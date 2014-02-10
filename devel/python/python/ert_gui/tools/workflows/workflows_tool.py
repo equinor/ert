@@ -9,7 +9,7 @@ from ert_gui.widgets.closable_dialog import ClosableDialog
 class WorkflowsTool(Tool):
     def __init__(self):
         enabled = len(WorkflowsModel().getList()) > 0
-        super(WorkflowsTool, self).__init__("Run Workflow", util.resourceIcon("ide/to_do_list_checked_1"), enabled)
+        super(WorkflowsTool, self).__init__("Run Workflow", "tools/workflows", util.resourceIcon("ide/to_do_list_checked_1"), enabled)
 
     def trigger(self):
         run_workflow_widget = RunWorkflowWidget()

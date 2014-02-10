@@ -19,5 +19,8 @@ class SimulationConfigPanel(QWidget):
     def isConfigurationValid(self):
         return True
 
+    def toggleAdvancedOptions(self, show_advanced):
+        raise NotImplementedError()
+
 
 

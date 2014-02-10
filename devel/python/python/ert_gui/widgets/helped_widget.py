@@ -114,5 +114,19 @@ class HelpedWidget(QWidget):
         """ Remove any model attachment or similar. Called when QT object is destroyed."""
         pass
 
+    @staticmethod
+    def addHelpToWidget(widget, link):
+        original_enter_event = widget.enterEvent
 
+        def enterEvent(event):
+            original_enter_event(event)
+            MessageCenter().setHelpMessageLink(link)
 
+        widget.enterEvent = enterEvent
+
+    @staticmethod
+    def addHelpToAction(action, link):
+        def showHelp():
+            MessageCenter().setHelpMessageLink(link)
+
+        action.hovered.connect(showHelp)
