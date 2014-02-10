@@ -139,18 +139,12 @@ void enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * plot_gen_kw,
 
   {
     int iens;
-    enkf_node_type * data_node;
-
-    data_node = enkf_node_alloc( plot_gen_kw->config_node );
-
     for (iens = 0; iens < ens_size; ++iens) {
       if (bool_vector_iget( mask , iens)) {
         enkf_plot_gen_kw_vector_type * vector = enkf_plot_gen_kw_iget( plot_gen_kw , iens );
         enkf_plot_gen_kw_vector_load( vector , fs , transform_data , report_step , state );
       }
     }
-
-    enkf_node_free( data_node );
   }
 }
 
