@@ -24,7 +24,8 @@ class EnkfSimulationRunner(BaseCClass):
         
     def runEnsembleExperiment(self, active_realization_mask):
         """ @rtype: bool """
-        return self.runSimpleStep(active_realization_mask , EnkfInitModeEnum.INIT_CONDITIONAL)
+        iter_nr = 0
+        return self.runSimpleStep(active_realization_mask , EnkfInitModeEnum.INIT_CONDITIONAL , iter_nr)
 
     def runPostWorkflow(self):
         EnkfSimulationRunner.cNamespace().run_post_workflow(self)
