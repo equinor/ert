@@ -48,10 +48,7 @@ class GertMainWindow(QMainWindow):
         action.setEnabled(tool.isEnabled())
         action.triggered.connect(tool.trigger)
 
-        # widget = self.toolbar.widgetForAction(action)
         HelpedWidget.addHelpToAction(action, tool.getHelpLink())
-        # HelpedWidget.addHelpToWidget(action.parentWidget(), tool.getHelpLink())
-
 
 
     def __createMenu(self):
