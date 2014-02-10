@@ -37,7 +37,6 @@ struct enkf_plot_gen_kw_struct {
   const enkf_config_node_type   * config_node;
   int                             size;        /* Number of ensembles. */
   enkf_plot_gen_kw_vector_type ** ensemble;    /* One vector for each ensemble. */
-  stringlist_type               * key_list;    /* Name of individual keys for this GEN_KW. */
 };
 
 
@@ -51,8 +50,6 @@ enkf_plot_gen_kw_type * enkf_plot_gen_kw_alloc( const enkf_config_node_type * co
     plot_gen_kw->config_node = config_node;
     plot_gen_kw->size = 0;
     plot_gen_kw->ensemble = NULL;
-    plot_gen_kw->key_list = stringlist_alloc_new();
-
     return plot_gen_kw;
   }
   else {
@@ -66,7 +63,6 @@ void enkf_plot_gen_kw_free( enkf_plot_gen_kw_type * plot_gen_kw ) {
   for (iens = 0 ; iens < plot_gen_kw->size ; ++iens) {
     enkf_plot_gen_kw_vector_free( plot_gen_kw->ensemble[iens] );
   }
-  stringlist_free( plot_gen_kw->key_list );
   free( plot_gen_kw );
 }
 
@@ -105,18 +101,6 @@ static void enkf_plot_gen_kw_resize( enkf_plot_gen_kw_type * plot_gen_kw , int n
 }
 
 
-static void enkf_plot_gen_kw_reset( enkf_plot_gen_kw_type * plot_gen_kw ) {
-  const gen_kw_config_type * gen_kw_config = enkf_config_node_get_ref( plot_gen_kw->config_node );
-
-  stringlist_free( plot_gen_kw->key_list );
-  plot_gen_kw->key_list = gen_kw_config_alloc_name_list( gen_kw_config );
-}
-
-
-const stringlist_type * enkf_plot_gen_kw_get_keys( const enkf_plot_gen_kw_type * gen_kw ) {
-  return gen_kw->key_list;
-}
-
 
 void enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * plot_gen_kw,
                             enkf_fs_type           * fs,
@@ -134,9 +118,7 @@ void enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * plot_gen_kw,
   else
     mask = bool_vector_alloc( ens_size , true );
 
-  enkf_plot_gen_kw_reset( plot_gen_kw );
   enkf_plot_gen_kw_resize( plot_gen_kw , ens_size );
-
   {
     int iens;
     for (iens = 0; iens < ens_size; ++iens) {

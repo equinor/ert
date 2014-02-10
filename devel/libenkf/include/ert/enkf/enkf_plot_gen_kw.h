@@ -43,7 +43,6 @@ extern "C" {
                                                         int                      report_step ,
                                                         state_enum               state ,
                                                         const bool_vector_type * input_mask);
-  const stringlist_type        * enkf_plot_gen_kw_get_keys( const enkf_plot_gen_kw_type * gen_kw );
   const char * enkf_plot_gen_kw_iget_key( const enkf_plot_gen_kw_type * plot_gen_kw, int index);
 
   UTIL_IS_INSTANCE_HEADER( enkf_plot_gen_kw );
