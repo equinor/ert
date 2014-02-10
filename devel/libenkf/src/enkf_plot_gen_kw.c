@@ -153,3 +153,11 @@ void enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * plot_gen_kw,
     enkf_node_free( data_node );
   }
 }
+
+
+
+const char * enkf_plot_gen_kw_iget_key( const enkf_plot_gen_kw_type * plot_gen_kw, int index) {
+  const gen_kw_config_type * gen_kw_config = enkf_config_node_get_ref( plot_gen_kw->config_node );
+  
+  return gen_kw_config_iget_name( gen_kw_config , index );
+}

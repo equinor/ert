@@ -25,6 +25,7 @@
 #include <ert/enkf/ert_test_context.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/enkf_config_node.h>
+#include <ert/enkf/gen_kw_config.h>
 
 
 void test_load(const char * config_file) {
@@ -40,11 +41,17 @@ void test_load(const char * config_file) {
     enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , "GEN_KW");
     enkf_plot_gen_kw_type * plot_gen_kw = enkf_plot_gen_kw_alloc( config_node );
     bool_vector_type      * input_mask  = bool_vector_alloc( ens_size , true );
+    gen_kw_config_type    * gen_kw_config = enkf_config_node_get_ref( config_node );
 
     enkf_plot_gen_kw_load( plot_gen_kw , enkf_main_get_fs( enkf_main ) , true , 0 , ANALYZED , input_mask );
     
     test_assert_int_equal( ens_size , enkf_plot_gen_kw_get_size( plot_gen_kw ));
     
+    {
+      enkf_plot_gen_kw_vector_type * vector = enkf_plot_gen_kw_iget( plot_gen_kw , 0 );
+      for (int i=0; i < enkf_plot_gen_kw_vector_get_size( vector ); i++)
+        test_assert_string_equal( enkf_plot_gen_kw_iget_key( plot_gen_kw , i ) , gen_kw_config_iget_name( gen_kw_config , i));
+    }
     bool_vector_free( input_mask );
   }
   
