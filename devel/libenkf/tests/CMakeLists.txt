@@ -122,6 +122,31 @@ add_executable( enkf_plot_blockvector enkf_plot_blockvector.c )
 target_link_libraries( enkf_plot_blockvector enkf test_util )
 add_test( enkf_plot_blockvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockvector )
 
+add_executable( enkf_plot_gen_kw enkf_plot_gen_kw.c )
+target_link_libraries( enkf_plot_gen_kw enkf test_util )
+add_test( enkf_plot_gen_kw  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw )
+
+add_executable( enkf_plot_gen_kw_vector enkf_plot_gen_kw_vector.c )
+target_link_libraries( enkf_plot_gen_kw_vector enkf test_util )
+add_test( enkf_plot_gen_kw_vector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw_vector )
+
+add_executable( enkf_plot_gen_kw_fs enkf_plot_gen_kw_fs.c )
+target_link_libraries( enkf_plot_gen_kw_fs enkf ert-test test_util )
+add_test( enkf_plot_gen_kw_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw_fs ${CMAKE_CURRENT_SOURCE_DIR}/data/config/gen_kw_plot/config )
+
+add_executable( enkf_plot_genvector enkf_plot_genvector.c )
+target_link_libraries( enkf_plot_genvector enkf test_util )
+add_test( enkf_plot_genvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_genvector )
+
+add_executable( enkf_plot_gendata_fs enkf_plot_gendata_fs.c )
+target_link_libraries( enkf_plot_gendata_fs ert-test enkf test_util )
+add_test( enkf_plot_gendata_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gendata_fs
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_GEN_DATA/config )
+
+add_executable( enkf_plot_gendata enkf_plot_gendata.c )
+target_link_libraries( enkf_plot_gendata enkf test_util )
+add_test( enkf_plot_gendata  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gendata )
+
 add_executable( enkf_config_node enkf_config_node.c )
 target_link_libraries( enkf_config_node enkf test_util )
 add_test( enkf_config_node  ${EXECUTABLE_OUTPUT_PATH}/enkf_config_node )
@@ -188,13 +213,13 @@ target_link_libraries( enkf_workflow_job_test ert-test test_util )
 add_test( enkf_workflow_job_test
           ${EXECUTABLE_OUTPUT_PATH}/enkf_workflow_job_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/CREATE_CASE
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/INIT_CASE_FROM_EXISTING
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS_ITER
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/OBSERVATION_RANKING
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/DATA_RANKING
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RANKING
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/INIT_MISFIT_TABLE)
-
 
 
 
@@ -361,3 +386,4 @@ set_property( TEST enkf_analysis_update_job PROPERTY LABELS StatoilData )
 set_property( TEST enkf_analysis_enkf_update_job PROPERTY LABELS StatoilData )
 set_property( TEST enkf_plot_blockdata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_block_obs PROPERTY LABELS StatoilData )
+set_property( TEST enkf_plot_gendata_fs PROPERTY LABELS StatoilData )

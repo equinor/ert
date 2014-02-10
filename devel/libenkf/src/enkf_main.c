@@ -207,6 +207,21 @@ void enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clea
 }
 
 
+bool enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
+  bool set_refcase = ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
+
+  model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
+  ensemble_config_set_refcase( enkf_main->ensemble_config , ecl_config_get_refcase( enkf_main->ecl_config ));
+
+  return set_refcase;
+}
+
+
+ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path) {
+  return ecl_config_validate_refcase( enkf_main->ecl_config , refcase_path );
+}
+
+
 ui_return_type * enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt) {
   ui_return_type * ui_return = ecl_config_validate_eclbase( enkf_main->ecl_config , eclbase_fmt);
   if (ui_return_get_status(ui_return) == UI_RETURN_OK) {
@@ -227,22 +242,6 @@ void enkf_main_set_jobname( enkf_main_type * enkf_main , const char * jobname_fm
   model_config_set_jobname_fmt( enkf_main->model_config , jobname_fmt );
   enkf_main_init_jobname( enkf_main );
 }
-
-
-ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path) {
-  return ecl_config_validate_refcase( enkf_main->ecl_config , refcase_path );
-}
-
-
-bool enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
-  bool set_refcase = ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
-  
-  model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
-  ensemble_config_set_refcase( enkf_main->ensemble_config , ecl_config_get_refcase( enkf_main->ecl_config ));
-  
-  return set_refcase;
-}
-
 
 void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file ) {
   enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
@@ -397,9 +396,6 @@ ui_return_type * enkf_main_set_data_file( enkf_main_type * enkf_main , const cha
   }
   return ui_return;
 }
-
-
-
 
 
 
@@ -1855,10 +1851,10 @@ bool enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * i
 
 
 
-void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , bool rerun) {
+void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun) {
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
-    if (enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL, 0))
+    if (enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL, iter))
       enkf_main_run_post_workflow(enkf_main);
     {
       enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true );
@@ -1867,7 +1863,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
       if (rerun) { 
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
-          if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE, 1))
+          if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE, iter + 1))
             enkf_main_run_post_workflow(enkf_main);
         } else {
           fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
@@ -1925,7 +1921,9 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2)
 
     if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
       enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , false , true);
-      bool force_copy = true;
+
+      enkf_main_init_case_from_existing(enkf_main, current_case, 0, ANALYZED, initial_case);
+
       // Currently does nothing; 
       enkf_main_set_fs( enkf_main , initial_case , NULL );
     }
@@ -1944,7 +1942,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2)
       } else
         break;
 
-      if (iter == iter2)
+      if (iter > iter2)
         break;
     }
     bool_vector_free(iactive);
@@ -1968,184 +1966,6 @@ void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
 
   enkf_main_iterate_smoother(enkf_main, iteration_number, "ONE-MORE" , iactive);
 }
-
-/*****************************************************************/
-/*  Filesystem copy functions                                    */
-
-
-void enkf_main_copy_ensemble(enkf_main_type * enkf_main        , 
-                             const char * source_case          , 
-                             int          source_report_step   ,
-                             state_enum   source_state         ,
-                             const char * target_case          ,  
-                             int          target_report_step   ,
-                             state_enum   target_state         , 
-                             const bool_vector_type * iens_mask,
-                             const char * ranking_key ,    /* It is OK to supply NULL - but if != NULL it must exist */
-                             const stringlist_type * node_list) {
-
-  /**
-     Must start by setting up the enkf_fs instance to read and write
-     from the correct cases.
-  */
-
-  const int ens_size            = enkf_main_get_ensemble_size( enkf_main );
-  
-  {
-    enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , true , false );
-    enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , false , true );
-
-    {
-      int * ranking_permutation;
-      int inode , src_iens;
-      
-      if (ranking_key != NULL) {
-        ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
-        ranking_permutation = (int *) ranking_table_get_permutation( ranking_table , ranking_key );
-      } else {
-        ranking_permutation = util_calloc( ens_size , sizeof * ranking_permutation );
-        for (src_iens = 0; src_iens < ens_size; src_iens++)
-          ranking_permutation[src_iens] = src_iens;
-      }
-      
-      for (inode =0; inode < stringlist_get_size( node_list ); inode++) {
-        enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( node_list , inode ));
-        for (src_iens = 0; src_iens < enkf_main_get_ensemble_size( enkf_main ); src_iens++) {
-          if (bool_vector_safe_iget(iens_mask , src_iens)) {
-            int target_iens = ranking_permutation[src_iens];
-            node_id_type src_id    = {.report_step = source_report_step , .iens = src_iens    , .state = source_state };
-            node_id_type target_id = {.report_step = target_report_step , .iens = target_iens , .state = target_state };
-            
-            enkf_node_copy( config_node , 
-                            source_fs , target_fs , 
-                            src_id , target_id );
-            
-          }
-        }
-      }
-
-      if (ranking_permutation == NULL) 
-        free( ranking_permutation );
-    }
-    enkf_fs_umount( source_fs );
-    enkf_fs_umount( target_fs );
-  }
-}
-
-
-
-
-
-
-/**
-   This is based on a general copy function, but a couple of variables
-   have been set to default values because this is an initialization:
-
-   target_step  = 0
-   target_state = analyzed
-   
-*/
-
-void enkf_main_initialize_from_existing__(enkf_main_type * enkf_main , 
-                                          const char * source_case , 
-                                          int          source_report_step,
-                                          state_enum   source_state,
-                                          const bool_vector_type * iens_mask,
-                                          const char * ranking_key ,    /* It is OK to supply NULL - but if != NULL it must exist */
-                                          const stringlist_type * node_list) {
-  
-  const int target_report_step  = 0;
-  const state_enum target_state = ANALYZED;
-  const char * target_case      = enkf_main->current_fs_case;
-
-  enkf_main_copy_ensemble(enkf_main , 
-                          source_case , 
-                          source_report_step , 
-                          source_state , 
-                          target_case , 
-                          target_report_step , 
-                          target_state , 
-                          iens_mask , 
-                          ranking_key , 
-                          node_list);
-  
-}
-
-
-
-/**
-   This function will select all the parameter variables in the
-   ensmeble, and then call enkf_main_initialize_from_existing__() with
-   that list.
-*/
-void enkf_main_initialize_from_existing(enkf_main_type * enkf_main , 
-                                        const char * source_case , 
-                                        int          source_report_step,
-                                        state_enum   source_state,
-                                        const bool_vector_type * iens_mask,
-                                        const char  * ranking_key) { 
-  stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER ); /* Select only paramters - will fail for GEN_DATA of type DYNAMIC_STATE. */
-  enkf_main_initialize_from_existing__(enkf_main , source_case , source_report_step , source_state , iens_mask , ranking_key , param_list );
-  stringlist_free( param_list );
-}
-
-
-
-static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
-  arg_pack_type * arg_pack           = arg_pack_safe_cast( void_arg );
-  enkf_main_type * enkf_main         = arg_pack_iget_ptr( arg_pack , 0);
-  const stringlist_type * param_list = arg_pack_iget_const_ptr( arg_pack , 1 );
-  int iens1                          = arg_pack_iget_int( arg_pack , 2 );
-  int iens2                          = arg_pack_iget_int( arg_pack , 3 );
-  init_mode_enum init_mode           = arg_pack_iget_int( arg_pack , 4 );
-  int iens;
-  
-  for (iens = iens1; iens < iens2; iens++) {
-    enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
-    enkf_state_initialize( state , enkf_main_get_fs( enkf_main ) , param_list , init_mode);
-  }
-
-  return NULL;
-}
-
-
-void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2, init_mode_enum init_mode) {
-  int num_cpu               = 4;
-  thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
-  int ens_sub_size          = (iens2 - iens1 + 1) / num_cpu;
-  arg_pack_type ** arg_list = util_calloc( num_cpu , sizeof * arg_list );
-  int i;
-  
-  printf("Initializing .... "); fflush( stdout );
-  for (i = 0; i < num_cpu;  i++) {
-    arg_list[i] = arg_pack_alloc();
-    arg_pack_append_ptr( arg_list[i] , enkf_main );
-    arg_pack_append_const_ptr( arg_list[i] , param_list );
-    {
-      int start_iens = i * ens_sub_size;
-      int end_iens   = start_iens + ens_sub_size;
-      
-      if (i == (num_cpu - 1)){
-        end_iens = iens2 + 1;  /* Input is upper limit inclusive. */
-        if(ens_sub_size == 0)
-          start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
-      }
-      arg_pack_append_int( arg_list[i] , start_iens );
-      arg_pack_append_int( arg_list[i] , end_iens );
-    }
-    arg_pack_append_int( arg_list[i] , init_mode );
-    thread_pool_add_job( tp , enkf_main_initialize_from_scratch_mt , arg_list[i]);
-  }
-  thread_pool_join( tp );
-  for (i = 0; i < num_cpu; i++)
-    arg_pack_free( arg_list[i] ); 
-  free( arg_list );
-  thread_pool_free( tp );
-  printf("\n");
-}
-
-
-
 
 
 /**
@@ -2648,68 +2468,8 @@ void enkf_main_create_fs( enkf_main_type * enkf_main , const char * fs_path) {
 }
 */
 
-static void update_case_log(enkf_main_type * enkf_main , const char * case_path) {
-  /*  : Update a small text file with the name of the host currently
-        running ert, the pid number of the process, the active case
-        and when it started. 
-        
-        If the previous shutdown was unclean the file will be around,
-        and we will need the info from the previous invocation which
-        is in the file. For that reason we open with mode 'a' instead
-        of 'w'.
-  */
-  
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
-  
-  {
-    int buffer_size = 256;
-    char * current_host = util_alloc_filename( ens_path , CASE_LOG , NULL );
-    FILE * stream = util_fopen( current_host , "a");
-    
-    fprintf(stream , "CASE:%-16s  " , case_path ); 
-    fprintf(stream , "PID:%-8d  " , getpid());
-    {
-      char hostname[buffer_size];
-      gethostname( hostname , buffer_size );
-      fprintf(stream , "HOST:%-16s  " , hostname );
-    }
-
-    
-    {
-      int year,month,day,hour,minute,second;
-      time_t now = time( NULL );
-      
-      util_set_datetime_values( now , &second , &minute , &hour , &day , &month , &year );
-      
-      fprintf(stream , "TIME:%02d/%02d/%4d-%02d.%02d.%02d\n" , day , month ,  year , hour , minute , second);
-    }
-    fclose( stream );
-    free( current_host );
-  }
-}
 
 
-
-
-static void enkf_main_close_fs( enkf_main_type * enkf_main ) {
-  enkf_fs_umount( enkf_main->dbase );
-  enkf_main->dbase = NULL;
-}
-
-
-enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
-  return enkf_fs_get_weakref( enkf_main->dbase );
-}
-
-
-char * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path) {
-  char * mount_point;
-  if (util_is_abs_path( case_path ))
-    mount_point = util_alloc_string_copy( case_path );
-  else
-    mount_point = util_alloc_filename( model_config_get_enspath( enkf_main->model_config) , case_path , NULL);
-  return mount_point;
-}
 
 
 void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
@@ -2727,271 +2487,6 @@ void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
 }
 
 
-static void enkf_main_write_current_case_file( const enkf_main_type * enkf_main, const char * case_path) {
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
-  const char * base = CURRENT_CASE_FILE; 
-  char * current_case_file = util_alloc_filename(ens_path , base, NULL);
-  FILE * stream = util_fopen( current_case_file  , "w");
-  fprintf(stream , case_path ); 
-  util_fclose(stream);
-  free(current_case_file);
-}
-
-static void enkf_main_update_current_case( enkf_main_type * enkf_main , const char * case_path) {
-  enkf_main_write_current_case_file(enkf_main, case_path); 
-  update_case_log(enkf_main , case_path);
-  
-  enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
-  enkf_main_gen_data_special( enkf_main );
-  enkf_main_add_subst_kw( enkf_main , "ERT-CASE" , enkf_main->current_fs_case , "Current case" , true );
-  enkf_main_add_subst_kw( enkf_main , "ERTCASE"  , enkf_main->current_fs_case , "Current case" , true );
-}
-
-
-static bool enkf_main_current_case_file_exists( const enkf_main_type * enkf_main) {
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
-  char * current_case_file = util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL); 
-  bool exists = util_file_exists(current_case_file); 
-  free(current_case_file);
-  return exists; 
-}
-
-char* enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main) {
-  char * current_case = NULL;  
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
-  char * current_case_file = util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL); 
-  if (enkf_main_current_case_file_exists(enkf_main)) {
-    FILE * stream = util_fopen( current_case_file  , "r");
-    current_case = util_fscanf_alloc_token(stream); 
-    util_fclose(stream);
-  } else {
-    util_abort("%s: File: storage/current_case not found, aborting! \n",__func__);
-  }
-  free(current_case_file);  
-  return current_case; 
-}
-
-  
-  
-/**
-   The enkf_fs instances employ a simple reference counting
-   scheme. The main point with this system is to avoid opening the
-   full timesystem more than necessary (this is quite compute
-   intensive). This is essentially achieved by:
-
-      1. Create new fs instances by using the function
-         enkf_main_mount_alt_fs() - depending on the input arguments
-         this will either create a new enkf_fs instance or it will
-         just return a pointer to currently open fs instance; with an
-         increased refcount.
-
-      2. When you are finished with working with filesystem pointer
-         call enkf_fs_unmount() - this will reduce the refcount with
-         one, and eventually discard the complete datastructure when
-         the refcount has reached zero.
-
-      3. By using the function enkf_main_get_fs() /
-         enkf_fs_get_weakref() you get a pointer to the current fs
-         instance WITHOUT INCREASING THE REFCOUNT. This means that
-         scope calling one of these functions does not get any
-         ownership to the enkf_fs instance.
- 
-   The enkf_main instance will take ownership of the enkf_fs instance;
-   this implies that the calling scope must have proper ownership of
-   the fs instance which is passed in. The return value from
-   enkf_main_get_fs() can NOT be used as input to this function; this
-   is not checked for in any way - but the crash will be horrible if
-   this is not adhered to.
-*/
-
-
-void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path /* Can be NULL */) {
-  if (!case_path)
-    case_path = enkf_fs_get_case_name( fs );
-    
-  if (enkf_main->dbase != NULL) 
-    enkf_main_close_fs( enkf_main );
-    
-  enkf_main->dbase = fs;
-  enkf_main_update_current_case(enkf_main, case_path); 
- }
-
-
-
-stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
-  stringlist_type * case_list = stringlist_alloc_new( );
-  {
-    const char * ens_path = model_config_get_enspath( enkf_main->model_config );
-    DIR * ens_dir = opendir( ens_path );
-    if (ens_dir != NULL) {
-      int ens_fd = dirfd( ens_dir );
-      if (ens_fd != -1) {
-        struct dirent * dp;
-        do {
-          dp = readdir( ens_dir );
-          if (dp != NULL) {
-            if (!(util_string_equal( dp->d_name , ".") || util_string_equal(dp->d_name , ".."))) {
-              if (!util_string_equal( dp->d_name , CURRENT_CASE_FILE)) {
-                char * full_path = util_alloc_filename( ens_path , dp->d_name , NULL);
-                if (util_is_directory( full_path ))
-                  stringlist_append_copy( case_list , dp->d_name );
-                free( full_path);
-              }
-            }
-          }
-        } while (dp != NULL);
-      }
-    }
-    closedir( ens_dir );
-  }
-  return case_list;
-}
-
-void enkf_main_create_fs( const enkf_main_type * enkf_main , const char * case_path ) {
-  char * new_mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
-
-  enkf_fs_create_fs( new_mount_point,
-                     model_config_get_dbase_type( enkf_main->model_config ) , 
-                     model_config_get_dbase_args( enkf_main->model_config ));
-  
-  free( new_mount_point );
-}
-
-
-bool enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path) {
-  char * mount_point               = enkf_main_alloc_mount_point( enkf_main , case_path );
-  const char * current_mount_point = NULL;
-  bool is_current;
-  
-  if (enkf_main->dbase != NULL)
-    current_mount_point = enkf_fs_get_mount_point( enkf_main->dbase );
-  
-  is_current = util_string_equal( mount_point , current_mount_point );
-  free( mount_point );
-  return is_current;
-}
-
-
-/*
-  All the return values from this function must be closed with
-  enkf_fs_umount(). If the return value is just a reference to the
-  current existing case the function will increase the reference count
-  on that enkf_fs instance, and the corresponding enkf_usmount will
-  decrease it again.
-*/
-
-enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
-  if (enkf_main_case_is_current( enkf_main , case_path )) {
-    // Fast path - we just return a reference to the currently selected case;
-    // with increased refcount.
-    if(!read_only) {
-        enkf_fs_type * fs = enkf_main->dbase;
-        enkf_fs_set_writable(fs);
-    }
-    return enkf_fs_get_ref( enkf_main->dbase );
-  } else {
-    // We have asked for an alterantive fs - must mount and possibly create that first.
-    enkf_fs_type * new_fs = NULL;
-    if (case_path != NULL) {
-      char * new_mount_point    = enkf_main_alloc_mount_point( enkf_main , case_path );
-
-      if (!enkf_fs_exists( new_mount_point )) {
-        if (create)
-          enkf_main_create_fs( enkf_main , case_path );
-      }
-      
-      new_fs = enkf_fs_mount( new_mount_point , read_only );
-      free( new_mount_point );
-    }
-    return new_fs;
-  }
-}
-
-
-state_map_type * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path) {
-  char * mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
-  state_map_type * state_map = enkf_fs_alloc_readonly_state_map( mount_point );
-  free( mount_point );
-  return state_map;
-}
-
-
-time_map_type * enkf_main_alloc_readonly_time_map( const enkf_main_type * enkf_main , const char * case_path ) {
-  char * mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
-  time_map_type * time_map = enkf_fs_alloc_readonly_time_map( mount_point );
-  free( mount_point );
-  return time_map;
-}
-
-
-void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
-  if (enkf_main_case_is_current( enkf_main , case_path ))
-    return;  /* We have tried to select the currently selected case - just return. */
-  else {
-
-    enkf_fs_type * new_fs = enkf_main_mount_alt_fs( enkf_main , case_path , false , true );
-    if (enkf_main->dbase == new_fs)
-      util_abort("%s : return reference to current FS in situation where that should not happen.\n",__func__);
-    
-    if (new_fs != NULL) 
-      enkf_main_set_fs( enkf_main , new_fs , case_path);
-    else {
-      const char * ens_path = model_config_get_enspath( enkf_main->model_config );
-      util_exit("%s: select filesystem %s:%s failed \n",__func__ , ens_path , case_path );
-    }
-
-  }
-}
-
-
-/*
-  Return a weak reference - i.e. the refocunt is not increased.
-*/
-const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
-  return enkf_main->current_fs_case;
-}
-
-bool enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case){
-  bool exists = false;
-  char * new_mount_point = enkf_main_alloc_mount_point( enkf_main , input_case);
-  if(enkf_fs_exists( new_mount_point )) 
-    exists = true;
-
-  free( new_mount_point );
-  return exists;
-}
-
-
-void enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * input_case ) {
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);      
-  int root_version = enkf_fs_get_version104( ens_path );
-  if (root_version == -1 || root_version == 105) {
-    if (input_case == NULL) {
-      char * current_mount_point = util_alloc_filename( ens_path , CURRENT_CASE , NULL);
-
-      if (enkf_main_current_case_file_exists(enkf_main)) { 
-        char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
-        enkf_main_select_fs(enkf_main, current_case);
-        free (current_case);
-      } else if (enkf_fs_exists( current_mount_point ) && util_is_link( current_mount_point )) {
-        /*If the current_case file does not exists, but the 'current' symlink does we use readlink to 
-          get hold of the actual target before calling the  enkf_main_select_fs() function. We then 
-          write the current_case file and delete the symlink.*/
-        char * target_case = util_alloc_atlink_target( ens_path , CURRENT_CASE );
-        enkf_main_select_fs( enkf_main , target_case );  
-        unlink(current_mount_point); 
-        enkf_main_write_current_case_file(enkf_main, target_case); 
-        free( target_case );
-        free( current_mount_point );
-      } else 
-        enkf_main_select_fs( enkf_main , DEFAULT_CASE );  // Selecting (a new) default case
-    } else
-      enkf_main_select_fs( enkf_main , input_case );
-  } else {
-    fprintf(stderr,"Sorry: the filesystem located in %s must be upgraded before the current ERT version can read it.\n" , ens_path);
-    exit(1);
-  }
-}
 
 
 /******************************************************************/
@@ -3680,59 +3175,6 @@ int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const cha
 
 
 
-/**
-   This function will go through the filesystem and check that we have
-   initial data for all parameters and all realizations. If the second
-   argument mask is different from NULL, the function will only
-   consider the realizations for which mask is true (if mask == NULL
-   all realizations will be checked).
-*/
-
-static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * __mask) {
-  stringlist_type  * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-  bool_vector_type * mask;
-  bool initialized = true;
-  int ikey = 0;
-  if (__mask != NULL)
-    mask = __mask;
-  else
-    mask = bool_vector_alloc(0 , true );
-  
-  while ((ikey < stringlist_get_size( parameter_keys )) && (initialized)) {
-    const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
-    int iens = 0;
-    do {
-      if (bool_vector_safe_iget( mask , iens)) {
-        node_id_type node_id = {.report_step = 0 , .iens = iens , .state = ANALYZED };
-        initialized = enkf_config_node_has_node( config_node , fs , node_id);
-      }
-      iens++;
-    } while ((iens < enkf_main->ens_size) && (initialized));
-    ikey++;
-  }
-  
-  stringlist_free( parameter_keys );
-  if (__mask == NULL)
-    bool_vector_free( mask );
-  return initialized;
-}
-
-
-bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_type * __mask) {
-  return enkf_main_case_is_initialized__(enkf_main , enkf_main->dbase , __mask);
-}
-
-bool enkf_main_case_is_initialized( const enkf_main_type * enkf_main , const char * case_name ,  bool_vector_type * __mask) {
-  enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main , case_name , true , false);
-  if (fs) {
-    bool initialized = enkf_main_case_is_initialized__(enkf_main , fs , __mask);
-    enkf_fs_umount( fs );
-    return initialized;
-  } else 
-    return false;
-}
-
-
 void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
   fprintf( stream , CONFIG_COMMENT_FORMAT  , "Here comes configuration information about the ERT logging.");
@@ -3761,9 +3203,6 @@ ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
   return enkf_main->templates;
 }
 
-void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file ) {
-  model_config_set_case_table( enkf_main->model_config , enkf_main->ens_size , case_table_file );
-}
 
 
 ert_report_list_type * enkf_main_get_report_list( const enkf_main_type * enkf_main ) {
@@ -4082,3 +3521,4 @@ void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_k
 }
 
 
+#include "enkf_main_manage_fs.c"

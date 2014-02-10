@@ -143,7 +143,7 @@ void * enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) 
 
 
 #define CURRENT_CASE_STRING "*"
-void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
+static void * enkf_main_smoother_JOB__( void * self , int iter , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive   = bool_vector_alloc( ens_size , true );
@@ -167,12 +167,29 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
       fprintf(stderr, "** Warning: Function %s : Second argument must be a bool value. Exiting job\n", __func__);
       return NULL;
   }
-
-  enkf_main_run_smoother( enkf_main , target_case , iactive , rerun);
+  enkf_main_run_smoother( enkf_main , target_case , iactive , iter , rerun);
   bool_vector_free( iactive );
   return NULL;
 }
 #undef CURRENT_CASE_STRING
+
+
+void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
+  return enkf_main_smoother_JOB__( self, 0 , args );
+}
+
+
+void * enkf_main_smoother_with_iter_JOB( void * self , const stringlist_type * args ) {
+  int iter;
+  stringlist_type * sub_args = stringlist_alloc_shallow_copy_with_limits( args , 1 , stringlist_get_size( args ) - 1);
+  util_sscanf_int( stringlist_iget(args , 0 ) , &iter );
+
+  enkf_main_smoother_JOB__( self , iter , sub_args );
+
+  stringlist_free( sub_args );
+  return NULL;
+}
+
 
 
 void * enkf_main_iterated_smoother_JOB( void * self , const stringlist_type * args ) {
@@ -218,6 +235,8 @@ void * enkf_main_scale_obs_std_JOB(void * self, const stringlist_type * args ) {
   return NULL;
 }
 
+/*****************************************************************/
+
 /* 
    Will create the new case if it does not exist. 
 */
@@ -237,6 +256,34 @@ void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
   return NULL;
 }
 
+
+
+void * enkf_main_init_case_from_existing_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+
+  const char * source_case = stringlist_iget( args , 0 );
+  enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , false , true );
+  enkf_fs_type * target_fs;
+
+  if (stringlist_get_size(args) > 1) {
+    const char * current_case = enkf_main_get_current_fs(enkf_main);
+    const char * target_case = stringlist_iget( args , 1 );
+    if (0 != strcmp(current_case, target_case)) {
+      target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , false , true );
+    }
+  } else
+    target_fs = enkf_fs_get_ref(enkf_main_get_fs(enkf_main));
+
+  enkf_main_init_case_from_existing(enkf_main, source_fs, 0, ANALYZED, target_fs);
+
+  enkf_fs_umount(source_fs);
+  enkf_fs_umount(target_fs);
+
+  return NULL;
+}
+
+
+/*****************************************************************/
 
 static void * enkf_main_load_results_JOB__( enkf_main_type * enkf_main , int iter , const stringlist_type * args) {
   bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, enkf_main_get_ensemble_size(enkf_main));
@@ -335,6 +382,8 @@ void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * ar
 }
 
 
+/*****************************************************************/
+
 void * enkf_main_rank_on_observations_JOB(void * self, const stringlist_type * args) {
   enkf_main_type * enkf_main  = enkf_main_safe_cast( self );
   const char * ranking_name   = stringlist_iget(args, 0);
@@ -393,8 +442,6 @@ void * enkf_main_rank_on_observations_JOB(void * self, const stringlist_type * a
   int_vector_free(steps_vector);
   return NULL;
 }
-
-
 
 
 void * enkf_main_rank_on_data_JOB(void * self, const stringlist_type * args) {

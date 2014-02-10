@@ -63,9 +63,13 @@ set( source_files
      surface_config.c 
      enkf_plot_data.c 
      enkf_plot_blockdata.c 
-     enkf_plot_blockvector.c 
-     enkf_plot_tvector.c 
-     qc_module.c 
+     enkf_plot_blockvector.c
+     enkf_plot_tvector.c
+     enkf_plot_gendata.c
+     enkf_plot_genvector.c
+     enkf_plot_gen_kw.c
+     enkf_plot_gen_kw_vector.c
+     qc_module.c
      ert_report_list.c 
      runpath_list.c 
      ert_workflow_list.c 
@@ -156,7 +160,11 @@ set( header_files
      enkf_plot_data.h 
      enkf_plot_blockdata.h
      enkf_plot_blockvector.h
-     enkf_plot_tvector.h 
+     enkf_plot_tvector.h
+     enkf_plot_gendata.h
+     enkf_plot_genvector.h
+     enkf_plot_gen_kw.h
+     enkf_plot_gen_kw_vector.h
      qc_module.h 
      ert_report_list.h 
      runpath_list.h 
