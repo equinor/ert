@@ -1,6 +1,7 @@
 from PyQt4.QtCore import QSettings, Qt
 from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction
 from ert_gui.widgets.help_dock import HelpDock
+from ert_gui.widgets.helped_widget import HelpedWidget
 
 
 class GertMainWindow(QMainWindow):
@@ -24,7 +25,7 @@ class GertMainWindow(QMainWindow):
 
         self.__createMenu()
         self.__help_dock = HelpDock()
-        help_dock = self.addDock("&Help", self.__help_dock, Qt.BottomDockWidgetArea )
+        self.addDock("&Help", self.__help_dock, Qt.BottomDockWidgetArea, Qt.AllDockWidgetAreas)
 
 
         self.__fetchSettings()
@@ -47,6 +48,8 @@ class GertMainWindow(QMainWindow):
         action.setIconText(tool.getName())
         action.setEnabled(tool.isEnabled())
         action.triggered.connect(tool.trigger)
+
+        HelpedWidget.addHelpToAction(action, tool.getHelpLink())
 
 
     def __createMenu(self):
