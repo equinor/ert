@@ -1,5 +1,5 @@
 from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton
+from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QAction
 from ert_gui.models.connectors.init import CaseList
 from ert_gui.models.connectors.run import SimulationModeModel
 from ert_gui.pages.run_dialog import RunDialog
@@ -58,14 +58,32 @@ class SimulationPanel(QWidget):
     def addSimulationConfigPanel(self, panel):
         assert isinstance(panel, SimulationConfigPanel)
 
+        panel.toggleAdvancedOptions(False)
         self.simulation_stack.addWidget(panel)
         self.simulation_widgets[panel.getSimulationModel()] = panel
 
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
 
+    def getActions(self):
+        """ @rtype: list of QAction """
+        advanced_toggle_action = QAction("Show Advanced Options", self)
+        advanced_toggle_action.setObjectName("AdvancedSimulationOptions")
+        advanced_toggle_action.setCheckable(True)
+        advanced_toggle_action.setChecked(False)
+        advanced_toggle_action.toggled.connect(self.toggleAdvanced)
+
+        return [advanced_toggle_action]
+
+
+    def toggleAdvanced(self, show_advanced):
+        for panel in self.simulation_widgets.values():
+            panel.toggleAdvancedOptions(show_advanced)
+
+
     def getCurrentSimulationMode(self):
         return SimulationModeModel().getCurrentChoice()
+
 
     def runSimulation(self):
         run_model = self.getCurrentSimulationMode()
@@ -81,6 +99,7 @@ class SimulationPanel(QWidget):
         widget = self.simulation_widgets[self.getCurrentSimulationMode()]
         self.simulation_stack.setCurrentWidget(widget)
         self.validationStatusChanged()
+
 
     def validationStatusChanged(self):
         widget = self.simulation_widgets[self.getCurrentSimulationMode()]
