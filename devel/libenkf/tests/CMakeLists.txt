@@ -122,6 +122,18 @@ add_executable( enkf_plot_blockvector enkf_plot_blockvector.c )
 target_link_libraries( enkf_plot_blockvector enkf test_util )
 add_test( enkf_plot_blockvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockvector )
 
+add_executable( enkf_plot_gen_kw enkf_plot_gen_kw.c )
+target_link_libraries( enkf_plot_gen_kw enkf test_util )
+add_test( enkf_plot_gen_kw  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw )
+
+add_executable( enkf_plot_gen_kw_vector enkf_plot_gen_kw_vector.c )
+target_link_libraries( enkf_plot_gen_kw_vector enkf test_util )
+add_test( enkf_plot_gen_kw_vector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw_vector )
+
+add_executable( enkf_plot_gen_kw_fs enkf_plot_gen_kw_fs.c )
+target_link_libraries( enkf_plot_gen_kw_fs enkf ert-test test_util )
+add_test( enkf_plot_gen_kw_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw_fs ${CMAKE_CURRENT_SOURCE_DIR}/data/config/gen_kw_plot/config )
+
 add_executable( enkf_plot_genvector enkf_plot_genvector.c )
 target_link_libraries( enkf_plot_genvector enkf test_util )
 add_test( enkf_plot_genvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_genvector )

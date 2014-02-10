@@ -67,6 +67,8 @@ set( source_files
      enkf_plot_tvector.c
      enkf_plot_gendata.c
      enkf_plot_genvector.c
+     enkf_plot_gen_kw.c
+     enkf_plot_gen_kw_vector.c
      qc_module.c
      ert_report_list.c 
      runpath_list.c 
@@ -161,6 +163,8 @@ set( header_files
      enkf_plot_tvector.h
      enkf_plot_gendata.h
      enkf_plot_genvector.h
+     enkf_plot_gen_kw.h
+     enkf_plot_gen_kw_vector.h
      qc_module.h 
      ert_report_list.h 
      runpath_list.h 
