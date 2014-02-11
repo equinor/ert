@@ -46,6 +46,9 @@ void                        enkf_plot_gendata_load( enkf_plot_gendata_type * plo
                                                     state_enum state ,
                                                     const bool_vector_type * input_mask);
 
+double_vector_type * enkf_plot_gendata_get_min_values(enkf_plot_gendata_type * plot_data);
+double_vector_type * enkf_plot_gendata_get_max_values(enkf_plot_gendata_type * plot_data);
+
 
 UTIL_IS_INSTANCE_HEADER( enkf_plot_gendata );
 
