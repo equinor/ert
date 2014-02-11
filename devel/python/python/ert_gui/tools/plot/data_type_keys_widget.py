@@ -49,6 +49,7 @@ class DataTypeKeysWidget(QWidget):
         self.filter_model.setShowBlockKeys(item["block"])
         self.filter_model.setShowSummaryKeys(item["summary"])
         self.filter_model.setShowGenKWKeys(item["gen_kw"])
+        self.filter_model.setShowGenDataKeys(item["gen_data"])
 
 
     def itemSelected(self):

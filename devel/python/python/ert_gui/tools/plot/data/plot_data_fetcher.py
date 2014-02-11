@@ -1,5 +1,6 @@
+from ert.enkf import ensemble_data
 from ert.enkf.plot import EnsembleDataFetcher, ObservationDataFetcher, RefcaseDataFetcher, BlockObservationDataFetcher, \
-    EnsembleGenKWFetcher
+    EnsembleGenKWFetcher, EnsembleGenDataFetcher, ObservationGenDataFetcher
 from ert.enkf.plot.ensemble_block_data_fetcher import EnsembleBlockDataFetcher
 from ert_gui.tools.plot.data import PlotData, ObservationPlotData, EnsemblePlotData, RefcasePlotData
 from ert_gui.models import ErtConnector
@@ -12,6 +13,7 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
         observation_data_fetcher = ObservationDataFetcher(self.ert())
         block_observation_data_fetcher = BlockObservationDataFetcher(self.ert())
         gen_kw_fetcher = EnsembleGenKWFetcher(self.ert())
+        gen_data_fetcher = EnsembleGenDataFetcher(self.ert())
 
         if self.isBlockObservationKey(key):
             return self.fetchBlockObservationData(block_observation_data_fetcher, key, cases)
@@ -21,6 +23,9 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
 
         elif self.isGenKWKey(key):
             return self.fetchGenKWData(gen_kw_fetcher, key, cases)
+
+        elif self.isGenDataKey(key):
+            return self.fetchGenData(gen_data_fetcher, key, cases)
 
         else:
             raise NotImplementedError("Key %s not supported." % key)
@@ -38,6 +43,35 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
     def isGenKWKey(self, key):
         gen_kw_fetcher = EnsembleGenKWFetcher(self.ert())
         return gen_kw_fetcher.supportsKey(key)
+
+    def isGenDataKey(self, key):
+        obs_gen_data_fetcher = ObservationGenDataFetcher(self.ert())
+        return obs_gen_data_fetcher.supportsKey(key)
+
+    def fetchGenData(self, gen_data_fetcher, key, cases):
+        plot_data = PlotData(key)
+
+        ensemble_data = ObservationGenDataFetcher(self.ert()).fetchData(key, cases)
+
+
+        if len(ensemble_data) > 0:
+            observation_plot_data = ObservationPlotData(key)
+
+            observation_plot_data.setObservationData(ensemble_data["x"], ensemble_data["y"], ensemble_data["std"], ensemble_data["continuous"], histogram_support=False)
+            observation_plot_data.updateBoundaries(ensemble_data["min_x"], ensemble_data["max_x"], ensemble_data["min_y"], ensemble_data["max_y"])
+            plot_data.setObservationData(observation_plot_data)
+
+            for case in cases:
+                ensemble_data = EnsembleGenDataFetcher(self.ert()).fetchData(key, case)
+
+                if len(ensemble_data) > 0:
+
+                    ensemble_plot_data = EnsemblePlotData(key, case)
+                    ensemble_plot_data.setEnsembleData(ensemble_data["x"], ensemble_data["y"], ensemble_data["min_y_values"], ensemble_data["max_y_values"], histogram_support=False)
+                    ensemble_plot_data.updateBoundaries(ensemble_data["min_x"], ensemble_data["max_x"], ensemble_data["min_y"], ensemble_data["max_y"])
+                    plot_data.addEnsembleData(ensemble_plot_data)
+
+        return plot_data
 
     def fetchGenKWData(self, gen_kw_fetcher, key, cases):
         return PlotData(key)

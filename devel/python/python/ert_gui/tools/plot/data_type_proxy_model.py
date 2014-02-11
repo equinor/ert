@@ -26,6 +26,7 @@ class DataTypeProxyModel(QSortFilterProxyModel):
         self.__show_summary_keys = True
         self.__show_block_keys = True
         self.__show_gen_kw_keys = True
+        self.__show_gen_data_keys = True
 
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.setSourceModel(model)
@@ -47,6 +48,10 @@ class DataTypeProxyModel(QSortFilterProxyModel):
             elif not self.__show_gen_kw_keys and source_model.isGenKWKey(key):
                 show = False
 
+            elif not self.__show_gen_data_keys and source_model.isGenDataKey(key):
+                show = False
+
+
         return show
 
     def sourceModel(self):
@@ -64,3 +69,8 @@ class DataTypeProxyModel(QSortFilterProxyModel):
     def setShowGenKWKeys(self, visible):
         self.__show_gen_kw_keys = visible
         self.invalidateFilter()
+
+    def setShowGenDataKeys(self, visible):
+        self.__show_gen_data_keys = visible
+        self.invalidateFilter()
+

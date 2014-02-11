@@ -1,5 +1,6 @@
 from ert.enkf.enums import ErtImplType, EnkfObservationImplementationType
-from ert.enkf.plot import BlockObservationDataFetcher, EnsembleGenKWFetcher
+from ert.enkf.plot import BlockObservationDataFetcher, EnsembleGenKWFetcher, EnsembleGenDataFetcher, \
+    ObservationGenDataFetcher
 from ert_gui.models import ErtConnector
 from ert_gui.models.mixins.list_model import ListModelMixin
 
@@ -12,12 +13,13 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
         self.__block_observation_keys = None
         self.__summary_keys = None
         self.__gen_kw_keys = None
+        self.__gen_data_keys = None
         super(DataTypeKeysModel, self).__init__()
 
 
     def getAllKeys(self):
         """ @rtype: list of str """
-        keys = self.getAllBlockObservationKeys() + self.getAllSummaryKeys() + self.getAllGenKWKeys()
+        keys = self.getAllBlockObservationKeys() + self.getAllSummaryKeys() + self.getAllGenKWKeys() + self.getAllGenDataKeys()
         return sorted([key for key in keys], key=lambda k : k.lower())
 
     def getAllGenKWKeys(self):
@@ -27,7 +29,12 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
 
         return self.__gen_kw_keys
 
+    def getAllGenDataKeys(self):
+        """ @rtype: list of str """
+        if self.__gen_data_keys is None:
+            self.__gen_data_keys = ObservationGenDataFetcher(self.ert()).getSupportedKeys()
 
+        return self.__gen_data_keys
 
     def getAllSummaryKeys(self):
         """ @rtype: list of str """
@@ -65,7 +72,10 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
         if self.__block_observation_keys is None:
             self.getAllBlockObservationKeys()
 
-        return item in self.__observation_keys or item in self.__block_observation_keys
+        if self.__gen_data_keys is None:
+            self.getAllGenDataKeys()
+
+        return item in self.__observation_keys or item in self.__block_observation_keys or item in self.__gen_data_keys
 
     def __isSummaryKeyObservationKey(self, key):
         return len(self.ert().ensembleConfig().getNode(key).getObservationKeys()) > 0
@@ -78,4 +88,7 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
 
     def isGenKWKey(self, key):
         return key in self.__gen_kw_keys
+
+    def isGenDataKey(self, key):
+        return key in self.__gen_data_keys
 

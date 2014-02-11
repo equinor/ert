@@ -17,8 +17,7 @@ from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enums import EnkfObservationImplementationType
-from ert.enkf.observations import BlockObservation, SummaryObservation
-
+from ert.enkf.observations import BlockObservation, SummaryObservation, GenObservation
 
 
 class ObsVector(BaseCClass):
@@ -51,6 +50,8 @@ class ObsVector(BaseCClass):
             return SummaryObservation.createCReference(pointer, self)
         elif node_type == EnkfObservationImplementationType.BLOCK_OBS:
             return BlockObservation.createCReference(pointer, self)
+        elif node_type == EnkfObservationImplementationType.GEN_OBS:
+            return GenObservation.createCReference(pointer, self)
         else:
             raise AssertionError("Node type '%s' currently not supported!" % node_type)
 
