@@ -118,9 +118,15 @@ void rml_enkf_common_store_state( matrix_type * state , const matrix_type * A , 
 
 void rml_enkf_common_recover_state( const matrix_type * state , matrix_type * A , const bool_vector_type * ens_mask ) { 
   const int ens_size = bool_vector_size( ens_mask );
+  const int active_size = bool_vector_count_equal( ens_mask , true );
+  const int rows = matrix_get_rows( state );
+  
+  matrix_resize( A , rows , active_size , false );
+  {
     int active_index = 0;
     for (int iens = 0; iens < ens_size; iens++) {
       if (bool_vector_iget( ens_mask , iens ))
         matrix_copy_column( A , state , active_index , iens );
     }
+  }
 }

@@ -35,6 +35,7 @@ void test_state() {
   bool_vector_type * ens_mask = bool_vector_alloc(ens_size , false);
   matrix_type * A = matrix_alloc( rows , active_size);
   matrix_type * A2 = matrix_alloc( rows, active_size );
+  matrix_type * A3 = matrix_alloc( 1,1 );
 
   for (int i=0; i < active_size; i++)
     bool_vector_iset( ens_mask , i + 1 , true );
@@ -57,9 +58,10 @@ void test_state() {
   }
 
   rml_enkf_common_recover_state( state , A2 , ens_mask);
+  rml_enkf_common_recover_state( state , A3 , ens_mask);
   test_assert_true( matrix_equal( A , A2 ));
+  test_assert_true( matrix_equal( A , A3 ));
   
-
   bool_vector_free( ens_mask );
   matrix_free( state );
   matrix_free( A );
