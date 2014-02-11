@@ -141,7 +141,6 @@
 
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char                 * current_fs_case;
   enkf_fs_type         * dbase;              /* The internalized information. */
   ensemble_config_type * ensemble_config;    /* The config objects for the various enkf nodes.*/
   qc_module_type       * qc_module;
@@ -421,8 +420,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL) 
     enkf_fs_umount( enkf_main->dbase );
-
-  util_safe_free( enkf_main->current_fs_case );
 
   if (log_is_open( enkf_main->logh ))
     log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
@@ -2301,7 +2298,6 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
-  enkf_main->current_fs_case    = NULL;
   enkf_main->dbase              = NULL;
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;

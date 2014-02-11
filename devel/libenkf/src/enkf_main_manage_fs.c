@@ -393,10 +393,9 @@ static void enkf_main_update_current_case( enkf_main_type * enkf_main , const ch
   enkf_main_write_current_case_file(enkf_main, case_path);
   update_case_log(enkf_main , case_path);
 
-  enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
   enkf_main_gen_data_special( enkf_main );
-  enkf_main_add_subst_kw( enkf_main , "ERT-CASE" , enkf_main->current_fs_case , "Current case" , true );
-  enkf_main_add_subst_kw( enkf_main , "ERTCASE"  , enkf_main->current_fs_case , "Current case" , true );
+  enkf_main_add_subst_kw( enkf_main , "ERT-CASE" , enkf_main_get_current_fs( enkf_main ) , "Current case" , true );
+  enkf_main_add_subst_kw( enkf_main , "ERTCASE"  , enkf_main_get_current_fs( enkf_main ) , "Current case" , true );
 }
 
 
@@ -438,7 +437,7 @@ enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
   Return a weak reference - i.e. the refocunt is not increased.
 */
 const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
-  return enkf_main->current_fs_case;
+  return enkf_fs_get_case_name( enkf_main->dbase );
 }
 
 
