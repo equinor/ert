@@ -1154,7 +1154,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   assert_matrix_size(X , "X" , ens_size , ens_size);
   assert_matrix_size(S , "S" , active_size , ens_size);
   assert_matrix_size(R , "R" , active_size , active_size);
-  assert_size_equal( ens_size , ens_mask );
+  assert_size_equal( enkf_main_get_ensemble_size( enkf_main ) , ens_mask );
 
   if (analysis_module_check_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
