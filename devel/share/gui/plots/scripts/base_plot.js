@@ -196,6 +196,9 @@ BasePlot.prototype.render = function() {
     this.plot_group.select(".y.axis").transition().duration(0).call(this.y_axis);
     this.plot_group.select(".x.axis").transition().duration(0).call(this.x_axis);
 
+    this.canvas.attr("width", this.width).attr("height", this.height);
+    this.overlay_canvas.attr("width", this.width).attr("height", this.height);
+
     var context = this.canvas.node().getContext("2d");
     context.save();
     context.clearRect(0, 0, this.width, this.height);
