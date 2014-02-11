@@ -18,7 +18,7 @@ class FilterPopup(QDialog):
         self.addFilterItem("Summary", "summary")
         self.addFilterItem("Block", "block")
         self.addFilterItem("Gen KW", "gen_kw")
-        #self.addFilterItem("Gen Data", "gen_data")
+        self.addFilterItem("Gen Data", "gen_data")
 
         self.setLayout(self.__layout)
         self.adjustSize()

@@ -60,6 +60,9 @@ class DataTypeKeysListModel(QAbstractItemModel):
     def isGenKWKey(self, key):
         return DataTypeKeysModel().isGenKWKey(str(key))
 
+    def isGenDataKey(self, key):
+        return DataTypeKeysModel().isGenDataKey(str(key))
+
 
 
 
