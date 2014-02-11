@@ -24,6 +24,10 @@ if (USE_RUNPATH)
    add_runpath( rmli_enkf )
 endif()
 
+if (BUILD_TESTS)
+   add_subdirectory( tests )
+endif()
+
 #-----------------------------------------------------------------
 
 # Alternative script based build:

@@ -1,5 +1,3 @@
-
-
 /*
    Copyright (C) 2011  Statoil ASA, Norway. 
     
@@ -100,3 +98,29 @@ void rml_enkf_common_initA__( matrix_type * A ,
   matrix_free(dA1);
 }
 
+
+
+void rml_enkf_common_store_state( matrix_type * state , const matrix_type * A , const bool_vector_type * ens_mask ) { 
+  matrix_resize( state , matrix_get_rows( A ) , bool_vector_size( ens_mask ) , false);
+  {
+    const int ens_size = bool_vector_size( ens_mask );
+    int active_index = 0;
+    for (int iens = 0; iens < ens_size; iens++) {
+      if (bool_vector_iget( ens_mask , iens ))
+        matrix_copy_column( state , A , iens , active_index );
+      else
+        matrix_set_const_column( state , iens  , 0);
+    }
+  }
+}
+
+
+
+void rml_enkf_common_recover_state( const matrix_type * state , matrix_type * A , const bool_vector_type * ens_mask ) { 
+  const int ens_size = bool_vector_size( ens_mask );
+    int active_index = 0;
+    for (int iens = 0; iens < ens_size; iens++) {
+      if (bool_vector_iget( ens_mask , iens ))
+        matrix_copy_column( A , state , active_index , iens );
+    }
+}
