@@ -27,7 +27,7 @@
 #include <ert/util/rng.h>
 #include <ert/util/matrix.h>
 #include <ert/util/matrix_blas.h>
-
+#include <ert/util/bool_vector.h>
 
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
@@ -94,9 +94,10 @@ struct rml_enkf_imodel_data_struct {
   double    Sk;                    // Objective function value
   double    Std;                   // Standard Deviation of the Objective function
   double  * Csc;
-  matrix_type * Am;
+  matrix_type *Am;
   matrix_type *prior;
   matrix_type *state;
+  bool_vector_type * ens_mask;
 };
 
 
@@ -143,13 +144,23 @@ void * rml_enkf_imodel_data_alloc( rng_type * rng) {
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
   data->Std          = 0; 
+  data->ens_mask     = bool_vector_alloc(0,false);
+  data->state        = matrix_alloc(1,1);
+  data->prior        = matrix_alloc(1,1);
   return data;
 }
 
 
-void rml_enkf_imodel_data_free( void * data ) { 
+void rml_enkf_imodel_data_free( void * arg ) { 
+  rml_enkf_imodel_data_type * data = rml_enkf_imodel_data_safe_cast( arg );
+
+  matrix_free( data->state );
+  matrix_free( data->prior );
+
+  bool_vector_free( data->ens_mask );
   free( data );
 }
+
 
 
 void rml_enkf_imodel_init1__( matrix_type * A,
@@ -343,8 +354,9 @@ void rml_enkf_imodel_updateA(void * module_data ,
     Std_new= matrix_diag_std(Skm,Sk_new);
 
     data->lamda =pow(10,floor(log10(Sk_new/(2*nrobs))));
-    data->prior = matrix_alloc_copy(A);
-    data->state = matrix_alloc_copy(A);
+    rml_enkf_common_store_state( data->state , A , data->ens_mask );
+    data->prior = matrix_realloc_copy( data->prior , A );
+    
 
     data->Csc     = util_calloc(nstate , sizeof * data->Csc);
     rml_enkf_imodel_Create_Csc(data);
@@ -365,7 +377,7 @@ void rml_enkf_imodel_updateA(void * module_data ,
   
   else
     {
-      matrix_type *Acopy  = matrix_alloc_copy (A);
+      matrix_type * Acopy  = matrix_alloc_copy (A);
       Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
       Std_new= matrix_diag_std(Skm,Sk_new);
       printf(" Current Objective function value is %5.3f \n\n",Sk_new);
@@ -380,7 +392,9 @@ void rml_enkf_imodel_updateA(void * module_data ,
           fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
           data->lamda = data->lamda / 10 ;
           data->Std   = Std_new;
-          data->state = matrix_alloc_copy(A);
+
+          rml_enkf_common_store_state(data->state , A , data->ens_mask );
+
           data->Sk = Sk_new;
           rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
           rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
@@ -393,7 +407,9 @@ void rml_enkf_imodel_updateA(void * module_data ,
           fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
           data->lamda = data->lamda;
           data->Std=Std_new;
-          data->state = matrix_alloc_copy(A);
+
+          rml_enkf_common_store_state(data->state , A , data->ens_mask );
+          
           data->Sk = Sk_new;
           rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
           rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
@@ -403,7 +419,9 @@ void rml_enkf_imodel_updateA(void * module_data ,
           fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f     \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
         printf("The previous step is rejected !!\n");
         data->lamda = data ->lamda * 4;   
-        matrix_assign( A , data->state );
+
+        rml_enkf_common_recover_state( data->state , A , data->ens_mask );
+
         printf("matrix copied \n");
         rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
         rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
@@ -431,6 +449,17 @@ void rml_enkf_imodel_updateA(void * module_data ,
 }
 
 
+void rml_enkf_imodel_init_update(void * arg , 
+                                 const bool_vector_type * ens_mask , 
+                                 const matrix_type * S , 
+                                 const matrix_type * R , 
+                                 const matrix_type * dObs , 
+                                 const matrix_type * E , 
+                                 const matrix_type * D ) {
+  
+  rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast( arg );
+  bool_vector_memcpy( module_data->ens_mask , ens_mask );
+}
 
 
 
@@ -498,11 +527,6 @@ long rml_enkf_imodel_get_options( void * arg , long flag ) {
 
 
 
-/**
-   gcc -fpic -c <object_file> -I??  <src_file>
-   gcc -shared -o <lib_file> <object_files>
-*/
-
 
 
 #ifdef INTERNAL_LINK
@@ -522,7 +546,7 @@ analysis_table_type SYMBOL_TABLE = {
     .get_options     = rml_enkf_imodel_get_options , 
     .initX           = NULL,
     .updateA         = rml_enkf_imodel_updateA ,  
-    .init_update     = NULL,
+    .init_update     = rml_enkf_imodel_init_update ,
     .complete_update = NULL,
     .has_var         = rml_enkf_imodel_has_var,
     .get_int         = rml_enkf_imodel_get_int,
