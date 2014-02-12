@@ -46,37 +46,28 @@ class EnsembleGenKWFetcher(DataFetcher):
         key, keyword = key.split(":")
         ensemble_config_node = self.getEnsembleConfigNode(key)
         enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(case, True, False)
-        ensemble_plot_gen_kw = EnsemblePlotGenKW(ensemble_config_node, enkf_fs, keyword)
+        ensemble_plot_gen_kw = EnsemblePlotGenKW(ensemble_config_node, enkf_fs)
+        keyword_index = ensemble_plot_gen_kw.getIndexForKeyword(keyword)
 
-        data = {"x": None,
+        data = {"x": [0],
                 "y": [],
                 "min_y": None,
                 "max_y": None,
                 "min_x": 0,
-                "max_x": None}
-
+                "max_x": 0}
 
         for vector in ensemble_plot_gen_kw:
             y = []
             data["y"].append(y)
 
-            for value in vector:
-                y.append(value)
+            value = vector.getValue(keyword_index)
+            y.append(value)
 
-                if data["min_y"] is None or data["min_y"] > value:
-                    data["min_y"] = value
+            if data["min_y"] is None or data["min_y"] > value:
+                data["min_y"] = value
 
-                if data["max_y"] is None or data["max_y"] < value:
-                    data["max_y"] = value
-
-            if data["x"] is None:
-                size = len(data["y"][0])
-                data["x"] = [index for index in range(size)]
-                data["max_x"] = size - 1
-
-
-
-
+            if data["max_y"] is None or data["max_y"] < value:
+                data["max_y"] = value
 
         return data
 
