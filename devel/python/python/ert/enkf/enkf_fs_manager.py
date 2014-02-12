@@ -16,8 +16,8 @@ class EnkfFsManager(BaseCClass):
     def isCaseInitialized(self, case):
         return EnkfFsManager.cNamespace().is_case_initialized(self, case, None)
 
-    def selectFileSystem(self, path):
-        EnkfFsManager.cNamespace().select_fs(self, path)
+    # def selectFileSystem(self, path):
+    #     EnkfFsManager.cNamespace().select_fs(self, path)
 
     # def fs_exists(self, case):
     #     """ @rtype: bool """
@@ -32,8 +32,16 @@ class EnkfFsManager(BaseCClass):
         return EnkfFsManager.cNamespace().is_initialized(self, None) # what is the bool_vector mask???
 
     def getFileSystem(self):
-        """ @rtype: EnkfFs """
-        return EnkfFsManager.cNamespace().get_fs(self).setParent(self)
+        """ Returns the currently selected file system
+        @rtype: EnkfFs
+        """
+        enkf_fs = EnkfFsManager.cNamespace().get_fs(self)
+
+        case_name = enkf_fs.getCaseName()
+        if not case_name in self.__cached_file_systems:
+            self.__cached_file_systems[case_name] = enkf_fs
+
+        return self.__cached_file_systems[case_name]
 
     def getCaseList(self):
         """ @rtype: StringList """
@@ -43,8 +51,8 @@ class EnkfFsManager(BaseCClass):
     #     """ @rtype: str """
     #     return EnkfFsManager.cNamespace().get_current_fs(self)
 
-    def userSelectFileSystem(self, input_case):
-        EnkfFsManager.cNamespace().user_select_fs(self, input_case)
+    # def userSelectFileSystem(self, input_case):
+    #     EnkfFsManager.cNamespace().user_select_fs(self, input_case)
 
     def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, source_state, member_mask, node_list):
         assert isinstance(source_state, EnkfStateType)
@@ -94,9 +102,9 @@ class EnkfFsManager(BaseCClass):
         return self.__cached_file_systems[case]
 
 
-    def switchFileSystem(self, files_system):
-        assert isinstance(files_system, EnkfFs)
-        EnkfFsManager.cNamespace().switch_fs(self, files_system, None)
+    def switchFileSystem(self, file_system):
+        assert isinstance(file_system, EnkfFs)
+        EnkfFsManager.cNamespace().switch_fs(self, file_system, None)
 
 
     def getStateMapForCase(self, case):
@@ -118,9 +126,9 @@ cwrapper.registerType("enkf_fs_manager", EnkfFsManager)
 EnkfFsManager.cNamespace().get_fs = cwrapper.prototype("enkf_fs_ref enkf_main_get_fs(enkf_fs_manager)")
 EnkfFsManager.cNamespace().mount_alt_fs = cwrapper.prototype("enkf_fs_ref enkf_main_mount_alt_fs(enkf_fs_manager, char*, bool, bool)")
 EnkfFsManager.cNamespace().switch_fs = cwrapper.prototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
-EnkfFsManager.cNamespace().user_select_fs = cwrapper.prototype("void enkf_main_user_select_fs(enkf_fs_manager, char*)")
+# EnkfFsManager.cNamespace().user_select_fs = cwrapper.prototype("void enkf_main_user_select_fs(enkf_fs_manager, char*)")
 # EnkfFsManager.cNamespace().get_current_fs = cwrapper.prototype("char* enkf_main_get_current_fs(enkf_fs_manager)")
-EnkfFsManager.cNamespace().select_fs = cwrapper.prototype("void enkf_main_select_fs(enkf_fs_manager, char*)")
+# EnkfFsManager.cNamespace().select_fs = cwrapper.prototype("void enkf_main_select_fs(enkf_fs_manager, char*)")
 EnkfFsManager.cNamespace().fs_exists = cwrapper.prototype("bool enkf_main_fs_exists(enkf_fs_manager, char*)")
 EnkfFsManager.cNamespace().alloc_caselist = cwrapper.prototype("stringlist_obj enkf_main_alloc_caselist(enkf_fs_manager)")
 EnkfFsManager.cNamespace().set_case_table = cwrapper.prototype("void enkf_main_set_case_table(enkf_fs_manager, char*)")
