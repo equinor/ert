@@ -419,7 +419,7 @@ void enkf_main_free(enkf_main_type * enkf_main){
   ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL) 
-    enkf_fs_umount( enkf_main->dbase );
+    enkf_fs_decref( enkf_main->dbase );
 
   if (log_is_open( enkf_main->logh ))
     log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
@@ -1862,17 +1862,17 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
     {
       enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true );
       bool update_done = enkf_main_smoother_update( enkf_main , target_fs );
-      
+
       if (rerun) { 
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
           if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE, iter + 1))
             enkf_main_run_post_workflow(enkf_main);
-        } else {
+        } else 
           fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
-          enkf_fs_umount( target_fs );
-        }
       }
+      enkf_fs_decref( target_fs );
+
     }
   } else
     fprintf(stderr,"** ERROR: The normal smoother should not be combined with an iterable analysis module\n");
@@ -1896,6 +1896,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
     updateOK = enkf_main_smoother_update__(enkf_main , step_list , target_fs );
     enkf_main_set_fs(enkf_main , target_fs , NULL);
     cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
+    enkf_fs_decref( target_fs );
   }
 
   if (updateOK)
@@ -1924,11 +1925,11 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2)
 
     if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
       enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , false , true);
-
       enkf_main_init_case_from_existing(enkf_main, current_case, 0, ANALYZED, initial_case);
-
+      
       // Currently does nothing; 
       enkf_main_set_fs( enkf_main , initial_case , NULL );
+      enkf_fs_decref( initial_case );
     }
 
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);

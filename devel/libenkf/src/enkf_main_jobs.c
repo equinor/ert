@@ -95,34 +95,36 @@ void * enkf_main_analysis_update_JOB( void * self , const stringlist_type * args
   if (stringlist_get_size(args)) {
     const char * target_fs_name = stringlist_iget( args , 0 );
     if (strcmp( target_fs_name , CURRENT_CASE_STRING) == 0)
-      target_fs = enkf_fs_get_ref( enkf_main_get_fs( enkf_main ));
+      target_fs = enkf_main_get_fs( enkf_main );
     else
       target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true);
   } else
-      target_fs = enkf_fs_get_ref( enkf_main_get_fs( enkf_main ));
+      target_fs = enkf_main_get_fs( enkf_main );
+  {
 
 
-  // Argument 1: The number of the step to write to
-  if (stringlist_get_size(args) > 1) 
-    util_sscanf_int(stringlist_iget( args , 1) , &target_step);
-  else
-    target_step = 0;
-
-  // Argument 2 - ??: The timesteps to use in the update
-  if (stringlist_get_size( args ) > 2) {
-    char * step_args = stringlist_alloc_joined_substring(args , 2 , stringlist_get_size(args) , " ");
-    step_list = string_util_alloc_active_list( step_args );
-    free( step_args );
-  } else {
-    int stride = 1;
-    time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
-    step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
+    // Argument 1: The number of the step to write to
+    if (stringlist_get_size(args) > 1) 
+      util_sscanf_int(stringlist_iget( args , 1) , &target_step);
+    else
+      target_step = 0;
+    
+    // Argument 2 - ??: The timesteps to use in the update
+    if (stringlist_get_size( args ) > 2) {
+      char * step_args = stringlist_alloc_joined_substring(args , 2 , stringlist_get_size(args) , " ");
+      step_list = string_util_alloc_active_list( step_args );
+      free( step_args );
+    } else {
+      int stride = 1;
+      time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
+      step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
+    }
+    
+    enkf_main_UPDATE( enkf_main , step_list , target_fs , target_step , SMOOTHER_UPDATE);
+    
+    int_vector_free( step_list );
+    enkf_fs_decref( target_fs );
   }
-  
-  enkf_main_UPDATE( enkf_main , step_list , target_fs , target_step , SMOOTHER_UPDATE);
-  
-  int_vector_free( step_list );
-  enkf_fs_umount( target_fs );
   return NULL;
 }
 #undef CURRENT_CASE_STRING
@@ -252,7 +254,7 @@ void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
   const char * new_case = stringlist_iget( args , 0 );
   enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , new_case , false , true );
-  enkf_fs_umount(fs);
+  enkf_fs_decref( fs );
   return NULL;
 }
 
@@ -263,22 +265,24 @@ void * enkf_main_init_case_from_existing_JOB( void * self , const stringlist_typ
 
   const char * source_case = stringlist_iget( args , 0 );
   enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , false , true );
-  enkf_fs_type * target_fs;
+  {
+    enkf_fs_type * target_fs;
 
-  if (stringlist_get_size(args) > 1) {
-    const char * current_case = enkf_main_get_current_fs(enkf_main);
-    const char * target_case = stringlist_iget( args , 1 );
-    if (0 != strcmp(current_case, target_case)) {
-      target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , false , true );
-    }
-  } else
-    target_fs = enkf_fs_get_ref(enkf_main_get_fs(enkf_main));
-
-  enkf_main_init_case_from_existing(enkf_main, source_fs, 0, ANALYZED, target_fs);
-
-  enkf_fs_umount(source_fs);
-  enkf_fs_umount(target_fs);
-
+    if (stringlist_get_size(args) > 1) {
+      const char * current_case = enkf_main_get_current_fs(enkf_main);
+      const char * target_case = stringlist_iget( args , 1 );
+      if (0 != strcmp(current_case, target_case)) {
+        target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , false , true );
+      } else
+        target_fs = enkf_fs_get_ref( enkf_main_get_fs(enkf_main) );  // Using get_ref so that we can unconditionally call decref() further down.
+    } else
+      target_fs = enkf_fs_get_ref( enkf_main_get_fs(enkf_main) );    // Using get_ref so that we can unconditionally call decref() further down.
+    
+    enkf_main_init_case_from_existing(enkf_main, source_fs, 0, ANALYZED, target_fs);
+    enkf_fs_decref(target_fs);
+  }
+  enkf_fs_decref(source_fs);
+  
   return NULL;
 }
 
