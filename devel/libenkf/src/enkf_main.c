@@ -3450,7 +3450,7 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
             {
               const field_type * field = enkf_node_value_ptr(node);
               const bool output_transform = true;
-              field_export(field , filename , NULL , file_type , output_transform);
+              field_export(field , filename , NULL , file_type , output_transform, NULL);
               ret = true;
             }
             free(filename);
