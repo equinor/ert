@@ -47,6 +47,6 @@ from .enkf_simulation_runner import EnkfSimulationRunner
 from .enkf_fs_manager import EnkfFsManager
 
 from .enkf_main import EnKFMain
-
+from .ert_test_context import ErtTestContext , ErtTest
 from .data import EnkfConfigNode, EnkfNode, GenDataConfig, GenKwConfig, FieldConfig, Field
 

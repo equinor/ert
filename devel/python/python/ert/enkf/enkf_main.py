@@ -27,6 +27,15 @@ class EnKFMain(BaseCClass):
         self.__simulation_runner = EnkfSimulationRunner(self)
         self.__fs_manager = EnkfFsManager(self)
 
+
+    @classmethod
+    def createCReference(cls , c_pointer , parent = None):
+        obj = super(EnKFMain, cls).createCReference(c_pointer , parent)
+        obj.__simulation_runner = EnkfSimulationRunner(obj)
+        obj.__fs_manager = EnkfFsManager(obj)
+        return obj
+        
+
     @staticmethod
     def createNewConfig(config_file, storage_path, case_name, dbase_type, num_realizations):
         EnKFMain.cNamespace().create_new_config(config_file, storage_path, case_name, dbase_type, num_realizations)
@@ -169,6 +178,7 @@ class EnKFMain(BaseCClass):
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("enkf_main", EnKFMain)
+cwrapper.registerType("enkf_main_ref", EnKFMain.createCReference)
 
 
 EnKFMain.cNamespace().bootstrap = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool, bool)")
