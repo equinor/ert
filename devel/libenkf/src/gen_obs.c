@@ -38,6 +38,7 @@
 #include <ert/enkf/gen_common.h>
 #include <ert/enkf/active_list.h>
 
+
 /**
    This file implemenets a structure for general observations. A
    general observation is just a vector of numbers - where EnKF has no
@@ -422,7 +423,28 @@ void gen_obs_scale_std__(void * gen_obs, double std_multiplier) {
   gen_obs_scale_std(observation, std_multiplier);
 }
 
+int gen_obs_get_size(const gen_obs_type * gen_obs){
+    return gen_obs->obs_size;
+}
 
+double gen_obs_iget_std(const gen_obs_type * gen_obs, int index){
+    return gen_obs->obs_std[index];
+}
+
+double gen_obs_iget_data(const gen_obs_type * gen_obs, int index){
+    return gen_obs->obs_data[index];
+}
+
+int gen_obs_get_obs_index(const gen_obs_type * gen_obs, int index){
+    if(index < 0 || index >= gen_obs->obs_size){
+        util_abort("[Gen_Obs] Index out of bounds %d [0, %d]", index, gen_obs->obs_size - 1);
+    }
+    if (gen_obs->observe_all_data){
+        return index;
+    } else {
+        return gen_obs->data_index_list[index];
+    }
+}
 
 
   

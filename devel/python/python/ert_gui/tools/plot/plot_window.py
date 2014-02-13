@@ -126,15 +126,24 @@ class PlotWindow(QMainWindow):
     def keySelected(self, key):
         self.__data_type_key = str(key)
 
+        plot_data_fetcher = PlotDataFetcher()
         for plot_panel in self.__plot_panels:
             visible = self.__central_tab.indexOf(plot_panel) > -1
 
-            if PlotDataFetcher().isSummaryKey(self.__data_type_key):
-                show_plot = plot_panel.supportsPlotProperties(time=True, value=True)
+            if plot_data_fetcher.isSummaryKey(self.__data_type_key):
+                show_plot = plot_panel.supportsPlotProperties(time=True, value=True, histogram=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
-            elif PlotDataFetcher().isBlockObservationKey(self.__data_type_key):
+            elif plot_data_fetcher.isBlockObservationKey(self.__data_type_key):
                 show_plot = plot_panel.supportsPlotProperties(depth=True, value=True)
+                self.showOrHidePlotTab(plot_panel, visible, show_plot)
+
+            elif plot_data_fetcher.isGenKWKey(self.__data_type_key):
+                show_plot = plot_panel.supportsPlotProperties(histogram=True)
+                self.showOrHidePlotTab(plot_panel, visible, show_plot)
+
+            elif plot_data_fetcher.isGenDataKey(self.__data_type_key):
+                show_plot = plot_panel.supportsPlotProperties(time=True, value=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             else:
@@ -151,7 +160,7 @@ class PlotWindow(QMainWindow):
 
 
         if self.checkPlotStatus():
-            data = PlotDataFetcher().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
+            data = plot_data_fetcher.getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
             data.setParent(self)
 
             for plot_panel in self.__plot_panels:

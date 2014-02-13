@@ -2,6 +2,7 @@ set(PYTHON_SOURCES
     __init__.py
     ensemble_plot_data.py
     histogram_plot_data.py
+    histogram_plot_data_factory.py
     observation_plot_data.py
     plot_data.py
     plot_data_fetcher.py

@@ -46,6 +46,8 @@ void test_load(const char * config_file) {
     enkf_plot_gen_kw_load( plot_gen_kw , enkf_main_get_fs( enkf_main ) , true , 0 , ANALYZED , input_mask );
     
     test_assert_int_equal( ens_size , enkf_plot_gen_kw_get_size( plot_gen_kw ));
+
+    test_assert_int_equal(4, enkf_plot_gen_kw_get_keyword_count(plot_gen_kw));
     
     {
       enkf_plot_gen_kw_vector_type * vector = enkf_plot_gen_kw_iget( plot_gen_kw , 0 );

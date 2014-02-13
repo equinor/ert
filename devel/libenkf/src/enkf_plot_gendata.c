@@ -19,6 +19,9 @@
 
 #include <time.h>
 #include <stdbool.h>
+#include <float.h>
+#include <math.h>
+
 
 #include <ert/util/double_vector.h>
 #include <ert/util/vector.h>
@@ -39,6 +42,8 @@ struct enkf_plot_gendata_struct {
   const enkf_config_node_type * enkf_config_node;
   enkf_plot_genvector_type ** ensemble;
   arg_pack_type              ** work_arg;
+  double_vector_type * max_values;
+  double_vector_type * min_values;
 };
 
 UTIL_IS_INSTANCE_FUNCTION( enkf_plot_gendata , ENKF_PLOT_GENDATA_TYPE_ID )
@@ -51,6 +56,9 @@ enkf_plot_gendata_type * enkf_plot_gendata_alloc( const enkf_config_node_type * 
         data->enkf_config_node = enkf_config_node;
         data->work_arg = NULL;
         data->ensemble = NULL;
+
+        data->max_values = NULL;
+        data->min_values = NULL;
         return data;
     } else {
         return NULL;
@@ -164,5 +172,34 @@ void enkf_plot_gendata_load( enkf_plot_gendata_type * plot_data ,
 
 }
 
+void enkf_plot_gendata_find_min_max_values__(enkf_plot_gendata_type * plot_data){
+    for (int iens = 0; iens < plot_data->size; iens++){
+        enkf_plot_genvector_type * vector = enkf_plot_gendata_iget(plot_data, iens);
+        int size = enkf_plot_genvector_get_size(vector);
+        if(iens == 0) {
+            plot_data->min_values = double_vector_alloc(size, DBL_MAX);
+            plot_data->max_values = double_vector_alloc(size, -DBL_MAX);
+        }
+        for(int index = 0; index < size; index++){
+            double value = enkf_plot_genvector_iget(vector, index);
+            double_vector_iset(plot_data->min_values, index, util_double_min(double_vector_iget(plot_data->min_values, index), value));
+            double_vector_iset(plot_data->max_values, index, util_double_max(double_vector_iget(plot_data->max_values, index), value));
+        }
+    }
+}
+
+double_vector_type * enkf_plot_gendata_get_min_values(enkf_plot_gendata_type * plot_data) {
+    if(plot_data->min_values == NULL) {
+        enkf_plot_gendata_find_min_max_values__(plot_data);
+    }
+    return plot_data->min_values;
+}
 
 
+
+double_vector_type * enkf_plot_gendata_get_max_values(enkf_plot_gendata_type * plot_data) {
+    if(plot_data->max_values == NULL) {
+        enkf_plot_gendata_find_min_max_values__(plot_data);
+    }
+    return plot_data->max_values;
+}

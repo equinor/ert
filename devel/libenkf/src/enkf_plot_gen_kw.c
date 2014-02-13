@@ -137,3 +137,8 @@ const char * enkf_plot_gen_kw_iget_key( const enkf_plot_gen_kw_type * plot_gen_k
   
   return gen_kw_config_iget_name( gen_kw_config , index );
 }
+
+int enkf_plot_gen_kw_get_keyword_count( const enkf_plot_gen_kw_type * gen_kw ){
+    const gen_kw_config_type * gen_kw_config = enkf_config_node_get_ref( gen_kw->config_node );
+    return gen_kw_config_get_data_size(gen_kw_config);
+}
