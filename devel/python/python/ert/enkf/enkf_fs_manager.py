@@ -115,7 +115,7 @@ class EnkfFsManager(BaseCClass):
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("enkf_fs_manager", EnkfFsManager)
 
-EnkfFsManager.cNamespace().get_fs = cwrapper.prototype("enkf_fs_ref enkf_main_get_fs(enkf_fs_manager)")
+EnkfFsManager.cNamespace().get_fs = cwrapper.prototype("enkf_fs_ref enkf_main_get_fs_ref(enkf_fs_manager)")
 EnkfFsManager.cNamespace().mount_alt_fs = cwrapper.prototype("enkf_fs_ref enkf_main_mount_alt_fs(enkf_fs_manager, char*, bool, bool)")
 EnkfFsManager.cNamespace().switch_fs = cwrapper.prototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
 EnkfFsManager.cNamespace().user_select_fs = cwrapper.prototype("void enkf_main_user_select_fs(enkf_fs_manager, char*)")

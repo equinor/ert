@@ -42,13 +42,20 @@ int main(int argc, char ** argv) {
   {
     const char * site_config = "/project/res/etc/ERT/site-config";
     enkf_main_type * enkf_main = enkf_main_bootstrap( site_config , model_config , false , false );
-    
+
     enkf_main_select_fs( enkf_main , "enkf");
     test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
     test_assert_false( enkf_main_case_is_current( enkf_main , "default_fs"));
     test_assert_false( enkf_main_case_is_current( enkf_main , "does_not_exist"));
 
     test_assert_int_equal( 1 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
+    {
+      enkf_fs_type * fs_ref = enkf_main_get_fs_ref( enkf_main );
+      test_assert_int_equal( 2 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
+      enkf_fs_decref( fs_ref );
+      test_assert_int_equal( 1 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
+    }
+
     {
       state_map_type * map1 = enkf_fs_get_state_map( enkf_main_get_fs( enkf_main ));
       state_map_type * map2 = enkf_main_alloc_readonly_state_map(enkf_main , "enkf");
