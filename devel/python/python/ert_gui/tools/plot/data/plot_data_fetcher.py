@@ -74,7 +74,14 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
         return plot_data
 
     def fetchGenKWData(self, gen_kw_fetcher, key, cases):
-        return PlotData(key)
+        plot_data = PlotData(key)
+
+        for case in cases:
+            ensemble_data = EnsembleGenKWFetcher(self.ert()).fetchData(key, case)
+
+           # if len(ensemble_data) > 0:
+
+        return plot_data
 
     def fetchBlockObservationData(self, block_observation_data_fetcher, key, cases):
         plot_data = PlotData(key)
