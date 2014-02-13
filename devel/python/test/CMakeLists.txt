@@ -170,6 +170,10 @@ add_test( NAME python.tests.ert.enkf.enkf
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf.EnKFTest)
 
+add_test( NAME python.tests.ert.enkf.enkf_fs
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs.EnKFFSTest)
+
 add_test( NAME python.tests.ert.enkf.enkf_library
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_library.EnKFLibraryTest)
@@ -410,6 +414,7 @@ set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python
 
 set_property( TEST python.tests.ert.enkf.enkf             PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.ecl_config       PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf_fs          PROPERTY LABELS Python:StatoilData )
 
 if (ERT_BUILD_GUI)
    set_property( TEST python.tests.ert_gui.import         PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")

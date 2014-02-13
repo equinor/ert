@@ -11,7 +11,7 @@ class EnkfFsManager(BaseCClass):
         super(EnkfFsManager, self).__init__(enkf_main.from_param(enkf_main).value, parent=enkf_main, is_reference=True)
         self.__cached_file_systems = {}
         """ @type: dict of (str, EnkfFs) """
-
+        
 
     def isCaseInitialized(self, case):
         return EnkfFsManager.cNamespace().is_case_initialized(self, case, None)
