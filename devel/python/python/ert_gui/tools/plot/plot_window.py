@@ -131,7 +131,7 @@ class PlotWindow(QMainWindow):
             visible = self.__central_tab.indexOf(plot_panel) > -1
 
             if plot_data_fetcher.isSummaryKey(self.__data_type_key):
-                show_plot = plot_panel.supportsPlotProperties(time=True, value=True)
+                show_plot = plot_panel.supportsPlotProperties(time=True, value=True, histogram=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             elif plot_data_fetcher.isBlockObservationKey(self.__data_type_key):
@@ -139,7 +139,7 @@ class PlotWindow(QMainWindow):
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             elif plot_data_fetcher.isGenKWKey(self.__data_type_key):
-                show_plot = plot_panel.supportsPlotProperties()
+                show_plot = plot_panel.supportsPlotProperties(histogram=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             elif plot_data_fetcher.isGenDataKey(self.__data_type_key):
