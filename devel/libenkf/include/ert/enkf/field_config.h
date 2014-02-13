@@ -116,7 +116,7 @@ void field_config_update_general_field( field_config_type * config , int truncat
                                         const char * output_transform );
 
 
-field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table );
+field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table, bool global_size );
 
 
 void                    field_config_get_ijk( const field_config_type * config , int active_index , int *i , int * j , int * k);
@@ -140,6 +140,7 @@ const bool            * field_config_get_iactive(const field_config_type * );
 int                     field_config_get_byte_size(const field_config_type * );
 int                     field_config_get_sizeof_ctype(const field_config_type * );
 int                     field_config_active_index(const field_config_type * , int , int , int );
+int                     field_config_global_index(const field_config_type * , int , int , int );
 void                    field_config_get_ijk(const field_config_type * , int , int * , int * , int *);
 bool                    field_config_ijk_valid(const field_config_type *  , int  , int  , int );
 bool                    field_config_ijk_active(const field_config_type * config , int i , int j , int k);
@@ -153,6 +154,7 @@ void                    field_config_enkf_OFF(field_config_type * );
 bool                    field_config_enkf_mode(const field_config_type * config);
 void                    field_config_scanf_ijk(const field_config_type *  , bool , const char * , int , int * , int * , int * , int *);
 const char            * field_config_get_key(const field_config_type * );
+bool                    field_config_global_size(const field_config_type *);
 field_func_type       * field_config_get_init_transform(const field_config_type * );
 field_func_type       * field_config_get_output_transform(const field_config_type * );
 field_func_type       * field_config_get_input_transform(const field_config_type * );
