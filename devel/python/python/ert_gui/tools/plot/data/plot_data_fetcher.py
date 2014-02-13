@@ -81,11 +81,10 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
         for case in cases:
             ensemble_data = gen_kw_fetcher.fetchData(key, case)
 
-            if len(ensemble_data) > 0:
-                ensemble_plot_data = EnsemblePlotData(key, case)
-                ensemble_plot_data.setEnsembleData(ensemble_data["x"], ensemble_data["y"], None, None)
-                ensemble_plot_data.updateBoundaries(ensemble_data["min_x"], ensemble_data["max_x"], ensemble_data["min_y"], ensemble_data["max_y"])
-                plot_data.addEnsembleData(ensemble_plot_data)
+            ensemble_plot_data = EnsemblePlotData(key, case)
+            ensemble_plot_data.setEnsembleData(ensemble_data["x"], ensemble_data["y"], None, None)
+            ensemble_plot_data.updateBoundaries(ensemble_data["min_x"], ensemble_data["max_x"], ensemble_data["min_y"], ensemble_data["max_y"])
+            plot_data.addEnsembleData(ensemble_plot_data)
 
             histogram_factory.addEnsembleData(case, ensemble_data["x"], ensemble_data["y"], ensemble_data["min_y"], ensemble_data["max_y"])
 
