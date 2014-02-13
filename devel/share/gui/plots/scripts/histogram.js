@@ -167,8 +167,12 @@ function Histogram(element) {
 //        }
 
         resetLegends();
-
-        title.text(data.name() + " @ " + formatDate(data.reportStepTime()));
+        var report_date = data.reportStepTime();
+        if(report_date == 0){
+            title.text(data.name());
+        } else {
+            title.text(data.name() + " @ " + formatDate(data.reportStepTime()));
+        }
 
         setYDomain(0, data.maxCount());
         setXDomain(data.min(), data.max());

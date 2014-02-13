@@ -1,5 +1,5 @@
 from PyQt4.QtCore import QObject, pyqtSlot, QString
-from ert_gui.tools.plot.data import HistogramPlotData, ObservationPlotData, RefcasePlotData, EnsemblePlotData
+from ert_gui.tools.plot.data import HistogramPlotDataFactory, HistogramPlotData, ObservationPlotData, RefcasePlotData, EnsemblePlotData
 
 
 class PlotData(QObject):
@@ -15,7 +15,8 @@ class PlotData(QObject):
         #: :type: EnsemblePlotData
         self.__ensemble_data = {}
 
-        self.__histogram_data = {}
+        #: :type: HistogramPlotDataFactory
+        self.__histogram_factory = None
 
 
         self.__min_x = None
@@ -37,6 +38,9 @@ class PlotData(QObject):
         self.__refcase_data = refcase_data
         self.updateBoundaries(refcase_data.minX(), refcase_data.maxX(), refcase_data.minY(), refcase_data.maxY())
 
+    def setHistogramFactory(self, histogram_factory):
+        assert isinstance(histogram_factory, HistogramPlotDataFactory)
+        self.__histogram_factory = histogram_factory
 
     def addEnsembleData(self, ensemble_data):
         ensemble_data.setParent(self)
@@ -106,6 +110,10 @@ class PlotData(QObject):
         """ @rtype: int """
         return self.__ensemble_data[str(case)].realizationCount()
 
+    @pyqtSlot(result=bool)
+    def hasHistogram(self):
+        """ @rtype: bool """
+        return self.__histogram_factory is not None
 
     @pyqtSlot(result=float)
     def minX(self):
@@ -123,28 +131,9 @@ class PlotData(QObject):
     def maxY(self):
         return self.__max_y
 
-    @pyqtSlot(result=int)
-    def lastReportStepTime(self):
-        last_report_step_time = 0
-
-        if self.hasObservationData():
-            last_report_step_time = self.__observation_data.lastReportStepTime()
-
-        if self.hasRefcaseData():
-            last_report_step_time = max(last_report_step_time, self.__refcase_data.lastReportStepTime())
-
-        if self.hasEnsembleData():
-
-            for case_name in self.__case_list:
-                ensemble_data = self.ensembleData(case_name)
-                last_report_step_time = max(last_report_step_time, ensemble_data.lastReportStepTime())
-
-        return last_report_step_time
-
-
     @pyqtSlot(result=bool)
     def isValid(self):
-        return self.hasBoundaries() and (self.hasObservationData() or self.hasRefcaseData() or self.hasEnsembleData())
+        return self.hasBoundaries() and (self.hasObservationData() or self.hasRefcaseData() or self.hasEnsembleData() or self.hasHistogram())
 
     @pyqtSlot(result=bool)
     def hasBoundaries(self):
@@ -157,28 +146,11 @@ class PlotData(QObject):
 
     @pyqtSlot(int, result=QObject)
     def histogramData(self, report_step_time):
-        if not report_step_time in self.__histogram_data:
-            histogram_data = HistogramPlotData(self.__name, report_step_time, parent=self)
+        if self.__histogram_factory is not None:
+            data = self.__histogram_factory.getHistogramData(report_step_time)
+            data.setParent(self)
 
-            if self.hasObservationData():
-                obs_data = self.observationData()
-                if obs_data.hasSample(report_step_time):
-                    histogram_data.setObservation(obs_data.getSample(report_step_time), obs_data.getError(report_step_time))
-
-            if self.hasRefcaseData():
-                refcase_data = self.refcaseData()
-                if refcase_data.hasSample(report_step_time):
-                    histogram_data.setRefcase(refcase_data.getSample(report_step_time))
+            return data
+        return None
 
 
-            for case_name in self.__case_list:
-                ensemble_data = self.ensembleData(case_name)
-
-                if ensemble_data.hasSample(report_step_time) and not histogram_data.hasCaseHistogram(case_name):
-                    samples = ensemble_data.getSample(report_step_time)
-                    for sample in samples:
-                        histogram_data.addSample(case_name, sample)
-
-            self.__histogram_data[report_step_time] = histogram_data
-
-        return self.__histogram_data[report_step_time]
