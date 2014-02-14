@@ -8,7 +8,7 @@ extern "C" {
 
 #include <ert/util/matrix.h>
 #include <ert/util/rng.h>
-
+#include <ert/util/bool_vector.h>
 
   typedef void (analysis_updateA_ftype) (void * module_data , 
                                          matrix_type * A , 
@@ -38,6 +38,7 @@ extern "C" {
 
 
   typedef void (analysis_init_update_ftype) (void * module_data, 
+                                             const bool_vector_type * ens_mask , 
                                              const matrix_type * S , 
                                              const matrix_type * R , 
                                              const matrix_type * dObs , 

@@ -1116,6 +1116,10 @@ static void assert_matrix_size(const matrix_type * m , const char * name , int r
       util_abort("%s: matrix mismatch %s:[%d,%d]   - expected:[%d, %d]", __func__ , name , matrix_get_rows(m) , matrix_get_columns(m) , rows , columns);
 }
 
+static void assert_size_equal(int ens_size , const bool_vector_type * ens_mask) {
+  if (bool_vector_size( ens_mask ) != ens_size)
+    util_abort("%s: fundamental inconsisentcy detected. Total ens_size:%d  mask_size:%d \n",__func__ , ens_size , bool_vector_size( ens_mask ));
+} 
 
 
 static void enkf_main_analysis_update( enkf_main_type * enkf_main , 
@@ -1150,6 +1154,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   assert_matrix_size(X , "X" , ens_size , ens_size);
   assert_matrix_size(S , "S" , active_size , ens_size);
   assert_matrix_size(R , "R" , active_size , active_size);
+  assert_size_equal( enkf_main_get_ensemble_size( enkf_main ) , ens_mask );
+
   if (analysis_module_check_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
@@ -1166,7 +1172,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
   /*****************************************************************/
   
-  analysis_module_init_update( module , S , R , dObs , E , D );
+  analysis_module_init_update( module , ens_mask , S , R , dObs , E , D );
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     enkf_fs_type * src_fs = enkf_main_get_fs( enkf_main );
