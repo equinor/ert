@@ -284,8 +284,7 @@ rms_tag_type * rms_file_fread_alloc_tag(rms_file_type * rms_file , const char *t
     }
     if (tag == NULL) {
       util_fseek(rms_file->stream , start_pos , SEEK_SET);
-      fprintf(stderr,"%s: could not find tag: \"%s\" (with %s=%s) in file:%s - aborting.\n",__func__ , tagname , keyname , keyvalue , rms_file->filename);
-      abort();
+      util_abort("%s: could not find tag: \"%s\" (with %s=%s) in file:%s - aborting.\n",__func__ , tagname , keyname , keyvalue , rms_file->filename);
     }
   }
   rms_file_fclose(rms_file);
