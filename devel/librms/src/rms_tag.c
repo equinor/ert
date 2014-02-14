@@ -118,7 +118,7 @@ void rms_tag_fread_header(rms_tag_type *tag , FILE *stream , bool *eof_tag) {
    
 bool rms_tag_name_eq(const rms_tag_type *tag , const char * tagname , const char *tagkey_name , const char *keyvalue) {
   bool eq = false;
-  if (strcmp(tag->name , tagname) == 0) {
+   if (strcmp(tag->name , tagname) == 0) {
     if (tagkey_name != NULL && keyvalue != NULL) {
       if (hash_has_key(tag->key_hash , tagkey_name)) {
         const rms_tagkey_type *tagkey = hash_get(tag->key_hash , tagkey_name);
@@ -167,7 +167,7 @@ int rms_tag_get_datakey_sizeof_ctype(const rms_tag_type * tag) {
 
 
 
-static void rms_tag_add_tagkey(const rms_tag_type *tag , const rms_tagkey_type *tagkey, int mem_mode) {
+static void rms_tag_add_tagkey(rms_tag_type *tag , const rms_tagkey_type *tagkey, int mem_mode) {
 
   switch (mem_mode) {
   case(COPY):
@@ -207,12 +207,12 @@ static bool rms_tag_at_endtag(FILE *stream) {
 void rms_fread_tag(rms_tag_type *tag, FILE *stream , hash_type *type_map , bool endian_convert , bool *at_eof) {
   rms_tag_fread_header(tag , stream , at_eof);
   if (!*at_eof) {
-    rms_tagkey_type *tagkey = rms_tagkey_alloc_empty(endian_convert);
     while (! rms_tag_at_endtag(stream)) {
+      rms_tagkey_type *tagkey = rms_tagkey_alloc_empty(endian_convert);
       rms_tagkey_load(tagkey , endian_convert , stream , type_map);
       rms_tag_add_tagkey(tag , tagkey , COPY);
+      //rms_tagkey_free(tagkey);
     }
-    rms_tagkey_free(tagkey);
   }
 }
 
@@ -296,7 +296,7 @@ void rms_tag_fwrite_dimensions(int nX , int nY , int nZ , FILE *stream) {
 
 void rms_tag_fwrite_parameter(const char *param_name , const rms_tagkey_type *data_key, FILE *stream) {
   rms_tag_type * tag = rms_tag_alloc("parameter");
-  
+
   rms_tag_add_tagkey(tag , rms_tagkey_alloc_parameter_name(param_name) , OWNED_REF);
   rms_tag_add_tagkey(tag , data_key , SHARED);
   rms_tag_fwrite(tag , stream);
