@@ -29,6 +29,7 @@
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/ecl/ecl_kw_magic.h>
 #include <ert/ecl/ecl_kw.h>
+#include <ert/rms/rms_util.h>
 
 
 void check_exported_data(const char * exported_file,
@@ -47,64 +48,74 @@ void check_exported_data(const char * exported_file,
   field_type * exported_field               = NULL;
   field_config_type * exported_field_config = NULL;
 
+  {
+    if (init_file) {
+      original_stream = util_fopen( init_file , "r");
+      kw_original = ecl_kw_fscanf_alloc_grdecl_dynamic( original_stream , field_config_get_key(field_config) , ECL_DOUBLE_TYPE );
+    }
 
-  if (init_file) {
-    original_stream = util_fopen( init_file , "r");
-    kw_original = ecl_kw_fscanf_alloc_grdecl_dynamic( original_stream , field_config_get_key(field_config) , ECL_DOUBLE_TYPE );
+    if (ECL_GRDECL_FILE == file_type) {
+      exported_stream = util_fopen( exported_file , "r");
+      kw_exported     = ecl_kw_fscanf_alloc_grdecl_dynamic( exported_stream , field_config_get_key(field_config) , ECL_DOUBLE_TYPE );
+    } else if (RMS_ROFF_FILE == file_type) {
+      const ecl_grid_type * grid = field_config_get_grid(field_config);
+      exported_field_config      = field_config_alloc_empty(field_config_get_key(field_config), grid, NULL, true);
+      exported_field             = field_alloc(exported_field_config);
+
+      bool keep_inactive = true;
+      field_fload_rms(exported_field, exported_file, keep_inactive);
+    }
   }
 
-  if (ECL_GRDECL_FILE == file_type) {
-    exported_stream = util_fopen( exported_file , "r");
-    kw_exported     = ecl_kw_fscanf_alloc_grdecl_dynamic( exported_stream , field_config_get_key(field_config) , ECL_DOUBLE_TYPE );
-  } else if (RMS_ROFF_FILE == file_type) {
-    const ecl_grid_type * grid = field_config_get_grid(field_config);
-    exported_field_config      = field_config_alloc_empty(field_config_get_key(field_config), grid, NULL, true);
-    exported_field             = field_alloc(exported_field_config);
 
-    bool keep_inactive = true;
-    field_fload_rms(exported_field, exported_file, keep_inactive);
-  }
+  {
+    int k, j, i = 0;
 
-  int k, j, i = 0;
+    for (k=0; k < nz; k++) {
+      for (j=0; j < ny; j++) {
+        for (i=0; i < nx; i++) {
+          bool active           = field_config_active_cell(field_config, i, j, k);
+          double field_value    = active ? field_ijk_get_double(field, i, j, k) : 0.0;
+          int global_index      = field_config_global_index(field_config , i , j , k);
+          double exported_value = 0.0;
+          if (ECL_GRDECL_FILE == file_type)
+            exported_value = ecl_kw_iget_as_double(kw_exported, global_index);
+          else if (RMS_ROFF_FILE == file_type) {
+            exported_value = field_ijk_get_double(exported_field, i, j, k);
+          }
+          double initial_value  = init_file ? ecl_kw_iget_as_double(kw_original, global_index) : 0.0;
 
-  for (k=0; k < nz; k++) {
-    for (j=0; j < ny; j++) {
-      for (i=0; i < nx; i++) {
-        bool active           = field_config_active_cell(field_config, i, j, k);
-        double field_value    = active ? field_ijk_get_double(field, i, j, k) : 0.0;
-        int global_index      = field_config_global_index(field_config , i , j , k);
-        double exported_value = 0.0;
-        if (ECL_GRDECL_FILE == file_type)
-          exported_value = ecl_kw_iget_as_double(kw_exported, global_index);
-        else if (RMS_ROFF_FILE == file_type) {
-          exported_value = field_ijk_get_double(exported_field_config, i, j, k);
+          if (false) {
+            printf(" i, j, k: %d, %d, %d \n", i, j, k);
+            if (init_file) printf("INITIAL VALUE %f\n", initial_value);
+            printf("FIELD VALUE %f\n", field_value);
+            printf("EXPORTED VALUE %f\n", exported_value);
+          }
+
+          if (active)
+            test_assert_double_equal(field_value, exported_value);
+          else if (init_file)
+            test_assert_double_equal(initial_value, exported_value);
+          else if (file_type == RMS_ROFF_FILE)
+            test_assert_double_equal(RMS_INACTIVE_DOUBLE, exported_value);
+          else
+            test_assert_double_equal(0.0, exported_value);
         }
-        double initial_value  = init_file ? ecl_kw_iget_as_double(kw_original, global_index) : 0.0;
-
-        if (false) {
-          printf(" i, j, k: %d, %d, %d \n", i, j, k);
-          if (init_file) printf("INITIAL VALUE %f\n", initial_value);
-          printf("FIELD VALUE %f\n", field_value);
-          printf("EXPORTED VALUE %f\n", exported_value);
-        }
-
-        if (active)
-          test_assert_double_equal(field_value, exported_value);
-        else if (init_file)
-          test_assert_double_equal(initial_value, exported_value);
-        else
-          test_assert_double_equal(0.0, exported_value);
       }
     }
   }
+
 
   if (init_file) {
     util_fclose(original_stream);
     ecl_kw_free(kw_original);
   }
 
-  util_fclose(exported_stream);
-  ecl_kw_free(kw_exported);
+  if (ECL_GRDECL_FILE == file_type) {
+    util_fclose(exported_stream);
+    ecl_kw_free(kw_exported);
+  } else
+    field_free(exported_field);
 }
 
 
@@ -165,6 +176,7 @@ int main(int argc , char ** argv) {
   const char * export_file_roff   = "my_test_dir/exported_field_test_file_roff";
   field_file_format_type file_type;
 
+
   {
     file_type = ECL_GRDECL_FILE;
     field_export(field, export_file_grdecl, NULL, file_type, false, init_file);
@@ -173,8 +185,9 @@ int main(int argc , char ** argv) {
   {
     file_type = RMS_ROFF_FILE;
     field_export(field, export_file_roff, NULL, file_type, false, init_file);
-    //check_exported_data(export_file_roff, init_file, file_type, field_config, field, nx, ny, nz);
+    check_exported_data(export_file_roff, init_file, file_type, field_config, field, nx, ny, nz);
   }
+
 
   init_file = NULL;
   {
@@ -185,7 +198,7 @@ int main(int argc , char ** argv) {
   {
     file_type = RMS_ROFF_FILE;
     field_export(field, export_file_roff, NULL, file_type, false, init_file);
-    //check_exported_data(export_file, init_file, file_type, field_config, field, nx, ny, nz);
+    check_exported_data(export_file_roff, init_file, file_type, field_config, field, nx, ny, nz);
   }
 
 
