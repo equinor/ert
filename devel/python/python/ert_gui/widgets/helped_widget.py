@@ -1,6 +1,6 @@
 from PyQt4.QtCore import QSize, pyqtSignal
 from PyQt4.QtGui import QWidget, QColor, QLabel, QHBoxLayout, QIcon, QPixmap
-from ert_gui.pages.message_center import MessageCenter
+from ert_gui.tools import HelpCenter
 from ert_gui.widgets.error_popup import ErrorPopup
 
 from ert_gui.widgets.util import resourceImage
@@ -82,7 +82,8 @@ class HelpedWidget(QWidget):
             HelpedWidget.__error_popup.presentError(self, self.validation_message)
             self.validationChanged.emit(False)
 
-        MessageCenter().setWarning(self, self.validation_message)
+        # HelpCenter.getHelpCenter("ERT").setHelpMessageLink()
+        # MessageCenter().setWarning(self, self.validation_message)
 
 
     def isValid(self):
@@ -94,7 +95,7 @@ class HelpedWidget(QWidget):
 
     def enterEvent(self, event):
         QWidget.enterEvent(self, event)
-        MessageCenter().setHelpMessageLink(self.help_link)
+        HelpCenter.getHelpCenter("ERT").setHelpMessageLink(self.help_link)
 
         # if HelpedWidget.__error_popup is None:
         #     HelpedWidget.__error_popup = ErrorPopup()
@@ -120,13 +121,7 @@ class HelpedWidget(QWidget):
 
         def enterEvent(event):
             original_enter_event(event)
-            MessageCenter().setHelpMessageLink(link)
+            HelpCenter.getHelpCenter("ERT").setHelpMessageLink(link)
 
         widget.enterEvent = enterEvent
 
-    @staticmethod
-    def addHelpToAction(action, link):
-        def showHelp():
-            MessageCenter().setHelpMessageLink(link)
-
-        action.hovered.connect(showHelp)
