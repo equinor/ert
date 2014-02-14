@@ -1,6 +1,7 @@
 from ert.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert_gui.models import ErtConnector
 from ert_gui.models.mixins import ListModelMixin
+from ert.enkf.state_map import StateMap
 
 
 class CaseList(ErtConnector, ListModelMixin):
@@ -11,8 +12,7 @@ class CaseList(ErtConnector, ListModelMixin):
         return sorted(case_list)
 
     def addItem(self, value):
-        # Creates a new filesystem. Value should be a case that does not exist
-        enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(value, False, True)
+        self.ert().getEnkfFsManager().selectFileSystem(value)
         self.observable().notify(ListModelMixin.LIST_CHANGED_EVENT)
 
 
