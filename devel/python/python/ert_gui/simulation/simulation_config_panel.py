@@ -9,9 +9,7 @@ class SimulationConfigPanel(QWidget):
     def __init__(self, simulation_model):
         QWidget.__init__(self)
         self.setContentsMargins(10, 10, 10, 10)
-
         self.__simulation_model = simulation_model
-
 
     def getSimulationModel(self):
         return self.__simulation_model
@@ -21,6 +19,3 @@ class SimulationConfigPanel(QWidget):
 
     def toggleAdvancedOptions(self, show_advanced):
         raise NotImplementedError()
-
-
-
