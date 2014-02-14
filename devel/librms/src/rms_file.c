@@ -300,7 +300,7 @@ FILE * rms_file_fopen_r(rms_file_type *rms_file) {
 
 
 FILE * rms_file_fopen_w(rms_file_type *rms_file) {
-  rms_file->stream = util_fopen(rms_file->filename , "w");
+  rms_file->stream = util_mkdir_fopen(rms_file->filename , "w");
   return rms_file->stream;
 }
 
