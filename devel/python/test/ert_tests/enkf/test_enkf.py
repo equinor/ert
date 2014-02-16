@@ -40,6 +40,7 @@ class EnKFTest(ExtendedTestCase):
             self.assertTrue(main, "Load failed")
             main.free()
 
+
     def test_enum(self):
 
         self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "libenkf/include/ert/enkf/enkf_types.h")
@@ -122,6 +123,8 @@ class EnKFTest(ExtendedTestCase):
             self.assertIsInstance(main.getEnkfFsManager().getFileSystem(), EnkfFs)
             # self.assertIsInstance(main.iget_member_config(0), MemberConfig)
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
+
+            self.assertEqual( "Ensemble" , main.getMountPoint())
 
             main.free()
             

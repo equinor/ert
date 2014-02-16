@@ -417,6 +417,11 @@ static void enkf_main_create_fs( const enkf_main_type * enkf_main , const char *
 }
 
 
+const char * enkf_main_get_mount_root( const enkf_main_type * enkf_main) {
+  return model_config_get_enspath( enkf_main->model_config);
+}
+
+
 
 char * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path) {
   char * mount_point;

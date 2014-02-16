@@ -325,6 +325,8 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   void              enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * case_path );
   void              enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path );
   bool              enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case);
+  const      char * enkf_main_get_mount_root( const enkf_main_type * enkf_main);
+
 
   state_map_type  * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path);
   time_map_type   * enkf_main_alloc_readonly_time_map( const enkf_main_type * enkf_main , const char * case_path );

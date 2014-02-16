@@ -106,7 +106,9 @@ class EnKFMain(BaseCClass):
         EnKFMain.cNamespace().add_data_kw(self, key, value)
 
 
-
+    def getMountPoint(self):
+        return EnKFMain.cNamespace().get_mount_point( self )
+    
 
     def del_node(self, key):
         EnKFMain.cNamespace().del_node(self, key)
@@ -228,6 +230,6 @@ EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprint
 EnKFMain.cNamespace().create_new_config = cwrapper.prototype("void enkf_main_create_new_config(char* , char*, char* , char* , int)")
 
 EnKFMain.cNamespace().get_user_config_file = cwrapper.prototype("char* enkf_main_get_user_config_file(enkf_main)")
-
+EnKFMain.cNamespace().get_mount_point = cwrapper.prototype("char* enkf_main_get_mount_root( enkf_main )")
 
 
