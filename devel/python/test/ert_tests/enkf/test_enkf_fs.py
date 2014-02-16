@@ -3,17 +3,21 @@ from ert.enkf import EnkfFs
 from ert.enkf import EnKFMain
 from ert.enkf import ErtTestContext
 from ert_tests import ExtendedTestCase
-
+from ert.util.test_area import TestAreaContext
 
 class EnKFFSTest(ExtendedTestCase):
     def setUp(self):
-        self.mount_point = self.createTestPath("Statoil/config/with_data/storage/default")
+        self.mount_point = "storage/default"
         self.config_file = self.createTestPath("Statoil/config/with_data/config")
+        
 
     def test_create(self):
-        print self.mount_point
-        fs = EnkfFs( self.mount_point )
-        self.assertEqual( 1 , fs.refCount() ) 
+        with TestAreaContext("create_fs") as work_area:
+            work_area.copy_parent_content( self.config_file )
+
+            fs = EnkfFs( self.mount_point )
+            self.assertEqual( 1 , fs.refCount() ) 
+            
 
         
     def test_throws(self):
