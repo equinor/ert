@@ -19,17 +19,10 @@ class EnkfFsManager(BaseCClass):
     def selectFileSystem(self, path):
         EnkfFsManager.cNamespace().select_fs(self, path)
 
-    # def fs_exists(self, case):
-    #     """ @rtype: bool """
-    #     return EnkfFsManager.cNamespace().fs_exists(self, case)
-    #
-    # def get_alt_fs(self, fs, read_only, create):
-    #     """ @rtype: EnkfFs """
-    #     return EnkfFsManager.cNamespace().get_alt_fs(self, fs, read_only, create).setParent(self)
-
     def isInitialized(self):
         """ @rtype: bool """
         return EnkfFsManager.cNamespace().is_initialized(self, None) # what is the bool_vector mask???
+
 
     def getCurrentFS(self):
         """ Returns the currently selected file system
@@ -43,16 +36,24 @@ class EnkfFsManager(BaseCClass):
 
         return self.__cached_file_systems[case_name]
 
+
+    def switchFileSystem(self, files_system):
+        assert isinstance(files_system, EnkfFs)
+        EnkfFsManager.cNamespace().switch_fs(self, files_system, None)
+
+
+    def isCaseInitialized(self, case):
+        return EnkfFsManager.cNamespace().is_case_initialized(self, case, None)
+
+    def isInitialized(self):
+        """ @rtype: bool """
+        return EnkfFsManager.cNamespace().is_initialized(self, None) # what is the bool_vector mask???
+
+
     def getCaseList(self):
         """ @rtype: StringList """
         return EnkfFsManager.cNamespace().alloc_caselist(self)
 
-    # def getCurrentFileSystem(self):
-    #     """ @rtype: str """
-    #     return EnkfFsManager.cNamespace().get_current_fs(self)
-
-    def userSelectFileSystem(self, input_case):
-        EnkfFsManager.cNamespace().user_select_fs(self, input_case)
 
     def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, source_state, member_mask, node_list):
         assert isinstance(source_state, EnkfStateType)
@@ -73,38 +74,6 @@ class EnkfFsManager(BaseCClass):
 
     def initializeFromScratch(self, parameter_list, iens1, iens2, force_init=True):
         EnkfFsManager.cNamespace().initialize_from_scratch(self, parameter_list, iens1, iens2, force_init)
-
-    # def set_case_table(self, case_table_file):
-    #     EnkfFsManager.cNamespace().set_case_table(self, case_table_file)
-
-    def mountAlternativeFileSystem(self, case, read_only, create):
-        """ @rtype: EnkfFs """
-        assert isinstance(case, str)
-        assert isinstance(read_only, bool)
-        assert isinstance(create, bool)
-
-        if case in self.__cached_file_systems and not read_only:
-            fs = self.__cached_file_systems[case]
-
-            if fs.isReadOnly():
-                print("[EnkfFsManager] Removed a read only file system from cache: %s" % case)
-                del self.__cached_file_systems[case]
-
-        if not case in self.__cached_file_systems:
-            # print("Added a file system to cache: %s" % case)
-            before = time.time()
-            self.__cached_file_systems[case] = EnkfFsManager.cNamespace().mount_alt_fs(self, case, read_only, create)
-            after = time.time()
-            print("[EnkfFsManager] Mounting of filesystem '%s' took %2.2f s." % (case, (after - before)))
-        # else:
-        #     print("Provided a file system from cache: %s" % case)
-
-        return self.__cached_file_systems[case]
-
-
-    def switchFileSystem(self, files_system):
-        assert isinstance(files_system, EnkfFs)
-        EnkfFsManager.cNamespace().switch_fs(self, files_system, None)
 
 
     def getStateMapForCase(self, case):
