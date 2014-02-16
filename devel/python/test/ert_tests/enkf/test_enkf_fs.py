@@ -27,7 +27,7 @@ class EnKFFSTest(ExtendedTestCase):
             self.assertTrue( isinstance( ert , EnKFMain ))
 
             fsm = ert.getEnkfFsManager()
-            fs = fsm.getFileSystem()
+            fs = fsm.getCurrentFS()
             self.assertEqual( 2 , fs.refCount())
 
             

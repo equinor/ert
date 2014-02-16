@@ -7,7 +7,7 @@ from ert.enkf.state_map import StateMap
 class CaseList(ErtConnector, ListModelMixin):
 
     def getList(self):
-        fs = self.ert().getEnkfFsManager().getFileSystem()
+        fs = self.ert().getEnkfFsManager().getCurrentFS()
         case_list = self.ert().getEnkfFsManager().getCaseList()
         return sorted(case_list)
 
