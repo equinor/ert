@@ -54,7 +54,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         analysis_module = self.setAnalysisModule()
 
-        source_fs = self.ert().getEnkfFsManager().getFileSystem()
+        source_fs = self.ert().getEnkfFsManager().getCurrentFS()
         initial_fs = self.createTargetCaseFileSystem(0)
 
         if not source_fs == initial_fs:

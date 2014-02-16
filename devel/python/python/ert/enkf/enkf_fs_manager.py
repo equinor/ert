@@ -31,9 +31,17 @@ class EnkfFsManager(BaseCClass):
         """ @rtype: bool """
         return EnkfFsManager.cNamespace().is_initialized(self, None) # what is the bool_vector mask???
 
-    def getFileSystem(self):
-        """ @rtype: EnkfFs """
-        return EnkfFsManager.cNamespace().get_fs(self).setParent(self)
+    def getCurrentFS(self):
+        """ Returns the currently selected file system
+        @rtype: EnkfFs
+        """
+        enkf_fs = EnkfFsManager.cNamespace().get_fs(self)
+
+        case_name = enkf_fs.getCaseName()
+        if not case_name in self.__cached_file_systems:
+            self.__cached_file_systems[case_name] = enkf_fs
+
+        return self.__cached_file_systems[case_name]
 
     def getCaseList(self):
         """ @rtype: StringList """

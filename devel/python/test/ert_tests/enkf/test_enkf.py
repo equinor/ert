@@ -120,7 +120,7 @@ class EnKFTest(ExtendedTestCase):
             # self.main.load_obs(obs_config_file)
             self.assertIsInstance(main.getObservations(), EnkfObs)
             self.assertIsInstance(main.get_templates(), ErtTemplates)
-            self.assertIsInstance(main.getEnkfFsManager().getFileSystem(), EnkfFs)
+            self.assertIsInstance(main.getEnkfFsManager().getCurrentFS(), EnkfFs)
             # self.assertIsInstance(main.iget_member_config(0), MemberConfig)
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
