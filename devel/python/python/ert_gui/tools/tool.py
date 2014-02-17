@@ -1,12 +1,24 @@
+from PyQt4.QtGui import QAction
+from ert_gui.tools import HelpCenter
+
 
 class Tool(object):
-    def __init__(self, name, help_link="", icon=None, enabled=True):
+    def __init__(self, name, help_link="", icon=None, enabled=True, checkable=False):
         super(Tool, self).__init__()
         self.__icon = icon
         self.__name = name
         self.__parent = None
         self.__enabled = enabled
+        self.__checkable = checkable
         self.__help_link = help_link
+
+        self.__action = QAction(self.getIcon(), self.getName(), None)
+        self.__action.setIconText(self.getName())
+        self.__action.setEnabled(self.isEnabled())
+        self.__action.setCheckable(checkable)
+        self.__action.triggered.connect(self.trigger)
+
+        HelpCenter.addHelpToAction(self.__action, self.getHelpLink())
 
     def getIcon(self):
         return self.__icon
@@ -19,6 +31,7 @@ class Tool(object):
 
     def setParent(self, parent):
         self.__parent = parent
+        self.__action.setParent(parent)
 
     def parent(self):
         return self.__parent
@@ -28,3 +41,8 @@ class Tool(object):
 
     def getHelpLink(self):
         return self.__help_link
+
+
+    def getAction(self):
+        return self.__action
+

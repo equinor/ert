@@ -1,7 +1,5 @@
 from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction
-from ert_gui.widgets.help_dock import HelpDock
-from ert_gui.widgets.helped_widget import HelpedWidget
+from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget
 
 
 class GertMainWindow(QMainWindow):
@@ -11,7 +9,7 @@ class GertMainWindow(QMainWindow):
         self.tools = {}
 
         self.resize(300, 700)
-        self.setWindowTitle('gERT')
+        self.setWindowTitle('ERT')
 
         self.central_widget = QWidget()
         self.central_layout = QVBoxLayout()
@@ -23,11 +21,13 @@ class GertMainWindow(QMainWindow):
         self.toolbar.setObjectName("Toolbar")
         self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
+        self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
+        self.setCorner(Qt.BottomLeftCorner, Qt.BottomDockWidgetArea)
+
+        self.setCorner(Qt.TopRightCorner, Qt.RightDockWidgetArea)
+        self.setCorner(Qt.BottomRightCorner, Qt.BottomDockWidgetArea)
+
         self.__createMenu()
-        self.__help_dock = HelpDock()
-        self.addDock("&Help", self.__help_dock, Qt.BottomDockWidgetArea, Qt.AllDockWidgetAreas)
-
-
         self.__fetchSettings()
 
     def addDock(self, name, widget, area=Qt.RightDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):
@@ -44,12 +44,7 @@ class GertMainWindow(QMainWindow):
     def addTool(self, tool):
         tool.setParent(self)
         self.tools[tool.getName()] = tool
-        action = self.toolbar.addAction(tool.getIcon(), tool.getName())
-        action.setIconText(tool.getName())
-        action.setEnabled(tool.isEnabled())
-        action.triggered.connect(tool.trigger)
-
-        HelpedWidget.addHelpToAction(action, tool.getHelpLink())
+        self.toolbar.addAction(tool.getAction())
 
 
     def __createMenu(self):
@@ -64,7 +59,7 @@ class GertMainWindow(QMainWindow):
 
 
     def __saveSettings(self):
-        settings = QSettings("Statoil", "ErtGui")
+        settings = QSettings("Statoil", "Ert-Gui")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
 
@@ -77,7 +72,7 @@ class GertMainWindow(QMainWindow):
 
 
     def __fetchSettings(self):
-        settings = QSettings("Statoil", "ErtGui")
+        settings = QSettings("Statoil", "Ert-Gui")
         self.restoreGeometry(settings.value("geometry").toByteArray())
         self.restoreState(settings.value("windowState").toByteArray())
 
