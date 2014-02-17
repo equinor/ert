@@ -37,15 +37,10 @@ void test_rms_file_fread_alloc_data_tag(rms_file_type * rms_file) {
 
 
 void test_rms_file_fread_alloc_data_tagkey(rms_file_type *rms_file) {
-  rms_tagkey_type * name_tagkey = rms_file_fread_alloc_data_tagkey(rms_file , "parameter" , "name" , NULL);
+  rms_tagkey_type * name_tagkey = rms_file_fread_alloc_data_tagkey(rms_file , "parameter" , NULL , NULL);
   test_assert_not_NULL(name_tagkey);
-  //test_assert_int_equal(rms_char_type, rms_tagkey_get_rms_type(name_tagkey));
+  test_assert_int_equal(rms_float_type, rms_tagkey_get_rms_type(name_tagkey));
   rms_tagkey_free(name_tagkey);
-
-  rms_tagkey_type * data_tagkey = rms_file_fread_alloc_data_tagkey(rms_file , "parameter" , "data" , NULL);
-  test_assert_not_NULL(data_tagkey);
-  test_assert_int_equal(rms_float_type, rms_tagkey_get_rms_type(data_tagkey));
-  rms_tagkey_free(data_tagkey);
 }
 
 
