@@ -36,7 +36,7 @@ class ObsVector(BaseCClass):
         super(ObsVector, self).__init__(pointer)
 
 
-    def get_state_kw(self):
+    def getDataKey(self):
         """ @rtype: str """
         return ObsVector.cNamespace().get_state_kw(self)
 
