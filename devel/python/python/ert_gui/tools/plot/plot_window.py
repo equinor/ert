@@ -35,12 +35,14 @@ class PlotWindow(QMainWindow):
         current_case = CaseSelectorModel().getCurrentChoice()
         self.__case_selection_widget = CaseSelectionWidget(current_case)
         self.__case_selection_widget.caseSelectionChanged.connect(self.caseSelectionChanged)
-        self.addDock("Plot case", self.__case_selection_widget)
+        plot_case_dock = self.addDock("Plot case", self.__case_selection_widget)
 
         self.__plot_metrics_widget = PlotMetricsWidget()
         self.__plot_metrics_widget.plotScalesChanged.connect(self.scalesChanged)
         self.__plot_metrics_widget.reportStepTimeChanged.connect(self.reportStepTimeChanged)
-        self.addDock("Plot metrics", self.__plot_metrics_widget)
+        plot_metrics_dock = self.addDock("Plot metrics", self.__plot_metrics_widget)
+
+        self.tabifyDockWidget(plot_metrics_dock, plot_case_dock)
 
         self.__data_type_key = None
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
