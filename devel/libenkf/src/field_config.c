@@ -400,8 +400,12 @@ void field_config_set_grid(field_config_type * config, ecl_grid_type * grid , bo
   
   config->grid         = grid;
   config->private_grid = private_grid;
-  ecl_grid_get_dims(grid , &config->nx , &config->ny , &config->nz , &config->data_size);
+
+  ecl_grid_get_dims(grid , &config->nx , &config->ny , &config->nz , NULL);
+  config->data_size = field_config_get_data_size_from_grid(config);
 }
+
+
 
 
 const char * field_config_get_grid_name( const field_config_type * config) {
@@ -687,11 +691,14 @@ ecl_type_enum field_config_get_ecl_type(const field_config_type * config) {
 
 
 
-int field_config_get_byte_size(const field_config_type * config) {
-  int num_cells = config->global_size ? ecl_grid_get_global_size(config->grid) : ecl_grid_get_active_size(config->grid);
-  return num_cells * config->sizeof_ctype;
+int field_config_get_data_size_from_grid(const field_config_type * config) {
+  return config->global_size ? ecl_grid_get_global_size(config->grid) : ecl_grid_get_active_size(config->grid);
 }
 
+int field_config_get_byte_size(const field_config_type * config) {
+  int num_cells = field_config_get_data_size_from_grid(config);
+  return num_cells * config->sizeof_ctype;
+}
 
 
 int field_config_get_sizeof_ctype(const field_config_type * config) { return config->sizeof_ctype; }
