@@ -54,12 +54,38 @@ class EnkfFs(BaseCClass):
     def refCount(self):
         return self.cNamespace().get_refcount(self)
 
+    def incRefCount(self):
+        return self.cNamespace().incref(self)
+        
     @classmethod
     def exists(cls, path):
         return cls.cNamespace().exists(path)
 
+        
+    @classmethod
+    def createFS(cls, path , fs_type , arg = None):
+        cls.cNamespace().create(path , fs_type , arg)
+
+
+    # It should be safe to call the umount method explicitly; but then
+    # we must be certain that is not called one more time when the
+    # object goes out of scope. IFF the umount method has been called
+    # the underlying C object has been closed down, and this Python
+    # object is a dangling reference - which should not be used for
+    # anything; the only reason to expose it here is to be able to
+    # force immediate shutdown of the C object.
+    def umount(self):
+        if self.hasCPointer():
+            refcount = self.refCount()
+            EnkfFs.cNamespace().decref(self)
+            refcount -= 1
+
+            if refcount == 0:
+                self.dropCPointer()
+
+
     def free(self):
-        EnkfFs.cNamespace().decref(self)
+        self.umount()
 
 
 
@@ -69,7 +95,9 @@ cwrapper.registerType("enkf_fs_obj", EnkfFs.createPythonObject)
 cwrapper.registerType("enkf_fs_ref", EnkfFs.createCReference)
 
 EnkfFs.cNamespace().mount = cwrapper.prototype("c_void_p enkf_fs_mount(char* , bool)")
+EnkfFs.cNamespace().create = cwrapper.prototype("void enkf_fs_create_fs(char* , enkf_fs_type_enum , c_void_p)")
 EnkfFs.cNamespace().decref = cwrapper.prototype("int enkf_fs_decref(enkf_fs)")
+EnkfFs.cNamespace().incref = cwrapper.prototype("int enkf_fs_incref(enkf_fs)")
 EnkfFs.cNamespace().get_refcount = cwrapper.prototype("int enkf_fs_get_refcount(enkf_fs)")
 EnkfFs.cNamespace().has_node = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, c_uint, int, int, c_uint)")
 EnkfFs.cNamespace().has_vector = cwrapper.prototype("bool enkf_fs_has_vector(enkf_fs, char*, c_uint, int, c_uint)")
