@@ -25,7 +25,7 @@ class SummaryTemplate(object):
 
     def addRow(self, value):
         if not self.__finished:
-            style = "text-indent: 10px;"
+            style = "text-indent: 5px;"
             self.text += "<div style=\"%s\">%s</div>" % (style, value)
 
     def endGroup(self):
