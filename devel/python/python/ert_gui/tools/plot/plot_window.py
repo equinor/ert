@@ -2,6 +2,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker
+from ert_gui.tools.plot.customize_plot_widget import CustomizePlotWidget
 from ert_gui.tools.plot.data import PlotDataFetcher
 from ert_gui.widgets.util import may_take_a_long_time
 
@@ -42,6 +43,11 @@ class PlotWindow(QMainWindow):
         self.__plot_metrics_widget.reportStepTimeChanged.connect(self.reportStepTimeChanged)
         plot_metrics_dock = self.addDock("Plot metrics", self.__plot_metrics_widget)
 
+        self.__customize_plot_widget = CustomizePlotWidget()
+        self.__customize_plot_widget.customPlotSettingsChanged.connect(self.customizePlot)
+        customize_plot_dock = self.addDock("Customize", self.__customize_plot_widget)
+
+        self.tabifyDockWidget(plot_metrics_dock, customize_plot_dock)
         self.tabifyDockWidget(plot_metrics_dock, plot_case_dock)
 
         self.__data_type_key = None
@@ -85,10 +91,18 @@ class PlotWindow(QMainWindow):
     def plotReady(self):
         if self.checkPlotStatus():
             self.__data_type_keys_widget.selectDefault()
+            self.__customize_plot_widget.emitChange()
 
 
     def caseSelectionChanged(self):
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
+        self.keySelected(self.__data_type_key)
+
+
+    def customizePlot(self, settings):
+        for plot_panel in self.__plot_panels:
+            plot_panel.setCustomSettings(settings)
+
         self.keySelected(self.__data_type_key)
 
     def scalesChanged(self):
