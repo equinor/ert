@@ -34,8 +34,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     def createTargetCaseFileSystem(self, phase):
         target_case_format = TargetCaseFormatModel().getValue()
-        target_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(target_case_format % phase, read_only=False, create=True)
-
+        target_fs = self.ert().getEnkfFsManager().getFS(target_case_format % phase)
         return target_fs
 
 

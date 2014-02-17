@@ -51,6 +51,9 @@ class EnkfFs(BaseCClass):
         """ @rtype: bool """
         return EnkfFs.cNamespace().is_read_only(self)
 
+    def setWritable(self):
+        EnkfFs.cNamespace().set_writable(self)
+
     def refCount(self):
         return self.cNamespace().get_refcount(self)
 
@@ -107,3 +110,4 @@ EnkfFs.cNamespace().get_time_map = cwrapper.prototype("time_map_ref enkf_fs_get_
 EnkfFs.cNamespace().exists = cwrapper.prototype("bool enkf_fs_exists(char*)")
 EnkfFs.cNamespace().get_case_name = cwrapper.prototype("char* enkf_fs_get_case_name(enkf_fs)")
 EnkfFs.cNamespace().is_read_only = cwrapper.prototype("bool enkf_fs_is_read_only(enkf_fs)")
+EnkfFs.cNamespace().set_writable = cwrapper.prototype("void enkf_fs_set_writable(enkf_fs)")

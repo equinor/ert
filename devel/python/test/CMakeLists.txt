@@ -174,6 +174,10 @@ add_test( NAME python.tests.ert.enkf.enkf_fs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs.EnKFFSTest)
 
+add_test( NAME python.tests.ert.enkf.enkf_fs_manager
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs_manager.EnKFFSManagerTest)
+
 add_test( NAME python.tests.ert.enkf.enkf_library
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_library.EnKFLibraryTest)

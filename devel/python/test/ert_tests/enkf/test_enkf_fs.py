@@ -37,6 +37,8 @@ class EnKFFSTest(ExtendedTestCase):
         with self.assertRaises(Exception):
             fs = EnkfFs("/does/not/exist")
             
+        
+
     
     def test_refcount(self):
         with ErtTestContext("TEST" , self.config_file) as testContext:
