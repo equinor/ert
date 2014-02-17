@@ -15,11 +15,13 @@ from ert_gui.widgets.integer_spinner import IntegerSpinner
 from ert_gui.widgets.keyword_list import KeywordList
 from ert_gui.widgets.row_group import RowGroup
 from ert_gui.widgets.row_panel import RowPanel
+from ert_gui.widgets.util import may_take_a_long_time
 from ert_gui.widgets.validated_dialog import ValidatedDialog
 
 
 class CaseInitializationConfigurationPanel(RowPanel):
 
+    @may_take_a_long_time
     def __init__(self):
         RowPanel.__init__(self, "Case Management")
         self.setMinimumWidth(600)
@@ -128,7 +130,6 @@ class CaseInitializationConfigurationPanel(RowPanel):
         self.addRow(Button(initialize_from_existing, help_link="init/initialize_from_existing"))
 
         self.addSpace(10)
-
 
     def addShowCaseInfo(self):
         self.addTab("Case Info")
