@@ -44,6 +44,7 @@ class EnKFMain(BaseCClass):
         EnKFMain.cNamespace().set_eclbase(self, eclbase)
 
     def free(self):
+        self.__fs_manager.umount()
         EnKFMain.cNamespace().free(self)
 
     def getEnsembleSize( self ):
