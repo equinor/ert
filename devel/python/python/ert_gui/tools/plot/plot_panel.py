@@ -1,3 +1,4 @@
+import json
 import os
 from PyQt4.QtCore import QUrl, Qt, pyqtSlot, pyqtSignal, QObject
 from PyQt4.QtGui import QWidget, QGridLayout, QPainter
@@ -154,5 +155,9 @@ class PlotPanel(QWidget):
 
     def setPlotIsVisible(self, visible):
         self.__plot_is_visible = visible
+
+    def setCustomSettings(self, settings):
+        json_settings = json.dumps(settings)
+        self.web_view.page().mainFrame().evaluateJavaScript("setCustomSettings(%s);" % json_settings)
 
 

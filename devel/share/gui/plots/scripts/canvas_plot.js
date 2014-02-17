@@ -192,3 +192,7 @@ Plot.prototype.setVerticalErrorBar = function (vertical) {
 Plot.prototype.setHorizontalDrawDirection = function (horizontal) {
     this.horizontal_draw_direction = horizontal;
 };
+
+Plot.prototype.setCustomSettings = function (settings) {
+    this.plot.setCustomSettings(settings);
+};

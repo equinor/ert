@@ -28,6 +28,7 @@ function BasePlot(element, x_dimension, y_dimension) {
     this.dimension_x = x_dimension;
 
     this.vertical_error_bar = true;
+    this.error_bar_only = false;
 
     var group = this.root_elemenet.append("div")
         .attr("class", "plot");
@@ -234,7 +235,7 @@ BasePlot.prototype.addLegend = function(style, name, render_function) {
 BasePlot.prototype.renderObservations = function(context, data) {
     if(data.hasObservationData()) {
         var obs_data = data.observationData();
-        if(obs_data.isContinuous()) {
+        if(obs_data.isContinuous() && !this.error_bar_only) {
             var x_values = obs_data.xValues();
             var y_values = obs_data.yValues();
             var std_values = obs_data.stdValues();
@@ -319,5 +320,11 @@ BasePlot.prototype.createCircleRenderer = function() {
 BasePlot.prototype.setVerticalErrorBar = function(vertical){
     this.vertical_error_bar = vertical;
 
+};
+
+BasePlot.prototype.setCustomSettings = function (settings) {
+    if ("error_bar_only" in settings) {
+        this.error_bar_only = settings["error_bar_only"];
+    }
 };
 
