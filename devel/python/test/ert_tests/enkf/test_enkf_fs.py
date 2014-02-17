@@ -47,5 +47,7 @@ class EnKFFSTest(ExtendedTestCase):
             fs = fsm.getCurrentFS()
             self.assertEqual( 2 , fs.refCount())
 
-            
-
+            fs.incRefCount( )
+            self.assertEqual( 3 , fs.refCount())
+            fs.umount( )
+            self.assertEqual( 2 , fs.refCount())
