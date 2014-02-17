@@ -12,6 +12,7 @@ class IdeWindow(QMainWindow):
 
         self.resize(900, 900)
 
+        self.__position = None
         self.__geometry = None
 
         self.__configuration_panel = ConfigurationPanel(path, help_tool)
@@ -35,13 +36,15 @@ class IdeWindow(QMainWindow):
 
 
     def closeEvent(self, q_close_event):
+        self.__position = self.pos()
         self.__geometry = self.geometry()
         self.hide()
         q_close_event.ignore()
 
     def show(self):
-        if not self.__geometry is None:
+        if self.__geometry is not None and self.__position is not None:
             self.setGeometry(self.__geometry)
+            self.move(self.__position)
         QMainWindow.show(self)
 
     # def addDock(self, name, widget, area=Qt.RightDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):

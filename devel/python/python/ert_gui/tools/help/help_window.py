@@ -1,4 +1,4 @@
-from PyQt4.QtCore import Qt, QUrl, pyqtSignal
+from PyQt4.QtCore import Qt, QUrl, pyqtSignal, QSettings
 from PyQt4.QtGui import QLabel, QVBoxLayout, QColor, QDesktopServices, QDialog, QMainWindow, QWidget
 
 from ert_gui.tools import HelpCenter
@@ -25,6 +25,7 @@ class HelpWindow(QMainWindow):
         self.setMinimumWidth(300)
         self.setMinimumHeight(250)
         self.setWindowTitle("Help")
+        self.setObjectName("ert-gui-help")
 
         central_widget = QWidget()
 
@@ -46,8 +47,12 @@ class HelpWindow(QMainWindow):
 
         HelpCenter.getHelpCenter(help_center_name).addListener(self)
 
+        self.__position = None
         self.__geometry = None
         self.setCentralWidget(central_widget)
+
+        # settings = QSettings("Statoil", "Ert-Gui")
+        # self.restoreGeometry(settings.value("ert-gui-help/geometry").toByteArray())
 
 
     def openHelpURL(self, q_string):
@@ -59,15 +64,16 @@ class HelpWindow(QMainWindow):
         self.link_widget.setText(help_link)
         self.help_widget.setText(message)
 
-    def setVisible(self, visible):
-        QMainWindow.setVisible(self, visible)
-
-        if visible and self.__geometry is not None:
+    def showEvent(self, q_show_event):
+        if self.__geometry is not None and self.__position is not None:
             self.setGeometry(self.__geometry)
-        else:
-            self.__geometry = self.geometry()
+            self.move(self.__position)
+        self.visibilityChanged.emit(True)
 
-        self.visibilityChanged.emit(visible)
+    def hideEvent(self, q_hide_event):
+        self.__position = self.pos()
+        self.__geometry = self.geometry()
+        self.visibilityChanged.emit(False)
 
 
     def keyPressEvent(self, event):
@@ -75,5 +81,6 @@ class HelpWindow(QMainWindow):
             QMainWindow.keyPressEvent(self, event)
 
     def closeEvent(self, event):
-        self.setVisible(False)
+        self.hide()
+        event.ignore()
 

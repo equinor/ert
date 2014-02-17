@@ -19,5 +19,8 @@ class HelpTool(Tool):
 
     def trigger(self):
         checked = self.getAction().isChecked()
-        HelpTool.__help_window_instance.setVisible(checked)
+        if checked:
+            HelpTool.__help_window_instance.show()
+        else:
+            HelpTool.__help_window_instance.hide()
 
