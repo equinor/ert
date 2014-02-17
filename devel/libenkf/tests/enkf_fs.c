@@ -33,8 +33,10 @@
 
 void test_mount() {
   test_work_area_type * work_area = test_work_area_alloc("enkf_fs/mount");
-  
+
+  test_assert_false( enkf_fs_exists( "mnt" ));
   enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL );
+  test_assert_true( enkf_fs_exists( "mnt" ));
   {
     enkf_fs_type * fs = enkf_fs_mount( "mnt" , false );
     test_assert_true( enkf_fs_is_instance( fs ));

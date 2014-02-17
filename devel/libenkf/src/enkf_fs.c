@@ -594,10 +594,10 @@ enkf_fs_type * enkf_fs_mount( const char * mount_point , bool read_only) {
 }
 
 
-bool enkf_fs_exists( const char * path ) {
+bool enkf_fs_exists( const char * mount_point ) {
   bool exists   = false;
   
-  FILE * stream = fs_driver_open_fstab( path , false );
+  FILE * stream = fs_driver_open_fstab( mount_point , false );
   if (stream != NULL) {
     exists = true;
     fclose( stream );

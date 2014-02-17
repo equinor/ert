@@ -63,7 +63,7 @@ extern "C" {
                                           int iens , 
                                           state_enum state);
   
-  bool              enkf_fs_exists( const char * path );
+  bool              enkf_fs_exists( const char * mount_point );
 
   void              enkf_fs_fread_node(enkf_fs_type * enkf_fs , buffer_type * buffer , 
                                        const char * node_key , enkf_var_type var_type , 
