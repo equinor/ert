@@ -17,27 +17,44 @@ class FSNode:
         return "<FSNode case:%s  storage_index:%d>" % (self.case_name , self.index)
 
 
-
+# The EnkfFsmanager class works be keeping an internal inventory of
+# all currently mounted filesystems; the class implements a double
+# bookkeeping where the file systems are stored both in the lst
+# @fs_list and the dictionary @fs_map to ensure both FIFO based
+# behaviour and name based lookup; when we go to version 2.7 this can
+# be simplified considerably by using an OrderedDict.
+#
+# For convenience the fs handle, the case name and the storage index
+# are assembled in a small Struct FSNode. The methods __addFS(),
+# __dropFS() and __haveFS() use this internal data structure and
+# should not be called outside of this file.
+#
+# For normal use from ert all filesystems will be located in the same
+# folder in the filesystem - corresponding to the ENSPATH setting in
+# the config file; in this implementation that setting is stored in
+# the @mount_root field. Currently @mount_root is fixed to the value
+# returned by EnKFMain.getMountPoint(), but in principle a different
+# path could be sent as the the optional second argument to the
+# getFS() method. 
 
 class EnkfFsManager(BaseCClass):
-
-    def __init__(self, enkf_main):
+    def __init__(self, enkf_main , capacity):
         assert isinstance(enkf_main, BaseCClass)
         super(EnkfFsManager, self).__init__(enkf_main.from_param(enkf_main).value, parent=enkf_main, is_reference=True)
-        self.__cached_file_systems = {}
+
         self.FSArg = None
         self.fs_list = []
         self.fs_map  = {}
         self.mountIndex = 0
-        self.capacity = 3
+        self.capacity = capacity
         self.FSType = enkf_main.getModelConfig().getFSType()
         self.FS_arg = None
         self.mount_root = enkf_main.getMountPoint()
-        """ @type: dict of (str, EnkfFs) """
-        
         for i in range(self.capacity):
             self.fs_list.append( None )
-            
+        
+        self.getCurrentFS( )
+
 
     def __addFS(self , fsNode):
         if self.fs_list[fsNode.index]:
@@ -52,13 +69,14 @@ class EnkfFsManager(BaseCClass):
 
 
     def __dropFS(self , fsNode):
+        print "Dropping: %s" % fsNode
         index = fsNode.index
         case_name = fsNode.case_name
         fs = fsNode.fs
-
+        
         fs.umount()
-        self.fs_buffer[ index ] = None
         del self.fs_map[ case_name ]
+        self.fs_list[ index ] = None
 
 
     def __hasFS(self , full_case):
@@ -71,15 +89,18 @@ class EnkfFsManager(BaseCClass):
 
 
     def getFS(self , case_name , mount_root = None , read_only = False):
+        """
+        @rtype: EnkfFs
+        """
         if mount_root is None:
             mount_root = self.mount_root
 
         full_case = self.__fullName( mount_root , case_name )
         if not self.__hasFS( full_case ):
-            oldFS = self.fs_list[ self.mountIndex ]
+            oldFS = self.fs_list[self.mountIndex]:
             if oldFS:
                 self.__dropFS( oldFS )
-
+                
             if not EnkfFs.exists( full_case ):
                 if read_only:
                     raise IOError("Tried to access non existing filesystem:%s in read-only mode" % full_case)
@@ -103,11 +124,15 @@ class EnkfFsManager(BaseCClass):
         """
         current_fs = EnkfFsManager.cNamespace().get_current_fs(self)
         case_name = current_fs.getCaseName()
-        fsNode = FSNode( current_fs , 
-                         self.__fullName(self.mount_root , case_name ) , 
-                         self.mountIndex )
-        self.__addFS( fsNode )
-
+        fullName = self.__fullName(self.mount_root , case_name )
+        if not self.__hasFS( fullName ):
+            fsNode = FSNode( current_fs , 
+                             fullName , 
+                             self.mountIndex )
+            self.__addFS( fsNode )
+        else:
+            current_fs.umount()
+            
         currentFS = self.getFS( case_name , self.mount_root )
         return currentFS
 
@@ -123,31 +148,6 @@ class EnkfFsManager(BaseCClass):
             if node:
                 size += 1
         return size
-
-
-#    def mountAlternativeFileSystem(self, case, read_only, create):
-#        """ @rtype: EnkfFs """
-#        assert isinstance(case, str)
-#        assert isinstance(read_only, bool)
-#        assert isinstance(create, bool)
-#
-#        if case in self.__cached_file_systems and not read_only:
-#            fs = self.__cached_file_systems[case]
-#
-#            if fs.isReadOnly():
-#                print("[EnkfFsManager] Removed a read only file system from cache: %s" % case)
-#                del self.__cached_file_systems[case]
-#
-#        if not case in self.__cached_file_systems:
-#            # print("Added a file system to cache: %s" % case)
-#            before = time.time()
-#            self.__cached_file_systems[case] = EnkfFsManager.cNamespace().mount_alt_fs(self, case, read_only, create)
-#            after = time.time()
-#            print("[EnkfFsManager] Mounting of filesystem '%s' took %2.2f s." % (case, (after - before)))
-#        # else:
-#        #     print("Provided a file system from cache: %s" % case)
-#
-#        return self.__cached_file_systems[case]
 
 
     def switchFileSystem(self, file_system):

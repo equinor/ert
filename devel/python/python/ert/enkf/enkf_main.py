@@ -20,19 +20,20 @@ from ert.util import SubstitutionList, Log
 
 
 class EnKFMain(BaseCClass):
+    fsCapacity = 2
     def __init__(self, model_config, site_config, strict=True):
         c_ptr = EnKFMain.cNamespace().bootstrap(site_config, model_config, strict, False)
         super(EnKFMain, self).__init__(c_ptr)
 
         self.__simulation_runner = EnkfSimulationRunner(self)
-        self.__fs_manager = EnkfFsManager(self)
+        self.__fs_manager = EnkfFsManager(self , self.fsCapacity)
 
 
     @classmethod
     def createCReference(cls , c_pointer , parent = None):
         obj = super(EnKFMain, cls).createCReference(c_pointer , parent)
         obj.__simulation_runner = EnkfSimulationRunner(obj)
-        obj.__fs_manager = EnkfFsManager(obj)
+        obj.__fs_manager = EnkfFsManager(obj , cls.fsCapacity)
         return obj
         
 
