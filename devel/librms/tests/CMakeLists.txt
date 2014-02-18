@@ -1,6 +1,6 @@
 
 add_executable( rms_file_test rms_file_test.c )
-target_link_libraries( rms_file_test enkf ert-test test_util )
+target_link_libraries( rms_file_test rms test_util )
 
 add_test( rms_file_test
           ${EXECUTABLE_OUTPUT_PATH}/rms_file_test
