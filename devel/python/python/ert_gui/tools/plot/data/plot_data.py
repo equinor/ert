@@ -24,6 +24,8 @@ class PlotData(QObject):
         self.__min_y = None
         self.__max_y = None
 
+        self.__use_log_scale = False
+
         self.__case_list = []
 
 
@@ -63,7 +65,8 @@ class PlotData(QObject):
         if max_y is not None and (self.__max_y is None or self.__max_y < max_y):
             self.__max_y = max_y
 
-
+    def setShouldUseLogScale(self, use_log_scale):
+        self.__use_log_scale = use_log_scale
 
     @pyqtSlot(result=str)
     def name(self):
@@ -143,6 +146,9 @@ class PlotData(QObject):
     def caseList(self):
         return self.__case_list
 
+    @pyqtSlot(result=bool)
+    def shouldUseLogScale(self):
+        return self.__use_log_scale
 
     @pyqtSlot(int, result=QObject)
     def histogramData(self, report_step_time):
