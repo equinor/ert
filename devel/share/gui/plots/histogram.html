@@ -98,6 +98,7 @@
                 var histogram = histograms[index];
                 histogram.setVisible(true);
                 histogram.setSize(stored_width, stored_histogram_height);
+                histogram.setShouldUseLogScale(stored_data.shouldUseLogScale());
                 histogram(histogram_data, case_list[index]);
             }
 
