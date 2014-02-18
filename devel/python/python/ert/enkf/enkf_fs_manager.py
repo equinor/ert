@@ -97,7 +97,7 @@ class EnkfFsManager(BaseCClass):
 
         full_case = self.__fullName( mount_root , case_name )
         if not self.__hasFS( full_case ):
-            oldFS = self.fs_list[self.mountIndex]:
+            oldFS = self.fs_list[self.mountIndex]
             if oldFS:
                 self.__dropFS( oldFS )
                 
