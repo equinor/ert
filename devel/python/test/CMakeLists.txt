@@ -32,6 +32,9 @@ set(TEST_SOURCES
 
     ert_tests/enkf/__init__.py
     ert_tests/enkf/test_enkf.py
+    ert_tests/enkf/test_enkf_fs.py
+    ert_tests/enkf/test_enkf_fs_manager1.py
+    ert_tests/enkf/test_enkf_fs_manager2.py
     ert_tests/enkf/test_enkf_library.py
     ert_tests/enkf/test_analysis_config.py
     ert_tests/enkf/test_analysis_iter_config.py
@@ -174,9 +177,13 @@ add_test( NAME python.tests.ert.enkf.enkf_fs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs.EnKFFSTest)
 
-add_test( NAME python.tests.ert.enkf.enkf_fs_manager
+add_test( NAME python.tests.ert.enkf.enkf_fs_manager1
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs_manager.EnKFFSManagerTest)
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs_manager1.EnKFFSManagerTest1)
+
+add_test( NAME python.tests.ert.enkf.enkf_fs_manager2
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs_manager2.EnKFFSManagerTest2)
 
 add_test( NAME python.tests.ert.enkf.enkf_library
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -419,6 +426,8 @@ set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python
 set_property( TEST python.tests.ert.enkf.enkf             PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.ecl_config       PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_fs          PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf_fs_manager1 PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf_fs_manager2 PROPERTY LABELS Python:StatoilData )
 
 if (ERT_BUILD_GUI)
    set_property( TEST python.tests.ert_gui.import         PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
