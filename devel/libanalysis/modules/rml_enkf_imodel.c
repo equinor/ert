@@ -35,7 +35,6 @@
 #include <ert/analysis/std_enkf.h>
 
 #include <rml_enkf_common.h>
-#define RML_ENKF_IMODEL_TYPE_ID 261123
 
 typedef struct rml_enkf_imodel_data_struct rml_enkf_imodel_data_type;
 
@@ -87,7 +86,7 @@ typedef struct rml_enkf_imodel_data_struct rml_enkf_imodel_data_type;
 */
 
 
-
+#define RML_ENKF_IMODEL_TYPE_ID 261123
 
 struct rml_enkf_imodel_data_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -110,15 +109,6 @@ struct rml_enkf_imodel_data_struct {
   double lambda_increase_factor;
 };
 
-
-/*
-  This is a macro which will expand to generate a function:
-  
-     rml_enkf_imodel_data_type * rml_enkf_imodel_data_safe_cast( void * arg ) {}
-  
-  which is used for runtime type checking of all the functions which
-  accept a void pointer as first argument. 
-*/
 static UTIL_SAFE_CAST_FUNCTION( rml_enkf_imodel_data , RML_ENKF_IMODEL_TYPE_ID )
 static UTIL_SAFE_CAST_FUNCTION_CONST( rml_enkf_imodel_data , RML_ENKF_IMODEL_TYPE_ID )
 
