@@ -115,6 +115,7 @@ function Plot(element, x_dimension, y_dimension) {
             }, 15);
         } else {
             self.tracker.stoppedRendering();
+            self.plot.renderCallbackFinishedRendering();
         }
     };
 
@@ -158,11 +159,12 @@ function Plot(element, x_dimension, y_dimension) {
 
                 self.plot.addLegend(style, case_name, CanvasPlotLegend.simpleLine);
             }
+            self.plot.renderCallbackFinishedRendering();
         }
     };
 
-    //this.plot.setRenderCallback(renderEnsembleProgressively);
-    this.plot.setRenderCallback(renderEnsembleDirect);
+    this.plot.setRenderCallback(renderEnsembleProgressively);
+    //this.plot.setRenderCallback(renderEnsembleDirect);
 }
 
 Plot.prototype.resize = function (width, height) {
@@ -195,4 +197,8 @@ Plot.prototype.setHorizontalDrawDirection = function (horizontal) {
 
 Plot.prototype.setCustomSettings = function (settings) {
     this.plot.setCustomSettings(settings);
+};
+
+Plot.prototype.setRenderingFinishedCallback = function(callback) {
+    this.plot.setRenderingFinishedCallback(callback);
 };

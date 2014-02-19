@@ -65,6 +65,9 @@
 
     function createPlot() {
         plot = new Plot(d3.select("body"), BasePlotTimeDimension(), BasePlotValueDimension());
+        plot.setRenderingFinishedCallback(function() {
+            plot_data_source.renderingFinished();
+        });
     }
 
     function updatePlot() {

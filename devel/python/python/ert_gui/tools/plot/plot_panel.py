@@ -80,9 +80,6 @@ class PlotPanel(QWidget):
     def supportsPlotProperties(self, time=False, value=False, depth=False, histogram=False):
         return self.__plot_bridge.supportsPlotProperties(time, value, depth, histogram)
 
-    def getName(self):
-        return self.__name
-
     def isPlotVisible(self):
         return self.__plot_is_visible
 
@@ -93,5 +90,6 @@ class PlotPanel(QWidget):
         return self.__plot_bridge
 
 
-
+    def setCustomSettings(self, settings):
+        self.__plot_bridge.setCustomSettings(settings)
 

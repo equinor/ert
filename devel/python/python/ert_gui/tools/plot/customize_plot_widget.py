@@ -37,4 +37,5 @@ class CustomizePlotWidget(QWidget):
         self.__layout.addWidget(checkbox)
 
 
-
+    def getCustomSettings(self):
+        return self.__custom

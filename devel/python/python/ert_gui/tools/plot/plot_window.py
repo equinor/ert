@@ -50,12 +50,13 @@ class PlotWindow(QMainWindow):
         self.__customize_plot_widget.customPlotSettingsChanged.connect(self.customizePlot)
         customize_plot_dock = self.addDock("Customize", self.__customize_plot_widget)
 
-        self.tabifyDockWidget(plot_metrics_dock, customize_plot_dock)
-        self.tabifyDockWidget(plot_metrics_dock, plot_case_dock)
-
         self.__export_plot_widget = ExportPlotWidget()
         self.__export_plot_widget.exportButtonPressed.connect(self.exportActivePlot)
-        self.addDock("Export Plot", self.__export_plot_widget)
+        export_dock = self.addDock("Export Plot", self.__export_plot_widget)
+
+        self.tabifyDockWidget(plot_metrics_dock, customize_plot_dock)
+        self.tabifyDockWidget(plot_metrics_dock, export_dock)
+        self.tabifyDockWidget(plot_metrics_dock, plot_case_dock)
 
         self.__data_type_key = None
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
@@ -68,13 +69,19 @@ class PlotWindow(QMainWindow):
         if self.__central_tab.currentIndex() > -1:
             active_plot =  self.__central_tab.currentWidget()
             assert isinstance(active_plot, PlotPanel)
-            value_min = self.__value_scale_tracker.getMinimumScaleValue(self.__data_type_key)
-            value_max = self.__value_scale_tracker.getMaximumScaleValue(self.__data_type_key)
-            time_min = self.__time_scale_tracker.getMinimumScaleValue(self.__data_type_key)
-            time_max = self.__time_scale_tracker.getMaximumScaleValue(self.__data_type_key)
-            depth_min = self.__depth_scale_tracker.getMinimumScaleValue(self.__data_type_key)
-            depth_max = self.__depth_scale_tracker.getMaximumScaleValue(self.__data_type_key)
-            self.export_plot = ExportPlot(active_plot, time_min, time_max, value_min, value_max, depth_min, depth_max)
+            settings = {
+                "value_min" : self.__value_scale_tracker.getMinimumScaleValue(self.__data_type_key),
+                "value_max" : self.__value_scale_tracker.getMaximumScaleValue(self.__data_type_key),
+                "time_min" : self.__time_scale_tracker.getMinimumScaleValue(self.__data_type_key),
+                "time_max" : self.__time_scale_tracker.getMaximumScaleValue(self.__data_type_key),
+                "depth_min" : self.__depth_scale_tracker.getMinimumScaleValue(self.__data_type_key),
+                "depth_max" : self.__depth_scale_tracker.getMaximumScaleValue(self.__data_type_key),
+                "report_step_time" : self.__plot_metrics_widget.getSelectedReportStepTime(),
+                "custom_settings" : self.__customize_plot_widget.getCustomSettings()
+            }
+
+
+            self.export_plot = ExportPlot(active_plot, settings)
             self.export_plot.export()
 
 

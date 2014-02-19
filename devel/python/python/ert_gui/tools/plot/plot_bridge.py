@@ -1,3 +1,4 @@
+import json
 import os
 from PyQt4.QtCore import QObject, pyqtSlot, pyqtSignal, QUrl
 from PyQt4.QtWebKit import QWebPage
@@ -118,5 +119,12 @@ class PlotBridge(QObject):
 
     def getPage(self):
         return self.__web_page
+
+
+    def setCustomSettings(self, settings):
+        json_settings = json.dumps(settings)
+        self.__web_page.mainFrame().evaluateJavaScript("setCustomSettings(%s);" % json_settings)
+
+
 
 
