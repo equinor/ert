@@ -35,11 +35,6 @@
 #include <ert/analysis/std_enkf.h>
 
 #include <rml_enkf_common.h>
-
-/*
-  A random 'magic' integer id which is used for run-time type checking
-  of the input data. 
-*/
 #define RML_ENKF_IMODEL_TYPE_ID 261123
 
 typedef struct rml_enkf_imodel_data_struct rml_enkf_imodel_data_type;
@@ -118,9 +113,9 @@ struct rml_enkf_imodel_data_struct {
 
 /*
   This is a macro which will expand to generate a function:
-
+  
      rml_enkf_imodel_data_type * rml_enkf_imodel_data_safe_cast( void * arg ) {}
-
+  
   which is used for runtime type checking of all the functions which
   accept a void pointer as first argument. 
 */
@@ -667,66 +662,66 @@ long rml_enkf_imodel_get_options( void * arg , long flag ) {
 
 
 
- bool rml_enkf_imodel_has_var( const void * arg, const char * var_name) {
-   {
-     if (strcmp(var_name , ITER_KEY) == 0)
-       return true;
-     else if (strcmp(var_name , USE_PRIOR_KEY) == 0)
-       return true;
-     else if (strcmp(var_name , LAMBDA_INCREASE_FACTOR_KEY) == 0)
-       return true;
-     else if (strcmp(var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
-       return true;
-     else if (strcmp(var_name , LAMBDA0_KEY) == 0)
-       return true;
-     else if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
-       return true;
-     else
+bool rml_enkf_imodel_has_var( const void * arg, const char * var_name) {
+  {
+    if (strcmp(var_name , ITER_KEY) == 0)
+      return true;
+    else if (strcmp(var_name , USE_PRIOR_KEY) == 0)
+      return true;
+    else if (strcmp(var_name , LAMBDA_INCREASE_FACTOR_KEY) == 0)
+      return true;
+    else if (strcmp(var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
+      return true;
+    else if (strcmp(var_name , LAMBDA0_KEY) == 0)
+      return true;
+    else if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
+      return true;
+    else
+      return false;
+  }
+}
+
+
+
+
+int rml_enkf_imodel_get_int( const void * arg, const char * var_name) {
+  const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , ITER_KEY) == 0)
+      return module_data->iteration_nr;
+    else
+      return -1;
+  }
+}
+
+
+bool rml_enkf_imodel_get_bool( const void * arg, const char * var_name) {
+  const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , USE_PRIOR_KEY) == 0)
+      return module_data->use_prior;
+    else
        return false;
-   }
- }
+  }
+}
 
 
 
- 
- int rml_enkf_imodel_get_int( const void * arg, const char * var_name) {
-   const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
-   {
-     if (strcmp(var_name , ITER_KEY) == 0)
-       return module_data->iteration_nr;
-     else
-       return -1;
-   }
- }
-
-
- bool rml_enkf_imodel_get_bool( const void * arg, const char * var_name) {
-   const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
-   {
-     if (strcmp(var_name , USE_PRIOR_KEY) == 0)
-       return module_data->use_prior;
-     else
-       return false;
-   }
- }
-
-
-
- double rml_enkf_imodel_get_double( const void * arg, const char * var_name) {
-   const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
-   {
-     if (strcmp(var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
-       return module_data->lambda_reduce_factor;
-     if (strcmp(var_name , LAMBDA_INCREASE_FACTOR_KEY) == 0)
-       return module_data->lambda_increase_factor;
-     if (strcmp(var_name , LAMBDA0_KEY) == 0)
-       return module_data->lambda0;
-     if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
-       return module_data->truncation;
-     else
-       return -1;
-   }
- }
+double rml_enkf_imodel_get_double( const void * arg, const char * var_name) {
+  const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
+      return module_data->lambda_reduce_factor;
+    if (strcmp(var_name , LAMBDA_INCREASE_FACTOR_KEY) == 0)
+      return module_data->lambda_increase_factor;
+    if (strcmp(var_name , LAMBDA0_KEY) == 0)
+      return module_data->lambda0;
+    if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
+      return module_data->truncation;
+    else
+      return -1;
+  }
+}
 
 
 
@@ -741,21 +736,21 @@ long rml_enkf_imodel_get_options( void * arg , long flag ) {
 
 
 analysis_table_type SYMBOL_TABLE = {
-    .alloc           = rml_enkf_imodel_data_alloc,
-    .freef           = rml_enkf_imodel_data_free,
-    .set_int         = rml_enkf_imodel_set_int , 
-    .set_double      = rml_enkf_imodel_set_double , 
-    .set_bool        = rml_enkf_imodel_set_bool, 
-    .set_string      = NULL , 
-    .get_options     = rml_enkf_imodel_get_options , 
-    .initX           = NULL,
-    .updateA         = rml_enkf_imodel_updateA ,  
-    .init_update     = rml_enkf_imodel_init_update ,
-    .complete_update = NULL,
-    .has_var         = rml_enkf_imodel_has_var,
-    .get_int         = rml_enkf_imodel_get_int,
-    .get_double      = rml_enkf_imodel_get_double,
-    .get_bool        = rml_enkf_imodel_get_bool,
-    .get_ptr         = NULL, 
+  .alloc           = rml_enkf_imodel_data_alloc,
+  .freef           = rml_enkf_imodel_data_free,
+  .set_int         = rml_enkf_imodel_set_int , 
+  .set_double      = rml_enkf_imodel_set_double , 
+  .set_bool        = rml_enkf_imodel_set_bool, 
+  .set_string      = NULL , 
+  .get_options     = rml_enkf_imodel_get_options , 
+  .initX           = NULL,
+  .updateA         = rml_enkf_imodel_updateA ,  
+  .init_update     = rml_enkf_imodel_init_update ,
+  .complete_update = NULL,
+  .has_var         = rml_enkf_imodel_has_var,
+  .get_int         = rml_enkf_imodel_get_int,
+  .get_double      = rml_enkf_imodel_get_double,
+  .get_bool        = rml_enkf_imodel_get_bool,
+  .get_ptr         = NULL, 
 };
 
