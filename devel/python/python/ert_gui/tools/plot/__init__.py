@@ -1,3 +1,6 @@
+from .plot_bridge import PlotBridge
+from .export_plot_widget import ExportPlotWidget
+from .export_plot import ExportPlot
 from .scale_tracker import ScaleTracker
 from .filter_popup import FilterPopup
 

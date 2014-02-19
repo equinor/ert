@@ -225,8 +225,8 @@ function Histogram(element) {
         }
 
         legend_group.selectAll(".plot-legend").data(legend_list).call(legend);
-        histogram_group.select(".y.axis").transition().duration(0).call(y_axis);
-        histogram_group.select(".x.axis").transition().duration(0).call(x_axis);
+        histogram_group.select(".y.axis").call(y_axis);
+        histogram_group.select(".x.axis").call(x_axis);
 
         context.restore();
     }
