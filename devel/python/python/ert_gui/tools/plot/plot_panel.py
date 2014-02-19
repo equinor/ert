@@ -1,3 +1,4 @@
+import json
 import os
 from PyQt4.QtCore import QUrl, Qt, pyqtSlot, pyqtSignal, QObject
 from PyQt4.QtGui import QWidget, QGridLayout, QPainter
@@ -139,11 +140,12 @@ class PlotPanel(QWidget):
             size = self.size()
             self.web_view.page().mainFrame().evaluateJavaScript("setSize(%d,%d);" % (size.width(), size.height()))
 
-    def supportsPlotProperties(self, time=False, value=False, depth=False):
+    def supportsPlotProperties(self, time=False, value=False, depth=False, histogram=False):
         time = str(time).lower()
         value = str(value).lower()
         depth = str(depth).lower()
-        return self.web_view.page().mainFrame().evaluateJavaScript("supportsPlotProperties(%s,%s,%s);" % (time, value, depth)).toBool()
+        histogram = str(histogram).lower()
+        return self.web_view.page().mainFrame().evaluateJavaScript("supportsPlotProperties(%s,%s,%s,%s);" % (time, value, depth, histogram)).toBool()
 
     def getName(self):
         return self.__name
@@ -153,5 +155,9 @@ class PlotPanel(QWidget):
 
     def setPlotIsVisible(self, visible):
         self.__plot_is_visible = visible
+
+    def setCustomSettings(self, settings):
+        json_settings = json.dumps(settings)
+        self.web_view.page().mainFrame().evaluateJavaScript("setCustomSettings(%s);" % json_settings)
 
 

@@ -39,11 +39,14 @@ extern "C" {
   enkf_plot_gen_kw_vector_type * enkf_plot_gen_kw_iget( const enkf_plot_gen_kw_type * vector , int index);
   void                           enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * gen_kw ,
                                                         enkf_fs_type           * fs ,
-                                                        bool                     transform_data , 
+                                                        bool                     transform_data ,
                                                         int                      report_step ,
                                                         state_enum               state ,
                                                         const bool_vector_type * input_mask);
-  const char * enkf_plot_gen_kw_iget_key( const enkf_plot_gen_kw_type * plot_gen_kw, int index);
+
+  const char                   * enkf_plot_gen_kw_iget_key( const enkf_plot_gen_kw_type * plot_gen_kw, int index);
+  int                            enkf_plot_gen_kw_get_keyword_count( const enkf_plot_gen_kw_type * gen_kw );
+  bool                           enkf_plot_gen_kw_should_use_log_scale(const enkf_plot_gen_kw_type * gen_kw , int index);
 
   UTIL_IS_INSTANCE_HEADER( enkf_plot_gen_kw );
 

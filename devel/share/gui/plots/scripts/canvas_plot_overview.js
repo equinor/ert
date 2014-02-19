@@ -100,3 +100,7 @@ OverviewPlot.prototype.setHorizontalDrawDirection = function (horizontal) {
     this.horizontal_draw_direction = horizontal;
 };
 
+OverviewPlot.prototype.setCustomSettings = function (settings) {
+    this.plot.setCustomSettings(settings);
+};
+

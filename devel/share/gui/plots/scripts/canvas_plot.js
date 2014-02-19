@@ -119,28 +119,50 @@ function Plot(element, x_dimension, y_dimension) {
     };
 
 
-//    var renderEnsembleDirect = function(context, data) {
-//        if(data.hasEnsembleData()) {
-//            var case_list = data.caseList();
-//
-//            for(var case_index = 0; case_index < case_list.length; case_index++) {
-//                var style = STYLES["ensemble_" + (case_index + 1)];
-//                var case_name = case_list[case_index];
-//                var line_renderer = self.line_renderers[case_index];
-//
-//                var x_values = data.ensembleXValues(case_name);
-//                var y_values_list = data.ensembleYValues(case_name);
-//
-//                for (var realization = 0; realization < y_values_list.length; realization++) {
-//                    line_renderer(context, x_values[realization], y_values_list[realization]);
-//                }
-//
-//                self.plot.addLegend(style, case_name, CanvasPlotLegend.simpleLine);
-//            }
-//        }
-//    };
+    var renderEnsembleDirect = function(context, data) {
+        if(data.hasEnsembleData()) {
+            var case_list = data.caseList();
+
+            for(var case_index = 0; case_index < case_list.length; case_index++) {
+                var style = STYLES["ensemble_" + (case_index + 1)];
+                var case_name = case_list[case_index];
+                var line_renderer = self.line_renderers[case_index];
+
+                var ensemble_data = data.ensembleData(case_name);
+                var x_values = ensemble_data.xValues();
+                var y_values = ensemble_data.yValues();
+
+                var realization_count = y_values.length;
+                if (!self.horizontal_draw_direction) {
+                    realization_count = x_values.length;
+                }
+
+
+                for (var i = 0; i < realization_count; i++) {
+                    if (self.horizontal_draw_direction) {
+                        if(x_values.length == 1) {
+                            circle_renderer(context, x_values[0], y_values[i][0])
+                        } else {
+                            line_renderer(context, x_values, y_values[i]);
+                        }
+
+                    } else {
+                        if(y_values.length == 1) {
+                            circle_renderer(context, x_values[i][0], y_values[0])
+                        } else {
+                            line_renderer(context, x_values[i], y_values);
+                        }
+                    }
+
+                }
+
+                self.plot.addLegend(style, case_name, CanvasPlotLegend.simpleLine);
+            }
+        }
+    };
 
     this.plot.setRenderCallback(renderEnsembleProgressively);
+    //this.plot.setRenderCallback(renderEnsembleDirect);
 }
 
 Plot.prototype.resize = function (width, height) {
@@ -169,4 +191,8 @@ Plot.prototype.setVerticalErrorBar = function (vertical) {
 
 Plot.prototype.setHorizontalDrawDirection = function (horizontal) {
     this.horizontal_draw_direction = horizontal;
+};
+
+Plot.prototype.setCustomSettings = function (settings) {
+    this.plot.setCustomSettings(settings);
 };

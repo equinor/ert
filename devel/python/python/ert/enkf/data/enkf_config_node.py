@@ -46,12 +46,15 @@ class EnkfConfigNode(BaseCClass):
         return EnkfConfigNode.cNamespace().get_enkf_outfile(self)
 
     def getFieldModelConfig(self):
+        """ @rtype: FieldConfig """
         return FieldConfig.createCReference(EnkfConfigNode.cNamespace().get_ref(self), parent=self)
 
     def getDataModelConfig(self):
+        """ @rtype: GenDataConfig """
         return GenDataConfig.createCReference(EnkfConfigNode.cNamespace().get_ref(self), parent=self)
 
     def getKeywordModelConfig(self):
+        """ @rtype: GenKWConfig """
         return GenKwConfig.createCReference(EnkfConfigNode.cNamespace().get_ref(self), parent=self)
 
     def get_enkf_infile(self):
