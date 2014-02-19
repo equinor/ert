@@ -11,10 +11,6 @@ class RefcasePlotData(QObject):
         self.__y_values = []
         self.__has_data = False
 
-        self.__report_step_time_indexes = {}
-        self.__first_report_step_time = None
-        self.__last_report_step_time = None
-
         self.__min_x = None
         self.__max_x = None
         self.__min_y = None
@@ -27,15 +23,6 @@ class RefcasePlotData(QObject):
             self.__x_values = x_values
             self.__y_values = y_values
             self.__has_data = True
-
-            for index in range(len(x_values)):
-                x = x_values[index]
-                # if x in self.__report_step_time_indexes:
-                #     print("[RefcasePlotData] value %d already in index list!" % x)
-                self.__report_step_time_indexes[x] = index
-
-            self.__first_report_step_time = min(x_values)
-            self.__last_report_step_time = max(x_values)
 
 
     def updateBoundaries(self, min_x, max_x, min_y, max_y):
@@ -84,10 +71,6 @@ class RefcasePlotData(QObject):
     def maxY(self):
         return self.__max_y
 
-    @pyqtSlot(result=int)
-    def lastReportStepTime(self):
-        return self.__last_report_step_time
-
 
     @pyqtSlot(result=bool)
     def isValid(self):
@@ -103,12 +86,4 @@ class RefcasePlotData(QObject):
         return self.__has_data
 
 
-    @pyqtSlot(int, result=bool)
-    def hasSample(self, report_step_time):
-        return report_step_time in self.__report_step_time_indexes
-
-    @pyqtSlot(int, result=float)
-    def getSample(self, report_step_time):
-        index = self.__report_step_time_indexes[report_step_time]
-        return self.__y_values[index]
 

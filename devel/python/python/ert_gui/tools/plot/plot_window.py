@@ -2,6 +2,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker
+from ert_gui.tools.plot.customize_plot_widget import CustomizePlotWidget
 from ert_gui.tools.plot.data import PlotDataFetcher
 from ert_gui.widgets.util import may_take_a_long_time
 
@@ -35,12 +36,19 @@ class PlotWindow(QMainWindow):
         current_case = CaseSelectorModel().getCurrentChoice()
         self.__case_selection_widget = CaseSelectionWidget(current_case)
         self.__case_selection_widget.caseSelectionChanged.connect(self.caseSelectionChanged)
-        self.addDock("Plot case", self.__case_selection_widget)
+        plot_case_dock = self.addDock("Plot case", self.__case_selection_widget)
 
         self.__plot_metrics_widget = PlotMetricsWidget()
         self.__plot_metrics_widget.plotScalesChanged.connect(self.scalesChanged)
         self.__plot_metrics_widget.reportStepTimeChanged.connect(self.reportStepTimeChanged)
-        self.addDock("Plot metrics", self.__plot_metrics_widget)
+        plot_metrics_dock = self.addDock("Plot metrics", self.__plot_metrics_widget)
+
+        self.__customize_plot_widget = CustomizePlotWidget()
+        self.__customize_plot_widget.customPlotSettingsChanged.connect(self.customizePlot)
+        customize_plot_dock = self.addDock("Customize", self.__customize_plot_widget)
+
+        self.tabifyDockWidget(plot_metrics_dock, customize_plot_dock)
+        self.tabifyDockWidget(plot_metrics_dock, plot_case_dock)
 
         self.__data_type_key = None
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
@@ -83,10 +91,18 @@ class PlotWindow(QMainWindow):
     def plotReady(self):
         if self.checkPlotStatus():
             self.__data_type_keys_widget.selectDefault()
+            self.__customize_plot_widget.emitChange()
 
 
     def caseSelectionChanged(self):
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
+        self.keySelected(self.__data_type_key)
+
+
+    def customizePlot(self, settings):
+        for plot_panel in self.__plot_panels:
+            plot_panel.setCustomSettings(settings)
+
         self.keySelected(self.__data_type_key)
 
     def scalesChanged(self):
@@ -126,15 +142,24 @@ class PlotWindow(QMainWindow):
     def keySelected(self, key):
         self.__data_type_key = str(key)
 
+        plot_data_fetcher = PlotDataFetcher()
         for plot_panel in self.__plot_panels:
             visible = self.__central_tab.indexOf(plot_panel) > -1
 
-            if PlotDataFetcher().isSummaryKey(self.__data_type_key):
-                show_plot = plot_panel.supportsPlotProperties(time=True, value=True)
+            if plot_data_fetcher.isSummaryKey(self.__data_type_key):
+                show_plot = plot_panel.supportsPlotProperties(time=True, value=True, histogram=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
-            elif PlotDataFetcher().isBlockObservationKey(self.__data_type_key):
+            elif plot_data_fetcher.isBlockObservationKey(self.__data_type_key):
                 show_plot = plot_panel.supportsPlotProperties(depth=True, value=True)
+                self.showOrHidePlotTab(plot_panel, visible, show_plot)
+
+            elif plot_data_fetcher.isGenKWKey(self.__data_type_key):
+                show_plot = plot_panel.supportsPlotProperties(histogram=True)
+                self.showOrHidePlotTab(plot_panel, visible, show_plot)
+
+            elif plot_data_fetcher.isGenDataKey(self.__data_type_key):
+                show_plot = plot_panel.supportsPlotProperties(time=True, value=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             else:
@@ -151,7 +176,7 @@ class PlotWindow(QMainWindow):
 
 
         if self.checkPlotStatus():
-            data = PlotDataFetcher().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
+            data = plot_data_fetcher.getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
             data.setParent(self)
 
             for plot_panel in self.__plot_panels:

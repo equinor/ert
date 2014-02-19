@@ -1,4 +1,5 @@
 from .histogram_plot_data import CaseHistogramPlotData, HistogramPlotData
+from .histogram_plot_data_factory import HistogramPlotDataFactory, ReportStepLessHistogramPlotDataFactory
 from .observation_plot_data import ObservationPlotData
 from .refcase_plot_data import RefcasePlotData
 from .ensemble_plot_data import EnsemblePlotData

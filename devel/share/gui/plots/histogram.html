@@ -82,11 +82,11 @@
     function updatePlot() {
         stored_data = plot_data_source.getPlotData();
 
-        if (stored_data != null) {
+        if (stored_data != null && stored_data.isValid()) {
             var histogram_data;
 
             if(stored_report_step_time == null) {
-                histogram_data = stored_data.histogramData(stored_data.lastReportStepTime());
+                histogram_data = stored_data.histogramData(stored_data.maxX());
             } else {
                 histogram_data = stored_data.histogramData(stored_report_step_time);
             }
@@ -98,6 +98,7 @@
                 var histogram = histograms[index];
                 histogram.setVisible(true);
                 histogram.setSize(stored_width, stored_histogram_height);
+                histogram.setShouldUseLogScale(stored_data.shouldUseLogScale());
                 histogram(histogram_data, case_list[index]);
             }
 
@@ -144,8 +145,12 @@
 
     }
 
-    function supportsPlotProperties(time, value, depth){
-        return time && value && !depth
+    function supportsPlotProperties(time, value, depth, histogram){
+        return histogram;
+    }
+
+    function setCustomSettings(settings) {
+
     }
 
 </script>
