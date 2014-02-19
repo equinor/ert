@@ -10,7 +10,6 @@ var STYLES = {
         stroke: "rgba(0, 0, 0, 1.0)",
         fill: "rgba(0, 0, 0, 0.0)",
         stroke_width: 1,
-//        dash_array: [3, 5],
         dash_array: [],
         line_cap: "butt"
     },
@@ -66,7 +65,7 @@ var STYLES = {
     ensemble_5: {
         stroke: "rgba(191, 91, 23, 0.8)",
         fill: "rgba(191, 91, 23, 0.5)",
-        stroke_width: 2,
+        stroke_width: 1,
         dash_array: [],
         line_cap: "butt"
     },

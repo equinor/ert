@@ -1,8 +1,10 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker
+from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker, \
+    ExportPlotWidget, ExportPlot
 from ert_gui.tools.plot.data import PlotDataFetcher
+
 from ert_gui.widgets.util import may_take_a_long_time
 
 
@@ -42,11 +44,29 @@ class PlotWindow(QMainWindow):
         self.__plot_metrics_widget.reportStepTimeChanged.connect(self.reportStepTimeChanged)
         self.addDock("Plot metrics", self.__plot_metrics_widget)
 
+        self.__export_plot_widget = ExportPlotWidget()
+        self.__export_plot_widget.exportButtonPressed.connect(self.exportActivePlot)
+        self.addDock("Export Plot", self.__export_plot_widget)
+
         self.__data_type_key = None
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
         self.__value_scale_tracker = ScaleTracker("Value")
         self.__time_scale_tracker = ScaleTracker("Time")
         self.__depth_scale_tracker = ScaleTracker("Depth")
+
+
+    def exportActivePlot(self):
+        if self.__central_tab.currentIndex() > -1:
+            active_plot =  self.__central_tab.currentWidget()
+            assert isinstance(active_plot, PlotPanel)
+            value_min = self.__value_scale_tracker.getMinimumScaleValue(self.__data_type_key)
+            value_max = self.__value_scale_tracker.getMaximumScaleValue(self.__data_type_key)
+            time_min = self.__time_scale_tracker.getMinimumScaleValue(self.__data_type_key)
+            time_max = self.__time_scale_tracker.getMaximumScaleValue(self.__data_type_key)
+            depth_min = self.__depth_scale_tracker.getMinimumScaleValue(self.__data_type_key)
+            depth_max = self.__depth_scale_tracker.getMaximumScaleValue(self.__data_type_key)
+            self.export_plot = ExportPlot(active_plot, time_min, time_max, value_min, value_max, depth_min, depth_max)
+            self.export_plot.export()
 
 
     def addPlotPanel(self, name, path, short_name=None):
