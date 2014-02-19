@@ -149,6 +149,8 @@ void rml_enkf_imodel_set_subspace_dimension( rml_enkf_imodel_data_type * data , 
 
 
 
+
+
 void * rml_enkf_imodel_data_alloc( rng_type * rng) {
   rml_enkf_imodel_data_type * data = util_malloc( sizeof * data);
   UTIL_TYPE_ID_INIT( data , RML_ENKF_IMODEL_TYPE_ID );
@@ -179,17 +181,14 @@ void rml_enkf_imodel_data_free( void * arg ) {
 }
 
 
-
-void rml_enkf_imodel_init1__( matrix_type * A,
-                              rml_enkf_imodel_data_type * data, 
-                              double truncation,
-                              double nsc) {
+static void rml_enkf_imodel_init1__( rml_enkf_imodel_data_type * data, 
+                                     double nsc) {
   
 
-  int nstate        = matrix_get_rows( A );
-  int ens_size      = matrix_get_columns( A );
+  int nstate        = matrix_get_rows( data->prior0 );
+  int ens_size      = matrix_get_columns( data->prior0 );
   int nrmin         = util_int_min( ens_size , nstate); 
-  matrix_type * Dm  = matrix_alloc_copy( A );
+  matrix_type * Dm  = matrix_alloc_copy( data->prior0 );
   
   matrix_type * Um  = matrix_alloc( nstate , nrmin  );     /* Left singular vectors.  */
   matrix_type * VmT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
@@ -208,7 +207,7 @@ void rml_enkf_imodel_init1__( matrix_type * A,
   }
 
 
-  int nsign1 = enkf_linalg_svd_truncation(Dm , truncation , -1 , DGESVD_MIN_RETURN  , Wm , Um , VmT);
+  int nsign1 = enkf_linalg_svd_truncation(Dm , data->truncation , -1 , DGESVD_MIN_RETURN  , Wm , Um , VmT);
   printf("The significant Eigen values are %d\n",nsign1);
 
   enkf_linalg_rml_enkfAm(Um, Wm, nsign1);
@@ -255,6 +254,71 @@ void rml_enkf_imodel_scalingA(matrix_type *A, double * Csc, bool invert ){
       }
 }
 
+
+
+
+static void rml_enkf_imodel_initA__(rml_enkf_imodel_data_type * data, 
+                                    matrix_type * A ,
+                                    matrix_type * S , 
+                                    matrix_type * Cd , 
+                                    matrix_type * E , 
+                                    matrix_type * D ,
+                                    matrix_type * Udr,
+                                    double * Wdr,
+                                    matrix_type * VdTr) {
+
+  int nrobs         = matrix_get_rows( S );
+  int ens_size      = matrix_get_columns( S );
+  double a = data->lambda + 1;
+  matrix_type *tmp  = matrix_alloc (nrobs, ens_size);
+  double nsc = 1/sqrt(ens_size-1);
+
+  
+  printf("The lamda Value is %5.5f\n",data->lambda);
+  printf("The Value of Truncation is %4.2f \n",data->truncation);
+
+  matrix_subtract_row_mean( S );           /* Shift away the mean in the ensemble predictions*/
+  matrix_inplace_diag_sqrt(Cd);
+  matrix_dgemm(tmp, Cd, S,false, false, 1.0, 0.0);
+  matrix_scale(tmp, nsc);
+  
+  printf("The Scaling of data matrix completed !\n ");
+
+
+  // SVD(S)  = Ud * Wd * Vd(T)
+  int nsign = enkf_linalg_svd_truncation(tmp , data->truncation , -1 , DGESVD_MIN_RETURN  , Wdr , Udr , VdTr);
+  
+  /* After this we only work with the reduced dimension matrices */
+  
+  printf("The number of siginificant ensembles are %d \n ",nsign);
+  
+  matrix_type * X1   = matrix_alloc( nsign, ens_size);
+  matrix_type * X2    = matrix_alloc (nsign, ens_size );
+  matrix_type * X3    = matrix_alloc (ens_size, ens_size );
+  
+  
+  // Compute the matrices X1,X2,X3 and dA 
+  enkf_linalg_rml_enkfX1(X1, Udr ,D ,Cd );  //X1 = Ud(T)*Cd(-1/2)*D   -- D= -(dk-d0)
+  enkf_linalg_rml_enkfX2(X2, Wdr ,X1 ,a, nsign);  //X2 = ((a*Ipd)+Wd^2)^-1  * X1
+
+  matrix_free(X1);
+
+  enkf_linalg_rml_enkfX3(X3, VdTr ,Wdr,X2, nsign);  //X3 = Vd *Wd*X2
+  printf("The X3 matrix is computed !\n ");
+
+  matrix_type *dA1= matrix_alloc (matrix_get_rows(A), ens_size);
+  matrix_type * Dm  = matrix_alloc_copy( A );
+
+  matrix_subtract_row_mean( Dm );      /* Remove the mean from the ensemble of model parameters*/
+  matrix_scale(Dm, nsc);
+
+  enkf_linalg_rml_enkfdA(dA1, Dm, X3);      //dA = Dm * X3   
+  matrix_inplace_add(A,dA1); //dA 
+
+  matrix_free(X3);
+  matrix_free(Dm);
+  matrix_free(dA1);
+}
 
 
 void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
@@ -331,6 +395,55 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
 }
 
 
+static void rml_enkf_imodel_updateA_iter0(rml_enkf_imodel_data_type * data,
+                                          matrix_type * A , 
+                                          matrix_type * S , 
+                                          matrix_type * R , 
+                                          matrix_type * dObs , 
+                                          matrix_type * E , 
+                                          matrix_type * D,
+                                          matrix_type * Cd) {
+        
+  matrix_type * Skm = matrix_alloc(matrix_get_columns(D),matrix_get_columns(D));
+  int ens_size      = matrix_get_columns( S );
+  int nrobs         = matrix_get_rows( S );
+  int nrmin         = util_int_min( ens_size , nrobs); 
+  int state_size    = matrix_get_rows( A );
+  matrix_type * Ud  = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
+  matrix_type * VdT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
+  double * Wd       = util_calloc( nrmin , sizeof * Wd ); 
+  double nsc = 1/sqrt(ens_size-1); 
+
+  
+  data->Sk  = enkf_linalg_data_mismatch(D,Cd,Skm);  
+  data->Std = matrix_diag_std(Skm,data->Sk);
+  
+  data->lambda = pow(10 , floor(log10(data->Sk/(2*nrobs))) );
+  rml_enkf_common_store_state( data->state  , A , data->ens_mask );
+  rml_enkf_common_store_state( data->prior0 , A , data->ens_mask );
+  
+  
+  data->Csc     = util_calloc(state_size , sizeof * data->Csc);
+  rml_enkf_imodel_Create_Csc( data );
+  rml_enkf_imodel_initA__(data , A, S , Cd , E , D , Ud , Wd , VdT);
+  rml_enkf_imodel_init1__(data , nsc);
+  
+  /*
+    printf("Prior Objective function value is %5.3f \n", data->Sk);
+    fprintf(fp,"Iteration number\t   Lambda Value \t    Current Mean (OB FN) \t    Old Mean\t     Current Stddev\n");
+    fprintf(fp, "\n\n");
+    fprintf(fp,"%d     \t\t       NA       \t      %5.5f      \t         \t   %5.5f    \n",data->iteration_nr, data->Sk, data->Std);
+  */
+
+  matrix_free( Skm );
+  matrix_free( Ud );
+  matrix_free( VdT );
+  free( Wd );
+}
+
+
+
+
 
 void rml_enkf_imodel_updateA(void * module_data , 
                       matrix_type * A , 
@@ -342,127 +455,90 @@ void rml_enkf_imodel_updateA(void * module_data ,
 
 
   rml_enkf_imodel_data_type * data = rml_enkf_imodel_data_safe_cast( module_data );
-  double truncation = data->truncation;
-  
   double Sk_new;
   double  Std_new;
-  matrix_type * Skm = matrix_alloc(matrix_get_columns(D),matrix_get_columns(D));
-  FILE *fp = util_fopen("rml_enkf_imodel_output","a");
-  
-  int nstate        = matrix_get_rows(A);
-  int ens_size      = matrix_get_columns( S );
   int nrobs         = matrix_get_rows( S );
+  int ens_size      = matrix_get_columns( S );
+  double nsc        = 1/sqrt(ens_size-1); 
+  FILE *fp = util_fopen("rml_enkf_imodel_output","a");
   matrix_type * Cd  = matrix_alloc( nrobs, nrobs );
-
-  double nsc = 1/sqrt(ens_size-1); 
  
-
-  int nrmin         = util_int_min( ens_size , nrobs); 
-  matrix_type * Ud  = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
-  matrix_type * VdT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
-  double * Wd       = util_calloc( nrmin , sizeof * Wd ); 
   
   enkf_linalg_Covariance(Cd ,E ,nsc, nrobs);
   matrix_inv(Cd);
 
   
   if (data->iteration_nr == 0) {
-    Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
-    Std_new= matrix_diag_std(Skm,Sk_new);
-
-    data->lambda =pow(10,floor(log10(Sk_new/(2*nrobs))));
-    rml_enkf_common_store_state( data->state  , A , data->ens_mask );
-    rml_enkf_common_store_state( data->prior0 , A , data->ens_mask );
-    
-
-    data->Csc     = util_calloc(nstate , sizeof * data->Csc);
-    rml_enkf_imodel_Create_Csc(data);
-    rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
-    printf("\n model scaling matrix computed\n");
-    rml_enkf_imodel_init1__(data->prior0 , data, truncation, nsc);
-  
-    data->Sk = Sk_new;
-    data->Std= Std_new;
-   
-    printf("Prior Objective function value is %5.3f \n", data->Sk);
-
-    fprintf(fp,"Iteration number\t   Lambda Value \t    Current Mean (OB FN) \t    Old Mean\t     Current Stddev\n");
-    fprintf(fp, "\n\n");
-    fprintf(fp,"%d     \t\t       NA       \t      %5.5f      \t         \t   %5.5f    \n",data->iteration_nr, Sk_new, Std_new);
-   
+    rml_enkf_imodel_updateA_iter0(data , A , S , R , dObs , E , D , Cd);
   } else {
+    int nrmin         = util_int_min( ens_size , nrobs); 
+    matrix_type * Ud  = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
+    matrix_type * VdT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
+    double * Wd       = util_calloc( nrmin , sizeof * Wd ); 
+    matrix_type * Skm = matrix_alloc(matrix_get_columns(D),matrix_get_columns(D));
     matrix_type * Acopy  = matrix_alloc_copy (A);
     Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
-    Std_new= matrix_diag_std(Skm,Sk_new);
+    Std_new = matrix_diag_std(Skm,Sk_new);
+    
     printf(" Current Objective function value is %5.3f \n\n",Sk_new);
-    printf("The old Objective function value is %5.3f \n", data->Sk);
-    
-    
-    if ((Sk_new< (data->Sk)) && (Std_new<= (data->Std))) {
-        if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
-          data-> iteration_nr = 16;
+    printf(" The old Objective function value is %5.3f \n", data->Sk);
+    {
+      bool mismatch_reduced = false;
+      bool std_reduced = false;
+
+      if (Sk_new < data->Sk)
+        mismatch_reduced = true;
+      
+      if (Std_new <= data->Std)
+        std_reduced = true;
+      
+      fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
+
+      if (mismatch_reduced) {
+        /*
+          Stop check: if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
+        */
+        if (std_reduced) 
+          data->lambda = data->lambda / 10 ;
+
+        rml_enkf_common_store_state(data->state , A , data->ens_mask );
+        rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
         
-        fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
-        data->lambda = data->lambda / 10 ;
-        data->Std   = Std_new;
+        rml_enkf_imodel_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
+        rml_enkf_imodel_init2__(data , A , Acopy , Wd , nsc , VdT);
 
-          rml_enkf_common_store_state(data->state , A , data->ens_mask );
-          rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
-          
-          data->Sk = Sk_new;
-          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
-          rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
-        }
-      else if((Sk_new< (data->Sk)) && (Std_new > (data->Std)))
-        {
-          if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
-            data-> iteration_nr = 16;
-
-          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
-          data->lambda = data->lambda;
-          data->Std=Std_new;
-
-          rml_enkf_common_store_state(data->state , A , data->ens_mask );
-          rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
-
-          data->Sk = Sk_new;
-          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
-          rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
-
-        }
-      else {
-          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f     \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
+        data->Sk = Sk_new;
+        data->Std=Std_new;
+        data->iteration_nr++;
+      } else {
         printf("The previous step is rejected !!\n");
-        data->lambda = data ->lambda * 4;   
-
+        data->lambda = data->lambda * 4;   
+        
         rml_enkf_common_recover_state( data->state , A , data->ens_mask );
         rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
-
-        printf("matrix copied \n");
-        rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
-        rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
-        data->iteration_nr--;
+        
+        rml_enkf_imodel_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
+        rml_enkf_imodel_init2__(data , A , Acopy , Wd , nsc , VdT);
       }
-      matrix_free(Acopy);
     }
-  data->iteration_nr++;
-  
+    matrix_free(Acopy);
+    matrix_free(Skm);
+    matrix_free( Ud );
+    matrix_free( VdT );
+    free( Wd );
+  }
+
   //setting the lower bound for lambda
   if (data->lambda <.01)
     data->lambda= .01;
 
-
   printf ("The current iteration number is %d \n ", data->iteration_nr);
-
-  // free(data->Csc);
-  matrix_free(Ud);
-  matrix_free(VdT);
-  free(Wd);
-  matrix_free(Skm);
+  
   matrix_free(Cd);
   fclose(fp);
-
 }
+
+
 
 
 void rml_enkf_imodel_init_update(void * arg , 
