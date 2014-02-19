@@ -65,6 +65,9 @@
         plot = new OverviewPlot(d3.select("body"), BasePlotValueDimension(), BasePlotValueDimension(true));
         plot.setVerticalErrorBar(false);
         plot.setHorizontalDrawDirection(false);
+        plot.setRenderingFinishedCallback(function() {
+            plot_data_source.renderingFinished();
+        });
     }
 
     function updatePlot() {

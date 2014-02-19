@@ -24,11 +24,15 @@ function BasePlot(element, x_dimension, y_dimension) {
     this.custom_x_min = null;
     this.custom_x_max = null;
 
+    this.render_finished = false;
+    this.render_callback_finished = false;
+
     this.dimension_y = y_dimension;
     this.dimension_x = x_dimension;
 
     this.vertical_error_bar = true;
     this.error_bar_only = false;
+    this.rendering_finished_callback = null;
 
     var group = this.root_elemenet.append("div")
         .attr("class", "plot");
@@ -191,11 +195,13 @@ BasePlot.prototype.setData = function(data) {
 
 BasePlot.prototype.render = function() {
     var data = this.stored_data;
+    this.render_finished = false;
+    this.render_callback_finished = false;
 
     this.resetLegends();
 
-    this.plot_group.select(".y.axis").transition().duration(0).call(this.y_axis);
-    this.plot_group.select(".x.axis").transition().duration(0).call(this.x_axis);
+    this.plot_group.select(".y.axis").call(this.y_axis);
+    this.plot_group.select(".x.axis").call(this.x_axis);
 
     this.canvas.attr("width", this.width).attr("height", this.height);
     this.overlay_canvas.attr("width", this.width).attr("height", this.height);
@@ -216,6 +222,8 @@ BasePlot.prototype.render = function() {
 
     overlay_context.restore();
     context.restore();
+    this.finishedRendering();
+
 };
 
 BasePlot.prototype.setRenderCallback = function(callback) {
@@ -328,3 +336,27 @@ BasePlot.prototype.setCustomSettings = function (settings) {
     }
 };
 
+BasePlot.prototype.renderCallbackFinishedRendering = function(){
+    this.render_callback_finished = true;
+    this.emitFinishedRendering()
+
+};
+
+BasePlot.prototype.finishedRendering = function(){
+    this.render_finished = true;
+    this.emitFinishedRendering();
+
+};
+
+BasePlot.prototype.emitFinishedRendering = function(){
+    if(this.rendering_finished_callback != null){
+        if(this.render_finished && this.render_callback_finished) {
+            this.rendering_finished_callback();
+        }
+    }
+
+};
+
+BasePlot.prototype.setRenderingFinishedCallback = function(callback) {
+    this.rendering_finished_callback = callback;
+};
