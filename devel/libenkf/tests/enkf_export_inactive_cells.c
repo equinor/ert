@@ -85,13 +85,6 @@ void check_exported_data(const char * exported_file,
           }
           double initial_value  = init_file ? ecl_kw_iget_as_double(kw_original, global_index) : 0.0;
 
-          if (false) {
-            printf(" i, j, k: %d, %d, %d \n", i, j, k);
-            if (init_file) printf("INITIAL VALUE %f\n", initial_value);
-            printf("FIELD VALUE %f\n", field_value);
-            printf("EXPORTED VALUE %f\n", exported_value);
-          }
-
           if (active)
             test_assert_double_equal(field_value, exported_value);
           else if (init_file)
