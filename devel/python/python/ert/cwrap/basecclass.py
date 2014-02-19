@@ -88,22 +88,11 @@ class BaseCClass(object):
         raise NotImplementedError("A CClass requires a free method implementation!")
 
 
-    #Dangeroud method; should only be used if you really know ...
-    def dropCPointer(self):
-        self.__c_pointer = None
-
-
-    def hasCPointer(self):
-        if self.__c_pointer > 0:
-            return True
-        else:
-            return False
-        
 
     def __del__(self):
         if self.free is not None:
             if not self.__is_reference:
                 # Important to check the c_pointer; in the case of failed object creation
                 # we can have a Python object with c_pointer == None.
-                if self.hasCPointer():
+                if self.__c_pointer > 0:
                     self.free()
