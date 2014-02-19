@@ -57,7 +57,9 @@ typedef struct rml_enkf_imodel_data_struct rml_enkf_imodel_data_type;
 #define INVALID_SUBSPACE_DIMENSION  -1
 #define INVALID_TRUNCATION          -1
 #define DEFAULT_SUBSPACE_DIMENSION  INVALID_SUBSPACE_DIMENSION
+#define DEFAULT_USE_PRIOR           true
 
+#define USE_PRIOR_KEY  "USE_PRIOR"
 
 
 
@@ -99,6 +101,7 @@ struct rml_enkf_imodel_data_struct {
   matrix_type *prior0;
   matrix_type *state;
   bool_vector_type * ens_mask;
+  bool use_prior;
 };
 
 
@@ -128,6 +131,16 @@ void rml_enkf_imodel_set_truncation( rml_enkf_imodel_data_type * data , double t
     data->subspace_dimension = INVALID_SUBSPACE_DIMENSION;
 }
 
+
+bool rml_enkf_imodel_get_use_prior( const rml_enkf_imodel_data_type * data ) {
+  return data->use_prior;
+}
+
+
+void rml_enkf_imodel_set_use_prior( rml_enkf_imodel_data_type * data , bool use_prior) {
+  data->use_prior = use_prior;
+}
+
 void rml_enkf_imodel_set_subspace_dimension( rml_enkf_imodel_data_type * data , int subspace_dimension) {
   data->subspace_dimension = subspace_dimension;
   if (subspace_dimension > 0)
@@ -142,6 +155,7 @@ void * rml_enkf_imodel_data_alloc( rng_type * rng) {
   
   rml_enkf_imodel_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   rml_enkf_imodel_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
+  rml_enkf_imodel_set_use_prior( data , DEFAULT_USE_PRIOR );
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
   data->Std          = 0; 
@@ -495,6 +509,21 @@ bool rml_enkf_imodel_set_int( void * arg , const char * var_name , int value) {
 }
 
 
+bool rml_enkf_imodel_set_bool( void * arg , const char * var_name , bool value) {
+  rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast( arg );
+  {
+    bool name_recognized = true;
+    
+    if (strcmp( var_name , USE_PRIOR_KEY) == 0)
+      rml_enkf_imodel_set_use_prior( module_data , value );
+    else
+      name_recognized = false;
+
+    return name_recognized;
+  }
+}
+
+
 long rml_enkf_imodel_get_options( void * arg , long flag ) {
   rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast( arg );
   {
@@ -507,6 +536,8 @@ long rml_enkf_imodel_get_options( void * arg , long flag ) {
  bool rml_enkf_imodel_has_var( const void * arg, const char * var_name) {
    {
      if (strcmp(var_name , ENKF_ITER_KEY_) == 0)
+       return true;
+     else if (strcmp(var_name , USE_PRIOR_KEY) == 0)
        return true;
      else
        return false;
@@ -543,7 +574,7 @@ analysis_table_type SYMBOL_TABLE = {
     .freef           = rml_enkf_imodel_data_free,
     .set_int         = rml_enkf_imodel_set_int , 
     .set_double      = rml_enkf_imodel_set_double , 
-    .set_bool        = NULL , 
+    .set_bool        = rml_enkf_imodel_set_bool, 
     .set_string      = NULL , 
     .get_options     = rml_enkf_imodel_get_options , 
     .initX           = NULL,
