@@ -52,6 +52,7 @@ extern "C" {
   typedef bool   (analysis_has_var_ftype)    (const void * module_data , const char * var_name);
   typedef int    (analysis_get_int_ftype)    (const void * module_data , const char * var_name );
   typedef double (analysis_get_double_ftype) (const void * module_data , const char * var_name );
+  typedef bool   (analysis_get_bool_ftype)   (const void * module_data , const char * var_name );
   typedef void * (analysis_get_ptr_ftype)    (const void * module_data , const char * var_name );
 
 /*****************************************************************/
@@ -78,6 +79,7 @@ typedef struct {
   analysis_has_var_ftype         * has_var;
   analysis_get_int_ftype         * get_int;
   analysis_get_double_ftype      * get_double;
+  analysis_get_bool_ftype        * get_bool;
   analysis_get_ptr_ftype         * get_ptr;
 } analysis_table_type;
 
