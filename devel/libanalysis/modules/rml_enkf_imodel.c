@@ -92,7 +92,7 @@ struct rml_enkf_imodel_data_struct {
   int       subspace_dimension;    // Controlled by config key: ENKF_NCOMP_KEY (-1: use Truncation instead)
   long      option_flags;
   int       iteration_nr;          // Keep track of the outer iteration loop
-  double    lamda;                 // parameter to control the search direction in Marquardt levenberg optimization 
+  double    lambda;                 // parameter to control the search direction in Marquardt levenberg optimization 
   double    Sk;                    // Objective function value
   double    Std;                   // Standard Deviation of the Objective function
   double  * Csc;
@@ -269,7 +269,7 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
   int ens_size      = matrix_get_columns( Acopy );
   matrix_type * Dk  = matrix_alloc_copy( Acopy );
 
-  double a = data->lamda + 1;
+  double a = data->lambda + 1;
   matrix_type *Am= matrix_alloc_copy(data->Am);
   matrix_type *Apr= matrix_alloc_copy(data->active_prior);
   double *Csc = util_calloc(nstate , sizeof * Csc ); 
@@ -370,14 +370,14 @@ void rml_enkf_imodel_updateA(void * module_data ,
     Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
     Std_new= matrix_diag_std(Skm,Sk_new);
 
-    data->lamda =pow(10,floor(log10(Sk_new/(2*nrobs))));
+    data->lambda =pow(10,floor(log10(Sk_new/(2*nrobs))));
     rml_enkf_common_store_state( data->state  , A , data->ens_mask );
     rml_enkf_common_store_state( data->prior0 , A , data->ens_mask );
     
 
     data->Csc     = util_calloc(nstate , sizeof * data->Csc);
     rml_enkf_imodel_Create_Csc(data);
-    rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+    rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
     printf("\n model scaling matrix computed\n");
     rml_enkf_imodel_init1__(data->prior0 , data, truncation, nsc);
   
@@ -386,7 +386,7 @@ void rml_enkf_imodel_updateA(void * module_data ,
    
     printf("Prior Objective function value is %5.3f \n", data->Sk);
 
-    fprintf(fp,"Iteration number\t   Lamda Value \t    Current Mean (OB FN) \t    Old Mean\t     Current Stddev\n");
+    fprintf(fp,"Iteration number\t   Lambda Value \t    Current Mean (OB FN) \t    Old Mean\t     Current Stddev\n");
     fprintf(fp, "\n\n");
     fprintf(fp,"%d     \t\t       NA       \t      %5.5f      \t         \t   %5.5f    \n",data->iteration_nr, Sk_new, Std_new);
    
@@ -402,15 +402,15 @@ void rml_enkf_imodel_updateA(void * module_data ,
         if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
           data-> iteration_nr = 16;
         
-        fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
-        data->lamda = data->lamda / 10 ;
+        fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
+        data->lambda = data->lambda / 10 ;
         data->Std   = Std_new;
 
           rml_enkf_common_store_state(data->state , A , data->ens_mask );
           rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
           
           data->Sk = Sk_new;
-          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
           rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
         }
       else if((Sk_new< (data->Sk)) && (Std_new > (data->Std)))
@@ -418,28 +418,28 @@ void rml_enkf_imodel_updateA(void * module_data ,
           if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
             data-> iteration_nr = 16;
 
-          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
-          data->lamda = data->lamda;
+          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
+          data->lambda = data->lambda;
           data->Std=Std_new;
 
           rml_enkf_common_store_state(data->state , A , data->ens_mask );
           rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
           data->Sk = Sk_new;
-          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
           rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
 
         }
       else {
-          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f     \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
+          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f     \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
         printf("The previous step is rejected !!\n");
-        data->lamda = data ->lamda * 4;   
+        data->lambda = data ->lambda * 4;   
 
         rml_enkf_common_recover_state( data->state , A , data->ens_mask );
         rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
         printf("matrix copied \n");
-        rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+        rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
         rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
         data->iteration_nr--;
       }
@@ -447,9 +447,9 @@ void rml_enkf_imodel_updateA(void * module_data ,
     }
   data->iteration_nr++;
   
-  //setting the lower bound for lamda
-  if (data->lamda <.01)
-    data->lamda= .01;
+  //setting the lower bound for lambda
+  if (data->lambda <.01)
+    data->lambda= .01;
 
 
   printf ("The current iteration number is %d \n ", data->iteration_nr);
