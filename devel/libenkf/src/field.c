@@ -80,8 +80,17 @@ struct field_struct {
   for (k=0; k < nz; k++) {                                                                              \
     for (j=0; j < ny; j++) {                                                                            \
       for (i=0; i < nx; i++) {                                                                          \
-        bool initial_value = (init_file && !field_config_active_cell(config, i, j, k)) ? true : false;  \
-        int source_index   = initial_value ? field_config_global_index(config , i , j , k) : field_config_active_index(config, i, j, k); \
+        bool active_cell          = field_config_active_cell(config, i, j, k);                          \
+        bool use_initial_value    = false;                                                              \
+                                                                                                        \
+        if (init_file && !active_cell)                                                                  \
+          use_initial_value = true;                                                                     \
+                                                                                                        \
+        int source_index = 0;                                                                           \
+        if (use_initial_value)                                                                          \
+          source_index = field_config_global_index(config , i , j , k);                                 \
+        else                                                                                            \
+          source_index = field_config_active_index(config, i, j, k);                                    \
                                                                                                         \
         int target_index;                                                                               \
         if (rms_index_order)                                                                            \
@@ -89,16 +98,16 @@ struct field_struct {
         else                                                                                            \
           target_index = i + j * nx + k* nx*ny;                                                         \
                                                                                                         \
-        if (initial_value)                                                                              \
+        if (use_initial_value)                                                                          \
           target_data[target_index] = initial_src_data[source_index];                                   \
-        else if (source_index >= 0)                                                                     \
+        else if (active_cell)                                                                           \
           target_data[target_index] = src_data[source_index];                                           \
         else                                                                                            \
           memcpy(&target_data[target_index] , fill_value , sizeof_ctype_target);                        \
       }                                                                                                 \
     }                                                                                                   \
   }                                                                                                     \
-}                                                                                                         
+}                                                                                                       \
 
 
 void field_export3D(const field_type * field ,
