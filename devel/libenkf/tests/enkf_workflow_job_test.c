@@ -51,15 +51,24 @@ void test_init_case_job(ert_test_context_type * test_context, const char * job_n
 
   ert_test_context_install_workflow_job( test_context , "JOB" , job_file );
 
+  printf("1: Current case: %s \n",enkf_main_get_current_fs( enkf_main ));
   //Test init current case from existing
-  enkf_fs_type * cur_fs = enkf_main_mount_alt_fs( enkf_main , "new_current_case" , false , true );
-  enkf_main_select_fs(enkf_main, "new_current_case");
+  {
+    enkf_fs_type * cur_fs = enkf_main_mount_alt_fs( enkf_main , "new_current_case" , false , true );
+    enkf_main_select_fs(enkf_main, "new_current_case");
+    
+    printf("2: Current case: %s \n",enkf_main_get_current_fs( enkf_main ));
+    printf("1: fs_ptr:%p \n",enkf_main_get_fs( enkf_main ));
+    test_assert_ptr_not_equal(cur_fs , enkf_main_get_fs( enkf_main ));
 
-  stringlist_append_copy( args, "default"); //case to init from
-  test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
-
-  enkf_fs_umount(cur_fs);
-  const char * current_case = enkf_main_get_current_fs(enkf_main);
+    stringlist_append_copy( args, "default"); //case to init from
+    test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+    
+    enkf_fs_decref(cur_fs);
+  }
+  printf("2: fs_ptr:%p \n",enkf_main_get_fs( enkf_main ));
+  
+  const char * current_case = enkf_main_get_current_fs( enkf_main );
   test_assert_string_equal(current_case, "new_current_case");
   test_assert_true(enkf_fs_has_node(enkf_main_get_fs(enkf_main), "PERMZ", PARAMETER, 0, 0, ANALYZED));
 
@@ -72,7 +81,7 @@ void test_init_case_job(ert_test_context_type * test_context, const char * job_n
     enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main, "new_not_current_case", true, false);
     test_assert_not_NULL( fs );
     test_assert_true( enkf_fs_has_node(fs, "PERMZ", PARAMETER, 0, 0, ANALYZED ));
-    enkf_fs_umount(fs);
+    enkf_fs_decref(fs);
   }
 
   stringlist_free( args );

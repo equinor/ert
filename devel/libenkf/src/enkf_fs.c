@@ -246,22 +246,38 @@ struct enkf_fs_struct {
 UTIL_SAFE_CAST_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 
-static int enkf_fs_incref( enkf_fs_type * fs ) {
+static void enkf_fs_umount( enkf_fs_type * fs );
+
+int enkf_fs_incref( enkf_fs_type * fs ) {
   fs->refcount++;
   return fs->refcount;
 }
 
-static int enkf_fs_decref( enkf_fs_type * fs ) {
+
+int enkf_fs_decref( enkf_fs_type * fs ) {
+  int refcount;
   fs->refcount--;
+  refcount = fs->refcount;
+
   if (fs->refcount < 0)
     util_abort("%s: internal fuckup. The filesystem refcount:%d is < 0 \n",__func__ , fs->refcount);
-  return fs->refcount;
+  
+  if (refcount == 0)
+    enkf_fs_umount( fs );
+
+  return refcount;
 }
+
 
 int enkf_fs_get_refcount( const enkf_fs_type * fs ) {
   return fs->refcount;
 }
 
+
+enkf_fs_type * enkf_fs_get_ref( enkf_fs_type * fs ) {
+  enkf_fs_incref( fs );
+  return fs;
+}
 
 
 static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_only) {
@@ -538,20 +554,7 @@ static void enkf_fs_fwrite_misfit( enkf_fs_type * fs ) {
 }
 
 
-enkf_fs_type * enkf_fs_get_weakref( enkf_fs_type * fs ) {
-  return fs;
-}
 
-
-enkf_fs_type * enkf_fs_get_ref( enkf_fs_type * fs ) {
-  if (enkf_fs_is_instance( fs )) {
-    enkf_fs_incref( fs );
-    return fs;
-  } else {
-    util_abort("%s: tried to get enkf_fs reference from object which was not an existing enkf_fs reference\n",__func__);
-    return NULL;
-  }
-}
 
 
 
@@ -584,16 +587,17 @@ enkf_fs_type * enkf_fs_mount( const char * mount_point , bool read_only) {
     enkf_fs_fread_state_map( fs );
     enkf_fs_fread_misfit( fs );
     
-    return enkf_fs_get_ref( fs );
+    enkf_fs_get_ref( fs );
+    return fs;
   }
   return NULL;
 }
 
 
-bool enkf_fs_exists( const char * path ) {
+bool enkf_fs_exists( const char * mount_point ) {
   bool exists   = false;
   
-  FILE * stream = fs_driver_open_fstab( path , false );
+  FILE * stream = fs_driver_open_fstab( mount_point , false );
   if (stream != NULL) {
     exists = true;
     fclose( stream );
@@ -614,15 +618,14 @@ static void enkf_fs_free_driver(fs_driver_type * driver) {
 }
 
 
-void enkf_fs_umount( enkf_fs_type * fs ) {
+static void enkf_fs_umount( enkf_fs_type * fs ) {
   if (!fs->read_only) {
     enkf_fs_fsync( fs );
     enkf_fs_fwrite_misfit( fs );
   }
   
   {
-    int refcount = enkf_fs_decref( fs );
-
+    int refcount = fs->refcount;
     if (refcount == 0) {
       enkf_fs_free_driver( fs->dynamic_forecast );
       enkf_fs_free_driver( fs->dynamic_analyzed );
@@ -642,7 +645,8 @@ void enkf_fs_umount( enkf_fs_type * fs ) {
       time_map_free( fs->time_map );
       cases_config_free( fs->cases_config );
       free( fs );
-    } 
+    } else
+      util_abort("%s: internal fuckup - tried to umount a filesystem with refcount:%d\n",__func__ , refcount);
   }
 }
 

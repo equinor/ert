@@ -20,12 +20,22 @@ from ert.util import SubstitutionList, Log
 
 
 class EnKFMain(BaseCClass):
+    fsCapacity = 2
     def __init__(self, model_config, site_config, strict=True):
         c_ptr = EnKFMain.cNamespace().bootstrap(site_config, model_config, strict, False)
         super(EnKFMain, self).__init__(c_ptr)
 
         self.__simulation_runner = EnkfSimulationRunner(self)
-        self.__fs_manager = EnkfFsManager(self)
+        self.__fs_manager = EnkfFsManager(self , self.fsCapacity)
+
+
+    @classmethod
+    def createCReference(cls , c_pointer , parent = None):
+        obj = super(EnKFMain, cls).createCReference(c_pointer , parent)
+        obj.__simulation_runner = EnkfSimulationRunner(obj)
+        obj.__fs_manager = EnkfFsManager(obj , cls.fsCapacity)
+        return obj
+        
 
     @staticmethod
     def createNewConfig(config_file, storage_path, case_name, dbase_type, num_realizations):
@@ -34,7 +44,11 @@ class EnKFMain(BaseCClass):
     def set_eclbase(self, eclbase):
         EnKFMain.cNamespace().set_eclbase(self, eclbase)
 
+    def umount(self):
+        self.__fs_manager.umount()
+
     def free(self):
+        self.umount()
         EnKFMain.cNamespace().free(self)
 
     def getEnsembleSize( self ):
@@ -97,7 +111,9 @@ class EnKFMain(BaseCClass):
         EnKFMain.cNamespace().add_data_kw(self, key, value)
 
 
-
+    def getMountPoint(self):
+        return EnKFMain.cNamespace().get_mount_point( self )
+    
 
     def del_node(self, key):
         EnKFMain.cNamespace().del_node(self, key)
@@ -169,6 +185,7 @@ class EnKFMain(BaseCClass):
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("enkf_main", EnKFMain)
+cwrapper.registerType("enkf_main_ref", EnKFMain.createCReference)
 
 
 EnKFMain.cNamespace().bootstrap = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool, bool)")
@@ -218,6 +235,6 @@ EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprint
 EnKFMain.cNamespace().create_new_config = cwrapper.prototype("void enkf_main_create_new_config(char* , char*, char* , char* , int)")
 
 EnKFMain.cNamespace().get_user_config_file = cwrapper.prototype("char* enkf_main_get_user_config_file(enkf_main)")
-
+EnKFMain.cNamespace().get_mount_point = cwrapper.prototype("char* enkf_main_get_mount_root( enkf_main )")
 
 
