@@ -32,7 +32,7 @@ function Histogram(element) {
 
     var count_format = d3.format("d");
     var value_format = d3.format(".4s");
-    var value_log_format = d3.format(".4s");
+    var value_log_format = d3.format("e");
 
     var value_log_format_function = function(d) {
         var x = Math.log(d) / Math.log(10) + 1e-6;
