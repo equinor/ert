@@ -127,7 +127,7 @@ struct field_config_struct {
 
   char                 * ecl_kw_name;    /* Name/key ... */
   int data_size , nx,ny,nz;              /* The number of elements in the three directions. */
-  bool global_size;                      /* Whether the data contains only active cells or active and inactive cells */
+  bool keep_inactive_cells;              /* Whether the data contains only active cells or active and inactive cells */
   ecl_grid_type * grid;                  /* A shared reference to the grid this field is defined on. */
   bool  private_grid;
   
@@ -417,17 +417,17 @@ const char * field_config_get_grid_name( const field_config_type * config) {
 /*
   The return value from this function is hardly usable. 
 */
-field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table, bool global_size ) {
+field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table, bool keep_inactive_cells ) {
 
   field_config_type * config = util_malloc(sizeof *config);
   UTIL_TYPE_ID_INIT( config , FIELD_CONFIG_ID);
   
-  config->global_size      = global_size;
-  config->ecl_kw_name      = util_alloc_string_copy( ecl_kw_name );
-  config->private_grid     = false;
-  config->__enkf_mode      = true;
-  config->grid             = NULL;
-  config->write_compressed = true;
+  config->keep_inactive_cells = keep_inactive_cells;
+  config->ecl_kw_name         = util_alloc_string_copy( ecl_kw_name );
+  config->private_grid        = false;
+  config->__enkf_mode         = true;
+  config->grid                = NULL;
+  config->write_compressed    = true;
 
   config->output_transform      = NULL;
   config->input_transform       = NULL;
@@ -692,7 +692,7 @@ ecl_type_enum field_config_get_ecl_type(const field_config_type * config) {
 
 
 int field_config_get_data_size_from_grid(const field_config_type * config) {
-  return config->global_size ? ecl_grid_get_global_size(config->grid) : ecl_grid_get_active_size(config->grid);
+  return config->keep_inactive_cells ? ecl_grid_get_global_size(config->grid) : ecl_grid_get_active_size(config->grid);
 }
 
 int field_config_get_byte_size(const field_config_type * config) {
@@ -858,8 +858,8 @@ const char * field_config_get_key(const field_config_type * field_config) {
   return field_config->ecl_kw_name;
 }
 
-bool field_config_global_size(const field_config_type * config) {
-  return config->global_size;
+bool field_config_keep_inactive_cells(const field_config_type * config) {
+  return config->keep_inactive_cells;
 }
 
 void field_config_enkf_OFF(field_config_type * config) {

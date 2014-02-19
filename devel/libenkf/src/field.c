@@ -836,7 +836,7 @@ void field_deserialize(field_type * field , node_id_type node_id , const active_
 }
 
 static int __get_index(const field_type * field, int i, int j, int k) {
-  return field_config_global_size(field->config) ? field_config_global_index(field->config , i , j , k) : field_config_active_index(field->config , i , j , k);
+  return field_config_keep_inactive_cells(field->config) ? field_config_global_index(field->config , i , j , k) : field_config_active_index(field->config , i , j , k);
 }
 
 

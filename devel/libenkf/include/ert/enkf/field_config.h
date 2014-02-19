@@ -154,7 +154,7 @@ void                    field_config_enkf_OFF(field_config_type * );
 bool                    field_config_enkf_mode(const field_config_type * config);
 void                    field_config_scanf_ijk(const field_config_type *  , bool , const char * , int , int * , int * , int * , int *);
 const char            * field_config_get_key(const field_config_type * );
-bool                    field_config_global_size(const field_config_type *);
+bool                    field_config_keep_inactive_cells(const field_config_type *);
 field_func_type       * field_config_get_init_transform(const field_config_type * );
 field_func_type       * field_config_get_output_transform(const field_config_type * );
 field_func_type       * field_config_get_input_transform(const field_config_type * );
