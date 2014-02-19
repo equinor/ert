@@ -26,6 +26,7 @@
 #include <ert/util/rng.h>
 #include <ert/util/matrix.h>
 #include <ert/util/matrix_blas.h>
+#include <ert/util/bool_vector.h>
 
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
@@ -94,6 +95,7 @@ struct rml_enkf_data_struct {
   double    Sk;                    // Objective function value
   double    Std;                   // Standard Deviation of the Objective function
   matrix_type *state;
+  bool_vector_type * ens_mask;
 };
 
 
@@ -147,18 +149,17 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
   data->Std          = 0; 
-  data->state        = NULL;
+  data->state        = matrix_alloc(1,1); // This will be resized under use; but we need a valid instance
   data->lambda0      = -1.0;
+  data->ens_mask     = bool_vector_alloc(0,false);
   return data;
 }
 
 
 void rml_enkf_data_free( void * module_data ) { 
   rml_enkf_data_type * data = rml_enkf_data_safe_cast( module_data );
-
-  if (data->state != NULL)
-    matrix_free( data->state );
-
+  matrix_free( data->state );
+  bool_vector_free(data->ens_mask);
   free( data );
 }
 
@@ -201,7 +202,7 @@ void rml_enkf_updateA(void * module_data ,
   FILE *fp = util_fopen("rml_enkf_output","a");
 
   int nrmin         = util_int_min( ens_size , nrobs); 
-  matrix_type * Ud   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
+  matrix_type * Ud   = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
   matrix_type * VdT  = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
   double * Wd       = util_calloc( nrmin , sizeof * Wd  ); 
   
@@ -211,9 +212,11 @@ void rml_enkf_updateA(void * module_data ,
   matrix_inv(Cd);
 
   if (data->iteration_nr == 0) {
-    Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
+    Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);                   //Calculate the intitial data mismatch term
     Std_new = matrix_diag_std(Skm,Sk_new);
-    data->state = matrix_realloc_copy(data->state , A);
+    rml_enkf_common_store_state( data->state , A , data->ens_mask ); 
+
+
     
     if (data->lambda0 < 0) 
       data->lambda = pow(10,floor(log10(Sk_new/(2*nrobs))));
@@ -245,7 +248,9 @@ void rml_enkf_updateA(void * module_data ,
       fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
       data->lambda = data->lambda / 10 ;
       data->Std   = Std_new;
-      data->state = matrix_realloc_copy(data->state , A);
+
+      rml_enkf_common_store_state( data->state , A , data->ens_mask ); 
+
       data->Sk = Sk_new;
       rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
     }
@@ -257,7 +262,9 @@ void rml_enkf_updateA(void * module_data ,
 
       fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
       data->Std=Std_new;
-      data->state = matrix_realloc_copy(data->state , A);
+
+      rml_enkf_common_store_state( data->state , A , data->ens_mask ); 
+
       data->Sk = Sk_new;
       rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
     }
@@ -265,11 +272,13 @@ void rml_enkf_updateA(void * module_data ,
       fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
       printf("The previous step is rejected !!\n");
       data->lambda = data ->lambda * 4;
-      matrix_assign( A , data->state );
+
+      rml_enkf_common_recover_state( data->state , A , data->ens_mask );
+
       rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
       data->iteration_nr--;
-        }
     }
+  }
   data->iteration_nr++;
 
   //  setting the lower bound for lambda
@@ -289,6 +298,16 @@ void rml_enkf_updateA(void * module_data ,
 }
 
 
+void rml_enkf_init_update(void * arg , 
+                          const bool_vector_type * ens_mask , 
+                          const matrix_type * S , 
+                          const matrix_type * R , 
+                          const matrix_type * dObs , 
+                          const matrix_type * E , 
+                          const matrix_type * D ) {
+    rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
+    bool_vector_memcpy( module_data->ens_mask , ens_mask );
+}
 
 
 
@@ -398,7 +417,7 @@ analysis_table_type SYMBOL_TABLE = {
     .get_options     = rml_enkf_get_options , 
     .initX           = NULL,
     .updateA         = rml_enkf_updateA ,  
-    .init_update     = NULL,
+    .init_update     = rml_enkf_init_update ,
     .complete_update = NULL,
     .has_var         = rml_enkf_has_var,
     .get_int         = rml_enkf_get_int,

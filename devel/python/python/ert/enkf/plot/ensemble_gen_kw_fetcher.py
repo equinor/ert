@@ -49,12 +49,15 @@ class EnsembleGenKWFetcher(DataFetcher):
         ensemble_plot_gen_kw = EnsemblePlotGenKW(ensemble_config_node, enkf_fs)
         keyword_index = ensemble_plot_gen_kw.getIndexForKeyword(keyword)
 
+        use_log_scale = ensemble_plot_gen_kw.shouldUseLogScale(keyword_index)
+
         data = {"x": [0],
                 "y": [],
                 "min_y": None,
                 "max_y": None,
                 "min_x": 0,
-                "max_x": 0}
+                "max_x": 0,
+                "use_log_scale": use_log_scale}
 
         for vector in ensemble_plot_gen_kw:
             y = []

@@ -58,7 +58,7 @@ class ModelConfig(BaseCClass):
     def set_max_internal_submit(self, max_value):
         ModelConfig.cNamespace().get_max_internal_submit(self, max_value)
 
-    def get_forward_model(self):
+    def getForwardModel(self):
         """ @rtype: ForwardModel """
         return ModelConfig.cNamespace().get_forward_model(self).setParent(self)
 
