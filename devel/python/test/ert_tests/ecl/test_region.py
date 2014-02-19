@@ -148,3 +148,19 @@ class RegionTest(ExtendedTestCase):
         reg.select_inside_polygon( [(x-dx,y-dy) , (x-dx,y+dy) , (x+dx,y+dy) , (x+dx,y-dy)] )
         self.assertTrue( self.grid.nz == len(reg.global_list))
         
+
+    def test_heidrun(self):
+        root = self.createTestPath("Statoil/ECLIPSE/Heidrun")
+        grid = EclGrid( "%s/FF12_2013B2_AMAP_AOP-J15_NO62_MOVEX.EGRID" % root)
+
+        polygon = []
+        with open("%s/polygon.ply" % root) as fileH:
+            for line in fileH.readlines():
+                tmp = line.split()
+                polygon.append( (float(tmp[0]) , float(tmp[1])))
+        self.assertEqual( len(polygon) , 11 )
+
+        reg = EclRegion( grid , False )
+        reg.select_inside_polygon( polygon )
+        self.assertEqual( 0 , len(reg.global_list) % grid.nz)
+        
