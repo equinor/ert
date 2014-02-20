@@ -23,16 +23,32 @@ class ErtSummary(ErtConnector):
         summary_obs = self.ert().getObservations().getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
 
         keys = []
+        summary_keys_count = {}
+        summary_keys = []
         for key in summary_obs:
             data_key = self.ert().getObservations().getObservationsVector(key).getDataKey()
+
+            if not data_key in summary_keys_count:
+                summary_keys_count[data_key] = 1
+                summary_keys.append(data_key)
+            else:
+                summary_keys_count[data_key] += 1
+
             if key == data_key:
                 keys.append(key)
             else:
                 keys.append("%s [%s]" % (key, data_key))
 
+        # keys = []
+        # for key in summary_keys:
+        #     count = summary_keys_count[key]
+        #     if count > 1:
+        #         #keys.append("%s (%d)" % (key, count))
+        #         keys.append("%s" % key)
+        #     else:
+        #         keys.append(key)
 
-
-        obs_keys = [observation for observation in gen_obs] + keys
+        obs_keys = [observation for observation in gen_obs] + summary_keys
         return sorted(obs_keys, key=lambda k : k.lower())
 
 
