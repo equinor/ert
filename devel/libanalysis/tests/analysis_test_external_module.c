@@ -39,25 +39,25 @@ void test_set_get(analysis_module_type * module , const char * var_value) {
       test_assert_true(analysis_module_has_var( module , var ));
       
       if (util_sscanf_int( string_value , &int_value)) {
-        analysis_module_set_var( module , var , string_value );
+        test_assert_true(analysis_module_set_var( module , var , string_value ));
         test_assert_int_equal( int_value , analysis_module_get_int( module , var ));
         break;
       }
 
       if (util_sscanf_double( string_value , &double_value)) {
-        analysis_module_set_var( module , var , string_value );
+        test_assert_true(analysis_module_set_var( module , var , string_value ));
         test_assert_double_equal( double_value , analysis_module_get_double( module , var ));
         break;
       }
 
       if (util_sscanf_bool( string_value , &bool_value)) {
-        analysis_module_set_var( module , var , string_value );
+        test_assert_true(analysis_module_set_var( module , var , string_value ));
         test_assert_bool_equal( bool_value , analysis_module_get_bool( module , var ));
         break;
       }
 
       
-      analysis_module_set_var( module , var , string_value );
+      test_assert_true(analysis_module_set_var( module , var , string_value ));
       test_assert_string_equal( string_value , (const char *) analysis_module_get_ptr( module , var ));
       break;
     }

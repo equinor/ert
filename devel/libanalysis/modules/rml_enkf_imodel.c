@@ -569,11 +569,11 @@ bool rml_enkf_imodel_set_double( void * arg , const char * var_name , double val
 
     if (strcmp( var_name , ENKF_TRUNCATION_KEY_) == 0)
       rml_enkf_imodel_set_truncation( module_data , value );
-    if (strcmp( var_name , LAMBDA_INCREASE_FACTOR_KEY) == 0)
+    else if (strcmp( var_name , LAMBDA_INCREASE_FACTOR_KEY) == 0)
       rml_enkf_imodel_set_lambda_increase_factor( module_data , value );
-    if (strcmp( var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
+    else if (strcmp( var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
       rml_enkf_imodel_set_lambda_reduce_factor( module_data , value );
-    if (strcmp( var_name , LAMBDA0_KEY) == 0)
+    else if (strcmp( var_name , LAMBDA0_KEY) == 0)
       rml_enkf_imodel_set_lambda0( module_data , value );
     else
       name_recognized = false;
@@ -590,7 +590,7 @@ bool rml_enkf_imodel_set_int( void * arg , const char * var_name , int value) {
     
     if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
       rml_enkf_imodel_set_subspace_dimension( module_data , value );
-    if (strcmp( var_name , ITER_KEY) == 0)
+    else if (strcmp( var_name , ITER_KEY) == 0)
       rml_enkf_imodel_set_iteration_nr( module_data , value );
     else
       name_recognized = false;
