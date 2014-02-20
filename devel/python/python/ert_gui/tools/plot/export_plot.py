@@ -1,4 +1,4 @@
-from PyQt4.QtCore import QSize, QSizeF, QDir, Qt
+from PyQt4.QtCore import QSize, QSizeF, QDir, Qt, QStringList, QString
 from PyQt4.QtGui import QPrinter, QImage, QPainter, QApplication, QFileDialog
 from PyQt4.QtWebKit import QWebPage
 from ert_gui.tools.plot.plot_bridge import PlotWebPage, PlotBridge
@@ -53,13 +53,30 @@ class ExportPlot(object):
 
     def performExport(self):
         home = QDir.homePath()
-        file_name = QFileDialog.getSaveFileName(caption="Save file", directory=home,filter="Image (*.png);; PDF (*.pdf)")
-        view = self.__bridge.getPage()
-        if not file_name.isEmpty():
-            if str(file_name).endswith(".pdf"):
-                self.exportPDF(view, file_name, self.__width, self.__height)
-            elif str(file_name).endswith(".png"):
-                self.exportPNG(view, file_name, self.__width, self.__height)
+        dialog = QFileDialog(self.__active_plot_panel.parent())
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setNameFilter("Image (*.png);; PDF (*.pdf)")
+        dialog.setWindowTitle("Export plot")
+        dialog.setDirectory(home)
+        file_type_label = QString("Select file type: ")
+        dialog.setLabelText(QFileDialog.FileType, file_type_label)
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        if dialog.exec_():
+            result = dialog.selectedFiles()
+            assert isinstance(result, QStringList)
+            if len(result) == 1:
+                file_name = result[0]
+                selected_file_type = dialog.selectedNameFilter()
+                view = self.__bridge.getPage()
+                if not file_name.isEmpty():
+                    if str(selected_file_type) == "PDF (*.pdf)":
+                        if not str(file_name).endswith(".pdf"):
+                            file_name=str(file_name) + ".pdf"
+                        self.exportPDF(view, file_name, self.__width, self.__height)
+                    elif str(selected_file_type) == "Image (*.png)":
+                        if not str(file_name).endswith(".png"):
+                            file_name=str(file_name) + ".png"
+                        self.exportPNG(view, file_name, self.__width, self.__height)
 
 
     def exportPDF(self, view, file_name, width, height):
