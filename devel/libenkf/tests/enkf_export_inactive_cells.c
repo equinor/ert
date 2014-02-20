@@ -169,7 +169,7 @@ int main(int argc , char ** argv) {
   const char * export_file_roff   = "my_test_dir/exported_field_test_file_roff";
   field_file_format_type file_type;
 
-  const char * found_init_file = enkf_main_get_abs_path_to_init_file(enkf_main, config_node);
+  const char * found_init_file = enkf_main_alloc_abs_path_to_init_file(enkf_main, config_node);
   {
     file_type = ECL_GRDECL_FILE;
     field_export(field, export_file_grdecl, NULL, file_type, false, found_init_file);
@@ -181,7 +181,7 @@ int main(int argc , char ** argv) {
     check_exported_data(export_file_roff, init_file, file_type, field_config, field, nx, ny, nz);
   }
 
-
+  free(found_init_file);
   found_init_file = NULL;
   {
     file_type = ECL_GRDECL_FILE;

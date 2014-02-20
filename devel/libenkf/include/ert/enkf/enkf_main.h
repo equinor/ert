@@ -234,7 +234,7 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   void                  enkf_main_rng_init( enkf_main_type * enkf_main);
   
 
-  const char * enkf_main_get_abs_path_to_init_file(const enkf_main_type * enkf_main, const enkf_config_node_type * enkf_config_node);
+  const char * enkf_main_alloc_abs_path_to_init_file(const enkf_main_type * enkf_main, const enkf_config_node_type * enkf_config_node);
 
   bool enkf_main_export_field(const enkf_main_type * enkf_main,
                               const char * kw, 
