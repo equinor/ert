@@ -251,35 +251,23 @@ static void rml_enkf_imodel_init1__( rml_enkf_imodel_data_type * data,
 
 
 
-void  rml_enkf_imodel_init_Csc(rml_enkf_imodel_data_type * data){
+void rml_enkf_imodel_init_Csc(rml_enkf_imodel_data_type * data){
   int state_size = matrix_get_rows( data->active_prior );
   int ens_size   = matrix_get_columns( data->active_prior );
 
-  for (int i=0; i < state_size; i++) {
-    double sumrow = matrix_get_row_sum(data->active_prior , i);
-    double tmp = sumrow / ens_size;
+  for (int row=0; row < state_size; row++) {
+    double sumrow = matrix_get_row_sum(data->active_prior , row);
+    double tmp    = sumrow / ens_size;
+
     if (abs(tmp)< 1)
-      data->Csc[i]=0.05;
+      data->Csc[row] = 0.05;
     else
-      data->Csc[i]= 1;
+      data->Csc[row] = 1.00;
+
   }
 }
 
 
-static void rml_enkf_imodel_scaleA(matrix_type *A , const double * Csc, bool invert ){
-  int nrows = matrix_get_rows(A);
-  if (invert) {
-    for (int i=0; i< nrows ; i++) {
-      double sc= 1/Csc[i];
-      matrix_scale_row(A, i, sc);
-    }
-  } else {
-    for (int i=0; i< nrows ; i++) {
-      double sc= Csc[i];
-      matrix_scale_row(A, i, sc);
-    }
-  }
-}
 
 
 
@@ -373,7 +361,7 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
   {
     matrix_type * Dk = matrix_alloc_copy( Acopy );
     matrix_inplace_sub(Dk, Apr);
-    rml_enkf_imodel_scaleA(Dk , data->Csc , true);
+    rml_enkf_common_scaleA(Dk , data->Csc , true);
     enkf_linalg_rml_enkfX4(X4 , Am , Dk);
     matrix_free(Dk);
   }
@@ -381,14 +369,14 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
   enkf_linalg_rml_enkfX5(X5, Am, X4);
   
   matrix_subtract_row_mean(Dk1);
-  rml_enkf_imodel_scaleA(Dk1 , data->Csc , true);
+  rml_enkf_common_scaleA(Dk1 , data->Csc , true);
   matrix_scale(Dk1,nsc);
 
   enkf_linalg_rml_enkfX6(X6, Dk1,X5);
 
   enkf_linalg_rml_enkfX7(X7, VdTr , Wdr , data->lambda + 1, X6);
 
-  rml_enkf_imodel_scaleA(Dk1 , data->Csc , false);
+  rml_enkf_common_scaleA(Dk1 , data->Csc , false);
 
   enkf_linalg_rml_enkfXdA2(dA2,Dk1,X7);
 
@@ -487,11 +475,11 @@ void rml_enkf_imodel_updateA(void * module_data ,
     matrix_type * Acopy  = matrix_alloc_copy (A);
     Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
     Std_new = matrix_diag_std(Skm,Sk_new);
-    
+
     printf(" Current Objective function value is %5.3f \n\n",Sk_new);
     printf(" The old Objective function value is %5.3f \n", data->Sk);
-                  {
-              bool mismatch_reduced = false;
+    {
+      bool mismatch_reduced = false;
       bool std_reduced = false;
 
       if (Sk_new < data->Sk)
@@ -511,9 +499,6 @@ void rml_enkf_imodel_updateA(void * module_data ,
 
         rml_enkf_common_store_state(data->state , A , data->ens_mask );
         rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
-        
-        rml_enkf_imodel_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
-        rml_enkf_imodel_init2__(data , A , Acopy , Wd , nsc , VdT);
 
         data->Sk = Sk_new;
         data->Std=Std_new;
@@ -523,11 +508,13 @@ void rml_enkf_imodel_updateA(void * module_data ,
         
         rml_enkf_common_recover_state( data->state , A , data->ens_mask );
         rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
-        
-        rml_enkf_imodel_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
-        rml_enkf_imodel_init2__(data , A , Acopy , Wd , nsc , VdT);
       }
     }
+
+    rml_enkf_imodel_init_Csc( data );
+    rml_enkf_imodel_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
+    rml_enkf_imodel_init2__(data , A , Acopy , Wd , nsc , VdT);
+
     matrix_free(Acopy);
     matrix_free(Skm);
     matrix_free( Ud );
