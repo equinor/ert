@@ -233,14 +233,16 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   rng_config_type     * enkf_main_get_rng_config( const enkf_main_type * enkf_main );
   void                  enkf_main_rng_init( enkf_main_type * enkf_main);
   
-  bool enkf_main_export_field(const enkf_main_type * enkf_main, 
+
+  const char * enkf_main_get_abs_path_to_init_file(const enkf_main_type * enkf_main, const enkf_config_node_type * enkf_config_node);
+
+  bool enkf_main_export_field(const enkf_main_type * enkf_main,
                               const char * kw, 
                               const char * path,
                               bool_vector_type * iactive,
                               field_file_format_type file_type,
                               int report_step,
                               state_enum state);  
-
 
 
   void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list);

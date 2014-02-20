@@ -169,29 +169,29 @@ int main(int argc , char ** argv) {
   const char * export_file_roff   = "my_test_dir/exported_field_test_file_roff";
   field_file_format_type file_type;
 
-
+  const char * found_init_file = enkf_main_get_abs_path_to_init_file(enkf_main, config_node);
   {
     file_type = ECL_GRDECL_FILE;
-    field_export(field, export_file_grdecl, NULL, file_type, false, init_file);
+    field_export(field, export_file_grdecl, NULL, file_type, false, found_init_file);
     check_exported_data(export_file_grdecl, init_file, file_type, field_config, field, nx, ny, nz);
   }
   {
     file_type = RMS_ROFF_FILE;
-    field_export(field, export_file_roff, NULL, file_type, false, init_file);
+    field_export(field, export_file_roff, NULL, file_type, false, found_init_file);
     check_exported_data(export_file_roff, init_file, file_type, field_config, field, nx, ny, nz);
   }
 
 
-  init_file = NULL;
+  found_init_file = NULL;
   {
     file_type = ECL_GRDECL_FILE;
-    field_export(field, export_file_grdecl, NULL, file_type, false, NULL);
-    check_exported_data(export_file_grdecl, init_file, file_type, field_config, field, nx, ny, nz);
+    field_export(field, export_file_grdecl, NULL, file_type, false, found_init_file);
+    check_exported_data(export_file_grdecl, found_init_file, file_type, field_config, field, nx, ny, nz);
   }
   {
     file_type = RMS_ROFF_FILE;
-    field_export(field, export_file_roff, NULL, file_type, false, init_file);
-    check_exported_data(export_file_roff, init_file, file_type, field_config, field, nx, ny, nz);
+    field_export(field, export_file_roff, NULL, file_type, false, found_init_file);
+    check_exported_data(export_file_roff, found_init_file, file_type, field_config, field, nx, ny, nz);
   }
 
 
