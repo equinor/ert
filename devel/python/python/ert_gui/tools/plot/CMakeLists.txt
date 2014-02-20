@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    color_chooser.py
     customize_plot_widget.py
     data_type_keys_list_model.py
     data_type_proxy_model.py
