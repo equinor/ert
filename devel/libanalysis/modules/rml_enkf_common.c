@@ -39,9 +39,10 @@ void rml_enkf_common_store_state( matrix_type * state , const matrix_type * A , 
     const int ens_size = bool_vector_size( ens_mask );
     int active_index = 0;
     for (int iens = 0; iens < ens_size; iens++) {
-      if (bool_vector_iget( ens_mask , iens ))
+      if (bool_vector_iget( ens_mask , iens )) {
         matrix_copy_column( state , A , iens , active_index );
-      else
+        active_index++;
+      } else
         matrix_set_const_column( state , iens  , 0);
     }
   }
@@ -58,8 +59,27 @@ void rml_enkf_common_recover_state( const matrix_type * state , matrix_type * A 
   {
     int active_index = 0;
     for (int iens = 0; iens < ens_size; iens++) {
-      if (bool_vector_iget( ens_mask , iens ))
+      if (bool_vector_iget( ens_mask , iens )) {
         matrix_copy_column( A , state , active_index , iens );
+        active_index++;
+      }
+    }
+  }
+}
+
+
+
+void rml_enkf_common_scaleA(matrix_type *A , const double * Csc, bool invert ){
+  int nrows = matrix_get_rows(A);
+  if (invert) {
+    for (int i=0; i< nrows ; i++) {
+      double sc= 1/Csc[i];
+      matrix_scale_row(A, i, sc);
+    }
+  } else {
+    for (int i=0; i< nrows ; i++) {
+      double sc= Csc[i];
+      matrix_scale_row(A, i, sc);
     }
   }
 }

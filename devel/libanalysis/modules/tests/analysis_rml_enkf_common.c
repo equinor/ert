@@ -26,7 +26,7 @@
 
 
 
-void test_state() {
+void test_store_recover_state() {
   rng_type * rng = rng_alloc( MZRAN , INIT_DEFAULT ); 
   int ens_size    = 10;
   int active_size = 8;
@@ -68,9 +68,66 @@ void test_state() {
 }
 
 
-int main(int argc , char ** argv) {
+
+
+
+void test_scaleA() {
+  const int N = 10;
+  matrix_type * m1 = matrix_alloc(N , N);
+  matrix_type * m2 = matrix_alloc(N , N);
+  double * csc = util_calloc( N , sizeof * csc );
+  rng_type * rng = rng_alloc( MZRAN , INIT_DEFAULT ); 
+
+  matrix_random_init( m1 , rng );
+  matrix_assign(m2 , m1);
+  test_assert_true( matrix_equal(m1 , m2));
+
+  {
+    for (int i=0; i < N; i++)
+      csc[i] = (i + 2);
+  }
+  rml_enkf_common_scaleA( m1 , csc , false );
+  {
+    int row,col;
+    for (row = 0; row < N; row++) {
+      for (col=0; col < N; col++) {
+        double v1 = matrix_iget(m1 , row , col);
+        double v2 = matrix_iget(m2 , row , col);
+        
+        test_assert_double_equal( v1 , v2 * csc[row] );
+      }
+    }
+  }
+  rml_enkf_common_scaleA( m2 , csc , false );
+  test_assert_true( matrix_equal(m1 , m2));
+  
+  rml_enkf_common_scaleA( m2 , csc , true );
+  {
+    int row,col;
+    for (row = 0; row < N; row++) {
+      for (col=0; col < N; col++) {
+        double v1 = matrix_iget(m1 , row , col);
+        double v2 = matrix_iget(m2 , row , col);
+
+        test_assert_double_equal( v1 , v2 * csc[row] );
+      }
+    }
+  }
+  rml_enkf_common_scaleA( m1 , csc , true );
+  test_assert_true( matrix_equal(m1 , m2));
   
 
+  rng_free( rng );
+  matrix_free(m1);
+  matrix_free(m2);
+  free( csc );
+}
+
+
+
+int main(int argc , char ** argv) {
+  test_store_recover_state();
+  test_scaleA();
   exit(0);
 }
 
