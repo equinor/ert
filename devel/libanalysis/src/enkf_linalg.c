@@ -744,22 +744,9 @@ void enkf_linalg_rml_enkfAm(matrix_type * Um, double * Wm,int nsign1){
     }
 }
 
-void enkf_linalg_rml_enkfX4 (matrix_type *X4,matrix_type *Am, matrix_type *A){
 
-  matrix_dgemm(X4, Am, A, true, false, 1.0, 0.0);
-}
 
-void enkf_linalg_rml_enkfX5(matrix_type * X5,matrix_type * Am, matrix_type * X4){
 
-  matrix_dgemm (X5, Am, X4, false,false,1.0,0.0);
-
-}
-
-void enkf_linalg_rml_enkfX6(matrix_type * X6, matrix_type * Dk, matrix_type * X5){
-
-  matrix_dgemm(X6, Dk, X5, true, false, 1.0, 0.0);
-
-}
 
 void enkf_linalg_rml_enkfX7(matrix_type * X7, matrix_type * VdT, double * Wdr, double a, matrix_type * X6){
 

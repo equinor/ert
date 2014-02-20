@@ -290,8 +290,8 @@ static void rml_enkf_imodel_initA__(rml_enkf_imodel_data_type * data,
     matrix_type *tmp  = matrix_alloc (nrobs, ens_size);
     matrix_subtract_row_mean( S );   
     matrix_inplace_diag_sqrt(Cd);
-    matrix_dgemm(tmp, Cd, S,false, false, 1.0, 0.0);
-    matrix_scale(tmp, nsc);
+    matrix_dgemm(tmp , Cd , S , false , false,  1.0 , 0.0);
+    matrix_scale(tmp , nsc);
   
     // SVD(S)  = Ud * Wd * Vd(T)
     nsign = enkf_linalg_svd_truncation(tmp , data->truncation , -1 , DGESVD_MIN_RETURN  , Wdr , Udr , VdTr);
@@ -362,18 +362,17 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
     matrix_type * Dk = matrix_alloc_copy( Acopy );
     matrix_inplace_sub(Dk, Apr);
     rml_enkf_common_scaleA(Dk , data->Csc , true);
-    enkf_linalg_rml_enkfX4(X4 , Am , Dk);
+    matrix_dgemm(X4 , Am , Dk , true, false, 1.0, 0.0);
     matrix_free(Dk);
   }
 
-  enkf_linalg_rml_enkfX5(X5, Am, X4);
+  matrix_dgemm(X5 , Am , X4 , false , false , 1.0 , 0.0);
   
   matrix_subtract_row_mean(Dk1);
   rml_enkf_common_scaleA(Dk1 , data->Csc , true);
   matrix_scale(Dk1,nsc);
 
-  enkf_linalg_rml_enkfX6(X6, Dk1,X5);
-
+  matrix_dgemm(X6, Dk1, X5, true, false, 1.0, 0.0);
   enkf_linalg_rml_enkfX7(X7, VdTr , Wdr , data->lambda + 1, X6);
 
   rml_enkf_common_scaleA(Dk1 , data->Csc , false);
