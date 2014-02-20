@@ -217,73 +217,68 @@ static void rml_enkf_imodel_init1__( rml_enkf_imodel_data_type * data,
                                      double nsc) {
   
 
-  int nstate        = matrix_get_rows( data->prior0 );
+  int state_size    = matrix_get_rows( data->prior0 );
   int ens_size      = matrix_get_columns( data->prior0 );
-  int nrmin         = util_int_min( ens_size , nstate); 
+  int nrmin         = util_int_min( ens_size , state_size); 
   matrix_type * Dm  = matrix_alloc_copy( data->prior0 );
   
-  matrix_type * Um  = matrix_alloc( nstate , nrmin  );     /* Left singular vectors.  */
+  matrix_type * Um  = matrix_alloc( state_size , nrmin  );     /* Left singular vectors.  */
   matrix_type * VmT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
   double * Wm       = util_calloc( nrmin , sizeof * Wm ); 
 
  
-   matrix_subtract_row_mean(Dm);
+  matrix_subtract_row_mean(Dm);
 
 
   //This routine only computes the SVD of Ensemble State matrix  
 
   
-  for (int i=0; i<nstate; i++){
-    double sc = nsc/ (data->Csc[i]);
-    matrix_scale_row (Dm,i, sc);
-  }
+   for (int i=0; i < state_size; i++){
+     double sc = nsc / (data->Csc[i]);
+     matrix_scale_row (Dm,i, sc);
+   }
 
 
   int nsign1 = enkf_linalg_svd_truncation(Dm , data->truncation , -1 , DGESVD_MIN_RETURN  , Wm , Um , VmT);
-  printf("The significant Eigen values are %d\n",nsign1);
 
   enkf_linalg_rml_enkfAm(Um, Wm, nsign1);
   data->Am=matrix_alloc_copy(Um);
-  printf("\n Init1 completed\n");
   matrix_free(Um);
   matrix_free(VmT);
   matrix_free(Dm);
   free(Wm);
- 
 }
 
-void  rml_enkf_imodel_Create_Csc(rml_enkf_imodel_data_type * data){
-  // Create the scaling matrix based on the state vector
 
-  int nstate        = matrix_get_rows( data->active_prior );
-  int ens_size      = matrix_get_columns( data->active_prior );
- 
-  
- for (int i=0; i < nstate; i++) {
-   double sumrow = matrix_get_row_sum(data->active_prior , i);
+
+void  rml_enkf_imodel_init_Csc(rml_enkf_imodel_data_type * data){
+  int state_size = matrix_get_rows( data->active_prior );
+  int ens_size   = matrix_get_columns( data->active_prior );
+
+  for (int i=0; i < state_size; i++) {
+    double sumrow = matrix_get_row_sum(data->active_prior , i);
     double tmp = sumrow / ens_size;
     if (abs(tmp)< 1)
       data->Csc[i]=0.05;
     else
       data->Csc[i]= 1;
- }
-
+  }
 }
 
-void rml_enkf_imodel_scalingA(matrix_type *A, double * Csc, bool invert ){
+
+static void rml_enkf_imodel_scaleA(matrix_type *A , const double * Csc, bool invert ){
   int nrows = matrix_get_rows(A);
-  if (invert)
-    for (int i=0; i< nrows ; i++)
-      {
-        double sc= 1/Csc[i];
-        matrix_scale_row(A, i, sc);
-      }
-  else
-    for (int i=0; i< nrows ; i++)
-      {
-        double sc= Csc[i];
-        matrix_scale_row(A, i, sc);
-      }
+  if (invert) {
+    for (int i=0; i< nrows ; i++) {
+      double sc= 1/Csc[i];
+      matrix_scale_row(A, i, sc);
+    }
+  } else {
+    for (int i=0; i< nrows ; i++) {
+      double sc= Csc[i];
+      matrix_scale_row(A, i, sc);
+    }
+  }
 }
 
 
@@ -299,58 +294,55 @@ static void rml_enkf_imodel_initA__(rml_enkf_imodel_data_type * data,
                                     double * Wdr,
                                     matrix_type * VdTr) {
 
-  int nrobs         = matrix_get_rows( S );
   int ens_size      = matrix_get_columns( S );
-  double a = data->lambda + 1;
-  matrix_type *tmp  = matrix_alloc (nrobs, ens_size);
-  double nsc = 1/sqrt(ens_size-1);
-
+  double nsc        = 1/sqrt(ens_size-1);
+  int nsign;
+  {
+    int nrobs         = matrix_get_rows( S );
+    matrix_type *tmp  = matrix_alloc (nrobs, ens_size);
+    matrix_subtract_row_mean( S );   
+    matrix_inplace_diag_sqrt(Cd);
+    matrix_dgemm(tmp, Cd, S,false, false, 1.0, 0.0);
+    matrix_scale(tmp, nsc);
   
-  printf("The lamda Value is %5.5f\n",data->lambda);
-  printf("The Value of Truncation is %4.2f \n",data->truncation);
-
-  matrix_subtract_row_mean( S );           /* Shift away the mean in the ensemble predictions*/
-  matrix_inplace_diag_sqrt(Cd);
-  matrix_dgemm(tmp, Cd, S,false, false, 1.0, 0.0);
-  matrix_scale(tmp, nsc);
+    // SVD(S)  = Ud * Wd * Vd(T)
+    nsign = enkf_linalg_svd_truncation(tmp , data->truncation , -1 , DGESVD_MIN_RETURN  , Wdr , Udr , VdTr);
+    matrix_free( tmp );
+  }
   
-  printf("The Scaling of data matrix completed !\n ");
+  {
+    matrix_type * X3  = matrix_alloc( ens_size, ens_size );
+    {
+      matrix_type * X1  = matrix_alloc( nsign, ens_size);
+      matrix_type * X2  = matrix_alloc( nsign, ens_size );
+      
+      
+      enkf_linalg_rml_enkfX1(X1, Udr ,D ,Cd );                         // X1 = Ud(T)*Cd(-1/2)*D   -- D= -(dk-d0)
+      enkf_linalg_rml_enkfX2(X2, Wdr ,X1 ,data->lambda + 1 , nsign);   // X2 = ((a*Ipd)+Wd^2)^-1  * X1
+      enkf_linalg_rml_enkfX3(X3, VdTr ,Wdr,X2, nsign);                 // X3 = Vd *Wd*X2
+      
+      matrix_free(X2);
+      matrix_free(X1);
+    }
+    
+    
+    {
+      matrix_type * dA1 = matrix_alloc( matrix_get_rows(A) , ens_size);
+      matrix_type * Dm = matrix_alloc_copy( A );
 
+      matrix_subtract_row_mean( Dm );           /* Remove the mean from the ensemble of model parameters*/
+      matrix_scale(Dm, nsc);
 
-  // SVD(S)  = Ud * Wd * Vd(T)
-  int nsign = enkf_linalg_svd_truncation(tmp , data->truncation , -1 , DGESVD_MIN_RETURN  , Wdr , Udr , VdTr);
-  
-  /* After this we only work with the reduced dimension matrices */
-  
-  printf("The number of siginificant ensembles are %d \n ",nsign);
-  
-  matrix_type * X1   = matrix_alloc( nsign, ens_size);
-  matrix_type * X2    = matrix_alloc (nsign, ens_size );
-  matrix_type * X3    = matrix_alloc (ens_size, ens_size );
-  
-  
-  // Compute the matrices X1,X2,X3 and dA 
-  enkf_linalg_rml_enkfX1(X1, Udr ,D ,Cd );  //X1 = Ud(T)*Cd(-1/2)*D   -- D= -(dk-d0)
-  enkf_linalg_rml_enkfX2(X2, Wdr ,X1 ,a, nsign);  //X2 = ((a*Ipd)+Wd^2)^-1  * X1
+      enkf_linalg_rml_enkfdA(dA1, Dm, X3);      // dA = Dm * X3   
+      matrix_inplace_add(A,dA1);                // dA 
 
-  matrix_free(X1);
-
-  enkf_linalg_rml_enkfX3(X3, VdTr ,Wdr,X2, nsign);  //X3 = Vd *Wd*X2
-  printf("The X3 matrix is computed !\n ");
-
-  matrix_type *dA1= matrix_alloc (matrix_get_rows(A), ens_size);
-  matrix_type * Dm  = matrix_alloc_copy( A );
-
-  matrix_subtract_row_mean( Dm );      /* Remove the mean from the ensemble of model parameters*/
-  matrix_scale(Dm, nsc);
-
-  enkf_linalg_rml_enkfdA(dA1, Dm, X3);      //dA = Dm * X3   
-  matrix_inplace_add(A,dA1); //dA 
-
-  matrix_free(X3);
-  matrix_free(Dm);
-  matrix_free(dA1);
+      matrix_free(Dm);
+      matrix_free(dA1);
+    }
+    matrix_free(X3);
+  }
 }
+
 
 
 void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
@@ -361,59 +353,47 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
                               matrix_type * VdTr) {
 
 
-  int nstate        = matrix_get_rows( Acopy );
-  int ens_size      = matrix_get_columns( Acopy );
-  matrix_type * Dk  = matrix_alloc_copy( Acopy );
+  int state_size   = matrix_get_rows( Acopy );
+  int ens_size     = matrix_get_columns( Acopy );
 
-  double a = data->lambda + 1;
-  matrix_type *Am= matrix_alloc_copy(data->Am);
-  matrix_type *Apr= matrix_alloc_copy(data->active_prior);
-  double *Csc = util_calloc(nstate , sizeof * Csc ); 
-  for (int i=0; i< nstate ; i++)
-    {
-      Csc[i]= data->Csc[i];
-    }
-  int nsign1= matrix_get_columns(data->Am);
+  matrix_type *Am  = matrix_alloc_copy(data->Am);
+  matrix_type *Apr = matrix_alloc_copy(data->active_prior);
+
+
+  int nsign1 = matrix_get_columns(data->Am);
   
 
   matrix_type * X4  = matrix_alloc(nsign1,ens_size);
-  matrix_type * X5  = matrix_alloc(nstate,ens_size);
+  matrix_type * X5  = matrix_alloc(state_size,ens_size);
   matrix_type * X6  = matrix_alloc(ens_size,ens_size);
   matrix_type * X7  = matrix_alloc(ens_size,ens_size);
-  matrix_type * dA2 = matrix_alloc(nstate, ens_size);
+  matrix_type * dA2 = matrix_alloc(state_size , ens_size);
+  matrix_type * Dk1 = matrix_alloc_copy( Acopy );
   
-
-  //Compute dA2 
-  printf("\n Starting init 2 \n");
-  matrix_inplace_sub(Dk, Apr);
-  rml_enkf_imodel_scalingA(Dk,Csc,true);
-
-  enkf_linalg_rml_enkfX4(X4, Am, Dk);
-  matrix_free(Dk);
+  {
+    matrix_type * Dk = matrix_alloc_copy( Acopy );
+    matrix_inplace_sub(Dk, Apr);
+    rml_enkf_imodel_scaleA(Dk , data->Csc , true);
+    enkf_linalg_rml_enkfX4(X4 , Am , Dk);
+    matrix_free(Dk);
+  }
 
   enkf_linalg_rml_enkfX5(X5, Am, X4);
-  printf("\nMatrix X5 computed\n");
-
-  matrix_type * Dk1  = matrix_alloc_copy( Acopy );
+  
   matrix_subtract_row_mean(Dk1);
-  rml_enkf_imodel_scalingA(Dk1,Csc,true);
+  rml_enkf_imodel_scaleA(Dk1 , data->Csc , true);
   matrix_scale(Dk1,nsc);
 
   enkf_linalg_rml_enkfX6(X6, Dk1,X5);
-  printf("Matrix X6 computed!\n");
 
-  enkf_linalg_rml_enkfX7(X7, VdTr ,Wdr, a, X6);
-  printf("Matrix X7 computed!\n");
+  enkf_linalg_rml_enkfX7(X7, VdTr , Wdr , data->lambda + 1, X6);
 
-  rml_enkf_imodel_scalingA(Dk1,Csc,false);
-  printf("Matrix Dk1 Scaling done!\n");
+  rml_enkf_imodel_scaleA(Dk1 , data->Csc , false);
 
   enkf_linalg_rml_enkfXdA2(dA2,Dk1,X7);
-  printf("Matrix dA2 computed!\n");
 
   matrix_inplace_sub(A, dA2);
 
-  free(Csc);
   matrix_free(Am);
   matrix_free(Apr);
   matrix_free(X4); 
@@ -422,8 +402,6 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
   matrix_free(X7);
   matrix_free(dA2);
   matrix_free(Dk1);
-
-    
 }
 
 
@@ -444,9 +422,9 @@ static void rml_enkf_imodel_updateA_iter0(rml_enkf_imodel_data_type * data,
   matrix_type * Ud  = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
   matrix_type * VdT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
   double * Wd       = util_calloc( nrmin , sizeof * Wd ); 
-  double nsc = 1/sqrt(ens_size-1); 
+  double nsc        = 1/sqrt(ens_size-1); 
 
-  
+  data->Csc = util_calloc(state_size , sizeof * data->Csc);
   data->Sk  = enkf_linalg_data_mismatch(D,Cd,Skm);  
   data->Std = matrix_diag_std(Skm,data->Sk);
   
@@ -458,19 +436,12 @@ static void rml_enkf_imodel_updateA_iter0(rml_enkf_imodel_data_type * data,
   rml_enkf_common_store_state( data->state  , A , data->ens_mask );
   rml_enkf_common_store_state( data->prior0 , A , data->ens_mask );
   
-  
-  data->Csc     = util_calloc(state_size , sizeof * data->Csc);
-  rml_enkf_imodel_Create_Csc( data );
-  rml_enkf_imodel_initA__(data , A, S , Cd , E , D , Ud , Wd , VdT);
-  rml_enkf_imodel_init1__(data , nsc);
-  
-  /*
-    printf("Prior Objective function value is %5.3f \n", data->Sk);
-    fprintf(fp,"Iteration number\t   Lambda Value \t    Current Mean (OB FN) \t    Old Mean\t     Current Stddev\n");
-    fprintf(fp, "\n\n");
-    fprintf(fp,"%d     \t\t       NA       \t      %5.5f      \t         \t   %5.5f    \n",data->iteration_nr, data->Sk, data->Std);
-  */
 
+  rml_enkf_imodel_initA__(data , A, S , Cd , E , D , Ud , Wd , VdT);
+  
+  rml_enkf_imodel_init_Csc( data );
+  rml_enkf_imodel_init1__(data , nsc);
+    
   matrix_free( Skm );
   matrix_free( Ud );
   matrix_free( VdT );
@@ -506,6 +477,7 @@ void rml_enkf_imodel_updateA(void * module_data ,
   
   if (data->iteration_nr == 0) {
     rml_enkf_imodel_updateA_iter0(data , A , S , R , dObs , E , D , Cd);
+    data->iteration_nr++;
   } else {
     int nrmin         = util_int_min( ens_size , nrobs); 
     matrix_type * Ud  = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
@@ -518,8 +490,8 @@ void rml_enkf_imodel_updateA(void * module_data ,
     
     printf(" Current Objective function value is %5.3f \n\n",Sk_new);
     printf(" The old Objective function value is %5.3f \n", data->Sk);
-    {
-      bool mismatch_reduced = false;
+                  {
+              bool mismatch_reduced = false;
       bool std_reduced = false;
 
       if (Sk_new < data->Sk)
