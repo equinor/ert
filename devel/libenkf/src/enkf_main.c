@@ -1625,9 +1625,11 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
           switch (run_status) {
           case JOB_RUN_FAILURE:
             enkf_main_report_run_failure( enkf_main , iens );
+            bool_vector_iset(iactive, iens, false);
             break;
           case JOB_LOAD_FAILURE:
             enkf_main_report_load_failure( enkf_main , iens );
+            bool_vector_iset(iactive, iens, false);
             break;
           case JOB_RUN_OK:
             break;
