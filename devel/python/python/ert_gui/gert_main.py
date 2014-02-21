@@ -127,6 +127,7 @@ from ert_gui.tools.manage_cases import ManageCasesTool
 from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.export import ExportTool
 from ert_gui.tools.workflows import WorkflowsTool
+from ert_gui.widgets import util
 
 import ert_gui.widgets.util
 
@@ -158,6 +159,7 @@ class Ert(object):
 
 def main(argv):
     app = QApplication(argv) #Early so that QT is initialized before other imports
+    app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
 
     splash = QSplashScreen(resourceImage("newsplash"), Qt.WindowStaysOnTopHint)
     splash.show()
