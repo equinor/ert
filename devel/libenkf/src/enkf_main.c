@@ -3418,6 +3418,9 @@ const char * enkf_main_alloc_abs_path_to_init_file(const enkf_main_type * enkf_m
 
   if (path_to_init_file)
     abs_path_to_init_file = util_alloc_abs_path(path_to_init_file);
+
+  if (abs_path_to_init_file && !util_file_exists(abs_path_to_init_file))
+    abs_path_to_init_file = NULL;
   
   if (runpath)
     free(runpath); 
@@ -3460,7 +3463,7 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
     enkf_node_type * node = NULL;
 
     const char * init_file = enkf_main_alloc_abs_path_to_init_file(enkf_main, config_node);
-    if (init_file && util_file_exists(init_file))
+    if (init_file)
       printf("init_file found: \"%s\", exporting initial value for inactive cells\n", init_file);
     else
       printf("no init_file found, exporting 0 or fill value for inactive cells\n");
