@@ -1,14 +1,33 @@
-from PyQt4.QtCore import QSize, QSizeF, QDir, Qt, QStringList, QString
-from PyQt4.QtGui import QPrinter, QImage, QPainter, QApplication, QFileDialog
-from PyQt4.QtWebKit import QWebPage
+# Copyright (C) 2014 Statoil ASA, Norway.
+#
+# The file 'export_plot.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+# ERT is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.
+#
+# See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+# for more details.
+
+
+from PyQt4.QtCore import QSize, QSizeF, Qt, QStringList
+from PyQt4.QtGui import QPrinter, QImage, QPainter, QFileDialog
+
+from ert.util import ctime
+from ert_gui.models.connectors.plot.plot_settings import PlotSettingsModel
 from ert_gui.tools.plot.plot_bridge import PlotWebPage, PlotBridge
 from ert_gui.tools.plot.plot_panel import PlotPanel
 
-
 class ExportPlot(object):
-    def __init__(self, active_plot_panel, settings):
+    def __init__(self, active_plot_panel, plot_settings):
         super(ExportPlot, self).__init__()
         assert isinstance(active_plot_panel, PlotPanel)
+        settings = plot_settings["settings"]
         self.__active_plot_panel = active_plot_panel
         self.__time_min = settings["time_min"]
         self.__time_max = settings["time_max"]
@@ -17,7 +36,7 @@ class ExportPlot(object):
         self.__depth_min = settings["depth_min"]
         self.__depth_max = settings["depth_max"]
         self.__report_step_time = settings["report_step_time"]
-        self.__custom_settings = settings["custom_settings"]
+        self.__custom_settings = plot_settings["custom_settings"]
         self.__bridge = None
         self.__plot_bridge_org = active_plot_panel.getPlotBridge()
 
@@ -52,15 +71,23 @@ class ExportPlot(object):
 
 
     def performExport(self):
-        home = QDir.homePath()
+        default_export_path = PlotSettingsModel().getDefaultPlotPath()
+
+
+
+        #home = QDir.homePath()
         dialog = QFileDialog(self.__active_plot_panel.parent())
         dialog.setFileMode(QFileDialog.AnyFile)
-        dialog.setNameFilter("Image (*.png);; PDF (*.pdf)")
+        #dialog.setNameFilter("Image (*.png);; PDF (*.pdf)")
+        dialog.setNameFilter("Image (*.png)")
         dialog.setWindowTitle("Export plot")
-        dialog.setDirectory(home)
-        file_type_label = QString("Select file type: ")
-        dialog.setLabelText(QFileDialog.FileType, file_type_label)
+        dialog.setDirectory(default_export_path)
+        dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+        #file_type_label = QString("Select file type: ")
+        dialog.setLabelText(QFileDialog.FileType, "Select file type: ")
         dialog.setAcceptMode(QFileDialog.AcceptSave)
+        default_file_name = self.getDefaultFileName()
+        dialog.selectFile(default_file_name)
         if dialog.exec_():
             result = dialog.selectedFiles()
             assert isinstance(result, QStringList)
@@ -102,3 +129,15 @@ class ExportPlot(object):
 
         image.save(file_name)
         paint.end()
+
+    def getDefaultFileName(self):
+        name = self.__plot_bridge_org.getPlotData().name()
+        name = name.replace(":"," ")
+        type = self.__active_plot_panel.getName()
+        if type == "Histogram":
+            time = ctime(self.__report_step_time)
+            name = "%s - %s" % (name, time.date())
+
+        name = type +" "+name
+
+        return name

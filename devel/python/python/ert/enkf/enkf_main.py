@@ -72,7 +72,7 @@ class EnKFMain(BaseCClass):
         """ @rtype: EclConfig """
         return EnKFMain.cNamespace().get_ecl_config(self).setParent(self)
 
-    def plot_config(self):
+    def plotConfig(self):
         """ @rtype: PlotConfig """
         return EnKFMain.cNamespace().get_plot_config(self).setParent(self)
 
