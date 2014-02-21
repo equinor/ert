@@ -201,7 +201,7 @@ add_test( enkf_state_no_summary_vars_present
 
 
 add_executable( enkf_export_field_test enkf_export_field_test.c )
-target_link_libraries( enkf_export_field_test  ert-test test_util )
+target_link_libraries( enkf_export_field_test  enkf test_util )
 
 add_test( enkf_export_field_test
           ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields/config
@@ -302,7 +302,7 @@ add_test( enkf_forward_init_transform_FALSE
 #-----------------------------------------------------------------
 
 add_executable( enkf_export_inactive_cells enkf_export_inactive_cells.c )
-target_link_libraries( enkf_export_inactive_cells ert-test test_util )
+target_link_libraries( enkf_export_inactive_cells enkf test_util )
 
 add_test( enkf_export_inactive_cells
           ${EXECUTABLE_OUTPUT_PATH}/enkf_export_inactive_cells
