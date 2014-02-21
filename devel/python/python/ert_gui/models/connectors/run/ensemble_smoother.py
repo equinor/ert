@@ -26,7 +26,14 @@ class EnsembleSmoother(BaseRunModel):
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL , 0)
 
         if not success:
-            raise ErtRunError("Simulation failed!")
+            min_realization_count = self.ert().analysisConfig().getMinRealisations()
+            success_count = active_realization_mask.count()
+
+            if min_realization_count > success_count:
+                raise ErtRunError("Simulation failed! Number of successful realizations less than MIN_REALIZATIONS %d < %d" % (success_count, min_realization_count))
+            elif success_count == 0:
+                raise ErtRunError("Simulation failed! All realizations failed!")
+            #else ignore and continue
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runPostWorkflow()
