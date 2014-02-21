@@ -190,6 +190,9 @@ void * rml_enkf_imodel_data_alloc( rng_type * rng) {
   rml_enkf_imodel_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
   rml_enkf_imodel_set_use_prior( data , DEFAULT_USE_PRIOR );
   rml_enkf_imodel_set_lambda0( data , DEFAULT_LAMBDA0 );
+  rml_enkf_imodel_set_lambda_increase_factor(data , DEFAULT_LAMBDA_INCREASE_FACTOR);
+  rml_enkf_imodel_set_lambda_reduce_factor(data , DEFAULT_LAMBDA_REDUCE_FACTOR);
+  
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
   data->Std          = 0; 
@@ -217,32 +220,28 @@ static void rml_enkf_imodel_init1__( rml_enkf_imodel_data_type * data,
                                      double nsc) {
   
 
-  int state_size    = matrix_get_rows( data->prior0 );
-  int ens_size      = matrix_get_columns( data->prior0 );
+  int state_size    = matrix_get_rows( data->active_prior );
+  int ens_size      = matrix_get_columns( data->active_prior );
   int nrmin         = util_int_min( ens_size , state_size); 
-  matrix_type * Dm  = matrix_alloc_copy( data->prior0 );
-  
+  matrix_type * Dm  = matrix_alloc_copy( data->active_prior );
   matrix_type * Um  = matrix_alloc( state_size , nrmin  );     /* Left singular vectors.  */
-  matrix_type * VmT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
+  matrix_type * VmT = matrix_alloc( nrmin , ens_size );        /* Right singular vectors. */
   double * Wm       = util_calloc( nrmin , sizeof * Wm ); 
 
- 
   matrix_subtract_row_mean(Dm);
 
 
   //This routine only computes the SVD of Ensemble State matrix  
 
-  
-   for (int i=0; i < state_size; i++){
-     double sc = nsc / (data->Csc[i]);
-     matrix_scale_row (Dm,i, sc);
-   }
-
-
+  for (int i=0; i < state_size; i++){
+    double sc = nsc / (data->Csc[i]);
+    matrix_scale_row( Dm , i , sc);
+  }
   int nsign1 = enkf_linalg_svd_truncation(Dm , data->truncation , -1 , DGESVD_MIN_RETURN  , Wm , Um , VmT);
-
+  
   enkf_linalg_rml_enkfAm(Um, Wm, nsign1);
-  data->Am=matrix_alloc_copy(Um);
+
+  data->Am = matrix_alloc_copy( Um );
   matrix_free(Um);
   matrix_free(VmT);
   matrix_free(Dm);
@@ -290,7 +289,7 @@ static void rml_enkf_imodel_initA__(rml_enkf_imodel_data_type * data,
     matrix_type *tmp  = matrix_alloc (nrobs, ens_size);
     matrix_subtract_row_mean( S );   
     matrix_inplace_diag_sqrt(Cd);
-    matrix_dgemm(tmp , Cd , S , false , false,  1.0 , 0.0);
+    matrix_matmul(tmp , Cd , S );
     matrix_scale(tmp , nsc);
   
     // SVD(S)  = Ud * Wd * Vd(T)
@@ -313,7 +312,6 @@ static void rml_enkf_imodel_initA__(rml_enkf_imodel_data_type * data,
       matrix_free(X1);
     }
     
-    
     {
       matrix_type * dA1 = matrix_alloc( matrix_get_rows(A) , ens_size);
       matrix_type * Dm = matrix_alloc_copy( A );
@@ -321,13 +319,14 @@ static void rml_enkf_imodel_initA__(rml_enkf_imodel_data_type * data,
       matrix_subtract_row_mean( Dm );           /* Remove the mean from the ensemble of model parameters*/
       matrix_scale(Dm, nsc);
 
-      enkf_linalg_rml_enkfdA(dA1, Dm, X3);      // dA = Dm * X3   
+      matrix_matmul(dA1, Dm , X3);
       matrix_inplace_add(A,dA1);                // dA 
 
       matrix_free(Dm);
       matrix_free(dA1);
     }
     matrix_free(X3);
+
   }
 }
 
@@ -365,8 +364,7 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
     matrix_dgemm(X4 , Am , Dk , true, false, 1.0, 0.0);
     matrix_free(Dk);
   }
-
-  matrix_dgemm(X5 , Am , X4 , false , false , 1.0 , 0.0);
+  matrix_matmul(X5 , Am , X4);
   
   matrix_subtract_row_mean(Dk1);
   rml_enkf_common_scaleA(Dk1 , data->Csc , true);
@@ -374,11 +372,9 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
 
   matrix_dgemm(X6, Dk1, X5, true, false, 1.0, 0.0);
   enkf_linalg_rml_enkfX7(X7, VdTr , Wdr , data->lambda + 1, X6);
-
+  
   rml_enkf_common_scaleA(Dk1 , data->Csc , false);
-
-  enkf_linalg_rml_enkfXdA2(dA2,Dk1,X7);
-
+  matrix_matmul(dA2 , Dk1 , X7);
   matrix_inplace_sub(A, dA2);
 
   matrix_free(Am);
@@ -422,13 +418,12 @@ static void rml_enkf_imodel_updateA_iter0(rml_enkf_imodel_data_type * data,
   
   rml_enkf_common_store_state( data->state  , A , data->ens_mask );
   rml_enkf_common_store_state( data->prior0 , A , data->ens_mask );
-  
+  rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
   rml_enkf_imodel_initA__(data , A, S , Cd , E , D , Ud , Wd , VdT);
-  
   rml_enkf_imodel_init_Csc( data );
   rml_enkf_imodel_init1__(data , nsc);
-    
+  
   matrix_free( Skm );
   matrix_free( Ud );
   matrix_free( VdT );
@@ -474,6 +469,8 @@ void rml_enkf_imodel_updateA(void * module_data ,
     matrix_type * Acopy  = matrix_alloc_copy (A);
     Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
     Std_new = matrix_diag_std(Skm,Sk_new);
+    
+    rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
     printf(" Current Objective function value is %5.3f \n\n",Sk_new);
     printf(" The old Objective function value is %5.3f \n", data->Sk);
@@ -497,23 +494,20 @@ void rml_enkf_imodel_updateA(void * module_data ,
           data->lambda = data->lambda * data->lambda_reduce_factor;
 
         rml_enkf_common_store_state(data->state , A , data->ens_mask );
-        rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
         data->Sk = Sk_new;
         data->Std=Std_new;
         data->iteration_nr++;
       } else {
         data->lambda = data->lambda * data->lambda_increase_factor;
-        
         rml_enkf_common_recover_state( data->state , A , data->ens_mask );
-        rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
       }
     }
 
     rml_enkf_imodel_init_Csc( data );
     rml_enkf_imodel_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
     rml_enkf_imodel_init2__(data , A , Acopy , Wd , nsc , VdT);
-
+    
     matrix_free(Acopy);
     matrix_free(Skm);
     matrix_free( Ud );
@@ -521,7 +515,6 @@ void rml_enkf_imodel_updateA(void * module_data ,
     free( Wd );
   }
 
-  //setting the lower bound for lambda
   if (data->lambda <.01)
     data->lambda= .01;
 

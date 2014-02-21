@@ -99,9 +99,8 @@ void enkf_linalg_rml_enkfX3(matrix_type *X3, matrix_type *VdTr, double *Wdr,matr
 
 double enkf_linalg_data_mismatch(matrix_type *D , matrix_type *R , matrix_type *Sk);
 void enkf_linalg_Covariance(matrix_type *Cd, const matrix_type *E, double nsc ,int nrobs);
-void enkf_linalg_rml_enkfAm(matrix_type * Um, double * Wm,int nsign1);
+void enkf_linalg_rml_enkfAm(matrix_type * Um, const double * Wm,int nsign1);
 
 void enkf_linalg_rml_enkfX7(matrix_type * X7, matrix_type * VdT, double * Wdr, double a,matrix_type * X6);
-void enkf_linalg_rml_enkfXdA2(matrix_type * dA2,matrix_type * Dk,matrix_type * X7);
 
 #endif
