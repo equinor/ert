@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2011  Statoil ASA, Norway. 
     
-   The file 'rml_enkf_imodel.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'rml_enkf.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -36,7 +36,7 @@
 
 #include <rml_enkf_common.h>
 
-typedef struct rml_enkf_imodel_data_struct rml_enkf_imodel_data_type;
+typedef struct rml_enkf_data_struct rml_enkf_data_type;
 
 
 /*
@@ -67,13 +67,13 @@ typedef struct rml_enkf_imodel_data_struct rml_enkf_imodel_data_type;
 
 
 /*
-  The configuration data used by the rml_enkf_imodel module is contained in a
-  rml_enkf_imodel_data_struct instance. The data type used for the rml_enkf_imodel
+  The configuration data used by the rml_enkf module is contained in a
+  rml_enkf_data_struct instance. The data type used for the rml_enkf
   module is quite simple; with only a few scalar variables, but there
   are essentially no limits to what you can pack into such a datatype.
 
   All the functions in the module have a void pointer as the first
-  argument, this will immediately be casted to a rml_enkf_imodel_data_type
+  argument, this will immediately be casted to a rml_enkf_data_type
   instance, to get some type safety the UTIL_TYPE_ID system should be
   used (see documentation in util.h)
 
@@ -86,9 +86,9 @@ typedef struct rml_enkf_imodel_data_struct rml_enkf_imodel_data_type;
 */
 
 
-#define RML_ENKF_IMODEL_TYPE_ID 261123
+#define RML_ENKF_TYPE_ID 261123
 
-struct rml_enkf_imodel_data_struct {
+struct rml_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
   double    truncation;            // Controlled by config key: ENKF_TRUNCATION_KEY
   int       subspace_dimension;    // Controlled by config key: ENKF_NCOMP_KEY (-1: use Truncation instead)
@@ -109,72 +109,72 @@ struct rml_enkf_imodel_data_struct {
   double lambda_increase_factor;
 };
 
-static UTIL_SAFE_CAST_FUNCTION( rml_enkf_imodel_data , RML_ENKF_IMODEL_TYPE_ID )
-static UTIL_SAFE_CAST_FUNCTION_CONST( rml_enkf_imodel_data , RML_ENKF_IMODEL_TYPE_ID )
+static UTIL_SAFE_CAST_FUNCTION( rml_enkf_data , RML_ENKF_TYPE_ID )
+static UTIL_SAFE_CAST_FUNCTION_CONST( rml_enkf_data , RML_ENKF_TYPE_ID )
 
 
-double rml_enkf_imodel_get_truncation( rml_enkf_imodel_data_type * data ) {
+double rml_enkf_get_truncation( rml_enkf_data_type * data ) {
   return data->truncation;
 }
 
-int rml_enkf_imodel_get_subspace_dimension( rml_enkf_imodel_data_type * data ) {
+int rml_enkf_get_subspace_dimension( rml_enkf_data_type * data ) {
   return data->subspace_dimension;
 }
 
-void rml_enkf_imodel_set_truncation( rml_enkf_imodel_data_type * data , double truncation ) {
+void rml_enkf_set_truncation( rml_enkf_data_type * data , double truncation ) {
   data->truncation = truncation;
   if (truncation > 0.0)
     data->subspace_dimension = INVALID_SUBSPACE_DIMENSION;
 }
 
-void rml_enkf_imodel_set_lambda0( rml_enkf_imodel_data_type * data , double increase_factor) {
+void rml_enkf_set_lambda0( rml_enkf_data_type * data , double increase_factor) {
   data->lambda0 = increase_factor;
 }
 
 
-void rml_enkf_imodel_set_lambda_increase_factor( rml_enkf_imodel_data_type * data , double increase_factor) {
+void rml_enkf_set_lambda_increase_factor( rml_enkf_data_type * data , double increase_factor) {
   data->lambda_increase_factor = increase_factor;
 }
 
-void rml_enkf_imodel_set_lambda_reduce_factor( rml_enkf_imodel_data_type * data , double reduce_factor) {
+void rml_enkf_set_lambda_reduce_factor( rml_enkf_data_type * data , double reduce_factor) {
   data->lambda_reduce_factor = reduce_factor;
 }
 
-double rml_enkf_imodel_get_lambda_increase_factor( const rml_enkf_imodel_data_type * data ) {
+double rml_enkf_get_lambda_increase_factor( const rml_enkf_data_type * data ) {
   return data->lambda_increase_factor;
 }
 
-double rml_enkf_imodel_get_lambda_reduce_factor( const rml_enkf_imodel_data_type * data ) {
+double rml_enkf_get_lambda_reduce_factor( const rml_enkf_data_type * data ) {
   return data->lambda_reduce_factor;
 }
 
-double rml_enkf_imodel_get_lambda0( const rml_enkf_imodel_data_type * data ) {
+double rml_enkf_get_lambda0( const rml_enkf_data_type * data ) {
   return data->lambda0;
 }
 
 
-bool rml_enkf_imodel_get_use_prior( const rml_enkf_imodel_data_type * data ) {
+bool rml_enkf_get_use_prior( const rml_enkf_data_type * data ) {
   return data->use_prior;
 }
 
 
-void rml_enkf_imodel_set_use_prior( rml_enkf_imodel_data_type * data , bool use_prior) {
+void rml_enkf_set_use_prior( rml_enkf_data_type * data , bool use_prior) {
   data->use_prior = use_prior;
 }
 
-void rml_enkf_imodel_set_subspace_dimension( rml_enkf_imodel_data_type * data , int subspace_dimension) {
+void rml_enkf_set_subspace_dimension( rml_enkf_data_type * data , int subspace_dimension) {
   data->subspace_dimension = subspace_dimension;
   if (subspace_dimension > 0)
     data->truncation = INVALID_TRUNCATION;
 }
 
 
-void rml_enkf_imodel_set_iteration_nr( rml_enkf_imodel_data_type * data , int iteration_nr) {
+void rml_enkf_set_iteration_nr( rml_enkf_data_type * data , int iteration_nr) {
   data->iteration_nr = iteration_nr;
 }
 
 
-int rml_enkf_imodel_get_iteration_nr( const rml_enkf_imodel_data_type * data ) {
+int rml_enkf_get_iteration_nr( const rml_enkf_data_type * data ) {
   return data->iteration_nr;
 }
 
@@ -182,16 +182,16 @@ int rml_enkf_imodel_get_iteration_nr( const rml_enkf_imodel_data_type * data ) {
 
 
 
-void * rml_enkf_imodel_data_alloc( rng_type * rng) {
-  rml_enkf_imodel_data_type * data = util_malloc( sizeof * data);
-  UTIL_TYPE_ID_INIT( data , RML_ENKF_IMODEL_TYPE_ID );
+void * rml_enkf_data_alloc( rng_type * rng) {
+  rml_enkf_data_type * data = util_malloc( sizeof * data);
+  UTIL_TYPE_ID_INIT( data , RML_ENKF_TYPE_ID );
   
-  rml_enkf_imodel_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
-  rml_enkf_imodel_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
-  rml_enkf_imodel_set_use_prior( data , DEFAULT_USE_PRIOR );
-  rml_enkf_imodel_set_lambda0( data , DEFAULT_LAMBDA0 );
-  rml_enkf_imodel_set_lambda_increase_factor(data , DEFAULT_LAMBDA_INCREASE_FACTOR);
-  rml_enkf_imodel_set_lambda_reduce_factor(data , DEFAULT_LAMBDA_REDUCE_FACTOR);
+  rml_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
+  rml_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
+  rml_enkf_set_use_prior( data , DEFAULT_USE_PRIOR );
+  rml_enkf_set_lambda0( data , DEFAULT_LAMBDA0 );
+  rml_enkf_set_lambda_increase_factor(data , DEFAULT_LAMBDA_INCREASE_FACTOR);
+  rml_enkf_set_lambda_reduce_factor(data , DEFAULT_LAMBDA_REDUCE_FACTOR);
   
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
@@ -204,8 +204,8 @@ void * rml_enkf_imodel_data_alloc( rng_type * rng) {
 }
 
 
-void rml_enkf_imodel_data_free( void * arg ) { 
-  rml_enkf_imodel_data_type * data = rml_enkf_imodel_data_safe_cast( arg );
+void rml_enkf_data_free( void * arg ) { 
+  rml_enkf_data_type * data = rml_enkf_data_safe_cast( arg );
 
   matrix_free( data->state );
   matrix_free( data->prior0 );
@@ -216,7 +216,7 @@ void rml_enkf_imodel_data_free( void * arg ) {
 }
 
 
-static void rml_enkf_imodel_init1__( rml_enkf_imodel_data_type * data, 
+static void rml_enkf_init1__( rml_enkf_data_type * data, 
                                      double nsc) {
   
 
@@ -250,7 +250,7 @@ static void rml_enkf_imodel_init1__( rml_enkf_imodel_data_type * data,
 
 
 
-void rml_enkf_imodel_init_Csc(rml_enkf_imodel_data_type * data){
+void rml_enkf_init_Csc(rml_enkf_data_type * data){
   int state_size = matrix_get_rows( data->active_prior );
   int ens_size   = matrix_get_columns( data->active_prior );
 
@@ -271,7 +271,7 @@ void rml_enkf_imodel_init_Csc(rml_enkf_imodel_data_type * data){
 
 
 
-static void rml_enkf_imodel_initA__(rml_enkf_imodel_data_type * data, 
+static void rml_enkf_initA__(rml_enkf_data_type * data, 
                                     matrix_type * A ,
                                     matrix_type * S , 
                                     matrix_type * Cd , 
@@ -332,7 +332,7 @@ static void rml_enkf_imodel_initA__(rml_enkf_imodel_data_type * data,
 
 
 
-void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
+void rml_enkf_init2__( rml_enkf_data_type * data,
                               matrix_type *A,
                               matrix_type *Acopy,
                               double * Wdr,
@@ -388,7 +388,7 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
 }
 
 
-static void rml_enkf_imodel_updateA_iter0(rml_enkf_imodel_data_type * data,
+static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
                                           matrix_type * A , 
                                           matrix_type * S , 
                                           matrix_type * R , 
@@ -420,9 +420,9 @@ static void rml_enkf_imodel_updateA_iter0(rml_enkf_imodel_data_type * data,
   rml_enkf_common_store_state( data->prior0 , A , data->ens_mask );
   rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
-  rml_enkf_imodel_initA__(data , A, S , Cd , E , D , Ud , Wd , VdT);
-  rml_enkf_imodel_init_Csc( data );
-  rml_enkf_imodel_init1__(data , nsc);
+  rml_enkf_initA__(data , A, S , Cd , E , D , Ud , Wd , VdT);
+  rml_enkf_init_Csc( data );
+  rml_enkf_init1__(data , nsc);
   
   matrix_free( Skm );
   matrix_free( Ud );
@@ -434,7 +434,7 @@ static void rml_enkf_imodel_updateA_iter0(rml_enkf_imodel_data_type * data,
 
 
 
-void rml_enkf_imodel_updateA(void * module_data , 
+void rml_enkf_updateA(void * module_data , 
                       matrix_type * A , 
                       matrix_type * S , 
                       matrix_type * R , 
@@ -443,13 +443,13 @@ void rml_enkf_imodel_updateA(void * module_data ,
                       matrix_type * D) {
 
 
-  rml_enkf_imodel_data_type * data = rml_enkf_imodel_data_safe_cast( module_data );
+  rml_enkf_data_type * data = rml_enkf_data_safe_cast( module_data );
   double Sk_new;
   double  Std_new;
   int nrobs         = matrix_get_rows( S );
   int ens_size      = matrix_get_columns( S );
   double nsc        = 1/sqrt(ens_size-1); 
-  FILE *fp = util_fopen("rml_enkf_imodel_output","a");
+  FILE *fp = util_fopen("rml_enkf_output","a");
   matrix_type * Cd  = matrix_alloc( nrobs, nrobs );
  
   
@@ -458,7 +458,7 @@ void rml_enkf_imodel_updateA(void * module_data ,
 
   
   if (data->iteration_nr == 0) {
-    rml_enkf_imodel_updateA_iter0(data , A , S , R , dObs , E , D , Cd);
+    rml_enkf_updateA_iter0(data , A , S , R , dObs , E , D , Cd);
     data->iteration_nr++;
   } else {
     int nrmin         = util_int_min( ens_size , nrobs); 
@@ -504,9 +504,9 @@ void rml_enkf_imodel_updateA(void * module_data ,
       }
     }
 
-    rml_enkf_imodel_init_Csc( data );
-    rml_enkf_imodel_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
-    rml_enkf_imodel_init2__(data , A , Acopy , Wd , nsc , VdT);
+    rml_enkf_init_Csc( data );
+    rml_enkf_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
+    rml_enkf_init2__(data , A , Acopy , Wd , nsc , VdT);
     
     matrix_free(Acopy);
     matrix_free(Skm);
@@ -527,7 +527,7 @@ void rml_enkf_imodel_updateA(void * module_data ,
 
 
 
-void rml_enkf_imodel_init_update(void * arg , 
+void rml_enkf_init_update(void * arg , 
                                  const bool_vector_type * ens_mask , 
                                  const matrix_type * S , 
                                  const matrix_type * R , 
@@ -535,25 +535,25 @@ void rml_enkf_imodel_init_update(void * arg ,
                                  const matrix_type * E , 
                                  const matrix_type * D ) {
   
-  rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast( arg );
+  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
   bool_vector_memcpy( module_data->ens_mask , ens_mask );
 }
 
 
 
-bool rml_enkf_imodel_set_double( void * arg , const char * var_name , double value) {
-  rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast( arg );
+bool rml_enkf_set_double( void * arg , const char * var_name , double value) {
+  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
   {
     bool name_recognized = true;
 
     if (strcmp( var_name , ENKF_TRUNCATION_KEY_) == 0)
-      rml_enkf_imodel_set_truncation( module_data , value );
+      rml_enkf_set_truncation( module_data , value );
     else if (strcmp( var_name , LAMBDA_INCREASE_FACTOR_KEY) == 0)
-      rml_enkf_imodel_set_lambda_increase_factor( module_data , value );
+      rml_enkf_set_lambda_increase_factor( module_data , value );
     else if (strcmp( var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
-      rml_enkf_imodel_set_lambda_reduce_factor( module_data , value );
+      rml_enkf_set_lambda_reduce_factor( module_data , value );
     else if (strcmp( var_name , LAMBDA0_KEY) == 0)
-      rml_enkf_imodel_set_lambda0( module_data , value );
+      rml_enkf_set_lambda0( module_data , value );
     else
       name_recognized = false;
 
@@ -562,15 +562,15 @@ bool rml_enkf_imodel_set_double( void * arg , const char * var_name , double val
 }
 
 
-bool rml_enkf_imodel_set_int( void * arg , const char * var_name , int value) {
-  rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast( arg );
+bool rml_enkf_set_int( void * arg , const char * var_name , int value) {
+  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
   {
     bool name_recognized = true;
     
     if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
-      rml_enkf_imodel_set_subspace_dimension( module_data , value );
+      rml_enkf_set_subspace_dimension( module_data , value );
     else if (strcmp( var_name , ITER_KEY) == 0)
-      rml_enkf_imodel_set_iteration_nr( module_data , value );
+      rml_enkf_set_iteration_nr( module_data , value );
     else
       name_recognized = false;
 
@@ -579,13 +579,13 @@ bool rml_enkf_imodel_set_int( void * arg , const char * var_name , int value) {
 }
 
 
-bool rml_enkf_imodel_set_bool( void * arg , const char * var_name , bool value) {
-  rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast( arg );
+bool rml_enkf_set_bool( void * arg , const char * var_name , bool value) {
+  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
   {
     bool name_recognized = true;
     
     if (strcmp( var_name , USE_PRIOR_KEY) == 0)
-      rml_enkf_imodel_set_use_prior( module_data , value );
+      rml_enkf_set_use_prior( module_data , value );
     else
       name_recognized = false;
 
@@ -594,8 +594,8 @@ bool rml_enkf_imodel_set_bool( void * arg , const char * var_name , bool value) 
 }
 
 
-long rml_enkf_imodel_get_options( void * arg , long flag ) {
-  rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast( arg );
+long rml_enkf_get_options( void * arg , long flag ) {
+  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
   {
     return module_data->option_flags;
   }
@@ -603,7 +603,7 @@ long rml_enkf_imodel_get_options( void * arg , long flag ) {
 
 
 
-bool rml_enkf_imodel_has_var( const void * arg, const char * var_name) {
+bool rml_enkf_has_var( const void * arg, const char * var_name) {
   {
     if (strcmp(var_name , ITER_KEY) == 0)
       return true;
@@ -625,8 +625,8 @@ bool rml_enkf_imodel_has_var( const void * arg, const char * var_name) {
 
 
 
-int rml_enkf_imodel_get_int( const void * arg, const char * var_name) {
-  const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
+int rml_enkf_get_int( const void * arg, const char * var_name) {
+  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
   {
     if (strcmp(var_name , ITER_KEY) == 0)
       return module_data->iteration_nr;
@@ -636,8 +636,8 @@ int rml_enkf_imodel_get_int( const void * arg, const char * var_name) {
 }
 
 
-bool rml_enkf_imodel_get_bool( const void * arg, const char * var_name) {
-  const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
+bool rml_enkf_get_bool( const void * arg, const char * var_name) {
+  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
   {
     if (strcmp(var_name , USE_PRIOR_KEY) == 0)
       return module_data->use_prior;
@@ -648,8 +648,8 @@ bool rml_enkf_imodel_get_bool( const void * arg, const char * var_name) {
 
 
 
-double rml_enkf_imodel_get_double( const void * arg, const char * var_name) {
-  const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
+double rml_enkf_get_double( const void * arg, const char * var_name) {
+  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
   {
     if (strcmp(var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
       return module_data->lambda_reduce_factor;
@@ -670,28 +670,28 @@ double rml_enkf_imodel_get_double( const void * arg, const char * var_name) {
 
 
 #ifdef INTERNAL_LINK
-#define SYMBOL_TABLE rml_enkf_imodel_symbol_table
+#define SYMBOL_TABLE rml_enkf_symbol_table
 #else
 #define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
 #endif
 
 
 analysis_table_type SYMBOL_TABLE = {
-  .alloc           = rml_enkf_imodel_data_alloc,
-  .freef           = rml_enkf_imodel_data_free,
-  .set_int         = rml_enkf_imodel_set_int , 
-  .set_double      = rml_enkf_imodel_set_double , 
-  .set_bool        = rml_enkf_imodel_set_bool, 
+  .alloc           = rml_enkf_data_alloc,
+  .freef           = rml_enkf_data_free,
+  .set_int         = rml_enkf_set_int , 
+  .set_double      = rml_enkf_set_double , 
+  .set_bool        = rml_enkf_set_bool, 
   .set_string      = NULL , 
-  .get_options     = rml_enkf_imodel_get_options , 
+  .get_options     = rml_enkf_get_options , 
   .initX           = NULL,
-  .updateA         = rml_enkf_imodel_updateA ,  
-  .init_update     = rml_enkf_imodel_init_update ,
+  .updateA         = rml_enkf_updateA ,  
+  .init_update     = rml_enkf_init_update ,
   .complete_update = NULL,
-  .has_var         = rml_enkf_imodel_has_var,
-  .get_int         = rml_enkf_imodel_get_int,
-  .get_double      = rml_enkf_imodel_get_double,
-  .get_bool        = rml_enkf_imodel_get_bool,
+  .has_var         = rml_enkf_has_var,
+  .get_int         = rml_enkf_get_int,
+  .get_double      = rml_enkf_get_double,
+  .get_bool        = rml_enkf_get_bool,
   .get_ptr         = NULL, 
 };
 
