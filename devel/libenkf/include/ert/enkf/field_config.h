@@ -133,6 +133,7 @@ int                     field_config_get_ny(const field_config_type * config );
 int                     field_config_get_nz(const field_config_type * config );
 void                    field_config_free(field_config_type *);
 int                     field_config_get_volume(const field_config_type * );
+int                     field_config_get_data_size_from_grid(const field_config_type * config);
 void                    field_config_set_ecl_kw_name(field_config_type * , const char * );
 void                    field_config_set_ecl_type(field_config_type *  , ecl_type_enum );
 void                    field_config_set_eclfile(field_config_type * , const char * );
@@ -172,7 +173,7 @@ void                    field_config_set_truncation(field_config_type * , int , 
 int                     field_config_get_truncation_mode(const field_config_type * config );
 double                  field_config_get_truncation_min( const field_config_type * config );
 double                  field_config_get_truncation_max( const field_config_type * config );
-const ecl_grid_type   * field_config_get_grid(const field_config_type * );
+ecl_grid_type         * field_config_get_grid(const field_config_type * );
 const char            * field_config_get_grid_name( const field_config_type * );
 
   int                     field_config_parse_user_key(const field_config_type * config, const char * index_key , int *i , int *j , int *k);

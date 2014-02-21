@@ -975,7 +975,7 @@ int field_config_parse_user_key(const field_config_type * config, const char * i
 
 
 
-const ecl_grid_type *field_config_get_grid(const field_config_type * config) { return config->grid; }
+ecl_grid_type * field_config_get_grid(const field_config_type * config) { return config->grid; }
 
 
 void field_config_fprintf_config( const field_config_type * config , 

@@ -58,9 +58,9 @@ void check_exported_data(const char * exported_file,
       exported_stream = util_fopen( exported_file , "r");
       kw_exported     = ecl_kw_fscanf_alloc_grdecl_dynamic( exported_stream , field_config_get_key(field_config) , ECL_DOUBLE_TYPE );
     } else if (RMS_ROFF_FILE == file_type) {
-      const ecl_grid_type * grid = field_config_get_grid(field_config);
-      exported_field_config      = field_config_alloc_empty(field_config_get_key(field_config), grid, NULL, true);
-      exported_field             = field_alloc(exported_field_config);
+      ecl_grid_type * grid  = field_config_get_grid(field_config);
+      exported_field_config = field_config_alloc_empty(field_config_get_key(field_config), grid, NULL, true);
+      exported_field        = field_alloc(exported_field_config);
 
       bool keep_inactive = true;
       field_fload_rms(exported_field, exported_file, keep_inactive);
@@ -169,7 +169,7 @@ int main(int argc , char ** argv) {
   const char * export_file_roff   = "my_test_dir/exported_field_test_file_roff";
   field_file_format_type file_type;
 
-  const char * found_init_file = enkf_main_alloc_abs_path_to_init_file(enkf_main, config_node);
+  char * found_init_file = enkf_main_alloc_abs_path_to_init_file(enkf_main, config_node);
   {
     file_type = ECL_GRDECL_FILE;
     field_export(field, export_file_grdecl, NULL, file_type, false, found_init_file);

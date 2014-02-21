@@ -55,6 +55,7 @@ extern "C" {
   void         field_get_dims(const field_type *, int *, int *, int *);
   bool         field_fload_keep_inactive(field_type * field , const char * filename);
   bool         field_fload_auto(field_type * , const char * , bool);
+  bool         field_fload_rms(field_type * field , const char * filename, bool keep_inactive);
   void         field_export3D(const field_type * , void *, bool, ecl_type_enum , void *, const char *);
   void         field_export(const field_type * , const char * , fortio_type * , field_file_format_type , bool, const char *);
   field_type * field_copyc(const field_type *);

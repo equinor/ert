@@ -121,13 +121,13 @@ void field_export3D(const field_type * field ,
   ecl_type_enum ecl_type = field_config_get_ecl_type( config );
   int   sizeof_ctype_target = ecl_util_get_sizeof_ctype(target_type);
 
-  const field_type * initial_field         = NULL;
+  field_type * initial_field               = NULL;
   field_config_type * initial_field_config = NULL;
   if (init_file) {
-    const ecl_grid_type * grid = field_config_get_grid(config);
-    bool global_size           = true;
-    initial_field_config       = field_config_alloc_empty(field_config_get_key(config), grid, NULL, global_size);
-    initial_field              = field_alloc(initial_field_config);
+    ecl_grid_type * grid        = field_config_get_grid(config);
+    bool global_size            = true;
+    initial_field_config        = field_config_alloc_empty(field_config_get_key(config), grid, NULL, global_size);
+    initial_field               = field_alloc(initial_field_config);
 
     field_fload_keep_inactive(initial_field, init_file);
   }

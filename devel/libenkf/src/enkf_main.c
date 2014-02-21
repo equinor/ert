@@ -3402,12 +3402,12 @@ void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bo
 
 
 
-const char * enkf_main_alloc_abs_path_to_init_file(const enkf_main_type * enkf_main, const enkf_config_node_type * config_node) {
-  model_config_type * model_config   = enkf_main_get_model_config(enkf_main);
-  const char * runpath               = NULL;
-  const char * path_to_init_file     = NULL;
-  const char * abs_path_to_init_file = NULL;
-  bool forward_init                  = enkf_config_node_use_forward_init(config_node);
+char * enkf_main_alloc_abs_path_to_init_file(const enkf_main_type * enkf_main, const enkf_config_node_type * config_node) {
+  model_config_type * model_config = enkf_main_get_model_config(enkf_main);
+  char * runpath                   = NULL;
+  char * path_to_init_file         = NULL;
+  char * abs_path_to_init_file     = NULL;
+  bool forward_init                = enkf_config_node_use_forward_init(config_node);
 
   if (forward_init) {
     path_fmt_type * runpath_fmt = model_config_get_runpath_fmt(model_config);
@@ -3462,7 +3462,7 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
   if (node_found) {
     enkf_node_type * node = NULL;
 
-    const char * init_file = enkf_main_alloc_abs_path_to_init_file(enkf_main, config_node);
+    char * init_file = enkf_main_alloc_abs_path_to_init_file(enkf_main, config_node);
     if (init_file)
       printf("init_file found: \"%s\", exporting initial value for inactive cells\n", init_file);
     else
