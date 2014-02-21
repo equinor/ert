@@ -55,12 +55,14 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 #define DEFAULT_LAMBDA_INCREASE_FACTOR 4
 #define DEFAULT_LAMBDA_REDUCE_FACTOR   0.1
 #define DEFAULT_LAMBDA0                -1
+#define DEFAULT_LAMBDA_MIN             0.01
 
 
 #define  USE_PRIOR_KEY               "USE_PRIOR"
 #define  LAMBDA_REDUCE_FACTOR_KEY    "LAMBDA_REDUCE"
 #define  LAMBDA_INCREASE_FACTOR_KEY  "LAMBDA_INCREASE"
 #define  LAMBDA0_KEY                 "LAMBDA0"
+#define  LAMBDA_MIN_KEY              "LAMBDA_MIN"
 #define  ITER_KEY                    "ITER"
 
 
@@ -94,8 +96,6 @@ struct rml_enkf_data_struct {
   int       subspace_dimension;    // Controlled by config key: ENKF_NCOMP_KEY (-1: use Truncation instead)
   long      option_flags;
   int       iteration_nr;          // Keep track of the outer iteration loop
-  double    lambda;                 // parameter to control the search direction in Marquardt levenberg optimization 
-  double    lambda0;
   double    Sk;                    // Objective function value
   double    Std;                   // Standard Deviation of the Objective function
   double  * Csc;
@@ -105,9 +105,15 @@ struct rml_enkf_data_struct {
   matrix_type *state;
   bool_vector_type * ens_mask;
   bool use_prior;
-  double lambda_reduce_factor;
-  double lambda_increase_factor;
+
+  double    lambda;                 // parameter to control the setp length in Marquardt levenberg optimization 
+  double    lambda0;
+  double    lambda_min;
+  double    lambda_reduce_factor;
+  double    lambda_increase_factor;
 };
+
+
 
 static UTIL_SAFE_CAST_FUNCTION( rml_enkf_data , RML_ENKF_TYPE_ID )
 static UTIL_SAFE_CAST_FUNCTION_CONST( rml_enkf_data , RML_ENKF_TYPE_ID )
@@ -131,6 +137,18 @@ void rml_enkf_set_lambda0( rml_enkf_data_type * data , double increase_factor) {
   data->lambda0 = increase_factor;
 }
 
+double rml_enkf_get_lambda0( const rml_enkf_data_type * data ) {
+  return data->lambda0;
+}
+
+void rml_enkf_set_lambda_min( rml_enkf_data_type * data , double increase_factor) {
+  data->lambda_min = increase_factor;
+}
+
+double rml_enkf_get_lambda_min( const rml_enkf_data_type * data ) {
+  return data->lambda_min;
+}
+
 
 void rml_enkf_set_lambda_increase_factor( rml_enkf_data_type * data , double increase_factor) {
   data->lambda_increase_factor = increase_factor;
@@ -148,9 +166,6 @@ double rml_enkf_get_lambda_reduce_factor( const rml_enkf_data_type * data ) {
   return data->lambda_reduce_factor;
 }
 
-double rml_enkf_get_lambda0( const rml_enkf_data_type * data ) {
-  return data->lambda0;
-}
 
 
 bool rml_enkf_get_use_prior( const rml_enkf_data_type * data ) {
@@ -192,7 +207,8 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   rml_enkf_set_lambda0( data , DEFAULT_LAMBDA0 );
   rml_enkf_set_lambda_increase_factor(data , DEFAULT_LAMBDA_INCREASE_FACTOR);
   rml_enkf_set_lambda_reduce_factor(data , DEFAULT_LAMBDA_REDUCE_FACTOR);
-  
+  rml_enkf_set_lambda_min( data , DEFAULT_LAMBDA_MIN );
+
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
   data->Std          = 0; 
@@ -216,8 +232,7 @@ void rml_enkf_data_free( void * arg ) {
 }
 
 
-static void rml_enkf_init1__( rml_enkf_data_type * data, 
-                                     double nsc) {
+static void rml_enkf_init1__( rml_enkf_data_type * data) {
   
 
   int state_size    = matrix_get_rows( data->active_prior );
@@ -227,6 +242,7 @@ static void rml_enkf_init1__( rml_enkf_data_type * data,
   matrix_type * Um  = matrix_alloc( state_size , nrmin  );     /* Left singular vectors.  */
   matrix_type * VmT = matrix_alloc( nrmin , ens_size );        /* Right singular vectors. */
   double * Wm       = util_calloc( nrmin , sizeof * Wm ); 
+  double nsc        = 1/sqrt(ens_size - 1); 
 
   matrix_subtract_row_mean(Dm);
 
@@ -272,14 +288,14 @@ void rml_enkf_init_Csc(rml_enkf_data_type * data){
 
 
 static void rml_enkf_initA__(rml_enkf_data_type * data, 
-                                    matrix_type * A ,
-                                    matrix_type * S , 
-                                    matrix_type * Cd , 
-                                    matrix_type * E , 
-                                    matrix_type * D ,
-                                    matrix_type * Udr,
-                                    double * Wdr,
-                                    matrix_type * VdTr) {
+                             matrix_type * A ,
+                             matrix_type * S , 
+                             matrix_type * Cd , 
+                             matrix_type * E , 
+                             matrix_type * D ,
+                             matrix_type * Udr,
+                             double * Wdr,
+                             matrix_type * VdTr) {
 
   int ens_size      = matrix_get_columns( S );
   double nsc        = 1/sqrt(ens_size-1);
@@ -333,15 +349,15 @@ static void rml_enkf_initA__(rml_enkf_data_type * data,
 
 
 void rml_enkf_init2__( rml_enkf_data_type * data,
-                              matrix_type *A,
-                              matrix_type *Acopy,
-                              double * Wdr,
-                              double nsc,
-                              matrix_type * VdTr) {
+                       matrix_type *A,
+                       matrix_type *Acopy,
+                       double * Wdr,
+                       matrix_type * VdTr) {
 
 
   int state_size   = matrix_get_rows( Acopy );
   int ens_size     = matrix_get_columns( Acopy );
+  double nsc       = 1/sqrt(ens_size-1); 
 
   matrix_type *Am  = matrix_alloc_copy(data->Am);
   matrix_type *Apr = matrix_alloc_copy(data->active_prior);
@@ -405,7 +421,6 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
   matrix_type * Ud  = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
   matrix_type * VdT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
   double * Wd       = util_calloc( nrmin , sizeof * Wd ); 
-  double nsc        = 1/sqrt(ens_size-1); 
 
   data->Csc = util_calloc(state_size , sizeof * data->Csc);
   data->Sk  = enkf_linalg_data_mismatch(D,Cd,Skm);  
@@ -422,7 +437,7 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
 
   rml_enkf_initA__(data , A, S , Cd , E , D , Ud , Wd , VdT);
   rml_enkf_init_Csc( data );
-  rml_enkf_init1__(data , nsc);
+  rml_enkf_init1__(data );
   
   matrix_free( Skm );
   matrix_free( Ud );
@@ -506,7 +521,7 @@ void rml_enkf_updateA(void * module_data ,
 
     rml_enkf_init_Csc( data );
     rml_enkf_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
-    rml_enkf_init2__(data , A , Acopy , Wd , nsc , VdT);
+    rml_enkf_init2__(data , A , Acopy , Wd , VdT);
     
     matrix_free(Acopy);
     matrix_free(Skm);
@@ -515,8 +530,8 @@ void rml_enkf_updateA(void * module_data ,
     free( Wd );
   }
 
-  if (data->lambda <.01)
-    data->lambda= .01;
+  if (data->lambda < data->lambda_min)
+    data->lambda = data->lambda_min;
 
   printf ("The current iteration number is %d \n ", data->iteration_nr);
   
@@ -554,6 +569,8 @@ bool rml_enkf_set_double( void * arg , const char * var_name , double value) {
       rml_enkf_set_lambda_reduce_factor( module_data , value );
     else if (strcmp( var_name , LAMBDA0_KEY) == 0)
       rml_enkf_set_lambda0( module_data , value );
+    else if (strcmp( var_name , LAMBDA_MIN_KEY) == 0)
+      rml_enkf_set_lambda_min( module_data , value );
     else
       name_recognized = false;
 
@@ -615,6 +632,8 @@ bool rml_enkf_has_var( const void * arg, const char * var_name) {
       return true;
     else if (strcmp(var_name , LAMBDA0_KEY) == 0)
       return true;
+    else if (strcmp(var_name , LAMBDA_MIN_KEY) == 0)
+      return true;
     else if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
       return true;
     else
@@ -657,6 +676,8 @@ double rml_enkf_get_double( const void * arg, const char * var_name) {
       return module_data->lambda_increase_factor;
     if (strcmp(var_name , LAMBDA0_KEY) == 0)
       return module_data->lambda0;
+    if (strcmp(var_name , LAMBDA_MIN_KEY) == 0)
+      return module_data->lambda_min;
     if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
       return module_data->truncation;
     else
