@@ -3418,8 +3418,10 @@ char * enkf_main_alloc_abs_path_to_init_file(const enkf_main_type * enkf_main, c
   if (path_to_init_file)
     abs_path_to_init_file = util_alloc_abs_path(path_to_init_file);
 
-  if (abs_path_to_init_file && !util_file_exists(abs_path_to_init_file))
+  if (abs_path_to_init_file && !util_file_exists(abs_path_to_init_file)) {
+    free(abs_path_to_init_file); 
     abs_path_to_init_file = NULL;
+  }
   
   if (runpath)
     free(runpath); 
