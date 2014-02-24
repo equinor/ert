@@ -134,7 +134,14 @@ function Histogram(element) {
         }
 
         x_scale.domain([min, max]).nice();
-        x_log_scale.domain([min, max]).nice();
+
+
+        var from_log = Math.floor(Math.log(min) / Math.log(10));
+        var to_log = Math.ceil(Math.log(max) / Math.log(10));
+        var from = Math.pow(10, from_log);
+        var to = Math.pow(10, to_log);
+
+        x_log_scale.domain([from, to]);
     };
 
     var resetLegends = function() {
@@ -169,9 +176,28 @@ function Histogram(element) {
 
             var r = range[1] - range[0];
 
+            var from = Math.round(Math.log(range[0]) / Math.log(10));
+            var to = Math.round(Math.log(range[1]) / Math.log(10));
+
+            var log_bin_count = to - from;
+            var log_bin_count_next = log_bin_count * 2;
+
+            while(log_bin_count_next < bin_count) {
+                log_bin_count = log_bin_count_next;
+                log_bin_count_next *= 2;
+            }
+
+            if(log_bin_count_next - bin_count < bin_count - log_bin_count) {
+                bin_count = log_bin_count_next;
+            } else {
+                bin_count = log_bin_count;
+            }
+
+            var step = bin_count / (to - from);
+
             var sum = 0;
             for(var i = 0; i <= bin_count; i++) {
-                sum += Math.pow(10, i);
+                sum += Math.pow(10, i * step);
             }
 
             var bin_size = r / sum;
@@ -179,11 +205,29 @@ function Histogram(element) {
             thresholds.push(range[0]);
 
             for(var i = 1; i < bin_count; i++) {
-                var value = thresholds[i - 1] + (bin_size * Math.pow(10, i));
+                var value = thresholds[i - 1] + (bin_size * Math.pow(10, i * step));
                 thresholds.push(value);
             }
 
+
             thresholds.push(range[1]);
+
+
+//            var sum = 0;
+//            for(var i = 0; i <= bin_count; i++) {
+//                sum += Math.pow(10, i);
+//            }
+//
+//            var bin_size = r / sum;
+//
+//            thresholds.push(range[0]);
+//
+//            for(var i = 1; i < bin_count; i++) {
+//                var value = thresholds[i - 1] + (bin_size * Math.pow(10, i));
+//                thresholds.push(value);
+//            }
+//
+//            thresholds.push(range[1]);
 
             return thresholds;
 
