@@ -18,11 +18,25 @@ function BasePlotValueDimension(flip_range){
     if (!arguments.length) {
         var flip_range = false;
     }
+
+    var is_log_scale = false;
+
     var scale = d3.scale.linear().range([1, 0]).domain([0, 1]).nice();
-    var value_format = d3.format(".4s");
+    var log_scale = d3.scale.log().range([1, 0]).domain([0, 1]).nice();
+    var value_format = d3.format(".4g");
+
+    var value_log_format = d3.format("e");
+    var value_log_format_function = function(d) {
+        var x = Math.log(d) / Math.log(10) + 1e-6;
+        return Math.abs(x - Math.floor(x)) < 0.3 ? value_log_format(d) : "";
+    };
 
     var scaler = function(d) {
-        return scale(d);
+        if (is_log_scale) {
+            return log_scale(d);
+        } else {
+            return scale(d);
+        }
     };
 
     function dimension(value) {
@@ -30,10 +44,9 @@ function BasePlotValueDimension(flip_range){
     }
 
     dimension.setDomain = function(min, max) {
-
         if(min == max) {
-            min = min - 0.1 * min
-            max = max + 0.1 * max
+            min = min - 0.1 * min;
+            max = max + 0.1 * max;
         }
 
         if(flip_range){
@@ -42,31 +55,44 @@ function BasePlotValueDimension(flip_range){
             max = tmp;
         }
         scale.domain([min, max]).nice();
+        log_scale.domain([min, max]).nice();
     };
 
     dimension.setRange = function(min, max) {
         scale.range([min, max]).nice();
+        log_scale.range([min, max]).nice();
     };
 
-    dimension.scale = function(new_scale) {
-        if (!arguments.length) return scale;
-        scale = new_scale;
-        return dimension;
+    dimension.scale = function() {
+        if(is_log_scale) {
+            return log_scale;
+        } else {
+            return scale;
+        }
     };
 
-    dimension.scaler = function(new_scaler) {
-        if (!arguments.length) return scaler;
-        scaler = new_scaler;
-        return dimension;
+    dimension.isOrdinal = function() {
+        return false;
     };
 
     dimension.format = function(axis, max_length){
-        axis.ticks(10)
-            .tickPadding(10)
-            .tickSize(-max_length, -max_length)
-            .tickFormat(value_format);
+        if(is_log_scale) {
+            axis.tickPadding(10)
+                .ticks(1)
+                .tickSize(-max_length, -max_length)
+                .tickFormat(value_log_format_function);
+        } else {
+            axis.ticks(10)
+                .tickPadding(10)
+                .tickSize(-max_length, -max_length)
+                .tickFormat(value_format);
+        }
 
         return dimension;
+    };
+
+    dimension.setIsLogScale = function(use_log_scale) {
+        is_log_scale = use_log_scale
     };
 
     return dimension;

@@ -31,7 +31,7 @@ function Histogram(element) {
     var use_log_scale = false;
 
     var count_format = d3.format("d");
-    var value_format = d3.format(".4s");
+    var value_format = d3.format(".4g");
     var value_log_format = d3.format("e");
 
     var value_log_format_function = function(d) {
