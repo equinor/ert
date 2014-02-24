@@ -60,8 +60,3 @@ class CustomizePlotWidget(QWidget):
         color_chooser.colorChanged.connect(colorChanged)
 
         self.__layout.addWidget(color_chooser)
-
-
-
-
-

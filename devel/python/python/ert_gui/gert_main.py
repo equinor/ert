@@ -217,7 +217,7 @@ def main(argv):
 
         help_tool = HelpTool("ERT", window)
 
-        window.addDock("Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
+        window.addDock("Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
         window.addTool(IdeTool(os.path.basename(enkf_config), ert.reloadERT, help_tool))
         window.addTool(PlotTool())
         window.addTool(ExportTool())

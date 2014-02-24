@@ -47,7 +47,7 @@ class ColorBox(QFrame):
 
         QFrame.paintEvent(self, paint_event)
 
-    def mouseDoubleClickEvent(self, QMouseEvent):
+    def mouseReleaseEvent(self, QMouseEvent):
         color = QColorDialog.getColor(self.color, self, "Select color", QColorDialog.ShowAlphaChannel)
 
         if color.isValid():
@@ -71,7 +71,7 @@ class ColorChooser(QWidget):
         layout.setSpacing(2)
 
         self.color_box = ColorBox(color)
-        self.color_box.setToolTip("Double click to change color.")
+        self.color_box.setToolTip("Click to change color.")
         self.color_box.colorChanged.connect(self.colorChanged)
 
         layout.addWidget(self.color_box)
