@@ -204,7 +204,11 @@ add_executable( enkf_export_field_test enkf_export_field_test.c )
 target_link_libraries( enkf_export_field_test  enkf test_util )
 
 add_test( enkf_export_field_test
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields/config
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD_ECL_GRDECL
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD_RMS_ROFF)
+
 
 
 add_executable( enkf_workflow_job_test enkf_workflow_job_test.c )
@@ -294,6 +298,16 @@ add_test( enkf_forward_init_transform_FALSE
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_false
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
           FALSE)
+
+#-----------------------------------------------------------------
+
+add_executable( enkf_export_inactive_cells enkf_export_inactive_cells.c )
+target_link_libraries( enkf_export_inactive_cells enkf test_util )
+
+add_test( enkf_export_inactive_cells
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_inactive_cells
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_inactive_cells/config
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_inactive_cells/petro.grdecl)
 
 #-----------------------------------------------------------------
 
@@ -387,3 +401,4 @@ set_property( TEST enkf_analysis_enkf_update_job PROPERTY LABELS StatoilData )
 set_property( TEST enkf_plot_blockdata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_block_obs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_plot_gendata_fs PROPERTY LABELS StatoilData )
+set_property( TEST enkf_export_inactive_cells PROPERTY LABELS StatoilData )

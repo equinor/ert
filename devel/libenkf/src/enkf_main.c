@@ -3401,6 +3401,38 @@ void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bo
 
 
 
+char * enkf_main_alloc_abs_path_to_init_file(const enkf_main_type * enkf_main, const enkf_config_node_type * config_node) {
+  model_config_type * model_config = enkf_main_get_model_config(enkf_main);
+  char * runpath                   = NULL;
+  char * path_to_init_file         = NULL;
+  char * abs_path_to_init_file     = NULL;
+  bool forward_init                = enkf_config_node_use_forward_init(config_node);
+
+  if (forward_init) {
+    path_fmt_type * runpath_fmt = model_config_get_runpath_fmt(model_config);
+    runpath = path_fmt_alloc_path(runpath_fmt , false , 0, 0);  /* Replace first %d with iens, if a second %d replace with iter */
+    path_to_init_file = enkf_config_node_alloc_initfile(config_node, runpath, 0);
+  } else
+    path_to_init_file = enkf_config_node_alloc_initfile(config_node, NULL, 0);
+
+  if (path_to_init_file)
+    abs_path_to_init_file = util_alloc_abs_path(path_to_init_file);
+
+  if (abs_path_to_init_file && !util_file_exists(abs_path_to_init_file)) {
+    free(abs_path_to_init_file); 
+    abs_path_to_init_file = NULL;
+  }
+  
+  if (runpath)
+    free(runpath); 
+  if (path_to_init_file)
+    free(path_to_init_file); 
+  
+  return abs_path_to_init_file;
+}
+
+
+
 bool enkf_main_export_field(const enkf_main_type * enkf_main, 
                             const char * kw, 
                             const char * path, 
@@ -3431,6 +3463,12 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
   if (node_found) {
     enkf_node_type * node = NULL;
 
+    char * init_file = enkf_main_alloc_abs_path_to_init_file(enkf_main, config_node);
+    if (init_file)
+      printf("init_file found: \"%s\", exporting initial value for inactive cells\n", init_file);
+    else
+      printf("no init_file found, exporting 0 or fill value for inactive cells\n");
+
     enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
     int iens;
     for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
@@ -3455,7 +3493,7 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
             {
               const field_type * field = enkf_node_value_ptr(node);
               const bool output_transform = true;
-              field_export(field , filename , NULL , file_type , output_transform);
+              field_export(field , filename , NULL , file_type , output_transform, init_file);
               ret = true;
             }
             free(filename);
@@ -3465,8 +3503,11 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
             printf("%s : enkf_state_get_node returned NULL for parameters  %d, %s \n", __func__, iens, kw);
        }
     } 
+    if (init_file)
+      free(init_file);
   }
-  
+    
+
   if (ret)
     printf("Successful export of FIELD %s\n", kw);
   else 

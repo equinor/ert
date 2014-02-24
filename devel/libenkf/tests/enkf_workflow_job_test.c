@@ -21,7 +21,6 @@
 #include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
 #include <ert/enkf/ert_test_context.h>
 
 #include <ert/util/util.h>

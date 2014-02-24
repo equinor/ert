@@ -372,7 +372,7 @@ const char * enkf_config_node_iget_container_key( const enkf_config_node_type * 
 */
 enkf_config_node_type * enkf_config_node_alloc_field( const char * key , ecl_grid_type * ecl_grid, field_trans_table_type * trans_table, bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( INVALID , FIELD , key , forward_init);
-  config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table );
+  config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table, false );
   return config_node;
 }
 
