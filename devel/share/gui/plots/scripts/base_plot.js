@@ -197,8 +197,6 @@ BasePlot.prototype.setData = function(data) {
         this.setYDomain(data.minY(), data.maxY());
         this.setXDomain(data.minX(), data.maxX());
     }
-
-    this.render();
 };
 
 BasePlot.prototype.render = function() {

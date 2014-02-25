@@ -109,3 +109,7 @@ OverviewPlot.prototype.setRenderingFinishedCallback = function(callback) {
     this.plot.setRenderingFinishedCallback(callback);
 };
 
+OverviewPlot.prototype.renderNow = function(){
+    this.plot.render();
+}
+

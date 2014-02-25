@@ -202,3 +202,7 @@ Plot.prototype.setCustomSettings = function (settings) {
 Plot.prototype.setRenderingFinishedCallback = function(callback) {
     this.plot.setRenderingFinishedCallback(callback);
 };
+
+Plot.prototype.renderNow = function(){
+    this.plot.render();
+}
