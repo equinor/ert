@@ -92,7 +92,7 @@ function BasePlotValueDimension(flip_range){
     };
 
     dimension.setIsLogScale = function(use_log_scale) {
-        is_log_scale = use_log_scale
+        is_log_scale = use_log_scale;
     };
 
     return dimension;
