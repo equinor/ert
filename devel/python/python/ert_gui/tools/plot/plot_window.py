@@ -43,7 +43,7 @@ class PlotWindow(QMainWindow):
         plot_metrics_dock = self.addDock("Plot metrics", self.__plot_metrics_widget)
 
         self.__customize_plot_widget = CustomizePlotWidget()
-        self.__customize_plot_widget.customPlotSettingsChanged.connect(self.customizePlot)
+        self.__customize_plot_widget.customPlotSettingsChanged.connect(self.plotSettingsChanged)
         customize_plot_dock = self.addDock("Customize", self.__customize_plot_widget)
 
         self.__export_plot_widget = ExportPlotWidget()
@@ -57,18 +57,20 @@ class PlotWindow(QMainWindow):
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
 
     def plotSettingsChanged(self):
-        settings = self.__plot_metrics_widget.getSettings()
-        time_min = settings["time_min"]
-        time_max = settings["time_max"]
-        value_min = settings["value_min"]
-        value_max = settings["value_max"]
-        depth_min = settings["depth_min"]
-        depth_max = settings["depth_max"]
-        key =  settings["report_step_time"]
-
+        all_settings = self.getSettings()
         for plot_panel in self.__plot_panels:
-            plot_panel.setScales(time_min, time_max, value_min, value_max, depth_min, depth_max)
-            plot_panel.setReportStepTime(key)
+           plot_panel.setSettings(all_settings)
+
+    def getSettings(self):
+        plot_data_fetcher = PlotDataFetcher()
+        data_key = self.__plot_metrics_widget.getDataKeyType()
+        settings = {
+            "settings" : self.__plot_metrics_widget.getSettings(),
+            "custom_settings" : self.__customize_plot_widget.getCustomSettings(),
+            "data" : plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases)
+        }
+
+        return settings
 
 
 
@@ -77,10 +79,7 @@ class PlotWindow(QMainWindow):
             key = self.__plot_metrics_widget.getDataKeyType()
             active_plot =  self.__central_tab.currentWidget()
             assert isinstance(active_plot, PlotPanel)
-            settings = {
-                "settings" : self.__plot_metrics_widget.exportSettings(),
-                "custom_settings" : self.__customize_plot_widget.getCustomSettings()
-            }
+            settings = self.getSettings()
 
             self.export_plot = ExportPlot(active_plot, settings)
             self.export_plot.export()
@@ -128,11 +127,6 @@ class PlotWindow(QMainWindow):
         self.keySelected(self.__plot_metrics_widget.getDataKeyType())
 
 
-    def customizePlot(self, settings):
-        for plot_panel in self.__plot_panels:
-            plot_panel.setCustomSettings(settings)
-
-        self.keySelected(self.__plot_metrics_widget.getDataKeyType())
 
 
     def showOrHidePlotTab(self, plot_panel, is_visible, show_plot):
@@ -172,21 +166,6 @@ class PlotWindow(QMainWindow):
             else:
                 raise NotImplementedError("Key %s not supported." % key)
 
-        # settings = self.__plot_metrics_widget.getSettings()
-        # time_min = settings["time_min"]
-        # time_max = settings["time_max"]
-        # value_min = settings["value_min"]
-        # value_max = settings["value_max"]
-        # depth_min = settings["depth_min"]
-        # depth_max = settings["depth_max"]
-
-
-        #self.__plot_metrics_widget.updateScales(time_min, time_max, value_min, value_max, depth_min, depth_max)
-
         if self.checkPlotStatus():
-            data = plot_data_fetcher.getPlotDataForKeyAndCases(key, self.__plot_cases)
-            data.setParent(self)
-
-            for plot_panel in self.__plot_panels:
-                plot_panel.setPlotData(data)
+            self.plotSettingsChanged()
 

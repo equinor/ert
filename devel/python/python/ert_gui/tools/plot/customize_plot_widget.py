@@ -1,5 +1,5 @@
-from PyQt4.QtCore import pyqtSignal, Qt
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtGui import QWidget, QVBoxLayout, QCheckBox
 
 
 class CustomizePlotWidget(QWidget):
