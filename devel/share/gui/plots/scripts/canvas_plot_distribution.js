@@ -62,6 +62,7 @@ function DistributionPlot(element, x_dimension, y_dimension) {
 
                 self.plot.addLegend(style, case_name, CanvasPlotLegend.filledCircle);
             }
+            self.plot.renderCallbackFinishedRendering();
         }
     };
 
@@ -96,3 +97,7 @@ DistributionPlot.prototype.setHorizontalDrawDirection = function (horizontal) {
 DistributionPlot.prototype.setCustomSettings = function (settings) {
     this.plot.setCustomSettings(settings);
 };
+
+DistributionPlot.prototype.renderNow = function(){
+    this.plot.render();
+}

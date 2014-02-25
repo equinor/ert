@@ -129,23 +129,16 @@ class PlotBridge(QObject):
     def renderNow(self):
         self.__web_page.mainFrame().evaluateJavaScript("renderNow()")
 
-    def setSettings(self, all_settings):
-        settings = all_settings["settings"]
+    def setPlotSettings(self, settings):
         time_min = settings["time_min"]
         time_max = settings["time_max"]
         value_min = settings["value_min"]
         value_max = settings["value_max"]
         depth_min = settings["depth_min"]
         depth_max = settings["depth_max"]
-        key =  settings["report_step_time"]
-        data = all_settings["data"]
-        custom_settings = all_settings["custom_settings"]
-        data.setParent(self)
-        self.setCustomSettings(custom_settings)
         self.setScales(time_min, time_max, value_min, value_max, depth_min, depth_max)
-        self.setReportStepTime(key)
-        self.setPlotData(data)
-        self.renderNow()
+
+        self.setReportStepTime(settings["report_step_time"])
 
 
 

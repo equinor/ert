@@ -56,7 +56,7 @@ class PlotPanel(QWidget):
 
     def setSettings(self, settings):
         if self.isPlotVisible():
-            self.__plot_bridge.setSettings(settings)
+            self.__plot_bridge.setPlotSettings(settings)
 
     def isReady(self):
         return self.__plot_bridge.isReady()
@@ -78,4 +78,9 @@ class PlotPanel(QWidget):
         self.__plot_is_visible = visible
 
     def getPlotBridge(self):
+        """ @rtype: PlotBridge """
         return self.__plot_bridge
+
+    def renderNow(self):
+        if self.isPlotVisible():
+            self.__plot_bridge.renderNow()

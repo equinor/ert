@@ -63,7 +63,6 @@ class PlotMetricsWidget(QWidget):
         self.blockSignals(True)
         self.updateScales()
         self.blockSignals(False)
-        self.plotSettingsChanged.emit()
 
     def updateScales(self):
         value_min = self.__value_scale_tracker.getMinimumScaleValue(self.__data_type_key)

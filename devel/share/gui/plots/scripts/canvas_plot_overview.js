@@ -63,7 +63,6 @@ function OverviewPlot(element, x_dimension, y_dimension) {
 
                 self.plot.addLegend(style, case_name, CanvasPlotLegend.filledCircle);
             }
-            self.plot.finishedRendering();
             self.plot.renderCallbackFinishedRendering();
         }
     };
