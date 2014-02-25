@@ -80,6 +80,25 @@ state_map_type * state_map_alloc_copy( state_map_type * map ) {
   return copy;
 }
 
+
+void state_map_copy_states(state_map_type * source_map, state_map_type * target_map) {
+  pthread_rwlock_rdlock( &source_map->rw_lock );
+  pthread_rwlock_rdlock( &target_map->rw_lock );
+  {
+   int size = int_vector_size (source_map->state);
+    for (int i = 0; i < size; ++i) {
+      int value = int_vector_iget(source_map->state, i);
+      if (i < int_vector_size(target_map->state))
+         int_vector_iset(target_map->state, i, value);
+      else
+        int_vector_append(target_map->state, value);
+    }
+  }
+  pthread_rwlock_unlock( &source_map->rw_lock );
+  pthread_rwlock_unlock( &target_map->rw_lock );
+}
+
+
 void state_map_free( state_map_type * map ) {
   free( map );
 }

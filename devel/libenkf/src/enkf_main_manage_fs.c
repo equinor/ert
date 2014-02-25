@@ -252,6 +252,10 @@ void enkf_main_init_case_from_existing(const enkf_main_type * enkf_main,
                           NULL,
                           param_list);
 
+  state_map_type * source_state_map = enkf_fs_get_state_map( source_case_fs );
+  state_map_type * target_state_map = enkf_fs_get_state_map( target_case_fs );
+  state_map_copy_states(source_state_map, target_state_map);
+
   bool_vector_free(iactive);
   stringlist_free(param_list);
 }
@@ -278,6 +282,10 @@ void enkf_main_init_case_from_existing_custom(const enkf_main_type * enkf_main,
                           iactive,
                           NULL,
                           node_list);
+
+  state_map_type * source_state_map = enkf_fs_get_state_map( source_case_fs );
+  state_map_type * target_state_map = enkf_fs_get_state_map( target_case_fs );
+  state_map_copy_states(source_state_map, target_state_map);
 }
 
 
