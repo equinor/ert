@@ -90,7 +90,7 @@ target_link_libraries( enkf_fs enkf test_util )
 add_test( enkf_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_fs )
 
 add_executable( enkf_ert_test_context enkf_ert_test_context.c )
-target_link_libraries( enkf_ert_test_context ert-test test_util )
+target_link_libraries( enkf_ert_test_context enkf test_util )
 add_test( enkf_ert_test_context  ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_test_context 
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/test_context/config
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/test_context/wf_job
@@ -98,13 +98,13 @@ add_test( enkf_ert_test_context  ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_test_context
 
 
 add_executable( enkf_analysis_update_job enkf_analysis_update_job.c )
-target_link_libraries( enkf_analysis_update_job ert-test test_util )
+target_link_libraries( enkf_analysis_update_job enkf test_util )
 add_test( enkf_analysis_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_update_job 
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config 
           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/ANALYSIS_UPDATE )
 
 add_executable( enkf_analysis_enkf_update_job enkf_analysis_enkf_update_job.c )
-target_link_libraries( enkf_analysis_enkf_update_job ert-test test_util )
+target_link_libraries( enkf_analysis_enkf_update_job enkf test_util )
 add_test( enkf_analysis_enkf_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_enkf_update_job 
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config 
           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/ANALYSIS_ENKF_UPDATE )
@@ -114,7 +114,7 @@ target_link_libraries( enkf_plot_blockdata enkf test_util )
 add_test( enkf_plot_blockdata  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata )
 
 add_executable( enkf_plot_blockdata_fs enkf_plot_blockdata_fs.c )
-target_link_libraries( enkf_plot_blockdata_fs ert-test enkf test_util )
+target_link_libraries( enkf_plot_blockdata_fs  enkf test_util )
 add_test( enkf_plot_blockdata_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata_fs 
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_RFT/config )
 
@@ -131,7 +131,7 @@ target_link_libraries( enkf_plot_gen_kw_vector enkf test_util )
 add_test( enkf_plot_gen_kw_vector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw_vector )
 
 add_executable( enkf_plot_gen_kw_fs enkf_plot_gen_kw_fs.c )
-target_link_libraries( enkf_plot_gen_kw_fs enkf ert-test test_util )
+target_link_libraries( enkf_plot_gen_kw_fs enkf  test_util )
 add_test( enkf_plot_gen_kw_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw_fs ${CMAKE_CURRENT_SOURCE_DIR}/data/config/gen_kw_plot/config )
 
 add_executable( enkf_plot_genvector enkf_plot_genvector.c )
@@ -139,7 +139,7 @@ target_link_libraries( enkf_plot_genvector enkf test_util )
 add_test( enkf_plot_genvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_genvector )
 
 add_executable( enkf_plot_gendata_fs enkf_plot_gendata_fs.c )
-target_link_libraries( enkf_plot_gendata_fs ert-test enkf test_util )
+target_link_libraries( enkf_plot_gendata_fs  enkf test_util )
 add_test( enkf_plot_gendata_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gendata_fs
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_GEN_DATA/config )
 
@@ -204,11 +204,15 @@ add_executable( enkf_export_field_test enkf_export_field_test.c )
 target_link_libraries( enkf_export_field_test  enkf test_util )
 
 add_test( enkf_export_field_test
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields/config
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD_ECL_GRDECL
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD_RMS_ROFF)
+
 
 
 add_executable( enkf_workflow_job_test enkf_workflow_job_test.c )
-target_link_libraries( enkf_workflow_job_test ert-test test_util )
+target_link_libraries( enkf_workflow_job_test enkf test_util )
 
 add_test( enkf_workflow_job_test
           ${EXECUTABLE_OUTPUT_PATH}/enkf_workflow_job_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config
@@ -294,6 +298,16 @@ add_test( enkf_forward_init_transform_FALSE
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_false
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
           FALSE)
+
+#-----------------------------------------------------------------
+
+add_executable( enkf_export_inactive_cells enkf_export_inactive_cells.c )
+target_link_libraries( enkf_export_inactive_cells enkf test_util )
+
+add_test( enkf_export_inactive_cells
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_inactive_cells
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_inactive_cells/config
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_inactive_cells/petro.grdecl)
 
 #-----------------------------------------------------------------
 
@@ -387,3 +401,4 @@ set_property( TEST enkf_analysis_enkf_update_job PROPERTY LABELS StatoilData )
 set_property( TEST enkf_plot_blockdata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_block_obs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_plot_gendata_fs PROPERTY LABELS StatoilData )
+set_property( TEST enkf_export_inactive_cells PROPERTY LABELS StatoilData )

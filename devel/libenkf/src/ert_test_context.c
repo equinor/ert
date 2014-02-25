@@ -148,3 +148,8 @@ bool ert_test_context_run_worklow_job( ert_test_context_type * test_context , co
   } else
     return false;
 }
+
+
+void ert_test_context_set_store( ert_test_context_type * test_context , bool store) {
+  test_work_area_set_store( test_context->work_area , store );
+}

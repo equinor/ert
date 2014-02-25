@@ -34,7 +34,7 @@ void test_create_invalid_data(ecl_grid_type * grid) {
 
 
 void test_create_from_field(ecl_grid_type * grid) {
-  field_config_type * field_config = field_config_alloc_empty( "PRESSURE" , grid , NULL );
+  field_config_type * field_config = field_config_alloc_empty( "PRESSURE" , grid , NULL, false );
   block_obs_type * block_obs = block_obs_alloc( "ObsKey" , field_config , grid );
   
   test_assert_true( block_obs_is_instance( block_obs ));

@@ -19,7 +19,7 @@ class FilterPopup(QDialog):
 
         self.__layout = QVBoxLayout()
         self.__layout.setSizeConstraint(QLayout.SetFixedSize)
-        self.__layout.addWidget(QLabel("Select data types to filter:"))
+        self.__layout.addWidget(QLabel("Filter by data type:"))
 
         self.addFilterItem("Summary", "summary")
         self.addFilterItem("Block", "block")

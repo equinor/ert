@@ -83,7 +83,8 @@ set( source_files
      pca_plot_vector.c 
      state_map.c 
      cases_config.c 
-     state_map.c)
+     state_map.c    
+     ert_test_context.c)
 
 set( header_files 
      ert_report.h 
@@ -178,7 +179,9 @@ set( header_files
      pca_plot_vector.h 
      state_map.h 
      cases_config.h 
-     state_map.h)
+     state_map.h
+     ert_test_context.h)
+
 
 add_library( enkf  ${LIBRARY_TYPE} ${source_files} )
 set_target_properties( enkf PROPERTIES VERSION 1.0 SOVERSION 1.0 )
@@ -205,11 +208,4 @@ endif()
 
 #-----------------------------------------------------------------
 
-if (BUILD_TESTS) 
-   add_library( ert-test  ${LIBRARY_TYPE} ert_test_context.c )
-   target_link_libraries( ert-test enkf )
-   if (USE_RUNPATH)
-      add_runpath( ert-test )
-   endif()
-endif()
       

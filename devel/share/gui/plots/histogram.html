@@ -115,6 +115,7 @@
                 histogram.setVisible(true);
                 histogram.setSize(stored_width, stored_histogram_height);
                 histogram.setShouldUseLogScale(stored_data.shouldUseLogScale());
+
                 histogram(histogram_data, case_list[index]);
             }
 
@@ -173,7 +174,7 @@
     }
 
     function setCustomSettings(settings) {
-
+        STYLES.updateColors(settings);
     }
 
 </script>

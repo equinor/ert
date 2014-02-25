@@ -37,7 +37,7 @@ class EnsembleGenDataFetcher(DataFetcher):
         report_step = int(report_step)
 
         ensemble_config_node = self.getEnsembleConfigNode(key)
-        enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(case, True, False)
+        enkf_fs = self.ert().getEnkfFsManager().getFS(case, read_only=True)
         ensemble_plot_gen_data = EnsemblePlotGenData(ensemble_config_node, enkf_fs, report_step)
 
         data = {"x": [],

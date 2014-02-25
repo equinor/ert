@@ -18,7 +18,7 @@ class EnKFLibraryTest(ExtendedTestCase):
 
     def test_failed_class_creation(self):
         classes = [FieldConfig, GenKwConfig, GenDataConfig,
-                   EnkfConfigNode, EnkfFs, EnkfObs, TimeMap, EnKFState, EnsConfig,
+                   EnkfConfigNode, EnkfObs, TimeMap, EnKFState, EnsConfig,
                    ErtTemplate, ErtTemplates, LocalConfig, ModelConfig, PlotConfig, SiteConfig]
 
         for cls in classes:
@@ -38,7 +38,7 @@ class EnKFLibraryTest(ExtendedTestCase):
             with self.assertRaises(ValueError): # Null pointer!
                 self.assertIsInstance(main.eclConfig().getRefcase(), EclSum)
 
-            file_system = main.getEnkfFsManager().getFileSystem()
+            file_system = main.getEnkfFsManager().getCurrentFS()
             self.assertEqual(file_system.getCaseName(), "default")
             time_map = file_system.getTimeMap()
             self.assertIsInstance(time_map, TimeMap)

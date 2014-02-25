@@ -151,32 +151,40 @@ BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
 
 
 BasePlot.prototype.setYDomain = function(min_y, max_y) {
-    var min = min_y;
-    var max = max_y;
+    if(!this.dimension_y.isOrdinal()) {
+        var min = min_y;
+        var max = max_y;
 
-    if (this.custom_y_min != null) {
-        min = this.custom_y_min;
+        if (this.custom_y_min != null) {
+            min = this.custom_y_min;
+        }
+
+        if (this.custom_y_max != null) {
+            max = this.custom_y_max;
+        }
+
+        this.dimension_y.setDomain(min, max);
+    } else {
+        this.dimension_y.setDomain(this.stored_data.caseList())
     }
-
-    if (this.custom_y_max != null) {
-        max = this.custom_y_max;
-    }
-
-    this.dimension_y.setDomain(min, max);
 };
 
 BasePlot.prototype.setXDomain = function(min_x, max_x) {
-    var min = min_x;
-    var max = max_x;
-    if (this.custom_x_min != null) {
-        min = this.custom_x_min;
-    }
+    if(!this.dimension_x.isOrdinal()) {
+        var min = min_x;
+        var max = max_x;
+        if (this.custom_x_min != null) {
+            min = this.custom_x_min;
+        }
 
-    if (this.custom_x_max != null) {
-        max = this.custom_x_max;
-    }
+        if (this.custom_x_max != null) {
+            max = this.custom_x_max;
+        }
 
-    this.dimension_x.setDomain(min, max);
+        this.dimension_x.setDomain(min, max);
+    } else {
+        this.dimension_x.setDomain(this.stored_data.caseList())
+    }
 };
 
 
@@ -202,6 +210,10 @@ BasePlot.prototype.render = function() {
 
     this.plot_group.select(".y.axis").call(this.y_axis);
     this.plot_group.select(".x.axis").call(this.x_axis);
+    if(this.pre_render_callback != null) {
+        this.pre_render_callback(data);
+    }
+
 
     this.canvas.attr("width", this.width).attr("height", this.height);
     this.overlay_canvas.attr("width", this.width).attr("height", this.height);
@@ -228,6 +240,10 @@ BasePlot.prototype.render = function() {
 
 BasePlot.prototype.setRenderCallback = function(callback) {
     this.render_callback = callback;
+};
+
+BasePlot.prototype.setPreRenderCallback = function(callback) {
+    this.pre_render_callback = callback;
 };
 
 
@@ -360,3 +376,19 @@ BasePlot.prototype.emitFinishedRendering = function(){
 BasePlot.prototype.setRenderingFinishedCallback = function(callback) {
     this.rendering_finished_callback = callback;
 };
+
+BasePlot.prototype.setLogScaleOnDimensionX = function(use_log_scale) {
+    this.dimension_x.setIsLogScale(use_log_scale);
+    this.x_axis.scale(this.dimension_x.scale());
+    this.dimension_x.format(this.x_axis, this.height);
+};
+
+BasePlot.prototype.setLogScaleOnDimensionY = function(use_log_scale) {
+    this.dimension_y.setIsLogScale(use_log_scale);
+    this.y_axis.scale(this.dimension_y.scale());
+    this.dimension_y.format(this.y_axis, this.width);
+};
+
+function isNumber(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+}

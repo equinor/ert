@@ -1,8 +1,8 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.init import CaseSelectorModel
+from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker
 from ert_gui.tools.plot.customize_plot_widget import CustomizePlotWidget
-from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ExportPlotWidget, ExportPlot
 from ert_gui.tools.plot.data import PlotDataFetcher
 from ert_gui.widgets.util import may_take_a_long_time
 
@@ -22,10 +22,12 @@ class PlotWindow(QMainWindow):
 
 
         self.__plot_panels = []
+        self.__selected_plot_for_type = {}
 
         self.addPlotPanel("Ensemble plot", "gui/plots/simple_plot.html", short_name="Plot")
         self.addPlotPanel("Ensemble overview plot", "gui/plots/simple_overview_plot.html", short_name="oPlot")
         self.addPlotPanel("Histogram", "gui/plots/histogram.html", short_name="Histogram")
+        self.addPlotPanel("Distribution", "gui/plots/gen_kw.html", short_name="Distribution")
         self.addPlotPanel("RFT plot", "gui/plots/rft.html", short_name="RFT")
         self.addPlotPanel("RFT overview plot", "gui/plots/rft_overview.html", short_name="oRFT")
 
@@ -138,10 +140,46 @@ class PlotWindow(QMainWindow):
             index = self.__central_tab.indexOf(plot_panel)
             self.__central_tab.removeTab(index)
 
+
+    def storePlotType(self, fetcher, key):
+        if key is not None:
+            if fetcher.isSummaryKey(key):
+                self.__selected_plot_for_type["summary"] = self.__central_tab.currentWidget()
+            elif fetcher.isBlockObservationKey(key):
+                self.__selected_plot_for_type["block"] = self.__central_tab.currentWidget()
+            elif fetcher.isGenKWKey(key):
+                self.__selected_plot_for_type["gen_kw"] = self.__central_tab.currentWidget()
+            elif fetcher.isGenDataKey(key):
+                self.__selected_plot_for_type["gen_data"] = self.__central_tab.currentWidget()
+            else:
+                raise NotImplementedError("Key %s not supported." % key)
+
+    def restorePlotType(self, fetcher, key):
+        if key is not None:
+            if fetcher.isSummaryKey(key):
+                if "summary" in self.__selected_plot_for_type:
+                    self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["summary"])
+            elif fetcher.isBlockObservationKey(key):
+                if "block" in self.__selected_plot_for_type:
+                    self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["block"])
+            elif fetcher.isGenKWKey(key):
+                if "gen_kw" in self.__selected_plot_for_type:
+                    self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["gen_kw"])
+            elif fetcher.isGenDataKey(key):
+                if "gen_data" in self.__selected_plot_for_type:
+                    self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["gen_data"])
+            else:
+                raise NotImplementedError("Key %s not supported." % key)
+
+
     @may_take_a_long_time
     def keySelected(self, key):
         key = str(key)
         self.__plot_metrics_widget.setDataKeyType(key)
+        plot_data_fetcher = PlotDataFetcher()
+        self.storePlotType(plot_data_fetcher, self.__data_type_key)
+
+        self.__data_type_key = str(key)
 
         plot_data_fetcher = PlotDataFetcher()
         for plot_panel in self.__plot_panels:
@@ -157,6 +195,8 @@ class PlotWindow(QMainWindow):
 
             elif plot_data_fetcher.isGenKWKey(key):
                 show_plot = plot_panel.supportsPlotProperties(histogram=True)
+            elif plot_data_fetcher.isGenKWKey(self.__data_type_key):
+                show_plot = plot_panel.supportsPlotProperties(value=True, histogram=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             elif plot_data_fetcher.isGenDataKey(key):
@@ -165,6 +205,10 @@ class PlotWindow(QMainWindow):
 
             else:
                 raise NotImplementedError("Key %s not supported." % key)
+                raise NotImplementedError("Key %s not supported." % self.__data_type_key)
+
+
+        self.restorePlotType(plot_data_fetcher, self.__data_type_key)
 
         if self.checkPlotStatus():
             self.plotSettingsChanged()
