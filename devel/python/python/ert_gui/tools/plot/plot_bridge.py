@@ -42,6 +42,7 @@ class PlotBridge(QObject):
         self.__size = size
         if self.isReady():
             self.__web_page.mainFrame().evaluateJavaScript("setSize(%d,%d);" % (size.width(), size.height()))
+            self.renderNow()
 
     def supportsPlotProperties(self, time=False, value=False, depth=False, histogram=False):
         time = str(time).lower()
@@ -125,6 +126,9 @@ class PlotBridge(QObject):
         json_settings = json.dumps(settings)
         self.__web_page.mainFrame().evaluateJavaScript("setCustomSettings(%s);" % json_settings)
 
+    def renderNow(self):
+        self.__web_page.mainFrame().evaluateJavaScript("renderNow()")
+
     def setSettings(self, all_settings):
         settings = all_settings["settings"]
         time_min = settings["time_min"]
@@ -141,6 +145,7 @@ class PlotBridge(QObject):
         self.setScales(time_min, time_max, value_min, value_max, depth_min, depth_max)
         self.setReportStepTime(key)
         self.setPlotData(data)
+        self.renderNow()
 
 
 

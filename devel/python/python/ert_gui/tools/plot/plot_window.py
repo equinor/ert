@@ -1,7 +1,8 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker
+from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker, \
+    ExportPlotWidget, ExportPlot
 from ert_gui.tools.plot.customize_plot_widget import CustomizePlotWidget
 from ert_gui.tools.plot.data import PlotDataFetcher
 from ert_gui.widgets.util import may_take_a_long_time
@@ -177,9 +178,7 @@ class PlotWindow(QMainWindow):
         key = str(key)
         self.__plot_metrics_widget.setDataKeyType(key)
         plot_data_fetcher = PlotDataFetcher()
-        self.storePlotType(plot_data_fetcher, self.__data_type_key)
-
-        self.__data_type_key = str(key)
+        self.storePlotType(plot_data_fetcher, key)
 
         plot_data_fetcher = PlotDataFetcher()
         for plot_panel in self.__plot_panels:
@@ -195,6 +194,8 @@ class PlotWindow(QMainWindow):
 
             elif plot_data_fetcher.isGenKWKey(key):
                 show_plot = plot_panel.supportsPlotProperties(histogram=True)
+                self.showOrHidePlotTab(plot_panel, visible, show_plot)
+
             elif plot_data_fetcher.isGenKWKey(self.__data_type_key):
                 show_plot = plot_panel.supportsPlotProperties(value=True, histogram=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
@@ -205,10 +206,8 @@ class PlotWindow(QMainWindow):
 
             else:
                 raise NotImplementedError("Key %s not supported." % key)
-                raise NotImplementedError("Key %s not supported." % self.__data_type_key)
 
-
-        self.restorePlotType(plot_data_fetcher, self.__data_type_key)
+        self.restorePlotType(plot_data_fetcher, key)
 
         if self.checkPlotStatus():
             self.plotSettingsChanged()

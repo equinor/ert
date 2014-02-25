@@ -1,5 +1,5 @@
-from PyQt4.QtCore import pyqtSignal, Qt
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtGui import QWidget, QVBoxLayout, QCheckBox, QColor
 
 from ert_gui.tools.plot import ColorChooser
 
@@ -9,6 +9,7 @@ class CustomizePlotWidget(QWidget):
 
     def __init__(self):
         QWidget.__init__(self)
+        self.__custom = { }
 
         self.__layout = QVBoxLayout()
         self.addCheckBox("error_bar_only", "Show only error bars", False)
