@@ -436,8 +436,10 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
   rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
   rml_enkf_initA__(data , A, S , Cd , E , D , Ud , Wd , VdT);
-  rml_enkf_init_Csc( data );
-  rml_enkf_init1__(data );
+  if (data->use_prior) {
+    rml_enkf_init_Csc( data );
+    rml_enkf_init1__(data );
+  }
   
   matrix_free( Skm );
   matrix_free( Ud );
@@ -519,10 +521,11 @@ void rml_enkf_updateA(void * module_data ,
       }
     }
 
-    rml_enkf_init_Csc( data );
     rml_enkf_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
-    rml_enkf_init2__(data , A , Acopy , Wd , VdT);
-    
+    if (data->use_prior) {
+      rml_enkf_init_Csc( data );
+      rml_enkf_init2__(data , A , Acopy , Wd , VdT);
+    }
     matrix_free(Acopy);
     matrix_free(Skm);
     matrix_free( Ud );
