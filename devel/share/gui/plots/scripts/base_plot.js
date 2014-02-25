@@ -26,13 +26,13 @@ function BasePlot(element, x_dimension, y_dimension) {
 
     this.render_finished = false;
     this.render_callback_finished = false;
+    this.rendering_finished_callback = null;
 
-    this.dimension_y = y_dimension;
     this.dimension_x = x_dimension;
+    this.dimension_y = y_dimension;
 
     this.vertical_error_bar = true;
     this.error_bar_only = false;
-    this.rendering_finished_callback = null;
 
     var group = this.root_elemenet.append("div")
         .attr("class", "plot");
@@ -107,6 +107,7 @@ function BasePlot(element, x_dimension, y_dimension) {
     this.circle_renderer = CanvasCircle().x(this.x).y(this.y);
 
     this.render_callback = null;
+    this.pre_render_callback = null;
 
 //    console.log("BasePlot initialized!");
 }
@@ -119,12 +120,11 @@ BasePlot.prototype.resize = function(width, height) {
     this.width = width - this.margin.left - this.margin.right;
     this.height = height - this.margin.top - this.margin.bottom;
 
+    this.dimension_x.format(this.x_axis, this.height);
+    this.dimension_y.format(this.y_axis, this.width);
 
     this.dimension_x.setRange(0, this.width);
     this.dimension_y.setRange(this.height, 0);
-
-    this.dimension_x.format(this.x_axis, this.height);
-    this.dimension_y.format(this.y_axis, this.width);
 
     this.plot_group.style("width", width + "px").style("height", height + "px");
 
@@ -132,8 +132,6 @@ BasePlot.prototype.resize = function(width, height) {
     this.overlay_canvas.attr("width", this.width).attr("height", this.height);
 
     this.plot_group.select(".x.axis").attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")");
-
-    this.setData(this.stored_data);
 };
 
 BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
@@ -190,13 +188,6 @@ BasePlot.prototype.setXDomain = function(min_x, max_x) {
 
 BasePlot.prototype.setData = function(data) {
     this.stored_data = data;
-
-    this.title.text(data.name());
-
-    if(data.hasBoundaries()) {
-        this.setYDomain(data.minY(), data.maxY());
-        this.setXDomain(data.minX(), data.maxX());
-    }
 };
 
 BasePlot.prototype.render = function() {
@@ -206,12 +197,19 @@ BasePlot.prototype.render = function() {
 
     this.resetLegends();
 
-    this.plot_group.select(".y.axis").call(this.y_axis);
-    this.plot_group.select(".x.axis").call(this.x_axis);
+    this.title.text(data.name());
+
+    if(data.hasBoundaries()) {
+        this.setYDomain(data.minY(), data.maxY());
+        this.setXDomain(data.minX(), data.maxX());
+    }
+
     if(this.pre_render_callback != null) {
         this.pre_render_callback(data);
     }
 
+    this.plot_group.select(".y.axis").call(this.y_axis);
+    this.plot_group.select(".x.axis").call(this.x_axis);
 
     this.canvas.attr("width", this.width).attr("height", this.height);
     this.overlay_canvas.attr("width", this.width).attr("height", this.height);

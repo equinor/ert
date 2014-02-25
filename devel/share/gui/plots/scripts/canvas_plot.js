@@ -121,6 +121,7 @@ function Plot(element, x_dimension, y_dimension) {
 
 
     var renderEnsembleDirect = function(context, data) {
+        console.log("Rendering!!!!");
         if(data.hasEnsembleData()) {
             var case_list = data.caseList();
 
@@ -128,6 +129,7 @@ function Plot(element, x_dimension, y_dimension) {
                 var style = STYLES["ensemble_" + (case_index + 1)];
                 var case_name = case_list[case_index];
                 var line_renderer = self.line_renderers[case_index];
+                var circle_renderer = self.circle_renderers[case_index];
 
                 var ensemble_data = data.ensembleData(case_name);
                 var x_values = ensemble_data.xValues();
@@ -163,8 +165,8 @@ function Plot(element, x_dimension, y_dimension) {
         }
     };
 
-    this.plot.setRenderCallback(renderEnsembleProgressively);
-    //this.plot.setRenderCallback(renderEnsembleDirect);
+    //this.plot.setRenderCallback(renderEnsembleProgressively);
+    this.plot.setRenderCallback(renderEnsembleDirect);
 }
 
 Plot.prototype.resize = function (width, height) {

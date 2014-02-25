@@ -1,9 +1,7 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker, \
-    ExportPlotWidget, ExportPlot
-from ert_gui.tools.plot.customize_plot_widget import CustomizePlotWidget
+from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker, ExportPlotWidget, ExportPlot, CustomizePlotWidget, PlotBridge
 from ert_gui.tools.plot.data import PlotDataFetcher
 from ert_gui.widgets.util import may_take_a_long_time
 
@@ -23,6 +21,8 @@ class PlotWindow(QMainWindow):
 
 
         self.__plot_panels = []
+        """:type: list of PlotPanel"""
+
         self.__selected_plot_for_type = {}
 
         self.addPlotPanel("Ensemble plot", "gui/plots/simple_plot.html", short_name="Plot")
@@ -53,29 +53,25 @@ class PlotWindow(QMainWindow):
         self.__export_plot_widget.exportButtonPressed.connect(self.exportActivePlot)
         export_dock = self.addDock("Export Plot", self.__export_plot_widget)
 
-        self.tabifyDockWidget(plot_metrics_dock, customize_plot_dock)
-        self.tabifyDockWidget(plot_metrics_dock, export_dock)
-        self.tabifyDockWidget(plot_metrics_dock, plot_case_dock)
+
+
+        self.tabifyDockWidget(plot_case_dock, plot_metrics_dock)
+        self.tabifyDockWidget(plot_case_dock, customize_plot_dock)
+        self.tabifyDockWidget(plot_case_dock, export_dock)
+        plot_case_dock.show()
+        plot_case_dock.raise_()
 
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
 
     def plotSettingsChanged(self):
-        all_settings = self.getSettings()
-        for plot_panel in self.__plot_panels:
-           plot_panel.setSettings(all_settings)
-
-    def getSettings(self):
         plot_data_fetcher = PlotDataFetcher()
         data_key = self.__plot_metrics_widget.getDataKeyType()
-        settings = {
-            "settings" : self.__plot_metrics_widget.getSettings(),
-            "custom_settings" : self.__customize_plot_widget.getCustomSettings(),
-            "data" : plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases)
-        }
-
-        return settings
-
-
+        for plot_panel in self.__plot_panels:
+            model = plot_panel.getPlotBridge()
+            model.setPlotData(plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases))
+            model.setCustomSettings(self.__customize_plot_widget.getCustomSettings())
+            model.setPlotSettings(self.__plot_metrics_widget.getSettings())
+            plot_panel.renderNow()
 
     def exportActivePlot(self):
         if self.__central_tab.currentIndex() > -1:
@@ -176,9 +172,9 @@ class PlotWindow(QMainWindow):
     @may_take_a_long_time
     def keySelected(self, key):
         key = str(key)
-        self.__plot_metrics_widget.setDataKeyType(key)
         plot_data_fetcher = PlotDataFetcher()
-        self.storePlotType(plot_data_fetcher, key)
+        self.storePlotType(plot_data_fetcher, self.__plot_metrics_widget.getDataKeyType())
+        self.__plot_metrics_widget.setDataKeyType(key)
 
         plot_data_fetcher = PlotDataFetcher()
         for plot_panel in self.__plot_panels:
@@ -193,10 +189,6 @@ class PlotWindow(QMainWindow):
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             elif plot_data_fetcher.isGenKWKey(key):
-                show_plot = plot_panel.supportsPlotProperties(histogram=True)
-                self.showOrHidePlotTab(plot_panel, visible, show_plot)
-
-            elif plot_data_fetcher.isGenKWKey(self.__data_type_key):
                 show_plot = plot_panel.supportsPlotProperties(value=True, histogram=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
