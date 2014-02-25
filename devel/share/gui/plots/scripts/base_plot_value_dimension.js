@@ -55,7 +55,12 @@ function BasePlotValueDimension(flip_range){
             max = tmp;
         }
         scale.domain([min, max]).nice();
-        log_scale.domain([min, max]).nice();
+
+        var from_log = Math.floor(Math.log(min) / Math.log(10));
+        var to_log = Math.ceil(Math.log(max) / Math.log(10));
+        var from = Math.pow(10, from_log);
+        var to = Math.pow(10, to_log);
+        log_scale.domain([from, to]);
     };
 
     dimension.setRange = function(min, max) {

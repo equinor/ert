@@ -136,8 +136,8 @@ function Histogram(element) {
         x_scale.domain([min, max]).nice();
 
 
-        var from_log = Math.round(Math.log(min) / Math.log(10));
-        var to_log = Math.round(Math.log(max) / Math.log(10));
+        var from_log = Math.floor(Math.log(min) / Math.log(10));
+        var to_log = Math.ceil(Math.log(max) / Math.log(10));
         var from = Math.pow(10, from_log);
         var to = Math.pow(10, to_log);
 
@@ -188,13 +188,15 @@ function Histogram(element) {
                 log_bin_count_next += from_to_diff;
             }
 
+
+
             if(log_bin_count_next - bin_count < bin_count - log_bin_count) {
                 bin_count = log_bin_count_next;
             } else {
                 bin_count = log_bin_count;
             }
 
-            var step = bin_count / (from_to_diff);
+            var step = from_to_diff / bin_count ;
 
             var sum = 0;
             for(var i = 0; i <= bin_count; i++) {
