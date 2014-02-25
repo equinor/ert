@@ -145,7 +145,7 @@ BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
         this.custom_x_min = x_min;
         this.custom_x_max = x_max;
 
-        this.setData(this.stored_data);
+        //this.setData(this.stored_data);
     }
 };
 

@@ -54,18 +54,9 @@ class PlotPanel(QWidget):
     def getWebView(self):
         return self.web_view
 
-
-    def setPlotData(self, data):
+    def setSettings(self, settings):
         if self.isPlotVisible():
-            self.__plot_bridge.setPlotData(data)
-
-    def setScales(self, time_min, time_max, value_min, value_max, depth_min, depth_max):
-        if self.isPlotVisible():
-            self.__plot_bridge.setScales(time_min, time_max, value_min, value_max, depth_min, depth_max)
-
-    def setReportStepTime(self, report_step_time):
-        if self.isPlotVisible():
-            self.__plot_bridge.setReportStepTime(report_step_time)
+            self.__plot_bridge.setSettings(settings)
 
     def isReady(self):
         return self.__plot_bridge.isReady()
@@ -88,8 +79,3 @@ class PlotPanel(QWidget):
 
     def getPlotBridge(self):
         return self.__plot_bridge
-
-
-    def setCustomSettings(self, settings):
-        self.__plot_bridge.setCustomSettings(settings)
-
