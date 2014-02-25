@@ -32,17 +32,18 @@ class HistogramPlotDataFactory(object):
 
 
     def setRefcase(self, x_values, y_values, min_y, max_y):
-        self.__refcase = {"x_values": x_values,
-                          "y_values": y_values,
-                          "min_y": min_y,
-                          "max_y": max_y,
-                          "reverse_lookup": {}}
+        if x_values is not None and y_values is not None:
+            self.__refcase = {"x_values": x_values,
+                              "y_values": y_values,
+                              "min_y": min_y,
+                              "max_y": max_y,
+                              "reverse_lookup": {}}
 
-        rl = self.__refcase["reverse_lookup"]
+            rl = self.__refcase["reverse_lookup"]
 
-        for index in range(len(x_values)):
-            x = x_values[index]
-            rl[x] = index
+            for index in range(len(x_values)):
+                x = x_values[index]
+                rl[x] = index
 
 
     def hasRefcaseSample(self, x_value):
