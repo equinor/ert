@@ -16,8 +16,5 @@ endif()
 
 if (BUILD_TESTS)
    ert_module_name( VAR_RML  rml_enkf  ${LIBRARY_OUTPUT_PATH} )
-   ert_module_name( VAR_RMLI rmli_enkf ${LIBRARY_OUTPUT_PATH} )
-
    add_test( analysis_module_test_RML ${EXECUTABLE_OUTPUT_PATH}/ert_module_test ${VAR_RML})
-   add_test( analysis_module_test_RMLI ${EXECUTABLE_OUTPUT_PATH}/ert_module_test ${VAR_RMLI} )
 endif()
