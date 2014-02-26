@@ -39,12 +39,9 @@ add_executable( enkf_analysis_config_ext_module enkf_analysis_config_ext_module.
 target_link_libraries( enkf_analysis_config_ext_module enkf test_util )
 
 ert_module_name( VAR_RML  rml_enkf  ${LIBRARY_OUTPUT_PATH} )
-ert_module_name( VAR_RMLI rmli_enkf ${LIBRARY_OUTPUT_PATH} )
 add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_ext_module 
-          rml_enkf ${VAR_RML}
-          rmli_enkf ${VAR_RMLI} )
+          rml_enkf ${VAR_RML} )
         
-
 add_executable( enkf_state_map enkf_state_map.c )
 target_link_libraries( enkf_state_map enkf test_util )
 
