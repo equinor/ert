@@ -20,6 +20,11 @@ if (BUILD_TESTS)
    add_subdirectory( tests )
 endif()
 
+if (INSTALL_ERT)
+   install(TARGETS rml_enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
+
+
 #-----------------------------------------------------------------
 
 # Alternative script based build:
