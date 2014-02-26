@@ -242,6 +242,7 @@ analysis_table_type SYMBOL_TABLE = {
   .has_var         = NULL ,
   .get_int         = NULL ,
   .get_double      = NULL ,
+  .get_bool        = NULL ,
   .get_ptr         = NULL
 };
 
