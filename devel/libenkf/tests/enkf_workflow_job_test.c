@@ -62,14 +62,23 @@ void test_init_case_job(ert_test_context_type * test_context, const char * job_n
 
     stringlist_append_copy( args, "default"); //case to init from
     test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
-    
+
     enkf_fs_decref(cur_fs);
   }
   printf("2: fs_ptr:%p \n",enkf_main_get_fs( enkf_main ));
-  
-  const char * current_case = enkf_main_get_current_fs( enkf_main );
-  test_assert_string_equal(current_case, "new_current_case");
-  test_assert_true(enkf_fs_has_node(enkf_main_get_fs(enkf_main), "PERMZ", PARAMETER, 0, 0, ANALYZED));
+
+  {
+    const char * current_case = enkf_main_get_current_fs( enkf_main );
+    test_assert_string_equal(current_case, "new_current_case");
+    test_assert_true(enkf_fs_has_node(enkf_main_get_fs(enkf_main), "PERMZ", PARAMETER, 0, 0, ANALYZED));
+
+    enkf_fs_type * default_fs          = enkf_main_mount_alt_fs( enkf_main , "default" , true , false );
+    state_map_type * default_state_map = enkf_fs_get_state_map(default_fs);
+    state_map_type * current_state_map = enkf_fs_get_state_map(enkf_main_get_fs(enkf_main));
+    test_assert_int_equal(state_map_get_size(default_state_map), state_map_get_size(current_state_map));
+    enkf_fs_decref(default_fs);
+  }
+
 
   //Test init case from existing case:
   stringlist_clear(args);
@@ -80,6 +89,11 @@ void test_init_case_job(ert_test_context_type * test_context, const char * job_n
     enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main, "new_not_current_case", true, false);
     test_assert_not_NULL( fs );
     test_assert_true( enkf_fs_has_node(fs, "PERMZ", PARAMETER, 0, 0, ANALYZED ));
+
+    enkf_fs_type * default_fs          = enkf_main_mount_alt_fs( enkf_main , "default" , true , false );
+    state_map_type * default_state_map = enkf_fs_get_state_map(default_fs);
+    state_map_type * new_state_map     = enkf_fs_get_state_map(fs);
+    test_assert_int_equal(state_map_get_size(default_state_map), state_map_get_size(new_state_map));
     enkf_fs_decref(fs);
   }
 
