@@ -279,5 +279,9 @@ class SumTest(ExtendedTestCase):
         key_index = self.ecl_sum.get_general_var_index("FOPT")
         self.assertIsInstance(self.ecl_sum.alloc_data_vector(key_index, True), DoubleVector)
 
-
-
+        
+    # Loading this dataset is a test of loading a case where one report step is missing.
+    def test_Heidrun(self):
+        sum = EclSum( self.createTestPath("Statoil/ECLIPSE/Heidrun/Summary/FF12_2013B3_CLEAN_RS"))
+        self.assertEqual( 452 , len(sum))
+        self.assertAlmostEqual( 1.85331e+8 , sum.get_last_value("FOPT"))
