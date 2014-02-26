@@ -95,6 +95,7 @@ class SumTest(ExtendedTestCase):
         self.assertEqual(last.date, datetime.datetime(2004, 12, 31, 0, 0, 0))
 
         self.assertAlmostEqual(self.ecl_sum.get_last_value("FGPT"), 6605249024.0)
+        self.assertEqual( len(self.ecl_sum) , 63 )
 
 
     def test_dates( self ):
