@@ -284,4 +284,4 @@ class SumTest(ExtendedTestCase):
     def test_Heidrun(self):
         sum = EclSum( self.createTestPath("Statoil/ECLIPSE/Heidrun/Summary/FF12_2013B3_CLEAN_RS"))
         self.assertEqual( 452 , len(sum))
-        self.assertAlmostEqual( 1.85331e+8 , sum.get_last_value("FOPT"), places=5)
+        self.assertAlmostEqualScaled( 1.85331e+8 , sum.get_last_value("FOPT"))
