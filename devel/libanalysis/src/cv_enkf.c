@@ -122,6 +122,7 @@ void cv_enkf_data_free( void * arg ) {
 
 
 void cv_enkf_init_update( void * arg , 
+                          const bool_vector_type * ens_mask , 
                           const matrix_type * S , 
                           const matrix_type * R , 
                           const matrix_type * dObs , 
@@ -668,5 +669,6 @@ analysis_table_type SYMBOL_TABLE = {
   .has_var         = NULL,
   .get_int         = NULL,
   .get_double      = NULL,
+  .get_bool        = NULL,
   .get_ptr         = NULL, 
 };

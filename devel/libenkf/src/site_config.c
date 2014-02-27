@@ -579,17 +579,30 @@ bool site_config_queue_is_running(const site_config_type * site_config) {
 /**
    The job_script might be a relative path, and the cwd changes during
    execution, i.e. it is essential to get hold of the full path.
- */
+*/
 
-void site_config_set_job_script(site_config_type * site_config, const char * job_script) {
-  char * job_script_full_path = util_alloc_realpath(job_script);
-  {
-    site_config->job_script = util_realloc_string_copy(site_config->job_script, job_script_full_path);
-    if (!site_config->user_mode)
-      site_config->job_script_site = util_realloc_string_copy(site_config->job_script_site, site_config->job_script);
-  }
-  free(job_script_full_path);
+bool site_config_set_job_script(site_config_type * site_config, const char * job_script) {
+  if (util_is_executable(job_script)) {
+    char * job_script_full_path = util_alloc_realpath(job_script);
+    {
+      site_config->job_script = util_realloc_string_copy(site_config->job_script, job_script_full_path);
+      if (!site_config->user_mode)
+        site_config->job_script_site = util_realloc_string_copy(site_config->job_script_site, site_config->job_script);
+    }
+    free(job_script_full_path);
+    return true;
+  } else
+    return false;
 }
+
+
+bool site_config_has_job_script( const site_config_type * site_config ) {
+  if (site_config->job_script)
+    return true;
+  else
+    return false;
+}
+
 
 const char * site_config_get_job_script(const site_config_type * site_config) {
   return site_config->job_script;
@@ -623,9 +636,6 @@ int site_config_get_max_submit(const site_config_type * site_config) {
 }
 
 static void site_config_install_job_queue(site_config_type * site_config) {
-  if (site_config->job_script == NULL)
-    util_exit("Must set the path to the job script with the %s key in the site_config / config file\n", JOB_SCRIPT_KEY);
-
   /* 
      All the various driver options are set, unconditionally of which
      driver is actually selected in the end.
@@ -1077,7 +1087,7 @@ void site_config_add_config_items(config_type * config, bool site_mode) {
   item = config_add_schema_item(config, QUEUE_OPTION_KEY, false);
   config_schema_item_set_argc_minmax(item, 3, CONFIG_DEFAULT_ARG_MAX);
 
-  item = config_add_schema_item(config, JOB_SCRIPT_KEY, site_mode);
+  item = config_add_schema_item(config, JOB_SCRIPT_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 

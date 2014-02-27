@@ -20,18 +20,35 @@ from ert.util import SubstitutionList, Log
 
 
 class EnKFMain(BaseCClass):
+    fsCapacity = 2
     def __init__(self, model_config, site_config, strict=True):
         c_ptr = EnKFMain.cNamespace().bootstrap(site_config, model_config, strict, False)
         super(EnKFMain, self).__init__(c_ptr)
 
         self.__simulation_runner = EnkfSimulationRunner(self)
-        self.__fs_manager = EnkfFsManager(self)
+        self.__fs_manager = EnkfFsManager(self , self.fsCapacity)
 
+
+    @classmethod
+    def createCReference(cls , c_pointer , parent = None):
+        obj = super(EnKFMain, cls).createCReference(c_pointer , parent)
+        obj.__simulation_runner = EnkfSimulationRunner(obj)
+        obj.__fs_manager = EnkfFsManager(obj , cls.fsCapacity)
+        return obj
+        
+
+    @staticmethod
+    def createNewConfig(config_file, storage_path, case_name, dbase_type, num_realizations):
+        EnKFMain.cNamespace().create_new_config(config_file, storage_path, case_name, dbase_type, num_realizations)
 
     def set_eclbase(self, eclbase):
         EnKFMain.cNamespace().set_eclbase(self, eclbase)
 
+    def umount(self):
+        self.__fs_manager.umount()
+
     def free(self):
+        self.umount()
         EnKFMain.cNamespace().free(self)
 
     def getEnsembleSize( self ):
@@ -73,9 +90,6 @@ class EnKFMain(BaseCClass):
         """ @rtype: PlotConfig """
         return EnKFMain.cNamespace().get_plot_config(self).setParent(self)
 
-    def set_eclbase(self, eclbase):
-        EnKFMain.cNamespace().set_eclbase(self, eclbase)
-
     def set_datafile(self, datafile):
         EnKFMain.cNamespace().set_datafile(self, datafile)
 
@@ -97,7 +111,9 @@ class EnKFMain(BaseCClass):
         EnKFMain.cNamespace().add_data_kw(self, key, value)
 
 
-
+    def getMountPoint(self):
+        return EnKFMain.cNamespace().get_mount_point( self )
+    
 
     def del_node(self, key):
         EnKFMain.cNamespace().del_node(self, key)
@@ -134,16 +150,14 @@ class EnKFMain(BaseCClass):
         site_conf_file = EnKFMain.cNamespace().get_site_config_file(self)
         return site_conf_file
 
+    def getUserConfigFile(self):
+        """ @rtype: str """
+        config_file = EnKFMain.cNamespace().get_user_config_file(self)
+        return config_file
+
 
     def getHistoryLength(self):
         return EnKFMain.cNamespace().get_history_length(self)
-
-
-    def copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step,
-                      target_state, member_mask, ranking_key, node_list):
-        EnKFMain.cNamespace().copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step,
-                            target_state, member_mask, ranking_key, node_list)
-
 
     def getMemberRunningState(self, ensemble_member):
         """ @rtype: EnKFState """
@@ -154,11 +168,6 @@ class EnKFMain(BaseCClass):
 
     def get_observation_count(self, user_key):
         return EnKFMain.cNamespace().get_observation_count(self, user_key)
-
-
-    def createNewConfig(self, storage_path, case_name, dbase_type, num_realizations):
-        EnKFMain.cNamespace().create_new_config(self, storage_path, case_name, dbase_type, num_realizations)
-
 
     def getEnkfSimulationRunner(self):
         """ @rtype: EnkfSimulationRunner """
@@ -176,6 +185,7 @@ class EnKFMain(BaseCClass):
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("enkf_main", EnKFMain)
+cwrapper.registerType("enkf_main_ref", EnKFMain.createCReference)
 
 
 EnKFMain.cNamespace().bootstrap = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool, bool)")
@@ -212,7 +222,6 @@ EnKFMain.cNamespace().get_templates = cwrapper.prototype("ert_templates_ref enkf
 EnKFMain.cNamespace().get_site_config_file = cwrapper.prototype("char* enkf_main_get_site_config_file(enkf_main)")
 EnKFMain.cNamespace().get_history_length = cwrapper.prototype("int enkf_main_get_history_length(enkf_main)")
 
-EnKFMain.cNamespace().copy_ensemble = cwrapper.prototype("void enkf_main_copy_ensemble(enkf_main, char*, int, int, char*, int, int, bool_vector, char*, stringlist)")
 EnKFMain.cNamespace().get_observations = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)")
 EnKFMain.cNamespace().get_observation_count = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
 EnKFMain.cNamespace().iget_state = cwrapper.prototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
@@ -225,5 +234,7 @@ EnKFMain.cNamespace().get_workflow_list = cwrapper.prototype("ert_workflow_list_
 EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprintf_config(enkf_main)")
 EnKFMain.cNamespace().create_new_config = cwrapper.prototype("void enkf_main_create_new_config(char* , char*, char* , char* , int)")
 
+EnKFMain.cNamespace().get_user_config_file = cwrapper.prototype("char* enkf_main_get_user_config_file(enkf_main)")
+EnKFMain.cNamespace().get_mount_point = cwrapper.prototype("char* enkf_main_get_mount_root( enkf_main )")
 
 

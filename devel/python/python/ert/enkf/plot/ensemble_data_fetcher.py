@@ -23,54 +23,40 @@ class EnsembleDataFetcher(DataFetcher):
 
     def fetchData(self, key, case=None):
         ensemble_config_node = self.getEnsembleConfigNode(key)
-        enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(case, True, False)
+        enkf_fs = self.ert().getEnkfFsManager().getFS(case, read_only = True)
         ensemble_plot_data = EnsemblePlotData(ensemble_config_node, enkf_fs)
 
         data = {
             "x": [],
             "y": [],
-            "min_y_values": None,
-            "max_y_values": None,
+            "min_y_values": [],
+            "max_y_values": [],
             "min_y": None,
             "max_y": None,
             "min_x": None,
             "max_x": None
         }
 
+        time_map = enkf_fs.getTimeMap()
+
+        for index in range(1, len(time_map)):
+            data["x"].append(time_map[index].ctime())
+            data["min_y_values"].append(None)
+            data["max_y_values"].append(None)
+
+        data["min_x"] = data["x"][0]
+        data["max_x"] = data["x"][len(data["x"]) - 1]
+
+
         for vector in ensemble_plot_data:
-            if data["x"] is None or data["y"] is None:
-                data["x"] = []
-                data["y"] = []
-
-            if data["min_y_values"] is None or data["max_y_values"] is None:
-                data["min_y_values"] = []
-                data["max_y_values"] = []
-
-                for index in range(len(vector)):
-                    if vector.isActive(index):
-                        data["min_y_values"].append(vector.getValue(index))
-                        data["max_y_values"].append(vector.getValue(index))
-
-
-            x = []
             y = []
-            data["x"].append(x)
             data["y"].append(y)
 
-            active_index = 0
-            for index in range(len(vector)):
-                if vector.isActive(index):
-                    y_value = vector.getValue(index)
+            # skip index 0 (not a valid simulation value...)
+            for index in range(len(vector) - 1):
+                if vector.isActive(index + 1):
+                    y_value = vector.getValue(index + 1)
                     y.append(y_value)
-
-                    x_value = vector.getTime(index).ctime()
-                    x.append(x_value)
-
-                    if data["min_x"] is None or data["min_x"] > x_value:
-                        data["min_x"] = x_value
-
-                    if data["max_x"] is None or data["max_x"] < x_value:
-                        data["max_x"] = x_value
 
                     if data["min_y"] is None or data["min_y"] > y_value:
                         data["min_y"] = y_value
@@ -79,13 +65,10 @@ class EnsembleDataFetcher(DataFetcher):
                         data["max_y"] = y_value
 
 
-                    if data["min_y_values"][active_index] is None or data["min_y_values"][active_index] > y_value:
-                        data["min_y_values"][active_index] = y_value
+                    if data["min_y_values"][index] is None or data["min_y_values"][index] > y_value:
+                        data["min_y_values"][index] = y_value
 
-                    if data["max_y_values"][active_index] is None or data["max_y_values"][active_index] < y_value:
-                        data["max_y_values"][active_index] = y_value
-
-
-                    active_index += 1
+                    if data["max_y_values"][index] is None or data["max_y_values"][index] < y_value:
+                        data["max_y_values"][index] = y_value
 
         return data

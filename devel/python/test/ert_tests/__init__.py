@@ -90,9 +90,9 @@ class ExtendedTestCase(TestCase):
         @param: The test root path can be set by environment variable ERT_TEST_ROOT_PATH
         """
         file_path = os.path.realpath(__file__)
-        default_test_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../test-data/"))
+        default_test_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../test-data/"))
         test_root = os.path.realpath(os.environ.get("ERT_TEST_ROOT_PATH", default_test_root))
-
+        
         return os.path.realpath(os.path.join(test_root, path))
 
     @staticmethod

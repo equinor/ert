@@ -39,6 +39,8 @@ const double   * gen_kw_get_data_ref(const gen_kw_type * );
   //void             gen_kw_get_data(const gen_kw_type * , double * );
 
 void             gen_kw_free(gen_kw_type *);
+int              gen_kw_data_size( gen_kw_type * );
+double           gen_kw_data_iget( gen_kw_type * , int , bool );
 void             gen_kw_ens_write(const gen_kw_type * , const char *);
 void             gen_kw_ens_read(gen_kw_type * , const char *);
 void             gen_kw_truncate(gen_kw_type * );

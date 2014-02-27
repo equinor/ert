@@ -19,9 +19,19 @@ from ert.util import Buffer
 
 
 class EnkfFs(BaseCClass):
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self , mount_point , read_only = False):
+        c_ptr = EnkfFs.cNamespace().mount( mount_point , read_only )
+        super(EnkfFs,self).__init__(c_ptr)
+        self.python_ref = 1
 
+
+    @classmethod
+    def createCReference(cls , c_pointer , parent = None):
+        obj = super(EnkfFs, cls).createCReference(c_pointer , parent)
+        obj.python_ref = 1
+        return obj
+
+        
     def has_node(self, node_key, var_type, report_step, iens, state):
         return EnkfFs.cNamespace().has_node(self, node_key, var_type, report_step, iens, state)
 
@@ -38,6 +48,7 @@ class EnkfFs(BaseCClass):
         EnkfFs.cNamespace().fread_vector(self, buffer, key, type, member, value)
 
     def getTimeMap(self):
+        """ @rtype: TimeMap """
         return EnkfFs.cNamespace().get_time_map(self).setParent(self)
 
     def getCaseName(self):
@@ -48,12 +59,37 @@ class EnkfFs(BaseCClass):
         """ @rtype: bool """
         return EnkfFs.cNamespace().is_read_only(self)
 
+    def setWritable(self):
+        EnkfFs.cNamespace().set_writable(self)
+
+    def refCount(self):
+        return self.cNamespace().get_refcount(self)
+
+        
     @classmethod
     def exists(cls, path):
         return cls.cNamespace().exists(path)
 
+        
+    @classmethod
+    def createFS(cls, path , fs_type , arg = None):
+        cls.cNamespace().create(path , fs_type , arg)
+
+
+    # It should be safe to call the umount method explicitly; but then
+    # we must be certain that is not called one more time when the
+    # object goes out of scope. To protect against this we keep track
+    # of the class variale python_ref which is set to one at object
+    # creation time, and then reduced to zero when the underlying
+    # storage is closed from Python. 
+    def umount(self):
+        if self.python_ref > 0:
+            EnkfFs.cNamespace().decref(self)
+            self.python_ref -= 1
+            
+
     def free(self):
-        EnkfFs.cNamespace().umount(self)
+        self.umount()
 
 
 
@@ -62,7 +98,10 @@ cwrapper.registerType("enkf_fs", EnkfFs)
 cwrapper.registerType("enkf_fs_obj", EnkfFs.createPythonObject)
 cwrapper.registerType("enkf_fs_ref", EnkfFs.createCReference)
 
-EnkfFs.cNamespace().umount = cwrapper.prototype("void enkf_fs_umount(enkf_fs)")
+EnkfFs.cNamespace().mount = cwrapper.prototype("c_void_p enkf_fs_mount(char* , bool)")
+EnkfFs.cNamespace().create = cwrapper.prototype("void enkf_fs_create_fs(char* , enkf_fs_type_enum , c_void_p)")
+EnkfFs.cNamespace().decref = cwrapper.prototype("int enkf_fs_decref(enkf_fs)")
+EnkfFs.cNamespace().get_refcount = cwrapper.prototype("int enkf_fs_get_refcount(enkf_fs)")
 EnkfFs.cNamespace().has_node = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, c_uint, int, int, c_uint)")
 EnkfFs.cNamespace().has_vector = cwrapper.prototype("bool enkf_fs_has_vector(enkf_fs, char*, c_uint, int, c_uint)")
 EnkfFs.cNamespace().fread_node = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, buffer, char*, c_uint, int, int, c_uint)")
@@ -71,3 +110,4 @@ EnkfFs.cNamespace().get_time_map = cwrapper.prototype("time_map_ref enkf_fs_get_
 EnkfFs.cNamespace().exists = cwrapper.prototype("bool enkf_fs_exists(char*)")
 EnkfFs.cNamespace().get_case_name = cwrapper.prototype("char* enkf_fs_get_case_name(enkf_fs)")
 EnkfFs.cNamespace().is_read_only = cwrapper.prototype("bool enkf_fs_is_read_only(enkf_fs)")
+EnkfFs.cNamespace().set_writable = cwrapper.prototype("void enkf_fs_set_writable(enkf_fs)")

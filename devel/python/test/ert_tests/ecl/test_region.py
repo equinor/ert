@@ -131,3 +131,36 @@ class RegionTest(ExtendedTestCase):
         self.assertTrue(2 * 3 * 6 == len(reg.global_list))
 
 
+
+    def test_index_list(self):
+        reg = EclRegion(self.grid, False)
+        reg.select_islice(0, 5)
+        active_list = reg.active_list
+        global_list = reg.global_list
+
+
+
+    def test_polygon(self):
+        reg = EclRegion(self.grid, False)
+        (x,y,z) = self.grid.get_xyz( ijk=(10,10,0) )
+        dx = 0.1
+        dy = 0.1
+        reg.select_inside_polygon( [(x-dx,y-dy) , (x-dx,y+dy) , (x+dx,y+dy) , (x+dx,y-dy)] )
+        self.assertTrue( self.grid.nz == len(reg.global_list))
+        
+
+    def test_heidrun(self):
+        root = self.createTestPath("Statoil/ECLIPSE/Heidrun")
+        grid = EclGrid( "%s/FF12_2013B2_AMAP_AOP-J15_NO62_MOVEX.EGRID" % root)
+
+        polygon = []
+        with open("%s/polygon.ply" % root) as fileH:
+            for line in fileH.readlines():
+                tmp = line.split()
+                polygon.append( (float(tmp[0]) , float(tmp[1])))
+        self.assertEqual( len(polygon) , 11 )
+
+        reg = EclRegion( grid , False )
+        reg.select_inside_polygon( polygon )
+        self.assertEqual( 0 , len(reg.global_list) % grid.nz)
+        

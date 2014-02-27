@@ -29,7 +29,7 @@
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/time_map.h>
-
+#include <ert/enkf/enkf_fs.h>
 
 
 void ecl_test( const char * ecl_case ) {
@@ -104,7 +104,7 @@ void * update_time_map( void * arg ) {
 
 void thread_test() {
   time_map_type * time_map = time_map_alloc( );
-  
+  test_assert_false( time_map_is_readonly( time_map ));
   {
     int pool_size = 1000;
     thread_pool_type * tp = thread_pool_alloc( pool_size/2 , true );
@@ -123,6 +123,49 @@ void thread_test() {
 }
 
 
+
+void test_read_only() {
+  test_work_area_type * work_area = test_work_area_alloc("time-map");
+  {
+    time_map_type * tm = time_map_alloc( );
+    
+    test_assert_true( time_map_is_instance( tm ));
+    test_assert_false( time_map_is_readonly( tm ));
+    
+    time_map_update( tm , 0 , 0 );
+    time_map_update( tm , 1 , 10 );
+    time_map_update( tm , 2 , 20 );
+    
+    time_map_fwrite( tm , "case/files/time-map" );
+    time_map_free( tm );
+  }
+  {
+    time_map_type * tm = time_map_fread_alloc_readonly( "case/files/time-map");
+    test_assert_time_t_equal(  0 , time_map_iget( tm , 0 ));
+    test_assert_time_t_equal( 10 , time_map_iget( tm , 1 ));
+    test_assert_time_t_equal( 20 , time_map_iget( tm , 2 ));
+    test_assert_int_equal( 3 , time_map_get_size( tm ));
+    time_map_free( tm );
+  }
+  {
+    time_map_type * tm = enkf_fs_alloc_readonly_time_map( "case" );
+    test_assert_time_t_equal(  0 , time_map_iget( tm , 0 ));
+    test_assert_time_t_equal( 10 , time_map_iget( tm , 1 ));
+    test_assert_time_t_equal( 20 , time_map_iget( tm , 2 ));
+    test_assert_int_equal( 3 , time_map_get_size( tm ));
+    time_map_free( tm );
+  }
+  {
+    time_map_type * tm = time_map_fread_alloc_readonly( "DoesNotExist");
+    test_assert_true( time_map_is_instance( tm ));
+    test_assert_true( time_map_is_readonly( tm ));
+    test_assert_int_equal(0 , time_map_get_size( tm ));
+    time_map_free( tm );
+  }
+  test_work_area_free( work_area );
+}
+
+
 int main(int argc , char ** argv) {
   
   if (argc == 1) {
@@ -130,8 +173,8 @@ int main(int argc , char ** argv) {
     thread_test();
   } else
     ecl_test( argv[1] );
-
   
+  test_read_only();  
   
   exit(0);
 }

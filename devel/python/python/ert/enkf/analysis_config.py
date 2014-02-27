@@ -58,7 +58,7 @@ class AnalysisConfig(BaseCClass):
         """ @rtype: AnalysisIterConfig """
         return AnalysisConfig.cNamespace().get_iter_config(self).setParent(self)
 
-    def get_min_realisations(self):
+    def getMinRealisations(self):
         """ @rtype: int """
         return AnalysisConfig.cNamespace().get_min_realisations( self )
 

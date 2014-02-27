@@ -1,3 +1,4 @@
+import json
 import os
 from PyQt4.QtCore import QUrl, Qt, pyqtSlot, pyqtSignal, QObject
 from PyQt4.QtGui import QWidget, QGridLayout, QPainter
@@ -30,10 +31,11 @@ class PlotWebView(QWebView):
 class PlotPanel(QWidget):
     plotReady = pyqtSignal()
 
-    def __init__(self, name, plot_url):
+    def __init__(self, name, debug_name, plot_url):
         QWidget.__init__(self)
 
         self.__name = name
+        self.__debug_name = debug_name
         self.__ready = False
         self.__html_ready = False
         self.__data = PlotData("invalid", parent=self)
@@ -43,7 +45,7 @@ class PlotPanel(QWidget):
 
         layout = QGridLayout()
 
-        self.web_view = PlotWebView(name)
+        self.web_view = PlotWebView(debug_name)
         self.applyContextObject()
         # self.web_view.page().mainFrame().javaScriptWindowObjectCleared.connect(self.applyContextObject)
         self.web_view.loadFinished.connect(self.loadFinished)
@@ -53,6 +55,8 @@ class PlotPanel(QWidget):
         self.setLayout(layout)
 
         self.web_view.setUrl(QUrl("file://%s" % path))
+
+        self.__plot_is_visible = True
 
 
     @pyqtSlot(result=QObject)
@@ -66,17 +70,43 @@ class PlotPanel(QWidget):
         self.checkStatus()
 
     def setPlotData(self, data):
-        self.__data = data
-        self.web_view.page().mainFrame().evaluateJavaScript("updatePlot();")
+        if self.isPlotVisible():
+            self.__data = data
+            self.web_view.page().mainFrame().evaluateJavaScript("updatePlot();")
 
-    def setYScales(self, min, max):
-        if min is None:
-            min = "null"
+    def setScales(self, time_min, time_max, value_min, value_max, depth_min, depth_max):
+        if self.isPlotVisible():
+            if value_min is None:
+                value_min = "null"
 
-        if max is None:
-            max = "null"
+            if value_max is None:
+                value_max = "null"
 
-        self.web_view.page().mainFrame().evaluateJavaScript("setYScales(%s,%s);" % (min, max))
+            if time_min is None:
+                time_min = "null"
+            else:
+                time_min = time_min.ctime()
+
+            if time_max is None:
+                time_max = "null"
+            else:
+                time_max = time_max.ctime()
+
+            if depth_min is None:
+                depth_min = "null"
+
+            if depth_max is None:
+                depth_max = "null"
+
+            scales = (time_min, time_max, value_min, value_max, depth_min, depth_max)
+            self.web_view.page().mainFrame().evaluateJavaScript("setScales(%s,%s,%s,%s,%s,%s);" % scales)
+
+    def setReportStepTime(self, report_step_time):
+        if self.isPlotVisible():
+            if report_step_time is None:
+                report_step_time = "null"
+
+            self.web_view.page().mainFrame().evaluateJavaScript("setReportStepTime(%s);" % (report_step_time))
 
 
     def applyContextObject(self):
@@ -106,11 +136,28 @@ class PlotPanel(QWidget):
 
 
     def updatePlotSize(self):
-        size = self.size()
-        self.web_view.page().mainFrame().evaluateJavaScript("setSize(%d,%d);" % (size.width(), size.height()))
+        if self.isPlotVisible():
+            size = self.size()
+            self.web_view.page().mainFrame().evaluateJavaScript("setSize(%d,%d);" % (size.width(), size.height()))
 
+    def supportsPlotProperties(self, time=False, value=False, depth=False, histogram=False):
+        time = str(time).lower()
+        value = str(value).lower()
+        depth = str(depth).lower()
+        histogram = str(histogram).lower()
+        return self.web_view.page().mainFrame().evaluateJavaScript("supportsPlotProperties(%s,%s,%s,%s);" % (time, value, depth, histogram)).toBool()
 
+    def getName(self):
+        return self.__name
 
+    def isPlotVisible(self):
+        return self.__plot_is_visible
 
+    def setPlotIsVisible(self, visible):
+        self.__plot_is_visible = visible
+
+    def setCustomSettings(self, settings):
+        json_settings = json.dumps(settings)
+        self.web_view.page().mainFrame().evaluateJavaScript("setCustomSettings(%s);" % json_settings)
 
 

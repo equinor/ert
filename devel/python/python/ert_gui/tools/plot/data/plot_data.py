@@ -1,4 +1,5 @@
 from PyQt4.QtCore import QObject, pyqtSlot, QString
+from ert_gui.tools.plot.data import HistogramPlotDataFactory, HistogramPlotData, ObservationPlotData, RefcasePlotData, EnsemblePlotData
 
 
 class PlotData(QObject):
@@ -6,20 +7,16 @@ class PlotData(QObject):
         QObject.__init__(self, parent)
 
         self.__name = name
-        self.__obs_x_values = []
-        self.__obs_y_values = []
-        self.__obs_std_values = []
-        self.__obs_is_continuous = True
-        self.__has_observation_data = False
 
-        self.__refcase_x_values = []
-        self.__refcase_y_values = []
-        self.__has_refcase_data = False
+        #: :type: ObservationPlotData
+        self.__observation_data = None
+        #: :type: RefcasePlotData
+        self.__refcase_data = None
+        #: :type: EnsemblePlotData
+        self.__ensemble_data = {}
 
-        self.__ensemble_x_values = {}
-        self.__ensemble_y_values = {}
-        self.__ensemble_y_min_values = {}
-        self.__ensemble_y_max_values = {}
+        #: :type: HistogramPlotDataFactory
+        self.__histogram_factory = None
 
 
         self.__min_x = None
@@ -27,35 +24,33 @@ class PlotData(QObject):
         self.__min_y = None
         self.__max_y = None
 
+        self.__use_log_scale = False
+
         self.__case_list = []
 
 
-    def setObservationData(self, x_values, y_values, std_values, continuous):
-        if x_values is not None and y_values is not None and std_values is not None:
-            self.__obs_x_values = x_values
-            self.__obs_y_values = y_values
-            self.__obs_std_values = std_values
-            self.__obs_is_continuous = continuous
-            self.__has_observation_data = True
+    def setObservationData(self, observation_data):
+        observation_data.setParent(self)
+        self.__observation_data = observation_data
+        self.updateBoundaries(observation_data.minX(), observation_data.maxX(), observation_data.minY(), observation_data.maxY())
 
 
-    def setRefcaseData(self, x_values, y_values):
-        if x_values is not None and y_values is not None:
-            self.__refcase_x_values = x_values
-            self.__refcase_y_values = y_values
-            self.__has_refcase_data = True
+    def setRefcaseData(self, refcase_data):
+        refcase_data.setParent(self)
+        self.__refcase_data = refcase_data
+        self.updateBoundaries(refcase_data.minX(), refcase_data.maxX(), refcase_data.minY(), refcase_data.maxY())
 
+    def setHistogramFactory(self, histogram_factory):
+        assert isinstance(histogram_factory, HistogramPlotDataFactory)
+        self.__histogram_factory = histogram_factory
 
-    def setEnsembleData(self, case, x_values, y_values, y_min_values, y_max_values):
-        if x_values is not None and y_values is not None and y_min_values is not None and y_max_values is not None:
-            self.__ensemble_x_values[case] = x_values
-            self.__ensemble_y_values[case] = y_values
+    def addEnsembleData(self, ensemble_data):
+        ensemble_data.setParent(self)
+        case_name = ensemble_data.caseName()
+        self.__case_list.append(case_name)
+        self.__ensemble_data[case_name] = ensemble_data
+        self.updateBoundaries(ensemble_data.minX(), ensemble_data.maxX(), ensemble_data.minY(), ensemble_data.maxY())
 
-            self.__ensemble_y_min_values[case] = y_min_values
-            self.__ensemble_y_max_values[case] = y_max_values
-
-            self.__case_list.append(case)
-    
 
     def updateBoundaries(self, min_x, max_x, min_y, max_y):
         if min_x is not None and (self.__min_x is None or self.__min_x > min_x):
@@ -70,59 +65,58 @@ class PlotData(QObject):
         if max_y is not None and (self.__max_y is None or self.__max_y < max_y):
             self.__max_y = max_y
 
-
+    def setShouldUseLogScale(self, use_log_scale):
+        self.__use_log_scale = use_log_scale
 
     @pyqtSlot(result=str)
     def name(self):
+        """ @rtype: str """
         return self.__name
 
-    @pyqtSlot(result="QVariantList")
-    def observationXValues(self):
-        return self.__obs_x_values
-
-    @pyqtSlot(result="QVariantList")
-    def observationYValues(self):
-        return self.__obs_y_values
-
-    @pyqtSlot(result="QVariantList")
-    def observationStdValues(self):
-        return self.__obs_std_values
+    @pyqtSlot(result=QObject)
+    def observationData(self):
+        """ @rtype: ObservationPlotData """
+        return self.__observation_data
 
     @pyqtSlot(result=bool)
-    def observationIsContinuous(self):
-        return self.__obs_is_continuous
+    def hasObservationData(self):
+        """ @rtype: bool """
+        return self.__observation_data is not None and self.__observation_data.isValid()
 
+    @pyqtSlot(result=QObject)
+    def refcaseData(self):
+        """ @rtype: RefcasePlotData """
+        return self.__refcase_data
 
+    @pyqtSlot(result=bool)
+    def hasRefcaseData(self):
+        """ @rtype: bool """
+        return self.__refcase_data is not None and self.__refcase_data.isValid()
 
-    @pyqtSlot(result="QVariantList")
-    def refcaseXValues(self):
-        return self.__refcase_x_values
+    @pyqtSlot(QString, result=QObject)
+    def ensembleData(self, case_name):
+        """ @rtype: EnsemblePlotData """
+        return self.__ensemble_data[str(case_name)]
 
-    @pyqtSlot(result="QVariantList")
-    def refcaseYValues(self):
-        return self.__refcase_y_values
+    @pyqtSlot(result=bool)
+    def hasEnsembleData(self):
+        """ @rtype: bool """
+        return len(self.__ensemble_data) > 0
 
-
-    @pyqtSlot(QString, result="QVariantList")
-    def ensembleXValues(self, case):
-        return self.__ensemble_x_values[str(case)]
-
-    @pyqtSlot(QString, result="QVariantList")
-    def ensembleYValues(self, case):
-        return self.__ensemble_y_values[str(case)]
-
-    @pyqtSlot(QString, result="QVariantList")
-    def ensembleMinYValues(self, case):
-        return self.__ensemble_y_min_values[str(case)]
-
-    @pyqtSlot(QString, result="QVariantList")
-    def ensembleMaxYValues(self, case):
-        return self.__ensemble_y_max_values[str(case)]
+    @pyqtSlot(QString, result=bool)
+    def hasEnsembleDataForCase(self, case_name):
+        """ @rtype: bool """
+        return str(case_name) in self.__ensemble_data
 
     @pyqtSlot(QString, result=int)
     def realizationCount(self, case):
-        return len(self.__ensemble_y_max_values[str(case)])
+        """ @rtype: int """
+        return self.__ensemble_data[str(case)].realizationCount()
 
+    @pyqtSlot(result=bool)
+    def hasHistogram(self):
+        """ @rtype: bool """
+        return self.__histogram_factory is not None
 
     @pyqtSlot(result=float)
     def minX(self):
@@ -140,10 +134,9 @@ class PlotData(QObject):
     def maxY(self):
         return self.__max_y
 
-
     @pyqtSlot(result=bool)
     def isValid(self):
-        return self.hasBoundaries() and (self.hasObservationData() or self.hasRefcaseData() or self.hasEnsembleData())
+        return self.hasBoundaries() and (self.hasObservationData() or self.hasRefcaseData() or self.hasEnsembleData() or self.hasHistogram())
 
     @pyqtSlot(result=bool)
     def hasBoundaries(self):
@@ -154,27 +147,16 @@ class PlotData(QObject):
         return self.__case_list
 
     @pyqtSlot(result=bool)
-    def hasObservationData(self):
-        return self.__has_observation_data
+    def shouldUseLogScale(self):
+        return self.__use_log_scale
 
-    @pyqtSlot(result=bool)
-    def hasRefcaseData(self):
-        return self.__has_refcase_data
+    @pyqtSlot(int, result=QObject)
+    def histogramData(self, report_step_time):
+        if self.__histogram_factory is not None:
+            data = self.__histogram_factory.getHistogramData(report_step_time)
+            data.setParent(self)
 
-    @pyqtSlot(result=bool)
-    def hasEnsembleData(self):
-        return len(self.__case_list) > 0
-
-    @pyqtSlot(QString, result="QVariantList")
-    def reportStepSamples(self, case_name):
-        result = []
-
-        for realization in self.__ensemble_y_values[str(case_name)]:
-            result.append(realization[len(realization) - 1])
-
-        return result
-    
-    
-
+            return data
+        return None
 
 

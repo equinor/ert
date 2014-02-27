@@ -848,7 +848,7 @@ int ensemble_config_get_observations( const ensemble_config_type * config , enkf
 */
 
 enkf_config_node_type * ensemble_config_add_field( ensemble_config_type * config , const char * key , ecl_grid_type * ecl_grid , bool forward_init) {
-  enkf_config_node_type * config_node = enkf_config_node_new_field( key , ecl_grid , config->field_trans_table , forward_init);
+  enkf_config_node_type * config_node = enkf_config_node_alloc_field( key , ecl_grid , config->field_trans_table , forward_init);
   ensemble_config_add_node__( config , config_node );
   return config_node;
 }

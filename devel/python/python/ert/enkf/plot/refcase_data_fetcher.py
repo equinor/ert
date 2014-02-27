@@ -35,17 +35,16 @@ class RefcaseDataFetcher(DataFetcher):
 
 
         refcase = self.getRefCase()
-        vector = refcase.get_vector(key, report_only=True)
+        vector = refcase.get_vector(key, report_only=False)
 
-        data["x"] = [None] * len(vector)
-        data["y"] = [None] * len(vector)
+        data["x"] = []
+        data["y"] = []
 
-        index = 0
-        for node in vector:
-            assert isinstance(node, EclSumNode)
+        for index in range(1, len(vector)):
+            node = vector[index]
 
             x_value = self.getReportStepTimeFromRefcase(refcase, node.report_step)
-            data["x"][index] = int(x_value)
+            data["x"].append(int(x_value))
 
             if data["min_x"] is None or data["min_x"] > x_value:
                 data["min_x"] = x_value
@@ -55,15 +54,13 @@ class RefcaseDataFetcher(DataFetcher):
 
 
             value = node.value
-            data["y"][index] = float(value)
+            data["y"].append(float(value))
 
             if data["min_y"] is None or data["min_y"] > value:
                 data["min_y"] = value
 
             if data["max_y"] is None or data["max_y"] < value:
                 data["max_y"] = value
-
-            index += 1
 
         return data
 

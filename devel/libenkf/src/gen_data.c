@@ -72,9 +72,6 @@ void gen_data_assert_size( gen_data_type * gen_data , int size , int report_step
   gen_data->current_report_step = report_step;
 }
 
-
-
-
 gen_data_config_type * gen_data_get_config(const gen_data_type * gen_data) { return gen_data->config; }
 
 int gen_data_get_size( const gen_data_type * gen_data ) {
@@ -638,7 +635,22 @@ const bool_vector_type * gen_data_get_forward_mask( const gen_data_type * gen_da
   return gen_data_config_get_active_mask( gen_data->config );
 }
 
+void gen_data_copy_to_double_vector(const gen_data_type * gen_data , double_vector_type * vector){
+    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+    int size = gen_data_get_size( gen_data );
+    if (internal_type == ECL_FLOAT_TYPE) {
+      float * data       = (float *) gen_data->data;
+      double_vector_reset(vector);
+      for (int i = 0; i < size; i++){
+        double_vector_append(vector , data[i]);
+      }
+    } else if (internal_type == ECL_DOUBLE_TYPE) {
+      double * data       = (double *) gen_data->data;
+      double_vector_memcpy_from_data( vector , data , size );
+    }
 
+
+}
 
 #define INFLATE(inf,std,min)                                                                                                                                     \
 {                                                                                                                                                                \
