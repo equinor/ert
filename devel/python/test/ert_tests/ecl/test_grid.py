@@ -90,8 +90,8 @@ class GridTest(ExtendedTestCase):
 
             self.assertTrue(grid.cell_contains(2.5 * a1, 2.5 * a2, 2.5 * a3, ijk=(2, 2, 2)))
 
-            ijk = grid.find_cell(1.5 * a1, 2.5 * a2, 3.5 * a3)
-            self.assertAlmostEqualList(ijk, [1, 2, 3])
+            #ijk = grid.find_cell(1.5 * a1 , 2.5 * a2 , 3.5 * a3)
+            #self.assertAlmostEqualList(ijk, [1, 2, 3])
 
 
     def test_create(self):
