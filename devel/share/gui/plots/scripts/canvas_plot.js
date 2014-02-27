@@ -164,8 +164,8 @@ function Plot(element, x_dimension, y_dimension) {
         }
     };
 
-    //this.plot.setRenderCallback(renderEnsembleProgressively);
-    this.plot.setRenderCallback(renderEnsembleDirect);
+    this.plot.setRenderCallback(renderEnsembleProgressively);
+    //this.plot.setRenderCallback(renderEnsembleDirect);
 }
 
 Plot.prototype.resize = function (width, height) {
