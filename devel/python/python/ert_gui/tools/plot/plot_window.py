@@ -78,9 +78,7 @@ class PlotWindow(QMainWindow):
             key = self.__plot_metrics_widget.getDataKeyType()
             active_plot =  self.__central_tab.currentWidget()
             assert isinstance(active_plot, PlotPanel)
-            settings = self.getSettings()
-
-            self.export_plot = ExportPlot(active_plot, settings)
+            self.export_plot = ExportPlot(active_plot, self.__plot_metrics_widget.getSettings(),self.__customize_plot_widget.getCustomSettings())
             self.export_plot.export()
 
 

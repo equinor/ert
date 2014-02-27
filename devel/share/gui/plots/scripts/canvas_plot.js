@@ -121,7 +121,6 @@ function Plot(element, x_dimension, y_dimension) {
 
 
     var renderEnsembleDirect = function(context, data) {
-        console.log("Rendering!!!!");
         if(data.hasEnsembleData()) {
             var case_list = data.caseList();
 
