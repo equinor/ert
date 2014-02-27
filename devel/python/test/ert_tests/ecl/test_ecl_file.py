@@ -53,6 +53,14 @@ class FileTest(ExtendedTestCase):
             EclFile("No/Does/not/exist")
 
 
+    def test_iget_named(self):
+        f = EclFile(self.test_file)
+        N = f.num_named_kw( "SWAT" )
+        with self.assertRaises(KeyError):
+            s = f.iget_named_kw( "SWAT" , N + 1)
+
+
+
     def test_fwrite( self ):
         #work_area = TestArea("python/ecl_file/fwrite")
         with TestAreaContext("python/ecl_file/fwrite"):

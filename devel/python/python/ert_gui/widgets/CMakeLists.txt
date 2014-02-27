@@ -11,7 +11,6 @@ set(PYTHON_SOURCES
     double_box.py
     double_spinner.py
     error_popup.py
-    help_dock.py
     helped_widget.py
     integer_spinner.py
     keyword_list.py

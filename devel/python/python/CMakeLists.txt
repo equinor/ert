@@ -9,5 +9,8 @@ endif()
 add_subdirectory( ert )
 if (ERT_BUILD_GUI)
    add_subdirectory( ert_gui )
+   if (INSTALL_ERT)
+      add_subdirectory( bin )
+   endif()
 endif()
 
