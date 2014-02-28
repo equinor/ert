@@ -16,6 +16,7 @@
 import random
 import os.path
 import subprocess
+import argparse
 from   ert.util import TestAreaContext
 
 
@@ -28,16 +29,17 @@ def path_exists( path ):
 
 class TestRun(object):
     default_ert_cmd = "ert"
+    default_ert_version = "stable"
     default_path_prefix = None
 
-    def __init__(self , config_file , name = None):
+    def __init__(self , config_file , args = [] , name = None):
         if os.path.exists( config_file ) and os.path.isfile( config_file ):
+            self.parseArgs(args)
             self.__ert_cmd = TestRun.default_ert_cmd
             self.path_prefix = TestRun.default_path_prefix
             self.config_file = config_file
             
             self.check_list = []
-            self.args = []
             self.workflows = []
             if name:
                 self.name = name
@@ -51,7 +53,16 @@ class TestRun(object):
             self.name += "/%08d" % random.randint(0,100000000)
         else:
             raise IOError("No such config file: %s" % config_file)
+
     
+    def parseArgs(self , args):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-v" , "--version" , default = self.default_ert_version)
+        parser.add_argument("args" , nargs="*")
+        result = parser.parse_args(args)
+        self.ert_version = result.version
+        self.args = result.args
+        
 
     def get_config_file(self):
         return self.__config_file
@@ -84,21 +95,17 @@ class TestRun(object):
 
     #-----------------------------------------------------------------
 
-    def get_args(self):
-        return self.args
-
-    
-    def add_arg(self , arg):
-        self.args.append(arg)
-
-    #-----------------------------------------------------------------
-
     def get_workflows(self):
         return self.workflows
 
     
     def add_workflow(self , workflow):
         self.workflows.append( workflow )
+
+    #-----------------------------------------------------------------
+
+    def get_args(self):
+        return self.args
 
     #-----------------------------------------------------------------
 
@@ -111,7 +118,7 @@ class TestRun(object):
     #-----------------------------------------------------------------
 
     def __run(self , work_area ):
-        argList = [ self.ert_cmd ]
+        argList = [ self.ert_cmd , "-v" , self.ert_version ]
         for arg in self.args:
             argList.append( arg )
 
@@ -128,7 +135,7 @@ class TestRun(object):
     
     def run(self):
         if len(self.workflows):
-            with TestAreaContext(self.name , prefix = self.path_prefix , store_area = True) as work_area:
+            with TestAreaContext(self.name , prefix = self.path_prefix , store_area = False) as work_area:
                 test_cwd = work_area.get_cwd()
                 work_area.copy_parent_content( self.abs_config_file )
                 status = self.__run( work_area )

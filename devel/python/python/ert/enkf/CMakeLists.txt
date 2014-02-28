@@ -2,7 +2,6 @@ set(PYTHON_SOURCES
     __init__.py
     analysis_config.py
     analysis_iter_config.py
-    block_obs.py
     ecl_config.py
     enkf_fs.py
     enkf_fs_manager.py
@@ -13,6 +12,7 @@ set(PYTHON_SOURCES
     ens_config.py
     ert_template.py
     ert_templates.py
+    ert_test_context.py
     ert_workflow_list.py
     local_config.py
     model_config.py

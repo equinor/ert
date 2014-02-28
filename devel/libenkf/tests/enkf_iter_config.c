@@ -43,6 +43,24 @@ char * create_config_file( const char * enspath_fmt , const char * runpath_fmt ,
 }
 
 
+
+void test_set() {
+  analysis_iter_config_type * iter_config = analysis_iter_config_alloc();
+  
+  test_assert_false( analysis_iter_config_case_fmt_set( iter_config ));
+  analysis_iter_config_set_case_fmt( iter_config , "case%d");
+  test_assert_true( analysis_iter_config_case_fmt_set( iter_config ));
+
+  test_assert_false( analysis_iter_config_num_iterations_set( iter_config ));
+  analysis_iter_config_set_num_iterations( iter_config , 77 );
+  test_assert_true( analysis_iter_config_num_iterations_set( iter_config ));
+
+  analysis_iter_config_free( iter_config );
+}
+
+
+
+
 int main(int argc , char ** argv) {
   const char * enspath_fmt = "iter%d";
   const char * runpath_fmt = "run/iter%d/real%d";
@@ -73,5 +91,7 @@ int main(int argc , char ** argv) {
   remove( config_file );
   free( config_file );
   config_free( config );
+
+  test_set();
   exit(0);
 }

@@ -20,7 +20,7 @@ import ert.cwrap.clib as clib
 import ert.analysis
 ENKF_LIB = clib.ert_load("libenkf.so")
 
-from .enums import EnkfStateType, EnkfVarType, EnkfRunEnum, LoadFailTypeEnum, EnkfObservationImplementationType
+from .enums import EnkfStateType, EnkfVarType, EnkfRunEnum, LoadFailTypeEnum, EnkfObservationImplementationType, EnkfTruncationType
 
 from .util import TimeMap
 from .enkf_fs import EnkfFs
@@ -31,7 +31,6 @@ from .observations import SummaryObservation, ObsVector
 
 from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
-from .block_obs import BlockObs
 from .ecl_config import EclConfig
 
 from .enkf_obs import EnkfObs
@@ -48,6 +47,6 @@ from .enkf_simulation_runner import EnkfSimulationRunner
 from .enkf_fs_manager import EnkfFsManager
 
 from .enkf_main import EnKFMain
-
+from .ert_test_context import ErtTestContext , ErtTest
 from .data import EnkfConfigNode, EnkfNode, GenDataConfig, GenKwConfig, FieldConfig, Field
 

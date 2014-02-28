@@ -28,10 +28,19 @@ function Histogram(element) {
     var custom_value_min = null;
     var custom_value_max = null;
 
+    var use_log_scale = false;
+
     var count_format = d3.format("d");
-    var value_format = d3.format(".4s");
+    var value_format = d3.format(".4g");
+    var value_log_format = d3.format("e");
+
+    var value_log_format_function = function(d) {
+        var x = Math.log(d) / Math.log(10) + 1e-6;
+        return Math.abs(x - Math.floor(x)) < 0.3 ? value_log_format(d) : "";
+    };
 
     var x_scale = d3.scale.linear().range([0, width]).nice();
+    var x_log_scale = d3.scale.log().range([0, width]).nice();
     var y_scale = d3.scale.linear().range([height, 0]).nice();
 
     var histogram_renderer = HistogramRenderer().x(x_scale).y(y_scale).margin(0, 1, 0, 1);
@@ -87,6 +96,8 @@ function Histogram(element) {
 
     var x_axis = d3.svg.axis()
         .scale(x_scale)
+        .tickPadding(10)
+        .ticks(5)
         .tickFormat(value_format)
         .orient("bottom");
 
@@ -123,6 +134,14 @@ function Histogram(element) {
         }
 
         x_scale.domain([min, max]).nice();
+
+
+        var from_log = Math.floor(Math.log(min) / Math.log(10));
+        var to_log = Math.ceil(Math.log(max) / Math.log(10));
+        var from = Math.pow(10, from_log);
+        var to = Math.pow(10, to_log);
+
+        x_log_scale.domain([from, to]);
     };
 
     var resetLegends = function() {
@@ -150,6 +169,77 @@ function Histogram(element) {
         return year + "-" + month + "-" + day;
     }
 
+
+    function createLogBinFunction (bin_count) {
+        function binner(range, values) {
+            var thresholds = [];
+
+            var range_diff = range[1] - range[0];
+
+            var from_log = Math.round(Math.log(range[0]) / Math.log(10));
+            var to_log = Math.round(Math.log(range[1]) / Math.log(10));
+
+            var from_to_diff = to_log - from_log;
+            var log_bin_count = from_to_diff;
+            var log_bin_count_next = from_to_diff * 2;
+
+            while(log_bin_count_next < bin_count) {
+                log_bin_count = log_bin_count_next;
+                log_bin_count_next += from_to_diff;
+            }
+
+
+
+            if(log_bin_count_next - bin_count < bin_count - log_bin_count) {
+                bin_count = log_bin_count_next;
+            } else {
+                bin_count = log_bin_count;
+            }
+
+            var step = from_to_diff / bin_count ;
+
+            var sum = 0;
+            for(var i = 0; i <= bin_count; i++) {
+                sum += Math.pow(10, i * step);
+            }
+
+            var bin_size = range_diff / sum;
+
+            thresholds.push(range[0]);
+
+            for(var i = 1; i < bin_count; i++) {
+                var value = thresholds[i - 1] + (bin_size * Math.pow(10, i * step));
+                thresholds.push(value);
+            }
+
+
+            thresholds.push(range[1]);
+
+
+//            var sum = 0;
+//            for(var i = 0; i <= bin_count; i++) {
+//                sum += Math.pow(10, i);
+//            }
+//
+//            var bin_size = r / sum;
+//
+//            thresholds.push(range[0]);
+//
+//            for(var i = 1; i < bin_count; i++) {
+//                var value = thresholds[i - 1] + (bin_size * Math.pow(10, i));
+//                thresholds.push(value);
+//            }
+//
+//            thresholds.push(range[1]);
+
+            return thresholds;
+
+        }
+        return binner;
+    }
+
+
+
     function histogram(data, case_name) {
         if (!arguments.length) {
             if(stored_data == null) {
@@ -167,8 +257,12 @@ function Histogram(element) {
 //        }
 
         resetLegends();
-
-        title.text(data.name() + " @ " + formatDate(data.reportStepTime()));
+        var report_date = data.reportStepTime();
+        if(report_date == 0){
+            title.text(data.name());
+        } else {
+            title.text(data.name() + " @ " + formatDate(data.reportStepTime()));
+        }
 
         setYDomain(0, data.maxCount());
         setXDomain(data.min(), data.max());
@@ -209,10 +303,19 @@ function Histogram(element) {
 
             var case_histogram = data.caseHistogram(case_name);
             var bin_count = data.numberOfBins();
-            var bins = d3.layout.histogram()
-                .bins(bin_count)
-                .range(x_scale.domain())
-                .bins(bin_count)(case_histogram.samples());
+
+            var bins;
+
+            if(use_log_scale) {
+                bins = d3.layout.histogram()
+                    .range(x_log_scale.domain())
+                    .bins(createLogBinFunction(bin_count))(case_histogram.samples());
+            } else {
+                bins = d3.layout.histogram()
+                    .range(x_scale.domain())
+                    .bins(bin_count)(case_histogram.samples());
+            }
+//
 
             histogram_renderer.style(style);
             histogram_renderer(context, bins);
@@ -235,6 +338,7 @@ function Histogram(element) {
         height = h - margin.top - margin.bottom;
 
         x_scale.range([0, width]);
+        x_log_scale.range([0, width]);
         y_scale.range([height, 0]).nice();
 
         y_axis.tickSize(-width, -width);
@@ -271,6 +375,24 @@ function Histogram(element) {
         } else {
             group.style("display", "inline-block");
         }
+    };
+
+    histogram.setShouldUseLogScale = function(should_use_log_scale) {
+        use_log_scale = should_use_log_scale;
+        if(use_log_scale) {
+            x_axis.scale(x_log_scale).tickFormat(value_log_format_function);
+            histogram_renderer.x(x_log_scale);
+            line_renderer.x(x_log_scale);
+            area_renderer.x(x_log_scale);
+            circle_renderer.x(x_log_scale);
+        } else {
+            x_axis.scale(x_scale).tickFormat(value_format);
+            histogram_renderer.x(x_scale);
+            line_renderer.x(x_scale);
+            area_renderer.x(x_scale);
+            circle_renderer.x(x_scale);
+        }
+
     };
 
     return histogram;

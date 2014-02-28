@@ -88,6 +88,31 @@ void gen_kw_copy(const gen_kw_type * src , gen_kw_type * target) {
 
 
 
+int gen_kw_data_size( gen_kw_type * gen_kw ) {
+  return gen_kw_config_get_data_size( gen_kw->config );
+}
+
+
+
+double gen_kw_data_iget( gen_kw_type * gen_kw, int index , bool do_transform )
+{
+  double value;
+  int size = gen_kw_config_get_data_size( gen_kw->config );
+  if (( index < 0 ) || ( index >= size ))
+    util_abort( "%s: index:%d invalid. Valid interval: [0,%d>.\n" , __func__ , index , size );
+
+  if (do_transform) {
+    value = gen_kw_config_transform(gen_kw->config, index, gen_kw->data[index]);
+  }
+  else {
+    value = gen_kw->data[index];
+  }
+
+  return value;
+}
+
+
+
 
 bool gen_kw_write_to_buffer(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_step, state_enum state) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );

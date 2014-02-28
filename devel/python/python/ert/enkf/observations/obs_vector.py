@@ -17,8 +17,7 @@ from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enums import EnkfObservationImplementationType
-from ert.enkf.observations.summary_observation import SummaryObservation
-
+from ert.enkf.observations import BlockObservation, SummaryObservation, GenObservation
 
 
 class ObsVector(BaseCClass):
@@ -36,16 +35,23 @@ class ObsVector(BaseCClass):
         pointer = ObsVector.cNamespace().alloc(observation_type, observation_key, config_node, num_reports)
         super(ObsVector, self).__init__(pointer)
 
-    def get_state_kw(self):
+
+    def getDataKey(self):
         """ @rtype: str """
         return ObsVector.cNamespace().get_state_kw(self)
 
     def getNode(self, index):
+        """ @rtype: SummaryObservation or BlockObservation """
+
         pointer = ObsVector.cNamespace().iget_node(self, index)
 
         node_type = self.getImplementationType()
         if node_type == EnkfObservationImplementationType.SUMMARY_OBS:
             return SummaryObservation.createCReference(pointer, self)
+        elif node_type == EnkfObservationImplementationType.BLOCK_OBS:
+            return BlockObservation.createCReference(pointer, self)
+        elif node_type == EnkfObservationImplementationType.GEN_OBS:
+            return GenObservation.createCReference(pointer, self)
         else:
             raise AssertionError("Node type '%s' currently not supported!" % node_type)
 
@@ -57,6 +63,10 @@ class ObsVector(BaseCClass):
         """ @rtype: bool """
         return ObsVector.cNamespace().iget_active(self, index)
 
+    def getNextActiveStep(self, previous_step=-1):
+        """ @rtype: int """
+        return  ObsVector.cNamespace().get_next_active_step(self, previous_step)
+
     def getImplementationType(self):
         """ @rtype: EnkfObservationImplementationType """
         return ObsVector.cNamespace().get_impl_type(self)
@@ -65,6 +75,18 @@ class ObsVector(BaseCClass):
         assert isinstance(node, SummaryObservation)
         node.convertToCReference(self)
         ObsVector.cNamespace().install_node(self, index, node.from_param(node))
+
+    def __iter__(self):
+        """ Iterate over active report steps. """
+        cur = -1
+        run = True
+        while run:
+            report_step = self.getNextActiveStep(cur)
+            if report_step >= 0:
+                cur = report_step
+                yield cur
+            else:
+                run = False
 
     def free(self):
         ObsVector.cNamespace().free(self)
@@ -83,3 +105,4 @@ ObsVector.cNamespace().get_num_active = cwrapper.prototype("int obs_vector_get_n
 ObsVector.cNamespace().iget_active = cwrapper.prototype("bool obs_vector_iget_active( obs_vector, int)")
 ObsVector.cNamespace().get_impl_type = cwrapper.prototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
 ObsVector.cNamespace().install_node = cwrapper.prototype("void obs_vector_install_node(obs_vector, int, c_void_p)")
+ObsVector.cNamespace().get_next_active_step = cwrapper.prototype("int obs_vector_get_next_active_step(obs_vector, int)")

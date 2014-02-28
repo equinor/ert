@@ -51,8 +51,17 @@ class DataTypeKeysListModel(QAbstractItemModel):
         return None
 
 
+    def isSummaryKey(self, key):
+        return DataTypeKeysModel().isSummaryKey(str(key))
 
+    def isBlockKey(self, key):
+        return DataTypeKeysModel().isBlockKey(str(key))
 
+    def isGenKWKey(self, key):
+        return DataTypeKeysModel().isGenKWKey(str(key))
+
+    def isGenDataKey(self, key):
+        return DataTypeKeysModel().isGenDataKey(str(key))
 
 
 
