@@ -14,14 +14,21 @@
 // See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 // for more details.
 
-function BasePlot(element) {
+function BasePlot(element, x_dimension, y_dimension) {
     this.stored_data = [];
     this.margin = {left: 90, right: 20, top: 20, bottom: 30};
     this.root_elemenet = element;
 
     this.custom_y_min = null;
     this.custom_y_max = null;
+    this.custom_x_min = null;
+    this.custom_x_max = null;
 
+    this.dimension_x = x_dimension;
+    this.dimension_y = y_dimension;
+
+    this.vertical_error_bar = true;
+    this.error_bar_only = false;
 
     var group = this.root_elemenet.append("div")
         .attr("class", "plot");
@@ -60,24 +67,17 @@ function BasePlot(element) {
     this.legend_group = group.append("div")
         .attr("class", "plot-legend-group");
 
-    this.x_scale = d3.time.scale().range([0, this.width]);
-    this.x_time_scale = d3.time.scale().range([0, this.width]);
-    this.y_scale = d3.scale.linear().range([this.height, 0]).nice();
-
-
     this.y_axis = d3.svg.axis()
-        .scale(this.y_scale)
-        .ticks(10)
-        .tickPadding(10)
-        .orient("left")
-        .tickSize(-this.width, -this.width);
+        .scale(this.dimension_y.scale())
+        .orient("left");
+
+    this.dimension_y.format(this.y_axis, this.width);
 
     this.x_axis = d3.svg.axis()
-        .scale(this.x_time_scale)
-        .ticks(10)
-        .tickPadding(10)
-        .orient("bottom")
-        .tickSubdivide(true);
+        .scale(this.dimension_x.scale())
+        .orient("bottom");
+
+    this.dimension_x.format(this.x_axis, this.height);
 
     this.plot_group.append("g")
         .attr("class", "y axis pale")
@@ -85,21 +85,14 @@ function BasePlot(element) {
         .call(this.y_axis);
 
     this.plot_group.append("g")
-        .attr("class", "x axis")
+        .attr("class", "x axis pale")
         .attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")")
         .call(this.x_axis);
 
 
-    var self = this;
 
-
-    this.x = function (d) {
-        return self.x_scale(d);
-    };
-
-    this.y = function (d) {
-        return self.y_scale(d);
-    };
+    this.x = this.dimension_x;
+    this.y = this.dimension_y;
 
     this.legend = CanvasPlotLegend();
     this.legend_list = [];
@@ -110,6 +103,7 @@ function BasePlot(element) {
     this.circle_renderer = CanvasCircle().x(this.x).y(this.y);
 
     this.render_callback = null;
+    this.pre_render_callback = null;
 
 //    console.log("BasePlot initialized!");
 }
@@ -122,11 +116,11 @@ BasePlot.prototype.resize = function(width, height) {
     this.width = width - this.margin.left - this.margin.right;
     this.height = height - this.margin.top - this.margin.bottom;
 
-    this.x_scale.range([0, this.width]);
-    this.x_time_scale.range([0, this.width]);
-    this.y_scale.range([this.height, 0]).nice();
+    this.dimension_x.format(this.x_axis, this.height);
+    this.dimension_y.format(this.y_axis, this.width);
 
-    this.y_axis.tickSize(-this.width, -this.width);
+    this.dimension_x.setRange(0, this.width);
+    this.dimension_y.setRange(this.height, 0);
 
     this.plot_group.style("width", width + "px").style("height", height + "px");
 
@@ -138,33 +132,55 @@ BasePlot.prototype.resize = function(width, height) {
     this.setData(this.stored_data);
 };
 
-BasePlot.prototype.setValueScales = function(min, max) {
-    this.custom_y_min = min;
-    this.custom_y_max = max;
+BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
 
-    this.setData(this.stored_data);
+    if(this.custom_y_min != y_min || this.custom_y_max != y_max ||
+        this.custom_x_min != x_min || this.custom_x_max != x_max) {
+        this.custom_y_min = y_min;
+        this.custom_y_max = y_max;
+        this.custom_x_min = x_min;
+        this.custom_x_max = x_max;
+
+        this.setData(this.stored_data);
+    }
 };
 
 
 BasePlot.prototype.setYDomain = function(min_y, max_y) {
-    var min = min_y;
-    var max = max_y;
+    if(!this.dimension_y.isOrdinal()) {
+        var min = min_y;
+        var max = max_y;
 
-    if (this.custom_y_min != null) {
-        min = this.custom_y_min;
+        if (this.custom_y_min != null) {
+            min = this.custom_y_min;
+        }
+
+        if (this.custom_y_max != null) {
+            max = this.custom_y_max;
+        }
+
+        this.dimension_y.setDomain(min, max);
+    } else {
+        this.dimension_y.setDomain(this.stored_data.caseList())
     }
-
-    if (this.custom_y_max != null) {
-        max = this.custom_y_max;
-    }
-
-    this.y_scale.domain([min, max]).nice();
 };
 
 BasePlot.prototype.setXDomain = function(min_x, max_x) {
-    this.x_time_scale.domain([new Date(min_x * 1000), new Date(max_x * 1000)]).nice();
-    var domain = this.x_time_scale.domain();
-    this.x_scale.domain([domain[0].getTime() / 1000, domain[1].getTime() / 1000]);
+    if(!this.dimension_x.isOrdinal()) {
+        var min = min_x;
+        var max = max_x;
+        if (this.custom_x_min != null) {
+            min = this.custom_x_min;
+        }
+
+        if (this.custom_x_max != null) {
+            max = this.custom_x_max;
+        }
+
+        this.dimension_x.setDomain(min, max);
+    } else {
+        this.dimension_x.setDomain(this.stored_data.caseList())
+    }
 };
 
 
@@ -186,8 +202,15 @@ BasePlot.prototype.render = function() {
 
     this.resetLegends();
 
-    this.plot_group.select(".y.axis").transition().duration(0).call(this.y_axis);
-    this.plot_group.select(".x.axis").transition().duration(0).call(this.x_axis);
+    if(this.pre_render_callback != null) {
+        this.pre_render_callback(data);
+    }
+
+    this.plot_group.select(".y.axis").call(this.y_axis);
+    this.plot_group.select(".x.axis").call(this.x_axis);
+
+    this.canvas.attr("width", this.width).attr("height", this.height);
+    this.overlay_canvas.attr("width", this.width).attr("height", this.height);
 
     var context = this.canvas.node().getContext("2d");
     context.save();
@@ -211,6 +234,10 @@ BasePlot.prototype.setRenderCallback = function(callback) {
     this.render_callback = callback;
 };
 
+BasePlot.prototype.setPreRenderCallback = function(callback) {
+    this.pre_render_callback = callback;
+};
+
 
 BasePlot.prototype.resetLegends = function() {
     this.legend_list = [];
@@ -224,7 +251,7 @@ BasePlot.prototype.addLegend = function(style, name, render_function) {
 BasePlot.prototype.renderObservations = function(context, data) {
     if(data.hasObservationData()) {
         var obs_data = data.observationData();
-        if(obs_data.isContinuous()) {
+        if(obs_data.isContinuous() && !this.error_bar_only) {
             var x_values = obs_data.xValues();
             var y_values = obs_data.yValues();
             var std_values = obs_data.stdValues();
@@ -245,25 +272,25 @@ BasePlot.prototype.renderObservations = function(context, data) {
             this.area_renderer.style(STYLES["observation_area"]);
             this.area_renderer(context, obs_x_area_samples, obs_y_area_samples);
 
-
             this.line_renderer.style(STYLES["observation"]);
             this.line_renderer(context, x_values, y_values);
 
 
-            this.circle_renderer.style(STYLES["observation"]);
+//            this.circle_renderer.style(STYLES["observation"]);
+//
+//            var circle_count = this.width / 20;
+//            var step = y_values.length / circle_count;
+//            for(var index = 0; index < y_values.length; index += step) {
+//                var idx = Math.min(y_values.length, Math.round(index));
+//                var x = x_values[idx];
+//                var y = y_values[idx];
+//                this.circle_renderer(context, x, y);
+//            }
+//
+//            this.circle_renderer(context, x_values[y_values.length - 1], y_values[y_values.length - 1]);
 
-            var circle_count = this.width / 20;
-            var step = y_values.length / circle_count;
-            for(var index = 0; index < y_values.length; index += step) {
-                var idx = Math.min(y_values.length, Math.round(index));
-                var x = x_values[idx];
-                var y = y_values[idx];
-                this.circle_renderer(context, x, y);
-            }
-
-            this.circle_renderer(context, x_values[y_values.length - 1], y_values[y_values.length - 1]);
-
-            this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.circledLine);
+//            this.addLegend([STYLES["observation_area"], STYLES["observation"]], "Observation", CanvasPlotLegend.filledCircleWithLine);
+            this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.simpleLine);
             this.addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
         } else {
 
@@ -277,7 +304,7 @@ BasePlot.prototype.renderObservations = function(context, data) {
                 var error = obs_std_samples[index];
 
                 this.error_bar_renderer.style(STYLES["observation_error_bar"]);
-                this.error_bar_renderer(context, x, y, error);
+                this.error_bar_renderer(context, x, y, error, this.vertical_error_bar);
             }
             this.addLegend(STYLES["observation_error_bar"], "Observation error bar", CanvasPlotLegend.errorBar);
         }
@@ -301,5 +328,35 @@ BasePlot.prototype.createLineRenderer = function() {
     return CanvasPlotLine().x(this.x).y(this.y);
 };
 
+BasePlot.prototype.createCircleRenderer = function() {
+    return CanvasCircle().x(this.x).y(this.y);
+};
 
 
+BasePlot.prototype.setVerticalErrorBar = function(vertical){
+    this.vertical_error_bar = vertical;
+
+};
+
+BasePlot.prototype.setCustomSettings = function (settings) {
+    if ("error_bar_only" in settings) {
+        this.error_bar_only = settings["error_bar_only"];
+    }
+};
+
+
+BasePlot.prototype.setLogScaleOnDimensionX = function(use_log_scale) {
+    this.dimension_x.setIsLogScale(use_log_scale);
+    this.x_axis.scale(this.dimension_x.scale());
+    this.dimension_x.format(this.x_axis, this.height);
+};
+
+BasePlot.prototype.setLogScaleOnDimensionY = function(use_log_scale) {
+    this.dimension_y.setIsLogScale(use_log_scale);
+    this.y_axis.scale(this.dimension_y.scale());
+    this.dimension_y.format(this.y_axis, this.width);
+};
+
+function isNumber(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+}

@@ -12,11 +12,6 @@ class ObservationPlotData(QObject):
         self.__is_continuous = True
         self.__has_data = False
 
-
-        self.__report_step_time_indexes = {}
-        self.__first_report_step_time = None
-        self.__last_report_step_time = None
-
         self.__min_x = None
         self.__max_x = None
         self.__min_y = None
@@ -30,15 +25,6 @@ class ObservationPlotData(QObject):
             self.__std_values = std_values
             self.__is_continuous = continuous
             self.__has_data = True
-
-            for index in range(len(x_values)):
-                x = x_values[index]
-                # if x in self.__report_step_time_indexes:
-                #     print("[ObservationPlotData] value %d already in index list!" % x)
-                self.__report_step_time_indexes[x] = index
-
-            self.__first_report_step_time = min(x_values)
-            self.__last_report_step_time = max(x_values)
 
 
     def updateBoundaries(self, min_x, max_x, min_y, max_y):
@@ -76,11 +62,6 @@ class ObservationPlotData(QObject):
     def isContinuous(self):
         return self.__is_continuous
 
-    @pyqtSlot(result=int)
-    def lastReportStepTime(self):
-        return self.__last_report_step_time
-
-
     @pyqtSlot(result=float)
     def minX(self):
         return self.__min_x
@@ -108,17 +89,3 @@ class ObservationPlotData(QObject):
     @pyqtSlot(result=bool)
     def hasData(self):
         return self.__has_data
-
-    @pyqtSlot(int, result=bool)
-    def hasSample(self, report_step_time):
-        return report_step_time in self.__report_step_time_indexes
-
-    @pyqtSlot(int, result=float)
-    def getSample(self, report_step_time):
-        index = self.__report_step_time_indexes[report_step_time]
-        return self.__y_values[index]
-
-    @pyqtSlot(int, result=float)
-    def getError(self, report_step_time):
-        index = self.__report_step_time_indexes[report_step_time]
-        return self.__std_values[index]

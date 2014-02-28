@@ -120,9 +120,14 @@ class UtilTest(TestCase):
         self.assertTrue(active_list[0] == 1)
         self.assertTrue(active_list[2] == 100)
         self.assertTrue(active_list[7] == 105)
+        self.assertEqual( active_list.count(100) , 1)
+        active_list.append(100)
+        active_list.append(100)
+        self.assertEqual( active_list.count(100) , 3)
 
         active_list = IntVector.active_list("1,10,100-105X")
         self.assertFalse(active_list)
+
 
 
     def test_activeMask(self):
@@ -134,8 +139,12 @@ class UtilTest(TestCase):
         self.assertFalse(active_list[9])
         self.assertFalse(active_list[8])
 
+        self.assertEqual(6, active_list.count(True))
+
         active_list = BoolVector.active_mask("1,4-7,10X")
         self.assertFalse(active_list)
+
+
 
 
     def test_update_active_mask(self):

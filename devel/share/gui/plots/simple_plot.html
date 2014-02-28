@@ -36,6 +36,8 @@
 <script src="libs/d3.v3.js"></script>
 <script src="scripts/styles.js"></script>
 <script src="scripts/base_plot.js"></script>
+<script src="scripts/base_plot_value_dimension.js"></script>
+<script src="scripts/base_plot_time_dimension.js"></script>
 <script src="scripts/render_tracker.js"></script>
 <script src="scripts/canvas_plot.js"></script>
 <script src="scripts/canvas_plot_line.js"></script>
@@ -62,7 +64,7 @@
     }
 
     function createPlot() {
-        plot = new Plot(d3.select("body"));
+        plot = new Plot(d3.select("body"), BasePlotTimeDimension(), BasePlotValueDimension());
     }
 
     function updatePlot() {
@@ -74,12 +76,21 @@
         plot.resize(width, height - 75);
     }
 
-    function setValueScales(min, max) {
-        plot.setValueScales(min, max);
+    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max) {
+        plot.setScales(time_min, time_max, value_min, value_max);
     }
 
     function setReportStepTime(report_step_time) {
         // Not supported by this plot
+    }
+
+    function supportsPlotProperties(time, value, depth, histogram){
+        return time && value && !depth
+    }
+
+    function setCustomSettings(settings) {
+        plot.setCustomSettings(settings);
+        STYLES.updateColors(settings);
     }
 
 </script>
