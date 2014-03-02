@@ -56,7 +56,9 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 #define DEFAULT_LAMBDA_REDUCE_FACTOR   0.1
 #define DEFAULT_LAMBDA0                -1
 #define DEFAULT_LAMBDA_MIN             0.01
+#define DEFAULT_LOG_FILE               NULL
 
+ 
 
 #define  USE_PRIOR_KEY               "USE_PRIOR"
 #define  LAMBDA_REDUCE_FACTOR_KEY    "LAMBDA_REDUCE"
@@ -64,7 +66,7 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 #define  LAMBDA0_KEY                 "LAMBDA0"
 #define  LAMBDA_MIN_KEY              "LAMBDA_MIN"
 #define  ITER_KEY                    "ITER"
-
+#define  LOG_FILE_KEY                "LOG_FILE"
 
 
 
@@ -111,6 +113,9 @@ struct rml_enkf_data_struct {
   double    lambda_min;
   double    lambda_reduce_factor;
   double    lambda_increase_factor;
+  
+  char    * log_file;
+  FILE    * log_stream;
 };
 
 
@@ -193,14 +198,21 @@ int rml_enkf_get_iteration_nr( const rml_enkf_data_type * data ) {
   return data->iteration_nr;
 }
 
+void rml_enkf_set_log_file( rml_enkf_data_type * data , const char * log_file ) {
+  data->log_file = util_realloc_string_copy( data->log_file , log_file );
+}
 
-
+const char * rml_enkf_get_log_file( const rml_enkf_data_type * data) {
+  return data->log_file;
+}
 
 
 void * rml_enkf_data_alloc( rng_type * rng) {
   rml_enkf_data_type * data = util_malloc( sizeof * data);
   UTIL_TYPE_ID_INIT( data , RML_ENKF_TYPE_ID );
-  
+    
+  data->log_file     = NULL;
+
   rml_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   rml_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
   rml_enkf_set_use_prior( data , DEFAULT_USE_PRIOR );
@@ -208,6 +220,7 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   rml_enkf_set_lambda_increase_factor(data , DEFAULT_LAMBDA_INCREASE_FACTOR);
   rml_enkf_set_lambda_reduce_factor(data , DEFAULT_LAMBDA_REDUCE_FACTOR);
   rml_enkf_set_lambda_min( data , DEFAULT_LAMBDA_MIN );
+  rml_enkf_set_log_file( data , DEFAULT_LOG_FILE );
 
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
@@ -227,6 +240,7 @@ void rml_enkf_data_free( void * arg ) {
   matrix_free( data->prior0 );
   matrix_free( data->active_prior );
 
+  util_safe_free( data->log_file );
   bool_vector_free( data->ens_mask );
   free( data );
 }
@@ -614,6 +628,21 @@ bool rml_enkf_set_bool( void * arg , const char * var_name , bool value) {
 }
 
 
+bool rml_enkf_set_string( void * arg , const char * var_name , const char * value) {
+  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
+  {
+    bool name_recognized = true;
+    
+    if (strcmp( var_name , LOG_FILE_KEY) == 0)
+      rml_enkf_set_log_file( module_data , value );
+    else
+      name_recognized = false;
+
+    return name_recognized;
+  }
+}
+
+
 long rml_enkf_get_options( void * arg , long flag ) {
   rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
   {
@@ -639,6 +668,8 @@ bool rml_enkf_has_var( const void * arg, const char * var_name) {
       return true;
     else if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
       return true;
+    else if (strcmp(var_name , LOG_FILE_KEY) == 0)
+      return true;
     else
       return false;
   }
@@ -654,6 +685,17 @@ int rml_enkf_get_int( const void * arg, const char * var_name) {
       return module_data->iteration_nr;
     else
       return -1;
+  }
+}
+
+
+void * rml_enkf_get_ptr( const void * arg , const char * var_name ) {
+  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , LOG_FILE_KEY) == 0)
+      return module_data->log_file;
+    else
+      return NULL;
   }
 }
 
@@ -706,7 +748,7 @@ analysis_table_type SYMBOL_TABLE = {
   .set_int         = rml_enkf_set_int , 
   .set_double      = rml_enkf_set_double , 
   .set_bool        = rml_enkf_set_bool, 
-  .set_string      = NULL , 
+  .set_string      = rml_enkf_set_string,
   .get_options     = rml_enkf_get_options , 
   .initX           = NULL,
   .updateA         = rml_enkf_updateA ,  
@@ -716,6 +758,6 @@ analysis_table_type SYMBOL_TABLE = {
   .get_int         = rml_enkf_get_int,
   .get_double      = rml_enkf_get_double,
   .get_bool        = rml_enkf_get_bool,
-  .get_ptr         = NULL, 
+  .get_ptr         = rml_enkf_get_ptr,
 };
 
