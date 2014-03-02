@@ -11,7 +11,8 @@ add_test( analysis_module_rml ${EXECUTABLE_OUTPUT_PATH}/analysis_test_external_m
           ENKF_TRUNCATION:0.77 
           LAMBDA0:0.25  
           LAMBDA_MIN:0.01
-          LOG_FILE:LogFile.txt )
+          LOG_FILE:LogFile.txt 
+          CLEAR_LOG:True )
 
 
     

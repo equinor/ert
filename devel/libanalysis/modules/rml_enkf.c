@@ -57,6 +57,7 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 #define DEFAULT_LAMBDA0                -1
 #define DEFAULT_LAMBDA_MIN             0.01
 #define DEFAULT_LOG_FILE               NULL
+#define DEFAULT_CLEAR_LOG              true
 
  
 
@@ -67,7 +68,7 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 #define  LAMBDA_MIN_KEY              "LAMBDA_MIN"
 #define  ITER_KEY                    "ITER"
 #define  LOG_FILE_KEY                "LOG_FILE"
-
+#define  CLEAR_LOG_KEY               "CLEAR_LOG" 
 
 
 /*
@@ -114,6 +115,7 @@ struct rml_enkf_data_struct {
   double    lambda_reduce_factor;
   double    lambda_increase_factor;
   
+  bool      clear_log;
   char    * log_file;
   FILE    * log_stream;
 };
@@ -171,7 +173,13 @@ double rml_enkf_get_lambda_reduce_factor( const rml_enkf_data_type * data ) {
   return data->lambda_reduce_factor;
 }
 
+bool rml_enkf_get_clear_log( const rml_enkf_data_type * data ) {
+  return data->clear_log;
+}
 
+void rml_enkf_set_clear_log( rml_enkf_data_type * data , bool clear_log) {
+  data->clear_log = clear_log;
+}
 
 bool rml_enkf_get_use_prior( const rml_enkf_data_type * data ) {
   return data->use_prior;
@@ -207,6 +215,16 @@ const char * rml_enkf_get_log_file( const rml_enkf_data_type * data) {
 }
 
 
+void rml_enkf_log_line( rml_enkf_data_type * data , const char * fmt , ...) {
+  if (data->log_stream) {
+    va_list ap;
+    va_start(ap , fmt);
+    vfprintf( data->log_stream , fmt , ap );
+    va_end( ap );
+  }
+}
+
+
 void * rml_enkf_data_alloc( rng_type * rng) {
   rml_enkf_data_type * data = util_malloc( sizeof * data);
   UTIL_TYPE_ID_INIT( data , RML_ENKF_TYPE_ID );
@@ -221,6 +239,7 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   rml_enkf_set_lambda_reduce_factor(data , DEFAULT_LAMBDA_REDUCE_FACTOR);
   rml_enkf_set_lambda_min( data , DEFAULT_LAMBDA_MIN );
   rml_enkf_set_log_file( data , DEFAULT_LOG_FILE );
+  rml_enkf_set_clear_log( data , DEFAULT_CLEAR_LOG );
 
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
@@ -480,14 +499,24 @@ void rml_enkf_updateA(void * module_data ,
   int nrobs         = matrix_get_rows( S );
   int ens_size      = matrix_get_columns( S );
   double nsc        = 1/sqrt(ens_size-1); 
-  FILE *fp = util_fopen("rml_enkf_output","a");
   matrix_type * Cd  = matrix_alloc( nrobs, nrobs );
  
   
   enkf_linalg_Covariance(Cd ,E ,nsc, nrobs);
   matrix_inv(Cd);
 
+  data->log_stream = NULL;
+  if (data->log_file) {
+    if (data->iteration_nr == 0) {
+      if (data->clear_log)
+        data->log_stream = util_mkdir_fopen( data->log_file , "w");
+      else
+        data->log_stream = util_mkdir_fopen( data->log_file , "a");
+    } else
+      data->log_stream = util_fopen( data->log_file , "a");
+  }
   
+
   if (data->iteration_nr == 0) {
     rml_enkf_updateA_iter0(data , A , S , R , dObs , E , D , Cd);
     data->iteration_nr++;
@@ -503,8 +532,8 @@ void rml_enkf_updateA(void * module_data ,
     
     rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
-    printf(" Current Objective function value is %5.3f \n\n",Sk_new);
-    printf(" The old Objective function value is %5.3f \n", data->Sk);
+    rml_enkf_log_line( data , " Current Objective function value is %5.3f \n\n",Sk_new);
+    rml_enkf_log_line( data , " The old Objective function value is %5.3f \n", data->Sk);
     {
       bool mismatch_reduced = false;
       bool std_reduced = false;
@@ -515,7 +544,7 @@ void rml_enkf_updateA(void * module_data ,
       if (Std_new <= data->Std)
         std_reduced = true;
       
-      fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
+      rml_enkf_log_line( data , "%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
 
       if (mismatch_reduced) {
         /*
@@ -550,10 +579,11 @@ void rml_enkf_updateA(void * module_data ,
   if (data->lambda < data->lambda_min)
     data->lambda = data->lambda_min;
 
-  printf ("The current iteration number is %d \n ", data->iteration_nr);
-  
+  rml_enkf_log_line( data , "The current iteration number is %d \n ", data->iteration_nr);
+  if (data->log_stream)
+    fclose( data->log_stream );
+                 
   matrix_free(Cd);
-  fclose(fp);
 }
 
 
@@ -620,6 +650,8 @@ bool rml_enkf_set_bool( void * arg , const char * var_name , bool value) {
     
     if (strcmp( var_name , USE_PRIOR_KEY) == 0)
       rml_enkf_set_use_prior( module_data , value );
+    else if (strcmp( var_name , CLEAR_LOG_KEY) == 0)
+      rml_enkf_set_clear_log( module_data , value );
     else
       name_recognized = false;
 
@@ -670,6 +702,8 @@ bool rml_enkf_has_var( const void * arg, const char * var_name) {
       return true;
     else if (strcmp(var_name , LOG_FILE_KEY) == 0)
       return true;
+    else if (strcmp(var_name , CLEAR_LOG_KEY) == 0)
+      return true;
     else
       return false;
   }
@@ -705,6 +739,8 @@ bool rml_enkf_get_bool( const void * arg, const char * var_name) {
   {
     if (strcmp(var_name , USE_PRIOR_KEY) == 0)
       return module_data->use_prior;
+    else if (strcmp(var_name , CLEAR_LOG_KEY) == 0) 
+      return module_data->clear_log;
     else
        return false;
   }
