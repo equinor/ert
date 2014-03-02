@@ -56,6 +56,7 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 #define DEFAULT_LAMBDA_REDUCE_FACTOR   0.1
 #define DEFAULT_LAMBDA0                -1
 #define DEFAULT_LAMBDA_MIN             0.01
+#define DEFAULT_LAMBDA_RECALCULATE     false
 #define DEFAULT_LOG_FILE               NULL
 #define DEFAULT_CLEAR_LOG              true
 
@@ -66,6 +67,7 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 #define  LAMBDA_INCREASE_FACTOR_KEY  "LAMBDA_INCREASE"
 #define  LAMBDA0_KEY                 "LAMBDA0"
 #define  LAMBDA_MIN_KEY              "LAMBDA_MIN"
+#define  LAMBDA_RECALCULATE_KEY      "LAMBDA_RECALCULATE"
 #define  ITER_KEY                    "ITER"
 #define  LOG_FILE_KEY                "LOG_FILE"
 #define  CLEAR_LOG_KEY               "CLEAR_LOG" 
@@ -114,6 +116,7 @@ struct rml_enkf_data_struct {
   double    lambda_min;
   double    lambda_reduce_factor;
   double    lambda_increase_factor;
+  bool      lambda_recalculate;
   
   bool      clear_log;
   char    * log_file;
@@ -140,16 +143,16 @@ void rml_enkf_set_truncation( rml_enkf_data_type * data , double truncation ) {
     data->subspace_dimension = INVALID_SUBSPACE_DIMENSION;
 }
 
-void rml_enkf_set_lambda0( rml_enkf_data_type * data , double increase_factor) {
-  data->lambda0 = increase_factor;
+void rml_enkf_set_lambda0( rml_enkf_data_type * data , double lambda0) {
+  data->lambda0 = lambda0;
 }
 
 double rml_enkf_get_lambda0( const rml_enkf_data_type * data ) {
   return data->lambda0;
 }
 
-void rml_enkf_set_lambda_min( rml_enkf_data_type * data , double increase_factor) {
-  data->lambda_min = increase_factor;
+void rml_enkf_set_lambda_min( rml_enkf_data_type * data , double lambda_min) {
+  data->lambda_min = lambda_min;
 }
 
 double rml_enkf_get_lambda_min( const rml_enkf_data_type * data ) {
@@ -188,6 +191,10 @@ bool rml_enkf_get_use_prior( const rml_enkf_data_type * data ) {
 
 void rml_enkf_set_use_prior( rml_enkf_data_type * data , bool use_prior) {
   data->use_prior = use_prior;
+}
+
+void rml_enkf_set_lambda_recalculate( rml_enkf_data_type * data , bool lambda_recalculate) {
+  data->lambda_recalculate = lambda_recalculate;
 }
 
 void rml_enkf_set_subspace_dimension( rml_enkf_data_type * data , int subspace_dimension) {
@@ -240,6 +247,7 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   rml_enkf_set_lambda_min( data , DEFAULT_LAMBDA_MIN );
   rml_enkf_set_log_file( data , DEFAULT_LOG_FILE );
   rml_enkf_set_clear_log( data , DEFAULT_CLEAR_LOG );
+  rml_enkf_set_lambda_recalculate( data , DEFAULT_LAMBDA_RECALCULATE );
 
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
@@ -530,6 +538,10 @@ void rml_enkf_updateA(void * module_data ,
     Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
     Std_new = matrix_diag_std(Skm,Sk_new);
     
+    if (data->lambda_recalculate)
+      data->lambda = pow(10 , floor(log10(Sk_new / (2*nrobs))) );
+    
+    rml_enkf_log_line( data , " Iteration:%d   Lambda:%g \n",data->iteration_nr , data->lambda);
     rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
     rml_enkf_log_line( data , " Current Objective function value is %5.3f \n\n",Sk_new);
@@ -652,6 +664,8 @@ bool rml_enkf_set_bool( void * arg , const char * var_name , bool value) {
       rml_enkf_set_use_prior( module_data , value );
     else if (strcmp( var_name , CLEAR_LOG_KEY) == 0)
       rml_enkf_set_clear_log( module_data , value );
+    else if (strcmp( var_name , LAMBDA_RECALCULATE_KEY) == 0)
+      rml_enkf_set_lambda_recalculate( module_data , value );
     else
       name_recognized = false;
 
@@ -698,6 +712,8 @@ bool rml_enkf_has_var( const void * arg, const char * var_name) {
       return true;
     else if (strcmp(var_name , LAMBDA_MIN_KEY) == 0)
       return true;
+    else if (strcmp(var_name , LAMBDA_RECALCULATE_KEY) == 0)
+      return true;
     else if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
       return true;
     else if (strcmp(var_name , LOG_FILE_KEY) == 0)
@@ -741,6 +757,8 @@ bool rml_enkf_get_bool( const void * arg, const char * var_name) {
       return module_data->use_prior;
     else if (strcmp(var_name , CLEAR_LOG_KEY) == 0) 
       return module_data->clear_log;
+    else if (strcmp(var_name , LAMBDA_RECALCULATE_KEY) == 0) 
+      return module_data->lambda_recalculate;
     else
        return false;
   }
