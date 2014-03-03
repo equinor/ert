@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 2.8 )
 project( ERT C CXX )
 
 set( ERT_VERSION_MAJOR 1 )
-set( ERT_VERSION_MINOR 4 )
+set( ERT_VERSION_MINOR 5 )
 set( ERT_VERSION_MICRO X )
 
 
@@ -47,6 +47,10 @@ endif()
 if (NOT ERT_WINDOWS)
    set( CMAKE_C_FLAGS   "-std=gnu99 -Wall -Wno-unknown-pragmas ")
    set( CMAKE_CXX_FLAGS "-Wall " )
+endif()
+
+if (MSVC)
+    add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4996" )
 endif()
 
 if (ERT_USE_OPENMP)
