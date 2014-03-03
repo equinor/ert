@@ -17,10 +17,14 @@
 Convenience module for loading shared library.
 """
 
+import platform
 import ctypes
 import os
 
 ert_lib_path = None
+so_extension = {"Linux"  : "so",
+                "win32"  : "dll",
+                "darwin" : "dylib" }
 
 
 def __load( lib_list, ert_prefix):
@@ -38,12 +42,13 @@ def __load( lib_list, ert_prefix):
     Will return a handle to the first successfull load, and raise
     ImportError if none of the loads succeed.
     """
+
     error_list = {}
     dll = None
     for lib in lib_list:
         try:
             if ert_prefix:
-                ert_lib = os.path.join(ert_lib_path, lib)
+                ert_lib = os.path.join(ert_lib_path , "%s.%s" % (lib , so_extension[platform.system()]))
                 dll = ctypes.CDLL(ert_lib, ctypes.RTLD_GLOBAL)
             else:
                 dll = ctypes.CDLL(lib, ctypes.RTLD_GLOBAL)
@@ -78,7 +83,7 @@ def load( *lib_list ):
     """
     Will try to load shared library with normal load semantics.
     """
-    return __load(__crossPlatformLibList(lib_list), False)
+    return __load(lib_list , False)
 
 
 def ert_load( *lib_list ):
@@ -90,8 +95,7 @@ def ert_load( *lib_list ):
 
     if ert_lib_path:
         try:
-            cross_platform_lib_list = __crossPlatformLibList(lib_list)
-            return __load(cross_platform_lib_list, True)
+            return __load(lib_list , True)
         except ImportError:
             # Try again - ignoring the ert_lib_path setting.
             return load(*lib_list)
@@ -100,17 +104,4 @@ def ert_load( *lib_list ):
         return load(*lib_list)
 
 
-def __crossPlatformLibList(lib_list):
-    cross_platform_lib_list = []
-    for lib in lib_list:
-        assert isinstance(lib, str)
-        if lib.endswith(".so"):
-            cross_platform_lib_list.append(lib.replace(".so", ".dylib"))
-            cross_platform_lib_list.append(lib)
-        elif lib.endswith(".dylib"):
-            cross_platform_lib_list.append(lib.replace(".dylib", ".so"))
-            cross_platform_lib_list.append(lib)
-        else:
-            cross_platform_lib_list.append("%s.so" % lib)
-            cross_platform_lib_list.append("%s.dylib" % lib)
-    return cross_platform_lib_list
+
