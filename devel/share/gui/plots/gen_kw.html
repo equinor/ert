@@ -86,6 +86,14 @@
         return !time && value && !depth
     }
 
+    function getPrintWidth(){
+        return 1600;
+    }
+
+    function getPrintHeight(){
+        return 1200;
+    }
+
     function setCustomSettings(settings) {
         plot.setCustomSettings(settings);
         STYLES.updateColors(settings);
@@ -93,6 +101,10 @@
 
     function renderNow(){
         plot.renderNow();
+    }
+
+    function getPlotTitle(){
+        return plot.getTitle();
     }
 
 </script>

@@ -110,5 +110,9 @@ OverviewPlot.prototype.setRenderingFinishedCallback = function(callback) {
 
 OverviewPlot.prototype.renderNow = function(){
     this.plot.render();
-}
+};
+
+OverviewPlot.prototype.getTitle = function(){
+    return this.plot.getTitle();
+};
 

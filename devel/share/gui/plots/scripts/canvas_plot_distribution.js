@@ -100,4 +100,8 @@ DistributionPlot.prototype.setCustomSettings = function (settings) {
 
 DistributionPlot.prototype.renderNow = function(){
     this.plot.render();
-}
+};
+
+DistributionPlot.prototype.getTitle = function(){
+    return this.plot.getTitle();
+};

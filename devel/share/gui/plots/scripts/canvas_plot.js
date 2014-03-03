@@ -206,4 +206,8 @@ Plot.prototype.setRenderingFinishedCallback = function(callback) {
 
 Plot.prototype.renderNow = function(){
     this.plot.render();
-}
+};
+
+Plot.prototype.getTitle = function(){
+    return this.plot.getTitle();
+};

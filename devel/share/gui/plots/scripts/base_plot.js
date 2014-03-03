@@ -39,7 +39,7 @@ function BasePlot(element, x_dimension, y_dimension) {
 
     this.title = group.append("div")
         .attr("class", "plot-title")
-        .text("No data");
+        .text(this.getTitle());
 
     var plot_area = group.append("div").attr("class", "plot-area");
 
@@ -190,6 +190,14 @@ BasePlot.prototype.setData = function(data) {
     this.stored_data = data;
 };
 
+BasePlot.prototype.getTitle = function(){
+    if("name" in this.stored_data){
+        return this.stored_data.name();
+    } else {
+        return "No data";
+    }
+};
+
 BasePlot.prototype.render = function() {
     var data = this.stored_data;
     this.render_finished = false;
@@ -197,7 +205,7 @@ BasePlot.prototype.render = function() {
 
     this.resetLegends();
 
-    this.title.text(data.name());
+    this.title.text(this.getTitle());
 
     if(data.hasBoundaries()) {
         this.setYDomain(data.minY(), data.maxY());
