@@ -38,7 +38,7 @@ class EnKFLibraryTest(ExtendedTestCase):
             with self.assertRaises(ValueError): # Null pointer!
                 self.assertIsInstance(main.eclConfig().getRefcase(), EclSum)
 
-            file_system = main.getEnkfFsManager().getCurrentFS()
+            file_system = main.getEnkfFsManager().getCurrentFileSystem()
             self.assertEqual(file_system.getCaseName(), "default")
             time_map = file_system.getTimeMap()
             self.assertIsInstance(time_map, TimeMap)
