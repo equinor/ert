@@ -80,6 +80,7 @@ state_map_type * state_map_alloc_copy( state_map_type * map ) {
   return copy;
 }
 
+
 void state_map_free( state_map_type * map ) {
   free( map );
 }

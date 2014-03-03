@@ -157,6 +157,7 @@ static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
                                      const stringlist_type * node_list) {
 
   const int ens_size = enkf_main_get_ensemble_size( enkf_main );
+  state_map_type * target_state_map = enkf_fs_get_state_map(target_case_fs); 
 
   {
     int * ranking_permutation;
@@ -184,7 +185,9 @@ static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
             enkf_node_copy( config_node ,
                             source_case_fs , target_case_fs ,
                             src_id , target_id );
-
+                            
+          if (0 == target_report_step)
+            state_map_iset(target_state_map, target_iens, STATE_INITIALIZED); 
         }
       }
     }
@@ -252,6 +255,9 @@ void enkf_main_init_case_from_existing(const enkf_main_type * enkf_main,
                           NULL,
                           param_list);
 
+
+  enkf_fs_fsync(target_case_fs);
+
   bool_vector_free(iactive);
   stringlist_free(param_list);
 }
@@ -278,6 +284,8 @@ void enkf_main_init_case_from_existing_custom(const enkf_main_type * enkf_main,
                           iactive,
                           NULL,
                           node_list);
+
+  enkf_fs_fsync(target_case_fs);
 }
 
 

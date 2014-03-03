@@ -117,6 +117,7 @@ typedef enum {
   bool                   analysis_module_has_var( const analysis_module_type * module , const char * var );
   double                 analysis_module_get_double( const analysis_module_type * module , const char * var);
   int                    analysis_module_get_int( const analysis_module_type * module , const char * var);
+  bool                   analysis_module_get_bool( const analysis_module_type * module , const char * var);
   void *                 analysis_module_get_ptr( const analysis_module_type * module , const char * var);
   const char           * analysis_module_flag_enum_iget( int index, int * value);
   
