@@ -45,7 +45,6 @@
 <script src="scripts/canvas_error_bar.js"></script>
 <script src="scripts/canvas_plot_circle.js"></script>
 <script src="scripts/canvas_plot_legend.js"></script>
-<script src="data.js"></script>
 
 <script>
     var plot = null;
@@ -106,6 +105,10 @@
 
     function renderNow(){
         plot.renderNow();
+    }
+
+    function getPlotTitle(){
+        return plot.getTitle();
     }
 
 </script>

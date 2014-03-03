@@ -240,6 +240,7 @@ function Histogram(element) {
 
 
 
+
     function histogram(data, case_name) {
         if (!arguments.length) {
             if(stored_data == null) {
@@ -257,12 +258,10 @@ function Histogram(element) {
 //        }
 
         resetLegends();
-        var report_date = data.reportStepTime();
-        if(report_date == 0){
-            title.text(data.name());
-        } else {
-            title.text(data.name() + " @ " + formatDate(data.reportStepTime()));
-        }
+
+        title.text(histogram.getTitle());
+
+
 
         setYDomain(0, data.maxCount());
         setXDomain(data.min(), data.max());
@@ -393,6 +392,16 @@ function Histogram(element) {
             circle_renderer.x(x_scale);
         }
 
+    };
+
+    histogram.getTitle = function(){
+        data = stored_data;
+        var report_date = data.reportStepTime();
+        if(report_date == 0){
+            return data.name();
+        } else {
+            return data.name() + " @ " + formatDate(data.reportStepTime());
+        }
     };
 
     return histogram;

@@ -15,7 +15,7 @@
 #  for more details.
 
 from PyQt4.QtCore import pyqtSignal, Qt
-from PyQt4.QtGui import QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QToolButton
+from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QToolButton
 from ert_gui.widgets import util
 
 

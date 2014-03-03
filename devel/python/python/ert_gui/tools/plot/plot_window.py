@@ -1,7 +1,7 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker, ExportPlotWidget, ExportPlot, CustomizePlotWidget, PlotBridge
+from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ExportPlotWidget, ExportPlot, CustomizePlotWidget
 from ert_gui.tools.plot.data import PlotDataFetcher
 from ert_gui.widgets.util import may_take_a_long_time
 
@@ -67,11 +67,12 @@ class PlotWindow(QMainWindow):
         plot_data_fetcher = PlotDataFetcher()
         data_key = self.__plot_metrics_widget.getDataKeyType()
         for plot_panel in self.__plot_panels:
-            model = plot_panel.getPlotBridge()
-            model.setPlotData(plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases))
-            model.setCustomSettings(self.__customize_plot_widget.getCustomSettings())
-            model.setPlotSettings(self.__plot_metrics_widget.getSettings())
-            plot_panel.renderNow()
+            if plot_panel.isPlotVisible():
+                model = plot_panel.getPlotBridge()
+                model.setPlotData(plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases))
+                model.setCustomSettings(self.__customize_plot_widget.getCustomSettings())
+                model.setPlotSettings(self.__plot_metrics_widget.getSettings())
+                plot_panel.renderNow()
 
     def exportActivePlot(self):
         if self.__central_tab.currentIndex() > -1:
@@ -172,9 +173,7 @@ class PlotWindow(QMainWindow):
         key = str(key)
         plot_data_fetcher = PlotDataFetcher()
         self.storePlotType(plot_data_fetcher, self.__plot_metrics_widget.getDataKeyType())
-        self.__plot_metrics_widget.setDataKeyType(key)
 
-        plot_data_fetcher = PlotDataFetcher()
         for plot_panel in self.__plot_panels:
             visible = self.__central_tab.indexOf(plot_panel) > -1
 
@@ -198,6 +197,7 @@ class PlotWindow(QMainWindow):
                 raise NotImplementedError("Key %s not supported." % key)
 
         self.restorePlotType(plot_data_fetcher, key)
+        self.__plot_metrics_widget.setDataKeyType(key)
 
         if self.checkPlotStatus():
             self.plotSettingsChanged()

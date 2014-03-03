@@ -129,12 +129,10 @@ class ExportPlot(object):
 
 
     def getDefaultFileName(self):
-        name = self.__plot_bridge_org.getPlotData().name()
+        name = str(self.__plot_bridge_org.getPlotTitle())
         name = name.replace(":"," ")
+        name = name.replace("@", "-")
         type = self.__active_plot_panel.getName()
-        if type == "Histogram":
-            time = ctime(self.__report_step_time)
-            name = "%s - %s" % (name, time.date())
 
         name = type + " " + name + ".png"
 

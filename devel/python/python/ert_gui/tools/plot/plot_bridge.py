@@ -141,7 +141,8 @@ class PlotBridge(QObject):
         self.setReportStepTime(settings["report_step_time"])
 
 
-
+    def getPlotTitle(self):
+        return self.__web_page.mainFrame().evaluateJavaScript("getPlotTitle();" ).toString()
 
 
 
