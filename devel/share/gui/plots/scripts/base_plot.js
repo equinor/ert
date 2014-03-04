@@ -100,12 +100,10 @@ function BasePlot(element, x_dimension, y_dimension) {
     this.line_renderer = CanvasPlotLine().x(this.x).y(this.y);
     this.area_renderer = CanvasPlotArea().x(this.x).y(this.y);
     this.error_bar_renderer = CanvasErrorBar().x(this.x).y(this.y);
-    this.circle_renderer = CanvasCircle().x(this.x).y(this.y);
+    this.stippled_line_renderer = CanvasPlotStippledLine().x(this.x).y(this.y);
 
     this.render_callback = null;
     this.pre_render_callback = null;
-
-//    console.log("BasePlot initialized!");
 }
 
 BasePlot.prototype.resize = function(width, height) {
@@ -272,24 +270,13 @@ BasePlot.prototype.renderObservations = function(context, data) {
             this.area_renderer.style(STYLES["observation_area"]);
             this.area_renderer(context, obs_x_area_samples, obs_y_area_samples);
 
-            this.line_renderer.style(STYLES["observation"]);
-            this.line_renderer(context, x_values, y_values);
+            this.stippled_line_renderer.style(STYLES["observation"]);
+            this.stippled_line_renderer(context, x_values, y_values);
+
+//            this.line_renderer.style(STYLES["observation"]);
+//            this.line_renderer(context, x_values, y_values);
 
 
-//            this.circle_renderer.style(STYLES["observation"]);
-//
-//            var circle_count = this.width / 20;
-//            var step = y_values.length / circle_count;
-//            for(var index = 0; index < y_values.length; index += step) {
-//                var idx = Math.min(y_values.length, Math.round(index));
-//                var x = x_values[idx];
-//                var y = y_values[idx];
-//                this.circle_renderer(context, x, y);
-//            }
-//
-//            this.circle_renderer(context, x_values[y_values.length - 1], y_values[y_values.length - 1]);
-
-//            this.addLegend([STYLES["observation_area"], STYLES["observation"]], "Observation", CanvasPlotLegend.filledCircleWithLine);
             this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.simpleLine);
             this.addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
         } else {

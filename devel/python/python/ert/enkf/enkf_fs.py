@@ -15,82 +15,85 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, TimeMap
-from ert.util import Buffer
+from ert.enkf.enums import EnKFFSType
 
 
 class EnkfFs(BaseCClass):
-    def __init__(self , mount_point , read_only = False):
-        c_ptr = EnkfFs.cNamespace().mount( mount_point , read_only )
-        super(EnkfFs,self).__init__(c_ptr)
-        self.python_ref = 1
+    def __init__(self, mount_point, read_only=False):
+        c_ptr = EnkfFs.cNamespace().mount(mount_point, read_only)
+        super(EnkfFs, self).__init__(c_ptr)
+
+        self.__umounted = False # Keep track of umounting so we only do it once
 
 
     @classmethod
-    def createCReference(cls , c_pointer , parent = None):
-        obj = super(EnkfFs, cls).createCReference(c_pointer , parent)
-        obj.python_ref = 1
+    def createCReference(cls, c_pointer, parent=None):
+        obj = super(EnkfFs, cls).createCReference(c_pointer, parent)
+        obj.__umounted = False
         return obj
 
-        
-    def has_node(self, node_key, var_type, report_step, iens, state):
-        return EnkfFs.cNamespace().has_node(self, node_key, var_type, report_step, iens, state)
 
-    def has_vector(self, node_key, var_type, iens, state):
-        return EnkfFs.cNamespace().has_vector(self, node_key, var_type, iens, state)
-
-
-    def fread_node(self, key, type, step, member, value):
-        buffer = Buffer(100)
-        EnkfFs.cNamespace().fread_node(self, buffer, key, type, step, member, value)
-
-    def fread_vector(self, key, type, member, value):
-        buffer = Buffer(100)
-        EnkfFs.cNamespace().fread_vector(self, buffer, key, type, member, value)
+    # def has_node(self, node_key, var_type, report_step, iens, state):
+    #     return EnkfFs.cNamespace().has_node(self, node_key, var_type, report_step, iens, state)
+    #
+    # def has_vector(self, node_key, var_type, iens, state):
+    #     return EnkfFs.cNamespace().has_vector(self, node_key, var_type, iens, state)
+    #
+    #
+    # def fread_node(self, key, type, step, member, value):
+    #     buffer = Buffer(100)
+    #     EnkfFs.cNamespace().fread_node(self, buffer, key, type, step, member, value)
+    #
+    # def fread_vector(self, key, type, member, value):
+    #     buffer = Buffer(100)
+    #     EnkfFs.cNamespace().fread_vector(self, buffer, key, type, member, value)
 
     def getTimeMap(self):
         """ @rtype: TimeMap """
+        self.__checkIfUmounted()
         return EnkfFs.cNamespace().get_time_map(self).setParent(self)
 
     def getCaseName(self):
         """ @rtype: str """
+        self.__checkIfUmounted()
         return EnkfFs.cNamespace().get_case_name(self)
 
     def isReadOnly(self):
         """ @rtype: bool """
+        self.__checkIfUmounted()
         return EnkfFs.cNamespace().is_read_only(self)
 
     def setWritable(self):
+        self.__checkIfUmounted()
         EnkfFs.cNamespace().set_writable(self)
 
     def refCount(self):
+        self.__checkIfUmounted()
         return self.cNamespace().get_refcount(self)
 
-        
+
     @classmethod
     def exists(cls, path):
         return cls.cNamespace().exists(path)
 
-        
     @classmethod
-    def createFS(cls, path , fs_type , arg = None):
-        cls.cNamespace().create(path , fs_type , arg)
+    def createFileSystem(cls, path, fs_type, arg=None):
+        assert isinstance(path, str)
+        assert isinstance(fs_type, EnKFFSType)
+        cls.cNamespace().create(path, fs_type, arg)
 
 
-    # It should be safe to call the umount method explicitly; but then
-    # we must be certain that is not called one more time when the
-    # object goes out of scope. To protect against this we keep track
-    # of the class variale python_ref which is set to one at object
-    # creation time, and then reduced to zero when the underlying
-    # storage is closed from Python. 
+    def __checkIfUmounted(self):
+        if self.__umounted:
+            raise AssertionError("The EnkfFs instance has been umounted!")
+
     def umount(self):
-        if self.python_ref > 0:
+        if not self.__umounted:
             EnkfFs.cNamespace().decref(self)
-            self.python_ref -= 1
-            
+            self.__umounted = True
 
     def free(self):
         self.umount()
-
 
 
 cwrapper = CWrapper(ENKF_LIB)
