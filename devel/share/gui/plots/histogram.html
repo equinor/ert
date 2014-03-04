@@ -88,7 +88,7 @@
         var default_height = 425;
         if (stored_data != null && stored_data.isValid()) {
            var number_of_histograms = stored_data.caseList().length;
-           return calculateHistogramHeight(stored_height, number_of_histograms) * number_of_histograms;
+           return calculateHistogramHeight(stored_height, number_of_histograms) * number_of_histograms+20;
 
         }
         return default_height;
