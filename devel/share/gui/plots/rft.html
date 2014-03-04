@@ -18,18 +18,6 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <style>
-        html {
-            height: 100%;
-        }
-
-        body {
-            height: 90%;
-            background-color: #eee;
-        }
-
-    </style>
-
     <link rel="stylesheet" type="text/css" href="style/plot.css"/>
 </head>
 
@@ -46,7 +34,6 @@
 <script src="scripts/canvas_error_bar.js"></script>
 <script src="scripts/canvas_plot_circle.js"></script>
 <script src="scripts/canvas_plot_legend.js"></script>
-<script src="data.js"></script>
 
 <script>
     var plot = null;
@@ -68,6 +55,9 @@
         plot = new Plot(d3.select("body"), BasePlotValueDimension(), BasePlotValueDimension(true));
         plot.setVerticalErrorBar(false);
         plot.setHorizontalDrawDirection(false);
+        plot.setRenderingFinishedCallback(function() {
+            plot_data_source.renderingFinished();
+        });
     }
 
     function updatePlot() {
@@ -91,9 +81,25 @@
         return !time && value && depth
     }
 
+    function getPrintWidth(){
+        return 1600;
+    }
+
+    function getPrintHeight(){
+        return 1200;
+    }
+
     function setCustomSettings(settings) {
         plot.setCustomSettings(settings);
         STYLES.updateColors(settings);
+    }
+
+    function renderNow(){
+        plot.renderNow();
+    }
+
+    function getPlotTitle(){
+        return plot.getTitle();
     }
 
 </script>

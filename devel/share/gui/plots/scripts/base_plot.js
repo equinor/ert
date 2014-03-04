@@ -24,6 +24,10 @@ function BasePlot(element, x_dimension, y_dimension) {
     this.custom_x_min = null;
     this.custom_x_max = null;
 
+    this.render_finished = false;
+    this.render_callback_finished = false;
+    this.rendering_finished_callback = null;
+
     this.dimension_x = x_dimension;
     this.dimension_y = y_dimension;
 
@@ -35,7 +39,7 @@ function BasePlot(element, x_dimension, y_dimension) {
 
     this.title = group.append("div")
         .attr("class", "plot-title")
-        .text("No data");
+        .text(this.getTitle());
 
     var plot_area = group.append("div").attr("class", "plot-area");
 
@@ -126,8 +130,6 @@ BasePlot.prototype.resize = function(width, height) {
     this.overlay_canvas.attr("width", this.width).attr("height", this.height);
 
     this.plot_group.select(".x.axis").attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")");
-
-    this.setData(this.stored_data);
 };
 
 BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
@@ -139,7 +141,7 @@ BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
         this.custom_x_min = x_min;
         this.custom_x_max = x_max;
 
-        this.setData(this.stored_data);
+        //this.setData(this.stored_data);
     }
 };
 
@@ -184,21 +186,29 @@ BasePlot.prototype.setXDomain = function(min_x, max_x) {
 
 BasePlot.prototype.setData = function(data) {
     this.stored_data = data;
+};
 
-    this.title.text(data.name());
+BasePlot.prototype.getTitle = function(){
+    if("name" in this.stored_data){
+        return this.stored_data.name();
+    } else {
+        return "No data";
+    }
+};
+
+BasePlot.prototype.render = function() {
+    var data = this.stored_data;
+    this.render_finished = false;
+    this.render_callback_finished = false;
+
+    this.resetLegends();
+
+    this.title.text(this.getTitle());
 
     if(data.hasBoundaries()) {
         this.setYDomain(data.minY(), data.maxY());
         this.setXDomain(data.minX(), data.maxX());
     }
-
-    this.render();
-};
-
-BasePlot.prototype.render = function() {
-    var data = this.stored_data;
-
-    this.resetLegends();
 
     if(this.pre_render_callback != null) {
         this.pre_render_callback(data);
@@ -226,6 +236,8 @@ BasePlot.prototype.render = function() {
 
     overlay_context.restore();
     context.restore();
+    this.finishedRendering();
+
 };
 
 BasePlot.prototype.setRenderCallback = function(callback) {
@@ -273,11 +285,7 @@ BasePlot.prototype.renderObservations = function(context, data) {
             this.stippled_line_renderer.style(STYLES["observation"]);
             this.stippled_line_renderer(context, x_values, y_values);
 
-//            this.line_renderer.style(STYLES["observation"]);
-//            this.line_renderer(context, x_values, y_values);
-
-
-            this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.simpleLine);
+            this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.stippledLine);
             this.addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
         } else {
 
@@ -331,6 +339,30 @@ BasePlot.prototype.setCustomSettings = function (settings) {
     }
 };
 
+BasePlot.prototype.renderCallbackFinishedRendering = function(){
+    this.render_callback_finished = true;
+    this.emitFinishedRendering()
+
+};
+
+BasePlot.prototype.finishedRendering = function(){
+    this.render_finished = true;
+    this.emitFinishedRendering();
+
+};
+
+BasePlot.prototype.emitFinishedRendering = function(){
+    if(this.rendering_finished_callback != null){
+        if(this.render_finished && this.render_callback_finished) {
+            this.rendering_finished_callback();
+        }
+    }
+
+};
+
+BasePlot.prototype.setRenderingFinishedCallback = function(callback) {
+    this.rendering_finished_callback = callback;
+};
 
 BasePlot.prototype.setLogScaleOnDimensionX = function(use_log_scale) {
     this.dimension_x.setIsLogScale(use_log_scale);
