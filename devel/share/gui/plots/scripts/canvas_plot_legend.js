@@ -208,6 +208,12 @@ CanvasPlotLegend.simpleLine = function(context, style, width, height) {
     context.stroke();
 };
 
+CanvasPlotLegend.stippledLine = function(context, style, width, height) {
+    var line_renderer = CanvasPlotStippledLine();
+    line_renderer.style(style);
+    line_renderer(context, [0, width], [height / 2, height / 2]);
+};
+
 CanvasPlotLegend.filledCircleWithLine = function(context, style, width, height) {
     context.strokeStyle = style[0]["stroke"];
     context.lineWidth = style[0]["stroke_width"];
