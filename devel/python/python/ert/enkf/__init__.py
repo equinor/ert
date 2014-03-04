@@ -18,7 +18,7 @@
 import ert.cwrap.clib as clib
 
 import ert.analysis
-ENKF_LIB = clib.ert_load("libenkf.so")
+ENKF_LIB = clib.ert_load("libenkf")
 
 from .enums import EnkfStateType, EnkfVarType, EnkfRunEnum, LoadFailTypeEnum, EnkfObservationImplementationType, EnkfTruncationType
 
