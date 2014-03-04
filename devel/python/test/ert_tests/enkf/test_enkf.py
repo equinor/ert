@@ -115,12 +115,12 @@ class EnKFTest(ExtendedTestCase):
             #self.assertIsInstance(main.local_config(), LocalConfig) #warn: Should this be None?
             self.assertIsInstance(main.siteConfig(), SiteConfig)
             self.assertIsInstance(main.eclConfig(), EclConfig)
-            self.assertIsInstance(main.plot_config(), PlotConfig)
+            self.assertIsInstance(main.plotConfig(), PlotConfig)
 
             # self.main.load_obs(obs_config_file)
             self.assertIsInstance(main.getObservations(), EnkfObs)
             self.assertIsInstance(main.get_templates(), ErtTemplates)
-            self.assertIsInstance(main.getEnkfFsManager().getCurrentFS(), EnkfFs)
+            self.assertIsInstance(main.getEnkfFsManager().getCurrentFileSystem(), EnkfFs)
             # self.assertIsInstance(main.iget_member_config(0), MemberConfig)
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 

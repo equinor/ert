@@ -63,7 +63,7 @@ function OverviewPlot(element, x_dimension, y_dimension) {
 
                 self.plot.addLegend(style, case_name, CanvasPlotLegend.filledCircle);
             }
-
+            self.plot.renderCallbackFinishedRendering();
         }
     };
 
@@ -102,5 +102,17 @@ OverviewPlot.prototype.setHorizontalDrawDirection = function (horizontal) {
 
 OverviewPlot.prototype.setCustomSettings = function (settings) {
     this.plot.setCustomSettings(settings);
+};
+
+OverviewPlot.prototype.setRenderingFinishedCallback = function(callback) {
+    this.plot.setRenderingFinishedCallback(callback);
+};
+
+OverviewPlot.prototype.renderNow = function(){
+    this.plot.render();
+};
+
+OverviewPlot.prototype.getTitle = function(){
+    return this.plot.getTitle();
 };
 

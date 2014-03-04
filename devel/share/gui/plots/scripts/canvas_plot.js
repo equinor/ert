@@ -115,6 +115,7 @@ function Plot(element, x_dimension, y_dimension) {
             }, 15);
         } else {
             self.tracker.stoppedRendering();
+            self.plot.renderCallbackFinishedRendering();
         }
     };
 
@@ -127,6 +128,7 @@ function Plot(element, x_dimension, y_dimension) {
                 var style = STYLES["ensemble_" + (case_index + 1)];
                 var case_name = case_list[case_index];
                 var line_renderer = self.line_renderers[case_index];
+                var circle_renderer = self.circle_renderers[case_index];
 
                 var ensemble_data = data.ensembleData(case_name);
                 var x_values = ensemble_data.xValues();
@@ -158,6 +160,7 @@ function Plot(element, x_dimension, y_dimension) {
 
                 self.plot.addLegend(style, case_name, CanvasPlotLegend.simpleLine);
             }
+            self.plot.renderCallbackFinishedRendering();
         }
     };
 
@@ -195,4 +198,16 @@ Plot.prototype.setHorizontalDrawDirection = function (horizontal) {
 
 Plot.prototype.setCustomSettings = function (settings) {
     this.plot.setCustomSettings(settings);
+};
+
+Plot.prototype.setRenderingFinishedCallback = function(callback) {
+    this.plot.setRenderingFinishedCallback(callback);
+};
+
+Plot.prototype.renderNow = function(){
+    this.plot.render();
+};
+
+Plot.prototype.getTitle = function(){
+    return this.plot.getTitle();
 };
