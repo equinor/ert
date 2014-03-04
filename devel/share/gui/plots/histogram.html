@@ -88,10 +88,9 @@
         var default_height = 425;
         if (stored_data != null && stored_data.isValid()) {
            var number_of_histograms = stored_data.caseList().length;
-           return calculateHistogramHeight(stored_height, number_of_histograms) * number_of_histograms + 20;
-
+           return calculateHistogramHeight(stored_height, number_of_histograms) * number_of_histograms + (12 * number_of_histograms);
         }
-        return default_height + 20;
+        return default_height;
 
     }
 
@@ -158,7 +157,6 @@
         for(var i = 0; i < histograms.length; i++) {
             var histogram = histograms[i];
             histogram.setValueScales(value_min, value_max);
-            histogram();
         }
         plot_data_source.renderingFinished();
     }
@@ -178,7 +176,7 @@
     }
 
     function renderNow(){
-       self.updatePlot();
+        self.updatePlot();
     }
 
     function getPlotTitle(){
