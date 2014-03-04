@@ -273,11 +273,7 @@ BasePlot.prototype.renderObservations = function(context, data) {
             this.stippled_line_renderer.style(STYLES["observation"]);
             this.stippled_line_renderer(context, x_values, y_values);
 
-//            this.line_renderer.style(STYLES["observation"]);
-//            this.line_renderer(context, x_values, y_values);
-
-
-            this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.simpleLine);
+            this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.stippledLine);
             this.addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
         } else {
 
