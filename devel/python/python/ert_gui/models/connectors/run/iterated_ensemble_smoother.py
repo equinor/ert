@@ -40,7 +40,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     def createTargetCaseFileSystem(self, phase):
         target_case_format = TargetCaseFormatModel().getValue()
-        target_fs = self.ert().getEnkfFsManager().getFS(target_case_format % phase)
+        target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_format % phase)
         return target_fs
 
 
@@ -60,7 +60,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         analysis_module = self.setAnalysisModule()
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
 
-        source_fs = self.ert().getEnkfFsManager().getCurrentFS()
+        source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         initial_fs = self.createTargetCaseFileSystem(0)
 
         if not source_fs == initial_fs:

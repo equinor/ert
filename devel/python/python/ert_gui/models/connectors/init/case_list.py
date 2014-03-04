@@ -7,13 +7,13 @@ from ert.enkf.state_map import StateMap
 class CaseList(ErtConnector, ListModelMixin):
 
     def getList(self):
-        fs = self.ert().getEnkfFsManager().getCurrentFS()
+        fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         case_list = self.ert().getEnkfFsManager().getCaseList()
         return sorted(case_list)
 
     def addItem(self, value):
         # Creates a new filesystem. Value should be a case that does not exist
-        enkf_fs = self.ert().getEnkfFsManager().getFS(value)
+        enkf_fs = self.ert().getEnkfFsManager().getFileSystem(value)
         self.observable().notify(ListModelMixin.LIST_CHANGED_EVENT)
 
 
