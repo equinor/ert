@@ -21,12 +21,20 @@ class HelpCenter(object):
 
     def setHelpMessageLink(self, help_link):
         self.__current_help_link = help_link
-        if not help_link in self.__help_messages:
-            help_message = self.resolveHelpLink(help_link)
-            if help_message is not None:
-                self.__help_messages[help_link] = help_message
-            else:
-                self.__help_messages[help_link] = self.__default_help_string
+
+        help_message = self.resolveHelpLink(help_link)
+
+        if help_message is not None:
+            self.__help_messages[help_link] = help_message
+        else:
+            self.__help_messages[help_link] = self.__default_help_string
+
+        # if not help_link in self.__help_messages:
+        #     help_message = self.resolveHelpLink(help_link)
+        #     if help_message is not None:
+        #         self.__help_messages[help_link] = help_message
+        #     else:
+        #         self.__help_messages[help_link] = self.__default_help_string
 
         for listener in self.__listeners:
             listener.setHelpMessage(help_link, self.__help_messages[help_link])
