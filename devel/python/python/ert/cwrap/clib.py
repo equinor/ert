@@ -22,8 +22,11 @@ import ctypes
 import os
 
 ert_lib_path = None
-so_extension = {"Linux"  : "so",
+so_extension = {"linux"  : "so",
+                "linux2" : "so",
+                "linux3" : "so",
                 "win32"  : "dll",
+                "win64"  : "dll",
                 "darwin" : "dylib" }
 
 
@@ -45,10 +48,11 @@ def __load( lib_list, ert_prefix):
 
     error_list = {}
     dll = None
+    platform_key = platform.system().lower()
     for lib in lib_list:
         try:
             if ert_prefix:
-                ert_lib = os.path.join(ert_lib_path , "%s.%s" % (lib , so_extension[platform.system()]))
+                ert_lib = os.path.join(ert_lib_path , "%s.%s" % (lib , so_extension[ platform_key ]))
                 dll = ctypes.CDLL(ert_lib, ctypes.RTLD_GLOBAL)
             else:
                 dll = ctypes.CDLL(lib, ctypes.RTLD_GLOBAL)
