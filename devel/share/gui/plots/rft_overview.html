@@ -54,6 +54,9 @@
         plot = new OverviewPlot(d3.select("body"), BasePlotValueDimension(), BasePlotValueDimension(true));
         plot.setVerticalErrorBar(false);
         plot.setHorizontalDrawDirection(false);
+        plot.setRenderingFinishedCallback(function() {
+            plot_data_source.renderingFinished();
+        });
     }
 
     function updatePlot() {
@@ -77,9 +80,25 @@
         return !time && value && depth
     }
 
+    function getPrintWidth(){
+        return 1600;
+    }
+
+    function getPrintHeight(){
+        return 1200;
+    }
+
     function setCustomSettings(settings) {
         plot.setCustomSettings(settings);
         STYLES.updateColors(settings);
+    }
+
+    function renderNow(){
+        plot.renderNow();
+    }
+
+    function getPlotTitle(){
+        return plot.getTitle();
     }
 
 </script>

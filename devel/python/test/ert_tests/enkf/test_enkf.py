@@ -115,7 +115,7 @@ class EnKFTest(ExtendedTestCase):
             #self.assertIsInstance(main.local_config(), LocalConfig) #warn: Should this be None?
             self.assertIsInstance(main.siteConfig(), SiteConfig)
             self.assertIsInstance(main.eclConfig(), EclConfig)
-            self.assertIsInstance(main.plot_config(), PlotConfig)
+            self.assertIsInstance(main.plotConfig(), PlotConfig)
 
             # self.main.load_obs(obs_config_file)
             self.assertIsInstance(main.getObservations(), EnkfObs)

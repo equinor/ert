@@ -240,6 +240,7 @@ function Histogram(element) {
 
 
 
+
     function histogram(data, case_name) {
         if (!arguments.length) {
             if(stored_data == null) {
@@ -257,12 +258,10 @@ function Histogram(element) {
 //        }
 
         resetLegends();
-        var report_date = data.reportStepTime();
-        if(report_date == 0){
-            title.text(data.name());
-        } else {
-            title.text(data.name() + " @ " + formatDate(data.reportStepTime()));
-        }
+
+        title.text(histogram.getTitle());
+
+
 
         setYDomain(0, data.maxCount());
         setXDomain(data.min(), data.max());
@@ -324,8 +323,8 @@ function Histogram(element) {
         }
 
         legend_group.selectAll(".plot-legend").data(legend_list).call(legend);
-        histogram_group.select(".y.axis").transition().duration(0).call(y_axis);
-        histogram_group.select(".x.axis").transition().duration(0).call(x_axis);
+        histogram_group.select(".y.axis").call(y_axis);
+        histogram_group.select(".x.axis").call(x_axis);
 
         context.restore();
     }
@@ -393,6 +392,16 @@ function Histogram(element) {
             circle_renderer.x(x_scale);
         }
 
+    };
+
+    histogram.getTitle = function(){
+        data = stored_data;
+        var report_date = data.reportStepTime();
+        if(report_date == 0){
+            return data.name();
+        } else {
+            return data.name() + " @ " + formatDate(data.reportStepTime());
+        }
     };
 
     return histogram;
