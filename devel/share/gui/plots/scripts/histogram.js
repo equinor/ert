@@ -313,7 +313,7 @@ function Histogram(element, x_dimension, y_dimension) {
     };
 
     histogram.getTitle = function(){
-        data = stored_data;
+        var data = stored_data;
         var report_date = data.reportStepTime();
         if(report_date == 0){
             return data.name();
