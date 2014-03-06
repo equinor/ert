@@ -79,6 +79,21 @@
         }
     }
 
+    function getPrintWidth(){
+        return 1200;
+    }
+
+    function getPrintHeight(){
+        stored_data = plot_data_source.getPlotData();
+        var default_height = 425;
+        if (stored_data != null && stored_data.isValid()) {
+           var number_of_histograms = stored_data.caseList().length;
+           return calculateHistogramHeight(stored_height, number_of_histograms) * number_of_histograms + (12 * number_of_histograms);
+        }
+        return default_height;
+
+    }
+
     function updatePlot() {
         stored_data = plot_data_source.getPlotData();
 
@@ -107,6 +122,8 @@
                 var histogram = histograms[index];
                 histogram.setVisible(false);
             }
+            plot_data_source.renderingFinished();
+
         }
     }
 
@@ -117,8 +134,12 @@
         if(stored_data != null) {
             var case_list = stored_data.caseList();
             var count = Math.max(case_list.length, 1);
-            stored_histogram_height = Math.max(250, ((stored_height - 50) - 20 * count) / count);
+            stored_histogram_height = calculateHistogramHeight(stored_height, count);
         }
+    }
+
+    function calculateHistogramHeight(height, count) {
+        return Math.max(250, ((height - 50) - 20 * count) / count);
     }
 
     function setSize(width, height) {
@@ -129,15 +150,15 @@
             histogram.setSize(stored_width, stored_histogram_height);
             histogram();
         }
+        plot_data_source.renderingFinished();
     }
 
     function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max) {
         for(var i = 0; i < histograms.length; i++) {
             var histogram = histograms[i];
             histogram.setValueScales(value_min, value_max);
-            histogram();
         }
-
+        plot_data_source.renderingFinished();
     }
 
     function setReportStepTime(report_step_time) {
@@ -152,6 +173,14 @@
 
     function setCustomSettings(settings) {
         STYLES.updateColors(settings);
+    }
+
+    function renderNow(){
+        self.updatePlot();
+    }
+
+    function getPlotTitle(){
+        return histograms[0].getTitle();
     }
 
 </script>

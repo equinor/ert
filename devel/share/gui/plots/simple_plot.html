@@ -35,7 +35,6 @@
 <script src="scripts/canvas_error_bar.js"></script>
 <script src="scripts/canvas_plot_circle.js"></script>
 <script src="scripts/canvas_plot_legend.js"></script>
-<script src="data.js"></script>
 
 <script>
     var plot = null;
@@ -55,6 +54,9 @@
 
     function createPlot() {
         plot = new Plot(d3.select("body"), BasePlotTimeDimension(), BasePlotValueDimension());
+        plot.setRenderingFinishedCallback(function() {
+            plot_data_source.renderingFinished();
+        });
     }
 
     function updatePlot() {
@@ -78,9 +80,25 @@
         return time && value && !depth
     }
 
+    function getPrintWidth(){
+        return 1600;
+    }
+
+    function getPrintHeight(){
+        return 1200;
+    }
+
     function setCustomSettings(settings) {
         plot.setCustomSettings(settings);
         STYLES.updateColors(settings);
+    }
+
+    function renderNow(){
+        plot.renderNow();
+    }
+
+    function getPlotTitle(){
+        return plot.getTitle();
     }
 
 </script>
