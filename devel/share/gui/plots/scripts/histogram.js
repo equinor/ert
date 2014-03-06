@@ -15,7 +15,7 @@
 // for more details.
 
 
-function Histogram(element) {
+function Histogram(element, x_dimension, y_dimension) {
     var stored_data = null;
     var stored_case_name = "";
 
@@ -28,25 +28,15 @@ function Histogram(element) {
     var custom_value_min = null;
     var custom_value_max = null;
 
-    var use_log_scale = false;
+    var x_dimension = x_dimension;
+    var y_dimension = y_dimension;
 
-    var count_format = d3.format("d");
-    var value_format = d3.format(".4g");
-    var value_log_format = d3.format("e");
 
-    var value_log_format_function = function(d) {
-        var x = Math.log(d) / Math.log(10) + 1e-6;
-        return Math.abs(x - Math.floor(x)) < 0.3 ? value_log_format(d) : "";
-    };
-
-    var x_scale = d3.scale.linear().range([0, width]).nice();
-    var x_log_scale = d3.scale.log().range([0, width]).nice();
-    var y_scale = d3.scale.linear().range([height, 0]).nice();
-
-    var histogram_renderer = HistogramRenderer().x(x_scale).y(y_scale).margin(0, 1, 0, 1);
-    var line_renderer = CanvasPlotLine().x(x_scale).y(y_scale);
-    var area_renderer = CanvasPlotArea().x(x_scale).y(y_scale);
-    var circle_renderer = CanvasCircle().x(x_scale).y(y_scale);
+    var histogram_renderer = HistogramRenderer().x(x_dimension).y(y_dimension).margin(0, 1, 0, 1);
+    var line_renderer = CanvasPlotLine().x(x_dimension).y(y_dimension);
+    var stipple_renderer = CanvasPlotStippledLine().x(x_dimension).y(y_dimension);
+    var area_renderer = CanvasPlotArea().x(x_dimension).y(y_dimension);
+    var circle_renderer = CanvasCircle().x(x_dimension).y(y_dimension);
 
     var legend = CanvasPlotLegend();
     var legend_list = [];
@@ -88,17 +78,11 @@ function Histogram(element) {
 
 
     var y_axis = d3.svg.axis()
-        .scale(y_scale)
-        .tickFormat(count_format)
-        .ticks(5)
-        .orient("left")
-        .tickSize(-width, -width);
+        .scale(y_dimension.scale())
+        .orient("left");
 
     var x_axis = d3.svg.axis()
-        .scale(x_scale)
-        .tickPadding(10)
-        .ticks(5)
-        .tickFormat(value_format)
+        .scale(x_dimension.scale())
         .orient("bottom");
 
     histogram_group.append("g")
@@ -111,38 +95,6 @@ function Histogram(element) {
         .attr("transform", "translate(" + margin.left + ", " + (height + margin.top) + ")")
         .call(x_axis);
 
-
-
-    var setYDomain = function(min_y, max_y) {
-        y_scale.domain([min_y, max_y]).nice();
-
-        if(y_scale.domain()[1] == max_y) {
-            y_scale.domain([min_y, max_y + 1]).nice();
-        }
-    };
-
-    var setXDomain = function(min_x, max_x) {
-        var min = min_x;
-        var max = max_x;
-
-        if (custom_value_min != null) {
-            min = custom_value_min;
-        }
-
-        if (custom_value_max != null) {
-            max = custom_value_max;
-        }
-
-        x_scale.domain([min, max]).nice();
-
-
-        var from_log = Math.floor(Math.log(min) / Math.log(10));
-        var to_log = Math.ceil(Math.log(max) / Math.log(10));
-        var from = Math.pow(10, from_log);
-        var to = Math.pow(10, to_log);
-
-        x_log_scale.domain([from, to]);
-    };
 
     var resetLegends = function() {
         legend_list = [];
@@ -215,23 +167,6 @@ function Histogram(element) {
 
             thresholds.push(range[1]);
 
-
-//            var sum = 0;
-//            for(var i = 0; i <= bin_count; i++) {
-//                sum += Math.pow(10, i);
-//            }
-//
-//            var bin_size = r / sum;
-//
-//            thresholds.push(range[0]);
-//
-//            for(var i = 1; i < bin_count; i++) {
-//                var value = thresholds[i - 1] + (bin_size * Math.pow(10, i));
-//                thresholds.push(value);
-//            }
-//
-//            thresholds.push(range[1]);
-
             return thresholds;
 
         }
@@ -253,18 +188,18 @@ function Histogram(element) {
             stored_case_name = case_name;
         }
 
-//        if(!stored_data.isValid(stored_case_name)) {
-//            return;
-//        }
+        x_axis.scale(x_dimension.scale());
+        x_dimension.format(x_axis, height);
+        x_axis.tickSize(0, 0);
+
+        y_axis.scale(y_dimension.scale());
+        y_dimension.format(y_axis, width);
+
 
         resetLegends();
 
         title.text(histogram.getTitle());
 
-
-
-        setYDomain(0, data.maxCount());
-        setXDomain(data.min(), data.max());
 
         var context = canvas.node().getContext("2d");
         context.save();
@@ -275,19 +210,12 @@ function Histogram(element) {
             line_renderer.style(STYLES["observation"]);
             var obs = data.observation();
             var top = data.maxCount() + 1;
-            line_renderer(context, [obs, obs], [0, top]);
-            addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.circledLine);
+            stipple_renderer(context, [obs, obs], [0, top]);
+            addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.stippledLine);
 
             var error = data.observationError();
             area_renderer.style(STYLES["observation_area"]);
             area_renderer(context, [obs - error, obs + error, obs + error, obs - error], [top, top, 0, 0]);
-
-            var circle_count = 10;
-            var step = (top) / (circle_count - 1);
-            for(var index = 0; index < circle_count; index++) {
-                circle_renderer(context, obs, step * index);
-            }
-
 
             addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
         }
@@ -303,18 +231,7 @@ function Histogram(element) {
             var case_histogram = data.caseHistogram(case_name);
             var bin_count = data.numberOfBins();
 
-            var bins;
-
-            if(use_log_scale) {
-                bins = d3.layout.histogram()
-                    .range(x_log_scale.domain())
-                    .bins(createLogBinFunction(bin_count))(case_histogram.samples());
-            } else {
-                bins = d3.layout.histogram()
-                    .range(x_scale.domain())
-                    .bins(bin_count)(case_histogram.samples());
-            }
-//
+            var bins = histogram.histogramLayout(bin_count)(case_histogram.samples());
 
             histogram_renderer.style(style);
             histogram_renderer(context, bins);
@@ -329,6 +246,28 @@ function Histogram(element) {
         context.restore();
     }
 
+
+    histogram.histogramLayout = function(bin_count) {
+        var layout = null;
+        var use_log_scale = false;
+
+        if("isLogScale" in x_dimension) {
+            use_log_scale = x_dimension.isLogScale();
+        }
+
+        if(use_log_scale) {
+            layout = d3.layout.histogram()
+                .range(x_dimension.scale().domain())
+                .bins(createLogBinFunction(bin_count));
+        } else {
+            layout = d3.layout.histogram()
+                .range(x_dimension.scale().domain())
+                .bins(bin_count);
+        }
+
+        return layout;
+    };
+
     histogram.setSize = function(w, h) {
         w = w - 80;
         h = h - 70;
@@ -336,11 +275,8 @@ function Histogram(element) {
         width = w - margin.left - margin.right;
         height = h - margin.top - margin.bottom;
 
-        x_scale.range([0, width]);
-        x_log_scale.range([0, width]);
-        y_scale.range([height, 0]).nice();
-
-        y_axis.tickSize(-width, -width);
+        x_dimension.setRange(0, width);
+        y_dimension.setRange(height, 0);
 
         histogram_group.style("width", w + "px");
         histogram_group.style("height", h + "px");
@@ -374,24 +310,6 @@ function Histogram(element) {
         } else {
             group.style("display", "inline-block");
         }
-    };
-
-    histogram.setShouldUseLogScale = function(should_use_log_scale) {
-        use_log_scale = should_use_log_scale;
-        if(use_log_scale) {
-            x_axis.scale(x_log_scale).tickFormat(value_log_format_function);
-            histogram_renderer.x(x_log_scale);
-            line_renderer.x(x_log_scale);
-            area_renderer.x(x_log_scale);
-            circle_renderer.x(x_log_scale);
-        } else {
-            x_axis.scale(x_scale).tickFormat(value_format);
-            histogram_renderer.x(x_scale);
-            line_renderer.x(x_scale);
-            area_renderer.x(x_scale);
-            circle_renderer.x(x_scale);
-        }
-
     };
 
     histogram.getTitle = function(){
