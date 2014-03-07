@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
