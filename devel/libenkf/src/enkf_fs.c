@@ -574,9 +574,8 @@ static void enkf_fs_fwrite_misfit( enkf_fs_type * fs ) {
 
 
 
-enkf_fs_type * enkf_fs_mount( const char * mount_point , bool read_only) {
+enkf_fs_type * enkf_fs_mount( const char * mount_point , bool read_only, bool block_level_lock) {
   FILE * stream = fs_driver_open_fstab( mount_point , false );
-  bool block_level_lock = false;
   
   if (stream != NULL) {
     enkf_fs_type * fs = NULL;
