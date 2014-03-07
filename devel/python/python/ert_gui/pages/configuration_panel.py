@@ -1,7 +1,9 @@
+import re
 import shutil
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QStyle, QMessageBox, QSizePolicy
 from ert_gui.ide.highlighter import KeywordHighlighter
+from ert_gui.ide.keywords.definitions.path_argument import PathArgument
 from ert_gui.tools.ide import IdePanel
 from ert_gui.widgets.search_box import SearchBox
 
@@ -64,6 +66,7 @@ class ConfigurationPanel(QWidget):
         
         search.filterChanged.connect(self.highlighter.setSearchString)
 
+        self.parseDefines(config_file_text)
         self.ide_panel.document().setPlainText(config_file_text)
 
         cursor = self.ide_panel.textCursor()
@@ -73,6 +76,8 @@ class ConfigurationPanel(QWidget):
 
 
         self.setLayout(layout)
+
+
 
         # self.addLabeledSeparator("Case initialization")
         # case_combo = ComboChoice(CaseSelectorModel(), "Current case", "init/current_case_selection")
@@ -109,3 +114,11 @@ class ConfigurationPanel(QWidget):
 
     def start(self):
         print("Start!")
+
+    def parseDefines(self, text):
+        pattern = re.compile("[ \t]*DEFINE[ \t]*(\S+)[ \t]*(\S+)")
+
+        match = re.findall(pattern, text)
+
+        for m in match:
+            PathArgument.addDefine(m[0], m[1])
