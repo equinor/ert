@@ -429,6 +429,8 @@ static enkf_fs_type *  enkf_fs_mount_block_fs( FILE * fstab_stream , const char 
     if (!util_try_lockf( fs->lock_file , S_IWUSR + S_IWGRP , &fs->lock_fd)) {
       fprintf(stderr," Another program has already opened filesystem read-write - this instance will be UNSYNCRONIZED read-only. Cross your fingers ....\n");
       fflush( stderr );
+      enkf_fs_set_writable(fs, false);
+      read_only = true;
     }
   }
 
@@ -866,8 +868,8 @@ bool enkf_fs_is_read_only(const enkf_fs_type * fs) {
     return fs->read_only;
 }
 
-void enkf_fs_set_writable(enkf_fs_type * fs) {
-    fs->read_only = false;
+void enkf_fs_set_writable(enkf_fs_type * fs, bool writable) {
+    fs->read_only = !writable;
 }
 
 void enkf_fs_debug_fprintf( const enkf_fs_type * fs) {
