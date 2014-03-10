@@ -480,7 +480,7 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
     // with increased refcount.
     if(!read_only) {
       enkf_fs_type * fs = enkf_main->dbase;
-      enkf_fs_set_writable(fs);
+      enkf_fs_set_writable(fs, true);
     }
     enkf_fs_incref( enkf_main->dbase );
     return enkf_main->dbase;
