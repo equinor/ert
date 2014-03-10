@@ -60,7 +60,7 @@ class FileSystemRotator(object):
 # getFS() method. 
 
 class EnkfFsManager(BaseCClass):
-    DEFAULT_CAPACITY = 2
+    DEFAULT_CAPACITY = 5
 
     def __init__(self, enkf_main, capacity=DEFAULT_CAPACITY):
         assert isinstance(enkf_main, BaseCClass)
