@@ -9,28 +9,28 @@ from ert_tests import ExtendedTestCase
 class EnKFFSManagerTest2(ExtendedTestCase):
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/with_data/config")
-            
-    
+
 
     def test_rotate(self):
+
         # We are indirectly testing the create through the create
         # already in the enkf_main object. In principle we could
         # create a separate manager instance from the ground up, but
         # then the reference count will be weird.
-        with ErtTestContext("TEST" , self.config_file) as testContext:
+        with ErtTestContext("enkf_fs_manager_rotate_test", self.config_file) as testContext:
             ert = testContext.getErt()
             fsm = ert.getEnkfFsManager()
-            self.assertEqual( 1 , fsm.size() )
+            self.assertEqual(1, fsm.getFileSystemCount())
 
-            fs1 = fsm.getFS("FSA")
-            fs2 = fsm.getFS("FSB")
-            self.assertEqual( fsm.capacity , fsm.size() )
+            fs1 = fsm.getFileSystem("FSA")
+            fs2 = fsm.getFileSystem("FSB")
+            self.assertEqual(EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount())
 
-            fsList = []
+            fs_list = []
             for i in range(10):
                 fs = "FS%d" % i
-                print "Mounting:%s" % fs
-                fsList.append( fsm.getFS(fs))
-                self.assertEqual( fsm.capacity , fsm.size() )
+                print("Mounting: %s" % fs)
+                fs_list.append(fsm.getFileSystem(fs))
+                self.assertEqual(EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount())
 
             

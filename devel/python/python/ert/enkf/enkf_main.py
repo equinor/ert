@@ -20,22 +20,21 @@ from ert.util import SubstitutionList, Log
 
 
 class EnKFMain(BaseCClass):
-    fsCapacity = 2
     def __init__(self, model_config, site_config, strict=True):
         c_ptr = EnKFMain.cNamespace().bootstrap(site_config, model_config, strict, False)
         super(EnKFMain, self).__init__(c_ptr)
 
         self.__simulation_runner = EnkfSimulationRunner(self)
-        self.__fs_manager = EnkfFsManager(self , self.fsCapacity)
+        self.__fs_manager = EnkfFsManager(self)
 
 
     @classmethod
-    def createCReference(cls , c_pointer , parent = None):
-        obj = super(EnKFMain, cls).createCReference(c_pointer , parent)
+    def createCReference(cls, c_pointer, parent=None):
+        obj = super(EnKFMain, cls).createCReference(c_pointer, parent)
         obj.__simulation_runner = EnkfSimulationRunner(obj)
-        obj.__fs_manager = EnkfFsManager(obj , cls.fsCapacity)
+        obj.__fs_manager = EnkfFsManager(obj)
         return obj
-        
+
 
     @staticmethod
     def createNewConfig(config_file, storage_path, case_name, dbase_type, num_realizations):
@@ -51,7 +50,7 @@ class EnKFMain(BaseCClass):
         self.umount()
         EnKFMain.cNamespace().free(self)
 
-    def getEnsembleSize( self ):
+    def getEnsembleSize(self):
         """ @rtype: int """
         return EnKFMain.cNamespace().get_ensemble_size(self)
 
@@ -86,7 +85,7 @@ class EnKFMain(BaseCClass):
         """ @rtype: EclConfig """
         return EnKFMain.cNamespace().get_ecl_config(self).setParent(self)
 
-    def plot_config(self):
+    def plotConfig(self):
         """ @rtype: PlotConfig """
         return EnKFMain.cNamespace().get_plot_config(self).setParent(self)
 
@@ -112,8 +111,8 @@ class EnKFMain(BaseCClass):
 
 
     def getMountPoint(self):
-        return EnKFMain.cNamespace().get_mount_point( self )
-    
+        return EnKFMain.cNamespace().get_mount_point(self)
+
 
     def del_node(self, key):
         EnKFMain.cNamespace().del_node(self, key)

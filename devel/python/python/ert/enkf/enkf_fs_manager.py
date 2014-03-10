@@ -1,34 +1,56 @@
 import os.path
-import time
 from ert.cwrap import CWrapper, BaseCClass
-from ert.enkf import EnkfFs
-from ert.enkf.enums import EnKFFSType
 from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap, TimeMap
 from ert.util import StringList
 
 
-class FSNode:
-    def __init__(self , fs , case_name , index):
-        self.fs = fs
-        self.case_name = case_name
-        self.index = index
+class FileSystemRotator(object):
+    def __init__(self, capacity):
+        super(FileSystemRotator, self).__init__()
+        self.__capacity = capacity
+        """:type: int"""
+        self.__fs_list = []
+        """:type: list of str"""
+        self.__fs_map = {}
+        """:type: dict[str, EnkfFs]"""
 
-    def __str__(self):
-        return "<FSNode case:%s  storage_index:%d>" % (self.case_name , self.index)
+    def __len__(self):
+        return len(self.__fs_list)
+
+    def addFileSystem(self, file_system, full_name):
+        if self.atCapacity():
+            self.dropOldestFileSystem()
+
+        self.__fs_list.append(full_name)
+        self.__fs_map[full_name] = file_system
+
+    def dropOldestFileSystem(self):
+        if len(self.__fs_list) > 0:
+            case_name = self.__fs_list[0]
+            fs = self.__fs_map[case_name]
+            fs.umount()
+            del self.__fs_list[0]
+            del self.__fs_map[case_name]
+
+            print("Dropped filesystem: %s" % case_name)
+
+    def atCapacity(self):
+        return len(self.__fs_list) == self.__capacity
+
+    def __contains__(self, full_case_name):
+        return full_case_name in self.__fs_list
+
+    def __getitem__(self, full_case_name):
+        """ @rtype: EnkfFs """
+        return self.__fs_map[full_case_name]
 
 
-# The EnkfFsmanager class works be keeping an internal inventory of
-# all currently mounted filesystems; the class implements a double
-# bookkeeping where the file systems are stored both in the lst
-# @fs_list and the dictionary @fs_map to ensure both FIFO based
-# behaviour and name based lookup; when we go to version 2.7 this can
-# be simplified considerably by using an OrderedDict.
-#
-# For convenience the fs handle, the case name and the storage index
-# are assembled in a small Struct FSNode. The methods __addFS(),
-# __dropFS() and __haveFS() use this internal data structure and
-# should not be called outside of this file.
-#
+    def umountAll(self):
+        while len(self.__fs_list) > 0:
+            self.dropOldestFileSystem()
+
+
+
 # For normal use from ert all filesystems will be located in the same
 # folder in the filesystem - corresponding to the ENSPATH setting in
 # the config file; in this implementation that setting is stored in
@@ -38,116 +60,77 @@ class FSNode:
 # getFS() method. 
 
 class EnkfFsManager(BaseCClass):
-    def __init__(self, enkf_main , capacity):
+    DEFAULT_CAPACITY = 2
+
+    def __init__(self, enkf_main, capacity=DEFAULT_CAPACITY):
         assert isinstance(enkf_main, BaseCClass)
         super(EnkfFsManager, self).__init__(enkf_main.from_param(enkf_main).value, parent=enkf_main, is_reference=True)
 
-        self.FSArg = None
-        self.fs_list = []
-        self.fs_map  = {}
-        self.mountIndex = 0
-        self.capacity = capacity
-        self.FSType = enkf_main.getModelConfig().getFSType()
-        self.FS_arg = None
-        self.mount_root = enkf_main.getMountPoint()
-        for i in range(self.capacity):
-            self.fs_list.append( None )
-        
-        self.getCurrentFS( )
+        self.__fs_rotator = FileSystemRotator(capacity)
+        self.__mount_root = enkf_main.getMountPoint()
+
+        self.__fs_type = enkf_main.getModelConfig().getFSType()
+        self.__fs_arg = None
+
+        self.getCurrentFileSystem()
 
 
-    def __addFS(self , fsNode):
-        if self.fs_list[fsNode.index]:
-            oldFS = self.fs_list[fsNode.index]
-            self.__dropFS( oldFS )
-
-        self.fs_list[fsNode.index] = fsNode
-        self.fs_map[fsNode.case_name] = fsNode
-        self.mountIndex += 1
-        if self.mountIndex == self.capacity:
-            self.mountIndex = 0
+    def __createFullCaseName(self, mount_root, case_name):
+        return os.path.join(mount_root, case_name)
 
 
-    def __dropFS(self , fsNode):
-        print "Dropping: %s" % fsNode
-        index = fsNode.index
-        case_name = fsNode.case_name
-        fs = fsNode.fs
-        
-        fs.umount()
-        del self.fs_map[ case_name ]
-        self.fs_list[ index ] = None
-
-
-    def __hasFS(self , full_case):
-        return self.fs_map.has_key( full_case )
-
-
-    @staticmethod
-    def __fullName(mount_root , case_name):
-        return os.path.join(mount_root , case_name)
-
-
-    def getFS(self , case_name , mount_root = None , read_only = False):
+    def getFileSystem(self, case_name, mount_root=None, read_only=False):
         """
         @rtype: EnkfFs
         """
         if mount_root is None:
-            mount_root = self.mount_root
+            mount_root = self.__mount_root
 
-        full_case = self.__fullName( mount_root , case_name )
-        if not self.__hasFS( full_case ):
-            oldFS = self.fs_list[self.mountIndex]
-            if oldFS:
-                self.__dropFS( oldFS )
-                
-            if not EnkfFs.exists( full_case ):
+        full_case_name = self.__createFullCaseName(mount_root, case_name)
+
+        if not full_case_name in self.__fs_rotator:
+            if not EnkfFs.exists(full_case_name):
+                if self.__fs_rotator.atCapacity():
+                    self.__fs_rotator.dropOldestFileSystem()
+
                 if read_only:
-                    raise IOError("Tried to access non existing filesystem:%s in read-only mode" % full_case)
-                EnkfFs.createFS( full_case , self.FSType , self.FS_arg)
+                    raise IOError("Tried to access non existing filesystem: '%s' in read-only mode" % full_case_name)
 
-            newFS = EnkfFs( full_case , read_only )
-            self.__addFS( FSNode( newFS , full_case , self.mountIndex) )
+                EnkfFs.createFileSystem(full_case_name, self.__fs_type, self.__fs_arg)
 
-        newNode = self.fs_map[full_case]
-        fs = newNode.fs
-        if not read_only:
-            fs.setWritable( )
-        return newNode.fs
-        
+            new_fs = EnkfFs(full_case_name, read_only)
+            self.__fs_rotator.addFileSystem(new_fs, full_case_name)
+
+        fs = self.__fs_rotator[full_case_name]
+
+        if fs.isReadOnly() and not read_only:
+            fs.setWritable()
+
+        return fs
 
 
-
-    def getCurrentFS(self):
+    def getCurrentFileSystem(self):
         """ Returns the currently selected file system
         @rtype: EnkfFs
         """
         current_fs = EnkfFsManager.cNamespace().get_current_fs(self)
         case_name = current_fs.getCaseName()
-        fullName = self.__fullName(self.mount_root , case_name )
-        if not self.__hasFS( fullName ):
-            fsNode = FSNode( current_fs , 
-                             fullName , 
-                             self.mountIndex )
-            self.__addFS( fsNode )
+        full_name = self.__createFullCaseName(self.__mount_root, case_name)
+        
+        if not full_name in self.__fs_rotator:
+            self.__fs_rotator.addFileSystem(current_fs, full_name)
         else:
             current_fs.umount()
-            
-        currentFS = self.getFS( case_name , self.mount_root )
-        return currentFS
+
+        return self.getFileSystem(case_name, self.__mount_root)
 
 
     def umount(self):
-        for node in self.fs_map.values():
-            node.fs.umount()
-        
+        self.__fs_rotator.umountAll()
 
-    def size(self):
-        size = 0
-        for node in self.fs_list:
-            if node:
-                size += 1
-        return size
+
+    def getFileSystemCount(self):
+        return len(self.__fs_rotator)
 
 
     def switchFileSystem(self, file_system):
@@ -168,21 +151,25 @@ class EnkfFsManager(BaseCClass):
         return EnkfFsManager.cNamespace().alloc_caselist(self)
 
 
-    def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, source_state, member_mask, node_list):
+    def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, source_state, member_mask,
+                                                node_list):
         assert isinstance(source_state, EnkfStateType)
-        source_case_fs = self.getFS(source_case)
-        EnkfFsManager.cNamespace().custom_initialize_from_existing(self, source_case_fs, source_report_step, source_state, node_list, member_mask)
+        source_case_fs = self.getFileSystem(source_case)
+        EnkfFsManager.cNamespace().custom_initialize_from_existing(self, source_case_fs, source_report_step,
+                                                                   source_state, node_list, member_mask)
 
     def initializeCurrentCaseFromExisting(self, source_fs, source_report_step, source_state):
         assert isinstance(source_state, EnkfStateType)
         assert isinstance(source_fs, EnkfFs);
-        EnkfFsManager.cNamespace().initialize_current_case_from_existing(self, source_fs, source_report_step, source_state)
+        EnkfFsManager.cNamespace().initialize_current_case_from_existing(self, source_fs, source_report_step,
+                                                                         source_state)
 
     def initializeCaseFromExisting(self, source_fs, source_report_step, source_state, target_fs):
         assert isinstance(source_state, EnkfStateType)
         assert isinstance(source_fs, EnkfFs);
         assert isinstance(target_fs, EnkfFs);
-        EnkfFsManager.cNamespace().initialize_case_from_existing(self, source_fs, source_report_step, source_state, target_fs)
+        EnkfFsManager.cNamespace().initialize_case_from_existing(self, source_fs, source_report_step, source_state,
+                                                                 target_fs)
 
 
     def initializeFromScratch(self, parameter_list, iens1, iens2, force_init=True):
@@ -198,8 +185,6 @@ class EnkfFsManager(BaseCClass):
         """ @rtype: TimeMap """
         assert isinstance(case, str)
         return EnkfFsManager.cNamespace().alloc_readonly_time_map(self, case)
-
-
 
 
 cwrapper = CWrapper(ENKF_LIB)

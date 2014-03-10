@@ -96,6 +96,8 @@ int main( int argc , char ** argv) {
   util_install_signals();
   ert_test_context_type * test_context = ert_test_context_alloc("BLOCKDATA" , config_file , NULL );
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
+
+  test_assert_true( enkf_main_is_instance( enkf_main ));
   
   test_blockdata( enkf_main , "RFT2" , 50);
   test_blockdata( enkf_main , "RFT5" , 56);

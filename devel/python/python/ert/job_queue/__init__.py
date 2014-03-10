@@ -71,7 +71,7 @@ if LSF_HOME:
     setenv("LSF_SERVERDIR", "%s/etc" % LSF_HOME)
     setenv("LSF_ENVDIR", "%s/conf" % LSF_HOME)   # This is wrong: Statoil: /prog/LSF/conf
 
-JOB_QUEUE_LIB = clib.ert_load("libjob_queue.so")
+JOB_QUEUE_LIB = clib.ert_load("libjob_queue")
 
 from .job_status_type_enum import JobStatusType
 from .job import Job

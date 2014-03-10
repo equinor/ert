@@ -1,4 +1,4 @@
-from PyQt4.QtCore import pyqtSignal, QSignalMapper
+from PyQt4.QtCore import pyqtSignal, QSignalMapper, Qt
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox, QPushButton
 from ert_gui.tools.plot import PlotCaseModel
 from ert_gui.widgets import util
@@ -20,7 +20,10 @@ class CaseSelectionWidget(QWidget):
         layout = QVBoxLayout()
 
         add_button_layout = QHBoxLayout()
-        button = QPushButton(util.resourceIcon("ide/small/add"), "Add case to plot")
+        button = QToolButton()
+        button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        button.setText("Add case to plot")
+        button.setIcon(util.resourceIcon("ide/small/add"))
         button.clicked.connect(self.addCaseSelector)
 
         add_button_layout.addStretch()
