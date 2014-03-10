@@ -55,6 +55,7 @@ class PlotWindow(QMainWindow):
 
         self.__exporter = None
 
+
         self.tabifyDockWidget(plot_case_dock, plot_metrics_dock)
         self.tabifyDockWidget(plot_case_dock, customize_plot_dock)
         self.tabifyDockWidget(plot_case_dock, export_dock)
