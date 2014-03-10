@@ -475,7 +475,6 @@ const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
 
 
 enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
-  bool block_level_lock = false;
   if (enkf_main_case_is_current( enkf_main , case_path )) {
     // Fast path - we just return a reference to the currently selected case;
     // with increased refcount.
@@ -496,7 +495,7 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
           enkf_main_create_fs( enkf_main , case_path );
       }
 
-      new_fs = enkf_fs_mount( new_mount_point , read_only, block_level_lock );
+      new_fs = enkf_fs_mount( new_mount_point , read_only );
       free( new_mount_point );
     }
     return new_fs;

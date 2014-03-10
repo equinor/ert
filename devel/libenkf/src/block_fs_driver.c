@@ -492,10 +492,11 @@ void block_fs_driver_create_fs( FILE * stream ,
   the block_fs_driver_create() function.  
 */
 
-void * block_fs_driver_open(FILE * fstab_stream , const char * mount_point , fs_driver_enum driver_type , bool read_only, bool block_level_lock) {
-  int num_fs           = util_fread_int( fstab_stream ); 
-  char * tmp_fmt       = util_fread_alloc_string( fstab_stream );
-  char * mountfile_fmt = util_alloc_sprintf("%s%c%s" , mount_point , UTIL_PATH_SEP_CHAR , tmp_fmt );
+void * block_fs_driver_open(FILE * fstab_stream , const char * mount_point , fs_driver_enum driver_type , bool read_only) {
+  int num_fs                  = util_fread_int( fstab_stream );
+  char * tmp_fmt              = util_fread_alloc_string( fstab_stream );
+  char * mountfile_fmt        = util_alloc_sprintf("%s%c%s" , mount_point , UTIL_PATH_SEP_CHAR , tmp_fmt );
+  const bool block_level_lock = false;
   
   block_fs_driver_type * driver = block_fs_driver_alloc_new( driver_type , read_only , num_fs , mountfile_fmt, block_level_lock );
   
