@@ -41,7 +41,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         target_case_name = TargetCaseModel().getValue()
-        target_fs = self.ert().getEnkfFsManager().getFS(target_case_name)
+        target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
 
         success = self.ert().getEnkfSimulationRunner().smootherUpdate(target_fs)
 

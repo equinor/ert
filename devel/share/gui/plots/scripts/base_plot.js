@@ -24,6 +24,10 @@ function BasePlot(element, x_dimension, y_dimension) {
     this.custom_x_min = null;
     this.custom_x_max = null;
 
+    this.render_finished = false;
+    this.render_callback_finished = false;
+    this.rendering_finished_callback = null;
+
     this.dimension_x = x_dimension;
     this.dimension_y = y_dimension;
 
@@ -35,7 +39,7 @@ function BasePlot(element, x_dimension, y_dimension) {
 
     this.title = group.append("div")
         .attr("class", "plot-title")
-        .text("No data");
+        .text(this.getTitle());
 
     var plot_area = group.append("div").attr("class", "plot-area");
 
@@ -100,12 +104,10 @@ function BasePlot(element, x_dimension, y_dimension) {
     this.line_renderer = CanvasPlotLine().x(this.x).y(this.y);
     this.area_renderer = CanvasPlotArea().x(this.x).y(this.y);
     this.error_bar_renderer = CanvasErrorBar().x(this.x).y(this.y);
-    this.circle_renderer = CanvasCircle().x(this.x).y(this.y);
+    this.stippled_line_renderer = CanvasPlotStippledLine().x(this.x).y(this.y);
 
     this.render_callback = null;
     this.pre_render_callback = null;
-
-//    console.log("BasePlot initialized!");
 }
 
 BasePlot.prototype.resize = function(width, height) {
@@ -128,8 +130,6 @@ BasePlot.prototype.resize = function(width, height) {
     this.overlay_canvas.attr("width", this.width).attr("height", this.height);
 
     this.plot_group.select(".x.axis").attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")");
-
-    this.setData(this.stored_data);
 };
 
 BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
@@ -141,7 +141,7 @@ BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
         this.custom_x_min = x_min;
         this.custom_x_max = x_max;
 
-        this.setData(this.stored_data);
+        //this.setData(this.stored_data);
     }
 };
 
@@ -186,21 +186,29 @@ BasePlot.prototype.setXDomain = function(min_x, max_x) {
 
 BasePlot.prototype.setData = function(data) {
     this.stored_data = data;
+};
 
-    this.title.text(data.name());
+BasePlot.prototype.getTitle = function(){
+    if("name" in this.stored_data){
+        return this.stored_data.name();
+    } else {
+        return "No data";
+    }
+};
+
+BasePlot.prototype.render = function() {
+    var data = this.stored_data;
+    this.render_finished = false;
+    this.render_callback_finished = false;
+
+    this.resetLegends();
+
+    this.title.text(this.getTitle());
 
     if(data.hasBoundaries()) {
         this.setYDomain(data.minY(), data.maxY());
         this.setXDomain(data.minX(), data.maxX());
     }
-
-    this.render();
-};
-
-BasePlot.prototype.render = function() {
-    var data = this.stored_data;
-
-    this.resetLegends();
 
     if(this.pre_render_callback != null) {
         this.pre_render_callback(data);
@@ -228,6 +236,8 @@ BasePlot.prototype.render = function() {
 
     overlay_context.restore();
     context.restore();
+    this.finishedRendering();
+
 };
 
 BasePlot.prototype.setRenderCallback = function(callback) {
@@ -272,25 +282,10 @@ BasePlot.prototype.renderObservations = function(context, data) {
             this.area_renderer.style(STYLES["observation_area"]);
             this.area_renderer(context, obs_x_area_samples, obs_y_area_samples);
 
-            this.line_renderer.style(STYLES["observation"]);
-            this.line_renderer(context, x_values, y_values);
+            this.stippled_line_renderer.style(STYLES["observation"]);
+            this.stippled_line_renderer(context, x_values, y_values);
 
-
-//            this.circle_renderer.style(STYLES["observation"]);
-//
-//            var circle_count = this.width / 20;
-//            var step = y_values.length / circle_count;
-//            for(var index = 0; index < y_values.length; index += step) {
-//                var idx = Math.min(y_values.length, Math.round(index));
-//                var x = x_values[idx];
-//                var y = y_values[idx];
-//                this.circle_renderer(context, x, y);
-//            }
-//
-//            this.circle_renderer(context, x_values[y_values.length - 1], y_values[y_values.length - 1]);
-
-//            this.addLegend([STYLES["observation_area"], STYLES["observation"]], "Observation", CanvasPlotLegend.filledCircleWithLine);
-            this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.simpleLine);
+            this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.stippledLine);
             this.addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
         } else {
 
@@ -344,6 +339,30 @@ BasePlot.prototype.setCustomSettings = function (settings) {
     }
 };
 
+BasePlot.prototype.renderCallbackFinishedRendering = function(){
+    this.render_callback_finished = true;
+    this.emitFinishedRendering()
+
+};
+
+BasePlot.prototype.finishedRendering = function(){
+    this.render_finished = true;
+    this.emitFinishedRendering();
+
+};
+
+BasePlot.prototype.emitFinishedRendering = function(){
+    if(this.rendering_finished_callback != null){
+        if(this.render_finished && this.render_callback_finished) {
+            this.rendering_finished_callback();
+        }
+    }
+
+};
+
+BasePlot.prototype.setRenderingFinishedCallback = function(callback) {
+    this.rendering_finished_callback = callback;
+};
 
 BasePlot.prototype.setLogScaleOnDimensionX = function(use_log_scale) {
     this.dimension_x.setIsLogScale(use_log_scale);

@@ -3,8 +3,8 @@ from PyQt4.QtGui import QWidget, QVBoxLayout, QCheckBox, QColor
 
 from ert_gui.tools.plot import ColorChooser
 
-
 class CustomizePlotWidget(QWidget):
+
     customPlotSettingsChanged = pyqtSignal(dict)
 
     def __init__(self):
@@ -48,9 +48,11 @@ class CustomizePlotWidget(QWidget):
     def createJSColor(self, color):
         return "rgba(%d, %d, %d, %f)" % (color.red(), color.green(), color.blue(), color.alphaF())
 
+    def getCustomSettings(self):
+        return self.__custom
+    
     def addColorChooser(self, name, label, default_color):
         color_chooser = ColorChooser(label, default_color)
-
         self.__custom[name] = self.createJSColor(default_color)
 
         def colorChanged(color):
@@ -60,3 +62,5 @@ class CustomizePlotWidget(QWidget):
         color_chooser.colorChanged.connect(colorChanged)
 
         self.__layout.addWidget(color_chooser)
+
+
