@@ -66,21 +66,23 @@ class PlotWindow(QMainWindow):
     def plotSettingsChanged(self):
         plot_data_fetcher = PlotDataFetcher()
         data_key = self.__plot_metrics_widget.getDataKeyType()
-        for plot_panel in self.__plot_panels:
-            if plot_panel.isPlotVisible():
-                model = plot_panel.getPlotBridge()
-                model.setPlotData(plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases))
-                model.setCustomSettings(self.__customize_plot_widget.getCustomSettings())
-                model.setPlotSettings(self.__plot_metrics_widget.getSettings())
-                plot_panel.renderNow()
+
+        if data_key is not None:
+            for plot_panel in self.__plot_panels:
+                if plot_panel.isPlotVisible():
+                    model = plot_panel.getPlotBridge()
+                    model.setPlotData(plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases))
+                    model.setCustomSettings(self.__customize_plot_widget.getCustomSettings())
+                    model.setPlotSettings(self.__plot_metrics_widget.getSettings())
+                    plot_panel.renderNow()
 
     def exportActivePlot(self):
         if self.__central_tab.currentIndex() > -1:
             key = self.__plot_metrics_widget.getDataKeyType()
             active_plot =  self.__central_tab.currentWidget()
             assert isinstance(active_plot, PlotPanel)
-            self.export_plot = ExportPlot(active_plot, self.__plot_metrics_widget.getSettings(),self.__customize_plot_widget.getCustomSettings())
-            self.export_plot.export()
+            export_plot = ExportPlot(active_plot, self.__plot_metrics_widget.getSettings(),self.__customize_plot_widget.getCustomSettings())
+            export_plot.export()
 
 
     def addPlotPanel(self, name, path, short_name=None):
