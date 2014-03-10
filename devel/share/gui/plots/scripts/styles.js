@@ -30,7 +30,7 @@ var STYLES = {
     refcase: {
         stroke: "rgba(0, 0, 0, 0.7)",
         fill: "rgba(0, 0, 0, 0.0)",
-        stroke_width: 2,
+        stroke_width: 1.5,
         dash_array: [],
         line_cap: "butt"
     },
