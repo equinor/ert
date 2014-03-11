@@ -22,13 +22,14 @@ class EnKFFSManagerTest2(ExtendedTestCase):
             fsm = ert.getEnkfFsManager()
             self.assertEqual(1, fsm.getFileSystemCount())
 
-            fs1 = fsm.getFileSystem("FSA")
-            fs2 = fsm.getFileSystem("FSB")
+            fs_list = []
+            for index in range(EnkfFsManager.DEFAULT_CAPACITY):
+                fs_list.append(fsm.getFileSystem("fs_fill_%d" % index))
+
             self.assertEqual(EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount())
 
-            fs_list = []
             for i in range(10):
-                fs = "FS%d" % i
+                fs = "fs_test_%d" % i
                 print("Mounting: %s" % fs)
                 fs_list.append(fsm.getFileSystem(fs))
                 self.assertEqual(EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount())
