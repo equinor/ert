@@ -28,6 +28,7 @@
 
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_main.h>
+#include <ert/job_queue/workflow_job_monitor.h>
 
 void check_exported_files_exists() {
   test_assert_true(util_file_exists("TEST_EXPORT/test_export_field/PermZ0.grdecl"));
@@ -71,8 +72,10 @@ int main(int argc , const char ** argv) {
   ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list(enkf_main);
   log_type * logh = enkf_main_get_logh(enkf_main); 
   ert_workflow_list_add_jobs_in_directory(workflow_list, job_dir_path, logh); 
-  test_assert_true(ert_workflow_list_has_workflow( workflow_list , "EXPORT_FIELDS" ));  
-  test_assert_true(ert_workflow_list_run_workflow(workflow_list  , "EXPORT_FIELDS" , enkf_main));
+  test_assert_true(ert_workflow_list_has_workflow( workflow_list , "EXPORT_FIELDS" ));
+  workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
+  test_assert_true(ert_workflow_list_run_workflow(workflow_list  , monitor, "EXPORT_FIELDS" , enkf_main));
+  workflow_job_monitor_free(monitor);
 
   check_exported_files_exists(); 
 

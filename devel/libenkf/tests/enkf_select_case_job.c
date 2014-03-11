@@ -29,6 +29,7 @@
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_main_jobs.h>
+#include <ert/job_queue/workflow_job_monitor.h>
 
 
 int main(int argc , const char ** argv) {
@@ -52,8 +53,11 @@ int main(int argc , const char ** argv) {
   test_assert_string_not_equal( "NewCase" , enkf_main_get_current_fs( enkf_main ));
   enkf_main_select_case_JOB( enkf_main , args );
   test_assert_string_equal( "NewCase" , enkf_main_get_current_fs( enkf_main ));
-  ert_workflow_list_run_workflow(workflow_list  , "SELECT_CASE" , enkf_main);
+  workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
+  ert_workflow_list_run_workflow(workflow_list  , monitor, "SELECT_CASE" , enkf_main);
+   workflow_job_monitor_free(monitor);
     //test_assert_true( ert_workflow_list_run_workflow(workflow_list  , "SELECT_CASE" , enkf_main) );
+
   test_assert_string_equal( "WorkFlowSelect" , enkf_main_get_current_fs( enkf_main ));
 
   stringlist_free( args );
