@@ -26,6 +26,7 @@ from .util import TimeMap
 from .enkf_fs import EnkfFs
 
 from .ert_workflow_list import ErtWorkflowList
+from .ert_workflow_list_handler import ErtWorkflowListHandler
 
 from .observations import SummaryObservation, ObsVector
 

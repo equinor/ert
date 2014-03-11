@@ -119,10 +119,15 @@ bool ert_test_context_run_worklow( ert_test_context_type * test_context , const 
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
   ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list( enkf_main );
 
-  if (ert_workflow_list_has_workflow( workflow_list , workflow_name ))
-    return ert_workflow_list_run_workflow( workflow_list , workflow_name , enkf_main );
-  else
+  if (ert_workflow_list_has_workflow( workflow_list , workflow_name )){
+       workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
+    bool result =  ert_workflow_list_run_workflow( workflow_list , monitor, workflow_name , enkf_main );
+    workflow_job_monitor_free(monitor);
+    return result;
+  }
+  else{
     return false;
+  }
 }
                                      
 
