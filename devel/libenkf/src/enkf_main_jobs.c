@@ -37,6 +37,12 @@ static bool_vector_type * alloc_iactive_vector_from_range(const stringlist_type 
   return iactive;
 }
 
+void enkf_main_jobs_sleep(){
+    while(true){
+        printf("Hei from internal \n");
+        sleep(1);
+    }
+}
 
 void * enkf_main_exit_JOB(void * self , const stringlist_type * args ) {
   enkf_main_type  * enkf_main = enkf_main_safe_cast( self );
