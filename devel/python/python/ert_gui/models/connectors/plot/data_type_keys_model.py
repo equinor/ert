@@ -19,20 +19,23 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
 
     def getAllKeys(self):
         """ @rtype: list of str """
-        keys = self.getAllBlockObservationKeys() + self.getAllSummaryKeys() + self.getAllGenKWKeys() + self.getAllGenDataKeys()
-        return sorted([key for key in keys], key=lambda k : k.lower())
+        keys = self.getAllSummaryKeys() + self.getAllBlockObservationKeys() + self.getAllGenKWKeys() + self.getAllGenDataKeys()
+        # return sorted([key for key in keys], key=lambda k : k.lower())
+        return keys
 
     def getAllGenKWKeys(self):
         """ @rtype: list of str """
         if self.__gen_kw_keys is None:
-            self.__gen_kw_keys = EnsembleGenKWFetcher(self.ert()).getSupportedKeys()
+            keys = EnsembleGenKWFetcher(self.ert()).getSupportedKeys()
+            self.__gen_kw_keys = sorted(keys, key=lambda k : k.lower())
 
         return self.__gen_kw_keys
 
     def getAllGenDataKeys(self):
         """ @rtype: list of str """
         if self.__gen_data_keys is None:
-            self.__gen_data_keys = ObservationGenDataFetcher(self.ert()).getSupportedKeys()
+            keys = ObservationGenDataFetcher(self.ert()).getSupportedKeys()
+            self.__gen_data_keys = sorted(keys, key=lambda k : k.lower())
 
         return self.__gen_data_keys
 
@@ -47,7 +50,8 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
     def getAllBlockObservationKeys(self):
         """ @rtype: list of str """
         if self.__block_observation_keys is None:
-            self.__block_observation_keys = BlockObservationDataFetcher(self.ert()).getSupportedKeys()
+            keys = BlockObservationDataFetcher(self.ert()).getSupportedKeys()
+            self.__block_observation_keys = sorted(keys, key=lambda k : k.lower())
 
         return self.__block_observation_keys
 

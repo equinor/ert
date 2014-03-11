@@ -90,14 +90,17 @@ void * enkf_main_analysis_update_JOB( void * self , const stringlist_type * args
   enkf_fs_type * target_fs;
   int target_step;
   int_vector_type * step_list;
+  bool decrease_ref = false;
 
   // Argument 0: Which case to write to
   if (stringlist_get_size(args)) {
     const char * target_fs_name = stringlist_iget( args , 0 );
     if (strcmp( target_fs_name , CURRENT_CASE_STRING) == 0)
       target_fs = enkf_main_get_fs( enkf_main );
-    else
+    else {
       target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true);
+      decrease_ref = true;
+    }
   } else
       target_fs = enkf_main_get_fs( enkf_main );
   {
@@ -123,7 +126,9 @@ void * enkf_main_analysis_update_JOB( void * self , const stringlist_type * args
     enkf_main_UPDATE( enkf_main , step_list , target_fs , target_step , SMOOTHER_UPDATE);
     
     int_vector_free( step_list );
-    enkf_fs_decref( target_fs );
+
+    if (decrease_ref)
+      enkf_fs_decref( target_fs );
   }
   return NULL;
 }

@@ -53,6 +53,7 @@ class PlotWindow(QMainWindow):
         self.__export_plot_widget.exportButtonPressed.connect(self.exportActivePlot)
         export_dock = self.addDock("Export Plot", self.__export_plot_widget)
 
+        self.__exporter = None
 
 
         self.tabifyDockWidget(plot_case_dock, plot_metrics_dock)
@@ -66,21 +67,22 @@ class PlotWindow(QMainWindow):
     def plotSettingsChanged(self):
         plot_data_fetcher = PlotDataFetcher()
         data_key = self.__plot_metrics_widget.getDataKeyType()
+        plot_data = plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases)
+
         for plot_panel in self.__plot_panels:
             if plot_panel.isPlotVisible():
                 model = plot_panel.getPlotBridge()
-                model.setPlotData(plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases))
+                model.setPlotData(plot_data)
                 model.setCustomSettings(self.__customize_plot_widget.getCustomSettings())
                 model.setPlotSettings(self.__plot_metrics_widget.getSettings())
                 plot_panel.renderNow()
 
     def exportActivePlot(self):
         if self.__central_tab.currentIndex() > -1:
-            key = self.__plot_metrics_widget.getDataKeyType()
             active_plot =  self.__central_tab.currentWidget()
             assert isinstance(active_plot, PlotPanel)
-            self.export_plot = ExportPlot(active_plot, self.__plot_metrics_widget.getSettings(),self.__customize_plot_widget.getCustomSettings())
-            self.export_plot.export()
+            self.__exporter = ExportPlot(active_plot, self.__plot_metrics_widget.getSettings(), self.__customize_plot_widget.getCustomSettings())
+            self.__exporter.export()
 
 
     def addPlotPanel(self, name, path, short_name=None):
@@ -125,8 +127,6 @@ class PlotWindow(QMainWindow):
         self.keySelected(self.__plot_metrics_widget.getDataKeyType())
 
 
-
-
     def showOrHidePlotTab(self, plot_panel, is_visible, show_plot):
         plot_panel.setPlotIsVisible(show_plot)
         if show_plot and not is_visible:
@@ -155,15 +155,27 @@ class PlotWindow(QMainWindow):
             if fetcher.isSummaryKey(key):
                 if "summary" in self.__selected_plot_for_type:
                     self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["summary"])
+                else:
+                    if self.__central_tab.count() > 0:
+                        self.__central_tab.setCurrentIndex(0)
             elif fetcher.isBlockObservationKey(key):
                 if "block" in self.__selected_plot_for_type:
                     self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["block"])
+                else:
+                    if self.__central_tab.count() > 0:
+                        self.__central_tab.setCurrentIndex(0)
             elif fetcher.isGenKWKey(key):
                 if "gen_kw" in self.__selected_plot_for_type:
                     self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["gen_kw"])
+                else:
+                    if self.__central_tab.count() > 0:
+                        self.__central_tab.setCurrentIndex(0)
             elif fetcher.isGenDataKey(key):
                 if "gen_data" in self.__selected_plot_for_type:
                     self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["gen_data"])
+                else:
+                    if self.__central_tab.count() > 0:
+                        self.__central_tab.setCurrentIndex(0)
             else:
                 raise NotImplementedError("Key %s not supported." % key)
 
