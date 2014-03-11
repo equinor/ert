@@ -21,6 +21,7 @@ function CanvasCircle() {
     var Y = function (d) { return d; };
     var style = STYLES["default"];
     var radius = 2.5;
+    var fill = false;
 
     function render(context, x, y) {
         context.lineWidth = style["stroke_width"];
@@ -29,6 +30,11 @@ function CanvasCircle() {
 
         context.beginPath();
         context.arc(X(x), Y(y), radius, 0, 2 * Math.PI);
+
+        if(fill) {
+            context.fill();
+        }
+
         context.stroke();
     }
 
@@ -47,6 +53,18 @@ function CanvasCircle() {
     render.style = function (value) {
         if (!arguments.length) return style;
         style = value;
+        return render;
+    };
+
+    render.fillCircle = function(fill_circle) {
+        if (!arguments.length) return fill;
+        fill = fill_circle;
+        return render;
+    };
+
+    render.radius = function(value) {
+        if (!arguments.length) return radius;
+        radius = value;
         return render;
     };
 

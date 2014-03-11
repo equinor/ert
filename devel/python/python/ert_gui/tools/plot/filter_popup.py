@@ -11,16 +11,24 @@ class FilterPopup(QDialog):
 
         self.filter_items = {}
 
+        layout = QVBoxLayout()
+        layout.setMargin(0)
+        frame = QFrame()
+        frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
+        layout.addWidget(frame)
+
         self.__layout = QVBoxLayout()
         self.__layout.setSizeConstraint(QLayout.SetFixedSize)
-        self.__layout.addWidget(QLabel("Select data types to filter:"))
+        self.__layout.addWidget(QLabel("Filter by data type:"))
 
         self.addFilterItem("Summary", "summary")
         self.addFilterItem("Block", "block")
         self.addFilterItem("Gen KW", "gen_kw")
         self.addFilterItem("Gen Data", "gen_data")
 
-        self.setLayout(self.__layout)
+        frame.setLayout(self.__layout)
+
+        self.setLayout(layout)
         self.adjustSize()
 
 
