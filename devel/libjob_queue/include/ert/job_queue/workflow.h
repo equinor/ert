@@ -29,12 +29,13 @@ extern "C" {
 #include <ert/config/config_error.h>
 
 #include <ert/job_queue/workflow_joblist.h>
+#include <ert/job_queue/workflow_job_monitor.h>
 
   typedef struct workflow_struct workflow_type;
 
   const config_error_type * workflow_get_last_error( const workflow_type * workflow);
   workflow_type           * workflow_alloc( const char * src_file , workflow_joblist_type * joblist);
-  bool                      workflow_run(  workflow_type * workflow , void * self , bool verbose , const subst_list_type * context);
+  bool                      workflow_run(  workflow_type * workflow , workflow_job_monitor_type * monitor, void * self , bool verbose , const subst_list_type * context);
   void                      workflow_free( workflow_type * workflow );
   void                      workflow_free__( void * arg );
 

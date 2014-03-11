@@ -42,6 +42,7 @@
 #include <enkf_tui_help.h>
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
+#include <ert/job_queue/workflow_job_monitor.h>
 
 
 void enkf_tui_workflow_run( void * arg ) {
@@ -53,7 +54,9 @@ void enkf_tui_workflow_run( void * arg ) {
       char * workflow_name = util_alloc_stdin_line();
       if (workflow_name != NULL) {
         if (ert_workflow_list_has_workflow( workflow_list , workflow_name )) {
-          bool runOK = ert_workflow_list_run_workflow( workflow_list , workflow_name , enkf_main);
+            workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
+          bool runOK = ert_workflow_list_run_workflow( workflow_list ,monitor, workflow_name , enkf_main);
+           workflow_job_monitor_free(monitor);
           if (!runOK) {
             printf("Errors in workflow:%s \n", workflow_name );
             printf("-----------------------------------------------------------------\n");
