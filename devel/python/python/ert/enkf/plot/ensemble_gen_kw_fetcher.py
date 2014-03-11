@@ -36,38 +36,45 @@ class EnsembleGenKWFetcher(DataFetcher):
                 gen_kw_list.append("%s:%s" % (key, key_word))
 
         return gen_kw_list
+
+
     def getEnsembleConfigNode(self, key):
         """ @rtype: EnsConfig """
         ensemble_config = self.ert().ensembleConfig()
         assert ensemble_config.hasKey(key)
         return ensemble_config.getNode(key)
 
+
     def fetchData(self, key, case=None):
         key, keyword = key.split(":")
         ensemble_config_node = self.getEnsembleConfigNode(key)
-        enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(case, True, False)
+        enkf_fs = self.ert().getEnkfFsManager().getFileSystem(case, read_only=True)
         ensemble_plot_gen_kw = EnsemblePlotGenKW(ensemble_config_node, enkf_fs)
         keyword_index = ensemble_plot_gen_kw.getIndexForKeyword(keyword)
+
+        use_log_scale = ensemble_plot_gen_kw.shouldUseLogScale(keyword_index)
 
         data = {"x": [0],
                 "y": [],
                 "min_y": None,
                 "max_y": None,
                 "min_x": 0,
-                "max_x": 0}
+                "max_x": 0,
+                "use_log_scale": use_log_scale}
 
         for vector in ensemble_plot_gen_kw:
             y = []
             data["y"].append(y)
 
-            value = vector.getValue(keyword_index)
-            y.append(value)
+            if len(vector) > keyword_index:
+                value = vector.getValue(keyword_index)
+                y.append(value)
 
-            if data["min_y"] is None or data["min_y"] > value:
-                data["min_y"] = value
+                if data["min_y"] is None or data["min_y"] > value:
+                    data["min_y"] = value
 
-            if data["max_y"] is None or data["max_y"] < value:
-                data["max_y"] = value
+                if data["max_y"] is None or data["max_y"] < value:
+                    data["max_y"] = value
 
         return data
 

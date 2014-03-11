@@ -4,29 +4,39 @@ class ScaleTracker(object):
         super(ScaleTracker, self).__init__()
 
         self.__name = name
-        self.__min_scales = {}
-        self.__max_scales = {}
+        self.__states = {}
 
-    def getMinimumScaleValue(self, key):
-        if key in self.__min_scales:
-            return self.__min_scales[key]
-
-        return None
-
-    def getMaximumScaleValue(self, key):
-        if key in self.__max_scales:
-            return self.__max_scales[key]
-
-        return None
-
-    def setScaleValues(self, key, minimum, maximum):
-        if minimum is None and key in self.__min_scales:
-            del self.__min_scales[key]
+    def getScaleValue(self, key):
+        if self.isEnabled(key):
+            return self.getState(key)["scale"]
         else:
-            self.__min_scales[key] = minimum
+            return None
 
-        if maximum is None and key in self.__max_scales:
-            del self.__max_scales[key]
+    def getState(self, key):
+        if key in self.__states:
+            return self.__states[key]
         else:
-            self.__max_scales[key] = maximum
+            return {"scale": None, "enabled": False}
 
+    def setScaleValue(self, key, value):
+        if self.getState(key) is None:
+            self.__states[key] = {"scale": value, "enabled": True}
+        else:
+            self.getState(key)["scale"] = value
+
+    def isEnabled(self, key):
+        return self.getState(key)["enabled"]
+
+    def setEnabled(self, key, enabled):
+        if self.getState(key) is None:
+            self.__states[key] = {"scale": None, "enabled": enabled}
+        else:
+            self.getState(key)["enabled"] = enabled
+
+
+    def setValues(self, key, value, enabled):
+        if key not in self.__states:
+            self.__states[key] = {"scale": value, "enabled": enabled}
+        else:
+            self.getState(key)["enabled"] = enabled
+            self.getState(key)["scale"] = value

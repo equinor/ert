@@ -87,6 +87,8 @@ class BaseCClass(object):
     def free(self):
         raise NotImplementedError("A CClass requires a free method implementation!")
 
+
+
     def __del__(self):
         if self.free is not None:
             if not self.__is_reference:

@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
@@ -215,7 +216,9 @@ struct enkf_fs_struct {
   char                   * root_path;
   char                   * mount_point;    // mount_point = root_path / case_name; the mount_point is the fundamental INPUT.
 
-
+  char                   * lock_file;
+  int                      lock_fd;
+  
   fs_driver_type         * dynamic_forecast;
   fs_driver_type         * dynamic_analyzed;
   fs_driver_type         * parameter;
@@ -246,22 +249,38 @@ struct enkf_fs_struct {
 UTIL_SAFE_CAST_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 
-static int enkf_fs_incref( enkf_fs_type * fs ) {
+static void enkf_fs_umount( enkf_fs_type * fs );
+
+int enkf_fs_incref( enkf_fs_type * fs ) {
   fs->refcount++;
   return fs->refcount;
 }
 
-static int enkf_fs_decref( enkf_fs_type * fs ) {
+
+int enkf_fs_decref( enkf_fs_type * fs ) {
+  int refcount;
   fs->refcount--;
+  refcount = fs->refcount;
+
   if (fs->refcount < 0)
     util_abort("%s: internal fuckup. The filesystem refcount:%d is < 0 \n",__func__ , fs->refcount);
-  return fs->refcount;
+  
+  if (refcount == 0)
+    enkf_fs_umount( fs );
+
+  return refcount;
 }
+
 
 int enkf_fs_get_refcount( const enkf_fs_type * fs ) {
   return fs->refcount;
 }
 
+
+enkf_fs_type * enkf_fs_get_ref( enkf_fs_type * fs ) {
+  enkf_fs_incref( fs );
+  return fs;
+}
 
 
 static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_only) {
@@ -279,6 +298,8 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_
   fs->read_only              = read_only;
   fs->mount_point            = util_alloc_string_copy( mount_point );
   fs->refcount               = 0;
+  fs->lock_fd                = 0;
+  
   if (mount_point == NULL)
     util_abort("%s: fatal internal error: mount_point == NULL \n",__func__);
   {
@@ -288,7 +309,8 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_
     util_path_split( fs->mount_point , &path_len , &path_tmp);
     fs->case_name = util_alloc_string_copy( path_tmp[path_len - 1]);
     fs->root_path = util_alloc_joined_string( (const char **) path_tmp , path_len , UTIL_PATH_SEP_STRING);
-    
+    fs->lock_file = util_alloc_filename( fs->mount_point , fs->case_name , "lock");
+
     util_free_stringlist( path_tmp , path_len );
   }
   return fs;
@@ -402,10 +424,21 @@ static void enkf_fs_assign_driver( enkf_fs_type * fs , fs_driver_type * driver ,
 
 static enkf_fs_type *  enkf_fs_mount_block_fs( FILE * fstab_stream , const char * mount_point , bool read_only ) {
   enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point , read_only );
+
+  if (!read_only) { //Lock on fs level
+    if (!util_try_lockf( fs->lock_file , S_IWUSR + S_IWGRP , &fs->lock_fd)) {
+      fprintf(stderr," Another program has already opened filesystem read-write - this instance will be UNSYNCRONIZED read-only. Cross your fingers ....\n");
+      fflush( stderr );
+      enkf_fs_set_writable(fs, false);
+      read_only = true;
+    }
+  }
+
   {
     int driver_nr;
     for (driver_nr = 0; driver_nr < 5; driver_nr++) {
       fs_driver_enum driver_type = util_fread_int( fstab_stream );
+
       fs_driver_type * driver = block_fs_driver_open( fstab_stream , mount_point , driver_type , read_only);
       
       enkf_fs_assign_driver( fs , driver , driver_type );
@@ -538,20 +571,7 @@ static void enkf_fs_fwrite_misfit( enkf_fs_type * fs ) {
 }
 
 
-enkf_fs_type * enkf_fs_get_weakref( enkf_fs_type * fs ) {
-  return fs;
-}
 
-
-enkf_fs_type * enkf_fs_get_ref( enkf_fs_type * fs ) {
-  if (enkf_fs_is_instance( fs )) {
-    enkf_fs_incref( fs );
-    return fs;
-  } else {
-    util_abort("%s: tried to get enkf_fs reference from object which was not an existing enkf_fs reference\n",__func__);
-    return NULL;
-  }
-}
 
 
 
@@ -584,16 +604,17 @@ enkf_fs_type * enkf_fs_mount( const char * mount_point , bool read_only) {
     enkf_fs_fread_state_map( fs );
     enkf_fs_fread_misfit( fs );
     
-    return enkf_fs_get_ref( fs );
+    enkf_fs_get_ref( fs );
+    return fs;
   }
   return NULL;
 }
 
 
-bool enkf_fs_exists( const char * path ) {
+bool enkf_fs_exists( const char * mount_point ) {
   bool exists   = false;
   
-  FILE * stream = fs_driver_open_fstab( path , false );
+  FILE * stream = fs_driver_open_fstab( mount_point , false );
   if (stream != NULL) {
     exists = true;
     fclose( stream );
@@ -614,15 +635,20 @@ static void enkf_fs_free_driver(fs_driver_type * driver) {
 }
 
 
-void enkf_fs_umount( enkf_fs_type * fs ) {
+static void enkf_fs_umount( enkf_fs_type * fs ) {
   if (!fs->read_only) {
     enkf_fs_fsync( fs );
     enkf_fs_fwrite_misfit( fs );
   }
+
+  if (fs->lock_fd > 0) {
+    close( fs->lock_fd );  // Closing the lock_file file descriptor - and releasing the lock.
+    util_unlink_existing( fs->lock_file );
+  }
+
   
   {
-    int refcount = enkf_fs_decref( fs );
-
+    int refcount = fs->refcount;
     if (refcount == 0) {
       enkf_fs_free_driver( fs->dynamic_forecast );
       enkf_fs_free_driver( fs->dynamic_analyzed );
@@ -632,6 +658,7 @@ void enkf_fs_umount( enkf_fs_type * fs ) {
       
       util_safe_free( fs->case_name );
       util_safe_free( fs->root_path );
+      util_safe_free(fs->lock_file);
       util_safe_free( fs->mount_point );
       path_fmt_free( fs->case_fmt );
       path_fmt_free( fs->case_member_fmt );
@@ -642,7 +669,8 @@ void enkf_fs_umount( enkf_fs_type * fs ) {
       time_map_free( fs->time_map );
       cases_config_free( fs->cases_config );
       free( fs );
-    } 
+    } else
+      util_abort("%s: internal fuckup - tried to umount a filesystem with refcount:%d\n",__func__ , refcount);
   }
 }
 
@@ -840,8 +868,8 @@ bool enkf_fs_is_read_only(const enkf_fs_type * fs) {
     return fs->read_only;
 }
 
-void enkf_fs_set_writable(enkf_fs_type * fs) {
-    fs->read_only = false;
+void enkf_fs_set_writable(enkf_fs_type * fs, bool writable) {
+    fs->read_only = !writable;
 }
 
 void enkf_fs_debug_fprintf( const enkf_fs_type * fs) {

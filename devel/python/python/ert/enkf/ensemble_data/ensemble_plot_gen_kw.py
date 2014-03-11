@@ -73,6 +73,9 @@ class EnsemblePlotGenKW(BaseCClass):
                 return index
         return None
 
+    def shouldUseLogScale(self, index):
+        """ @rtype: bool """
+        return bool(EnsemblePlotGenKW.cNamespace().should_use_log_scale(self, index))
 
     def free(self):
         EnsemblePlotGenKW.cNamespace().free(self)
@@ -92,6 +95,7 @@ EnsemblePlotGenKW.cNamespace().load = cwrapper.prototype("void enkf_plot_gen_kw_
 EnsemblePlotGenKW.cNamespace().get = cwrapper.prototype("ensemble_plot_gen_kw_vector_ref enkf_plot_gen_kw_iget(ensemble_plot_gen_kw, int)")
 EnsemblePlotGenKW.cNamespace().iget_key = cwrapper.prototype("char* enkf_plot_gen_kw_iget_key(ensemble_plot_gen_kw, int)")
 EnsemblePlotGenKW.cNamespace().get_keyword_count = cwrapper.prototype("int enkf_plot_gen_kw_get_keyword_count(ensemble_plot_gen_kw)")
+EnsemblePlotGenKW.cNamespace().should_use_log_scale = cwrapper.prototype("bool enkf_plot_gen_kw_should_use_log_scale(ensemble_plot_gen_kw, int)")
 
 
 

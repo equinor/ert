@@ -211,9 +211,9 @@ static void enkf_tui_fs_copy_ensemble__(
         enkf_node_copy_ensemble(config_node, src_fs , target_fs , report_step_from, state_from, report_step_to , state_to , ens_size , ranking_permutation);
       }
     }
-   
-    enkf_fs_umount( src_fs );
-    enkf_fs_umount( target_fs );
+    
+    enkf_fs_decref( src_fs );
+    enkf_fs_decref( target_fs );
     
     msg_free(msg , true);
     stringlist_free(nodes);
@@ -246,7 +246,7 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
     src_state                = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
     enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , true , false );
     enkf_main_init_current_case_from_existing(enkf_main, source_fs , src_step , src_state);
-    enkf_fs_umount(source_fs);
+    enkf_fs_decref(source_fs);
   }
   util_safe_free( source_case );
 }

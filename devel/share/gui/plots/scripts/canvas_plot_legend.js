@@ -200,7 +200,34 @@ CanvasPlotLegend.simpleLine = function(context, style, width, height) {
     var color = style["stroke"];
     var rgba = CanvasPlotLegend.parseColor(color);
     context.strokeStyle = CanvasPlotLegend.asRgba(rgba[0], rgba[1], rgba[2], 1.0);
-    context.lineWidth = style["stroke_width"];
+    context.lineWidth = style["stroke_width"] * 2;
+
+    context.beginPath();
+    context.moveTo(0, height / 2);
+    context.lineTo(width, height / 2);
+    context.stroke();
+};
+
+CanvasPlotLegend.stippledLine = function(context, style, width, height) {
+    var line_renderer = CanvasPlotStippledLine();
+    line_renderer.style(style);
+    line_renderer(context, [0, width], [height / 2, height / 2]);
+};
+
+CanvasPlotLegend.filledCircleWithLine = function(context, style, width, height) {
+    context.strokeStyle = style[0]["stroke"];
+    context.lineWidth = style[0]["stroke_width"];
+    context.fillStyle = style[0]["fill"];
+
+    context.beginPath();
+    context.arc(width / 2, height / 2, (width - 1) / 2, 0, 2 * Math.PI);
+    context.fill();
+    context.stroke();
+
+
+    context.strokeStyle = style[1]["stroke"];
+    context.lineWidth = style[1]["stroke_width"];
+    context.fillStyle = style[1]["fill"];
 
     context.beginPath();
     context.moveTo(0, height / 2);

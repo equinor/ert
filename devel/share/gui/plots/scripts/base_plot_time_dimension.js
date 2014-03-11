@@ -49,19 +49,13 @@ function BasePlotTimeDimension(){
         time_scale.range([min, max]);
     };
 
-    dimension.scale = function(new_time_scale) {
-        if (!arguments.length) return time_scale;
-        time_scale = new_time_scale;
-        return dimension;
+    dimension.scale = function() {
+        return time_scale;
     };
 
-    dimension.scaler = function(new_scaler) {
-        if (!arguments.length) return scaler;
-        scaler = new_scaler;
-        return dimension;
+    dimension.isOrdinal = function() {
+        return false;
     };
-
-
 
     dimension.format = function(axis, max_length){
         axis.tickFormat(customTimeFormat);

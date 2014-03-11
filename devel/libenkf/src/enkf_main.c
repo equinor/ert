@@ -142,7 +142,6 @@
 
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char                 * current_fs_case;
   enkf_fs_type         * dbase;              /* The internalized information. */
   ensemble_config_type * ensemble_config;    /* The config objects for the various enkf nodes.*/
   qc_module_type       * qc_module;
@@ -421,9 +420,7 @@ void enkf_main_free(enkf_main_type * enkf_main){
   ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL) 
-    enkf_fs_umount( enkf_main->dbase );
-
-  util_safe_free( enkf_main->current_fs_case );
+    enkf_fs_decref( enkf_main->dbase );
 
   if (log_is_open( enkf_main->logh ))
     log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
@@ -1117,6 +1114,10 @@ static void assert_matrix_size(const matrix_type * m , const char * name , int r
       util_abort("%s: matrix mismatch %s:[%d,%d]   - expected:[%d, %d]", __func__ , name , matrix_get_rows(m) , matrix_get_columns(m) , rows , columns);
 }
 
+static void assert_size_equal(int ens_size , const bool_vector_type * ens_mask) {
+  if (bool_vector_size( ens_mask ) != ens_size)
+    util_abort("%s: fundamental inconsisentcy detected. Total ens_size:%d  mask_size:%d \n",__func__ , ens_size , bool_vector_size( ens_mask ));
+} 
 
 
 static void enkf_main_analysis_update( enkf_main_type * enkf_main , 
@@ -1151,6 +1152,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   assert_matrix_size(X , "X" , ens_size , ens_size);
   assert_matrix_size(S , "S" , active_size , ens_size);
   assert_matrix_size(R , "R" , active_size , active_size);
+  assert_size_equal( enkf_main_get_ensemble_size( enkf_main ) , ens_mask );
+
   if (analysis_module_check_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
@@ -1167,7 +1170,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
   /*****************************************************************/
   
-  analysis_module_init_update( module , S , R , dObs , E , D );
+  analysis_module_init_update( module , ens_mask , S , R , dObs , E , D );
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     enkf_fs_type * src_fs = enkf_main_get_fs( enkf_main );
@@ -1623,9 +1626,11 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
           switch (run_status) {
           case JOB_RUN_FAILURE:
             enkf_main_report_run_failure( enkf_main , iens );
+            bool_vector_iset(iactive, iens, false);
             break;
           case JOB_LOAD_FAILURE:
             enkf_main_report_load_failure( enkf_main , iens );
+            bool_vector_iset(iactive, iens, false);
             break;
           case JOB_RUN_OK:
             break;
@@ -1860,17 +1865,17 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
     {
       enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true );
       bool update_done = enkf_main_smoother_update( enkf_main , target_fs );
-      
+
       if (rerun) { 
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
           if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE, iter + 1))
             enkf_main_run_post_workflow(enkf_main);
-        } else {
+        } else 
           fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
-          enkf_fs_umount( target_fs );
-        }
       }
+      enkf_fs_decref( target_fs );
+
     }
   } else
     fprintf(stderr,"** ERROR: The normal smoother should not be combined with an iterable analysis module\n");
@@ -1894,6 +1899,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
     updateOK = enkf_main_smoother_update__(enkf_main , step_list , target_fs );
     enkf_main_set_fs(enkf_main , target_fs , NULL);
     cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
+    enkf_fs_decref( target_fs );
   }
 
   if (updateOK)
@@ -1922,11 +1928,11 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2)
 
     if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
       enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , false , true);
-
       enkf_main_init_case_from_existing(enkf_main, current_case, 0, ANALYZED, initial_case);
-
+      
       // Currently does nothing; 
       enkf_main_set_fs( enkf_main , initial_case , NULL );
+      enkf_fs_decref( initial_case );
     }
 
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
@@ -2296,7 +2302,6 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
-  enkf_main->current_fs_case    = NULL;
   enkf_main->dbase              = NULL;
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;
@@ -3402,6 +3407,38 @@ void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bo
 
 
 
+char * enkf_main_alloc_abs_path_to_init_file(const enkf_main_type * enkf_main, const enkf_config_node_type * config_node) {
+  model_config_type * model_config = enkf_main_get_model_config(enkf_main);
+  char * runpath                   = NULL;
+  char * path_to_init_file         = NULL;
+  char * abs_path_to_init_file     = NULL;
+  bool forward_init                = enkf_config_node_use_forward_init(config_node);
+
+  if (forward_init) {
+    path_fmt_type * runpath_fmt = model_config_get_runpath_fmt(model_config);
+    runpath = path_fmt_alloc_path(runpath_fmt , false , 0, 0);  /* Replace first %d with iens, if a second %d replace with iter */
+    path_to_init_file = enkf_config_node_alloc_initfile(config_node, runpath, 0);
+  } else
+    path_to_init_file = enkf_config_node_alloc_initfile(config_node, NULL, 0);
+
+  if (path_to_init_file)
+    abs_path_to_init_file = util_alloc_abs_path(path_to_init_file);
+
+  if (abs_path_to_init_file && !util_file_exists(abs_path_to_init_file)) {
+    free(abs_path_to_init_file); 
+    abs_path_to_init_file = NULL;
+  }
+  
+  if (runpath)
+    free(runpath); 
+  if (path_to_init_file)
+    free(path_to_init_file); 
+  
+  return abs_path_to_init_file;
+}
+
+
+
 bool enkf_main_export_field(const enkf_main_type * enkf_main, 
                             const char * kw, 
                             const char * path, 
@@ -3432,6 +3469,12 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
   if (node_found) {
     enkf_node_type * node = NULL;
 
+    char * init_file = enkf_main_alloc_abs_path_to_init_file(enkf_main, config_node);
+    if (init_file)
+      printf("init_file found: \"%s\", exporting initial value for inactive cells\n", init_file);
+    else
+      printf("no init_file found, exporting 0 or fill value for inactive cells\n");
+
     enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
     int iens;
     for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
@@ -3456,7 +3499,7 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
             {
               const field_type * field = enkf_node_value_ptr(node);
               const bool output_transform = true;
-              field_export(field , filename , NULL , file_type , output_transform);
+              field_export(field , filename , NULL , file_type , output_transform, init_file);
               ret = true;
             }
             free(filename);
@@ -3466,8 +3509,11 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
             printf("%s : enkf_state_get_node returned NULL for parameters  %d, %s \n", __func__, iens, kw);
        }
     } 
+    if (init_file)
+      free(init_file);
   }
-  
+    
+
   if (ret)
     printf("Successful export of FIELD %s\n", kw);
   else 

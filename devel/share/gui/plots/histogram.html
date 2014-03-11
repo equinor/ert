@@ -37,8 +37,11 @@
 <script src="scripts/styles.js"></script>
 <script src="scripts/canvas_plot_legend.js"></script>
 <script src="scripts/canvas_plot_line.js"></script>
+<script src="scripts/canvas_plot_stippled_line.js"></script>
 <script src="scripts/canvas_plot_area.js"></script>
 <script src="scripts/canvas_plot_circle.js"></script>
+<script src="scripts/base_plot_integer_dimension.js"></script>
+<script src="scripts/base_plot_value_dimension.js"></script>
 <script src="scripts/histogram_renderer.js"></script>
 <script src="scripts/histogram.js"></script>
 
@@ -52,6 +55,12 @@
     var histogram_div = null;
     var histograms = [];
     var style_count = 5;
+
+    var count_dimension = null;
+    var value_dimension = null;
+
+    var custom_min_x = null;
+    var custom_max_x = null;
 
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
@@ -68,15 +77,67 @@
 
     function createPlot() {
         histogram_div = d3.select("body").append("div").attr("class", "histogram-div");
+        count_dimension = BasePlotIntegerDimension();
+        value_dimension = BasePlotValueDimension();
 
         for (var index = 0; index < STYLES.ensemble_colors.length; index++) {
-            var histogram = new Histogram(histogram_div);
+            var histogram = new Histogram(histogram_div, value_dimension, count_dimension);
             histogram.setVisible(false);
             var style_name = STYLES.ensemble_colors[index];
             histogram.style(STYLES[style_name]);
 
             histograms.push(histogram);
         }
+    }
+
+    function getPrintWidth(){
+        return 1200;
+    }
+
+    function getPrintHeight(){
+        stored_data = plot_data_source.getPlotData();
+        var default_height = 425;
+        if (stored_data != null && stored_data.isValid()) {
+           var number_of_histograms = stored_data.caseList().length;
+           return calculateHistogramHeight(stored_height, number_of_histograms) * number_of_histograms + (12 * number_of_histograms);
+        }
+        return default_height;
+
+    }
+
+
+    function findMaxBinCount(case_list, data) {
+        var bin_count = data.numberOfBins();
+
+        var max_bin_count = 0;
+        for(var index = 0; index < case_list.length; index++) {
+            var histogram = histograms[index];
+            var case_name = case_list[index];
+
+            var layout = histogram.histogramLayout(bin_count);
+            var bins = layout(data.caseHistogram(case_name).samples());
+
+            for(var i = 0; i < bins.length; i++) {
+                max_bin_count = Math.max(max_bin_count, bins[i].y);
+            }
+        }
+        return max_bin_count;
+    }
+
+    function updateXDomain(use_log_scale, data) {
+        var min_x = data.min();
+        var max_x = data.max();
+
+        if (custom_min_x != null) {
+            min_x = custom_min_x;
+        }
+
+        if (custom_max_x != null) {
+            max_x = custom_max_x;
+        }
+
+        value_dimension.setIsLogScale(use_log_scale);
+        value_dimension.setDomain(min_x, max_x);
     }
 
     function updatePlot() {
@@ -91,7 +152,12 @@
                 histogram_data = stored_data.histogramData(stored_report_step_time);
             }
 
+            updateXDomain(stored_data.shouldUseLogScale(), histogram_data);
             var case_list = stored_data.caseList();
+
+            var max_bin_count = findMaxBinCount(case_list, histogram_data);
+
+            count_dimension.setDomain(0, max_bin_count + 1);
 
             calculateSize(stored_width, stored_height);
             for(var index = 0; index < case_list.length; index++) {
@@ -105,6 +171,8 @@
                 var histogram = histograms[index];
                 histogram.setVisible(false);
             }
+
+            plot_data_source.renderingFinished();
         }
     }
 
@@ -115,8 +183,12 @@
         if(stored_data != null) {
             var case_list = stored_data.caseList();
             var count = Math.max(case_list.length, 1);
-            stored_histogram_height = Math.max(250, ((stored_height - 50) - 20 * count) / count);
+            stored_histogram_height = calculateHistogramHeight(stored_height, count);
         }
+    }
+
+    function calculateHistogramHeight(height, count) {
+        return Math.max(250, ((height - 50) - 20 * count) / count);
     }
 
     function setSize(width, height) {
@@ -125,17 +197,12 @@
         for(var i = 0; i < histograms.length; i++) {
             var histogram = histograms[i];
             histogram.setSize(stored_width, stored_histogram_height);
-            histogram();
         }
     }
 
     function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max) {
-        for(var i = 0; i < histograms.length; i++) {
-            var histogram = histograms[i];
-            histogram.setValueScales(value_min, value_max);
-            histogram();
-        }
-
+        custom_min_x = value_min;
+        custom_max_x = value_max;
     }
 
     function setReportStepTime(report_step_time) {
@@ -146,6 +213,18 @@
 
     function supportsPlotProperties(time, value, depth, histogram){
         return histogram;
+    }
+
+    function setCustomSettings(settings) {
+        STYLES.updateColors(settings);
+    }
+
+    function renderNow(){
+        self.updatePlot();
+    }
+
+    function getPlotTitle(){
+        return histograms[0].getTitle();
     }
 
 </script>

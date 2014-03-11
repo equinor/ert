@@ -23,7 +23,7 @@ class EnsembleDataFetcher(DataFetcher):
 
     def fetchData(self, key, case=None):
         ensemble_config_node = self.getEnsembleConfigNode(key)
-        enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(case, True, False)
+        enkf_fs = self.ert().getEnkfFsManager().getFileSystem(case, read_only = True)
         ensemble_plot_data = EnsemblePlotData(ensemble_config_node, enkf_fs)
 
         data = {
