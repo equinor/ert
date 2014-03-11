@@ -19,6 +19,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include <ert/util/int_vector.h>
 #include <ert/util/util.h>
