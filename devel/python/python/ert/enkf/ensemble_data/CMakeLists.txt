@@ -6,6 +6,8 @@ set(PYTHON_SOURCES
     ensemble_plot_gen_data_vector.py
     ensemble_plot_gen_kw.py
     ensemble_plot_gen_kw_vector.py
+    pca_plot_data.py
+    pca_plot_vector.py
     plot_block_data.py
     plot_block_vector.py
 )

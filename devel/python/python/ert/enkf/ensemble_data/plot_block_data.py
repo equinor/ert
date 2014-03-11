@@ -36,7 +36,7 @@ class PlotBlockData(BaseCClass):
     def __getitem__(self, index):
         """ @rtype: PlotBlockVector """
         assert isinstance(index, int)
-        return PlotBlockData.cNamespace().get(self, index)
+        return PlotBlockData.cNamespace().get(self, index).setParent(self)
 
     def __iter__(self):
         cur = 0
