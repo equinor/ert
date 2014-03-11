@@ -43,6 +43,7 @@ class PathArgument(ArgumentDefinition):
 
     @staticmethod
     def addDefine(key, value):
+        value = PathArgument.substituteDefines(value)
         PathArgument.DEFINES[key] = value
 
 
