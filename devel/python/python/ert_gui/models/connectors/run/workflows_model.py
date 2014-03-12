@@ -26,16 +26,6 @@ class WorkflowsModel(ErtConnector, ListModelMixin, ChoiceModelMixin):
         self.observable().notify(self.CURRENT_CHOICE_CHANGED_EVENT)
 
 
-    # def startWorkflow(self):
-    #     # self.ert().getWorkflowList().setVerbose(True)
-    #     workflow_name = self.getCurrentChoice()
-    #     workflow_list = self.ert().getWorkflowList()
-    #     pointer = workflow_list.parent().from_param(workflow_list.parent())
-    #     handler = ErtWorkflowListHandler(workflow_list, workflow_name, pointer)
-    #     handler.runWorkflow()
-    #     print("Done?")
-    #     print(handler.isReference())
-
     def createWorkflowRunner(self):
         workflow_name = self.getCurrentChoice()
         workflow_list = self.ert().getWorkflowList()
