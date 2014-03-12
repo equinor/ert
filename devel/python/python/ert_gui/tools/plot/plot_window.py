@@ -81,10 +81,13 @@ class PlotWindow(QMainWindow):
         if self.__central_tab.currentIndex() > -1:
             active_plot =  self.__central_tab.currentWidget()
             assert isinstance(active_plot, PlotPanel)
-            if self.__exporter:
-                self.__exporter = ExportPlot(active_plot, self.__plot_metrics_widget.getSettings(), self.__customize_plot_widget.getCustomSettings(), self.__exporter.getCurrentPath())
+
+            if self.__exporter is None:
+                path = None
             else:
-                self.__exporter = ExportPlot(active_plot, self.__plot_metrics_widget.getSettings(), self.__customize_plot_widget.getCustomSettings())
+                path = self.__exporter.getCurrentPath()
+
+            self.__exporter = ExportPlot(active_plot, self.__plot_metrics_widget.getSettings(), self.__customize_plot_widget.getCustomSettings(), path)
 
             self.__exporter.export()
 
