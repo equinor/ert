@@ -8,8 +8,6 @@ class PlotSettingsModel(ErtConnector):
     def getDefaultPlotPath(self):
         """ @rtype: str """
         path = self.ert().plotConfig().getPath()
-        case_name = CaseSelectorModel().getCurrentChoice()
-        path = os.path.join(path, case_name)
         if not os.path.exists(path):
             os.makedirs(path)
         return path
