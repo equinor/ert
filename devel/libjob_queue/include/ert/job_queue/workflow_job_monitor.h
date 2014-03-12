@@ -15,7 +15,8 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
-
+#ifndef __WORKFLOW_JOB_MONITOR_H__
+#define __WORKFLOW_JOB_MONITOR_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,4 +40,6 @@ void workflow_job_monitor_set_blocking(workflow_job_monitor_type * monitor, bool
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

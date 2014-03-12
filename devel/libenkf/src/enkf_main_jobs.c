@@ -22,6 +22,7 @@
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/field_config.h>
+#include <unistd.h>    
 
 
 static bool_vector_type * alloc_iactive_vector_from_range(const stringlist_type * range, int startindex, int ens_size) {
