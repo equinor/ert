@@ -40,7 +40,7 @@ static bool_vector_type * alloc_iactive_vector_from_range(const stringlist_type 
 
 void enkf_main_jobs_sleep(){
     while(true){
-        printf("Hei from internal \n");
+        printf("Hi from internal \n");
         sleep(1);
     }
 }

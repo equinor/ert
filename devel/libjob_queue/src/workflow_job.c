@@ -21,6 +21,7 @@
 #include <dlfcn.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include <ert/util/int_vector.h>
 #include <ert/util/util.h>
@@ -332,7 +333,7 @@ void workflow_job_free__( void * arg) {
 */
 
 static void * workflow_job_run_internal( const workflow_job_type * job , workflow_job_monitor_type * monitor, void * self , bool verbose , const stringlist_type * arg) {
-    workflow_job_monitor_set_pid(monitor, 0);
+    workflow_job_monitor_set_pid(monitor, getpid());
     return job->dl_func( self , arg );
 }
 

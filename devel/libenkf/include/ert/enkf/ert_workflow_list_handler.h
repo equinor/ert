@@ -15,6 +15,8 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
+#ifndef __ERT_WORKFLOW_LIST_HANDLER_H__
+#define __ERT_WORKFLOW_LIST_HANDLER_H__
 
 
 #ifdef __cplusplus
@@ -49,4 +51,4 @@ bool ert_workflow_list_handler_is_killed(ert_workflow_list_handler_data_type *td
 }
 #endif
 
-
+#endif
