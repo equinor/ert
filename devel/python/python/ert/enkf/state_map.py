@@ -16,6 +16,7 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf.enums import RealizationStateEnum
+from ert.util import BoolVector
 
 
 class StateMap(BaseCClass):
@@ -83,6 +84,12 @@ class StateMap(BaseCClass):
         """ @rtype: bool """
         return StateMap.cNamespace().is_read_only(self)
 
+    def selectMatching(self, select_target, select_mask):
+        assert isinstance(select_target, BoolVector)
+        assert isinstance(select_mask, RealizationStateEnum)
+
+        StateMap.cNamespace().select_matching(self, select_target, select_mask)
+
 
     def free(self):
         StateMap.cNamespace().free(self)
@@ -111,6 +118,8 @@ StateMap.cNamespace().free   = cwrapper.prototype("void state_map_free(state_map
 StateMap.cNamespace().size   = cwrapper.prototype("int state_map_get_size(state_map)")
 StateMap.cNamespace().iget   = cwrapper.prototype("realisation_state_enum state_map_iget(state_map, int)")
 StateMap.cNamespace().iset   = cwrapper.prototype("void state_map_iset(state_map, int, realisation_state_enum)")
+StateMap.cNamespace().select_matching   = cwrapper.prototype("void state_map_select_matching(state_map, bool_vector, realisation_state_enum)")
 StateMap.cNamespace().is_read_only = cwrapper.prototype("bool state_map_is_readonly(state_map)")
 StateMap.cNamespace().is_legal_transition = cwrapper.prototype("bool state_map_legal_transition(realisation_state_enum, realisation_state_enum)")
+
 

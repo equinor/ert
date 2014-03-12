@@ -5,6 +5,7 @@ set(PYTHON_SOURCES
     ecl_config.py
     enkf_fs.py
     enkf_fs_manager.py
+    enkf_linalg.py
     enkf_main.py
     enkf_obs.py
     enkf_simulation_runner.py
@@ -15,7 +16,11 @@ set(PYTHON_SOURCES
     ert_test_context.py
     ert_workflow_list.py
     local_config.py
+    local_obsdata.py
+    local_obsdata_node.py
+    meas_data.py
     model_config.py
+    obs_data.py
     plot_config.py
     site_config.py
     state_map.py

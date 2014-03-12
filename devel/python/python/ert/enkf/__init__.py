@@ -22,12 +22,19 @@ ENKF_LIB = clib.ert_load("libenkf")
 
 from .enums import EnkfStateType, EnkfVarType, EnkfRunEnum, LoadFailTypeEnum, EnkfObservationImplementationType, EnkfTruncationType
 
+from .enkf_linalg import EnkfLinalg
 from .util import TimeMap
+from .state_map import StateMap
 from .enkf_fs import EnkfFs
 
 from .ert_workflow_list import ErtWorkflowList
 
 from .observations import SummaryObservation, ObsVector
+
+from .local_obsdata_node import LocalObsdataNode
+from .local_obsdata import LocalObsdata
+from .obs_data import ObsData
+from .meas_data import MeasData
 
 from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
@@ -42,7 +49,7 @@ from .local_config import LocalConfig
 from .model_config import ModelConfig
 from .plot_config import PlotConfig
 from .site_config import SiteConfig
-from .state_map import StateMap
+
 from .enkf_simulation_runner import EnkfSimulationRunner
 from .enkf_fs_manager import EnkfFsManager
 

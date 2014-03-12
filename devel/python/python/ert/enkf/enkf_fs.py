@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, TimeMap
+from ert.enkf import ENKF_LIB, TimeMap, StateMap
 from ert.enkf.enums import EnKFFSType
 
 
@@ -52,6 +52,11 @@ class EnkfFs(BaseCClass):
         """ @rtype: TimeMap """
         self.__checkIfUmounted()
         return EnkfFs.cNamespace().get_time_map(self).setParent(self)
+
+    def getStateMap(self):
+        """ @rtype: StateMap """
+        self.__checkIfUmounted()
+        return EnkfFs.cNamespace().get_state_map(self).setParent(self)
 
     def getCaseName(self):
         """ @rtype: str """
@@ -110,6 +115,7 @@ EnkfFs.cNamespace().has_vector = cwrapper.prototype("bool enkf_fs_has_vector(enk
 EnkfFs.cNamespace().fread_node = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, buffer, char*, c_uint, int, int, c_uint)")
 EnkfFs.cNamespace().fread_vector = cwrapper.prototype("void enkf_fs_fread_vector(enkf_fs, buffer, char*, c_uint, int, c_uint)")
 EnkfFs.cNamespace().get_time_map = cwrapper.prototype("time_map_ref enkf_fs_get_time_map(enkf_fs)")
+EnkfFs.cNamespace().get_state_map = cwrapper.prototype("state_map_ref enkf_fs_get_state_map(enkf_fs)")
 EnkfFs.cNamespace().exists = cwrapper.prototype("bool enkf_fs_exists(char*)")
 EnkfFs.cNamespace().get_case_name = cwrapper.prototype("char* enkf_fs_get_case_name(enkf_fs)")
 EnkfFs.cNamespace().is_read_only = cwrapper.prototype("bool enkf_fs_is_read_only(enkf_fs)")
