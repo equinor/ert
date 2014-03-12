@@ -20,7 +20,7 @@ class PcaPlotVector(BaseCClass):
 
 
     def __getitem__(self, index):
-        """ @rtype: double """
+        """ @rtype: float """
         assert isinstance(index, int)
         return PcaPlotVector.cNamespace().get(self, index)
 
@@ -44,7 +44,7 @@ cwrapper.registerType("pca_plot_vector", PcaPlotVector)
 cwrapper.registerType("pca_plot_vector_obj", PcaPlotVector.createPythonObject)
 cwrapper.registerType("pca_plot_vector_ref", PcaPlotVector.createCReference)
 
-PcaPlotVector.cNamespace().alloc   = cwrapper.prototype("c_void_p pca_plot_vector_alloc(pca_plot_vector, int)")
+PcaPlotVector.cNamespace().alloc   = cwrapper.prototype("c_void_p pca_plot_vector_alloc(int, matrix, matrix)")
 PcaPlotVector.cNamespace().free    = cwrapper.prototype("void pca_plot_vector_free(pca_plot_vector)")
 PcaPlotVector.cNamespace().size    = cwrapper.prototype("int pca_plot_vector_get_size(pca_plot_vector)")
 PcaPlotVector.cNamespace().get     = cwrapper.prototype("double pca_plot_vector_iget_sim_value(pca_plot_vector, int)")
