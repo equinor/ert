@@ -536,13 +536,16 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
 
 
 void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path /* Can be NULL */) {
-  enkf_fs_incref( fs );
-  
-  if (enkf_main->dbase)
-    enkf_fs_decref( enkf_main->dbase );
-  
-  enkf_main->dbase = fs;
-  enkf_main_update_current_case(enkf_main, case_path);
+  if (enkf_main->dbase != fs) {
+    enkf_fs_incref( fs );
+
+    if (enkf_main->dbase)
+      enkf_fs_decref( enkf_main->dbase );
+
+    enkf_main->dbase = fs;
+    enkf_main_invalidate_cache(enkf_main);
+    enkf_main_update_current_case(enkf_main, case_path);
+  }
 }
 
 
