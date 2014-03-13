@@ -2365,13 +2365,13 @@ static void enkf_main_install_data_kw( enkf_main_type * enkf_main , hash_type * 
     const char * num_cpu_string   = "1";
   
     enkf_main_add_subst_kw( enkf_main , "CWD"          , cwd , "The current working directory we are running from - the location of the config file." , true);
-    enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , false);
+    enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , true);
     enkf_main_add_subst_kw( enkf_main , "DATE"         , date_string , "The current date." , true);
     enkf_main_add_subst_kw( enkf_main , "NUM_CPU"      , num_cpu_string , "The number of CPU used for one forward model." , true );
     enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , qc_module_get_runpath_list_file( enkf_main->qc_module ) , "The name of a file with a list of run directories." , true);
-    
-    //free( cwd );
-    //free( date_string );
+
+    free( cwd );
+    free( date_string );
   }
 }
 
