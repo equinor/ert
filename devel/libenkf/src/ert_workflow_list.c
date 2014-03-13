@@ -39,6 +39,7 @@
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
+#include <ert/job_queue/workflow_job_monitor.h>
 
 
 struct ert_workflow_list_struct {
@@ -216,9 +217,8 @@ bool  ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , co
 }
 
 
-bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , workflow_type * workflow, bool verbose , void * self) {
-  bool runOK = workflow_run( workflow , self , verbose , workflow_list->context);
-
+bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list , workflow_job_monitor_type * monitor, workflow_type * workflow, bool verbose , void * self) {
+    bool runOK = workflow_run( workflow , monitor, self , verbose , workflow_list->context);
   if (runOK)
     workflow_list->last_error = NULL;
   else
@@ -227,9 +227,19 @@ bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , 
   return runOK;
 }
 
-bool ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self) {
+
+bool ert_workflow_list_run_workflow_blocking(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self) {
   workflow_type * workflow = ert_workflow_list_get_workflow( workflow_list , workflow_name );
-  return ert_workflow_list_run_workflow__( workflow_list , workflow , workflow_list->verbose , self);
+  workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
+  bool result = ert_workflow_list_run_workflow__( workflow_list , monitor, workflow , workflow_list->verbose , self);
+  workflow_job_monitor_free( monitor );
+  return result;
+}
+
+
+bool ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  ,workflow_job_monitor_type * monitor, const char * workflow_name , void * self) {
+  workflow_type * workflow = ert_workflow_list_get_workflow( workflow_list , workflow_name );
+  return ert_workflow_list_run_workflow__( workflow_list , monitor, workflow , workflow_list->verbose , self);
 }
 
 

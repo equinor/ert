@@ -14,6 +14,7 @@ set(PYTHON_SOURCES
     ert_templates.py
     ert_test_context.py
     ert_workflow_list.py
+    ert_workflow_list_handler.py
     local_config.py
     model_config.py
     plot_config.py

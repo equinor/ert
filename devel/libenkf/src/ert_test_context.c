@@ -119,10 +119,13 @@ bool ert_test_context_run_worklow( ert_test_context_type * test_context , const 
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
   ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list( enkf_main );
 
-  if (ert_workflow_list_has_workflow( workflow_list , workflow_name ))
-    return ert_workflow_list_run_workflow( workflow_list , workflow_name , enkf_main );
-  else
+  if (ert_workflow_list_has_workflow( workflow_list , workflow_name )){
+    bool result =  ert_workflow_list_run_workflow_blocking( workflow_list , workflow_name , enkf_main );
+    return result;
+  }
+  else{
     return false;
+  }
 }
                                      
 

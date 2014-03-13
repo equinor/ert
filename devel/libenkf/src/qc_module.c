@@ -146,7 +146,10 @@ bool qc_module_run_workflow( const qc_module_type * qc_module , void * self) {
     if (!util_file_exists( qc_module->runpath_list_file ))
       fprintf(stderr,"** Warning: the file:%s with a list of runpath directories was not found - QC workflow wil probably fail.\n" , qc_module->runpath_list_file);
     
-    return ert_workflow_list_run_workflow__( qc_module->workflow_list , qc_module->qc_workflow , verbose , self);
+    workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
+    bool result = ert_workflow_list_run_workflow__( qc_module->workflow_list , monitor, qc_module->qc_workflow , verbose , self);
+    workflow_job_monitor_free(monitor);
+    return result;
   } else
     return false;
 }
