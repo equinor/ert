@@ -45,7 +45,7 @@ class ExportPlot(object):
 
 
     def export(self):
-        if self.__path:
+        if self.__path is not None:
             default_export_path = self.__path
         else:
             default_export_path = PlotSettingsModel().getDefaultPlotPath()
@@ -65,10 +65,9 @@ class ExportPlot(object):
             result = dialog.selectedFiles()
             assert isinstance(result, QStringList)
             if len(result) == 1:
-                fileInfo = QFileInfo(result[0])
-                self.__file_name = fileInfo.fileName()
-                self.__path = fileInfo.path()
-                    #result[0]
+                file_info = QFileInfo(result[0])
+                self.__file_name = file_info.fileName()
+                self.__path = file_info.path()
                 self.__selected_file_type = dialog.selectedNameFilter()
             name = self.__active_plot_panel.getName()
             url = self.__active_plot_panel.getUrl()
