@@ -36,16 +36,13 @@ extern "C" {
 typedef struct ert_workflow_list_handler_data_struct ert_workflow_list_handler_data_type;
 
 void ert_workflow_list_handler_free(ert_workflow_list_handler_data_type *tdata);
-void ert_workflow_list_handler_set_pointer(ert_workflow_list_handler_data_type * tdata, void * self);
-void ert_workflow_list_handler_set_workflow_name(ert_workflow_list_handler_data_type * tdata, char *workflow_name);
-void ert_workflow_list_handler_set_workflow_list(ert_workflow_list_handler_data_type * tdata, ert_workflow_list_type * workflow_list);
 ert_workflow_list_handler_data_type * ert_workflow_list_handler_alloc();
 void ert_workflow_list_handler_run_workflow(ert_workflow_list_handler_data_type * tdata, ert_workflow_list_type * workflow_list,char *workflow_name, void * self);
-bool ert_workflow_list_handler_read_result(ert_workflow_list_handler_data_type *tdata);
-bool ert_workflow_list_handler_is_running(ert_workflow_list_handler_data_type *tdata);
+bool ert_workflow_list_handler_read_result(const ert_workflow_list_handler_data_type *tdata);
+bool ert_workflow_list_handler_is_running(const ert_workflow_list_handler_data_type *tdata);
 void ert_workflow_list_handler_stop_workflow(ert_workflow_list_handler_data_type *tdata);
 void ert_workflow_list_handler_join_workflow(ert_workflow_list_handler_data_type *tdata);
-bool ert_workflow_list_handler_is_killed(ert_workflow_list_handler_data_type *tdata);
+bool ert_workflow_list_handler_is_killed(const ert_workflow_list_handler_data_type *tdata);
 
 #ifdef __cplusplus
 }

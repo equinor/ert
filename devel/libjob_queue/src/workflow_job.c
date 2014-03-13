@@ -350,8 +350,8 @@ static void * workflow_job_run_external( const workflow_job_type * job, workflow
                   NULL , 
                   NULL , 
                   NULL );
-  workflow_job_monitor_set_pid(monitor, pid);
   if(!blocking){
+      workflow_job_monitor_set_pid(monitor, pid);
       waitpid(pid , NULL , 0);
   }
   if (argv != NULL) {

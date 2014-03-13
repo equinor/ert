@@ -82,18 +82,6 @@ void ert_workflow_list_handler_run_workflow(ert_workflow_list_handler_data_type 
         tdata->tid = tid;
 }
 
-void ert_workflow_list_handler_set_pointer(ert_workflow_list_handler_data_type * tdata, void * self){
-    tdata->self = self;
-}
-
-void ert_workflow_list_handler_set_workflow_name(ert_workflow_list_handler_data_type * tdata, char *workflow_name){
-  tdata->workflow_name = workflow_name;
-}
-
-void ert_workflow_list_handler_set_workflow_list(ert_workflow_list_handler_data_type * tdata, ert_workflow_list_type * workflow_list){
-  tdata->workflow_list = workflow_list;
-}
-
 void ert_workflow_list_handler_free(ert_workflow_list_handler_data_type *tdata){
   workflow_job_monitor_free(tdata->monitor);
   free(tdata);
@@ -130,15 +118,15 @@ void ert_workflow_list_handler_join_workflow(ert_workflow_list_handler_data_type
   pthread_join(tdata->tid, NULL);
 }
 
-bool ert_workflow_list_handler_is_running(ert_workflow_list_handler_data_type *tdata){
+bool ert_workflow_list_handler_is_running(const ert_workflow_list_handler_data_type *tdata){
   return tdata->running;
 }
 
-bool ert_workflow_list_handler_is_killed(ert_workflow_list_handler_data_type *tdata){
+bool ert_workflow_list_handler_is_killed(const ert_workflow_list_handler_data_type *tdata){
   return tdata->killed;
 }
 
-bool ert_workflow_list_handler_read_result(ert_workflow_list_handler_data_type *tdata){
+bool ert_workflow_list_handler_read_result(const ert_workflow_list_handler_data_type *tdata){
   return tdata->result;
 }
 

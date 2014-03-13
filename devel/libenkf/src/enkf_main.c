@@ -3335,10 +3335,7 @@ ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main
 bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow ) {
   ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list( enkf_main );
   if (ert_workflow_list_has_workflow( workflow_list , workflow)){
-      workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
-      bool result = ert_workflow_list_run_workflow( workflow_list , monitor, workflow , enkf_main);
-      workflow_job_monitor_free(monitor);
-    return result;
+      return ert_workflow_list_run_workflow_blocking( workflow_list , workflow , enkf_main);
   }
   else{
     return false;
