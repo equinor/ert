@@ -586,9 +586,10 @@ void enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * input_ca
         unlink(current_mount_point);
         enkf_main_write_current_case_file(enkf_main, target_case);
         free( target_case );
-        free( current_mount_point );
       } else
         enkf_main_select_fs( enkf_main , DEFAULT_CASE );  // Selecting (a new) default case
+
+      free( current_mount_point );
     } else
       enkf_main_select_fs( enkf_main , input_case );
   } else {
