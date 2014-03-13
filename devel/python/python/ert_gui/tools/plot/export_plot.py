@@ -33,6 +33,8 @@ class ExportPlot(object):
         self.__value_max = settings["value_max"]
         self.__depth_min = settings["depth_min"]
         self.__depth_max = settings["depth_max"]
+        self._index_min = settings["index_min"]
+        self._index_max = settings["index_max"]
         self.__report_step_time = settings["report_step_time"]
         self.__custom_settings = custom_settings
         self.__bridge = None
@@ -85,7 +87,7 @@ class ExportPlot(object):
     def plotReady(self):
         data = self.__plot_bridge_org.getPlotData()
         self.__bridge.setPlotData(data)
-        self.__bridge.setScales(self.__time_min, self.__time_max, self.__value_min, self.__value_max, self.__depth_min, self.__depth_max)
+        self.__bridge.setScales(self.__time_min, self.__time_max, self.__value_min, self.__value_max, self.__depth_min, self.__depth_max, self._index_min, self._index_max)
         self.__bridge.updatePlotSize(QSize(self.__width, self.__height))
         self.__bridge.setCustomSettings(self.__custom_settings)
         self.__bridge.setReportStepTime(self.__report_step_time)
