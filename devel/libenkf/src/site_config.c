@@ -827,6 +827,7 @@ void site_config_free(site_config_type * site_config) {
     util_clear_directory(site_config->__license_root_path, true, true);
 
   util_safe_free(site_config->manual_url);
+  util_safe_free(site_config->default_browser);
   util_safe_free(site_config->license_root_path);
   util_safe_free(site_config->license_root_path_site);
   util_safe_free(site_config->__license_root_path);

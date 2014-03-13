@@ -82,6 +82,7 @@ state_map_type * state_map_alloc_copy( state_map_type * map ) {
 
 
 void state_map_free( state_map_type * map ) {
+  int_vector_free( map->state );
   free( map );
 }
 
