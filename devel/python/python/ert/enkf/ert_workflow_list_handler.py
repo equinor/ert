@@ -12,15 +12,6 @@ class ErtWorkflowListHandler(BaseCClass):
         self.__workflow_name = workflow_name
         self.__enkf_main_pointer = enkf_main_pointer
 
-    def setPointer(self, pointer):
-        ErtWorkflowListHandler.cNamespace().set_pointer(self, pointer)
-
-    def setWorkflowName(self, workflow_name):
-        ErtWorkflowListHandler.cNamespace().set_workflow_name(self, workflow_name)
-
-    def setWorkflowList(self, workflow_list):
-        ErtWorkflowListHandler.cNamespace().set_workflow_list(self, workflow_list)
-
     def isRunning(self):
         return ErtWorkflowListHandler.cNamespace().is_running(self)
 
@@ -49,9 +40,6 @@ ErtWorkflowListHandler.cNamespace().alloc = cwrapper.prototype("c_void_p ert_wor
 ErtWorkflowListHandler.cNamespace().free = cwrapper.prototype("void ert_workflow_list_handler_free(ert_workflow_thread_data)")
 
 ErtWorkflowListHandler.cNamespace().run_workflow = cwrapper.prototype("void ert_workflow_list_handler_run_workflow(ert_workflow_thread_data, ert_workflow_list, char*, c_void_p)")
-ErtWorkflowListHandler.cNamespace().set_pointer = cwrapper.prototype("void ert_workflow_list_handler_set_pointer(ert_workflow_thread_data, c_void_p)")
-ErtWorkflowListHandler.cNamespace().set_workflow_name = cwrapper.prototype("void ert_workflow_list_handler_set_workflow_name(ert_workflow_thread_data, char*)")
-ErtWorkflowListHandler.cNamespace().set_workflow_list = cwrapper.prototype("void ert_workflow_list_handler_set_workflow_list(ert_workflow_thread_data, ert_workflow_list)")
 ErtWorkflowListHandler.cNamespace().read_result = cwrapper.prototype("bool ert_workflow_list_handler_read_result(ert_workflow_thread_data)")
 ErtWorkflowListHandler.cNamespace().is_running = cwrapper.prototype("bool ert_workflow_list_handler_is_running(ert_workflow_thread_data)")
 ErtWorkflowListHandler.cNamespace().is_killed = cwrapper.prototype("bool ert_workflow_list_handler_is_killed(ert_workflow_thread_data)")
