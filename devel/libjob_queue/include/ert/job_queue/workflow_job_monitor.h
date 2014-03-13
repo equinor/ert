@@ -33,9 +33,9 @@ workflow_job_monitor_type * workflow_job_monitor_alloc();
 void workflow_job_monitor_free(workflow_job_monitor_type *monitor);
 
 void workflow_job_monitor_set_pid(workflow_job_monitor_type * monitor, pid_t pid);
-pid_t workflow_job_monitor_get_pid(workflow_job_monitor_type * monitor);
+pid_t workflow_job_monitor_get_pid(const workflow_job_monitor_type * monitor);
 
-bool workflow_job_monitor_get_blocking(workflow_job_monitor_type * monitor);
+bool workflow_job_monitor_get_blocking(const workflow_job_monitor_type * monitor);
 void workflow_job_monitor_set_blocking(workflow_job_monitor_type * monitor, bool blocking);
 
 #ifdef __cplusplus

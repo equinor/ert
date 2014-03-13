@@ -38,11 +38,11 @@ void workflow_job_monitor_set_pid(workflow_job_monitor_type * monitor, pid_t pid
     monitor->processid = pid;
 }
 
-pid_t workflow_job_monitor_get_pid(workflow_job_monitor_type * monitor){
+pid_t workflow_job_monitor_get_pid(const workflow_job_monitor_type * monitor){
     return monitor->processid;
 }
 
-bool workflow_job_monitor_get_blocking(workflow_job_monitor_type * monitor){
+bool workflow_job_monitor_get_blocking(const workflow_job_monitor_type * monitor){
     return monitor->blocking;
 }
 
