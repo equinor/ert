@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 #include <ert/config/config.h>
+#include <ert/job_queue/workflow_job_monitor.h>
 
   
   typedef void * (workflow_job_ftype) (void * self , const stringlist_type * arg );
@@ -42,7 +43,7 @@ extern "C" {
   void           workflow_job_set_executable( workflow_job_type * workflow_job , const char * executable);
   void           workflow_job_set_function( workflow_job_type * workflow_job , const char * function);
   void           workflow_job_set_module( workflow_job_type * workflow_job , const char * module);
-  void *         workflow_job_run( const workflow_job_type * job , void * self , bool verbose , const stringlist_type * arg);
+  void *         workflow_job_run( const workflow_job_type * job ,workflow_job_monitor_type * monitor, void * self , bool verbose , const stringlist_type * arg);
   
 #ifdef __cplusplus
 }

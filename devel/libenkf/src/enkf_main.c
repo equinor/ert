@@ -105,6 +105,7 @@
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/field.h>
+#include <ert/job_queue/workflow_job_monitor.h>
 
 /**/
 
@@ -3333,10 +3334,12 @@ ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main
 
 bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow ) {
   ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list( enkf_main );
-  if (ert_workflow_list_has_workflow( workflow_list , workflow)) 
-    return ert_workflow_list_run_workflow( workflow_list , workflow , enkf_main);
-  else
+  if (ert_workflow_list_has_workflow( workflow_list , workflow)){
+      return ert_workflow_list_run_workflow_blocking( workflow_list , workflow , enkf_main);
+  }
+  else{
     return false;
+  }
 }
 
 
