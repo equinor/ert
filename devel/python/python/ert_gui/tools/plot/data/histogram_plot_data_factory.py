@@ -130,6 +130,8 @@ class HistogramPlotDataFactory(object):
                 histogram_data.setRefcase(value)
 
         for case_name in self.__case_names:
+            histogram_data.addCase(case_name)
+
             if self.hasEnsembleSample(case_name, x_value):
                 for sample in self.getEnsembleSamples(case_name, x_value):
                     histogram_data.addSample(case_name, sample)
