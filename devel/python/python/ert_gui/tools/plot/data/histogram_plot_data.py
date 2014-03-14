@@ -61,10 +61,14 @@ class HistogramPlotData(QObject):
         self.__refcase = None
 
 
-    def addSample(self, case_name, sample):
+    def addCase(self, case_name):
         if not case_name in self.__case_histograms:
             self.__case_histograms[case_name] = CaseHistogramPlotData(case_name, self.__report_step_time, parent=self)
             self.__case_list.append(case_name)
+
+
+    def addSample(self, case_name, sample):
+        self.addCase(case_name)
 
         self.__case_histograms[case_name].addSample(sample)
 

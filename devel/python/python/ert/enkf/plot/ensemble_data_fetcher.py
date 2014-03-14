@@ -1,5 +1,5 @@
 from ert.enkf import EnsConfig
-from ert.enkf.ensemble_data import EnsemblePlotData
+from ert.enkf.plot_data import EnsemblePlotData
 from ert.enkf.enums import ErtImplType
 from ert.enkf.plot.data_fetcher import DataFetcher
 

@@ -1,7 +1,7 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, EnkfStateType, EnkfFs
 from ert.enkf.observations import ObsVector
-from ert.enkf.ensemble_data import PlotBlockVector
+from ert.enkf.plot_data import PlotBlockVector
 from ert.util import DoubleVector, BoolVector
 
 
@@ -36,7 +36,7 @@ class PlotBlockData(BaseCClass):
     def __getitem__(self, index):
         """ @rtype: PlotBlockVector """
         assert isinstance(index, int)
-        return PlotBlockData.cNamespace().get(self, index)
+        return PlotBlockData.cNamespace().get(self, index).setParent(self)
 
     def __iter__(self):
         cur = 0
