@@ -21,7 +21,7 @@ from ert.enkf.enkf_fs import EnkfFs
 from ert.enkf.enums.enkf_state_type_enum import EnkfStateType
 from ert.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert.util import BoolVector
-from ert.enkf.ensemble_data import EnsemblePlotGenKWVector
+from ert.enkf.plot_data import EnsemblePlotGenKWVector
 
 
 class EnsemblePlotGenKW(BaseCClass):

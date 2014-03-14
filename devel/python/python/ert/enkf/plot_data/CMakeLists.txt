@@ -12,5 +12,5 @@ set(PYTHON_SOURCES
     plot_block_vector.py
 )
 
-add_python_package("python.ert.enkf.ensemble_data"  ${PYTHON_INSTALL_PREFIX}/ert/enkf/ensemble_data "${PYTHON_SOURCES}" True)
+add_python_package("python.ert.enkf.plot_data"  ${PYTHON_INSTALL_PREFIX}/ert/enkf/plot_data "${PYTHON_SOURCES}" True)
 

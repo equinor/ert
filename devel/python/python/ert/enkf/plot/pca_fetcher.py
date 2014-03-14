@@ -1,4 +1,4 @@
-from ert.enkf.ensemble_data import PcaPlotData
+from ert.enkf.plot_data import PcaPlotData
 from ert.enkf.enums import EnkfStateType, RealizationStateEnum
 from ert.enkf import LocalObsdata, LocalObsdataNode, EnkfLinalg, MeasData, ObsData
 from ert.enkf.plot import DataFetcher

@@ -13,7 +13,7 @@
 #
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
-from ert.enkf.ensemble_data import PlotBlockData
+from ert.enkf.plot_data import PlotBlockData
 from ert.enkf.enums import ErtImplType
 from ert.enkf.plot import DataFetcher
 

@@ -1,7 +1,7 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, EnkfStateType, EnkfFs
 from ert.enkf.observations import ObsVector
-from ert.enkf.ensemble_data import PlotBlockVector
+from ert.enkf.plot_data import PlotBlockVector
 from ert.util import DoubleVector, BoolVector
 
 

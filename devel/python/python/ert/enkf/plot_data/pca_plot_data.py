@@ -1,7 +1,7 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.util import Matrix
-from ert.enkf.ensemble_data import PcaPlotVector
+from ert.enkf.plot_data import PcaPlotVector
 
 
 class PcaPlotData(BaseCClass):
