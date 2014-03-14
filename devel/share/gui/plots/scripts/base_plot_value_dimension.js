@@ -26,6 +26,7 @@ function BasePlotValueDimension(flip_range){
     var value_format = d3.format(".4g");
 
     var value_log_format = d3.format("e");
+
     var value_log_format_function = function(d) {
         var x = Math.log(d) / Math.log(10) + 1e-6;
         return Math.abs(x - Math.floor(x)) < 0.3 ? value_log_format(d) : "";
@@ -98,6 +99,10 @@ function BasePlotValueDimension(flip_range){
 
     dimension.setIsLogScale = function(use_log_scale) {
         is_log_scale = use_log_scale;
+    };
+
+    dimension.isLogScale = function() {
+        return is_log_scale;
     };
 
     return dimension;
