@@ -63,10 +63,9 @@ class PlotMetricsWidget(QWidget):
         for key in self.__spinners:
             scaler = self.__spinners[key]
             self.blockSignals(True)
-            values ={"type_key":key, "enabled": self.getIsEnabled(key), "value":self.getValue(key)}
+            values = {"type_key": key, "enabled": self.getIsEnabled(key), "value": self.getValue(key)}
             scaler.setValues(values)
             self.blockSignals(False)
-        self.plotSettingsChanged.emit()
 
     def getValue(self, type_key):
         if type_key in self.__trackers:

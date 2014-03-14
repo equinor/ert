@@ -19,6 +19,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include <ert/util/int_vector.h>
 #include <ert/util/util.h>
@@ -27,6 +30,7 @@
 #include <ert/config/config.h>
 
 #include <ert/job_queue/workflow_job.h>
+#include <ert/job_queue/workflow_job_monitor.h>
 
 
 /* The default values are interepreted as no limit. */
@@ -328,25 +332,28 @@ void workflow_job_free__( void * arg) {
   discard it.  
 */
 
-static void * workflow_job_run_internal( const workflow_job_type * job , void * self , bool verbose , const stringlist_type * arg) {
-  return job->dl_func( self , arg );
+static void * workflow_job_run_internal( const workflow_job_type * job , workflow_job_monitor_type * monitor, void * self , bool verbose , const stringlist_type * arg) {
+    workflow_job_monitor_set_pid(monitor, getpid());
+    return job->dl_func( self , arg );
 }
 
 
-static void * workflow_job_run_external( const workflow_job_type * job  , bool verbose , const stringlist_type * arg) {
+static void * workflow_job_run_external( const workflow_job_type * job, workflow_job_monitor_type * monitor, bool verbose , const stringlist_type * arg) {
   char ** argv = stringlist_alloc_char_copy( arg );
-
-  util_fork_exec( job->executable , 
+  bool blocking =  workflow_job_monitor_get_blocking(monitor);
+  pid_t pid = util_fork_exec( job->executable ,
                   stringlist_get_size( arg ),
                   (const char **) argv , 
-                  true ,
+                  blocking ,
                   NULL , 
                   NULL , 
                   NULL , 
                   NULL , 
                   NULL );
-  
-  
+  if(!blocking){
+      workflow_job_monitor_set_pid(monitor, pid);
+      waitpid(pid , NULL , 0);
+  }
   if (argv != NULL) {
     int i;
     for (i=0; i < stringlist_get_size( arg ); i++)
@@ -357,9 +364,9 @@ static void * workflow_job_run_external( const workflow_job_type * job  , bool v
 }
 
 
-void * workflow_job_run( const workflow_job_type * job , void * self , bool verbose , const stringlist_type * arg) {
+void * workflow_job_run( const workflow_job_type * job,workflow_job_monitor_type * monitor, void * self , bool verbose , const stringlist_type * arg) {
   if (job->internal)
-    return workflow_job_run_internal( job , self , verbose , arg );
+    return workflow_job_run_internal( job, monitor, self, verbose, arg );
   else
-    return workflow_job_run_external( job , verbose , arg );
+    return workflow_job_run_external( job, monitor, verbose, arg );
 }

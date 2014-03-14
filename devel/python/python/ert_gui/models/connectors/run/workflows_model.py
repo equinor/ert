@@ -1,3 +1,4 @@
+from ert.enkf.ert_workflow_list_handler import ErtWorkflowListHandler
 from ert_gui.models import ErtConnector
 from ert_gui.models.mixins import ChoiceModelMixin
 from ert_gui.models.mixins.list_model import ListModelMixin
@@ -25,10 +26,11 @@ class WorkflowsModel(ErtConnector, ListModelMixin, ChoiceModelMixin):
         self.observable().notify(self.CURRENT_CHOICE_CHANGED_EVENT)
 
 
-    def startWorkflow(self):
-        # self.ert().getWorkflowList().setVerbose(True)
+    def createWorkflowRunner(self):
         workflow_name = self.getCurrentChoice()
-        return self.ert().getWorkflowList().runWorkflow(workflow_name)
+        workflow_list = self.ert().getWorkflowList()
+        enkf_main_pointer = workflow_list.parent().from_param(workflow_list.parent())
+        return ErtWorkflowListHandler(workflow_list, workflow_name, enkf_main_pointer)
 
 
     def getError(self):
