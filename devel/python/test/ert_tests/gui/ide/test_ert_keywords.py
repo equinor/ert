@@ -171,7 +171,7 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("ARG_TYPE", [StringArgument], "keywords/arg_type", "Workflow Jobs")
         self.keywordTest("LOAD_WORKFLOW_JOB", [StringArgument], "keywords/load_workflow_job", "Workflow Jobs")
         self.keywordTest("WORKFLOW_JOB_DIRECTORY", [PathArgument], "keywords/workflow_job_directory", "Workflow Jobs")
-        self.keywordTest("LOAD_WORKFLOW", [PathArgument], "keywords/load_workflow", "Workflow Jobs")
+        self.keywordTest("LOAD_WORKFLOW", [PathArgument, StringArgument], "keywords/load_workflow", "Workflow Jobs")
 
     def test_qc_keywords(self):
         self.keywordTest("QC_WORKFLOW", [StringArgument], "keywords/qc_workflow", "Quality Check")
