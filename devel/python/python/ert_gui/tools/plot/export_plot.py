@@ -13,19 +13,17 @@
 #
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
+import os
+from PyQt4.QtCore import QSize, QSizeF, Qt, QStringList, QFileInfo
+from PyQt4.QtGui import QPrinter, QImage, QPainter, QFileDialog, QApplication, QCursor
 
-
-from PyQt4.QtCore import QSize, QSizeF, Qt, QStringList
-from PyQt4.QtGui import QPrinter, QImage, QPainter, QFileDialog, QWidget, QHBoxLayout, QLabel, QApplication, QCursor
-
-from ert.util import ctime
 from ert_gui.models.connectors.plot.plot_settings import PlotSettingsModel
 from ert_gui.tools.plot.plot_bridge import PlotWebPage, PlotBridge
 from ert_gui.tools.plot.plot_panel import PlotPanel
 
 
 class ExportPlot(object):
-    def __init__(self, active_plot_panel, settings, custom_settings):
+    def __init__(self, active_plot_panel, settings, custom_settings, path=None):
         super(ExportPlot, self).__init__()
         assert isinstance(active_plot_panel, PlotPanel)
         self.__active_plot_panel = active_plot_panel
@@ -43,10 +41,14 @@ class ExportPlot(object):
         self.__height = self.__plot_bridge_org.getPrintHeight() + 20
         self.__file_name = None
         self.__selected_file_type = None
+        self.__path = path
 
 
     def export(self):
-        default_export_path = PlotSettingsModel().getDefaultPlotPath()
+        if self.__path is not None:
+            default_export_path = self.__path
+        else:
+            default_export_path = PlotSettingsModel().getDefaultPlotPath()
 
         dialog = QFileDialog(self.__active_plot_panel)
         dialog.setFileMode(QFileDialog.AnyFile)
@@ -63,10 +65,13 @@ class ExportPlot(object):
             result = dialog.selectedFiles()
             assert isinstance(result, QStringList)
             if len(result) == 1:
-                self.__file_name = result[0]
+                file_info = QFileInfo(result[0])
+                self.__file_name = file_info.fileName()
+                self.__path = file_info.path()
                 self.__selected_file_type = dialog.selectedNameFilter()
             name = self.__active_plot_panel.getName()
             url = self.__active_plot_panel.getUrl()
+
 
             web_page = PlotWebPage("export - %s" % name)
             web_page.mainFrame().setScrollBarPolicy(Qt.Vertical, Qt.ScrollBarAlwaysOff)
@@ -88,16 +93,17 @@ class ExportPlot(object):
 
 
     def performExport(self):
+        file_name = os.path.join(str(self.__path), str(self.__file_name))
         view = self.__bridge.getPage()
         if not self.__file_name.isEmpty():
             if str(self.__selected_file_type) == "PDF (*.pdf)":
-                if not str(self.__file_name).endswith(".pdf"):
-                    self.__file_name=str(self.__file_name) + ".pdf"
-                self.exportPDF(view, self.__file_name, self.__width, self.__height)
+                if not file_name.endswith(".pdf"):
+                    file_name += ".pdf"
+                self.exportPDF(view, file_name, self.__width, self.__height)
             elif str(self.__selected_file_type) == "Image (*.png)":
-                if not str(self.__file_name).endswith(".png"):
-                    self.__file_name=str(self.__file_name) + ".png"
-                self.exportPNG(view, self.__file_name, self.__width, self.__height)
+                if not file_name.endswith(".png"):
+                    file_name += ".png"
+                self.exportPNG(view, file_name, self.__width, self.__height)
 
 
     def exportPDF(self, view, file_name, width, height):
@@ -137,3 +143,6 @@ class ExportPlot(object):
         name = type + " " + name + ".png"
 
         return name
+
+    def getCurrentPath(self):
+        return self.__path

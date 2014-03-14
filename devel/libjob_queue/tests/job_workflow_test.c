@@ -30,6 +30,7 @@
 #include <ert/job_queue/workflow.h>
 #include <ert/job_queue/workflow_job.h>
 #include <ert/job_queue/workflow_joblist.h>
+#include <ert/job_queue/workflow_job_monitor.h>
 
 
 void create_workflow( const char * workflow_file , const char * tmp_file , int value) {
@@ -135,7 +136,9 @@ int main( int argc , char ** argv) {
       
       {
         bool runOK;
-        runOK = workflow_run( workflow , &read_value , false , NULL);
+        workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
+        runOK = workflow_run( workflow , monitor, &read_value , false , NULL);
+        workflow_job_monitor_free(monitor);
         if (runOK) {
           if (int_value != read_value)
             test_error_exit("Wrong numeric value read back \n");
@@ -155,6 +158,7 @@ int main( int argc , char ** argv) {
             test_assert_int_equal( workflow_get_stack_size( workflow ) , 0 );
             
             free( return_value );
+
           }
 
           
@@ -182,9 +186,10 @@ int main( int argc , char ** argv) {
     create_workflow( workflow_file , tmp_file , int_value );
     workflow = workflow_alloc(workflow_file , joblist );
     unlink( workflow_file );
-
-    test_assert_false( workflow_run( workflow , &read_value , false , NULL) );
+     workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
+    test_assert_false( workflow_run( workflow , monitor, &read_value , false , NULL) );
     test_assert_int_equal( workflow_get_stack_size( workflow ) , 0 );
+    workflow_job_monitor_free(monitor);
   }
   test_work_area_free( work_area );
   exit(0);
