@@ -38,10 +38,9 @@ void test_mount() {
 
   test_assert_false( enkf_fs_exists( "mnt" ));
   enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL );
-  bool read_only           = false;
   test_assert_true( enkf_fs_exists( "mnt" ));
   {
-    enkf_fs_type * fs = enkf_fs_mount( "mnt" , read_only );
+    enkf_fs_type * fs = enkf_fs_mount( "mnt"  );
     test_assert_true( util_file_exists("mnt/mnt.lock"));
     test_assert_true( enkf_fs_is_instance( fs ));
     enkf_fs_decref( fs );
@@ -57,7 +56,7 @@ void test_refcount() {
   
   enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL );
   {
-    enkf_fs_type * fs = enkf_fs_mount( "mnt" , false );
+    enkf_fs_type * fs = enkf_fs_mount( "mnt" );
     test_assert_int_equal( 1 , enkf_fs_get_refcount( fs ));
     enkf_fs_decref( fs );
   }
@@ -69,7 +68,7 @@ void createFS() {
   pid_t pid = fork();
 
   if (pid == 0) {
-    enkf_fs_type * fs_false = enkf_fs_mount( "mnt" , false );
+    enkf_fs_type * fs_false = enkf_fs_mount( "mnt" );
     test_assert_false(enkf_fs_is_read_only(fs_false));
     test_assert_true( util_file_exists("mnt/mnt.lock"));
     {
@@ -121,7 +120,7 @@ void test_read_only2() {
   }
   
   {
-    enkf_fs_type * fs_false = enkf_fs_mount( "mnt" , false );
+    enkf_fs_type * fs_false = enkf_fs_mount( "mnt" );
     test_assert_true(enkf_fs_is_read_only(fs_false));
     test_assert_util_abort( "enkf_fs_fwrite_node" , test_fwrite_readonly , fs_false );
     enkf_fs_decref( fs_false );
@@ -140,27 +139,6 @@ void test_read_only2() {
 
 
 
-void test_read_only1() {
-  test_work_area_type * work_area = test_work_area_alloc("enkf_fs/read_only");
-
-  enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL );
-  {
-    {
-      enkf_fs_type * fs_false = enkf_fs_mount( "mnt" , false );
-      test_assert_false(enkf_fs_is_read_only(fs_false));
-      test_assert_true( util_file_exists("mnt/mnt.lock"));
-      enkf_fs_decref( fs_false );
-    }
-
-    {
-      enkf_fs_type * fs_true = enkf_fs_mount( "mnt" , true );
-      test_assert_true(enkf_fs_is_read_only(fs_true));
-      test_assert_false( util_file_exists("mnt/mnt.lock"));
-      enkf_fs_decref( fs_true );
-    }
-  }
-  test_work_area_free( work_area );
-}
 
 
 
@@ -168,7 +146,6 @@ void test_read_only1() {
 int main(int argc, char ** argv) {
   test_mount();
   test_refcount();
-  test_read_only1();
   test_read_only2();
   exit(0);
 }

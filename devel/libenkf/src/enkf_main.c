@@ -1863,7 +1863,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
     if (enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL, iter))
       enkf_main_run_post_workflow(enkf_main);
     {
-      enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true );
+      enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , true );
       bool update_done = enkf_main_smoother_update( enkf_main , target_fs );
 
       if (rerun) { 
@@ -1895,7 +1895,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
     fprintf(stderr,"Sorry: the updated ensemble will overwrite the current case in the iterated ensemble smoother.");
     updateOK = enkf_main_smoother_update__(enkf_main , step_list , enkf_main_get_fs(enkf_main));
   } else {
-    enkf_fs_type * target_fs     = enkf_main_mount_alt_fs(enkf_main , target_fs_name , false , true );
+    enkf_fs_type * target_fs     = enkf_main_mount_alt_fs(enkf_main , target_fs_name , true );
     updateOK = enkf_main_smoother_update__(enkf_main , step_list , target_fs );
     enkf_main_set_fs(enkf_main , target_fs , NULL);
     cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
@@ -1927,7 +1927,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2)
 
 
     if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
-      enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , false , true);
+      enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , true);
       enkf_main_init_case_from_existing(enkf_main, current_case, 0, ANALYZED, initial_case);
       
       // Currently does nothing; 

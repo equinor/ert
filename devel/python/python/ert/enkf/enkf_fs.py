@@ -19,8 +19,8 @@ from ert.enkf.enums import EnKFFSType
 
 
 class EnkfFs(BaseCClass):
-    def __init__(self, mount_point, read_only=False):
-        c_ptr = EnkfFs.cNamespace().mount(mount_point, read_only)
+    def __init__(self, mount_point):
+        c_ptr = EnkfFs.cNamespace().mount(mount_point)
         super(EnkfFs, self).__init__(c_ptr)
 
         self.__umounted = False # Keep track of umounting so we only do it once
@@ -63,9 +63,6 @@ class EnkfFs(BaseCClass):
         self.__checkIfUmounted()
         return EnkfFs.cNamespace().is_read_only(self)
 
-    def setWritable(self):
-        self.__checkIfUmounted()
-        EnkfFs.cNamespace().set_writable(self)
 
     def refCount(self):
         self.__checkIfUmounted()
@@ -101,7 +98,7 @@ cwrapper.registerType("enkf_fs", EnkfFs)
 cwrapper.registerType("enkf_fs_obj", EnkfFs.createPythonObject)
 cwrapper.registerType("enkf_fs_ref", EnkfFs.createCReference)
 
-EnkfFs.cNamespace().mount = cwrapper.prototype("c_void_p enkf_fs_mount(char* , bool)")
+EnkfFs.cNamespace().mount = cwrapper.prototype("c_void_p enkf_fs_mount(char* )")
 EnkfFs.cNamespace().create = cwrapper.prototype("void enkf_fs_create_fs(char* , enkf_fs_type_enum , c_void_p)")
 EnkfFs.cNamespace().decref = cwrapper.prototype("int enkf_fs_decref(enkf_fs)")
 EnkfFs.cNamespace().get_refcount = cwrapper.prototype("int enkf_fs_get_refcount(enkf_fs)")
@@ -113,4 +110,3 @@ EnkfFs.cNamespace().get_time_map = cwrapper.prototype("time_map_ref enkf_fs_get_
 EnkfFs.cNamespace().exists = cwrapper.prototype("bool enkf_fs_exists(char*)")
 EnkfFs.cNamespace().get_case_name = cwrapper.prototype("char* enkf_fs_get_case_name(enkf_fs)")
 EnkfFs.cNamespace().is_read_only = cwrapper.prototype("bool enkf_fs_is_read_only(enkf_fs)")
-EnkfFs.cNamespace().set_writable = cwrapper.prototype("void enkf_fs_set_writable(enkf_fs)")
