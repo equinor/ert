@@ -68,6 +68,7 @@ class PlotWindow(QMainWindow):
         plot_data_fetcher = PlotDataFetcher()
         data_key = self.__plot_metrics_widget.getDataKeyType()
         plot_data = plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases)
+        plot_data.setParent(self)
 
         for plot_panel in self.__plot_panels:
             if plot_panel.isPlotVisible():
