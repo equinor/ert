@@ -31,7 +31,7 @@ class PcaPlotVector(BaseCClass):
             cur += 1
 
     def getObservation(self):
-        """ @rtype: double """
+        """ @rtype: float """
         return PcaPlotVector.cNamespace().get_obs(self)
 
     def free(self):

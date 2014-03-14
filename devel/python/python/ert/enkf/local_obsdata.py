@@ -4,10 +4,10 @@ from ert.enkf import ENKF_LIB, LocalObsdataNode
 
 class LocalObsdata(BaseCClass):
 
-    def __init__(self, obs_key):
-        assert isinstance(obs_key, str)
+    def __init__(self, name):
+        assert isinstance(name, str)
 
-        c_pointer = LocalObsdata.cNamespace().alloc(obs_key)
+        c_pointer = LocalObsdata.cNamespace().alloc(name)
         super(LocalObsdata, self).__init__(c_pointer)
 
     def __len__(self):
@@ -27,9 +27,11 @@ class LocalObsdata(BaseCClass):
            cur += 1
 
     def addNode(self, node):
+        """ @rtype: bool """
         assert isinstance(node, LocalObsdataNode)
         node.convertToCReference(self)
         already_exists_node_for_key = LocalObsdata.cNamespace().add_node(self, node)
+        return already_exists_node_for_key
 
     def __contains__(self, item):
         """ @rtype: bool """
