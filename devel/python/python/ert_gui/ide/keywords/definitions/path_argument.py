@@ -26,7 +26,7 @@ class PathArgument(ArgumentDefinition):
 
         token = PathArgument.substituteDefines(token)
 
-        if not os.path.exists(token):
+        if self.__must_exist and not os.path.exists(token):
             validation_status.setFailed()
             validation_status.addToMessage(PathArgument.PATH_DOES_NOT_EXIST)
 

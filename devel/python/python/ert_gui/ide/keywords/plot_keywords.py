@@ -108,7 +108,7 @@ class PlotKeywords(object):
 
     def addPlotPath(self):
         plot_path = ConfigurationLineDefinition(keyword=KeywordDefinition("PLOT_PATH"),
-                                                arguments=[PathArgument()],
+                                                arguments=[PathArgument(must_exist=False)],
                                                 documentation_link="keywords/plot_path",
                                                 required=False,
                                                 group=self.group)

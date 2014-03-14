@@ -57,7 +57,7 @@ class RunKeywords(object):
 
     def addRunpath(self):
         runpath = ConfigurationLineDefinition(keyword=KeywordDefinition("RUNPATH"),
-                                                  arguments=[PathArgument()],
+                                                  arguments=[PathArgument(must_exist=False)],
                                                   documentation_link="keywords/runpath",
                                                   required=False,
                                                   group=self.group)
