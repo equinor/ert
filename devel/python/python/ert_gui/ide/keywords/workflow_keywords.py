@@ -108,7 +108,7 @@ class WorkflowKeywords(object):
 
     def addLoadWorkflow(self):
         load_workflow = ConfigurationLineDefinition(keyword=KeywordDefinition("LOAD_WORKFLOW"),
-                                                        arguments=[PathArgument()],
+                                                        arguments=[PathArgument(), StringArgument(optional=True)],
                                                         documentation_link="keywords/load_workflow",
                                                         required=False,
                                                         group=self.group)
