@@ -16,8 +16,8 @@
 #  for more details.
 from ert.ecl import EclGrid
 from ert.enkf.data import EnkfConfigNode
-from ert.enkf.ensemble_data import PlotBlockData
-from ert.enkf.ensemble_data.plot_block_vector import PlotBlockVector
+from ert.enkf.plot_data import PlotBlockData
+from ert.enkf.plot_data.plot_block_vector import PlotBlockVector
 from ert.enkf.enums import EnkfTruncationType, EnkfObservationImplementationType
 from ert.enkf.observations import ObsVector
 
