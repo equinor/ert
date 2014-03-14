@@ -91,6 +91,19 @@ void createFS() {
     enkf_fs_decref( fs_false );
     exit(0);
   } 
+  usleep(10000);
+}
+
+
+void test_fwrite_readonly( void * arg ) {
+  enkf_fs_type * fs = enkf_fs_safe_cast( arg );
+  /* 
+     The arguments here are completely bogus; the important thing is
+     that this fwrite call should be intercepted by a util_abort()
+     call (which is again intercepted by the testing function) before
+     the argument are actually accessed. 
+  */
+  enkf_fs_fwrite_node( fs , NULL , "KEY" , PARAMETER , 100 , 1 , FORECAST );
 }
 
 
@@ -110,6 +123,7 @@ void test_read_only2() {
   {
     enkf_fs_type * fs_false = enkf_fs_mount( "mnt" , false );
     test_assert_true(enkf_fs_is_read_only(fs_false));
+    test_assert_util_abort( "enkf_fs_fwrite_node" , test_fwrite_readonly , fs_false );
     enkf_fs_decref( fs_false );
   }
   {
