@@ -56,6 +56,7 @@ struct ert_workflow_list_handler_data_struct{
      bool                          running;
      bool                          killed;
      pthread_t                     tid;
+     bool                          isExternalWorkflow;
 };
 
 void * ert_workflow_list_handler_workflowthread(void *arg){
@@ -102,11 +103,13 @@ void ert_workflow_list_handler_stop_workflow(ert_workflow_list_handler_data_type
       pid_t handler_pid = getpid();
       if (thread_pid == handler_pid){
          pthread_cancel(tdata->tid);
+         tdata->isExternalWorkflow = false;
       }else{
           pid_t pid = workflow_job_monitor_get_pid(tdata->monitor);
           kill(pid, SIGTERM);
           sleep(2);
           kill(pid, SIGKILL);
+          tdata->isExternalWorkflow = true;
       }
       tdata->result = false;
       tdata->killed = true;
@@ -130,4 +133,7 @@ bool ert_workflow_list_handler_read_result(const ert_workflow_list_handler_data_
   return tdata->result;
 }
 
+bool ert_workflow_list_handler_is_external_workflow(const ert_workflow_list_handler_data_type *tdata){
+    return tdata->isExternalWorkflow;
+}
 
