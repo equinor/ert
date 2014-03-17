@@ -5,6 +5,7 @@ set(PYTHON_SOURCES
     button.py
     check_list.py
     checkbox.py
+    confirm_dialog.py
     closable_dialog.py
     cogwheel.py
     combo_choice.py
@@ -29,6 +30,7 @@ set(PYTHON_SOURCES
     util.py
     validated_dialog.py
     warning_panel.py
+    workflow_dialog.py
 )
 
 add_python_package("python.ert_gui.widgets"  ${PYTHON_INSTALL_PREFIX}/ert_gui/widgets "${PYTHON_SOURCES}" True)
