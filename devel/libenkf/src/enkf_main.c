@@ -1377,8 +1377,8 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       if (target_state_map != source_state_map) {
         state_map_set_from_inverted_mask( target_state_map , ens_mask , STATE_PARENT_FAILURE);
         state_map_set_from_mask( target_state_map , ens_mask , STATE_INITIALIZED );
-        enkf_fs_fsync( target_fs );
-      }
+      enkf_fs_fsync( target_fs );
+    }
     }
     bool_vector_free( ens_mask );
     int_vector_free( ens_active_list );
@@ -2449,20 +2449,19 @@ void enkf_main_update_node( enkf_main_type * enkf_main , const char * key ) {
 }
 
 
-// NOTE KF 20130628: This is commented out, because I don't think it is used, but we'll give it some time
-//
-///**
-//   When the case has changed it is essential to invalidate the meta
-//   information in the enkf_nodes, otherwise the nodes might reuse old
-//   data (from a previous case).
-//*/
-//
-//static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
-//  int ens_size = enkf_main_get_ensemble_size( enkf_main );
-//  int iens;
-//  for (iens = 0; iens < ens_size; iens++)
-//    enkf_state_invalidate_cache( enkf_main->ensemble[iens] );
-//}
+
+/*
+ When the case has changed it is essential to invalidate the meta
+ information in the enkf_nodes, otherwise the nodes might reuse old
+ data (from a previous case).
+*/
+
+static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
+  int ens_size = enkf_main_get_ensemble_size( enkf_main );
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    enkf_state_invalidate_cache( enkf_main->ensemble[iens] );
+}
 
 
 /*
