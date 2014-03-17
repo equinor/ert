@@ -376,6 +376,7 @@ void bootstrap_enkf_data_free( void * arg ) {
     std_enkf_data_free( boot_data->std_enkf_data );
     cv_enkf_data_free( boot_data->cv_enkf_data );
   }
+  free( boot_data );
 }
 
 

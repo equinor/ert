@@ -540,8 +540,10 @@ analysis_iter_config_type * analysis_config_get_iter_config( const analysis_conf
 void analysis_config_free(analysis_config_type * config) {
   analysis_iter_config_free( config->iter_config );
   hash_free( config->analysis_modules );
-  free(config->log_path);
-  free(config);
+  free( config->log_path );
+  free( config->PC_filename );
+  free( config->PC_path );
+  free( config );
 }
 
 

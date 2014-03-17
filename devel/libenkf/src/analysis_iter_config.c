@@ -86,6 +86,7 @@ analysis_iter_config_type * analysis_iter_config_alloc() {
 void analysis_iter_config_free( analysis_iter_config_type * config ) {
   util_safe_free( config->case_fmt );
   stringlist_free( config->storage );
+  util_safe_free( config );
 }
 
 

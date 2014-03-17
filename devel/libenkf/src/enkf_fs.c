@@ -668,6 +668,7 @@ static void enkf_fs_umount( enkf_fs_type * fs ) {
       state_map_free( fs->state_map );
       time_map_free( fs->time_map );
       cases_config_free( fs->cases_config );
+      misfit_ensemble_free( fs->misfit_ensemble );
       free( fs );
     } else
       util_abort("%s: internal fuckup - tried to umount a filesystem with refcount:%d\n",__func__ , refcount);

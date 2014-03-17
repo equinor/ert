@@ -114,6 +114,7 @@ void cv_enkf_data_free( void * arg ) {
     matrix_safe_free( cv_data->Rp );
     matrix_safe_free( cv_data->Dp );
   }
+  free( cv_data );
 }
 
 
