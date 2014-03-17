@@ -72,7 +72,7 @@ void test_read_only() {
 }
 
 
-void create_and_initalize_case(enkf_main_type * enkf_main, const char * new_case) {
+void create_and_initalize_case(enkf_main_type * enkf_main, const char * new_case, const char * param) {
 
   enkf_fs_type * initialized_case = enkf_main_mount_alt_fs(enkf_main, new_case, false, true);
   enkf_main_set_fs(enkf_main, initialized_case, NULL);
@@ -80,10 +80,24 @@ void create_and_initalize_case(enkf_main_type * enkf_main, const char * new_case
 
   int ens_size = enkf_main_get_ensemble_size(enkf_main);
   stringlist_type * param_list = stringlist_alloc_new();
-  stringlist_append_copy(param_list, "MULTFLT");
+  stringlist_append_copy(param_list, param);
   enkf_main_initialize_from_scratch(enkf_main, param_list, 0, ens_size-1, INIT_FORCE);
 
   enkf_fs_decref(initialized_case);
+}
+
+double get_gen_kw_node_value(enkf_main_type * enkf_main, const char * param, int iens, int index) {
+  enkf_state_type * enkf_state = enkf_main_iget_state(enkf_main, iens);
+  enkf_node_type * gen_kw_node = enkf_state_get_node(enkf_state, param);
+  test_assert_not_NULL(gen_kw_node);
+
+  node_id_type node_id = {.report_step = 0 ,
+                          .iens = iens,
+                          .state = ANALYZED };
+
+  test_assert_true(enkf_node_try_load(gen_kw_node, enkf_main_get_fs(enkf_main), node_id));
+  gen_kw_type * kw_case1 = enkf_node_value_ptr(gen_kw_node);
+  return gen_kw_data_iget( kw_case1 , index , false );
 }
 
 
@@ -93,8 +107,10 @@ void test_invalidate_cache(ert_test_context_type * test_context) {
 
   const char * case1 = "test_case1";
   const char * case2 = "test_case2";
-  create_and_initalize_case(enkf_main, case1);
-  create_and_initalize_case(enkf_main, case2);
+  const char * param = "MULTFLT";
+
+  create_and_initalize_case(enkf_main, case1, param);
+  create_and_initalize_case(enkf_main, case2, param);
 
   int ensemble_size = enkf_main_get_ensemble_size(enkf_main);
 
@@ -103,35 +119,13 @@ void test_invalidate_cache(ert_test_context_type * test_context) {
     double val1;
     double val2;
 
-    node_id_type node_id = {.report_step = 0 ,
-                            .iens = iens,
-                            .state = ANALYZED };
+    enkf_main_select_fs(enkf_main, case1);
+    test_assert_string_equal(enkf_main_get_current_fs(enkf_main),  case1);
+    val1 = get_gen_kw_node_value(enkf_main, param, iens, 0);
 
-    {
-      enkf_main_select_fs(enkf_main, case1);
-      test_assert_string_equal(enkf_main_get_current_fs(enkf_main),  case1);
-
-      enkf_state_type * enkf_state = enkf_main_iget_state(enkf_main, iens);
-      enkf_node_type * gen_kw_node = enkf_state_get_node(enkf_state, "MULTFLT");
-      test_assert_not_NULL(gen_kw_node);
-
-      test_assert_true(enkf_node_try_load(gen_kw_node, enkf_main_get_fs(enkf_main), node_id));
-      gen_kw_type * kw_case1 = enkf_node_value_ptr(gen_kw_node);
-      val1 = gen_kw_data_iget( kw_case1 , 0 , false );
-    }
-
-    {
-      enkf_main_select_fs(enkf_main, case2);
-      test_assert_string_equal(enkf_main_get_current_fs(enkf_main),  case2);
-
-      enkf_state_type * enkf_state = enkf_main_iget_state(enkf_main, iens);
-      enkf_node_type * gen_kw_node = enkf_state_get_node(enkf_state, "MULTFLT");
-      test_assert_not_NULL(gen_kw_node);
-
-      test_assert_true(enkf_node_try_load(gen_kw_node, enkf_main_get_fs(enkf_main), node_id));
-      gen_kw_type * kw_case2 = enkf_node_value_ptr(gen_kw_node);
-      val2 = gen_kw_data_iget( kw_case2, 0 , false );
-    }
+    enkf_main_select_fs(enkf_main, case2);
+    test_assert_string_equal(enkf_main_get_current_fs(enkf_main),  case2);
+    val2 = get_gen_kw_node_value(enkf_main, param, iens, 0);
 
     test_assert_double_not_equal(val1, val2);
     printf("Realization nr %d: MULTFLT value from test_case 1 is %f, MULTFLT value from test_case2 is %f\n", iens+1, val1, val2);
