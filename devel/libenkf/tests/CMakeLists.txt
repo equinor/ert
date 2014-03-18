@@ -84,7 +84,11 @@ add_test( enkf_main_fs_current_file_test  ${EXECUTABLE_OUTPUT_PATH}/enkf_main_fs
 
 add_executable( enkf_fs enkf_fs.c )
 target_link_libraries( enkf_fs enkf test_util )
-add_test( enkf_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config)
+add_test( enkf_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_fs )
+
+add_executable( enkf_fs_invalidate_cache enkf_fs_invalidate_cache.c )
+target_link_libraries( enkf_fs_invalidate_cache enkf test_util )
+add_test( enkf_fs_invalidate_cache ${EXECUTABLE_OUTPUT_PATH}/enkf_fs_invalidate_cache ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config)
 
 add_executable( enkf_ert_test_context enkf_ert_test_context.c )
 target_link_libraries( enkf_ert_test_context enkf test_util )
@@ -399,3 +403,4 @@ set_property( TEST enkf_plot_blockdata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_block_obs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_plot_gendata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_export_inactive_cells PROPERTY LABELS StatoilData )
+set_property( TEST enkf_fs_invalidate_cache PROPERTY LABELS StatoilData )
