@@ -29,7 +29,7 @@
 
 void create_and_initalize_case(enkf_main_type * enkf_main, const char * new_case, const char * param) {
 
-  enkf_fs_type * initialized_case = enkf_main_mount_alt_fs(enkf_main, new_case, false, true);
+  enkf_fs_type * initialized_case = enkf_main_mount_alt_fs(enkf_main, new_case, true );
   enkf_main_set_fs(enkf_main, initialized_case, NULL);
   test_assert_string_equal(enkf_main_get_current_fs(enkf_main), enkf_fs_get_case_name(initialized_case));
 
