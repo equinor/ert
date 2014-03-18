@@ -105,7 +105,7 @@ void * enkf_main_analysis_update_JOB( void * self , const stringlist_type * args
     if (strcmp( target_fs_name , CURRENT_CASE_STRING) == 0)
       target_fs = enkf_main_get_fs( enkf_main );
     else {
-      target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true);
+      target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , true);
       decrease_ref = true;
     }
   } else
@@ -265,7 +265,7 @@ void * enkf_main_select_case_JOB( void * self , const stringlist_type * args) {
 void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
   const char * new_case = stringlist_iget( args , 0 );
-  enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , new_case , false , true );
+  enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , new_case , true );
   enkf_fs_decref( fs );
   return NULL;
 }
@@ -276,7 +276,7 @@ void * enkf_main_init_case_from_existing_JOB( void * self , const stringlist_typ
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
 
   const char * source_case = stringlist_iget( args , 0 );
-  enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , false , true );
+  enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , true );
   {
     enkf_fs_type * target_fs;
 
@@ -284,7 +284,7 @@ void * enkf_main_init_case_from_existing_JOB( void * self , const stringlist_typ
       const char * current_case = enkf_main_get_current_fs(enkf_main);
       const char * target_case = stringlist_iget( args , 1 );
       if (0 != strcmp(current_case, target_case)) {
-        target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , false , true );
+        target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , true );
       } else
         target_fs = enkf_fs_get_ref( enkf_main_get_fs(enkf_main) );  // Using get_ref so that we can unconditionally call decref() further down.
     } else

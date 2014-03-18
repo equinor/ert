@@ -36,7 +36,7 @@ void test_load_GEN_KW( enkf_main_type * enkf_main , const char * key , const cha
   enkf_plot_data_type * plot_data = enkf_plot_data_alloc( config_node );
 
   {
-    enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "enkf" , true , false );
+    enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "enkf" , true );
 
     enkf_plot_data_load( plot_data , enkf_fs , index_key , ANALYZED , NULL );
     test_assert_int_equal( 25 , enkf_plot_data_get_size( plot_data ));
@@ -68,7 +68,7 @@ void test_load_summary( enkf_main_type * enkf_main , const char * summary_key) {
   enkf_plot_data_type * plot_data = enkf_plot_data_alloc( config_node );
   
   {
-    enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "enkf" , true , false );
+    enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "enkf" , true );
     enkf_plot_data_load( plot_data , enkf_fs , NULL , FORECAST , NULL );
     test_assert_int_equal( 25 , enkf_plot_data_get_size( plot_data ));
     {
@@ -81,7 +81,7 @@ void test_load_summary( enkf_main_type * enkf_main , const char * summary_key) {
   }
   
   {
-    enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "default" , true , false );
+    enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "default" , true  );
     enkf_plot_data_load( plot_data , enkf_fs , NULL , FORECAST , NULL );
     test_assert_int_equal( 25 , enkf_plot_data_get_size( plot_data ));
     {

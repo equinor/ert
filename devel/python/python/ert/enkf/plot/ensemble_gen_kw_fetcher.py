@@ -48,7 +48,7 @@ class EnsembleGenKWFetcher(DataFetcher):
     def fetchData(self, key, case=None):
         key, keyword = key.split(":")
         ensemble_config_node = self.getEnsembleConfigNode(key)
-        enkf_fs = self.ert().getEnkfFsManager().getFileSystem(case, read_only=True)
+        enkf_fs = self.ert().getEnkfFsManager().getFileSystem(case)
         ensemble_plot_gen_kw = EnsemblePlotGenKW(ensemble_config_node, enkf_fs)
         keyword_index = ensemble_plot_gen_kw.getIndexForKeyword(keyword)
 
