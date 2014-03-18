@@ -174,8 +174,8 @@ static void enkf_tui_fs_copy_ensemble__(
 
   {
     /* If the current target_case does not exist it is automatically created by the select_write_dir function */
-    enkf_fs_type * src_fs    = enkf_main_mount_alt_fs( enkf_main , source_case , true , false );
-    enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , false, true );
+    enkf_fs_type * src_fs    = enkf_main_mount_alt_fs( enkf_main , source_case , false );
+    enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , true );
     
     stringlist_type * nodes;
     
@@ -244,7 +244,7 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
   if (source_case != NULL) {                                              
     src_step                 = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
     src_state                = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
-    enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , true , false );
+    enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , false );
     enkf_main_init_current_case_from_existing(enkf_main, source_fs , src_step , src_state);
     enkf_fs_decref(source_fs);
   }
