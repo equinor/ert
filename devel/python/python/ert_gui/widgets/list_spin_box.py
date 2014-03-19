@@ -1,7 +1,6 @@
 import re
-from PyQt4 import QtGui
-from PyQt4.QtCore import QSize, QString, QStringList, Qt
-from PyQt4.QtGui import QSpinBox, QValidator, QLineEdit, QCompleter, QListView, QStringListModel, QScrollBar
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QSpinBox, QValidator, QLineEdit, QCompleter, QListView, QStringListModel
 from ert.util import ctime
 
 
@@ -13,8 +12,9 @@ class ListSpinBox(QSpinBox):
 
         self.__string_converter = str
         self.__items = items
-        list = QStringList()
-        for i,item in enumerate(self.__items):
+
+        list = []
+        for item in self.__items:
             assert isinstance(item, ctime)
             date = item.date()
             list.append(self.convertToString(date))
@@ -22,19 +22,22 @@ class ListSpinBox(QSpinBox):
         model = QStringListModel()
         model.setStringList(list)
 
-
         self.setRange(0, len(items) - 1)
         self.setValue(len(items) - 1)
-        line_edit = QLineEdit()
+
         self.__completer = QCompleter()
         self.__completer.setModel(model)
         self.__completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
 
         view = QListView()
-        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.__completer.setPopup(view)
+
+        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         view.setAlternatingRowColors(True)
         view.setMinimumWidth(90)
+
+
+        line_edit = QLineEdit()
         line_edit.setCompleter(self.__completer)
         line_edit.textEdited.connect(self.showCompleter)
         self.setLineEdit(line_edit)
