@@ -4,8 +4,9 @@ from PyQt4.QtGui import QWidget, QHBoxLayout, QLabel, QToolButton, QMovie, QVBox
 import time
 from ert_gui.models.connectors.run import WorkflowsModel
 from ert_gui.widgets import util
-from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice
+from ert_gui.widgets.confirm_dialog import ConfirmDialog
+from ert_gui.widgets.workflow_dialog import WorkflowDialog
 
 
 class RunWorkflowWidget(QWidget):
@@ -13,6 +14,7 @@ class RunWorkflowWidget(QWidget):
     workflowSucceeded = pyqtSignal()
     workflowFailed = pyqtSignal()
     workflowKilled = pyqtSignal()
+    reloadErtTriggered = pyqtSignal()
 
     def __init__(self):
         QWidget.__init__(self)
@@ -43,6 +45,7 @@ class RunWorkflowWidget(QWidget):
         self.setLayout(layout)
 
         self.__running_workflow_dialog = None
+        self.__confirm_stop_dialog = None
 
         self.workflowSucceeded.connect(self.workflowFinished)
         self.workflowFailed.connect(self.workflowFinishedWithFail)
@@ -76,15 +79,28 @@ class RunWorkflowWidget(QWidget):
 
         return widget
 
+    def confirmCancelWorkflow(self):
+        self.__confirm_stop_dialog = ConfirmDialog("Confirm stop","Ert might need to restart when a workflow is stopped - do you want to proceed?",self)
+        self.__confirm_stop_dialog.confirmButtonPressed.connect(self.cancelWorkflow)
+        self.__confirm_stop_dialog.show()
+
+
     def cancelWorkflow(self):
         if self.__workflow_runner.isRunning:
             self.__workflow_runner.cancelWorkflow()
+            self.__running_workflow_dialog.accept()
+            self.__confirm_stop_dialog.accept()
+            if not self.__workflow_runner.isExternalWorkflow():
+                #internal workflow we need to reload ERT to continue
+               self.reloadErtTriggered.emit()
+
+
 
 
     def startWorkflow(self):
-        self.__running_workflow_dialog = ClosableDialog("Running Workflow", self.createSpinWidget(), self)
+        self.__running_workflow_dialog = WorkflowDialog("Running Workflow", self.createSpinWidget(), self)
         #self.__running_workflow_dialog.disableCloseButton()
-        self.__running_workflow_dialog.accepted.connect(self.cancelWorkflow)
+        self.__running_workflow_dialog.closeButtonPressed.connect(self.confirmCancelWorkflow)
 
         workflow_thread = Thread(name="ert_gui_workflow_thread")
         workflow_thread.setDaemon(True)
@@ -104,7 +120,7 @@ class RunWorkflowWidget(QWidget):
             time.sleep(2)
 
         killed = self.__workflow_runner.isKilled()
-
+      
         if killed:
             self.workflowKilled.emit()
         else:

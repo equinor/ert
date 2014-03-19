@@ -43,6 +43,7 @@ bool ert_workflow_list_handler_is_running(const ert_workflow_list_handler_data_t
 void ert_workflow_list_handler_stop_workflow(ert_workflow_list_handler_data_type *tdata);
 void ert_workflow_list_handler_join_workflow(ert_workflow_list_handler_data_type *tdata);
 bool ert_workflow_list_handler_is_killed(const ert_workflow_list_handler_data_type *tdata);
+bool ert_workflow_list_handler_is_external_workflow(const ert_workflow_list_handler_data_type *tdata);
 
 #ifdef __cplusplus
 }
