@@ -79,14 +79,6 @@ OverviewPlot.prototype.setScales = function (x_min, x_max, y_min, y_max) {
     this.plot.setScales(x_min, x_max, y_min, y_max);
 };
 
-OverviewPlot.prototype.setYDomain = function (min_y, max_y) {
-    this.plot.setYDomain(min_y, max_y);
-};
-
-OverviewPlot.prototype.setXDomain = function (min_x, max_x) {
-    this.plot.setXDomain(min_x, max_x);
-};
-
 OverviewPlot.prototype.setData = function (data) {
     this.plot.setData(data);
 };

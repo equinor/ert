@@ -1,5 +1,5 @@
 from ert.enkf.plot import EnsembleDataFetcher, ObservationDataFetcher, RefcaseDataFetcher, BlockObservationDataFetcher, EnsembleGenKWFetcher, EnsembleGenDataFetcher, ObservationGenDataFetcher
-from ert.enkf.plot.ensemble_block_data_fetcher import EnsembleBlockDataFetcher
+from ert.enkf.plot import EnsembleBlockDataFetcher, PcaDataFetcher
 from ert_gui.tools.plot.data import PlotData, ObservationPlotData, EnsemblePlotData, RefcasePlotData, HistogramPlotDataFactory, ReportStepLessHistogramPlotDataFactory
 from ert_gui.models import ErtConnector
 from ert_gui.models.mixins import ModelMixin
@@ -30,7 +30,7 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
 
 
     def isSummaryKey(self, key):
-        ensemble_data_fetcher = EnsembleBlockDataFetcher(self.ert())
+        ensemble_data_fetcher = ObservationDataFetcher(self.ert())
         return ensemble_data_fetcher.supportsKey(key)
 
 
@@ -47,6 +47,10 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
     def isGenDataKey(self, key):
         obs_gen_data_fetcher = ObservationGenDataFetcher(self.ert())
         return obs_gen_data_fetcher.supportsKey(key)
+
+    def isPcaDataKey(self, key):
+        pca_data_fetcher = PcaDataFetcher(self.ert())
+        return pca_data_fetcher.supportsKey(key)
 
 
     def fetchGenData(self, gen_data_fetcher, key, cases):
@@ -100,11 +104,12 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
         plot_data = PlotData(key)
 
         data = block_observation_data_fetcher.fetchData(key)
-        block_observation_plot_data = ObservationPlotData(key)
-        selected_report_step_index = 0
 
         if len(data) > 0:
+            selected_report_step_index = 0
             data = data[selected_report_step_index]
+
+            block_observation_plot_data = ObservationPlotData(key)
             block_observation_plot_data.setObservationData(data["x"], data["y"], data["std"], False)
             block_observation_plot_data.updateBoundaries(data["min_x"], data["max_x"], data["min_y"], data["max_y"])
 
@@ -118,7 +123,15 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
                     ensemble_plot_data = EnsemblePlotData(key, case)
                     ensemble_plot_data.setEnsembleData(ensemble_data["x"], ensemble_data["y"], ensemble_data["min_x_values"], ensemble_data["max_x_values"])
                     ensemble_plot_data.updateBoundaries(ensemble_data["min_x"], ensemble_data["max_x"], ensemble_data["min_y"], ensemble_data["max_y"])
+
                     plot_data.addEnsembleData(ensemble_plot_data)
+
+
+            if plot_data.hasEnsembleData():
+                plot_data.setUserData("PCA", self.fetchPcaData(key, cases))
+            else:
+                plot_data.setUserData("PCA", PlotData("No ensemble data available for %s" % key))
+
 
         return plot_data
 
@@ -135,7 +148,6 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
         plot_data.setObservationData(observation_plot_data)
 
         histogram_factory.setObservations(observation_data["x"], observation_data["y"], observation_data["std"], observation_data["min_y"], observation_data["max_y"])
-
 
 
         refcase_data = RefcaseDataFetcher(self.ert()).fetchData(key)
@@ -156,7 +168,33 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
 
             histogram_factory.addEnsembleData(case, ensemble_data["x"], ensemble_data["y"], ensemble_data["min_y"], ensemble_data["max_y"])
 
+        if observation_plot_data.hasData():
+            plot_data.setUserData("PCA", self.fetchPcaData(key, cases))
+
         plot_data.setHistogramFactory(histogram_factory)
 
         return plot_data
 
+
+    def fetchPcaData(self, key, cases):
+        """ @rtype: PlotData """
+        pca_name ="PCA:%s" % key
+        pca_plot_data = PlotData(pca_name)
+
+        for case in cases:
+            pca_data = PcaDataFetcher(self.ert()).fetchData(key, case)
+
+            if pca_data["x"] is not None:
+
+                if not pca_plot_data.hasObservationData():
+                    pca_observation_plot_data = ObservationPlotData(pca_name)
+                    pca_observation_plot_data.setObservationData(pca_data["x"], pca_data["obs_y"], [0.0 for x in pca_data["x"]], False)
+                    pca_observation_plot_data.updateBoundaries(pca_data["min_x"], pca_data["max_x"], pca_data["min_y"], pca_data["max_y"])
+                    pca_plot_data.setObservationData(pca_observation_plot_data)
+
+                pca_ensemble_plot_data = EnsemblePlotData(key, case)
+                pca_ensemble_plot_data.setEnsembleData(pca_data["x"], pca_data["y"], [], [])
+                pca_ensemble_plot_data.updateBoundaries(pca_data["min_x"], pca_data["max_x"], pca_data["min_y"], pca_data["max_y"])
+                pca_plot_data.addEnsembleData(pca_ensemble_plot_data)
+
+        return pca_plot_data

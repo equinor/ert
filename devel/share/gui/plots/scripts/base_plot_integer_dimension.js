@@ -57,6 +57,9 @@ function BasePlotIntegerDimension(){
         return dimension;
     };
 
+    dimension.relabel = function (axis) {
+
+    };
 
     return dimension;
 }

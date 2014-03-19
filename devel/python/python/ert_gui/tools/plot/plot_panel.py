@@ -68,8 +68,8 @@ class PlotPanel(QWidget):
             self.__plot_bridge.updatePlotSize(size = self.size())
 
 
-    def supportsPlotProperties(self, time=False, value=False, depth=False, histogram=False):
-        return self.__plot_bridge.supportsPlotProperties(time, value, depth, histogram)
+    def supportsPlotProperties(self, time=False, value=False, depth=False, histogram=False, pca=False):
+        return self.__plot_bridge.supportsPlotProperties(time, value, depth, histogram, pca)
 
     def isPlotVisible(self):
         return self.__plot_is_visible
