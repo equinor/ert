@@ -98,7 +98,8 @@ ert_workflow_list_handler_data_type * ert_workflow_list_handler_alloc(){
 
 void ert_workflow_list_handler_stop_workflow(ert_workflow_list_handler_data_type *tdata){
   if(tdata->running){
-      tdata->running = false;
+      tdata->result = false;
+      tdata->killed = true;
       pid_t thread_pid = workflow_job_monitor_get_pid(tdata->monitor);
       pid_t handler_pid = getpid();
       if (thread_pid == handler_pid){
@@ -111,8 +112,7 @@ void ert_workflow_list_handler_stop_workflow(ert_workflow_list_handler_data_type
           kill(pid, SIGKILL);
           tdata->isExternalWorkflow = true;
       }
-      tdata->result = false;
-      tdata->killed = true;
+      tdata->running = false;
   }
 
 }
