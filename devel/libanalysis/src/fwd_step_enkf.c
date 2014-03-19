@@ -177,6 +177,7 @@ void fwd_step_enkf_data_free( void * arg ) {
       }
     }
   }
+  free( fwd_step_data );
 }
 
 

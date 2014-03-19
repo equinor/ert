@@ -79,7 +79,7 @@ class EnkfFsManager(BaseCClass):
         return os.path.join(mount_root, case_name)
 
 
-    def getFileSystem(self, case_name, mount_root=None, read_only=False):
+    def getFileSystem(self, case_name, mount_root=None):
         """
         @rtype: EnkfFs
         """
@@ -93,18 +93,12 @@ class EnkfFsManager(BaseCClass):
                 if self.__fs_rotator.atCapacity():
                     self.__fs_rotator.dropOldestFileSystem()
 
-                if read_only:
-                    raise IOError("Tried to access non existing filesystem: '%s' in read-only mode" % full_case_name)
-
                 EnkfFs.createFileSystem(full_case_name, self.__fs_type, self.__fs_arg)
 
-            new_fs = EnkfFs(full_case_name, read_only)
+            new_fs = EnkfFs(full_case_name)
             self.__fs_rotator.addFileSystem(new_fs, full_case_name)
 
         fs = self.__fs_rotator[full_case_name]
-
-        if fs.isReadOnly() and not read_only:
-            fs.setWritable()
 
         return fs
 

@@ -24,13 +24,13 @@
 <script src="libs/d3.v3.js"></script>
 <script src="scripts/styles.js"></script>
 <script src="scripts/base_plot.js"></script>
-<script src="scripts/base_plot_value_dimension.js"></script>
 <script src="scripts/base_plot_time_dimension.js"></script>
+<script src="scripts/base_plot_value_dimension.js"></script>
+<script src="scripts/base_plot_integer_dimension.js"></script>
 <script src="scripts/render_tracker.js"></script>
 <script src="scripts/canvas_plot.js"></script>
 <script src="scripts/canvas_plot_line.js"></script>
 <script src="scripts/canvas_plot_stippled_line.js"></script>
-
 <script src="scripts/canvas_plot_area.js"></script>
 <script src="scripts/canvas_error_bar.js"></script>
 <script src="scripts/canvas_plot_circle.js"></script>
@@ -53,7 +53,7 @@
     }
 
     function createPlot() {
-        plot = new Plot(d3.select("body"), BasePlotTimeDimension(), BasePlotValueDimension());
+        plot = new Plot(d3.select("body"), BasePlotIntegerDimension(), BasePlotValueDimension());
         plot.setRenderingFinishedCallback(function() {
             plot_data_source.renderingFinished();
         });
@@ -69,15 +69,15 @@
     }
 
     function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max) {
-        plot.setScales(time_min, time_max, value_min, value_max);
+        plot.setScales(index_min, index_max, value_min, value_max);
     }
 
     function setReportStepTime(report_step_time) {
         // Not supported by this plot
     }
 
-    function supportsPlotProperties(time, value, depth, index, histogram, pca){
-        return time && value && !depth;
+    function supportsPlotProperties(time, value, depth, index, histogram){
+        return index;
     }
 
     function getPrintWidth(){

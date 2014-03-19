@@ -905,6 +905,7 @@ void enkf_node_free(enkf_node_type *enkf_node) {
   if (enkf_node->freef != NULL)
     enkf_node->freef(enkf_node->data);
   free(enkf_node->node_key);
+  vector_free(enkf_node->container_nodes);
   free(enkf_node);
 }
 

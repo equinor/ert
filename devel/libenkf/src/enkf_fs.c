@@ -283,7 +283,7 @@ enkf_fs_type * enkf_fs_get_ref( enkf_fs_type * fs ) {
 }
 
 
-static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_only) {
+static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point ) {
   enkf_fs_type * fs          = util_malloc(sizeof * fs );
   UTIL_TYPE_ID_INIT( fs , ENKF_FS_TYPE_ID );
   fs->time_map               = time_map_alloc();
@@ -295,7 +295,7 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_
   fs->parameter              = NULL;
   fs->dynamic_forecast       = NULL;
   fs->dynamic_analyzed       = NULL;
-  fs->read_only              = read_only;
+  fs->read_only              = true;
   fs->mount_point            = util_alloc_string_copy( mount_point );
   fs->refcount               = 0;
   fs->lock_fd                = 0;
@@ -310,6 +310,13 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_
     fs->case_name = util_alloc_string_copy( path_tmp[path_len - 1]);
     fs->root_path = util_alloc_joined_string( (const char **) path_tmp , path_len , UTIL_PATH_SEP_STRING);
     fs->lock_file = util_alloc_filename( fs->mount_point , fs->case_name , "lock");
+
+    if (util_try_lockf( fs->lock_file , S_IWUSR + S_IWGRP , &fs->lock_fd)) {
+      fs->read_only = false;
+    } else {
+      fprintf(stderr," Another program has already opened filesystem read-write - this instance will be UNSYNCRONIZED read-only. Cross your fingers ....\n");
+      fs->read_only = true;
+    }
 
     util_free_stringlist( path_tmp , path_len );
   }
@@ -422,24 +429,15 @@ static void enkf_fs_assign_driver( enkf_fs_type * fs , fs_driver_type * driver ,
 }
 
 
-static enkf_fs_type *  enkf_fs_mount_block_fs( FILE * fstab_stream , const char * mount_point , bool read_only ) {
-  enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point , read_only );
-
-  if (!read_only) { //Lock on fs level
-    if (!util_try_lockf( fs->lock_file , S_IWUSR + S_IWGRP , &fs->lock_fd)) {
-      fprintf(stderr," Another program has already opened filesystem read-write - this instance will be UNSYNCRONIZED read-only. Cross your fingers ....\n");
-      fflush( stderr );
-      enkf_fs_set_writable(fs, false);
-      read_only = true;
-    }
-  }
-
+static enkf_fs_type *  enkf_fs_mount_block_fs( FILE * fstab_stream , const char * mount_point  ) {
+  enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point );
+  
   {
     int driver_nr;
     for (driver_nr = 0; driver_nr < 5; driver_nr++) {
       fs_driver_enum driver_type = util_fread_int( fstab_stream );
 
-      fs_driver_type * driver = block_fs_driver_open( fstab_stream , mount_point , driver_type , read_only);
+      fs_driver_type * driver = block_fs_driver_open( fstab_stream , mount_point , driver_type , fs->read_only);
       
       enkf_fs_assign_driver( fs , driver , driver_type );
     }
@@ -448,8 +446,8 @@ static enkf_fs_type *  enkf_fs_mount_block_fs( FILE * fstab_stream , const char 
 }
 
 
-static enkf_fs_type *  enkf_fs_mount_plain( FILE * fstab_stream , const char * mount_point , bool read_only ) {
-  enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point , read_only);
+static enkf_fs_type *  enkf_fs_mount_plain( FILE * fstab_stream , const char * mount_point ) {
+  enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point );
   {
     int driver_nr;
     for (driver_nr = 0; driver_nr < 5; driver_nr++) {
@@ -576,7 +574,7 @@ static void enkf_fs_fwrite_misfit( enkf_fs_type * fs ) {
 
 
 
-enkf_fs_type * enkf_fs_mount( const char * mount_point , bool read_only) {
+enkf_fs_type * enkf_fs_mount( const char * mount_point ) {
   FILE * stream = fs_driver_open_fstab( mount_point , false );
   
   if (stream != NULL) {
@@ -588,10 +586,10 @@ enkf_fs_type * enkf_fs_mount( const char * mount_point , bool read_only) {
     
       switch( driver_id ) {
       case( BLOCK_FS_DRIVER_ID ):
-        fs = enkf_fs_mount_block_fs( stream , mount_point , read_only );
+        fs = enkf_fs_mount_block_fs( stream , mount_point);
         break;
       case( PLAIN_DRIVER_ID ):
-        fs = enkf_fs_mount_plain( stream , mount_point , read_only );
+        fs = enkf_fs_mount_plain( stream , mount_point );
         break;
       default:
         util_abort("%s: unrecognized driver_id:%d \n",__func__ , driver_id );
@@ -668,6 +666,7 @@ static void enkf_fs_umount( enkf_fs_type * fs ) {
       state_map_free( fs->state_map );
       time_map_free( fs->time_map );
       cases_config_free( fs->cases_config );
+      misfit_ensemble_free( fs->misfit_ensemble );
       free( fs );
     } else
       util_abort("%s: internal fuckup - tried to umount a filesystem with refcount:%d\n",__func__ , refcount);

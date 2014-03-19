@@ -331,7 +331,7 @@ static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , 
 
 
 bool enkf_main_case_is_initialized( const enkf_main_type * enkf_main , const char * case_name ,  bool_vector_type * __mask) {
-  enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main , case_name , true , false);
+  enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main , case_name , false );
   if (fs) {
     bool initialized = enkf_main_case_is_initialized__(enkf_main , fs , __mask);
     enkf_fs_decref( fs );
@@ -474,14 +474,10 @@ const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
 */
 
 
-enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
+enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool create) {
   if (enkf_main_case_is_current( enkf_main , case_path )) {
     // Fast path - we just return a reference to the currently selected case;
     // with increased refcount.
-    if(!read_only) {
-      enkf_fs_type * fs = enkf_main->dbase;
-      enkf_fs_set_writable(fs, true);
-    }
     enkf_fs_incref( enkf_main->dbase );
     return enkf_main->dbase;
   } else {
@@ -495,7 +491,7 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
           enkf_main_create_fs( enkf_main , case_path );
       }
 
-      new_fs = enkf_fs_mount( new_mount_point , read_only );
+      new_fs = enkf_fs_mount( new_mount_point );
       free( new_mount_point );
     }
     return new_fs;
@@ -536,13 +532,16 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
 
 
 void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path /* Can be NULL */) {
-  enkf_fs_incref( fs );
-  
-  if (enkf_main->dbase)
-    enkf_fs_decref( enkf_main->dbase );
-  
-  enkf_main->dbase = fs;
-  enkf_main_update_current_case(enkf_main, case_path);
+  if (enkf_main->dbase != fs) {
+    enkf_fs_incref( fs );
+
+    if (enkf_main->dbase)
+      enkf_fs_decref( enkf_main->dbase );
+
+    enkf_main->dbase = fs;
+    enkf_main_invalidate_cache(enkf_main);
+    enkf_main_update_current_case(enkf_main, case_path);
+  }
 }
 
 
@@ -551,7 +550,7 @@ void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) 
   if (enkf_main_case_is_current( enkf_main , case_path ))
     return;  /* We have tried to select the currently selected case - just return. */
   else {
-    enkf_fs_type * new_fs = enkf_main_mount_alt_fs( enkf_main , case_path , false , true );
+    enkf_fs_type * new_fs = enkf_main_mount_alt_fs( enkf_main , case_path , true );
     if (enkf_main->dbase == new_fs)
       util_abort("%s : return reference to current FS in situation where that should not happen.\n",__func__);
 
@@ -586,9 +585,10 @@ void enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * input_ca
         unlink(current_mount_point);
         enkf_main_write_current_case_file(enkf_main, target_case);
         free( target_case );
-        free( current_mount_point );
       } else
         enkf_main_select_fs( enkf_main , DEFAULT_CASE );  // Selecting (a new) default case
+
+      free( current_mount_point );
     } else
       enkf_main_select_fs( enkf_main , input_case );
   } else {
