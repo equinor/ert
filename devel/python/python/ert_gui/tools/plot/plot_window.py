@@ -31,6 +31,8 @@ class PlotWindow(QMainWindow):
         self.addPlotPanel("Distribution", "gui/plots/gen_kw.html", short_name="Distribution")
         self.addPlotPanel("RFT plot", "gui/plots/rft.html", short_name="RFT")
         self.addPlotPanel("RFT overview plot", "gui/plots/rft_overview.html", short_name="oRFT")
+        self.addPlotPanel("Ensemble plot", "gui/plots/gen_data.html", short_name="epGenData")
+        self.addPlotPanel("Ensemble overview plot", "gui/plots/gen_data_overview.html", short_name="eopGenData")
         self.addPlotPanel("PCA plot", "gui/plots/pca.html", short_name="PCA")
 
         self.__data_type_keys_widget = DataTypeKeysWidget()
@@ -69,7 +71,6 @@ class PlotWindow(QMainWindow):
         plot_data_fetcher = PlotDataFetcher()
         data_key = self.__plot_metrics_widget.getDataKeyType()
         plot_data = plot_data_fetcher.getPlotDataForKeyAndCases(data_key, self.__plot_cases)
-        plot_data.setParent(self)
 
         for plot_panel in self.__plot_panels:
             if plot_panel.isPlotVisible():
@@ -213,7 +214,7 @@ class PlotWindow(QMainWindow):
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             elif plot_data_fetcher.isGenDataKey(key):
-                show_plot = plot_panel.supportsPlotProperties(time=True, value=True, pca=show_pca)
+                show_plot = plot_panel.supportsPlotProperties(index=True, pca=show_pca)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             else:

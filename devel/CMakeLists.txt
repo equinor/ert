@@ -51,7 +51,11 @@ endif()
 
 if (MSVC)
     add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4996" )
+    add_definitions( -DCOMPILER_MSVC )
+elseif (CMAKE_COMPILER_IS_GNUCC) 
+    add_definitions( -DCOMPILER_GCC )
 endif()
+
 
 if (ERT_USE_OPENMP)
    find_package(OpenMP)
