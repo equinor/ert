@@ -115,7 +115,18 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const string
   arg_pack_type ** arg_list = util_calloc( num_cpu , sizeof * arg_list );
   int i;
 
-  printf("Initializing .... "); fflush( stdout );
+  printf("Setting up ensemble members from %d to %d", iens1, iens2);
+  if (init_mode == INIT_CONDITIONAL) {
+    printf(" using conditional initialization (keep existing parameter values).\n");
+  }
+  else if (init_mode == INIT_FORCE) {
+    printf(" using forced initialization (initialize from scratch).\n");
+  }
+  else if (init_mode == INIT_NONE) {
+    printf(" not initializing at all.\n");
+  }
+  fflush( stdout );
+
   for (i = 0; i < num_cpu;  i++) {
     arg_list[i] = arg_pack_alloc();
     arg_pack_append_ptr( arg_list[i] , enkf_main );
@@ -140,7 +151,7 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const string
     arg_pack_free( arg_list[i] );
   free( arg_list );
   thread_pool_free( tp );
-  printf("\n");
+  printf("Done setting up ensemble.\n");
 }
 
 
