@@ -331,7 +331,7 @@ static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , 
 
 
 bool enkf_main_case_is_initialized( const enkf_main_type * enkf_main , const char * case_name ,  bool_vector_type * __mask) {
-  enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main , case_name , true );
+  enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main , case_name , false );
   if (fs) {
     bool initialized = enkf_main_case_is_initialized__(enkf_main , fs , __mask);
     enkf_fs_decref( fs );
