@@ -86,6 +86,10 @@ class ObservationGenDataFetcher(DataFetcher):
         raise UserWarning("Observation key for key '%s' not found!" % key)
 
 
+    def getAllObsKeysForKey(self, key):
+        return self.ert().ensembleConfig().getNode(key).getObservationKeys()
+
+
     def fetchData(self, key, case=None):
         key, report_step = key.split("@")
 
