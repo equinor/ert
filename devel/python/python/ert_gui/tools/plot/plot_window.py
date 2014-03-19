@@ -31,6 +31,7 @@ class PlotWindow(QMainWindow):
         self.addPlotPanel("Distribution", "gui/plots/gen_kw.html", short_name="Distribution")
         self.addPlotPanel("RFT plot", "gui/plots/rft.html", short_name="RFT")
         self.addPlotPanel("RFT overview plot", "gui/plots/rft_overview.html", short_name="oRFT")
+        self.addPlotPanel("PCA plot", "gui/plots/pca.html", short_name="PCA")
 
         self.__data_type_keys_widget = DataTypeKeysWidget()
         self.__data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
@@ -194,23 +195,25 @@ class PlotWindow(QMainWindow):
         plot_data_fetcher = PlotDataFetcher()
         self.storePlotType(plot_data_fetcher, self.__plot_metrics_widget.getDataKeyType())
 
+        show_pca = plot_data_fetcher.isPcaDataKey(key)
+
         for plot_panel in self.__plot_panels:
             visible = self.__central_tab.indexOf(plot_panel) > -1
 
             if plot_data_fetcher.isSummaryKey(key):
-                show_plot = plot_panel.supportsPlotProperties(time=True, value=True, histogram=True)
+                show_plot = plot_panel.supportsPlotProperties(time=True, value=True, histogram=True, pca=show_pca)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             elif plot_data_fetcher.isBlockObservationKey(key):
-                show_plot = plot_panel.supportsPlotProperties(depth=True, value=True)
+                show_plot = plot_panel.supportsPlotProperties(depth=True, value=True, pca=show_pca)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             elif plot_data_fetcher.isGenKWKey(key):
-                show_plot = plot_panel.supportsPlotProperties(value=True, histogram=True)
+                show_plot = plot_panel.supportsPlotProperties(value=True, histogram=True, pca=show_pca)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             elif plot_data_fetcher.isGenDataKey(key):
-                show_plot = plot_panel.supportsPlotProperties(time=True, value=True)
+                show_plot = plot_panel.supportsPlotProperties(time=True, value=True, pca=show_pca)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             else:
