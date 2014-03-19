@@ -89,8 +89,6 @@ class ListSpinBox(QSpinBox):
                 return QValidator.Intermediate, pos
 
         return QValidator.Invalid, pos
-        #return QValidator.Acceptable, pos
-
 
     def fixup(self, input):
         text = str(input).lower()
