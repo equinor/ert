@@ -64,7 +64,7 @@ class PlotBridge(QObject):
         self.__web_page.mainFrame().evaluateJavaScript("setReportStepTime(%s);" % (report_step_time))
 
 
-    def setScales(self, time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max):
+    def setScales(self, time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max):
         if value_min is None:
             value_min = "null"
 
@@ -92,9 +92,14 @@ class PlotBridge(QObject):
         if index_max is None:
             index_max = "null"
 
+        if count_min is None:
+            count_min = "null"
+        if count_max is None:
+            count_max = "null"
 
-        scales = (time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max)
-        self.__web_page.mainFrame().evaluateJavaScript("setScales(%s,%s,%s,%s,%s,%s,%s,%s);" % scales)
+
+        scales = (time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max)
+        self.__web_page.mainFrame().evaluateJavaScript("setScales(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);" % scales)
 
     @pyqtSlot(result=QObject)
     def getPlotData(self):
@@ -146,7 +151,9 @@ class PlotBridge(QObject):
         depth_max = settings["depth_max"]
         index_min = settings["index_min"]
         index_max = settings["index_max"]
-        self.setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max)
+        count_min = settings["count_min"]
+        count_max = settings["count_max"]
+        self.setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max)
 
         self.setReportStepTime(settings["report_step_time"])
 
