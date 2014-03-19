@@ -94,7 +94,7 @@ class PcaDataFetcher(DataFetcher):
         obs_keys = self.getObsKeys(key)
 
 
-        fs = self.ert().getEnkfFsManager().getFileSystem(case, read_only=True)
+        fs = self.ert().getEnkfFsManager().getFileSystem(case)
 
         step_1 = 0
         step_2 = self.ert().getHistoryLength()
