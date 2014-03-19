@@ -16,6 +16,9 @@ class PlotMetricsWidget(QWidget):
     INDEX_MIN = "Index Minimum"
     INDEX_MAX = "Index Maximum"
 
+    COUNT_MIN = "Count Minimum"
+    COUNT_MAX = "Count Maximum"
+
     plotSettingsChanged = pyqtSignal()
 
     def __init__(self):
@@ -34,6 +37,8 @@ class PlotMetricsWidget(QWidget):
         self.__layout.addWidget(self.addScaler("depth_max", self.DEPTH_MAX))
         self.__layout.addWidget(self.addScaler("index_min", self.INDEX_MIN))
         self.__layout.addWidget(self.addScaler("index_max", self.INDEX_MAX))
+        self.__layout.addWidget(self.addScaler("count_min", self.COUNT_MIN))
+        self.__layout.addWidget(self.addScaler("count_max", self.COUNT_MAX))
 
 
         self.__layout.addSpacing(10)
@@ -95,6 +100,8 @@ class PlotMetricsWidget(QWidget):
             "depth_max" : self.getValue("depth_max"),
             "index_min" : self.getValue("index_min"),
             "index_max" : self.getValue("index_max"),
+            "count_min" : self.getValue("count_min"),
+            "count_max" : self.getValue("count_max"),
             "report_step_time" : self.__report_step_widget.getSelectedValue().ctime()
         }
         return settings
