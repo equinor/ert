@@ -158,6 +158,8 @@ class PlotWindow(QMainWindow):
                 self.__selected_plot_for_type["gen_kw"] = self.__central_tab.currentWidget()
             elif fetcher.isGenDataKey(key):
                 self.__selected_plot_for_type["gen_data"] = self.__central_tab.currentWidget()
+            elif fetcher.isPcaDataKey(key):
+                self.__selected_plot_for_type["pca_data"] = self.__central_tab.currentWidget()
             else:
                 raise NotImplementedError("Key %s not supported." % key)
 
@@ -184,6 +186,12 @@ class PlotWindow(QMainWindow):
             elif fetcher.isGenDataKey(key):
                 if "gen_data" in self.__selected_plot_for_type:
                     self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["gen_data"])
+                else:
+                    if self.__central_tab.count() > 0:
+                        self.__central_tab.setCurrentIndex(0)
+            elif fetcher.isPcaDataKey(key):
+                if "pca_data" in self.__selected_plot_for_type:
+                    self.__central_tab.setCurrentWidget(self.__selected_plot_for_type["pca_data"])
                 else:
                     if self.__central_tab.count() > 0:
                         self.__central_tab.setCurrentIndex(0)
@@ -216,6 +224,10 @@ class PlotWindow(QMainWindow):
 
             elif plot_data_fetcher.isGenDataKey(key):
                 show_plot = plot_panel.supportsPlotProperties(index=True, pca=show_pca)
+                self.showOrHidePlotTab(plot_panel, visible, show_plot)
+
+            elif plot_data_fetcher.isPcaDataKey(key):
+                show_plot = plot_panel.supportsPlotProperties(pca=show_pca)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
             else:

@@ -1,5 +1,6 @@
 from ert.enkf.plot import EnsembleDataFetcher, ObservationDataFetcher, RefcaseDataFetcher, BlockObservationDataFetcher, EnsembleGenKWFetcher, EnsembleGenDataFetcher, ObservationGenDataFetcher
 from ert.enkf.plot import EnsembleBlockDataFetcher, PcaDataFetcher
+from ert_gui.models.connectors.plot.data_type_keys_model import DataTypeKeysModel
 from ert_gui.tools.plot.data import PlotData, ObservationPlotData, EnsemblePlotData, RefcasePlotData, HistogramPlotDataFactory, ReportStepLessHistogramPlotDataFactory
 from ert_gui.models import ErtConnector
 from ert_gui.models.mixins import ModelMixin
@@ -24,6 +25,12 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
 
         elif self.isGenDataKey(key):
             return self.fetchGenData(gen_data_fetcher, key, cases)
+
+        elif self.isPcaDataKey(key):
+            plot_data = PlotData(key)
+            pca_plot_data = self.fetchPcaData(key, cases)
+            plot_data.setUserData("PCA", pca_plot_data)
+            return plot_data
 
         else:
             raise NotImplementedError("Key %s not supported." % key)
@@ -50,7 +57,7 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
 
     def isPcaDataKey(self, key):
         pca_data_fetcher = PcaDataFetcher(self.ert())
-        return pca_data_fetcher.supportsKey(key)
+        return pca_data_fetcher.supportsKey(key) or DataTypeKeysModel().isCustomPcaKeys(key)
 
 
     def fetchGenData(self, gen_data_fetcher, key, cases):
@@ -73,6 +80,11 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
                     ensemble_plot_data.setEnsembleData(ensemble_data["x"], ensemble_data["y"], ensemble_data["min_y_values"], ensemble_data["max_y_values"])
                     ensemble_plot_data.updateBoundaries(ensemble_data["min_x"], ensemble_data["max_x"], ensemble_data["min_y"], ensemble_data["max_y"])
                     plot_data.addEnsembleData(ensemble_plot_data)
+
+            if plot_data.hasEnsembleData():
+                plot_data.setUserData("PCA", self.fetchPcaData(key, cases))
+            else:
+                plot_data.setUserData("PCA", PlotData("No ensemble data available for %s" % key))
 
         return plot_data
 
@@ -178,7 +190,11 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
 
     def fetchPcaData(self, key, cases):
         """ @rtype: PlotData """
-        pca_name ="PCA:%s" % key
+        if key.startswith("PCA:"):
+            pca_name = key
+        else:
+            pca_name ="PCA:%s" % key
+
         pca_plot_data = PlotData(pca_name)
 
         for case in cases:
