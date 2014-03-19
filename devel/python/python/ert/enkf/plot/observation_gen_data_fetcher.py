@@ -13,10 +13,7 @@
 #
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
-from ert.enkf import EnkfObservationImplementationType, GenDataConfig
-from ert.enkf.data.gen_kw_config import GenKwConfig
 from ert.enkf.enums.ert_impl_type_enum import ErtImplType
-from ert.enkf.observations import BlockObservation
 from ert.enkf.plot import DataFetcher
 
 
@@ -89,6 +86,16 @@ class ObservationGenDataFetcher(DataFetcher):
     def getAllObsKeysForKey(self, key):
         return self.ert().ensembleConfig().getNode(key).getObservationKeys()
 
+
+    def hasData(self, key):
+        """ @rtype: bool """
+        key, report_step = key.split("@")
+        observations = self.ert().getObservations()
+        obs_key = self.getObsKeyForKey(key, int(report_step))
+        if not observations.hasKey(obs_key):
+            return False
+
+        return observations.getObservationsVector(obs_key).getActiveCount() > 0
 
     def fetchData(self, key, case=None):
         key, report_step = key.split("@")
