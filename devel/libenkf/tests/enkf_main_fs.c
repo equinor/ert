@@ -63,8 +63,8 @@ int main(int argc, char ** argv) {
       state_map_free( map2 );
     }
     {
-      enkf_fs_type * fs1 = enkf_main_mount_alt_fs( enkf_main , "default" , false , false);
-      enkf_fs_type * fs2 = enkf_main_mount_alt_fs( enkf_main , "enkf" , false , false);
+      enkf_fs_type * fs1 = enkf_main_mount_alt_fs( enkf_main , "default" , false );
+      enkf_fs_type * fs2 = enkf_main_mount_alt_fs( enkf_main , "enkf" , false );
       
       test_assert_int_equal( 2 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
       test_assert_int_equal( 2 , enkf_fs_get_refcount( fs2 ));
@@ -75,7 +75,7 @@ int main(int argc, char ** argv) {
     }
 
     {
-      enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "enkf" , false , false );
+      enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "enkf" , false  );
       
       enkf_main_select_fs( enkf_main , "default");
       test_assert_int_equal( 1 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
@@ -83,7 +83,7 @@ int main(int argc, char ** argv) {
     }
 
     {
-      enkf_fs_type * default_fs = enkf_main_mount_alt_fs( enkf_main , "default" , false , false );
+      enkf_fs_type * default_fs = enkf_main_mount_alt_fs( enkf_main , "default" , false );
       
       test_assert_int_equal( 2 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
       enkf_main_select_fs( enkf_main , "default");
@@ -93,7 +93,7 @@ int main(int argc, char ** argv) {
     }
     /*****************************************************************/
     {
-      enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , "default" , false , false );
+      enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , "default" , false  );
       test_assert_int_equal( 2 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
       
       enkf_main_set_fs( enkf_main , fs , NULL );
@@ -101,8 +101,8 @@ int main(int argc, char ** argv) {
       test_assert_int_equal( 1 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
     }
     {
-      enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , "enkf" , false , false );
-      enkf_fs_type * current = enkf_main_mount_alt_fs( enkf_main , "default" , false , false);
+      enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , "enkf" , false );
+      enkf_fs_type * current = enkf_main_mount_alt_fs( enkf_main , "default" , false );
       
       test_assert_int_equal( 2 , enkf_fs_get_refcount( current ));
       test_assert_int_equal( 1 , enkf_fs_get_refcount( fs));
