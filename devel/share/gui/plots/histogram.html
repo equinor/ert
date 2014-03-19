@@ -200,7 +200,7 @@
         }
     }
 
-    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max) {
+    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max) {
         custom_min_x = value_min;
         custom_max_x = value_max;
     }
@@ -211,7 +211,7 @@
 
     }
 
-    function supportsPlotProperties(time, value, depth, histogram){
+    function supportsPlotProperties(time, value, depth, index, histogram){
         return histogram;
     }
 

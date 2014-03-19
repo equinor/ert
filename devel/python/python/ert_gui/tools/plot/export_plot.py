@@ -27,13 +27,7 @@ class ExportPlot(object):
         super(ExportPlot, self).__init__()
         assert isinstance(active_plot_panel, PlotPanel)
         self.__active_plot_panel = active_plot_panel
-        self.__time_min = settings["time_min"]
-        self.__time_max = settings["time_max"]
-        self.__value_min = settings["value_min"]
-        self.__value_max = settings["value_max"]
-        self.__depth_min = settings["depth_min"]
-        self.__depth_max = settings["depth_max"]
-        self.__report_step_time = settings["report_step_time"]
+        self.__settings = settings
         self.__custom_settings = custom_settings
         self.__bridge = None
         self.__plot_bridge_org = active_plot_panel.getPlotBridge()
@@ -85,10 +79,9 @@ class ExportPlot(object):
     def plotReady(self):
         data = self.__plot_bridge_org.getPlotData()
         self.__bridge.setPlotData(data)
-        self.__bridge.setScales(self.__time_min, self.__time_max, self.__value_min, self.__value_max, self.__depth_min, self.__depth_max)
         self.__bridge.updatePlotSize(QSize(self.__width, self.__height))
         self.__bridge.setCustomSettings(self.__custom_settings)
-        self.__bridge.setReportStepTime(self.__report_step_time)
+        self.__bridge.setPlotSettings(self.__settings)
         self.__bridge.renderingFinished.connect(self.performExport)
 
 
