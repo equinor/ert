@@ -13,6 +13,9 @@ class PlotMetricsWidget(QWidget):
     TIME_MIN = "Time Minimum"
     TIME_MAX = "Time Maximum"
 
+    INDEX_MIN = "Index Minimum"
+    INDEX_MAX = "Index Maximum"
+
     plotSettingsChanged = pyqtSignal()
 
     def __init__(self):
@@ -29,6 +32,9 @@ class PlotMetricsWidget(QWidget):
         self.__layout.addWidget(self.addScaler("time_max", self.TIME_MAX, True))
         self.__layout.addWidget(self.addScaler("depth_min", self.DEPTH_MIN))
         self.__layout.addWidget(self.addScaler("depth_max", self.DEPTH_MAX))
+        self.__layout.addWidget(self.addScaler("index_min", self.INDEX_MIN))
+        self.__layout.addWidget(self.addScaler("index_max", self.INDEX_MAX))
+
 
         self.__layout.addSpacing(10)
 
@@ -87,6 +93,8 @@ class PlotMetricsWidget(QWidget):
             "time_max" : self.getValue("time_max"),
             "depth_min" : self.getValue("depth_min"),
             "depth_max" : self.getValue("depth_max"),
+            "index_min" : self.getValue("index_min"),
+            "index_max" : self.getValue("index_max"),
             "report_step_time" : self.__report_step_widget.getSelectedValue().ctime()
         }
         return settings
