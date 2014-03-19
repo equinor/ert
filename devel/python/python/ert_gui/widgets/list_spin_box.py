@@ -1,7 +1,7 @@
 import re
 from PyQt4 import QtGui
-from PyQt4.QtCore import QSize, QString, QStringList
-from PyQt4.QtGui import QSpinBox, QValidator, QLineEdit, QCompleter, QListView, QStringListModel
+from PyQt4.QtCore import QSize, QString, QStringList, Qt
+from PyQt4.QtGui import QSpinBox, QValidator, QLineEdit, QCompleter, QListView, QStringListModel, QScrollBar
 from ert.util import ctime
 
 
@@ -31,6 +31,7 @@ class ListSpinBox(QSpinBox):
         self.__completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
 
         view = QListView()
+        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.__completer.setPopup(view)
         view.setAlternatingRowColors(True)
         view.setMinimumWidth(90)
