@@ -120,7 +120,7 @@ class RunWorkflowWidget(QWidget):
             time.sleep(2)
 
         killed = self.__workflow_runner.isKilled()
-        print(killed)
+      
         if killed:
             self.workflowKilled.emit()
         else:
