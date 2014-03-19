@@ -15,7 +15,7 @@
 // for more details.
 
 function BasePlot(element, x_dimension, y_dimension) {
-    this.stored_data = [];
+    this.stored_data = null;
     this.margin = {left: 90, right: 20, top: 20, bottom: 30};
     this.root_elemenet = element;
 
@@ -143,8 +143,6 @@ BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
         this.custom_y_max = y_max;
         this.custom_x_min = x_min;
         this.custom_x_max = x_max;
-
-        //this.setData(this.stored_data);
     }
 };
 
@@ -191,7 +189,7 @@ BasePlot.prototype.setData = function(data) {
 };
 
 BasePlot.prototype.getTitle = function(){
-    if("name" in this.stored_data){
+    if(this.stored_data != null && "name" in this.stored_data){
         return this.stored_data.name();
     } else {
         return "No data";
@@ -199,6 +197,10 @@ BasePlot.prototype.getTitle = function(){
 };
 
 BasePlot.prototype.render = function() {
+    if(this.stored_data == null) {
+        return;
+    }
+
     var data = this.stored_data;
     this.render_finished = false;
     this.render_callback_finished = false;
@@ -358,13 +360,11 @@ BasePlot.prototype.setCustomSettings = function (settings) {
 BasePlot.prototype.renderCallbackFinishedRendering = function(){
     this.render_callback_finished = true;
     this.emitFinishedRendering()
-
 };
 
 BasePlot.prototype.finishedRendering = function(){
     this.render_finished = true;
     this.emitFinishedRendering();
-
 };
 
 BasePlot.prototype.emitFinishedRendering = function(){
@@ -373,7 +373,6 @@ BasePlot.prototype.emitFinishedRendering = function(){
             this.rendering_finished_callback();
         }
     }
-
 };
 
 BasePlot.prototype.setRenderingFinishedCallback = function(callback) {
