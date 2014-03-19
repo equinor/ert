@@ -32,9 +32,10 @@ class PlotData(QObject):
 
 
     def setObservationData(self, observation_data):
-        observation_data.setParent(self)
-        self.__observation_data = observation_data
-        self.updateBoundaries(observation_data.minX(), observation_data.maxX(), observation_data.minY(), observation_data.maxY())
+        if observation_data.isValid():
+            observation_data.setParent(self)
+            self.__observation_data = observation_data
+            self.updateBoundaries(observation_data.minX(), observation_data.maxX(), observation_data.minY(), observation_data.maxY())
 
 
     def setRefcaseData(self, refcase_data):
