@@ -1,4 +1,4 @@
-from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel
+from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel, QMessageBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
@@ -79,4 +79,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.variables_popup_button.setVisible(show_advanced)
 
     def showVariablesPopup(self):
-        pass
+        message_box = QMessageBox()
+        message_box.addButton("Close",QMessageBox.AcceptRole)
+        message_box.show()
+
