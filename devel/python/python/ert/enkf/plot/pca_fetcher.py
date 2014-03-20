@@ -3,7 +3,6 @@ from ert.enkf.plot_data import PcaPlotData
 from ert.enkf.enums import EnkfStateType, RealizationStateEnum, EnkfObservationImplementationType
 from ert.enkf import LocalObsdata, LocalObsdataNode, EnkfLinalg, MeasData, ObsData
 from ert.util import Matrix, BoolVector
-from ert_gui.models.connectors.plot.data_type_keys_model import DataTypeKeysModel
 
 
 class PcaDataFetcher(DataFetcher):
@@ -82,25 +81,22 @@ class PcaDataFetcher(DataFetcher):
         if gen_data_observation_data_fetcher.supportsKey(key):
             return gen_data_observation_data_fetcher.getAllObsKeysForKey(key)
 
-        if DataTypeKeysModel().isCustomPcaKeys(key):
-            observations = self.ert().getObservations()
-            summary_obs_keys = observations.getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
-            gen_data_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
-            block_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.BLOCK_OBS)
-
-            summary_obs_keys = [key for key in summary_obs_keys]
-            gen_data_obs_keys = [key for key in gen_data_obs_keys]
-            block_obs_keys = [key for key in block_obs_keys]
-
-            return summary_obs_keys + gen_data_obs_keys# + block_obs_keys
-
-
-
         return None
 
+    def getAllObsKeys(self):
+        observations = self.ert().getObservations()
+        summary_obs_keys = observations.getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
+        gen_data_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
+        block_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.BLOCK_OBS)
+
+        summary_obs_keys = [key for key in summary_obs_keys]
+        gen_data_obs_keys = [key for key in gen_data_obs_keys]
+        block_obs_keys = [key for key in block_obs_keys]
+
+        return summary_obs_keys + gen_data_obs_keys# + block_obs_keys
 
 
-    def fetchData(self, key, case=None):
+    def fetchData(self, obs_keys, case=None):
         data = {"x": None,
                 "y": None,
                 "obs_y": None,
@@ -109,8 +105,6 @@ class PcaDataFetcher(DataFetcher):
                 "min_x": None,
                 "max_x": None}
 
-
-        obs_keys = self.getObsKeys(key)
 
 
         fs = self.ert().getEnkfFsManager().getFileSystem(case)

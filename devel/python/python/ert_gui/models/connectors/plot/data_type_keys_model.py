@@ -1,5 +1,5 @@
 from ert.enkf.enums import ErtImplType, EnkfObservationImplementationType
-from ert.enkf.plot import BlockObservationDataFetcher, EnsembleGenKWFetcher, EnsembleGenDataFetcher, ObservationGenDataFetcher
+from ert.enkf.plot import BlockObservationDataFetcher, EnsembleGenKWFetcher, EnsembleGenDataFetcher, ObservationGenDataFetcher, PcaDataFetcher
 from ert_gui.models import ErtConnector
 from ert_gui.models.mixins.list_model import ListModelMixin
 
@@ -13,7 +13,8 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
         self.__summary_keys = None
         self.__gen_kw_keys = None
         self.__gen_data_keys = None
-        self.__custom_pca_keys = ["PCA:All"]
+
+        self.__custom_pca_keys = {"PCA:All": (PcaDataFetcher(self.ert()).getAllObsKeys())}
         super(DataTypeKeysModel, self).__init__()
 
 
@@ -63,7 +64,7 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
 
     def getCustomPcaKeys(self):
         """ @rtype: list of str """
-        return self.__custom_pca_keys
+        return self.__custom_pca_keys.keys()
 
 
     def getList(self):
@@ -100,6 +101,9 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
     def isGenDataKey(self, key):
         return key in self.__gen_data_keys
 
-    def isCustomPcaKeys(self, key):
+    def isCustomPcaKey(self, key):
         return key in self.__custom_pca_keys
+
+    def getCustomPcaKeyObsKeys(self, key):
+        return self.__custom_pca_keys[key]
 

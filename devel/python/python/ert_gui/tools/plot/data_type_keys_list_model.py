@@ -66,7 +66,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
         return DataTypeKeysModel().isGenDataKey(str(key))
 
     def isCustomPcaKey(self, key):
-        return DataTypeKeysModel().isCustomPcaKeys(str(key))
+        return DataTypeKeysModel().isCustomPcaKey(str(key))
 
 
 
