@@ -1,9 +1,10 @@
-from PyQt4.QtGui import QFormLayout
+from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import ActiveRealizationsModel, IteratedEnsembleSmoother, IteratedAnalysisModuleModel, NumberOfIterationsModel, TargetCaseFormatModel, RunPathModel
 from ert_gui.simulation import SimulationConfigPanel
+from ert_gui.widgets import util
 from ert_gui.widgets.active_label import ActiveLabel
 from ert_gui.widgets.combo_choice import ComboChoice
 from ert_gui.widgets.integer_spinner import IntegerSpinner
@@ -41,7 +42,17 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
         iterated_analysis_module_model = IteratedAnalysisModuleModel()
         self.iterated_analysis_module_choice = ComboChoice(iterated_analysis_module_model, "Analysis Module", "config/analysis/iterated_analysis_module")
-        layout.addRow(self.iterated_analysis_module_choice.getLabel(), self.iterated_analysis_module_choice)
+
+        self.variables_popup_button = QToolButton()
+        self.variables_popup_button.setIcon(util.resourceIcon("ide/cog_edit.png"))
+        self.variables_popup_button.clicked.connect(self.showVariablesPopup)
+
+        self.variables_layout = QHBoxLayout()
+        self.variables_layout.setSpacing(2)
+        self.variables_layout.addWidget(self.iterated_analysis_module_choice)
+        self.variables_layout.addWidget(self.variables_popup_button)
+
+        layout.addRow(self.iterated_analysis_module_choice.getLabel(), self.variables_layout)
 
         active_realizations_model = ActiveRealizationsModel()
         self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
@@ -64,6 +75,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.layout().labelForField(self.active_realizations_field).setVisible(show_advanced)
 
         self.iterated_analysis_module_choice.setVisible(show_advanced)
-        self.layout().labelForField(self.iterated_analysis_module_choice).setVisible(show_advanced)
+        self.layout().labelForField(self.variables_layout).setVisible(show_advanced)
+        self.variables_popup_button.setVisible(show_advanced)
 
-
+    def showVariablesPopup(self):
+        pass
