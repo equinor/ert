@@ -104,6 +104,7 @@ class PlotScalesWidget(QWidget):
         spinner.setEnabled(False)
         spinner.setMinimumWidth(75)
         spinner.valueChanged[int].connect(self.spinning)
+        spinner.editingFinished.connect(self.spinning)
         spinner.setStringConverter(converter)
         if min_value:
             spinner.setValue(0)
