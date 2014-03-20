@@ -1,6 +1,6 @@
 from ert.enkf.plot import EnsembleDataFetcher, ObservationDataFetcher, RefcaseDataFetcher, BlockObservationDataFetcher, EnsembleGenKWFetcher, EnsembleGenDataFetcher, ObservationGenDataFetcher
 from ert.enkf.plot import EnsembleBlockDataFetcher, PcaDataFetcher
-from ert_gui.models.connectors.plot.data_type_keys_model import DataTypeKeysModel
+from ert_gui.models.connectors.plot import DataTypeKeysModel
 from ert_gui.tools.plot.data import PlotData, ObservationPlotData, EnsemblePlotData, RefcasePlotData, HistogramPlotDataFactory, ReportStepLessHistogramPlotDataFactory
 from ert_gui.models import ErtConnector
 from ert_gui.models.mixins import ModelMixin
@@ -28,7 +28,8 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
 
         elif self.isPcaDataKey(key):
             plot_data = PlotData(key)
-            self.addPcaData(plot_data, key, cases)
+            pca_plot_data = self.fetchPcaData(key, cases)
+            plot_data.setUserData("PCA", pca_plot_data)
             return plot_data
 
         else:
@@ -56,7 +57,7 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
 
     def isPcaDataKey(self, key):
         pca_data_fetcher = PcaDataFetcher(self.ert())
-        return pca_data_fetcher.supportsKey(key) or DataTypeKeysModel().isCustomPcaKeys(key)
+        return pca_data_fetcher.supportsKey(key) or DataTypeKeysModel().isCustomPcaKey(key)
 
 
     def fetchGenData(self, gen_data_fetcher, key, cases):
@@ -187,10 +188,17 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
         else:
             pca_name ="PCA:%s" % key
 
+        pca_data_fetcher = PcaDataFetcher(self.ert())
         pca_plot_data = PlotData(pca_name)
 
+        if DataTypeKeysModel().isCustomPcaKey(key):
+            obs_keys = DataTypeKeysModel().getCustomPcaKeyObsKeys(key)
+        else:
+            obs_keys = pca_data_fetcher.getObsKeys(key)
+
         for case in cases:
-            pca_data = PcaDataFetcher(self.ert()).fetchData(key, case)
+
+            pca_data = pca_data_fetcher.fetchData(obs_keys, case)
 
             if pca_data["x"] is not None:
 
