@@ -3,9 +3,11 @@ from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameForm
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import ActiveRealizationsModel, IteratedEnsembleSmoother, IteratedAnalysisModuleModel, NumberOfIterationsModel, TargetCaseFormatModel, RunPathModel
-from ert_gui.simulation import SimulationConfigPanel
+from ert_gui.models.connectors.run.analysis_module_variables_model import AnalysisModuleVariablesModel
+from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.widgets import util
 from ert_gui.widgets.active_label import ActiveLabel
+from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice
 from ert_gui.widgets.integer_spinner import IntegerSpinner
 from ert_gui.widgets.string_box import StringBox
@@ -44,8 +46,9 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.iterated_analysis_module_choice = ComboChoice(iterated_analysis_module_model, "Analysis Module", "config/analysis/iterated_analysis_module")
 
         self.variables_popup_button = QToolButton()
-        self.variables_popup_button.setIcon(util.resourceIcon("ide/cog_edit.png"))
+        self.variables_popup_button.setIcon(util.resourceIcon("ide/small/cog_edit.png"))
         self.variables_popup_button.clicked.connect(self.showVariablesPopup)
+        self.variables_popup_button.setMaximumSize(20, 20)
 
         self.variables_layout = QHBoxLayout()
         self.variables_layout.setSpacing(2)
@@ -79,7 +82,11 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.variables_popup_button.setVisible(show_advanced)
 
     def showVariablesPopup(self):
-        message_box = QMessageBox()
-        message_box.addButton("Close",QMessageBox.AcceptRole)
-        message_box.show()
+
+        analysis_module_name = IteratedAnalysisModuleModel().getCurrentChoice()
+
+        variable_dialog = AnalysisModuleVariablesPanel(analysis_module_name)
+        dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
+
+        dialog.exec_()
 
