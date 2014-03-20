@@ -57,7 +57,7 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 #define DEFAULT_LAMBDA0                -1
 #define DEFAULT_LAMBDA_MIN             0.01
 #define DEFAULT_LAMBDA_RECALCULATE     false
-#define DEFAULT_LOG_FILE               NULL
+#define DEFAULT_LOG_FILE               "rml_enkf.out"
 #define DEFAULT_CLEAR_LOG              true
 
  
