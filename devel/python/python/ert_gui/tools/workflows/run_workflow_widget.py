@@ -55,8 +55,6 @@ class RunWorkflowWidget(QWidget):
         self.__workflow_runner = None
 
 
-
-
     def createSpinWidget(self):
         widget = QWidget()
         layout = QHBoxLayout()
@@ -92,12 +90,8 @@ class RunWorkflowWidget(QWidget):
             self.__running_workflow_dialog.accept()
             self.__confirm_stop_dialog.accept()
             if not self.__workflow_runner.isExternalWorkflow():
-                #internal workflow we need to shutdown  ERT to continue
+                #internal workflow we need to shutdown ERT to continue
                 sys.exit(0)
-               #self.reloadErtTriggered.emit()
-
-
-
 
     def startWorkflow(self):
         self.__running_workflow_dialog = WorkflowDialog("Running Workflow", self.createSpinWidget(), self)
@@ -111,11 +105,9 @@ class RunWorkflowWidget(QWidget):
         self.__workflow_runner = WorkflowsModel().createWorkflowRunner()
         self.__workflow_runner.runWorkflow()
 
-
         workflow_thread.start()
 
         self.__running_workflow_dialog.show()
-
 
     def runWorkflow(self):
         while self.__workflow_runner.isRunning():
@@ -133,13 +125,11 @@ class RunWorkflowWidget(QWidget):
             else:
                 self.workflowSucceeded.emit()
 
-
     def workflowFinished(self):
         workflow_name = WorkflowsModel().getCurrentChoice()
         QMessageBox.information(self, "Workflow completed!", "The workflow '%s' completed successfully!" % workflow_name)
         self.__running_workflow_dialog.accept()
         self.__running_workflow_dialog = None
-
 
     def workflowFinishedWithFail(self):
         workflow_name = WorkflowsModel().getCurrentChoice()
@@ -148,9 +138,7 @@ class RunWorkflowWidget(QWidget):
         self.__running_workflow_dialog.reject()
         self.__running_workflow_dialog = None
 
-
     def workflowStopedByUser(self):
         workflow_name = WorkflowsModel().getCurrentChoice()
         QMessageBox.information(self, "Workflow killed!", "The workflow '%s' was killed successfully!" % workflow_name)
         self.__running_workflow_dialog = None
-
