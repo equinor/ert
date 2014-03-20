@@ -2,6 +2,7 @@ from threading import Thread
 from PyQt4.QtCore import QSize, Qt, pyqtSignal
 from PyQt4.QtGui import QWidget, QHBoxLayout, QLabel, QToolButton, QMovie, QVBoxLayout, QMessageBox
 import time
+import sys
 from ert_gui.models.connectors.run import WorkflowsModel
 from ert_gui.widgets import util
 from ert_gui.widgets.combo_choice import ComboChoice
@@ -80,7 +81,7 @@ class RunWorkflowWidget(QWidget):
         return widget
 
     def confirmCancelWorkflow(self):
-        self.__confirm_stop_dialog = ConfirmDialog("Confirm stop","Ert might need to restart when a workflow is stopped - do you want to proceed?",self)
+        self.__confirm_stop_dialog = ConfirmDialog("Confirm stop","Ert might need to shut down when a workflow is stopped - do you want to proceed?",self)
         self.__confirm_stop_dialog.confirmButtonPressed.connect(self.cancelWorkflow)
         self.__confirm_stop_dialog.show()
 
@@ -91,8 +92,9 @@ class RunWorkflowWidget(QWidget):
             self.__running_workflow_dialog.accept()
             self.__confirm_stop_dialog.accept()
             if not self.__workflow_runner.isExternalWorkflow():
-                #internal workflow we need to reload ERT to continue
-               self.reloadErtTriggered.emit()
+                #internal workflow we need to shutdown  ERT to continue
+                sys.exit(0)
+               #self.reloadErtTriggered.emit()
 
 
 
