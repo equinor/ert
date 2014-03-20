@@ -142,3 +142,4 @@ class RunWorkflowWidget(QWidget):
         workflow_name = WorkflowsModel().getCurrentChoice()
         QMessageBox.information(self, "Workflow killed!", "The workflow '%s' was killed successfully!" % workflow_name)
         self.__running_workflow_dialog = None
+        
