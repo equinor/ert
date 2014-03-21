@@ -40,9 +40,16 @@ class FileSystemRotator(object):
     def __contains__(self, full_case_name):
         return full_case_name in self.__fs_list
 
-    def __getitem__(self, full_case_name):
+    def __getitem__(self, case):
         """ @rtype: EnkfFs """
-        return self.__fs_map[full_case_name]
+        if isinstance(case, str):
+            return self.__fs_map[case]
+        elif isinstance(case, int):
+            if (case < len(self)):
+                case_name = self.__fs_list[case]
+                return self.__fs_map[case_name]
+            else:
+                raise IndexError
 
 
     def umountAll(self):
