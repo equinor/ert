@@ -138,11 +138,14 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
 
 
 
-        refcase_data = RefcaseDataFetcher(self.ert()).fetchData(key)
+        refcase_fetcher = RefcaseDataFetcher(self.ert())
+        refcase_data = refcase_fetcher.fetchData(key)
         refcase_plot_data = RefcasePlotData(key)
         refcase_plot_data.setRefcaseData(refcase_data["x"], refcase_data["y"])
         refcase_plot_data.updateBoundaries(refcase_data["min_x"], refcase_data["max_x"], refcase_data["min_y"], refcase_data["max_y"])
         plot_data.setRefcaseData(refcase_plot_data)
+        if refcase_fetcher.hasRefcase():
+            plot_data.setUnit(refcase_fetcher.getRefCase().unit(key))
 
         histogram_factory.setRefcase(refcase_data["x"], refcase_data["y"], refcase_data["min_y"], refcase_data["max_y"])
 
