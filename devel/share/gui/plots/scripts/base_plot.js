@@ -88,11 +88,25 @@ function BasePlot(element, x_dimension, y_dimension) {
         .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         .call(this.y_axis);
 
+    this.y_label = this.plot_group.append("text")
+        .attr("class", "y label")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0)
+        .attr("x", 0 - (this.height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("");
+
     this.plot_group.append("g")
         .attr("class", "x axis pale")
         .attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")")
         .call(this.x_axis);
 
+    this.x_label = this.plot_group.append("text")
+        .attr("class", "x label")
+        .attr("transform", "translate(" + (this.margin.left + (this.width - this.margin.left) / 2) + " ," + (this.height + this.margin.bottom) + ")")
+        .style("text-anchor", "middle")
+        .text("");
 
 
     this.x = this.dimension_x;
@@ -130,6 +144,9 @@ BasePlot.prototype.resize = function(width, height) {
     this.overlay_canvas.attr("width", this.width).attr("height", this.height);
 
     this.plot_group.select(".x.axis").attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")");
+
+    this.plot_group.select(".x.label").attr("transform", "translate(" + (this.margin.left + (this.width - this.margin.left) / 2) + " ," + (this.height) + ")");
+    this.plot_group.select(".y.label").attr("x", 0 - (this.height / 2));
 };
 
 BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
@@ -145,6 +162,13 @@ BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
     }
 };
 
+BasePlot.prototype.setXLabel = function(x_label) {
+    this.x_label.text(x_label);
+};
+
+BasePlot.prototype.setYLabel = function(y_label) {
+    this.y_label.text(y_label);
+};
 
 BasePlot.prototype.setYDomain = function(min_y, max_y) {
     if(!this.dimension_y.isOrdinal()) {
@@ -204,6 +228,10 @@ BasePlot.prototype.render = function() {
     this.resetLegends();
 
     this.title.text(this.getTitle());
+
+    if(typeof data.unit != 'undefined') {
+        this.setYLabel(data.unit());
+    }
 
     if(data.hasBoundaries()) {
         this.setYDomain(data.minY(), data.maxY());
