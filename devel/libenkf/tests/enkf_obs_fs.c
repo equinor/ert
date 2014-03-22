@@ -30,26 +30,42 @@
 void testS(const char * config_file ) {
   const char * site_config = NULL;
   ert_test_context_type * test_context = ert_test_context_alloc( "ENKF_OBS_FS" , config_file , site_config );
-  ert_test_context_set_store( test_context , true );
   {
     enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
     enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
     enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
     int_vector_type * step_list = int_vector_alloc(0,0);
     int_vector_type * active_list = int_vector_alloc(0,0);
+    obs_data_type * obs_data = obs_data_alloc( );
+    local_obsset_type * obs_set = local_obsset_alloc( "OBSNAME" );
     meas_data_type * meas_data;
-    obs_data_type * obs_data;
-    local_obsset_type * obs_set;
     int active_size = 0;
     
+
+    {
+      for (int i= 0; i < enkf_main_get_ensemble_size( enkf_main); i++)
+        int_vector_append( active_list , i );
+      active_size = int_vector_size( active_list );
+    }
+    {
+      for (int s = 0; s < enkf_main_get_history_length( enkf_main ); s++)
+        int_vector_append( step_list , s );
+    }
+
     meas_data = meas_data_alloc( active_list );
     obs_data = obs_data_alloc( );
-    obs_set = local_obsset_alloc( "OBSNAME" );
 
     enkf_obs_get_obs_and_measure( enkf_obs , fs , step_list , FORECAST , active_list , enkf_main_get_ensemble_const( enkf_main ) , meas_data , obs_data , obs_set);
     {
+      FILE * stream = util_fopen("analysis/Smatrix" , "r");
       matrix_type * S = meas_data_allocS( meas_data , active_size );
+      matrix_type * S0 = matrix_fread_alloc( stream );
+
+      test_assert_true( matrix_equal( S0 , S ));
+
       matrix_free( S );
+      matrix_free( S0 );
+      fclose( stream );
     }
     int_vector_free( step_list );
     int_vector_free( active_list );
