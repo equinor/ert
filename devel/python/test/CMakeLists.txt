@@ -41,7 +41,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_analysis_iter_config.py
     ert_tests/enkf/test_state_map.py
     ert_tests/enkf/test_block_obs_plot_data.py
-
+    ert_tests/enkf/test_enkf_obs.py
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
@@ -173,6 +173,11 @@ add_test( NAME python.tests.ert.util.stat
 add_test( NAME python.tests.ert.enkf.enkf
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf.EnKFTest)
+
+add_test( NAME python.tests.ert.enkf.enkf_obs
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_obs.EnKFObsTest)
+
 
 add_test( NAME python.tests.ert.enkf.enkf_fs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
