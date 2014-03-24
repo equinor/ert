@@ -218,10 +218,10 @@ struct enkf_node_struct {
   iaddsqr_ftype                  * iaddsqr;
   
   /******************************************************************/
-  bool                         vector_storage;
-  char                        *node_key;         /* The (hash)key this node is identified with. */
-  void                        *data;             /* A pointer to the underlying enkf_object, i.e. gen_kw_type instance, or a field_type instance or ... */
-  const enkf_config_node_type *config;           /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
+  bool                          vector_storage;
+  char                         *node_key;          /* The (hash)key this node is identified with. */
+  void                         *data;              /* A pointer to the underlying enkf_object, i.e. gen_kw_type instance, or a field_type instance or ... */
+  const enkf_config_node_type  *config;            /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
   /*****************************************************************/
   
   vector_type                 *container_nodes;
@@ -581,7 +581,7 @@ static void enkf_node_buffer_load( enkf_node_type * enkf_node , enkf_fs_type * f
 
 
 
-static void enkf_node_load_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , int iens , state_enum state) {
+void enkf_node_load_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , int iens , state_enum state) {
   if ((enkf_node->__load_state & state) &&
       (enkf_node->__node_id.iens == iens)) 
     return;
