@@ -80,10 +80,6 @@ class EnkfFsManager(BaseCClass):
 
         self.getCurrentFileSystem()
 
-        #for fs in self.__fs_rotator:
-        #s    print("fs name , fs refcount",s (fs.getCaseName(), fs.refCount()))
-
-
     def __createFullCaseName(self, mount_root, case_name):
         return os.path.join(mount_root, case_name)
 
