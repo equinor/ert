@@ -44,7 +44,6 @@ class PcaDataFetcher(DataFetcher):
 
         state_map = fs.getStateMap()
         ens_mask = BoolVector(False, self.ert().getEnsembleSize())
-
         state_map.selectMatching(ens_mask, RealizationStateEnum.STATE_HAS_DATA)
         active_list = BoolVector.createActiveList(ens_mask)
 
@@ -69,34 +68,40 @@ class PcaDataFetcher(DataFetcher):
 
         return None
 
-    def getObsKeys(self, key):
+
+    def getObsKeys(self, data_key , fs):
         ensemble_data_fetcher = EnsembleDataFetcher(self.ert())
-        if ensemble_data_fetcher.supportsKey(key):
-            return self.ert().ensembleConfig().getNode(key).getObservationKeys()
-
         block_observation_data_fetcher = BlockObservationDataFetcher(self.ert())
-        if block_observation_data_fetcher.supportsKey(key):
-            return [key]
-
         gen_data_observation_data_fetcher = ObservationGenDataFetcher(self.ert())
-        if gen_data_observation_data_fetcher.supportsKey(key):
-            return gen_data_observation_data_fetcher.getAllObsKeysForKey(key)
+        obsKeys = []
 
-        if DataTypeKeysModel().isCustomPcaKeys(key):
-            observations = self.ert().getObservations()
-            summary_obs_keys = observations.getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
-            gen_data_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
-            block_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.BLOCK_OBS)
+        if ensemble_data_fetcher.supportsKey(data_key):
+            obsKeys += self.ert().ensembleConfig().getNode(data_key).getObservationKeys()
+        elif block_observation_data_fetcher.supportsKey(data_key):
+            obsKeys += [data_key]
+        elif gen_data_observation_data_fetcher.supportsKey(data_key):
+            obsKeys += gen_data_observation_data_fetcher.getAllObsKeysForKey(data_key)
+        else:
+            if DataTypeKeysModel().isCustomPcaKeys(data_key):
+                observations = self.ert().getObservations()
+                summary_obs_keys = observations.getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
+                gen_data_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
+                block_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.BLOCK_OBS)
 
-            summary_obs_keys = [key for key in summary_obs_keys]
-            gen_data_obs_keys = [key for key in gen_data_obs_keys]
-            block_obs_keys = [key for key in block_obs_keys]
+                summary_obs_keys = [key for key in summary_obs_keys]
+                gen_data_obs_keys = [key for key in gen_data_obs_keys]
+                block_obs_keys = [key for key in block_obs_keys]
+                
+                obsKeys = summary_obs_keys + gen_data_obs_keys# + block_obs_keys
 
-            return summary_obs_keys + gen_data_obs_keys# + block_obs_keys
 
-
-
-        return None
+        activeMask = BoolVector(True, self.ert().getEnsembleSize())
+        ertObs = self.ert().getObservations()
+        for obs_key in obsKeys:
+            obsVector = ertObs["obs_key"]
+            if not obsVector.hasData( activeMask , fs ):
+                obsKeys.delete(obs_key)
+        return obsKeys
 
 
 
@@ -109,11 +114,8 @@ class PcaDataFetcher(DataFetcher):
                 "min_x": None,
                 "max_x": None}
 
-
-        obs_keys = self.getObsKeys(key)
-
-
         fs = self.ert().getEnkfFsManager().getFileSystem(case)
+        obs_keys = self.getObsKeys(key,fs)
 
         step_1 = 0
         step_2 = self.ert().getHistoryLength()
