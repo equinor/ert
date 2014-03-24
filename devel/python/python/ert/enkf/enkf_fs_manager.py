@@ -44,12 +44,11 @@ class FileSystemRotator(object):
         """ @rtype: EnkfFs """
         if isinstance(case, str):
             return self.__fs_map[case]
-        elif isinstance(case, int):
-            if (case < len(self)):
-                case_name = self.__fs_list[case]
-                return self.__fs_map[case_name]
-            else:
-                raise IndexError
+        elif isinstance(case, int) and 0 <= case < len(self):
+            case_name = self.__fs_list[case]
+            return self.__fs_map[case_name]
+        else:
+            raise IndexError("Value '%s' is not a proper index or case name." % case)
 
 
     def umountAll(self):
@@ -80,6 +79,9 @@ class EnkfFsManager(BaseCClass):
         self.__fs_arg = None
 
         self.getCurrentFileSystem()
+
+        #for fs in self.__fs_rotator:
+        #s    print("fs name , fs refcount",s (fs.getCaseName(), fs.refCount()))
 
 
     def __createFullCaseName(self, mount_root, case_name):
