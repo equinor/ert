@@ -639,12 +639,6 @@ static void enkf_fs_umount( enkf_fs_type * fs ) {
     enkf_fs_fwrite_misfit( fs );
   }
 
-  if (fs->lock_fd > 0) {
-    close( fs->lock_fd );  // Closing the lock_file file descriptor - and releasing the lock.
-    util_unlink_existing( fs->lock_file );
-  }
-
-  
   {
     int refcount = fs->refcount;
     if (refcount == 0) {
@@ -654,6 +648,11 @@ static void enkf_fs_umount( enkf_fs_type * fs ) {
       enkf_fs_free_driver( fs->eclipse_static );
       enkf_fs_free_driver( fs->index );
       
+      if (fs->lock_fd > 0) {
+        close( fs->lock_fd );  // Closing the lock_file file descriptor - and releasing the lock.
+        util_unlink_existing( fs->lock_file );
+      }
+
       util_safe_free( fs->case_name );
       util_safe_free( fs->root_path );
       util_safe_free(fs->lock_file);
