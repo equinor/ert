@@ -31,6 +31,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_ecl_sum_vector.py
 
     ert_tests/enkf/__init__.py
+    ert_tests/enkf/test_ert_context.py
     ert_tests/enkf/test_enkf.py
     ert_tests/enkf/test_enkf_fs.py
     ert_tests/enkf/test_enkf_fs_manager1.py
@@ -208,6 +209,10 @@ add_test( NAME python.tests.ert.enkf.ecl_config
 add_test( NAME python.tests.ert.enkf.block_obs_plot_data
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_block_obs_plot_data.BlockObsPlotDataTest)
+
+add_test( NAME python.tests.ert.enkf.ert_test_context
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_context.ErtTestContextTest)
 
 
 #GUI

@@ -21,9 +21,12 @@ from ert.enkf import ENKF_LIB
 class ErtTest(BaseCClass):
 
     def __init__(self , test_name , model_config , site_config = None , store_area = False):
-        c_ptr = ErtTest.cNamespace().alloc(test_name , model_config , site_config)
-        super(ErtTest, self).__init__(c_ptr)
-        self.setStore( store_area )
+        if not os.path.exists( model_config ):
+            raise IOError("The configuration file:%s does not exist" % model_config )
+        else:
+            c_ptr = ErtTest.cNamespace().alloc(test_name , model_config , site_config)
+            super(ErtTest, self).__init__(c_ptr)
+            self.setStore( store_area )
         
     def setStore(self , store):
         ErtTest.cNamespace().set_store(self , store)
@@ -42,10 +45,10 @@ class ErtTestContext(object):
         self.model_config = model_config
         self.site_config = site_config
         self.store_area = store_area
+        self.test_context = ErtTest( self.test_name , self.model_config , site_config = self.site_config , store_area = self.store_area)
 
 
     def __enter__(self):
-        self.test_context = ErtTest( self.test_name , self.model_config , site_config = self.site_config , store_area = self.store_area)
         return self.test_context
         
         
