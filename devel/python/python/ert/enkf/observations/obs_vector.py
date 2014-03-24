@@ -89,7 +89,7 @@ class ObsVector(BaseCClass):
                 run = False
 
     def hasData(self , active_mask , fs):
-        return ObsVector.cNamespace().has_data(self)
+        return ObsVector.cNamespace().has_data(self , active_mask , fs)
 
     def free(self):
         ObsVector.cNamespace().free(self)

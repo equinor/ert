@@ -98,7 +98,7 @@ class PcaDataFetcher(DataFetcher):
         activeMask = BoolVector(True, self.ert().getEnsembleSize())
         ertObs = self.ert().getObservations()
         for obs_key in obsKeys:
-            obsVector = ertObs["obs_key"]
+            obsVector = ertObs[obs_key]
             if not obsVector.hasData( activeMask , fs ):
                 obsKeys.delete(obs_key)
         return obsKeys

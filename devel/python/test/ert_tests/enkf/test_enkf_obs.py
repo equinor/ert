@@ -4,8 +4,8 @@ from ert.enkf import ObsVector
 from ert.enkf import EnKFMain
 from ert.enkf import EnkfFsManager
 from ert.enkf import ErtTestContext
+from ert.util import BoolVector
 from ert_tests import ExtendedTestCase
-
 
 class EnKFObsTest(ExtendedTestCase):
     def setUp(self):
@@ -28,3 +28,12 @@ class EnKFObsTest(ExtendedTestCase):
                 
             with self.assertRaises(KeyError):
                 v = obs["No-this-does-not-exist"]
+            
+            v1 = obs["WWCT:OP_3"]
+            v2 = obs["GOPT:OP"]
+            mask = BoolVector(True , ert.getEnsembleSize() )
+            currentFS = ert.getEnkfFsManager().getCurrentFileSystem()
+
+            self.assertTrue( v1.hasData( mask , currentFS ))
+            self.assertFalse( v2.hasData( mask , currentFS))
+            
