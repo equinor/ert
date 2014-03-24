@@ -3,10 +3,9 @@ from ert.enkf.plot import EnsembleBlockDataFetcher, PcaDataFetcher
 from ert_gui.models.connectors.plot import DataTypeKeysModel
 from ert_gui.tools.plot.data import PlotData, ObservationPlotData, EnsemblePlotData, RefcasePlotData, HistogramPlotDataFactory, ReportStepLessHistogramPlotDataFactory
 from ert_gui.models import ErtConnector
-from ert_gui.models.mixins import ModelMixin
 
 
-class PlotDataFetcher(ErtConnector, ModelMixin):
+class PlotDataFetcher(ErtConnector):
 
     def getPlotDataForKeyAndCases(self, key, cases):
         observation_data_fetcher = ObservationDataFetcher(self.ert())
@@ -54,6 +53,7 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
     def isGenDataKey(self, key):
         obs_gen_data_fetcher = ObservationGenDataFetcher(self.ert())
         return obs_gen_data_fetcher.supportsKey(key)
+
 
     def isPcaDataKey(self, key):
         pca_data_fetcher = PcaDataFetcher(self.ert())
