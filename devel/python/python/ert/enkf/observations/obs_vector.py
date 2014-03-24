@@ -88,6 +88,9 @@ class ObsVector(BaseCClass):
             else:
                 run = False
 
+    def hasData(self , active_mask , fs):
+        return ObsVector.cNamespace().has_data(self)
+
     def free(self):
         ObsVector.cNamespace().free(self)
 
@@ -106,3 +109,4 @@ ObsVector.cNamespace().iget_active = cwrapper.prototype("bool obs_vector_iget_ac
 ObsVector.cNamespace().get_impl_type = cwrapper.prototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
 ObsVector.cNamespace().install_node = cwrapper.prototype("void obs_vector_install_node(obs_vector, int, c_void_p)")
 ObsVector.cNamespace().get_next_active_step = cwrapper.prototype("int obs_vector_get_next_active_step(obs_vector, int)")
+ObsVector.cNamespace().has_data = cwrapper.prototype("bool obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
