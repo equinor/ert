@@ -23,6 +23,7 @@
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
 #include <ert/util/msg.h>
+#include <ert/util/vector.h>
 
 #include <ert/config/conf.h>
 
@@ -186,6 +187,7 @@ struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
   bool                  have_obs;
   char                * config_file;  /* The name of the config file which has been loaded. */ 
+  vector_type         * obs_vector;
   hash_type           * obs_hash;
   time_t_vector_type  * obs_time;     /* For fast lookup of report_step -> obs_time */
   const history_type  * history;      /* A shared (not owned by enkf_obs) reference to the history object - used when
@@ -203,6 +205,7 @@ enkf_obs_type * enkf_obs_alloc(  )
   enkf_obs_type * enkf_obs = util_malloc(sizeof * enkf_obs);
   enkf_obs->have_obs       = false;
   enkf_obs->obs_hash       = hash_alloc();
+  enkf_obs->obs_vector     = vector_alloc_new();
   enkf_obs->obs_time       = time_t_vector_alloc(0  , -1 );
 
   enkf_obs->history        = NULL;
@@ -219,6 +222,7 @@ bool enkf_obs_have_obs( const enkf_obs_type * enkf_obs ) {
 
 void enkf_obs_free(enkf_obs_type * enkf_obs) {
   hash_free(enkf_obs->obs_hash);
+  vector_free( enkf_obs->obs_vector );
   time_t_vector_free( enkf_obs->obs_time );
   util_safe_free( enkf_obs->config_file );
   free(enkf_obs);
@@ -248,7 +252,9 @@ void enkf_obs_add_obs_vector(enkf_obs_type       * enkf_obs,
   if (vector != NULL) {
     if (hash_has_key(enkf_obs->obs_hash , key))
       util_abort("%s: Observation with key:%s already added.\n",__func__ , key);
-    hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , vector , obs_vector_free__);
+
+    hash_insert_ref(enkf_obs->obs_hash , key , vector );
+    vector_append_owned_ref( enkf_obs->obs_vector , vector , obs_vector_free__);
   }
 }
 
@@ -259,6 +265,14 @@ bool enkf_obs_has_key(const enkf_obs_type * obs , const char * key) {
 
 obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * key) {
   return hash_get(obs->obs_hash , key);
+}
+
+obs_vector_type * enkf_obs_iget_vector(const enkf_obs_type * obs, int index) {
+  return vector_iget( obs->obs_vector , index );
+}
+
+int enkf_obs_get_size( const enkf_obs_type * obs ) {
+  return vector_get_size( obs->obs_vector );
 }
 
 

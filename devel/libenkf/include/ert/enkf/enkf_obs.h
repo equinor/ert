@@ -47,6 +47,7 @@ extern "C" {
   
   void            enkf_obs_free(  enkf_obs_type * enkf_obs);
   
+  obs_vector_type * enkf_obs_iget_vector(const enkf_obs_type * obs, int index);
   obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
   void enkf_obs_add_obs_vector(enkf_obs_type * enkf_obs, const char * key, const obs_vector_type * vector);
   
@@ -98,6 +99,7 @@ extern "C" {
   
   const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key );
   bool              enkf_obs_has_key(const enkf_obs_type * , const char * );
+  int               enkf_obs_get_size( const enkf_obs_type * obs );
   
   hash_iter_type  * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs );
 

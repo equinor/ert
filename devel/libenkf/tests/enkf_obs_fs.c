@@ -27,9 +27,7 @@
 #include <ert/util/test_util.h>
 
 
-void testS(const char * config_file ) {
-  const char * site_config = NULL;
-  ert_test_context_type * test_context = ert_test_context_alloc( "ENKF_OBS_FS" , config_file , site_config );
+void testS( ert_test_context_type * test_context ) {
   {
     enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
     enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
@@ -73,17 +71,34 @@ void testS(const char * config_file ) {
     obs_data_free( obs_data );
     local_obsset_free( obs_set );
   }
-
-
-  ert_test_context_free( test_context );
 }
+
+
+
+void test_iget(ert_test_context_type * test_context) {
+  enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
+  enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
+
+  test_assert_int_equal( 29 , enkf_obs_get_size( enkf_obs ) );
+  for (int iobs = 0; iobs < enkf_obs_get_size( enkf_obs ); iobs++) {
+    obs_vector_type * vec1 = enkf_obs_iget_vector( enkf_obs , iobs );
+    obs_vector_type * vec2 = enkf_obs_get_vector( enkf_obs , obs_vector_get_key( vec1 ));
+    
+    test_assert_ptr_equal( vec1 , vec2 );
+  }
+}
+
 
 
 
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
-
-  testS( config_file );
-
+  const char * site_config = NULL;
+  ert_test_context_type * test_context = ert_test_context_alloc( "ENKF_OBS_FS" , config_file , site_config );
+  {
+    testS( test_context );
+    test_iget( test_context );
+  }
+  ert_test_context_free( test_context );
   exit(0);
 }
