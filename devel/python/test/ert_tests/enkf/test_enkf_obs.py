@@ -16,7 +16,7 @@ class EnKFObsTest(ExtendedTestCase):
             ert = testContext.getErt()
             obs = ert.getObservations()
 
-            self.assertEqual(30 , len(obs))
+            self.assertEqual(31 , len(obs))
             for v in obs:
                 self.assertTrue( isinstance(v , ObsVector ))
                 
