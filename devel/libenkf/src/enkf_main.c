@@ -1049,7 +1049,6 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
                                        obsdata , 
                                        state , 
                                        ens_active_list , 
-                                       enkf_main_get_ensemble_const( enkf_main ),
                                        meas_data , 
                                        obs_data );
 
@@ -1340,7 +1339,6 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
                                       step_list , 
                                       FORECAST, 
                                       ens_active_list , 
-                                      (const enkf_state_type **) enkf_main->ensemble, 
                                       meas_forecast, 
                                       obs_data , 
                                       obsset );

@@ -27,6 +27,27 @@ class EnkfObs(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
+
+    def __len__(self):
+        return EnkfObs.cNamespace().get_size(self)
+
+
+    def __iter__(self):
+         iobs = 0
+         while iobs < len(self):
+             vector = self.igetObservationsVector( iobs )
+             yield vector
+             iobs += 1
+
+
+    def __getitem__(self , index):
+        if isinstance(index, str):
+            return self.getObservationsVector(index)
+        elif isinstance(index,int):
+            return self.igetObservationsVector(index)
+        else:
+            raise TypeError("[] operator must have string or integer")
+
     def get_config_file(self):
         """ @rtype: Str """
         return EnkfObs.cNamespace().get_config_file(self)
@@ -45,11 +66,27 @@ class EnkfObs(BaseCClass):
     def getObservationsVector(self, key):
         """ @rtype: ObsVector """
         assert isinstance(key, str)
-        return EnkfObs.cNamespace().get_vector(self, key).setParent(self)
+        if self.hasKey(key):
+            return EnkfObs.cNamespace().get_vector(self, key).setParent(self)
+        else:
+            raise KeyError("Unknown key:%s" % key)
+
+
+    def igetObservationsVector(self, index):
+        """ @rtype: ObsVector """
+        assert isinstance(index, int)
+        if index < 0:
+            raise ValueError("Index:%d - invalid" % index)
+        elif index >= len(self):
+            raise IndexError("Index:%d - invalid" % index)
+            
+        return EnkfObs.cNamespace().iget_vector(self, index).setParent(self)
+
 
     def getObservationTime(self, index):
         """ @rtype: ctime """
         return EnkfObs.cNamespace().iget_obs_time(self, index)
+
 
     def addObservationVector(self, observation_key, observation_vector):
         assert isinstance(observation_key, str)
@@ -59,16 +96,15 @@ class EnkfObs(BaseCClass):
 
         EnkfObs.cNamespace().add_obs_vector(self, observation_key, observation_vector)
 
-    def getObservationAndMeasureData(self, fs, local_obsdata, state, active_list, ensemble, meas_data, obs_data):
+    def getObservationAndMeasureData(self, fs, local_obsdata, state, active_list, meas_data, obs_data):
         assert isinstance(fs, EnkfFs)
         assert isinstance(local_obsdata, LocalObsdata)
         assert isinstance(state, EnkfStateType)
         assert isinstance(active_list, IntVector)
-        # assert isinstance(ensemble, c_void_p)
         assert isinstance(meas_data, MeasData)
         assert isinstance(obs_data, ObsData)
 
-        EnkfObs.cNamespace().get_obs_and_measure_data(self, fs, local_obsdata, state, active_list, ensemble, meas_data, obs_data)
+        EnkfObs.cNamespace().get_obs_and_measure_data(self, fs, local_obsdata, state, active_list, meas_data, obs_data)
 
 
     def free(self):
@@ -81,11 +117,13 @@ cwrapper.registerType("enkf_obs_obj", EnkfObs.createPythonObject)
 cwrapper.registerType("enkf_obs_ref", EnkfObs.createCReference)
 
 EnkfObs.cNamespace().free                = cwrapper.prototype("void enkf_obs_free( enkf_obs )")
+EnkfObs.cNamespace().get_size            = cwrapper.prototype("int enkf_obs_get_size( enkf_obs )")
 EnkfObs.cNamespace().get_config_file     = cwrapper.prototype("char* enkf_obs_get_config_file( enkf_obs )")
 EnkfObs.cNamespace().alloc_typed_keylist = cwrapper.prototype("stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)")
 EnkfObs.cNamespace().has_key             = cwrapper.prototype("bool enkf_obs_has_key(enkf_obs, char*)")
 EnkfObs.cNamespace().get_vector          = cwrapper.prototype("obs_vector_ref enkf_obs_get_vector(enkf_obs, char*)")
+EnkfObs.cNamespace().iget_vector         = cwrapper.prototype("obs_vector_ref enkf_obs_iget_vector(enkf_obs, int)")
 EnkfObs.cNamespace().iget_obs_time       = cwrapper.prototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
 EnkfObs.cNamespace().add_obs_vector      = cwrapper.prototype("void enkf_obs_add_obs_vector(enkf_obs, char*, obs_vector)")
 
-EnkfObs.cNamespace().get_obs_and_measure_data = cwrapper.prototype("void enkf_obs_get_obs_and_measure_data(enkf_obs, enkf_fs, local_obsdata, enkf_state_type_enum, int_vector, c_void_p, meas_data, obs_data)")
+EnkfObs.cNamespace().get_obs_and_measure_data = cwrapper.prototype("void enkf_obs_get_obs_and_measure_data(enkf_obs, enkf_fs, local_obsdata, enkf_state_type_enum, int_vector, meas_data, obs_data)")
