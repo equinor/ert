@@ -482,7 +482,10 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
     rml_enkf_init1__(data );
   }
 
-  rml_enkf_log_line( data , "%-24d %-19.5f %-36.5f %-37.5f %-33ss.5f \n", data->iteration_nr, data->lambda, Sk_new, data->Sk, Std_new);
+  {
+    const char * prev_obj_func_value_dummy = "-";
+    rml_enkf_log_line( data , "%-24d %-19.5f %-36.5f %-37s %-33.5f \n", data->iteration_nr, data->lambda, data->Sk , prev_obj_func_value_dummy, data->Std);
+  }
   
   matrix_free( Skm );
   matrix_free( Ud );
