@@ -575,8 +575,8 @@ void rml_enkf_updateA(void * module_data ,
       
       if (Std_new <= data->Std)
         std_reduced = true;
-      
-      rml_enkf_log_line( data , "%-24d %-18.5f %-36.5f %-37.5f %-33ss.5f \n", data->iteration_nr, data->lambda, Sk_new, data->Sk, Std_new);
+
+      rml_enkf_log_line( data , "%-24d %-19.5f %-36.5f %-37.5f %-33.5f \n", data->iteration_nr, data->lambda, Sk_new, data->Sk, Std_new);
 
       if (mismatch_reduced) {
         /*
