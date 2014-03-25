@@ -481,6 +481,8 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
     rml_enkf_init_Csc( data );
     rml_enkf_init1__(data );
   }
+
+  rml_enkf_log_line( data , "%-24d %-19.5f %-36.5f %-37.5f %-33ss.5f \n", data->iteration_nr, data->lambda, Sk_new, data->Sk, Std_new);
   
   matrix_free( Skm );
   matrix_free( Ud );
@@ -490,14 +492,16 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
 
 
 static void rml_enkf_write_log_header( rml_enkf_data_type * data ) {
-  const char * column1 = "\"Iteration Number\"";
-  const char * column2 = "\"Lamda Value\"";
-  const char * column3 = "\"Current Object Function Value\"";
-  const char * column4 = "\"Previous Object Function Value\"";
-  const char * column5 = "\"Current Standard Deviation\"";
-
   if (data->log_stream) {
-    rml_enkf_log_line(data, "%-23s %-18s %-36s %-37s %-33s\n", column1, column2, column3, column4, column5);
+    const char * column1 = "\"Iteration Number\"";
+    const char * column2 = "\"Lambda Value\"";
+    const char * column3 = "\"Current Object Function Value\"";
+    const char * column4 = "\"Previous Object Function Value\"";
+    const char * column5 = "\"Current Standard Deviation\"";
+
+    if (data->log_stream) {
+      rml_enkf_log_line(data, "%-23s %-19s %-36s %-37s %-33s\n", column1, column2, column3, column4, column5);
+    }
   }
 }
 
@@ -569,7 +573,7 @@ void rml_enkf_updateA(void * module_data ,
       if (Std_new <= data->Std)
         std_reduced = true;
       
-      rml_enkf_log_line( data , "%-24d %-18.5f %-36.5f %-37.5f %-33.5f \n", data->iteration_nr, data->lambda, Sk_new, data->Sk, Std_new);
+      rml_enkf_log_line( data , "%-24d %-18.5f %-36.5f %-37.5f %-33ss.5f \n", data->iteration_nr, data->lambda, Sk_new, data->Sk, Std_new);
 
       if (mismatch_reduced) {
         /*
