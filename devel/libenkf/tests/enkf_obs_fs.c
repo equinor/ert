@@ -114,7 +114,6 @@ void test_container( ert_test_context_type * test_context ) {
 }
 
 
-
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
   const char * site_config = NULL;

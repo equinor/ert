@@ -52,6 +52,18 @@ void test_invalid_obs_vector( enkf_main_type * enkf_main , const char * obs_key)
   bool_vector_free( active_mask );
 }
 
+void test_container( ert_test_context_type * test_context ) {
+  enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
+  enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
+  obs_vector_type * rft_obs = enkf_obs_get_vector( enkf_obs , "RFT_TEST");
+  enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
+  bool_vector_type * active_mask = bool_vector_alloc( enkf_main_get_ensemble_size( enkf_main ) , true );
+
+  test_assert_true( obs_vector_has_data( rft_obs , active_mask , fs ));
+  bool_vector_free( active_mask );
+}
+
+
 
 
 int main(int argc , char ** argv) {
@@ -62,6 +74,7 @@ int main(int argc , char ** argv) {
   {
     test_valid_obs_vector( enkf_main , "WWCT:OP_3");
     test_invalid_obs_vector( enkf_main , "GOPT:OP");
+    test_container( context );
   }
   ert_test_context_free( context );
 }
