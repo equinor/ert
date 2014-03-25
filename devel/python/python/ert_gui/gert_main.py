@@ -232,7 +232,11 @@ def main(argv):
         window.show()
         splash.finish(window)
 
-        sys.exit(app.exec_())
+        finished_code = app.exec_()
+
+        ert.ert().free()
+
+        sys.exit(finished_code)
 
 
 if __name__ == "__main__":
