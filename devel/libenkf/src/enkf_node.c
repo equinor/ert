@@ -1133,6 +1133,9 @@ enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
 }
 
 
+
+
+
 static void enkf_node_container_add_node( enkf_node_type * node , const enkf_node_type * child_node , bool shared) {
   if (shared)
     vector_append_ref( node->container_nodes , child_node );
@@ -1166,6 +1169,13 @@ enkf_node_type * enkf_node_alloc_shared_container(const enkf_config_node_type * 
 
 enkf_node_type * enkf_node_alloc_private_container(const enkf_config_node_type * config) {
   return enkf_node_alloc_container( config , NULL , false );
+}
+
+enkf_node_type * enkf_node_deep_alloc(const enkf_config_node_type * config) {
+  if (enkf_config_node_get_var_type( config ) == CONTAINER) 
+    enkf_node_alloc_container( config , NULL , false );
+  else
+    return enkf_node_alloc( config );
 }
 
 

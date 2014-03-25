@@ -64,7 +64,7 @@ extern "C" {
   bool                 obs_vector_iget_active(const obs_vector_type * , int );
   void                 obs_vector_iget_observations(const obs_vector_type *  , int  , obs_data_type * , const active_list_type * active_list);
   bool                 obs_vector_has_data( const obs_vector_type * obs_vector , const bool_vector_type * active_mask , enkf_fs_type * fs);
-  void                 obs_vector_measure(const obs_vector_type *  , enkf_fs_type * fs, state_enum state , int report_step , int active_iens_index , const enkf_state_type *  ,  meas_data_type * , const active_list_type * active_list);
+  void                 obs_vector_measure(const obs_vector_type *  , enkf_fs_type * fs, state_enum state , int report_step , const int_vector_type * ens_active_list , meas_data_type * , const active_list_type * active_list);
   const char         * obs_vector_get_state_kw(const obs_vector_type * );
   const char         * obs_vector_get_key(const obs_vector_type * );
   obs_impl_type        obs_vector_get_impl_type(const obs_vector_type * );

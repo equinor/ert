@@ -18,13 +18,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <ert/util/test_util.h>
+
 #include <ert/enkf/enkf_obs.h>
 #include <ert/enkf/ert_test_context.h>
 #include <ert/enkf/meas_data.h>
 #include <ert/enkf/obs_data.h>
 #include <ert/enkf/local_obsset.h>
-
-#include <ert/util/test_util.h>
+#include <ert/enkf/summary_config.h>
 
 
 void testS( ert_test_context_type * test_context ) {
@@ -53,7 +54,7 @@ void testS( ert_test_context_type * test_context ) {
     meas_data = meas_data_alloc( active_list );
     obs_data = obs_data_alloc( );
 
-    enkf_obs_get_obs_and_measure( enkf_obs , fs , step_list , FORECAST , active_list , enkf_main_get_ensemble_const( enkf_main ) , meas_data , obs_data , obs_set);
+    enkf_obs_get_obs_and_measure( enkf_obs , fs , step_list , FORECAST , active_list , meas_data , obs_data , obs_set);
     {
       FILE * stream = util_fopen("analysis/Smatrix" , "r");
       matrix_type * S = meas_data_allocS( meas_data , active_size );
@@ -89,6 +90,29 @@ void test_iget(ert_test_context_type * test_context) {
 }
 
 
+void test_container( ert_test_context_type * test_context ) {
+  enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
+  enkf_config_node_type * config_node = enkf_config_node_new_container( "CONTAINER" );
+  enkf_config_node_type * wwct1_node = enkf_config_node_alloc_summary( "WWCT:OP_1" , LOAD_FAIL_SILENT);
+  enkf_config_node_type * wwct2_node = enkf_config_node_alloc_summary( "WWCT:OP_2" , LOAD_FAIL_SILENT);  
+  enkf_config_node_type * wwct3_node = enkf_config_node_alloc_summary( "WWCT:OP_3" , LOAD_FAIL_SILENT);
+
+  
+  enkf_config_node_update_container( config_node , wwct1_node );
+  enkf_config_node_update_container( config_node , wwct2_node );
+  enkf_config_node_update_container( config_node , wwct3_node );
+  {
+    enkf_node_type * container = enkf_node_deep_alloc( config_node );
+    enkf_node_free( container );
+  }
+  
+
+  enkf_config_node_free( wwct3_node );
+  enkf_config_node_free( wwct2_node );
+  enkf_config_node_free( wwct1_node );  
+  enkf_config_node_free( config_node );
+}
+
 
 
 int main(int argc , char ** argv) {
@@ -98,6 +122,7 @@ int main(int argc , char ** argv) {
   {
     testS( test_context );
     test_iget( test_context );
+    test_container( test_context );
   }
   ert_test_context_free( test_context );
   exit(0);

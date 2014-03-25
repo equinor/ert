@@ -784,21 +784,27 @@ void obs_vector_measure(const obs_vector_type * obs_vector ,
                         enkf_fs_type * fs , 
                         state_enum state , 
                         int report_step , 
-                        int active_iens_index , 
-                        const enkf_state_type * enkf_state ,  
+                        const int_vector_type * ens_active_list , 
                         meas_data_type * meas_data , 
                         const active_list_type * active_list) {
   
   void * obs_node = vector_iget( obs_vector->nodes , report_step );
   if ( obs_node != NULL ) {
-    enkf_node_type * enkf_node = enkf_state_get_node( enkf_state , obs_vector_get_state_kw( obs_vector ));
+    enkf_node_type * enkf_node = enkf_node_deep_alloc( obs_vector->config_node );
+
     node_id_type node_id = { .report_step = report_step , 
                              .state       = state , 
-                             .iens        = enkf_state_get_iens( enkf_state ) };
-    
-    enkf_node_load(enkf_node , fs , node_id);
-    node_id.iens = active_iens_index;
-    obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , node_id , meas_data , active_list);
+                             .iens        = 0 };
+
+    for (int active_iens_index =0; active_iens_index < int_vector_size( ens_active_list ); active_iens_index++) {
+      node_id.iens = int_vector_iget( ens_active_list , active_iens_index );
+      
+      enkf_node_load(enkf_node , fs , node_id);
+      node_id.iens = active_iens_index;
+      obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , node_id , meas_data , active_list);
+    }
+
+    enkf_node_free( enkf_node );
   }
 }
 

@@ -68,7 +68,6 @@ extern "C" {
                                     const int_vector_type  * step_list , 
                                     state_enum               state,
                                     const int_vector_type  * ens_active_list, 
-                                    const enkf_state_type ** ensemble ,
                                     meas_data_type         * meas_data,
                                     obs_data_type          * obs_data,
                                     const local_obsset_type * obsset);
@@ -79,7 +78,6 @@ extern "C" {
                                           const local_obsdata_node_type * obs_node , 
                                           state_enum                 state,
                                           const int_vector_type    * ens_active_list , 
-                                          const enkf_state_type    ** ensemble ,
                                           meas_data_type           * meas_data,
                                           obs_data_type            * obs_data);
 
@@ -89,7 +87,6 @@ extern "C" {
                                          const local_obsdata_type * local_obsdata , 
                                          state_enum                 state,
                                          const int_vector_type    * ens_active_list , 
-                                         const enkf_state_type    ** ensemble ,
                                          meas_data_type           * meas_data,
                                          obs_data_type            * obs_data);
 

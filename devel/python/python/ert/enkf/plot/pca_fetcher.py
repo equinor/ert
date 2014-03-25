@@ -53,7 +53,7 @@ class PcaDataFetcher(DataFetcher):
             meas_data = MeasData(active_list)
             obs_data = ObsData()
 
-            self.ert().getObservations().getObservationAndMeasureData(fs, local_obsdata, state, active_list, ensemble, meas_data, obs_data)
+            self.ert().getObservations().getObservationAndMeasureData(fs, local_obsdata, state, active_list, meas_data, obs_data)
 
             active_size = len(obs_data)
             S = meas_data.createS(active_size)
@@ -73,14 +73,14 @@ class PcaDataFetcher(DataFetcher):
         ensemble_data_fetcher = EnsembleDataFetcher(self.ert())
         block_observation_data_fetcher = BlockObservationDataFetcher(self.ert())
         gen_data_observation_data_fetcher = ObservationGenDataFetcher(self.ert())
-        obsKeys = []
+        tmpList = []
 
         if ensemble_data_fetcher.supportsKey(data_key):
-            obsKeys += self.ert().ensembleConfig().getNode(data_key).getObservationKeys()
+            tmpList += self.ert().ensembleConfig().getNode(data_key).getObservationKeys()
         elif block_observation_data_fetcher.supportsKey(data_key):
-            obsKeys += [data_key]
+            tmpList += [data_key]
         elif gen_data_observation_data_fetcher.supportsKey(data_key):
-            obsKeys += gen_data_observation_data_fetcher.getAllObsKeysForKey(data_key)
+            tmpList += gen_data_observation_data_fetcher.getAllTmpListForKey(data_key)
         else:
             if DataTypeKeysModel().isCustomPcaKeys(data_key):
                 observations = self.ert().getObservations()
@@ -92,15 +92,17 @@ class PcaDataFetcher(DataFetcher):
                 gen_data_obs_keys = [key for key in gen_data_obs_keys]
                 block_obs_keys = [key for key in block_obs_keys]
                 
-                obsKeys = summary_obs_keys + gen_data_obs_keys# + block_obs_keys
+                tmpList = summary_obs_keys + gen_data_obs_keys# + block_obs_keys
 
 
         activeMask = BoolVector(True, self.ert().getEnsembleSize())
         ertObs = self.ert().getObservations()
-        for obs_key in obsKeys:
+
+        obsKeys = []
+        for obs_key in tmpList:
             obsVector = ertObs[obs_key]
-            if not obsVector.hasData( activeMask , fs ):
-                obsKeys.delete(obs_key)
+            if obsVector.hasData( activeMask , fs ):
+                obsKeys.append( obs_key )
         return obsKeys
 
 
