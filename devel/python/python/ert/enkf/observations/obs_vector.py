@@ -1,4 +1,4 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
+# Copyright (C) 2012  Statoil ASA, Norway.
 #   
 #  The file 'obs_vector.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
@@ -65,7 +65,7 @@ class ObsVector(BaseCClass):
 
     def getNextActiveStep(self, previous_step=-1):
         """ @rtype: int """
-        return  ObsVector.cNamespace().get_next_active_step(self, previous_step)
+        return ObsVector.cNamespace().get_next_active_step(self, previous_step)
 
     def getImplementationType(self):
         """ @rtype: EnkfObservationImplementationType """
@@ -88,8 +88,8 @@ class ObsVector(BaseCClass):
             else:
                 run = False
 
-    def hasData(self , active_mask , fs):
-        return ObsVector.cNamespace().has_data(self , active_mask , fs)
+    def hasData(self, active_mask, fs):
+        return ObsVector.cNamespace().has_data(self, active_mask, fs)
 
     def free(self):
         ObsVector.cNamespace().free(self)
