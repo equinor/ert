@@ -3,7 +3,6 @@ from ert.enkf.plot_data import PcaPlotData
 from ert.enkf.enums import EnkfStateType, RealizationStateEnum, EnkfObservationImplementationType
 from ert.enkf import LocalObsdata, LocalObsdataNode, EnkfLinalg, MeasData, ObsData
 from ert.util import Matrix, BoolVector
-from ert_gui.models.connectors.plot.data_type_keys_model import DataTypeKeysModel
 
 
 class PcaDataFetcher(DataFetcher):
@@ -49,7 +48,6 @@ class PcaDataFetcher(DataFetcher):
 
         if len(active_list) > 0:
             state = EnkfStateType.FORECAST
-            ensemble = self.ert().getEnsembleConstant()
             meas_data = MeasData(active_list)
             obs_data = ObsData()
 
@@ -68,46 +66,45 @@ class PcaDataFetcher(DataFetcher):
 
         return None
 
+    def getAllObsKeys(self):
+        observations = self.ert().getObservations()
+        summary_obs_keys = observations.getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
+        gen_data_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
+        block_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.BLOCK_OBS)
 
-    def getObsKeys(self, data_key , fs):
+        summary_obs_keys = [key for key in summary_obs_keys]
+        gen_data_obs_keys = [key for key in gen_data_obs_keys]
+        block_obs_keys = [key for key in block_obs_keys]
+
+        return summary_obs_keys + gen_data_obs_keys + block_obs_keys
+
+
+    def getObsKeys(self, data_key):
         ensemble_data_fetcher = EnsembleDataFetcher(self.ert())
         block_observation_data_fetcher = BlockObservationDataFetcher(self.ert())
         gen_data_observation_data_fetcher = ObservationGenDataFetcher(self.ert())
-        tmpList = []
 
         if ensemble_data_fetcher.supportsKey(data_key):
-            tmpList += self.ert().ensembleConfig().getNode(data_key).getObservationKeys()
+            return self.ert().ensembleConfig().getNode(data_key).getObservationKeys()
         elif block_observation_data_fetcher.supportsKey(data_key):
-            tmpList += [data_key]
+            return [data_key]
         elif gen_data_observation_data_fetcher.supportsKey(data_key):
-            tmpList += gen_data_observation_data_fetcher.getAllTmpListForKey(data_key)
-        else:
-            if DataTypeKeysModel().isCustomPcaKeys(data_key):
-                observations = self.ert().getObservations()
-                summary_obs_keys = observations.getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
-                gen_data_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
-                block_obs_keys =  observations.getTypedKeylist(EnkfObservationImplementationType.BLOCK_OBS)
-
-                summary_obs_keys = [key for key in summary_obs_keys]
-                gen_data_obs_keys = [key for key in gen_data_obs_keys]
-                block_obs_keys = [key for key in block_obs_keys]
-                
-                tmpList = summary_obs_keys + gen_data_obs_keys# + block_obs_keys
+            return gen_data_observation_data_fetcher.getAllObsKeysForKey(data_key)
 
 
-        activeMask = BoolVector(True, self.ert().getEnsembleSize())
-        ertObs = self.ert().getObservations()
+    def filterObsKeys(self, obs_keys, fs):
+        active_mask = BoolVector(True, self.ert().getEnsembleSize())
+        ert_obs = self.ert().getObservations()
 
-        obsKeys = []
-        for obs_key in tmpList:
-            obsVector = ertObs[obs_key]
-            if obsVector.hasData( activeMask , fs ):
-                obsKeys.append( obs_key )
-        return obsKeys
+        result = []
+        for obs_key in obs_keys:
+            obsVector = ert_obs[obs_key]
+            if obsVector.hasData(active_mask, fs):
+                result.append(obs_key)
+        return result
 
 
-
-    def fetchData(self, key, case=None):
+    def fetchData(self, obs_keys, case=None):
         data = {"x": None,
                 "y": None,
                 "obs_y": None,
@@ -117,7 +114,9 @@ class PcaDataFetcher(DataFetcher):
                 "max_x": None}
 
         fs = self.ert().getEnkfFsManager().getFileSystem(case)
-        obs_keys = self.getObsKeys(key,fs)
+        print(obs_keys)
+        obs_keys = self.filterObsKeys(obs_keys, fs)
+        print(obs_keys)
 
         step_1 = 0
         step_2 = self.ert().getHistoryLength()

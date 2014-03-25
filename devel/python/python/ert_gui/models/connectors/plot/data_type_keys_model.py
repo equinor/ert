@@ -14,7 +14,7 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
         self.__gen_kw_keys = None
         self.__gen_data_keys = None
 
-        self.__custom_pca_keys = {"PCA:All": (PcaDataFetcher(self.ert()).getAllObsKeys())}
+        self.__custom_pca_keys = {"PCA:All": PcaDataFetcher(self.ert()).getAllObsKeys()}
         super(DataTypeKeysModel, self).__init__()
 
 
