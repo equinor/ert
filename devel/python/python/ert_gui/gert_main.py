@@ -221,7 +221,7 @@ def main(argv):
         window.addTool(IdeTool(os.path.basename(enkf_config), ert.reloadERT, help_tool))
         window.addTool(PlotTool())
         window.addTool(ExportTool())
-        window.addTool(WorkflowsTool())
+        window.addTool(WorkflowsTool(ert.reloadERT))
         window.addTool(ManageCasesTool())
         window.addTool(help_tool)
 
@@ -232,7 +232,11 @@ def main(argv):
         window.show()
         splash.finish(window)
 
-        sys.exit(app.exec_())
+        finished_code = app.exec_()
+
+        ert.ert().free()
+
+        sys.exit(finished_code)
 
 
 if __name__ == "__main__":

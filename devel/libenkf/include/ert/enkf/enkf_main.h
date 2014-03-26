@@ -322,7 +322,7 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   enkf_fs_type    * enkf_main_get_fs(const enkf_main_type * );
   enkf_fs_type    * enkf_main_get_fs_ref(const enkf_main_type * enkf_main);
   const char      * enkf_main_get_current_fs( const enkf_main_type * enkf_main );
-  enkf_fs_type    * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create);
+  enkf_fs_type    * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path ,  bool create);
   void              enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path );
   void              enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * case_path );
   void              enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path );

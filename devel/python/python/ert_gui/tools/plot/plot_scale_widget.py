@@ -7,8 +7,16 @@ class PlotScalesWidget(QWidget):
 
     plotScaleChanged = pyqtSignal(dict)
 
-    def __init__(self, type_key, title, time_spinner, min_value, minimum=-999999999999, maximum=999999999999):
+    def __init__(self, type_key, title, time_spinner, min_value, minimum=None, maximum=None):
         QWidget.__init__(self)
+
+        if minimum is None:
+            minimum = -999999999999
+
+        if maximum is None:
+            maximum = 999999999999
+
+
         self.__time_spinner = time_spinner
         if time_spinner:
             self.__time_map = ReportStepsModel().getList()
@@ -96,6 +104,7 @@ class PlotScalesWidget(QWidget):
         spinner.setEnabled(False)
         spinner.setMinimumWidth(75)
         spinner.valueChanged[int].connect(self.spinning)
+        spinner.editingFinished.connect(self.spinning)
         spinner.setStringConverter(converter)
         if min_value:
             spinner.setValue(0)

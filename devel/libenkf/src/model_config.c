@@ -486,7 +486,6 @@ const char * model_config_iget_casename( const model_config_type * model_config 
 
 
 void model_config_free(model_config_type * model_config) {
-  path_fmt_free(  model_config->current_runpath );
   if (model_config->enkf_sched != NULL)
     enkf_sched_free( model_config->enkf_sched );
   free( model_config->enspath );
@@ -505,6 +504,7 @@ void model_config_free(model_config_type * model_config) {
 
   bool_vector_free(model_config->internalize_state);
   bool_vector_free(model_config->__load_state);
+  hash_free(model_config->runpath_map);
   if (model_config->case_names != NULL) stringlist_free( model_config->case_names );
   free(model_config);
 }

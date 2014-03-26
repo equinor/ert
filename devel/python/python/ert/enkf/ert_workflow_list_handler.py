@@ -31,6 +31,9 @@ class ErtWorkflowListHandler(BaseCClass):
     def isKilled(self):
         return ErtWorkflowListHandler.cNamespace().is_killed(self)
 
+    def isExternalWorkflow(self):
+        return ErtWorkflowListHandler.cNamespace().is_external_workflow(self)
+
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("ert_workflow_thread_data", ErtWorkflowListHandler)
 cwrapper.registerType("ert_workflow_thread_data_ref", ErtWorkflowListHandler.createCReference)
@@ -45,3 +48,4 @@ ErtWorkflowListHandler.cNamespace().is_running = cwrapper.prototype("bool ert_wo
 ErtWorkflowListHandler.cNamespace().is_killed = cwrapper.prototype("bool ert_workflow_list_handler_is_killed(ert_workflow_thread_data)")
 ErtWorkflowListHandler.cNamespace().cancel_workflow = cwrapper.prototype("void ert_workflow_list_handler_stop_workflow(ert_workflow_thread_data)")
 ErtWorkflowListHandler.cNamespace().join_workflow = cwrapper.prototype("void ert_workflow_list_handler_join_workflow(ert_workflow_thread_data)")
+ErtWorkflowListHandler.cNamespace().is_external_workflow = cwrapper.prototype("bool ert_workflow_list_handler_is_external_workflow(ert_workflow_thread_data)")

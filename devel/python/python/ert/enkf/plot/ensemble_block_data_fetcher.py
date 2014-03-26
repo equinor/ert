@@ -74,7 +74,7 @@ class EnsembleBlockDataFetcher(DataFetcher):
         return data
 
     def fetchData(self, key, case=None):
-        enkf_fs = self.ert().getEnkfFsManager().getFileSystem(case, read_only = True)
+        enkf_fs = self.ert().getEnkfFsManager().getFileSystem(case)
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 

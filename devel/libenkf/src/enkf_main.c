@@ -1377,8 +1377,8 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       if (target_state_map != source_state_map) {
         state_map_set_from_inverted_mask( target_state_map , ens_mask , STATE_PARENT_FAILURE);
         state_map_set_from_mask( target_state_map , ens_mask , STATE_INITIALIZED );
-        enkf_fs_fsync( target_fs );
-      }
+      enkf_fs_fsync( target_fs );
+    }
     }
     bool_vector_free( ens_mask );
     int_vector_free( ens_active_list );
@@ -1863,7 +1863,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
     if (enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL, iter))
       enkf_main_run_post_workflow(enkf_main);
     {
-      enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true );
+      enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , true );
       bool update_done = enkf_main_smoother_update( enkf_main , target_fs );
 
       if (rerun) { 
@@ -1895,7 +1895,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
     fprintf(stderr,"Sorry: the updated ensemble will overwrite the current case in the iterated ensemble smoother.");
     updateOK = enkf_main_smoother_update__(enkf_main , step_list , enkf_main_get_fs(enkf_main));
   } else {
-    enkf_fs_type * target_fs     = enkf_main_mount_alt_fs(enkf_main , target_fs_name , false , true );
+    enkf_fs_type * target_fs     = enkf_main_mount_alt_fs(enkf_main , target_fs_name , true );
     updateOK = enkf_main_smoother_update__(enkf_main , step_list , target_fs );
     enkf_main_set_fs(enkf_main , target_fs , NULL);
     cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
@@ -1927,7 +1927,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2)
 
 
     if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
-      enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , false , true);
+      enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , true);
       enkf_main_init_case_from_existing(enkf_main, current_case, 0, ANALYZED, initial_case);
       
       // Currently does nothing; 
@@ -2366,13 +2366,13 @@ static void enkf_main_install_data_kw( enkf_main_type * enkf_main , hash_type * 
     const char * num_cpu_string   = "1";
   
     enkf_main_add_subst_kw( enkf_main , "CWD"          , cwd , "The current working directory we are running from - the location of the config file." , true);
-    enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , false);
+    enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , true);
     enkf_main_add_subst_kw( enkf_main , "DATE"         , date_string , "The current date." , true);
     enkf_main_add_subst_kw( enkf_main , "NUM_CPU"      , num_cpu_string , "The number of CPU used for one forward model." , true );
     enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , qc_module_get_runpath_list_file( enkf_main->qc_module ) , "The name of a file with a list of run directories." , true);
-    
-    //free( cwd );
-    //free( date_string );
+
+    free( cwd );
+    free( date_string );
   }
 }
 
@@ -2449,20 +2449,19 @@ void enkf_main_update_node( enkf_main_type * enkf_main , const char * key ) {
 }
 
 
-// NOTE KF 20130628: This is commented out, because I don't think it is used, but we'll give it some time
-//
-///**
-//   When the case has changed it is essential to invalidate the meta
-//   information in the enkf_nodes, otherwise the nodes might reuse old
-//   data (from a previous case).
-//*/
-//
-//static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
-//  int ens_size = enkf_main_get_ensemble_size( enkf_main );
-//  int iens;
-//  for (iens = 0; iens < ens_size; iens++)
-//    enkf_state_invalidate_cache( enkf_main->ensemble[iens] );
-//}
+
+/*
+ When the case has changed it is essential to invalidate the meta
+ information in the enkf_nodes, otherwise the nodes might reuse old
+ data (from a previous case).
+*/
+
+static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
+  int ens_size = enkf_main_get_ensemble_size( enkf_main );
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    enkf_state_invalidate_cache( enkf_main->ensemble[iens] );
+}
 
 
 /*

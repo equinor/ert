@@ -40,9 +40,15 @@ class FileSystemRotator(object):
     def __contains__(self, full_case_name):
         return full_case_name in self.__fs_list
 
-    def __getitem__(self, full_case_name):
+    def __getitem__(self, case):
         """ @rtype: EnkfFs """
-        return self.__fs_map[full_case_name]
+        if isinstance(case, str):
+            return self.__fs_map[case]
+        elif isinstance(case, int) and 0 <= case < len(self):
+            case_name = self.__fs_list[case]
+            return self.__fs_map[case_name]
+        else:
+            raise IndexError("Value '%s' is not a proper index or case name." % case)
 
 
     def umountAll(self):
@@ -74,12 +80,11 @@ class EnkfFsManager(BaseCClass):
 
         self.getCurrentFileSystem()
 
-
     def __createFullCaseName(self, mount_root, case_name):
         return os.path.join(mount_root, case_name)
 
 
-    def getFileSystem(self, case_name, mount_root=None, read_only=False):
+    def getFileSystem(self, case_name, mount_root=None):
         """
         @rtype: EnkfFs
         """
@@ -93,18 +98,12 @@ class EnkfFsManager(BaseCClass):
                 if self.__fs_rotator.atCapacity():
                     self.__fs_rotator.dropOldestFileSystem()
 
-                if read_only:
-                    raise IOError("Tried to access non existing filesystem: '%s' in read-only mode" % full_case_name)
-
                 EnkfFs.createFileSystem(full_case_name, self.__fs_type, self.__fs_arg)
 
-            new_fs = EnkfFs(full_case_name, read_only)
+            new_fs = EnkfFs(full_case_name)
             self.__fs_rotator.addFileSystem(new_fs, full_case_name)
 
         fs = self.__fs_rotator[full_case_name]
-
-        if fs.isReadOnly() and not read_only:
-            fs.setWritable()
 
         return fs
 
