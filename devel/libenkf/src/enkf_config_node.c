@@ -356,6 +356,7 @@ enkf_config_node_type * enkf_config_node_new_container( const char * key ) {
 
 void enkf_config_node_update_container( enkf_config_node_type * config_node , const enkf_config_node_type * child_node) {
   vector_append_ref( config_node->container_nodes , child_node );
+  container_config_add_node( config_node->data , child_node );
 }                                       
   
 const char * enkf_config_node_iget_container_key( const enkf_config_node_type * config_node , int index) {
