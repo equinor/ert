@@ -62,7 +62,6 @@ int container_get_size( const container_type * container ) {
 void container_assert_size( const container_type * container ) {
   if (vector_get_size( container->nodes ) != container_config_get_size( container->config ))
     util_abort("%s: container size mismatch. Current:%d  Config:%d \n",__func__ , container_get_size( container ) , container_config_get_size( container->config ));
-  printf("Container size:%d \n",container_get_size( container ));
 }
 
 

@@ -114,9 +114,7 @@ class PcaDataFetcher(DataFetcher):
                 "max_x": None}
 
         fs = self.ert().getEnkfFsManager().getFileSystem(case)
-        print(obs_keys)
         obs_keys = self.filterObsKeys(obs_keys, fs)
-        print(obs_keys)
 
         step_1 = 0
         step_2 = self.ert().getHistoryLength()
