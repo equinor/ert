@@ -65,6 +65,28 @@ void test_container( ert_test_context_type * test_context ) {
 
 
 
+void test_measure( ert_test_context_type * test_context ) {
+  enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
+  enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
+  enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
+  obs_vector_type * rft_obs = enkf_obs_get_vector( enkf_obs , "RFT_TEST");
+  int_vector_type * ens_active_list = int_vector_alloc(0,0);
+  active_list_type * active_list = active_list_alloc( );
+  meas_data_type * meas_data_RFT;
+
+  for (int i=0; i < enkf_main_get_ensemble_size( enkf_main ); i++) 
+    int_vector_append( ens_active_list , i );
+  meas_data_RFT = meas_data_alloc( ens_active_list );
+  
+  obs_vector_measure( rft_obs , fs , FORECAST , 20 , ens_active_list , meas_data_RFT , active_list );
+
+  int_vector_free( ens_active_list );
+  active_list_free( active_list );
+  meas_data_free( meas_data_RFT );
+}
+
+
+
 
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
@@ -75,6 +97,7 @@ int main(int argc , char ** argv) {
     test_valid_obs_vector( enkf_main , "WWCT:OP_3");
     test_invalid_obs_vector( enkf_main , "GOPT:OP");
     test_container( context );
+    test_measure( context );
   }
   ert_test_context_free( context );
 }
