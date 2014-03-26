@@ -28,6 +28,3 @@ class EnKFFSManagerTest1(ExtendedTestCase):
             self.assertEqual(2, fsm.getFileSystemCount())
             self.assertEqual(1, fs2.refCount())
 
-            with self.assertRaises(IOError):
-                fs2 = fsm.getFileSystem("newFS3", read_only=True)
-

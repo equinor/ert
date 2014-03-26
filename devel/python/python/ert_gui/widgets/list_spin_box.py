@@ -1,4 +1,7 @@
-from PyQt4.QtGui import QSpinBox, QValidator
+import re
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QSpinBox, QValidator, QLineEdit, QCompleter, QListView, QStringListModel
+from ert.util import ctime
 
 
 class ListSpinBox(QSpinBox):
@@ -10,10 +13,37 @@ class ListSpinBox(QSpinBox):
         self.__string_converter = str
         self.__items = items
 
+        list = []
+        for item in self.__items:
+            assert isinstance(item, ctime)
+            date = item.date()
+            list.append(self.convertToString(date))
+
+        model = QStringListModel()
+        model.setStringList(list)
+
         self.setRange(0, len(items) - 1)
         self.setValue(len(items) - 1)
 
+        self.__completer = QCompleter()
+        self.__completer.setModel(model)
+        self.__completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
 
+        view = QListView()
+        self.__completer.setPopup(view)
+
+        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        view.setAlternatingRowColors(True)
+        view.setMinimumWidth(90)
+
+
+        line_edit = QLineEdit()
+        line_edit.setCompleter(self.__completer)
+        line_edit.textEdited.connect(self.showCompleter)
+        self.setLineEdit(line_edit)
+
+    def showCompleter(self):
+        self.__completer.complete()
 
     def convertToString(self, item):
         return self.__string_converter(item)
@@ -46,6 +76,12 @@ class ListSpinBox(QSpinBox):
     def validate(self, qstring, pos):
         text = str(qstring).lower()
 
+        if re.match("^[0-9-]+$", text) is None:
+            return QValidator.Invalid, pos
+
+        if len(text) < 10:
+            return QValidator.Acceptable, pos
+
         for index in range(len(self.__items)):
             value = self.convertToString(self.__items[index]).lower()
 
@@ -56,7 +92,6 @@ class ListSpinBox(QSpinBox):
                 return QValidator.Intermediate, pos
 
         return QValidator.Invalid, pos
-
 
     def fixup(self, input):
         text = str(input).lower()
