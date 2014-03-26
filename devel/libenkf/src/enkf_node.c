@@ -1172,9 +1172,11 @@ enkf_node_type * enkf_node_alloc_private_container(const enkf_config_node_type *
 }
 
 enkf_node_type * enkf_node_deep_alloc(const enkf_config_node_type * config) {
-  if (enkf_config_node_get_var_type( config ) == CONTAINER) 
-    enkf_node_alloc_container( config , NULL , false );
-  else
+  if (enkf_config_node_get_impl_type( config ) == CONTAINER) {
+    enkf_node_type * container = enkf_node_alloc_container( config , NULL , false );
+    container_assert_size( enkf_node_value_ptr( container ));
+    return container;
+  } else
     return enkf_node_alloc( config );
 }
 
