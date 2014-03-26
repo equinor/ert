@@ -21,7 +21,7 @@ class ObservationDataFetcher(DataFetcher):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 
-        observation_data = observations.getObservationsVector(key)
+        observation_data = observations[key]
         active_count = observation_data.getActiveCount()
 
         history_length = self.ert().getHistoryLength()

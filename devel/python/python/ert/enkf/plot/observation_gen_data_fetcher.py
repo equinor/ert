@@ -27,7 +27,7 @@ class ObservationGenDataFetcher(DataFetcher):
         for key in gen_data_keys:
             obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
             for obs_key in obs_keys:
-                obs_vector = self.ert().getObservations().getObservationsVector(obs_key)
+                obs_vector = self.ert().getObservations()[obs_key]
                 for report_step in obs_vector:
                     gen_data_list.append("%s@%d" % (key, report_step))
 
@@ -46,7 +46,7 @@ class ObservationGenDataFetcher(DataFetcher):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 
-        gen_obs = observations.getObservationsVector(key).getNode(report_step)
+        gen_obs = observations[key].getNode(report_step)
 
         size = gen_obs.getSize()
 
@@ -75,7 +75,7 @@ class ObservationGenDataFetcher(DataFetcher):
     def getObsKeyForKey(self, key, key_report_step):
         obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
         for obs_key in obs_keys:
-            obs_vector = self.ert().getObservations().getObservationsVector(obs_key)
+            obs_vector = self.ert().getObservations()[obs_key]
             for report_step in obs_vector:
                 if report_step == key_report_step:
                     return obs_key
@@ -95,7 +95,7 @@ class ObservationGenDataFetcher(DataFetcher):
         if not observations.hasKey(obs_key):
             return False
 
-        return observations.getObservationsVector(obs_key).getActiveCount() > 0
+        return observations[obs_key].getActiveCount() > 0
 
     def fetchData(self, key, case=None):
         key, report_step = key.split("@")

@@ -79,7 +79,7 @@ class EnsembleBlockDataFetcher(DataFetcher):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 
-        observation_vector = observations.getObservationsVector(key)
+        observation_vector = observations[key]
 
         report_step_data = []
         for report_step in observation_vector:

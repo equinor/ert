@@ -33,7 +33,7 @@ class EnkfObs(BaseCClass):
     def __iter__(self):
         iobs = 0
         while iobs < len(self):
-            vector = self.igetObservationsVector(iobs)
+            vector = self[iobs]
             yield vector
             iobs += 1
 

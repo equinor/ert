@@ -84,13 +84,13 @@ class BlockObservationDataFetcher(DataFetcher):
         if not observations.hasKey(key):
             return False
 
-        return observations.getObservationsVector(key).getActiveCount() > 0
+        return observations[key].getActiveCount() > 0
 
     def fetchData(self, key, case=None):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 
-        observation_vector = observations.getObservationsVector(key)
+        observation_vector = observations[key]
 
         report_step_data = []
         for report_step in observation_vector:
