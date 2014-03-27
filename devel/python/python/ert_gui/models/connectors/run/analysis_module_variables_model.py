@@ -22,14 +22,19 @@ class AnalysisModuleVariablesModel(ErtConnector):
     def __init__(self):
         super(AnalysisModuleVariablesModel, self).__init__()
         self.__variable_names = {
-            "LAMBDA0": {"type": float, "min": -1, "max": None},
-            "LAMBDA_REDUCE": {"type": float},
-            "LAMBDA_INCREASE": {"type": float},
-            "LAMBDA_MIN": {"type": float},
+            "LAMBDA0": {"type": float, "min": -1, "max": 100, "step":1.0},
+            "LAMBDA_REDUCE": {"type": float, "min": 0, "max": 1, "step":0.1},
+            "LAMBDA_INCREASE": {"type": float, "min": 1, "max": 2, "step":0.1},
+            "LAMBDA_MIN": {"type": float, "min": 0, "max": 10, "step":0.1},
             "USE_PRIOR": {"type": bool},
             "LOG_FILE": {"type": str},
             "CLEAR_LOG": {"type": bool},
-            "LAMBDA_RECALCULATE": {"type": bool}
+            "LAMBDA_RECALCULATE": {"type": bool},
+            "ENKF_TRUNCATION" :{"type": float, "min": 0, "max": 1, "step":0.1},
+            "ENKF_NCOMP": {"type": int, "min": -1000000, "max": 10000000, "step":1.0},
+            "CV_NFOLDS": {"type": int, "min": -1000000, "max": 10000000, "step":1.0},
+            "FWD_STEP_R2_LIMIT":{"type": float, "min": -1, "max": 100, "step":1.0},
+            "CV_PEN_PRESS": {"type": bool}
         }
 
 
@@ -43,15 +48,37 @@ class AnalysisModuleVariablesModel(ErtConnector):
                 items.append(name)
         return items
 
-    def getVariableValue(self, analysis_module, name):
-        """ @rtype: int or float or bool or str """
-        pass
-
-    def getVariableType(self,name):
+    def getVariableType(self, name):
         return self.__variable_names[name]["type"]
 
+    def getVariableMaximumValue(self, name):
+        return self.__variable_names[name]["max"]
 
-    def setVariableValue(self, analysis_module, name, value):
-        pass
+    def getVariableMinimumValue(self, name):
+        return self.__variable_names[name]["min"]
+
+    def getVariableStepValue(self, name):
+        return self.__variable_names[name]["step"]
+
+
+
+    def setVariableValue(self, analysis_module_name, name, value):
+        analysis_module = self.ert().analysisConfig().getModule(analysis_module_name)
+        result = analysis_module.setVar(name,str(value))
+
+
+
+    def getVariableValue(self, analysis_module_name, name):
+        """ @rtype: int or float or bool or str """
+        analysis_module = self.ert().analysisConfig().getModule(analysis_module_name)
+        variable_type = self.getVariableType(name)
+        if variable_type == float:
+            return analysis_module.getDouble(name)
+        elif variable_type == bool:
+            return analysis_module.getBool(name)
+        elif variable_type == str:
+            return analysis_module.getStr(name)
+        elif variable_type == int:
+            return  analysis_module.getInt(name)
 
 

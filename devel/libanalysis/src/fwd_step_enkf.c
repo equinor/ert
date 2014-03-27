@@ -49,8 +49,7 @@ struct fwd_step_enkf_data_struct {
   double                 r2_limit;
 };
 
-
-
+static UTIL_SAFE_CAST_FUNCTION_CONST( fwd_step_enkf_data , FWD_STEP_ENKF_TYPE_ID )
 static UTIL_SAFE_CAST_FUNCTION( fwd_step_enkf_data , FWD_STEP_ENKF_TYPE_ID )
 
 
@@ -218,6 +217,37 @@ long fwd_step_enkf_get_options( void * arg , long flag) {
   }
 }
 
+bool fwd_step_enkf_has_var( const void * arg, const char * var_name) {
+  {
+    if (strcmp(var_name , NFOLDS_KEY) == 0)
+      return true;
+    else if (strcmp(var_name , R2_LIMIT_KEY ) == 0)
+      return true;
+    else
+      return false;
+  }
+}
+
+double fwd_step_enkf_get_double( const void * arg, const char * var_name) {
+  const fwd_step_enkf_data_type * module_data = fwd_step_enkf_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , R2_LIMIT_KEY ) == 0)
+      return module_data->r2_limit;
+    else
+      return -1;
+  }
+}
+
+int fwd_step_enkf_get_int( const void * arg, const char * var_name) {
+  const fwd_step_enkf_data_type * module_data = fwd_step_enkf_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , NFOLDS_KEY) == 0)
+      return module_data->nfolds;
+    else
+      return -1;
+  }
+}
+
 
 
 
@@ -240,9 +270,9 @@ analysis_table_type SYMBOL_TABLE = {
   .updateA         = fwd_step_enkf_updateA,
   .init_update     = NULL ,
   .complete_update = NULL ,
-  .has_var         = NULL ,
-  .get_int         = NULL ,
-  .get_double      = NULL ,
+  .has_var         = fwd_step_enkf_has_var,
+  .get_int         = fwd_step_enkf_get_int ,
+  .get_double      = fwd_step_enkf_get_double ,
   .get_bool        = NULL ,
   .get_ptr         = NULL
 };
