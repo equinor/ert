@@ -2,7 +2,7 @@ from ert.enkf.plot import DataFetcher, ObservationGenDataFetcher, BlockObservati
 from ert.enkf.plot_data import PcaPlotData
 from ert.enkf.enums import EnkfStateType, RealizationStateEnum, EnkfObservationImplementationType
 from ert.enkf import LocalObsdata, LocalObsdataNode, EnkfLinalg, MeasData, ObsData
-from ert.util import Matrix, BoolVector
+from ert.util import Matrix, BoolVector, DoubleVector
 
 
 class PcaDataFetcher(DataFetcher):
@@ -40,6 +40,7 @@ class PcaDataFetcher(DataFetcher):
     def calculatePrincipalComponent(self, fs, local_obsdata, truncation_or_ncomp=3):
         pc = Matrix(1, 1)
         pc_obs = Matrix(1, 1)
+        singular_values = DoubleVector()
 
         state_map = fs.getStateMap()
         ens_mask = BoolVector(False, self.ert().getEnsembleSize())
@@ -60,7 +61,7 @@ class PcaDataFetcher(DataFetcher):
             truncation, ncomp = self.truncationOrNumberOfComponents(truncation_or_ncomp)
 
             obs_data.scale(S, D_obs=D_obs)
-            EnkfLinalg.calculatePrincipalComponents(S, D_obs, truncation, ncomp, pc, pc_obs)
+            EnkfLinalg.calculatePrincipalComponents(S, D_obs, truncation, ncomp, pc, pc_obs, singular_values)
 
             return PcaPlotData(local_obsdata.getName(), pc, pc_obs)
 

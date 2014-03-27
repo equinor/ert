@@ -1017,9 +1017,10 @@ void enkf_main_get_PC( const matrix_type * S,
                        double truncation , 
                        int ncomp , 
                        matrix_type * PC , 
-                       matrix_type * PC_obs) {
-
-  enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
+                       matrix_type * PC_obs , 
+                       double_vector_type * singular_values) {
+  
+  enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
 }
 
 
@@ -1029,7 +1030,9 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
                         const local_obsdata_type * obsdata , 
                         double truncation_or_ncomp , 
                         matrix_type * PC , 
-                        matrix_type * PC_obs ) {
+                        matrix_type * PC_obs ,
+                        double_vector_type * singular_values) {
+  
   state_enum   state                     = FORECAST;
   enkf_fs_type * fs                      = enkf_main_get_fs( enkf_main );
   state_map_type * state_map             = enkf_fs_get_state_map( fs );
@@ -1074,7 +1077,7 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
         ncomp = (int) truncation_or_ncomp;
 
       obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
-      enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
+      enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
     
       matrix_free( S );
       matrix_free( dObs );
@@ -1096,11 +1099,12 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   {
     matrix_type * PC = matrix_alloc(1,1);
     matrix_type * PC_obs = matrix_alloc(1,1);
+    double_vector_type * singular_values = double_vector_alloc(0,0);
 
-    enkf_main_init_PC(  enkf_main , obs_data , truncation_or_ncomp , PC , PC_obs );
+    enkf_main_init_PC(  enkf_main , obs_data , truncation_or_ncomp , PC , PC_obs , singular_values );
     pca_plot_data = pca_plot_data_alloc( local_obsdata_get_name( obs_data ) , PC , PC_obs );
-
-  
+    
+    double_vector_free( singular_values );
     matrix_free( PC );
     matrix_free( PC_obs );
   }
@@ -1189,10 +1193,11 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       int ncomp            = ens_size - 1;
       matrix_type * PC     = matrix_alloc(1,1);
       matrix_type * PC_obs = matrix_alloc(1,1);
+      double_vector_type * singular_values = double_vector_alloc(0,0);
       local_obsset_type   * obsset = local_ministep_get_obsset( ministep );
       const char * obsset_name = local_obsset_get_name( obsset );
       
-      enkf_main_get_PC( S , dObs , truncation , ncomp , PC , PC_obs );
+      enkf_main_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
       {
         char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , obsset_name);
         char * full_path = util_alloc_filename( analysis_config_get_PC_path( enkf_main->analysis_config) , filename , NULL );
@@ -1204,6 +1209,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       }
       matrix_free( PC );
       matrix_free( PC_obs );
+      double_vector_free( singular_values );
     }
     
     if (localA == NULL)

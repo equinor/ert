@@ -592,7 +592,8 @@ void enkf_linalg_get_PC( const matrix_type * S0,
                          double truncation,
                          int ncomp, 
                          matrix_type * PC,
-                         matrix_type * PC_obs ) {
+                         matrix_type * PC_obs, 
+                         double_vector_type * singular_values) {
   
   const int nrobs   = matrix_get_rows( S0 );
   const int nrens   = matrix_get_columns( S0 );
@@ -600,10 +601,12 @@ void enkf_linalg_get_PC( const matrix_type * S0,
 
   matrix_type * U0  = matrix_alloc( nrobs , nrens );
   matrix_type * S   = matrix_alloc_copy( S0 );
-  double * inv_sig0 = util_calloc( nrmin , sizeof * inv_sig0 );
-  
+  double * inv_sig0;
+
+  double_vector_resize( singular_values , nrmin );
   matrix_subtract_row_mean( S );
   ncomp = util_int_min( ncomp , nrmin );
+  inv_sig0 = double_vector_get_ptr( singular_values );
   {
     matrix_type * S_mean = matrix_alloc( nrobs , 1 );
     int num_PC = enkf_linalg_svdS(S , truncation , ncomp, DGESVD_NONE , inv_sig0 , U0 , NULL);
@@ -631,10 +634,11 @@ void enkf_linalg_get_PC( const matrix_type * S0,
       matrix_dgemm( PC_obs , U0 , S_mean , true , false , 1.0 , 0.0 );
     }
 
-
+    for (int i=0; i < double_vector_size( singular_values ); i++)
+      inv_sig0[i] = 1.0 / inv_sig0[i];
+    
     matrix_free( S_mean );
   }
-  free( inv_sig0 );
   matrix_free( S );
   matrix_free( U0 );
 }
