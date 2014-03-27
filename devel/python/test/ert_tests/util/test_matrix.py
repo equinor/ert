@@ -25,6 +25,23 @@ class MatrixTest(ExtendedTestCase):
         with self.assertRaises(IndexError):
             m[0, 3] = 0
 
+    def test_matrix_set(self):
+        m1 = Matrix(2,2)
+        m1.setAll(99)
+        self.assertEqual( 99 , m1[0,0] )
+        self.assertEqual( 99 , m1[1,1] )
+        m2 = Matrix(2,2 , value = 99)
+        self.assertEqual(m1,m2)
+
+    
+    def test_matrix_scale(self):
+        m = Matrix(2,2 , value = 1)
+        m.scaleColumn(0 , 2)
+        self.assertEqual(2 , m[0,0])
+        self.assertEqual(2 , m[1,0])
+        
+        with self.assertRaises(IndexError):
+            m.scaleColumn(10 , 99)
 
 
     def test_matrix_equality(self):
@@ -47,3 +64,6 @@ class MatrixTest(ExtendedTestCase):
         r[1, 1] = 4
 
         self.assertEqual(m, r)
+
+
+        
