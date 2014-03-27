@@ -80,6 +80,7 @@ extern "C" {
 #define  ENSPATH_KEY                       "ENSPATH" 
 #define  ITER_CASE_KEY                     "ITER_CASE" 
 #define  ITER_COUNT_KEY                    "ITER_COUNT"
+#define  MAX_ITER_COUNT_KEY                "MAX_ITER_COUNT"
 #define  FIELD_KEY                         "FIELD"
 #define  FORWARD_MODEL_KEY                 "FORWARD_MODEL"
 #define  GEN_DATA_KEY                      "GEN_DATA"
