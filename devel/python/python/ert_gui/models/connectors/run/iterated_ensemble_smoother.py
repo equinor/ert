@@ -67,19 +67,39 @@ class IteratedEnsembleSmoother(BaseRunModel):
             self.ert().getEnkfFsManager().switchFileSystem(initial_fs)
             self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(source_fs, 0, EnkfStateType.ANALYZED)
 
-        analysis_module.setVar("ITER", str(0))
         self.runAndPostProcess(active_realization_mask, 0, phase_count, EnkfInitModeEnum.INIT_CONDITIONAL)
         target_case_format = TargetCaseFormatModel().getValue()
         self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat( target_case_format )
 
-        for phase in range(1, phase_count):
+        analysis_config = self.ert().analysisConfig()
+        analysis_iter_config = analysis_config.getAnalysisIterConfig()
+        max_iterations = analysis_iter_config.getMaxNumIterations()
+        iteration_counter = 0
+        failed_iterations = 0
+        phase = 1
+
+        while phase <= phase_count and iteration_counter <= max_iterations:
             target_fs = self.createTargetCaseFileSystem(phase)
 
             self.analyzeStep(target_fs)
 
-            self.ert().getEnkfFsManager().switchFileSystem(target_fs)
+            iteration_num = analysis_module.getInt("ITER")
+            if iteration_num+1 > phase:
+                self.ert().getEnkfFsManager().switchFileSystem(target_fs)
+                self.runAndPostProcess(active_realization_mask, phase, phase_count, EnkfInitModeEnum.INIT_NONE)
+            else:
+                self.runAndPostProcess(active_realization_mask, phase-1, phase_count, EnkfInitModeEnum.INIT_NONE)
 
-            analysis_module.setVar("ITER", str(phase))
-            self.runAndPostProcess(active_realization_mask, phase, phase_count, EnkfInitModeEnum.INIT_NONE)
+            if iteration_num+1 > phase :
+              phase += 1
+            else :
+              failed_iterations += 1
 
-        self.setPhase(phase_count, "Simulations completed.")
+            iteration_counter += 1
+
+
+        if phase == phase_count:
+            self.setPhase(phase_count, "Simulations completed.")
+        else:
+            raise ErtRunError("Iterated Ensemble Smoother stopped: maximum number of iterations (%d iterations) reached. Number of failed iterations: %d" % (max_iterations, failed_iterations))
+
