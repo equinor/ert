@@ -1,9 +1,9 @@
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.models.connectors.run import ActiveRealizationsModel, EnsembleSmoother, TargetCaseModel, AnalysisModuleModel, RunPathModel, \
-    IteratedAnalysisModuleModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel, EnsembleSmoother, TargetCaseModel, AnalysisModuleModel, RunPathModel
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.widgets import util
 from ert_gui.widgets.active_label import ActiveLabel
@@ -52,8 +52,9 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
         self.variables_layout = QHBoxLayout()
         self.variables_layout.setSpacing(2)
-        self.variables_layout.addWidget(self.analysis_module_choice)
-        self.variables_layout.addWidget(self.variables_popup_button)
+        self.variables_layout.addWidget(self.analysis_module_choice, 0, Qt.AlignLeft)
+        self.variables_layout.addWidget(self.variables_popup_button, 0, Qt.AlignLeft)
+
 
         layout.addRow(self.analysis_module_choice.getLabel(), self.variables_layout)
 
