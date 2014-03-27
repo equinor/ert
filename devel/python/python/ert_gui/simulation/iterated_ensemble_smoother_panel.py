@@ -1,3 +1,4 @@
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel, QMessageBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
 from ert_gui.models.connectors import EnsembleSizeModel
@@ -52,8 +53,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
         self.variables_layout = QHBoxLayout()
         self.variables_layout.setSpacing(2)
-        self.variables_layout.addWidget(self.iterated_analysis_module_choice)
-        self.variables_layout.addWidget(self.variables_popup_button)
+        self.variables_layout.addWidget(self.iterated_analysis_module_choice, 0, Qt.AlignLeft)
+        self.variables_layout.addWidget(self.variables_popup_button, 0, Qt.AlignLeft)
 
         layout.addRow(self.iterated_analysis_module_choice.getLabel(), self.variables_layout)
 
