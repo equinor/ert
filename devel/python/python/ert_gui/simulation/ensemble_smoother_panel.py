@@ -51,7 +51,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self.variables_popup_button.setMaximumSize(20, 20)
 
         self.variables_layout = QHBoxLayout()
-        self.variables_layout.setSpacing(2)
+        #self.variables_layout.setSpacing(2)
         self.variables_layout.addWidget(self.analysis_module_choice, 0, Qt.AlignLeft)
         self.variables_layout.addWidget(self.variables_popup_button, 0, Qt.AlignLeft)
 
