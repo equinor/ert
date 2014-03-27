@@ -40,8 +40,18 @@ class MatrixTest(ExtendedTestCase):
         self.assertEqual(2 , m[0,0])
         self.assertEqual(2 , m[1,0])
         
+        m.setAll(1)
+        m.scaleRow(1 , 2 )
+        self.assertEqual(2 , m[1,0])
+        self.assertEqual(2 , m[1,1])
+
         with self.assertRaises(IndexError):
             m.scaleColumn(10 , 99)
+        
+        with self.assertRaises(IndexError):
+            m.scaleRow(10 , 99)
+
+
 
 
     def test_matrix_equality(self):
