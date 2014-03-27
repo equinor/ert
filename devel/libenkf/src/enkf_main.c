@@ -1102,7 +1102,7 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
     double_vector_type * singular_values = double_vector_alloc(0,0);
 
     enkf_main_init_PC(  enkf_main , obs_data , truncation_or_ncomp , PC , PC_obs , singular_values );
-    pca_plot_data = pca_plot_data_alloc( local_obsdata_get_name( obs_data ) , PC , PC_obs );
+    pca_plot_data = pca_plot_data_alloc( local_obsdata_get_name( obs_data ) , PC , PC_obs , singular_values);
     
     double_vector_free( singular_values );
     matrix_free( PC );

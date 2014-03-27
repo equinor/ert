@@ -603,7 +603,7 @@ void enkf_linalg_get_PC( const matrix_type * S0,
   matrix_type * S   = matrix_alloc_copy( S0 );
   double * inv_sig0;
 
-  double_vector_resize( singular_values , nrmin );
+  double_vector_iset( singular_values , nrmin - 1 , 0 );
   matrix_subtract_row_mean( S );
   ncomp = util_int_min( ncomp , nrmin );
   inv_sig0 = double_vector_get_ptr( singular_values );

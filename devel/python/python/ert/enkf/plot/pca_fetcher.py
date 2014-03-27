@@ -8,6 +8,7 @@ from ert.util import Matrix, BoolVector, DoubleVector
 class PcaDataFetcher(DataFetcher):
     def __init__(self, ert):
         super(PcaDataFetcher, self).__init__(ert)
+        self.__prior_singular_values = None
 
     def fetchSupportedKeys(self):
         summary_keys = EnsembleDataFetcher(self.ert()).getSupportedKeys()
@@ -62,10 +63,19 @@ class PcaDataFetcher(DataFetcher):
 
             obs_data.scale(S, D_obs=D_obs)
             EnkfLinalg.calculatePrincipalComponents(S, D_obs, truncation, ncomp, pc, pc_obs, singular_values)
+            if self.__prior_singular_values is None:
+                self.__prior_singular_values = singular_values
+            else:
+                for row in range(pc.rows()):
+                    factor = singular_values[row]/self.__prior_singular_values[row]
+                    pc.scaleRow( row , factor )
+                    pc_obs.scaleRow( row , factor )
 
-            return PcaPlotData(local_obsdata.getName(), pc, pc_obs)
-
+            
+            return PcaPlotData(local_obsdata.getName(), pc , pc_obs , singular_values)
         return None
+
+
 
     def getAllObsKeys(self):
         observations = self.ert().getObservations()

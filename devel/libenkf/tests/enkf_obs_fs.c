@@ -91,7 +91,6 @@ void test_iget(ert_test_context_type * test_context) {
 
 
 void test_container( ert_test_context_type * test_context ) {
-  enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
   enkf_config_node_type * config_node = enkf_config_node_new_container( "CONTAINER" );
   enkf_config_node_type * wwct1_node = enkf_config_node_alloc_summary( "WWCT:OP_1" , LOAD_FAIL_SILENT);
   enkf_config_node_type * wwct2_node = enkf_config_node_alloc_summary( "WWCT:OP_2" , LOAD_FAIL_SILENT);  
