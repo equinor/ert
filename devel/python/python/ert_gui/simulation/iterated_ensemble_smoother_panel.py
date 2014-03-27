@@ -84,9 +84,9 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
     def showVariablesPopup(self):
 
         analysis_module_name = IteratedAnalysisModuleModel().getCurrentChoice()
+        if analysis_module_name is not None:
+            variable_dialog = AnalysisModuleVariablesPanel(analysis_module_name)
+            dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
 
-        variable_dialog = AnalysisModuleVariablesPanel(analysis_module_name)
-        dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
-
-        dialog.exec_()
+            dialog.exec_()
 

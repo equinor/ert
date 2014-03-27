@@ -26,9 +26,6 @@ class AnalysisModuleVariablesPanel(QWidget):
     def __init__(self, analysis_module_name, parent=None):
         QWidget.__init__(self, parent)
 
-        if analysis_module_name is None:
-            pass
-        
         self.__analysis_module_name = analysis_module_name
 
         layout = QFormLayout()
