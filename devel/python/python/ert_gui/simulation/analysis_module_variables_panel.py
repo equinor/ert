@@ -113,5 +113,5 @@ class AnalysisModuleVariablesPanel(QWidget):
             assert isinstance(variable_control, QSpinBox)
             value = variable_control.value()
 
-
-        AnalysisModuleVariablesModel().setVariableValue(self.__analysis_module_name, variable_name, value)
+        if value is not None:
+            AnalysisModuleVariablesModel().setVariableValue(self.__analysis_module_name, variable_name, value)
