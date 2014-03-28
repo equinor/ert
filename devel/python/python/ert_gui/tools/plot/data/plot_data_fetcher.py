@@ -103,6 +103,9 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
         block_observation_plot_data = ObservationPlotData(key)
         selected_report_step_index = 0
 
+        plot_data.setUnitY(self.ert().eclConfig().getDepthUnit())
+        plot_data.setUnitX(self.ert().eclConfig().getPressureUnit())
+
         if len(data) > 0:
             data = data[selected_report_step_index]
             block_observation_plot_data.setObservationData(data["x"], data["y"], data["std"], False)
@@ -145,7 +148,7 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
         refcase_plot_data.updateBoundaries(refcase_data["min_x"], refcase_data["max_x"], refcase_data["min_y"], refcase_data["max_y"])
         plot_data.setRefcaseData(refcase_plot_data)
         if refcase_fetcher.hasRefcase():
-            plot_data.setUnit(refcase_fetcher.getRefCase().unit(key))
+            plot_data.setUnitY(refcase_fetcher.getRefCase().unit(key))
 
         histogram_factory.setRefcase(refcase_data["x"], refcase_data["y"], refcase_data["min_y"], refcase_data["max_y"])
 

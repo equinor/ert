@@ -62,6 +62,8 @@
 
     function updatePlot() {
         var data = plot_data_source.getPlotData();
+        plot.setXLabel(data.unitX());
+        plot.setYLabel(data.unitY());
         plot.setData(data);
     }
 
