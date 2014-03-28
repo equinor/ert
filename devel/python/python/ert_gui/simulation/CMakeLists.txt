@@ -5,6 +5,7 @@ set(PYTHON_SOURCES
     iterated_ensemble_smoother_panel.py
     simulation_config_panel.py
     simulation_panel.py
+    analysis_module_variables_panel.py
 )
 
 add_python_package("python.ert_gui.simulation"  ${PYTHON_INSTALL_PREFIX}/ert_gui/simulation "${PYTHON_SOURCES}" True)

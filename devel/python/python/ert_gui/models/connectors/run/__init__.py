@@ -15,3 +15,5 @@ from .simulations_tracker import SimulationsTracker
 from .workflows_model import WorkflowsModel
 
 from .run_path import RunPathModel
+
+from .analysis_module_variables_model import AnalysisModuleVariablesModel

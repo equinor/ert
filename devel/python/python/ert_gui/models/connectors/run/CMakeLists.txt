@@ -2,6 +2,7 @@ set(PYTHON_SOURCES
     __init__.py
     active_realizations_model.py
     analysis_module_model.py
+    analysis_module_variables_model.py
     base_run_model.py
     ensemble_experiment.py
     ensemble_smoother.py
