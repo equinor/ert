@@ -32,6 +32,8 @@ from .enkf_fs import EnkfFs
 from .ert_workflow_list import ErtWorkflowList
 from .ert_workflow_list_handler import ErtWorkflowListHandler
 
+from .observations import SummaryObservation, ObsVector
+
 from .local_obsdata_node import LocalObsdataNode
 from .local_obsdata import LocalObsdata
 from .obs_data import ObsData
