@@ -97,7 +97,7 @@ function Histogram(element, x_dimension, y_dimension) {
         .attr("x", 0 - (height / 2))
         .attr("dy", ".7em")
         .style("text-anchor", "middle")
-        .text(y_label_text);
+        .text("");
 
     histogram_group.append("g")
         .attr("class", "x axis")
@@ -108,7 +108,7 @@ function Histogram(element, x_dimension, y_dimension) {
         .attr("class", "x label")
         .attr("transform", "translate(" + (margin.left + (width - margin.left) / 2) + " ," + (height + margin.top + margin.bottom) + ")")
         .style("text-anchor", "middle")
-        .text(x_label_text);
+        .text("");
 
     var resetLegends = function() {
         legend_list = [];
