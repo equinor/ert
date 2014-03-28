@@ -1,4 +1,4 @@
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QMargins
 from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
 from ert_gui.models.connectors import EnsembleSizeModel
@@ -26,15 +26,9 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         run_path_label = ActiveLabel(run_path_model, "Runpath", "config/simulation/runpath")
         layout.addRow(run_path_label.getLabel(), run_path_label)
 
-        # re_run_path_model = RerunPathModel()
-        # re_run_path_label = ActiveLabel(re_run_path_model, "Rerunpath", "config/simulation/rerunpath")
-        # layout.addRow(re_run_path_label.getLabel(), re_run_path_label)
-
-
         number_of_realizations_model = EnsembleSizeModel()
         number_of_realizations_label = ActiveLabel(number_of_realizations_model, "Number of realizations", "config/ensemble/num_realizations")
         layout.addRow(number_of_realizations_label.getLabel(), number_of_realizations_label)
-
 
         target_case_model = TargetCaseModel()
         self.target_case_field = StringBox(target_case_model, "Target case", "config/simulation/target_case")
@@ -43,7 +37,6 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
         analysis_module_model = AnalysisModuleModel()
         self.analysis_module_choice = ComboChoice(analysis_module_model, "Analysis Module", "config/analysis/analysis_module")
-        #layout.addRow(self.analysis_module_choice.getLabel(), self.analysis_module_choice)
 
         self.variables_popup_button = QToolButton()
         self.variables_popup_button.setIcon(util.resourceIcon("ide/small/cog_edit.png"))
@@ -51,23 +44,17 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self.variables_popup_button.setMaximumSize(20, 20)
 
         self.variables_layout = QHBoxLayout()
-        #self.variables_layout.setSpacing(2)
         self.variables_layout.addWidget(self.analysis_module_choice, 0, Qt.AlignLeft)
         self.variables_layout.addWidget(self.variables_popup_button, 0, Qt.AlignLeft)
-
+        self.variables_layout.setContentsMargins(QMargins(0,0,0,0))
+        self.variables_layout.addStretch()
 
         layout.addRow(self.analysis_module_choice.getLabel(), self.variables_layout)
-
-
-
-
-
 
         active_realizations_model = ActiveRealizationsModel()
         self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
         self.active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow(self.active_realizations_field.getLabel(), self.active_realizations_field)
-
 
         self.target_case_field.validationChanged.connect(self.simulationConfigurationChanged)
         self.active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)
@@ -86,12 +73,11 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self.variables_popup_button.setVisible(show_advanced)
 
     def showVariablesPopup(self):
-
         analysis_module_name = AnalysisModuleModel().getCurrentChoice()
+        if analysis_module_name is not None:
+            variable_dialog = AnalysisModuleVariablesPanel(analysis_module_name)
+            dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
 
-        variable_dialog = AnalysisModuleVariablesPanel(analysis_module_name)
-        dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
-
-        dialog.exec_()
+            dialog.exec_()
 
 

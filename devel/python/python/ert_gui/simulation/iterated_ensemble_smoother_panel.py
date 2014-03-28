@@ -1,10 +1,9 @@
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel, QMessageBox
+from PyQt4.QtCore import Qt, QMargins
+from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import ActiveRealizationsModel, IteratedEnsembleSmoother, IteratedAnalysisModuleModel, NumberOfIterationsModel, TargetCaseFormatModel, RunPathModel
-from ert_gui.models.connectors.run.analysis_module_variables_model import AnalysisModuleVariablesModel
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.widgets import util
 from ert_gui.widgets.active_label import ActiveLabel
@@ -28,11 +27,9 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         run_path_label = ActiveLabel(run_path_model, "Runpath", "config/simulation/runpath")
         layout.addRow(run_path_label.getLabel(), run_path_label)
 
-
         number_of_realizations_model = EnsembleSizeModel()
         number_of_realizations_label = ActiveLabel(number_of_realizations_model, "Number of realizations", "config/ensemble/num_realizations")
         layout.addRow(number_of_realizations_label.getLabel(), number_of_realizations_label)
-
 
         num_iterations_model = NumberOfIterationsModel()
         num_iterations_spinner = IntegerSpinner(num_iterations_model, "Number of iterations", "config/simulation/number_of_iterations")
@@ -52,9 +49,10 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.variables_popup_button.setMaximumSize(20, 20)
 
         self.variables_layout = QHBoxLayout()
-        self.variables_layout.setSpacing(2)
         self.variables_layout.addWidget(self.iterated_analysis_module_choice, 0, Qt.AlignLeft)
         self.variables_layout.addWidget(self.variables_popup_button, 0, Qt.AlignLeft)
+        self.variables_layout.setContentsMargins(QMargins(0,0,0,0))
+        self.variables_layout.addStretch()
 
         layout.addRow(self.iterated_analysis_module_choice.getLabel(), self.variables_layout)
 
@@ -62,7 +60,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
         self.active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow(self.active_realizations_field.getLabel(), self.active_realizations_field)
-
 
         self.iterated_target_case_format_field.validationChanged.connect(self.simulationConfigurationChanged)
         self.active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)
@@ -83,7 +80,6 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.variables_popup_button.setVisible(show_advanced)
 
     def showVariablesPopup(self):
-
         analysis_module_name = IteratedAnalysisModuleModel().getCurrentChoice()
         if analysis_module_name is not None:
             variable_dialog = AnalysisModuleVariablesPanel(analysis_module_name)
