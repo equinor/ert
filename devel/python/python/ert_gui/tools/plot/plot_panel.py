@@ -1,8 +1,8 @@
 import os
 
 from PyQt4.QtCore import QUrl, Qt, pyqtSignal
-from PyQt4.QtGui import QWidget, QGridLayout, QPainter
-from PyQt4.QtWebKit import QWebView, QWebSettings
+from PyQt4.QtGui import QWidget, QGridLayout, QPainter, QShortcut, QMainWindow
+from PyQt4.QtWebKit import QWebView, QWebSettings, QWebInspector
 
 from ert_gui.tools.plot import PlotBridge
 from ert_gui.tools.plot.plot_bridge import PlotWebPage
@@ -18,6 +18,22 @@ class PlotWebView(QWebView):
         self.settings().setAttribute(QWebSettings.LocalContentCanAccessFileUrls, True)
         self.settings().setAttribute(QWebSettings.LocalContentCanAccessRemoteUrls, True)
         self.settings().clearMemoryCaches()
+
+        self.settings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
+        self.__web_inspector = QWebInspector()
+        self.__web_inspector.setPage(self.page())
+
+        shortcut = QShortcut(self)
+        shortcut.setKey(Qt.Key_F12)
+        shortcut.activated.connect(self.toggleInspector)
+
+        self.__inspector_window = QMainWindow(self)
+        self.__inspector_window.setCentralWidget(self.__web_inspector)
+        self.__inspector_window.resize(900, 600)
+        self.__inspector_window.setVisible(False)
+
+    def toggleInspector(self):
+        self.__inspector_window.setVisible(not self.__inspector_window.isVisible())
 
 
 
