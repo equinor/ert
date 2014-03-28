@@ -481,6 +481,11 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
     rml_enkf_init_Csc( data );
     rml_enkf_init1__(data );
   }
+
+  {
+    const char * prev_obj_func_value_dummy = "-";
+    rml_enkf_log_line( data , "%-24d %-19.5f %-36.5f %-37s %-33.5f \n", data->iteration_nr, data->lambda, data->Sk , prev_obj_func_value_dummy, data->Std);
+  }
   
   matrix_free( Skm );
   matrix_free( Ud );
@@ -489,8 +494,35 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
 }
 
 
+static void rml_enkf_write_log_header( rml_enkf_data_type * data ) {
+  if (data->log_stream) {
+    const char * column1 = "\"Iteration Number\"";
+    const char * column2 = "\"Lambda Value\"";
+    const char * column3 = "\"Current Object Function Value\"";
+    const char * column4 = "\"Previous Object Function Value\"";
+    const char * column5 = "\"Current Standard Deviation\"";
 
+    if (data->log_stream) {
+      rml_enkf_log_line(data, "%-23s %-19s %-36s %-37s %-33s\n", column1, column2, column3, column4, column5);
+    }
+  }
+}
 
+static void rml_enkf_open_log_file( rml_enkf_data_type * data )
+{
+  data->log_stream = NULL;
+  if (data->log_file) {
+    if ( data->iteration_nr == 0) {
+      if (data->clear_log){
+        data->log_stream = util_mkdir_fopen( data->log_file , "w");
+        rml_enkf_write_log_header(data);
+      }
+      else
+        data->log_stream = util_mkdir_fopen( data->log_file , "a");
+    } else
+      data->log_stream = util_fopen( data->log_file , "a");
+  }
+}
 
 void rml_enkf_updateA(void * module_data , 
                       matrix_type * A , 
@@ -513,17 +545,8 @@ void rml_enkf_updateA(void * module_data ,
   enkf_linalg_Covariance(Cd ,E ,nsc, nrobs);
   matrix_inv(Cd);
 
-  data->log_stream = NULL;
-  if (data->log_file) {
-    if (data->iteration_nr == 0) {
-      if (data->clear_log)
-        data->log_stream = util_mkdir_fopen( data->log_file , "w");
-      else
-        data->log_stream = util_mkdir_fopen( data->log_file , "a");
-    } else
-      data->log_stream = util_fopen( data->log_file , "a");
-  }
-  
+  rml_enkf_open_log_file(data);
+
 
   if (data->iteration_nr == 0) {
     rml_enkf_updateA_iter0(data , A , S , R , dObs , E , D , Cd);
@@ -541,11 +564,8 @@ void rml_enkf_updateA(void * module_data ,
     if (data->lambda_recalculate)
       data->lambda = pow(10 , floor(log10(Sk_new / (2*nrobs))) );
     
-    rml_enkf_log_line( data , " Iteration:%d   Lambda:%g \n",data->iteration_nr , data->lambda);
     rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
-    rml_enkf_log_line( data , " Current Objective function value is %5.3f \n\n",Sk_new);
-    rml_enkf_log_line( data , " The old Objective function value is %5.3f \n", data->Sk);
     {
       bool mismatch_reduced = false;
       bool std_reduced = false;
@@ -555,8 +575,8 @@ void rml_enkf_updateA(void * module_data ,
       
       if (Std_new <= data->Std)
         std_reduced = true;
-      
-      rml_enkf_log_line( data , "%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lambda, Sk_new,data->Sk, Std_new);
+
+      rml_enkf_log_line( data , "%-24d %-19.5f %-36.5f %-37.5f %-33.5f \n", data->iteration_nr, data->lambda, Sk_new, data->Sk, Std_new);
 
       if (mismatch_reduced) {
         /*
@@ -591,7 +611,7 @@ void rml_enkf_updateA(void * module_data ,
   if (data->lambda < data->lambda_min)
     data->lambda = data->lambda_min;
 
-  rml_enkf_log_line( data , "The current iteration number is %d \n ", data->iteration_nr);
+
   if (data->log_stream)
     fclose( data->log_stream );
                  
