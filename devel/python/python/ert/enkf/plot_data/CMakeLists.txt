@@ -9,6 +9,7 @@ set(PYTHON_SOURCES
     pca_plot_data.py
     pca_plot_vector.py
     plot_block_data.py
+    plot_block_data_loader.py
     plot_block_vector.py
 )
 

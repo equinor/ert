@@ -14,7 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB
+from ert.enkf import ENKF_LIB, NodeId
+
 
 class BlockObservation(BaseCClass):
 
@@ -29,6 +30,7 @@ class BlockObservation(BaseCClass):
         return i, j, k
 
     def __len__(self):
+        """ @rtype: int """
         return BlockObservation.cNamespace().get_size(self)
 
     def __iter__(self):
@@ -38,16 +40,26 @@ class BlockObservation(BaseCClass):
             cur += 1
 
     def getValue(self, index):
-        """ @rtype: double """
+        """ @rtype: float """
         return BlockObservation.cNamespace().get_value(self, index)
 
     def getStd(self, index):
-        """ @rtype: double """
+        """ @rtype: float """
         return BlockObservation.cNamespace().get_std(self, index)
 
     def getDepth(self, index):
-        """ @rtype: double """
+        """ @rtype: float """
         return BlockObservation.cNamespace().get_depth(self, index)
+
+    def getData(self, state, obs_index, node_id):
+        """
+        @type state: c_void_p
+        @type obs_index: int
+        @type node_id: NodeId
+        @rtype: float """
+
+        return BlockObservation.cNamespace().iget_data(self, state, obs_index, node_id)
+
 
     def free(self):
         BlockObservation.cNamespace().free(self)
@@ -55,9 +67,7 @@ class BlockObservation(BaseCClass):
 ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("block_obs", BlockObservation)
-cwrapper.registerType("block_obs_obj", BlockObservation.createPythonObject)
-cwrapper.registerType("block_obs_ref", BlockObservation.createCReference)
+cwrapper.registerObject("block_obs", BlockObservation)
 
 BlockObservation.cNamespace().free = cwrapper.prototype("void block_obs_free( block_obs )")
 BlockObservation.cNamespace().iget_i = cwrapper.prototype("int block_obs_iget_i(block_obs, int)")
@@ -67,4 +77,6 @@ BlockObservation.cNamespace().get_size = cwrapper.prototype("int block_obs_get_s
 BlockObservation.cNamespace().get_std = cwrapper.prototype("double block_obs_iget_std( block_obs, int )")
 BlockObservation.cNamespace().get_value = cwrapper.prototype("double block_obs_iget_value( block_obs, int)")
 BlockObservation.cNamespace().get_depth = cwrapper.prototype("double block_obs_iget_depth( block_obs, int)")
+
+BlockObservation.cNamespace().iget_data = cwrapper.prototype("double block_obs_iget_data(block_obs, c_void_p, int, node_id)")
 

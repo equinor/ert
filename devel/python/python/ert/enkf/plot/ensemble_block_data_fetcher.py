@@ -13,9 +13,9 @@
 #
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
-from ert.enkf.plot_data import PlotBlockData
 from ert.enkf.enums import ErtImplType
 from ert.enkf.plot import DataFetcher
+from ert.enkf.plot_data import PlotBlockDataLoader, PlotBlockData
 
 
 class EnsembleBlockDataFetcher(DataFetcher):
@@ -23,6 +23,10 @@ class EnsembleBlockDataFetcher(DataFetcher):
         super(EnsembleBlockDataFetcher, self).__init__(ert)
 
     def __fetchSimulationData(self, block_data):
+        """
+        @type block_data: PlotBlockData
+        @rtype dict
+        """
         data = {
             "x": [],
             "y": [],
@@ -51,8 +55,6 @@ class EnsembleBlockDataFetcher(DataFetcher):
         if data["max_y"] is None or data["max_y"] < max_y:
             data["max_y"] = max_y
 
-
-
         for block_vector in block_data:
             x = []
             data["x"].append(x)
@@ -71,6 +73,7 @@ class EnsembleBlockDataFetcher(DataFetcher):
 
                 if data["max_x_values"][index] is None or data["max_x_values"][index] < value:
                     data["max_x_values"][index] = value
+
         return data
 
     def fetchData(self, key, case=None):
@@ -80,14 +83,15 @@ class EnsembleBlockDataFetcher(DataFetcher):
 
         observation_vector = observations.getObservationsVector(key)
 
+        loader = PlotBlockDataLoader(observation_vector)
+
         report_step_data = []
         for report_step in observation_vector:
-            block_data = PlotBlockData(observation_vector, enkf_fs, report_step)
+            block_data = loader.load(enkf_fs, report_step)
             data = self.__fetchSimulationData(block_data)
             data["report_step"] = report_step
 
             report_step_data.append(data)
-
 
         return report_step_data
 

@@ -22,7 +22,6 @@
 #include <ert/ecl/ecl_grid.h>
 
 #include <ert/enkf/block_obs.h>
-#include <ert/enkf/enkf_plot_blockdata.h>
 #include <ert/enkf/ert_test_context.h>
 #include <ert/enkf/enkf_plot_gendata.h>
 #include <ert/enkf/gen_obs.h>
