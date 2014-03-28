@@ -84,6 +84,7 @@ class ObservationGenDataFetcher(DataFetcher):
 
 
     def getAllObsKeysForKey(self, key):
+        key, report_step = key.split("@")
         return self.ert().ensembleConfig().getNode(key).getObservationKeys()
 
 
