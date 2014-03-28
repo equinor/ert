@@ -11,7 +11,6 @@ class PcaPlotData(BaseCClass):
         assert isinstance(principal_component_matrix, Matrix)
         assert isinstance(observation_principal_component_matrix, Matrix)
 
-        print "PC: %d,%d  V:%d" % (principal_component_matrix.rows() , principal_component_matrix.columns() , len(singular_values))
         c_pointer = PcaPlotData.cNamespace().alloc(name, principal_component_matrix, observation_principal_component_matrix , singular_values)
         super(PcaPlotData, self).__init__(c_pointer)
 
