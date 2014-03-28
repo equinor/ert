@@ -67,7 +67,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         spinner.setSingleStep(analysis_module_variables_model.getVariableStepValue(variable_name))
         if variable_value is not None:
             spinner.setValue(variable_value)
-        spinner.valueChanged.connect(partial(self.ValueChanged,variable_name, variable_type, spinner))
+        spinner.valueChanged.connect(partial(self.valueChanged, variable_name, variable_type, spinner))
         return spinner
     
     def createLineEdit(self, variable_name, variable_value, variable_type):
@@ -76,13 +76,13 @@ class AnalysisModuleVariablesPanel(QWidget):
             spinner.setText("")
         else:
             spinner.setText(variable_value)
-        spinner.editingFinished.connect(partial(self.ValueChanged, variable_name, variable_type, spinner))
+        spinner.editingFinished.connect(partial(self.valueChanged, variable_name, variable_type, spinner))
         return spinner
         
     def createCheckBox(self, variable_name, variable_value, variable_type):
         spinner = QCheckBox()
         spinner.setChecked(variable_value)
-        spinner.clicked.connect(partial(self.ValueChanged, variable_name, variable_type, spinner))
+        spinner.clicked.connect(partial(self.valueChanged, variable_name, variable_type, spinner))
         return spinner
     
     def createDoubleSpinBox(self, variable_name, variable_value, variable_type, analysis_module_variables_model):
@@ -92,10 +92,10 @@ class AnalysisModuleVariablesPanel(QWidget):
         spinner.setMinimum(analysis_module_variables_model.getVariableMinimumValue(variable_name))
         spinner.setSingleStep(analysis_module_variables_model.getVariableStepValue(variable_name))
         spinner.setValue(variable_value)
-        spinner.valueChanged.connect(partial(self.ValueChanged,variable_name, variable_type, spinner))
+        spinner.valueChanged.connect(partial(self.valueChanged,variable_name, variable_type, spinner))
         return spinner;
 
-    def ValueChanged(self, variable_name, variable_type, variable_control):
+    def valueChanged(self, variable_name, variable_type, variable_control):
         value = None
         if variable_type == bool:
             assert isinstance(variable_control, QCheckBox)
