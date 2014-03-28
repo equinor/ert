@@ -90,11 +90,25 @@ function Histogram(element, x_dimension, y_dimension) {
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
         .call(y_axis);
 
+    var y_label = histogram_group.append("text")
+        .attr("class", "y label")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0)
+        .attr("x", 0 - (height / 2))
+        .attr("dy", ".7em")
+        .style("text-anchor", "middle")
+        .text(y_label_text);
+
     histogram_group.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(" + margin.left + ", " + (height + margin.top) + ")")
         .call(x_axis);
 
+    var x_label = histogram_group.append("text")
+        .attr("class", "x label")
+        .attr("transform", "translate(" + (margin.left + (width - margin.left) / 2) + " ," + (height + margin.top + margin.bottom) + ")")
+        .style("text-anchor", "middle")
+        .text(x_label_text);
 
     var resetLegends = function() {
         legend_list = [];
@@ -243,6 +257,9 @@ function Histogram(element, x_dimension, y_dimension) {
         histogram_group.select(".y.axis").call(y_axis);
         histogram_group.select(".x.axis").call(x_axis);
 
+        histogram_group.select(".y.label").attr("x", 0 - (height / 2));
+        histogram_group.select(".x.label").attr("transform", "translate(" + (margin.left + (width - margin.left) / 2) + " ," + (height + margin.top + margin.bottom) + ")");
+
         context.restore();
     }
 
@@ -303,6 +320,13 @@ function Histogram(element, x_dimension, y_dimension) {
         custom_value_max = max;
     };
 
+    histogram.setXLabel = function(label) {
+        x_label.text(label);
+    };
+
+    histogram.setYLabel = function(label) {
+        y_label.text(label);
+    };
 
     histogram.setVisible = function(visible) {
         if(!visible) {

@@ -175,13 +175,15 @@
 
             updateYDomain(case_list, histogram_data);
 
-
             calculateSize(stored_width, stored_height);
             for(var index = 0; index < case_list.length; index++) {
                 var histogram = histograms[index];
                 histogram.setVisible(true);
                 histogram.setSize(stored_width, stored_histogram_height);
                 histogram(histogram_data, case_list[index]);
+                if (typeof(stored_data.unit) != 'undefined' )
+                    histogram.setXLabel(stored_data.unit());
+                histogram.setYLabel("# of realizations");
             }
 
             for(var index = case_list.length; index < style_count; index++) {
