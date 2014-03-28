@@ -230,7 +230,7 @@ BasePlot.prototype.render = function() {
     this.title.text(this.getTitle());
 
     if(typeof data.unit != 'undefined') {
-        this.setYLabel(data.unit());
+        this.setYLabel(data.unitY());
     }
 
     if(data.hasBoundaries()) {

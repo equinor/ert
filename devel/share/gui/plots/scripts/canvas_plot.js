@@ -184,6 +184,14 @@ Plot.prototype.setXDomain = function (min_x, max_x) {
     this.plot.setXDomain(min_x, max_x);
 };
 
+Plot.prototype.setXLabel = function (label) {
+    this.plot.setXLabel(label);
+};
+
+Plot.prototype.setYLabel = function (label) {
+    this.plot.setYLabel(label);
+};
+
 Plot.prototype.setData = function (data) {
     this.plot.setData(data);
 };
