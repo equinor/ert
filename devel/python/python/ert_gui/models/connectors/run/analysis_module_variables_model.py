@@ -31,8 +31,8 @@ class AnalysisModuleVariablesModel(ErtConnector):
             "CLEAR_LOG": {"type": bool},
             "LAMBDA_RECALCULATE": {"type": bool},
             "ENKF_TRUNCATION" :{"type": float, "min": 0, "max": 1, "step":0.1},
-            "ENKF_NCOMP": {"type": int, "min": -1000000, "max": 10000000, "step":1.0},
-            "CV_NFOLDS": {"type": int, "min": -1000000, "max": 10000000, "step":1.0},
+            "ENKF_NCOMP": {"type": int, "min": -1, "max": 10, "step":1.0},
+            "CV_NFOLDS": {"type": int, "min": -1, "max": 10, "step":1.0},
             "FWD_STEP_R2_LIMIT":{"type": float, "min": -1, "max": 100, "step":1.0},
             "CV_PEN_PRESS": {"type": bool}
         }
