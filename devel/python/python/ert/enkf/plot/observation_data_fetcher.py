@@ -1,4 +1,5 @@
 from ert.enkf import EnkfObservationImplementationType
+from ert.enkf.enums import ErtImplType
 from ert.enkf.plot import DataFetcher
 
 
@@ -6,17 +7,21 @@ class ObservationDataFetcher(DataFetcher):
     def __init__(self, ert):
         super(ObservationDataFetcher, self).__init__(ert)
 
-    def fetchSupportedKeys(self):
+    def getObservationKeys(self):
         observations = self.ert().getObservations()
         keys = observations.getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
         keys = sorted(keys)
         return keys
 
+    def fetchSupportedKeys(self):
+        """ @rtype: list of str """
+        return sorted([key for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)])
+
     def __getObservationData(self, key, data):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 
-        observation_data = observations.getObservationsVector(key)
+        observation_data = observations[key]
         active_count = observation_data.getActiveCount()
 
         history_length = self.ert().getHistoryLength()

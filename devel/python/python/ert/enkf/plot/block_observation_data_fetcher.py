@@ -21,6 +21,10 @@ from ert.enkf.plot import DataFetcher
 class BlockObservationDataFetcher(DataFetcher):
     def __init__(self, ert):
         super(BlockObservationDataFetcher, self).__init__(ert)
+        self.__selected_report_step_index = None
+
+    def setSelectedReportStepIndex(self, index):
+        self.__selected_report_step_index = index
 
     def fetchSupportedKeys(self):
         observations = self.ert().getObservations()
@@ -31,6 +35,7 @@ class BlockObservationDataFetcher(DataFetcher):
         assert isinstance(block_observation, BlockObservation)
 
         data = {
+            "continuous": False,
             "x": [],
             "y": [],
             "std": [],
@@ -73,11 +78,19 @@ class BlockObservationDataFetcher(DataFetcher):
 
         return x - std
 
+    def hasData(self, key):
+        """ @rtype: bool """
+        observations = self.ert().getObservations()
+        if not observations.hasKey(key):
+            return False
+
+        return observations[key].getActiveCount() > 0
+
     def fetchData(self, key, case=None):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 
-        observation_vector = observations.getObservationsVector(key)
+        observation_vector = observations[key]
 
         report_step_data = []
         for report_step in observation_vector:
@@ -87,5 +100,8 @@ class BlockObservationDataFetcher(DataFetcher):
             report_step_data.append(data)
 
 
-        return report_step_data
+        if self.__selected_report_step_index is not None:
+            return report_step_data[self.__selected_report_step_index]
+        else:
+            return report_step_data
 

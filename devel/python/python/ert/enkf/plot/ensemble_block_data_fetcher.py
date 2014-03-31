@@ -21,6 +21,7 @@ from ert.enkf.plot import DataFetcher
 class EnsembleBlockDataFetcher(DataFetcher):
     def __init__(self, ert):
         super(EnsembleBlockDataFetcher, self).__init__(ert)
+        self.__selected_report_step_index = None
 
     def __fetchSimulationData(self, block_data):
         data = {
@@ -78,7 +79,7 @@ class EnsembleBlockDataFetcher(DataFetcher):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 
-        observation_vector = observations.getObservationsVector(key)
+        observation_vector = observations[key]
 
         report_step_data = []
         for report_step in observation_vector:
@@ -89,9 +90,15 @@ class EnsembleBlockDataFetcher(DataFetcher):
             report_step_data.append(data)
 
 
-        return report_step_data
+        if self.__selected_report_step_index is not None:
+            return report_step_data[self.__selected_report_step_index]
+        else:
+            return report_step_data
 
     def fetchSupportedKeys(self):
         string_list = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)
         return [key for key in string_list]
+
+    def setSelectedReportStepIndex(self, index):
+        self.__selected_report_step_index = index
 

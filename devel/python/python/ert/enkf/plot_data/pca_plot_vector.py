@@ -20,7 +20,10 @@ class PcaPlotVector(BaseCClass):
 
 
     def __getitem__(self, index):
-        """ @rtype: float """
+        """
+        @type index: int
+        @rtype: float 
+        """
         assert isinstance(index, int)
         return PcaPlotVector.cNamespace().get(self, index)
 
@@ -33,6 +36,11 @@ class PcaPlotVector(BaseCClass):
     def getObservation(self):
         """ @rtype: float """
         return PcaPlotVector.cNamespace().get_obs(self)
+
+    def getSingularValue(self):
+        """ @rtype: float """
+        return PcaPlotVector.cNamespace().get_singular_value(self)
+        
 
     def free(self):
         PcaPlotVector.cNamespace().free(self)
@@ -49,5 +57,6 @@ PcaPlotVector.cNamespace().free    = cwrapper.prototype("void pca_plot_vector_fr
 PcaPlotVector.cNamespace().size    = cwrapper.prototype("int pca_plot_vector_get_size(pca_plot_vector)")
 PcaPlotVector.cNamespace().get     = cwrapper.prototype("double pca_plot_vector_iget_sim_value(pca_plot_vector, int)")
 PcaPlotVector.cNamespace().get_obs = cwrapper.prototype("double pca_plot_vector_get_obs_value(pca_plot_vector)")
+PcaPlotVector.cNamespace().get_singular_value = cwrapper.prototype("double pca_plot_vector_get_singular_value(pca_plot_vector)")
 
 
