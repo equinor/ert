@@ -76,29 +76,28 @@ class IteratedEnsembleSmoother(BaseRunModel):
         max_iterations = analysis_iter_config.getMaxNumIterations()
         iteration_counter = 0
         failed_iterations = 0
-        phase = 1
+        iteration_number = 1
 
-        while phase <= phase_count and iteration_counter <= max_iterations:
-            target_fs = self.createTargetCaseFileSystem(phase)
+        while iteration_number < phase_count and iteration_counter < max_iterations:
+            target_fs = self.createTargetCaseFileSystem(iteration_number)
 
             self.analyzeStep(target_fs)
 
             iteration_num = analysis_module.getInt("ITER")
-            if iteration_num+1 > phase:
+            if iteration_num + 1 > iteration_number:
                 self.ert().getEnkfFsManager().switchFileSystem(target_fs)
-                self.runAndPostProcess(active_realization_mask, phase, phase_count, EnkfInitModeEnum.INIT_NONE)
+                self.runAndPostProcess(active_realization_mask, iteration_number, phase_count, EnkfInitModeEnum.INIT_NONE)
+                iteration_number += 1
             else:
-                self.runAndPostProcess(active_realization_mask, phase-1, phase_count, EnkfInitModeEnum.INIT_NONE)
+                self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(target_fs, 0, EnkfStateType.ANALYZED)
+                self.runAndPostProcess(active_realization_mask, iteration_number - 1 , phase_count, EnkfInitModeEnum.INIT_NONE)
+                failed_iterations += 1
 
-            if iteration_num+1 > phase :
-              phase += 1
-            else :
-              failed_iterations += 1
 
             iteration_counter += 1
 
 
-        if phase == phase_count:
+        if iteration_number == phase_count:
             self.setPhase(phase_count, "Simulations completed.")
         else:
             raise ErtRunError("Iterated Ensemble Smoother stopped: maximum number of iterations (%d iterations) reached. Number of failed iterations: %d" % (max_iterations, failed_iterations))
