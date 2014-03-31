@@ -176,14 +176,6 @@ Plot.prototype.setScales = function (x_min, x_max, y_min, y_max) {
     this.plot.setScales(x_min, x_max, y_min, y_max);
 };
 
-Plot.prototype.setYDomain = function (min_y, max_y) {
-    this.plot.setYDomain(min_y, max_y);
-};
-
-Plot.prototype.setXDomain = function (min_x, max_x) {
-    this.plot.setXDomain(min_x, max_x);
-};
-
 Plot.prototype.setData = function (data) {
     this.plot.setData(data);
 };

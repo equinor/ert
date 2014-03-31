@@ -26,7 +26,7 @@ class ErtSummary(ErtConnector):
         summary_keys_count = {}
         summary_keys = []
         for key in summary_obs:
-            data_key = self.ert().getObservations().getObservationsVector(key).getDataKey()
+            data_key = self.ert().getObservations()[key].getDataKey()
 
             if not data_key in summary_keys_count:
                 summary_keys_count[data_key] = 1

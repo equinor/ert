@@ -171,6 +171,24 @@ CanvasPlotLegend.filledCircle = function(context, style, width, height) {
     context.stroke();
 };
 
+CanvasPlotLegend.cross = function(context, style, width, height) {
+    context.strokeStyle = style["stroke"];
+    context.lineWidth = style["stroke_width"];
+    context.fillStyle = style["fill"];
+
+    var cx = width / 2;
+    var cy = height / 2;
+    var radius = width / 2;
+
+    context.beginPath();
+    context.moveTo(cx - radius, cy - radius);
+    context.lineTo(cx + radius, cy + radius);
+
+    context.moveTo(cx + radius, cy - radius);
+    context.lineTo(cx - radius, cy + radius);
+    context.stroke();
+};
+
 CanvasPlotLegend.errorBar = function(context, style, width, height) {
     context.strokeStyle = style["stroke"];
     context.lineWidth = 1;
