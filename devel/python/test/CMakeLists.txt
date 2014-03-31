@@ -221,7 +221,6 @@ add_test( NAME python.tests.ert.enkf.ert_test_context
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_context.ErtTestContextTest)
 
 
-
 #GUI
 if (ERT_BUILD_GUI) 
    add_test( NAME python.tests.ert_gui.models
@@ -440,6 +439,7 @@ set_property( TEST python.tests.ert.enkf.ecl_config           PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.enkf_fs              PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_fs_manager1     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_fs_manager2     PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf_obs             PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Python:StatoilData )
 
 if (ERT_BUILD_GUI)
