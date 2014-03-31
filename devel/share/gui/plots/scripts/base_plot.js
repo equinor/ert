@@ -15,9 +15,12 @@
 // for more details.
 
 function BasePlot(element, x_dimension, y_dimension) {
-    this.stored_data = [];
+    this.stored_data = null;
     this.margin = {left: 90, right: 20, top: 20, bottom: 30};
     this.root_elemenet = element;
+
+    this.render_observations = true;
+    this.render_refcase = true;
 
     this.custom_y_min = null;
     this.custom_y_max = null;
@@ -27,6 +30,9 @@ function BasePlot(element, x_dimension, y_dimension) {
     this.render_finished = false;
     this.render_callback_finished = false;
     this.rendering_finished_callback = null;
+
+    this.pre_render_callback = null;
+    this.render_callback = null;
 
     this.dimension_x = x_dimension;
     this.dimension_y = y_dimension;
@@ -105,9 +111,6 @@ function BasePlot(element, x_dimension, y_dimension) {
     this.area_renderer = CanvasPlotArea().x(this.x).y(this.y);
     this.error_bar_renderer = CanvasErrorBar().x(this.x).y(this.y);
     this.stippled_line_renderer = CanvasPlotStippledLine().x(this.x).y(this.y);
-
-    this.render_callback = null;
-    this.pre_render_callback = null;
 }
 
 BasePlot.prototype.resize = function(width, height) {
@@ -140,14 +143,14 @@ BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
         this.custom_y_max = y_max;
         this.custom_x_min = x_min;
         this.custom_x_max = x_max;
-
-        //this.setData(this.stored_data);
     }
 };
 
 
-BasePlot.prototype.setYDomain = function(min_y, max_y) {
-    if(!this.dimension_y.isOrdinal()) {
+BasePlot.prototype.setYDomain = function(min_y, max_y, ordinals) {
+    if (arguments.length == 3 && this.dimension_y.isOrdinal()) {
+        this.dimension_y.setDomain(ordinals);
+    } else {
         var min = min_y;
         var max = max_y;
 
@@ -160,13 +163,13 @@ BasePlot.prototype.setYDomain = function(min_y, max_y) {
         }
 
         this.dimension_y.setDomain(min, max);
-    } else {
-        this.dimension_y.setDomain(this.stored_data.caseList())
     }
 };
 
-BasePlot.prototype.setXDomain = function(min_x, max_x) {
-    if(!this.dimension_x.isOrdinal()) {
+BasePlot.prototype.setXDomain = function(min_x, max_x, ordinals) {
+    if (arguments.length == 3 && this.dimension_x.isOrdinal()) {
+        this.dimension_x.setDomain(ordinals);
+    } else {
         var min = min_x;
         var max = max_x;
         if (this.custom_x_min != null) {
@@ -178,18 +181,15 @@ BasePlot.prototype.setXDomain = function(min_x, max_x) {
         }
 
         this.dimension_x.setDomain(min, max);
-    } else {
-        this.dimension_x.setDomain(this.stored_data.caseList())
     }
 };
-
 
 BasePlot.prototype.setData = function(data) {
     this.stored_data = data;
 };
 
 BasePlot.prototype.getTitle = function(){
-    if("name" in this.stored_data){
+    if(this.stored_data != null && "name" in this.stored_data){
         return this.stored_data.name();
     } else {
         return "No data";
@@ -197,6 +197,10 @@ BasePlot.prototype.getTitle = function(){
 };
 
 BasePlot.prototype.render = function() {
+    if(this.stored_data == null) {
+        return;
+    }
+
     var data = this.stored_data;
     this.render_finished = false;
     this.render_callback_finished = false;
@@ -214,8 +218,11 @@ BasePlot.prototype.render = function() {
         this.pre_render_callback(data);
     }
 
-    this.plot_group.select(".y.axis").call(this.y_axis);
-    this.plot_group.select(".x.axis").call(this.x_axis);
+    var axis = this.plot_group.select(".y.axis").call(this.y_axis);
+    this.dimension_y.relabel(axis);
+
+    axis = this.plot_group.select(".x.axis").call(this.x_axis);
+    this.dimension_x.relabel(axis);
 
     this.canvas.attr("width", this.width).attr("height", this.height);
     this.overlay_canvas.attr("width", this.width).attr("height", this.height);
@@ -229,8 +236,14 @@ BasePlot.prototype.render = function() {
     overlay_context.clearRect(0, 0, this.width, this.height);
 
     this.render_callback(context, data);
-    this.renderObservations(overlay_context, data);
-    this.renderRefcase(overlay_context, data);
+
+    if(this.render_observations) {
+        this.renderObservations(overlay_context, data);
+    }
+
+    if(this.render_refcase) {
+        this.renderRefcase(overlay_context, data);
+    }
 
     this.legend_group.selectAll(".plot-legend").data(this.legend_list).call(this.legend);
 
@@ -287,6 +300,7 @@ BasePlot.prototype.renderObservations = function(context, data) {
 
             this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.stippledLine);
             this.addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
+
         } else {
 
             var obs_x_samples = obs_data.xValues();
@@ -327,6 +341,10 @@ BasePlot.prototype.createCircleRenderer = function() {
     return CanvasCircle().x(this.x).y(this.y);
 };
 
+BasePlot.prototype.createCrossRenderer = function() {
+    return CanvasCross().x(this.x).y(this.y);
+};
+
 
 BasePlot.prototype.setVerticalErrorBar = function(vertical){
     this.vertical_error_bar = vertical;
@@ -342,13 +360,11 @@ BasePlot.prototype.setCustomSettings = function (settings) {
 BasePlot.prototype.renderCallbackFinishedRendering = function(){
     this.render_callback_finished = true;
     this.emitFinishedRendering()
-
 };
 
 BasePlot.prototype.finishedRendering = function(){
     this.render_finished = true;
     this.emitFinishedRendering();
-
 };
 
 BasePlot.prototype.emitFinishedRendering = function(){
@@ -357,7 +373,6 @@ BasePlot.prototype.emitFinishedRendering = function(){
             this.rendering_finished_callback();
         }
     }
-
 };
 
 BasePlot.prototype.setRenderingFinishedCallback = function(callback) {
@@ -374,6 +389,14 @@ BasePlot.prototype.setLogScaleOnDimensionY = function(use_log_scale) {
     this.dimension_y.setIsLogScale(use_log_scale);
     this.y_axis.scale(this.dimension_y.scale());
     this.dimension_y.format(this.y_axis, this.width);
+};
+
+BasePlot.prototype.setRenderObservations = function(enabled) {
+    this.render_observations = enabled;
+};
+
+BasePlot.prototype.setRenderRefcase = function(enabled) {
+    this.render_refcase = enabled;
 };
 
 function isNumber(n) {

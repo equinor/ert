@@ -16,6 +16,16 @@ add_executable( enkf_block_obs enkf_block_obs.c )
 target_link_libraries( enkf_block_obs enkf test_util )
 add_test( enkf_block_obs ${EXECUTABLE_OUTPUT_PATH}/enkf_block_obs ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID)
 
+
+add_executable( enkf_obs_fs enkf_obs_fs.c )
+target_link_libraries( enkf_obs_fs enkf test_util )
+add_test( enkf_obs_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config )
+
+add_executable( enkf_obs_vector_fs enkf_obs_vector_fs.c )
+target_link_libraries( enkf_obs_vector_fs enkf test_util )
+add_test( enkf_obs_vector_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_vector_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config )
+
+
 add_executable( enkf_plot_data_fs enkf_plot_data_fs.c )
 target_link_libraries( enkf_plot_data_fs enkf test_util )
 add_test( enkf_plot_data_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/plotData/config )
@@ -404,3 +414,5 @@ set_property( TEST enkf_block_obs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_plot_gendata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_export_inactive_cells PROPERTY LABELS StatoilData )
 set_property( TEST enkf_fs_invalidate_cache PROPERTY LABELS StatoilData )
+set_property( TEST enkf_obs_fs PROPERTY LABELS StatoilData )
+set_property( TEST enkf_obs_vector_fs PROPERTY LABELS StatoilData )

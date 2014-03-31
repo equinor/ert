@@ -44,13 +44,14 @@ class PlotBridge(QObject):
             self.__web_page.mainFrame().evaluateJavaScript("setSize(%d,%d);" % (size.width(), size.height()))
             self.renderNow()
 
-    def supportsPlotProperties(self, time=False, value=False, depth=False, index=False, histogram=False):
+    def supportsPlotProperties(self, time=False, value=False, depth=False, index=False, histogram=False, pca=False):
         time = str(time).lower()
         value = str(value).lower()
         depth = str(depth).lower()
         index = str(index).lower()
         histogram = str(histogram).lower()
-        return self.__web_page.mainFrame().evaluateJavaScript("supportsPlotProperties(%s,%s,%s,%s,%s);" % (time, value, depth, index, histogram)).toBool()
+        pca = str(pca).lower()
+        return self.__web_page.mainFrame().evaluateJavaScript("supportsPlotProperties(%s,%s,%s,%s,%s,%s);" % (time, value, depth, index, histogram, pca)).toBool()
 
     def setPlotData(self, data):
         self.__data = data
