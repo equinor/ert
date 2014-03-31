@@ -86,6 +86,9 @@ class PlotDataFetcher(ErtConnector):
     def fetchBlockObservationData(self, block_observation_data_fetcher, key, cases):
         plot_data = PlotData(key)
 
+        plot_data.setUnitY(self.ert().eclConfig().getDepthUnit())
+        plot_data.setUnitX(self.ert().eclConfig().getPressureUnit())
+
         if block_observation_data_fetcher.hasData(key):
             block_observation_data_fetcher.setSelectedReportStepIndex(0)
             self.addObservationData(plot_data, key, block_observation_data_fetcher)
@@ -103,17 +106,18 @@ class PlotDataFetcher(ErtConnector):
         plot_data = PlotData(key)
 
         histogram_factory = HistogramPlotDataFactory(key)
+        refcase_fetcher = RefcaseDataFetcher(self.ert())
 
         self.addObservationData(plot_data, key, observation_data_fetcher, histogram_factory)
 
-        plot_data.setUnitY(self.ert().eclConfig().getDepthUnit())
-        plot_data.setUnitX(self.ert().eclConfig().getPressureUnit())
-
-        self.addRefcaseData(plot_data, key, RefcaseDataFetcher(self.ert()), histogram_factory)
+        self.addRefcaseData(plot_data, key, refcase_fetcher, histogram_factory)
 
         self.addEnsembleData(plot_data, key, cases, EnsembleDataFetcher(self.ert()), histogram_factory)
 
         self.addPcaData(plot_data, key, cases)
+
+        if refcase_fetcher.hasRefcase():
+            plot_data.setUnitY(refcase_fetcher.getRefCase().unit(key))
 
         plot_data.setHistogramFactory(histogram_factory)
 
@@ -172,8 +176,6 @@ class PlotDataFetcher(ErtConnector):
         refcase_plot_data.setRefcaseData(refcase_data["x"], refcase_data["y"])
         refcase_plot_data.updateBoundaries(refcase_data["min_x"], refcase_data["max_x"], refcase_data["min_y"], refcase_data["max_y"])
         plot_data.setRefcaseData(refcase_plot_data)
-        if refcase_fetcher.hasRefcase():
-            plot_data.setUnitY(refcase_fetcher.getRefCase().unit(key))
 
         if histogram_factory is not None:
             histogram_factory.setRefcase(refcase_data["x"], refcase_data["y"], refcase_data["min_y"], refcase_data["max_y"])
