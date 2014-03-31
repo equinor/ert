@@ -222,6 +222,8 @@ void enkf_main_init_current_case_from_existing(const enkf_main_type * enkf_main,
                                     source_report_step,
                                     source_state,
                                     current_fs);
+
+  enkf_main_invalidate_cache(enkf_main);
 }
 
 
@@ -241,6 +243,8 @@ void enkf_main_init_current_case_from_existing_custom(const enkf_main_type * enk
                                            current_fs,
                                            node_list,
                                            iactive);
+
+  enkf_main_invalidate_cache(enkf_main);
 }
 
 
