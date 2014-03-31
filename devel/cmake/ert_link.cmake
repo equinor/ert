@@ -10,5 +10,7 @@ endif()
 
 
 macro( add_runpath target )
-  set_target_properties( ${target} PROPERTIES LINK_FLAGS -Wl,--enable-new-dtags)     
+	if(NOT ERT_MAC)
+  		set_target_properties( ${target} PROPERTIES LINK_FLAGS -Wl,--enable-new-dtags)     
+  	endif()
 endmacro()

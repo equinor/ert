@@ -15,6 +15,8 @@ class PlotData(QObject):
         #: :type: EnsemblePlotData
         self.__ensemble_data = {}
 
+        self.__user_data = {}
+
         #: :type: HistogramPlotDataFactory
         self.__histogram_factory = None
 
@@ -32,9 +34,10 @@ class PlotData(QObject):
 
 
     def setObservationData(self, observation_data):
-        observation_data.setParent(self)
-        self.__observation_data = observation_data
-        self.updateBoundaries(observation_data.minX(), observation_data.maxX(), observation_data.minY(), observation_data.maxY())
+        if observation_data.isValid():
+            observation_data.setParent(self)
+            self.__observation_data = observation_data
+            self.updateBoundaries(observation_data.minX(), observation_data.maxX(), observation_data.minY(), observation_data.maxY())
 
 
     def setRefcaseData(self, refcase_data):
@@ -53,12 +56,16 @@ class PlotData(QObject):
         self.__unit_y = unit
 
     def addEnsembleData(self, ensemble_data):
-        ensemble_data.setParent(self)
-        case_name = ensemble_data.caseName()
-        self.__case_list.append(case_name)
-        self.__ensemble_data[case_name] = ensemble_data
-        self.updateBoundaries(ensemble_data.minX(), ensemble_data.maxX(), ensemble_data.minY(), ensemble_data.maxY())
+        if ensemble_data.isValid():
+            ensemble_data.setParent(self)
+            case_name = ensemble_data.caseName()
+            self.__case_list.append(case_name)
+            self.__ensemble_data[case_name] = ensemble_data
+            self.updateBoundaries(ensemble_data.minX(), ensemble_data.maxX(), ensemble_data.minY(), ensemble_data.maxY())
 
+    def setUserData(self, name, data):
+        data.setParent(self)
+        self.__user_data[name] = data
 
     def updateBoundaries(self, min_x, max_x, min_y, max_y):
         if min_x is not None and (self.__min_x is None or self.__min_x > min_x):
@@ -119,12 +126,17 @@ class PlotData(QObject):
     @pyqtSlot(result=bool)
     def hasEnsembleData(self):
         """ @rtype: bool """
-        return len(self.__ensemble_data) > 0
+        return len(self.__ensemble_data.keys()) > 0
 
     @pyqtSlot(QString, result=bool)
     def hasEnsembleDataForCase(self, case_name):
         """ @rtype: bool """
         return str(case_name) in self.__ensemble_data
+
+    @pyqtSlot(QString, result=bool)
+    def hasUserData(self, name):
+        """ @rtype: bool """
+        return str(name) in self.__user_data
 
     @pyqtSlot(QString, result=int)
     def realizationCount(self, case):
@@ -177,4 +189,7 @@ class PlotData(QObject):
             return data
         return None
 
+    @pyqtSlot("QString", result=QObject)
+    def getUserData(self, name):
+        return self.__user_data[str(name)]
 
