@@ -78,7 +78,7 @@ class ObsVector(BaseCClass):
 
     def getConfigNode(self):
         """ @rtype: EnkfConfigNode """
-        return ObsVector.cNamespace().get_config_node(self)
+        return ObsVector.cNamespace().get_config_node(self).setParent(self)
 
     def __iter__(self):
         """ Iterate over active report steps. """
@@ -112,3 +112,5 @@ ObsVector.cNamespace().iget_active = cwrapper.prototype("bool obs_vector_iget_ac
 ObsVector.cNamespace().get_impl_type = cwrapper.prototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
 ObsVector.cNamespace().install_node = cwrapper.prototype("void obs_vector_install_node(obs_vector, int, c_void_p)")
 ObsVector.cNamespace().get_next_active_step = cwrapper.prototype("int obs_vector_get_next_active_step(obs_vector, int)")
+ObsVector.cNamespace().has_data = cwrapper.prototype("bool obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
+ObsVector.cNamespace().get_config_node = cwrapper.prototype("enkf_config_node_ref obs_vector_get_config_node(obs_vector)")
