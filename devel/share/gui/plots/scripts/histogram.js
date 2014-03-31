@@ -233,6 +233,17 @@ function Histogram(element, x_dimension, y_dimension) {
 
             var bins = histogram.histogramLayout(bin_count)(case_histogram.samples());
 
+//            var ticks = [];
+//            for(var i = 0; i < bins.length; i++) {
+//                ticks.push(bins[i].x);
+//
+//                if(i == bins.length - 1) {
+//                    ticks.push(bins[i].x + bins[i].dx);
+//                }
+//            }
+//
+//            x_dimension.setTicks(ticks);
+
             histogram_renderer.style(style);
             histogram_renderer(context, bins);
 
@@ -241,7 +252,8 @@ function Histogram(element, x_dimension, y_dimension) {
 
         legend_group.selectAll(".plot-legend").data(legend_list).call(legend);
         histogram_group.select(".y.axis").call(y_axis);
-        histogram_group.select(".x.axis").call(x_axis);
+        var axis = histogram_group.select(".x.axis").call(x_axis);
+        x_dimension.relabel(axis);
 
         context.restore();
     }

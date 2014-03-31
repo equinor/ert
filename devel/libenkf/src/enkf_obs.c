@@ -23,6 +23,7 @@
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
 #include <ert/util/msg.h>
+#include <ert/util/vector.h>
 
 #include <ert/config/conf.h>
 
@@ -186,6 +187,7 @@ struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
   bool                  have_obs;
   char                * config_file;  /* The name of the config file which has been loaded. */ 
+  vector_type         * obs_vector;
   hash_type           * obs_hash;
   time_t_vector_type  * obs_time;     /* For fast lookup of report_step -> obs_time */
   const history_type  * history;      /* A shared (not owned by enkf_obs) reference to the history object - used when
@@ -203,6 +205,7 @@ enkf_obs_type * enkf_obs_alloc(  )
   enkf_obs_type * enkf_obs = util_malloc(sizeof * enkf_obs);
   enkf_obs->have_obs       = false;
   enkf_obs->obs_hash       = hash_alloc();
+  enkf_obs->obs_vector     = vector_alloc_new();
   enkf_obs->obs_time       = time_t_vector_alloc(0  , -1 );
 
   enkf_obs->history        = NULL;
@@ -219,6 +222,7 @@ bool enkf_obs_have_obs( const enkf_obs_type * enkf_obs ) {
 
 void enkf_obs_free(enkf_obs_type * enkf_obs) {
   hash_free(enkf_obs->obs_hash);
+  vector_free( enkf_obs->obs_vector );
   time_t_vector_free( enkf_obs->obs_time );
   util_safe_free( enkf_obs->config_file );
   free(enkf_obs);
@@ -248,7 +252,9 @@ void enkf_obs_add_obs_vector(enkf_obs_type       * enkf_obs,
   if (vector != NULL) {
     if (hash_has_key(enkf_obs->obs_hash , key))
       util_abort("%s: Observation with key:%s already added.\n",__func__ , key);
-    hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , vector , obs_vector_free__);
+
+    hash_insert_ref(enkf_obs->obs_hash , key , vector );
+    vector_append_owned_ref( enkf_obs->obs_vector , vector , obs_vector_free__);
   }
 }
 
@@ -261,6 +267,14 @@ obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * ke
   return hash_get(obs->obs_hash , key);
 }
 
+obs_vector_type * enkf_obs_iget_vector(const enkf_obs_type * obs, int index) {
+  return vector_iget( obs->obs_vector , index );
+}
+
+int enkf_obs_get_size( const enkf_obs_type * obs ) {
+  return vector_get_size( obs->obs_vector );
+}
+
 
 
 static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
@@ -269,7 +283,6 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
                                                  const local_obsdata_node_type * obs_node , 
                                                  state_enum                 state,
                                                  const int_vector_type     * ens_active_list , 
-                                                 const enkf_state_type     **   ensemble ,
                                                  meas_data_type             *   meas_data,
                                                  obs_data_type              * obs_data,
                                                  double_vector_type         * obs_value , 
@@ -347,7 +360,8 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
     {
       obs_block_type  * obs_block  = obs_data_add_block( obs_data , obs_vector_get_obs_key( obs_vector ) , active_count , error_covar , true);
       meas_block_type * meas_block = meas_data_add_block( meas_data, obs_vector_get_obs_key( obs_vector ) , obs_tstep_list_get_last( tstep_list ) , active_count );
-      
+      enkf_node_type * work_node = enkf_node_alloc( obs_vector_get_config_node( obs_vector ));
+
       for (int i=0; i < active_count; i++) 
         obs_block_iset( obs_block , i , double_vector_iget( obs_value , i) , double_vector_iget( obs_std , i ));
       
@@ -357,23 +371,23 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
         if (obs_vector_iget_active( obs_vector , step ) && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
           
           for (int iens_index = 0; iens_index < int_vector_size( ens_active_list ); iens_index++) {
+            
             const int iens = int_vector_iget( ens_active_list , iens_index );
-            const char * state_key = obs_vector_get_state_kw(obs_vector);
-            enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , state_key);
             node_id_type node_id = {.report_step = step, 
                                     .iens        = iens , 
                                     .state       = state };
             
-            enkf_node_load( enkf_node , fs , node_id );
+            enkf_node_load( work_node , fs , node_id );
             
             meas_block_iset(meas_block , 
                             iens_index , active_count , 
-                            summary_get( enkf_node_value_ptr( enkf_node ) , node_id.report_step , node_id.state ));
+                            summary_get( enkf_node_value_ptr( work_node ) , node_id.report_step , node_id.state ));
             
           }
           active_count++;
         } 
       }
+      enkf_node_free( work_node );
     }
   }
 }
@@ -383,7 +397,6 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
                                         const local_obsdata_node_type * obs_node , 
                                         state_enum                 state,
                                         const int_vector_type    * ens_active_list , 
-                                        const enkf_state_type    ** ensemble ,
                                         meas_data_type           * meas_data,
                                         obs_data_type            * obs_data) {
 
@@ -400,7 +413,6 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
                                           obs_node , 
                                           state , 
                                           ens_active_list , 
-                                          ensemble , 
                                           meas_data , 
                                           obs_data , 
                                           work_value, 
@@ -412,13 +424,7 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
       if (obs_vector_iget_active(obs_vector , report_step)) {                             /* The observation is active for this report step.     */
         const active_list_type * active_list = local_obsdata_node_get_active_list( obs_node );
         obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list);  /* Collect the observed data in the obs_data instance. */
-        {
-          /* Could be multithreaded */
-          for (int iens_index = 0; iens_index < int_vector_size( ens_active_list ); iens_index++) {
-            const int iens = int_vector_iget( ens_active_list , iens_index );
-            obs_vector_measure(obs_vector , fs , state , report_step , iens_index , ensemble[iens] , meas_data , active_list);
-          }
-        }
+        obs_vector_measure(obs_vector , fs , state , report_step , ens_active_list , meas_data , active_list);
       } 
     }
   }
@@ -441,7 +447,6 @@ void enkf_obs_get_obs_and_measure_data(const enkf_obs_type      * enkf_obs,
                                        const local_obsdata_type * local_obsdata , 
                                        state_enum                 state,
                                        const int_vector_type    * ens_active_list , 
-                                       const enkf_state_type    ** ensemble ,
                                        meas_data_type           * meas_data,
                                        obs_data_type            * obs_data) {
   
@@ -454,7 +459,6 @@ void enkf_obs_get_obs_and_measure_data(const enkf_obs_type      * enkf_obs,
                                        obs_node , 
                                        state , 
                                        ens_active_list , 
-                                       ensemble , 
                                        meas_data , 
                                        obs_data);
   }
@@ -466,7 +470,6 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                   const int_vector_type  * step_list , 
                                   state_enum               state,
                                   const int_vector_type * ens_active_list , 
-                                  const enkf_state_type    ** ensemble ,
                                   meas_data_type           * meas_data,
                                   obs_data_type            * obs_data,
                                   const local_obsset_type  * obsset) {
@@ -487,7 +490,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
     }
     hash_iter_free( iter );
   }
-  enkf_obs_get_obs_and_measure_data(enkf_obs , fs , local_obsdata , state , ens_active_list , ensemble , meas_data , obs_data );
+  enkf_obs_get_obs_and_measure_data(enkf_obs , fs , local_obsdata , state , ens_active_list , meas_data , obs_data );
   local_obsdata_free( local_obsdata );
 }
 

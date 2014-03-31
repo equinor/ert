@@ -13,6 +13,7 @@
 #
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
+
 from ert.enkf.enums import ErtImplType
 from ert.enkf.plot import DataFetcher
 from ert.enkf.plot_data import PlotBlockDataLoader, PlotBlockData
@@ -21,6 +22,7 @@ from ert.enkf.plot_data import PlotBlockDataLoader, PlotBlockData
 class EnsembleBlockDataFetcher(DataFetcher):
     def __init__(self, ert):
         super(EnsembleBlockDataFetcher, self).__init__(ert)
+        self.__selected_report_step_index = None
 
     def __fetchSimulationData(self, block_data):
         """
@@ -81,7 +83,7 @@ class EnsembleBlockDataFetcher(DataFetcher):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 
-        observation_vector = observations.getObservationsVector(key)
+        observation_vector = observations[key]
 
         loader = PlotBlockDataLoader(observation_vector)
 
@@ -93,9 +95,15 @@ class EnsembleBlockDataFetcher(DataFetcher):
 
             report_step_data.append(data)
 
-        return report_step_data
+        if self.__selected_report_step_index is not None:
+            return report_step_data[self.__selected_report_step_index]
+        else:
+            return report_step_data
 
     def fetchSupportedKeys(self):
         string_list = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)
         return [key for key in string_list]
+
+    def setSelectedReportStepIndex(self, index):
+        self.__selected_report_step_index = index
 

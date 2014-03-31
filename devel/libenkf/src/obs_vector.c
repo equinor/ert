@@ -174,6 +174,11 @@ const char * obs_vector_get_state_kw(const obs_vector_type * obs_vector) {
 }
 
 
+const char * obs_vector_get_key(const obs_vector_type * obs_vector) {
+  return obs_vector->obs_key;
+}
+
+
 const enkf_config_node_type * obs_vector_get_config_node(const obs_vector_type * obs_vector) {
   return obs_vector->config_node;
 }
@@ -313,6 +318,8 @@ void * obs_vector_iget_node(const obs_vector_type * vector, int index) {
 }
 
 
+
+
 void obs_vector_user_get(const obs_vector_type * obs_vector , const char * index_key , int report_step , double * value , double * std , bool * valid) {
   void * obs_node = obs_vector_iget_node( obs_vector , report_step );
   obs_vector->user_get(obs_node , index_key , value , std , valid);
@@ -339,6 +346,22 @@ int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int pre
       return next_step;
   }
 }
+
+
+int obs_vector_get_last_active_step(const obs_vector_type * obs_vector) {
+  int step = vector_get_size( obs_vector->nodes ) - 1;
+  while (true) {
+    const void * obs_node = vector_iget_const( obs_vector->nodes , step );
+    if (obs_node)
+      break;
+    
+    step--;
+    if (step < 0)
+      break;
+  }
+  return step;
+}
+
 
 
 /*****************************************************************/
@@ -761,21 +784,95 @@ void obs_vector_measure(const obs_vector_type * obs_vector ,
                         enkf_fs_type * fs , 
                         state_enum state , 
                         int report_step , 
-                        int active_iens_index , 
-                        const enkf_state_type * enkf_state ,  
+                        const int_vector_type * ens_active_list , 
                         meas_data_type * meas_data , 
                         const active_list_type * active_list) {
   
   void * obs_node = vector_iget( obs_vector->nodes , report_step );
   if ( obs_node != NULL ) {
-    enkf_node_type * enkf_node = enkf_state_get_node( enkf_state , obs_vector_get_state_kw( obs_vector ));
+    enkf_node_type * enkf_node = enkf_node_deep_alloc( obs_vector->config_node );
+
     node_id_type node_id = { .report_step = report_step , 
                              .state       = state , 
-                             .iens        = enkf_state_get_iens( enkf_state ) };
-    
-    enkf_node_load(enkf_node , fs , node_id);
-    node_id.iens = active_iens_index;
-    obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , node_id , meas_data , active_list);
+                             .iens        = 0 };
+
+    for (int active_iens_index =0; active_iens_index < int_vector_size( ens_active_list ); active_iens_index++) {
+      node_id.iens = int_vector_iget( ens_active_list , active_iens_index );
+      
+      enkf_node_load(enkf_node , fs , node_id);
+      node_id.iens = active_iens_index;
+      obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , node_id , meas_data , active_list);
+    }
+
+    enkf_node_free( enkf_node );
+  }
+}
+
+
+static bool obs_vector_has_data_at_report_step( const obs_vector_type * obs_vector , const bool_vector_type * active_mask , enkf_fs_type * fs, int report_step) {
+  void * obs_node = vector_iget( obs_vector->nodes , report_step );
+  if ( obs_node ) {
+    node_id_type node_id = {.state = FORECAST ,
+                            .report_step = report_step };
+    for (int iens = 0; iens < bool_vector_size( active_mask ); iens++) {
+      if (bool_vector_iget( active_mask , iens)) {
+        node_id.iens = iens;
+        if (! enkf_config_node_has_node(obs_vector->config_node , fs , node_id ))
+          return false;
+      }
+    }
+  } 
+  
+  /* 
+     Will return true unconditionally if we do not have observation data at this report step;
+     or alternatively if the active_mask is all false. 
+  */
+  return true;  
+}                
+
+
+/*
+  The has_vector_data() function will only check that we have a vector
+  stored, and not the actual length of the vector. This means we can
+  be fooled if the stored vector is shorter than what the observation
+  requires. 
+
+  Should ideally check that the vector is long enough, but that
+  requires changes in the enkf_node api for vector storage.
+*/
+
+static bool obs_vector_has_vector_data( const obs_vector_type * obs_vector , const bool_vector_type * active_mask , enkf_fs_type * fs) {
+  bool has_data = true;
+  int iens = 0;
+
+  while (true) {
+    const enkf_config_node_type * data_config = obs_vector->config_node;
+    if (bool_vector_iget( active_mask , iens )) {
+      if (!enkf_config_node_has_vector(data_config , fs , iens , FORECAST)) {
+        has_data = false;
+        break;
+      }
+    }
+    iens++;
+    if (iens >= bool_vector_size( active_mask ))
+      break;
+  }
+
+  return has_data;
+}
+
+
+
+bool obs_vector_has_data( const obs_vector_type * obs_vector , const bool_vector_type * active_mask , enkf_fs_type * fs) {                
+  const enkf_config_node_type * data_config = obs_vector->config_node;
+  if (enkf_config_node_vector_storage( data_config )) 
+    return obs_vector_has_vector_data( obs_vector , active_mask , fs );
+  else {
+    for (int report_step = 0; report_step < vector_get_size( obs_vector->nodes ); report_step++) {
+      if (!obs_vector_has_data_at_report_step( obs_vector , active_mask , fs, report_step))
+        return false;
+    }
+    return true;
   }
 }
 

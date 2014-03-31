@@ -28,6 +28,9 @@ function DistributionPlot(element, x_dimension, y_dimension) {
             } else {
                 self.plot.setLogScaleOnDimensionY(data.shouldUseLogScale());
             }
+
+            self.plot.setXDomain(data.minX(), data.maxX(), data.caseList());
+            self.plot.setYDomain(data.minY(), data.maxY(), data.caseList());
         }
     };
 
@@ -56,7 +59,11 @@ function DistributionPlot(element, x_dimension, y_dimension) {
                 for(var j = 0; j < values.length; j++) {
                     var value = values[j];
                     if(isNumber(value)) {
-                        circle_renderer(context, case_name, value);
+                        if (self.horizontal_draw_direction) {
+                            circle_renderer(context, case_name, value);
+                        } else {
+                            circle_renderer(context, value, case_name);
+                        }
                     }
                 }
 
@@ -76,14 +83,6 @@ DistributionPlot.prototype.resize = function (width, height) {
 
 DistributionPlot.prototype.setScales = function (x_min, x_max, y_min, y_max) {
     this.plot.setScales(x_min, x_max, y_min, y_max);
-};
-
-DistributionPlot.prototype.setYDomain = function (min_y, max_y) {
-    this.plot.setYDomain(min_y, max_y);
-};
-
-DistributionPlot.prototype.setXDomain = function (min_x, max_x) {
-    this.plot.setXDomain(min_x, max_x);
 };
 
 DistributionPlot.prototype.setData = function (data) {

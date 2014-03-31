@@ -26,12 +26,13 @@
 <script src="scripts/base_plot.js"></script>
 <script src="scripts/base_plot_value_dimension.js"></script>
 <script src="scripts/base_plot_ordinal_dimension.js"></script>
-<script src="scripts/canvas_plot_distribution.js"></script>
+<script src="scripts/canvas_plot_pca.js"></script>
 <script src="scripts/canvas_plot_line.js"></script>
 <script src="scripts/canvas_plot_stippled_line.js"></script>
 <script src="scripts/canvas_plot_area.js"></script>
 <script src="scripts/canvas_error_bar.js"></script>
 <script src="scripts/canvas_plot_circle.js"></script>
+<script src="scripts/canvas_plot_cross.js"></script>
 <script src="scripts/canvas_plot_legend.js"></script>
 
 <script>
@@ -51,19 +52,21 @@
     }
 
     function createPlot() {
-        plot = new DistributionPlot(d3.select("body"), BasePlotOrdinalDimension(true), BasePlotValueDimension());
+        plot = new PcaPlot(d3.select("body"), BasePlotOrdinalDimension(false), BasePlotValueDimension());
     }
 
     function updatePlot() {
         var data = plot_data_source.getPlotData();
-        plot.setData(data);
+        if(data.hasUserData("PCA")) {
+            plot.setData(data.getUserData("PCA"));
+        }
     }
 
     function setSize(width, height) {
         plot.resize(width, height - 75);
     }
 
-    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max) {
+    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max) {
         plot.setScales(0, 1, value_min, value_max);
     }
 
@@ -72,7 +75,7 @@
     }
 
     function supportsPlotProperties(time, value, depth, index, histogram, pca){
-        return !time && value && !depth;
+        return pca;
     }
 
     function getPrintWidth(){

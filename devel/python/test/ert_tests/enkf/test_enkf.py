@@ -83,7 +83,7 @@ class EnKFTest(ExtendedTestCase):
 
 
             observations = main.getObservations()
-            test_vector = observations.getObservationsVector(observation_key)
+            test_vector = observations[observation_key]
 
             self.assertListEqual(range(10), [report_step for report_step in test_vector])
 

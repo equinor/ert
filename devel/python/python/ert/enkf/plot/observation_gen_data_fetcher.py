@@ -13,10 +13,7 @@
 #
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
-from ert.enkf import EnkfObservationImplementationType, GenDataConfig
-from ert.enkf.data.gen_kw_config import GenKwConfig
 from ert.enkf.enums.ert_impl_type_enum import ErtImplType
-from ert.enkf.observations import BlockObservation
 from ert.enkf.plot import DataFetcher
 
 
@@ -30,7 +27,7 @@ class ObservationGenDataFetcher(DataFetcher):
         for key in gen_data_keys:
             obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
             for obs_key in obs_keys:
-                obs_vector = self.ert().getObservations().getObservationsVector(obs_key)
+                obs_vector = self.ert().getObservations()[obs_key]
                 for report_step in obs_vector:
                     gen_data_list.append("%s@%d" % (key, report_step))
 
@@ -49,7 +46,7 @@ class ObservationGenDataFetcher(DataFetcher):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
 
-        gen_obs = observations.getObservationsVector(key).getNode(report_step)
+        gen_obs = observations[key].getNode(report_step)
 
         size = gen_obs.getSize()
 
@@ -78,13 +75,28 @@ class ObservationGenDataFetcher(DataFetcher):
     def getObsKeyForKey(self, key, key_report_step):
         obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
         for obs_key in obs_keys:
-            obs_vector = self.ert().getObservations().getObservationsVector(obs_key)
+            obs_vector = self.ert().getObservations()[obs_key]
             for report_step in obs_vector:
                 if report_step == key_report_step:
                     return obs_key
 
         raise UserWarning("Observation key for key '%s' not found!" % key)
 
+
+    def getAllObsKeysForKey(self, key):
+        key, report_step = key.split("@")
+        return self.ert().ensembleConfig().getNode(key).getObservationKeys()
+
+
+    def hasData(self, key):
+        """ @rtype: bool """
+        key, report_step = key.split("@")
+        observations = self.ert().getObservations()
+        obs_key = self.getObsKeyForKey(key, int(report_step))
+        if not observations.hasKey(obs_key):
+            return False
+
+        return observations[obs_key].getActiveCount() > 0
 
     def fetchData(self, key, case=None):
         key, report_step = key.split("@")

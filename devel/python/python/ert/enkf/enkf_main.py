@@ -180,9 +180,7 @@ class EnKFMain(BaseCClass):
         """ @rtype: ErtWorkflowList """
         return EnKFMain.cNamespace().get_workflow_list(self).setParent(self)
 
-    def getEnsembleConstant(self):
-        """ @rtype: c_void_p """
-        return EnKFMain.cNamespace().get_ensemble_constant(self)
+
 
 ##################################################################
 
@@ -240,6 +238,5 @@ EnKFMain.cNamespace().create_new_config = cwrapper.prototype("void enkf_main_cre
 EnKFMain.cNamespace().get_user_config_file = cwrapper.prototype("char* enkf_main_get_user_config_file(enkf_main)")
 EnKFMain.cNamespace().get_mount_point = cwrapper.prototype("char* enkf_main_get_mount_root( enkf_main )")
 
-EnKFMain.cNamespace().get_ensemble_constant = cwrapper.prototype("c_void_p enkf_main_get_ensemble_const( enkf_main )") #todo: should create a proper wrapper
 
 

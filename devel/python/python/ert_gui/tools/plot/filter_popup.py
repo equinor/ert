@@ -1,5 +1,6 @@
-from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtGui import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout, QCursor
+from PyQt4.QtCore import Qt, pyqtSignal, QSize, SIGNAL
+from PyQt4.QtGui import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout, QCursor, QHBoxLayout, QToolButton
+from ert_gui.widgets.util import resourceIcon
 
 
 class FilterPopup(QDialog):
@@ -25,6 +26,7 @@ class FilterPopup(QDialog):
         self.addFilterItem("Block", "block")
         self.addFilterItem("Gen KW", "gen_kw")
         self.addFilterItem("Gen Data", "gen_data")
+        self.addFilterItem("Custom PCA", "custom_pca")
 
         frame.setLayout(self.__layout)
 
@@ -54,6 +56,3 @@ class FilterPopup(QDialog):
         QWidget.show(self)
         p = QCursor().pos()
         self.move(p.x(), p.y())
-
-
-

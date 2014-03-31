@@ -208,13 +208,17 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                          double truncation , 
                          int ncomp , 
                          matrix_type * PC , 
-                         matrix_type * PC_obs);
+                         matrix_type * PC_obs,
+                         double_vector_type * singular_values);
   
+
   void enkf_main_init_PC( const enkf_main_type * enkf_main , 
                           const local_obsdata_type * obsdata , 
                           double truncation_or_ncomp , 
                           matrix_type * PC , 
-                          matrix_type * PC_obs );
+                          matrix_type * PC_obs ,
+                          double_vector_type * singular_values);
+  
 
   void enkf_main_fprintf_PC(const char * filename , 
                             matrix_type * PC , 

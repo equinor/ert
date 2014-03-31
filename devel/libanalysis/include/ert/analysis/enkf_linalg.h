@@ -3,6 +3,7 @@
 
 #include <ert/util/matrix_lapack.h>
 #include <ert/util/matrix.h>
+#include <ert/util/double_vector.h>
 
 
 void enkf_linalg_get_PC( const matrix_type * S0, 
@@ -10,7 +11,8 @@ void enkf_linalg_get_PC( const matrix_type * S0,
                          double truncation,
                          int ncomp, 
                          matrix_type * PC,
-                         matrix_type * PC_obs );
+                         matrix_type * PC_obs ,
+                         double_vector_type * singular_values);
 
 
 void enkf_linalg_init_stdX( matrix_type * X , 

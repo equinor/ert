@@ -65,7 +65,7 @@ class ObsVector(BaseCClass):
 
     def getNextActiveStep(self, previous_step=-1):
         """ @rtype: int """
-        return  ObsVector.cNamespace().get_next_active_step(self, previous_step)
+        return ObsVector.cNamespace().get_next_active_step(self, previous_step)
 
     def getImplementationType(self):
         """ @rtype: EnkfObservationImplementationType """
@@ -92,6 +92,10 @@ class ObsVector(BaseCClass):
             else:
                 run = False
 
+    def hasData(self, active_mask, fs):
+        """ @rtype: bool """
+        return ObsVector.cNamespace().has_data(self, active_mask, fs)
+
     def free(self):
         ObsVector.cNamespace().free(self)
 
@@ -108,5 +112,3 @@ ObsVector.cNamespace().iget_active = cwrapper.prototype("bool obs_vector_iget_ac
 ObsVector.cNamespace().get_impl_type = cwrapper.prototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
 ObsVector.cNamespace().install_node = cwrapper.prototype("void obs_vector_install_node(obs_vector, int, c_void_p)")
 ObsVector.cNamespace().get_next_active_step = cwrapper.prototype("int obs_vector_get_next_active_step(obs_vector, int)")
-
-ObsVector.cNamespace().get_config_node = cwrapper.prototype("enkf_config_node_ref obs_vector_get_config_node(obs_vector)")
