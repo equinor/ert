@@ -54,7 +54,7 @@ class PlotDataTest(ExtendedTestCase):
         @type report_step: int
         """
         enkf_obs = ert.getObservations()
-        obs_vector = enkf_obs.getObservationsVector(obs_key)
+        obs_vector = enkf_obs[obs_key]
         loader = PlotBlockDataLoader(obs_vector)
 
         fs = ert.getEnkfFsManager().getCurrentFileSystem()
