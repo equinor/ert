@@ -2705,6 +2705,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
       site_config_add_config_items( config , true );
       if (config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false)) {
         site_config_init( enkf_main->site_config , config );
+        analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, config);
         ert_report_list_site_init( enkf_main->report_list , config );
         ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh);
       } else {
@@ -2799,7 +2800,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   }
 
 
-  if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
+  if (!util_file_exists(model_config))
+    util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
     config_type * config;
     enkf_main            = enkf_main_alloc_empty( );
