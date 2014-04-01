@@ -1952,7 +1952,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations) {
     }
 
     { //Iteration 0
-      enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
+      enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_FORCE);
       enkf_main_run_simulation_and_postworkflow(enkf_main, iteration_number, iactive);
     }
 
