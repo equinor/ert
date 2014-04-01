@@ -101,7 +101,7 @@ class ObsVector(BaseCClass):
 
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerObject("obs_vector", ObsVector)
+cwrapper.registerObjectType("obs_vector", ObsVector)
 
 ObsVector.cNamespace().alloc = cwrapper.prototype("c_void_p obs_vector_alloc(enkf_obs_impl_type, char*, enkf_config_node, int)")
 ObsVector.cNamespace().free = cwrapper.prototype("void obs_vector_free( obs_vector )")

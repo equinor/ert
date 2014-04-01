@@ -67,7 +67,7 @@ class BlockObservation(BaseCClass):
 ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerObject("block_obs", BlockObservation)
+cwrapper.registerObjectType("block_obs", BlockObservation)
 
 BlockObservation.cNamespace().free = cwrapper.prototype("void block_obs_free( block_obs )")
 BlockObservation.cNamespace().iget_i = cwrapper.prototype("int block_obs_iget_i(block_obs, int)")

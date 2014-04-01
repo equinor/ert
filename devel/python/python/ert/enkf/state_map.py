@@ -110,7 +110,7 @@ class StateMap(BaseCClass):
 
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerObject("state_map", StateMap)
+cwrapper.registerObjectType("state_map", StateMap)
 
 StateMap.cNamespace().alloc  = cwrapper.prototype("c_void_p state_map_alloc()")
 StateMap.cNamespace().fread  = cwrapper.prototype("bool state_map_fread(state_map , char*)")

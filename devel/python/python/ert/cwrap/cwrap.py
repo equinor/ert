@@ -46,7 +46,7 @@ class CWrapper:
         cls.registered_types[type_name] = value
 
     @classmethod
-    def registerObject(cls, type_name, base_c_class):
+    def registerObjectType(cls, type_name, base_c_class):
         """
         Automatically registers a class type with object and reference versions.
         For example:
@@ -59,9 +59,9 @@ class CWrapper:
         """
         assert issubclass(base_c_class, BaseCClass)
 
-        cls.registered_types[type_name] = base_c_class
-        cls.registered_types["%s_ref" % type_name] = base_c_class.createCReference
-        cls.registered_types["%s_obj" % type_name] = base_c_class.createPythonObject
+        cls.registerType(type_name, base_c_class)
+        cls.registerType("%s_ref" % type_name, base_c_class.createCReference)
+        cls.registerType("%s_obj" % type_name, base_c_class.createPythonObject)
 
 
     @classmethod

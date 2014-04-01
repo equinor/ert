@@ -115,7 +115,7 @@ class EnkfConfigNode(BaseCClass):
 
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerObject("enkf_config_node", EnkfConfigNode)
+cwrapper.registerObjectType("enkf_config_node", EnkfConfigNode)
 
 EnkfConfigNode.cNamespace().free = cwrapper.prototype("void enkf_config_node_free(enkf_config_node)")
 EnkfConfigNode.cNamespace().get_ref = cwrapper.prototype("c_void_p enkf_config_node_get_ref(enkf_config_node)") #todo: fix return type

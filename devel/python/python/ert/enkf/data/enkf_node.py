@@ -67,7 +67,7 @@ class EnkfNode(BaseCClass):
 
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerObject("enkf_node", EnkfNode)
+cwrapper.registerObjectType("enkf_node", EnkfNode)
 
 EnkfNode.cNamespace().free = cwrapper.prototype("void enkf_node_free( enkf_node )")
 EnkfNode.cNamespace().alloc = cwrapper.prototype("c_void_p enkf_node_alloc(enkf_node)")

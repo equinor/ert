@@ -3,6 +3,9 @@ from ert.cwrap import CWrapper
 from ert.enkf.enums import EnkfStateType
 
 class NodeId(Structure):
+    """
+    NodeId is specified in enkf_types.h
+    """
     _fields_ = [("report_step", c_int),
                 ("iens", c_int),
                 ("state", c_int)]
