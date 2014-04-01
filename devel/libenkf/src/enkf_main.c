@@ -2619,15 +2619,26 @@ static void enkf_main_init_log( enkf_main_type * enkf_main , const config_type *
 }
 
 static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * config ) {
-  config_content_item_type * data_item = config_get_content_item( config , DATA_KW_KEY );
-  hash_type      * data_kw = NULL;
-  if (data_item) 
-    data_kw = config_content_item_alloc_hash(data_item , true);
-
-  enkf_main_install_data_kw( enkf_main , data_kw );
+  {
+    const subst_list_type * define_list = config_get_define_list( config );
+    for (int i=0; i < subst_list_get_size( define_list ); i++) {
+      const char * key = subst_list_iget_key( define_list , i );
+      const char * value = subst_list_iget_value( define_list , i );
+      enkf_main_add_data_kw( enkf_main , key , value );
+    }
+  }
   
-  if (data_kw)
-    hash_free( data_kw );
+  {
+    config_content_item_type * data_item = config_get_content_item( config , DATA_KW_KEY );
+    hash_type      * data_kw = NULL;
+    if (data_item) 
+      data_kw = config_content_item_alloc_hash(data_item , true);
+    
+    enkf_main_install_data_kw( enkf_main , data_kw );
+    
+    if (data_kw)
+      hash_free( data_kw );
+  }
 }
 
     
