@@ -1910,53 +1910,118 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
 }
 
 
+static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main, int iteration_number, bool_vector_type * iactive) {
+  bool ret = true;
+  const int step1 = 0;
+  analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  const int min_realizations = analysis_config_get_min_realisations(analysis_config);
 
-void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2) {  //[iter1, iter2)
+  printf("Running simulation iteration %d\n", iteration_number);
+  bool total_ok = enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iteration_number, step1 , -1);
+
+  if (total_ok || (bool_vector_count_equal(iactive, true) >= min_realizations))
+    enkf_main_run_post_workflow(enkf_main);
+  else {
+    fprintf(stderr,"Simulation in iteration %d failed, stopping Iterated Ensemble Smoother\n", iteration_number);
+    ret = false;
+  }
+  return ret;
+}
+
+
+static bool enkf_main_run_analysis(enkf_main_type * enkf_main, const char * target_fs_name, int iteration_number) {
+  bool updateOK               = false;
+  const int step1             = 0;
+  const int step2             = enkf_main_get_history_length( enkf_main );
+  int_vector_type * step_list = int_vector_alloc(0, 0);
+
+  for (int step = step1; step <= step2; step++)
+    int_vector_append(step_list, step);
+
+  analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  analysis_module_type * analysis_module = analysis_config_get_active_module(analysis_config);
+  int pre_iteration_number               = analysis_module_get_int(analysis_module, "ITER");
+
+  if (target_fs_name == NULL){
+    fprintf(stderr,"Sorry: the updated ensemble will overwrite the current case in the iterated ensemble smoother.");
+    printf("Running analysis on case %s, target case is %s\n", enkf_main_get_current_fs(enkf_main), enkf_main_get_current_fs(enkf_main));
+    updateOK = enkf_main_smoother_update(enkf_main, enkf_main_get_fs(enkf_main));
+  } else {
+    enkf_fs_type * target_fs = enkf_main_mount_alt_fs(enkf_main , target_fs_name , true );
+    printf("Running analysis on case %s, target case is %s\n", enkf_main_get_current_fs(enkf_main), enkf_fs_get_case_name(target_fs));
+    updateOK = enkf_main_smoother_update(enkf_main, target_fs);
+    enkf_fs_decref( target_fs );
+  }
+
+  int_vector_free(step_list);
+  int post_iteration_number = analysis_module_get_int(analysis_module, "ITER");
+
+  if (post_iteration_number <= pre_iteration_number)
+    updateOK = false;
+
+  if (updateOK) {
+    enkf_fs_type * target_fs = enkf_main_mount_alt_fs(enkf_main , target_fs_name , true );
+    cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
+    enkf_fs_decref( target_fs );
+  }
+
+  return updateOK;
+}
+
+
+void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations) {
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
 
   if (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
-    const int ens_size = enkf_main_get_ensemble_size(enkf_main);
+    const int ens_size                      = enkf_main_get_ensemble_size(enkf_main);
+    bool_vector_type * iactive              = bool_vector_alloc(ens_size , true);
+    enkf_fs_type * current_case             = enkf_main_get_fs( enkf_main );
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
-    bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
-    int iter = iter1;
-    enkf_fs_type * current_case = enkf_main_get_fs( enkf_main );
-
-    
-    const int step1 = 0;
-    const char * initial_case_name = analysis_iter_config_iget_case( iter_config , iter1 );
-
+    int iteration_number                    = 0;
+    const char * initial_case_name          = analysis_iter_config_iget_case( iter_config , iteration_number );
 
     if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
       enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , true);
       enkf_main_init_case_from_existing(enkf_main, current_case, 0, ANALYZED, initial_case);
-      
-      // Currently does nothing; 
       enkf_main_set_fs( enkf_main , initial_case , NULL );
       enkf_fs_decref( initial_case );
     }
 
-    enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
-    if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iter, step1 , -1))
-      enkf_main_run_post_workflow(enkf_main);
-
-    iter++;
-    while (true) {
-      const char * target_fs_name = analysis_iter_config_iget_case( iter_config , iter );
-
-      if (enkf_main_iterate_smoother(enkf_main, iter, target_fs_name , iactive)) {
-        enkf_main_run_post_workflow(enkf_main);
-        iter++;
-      } else
-        break;
-
-      if (iter > iter2)
-        break;
+    { //Iteration 0
+      enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
+      enkf_main_run_simulation_and_postworkflow(enkf_main, iteration_number, iactive);
     }
+
+    { // Iteration 1 - num_iterations [iteration 1, num iterations]
+      int max_num_iterations = analysis_iter_config_get_max_num_iterations(iter_config);
+      int iteration_count    = 0;
+      iteration_number       = 1;
+
+      while ((iteration_number <= num_iterations) && (iteration_count < max_num_iterations)) {
+        const char * target_fs_name = analysis_iter_config_iget_case( iter_config , iteration_number );
+
+        if (enkf_main_run_analysis(enkf_main, target_fs_name, iteration_number)) {
+          enkf_main_select_fs(enkf_main, target_fs_name);
+          if (!enkf_main_run_simulation_and_postworkflow(enkf_main, iteration_number, iactive))
+            break;
+          ++iteration_number;
+        } else {
+          fprintf(stderr, "\nAnalysis failed, rerunning simulation on changed initial parameters\n", iteration_number);
+          enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false );
+          enkf_main_init_current_case_from_existing(enkf_main, target_fs, 0, ANALYZED);
+          enkf_fs_decref(target_fs);
+
+          if (!enkf_main_run_simulation_and_postworkflow(enkf_main, iteration_number-1, iactive))
+            break;
+        }
+
+        ++iteration_count;
+      }
+    }
+
     bool_vector_free(iactive);
   } else
-    fprintf(stderr,"** ERROR: The current analysis module:%s can not be used for iterations \n",
-            analysis_config_get_active_module_name( analysis_config ));
-
+    fprintf(stderr,"** ERROR: The current analysis module:%s can not be used for iterations \n", analysis_config_get_active_module_name( analysis_config ));
 }
 
 

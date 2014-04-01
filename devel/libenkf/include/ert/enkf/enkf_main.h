@@ -128,7 +128,7 @@ extern "C" {
 
   void                          enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun);
   bool                          enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number, const char * target_fs_name , bool_vector_type * iactive);
-  void                          enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1 , int iter2);
+  void                          enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations);
   void                          enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2);
   void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
@@ -285,12 +285,12 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                                                       int iens2,
                                                       init_mode_enum init_mode);
 
-  void              enkf_main_init_current_case_from_existing(const enkf_main_type * enkf_main,
+  void              enkf_main_init_current_case_from_existing(enkf_main_type * enkf_main,
                                                               enkf_fs_type * source_case_fs,
                                                               int source_report_step,
                                                               state_enum source_state);
 
-  void              enkf_main_init_current_case_from_existing_custom(const enkf_main_type * enkf_main,
+  void              enkf_main_init_current_case_from_existing_custom(enkf_main_type * enkf_main,
                                                                     enkf_fs_type * source_case_fs,
                                                                     int source_report_step,
                                                                     state_enum source_state,
