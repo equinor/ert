@@ -124,19 +124,6 @@ void enkf_tui_run_iterated_ES(void * arg) {
   enkf_main_run_iterated_ES(enkf_main , num_iter );
 }
 
-/*void enkf_tui_run_one_more_iteration(void * arg){
-  enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
-  const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
-  const int last_report = enkf_main_get_history_length( enkf_main );
-  int step2;
-  if (ecl_config_has_schedule( ecl_config ))
-    step2 = util_scanf_int_with_limits("Last report",PROMPT_LEN , 0 , last_report);  
-  else
-    step2 = last_report;
-  enkf_main_run_one_more_iteration(enkf_main, step2);
-}*/
-
-
 
 /** 
     Experiments will always start with the parameters at time == 0; if
@@ -146,8 +133,6 @@ void enkf_tui_run_iterated_ES(void * arg) {
 
     Prediction part is included if it exists.
 */
-
-
 
 void enkf_tui_run_exp(void * enkf_main) {
   const int ens_size          = enkf_main_get_ensemble_size( enkf_main );
