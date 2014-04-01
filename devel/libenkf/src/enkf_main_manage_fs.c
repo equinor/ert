@@ -210,7 +210,7 @@ static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
 
 
 
-void enkf_main_init_current_case_from_existing(const enkf_main_type * enkf_main,
+void enkf_main_init_current_case_from_existing(enkf_main_type * enkf_main,
                                                enkf_fs_type * source_case_fs,
                                                int source_report_step,
                                                state_enum source_state) {
@@ -227,7 +227,7 @@ void enkf_main_init_current_case_from_existing(const enkf_main_type * enkf_main,
 }
 
 
-void enkf_main_init_current_case_from_existing_custom(const enkf_main_type * enkf_main,
+void enkf_main_init_current_case_from_existing_custom(enkf_main_type * enkf_main,
                                                       enkf_fs_type * source_case_fs,
                                                       int source_report_step,
                                                       state_enum source_state,
