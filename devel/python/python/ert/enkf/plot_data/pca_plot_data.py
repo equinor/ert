@@ -33,7 +33,7 @@ class PcaPlotData(BaseCClass):
 
     def getSingularValues(self):
         """ @rtype: DoubleVector """
-        return PcaPlotData.cNamespace().get_singular_values( self )
+        return PcaPlotData.cNamespace().get_singular_values(self).setParent(self)
 
     def free(self):
         PcaPlotData.cNamespace().free(self)
@@ -52,4 +52,4 @@ PcaPlotData.cNamespace().component_count      = cwrapper.prototype("int pca_plot
 PcaPlotData.cNamespace().realization_count    = cwrapper.prototype("int pca_plot_data_get_ens_size(pca_plot_data)")
 PcaPlotData.cNamespace().get                  = cwrapper.prototype("pca_plot_vector_ref pca_plot_data_iget_vector(pca_plot_data, int)")
 PcaPlotData.cNamespace().get_name             = cwrapper.prototype("char* pca_plot_data_get_name(pca_plot_data)")
-PcaPlotData.cNamespace().get_singular_values  = cwrapper.prototype("double_vector pca_plot_data_get_singular_values(pca_plot_data)")
+PcaPlotData.cNamespace().get_singular_values  = cwrapper.prototype("double_vector_ref pca_plot_data_get_singular_values(pca_plot_data)")

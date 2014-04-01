@@ -15,58 +15,56 @@
 #  for more details.
 import os.path
 
-from ert.cwrap import clib, BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB
+from ert.cwrap import BaseCClass, CWrapper
+from ert.enkf import ENKF_LIB, EnKFMain
 
 class ErtTest(BaseCClass):
 
-    def __init__(self , test_name , model_config , site_config = None , store_area = False):
-        if not os.path.exists( model_config ):
-            raise IOError("The configuration file:%s does not exist" % model_config )
+    def __init__(self, test_name, model_config, site_config=None, store_area=False):
+        if not os.path.exists(model_config):
+            raise IOError("The configuration file: %s does not exist" % model_config )
         else:
-            c_ptr = ErtTest.cNamespace().alloc(test_name , model_config , site_config)
+            c_ptr = ErtTest.cNamespace().alloc(test_name, model_config, site_config)
             super(ErtTest, self).__init__(c_ptr)
             self.setStore( store_area )
-        
-    def setStore(self , store):
-        ErtTest.cNamespace().set_store(self , store)
+
+    def setStore(self, store):
+        ErtTest.cNamespace().set_store(self, store)
 
     def getErt(self):
-        return ErtTest.cNamespace().get_enkf_main( self )
+        """ @rtype: EnKFMain """
+        return ErtTest.cNamespace().get_enkf_main(self)
 
     def free(self):
-        ErtTest.cNamespace().free( self )
-
+        ErtTest.cNamespace().free(self)
 
 
 class ErtTestContext(object):
-    def __init__(self , test_name , model_config , site_config = None , store_area = False):
-        self.test_name = test_name
-        self.model_config = model_config
-        self.site_config = site_config
-        self.store_area = store_area
-        self.test_context = ErtTest( self.test_name , self.model_config , site_config = self.site_config , store_area = self.store_area)
+    def __init__(self, test_name, model_config, site_config=None, store_area=False):
+        self.__test_name = test_name
+        self.__model_config = model_config
+        self.__site_config = site_config
+        self.__store_area = store_area
+        self.__test_context = ErtTest(self.__test_name, self.__model_config, site_config=self.__site_config, store_area=self.__store_area)
 
 
     def __enter__(self):
-        return self.test_context
-        
-        
-    def __exit__(self , exc_type, exc_val, exc_tb):
-        del self.test_context
+        """ @rtype: ErtTest """
+        return self.__test_context
+
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        del self.__test_context
         return False
 
-    
+
     def getErt(self):
-        return self.test_context.getErt()
+        return self.__test_context.getErt()
 
 
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("ert_test", ErtTest)
-cwrapper.registerType("ert_test_obj", ErtTest.createPythonObject)
-cwrapper.registerType("ert_test_ref", ErtTest.createCReference)
-
+cwrapper.registerObjectType("ert_test", ErtTest)
 
 ErtTest.cNamespace().alloc = cwrapper.prototype("c_void_p ert_test_context_alloc( char* , char* , char*)")
 ErtTest.cNamespace().set_store = cwrapper.prototype("c_void_p ert_test_context_set_store( ert_test , bool)")

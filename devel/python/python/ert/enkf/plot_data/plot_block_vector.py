@@ -1,51 +1,39 @@
-from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB
-from ert.enkf.data import EnkfConfigNode
-from ert.enkf.enkf_fs import EnkfFs
-from ert.enkf.enums.enkf_state_type_enum import EnkfStateType
-from ert.enkf.observations import ObsVector
-from ert.util import BoolVector
+from ert.util import DoubleVector
 
 
-class PlotBlockVector(BaseCClass):
+class PlotBlockVector(object):
+    def __init__(self, realization_number, data):
+        """
+        @type realization_number: int
+        @type data: DoubleVector
+        """
+        super(PlotBlockVector, self).__init__()
 
-    def __init__(self, obs_vector, realization_number):
-        assert isinstance(obs_vector, ObsVector)
+        assert isinstance(data, DoubleVector)
 
-        c_pointer = PlotBlockVector.cNamespace().alloc(obs_vector, realization_number)
-        super(PlotBlockVector, self).__init__(c_pointer)
-
+        self.__realization_number = realization_number
+        self.__data = data
 
     def __len__(self):
         """ @rtype: int """
-        return PlotBlockVector.cNamespace().size(self)
+        return len(self.__data)
 
 
     def __getitem__(self, index):
-        """ @rtype: double """
+        """ @rtype: float """
         assert isinstance(index, int)
-        return PlotBlockVector.cNamespace().get(self, index)
+        return self.__data[index]
+
 
     def __iter__(self):
+        """ @rtype: float """
         cur = 0
         while cur < len(self):
             yield self[cur]
             cur += 1
 
 
-    def free(self):
-        PlotBlockVector.cNamespace().free(self)
-
-
-
-cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("plot_block_vector", PlotBlockVector)
-cwrapper.registerType("plot_block_vector_obj", PlotBlockVector.createPythonObject)
-cwrapper.registerType("plot_block_vector_ref", PlotBlockVector.createCReference)
-
-PlotBlockVector.cNamespace().free = cwrapper.prototype("void enkf_plot_blockvector_free(plot_block_vector)")
-PlotBlockVector.cNamespace().alloc = cwrapper.prototype("c_void_p enkf_plot_blockvector_alloc(obs_vector, int)")
-PlotBlockVector.cNamespace().size = cwrapper.prototype("int enkf_plot_blockvector_get_size(plot_block_vector)")
-PlotBlockVector.cNamespace().get = cwrapper.prototype("double enkf_plot_blockvector_iget(plot_block_vector, int)")
-
+    def getRealizationNumber(self):
+        """ @rtype: int """
+        return self.__realization_number
 

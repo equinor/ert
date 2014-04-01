@@ -40,8 +40,8 @@ set(TEST_SOURCES
     ert_tests/enkf/test_analysis_config.py
     ert_tests/enkf/test_analysis_iter_config.py
     ert_tests/enkf/test_state_map.py
-    ert_tests/enkf/test_block_obs_plot_data.py
     ert_tests/enkf/test_enkf_obs.py
+    ert_tests/enkf/plot/test_plot_data.py
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
@@ -62,6 +62,7 @@ set(TEST_SOURCES
     ert_tests/util/test_string_list.py
     ert_tests/util/test_vectors.py
     ert_tests/util/test_ui_return.py
+    ert_tests/util/test_thread_pool.py
 
     ert_tests/gui/__init__.py
     ert_tests/gui/test_model.py
@@ -211,9 +212,9 @@ add_test( NAME python.tests.ert.enkf.ecl_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ecl_config.EclConfigTest)
 
-add_test( NAME python.tests.ert.enkf.block_obs_plot_data
+add_test( NAME python.tests.ert.enkf.plot.plot_block_data
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_block_obs_plot_data.BlockObsPlotDataTest)
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.plot.test_plot_data.PlotDataTest)
 
 add_test( NAME python.tests.ert.enkf.ert_test_context
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -433,12 +434,13 @@ set_property( TEST python.tests.ert.import                PROPERTY LABELS Python
 set_property( TEST python.tests.ert.util.stringlist       PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python )
 
-set_property( TEST python.tests.ert.enkf.enkf             PROPERTY LABELS Python:StatoilData )
-set_property( TEST python.tests.ert.enkf.ecl_config       PROPERTY LABELS Python:StatoilData )
-set_property( TEST python.tests.ert.enkf.enkf_fs          PROPERTY LABELS Python:StatoilData )
-set_property( TEST python.tests.ert.enkf.enkf_fs_manager1 PROPERTY LABELS Python:StatoilData )
-set_property( TEST python.tests.ert.enkf.enkf_fs_manager2 PROPERTY LABELS Python:StatoilData )
-set_property( TEST python.tests.ert.enkf.enkf_obs         PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf                 PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.ecl_config           PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf_fs              PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf_fs_manager1     PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf_fs_manager2     PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf_obs             PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Python:StatoilData )
 
 if (ERT_BUILD_GUI)
    set_property( TEST python.tests.ert_gui.import         PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
