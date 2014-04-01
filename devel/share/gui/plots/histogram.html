@@ -181,8 +181,11 @@
                 histogram.setVisible(true);
                 histogram.setSize(stored_width, stored_histogram_height);
                 histogram(histogram_data, case_list[index]);
-                if (typeof(stored_data.unit) != 'undefined' )
-                    histogram.setXLabel(stored_data.unit());
+                var x_label = stored_data.name();
+                if (stored_data.unitY() != "") {
+                    x_label = x_label + " (" + stored_data.unitY() + ")";
+                }
+                histogram.setXLabel(x_label);
                 histogram.setYLabel("# of realizations");
             }
 
