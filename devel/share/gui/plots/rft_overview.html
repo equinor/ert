@@ -62,6 +62,16 @@
     function updatePlot() {
         var data = plot_data_source.getPlotData();
         plot.setData(data);
+        var x_label = "Pressure";
+        if (data.unitX() != "") {
+            x_label = x_label + " (" + data.unitX() + ")";
+        }
+        plot.setXLabel(x_label);
+        var y_label = "Depth";
+        if (data.unitY() != "") {
+            y_label = y_label + " (" + data.unitY() + ")";
+        }
+        plot.setYLabel(y_label);
     }
 
     function setSize(width, height) {

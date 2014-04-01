@@ -51,6 +51,17 @@ function Histogram(element, x_dimension, y_dimension) {
         .attr("class", "plot-title")
         .text("Histogram");
 
+    var axis_label_group = group.append("div")
+        .attr("class", "axis-label-group")
+
+    var x_label = axis_label_group.append("div")
+        .attr("class", "x axis-label")
+        .text("")
+
+    var y_label = axis_label_group.append("div")
+        .attr("class", "y axis-label")
+        .text("");
+
     var histogram_area = group.append("div").attr("class", "plot-area");
 
     var legend_group = group.append("div")
@@ -90,25 +101,10 @@ function Histogram(element, x_dimension, y_dimension) {
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
         .call(y_axis);
 
-    var y_label = histogram_group.append("text")
-        .attr("class", "y label")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 0)
-        .attr("x", 0 - (height / 2))
-        .attr("dy", ".7em")
-        .style("text-anchor", "middle")
-        .text("");
-
     histogram_group.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(" + margin.left + ", " + (height + margin.top) + ")")
         .call(x_axis);
-
-    var x_label = histogram_group.append("text")
-        .attr("class", "x label")
-        .attr("transform", "translate(" + (margin.left + (width - margin.left) / 2) + " ," + (height + margin.top + margin.bottom) + ")")
-        .style("text-anchor", "middle")
-        .text("");
 
     var resetLegends = function() {
         legend_list = [];
@@ -214,6 +210,17 @@ function Histogram(element, x_dimension, y_dimension) {
 
         title.text(histogram.getTitle());
 
+        if (x_dimension.getLabel() == "") {
+            x_label.text("");
+        } else {
+            x_label.text("X: " + x_dimension.getLabel());
+        }
+
+        if (y_dimension.getLabel() == "") {
+            y_label.text("");
+        } else {
+            y_label.text("Y: " + y_dimension.getLabel());
+        }
 
         var context = canvas.node().getContext("2d");
         context.save();
@@ -333,11 +340,11 @@ function Histogram(element, x_dimension, y_dimension) {
     };
 
     histogram.setXLabel = function(label) {
-        x_label.text(label);
+        x_dimension.setLabel(label);
     };
 
     histogram.setYLabel = function(label) {
-        y_label.text(label);
+        y_dimension.setLabel(label);
     };
 
     histogram.setVisible = function(visible) {

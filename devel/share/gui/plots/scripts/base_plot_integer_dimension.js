@@ -16,6 +16,7 @@
 
 function BasePlotIntegerDimension(){
     var scale = d3.time.scale().range([0, 1]).domain([1, 0]);
+    var label = "";
 
     var scaler = function(d) {
         return scale(d);
@@ -59,6 +60,14 @@ function BasePlotIntegerDimension(){
 
     dimension.relabel = function (axis) {
 
+    };
+
+    dimension.setLabel = function(label_in) {
+        label = label_in;
+    };
+
+    dimension.getLabel = function() {
+        return label;
     };
 
     return dimension;
