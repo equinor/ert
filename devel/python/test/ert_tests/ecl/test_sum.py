@@ -147,7 +147,7 @@ class SumTest(ExtendedTestCase):
         self.assertEqual(sum.last_report, 62)
 
         self.assertEqual(sum.get_report_time(10), datetime.date(2000, 10, 1))
-        self.assertAlmostEqualScaled(sum.get_from_report("FOPT", 10), 6.67447e+06)
+        self.assertFloatEqual(sum.get_from_report("FOPT", 10), 6.67447e+06)
 
 
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow test skipped")
@@ -284,4 +284,4 @@ class SumTest(ExtendedTestCase):
     def test_Heidrun(self):
         sum = EclSum( self.createTestPath("Statoil/ECLIPSE/Heidrun/Summary/FF12_2013B3_CLEAN_RS"))
         self.assertEqual( 452 , len(sum))
-        self.assertAlmostEqualScaled( 1.8533144e+8 , sum.get_last_value("FOPT"))
+        self.assertFloatEqual( 1.8533144e+8 , sum.get_last_value("FOPT"))
