@@ -1902,14 +1902,7 @@ static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main
 
 
 static bool enkf_main_run_analysis(enkf_main_type * enkf_main, const char * target_fs_name, int iteration_number) {
-  bool updateOK               = false;
-  const int step1             = 0;
-  const int step2             = enkf_main_get_history_length( enkf_main );
-  int_vector_type * step_list = int_vector_alloc(0, 0);
-
-  for (int step = step1; step <= step2; step++)
-    int_vector_append(step_list, step);
-
+  bool updateOK                          = false;
   analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   analysis_module_type * analysis_module = analysis_config_get_active_module(analysis_config);
   int pre_iteration_number               = analysis_module_get_int(analysis_module, "ITER");
@@ -1925,7 +1918,6 @@ static bool enkf_main_run_analysis(enkf_main_type * enkf_main, const char * targ
     enkf_fs_decref( target_fs );
   }
 
-  int_vector_free(step_list);
   int post_iteration_number = analysis_module_get_int(analysis_module, "ITER");
 
   if (post_iteration_number <= pre_iteration_number)
