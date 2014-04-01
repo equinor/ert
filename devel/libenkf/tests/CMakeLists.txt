@@ -120,18 +120,6 @@ add_test( enkf_analysis_enkf_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config 
           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/ANALYSIS_ENKF_UPDATE )
 
-add_executable( enkf_plot_blockdata enkf_plot_blockdata.c )
-target_link_libraries( enkf_plot_blockdata enkf test_util )
-add_test( enkf_plot_blockdata  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata )
-
-add_executable( enkf_plot_blockdata_fs enkf_plot_blockdata_fs.c )
-target_link_libraries( enkf_plot_blockdata_fs  enkf test_util )
-add_test( enkf_plot_blockdata_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata_fs 
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_RFT/config )
-
-add_executable( enkf_plot_blockvector enkf_plot_blockvector.c )
-target_link_libraries( enkf_plot_blockvector enkf test_util )
-add_test( enkf_plot_blockvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockvector )
 
 add_executable( enkf_plot_gen_kw enkf_plot_gen_kw.c )
 target_link_libraries( enkf_plot_gen_kw enkf test_util )
@@ -409,7 +397,6 @@ set_property( TEST enkf_state_runpath_test  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_manual_load_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_analysis_update_job PROPERTY LABELS StatoilData )
 set_property( TEST enkf_analysis_enkf_update_job PROPERTY LABELS StatoilData )
-set_property( TEST enkf_plot_blockdata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_block_obs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_plot_gendata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_export_inactive_cells PROPERTY LABELS StatoilData )

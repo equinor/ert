@@ -24,6 +24,7 @@ import ctypes
 import re
 import sys
 from ert.cwrap import BaseCClass
+import inspect
 
 
 prototype_pattern = "(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]"
@@ -43,6 +44,25 @@ class CWrapper:
         # if type_name in cls.registered_types:
         #     print("Type %s already exists!" % type_name)
         cls.registered_types[type_name] = value
+
+    @classmethod
+    def registerObjectType(cls, type_name, base_c_class):
+        """
+        Automatically registers a class type with object and reference versions.
+        For example:
+            string_list -> StringList
+            string_list_ref -> StringList.createCReference
+            string_list_obj -> StringList.createPythonObject
+
+        @type type_name: str
+        @type base_c_class: BaseCClass
+        """
+        assert issubclass(base_c_class, BaseCClass)
+
+        cls.registerType(type_name, base_c_class)
+        cls.registerType("%s_ref" % type_name, base_c_class.createCReference)
+        cls.registerType("%s_obj" % type_name, base_c_class.createPythonObject)
+
 
     @classmethod
     def registerDefaultTypes(cls):
@@ -107,7 +127,7 @@ class CWrapper:
 
         match = re.match(CWrapper.pattern, prototype)
         if not match:
-            sys.stderr.write("Illegal prototype definition: %s\n" % (prototype))
+            sys.stderr.write("Illegal prototype definition: %s\n" % prototype)
             return None
         else:
             restype = match.groupdict()["return"]
@@ -117,6 +137,12 @@ class CWrapper:
             func = getattr(self.lib, function_name)
 
             return_type = self.__parseType(restype)
+
+            if inspect.isclass(return_type) and issubclass(return_type, BaseCClass):
+                sys.stderr.write("BaseCClass can not be used as a return type in prototype definition: %s\n" % prototype)
+                sys.stderr.write("  Correct return type may be: %s_ref or %s_obj" % (restype, restype))
+                return None
+
             func.restype = return_type
 
             if hasattr(return_type, "__call__"):

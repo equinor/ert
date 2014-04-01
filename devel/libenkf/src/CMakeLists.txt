@@ -61,9 +61,7 @@ set( source_files
      local_obsset.c 
      surface.c 
      surface_config.c 
-     enkf_plot_data.c 
-     enkf_plot_blockdata.c 
-     enkf_plot_blockvector.c
+     enkf_plot_data.c
      enkf_plot_tvector.c
      enkf_plot_gendata.c
      enkf_plot_genvector.c
@@ -159,9 +157,7 @@ set( header_files
      surface.h 
      surface_config.h 
      local_context.h 
-     enkf_plot_data.h 
-     enkf_plot_blockdata.h
-     enkf_plot_blockvector.h
+     enkf_plot_data.h
      enkf_plot_tvector.h
      enkf_plot_gendata.h
      enkf_plot_genvector.h

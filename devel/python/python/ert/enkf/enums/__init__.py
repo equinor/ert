@@ -8,3 +8,14 @@ from .enkf_init_modes_enum import EnkfInitModeEnum
 from .realization_state_enum import RealizationStateEnum
 from .enkf_truncation_type import EnkfTruncationType
 from .enkf_fs_type_enum import EnKFFSType
+
+__all__ = ["LoadFailTypeEnum",
+           "EnkfVarType",
+           "EnkfStateType",
+           "EnkfRunEnum",
+           "EnkfObservationImplementationType",
+           "ErtImplType",
+           "EnkfInitModeEnum",
+           "RealizationStateEnum",
+           "EnkfTruncationType",
+           "EnKFFSType"]
