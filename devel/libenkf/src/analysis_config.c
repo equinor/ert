@@ -277,6 +277,20 @@ void analysis_config_load_internal_module( analysis_config_type * config ,
     fprintf(stderr,"** Warning: failed to load module %s from %s.\n",user_name , symbol_table);
 }
 
+void analysis_config_load_all_external_modules_from_config ( analysis_config_type * analysis, const config_type * config) {
+  if (config_item_set( config, ANALYSIS_LOAD_KEY)) {
+    const config_content_item_type * load_item = config_get_content_item( config , ANALYSIS_LOAD_KEY );
+    if (load_item != NULL) {
+      for (int i=0; i < config_content_item_get_size( load_item ); i++) {
+        const config_content_node_type * load_node = config_content_item_iget_node( load_item , i );
+        const char * user_name = config_content_node_iget( load_node , 0 );
+        const char * lib_name  = config_content_node_iget( load_node , 1 );
+
+        analysis_config_load_external_module( analysis , user_name , lib_name);
+      }
+    }
+  }
+}
 
 
 bool analysis_config_load_external_module( analysis_config_type * config ,
@@ -346,8 +360,6 @@ void analysis_config_reload_module( analysis_config_type * config , const char *
   } else
     fprintf(stderr,"** Warning: Internal modules can not be reloaded.\n");
 }
-
-
 
 
 analysis_module_type * analysis_config_get_module( analysis_config_type * config , const char * module_name ) {
@@ -459,20 +471,10 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
     analysis_config_set_max_runtime( analysis, config_get_value_as_int( config, MAX_RUNTIME_KEY )); 
   }
   
-  
-  /* Loading external modules */
-  {
-    const config_content_item_type * load_item = config_get_content_item( config , ANALYSIS_LOAD_KEY );
-    if (load_item != NULL) {
-      for (int i=0; i < config_content_item_get_size( load_item ); i++) {
-        const config_content_node_type * load_node = config_content_item_iget_node( load_item , i );
-        const char * user_name = config_content_node_iget( load_node , 0 );
-        const char * lib_name  = config_content_node_iget( load_node , 1 );
-        
-        analysis_config_load_external_module( analysis , user_name , lib_name);
-      }
-    }
-  }
+
+  /* Loading external modules */ 
+  analysis_config_load_all_external_modules_from_config(analysis, config);
+
   
   /* Reload/copy modules. */
   {
