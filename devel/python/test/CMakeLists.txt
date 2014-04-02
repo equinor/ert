@@ -301,7 +301,7 @@ add_test( NAME python.tests.ert.ecl.ecl_default
 
 add_test( NAME python.tests.ert.ecl.ecl_file
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_file.FileTest)
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_file.EclFileTest)
 
 add_test( NAME python.tests.ert.ecl.ecl_queue_LOCAL
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
