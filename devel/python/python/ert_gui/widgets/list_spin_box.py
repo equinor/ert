@@ -25,25 +25,9 @@ class ListSpinBox(QSpinBox):
         self.setRange(0, len(items) - 1)
         self.setValue(len(items) - 1)
 
-        self.__completer = QCompleter()
-        self.__completer.setModel(model)
-        self.__completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
-
-        view = QListView()
-        self.__completer.setPopup(view)
-
-        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        view.setAlternatingRowColors(True)
-        view.setMinimumWidth(90)
-
-
         line_edit = QLineEdit()
-        line_edit.setCompleter(self.__completer)
-        line_edit.textEdited.connect(self.showCompleter)
         self.setLineEdit(line_edit)
 
-    def showCompleter(self):
-        self.__completer.complete()
 
     def convertToString(self, item):
         return self.__string_converter(item)
@@ -80,7 +64,7 @@ class ListSpinBox(QSpinBox):
             return QValidator.Invalid, pos
 
         if len(text) < 10:
-            return QValidator.Acceptable, pos
+            return QValidator.Intermediate, pos
 
         for index in range(len(self.__items)):
             value = self.convertToString(self.__items[index]).lower()
