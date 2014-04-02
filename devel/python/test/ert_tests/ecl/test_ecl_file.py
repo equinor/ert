@@ -83,48 +83,20 @@ class EclFileTest(ExtendedTestCase):
             rst_file.close()
             self.assertFilesAreNotEqual("ECLIPSE.UNRST",self.test_file)
 
-            # rst_file1 = EclFile(self.test_file)
+            rst_file1 = EclFile(self.test_file)
             rst_file2 = EclFile("ECLIPSE.UNRST", flags=EclFileFlagEnum.ECL_FILE_WRITABLE)
-            #
-            # swat1 = rst_file1["SWAT"][0]
-            # swat2 = rst_file2["SWAT"][0]
-            # swat2.assign(swat1)
-            #
-            # rst_file2.save_kw(swat2)
-            # self.assertTrue(swat1.equal(swat2))
-            # rst_file1.close()
-            # rst_file2.close()
-            #
-            # # Random failure ....
-            # self.assertFilesAreEqual("ECLIPSE.UNRST", self.test_file)
 
-    @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow file test skipped!")
-    def test_save_coord(self):
-        #work_area = TestArea("python/ecl_file/save")
-        with TestAreaContext("python/ecl_file/save_coord", store_area=True) as work_area:
-            test_file = self.createTestPath("Statoil/ECLIPSE/Gurbat/COORD")
-            work_area.copy_file(test_file)
-            rst_file = EclFile("COORD", flags=EclFileFlagEnum.ECL_FILE_WRITABLE)
-            swat0 = rst_file["COORD"][0]
-            swat0.assign(0.75)
-            rst_file.save_kw(swat0)
-            rst_file.close()
-            self.assertFilesAreNotEqual("COORD", test_file)
+            swat1 = rst_file1["SWAT"][0]
+            swat2 = rst_file2["SWAT"][0]
+            swat2.assign(swat1)
 
-            # rst_file1 = EclFile(self.test_file)
-            rst_file2 = EclFile("COORD", flags=EclFileFlagEnum.ECL_FILE_WRITABLE)
-            #
-            # swat1 = rst_file1["SWAT"][0]
-            # swat2 = rst_file2["SWAT"][0]
-            # swat2.assign(swat1)
-            #
-            # rst_file2.save_kw(swat2)
-            # self.assertTrue(swat1.equal(swat2))
-            # rst_file1.close()
-            # rst_file2.close()
-            #
-            # # Random failure ....
-            # self.assertFilesAreEqual("ECLIPSE.UNRST", self.test_file)
+            rst_file2.save_kw(swat2)
+            self.assertTrue(swat1.equal(swat2))
+            rst_file1.close()
+            rst_file2.close()
+
+            # Random failure ....
+            self.assertFilesAreEqual("ECLIPSE.UNRST", self.test_file)
 
 
 
