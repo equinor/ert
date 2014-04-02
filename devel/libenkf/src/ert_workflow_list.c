@@ -110,7 +110,7 @@ void ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const c
     util_alloc_file_components( config_file , NULL , &name , NULL );
   
   if (!workflow_joblist_add_job_from_file( workflow_list->joblist , name , config_file )) 
-    fprintf(stderr,"** Warning: failed to add workflow job:%s from:%s \n",job_name , config_file );
+    fprintf(stderr,"** Warning: failed to add workflow job:%s from:%s \n",name , config_file );
 
   if (job_name == NULL) 
     free(name);
