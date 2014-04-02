@@ -13,6 +13,11 @@ if (HAVE_REALPATH)
   add_definitions( -DHAVE_REALPATH )
 endif()
 
+check_function_exists( chmod HAVE_CHMOD )
+if (HAVE_CHMOD)
+  add_definitions( -DHAVE_CHMOD )
+endif()
+
 check_function_exists( fork HAVE_FORK )
 if (HAVE_FORK)
   add_definitions( -DHAVE_FORK )
