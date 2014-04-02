@@ -21,6 +21,10 @@ add_executable( enkf_obs_fs enkf_obs_fs.c )
 target_link_libraries( enkf_obs_fs enkf test_util )
 add_test( enkf_obs_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config )
 
+add_executable( enkf_magic_string_in_workflows enkf_magic_string_in_workflows.c )
+target_link_libraries( enkf_magic_string_in_workflows enkf test_util )
+add_test( enkf_magic_string_in_workflows ${EXECUTABLE_OUTPUT_PATH}/enkf_magic_string_in_workflows ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config )
+
 add_executable( enkf_obs_vector_fs enkf_obs_vector_fs.c )
 target_link_libraries( enkf_obs_vector_fs enkf test_util )
 add_test( enkf_obs_vector_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_vector_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config )
@@ -51,7 +55,13 @@ target_link_libraries( enkf_analysis_config_ext_module enkf test_util )
 ert_module_name( VAR_RML  rml_enkf  ${LIBRARY_OUTPUT_PATH} )
 add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_ext_module 
           rml_enkf ${VAR_RML} )
-        
+
+add_executable( enkf_analysis_config_analysis_load enkf_analysis_config_analysis_load.c )
+target_link_libraries( enkf_analysis_config_analysis_load enkf test_util)
+add_test( enkf_analysis_config_analysis_load ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_analysis_load
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_config
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_site_config)
+
 add_executable( enkf_state_map enkf_state_map.c )
 target_link_libraries( enkf_state_map enkf test_util )
 
@@ -403,3 +413,4 @@ set_property( TEST enkf_export_inactive_cells PROPERTY LABELS StatoilData )
 set_property( TEST enkf_fs_invalidate_cache PROPERTY LABELS StatoilData )
 set_property( TEST enkf_obs_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_obs_vector_fs PROPERTY LABELS StatoilData )
+set_property( TEST enkf_magic_string_in_workflows PROPERTY LABELS StatoilData )
