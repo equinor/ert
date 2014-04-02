@@ -55,8 +55,10 @@ void test_init(const char * config_file) {
   config_type * config = config_alloc();
 
   site_config_add_config_items( config , true );
-  if (!config_parse(config , config_file , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true))
+  if (!config_parse(config , config_file , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true)) {
+    config_fprintf_errors( config , true , stdout );
     test_error_exit("Parsing site config file:%s failed \n",config_file );
+  }
 
   if (!site_config_init( site_config , config ))
     test_error_exit("Loading site_config from config failed\n");
@@ -101,6 +103,7 @@ void test_job_script() {
 
 int main(int argc , char ** argv) {
   const char * site_config_file = argv[1];
+
   test_empty();
   test_init( site_config_file );
   test_job_script();
