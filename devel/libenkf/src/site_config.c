@@ -1099,4 +1099,7 @@ void site_config_add_config_items(config_type * config, bool site_mode) {
   /* Items related to the reports. */
   item = config_add_schema_item(config, REPORT_SEARCH_PATH_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
+
+  item = config_add_schema_item( config , ANALYSIS_LOAD_KEY , false  );
+  config_schema_item_set_argc_minmax( item , 2 , 2);
 }
