@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 #  Copyright (C) 2013  Statoil ASA, Norway. 
 #   
 #  The file 'test_ecl_sum_vector.py' is part of ERT - Ensemble based Reservoir Tool. 
@@ -20,19 +20,21 @@ try:
 except ImportError:
     from unittest import skipIf
 
-from ert.ecl import EclSumVector,EclSum
-
-from ert.util.test_area import TestAreaContext
-from ert_tests import ExtendedTestCase
 import warnings
+
+from ert.ecl import EclSumVector, EclSum
+from ert_tests import ExtendedTestCase
+
 
 class EclSumVectorTest(ExtendedTestCase):
     def setUp(self):
         self.test_file = self.createTestPath("Statoil/ECLIPSE/Gurbat/ECLIPSE.SMSPEC")
-        self.eclSum = EclSum( self.test_file )
+        self.ecl_sum = EclSum(self.test_file)
 
     def test_reportOnly_warns(self):
         with warnings.catch_warnings(record=True) as w:
-            vector = EclSumVector( self.eclSum , "FOPT" , True)
+            warnings.simplefilter("always")
+
+            vector = EclSumVector(self.ecl_sum, "FOPT", True)
             assert len(w) == 1
-            assert issubclass(w[-1].category , DeprecationWarning )
+            assert issubclass(w[-1].category, DeprecationWarning)
