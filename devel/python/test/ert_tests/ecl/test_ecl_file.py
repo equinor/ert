@@ -71,10 +71,11 @@ class EclFileTest(ExtendedTestCase):
             rst_file.close()
             self.assertFilesAreEqual("ECLIPSE.UNRST", self.test_file)
 
+
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow file test skipped!")
     def test_save(self):
         #work_area = TestArea("python/ecl_file/save")
-        with TestAreaContext("python/ecl_file/save", store_area=True) as work_area:
+        with TestAreaContext("python/ecl_file/save", store_area=False) as work_area:
             work_area.copy_file(self.test_file)
             rst_file = EclFile("ECLIPSE.UNRST", flags=EclFileFlagEnum.ECL_FILE_WRITABLE)
             swat0 = rst_file["SWAT"][0]

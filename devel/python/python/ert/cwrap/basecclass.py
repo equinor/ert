@@ -85,7 +85,7 @@ class BaseCClass(object):
         super(BaseCClass, self).__eq__(other)
 
     def free(self):
-        raise NotImplementedError("A CClass requires a free method implementation!")
+        raise NotImplementedError("A BaseCClass requires a free method implementation!")
 
 
 
