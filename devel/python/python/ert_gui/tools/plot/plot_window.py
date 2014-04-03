@@ -206,6 +206,8 @@ class PlotWindow(QMainWindow):
         self.storePlotType(plot_data_fetcher, self.__plot_metrics_widget.getDataKeyType())
 
         show_pca = plot_data_fetcher.isPcaDataKey(key)
+        for plot_panel in self.__plot_panels:
+            self.showOrHidePlotTab(plot_panel, False, True)
 
         for plot_panel in self.__plot_panels:
             visible = self.__central_tab.indexOf(plot_panel) > -1

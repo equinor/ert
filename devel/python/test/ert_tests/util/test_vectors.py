@@ -148,7 +148,7 @@ class UtilTest(TestCase):
 
 
     def test_update_active_mask(self):
-        vec = BoolVector(0, 10)
+        vec = BoolVector(False, 10)
 
         self.assertTrue(BoolVector.updateActiveMask("1-2,5", vec))
         self.assertTrue(vec[1])
@@ -157,7 +157,7 @@ class UtilTest(TestCase):
         self.assertFalse(vec[4])
 
 
-        vec = BoolVector(0, 10)
+        vec = BoolVector(False, 10)
 
         self.assertTrue(BoolVector.updateActiveMask("1-5,2,3", vec))
         self.assertTrue(vec[1])
@@ -169,7 +169,7 @@ class UtilTest(TestCase):
         self.assertFalse(vec[6])
 
 
-        vec = BoolVector(0, 10)
+        vec = BoolVector(False, 10)
 
         self.assertTrue(BoolVector.updateActiveMask("5,6,7,15", vec))
         self.assertTrue(vec[5])
