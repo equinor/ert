@@ -261,6 +261,10 @@ config_type * config_alloc() {
 
 
 
+const subst_list_type * config_get_define_list( const config_type * config) {
+  return config->define_list;   
+}
+
 
 static void config_clear_content_items( config_type * config ) {
   hash_free( config->content_items );
