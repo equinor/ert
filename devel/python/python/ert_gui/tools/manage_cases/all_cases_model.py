@@ -49,6 +49,15 @@ class AllCasesModel(QAbstractItemModel):
         return CaseList().getList()
 
 
+    def indexOf(self, item):
+        items = self.getAllItems()
+
+        if item in items:
+
+            return items.index(item)
+
+        return -1
+
 
 
 

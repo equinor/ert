@@ -158,7 +158,8 @@ class CaseInitializationConfigurationPanel(RowPanel):
         area_widget.addStretch()
         self.addRow(area_widget)
 
-        self.showInfoForCase()
+        choice = CaseSelectorModel().getCurrentChoice()
+        self.combo.setCurrentIndex(model.indexOf(choice))
 
 
     def showInfoForCase(self):
