@@ -15,7 +15,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 import os
-from ert.ecl import EclKW, EclTypeEnum, EclFile
+import random
+from ert.ecl import EclKW, EclTypeEnum, EclFile, FortIO, EclFileFlagEnum
 from ert.util.test_area import TestAreaContext
 
 from ert_tests import ExtendedTestCase
@@ -136,6 +137,44 @@ class KWTest(ExtendedTestCase):
             self.kw_test(EclTypeEnum.ECL_DOUBLE_TYPE, [0.0, 1.1, 2.2, 3.3, 4.4, 5.5], "%12.6f\n")
             self.kw_test(EclTypeEnum.ECL_BOOL_TYPE, [True, True, True, False, True], "%4d\n")
             self.kw_test(EclTypeEnum.ECL_CHAR_TYPE, ["1", "22", "4444", "666666", "88888888"], "%-8s\n")
+
+    def test_kw_write(self):
+        with TestAreaContext("python/ecl_kw/writing"):
+
+            data = [random.random() for i in range(10000)]
+
+            kw = EclKW.new("TEST", len(data), EclTypeEnum.ECL_DOUBLE_TYPE)
+            i = 0
+            for d in data:
+                kw[i] = d
+                i += 1
+
+            fortio = FortIO("ECL_KW_TEST", FortIO.WRITE_MODE)
+            kw.fwrite(fortio)
+            fortio.close()
+
+            fortio = FortIO("ECL_KW_TEST")
+
+            kw2 = EclKW.fread(fortio)
+
+            self.assertTrue(kw.equal(kw2))
+
+            ecl_file = EclFile("ECL_KW_TEST", flags=EclFileFlagEnum.ECL_FILE_WRITABLE)
+            kw3 = ecl_file["TEST"][0]
+            self.assertTrue(kw.equal(kw3))
+            ecl_file.save_kw(kw3)
+            ecl_file.close()
+
+            fortio = FortIO("ECL_KW_TEST", FortIO.READ_AND_WRITE_MODE)
+            kw4 = EclKW.fread(fortio)
+            self.assertTrue(kw.equal(kw4))
+            fortio.seek(0)
+            kw4.fwrite(fortio)
+            fortio.close()
+
+            ecl_file = EclFile("ECL_KW_TEST")
+            kw5 = ecl_file["TEST"][0]
+            self.assertTrue(kw.equal(kw5))
 
 
 #def cutoff( x , arg ):
