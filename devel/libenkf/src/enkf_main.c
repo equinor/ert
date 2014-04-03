@@ -2619,15 +2619,26 @@ static void enkf_main_init_log( enkf_main_type * enkf_main , const config_type *
 }
 
 static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * config ) {
-  config_content_item_type * data_item = config_get_content_item( config , DATA_KW_KEY );
-  hash_type      * data_kw = NULL;
-  if (data_item) 
-    data_kw = config_content_item_alloc_hash(data_item , true);
-
-  enkf_main_install_data_kw( enkf_main , data_kw );
+  {
+    const subst_list_type * define_list = config_get_define_list( config );
+    for (int i=0; i < subst_list_get_size( define_list ); i++) {
+      const char * key = subst_list_iget_key( define_list , i );
+      const char * value = subst_list_iget_value( define_list , i );
+      enkf_main_add_data_kw( enkf_main , key , value );
+    }
+  }
   
-  if (data_kw)
-    hash_free( data_kw );
+  {
+    config_content_item_type * data_item = config_get_content_item( config , DATA_KW_KEY );
+    hash_type      * data_kw = NULL;
+    if (data_item) 
+      data_kw = config_content_item_alloc_hash(data_item , true);
+    
+    enkf_main_install_data_kw( enkf_main , data_kw );
+    
+    if (data_kw)
+      hash_free( data_kw );
+  }
 }
 
     
@@ -2705,6 +2716,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
       site_config_add_config_items( config , true );
       if (config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false)) {
         site_config_init( enkf_main->site_config , config );
+        analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, config);
         ert_report_list_site_init( enkf_main->report_list , config );
         ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh);
       } else {
@@ -2799,7 +2811,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   }
 
 
-  if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
+  if (!util_file_exists(model_config))
+    util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
     config_type * config;
     enkf_main            = enkf_main_alloc_empty( );
