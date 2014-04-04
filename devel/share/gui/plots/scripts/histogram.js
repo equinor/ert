@@ -51,6 +51,17 @@ function Histogram(element, x_dimension, y_dimension) {
         .attr("class", "plot-title")
         .text("Histogram");
 
+    var axis_label_group = group.append("div")
+        .attr("id", "axis-label-group")
+
+    var x_label = axis_label_group.append("div")
+        .attr("class", "x axis-label")
+        .text("")
+
+    var y_label = axis_label_group.append("div")
+        .attr("class", "y axis-label")
+        .text("");
+
     var histogram_area = group.append("div").attr("class", "plot-area");
 
     var legend_group = group.append("div")
@@ -94,7 +105,6 @@ function Histogram(element, x_dimension, y_dimension) {
         .attr("class", "x axis")
         .attr("transform", "translate(" + margin.left + ", " + (height + margin.top) + ")")
         .call(x_axis);
-
 
     var resetLegends = function() {
         legend_list = [];
@@ -200,6 +210,17 @@ function Histogram(element, x_dimension, y_dimension) {
 
         title.text(histogram.getTitle());
 
+        if (x_dimension.getUnit() == "") {
+            x_label.text("");
+        } else {
+            x_label.text("X: " + x_dimension.getUnit());
+        }
+
+        if (y_dimension.getUnit() == "") {
+            y_label.text("");
+        } else {
+            y_label.text("Y: " + y_dimension.getUnit());
+        }
 
         var context = canvas.node().getContext("2d");
         context.save();
@@ -314,7 +335,6 @@ function Histogram(element, x_dimension, y_dimension) {
         custom_value_min = min;
         custom_value_max = max;
     };
-
 
     histogram.setVisible = function(visible) {
         if(!visible) {
