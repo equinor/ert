@@ -118,9 +118,7 @@ class PlotDataFetcher(ErtConnector):
 
         if refcase_fetcher.hasRefcase():
             unit = refcase_fetcher.getRefCase().unit(key)
-            if unit == "":
-                plot_data.setUnitY("Unknown")
-            else:
+            if unit != "":
                 plot_data.setUnitY(unit)
 
         plot_data.setHistogramFactory(histogram_factory)
