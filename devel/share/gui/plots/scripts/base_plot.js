@@ -48,7 +48,7 @@ function BasePlot(element, x_dimension, y_dimension) {
         .text(this.getTitle());
 
     this.axis_label_group = group.append("div")
-        .attr("class", "axis-label-group")
+        .attr("id", "axis-label-group")
 
     this.x_label = this.axis_label_group.append("div")
         .attr("class", "x axis-label")
@@ -205,14 +205,6 @@ BasePlot.prototype.getTitle = function(){
     }
 };
 
-BasePlot.prototype.setXLabel = function(label) {
-    this.dimension_x.setLabel(label);
-}
-
-BasePlot.prototype.setYLabel = function(label) {
-    this.dimension_y.setLabel(label);
-}
-
 BasePlot.prototype.render = function() {
     if(this.stored_data == null) {
         return;
@@ -226,16 +218,16 @@ BasePlot.prototype.render = function() {
 
     this.title.text(this.getTitle());
 
-    if (this.dimension_x.getLabel() == "") {
+    if (this.dimension_x.getUnit() == "") {
         this.x_label.text("");
     } else {
-        this.x_label.text("X: " + this.dimension_x.getLabel());
+        this.x_label.text("X: " + this.dimension_x.getUnit());
     }
 
-    if (this.dimension_y.getLabel() == "") {
+    if (this.dimension_y.getUnit() == "") {
         this.y_label.text("");
     } else {
-        this.y_label.text("Y: " + this.dimension_y.getLabel());
+        this.y_label.text("Y: " + this.dimension_y.getUnit());
     }
 
     if(typeof data.unit != 'undefined') {

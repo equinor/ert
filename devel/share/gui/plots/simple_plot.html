@@ -39,6 +39,9 @@
 <script>
     var plot = null;
 
+    var time_dimension = null;
+    var value_dimension = null;
+
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
             createPlot();
@@ -53,7 +56,9 @@
     }
 
     function createPlot() {
-        plot = new Plot(d3.select("body"), BasePlotTimeDimension(), BasePlotValueDimension());
+        time_dimension = BasePlotTimeDimension();
+        value_dimension = BasePlotValueDimension();
+        plot = new Plot(d3.select("body"), time_dimension, value_dimension);
         plot.setRenderingFinishedCallback(function() {
             plot_data_source.renderingFinished();
         });
@@ -62,11 +67,7 @@
     function updatePlot() {
         var data = plot_data_source.getPlotData();
         plot.setData(data);
-        var y_label = data.name();
-        if (data.unitY() != "") {
-            y_label = y_label + " (" + data.unitY() + ")";
-        }
-        plot.setYLabel(y_label);
+        value_dimension.setUnit(data.unitY());
     }
 
     function setSize(width, height) {

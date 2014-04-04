@@ -37,6 +37,9 @@
 <script>
     var plot = null;
 
+    var x_dimension = null;
+    var y_dimension = null;
+
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
             createPlot();
@@ -51,7 +54,9 @@
     }
 
     function createPlot() {
-        plot = new OverviewPlot(d3.select("body"), BasePlotValueDimension(), BasePlotValueDimension(true));
+        x_dimension = BasePlotValueDimension();
+        y_dimension = BasePlotValueDimension(true);
+        plot = new OverviewPlot(d3.select("body"), x_dimension, y_dimension);
         plot.setVerticalErrorBar(false);
         plot.setHorizontalDrawDirection(false);
         plot.setRenderingFinishedCallback(function() {
@@ -62,16 +67,8 @@
     function updatePlot() {
         var data = plot_data_source.getPlotData();
         plot.setData(data);
-        var x_label = "Pressure";
-        if (data.unitX() != "") {
-            x_label = x_label + " (" + data.unitX() + ")";
-        }
-        plot.setXLabel(x_label);
-        var y_label = "Depth";
-        if (data.unitY() != "") {
-            y_label = y_label + " (" + data.unitY() + ")";
-        }
-        plot.setYLabel(y_label);
+        x_dimension.setUnit(data.unitX());
+        y_dimension.setUnit(data.unitY());
     }
 
     function setSize(width, height) {

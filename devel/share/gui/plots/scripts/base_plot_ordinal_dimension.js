@@ -16,7 +16,7 @@
 
 function BasePlotOrdinalDimension(point_style){
     var scale = null;
-    var label = "";
+    var unit = "";
 
     if(point_style) {
         scale = d3.scale.ordinal().rangePoints([0, 1], 1).domain(["unknown"]);
@@ -62,12 +62,12 @@ function BasePlotOrdinalDimension(point_style){
 
     };
 
-    dimension.setLabel = function(label_in) {
-        label = label_in;
+    dimension.setUnit = function(unit_in) {
+        unit = unit_in;
     };
 
-    dimension.getLabel = function() {
-        return label;
+    dimension.getUnit = function() {
+        return unit;
     };
 
     return dimension;

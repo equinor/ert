@@ -19,7 +19,7 @@ function BasePlotTimeDimension(){
     var scale = d3.time.scale().range([0, 1]).domain([1, 0]);
     var time_scale = d3.time.scale().range([0, 1]).domain([1, 0]);
 
-    var label = "Time (Date)";
+    var unit = "Date";
 
     var scaler = function(d) {
         return scale(d);
@@ -69,12 +69,12 @@ function BasePlotTimeDimension(){
 
     };
 
-    dimension.setLabel = function(label_in) {
-        label = label_in;
+    dimension.setUnit = function(unit_in) {
+        unit = unit_in;
     };
 
-    dimension.getLabel = function() {
-        return label;
+    dimension.getUnit = function() {
+        return unit;
     };
 
     return dimension;
