@@ -230,10 +230,6 @@ BasePlot.prototype.render = function() {
         this.y_label.text("Y: " + this.dimension_y.getUnit());
     }
 
-    if(typeof data.unit != 'undefined') {
-        this.setYLabel(data.unitY());
-    }
-
     if(data.hasBoundaries()) {
         this.setYDomain(data.minY(), data.maxY());
         this.setXDomain(data.minX(), data.maxX());
