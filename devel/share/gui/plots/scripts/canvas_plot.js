@@ -176,14 +176,6 @@ Plot.prototype.setScales = function (x_min, x_max, y_min, y_max) {
     this.plot.setScales(x_min, x_max, y_min, y_max);
 };
 
-Plot.prototype.setXLabel = function (label) {
-    this.plot.setXLabel(label);
-};
-
-Plot.prototype.setYLabel = function (label) {
-    this.plot.setYLabel(label);
-};
-
 Plot.prototype.setData = function (data) {
     this.plot.setData(data);
 };

@@ -210,16 +210,16 @@ function Histogram(element, x_dimension, y_dimension) {
 
         title.text(histogram.getTitle());
 
-        if (x_dimension.getLabel() == "") {
+        if (x_dimension.getUnit() == "") {
             x_label.text("");
         } else {
-            x_label.text("X: " + x_dimension.getLabel());
+            x_label.text("X: " + x_dimension.getUnit());
         }
 
-        if (y_dimension.getLabel() == "") {
+        if (y_dimension.getUnit() == "") {
             y_label.text("");
         } else {
-            y_label.text("Y: " + y_dimension.getLabel());
+            y_label.text("Y: " + y_dimension.getUnit());
         }
 
         var context = canvas.node().getContext("2d");
@@ -275,9 +275,6 @@ function Histogram(element, x_dimension, y_dimension) {
         histogram_group.select(".y.axis").call(y_axis);
         var axis = histogram_group.select(".x.axis").call(x_axis);
         x_dimension.relabel(axis);
-
-        histogram_group.select(".y.label").attr("x", 0 - (height / 2));
-        histogram_group.select(".x.label").attr("transform", "translate(" + (margin.left + (width - margin.left) / 2) + " ," + (height + margin.top + margin.bottom) + ")");
 
         context.restore();
     }
@@ -337,14 +334,6 @@ function Histogram(element, x_dimension, y_dimension) {
     histogram.setValueScales = function(min, max) {
         custom_value_min = min;
         custom_value_max = max;
-    };
-
-    histogram.setXLabel = function(label) {
-        x_dimension.setLabel(label);
-    };
-
-    histogram.setYLabel = function(label) {
-        y_dimension.setLabel(label);
     };
 
     histogram.setVisible = function(visible) {

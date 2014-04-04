@@ -79,14 +79,6 @@ OverviewPlot.prototype.setScales = function (x_min, x_max, y_min, y_max) {
     this.plot.setScales(x_min, x_max, y_min, y_max);
 };
 
-OverviewPlot.prototype.setXLabel = function (label) {
-    this.plot.setXLabel(label);
-};
-
-OverviewPlot.prototype.setYLabel = function (label) {
-    this.plot.setYLabel(label);
-};
-
 OverviewPlot.prototype.setData = function (data) {
     this.plot.setData(data);
 };
