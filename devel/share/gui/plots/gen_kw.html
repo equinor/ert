@@ -37,6 +37,9 @@
 <script>
     var plot = null;
 
+    var case_dimension = null;
+    var value_dimension = null;
+
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
             createPlot();
@@ -51,12 +54,16 @@
     }
 
     function createPlot() {
-        plot = new DistributionPlot(d3.select("body"), BasePlotOrdinalDimension(true), BasePlotValueDimension());
+        case_dimension = BasePlotOrdinalDimension(true);
+        value_dimension = BasePlotValueDimension();
+        case_dimension.setUnit("Case");
+        plot = new DistributionPlot(d3.select("body"), case_dimension, value_dimension);
     }
 
     function updatePlot() {
         var data = plot_data_source.getPlotData();
         plot.setData(data);
+        value_dimension.setUnit(data.unitY());
     }
 
     function setSize(width, height) {

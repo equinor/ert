@@ -82,7 +82,7 @@
         histogram_div = d3.select("body").append("div").attr("class", "histogram-div");
         count_dimension = BasePlotIntegerDimension();
         value_dimension = BasePlotValueDimension();
-
+        count_dimension.setUnit("# of realizations");
         for (var index = 0; index < STYLES.ensemble_colors.length; index++) {
             var histogram = new Histogram(histogram_div, value_dimension, count_dimension);
             histogram.setVisible(false);
@@ -172,9 +172,9 @@
 
             updateXDomain(stored_data.shouldUseLogScale(), histogram_data);
             var case_list = stored_data.caseList();
+            value_dimension.setUnit(stored_data.unitY());
 
             updateYDomain(case_list, histogram_data);
-
 
             calculateSize(stored_width, stored_height);
             for(var index = 0; index < case_list.length; index++) {
