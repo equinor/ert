@@ -83,7 +83,6 @@
         count_dimension = BasePlotIntegerDimension();
         value_dimension = BasePlotValueDimension();
         count_dimension.setUnit("# of realizations");
-
         for (var index = 0; index < STYLES.ensemble_colors.length; index++) {
             var histogram = new Histogram(histogram_div, value_dimension, count_dimension);
             histogram.setVisible(false);
