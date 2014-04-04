@@ -117,7 +117,11 @@ class PlotDataFetcher(ErtConnector):
         self.addPcaData(plot_data, key, cases)
 
         if refcase_fetcher.hasRefcase():
-            plot_data.setUnitY(refcase_fetcher.getRefCase().unit(key))
+            unit = refcase_fetcher.getRefCase().unit(key)
+            if unit == "":
+                plot_data.setUnitY("Unitless")
+            else:
+                plot_data.setUnitY(unit)
 
         plot_data.setHistogramFactory(histogram_factory)
 
