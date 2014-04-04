@@ -119,7 +119,7 @@ class PlotDataFetcher(ErtConnector):
         if refcase_fetcher.hasRefcase():
             unit = refcase_fetcher.getRefCase().unit(key)
             if unit == "":
-                plot_data.setUnitY("Unitless")
+                plot_data.setUnitY("Unknown")
             else:
                 plot_data.setUnitY(unit)
 
