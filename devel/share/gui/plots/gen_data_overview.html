@@ -38,6 +38,9 @@
 <script>
     var plot = null;
 
+    var index_dimension = null;
+    var value_dimension = null;
+
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
             createPlot();
@@ -52,7 +55,10 @@
     }
 
     function createPlot() {
-        plot = new OverviewPlot(d3.select("body"), BasePlotIntegerDimension(), BasePlotValueDimension());
+        index_dimension = BasePlotIntegerDimension();
+        value_dimension = BasePlotValueDimension();
+        index_dimension.setUnit("Index");
+        plot = new OverviewPlot(d3.select("body"), index_dimension, value_dimension);
         plot.setRenderingFinishedCallback(function() {
             plot_data_source.renderingFinished();
         });
@@ -61,6 +67,7 @@
     function updatePlot() {
         var data = plot_data_source.getPlotData();
         plot.setData(data);
+        value_dimension.setUnit(data.unitY());
     }
 
     function setSize(width, height) {

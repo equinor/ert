@@ -22,6 +22,7 @@ function BasePlotValueDimension(flip_range) {
     var is_log_scale = false;
     var tick_count = 10;
     var ticks = null;
+    var unit = "";
 
     var scale = d3.scale.linear().range([1, 0]).domain([0, 1]).nice();
     var log_scale = d3.scale.log().range([1, 0]).domain([0, 1]).nice();
@@ -133,6 +134,14 @@ function BasePlotValueDimension(flip_range) {
 
     dimension.setTicks = function(tick_list) {
         ticks = tick_list;
+    };
+
+    dimension.setUnit = function(unit_in) {
+        unit = unit_in;
+    };
+
+    dimension.getUnit = function() {
+        return unit;
     };
 
     return dimension;
