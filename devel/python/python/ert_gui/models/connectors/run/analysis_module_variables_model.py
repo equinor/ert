@@ -22,9 +22,9 @@ class AnalysisModuleVariablesModel(ErtConnector):
     def __init__(self):
         super(AnalysisModuleVariablesModel, self).__init__()
         self.__variable_names = {
-            "LAMBDA0": {"type": float, "min": -1, "max": 100, "step":1.0},
+            "LAMBDA0": {"type": float, "min": -1, "max": 100000, "step":1.0},
             "LAMBDA_REDUCE": {"type": float, "min": 0, "max": 1, "step":0.1},
-            "LAMBDA_INCREASE": {"type": float, "min": 1, "max": 2, "step":0.1},
+            "LAMBDA_INCREASE": {"type": float, "min": 1, "max": 10, "step":0.1},
             "LAMBDA_MIN": {"type": float, "min": 0, "max": 10, "step":0.1},
             "USE_PRIOR": {"type": bool},
             "LOG_FILE": {"type": str},
