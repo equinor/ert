@@ -20,8 +20,8 @@ class PlotData(QObject):
         #: :type: HistogramPlotDataFactory
         self.__histogram_factory = None
 
-        self.__unit_x = ""
-        self.__unit_y = ""
+        self.__unit_x = "Unknown"
+        self.__unit_y = "Unknown"
 
         self.__min_x = None
         self.__max_x = None
