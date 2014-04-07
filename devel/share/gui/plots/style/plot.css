@@ -144,3 +144,13 @@ body {
     stroke-dasharray: 2, 2;
 }
 
+#axis-label-group {
+    width: auto;
+    text-align: center;
+}
+
+.axis-label {
+    font-size: small;
+    display: inline;
+    margin-right: 10px;
+}

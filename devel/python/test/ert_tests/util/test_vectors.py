@@ -66,8 +66,8 @@ class UtilTest(TestCase):
         self.assertEqual(list(v), [0.66, 0.66, 0.66, 0.66])
 
         v.clear()
-        v.default = 0.75
-        self.assertEqual(v.default, 0.75)
+        v.setDefault(0.75)
+        self.assertEqual(v.getDefault(), 0.75)
         v[2] = 0.0
         self.assertEqual(v[1], 0.75)
 
@@ -107,7 +107,7 @@ class UtilTest(TestCase):
 
     def test_bool_vector(self):
         b = BoolVector()
-        b.default = True
+        b.setDefault(True)
 
         b[4] = False
 
@@ -148,7 +148,7 @@ class UtilTest(TestCase):
 
 
     def test_update_active_mask(self):
-        vec = BoolVector(0, 10)
+        vec = BoolVector(False, 10)
 
         self.assertTrue(BoolVector.updateActiveMask("1-2,5", vec))
         self.assertTrue(vec[1])
@@ -157,7 +157,7 @@ class UtilTest(TestCase):
         self.assertFalse(vec[4])
 
 
-        vec = BoolVector(0, 10)
+        vec = BoolVector(False, 10)
 
         self.assertTrue(BoolVector.updateActiveMask("1-5,2,3", vec))
         self.assertTrue(vec[1])
@@ -169,7 +169,7 @@ class UtilTest(TestCase):
         self.assertFalse(vec[6])
 
 
-        vec = BoolVector(0, 10)
+        vec = BoolVector(False, 10)
 
         self.assertTrue(BoolVector.updateActiveMask("5,6,7,15", vec))
         self.assertTrue(vec[5])
@@ -191,15 +191,15 @@ class UtilTest(TestCase):
 
         self.assertEqual(list(a), [1, 2, 3, 4, 5])
 
-        a.rsort()
+        a.sort(reverse=True)
         self.assertEqual(list(a), [5, 4, 3, 2, 1])
 
         self.assertTrue(a.max, 5)
         self.assertTrue(a.min, 1)
-        self.assertTrue(a.min_index(), 4)
+        self.assertTrue(a.minIndex(), 4)
 
-        self.assertEqual(a.max_index(reverse=True), 0)
-        self.assertEqual(a.max_index(reverse=False), 0)
+        self.assertEqual(a.maxIndex(reverse=True), 0)
+        self.assertEqual(a.maxIndex(reverse=False), 0)
 
         a[4] = 5
         self.assertTrue(a[4] == 5)
@@ -244,7 +244,7 @@ class UtilTest(TestCase):
         time1 = ctime(datetime(2013, 8, 13, 0, 0, 0))
         time2 = ctime(datetime(2013, 8, 13, 1, 0, 0))
 
-        time_vector.default = time2
+        time_vector.setDefault(time2)
 
         time_vector.append(time1)
         time_vector[2] = time2
@@ -253,3 +253,19 @@ class UtilTest(TestCase):
         self.assertEqual(time_vector[1], time2)
         self.assertEqual(time_vector[2], time2)
 
+
+    def test_permutation_vector(self):
+        vector = DoubleVector()
+
+        for i in range(5, 0, -1):
+            vector.append(i)
+
+        permutation_vector = vector.permutationSort()
+
+        for index, value in enumerate(range(5, 0, -1)):
+            self.assertEqual(vector[index], value)
+
+        vector.permute(permutation_vector)
+
+        for index, value in enumerate(range(1, 6)):
+            self.assertEqual(vector[index], value)

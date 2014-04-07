@@ -78,10 +78,10 @@ class GridTest(ExtendedTestCase):
             self.assertAlmostEqualList([x, y, z], [4.5 * a1, 4.5 * a2, 4.5 * a3])
 
             v = grid.cell_volume(ijk=(4, 4, 4))
-            self.assertAlmostEqualScaled(v, a1 * a2 * a3)
+            self.assertFloatEqual(v, a1 * a2 * a3)
 
             z = grid.depth(ijk=(4, 4, 4 ))
-            self.assertAlmostEqualScaled(z, 4.5 * a3)
+            self.assertFloatEqual(z, 4.5 * a3)
 
             g1 = grid.global_index(ijk=(2, 2, 2))
             g2 = grid.global_index(ijk=(4, 4, 4))
