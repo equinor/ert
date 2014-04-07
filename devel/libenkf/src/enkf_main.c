@@ -1937,7 +1937,7 @@ static bool enkf_main_run_analysis(enkf_main_type * enkf_main, const char * targ
 }
 
 
-void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations) {
+void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations_to_run) {
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
 
   if (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
@@ -1945,8 +1945,8 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations) {
     bool_vector_type * iactive              = bool_vector_alloc(ens_size , true);
     enkf_fs_type * current_case             = enkf_main_get_fs( enkf_main );
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
-    int iteration_number                    = 0;
-    const char * initial_case_name          = analysis_iter_config_iget_case( iter_config , iteration_number );
+    int current_iteration                   = 0;
+    const char * initial_case_name          = analysis_iter_config_iget_case( iter_config , current_iteration );
 
     if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
       enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , true);
@@ -1957,33 +1957,33 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations) {
 
     { //Iteration 0
       enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_FORCE);
-      enkf_main_run_simulation_and_postworkflow(enkf_main, iteration_number, iactive);
+      enkf_main_run_simulation_and_postworkflow(enkf_main, current_iteration, iactive);
     }
 
     { // Iteration 1 - num_iterations [iteration 1, num iterations]
       int max_num_iterations = analysis_iter_config_get_max_num_iterations(iter_config);
-      int iteration_count    = 0;
-      iteration_number       = 1;
+      int total_num_iterations_run = 0;
+      current_iteration            = 1;
 
-      while ((iteration_number <= num_iterations) && (iteration_count < max_num_iterations)) {
-        const char * target_fs_name = analysis_iter_config_iget_case( iter_config , iteration_number );
+      while ((current_iteration <= num_iterations_to_run) && (total_num_iterations_run < max_num_iterations)) {
+        const char * target_fs_name = analysis_iter_config_iget_case( iter_config , current_iteration );
 
-        if (enkf_main_run_analysis(enkf_main, target_fs_name, iteration_number)) {
+        if (enkf_main_run_analysis(enkf_main, target_fs_name, current_iteration)) {
           enkf_main_select_fs(enkf_main, target_fs_name);
-          if (!enkf_main_run_simulation_and_postworkflow(enkf_main, iteration_number, iactive))
+          if (!enkf_main_run_simulation_and_postworkflow(enkf_main, current_iteration, iactive))
             break;
-          ++iteration_number;
+          ++current_iteration;
         } else {
           fprintf(stderr, "\nAnalysis failed, rerunning simulation on changed initial parameters\n");
           enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false );
           enkf_main_init_current_case_from_existing(enkf_main, target_fs, 0, ANALYZED);
           enkf_fs_decref(target_fs);
 
-          if (!enkf_main_run_simulation_and_postworkflow(enkf_main, iteration_number-1, iactive))
+          if (!enkf_main_run_simulation_and_postworkflow(enkf_main, current_iteration-1, iactive))
             break;
         }
 
-        ++iteration_count;
+        ++total_num_iterations_run;
       }
     }
 
