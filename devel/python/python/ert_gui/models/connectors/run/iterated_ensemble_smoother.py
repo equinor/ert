@@ -77,7 +77,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         failed_iterations = 0
         current_iteration = 1
 
-        while current_iteration <= NumberOfIterationsModel.getValue() and total_num_iterations < max_iterations:
+        while current_iteration <= NumberOfIterationsModel().getValue() and total_num_iterations < max_iterations:
             target_fs = self.createTargetCaseFileSystem(current_iteration)
 
             pre_analysis_iter_num = analysis_module.getInt("ITER")
