@@ -16,12 +16,7 @@ class EnkfSimulationRunner(BaseCClass):
         assert isinstance(initialization_mode, EnkfInitModeEnum)
         return EnkfSimulationRunner.cNamespace().run_simple_step(self, active_realization_mask, initialization_mode , iter_nr)
 
-    def iterateSmoother(self, iteration_number, target_case_name, active_realization_mask):
-        """ @rtype: bool """
-        assert isinstance(active_realization_mask, BoolVector)
-        return EnkfSimulationRunner.cNamespace().iterate_smoother(self , iteration_number , target_case_name , active_realization_mask)
-    
-        
+
     def runEnsembleExperiment(self, active_realization_mask):
         """ @rtype: bool """
         iter_nr = 0
@@ -47,4 +42,3 @@ EnkfSimulationRunner.cNamespace().run_smoother      = cwrapper.prototype("void e
 EnkfSimulationRunner.cNamespace().run_simple_step   = cwrapper.prototype("bool enkf_main_run_simple_step(enkf_simulation_runner, bool_vector, enkf_init_mode_enum, int)")
 EnkfSimulationRunner.cNamespace().smoother_update   = cwrapper.prototype("bool enkf_main_smoother_update(enkf_simulation_runner, enkf_fs)")
 EnkfSimulationRunner.cNamespace().run_post_workflow = cwrapper.prototype("void enkf_main_run_post_workflow(enkf_simulation_runner)")
-EnkfSimulationRunner.cNamespace().iterate_smoother  = cwrapper.prototype("bool enkf_main_iterate_smoother(enkf_simulation_runner, int, char*, bool_vector)")
