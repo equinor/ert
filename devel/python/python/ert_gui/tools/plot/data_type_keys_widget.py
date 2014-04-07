@@ -1,6 +1,5 @@
-from PyQt4.QtCore import pyqtSignal, Qt
-from PyQt4.QtGui import QWidget, QVBoxLayout, QListView, QColor, QSortFilterProxyModel, QHBoxLayout, QToolButton, \
-    QComboBox, QStandardItemModel, QStandardItem
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtGui import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
 from ert_gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel, FilterPopup
 from ert_gui.widgets import util
 from ert_gui.widgets.legend import Legend
@@ -51,6 +50,7 @@ class DataTypeKeysWidget(QWidget):
         self.filter_model.setShowSummaryKeys(item["summary"])
         self.filter_model.setShowGenKWKeys(item["gen_kw"])
         self.filter_model.setShowGenDataKeys(item["gen_data"])
+        self.filter_model.setShowCustomPcaKeys(item["custom_pca"])
 
 
     def itemSelected(self):

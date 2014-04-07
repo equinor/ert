@@ -14,8 +14,15 @@
 // See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 // for more details.
 
-function BasePlotOrdinalDimension(){
-    var scale = d3.scale.ordinal().rangePoints([0, 1], 1).domain(["unknown"]);
+function BasePlotOrdinalDimension(point_style){
+    var scale = null;
+    var unit = "";
+
+    if(point_style) {
+        scale = d3.scale.ordinal().rangePoints([0, 1], 1).domain(["unknown"]);
+    } else {
+        scale = d3.scale.ordinal().rangeRoundBands([0, 1], .5).domain(["unknown"]);
+    }
 
     var scaler = function(d) {
         return scale(d);
@@ -30,7 +37,11 @@ function BasePlotOrdinalDimension(){
     };
 
     dimension.setRange = function(min, max) {
-        scale.rangePoints([min, max], 1);
+        if(point_style) {
+            scale.rangePoints([min, max], 1);
+        } else {
+            scale.rangeRoundBands([min, max], .5);
+        }
     };
 
     dimension.scale = function() {
@@ -45,6 +56,18 @@ function BasePlotOrdinalDimension(){
 
     dimension.isOrdinal = function() {
         return true;
+    };
+
+    dimension.relabel = function (axis) {
+
+    };
+
+    dimension.setUnit = function(unit_in) {
+        unit = unit_in;
+    };
+
+    dimension.getUnit = function() {
+        return unit;
     };
 
     return dimension;

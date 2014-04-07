@@ -41,7 +41,7 @@ class ObsVector(BaseCClass):
         return ObsVector.cNamespace().get_state_kw(self)
 
     def getNode(self, index):
-        """ @rtype: SummaryObservation or BlockObservation """
+        """ @rtype: SummaryObservation or BlockObservation or GenObservation"""
 
         pointer = ObsVector.cNamespace().iget_node(self, index)
 
@@ -65,7 +65,7 @@ class ObsVector(BaseCClass):
 
     def getNextActiveStep(self, previous_step=-1):
         """ @rtype: int """
-        return  ObsVector.cNamespace().get_next_active_step(self, previous_step)
+        return ObsVector.cNamespace().get_next_active_step(self, previous_step)
 
     def getImplementationType(self):
         """ @rtype: EnkfObservationImplementationType """
@@ -75,6 +75,10 @@ class ObsVector(BaseCClass):
         assert isinstance(node, SummaryObservation)
         node.convertToCReference(self)
         ObsVector.cNamespace().install_node(self, index, node.from_param(node))
+
+    def getConfigNode(self):
+        """ @rtype: EnkfConfigNode """
+        return ObsVector.cNamespace().get_config_node(self).setParent(self)
 
     def __iter__(self):
         """ Iterate over active report steps. """
@@ -88,14 +92,16 @@ class ObsVector(BaseCClass):
             else:
                 run = False
 
+    def hasData(self, active_mask, fs):
+        """ @rtype: bool """
+        return ObsVector.cNamespace().has_data(self, active_mask, fs)
+
     def free(self):
         ObsVector.cNamespace().free(self)
 
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("obs_vector", ObsVector)
-cwrapper.registerType("obs_vector_obj", ObsVector.createPythonObject)
-cwrapper.registerType("obs_vector_ref", ObsVector.createCReference)
+cwrapper.registerObjectType("obs_vector", ObsVector)
 
 ObsVector.cNamespace().alloc = cwrapper.prototype("c_void_p obs_vector_alloc(enkf_obs_impl_type, char*, enkf_config_node, int)")
 ObsVector.cNamespace().free = cwrapper.prototype("void obs_vector_free( obs_vector )")
@@ -106,3 +112,5 @@ ObsVector.cNamespace().iget_active = cwrapper.prototype("bool obs_vector_iget_ac
 ObsVector.cNamespace().get_impl_type = cwrapper.prototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
 ObsVector.cNamespace().install_node = cwrapper.prototype("void obs_vector_install_node(obs_vector, int, c_void_p)")
 ObsVector.cNamespace().get_next_active_step = cwrapper.prototype("int obs_vector_get_next_active_step(obs_vector, int)")
+ObsVector.cNamespace().has_data = cwrapper.prototype("bool obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
+ObsVector.cNamespace().get_config_node = cwrapper.prototype("enkf_config_node_ref obs_vector_get_config_node(obs_vector)")

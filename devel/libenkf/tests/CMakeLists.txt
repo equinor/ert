@@ -16,6 +16,20 @@ add_executable( enkf_block_obs enkf_block_obs.c )
 target_link_libraries( enkf_block_obs enkf test_util )
 add_test( enkf_block_obs ${EXECUTABLE_OUTPUT_PATH}/enkf_block_obs ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID)
 
+
+add_executable( enkf_obs_fs enkf_obs_fs.c )
+target_link_libraries( enkf_obs_fs enkf test_util )
+add_test( enkf_obs_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config )
+
+add_executable( enkf_magic_string_in_workflows enkf_magic_string_in_workflows.c )
+target_link_libraries( enkf_magic_string_in_workflows enkf test_util )
+add_test( enkf_magic_string_in_workflows ${EXECUTABLE_OUTPUT_PATH}/enkf_magic_string_in_workflows ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config )
+
+add_executable( enkf_obs_vector_fs enkf_obs_vector_fs.c )
+target_link_libraries( enkf_obs_vector_fs enkf test_util )
+add_test( enkf_obs_vector_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_vector_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config )
+
+
 add_executable( enkf_plot_data_fs enkf_plot_data_fs.c )
 target_link_libraries( enkf_plot_data_fs enkf test_util )
 add_test( enkf_plot_data_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/plotData/config )
@@ -41,7 +55,13 @@ target_link_libraries( enkf_analysis_config_ext_module enkf test_util )
 ert_module_name( VAR_RML  rml_enkf  ${LIBRARY_OUTPUT_PATH} )
 add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_ext_module 
           rml_enkf ${VAR_RML} )
-        
+
+add_executable( enkf_analysis_config_analysis_load enkf_analysis_config_analysis_load.c )
+target_link_libraries( enkf_analysis_config_analysis_load enkf test_util)
+add_test( enkf_analysis_config_analysis_load ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_analysis_load
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_config
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_site_config)
+
 add_executable( enkf_state_map enkf_state_map.c )
 target_link_libraries( enkf_state_map enkf test_util )
 
@@ -110,18 +130,6 @@ add_test( enkf_analysis_enkf_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config 
           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/ANALYSIS_ENKF_UPDATE )
 
-add_executable( enkf_plot_blockdata enkf_plot_blockdata.c )
-target_link_libraries( enkf_plot_blockdata enkf test_util )
-add_test( enkf_plot_blockdata  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata )
-
-add_executable( enkf_plot_blockdata_fs enkf_plot_blockdata_fs.c )
-target_link_libraries( enkf_plot_blockdata_fs  enkf test_util )
-add_test( enkf_plot_blockdata_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata_fs 
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_RFT/config )
-
-add_executable( enkf_plot_blockvector enkf_plot_blockvector.c )
-target_link_libraries( enkf_plot_blockvector enkf test_util )
-add_test( enkf_plot_blockvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockvector )
 
 add_executable( enkf_plot_gen_kw enkf_plot_gen_kw.c )
 target_link_libraries( enkf_plot_gen_kw enkf test_util )
@@ -399,8 +407,10 @@ set_property( TEST enkf_state_runpath_test  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_manual_load_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_analysis_update_job PROPERTY LABELS StatoilData )
 set_property( TEST enkf_analysis_enkf_update_job PROPERTY LABELS StatoilData )
-set_property( TEST enkf_plot_blockdata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_block_obs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_plot_gendata_fs PROPERTY LABELS StatoilData )
 set_property( TEST enkf_export_inactive_cells PROPERTY LABELS StatoilData )
 set_property( TEST enkf_fs_invalidate_cache PROPERTY LABELS StatoilData )
+set_property( TEST enkf_obs_fs PROPERTY LABELS StatoilData )
+set_property( TEST enkf_obs_vector_fs PROPERTY LABELS StatoilData )
+set_property( TEST enkf_magic_string_in_workflows PROPERTY LABELS StatoilData )

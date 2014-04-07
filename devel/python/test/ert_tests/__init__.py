@@ -26,12 +26,10 @@ from ert_tests.source_enumerator import SourceEnumerator
 
 
 """
-    This class provides some extra functionality for testing values that are almost equal.
-    """
-
-
+This class provides some extra functionality for testing values that are almost equal.
+"""
 class ExtendedTestCase(TestCase):
-    def assertAlmostEqualScaled(self, first, second, msg=None):
+    def assertFloatEqual(self, first, second, msg=None):
         if isinstance(first, numbers.Number) and isinstance(second, numbers.Number):
             tolerance = 1e-6
             diff = abs(first - second)
@@ -47,7 +45,7 @@ class ExtendedTestCase(TestCase):
             self.fail("Lists are not of same length!")
 
         for index in range(len(first)):
-            self.assertAlmostEqualScaled(first[index], second[index], msg=msg)
+            self.assertFloatEqual(first[index], second[index], msg=msg)
 
     def assertImportable(self, module_name):
         try:

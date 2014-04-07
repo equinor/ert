@@ -46,10 +46,11 @@ class AnalysisIterConfig(BaseCClass):
     def caseFormatSet(self):
         return AnalysisIterConfig.cNamespace().case_fmt_set(self)
 
+    def free(self):
+        AnalysisIterConfig.cNamespace().free(self)
+
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("analysis_iter_config", AnalysisIterConfig)
-cwrapper.registerType("analysis_iter_config_obj", AnalysisIterConfig.createPythonObject)
-cwrapper.registerType("analysis_iter_config_ref", AnalysisIterConfig.createCReference)
+cwrapper.registerObjectType("analysis_iter_config", AnalysisIterConfig)
 
 
 AnalysisIterConfig.cNamespace().alloc = cwrapper.prototype("c_void_p analysis_iter_config_alloc( )")

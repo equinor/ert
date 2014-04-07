@@ -14,25 +14,28 @@
 // See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 // for more details.
 
-function BasePlotValueDimension(flip_range){
+function BasePlotValueDimension(flip_range) {
     if (!arguments.length) {
         var flip_range = false;
     }
 
     var is_log_scale = false;
+    var tick_count = 10;
+    var ticks = null;
+    var unit = "";
 
     var scale = d3.scale.linear().range([1, 0]).domain([0, 1]).nice();
     var log_scale = d3.scale.log().range([1, 0]).domain([0, 1]).nice();
+
     var value_format = d3.format(".4g");
+//    var value_log_format = d3.format("e");
+//
+//    var value_log_format_function = function (d) {
+//        var x = Math.log(d) / Math.log(10) + 1e-6;
+//        return Math.abs(x - Math.floor(x)) < 0.3 ? value_log_format(d) : "";
+//    };
 
-    var value_log_format = d3.format("e");
-
-    var value_log_format_function = function(d) {
-        var x = Math.log(d) / Math.log(10) + 1e-6;
-        return Math.abs(x - Math.floor(x)) < 0.3 ? value_log_format(d) : "";
-    };
-
-    var scaler = function(d) {
+    var scaler = function (d) {
         if (is_log_scale) {
             return log_scale(d);
         } else {
@@ -44,13 +47,17 @@ function BasePlotValueDimension(flip_range){
         return scaler(value);
     }
 
-    dimension.setDomain = function(min, max) {
-        if(min == max) {
+    function powerOfTen(d) {
+        return d / Math.pow(10, Math.ceil(Math.log(d) / Math.LN10 - 1e-12)) === 1;
+    }
+
+    dimension.setDomain = function (min, max) {
+        if (min == max) {
             min = min - 0.1 * min;
             max = max + 0.1 * max;
         }
 
-        if(flip_range){
+        if (flip_range) {
             var tmp = min;
             min = max;
             max = tmp;
@@ -64,45 +71,77 @@ function BasePlotValueDimension(flip_range){
         log_scale.domain([from, to]);
     };
 
-    dimension.setRange = function(min, max) {
+    dimension.setRange = function (min, max) {
         scale.range([min, max]).nice();
         log_scale.range([min, max]).nice();
     };
 
-    dimension.scale = function() {
-        if(is_log_scale) {
+    dimension.scale = function () {
+        if (is_log_scale) {
             return log_scale;
         } else {
             return scale;
         }
     };
 
-    dimension.isOrdinal = function() {
+    dimension.isOrdinal = function () {
         return false;
     };
 
-    dimension.format = function(axis, max_length){
-        if(is_log_scale) {
-            axis.tickPadding(10)
-                .ticks(1)
-                .tickSize(-max_length, -max_length)
-                .tickFormat(value_log_format_function);
-        } else {
-            axis.ticks(10)
+    dimension.format = function (axis, max_length) {
+
+        if (is_log_scale) {
+            axis.tickValues(null)
                 .tickPadding(10)
+                .ticks(1)
+                .tickSize(-max_length, -max_length);
+//                .tickFormat(value_log_format_function);
+        } else {
+            axis.tickPadding(10)
                 .tickSize(-max_length, -max_length)
-                .tickFormat(value_format);
+                .tickFormat(value_format)
+                .ticks(tick_count)
+                .tickValues(ticks);
         }
 
         return dimension;
     };
 
-    dimension.setIsLogScale = function(use_log_scale) {
+    dimension.setIsLogScale = function (use_log_scale) {
         is_log_scale = use_log_scale;
     };
 
-    dimension.isLogScale = function() {
+    dimension.isLogScale = function () {
         return is_log_scale;
+    };
+
+    dimension.relabel = function (axis) {
+        if (is_log_scale) {
+            axis.selectAll(".tick text")
+                .text(null)
+                .filter(powerOfTen)
+                .text(function (d) {
+                    return "1.0×10";
+                })
+                .append("tspan")
+                .style("font-size", "70%")
+                .attr("dy", "-.7em")
+                .text(function (d) {
+                    return Math.round(Math.log(d) / Math.LN10);
+                });
+        }
+    };
+
+    dimension.setTicks = function(tick_list) {
+        ticks = tick_list;
+    };
+
+    dimension.setUnit = function(unit_in) {
+        unit = unit_in;
+    };
+
+    dimension.getUnit = function() {
+        return unit;
     };
 
     return dimension;

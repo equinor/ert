@@ -1045,9 +1045,11 @@ void site_config_add_config_items(config_type * config, bool site_mode) {
   config_schema_item_set_argc_minmax(item, 2, 2);
   config_schema_item_set_envvar_expansion(item, false); /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
 
-  item = config_add_schema_item(config, LICENSE_PATH_KEY, site_mode);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_PATH);
+  if (!site_mode) {
+    item = config_add_schema_item(config, LICENSE_PATH_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_PATH);
+  }
 
 
   /*****************************************************************/
@@ -1099,4 +1101,7 @@ void site_config_add_config_items(config_type * config, bool site_mode) {
   /* Items related to the reports. */
   item = config_add_schema_item(config, REPORT_SEARCH_PATH_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
+
+  item = config_add_schema_item( config , ANALYSIS_LOAD_KEY , false  );
+  config_schema_item_set_argc_minmax( item , 2 , 2);
 }

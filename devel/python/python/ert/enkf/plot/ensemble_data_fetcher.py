@@ -8,10 +8,9 @@ class EnsembleDataFetcher(DataFetcher):
     def __init__(self, ert):
         super(EnsembleDataFetcher, self).__init__(ert)
 
-
-    def getSummaryKeys(self):
-        """ @rtype: StringList """
-        return self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)
+    def fetchSupportedKeys(self):
+        """ @rtype: list of str """
+        return [key for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)]
 
 
     def getEnsembleConfigNode(self, key):

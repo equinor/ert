@@ -77,6 +77,7 @@ struct ecl_config_struct
   int last_history_restart;
   bool can_restart; /* Have we found the <INIT> tag in the data file? */
   int num_cpu; /* We should parse the ECLIPSE data file and determine how many cpus this eclipse file needs. */
+  ecl_unit_enum unit_system; /* Either metric, field or lab */
 };
 
 /*****************************************************************/
@@ -151,6 +152,7 @@ void ecl_config_set_data_file(ecl_config_type * ecl_config, const char * data_fi
   }
   ecl_config->start_date = ecl_util_get_start_date(ecl_config->data_file);
   ecl_config->num_cpu = ecl_util_get_num_cpu(ecl_config->data_file);
+  ecl_config->unit_system = ecl_util_get_unit_set(ecl_config->data_file);
 }
 
 
@@ -516,6 +518,7 @@ ecl_config_type * ecl_config_alloc()
   ecl_config->static_kw_set = set_alloc_empty();
   ecl_config->user_static_kw = stringlist_alloc_new();
   ecl_config->num_cpu = 1; /* This must get a valid default in case no ECLIPSE datafile is provided. */
+  ecl_config->unit_system = ECL_METRIC_UNITS;
   ecl_config->data_file = NULL;
   ecl_config->input_init_section = NULL;
   ecl_config->init_section = NULL;
@@ -991,4 +994,36 @@ void ecl_config_fprintf_config(const ecl_config_type * ecl_config, FILE * stream
   }
 
   fprintf(stream, "\n\n");
+}
+
+/* Units as specified in the ECLIPSE technical manual */
+const char * ecl_config_get_depth_unit(const ecl_config_type * ecl_config)
+{
+  switch(ecl_config->unit_system) {
+  case ECL_METRIC_UNITS:
+    return "M";
+  case ECL_FIELD_UNITS:
+    return "FT";
+  case ECL_LAB_UNITS:
+    return "CM";
+  default:
+    util_abort("%s: unit system enum value:%d not recognized \n",__func__ , ecl_config->unit_system);
+    return NULL;
+  }
+}
+
+
+const char * ecl_config_get_pressure_unit(const ecl_config_type * ecl_config)
+{
+  switch(ecl_config->unit_system) {
+  case ECL_METRIC_UNITS:
+    return "BARSA";
+  case ECL_FIELD_UNITS:
+    return "PSIA";
+  case ECL_LAB_UNITS:
+    return "ATMA";
+  default:
+    util_abort("%s: unit system enum value:%d not recognized \n",__func__ , ecl_config->unit_system);
+    return NULL;
+  }
 }

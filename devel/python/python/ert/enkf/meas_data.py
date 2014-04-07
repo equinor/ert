@@ -1,7 +1,6 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
-from ert.util import Matrix
-from ert.util.tvector import IntVector
+from ert.util import Matrix, IntVector
 
 
 class MeasData(BaseCClass):
