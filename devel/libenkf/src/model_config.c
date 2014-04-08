@@ -205,7 +205,7 @@ void model_config_set_runpath(model_config_type * model_config , const char * fm
 
 
 void  model_config_set_gen_kw_export_file( model_config_type * model_config, const char * file_name) {
-  model_config->gen_kw_export_file_name = file_name;
+  model_config->gen_kw_export_file_name = util_realloc_string_copy( model_config->gen_kw_export_file_name , file_name );
 }
 
 const char * model_config_get_gen_kw_export_file( const model_config_type * model_config) {
