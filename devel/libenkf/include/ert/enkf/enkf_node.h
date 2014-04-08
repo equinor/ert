@@ -57,7 +57,7 @@ extern "C" {
   typedef void          (ecl_write_ftype)         (const void *  ,   /* Node object */
                                                    const char *  ,   /* Directory to write to. */
                                                    const char *  ,   /* Filename - can be NULL. */
-                                                   fortio_type *);   /* fortio inistance for writing elements in restart files. */
+                                                   void * );   /* fortio or FILE inistance for writing elements in restart files. */
   
   typedef bool          (fload_ftype)                     (      void *  , const char *);
   typedef void          (read_from_buffer_ftype)          (      void *  , buffer_type * , int, state_enum );
@@ -137,7 +137,7 @@ extern "C" {
   bool             enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step1, int report_step2 , int iens );
   bool             enkf_node_forward_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_file_type * , int, int );
   void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int , int);
-  void             enkf_node_ecl_write (const enkf_node_type *, const char * , fortio_type * , int);
+  void             enkf_node_ecl_write (const enkf_node_type *, const char * , void * , int);
   bool             enkf_node_initialize(enkf_node_type *enkf_node , int , rng_type * );
   void             enkf_node_printf(const enkf_node_type *);
   bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, bool , int , int , state_enum);
