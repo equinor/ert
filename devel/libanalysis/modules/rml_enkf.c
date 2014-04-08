@@ -484,7 +484,7 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
 
   {
     const char * prev_obj_func_value_dummy = "-";
-    rml_enkf_log_line( data , "%-24d %-19.5f %-36.5f %-37s %-33.5f \n", data->iteration_nr, data->lambda, data->Sk , prev_obj_func_value_dummy, data->Std);
+    rml_enkf_log_line( data , "%-d-%-21d %-19.5f %-36.5f %-37s %-33.5f \n", data->iteration_nr, data->iteration_nr+1, data->lambda, data->Sk , prev_obj_func_value_dummy, data->Std);
   }
   
   matrix_free( Skm );
@@ -576,7 +576,9 @@ void rml_enkf_updateA(void * module_data ,
       if (Std_new <= data->Std)
         std_reduced = true;
 
-      rml_enkf_log_line( data , "%-24d %-19.5f %-36.5f %-37.5f %-33.5f \n", data->iteration_nr, data->lambda, Sk_new, data->Sk, Std_new);
+      if (data->log_stream){
+        rml_enkf_log_line( data , "%-d-%-21d %-19.5f %-36.5f %-37.5f %-33.5f \n", data->iteration_nr, data->iteration_nr+1,  data->lambda, Sk_new, data->Sk, Std_new);
+      }
 
       if (mismatch_reduced) {
         /*
