@@ -94,6 +94,8 @@ struct model_config_struct {
   history_source_type    history_source;
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer 
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
+  char                 * gen_kw_export_file_name;
+
   /** The results are always loaded. */
   bool_vector_type    * internalize_state;          /* Should the (full) state be internalized (at this report_step). */
   bool_vector_type    * __load_state;               /* Internal variable: is it necessary to load the state? */
@@ -200,6 +202,15 @@ void model_config_set_runpath(model_config_type * model_config , const char * fm
     util_abort("%s: current path has not been set \n",__func__);
 }
 
+
+
+void  model_config_set_gen_kw_export_file( model_config_type * model_config, const char * file_name) {
+  model_config->gen_kw_export_file_name = file_name;
+}
+
+const char * model_config_get_gen_kw_export_file( const model_config_type * model_config) {
+  return model_config->gen_kw_export_file_name;
+}
 
 
  /**
@@ -472,6 +483,17 @@ void model_config_init(model_config_type * model_config ,
   
   if (config_item_set( config , MAX_RESAMPLE_KEY))
     model_config_set_max_internal_submit( model_config , config_get_value_as_int( config , MAX_RESAMPLE_KEY ));
+
+
+  {
+    const char * export_file_name;
+    if (config_item_set( config , GEN_KW_EXPORT_FILE_KEY))
+      export_file_name = config_get_value(config, GEN_KW_EXPORT_FILE_KEY);
+    else
+      export_file_name = DEFAULT_GEN_KW_EXPORT_FILE;
+
+    model_config_set_gen_kw_export_file(model_config, export_file_name);
+   }
   
 }
 
