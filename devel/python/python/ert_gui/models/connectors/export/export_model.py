@@ -16,19 +16,12 @@
 from ert.enkf import EnkfVarType
 from ert_gui.models import ErtConnector
 
-class ExportKeywordModel(ErtConnector):
+class ExportModel(ErtConnector):
 
     def __init__(self):
-        super(ExportKeywordModel, self).__init__()
+        super(ExportModel, self).__init__()
 
-    def getKeylistFromImplType(self, ert_impl_type):
-        return sorted(self.ert().ensembleConfig().getKeylistFromImplType(ert_impl_type))
+    def exportField(self, keyword, path, iactive, file_type, report_step, state):
+        self.ert().exportField(keyword, path, iactive, file_type, report_step, state)
 
 
-    def isDynamicFiled(self, key):
-        config_node = self.ert().ensembleConfig().getNode(key)
-        variable_type = config_node.getVariableType()
-        if variable_type == EnkfVarType.DYNAMIC_STATE:
-            return True
-        else:
-            return False
