@@ -16,11 +16,13 @@
 from PyQt4.QtCore import Qt, QSize
 
 from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
+from ert.enkf import ErtImplType
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
+from ert_gui.models.connectors.export import ExportKeywordModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.plot import PlotSettingsModel
-from ert_gui.tools.export.export_realizations_model import ExportRealizationsModel
+from ert_gui.tools.export import ExportRealizationsModel
 from ert_gui.widgets import util
 from ert_gui.widgets.string_box import StringBox
 
@@ -29,22 +31,25 @@ class ExportPanel(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
-
-        self.setMinimumWidth(750)
-        self.setMinimumHeight(500)
+        self.setMinimumWidth(550)
+        self.setMinimumHeight(300)
 
         self.setWindowTitle("Export data")
         self.activateWindow()
 
-        self.__current_case = CaseSelectorModel().getCurrentChoice()
-
         layout = QFormLayout()
+
+        self.__keywords = ExportKeywordModel().getKeylistFromImplType(ErtImplType.FIELD)
+        self.__fields_keyword = QComboBox()
+        self.__fields_keyword.addItems(self.__keywords)
+        layout.addRow("Select keyword:",self.__fields_keyword)
+
+        self.__current_case = CaseSelectorModel().getCurrentChoice()
 
         active_realizations_model = ExportRealizationsModel(EnsembleSizeModel().getValue())
         self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
         self.active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow(self.active_realizations_field.getLabel(), self.active_realizations_field)
-
 
         file_name_button= QToolButton()
         file_name_button.setText("Browse")
@@ -67,6 +72,9 @@ class ExportPanel(QWidget):
         self.__file_type_combo.addItem("RMS roff")
         layout.addRow("Select file format:",self.__file_type_combo)
 
+        self.__report_step = QLineEdit()
+        layout.addRow("Report step:", self.__report_step)
+
         export_button= QToolButton()
         export_button.setText("Export")
         export_button.clicked.connect(self.export)
@@ -74,9 +82,12 @@ class ExportPanel(QWidget):
         export_button.setIconSize(QSize(32, 32))
         export_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
+
         layout.addRow("",export_button)
 
         self.setLayout(layout)
+        self.__fields_keyword.currentIndexChanged.connect(self.keywordSelected)
+        self.keywordSelected()
 
 
     def selectFileDirectory(self):
@@ -89,3 +100,9 @@ class ExportPanel(QWidget):
         pass
 
 
+    def keywordSelected(self):
+        key_index = self.__fields_keyword.currentIndex()
+        key = self.__keywords[key_index]
+        dynamic = ExportKeywordModel().isDynamicFiled(key)
+        self.__report_step.setVisible(dynamic)
+        self.layout().labelForField(self.__report_step).setVisible(dynamic)
