@@ -28,6 +28,3 @@ class ExportTool(Tool):
         run_workflow_widget = ExportPanel()
         dialog = ClosableDialog("Export", run_workflow_widget, self.parent())
         dialog.exec_()
-        #export_window = ExportWindow(self.parent())
-        #export_window.show()
-
