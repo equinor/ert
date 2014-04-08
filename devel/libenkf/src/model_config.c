@@ -355,6 +355,7 @@ model_config_type * model_config_alloc() {
   model_config->__load_state              = bool_vector_alloc( 0 , false ); 
   model_config->history_source            = HISTORY_SOURCE_INVALID;
   model_config->runpath_map               = hash_alloc(); 
+  model_config->gen_kw_export_file_name   = NULL;
 
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
   model_config_set_rftpath( model_config        , DEFAULT_RFTPATH );
@@ -362,6 +363,7 @@ model_config_type * model_config_alloc() {
   model_config_set_max_internal_submit( model_config   , DEFAULT_MAX_INTERNAL_SUBMIT);
   model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , DEFAULT_RUNPATH);
   model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
+  model_config_set_gen_kw_export_file(model_config, DEFAULT_GEN_KW_EXPORT_FILE);
   
   return model_config;
 }
