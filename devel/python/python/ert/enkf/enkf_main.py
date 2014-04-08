@@ -180,7 +180,7 @@ class EnKFMain(BaseCClass):
         """ @rtype: ErtWorkflowList """
         return EnKFMain.cNamespace().get_workflow_list(self).setParent(self)
 
-    def exportFiled(self, keyword, path, iactive, file_type, report_step, state):
+    def exportField(self, keyword, path, iactive, file_type, report_step, state):
         return EnKFMain.cNamespace().export_field(self,keyword, path, iactive, file_type, report_step, state)
 
 
