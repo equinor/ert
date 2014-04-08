@@ -180,6 +180,9 @@ class EnKFMain(BaseCClass):
         """ @rtype: ErtWorkflowList """
         return EnKFMain.cNamespace().get_workflow_list(self).setParent(self)
 
+    def exportFiled(self, keyword, path, iactive, file_type, report_step, state):
+        return EnKFMain.cNamespace().export_field(self,keyword, path, iactive, file_type, report_step, state)
+
 
 
 ##################################################################
@@ -237,6 +240,8 @@ EnKFMain.cNamespace().create_new_config = cwrapper.prototype("void enkf_main_cre
 
 EnKFMain.cNamespace().get_user_config_file = cwrapper.prototype("char* enkf_main_get_user_config_file(enkf_main)")
 EnKFMain.cNamespace().get_mount_point = cwrapper.prototype("char* enkf_main_get_mount_root( enkf_main )")
+
+EnKFMain.cNamespace().export_field = cwrapper.prototype("bool enkf_main_export_field(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_state_type_enum)")
 
 
 
