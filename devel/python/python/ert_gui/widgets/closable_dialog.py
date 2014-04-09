@@ -1,4 +1,4 @@
-from PyQt4.QtCore import Qt, SIGNAL, pyqtSlot, SLOT
+from PyQt4.QtCore import Qt, SIGNAL, pyqtSlot, SLOT, pyqtSignal
 from PyQt4.QtGui import QWidget, QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
 
 
@@ -18,14 +18,14 @@ class ClosableDialog(QDialog):
         layout.setSizeConstraint(QLayout.SetFixedSize) # not resizable!!!
         layout.addWidget(widget)
 
-        button_layout = QHBoxLayout()
+        self.__button_layout = QHBoxLayout()
         self.close_button = QPushButton("Close")
         self.close_button.clicked.connect(self.accept)
-        button_layout.addStretch()
-        button_layout.addWidget(self.close_button)
+        self.__button_layout.addStretch()
+        self.__button_layout.addWidget(self.close_button)
 
         layout.addStretch()
-        layout.addLayout(button_layout)
+        layout.addLayout(self.__button_layout)
 
         self.setLayout(layout)
 
@@ -42,3 +42,7 @@ class ClosableDialog(QDialog):
         else:
             QDialog.keyPressEvent(self, q_key_event)
 
+    def addButton(self, caption, listner):
+        button = QPushButton(caption)
+        self.__button_layout.insertWidget(1,button)
+        button.clicked.connect(listner)

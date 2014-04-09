@@ -29,3 +29,7 @@ class ExportKeywordModel(ErtConnector):
         config_node = self.ert().ensembleConfig().getNode(key)
         variable_type = config_node.getVariableType()
         return variable_type == EnkfVarType.DYNAMIC_STATE
+
+    def getImplementationType(self, key):
+        config_node = self.ert().ensembleConfig().getNode(key)
+        return config_node.getImplementationType()
