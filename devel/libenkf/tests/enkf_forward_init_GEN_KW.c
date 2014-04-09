@@ -159,7 +159,7 @@ int main(int argc , char ** argv) {
         }
       }
 
-      test_assert_true( util_is_file ("simulations/run0/parameter.txt")); //Export of gen kw params
+      test_assert_true( util_is_file ("simulations/run0/parameters.txt")); //Export of gen kw params
 
       util_clear_directory( "simulations" , true , true );
       create_runpath( enkf_main );
