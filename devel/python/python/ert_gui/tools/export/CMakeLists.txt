@@ -3,6 +3,7 @@ set(PYTHON_SOURCES
     export_panel.py
     export_tool.py
     export_window.py
+    export_realizations_model.py
 )
 
 add_python_package("python.ert_gui.tools.export"  ${PYTHON_INSTALL_PREFIX}/ert_gui/tools/export "${PYTHON_SOURCES}" True)
