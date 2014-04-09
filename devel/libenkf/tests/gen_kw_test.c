@@ -26,6 +26,7 @@
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_node.h>
+#include <ert/enkf/enkf_state.h>
 
 #include <ert/ecl/fortio.h>
 #include <ert/util/type_macros.h>
@@ -53,12 +54,31 @@ void test_send_fortio_to_gen_kw_ecl_write(void * arg) {
 }
 
 
+void test_write_gen_kw_export_file(enkf_main_type * enkf_main)
+{
+  test_assert_not_NULL(enkf_main);
+  enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
+  test_assert_not_NULL(state);
+  enkf_node_type * enkf_node = enkf_state_get_node( state , "MULTFLT" );
+  test_assert_not_NULL(enkf_node);
+  const enkf_config_node_type * config_node = enkf_node_get_config(enkf_node);
+  test_assert_not_NULL(config_node);
+
+  if (GEN_KW == enkf_config_node_get_impl_type(config_node)) {
+    enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
+    enkf_state_ecl_write(state, fs);
+    test_assert_true(util_file_exists("parameter.txt"));
+  }
+}
+
+
 int main(int argc , char ** argv) {
   const char * config_file             =  argv[1];
   ert_test_context_type * test_context = ert_test_context_alloc("gen_kw_test" , config_file , NULL);
   enkf_main_type * enkf_main           = ert_test_context_get_main(test_context);
   test_assert_not_NULL(enkf_main);
 
+  test_write_gen_kw_export_file(enkf_main);
   test_assert_util_abort("gen_kw_ecl_write", test_send_fortio_to_gen_kw_ecl_write, enkf_main);
 
   ert_test_context_free( test_context );
