@@ -102,7 +102,7 @@ int main(int argc , char ** argv) {
           run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
           enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);     /* This is ugly */
         }
-        
+
         
         test_assert_false( enkf_node_has_data( gen_kw_node , fs, node_id ));
         util_unlink_existing( "simulations/run0/MULTFLT_INIT" );
@@ -158,6 +158,9 @@ int main(int argc , char ** argv) {
           test_assert_double_equal( 123456.0 , value);
         }
       }
+
+      test_assert_true( util_is_file ("simulations/run0/parameter.txt")); //Export of gen kw params
+
       util_clear_directory( "simulations" , true , true );
       create_runpath( enkf_main );
       test_assert_true( util_is_directory( "simulations/run0" ));
