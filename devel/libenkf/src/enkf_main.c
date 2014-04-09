@@ -2159,6 +2159,9 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   item = config_add_schema_item(config , RFTPATH_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
 
+  item = config_add_schema_item(config, GEN_KW_EXPORT_FILE_KEY, false );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+
   item = config_add_schema_item(config , LOCAL_CONFIG_KEY  , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );

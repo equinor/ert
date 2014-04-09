@@ -444,12 +444,12 @@ void gen_data_export(const gen_data_type * gen_data , const char * full_path , g
 */
 
 
-void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path , const char * eclfile , fortio_type * fortio) {
+void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path , const char * eclfile , void * filestream) {
   if (eclfile != NULL) {  
     char * full_path = util_alloc_filename( run_path , eclfile  , NULL);
     
     gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
-    gen_data_export( gen_data , full_path , export_type , fortio );
+    gen_data_export( gen_data , full_path , export_type , filestream );
     free( full_path );
   }
 }
