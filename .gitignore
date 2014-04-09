@@ -5,7 +5,7 @@
 *.pyc
 *~
 *.user
-
+*.user.*
 #pyCharm project
 .idea
 
