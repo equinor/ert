@@ -67,7 +67,7 @@ void test_write_gen_kw_export_file(enkf_main_type * enkf_main)
   if (GEN_KW == enkf_config_node_get_impl_type(config_node)) {
     enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
     enkf_state_ecl_write(state, fs);
-    test_assert_true(util_file_exists("parameter.txt"));
+    test_assert_true(util_file_exists("parameters.txt"));
   }
 }
 
