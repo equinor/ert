@@ -27,6 +27,9 @@ from ert_gui.widgets.string_box import StringBox
 
 
 class ExportPanel(QWidget):
+
+
+
     def __init__(self):
         QWidget.__init__(self)
 
@@ -76,16 +79,6 @@ class ExportPanel(QWidget):
         self.__report_step = QLineEdit()
         layout.addRow("Report step:", self.__report_step)
 
-        export_button= QToolButton()
-        export_button.setText("Export")
-        export_button.clicked.connect(self.export)
-        export_button.setIcon(util.resourceIcon("ide/table_export"))
-        export_button.setIconSize(QSize(32, 32))
-        export_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-
-
-        layout.addRow("",export_button)
-
         self.setLayout(layout)
         self.__fields_keyword.currentIndexChanged.connect(self.keywordSelected)
         self.keywordSelected()
@@ -102,22 +95,26 @@ class ExportPanel(QWidget):
         if self.__dynamic:
             report_step = self.__report_step.text()
         keyword = self.__keywords[self.__fields_keyword.currentIndex()]
-
         path = self.__file_name.text()
-        if QDir(path).exists():
-            file_name  = str(path + "/" + keyword +"_%d")
-            iactive = self.__active_realizations_model.getActiveRealizationsMask()
+        impl_type = ExportKeywordModel().getImplementationType(keyword)
+        path = str(path) + "/" + str(self.__current_case) + "/" + str(impl_type) + "/" + str(keyword) + "/"
 
-            file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
+        if not QDir(path).exists():
+            QDir().mkdir(path);
 
-            if file_type_key == "Eclipse GRDECL":
-                file_type = EnkfFieldFileFormatEnum.ECL_GRDECL_FILE
-            else:
-                file_type = EnkfFieldFileFormatEnum.RMS_ROFF_FILE
+        file_name  =  str(path + "/" + keyword + "_%d")
+        iactive = self.__active_realizations_model.getActiveRealizationsMask()
 
-            state = EnkfStateType.FORECAST
-            export_model = ExportModel()
-            export_model.exportField(keyword, file_name, iactive, file_type, report_step, state)
+        file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
+
+        if file_type_key == "Eclipse GRDECL":
+            file_type = EnkfFieldFileFormatEnum.ECL_GRDECL_FILE
+        else:
+            file_type = EnkfFieldFileFormatEnum.RMS_ROFF_FILE
+
+        state = EnkfStateType.FORECAST
+        export_model = ExportModel()
+        export_model.exportField(keyword, file_name, iactive, file_type, report_step, state)
 
 
 
