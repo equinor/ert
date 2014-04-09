@@ -61,8 +61,17 @@ int main( int argc , char ** argv) {
   const char * model_config = argv[1];
   const char * site_config = NULL;
   ert_test_context_type * test_context = ert_test_context_alloc( "MAGIC-STRINGS" , model_config , site_config);
+  enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
+
   {
     test_has_job( test_context );
+
+    enkf_main_select_fs(enkf_main , "default");
+    test_assert_string_equal( "default" , enkf_fs_get_case_name( enkf_main_get_fs( enkf_main )));
+    test_magic_strings( test_context );
+    
+    enkf_main_select_fs(enkf_main , "extraCase");
+    test_assert_string_equal( "extraCase" , enkf_fs_get_case_name( enkf_main_get_fs( enkf_main )));
     test_magic_strings( test_context );
   }
   ert_test_context_free( test_context );
