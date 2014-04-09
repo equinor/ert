@@ -163,6 +163,15 @@ add_test( enkf_config_node  ${EXECUTABLE_OUTPUT_PATH}/enkf_config_node )
 
 #-----------------------------------------------------------------
 
+add_executable( gen_kw_test gen_kw_test.c )
+target_link_libraries( gen_kw_test enkf test_util )
+
+add_test( gen_kw_test
+          ${EXECUTABLE_OUTPUT_PATH}/gen_kw_test
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert/config_GEN_KW_true)
+
+#-----------------------------------------------------------------
+
 add_executable( enkf_forward_init_GEN_KW enkf_forward_init_GEN_KW.c )
 target_link_libraries( enkf_forward_init_GEN_KW enkf test_util )
 
