@@ -84,9 +84,6 @@ class HelpedWidget(QWidget):
         return self.validation_message is None
 
 
-    def hideValidationLabel(self):
-        self.validation_label.setHidden(True)
-
     def enterEvent(self, event):
         QWidget.enterEvent(self, event)
         HelpCenter.getHelpCenter("ERT").setHelpMessageLink(self.help_link)

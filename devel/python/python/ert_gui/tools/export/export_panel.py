@@ -13,15 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtCore import Qt, QSize, QDir
 
 from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
-from ert.enkf import ErtImplType
+from ert.enkf import ErtImplType, EnkfFieldFileFormatEnum, EnkfStateType
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
-from ert_gui.models.connectors.export import ExportKeywordModel
+from ert_gui.models.connectors.export import ExportKeywordModel, ExportModel
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.models.connectors.plot import PlotSettingsModel
 from ert_gui.tools.export import ExportRealizationsModel
 from ert_gui.widgets import util
 from ert_gui.widgets.string_box import StringBox
@@ -31,8 +30,9 @@ class ExportPanel(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
-        self.setMinimumWidth(550)
-        self.setMinimumHeight(300)
+        self.setMinimumWidth(500)
+        self.setMinimumHeight(200)
+        self.__dynamic = False
 
         self.setWindowTitle("Export data")
         self.activateWindow()
@@ -46,10 +46,10 @@ class ExportPanel(QWidget):
 
         self.__current_case = CaseSelectorModel().getCurrentChoice()
 
-        active_realizations_model = ExportRealizationsModel(EnsembleSizeModel().getValue())
-        self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
-        self.active_realizations_field.setValidator(RangeStringArgument())
-        layout.addRow(self.active_realizations_field.getLabel(), self.active_realizations_field)
+        self.__active_realizations_model = ExportRealizationsModel(EnsembleSizeModel().getValue())
+        self.__active_realizations_field = StringBox(self.__active_realizations_model, "Active realizations", "config/simulation/active_realizations")
+        self.__active_realizations_field.setValidator(RangeStringArgument())
+        layout.addRow(self.__active_realizations_field.getLabel(), self.__active_realizations_field)
 
         file_name_button= QToolButton()
         file_name_button.setText("Browse")
@@ -58,6 +58,7 @@ class ExportPanel(QWidget):
 
         self.__file_name = QLineEdit()
         self.__file_name.setEnabled(False)
+        self.__file_name.setText(QDir.currentPath())
         self.__file_name.setMinimumWidth(250)
 
         file_name_layout = QHBoxLayout()
@@ -66,10 +67,10 @@ class ExportPanel(QWidget):
 
         layout.addRow("Select directory to save files:", file_name_layout)
 
+        self.__file_type_model = ["Eclipse GRDECL", "RMS roff"]
         self.__file_type_combo = QComboBox()
         self.__file_type_combo.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        self.__file_type_combo.addItem("Eclipse GRDECL")
-        self.__file_type_combo.addItem("RMS roff")
+        self.__file_type_combo.addItems(self.__file_type_model)
         layout.addRow("Select file format:",self.__file_type_combo)
 
         self.__report_step = QLineEdit()
@@ -92,17 +93,36 @@ class ExportPanel(QWidget):
 
     def selectFileDirectory(self):
 
-        directory = QFileDialog().getExistingDirectory(self, "Directory", PlotSettingsModel().getDefaultPlotPath(), QFileDialog.ShowDirsOnly)
+        directory = QFileDialog().getExistingDirectory(self, "Directory", QDir.currentPath(), QFileDialog.ShowDirsOnly)
         self.__file_name.setText(str(directory))
 
 
     def export(self):
-        pass
+        report_step = 0
+        if self.__dynamic:
+            report_step = self.__report_step.text()
+        keyword = self.__keywords[self.__fields_keyword.currentIndex()]
+
+        path = self.__file_name.text()
+        if QDir(path).exists():
+            file_name  = str(path + "/" + keyword +"_%d")
+            iactive = self.__active_realizations_model.getActiveRealizationsMask()
+
+            file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
+
+            if file_type_key == "Eclipse GRDECL":
+                file_type = EnkfFieldFileFormatEnum.ECL_GRDECL_FILE
+            else:
+                file_type = EnkfFieldFileFormatEnum.RMS_ROFF_FILE
+
+            state = EnkfStateType.FORECAST
+            export_model = ExportModel()
+            export_model.exportField(keyword, file_name, iactive, file_type, report_step, state)
+
 
 
     def keywordSelected(self):
-        key_index = self.__fields_keyword.currentIndex()
-        key = self.__keywords[key_index]
-        dynamic = ExportKeywordModel().isDynamicFiled(key)
-        self.__report_step.setVisible(dynamic)
-        self.layout().labelForField(self.__report_step).setVisible(dynamic)
+        key = self.__keywords[self.__fields_keyword.currentIndex()]
+        self.__dynamic = ExportKeywordModel().isDynamicField(key)
+        self.__report_step.setVisible(self.__dynamic)
+        self.layout().labelForField(self.__report_step).setVisible(self.__dynamic)
