@@ -22,6 +22,15 @@ class ExportModel(ErtConnector):
         super(ExportModel, self).__init__()
 
     def exportField(self, keyword, path, iactive, file_type, report_step, state):
+        """
+        @type keyword: str
+        @type path: str
+        @type iactive: BoolVector
+        @type file_type: EnkfFieldFileFormatEnum
+        @type report_step: int
+        @type state: EnkfStateType
+
+        """
         self.ert().exportField(keyword, path, iactive, file_type, report_step, state)
 
 

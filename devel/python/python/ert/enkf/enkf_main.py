@@ -181,7 +181,17 @@ class EnKFMain(BaseCClass):
         return EnKFMain.cNamespace().get_workflow_list(self).setParent(self)
 
     def exportField(self, keyword, path, iactive, file_type, report_step, state):
-        return EnKFMain.cNamespace().export_field(self,keyword, path, iactive, file_type, report_step, state)
+        """
+        @type keyword: str
+        @type path: str
+        @type iactive: BoolVector
+        @type file_type: EnkfFieldFileFormatEnum
+        @type report_step: int
+        @type state: EnkfStateType
+
+        """
+        assert isinstance(keyword, str)
+        return EnKFMain.cNamespace().export_field(self, keyword, path, iactive, file_type, report_step, state)
 
 
 

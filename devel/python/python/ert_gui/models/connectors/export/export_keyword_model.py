@@ -25,10 +25,7 @@ class ExportKeywordModel(ErtConnector):
         return sorted(self.ert().ensembleConfig().getKeylistFromImplType(ert_impl_type))
 
 
-    def isDynamicFiled(self, key):
+    def isDynamicField(self, key):
         config_node = self.ert().ensembleConfig().getNode(key)
         variable_type = config_node.getVariableType()
-        if variable_type == EnkfVarType.DYNAMIC_STATE:
-            return True
-        else:
-            return False
+        return variable_type == EnkfVarType.DYNAMIC_STATE
