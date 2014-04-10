@@ -65,7 +65,8 @@ int analysis_iter_config_get_num_retries_per_iteration( const analysis_iter_conf
   if (analysis_iter_config_num_retries_per_iteration_set(config))
     return config->num_iter_tries;
   else
-    return 4;
+    return DEFAULT_ITER_RETRY_COUNT;
+
 }
 
 bool analysis_iter_config_num_retries_per_iteration_set( const analysis_iter_config_type * config ) {
