@@ -22,6 +22,7 @@ from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.export import ExportKeywordModel, ExportModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.tools.export import ExportRealizationsModel
+from ert_gui.tools.manage_cases.all_cases_model import AllCasesModel
 from ert_gui.widgets import util
 from ert_gui.widgets.string_box import StringBox
 
@@ -41,13 +42,22 @@ class ExportPanel(QWidget):
         self.activateWindow()
 
         layout = QFormLayout()
+        self.__current_case = CaseSelectorModel().getCurrentChoice()
 
+        self.__case_model = AllCasesModel()
+        self.__case_combo = QComboBox()
+        self.__case_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
+        self.__case_combo.setMinimumContentsLength(20)
+        self.__case_combo.setModel(self.__case_model)
+        self.__case_combo.setCurrentIndex(self.__case_model.indexOf(self.__current_case))
+
+        layout.addRow("Select case:",self.__case_combo)
         self.__keywords = ExportKeywordModel().getKeylistFromImplType(ErtImplType.FIELD)
         self.__fields_keyword = QComboBox()
         self.__fields_keyword.addItems(self.__keywords)
         layout.addRow("Select keyword:",self.__fields_keyword)
 
-        self.__current_case = CaseSelectorModel().getCurrentChoice()
+
 
         self.__active_realizations_model = ExportRealizationsModel(EnsembleSizeModel().getValue())
         self.__active_realizations_field = StringBox(self.__active_realizations_model, "Active realizations", "config/simulation/active_realizations")
