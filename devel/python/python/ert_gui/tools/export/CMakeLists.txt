@@ -2,7 +2,6 @@ set(PYTHON_SOURCES
     __init__.py
     export_panel.py
     export_tool.py
-    export_window.py
     export_realizations_model.py
 )
 
