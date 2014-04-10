@@ -46,6 +46,10 @@ class GridTest(ExtendedTestCase):
     def test_EGRID( self ):
         grid = EclGrid(self.egrid_file())
         self.assertTrue(grid)
+        dims = grid.dims
+        self.assertEqual(dims[0] , grid.getNX())
+        self.assertEqual(dims[1] , grid.getNY())
+        self.assertEqual(dims[2] , grid.getNZ())
 
 
     def create(self, filename, load_actnum=True):
