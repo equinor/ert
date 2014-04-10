@@ -180,7 +180,7 @@ class EnKFMain(BaseCClass):
         """ @rtype: ErtWorkflowList """
         return EnKFMain.cNamespace().get_workflow_list(self).setParent(self)
 
-    def exportField(self, keyword, path, iactive, file_type, report_step, state):
+    def exportField(self, keyword, path, iactive, file_type, report_step, state, enkfFs):
         """
         @type keyword: str
         @type path: str
@@ -188,10 +188,11 @@ class EnKFMain(BaseCClass):
         @type file_type: EnkfFieldFileFormatEnum
         @type report_step: int
         @type state: EnkfStateType
+        @type enkfFs: EnkfFs
 
         """
         assert isinstance(keyword, str)
-        return EnKFMain.cNamespace().export_field(self, keyword, path, iactive, file_type, report_step, state)
+        return EnKFMain.cNamespace().export_field_with_fs(self, keyword, path, iactive, file_type, report_step, state, enkfFs)
 
 
 
@@ -252,6 +253,8 @@ EnKFMain.cNamespace().get_user_config_file = cwrapper.prototype("char* enkf_main
 EnKFMain.cNamespace().get_mount_point = cwrapper.prototype("char* enkf_main_get_mount_root( enkf_main )")
 
 EnKFMain.cNamespace().export_field = cwrapper.prototype("bool enkf_main_export_field(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_state_type_enum)")
+
+EnKFMain.cNamespace().export_field_with_fs = cwrapper.prototype("bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_state_type_enum, enkf_fs_manager)")
 
 
 
