@@ -23,9 +23,11 @@ from ert_gui.widgets.closable_dialog import ClosableDialog
 class ExportTool(Tool):
     def __init__(self):
         super(ExportTool, self).__init__("Export Data", "tools/export", util.resourceIcon("ide/table_export"))
+        self.__export_widget = None
 
     def trigger(self):
-        self.__export_widget = ExportPanel()
+        if self.__export_widget is None:
+            self.__export_widget = ExportPanel()
         self.__dialog = ClosableDialog("Export", self.__export_widget, self.parent())
         self.__dialog.addButton("Export", self.export)
         self.__dialog.exec_()
@@ -33,6 +35,3 @@ class ExportTool(Tool):
     def export(self):
         self.__export_widget.export()
         self.__dialog.accept()
-
-
-
