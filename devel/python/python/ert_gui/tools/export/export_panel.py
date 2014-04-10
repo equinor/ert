@@ -13,9 +13,9 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from PyQt4.QtCore import Qt, QSize, QDir
+from PyQt4.QtCore import QDir
 
-from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
+from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
 from ert.enkf import ErtImplType, EnkfFieldFileFormatEnum, EnkfStateType
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
@@ -23,7 +23,6 @@ from ert_gui.models.connectors.export import ExportKeywordModel, ExportModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.tools.export import ExportRealizationsModel
 from ert_gui.tools.manage_cases.all_cases_model import AllCasesModel
-from ert_gui.widgets import util
 from ert_gui.widgets.string_box import StringBox
 
 
@@ -42,16 +41,16 @@ class ExportPanel(QWidget):
         self.activateWindow()
 
         layout = QFormLayout()
-        self.__current_case = CaseSelectorModel().getCurrentChoice()
+        current_case = CaseSelectorModel().getCurrentChoice()
 
         self.__case_model = AllCasesModel()
         self.__case_combo = QComboBox()
         self.__case_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
         self.__case_combo.setMinimumContentsLength(20)
         self.__case_combo.setModel(self.__case_model)
-        self.__case_combo.setCurrentIndex(self.__case_model.indexOf(self.__current_case))
-
+        self.__case_combo.setCurrentIndex(self.__case_model.indexOf(current_case))
         layout.addRow("Select case:",self.__case_combo)
+
         self.__keywords = ExportKeywordModel().getKeylistFromImplType(ErtImplType.FIELD)
         self.__fields_keyword = QComboBox()
         self.__fields_keyword.addItems(self.__keywords)
@@ -68,7 +67,6 @@ class ExportPanel(QWidget):
         file_name_button.setText("Browse")
         file_name_button.clicked.connect(self.selectFileDirectory)
 
-
         self.__file_name = QLineEdit()
         self.__file_name.setEnabled(False)
         self.__file_name.setText(QDir.currentPath())
@@ -77,7 +75,6 @@ class ExportPanel(QWidget):
         file_name_layout = QHBoxLayout()
         file_name_layout.addWidget(self.__file_name)
         file_name_layout.addWidget(file_name_button)
-
         layout.addRow("Select directory to save files:", file_name_layout)
 
         self.__file_type_model = ["Eclipse GRDECL", "RMS roff"]
@@ -105,14 +102,11 @@ class ExportPanel(QWidget):
         if self.__dynamic:
             report_step = self.__report_step.text()
         keyword = self.__keywords[self.__fields_keyword.currentIndex()]
-        path = self.__file_name.text()
-        impl_type = ExportKeywordModel().getImplementationType(keyword)
-        path = str(path) + "/" + str(self.__current_case) + "/" + str(impl_type) + "/" + str(keyword) + "/"
+        all_cases = self.__case_model.getAllItems()
+        selected_case  = all_cases[self.__case_combo.currentIndex()]
 
-        if not QDir(path).exists():
-            QDir().mkdir(path);
+        file_name = self.createExportFilNameMask(keyword, selected_case)
 
-        file_name  =  str(path + "/" + keyword + "_%d")
         iactive = self.__active_realizations_model.getActiveRealizationsMask()
 
         file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
@@ -124,8 +118,26 @@ class ExportPanel(QWidget):
 
         state = EnkfStateType.FORECAST
         export_model = ExportModel()
-        export_model.exportField(keyword, file_name, iactive, file_type, report_step, state)
+        result = export_model.exportField(keyword, file_name, iactive, file_type, report_step, state, selected_case)
+        if not result:
+            ret = QMessageBox.warning(self, "Warning",
+                                      '''Something did not work!''',
+                                       QMessageBox.Ok);
 
+
+
+    def createExportFilNameMask(self, keyword, current_case):
+        path = self.__file_name.text()
+
+        impl_type = ExportKeywordModel().getImplementationType(keyword)
+        path = str(path) + "/" + str(current_case) + "/" + str(impl_type) + "/" + str(keyword)
+
+        if not QDir(path).exists():
+            QDir().mkdir(path);
+
+        file_name  =  str(path + "/" + keyword + "_%d")
+
+        return file_name
 
 
     def keywordSelected(self):
