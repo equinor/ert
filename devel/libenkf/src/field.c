@@ -769,19 +769,19 @@ void field_export(const field_type * __field,
    unchanged.
 */
 
-void field_ecl_write(const field_type * field , const char * run_path , const char * file , fortio_type * restart_fortio) {
+void field_ecl_write(const field_type * field , const char * run_path , const char * file , void * filestream) {
   field_file_format_type export_format = field_config_get_export_format(field->config);
-  
-  if (export_format == ECL_FILE)
+
+  if (export_format == ECL_FILE) {
+    fortio_type * restart_fortio = fortio_safe_cast(filestream);
     field_export(field , NULL , restart_fortio , export_format , true, NULL);
+  }
   else {
     char * full_path = util_alloc_filename( run_path , file  , NULL);
     field_export(field , full_path , NULL , export_format , true, NULL);
     free( full_path );
   }
 }
-
-
 
 
 

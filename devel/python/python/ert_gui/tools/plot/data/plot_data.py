@@ -20,6 +20,8 @@ class PlotData(QObject):
         #: :type: HistogramPlotDataFactory
         self.__histogram_factory = None
 
+        self.__unit_x = "Unknown"
+        self.__unit_y = "Unknown"
 
         self.__min_x = None
         self.__max_x = None
@@ -46,6 +48,12 @@ class PlotData(QObject):
     def setHistogramFactory(self, histogram_factory):
         assert isinstance(histogram_factory, HistogramPlotDataFactory)
         self.__histogram_factory = histogram_factory
+
+    def setUnitX(self, unit):
+        self.__unit_x = unit
+
+    def setUnitY(self, unit):
+        self.__unit_y = unit
 
     def addEnsembleData(self, ensemble_data):
         if ensemble_data.isValid():
@@ -79,6 +87,16 @@ class PlotData(QObject):
     def name(self):
         """ @rtype: str """
         return self.__name
+
+    @pyqtSlot(result=str)
+    def unitX(self):
+        """ @rtype: str """
+        return self.__unit_x
+
+    @pyqtSlot(result=str)
+    def unitY(self):
+        """ @rtype: str """
+        return self.__unit_y
 
     @pyqtSlot(result=QObject)
     def observationData(self):

@@ -25,6 +25,12 @@
 
 
 /**
+  Default file name for export file for GEN_KW parameters
+*/
+#define DEFAULT_GEN_KW_EXPORT_FILE   "parameters.txt"
+
+
+/**
    The format string used when creating search strings from user input
    with the 'DATA_KW' keyword. The format string must contain one '%s'
    placeholder which will be replaced with the user supplied key; can

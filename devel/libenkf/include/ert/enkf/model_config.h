@@ -87,7 +87,9 @@ extern "C" {
   void                   model_config_fprintf_config( const model_config_type * model_config , int ens_size ,FILE * stream );
   model_config_type    * model_config_alloc();
   bool                   model_config_select_history( model_config_type * model_config , history_source_type source_type, const sched_file_type * sched_file , const ecl_sum_type * refcase);
-  void model_config_set_runpath(model_config_type * model_config , const char * fmt);
+  void                   model_config_set_runpath(model_config_type * model_config , const char * fmt);
+  void                   model_config_set_gen_kw_export_file( model_config_type * model_config, const char * file_name);
+  const char           * model_config_get_gen_kw_export_file( const model_config_type * model_config);
 
   UTIL_IS_INSTANCE_HEADER( model_config);
 

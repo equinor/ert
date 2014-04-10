@@ -1,4 +1,4 @@
-/*
+ /*
    Copyright (C) 2011  Statoil ASA, Norway. 
     
    The file 'enkf_state.c' is part of ERT - Ensemble based Reservoir Tool. 
@@ -1343,6 +1343,13 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, enkf_fs_type * fs) {
         -----------------------------------------------------------------------------------------
     */
     
+    const shared_info_type * shared_info   = enkf_state->shared_info;
+    const model_config_type * model_config = shared_info->model_config;
+    const char * base_name                 = model_config_get_gen_kw_export_file(model_config);
+    char * export_file_name                = util_alloc_filename( run_info->run_path , base_name  , NULL);
+    FILE * export_file                     = util_mkdir_fopen(export_file_name, "w");
+
+
     const int num_keys = hash_get_size(enkf_state->node_hash);
     char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
     int iens = enkf_state_get_iens( enkf_state );
@@ -1358,16 +1365,19 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, enkf_fs_type * fs) {
             node_id_type node_id = {.report_step = 0, 
                                     .iens = iens , 
                                     .state = ANALYZED };
-            
+
             if (enkf_node_has_data( enkf_node , fs , node_id))
-              enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+              enkf_node_ecl_write(enkf_node , run_info->run_path , export_file , run_info->step1);
           } else
-            enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+            enkf_node_ecl_write(enkf_node , run_info->run_path , export_file , run_info->step1);
 
         }
       }
     }
     util_free_stringlist(key_list , num_keys);
+
+    fclose(export_file);
+    free(export_file_name);
   }
 }
 

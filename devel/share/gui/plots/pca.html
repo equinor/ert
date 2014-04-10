@@ -38,6 +38,9 @@
 <script>
     var plot = null;
 
+    var ordinal_dimension = null;
+    var value_dimension = null;
+
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
             createPlot();
@@ -52,7 +55,11 @@
     }
 
     function createPlot() {
-        plot = new PcaPlot(d3.select("body"), BasePlotOrdinalDimension(false), BasePlotValueDimension());
+        ordinal_dimension = BasePlotOrdinalDimension(false);
+        value_dimension = BasePlotValueDimension();
+        ordinal_dimension.setUnit("Principal Component");
+        value_dimension.setUnit("Value");
+        plot = new PcaPlot(d3.select("body"), ordinal_dimension, value_dimension);
     }
 
     function updatePlot() {

@@ -30,5 +30,8 @@ class AnalysisIterConfigTest(ExtendedTestCase):
         self.assertTrue( c.caseFormatSet() )
 
         self.assertFalse( c.numIterationsSet() )
-        c.setNumIterations(0)
+        c.setNumIterations(1)
         self.assertTrue( c.numIterationsSet() )
+
+        self.assertEqual( c.getMaxNumIterations(),  2)
+
