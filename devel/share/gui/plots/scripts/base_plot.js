@@ -47,6 +47,17 @@ function BasePlot(element, x_dimension, y_dimension) {
         .attr("class", "plot-title")
         .text(this.getTitle());
 
+    this.axis_label_group = group.append("div")
+        .attr("id", "axis-label-group")
+
+    this.x_label = this.axis_label_group.append("div")
+        .attr("class", "x axis-label")
+        .text("")
+
+    this.y_label = this.axis_label_group.append("div")
+        .attr("class", "y axis-label")
+        .text("");
+
     var plot_area = group.append("div").attr("class", "plot-area");
 
     this.width = 1024 - this.margin.left - this.margin.right;
@@ -100,7 +111,6 @@ function BasePlot(element, x_dimension, y_dimension) {
         .call(this.x_axis);
 
 
-
     this.x = this.dimension_x;
     this.y = this.dimension_y;
 
@@ -145,7 +155,6 @@ BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
         this.custom_x_max = x_max;
     }
 };
-
 
 BasePlot.prototype.setYDomain = function(min_y, max_y, ordinals) {
     if (arguments.length == 3 && this.dimension_y.isOrdinal()) {
@@ -208,6 +217,18 @@ BasePlot.prototype.render = function() {
     this.resetLegends();
 
     this.title.text(this.getTitle());
+
+    if (this.dimension_x.getUnit() == "") {
+        this.x_label.text("");
+    } else {
+        this.x_label.text("X: " + this.dimension_x.getUnit());
+    }
+
+    if (this.dimension_y.getUnit() == "") {
+        this.y_label.text("");
+    } else {
+        this.y_label.text("Y: " + this.dimension_y.getUnit());
+    }
 
     if(data.hasBoundaries()) {
         this.setYDomain(data.minY(), data.maxY());
