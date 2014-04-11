@@ -39,7 +39,6 @@ typedef struct analysis_iter_config_struct analysis_iter_config_type;
   void                            analysis_iter_config_init(analysis_iter_config_type * iter_config , const config_type * config);
   bool                            analysis_iter_config_case_fmt_set( const analysis_iter_config_type * config );
   bool                            analysis_iter_config_num_iterations_set( const analysis_iter_config_type * config );
-  bool                            analysis_iter_config_num_retries_per_iteration_set( const analysis_iter_config_type * config );
 
 #ifdef __cplusplus 
 }

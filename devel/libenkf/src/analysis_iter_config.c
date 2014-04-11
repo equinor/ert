@@ -38,7 +38,6 @@ struct analysis_iter_config_struct {
   int               num_iter_tries;
   bool              case_set;   
   bool              num_iterations_set; 
-  bool              num_iter_tries_set;
 };
 
 
@@ -58,19 +57,10 @@ bool analysis_iter_config_num_iterations_set( const analysis_iter_config_type * 
 
 void analysis_iter_config_set_num_retries_per_iteration( analysis_iter_config_type * config , int num_iter_tries) {
   config->num_iter_tries = num_iter_tries;
-  config->num_iter_tries_set = true;
 }
 
 int analysis_iter_config_get_num_retries_per_iteration( const analysis_iter_config_type * config ) {
-  if (analysis_iter_config_num_retries_per_iteration_set(config))
-    return config->num_iter_tries;
-  else
-    return DEFAULT_ITER_RETRY_COUNT;
-
-}
-
-bool analysis_iter_config_num_retries_per_iteration_set( const analysis_iter_config_type * config ) {
-  return config->num_iter_tries_set;
+  return config->num_iter_tries;
 }
 
 
@@ -96,9 +86,9 @@ analysis_iter_config_type * analysis_iter_config_alloc() {
    analysis_iter_config_set_case_fmt( config, DEFAULT_ANALYSIS_ITER_CASE);
    config->storage = stringlist_alloc_new();
    analysis_iter_config_set_num_iterations( config , DEFAULT_ANALYSIS_NUM_ITERATIONS );
+   analysis_iter_config_set_num_retries_per_iteration(config, DEFAULT_ITER_RETRY_COUNT);
 
    config->num_iterations_set = false;
-   config->num_iter_tries_set = false;
    config->case_set = false;
    return config;
 }

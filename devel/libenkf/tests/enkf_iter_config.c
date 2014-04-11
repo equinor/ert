@@ -55,10 +55,8 @@ void test_set() {
   analysis_iter_config_set_num_iterations( iter_config , 77 );
   test_assert_true( analysis_iter_config_num_iterations_set( iter_config ));
 
-  test_assert_false( analysis_iter_config_num_retries_per_iteration_set( iter_config ));
   test_assert_int_equal( analysis_iter_config_get_num_retries_per_iteration(iter_config), 4);
   analysis_iter_config_set_num_retries_per_iteration(iter_config , 10 );
-  test_assert_true( analysis_iter_config_num_retries_per_iteration_set( iter_config ));
   test_assert_int_equal( analysis_iter_config_get_num_retries_per_iteration(iter_config), 10);
 
 
