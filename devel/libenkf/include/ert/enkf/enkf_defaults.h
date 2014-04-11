@@ -128,6 +128,7 @@
 #define DEFAULT_ANALYSIS_MIN_REALISATIONS  0   // 0: No lower limit
 #define DEFAULT_ANALYSIS_STOP_LONG_RUNNING false 
 #define DEFAULT_MAX_RUNTIME                0
+#define DEFAULT_ITER_RETRY_COUNT           4
 
 
 /* Default directories. */
