@@ -42,6 +42,8 @@ class AnalysisModuleVariablesPanel(QWidget):
             for variable_name in variable_names:
                 variable_type = analysis_module_variables_model.getVariableType(variable_name)
                 variable_value = analysis_module_variables_model.getVariableValue(self.__analysis_module_name, variable_name)
+
+                label_name = analysis_module_variables_model.getVariableLabelName(variable_name)
                 if variable_type == bool:
                     spinner = self.createCheckBox(variable_name, variable_value, variable_type)
                 
@@ -54,7 +56,7 @@ class AnalysisModuleVariablesPanel(QWidget):
                 elif variable_type == int:
                     spinner = self.createSpinBox(variable_name, variable_value, variable_type, analysis_module_variables_model)
                    
-                layout.addRow(variable_name, spinner)
+                layout.addRow(label_name, spinner)
 
         self.setLayout(layout)
         self.blockSignals(False)
