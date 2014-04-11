@@ -33,5 +33,5 @@ class AnalysisIterConfigTest(ExtendedTestCase):
         c.setNumIterations(1)
         self.assertTrue( c.numIterationsSet() )
 
-        self.assertEqual( c.getMaxNumIterations(),  2)
+        
 
