@@ -21,6 +21,7 @@ from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.export import ExportKeywordModel, ExportModel
 from ert_gui.models.connectors.init import CaseSelectorModel
+from ert_gui.models.connectors.plot import DataTypeKeysModel
 from ert_gui.tools.export import ExportRealizationsModel
 from ert_gui.tools.manage_cases.all_cases_model import AllCasesModel
 from ert_gui.widgets.string_box import StringBox
@@ -51,10 +52,13 @@ class ExportPanel(QWidget):
         self.__case_combo.setCurrentIndex(self.__case_model.indexOf(current_case))
         layout.addRow("Select case:",self.__case_combo)
 
-        self.__keywords = ExportKeywordModel().getKeylistFromImplType(ErtImplType.FIELD)
-        self.__fields_keyword = QComboBox()
-        self.__fields_keyword.addItems(self.__keywords)
-        layout.addRow("Select keyword:",self.__fields_keyword)
+        self.__field_kw = ExportKeywordModel().getKeylistFromImplType(ErtImplType.FIELD)
+        self.__gen_kw = DataTypeKeysModel().getAllGenKWKeys()
+
+        self.__kw_model = self.__field_kw + self.__gen_kw
+        self.__keywords = QComboBox()
+        self.__keywords.addItems(self.__kw_model)
+        layout.addRow("Select keyword:",self.__keywords)
 
 
 
@@ -77,7 +81,10 @@ class ExportPanel(QWidget):
         file_name_layout.addWidget(file_name_button)
         layout.addRow("Select directory to save files:", file_name_layout)
 
-        self.__file_type_model = ["Eclipse GRDECL", "RMS roff"]
+        self.__gen_kw_file_types = ["1", "2"]
+        self.__field_kw_file_types = ["Eclipse GRDECL", "RMS roff"]
+
+        self.__file_type_model = self.__field_kw_file_types
         self.__file_type_combo = QComboBox()
         self.__file_type_combo.setSizeAdjustPolicy(QComboBox.AdjustToContents)
         self.__file_type_combo.addItems(self.__file_type_model)
@@ -87,21 +94,38 @@ class ExportPanel(QWidget):
         layout.addRow("Report step:", self.__report_step)
 
         self.setLayout(layout)
-        self.__fields_keyword.currentIndexChanged.connect(self.keywordSelected)
-        self.keywordSelected()
+        self.__keywords.currentIndexChanged.connect(self.keywordSelected)
+        #self.keywordSelected()
 
 
     def selectFileDirectory(self):
-
         directory = QFileDialog().getExistingDirectory(self, "Directory", QDir.currentPath(), QFileDialog.ShowDirsOnly)
         self.__file_name.setText(str(directory))
+
+    def isGenKw(self, key):
+        return key in self.__gen_kw
+
+    def isFieldKw(self, key):
+        return key in self.__field_kw
+
+    def updateFileExportType(self):
+        keyword = self.__kw_model[self.__keywords.currentIndex()]
+
+        self.__file_type_combo.clear()
+        if self.isGenKw(keyword):
+            self.__file_type_model = self.__gen_kw_file_types
+        else:
+            self.__file_type_model = self.__field_kw_file_types
+
+        self.__file_type_combo.addItems(self.__file_type_model)
+
 
 
     def export(self):
         report_step = 0
         if self.__dynamic:
             report_step = self.__report_step.text()
-        keyword = self.__keywords[self.__fields_keyword.currentIndex()]
+        keyword = self.__kw_model[self.__keywords.currentIndex()]
         all_cases = self.__case_model.getAllItems()
         selected_case  = all_cases[self.__case_combo.currentIndex()]
 
@@ -141,7 +165,12 @@ class ExportPanel(QWidget):
 
 
     def keywordSelected(self):
-        key = self.__keywords[self.__fields_keyword.currentIndex()]
-        self.__dynamic = ExportKeywordModel().isDynamicField(key)
+        self.updateFileExportType()
+        key = self.__kw_model[self.__keywords.currentIndex()]
+        if self.isFieldKw(key):
+            self.__dynamic = ExportKeywordModel().isDynamicField(key)
+        else:
+            self.__dynamic = False
+            
         self.__report_step.setVisible(self.__dynamic)
         self.layout().labelForField(self.__report_step).setVisible(self.__dynamic)
