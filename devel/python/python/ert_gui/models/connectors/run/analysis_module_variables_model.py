@@ -22,19 +22,19 @@ class AnalysisModuleVariablesModel(ErtConnector):
     def __init__(self):
         super(AnalysisModuleVariablesModel, self).__init__()
         self.__variable_names = {
-            "LAMBDA0": {"type": float, "min": -1, "max": 100000, "step":1.0},
-            "LAMBDA_REDUCE": {"type": float, "min": 0, "max": 1, "step":0.1},
-            "LAMBDA_INCREASE": {"type": float, "min": 1, "max": 10, "step":0.1},
-            "LAMBDA_MIN": {"type": float, "min": 0, "max": 10, "step":0.1},
-            "USE_PRIOR": {"type": bool},
-            "LOG_FILE": {"type": str},
-            "CLEAR_LOG": {"type": bool},
-            "LAMBDA_RECALCULATE": {"type": bool},
-            "ENKF_TRUNCATION" :{"type": float, "min": 0, "max": 1, "step":0.1},
-            "ENKF_NCOMP": {"type": int, "min": -1, "max": 10, "step":1.0},
-            "CV_NFOLDS": {"type": int, "min": -1, "max": 10, "step":1.0},
-            "FWD_STEP_R2_LIMIT":{"type": float, "min": -1, "max": 100, "step":1.0},
-            "CV_PEN_PRESS": {"type": bool}
+            "LAMBDA0": {"type": float, "min": -1, "max": 10000000000000, "step":1.0, "labelname":"Initial Lambda"},
+            "LAMBDA_REDUCE": {"type": float, "min": 0, "max": 1, "step":0.1, "labelname":"Lambda Reduction Factor"},
+            "LAMBDA_INCREASE": {"type": float, "min": 1, "max": 10, "step":0.1, "labelname":"Lambda Incremental Factor"},
+            "LAMBDA_MIN": {"type": float, "min": 0, "max": 10, "step":0.1, "labelname":"Minimum Lambda"},
+            "USE_PRIOR": {"type": bool, "labelname":"Use both Prior and Observation Variability"},
+            "LOG_FILE": {"type": str, "labelname":"Log File"},
+            "CLEAR_LOG": {"type": bool, "labelname":"Clear Existing Log File"},
+            "LAMBDA_RECALCULATE": {"type": bool, "labelname":"Recalculate Lambda after each Iteration"},
+            "ENKF_TRUNCATION" :{"type": float, "min": 0, "max": 1, "step":0.1, "labelname":"Singular value truncation"},
+            "ENKF_NCOMP": {"type": int, "min": -1, "max": 10, "step":1.0, "labelname":"ENKF_NCOMP"},
+            "CV_NFOLDS": {"type": int, "min": -1, "max": 10, "step":1.0, "labelname":"CV_NFOLDS"},
+            "FWD_STEP_R2_LIMIT":{"type": float, "min": -1, "max": 100, "step":1.0, "labelname":"FWD_STEP_R2_LIMIT"},
+            "CV_PEN_PRESS": {"type": bool, "labelname":"CV_PEN_PRESS"}
         }
 
 
@@ -59,6 +59,9 @@ class AnalysisModuleVariablesModel(ErtConnector):
 
     def getVariableStepValue(self, name):
         return self.__variable_names[name]["step"]
+
+    def getVariableLabelName(self, name):
+        return self.__variable_names[name]["labelname"]
 
 
 
