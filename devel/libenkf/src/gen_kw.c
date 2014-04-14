@@ -215,7 +215,7 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
 }
 
 
-static void gen_kw_write_export_file(const gen_kw_type * gen_kw, FILE * filestream) {
+void gen_kw_write_export_file(const gen_kw_type * gen_kw, FILE * filestream) {
   const int size = gen_kw_config_get_data_size(gen_kw->config );
   int ikw;
 
@@ -227,6 +227,10 @@ static void gen_kw_write_export_file(const gen_kw_type * gen_kw, FILE * filestre
     const char * print_string = util_alloc_sprintf("%s:%s %*.5f\n", key, parameter, width, transformed_value);
     fprintf(filestream, print_string);
   }
+}
+
+void gen_kw_ecl_write_template(const gen_kw_type * gen_kw , const char * file_name){
+    gen_kw_filter_file(gen_kw , file_name);
 }
 
 
