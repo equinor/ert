@@ -16,6 +16,7 @@ class ParametrizationKeywords(object):
         ert_keywords.addKeyword(self.addLoadSeed())
         ert_keywords.addKeyword(self.addGenKwTagFormat())
         ert_keywords.addKeyword(self.addSurface())
+        ert_keywords.addKeyword(self.addGenKwExportFile())
 
 
 
@@ -52,6 +53,15 @@ class ParametrizationKeywords(object):
                                             required=False,
                                             group=self.group)
         return gen_kw
+
+
+    def addGenKwExportFile(self):
+        gen_kw_export_file = ConfigurationLineDefinition(keyword=KeywordDefinition("GEN_KW_EXPORT_FILE"),
+                                            arguments=[StringArgument()],
+                                            documentation_link="keywords/gen_kw_export_file",
+                                            required=False,
+                                            group=self.group)
+        return gen_kw_export_file
 
 
     def addGenKwTagFormat(self):

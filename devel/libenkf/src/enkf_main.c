@@ -1961,29 +1961,29 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations_to
     }
 
     { // Iteration 1 - num_iterations [iteration 1, num iterations]
-      int max_num_iterations = analysis_iter_config_get_max_num_iterations(iter_config);
-      int total_num_iterations_run = 0;
-      current_iteration            = 1;
+      int num_retries_per_iteration = analysis_iter_config_get_num_retries_per_iteration(iter_config);
+      int num_tries     = 0;
+      current_iteration = 1;
 
-      while ((current_iteration <= num_iterations_to_run) && (total_num_iterations_run < max_num_iterations)) {
+      while ((current_iteration <= num_iterations_to_run) && (num_tries < num_retries_per_iteration)) {
         const char * target_fs_name = analysis_iter_config_iget_case( iter_config , current_iteration );
 
         if (enkf_main_run_analysis(enkf_main, target_fs_name, current_iteration)) {
           enkf_main_select_fs(enkf_main, target_fs_name);
           if (!enkf_main_run_simulation_and_postworkflow(enkf_main, current_iteration, iactive))
             break;
+          num_tries = 0;
           ++current_iteration;
         } else {
           fprintf(stderr, "\nAnalysis failed, rerunning simulation on changed initial parameters\n");
           enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false );
           enkf_main_init_current_case_from_existing(enkf_main, target_fs, 0, ANALYZED);
           enkf_fs_decref(target_fs);
+          ++num_tries;
 
           if (!enkf_main_run_simulation_and_postworkflow(enkf_main, current_iteration-1, iactive))
             break;
         }
-
-        ++total_num_iterations_run;
       }
     }
 
