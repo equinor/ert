@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ert.enkf import EnsConfig, EnkfConfigNode, GenKw, EnkfNode, ErtImplType, NodeId
+from ert.enkf import EnkfConfigNode, GenKw, EnkfNode, ErtImplType, NodeId
 from ert_gui.models import ErtConnector
 
 class ExportModel(ErtConnector):
