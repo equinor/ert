@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import os
 from PyQt4.QtCore import QDir
 
 from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
@@ -21,7 +22,6 @@ from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.export import ExportKeywordModel, ExportModel
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.models.connectors.plot import DataTypeKeysModel
 from ert_gui.tools.export import ExportRealizationsModel
 from ert_gui.tools.manage_cases.all_cases_model import AllCasesModel
 from ert_gui.widgets.string_box import StringBox
@@ -53,14 +53,12 @@ class ExportPanel(QWidget):
         layout.addRow("Select case:",self.__case_combo)
 
         self.__field_kw = ExportKeywordModel().getKeylistFromImplType(ErtImplType.FIELD)
-        self.__gen_kw = DataTypeKeysModel().getAllGenKWKeys()
+        self.__gen_kw = ExportModel().getGenKwKeyWords()
 
         self.__kw_model = self.__field_kw + self.__gen_kw
         self.__keywords = QComboBox()
         self.__keywords.addItems(self.__kw_model)
         layout.addRow("Select keyword:",self.__keywords)
-
-
 
         self.__active_realizations_model = ExportRealizationsModel(EnsembleSizeModel().getValue())
         self.__active_realizations_field = StringBox(self.__active_realizations_model, "Active realizations", "config/simulation/active_realizations")
@@ -81,7 +79,7 @@ class ExportPanel(QWidget):
         file_name_layout.addWidget(file_name_button)
         layout.addRow("Select directory to save files:", file_name_layout)
 
-        self.__gen_kw_file_types = ["1", "2"]
+        self.__gen_kw_file_types = ["Parameter list", "Template based"]
         self.__field_kw_file_types = ["Eclipse GRDECL", "RMS roff"]
 
         self.__file_type_model = self.__field_kw_file_types
@@ -95,7 +93,7 @@ class ExportPanel(QWidget):
 
         self.setLayout(layout)
         self.__keywords.currentIndexChanged.connect(self.keywordSelected)
-        #self.keywordSelected()
+        self.keywordSelected()
 
 
     def selectFileDirectory(self):
@@ -134,35 +132,44 @@ class ExportPanel(QWidget):
         iactive = self.__active_realizations_model.getActiveRealizationsMask()
 
         file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
+        state = EnkfStateType.FORECAST
 
+        if self.isFieldKw(keyword):
+            self.exportField(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
+        elif self.isGenKw(keyword):
+            self.exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
+
+
+    def exportGenKw(self, keyword, file_name, iactive, file_type_key, report_step, state, selected_case):
+        ExportModel().exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
+
+
+    def exportField(self, keyword, file_name, iactive, file_type_key, report_step, state, selected_case):
         if file_type_key == "Eclipse GRDECL":
             file_type = EnkfFieldFileFormatEnum.ECL_GRDECL_FILE
         else:
             file_type = EnkfFieldFileFormatEnum.RMS_ROFF_FILE
 
-        state = EnkfStateType.FORECAST
-        export_model = ExportModel()
-        result = export_model.exportField(keyword, file_name, iactive, file_type, report_step, state, selected_case)
+        result = ExportModel().exportField(keyword, file_name, iactive, file_type, report_step, state, selected_case)
         if not result:
             ret = QMessageBox.warning(self, "Warning",
                                       '''Something did not work!''',
                                        QMessageBox.Ok);
 
-
-
     def createExportFilNameMask(self, keyword, current_case):
         path = self.__file_name.text()
 
-        impl_type = ExportKeywordModel().getImplementationType(keyword)
+        if self.isFieldKw(keyword):
+            impl_type = ExportKeywordModel().getImplementationType(keyword)
+        elif self.isGenKw(keyword):
+            impl_type = "Gen_Kw"
+
         path = str(path) + "/" + str(current_case) + "/" + str(impl_type) + "/" + str(keyword)
 
         if not QDir(path).exists():
-            QDir().mkdir(path);
+            os.makedirs(path);
 
-        file_name  =  str(path + "/" + keyword + "_%d")
-
-        return file_name
-
+        return path
 
     def keywordSelected(self):
         self.updateFileExportType()
@@ -171,6 +178,6 @@ class ExportPanel(QWidget):
             self.__dynamic = ExportKeywordModel().isDynamicField(key)
         else:
             self.__dynamic = False
-            
+
         self.__report_step.setVisible(self.__dynamic)
         self.layout().labelForField(self.__report_step).setVisible(self.__dynamic)
