@@ -13,7 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert.enkf import EnkfVarType
+
+from ert.enkf import EnsConfig, EnkfConfigNode, GenKw, EnkfNode, ErtImplType, NodeId
 from ert_gui.models import ErtConnector
 
 class ExportModel(ErtConnector):
@@ -32,7 +33,25 @@ class ExportModel(ErtConnector):
         @type selected_case: str
 
         """
+        file_name  =  str(path + "/" + keyword + "_%d")
         fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
-        return self.ert().exportField(keyword, path, iactive, file_type, report_step, state, fs)
+        return self.ert().exportField(keyword, file_name, iactive, file_type, report_step, state, fs)
 
 
+    def exportGenKw(self, keyword, path, iactive, file_type, report_step, state, selected_case):
+        enkf_config_node = self.ert().ensembleConfig().getNode(keyword)
+        assert isinstance(enkf_config_node, EnkfConfigNode)
+        node = EnkfNode(enkf_config_node)
+        fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
+
+        for index, value in enumerate(iactive):
+            if node.tryLoad(fs, NodeId(report_step, index, state)):
+                gen_kw = GenKw.createCReference(node.valuePointer())
+                filename  =  str(path + "/" + keyword + "_{0}").format(index)
+                if file_type == "Parameter list":
+                    gen_kw.exportParameters(filename)
+                else:
+                    gen_kw.exportTemplate(filename)
+
+    def getGenKwKeyWords(self):
+         return [key for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)]
