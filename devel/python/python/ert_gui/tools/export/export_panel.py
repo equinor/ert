@@ -29,8 +29,6 @@ from ert_gui.widgets.string_box import StringBox
 
 class ExportPanel(QWidget):
 
-
-
     def __init__(self):
         QWidget.__init__(self)
 
@@ -77,7 +75,7 @@ class ExportPanel(QWidget):
         file_name_layout = QHBoxLayout()
         file_name_layout.addWidget(self.__file_name)
         file_name_layout.addWidget(file_name_button)
-        layout.addRow("Select directory to save files:", file_name_layout)
+        layout.addRow("Select directory to save files to:", file_name_layout)
 
         self.__gen_kw_file_types = ["Parameter list", "Template based"]
         self.__field_kw_file_types = ["Eclipse GRDECL", "RMS roff"]
@@ -95,7 +93,6 @@ class ExportPanel(QWidget):
         self.__keywords.currentIndexChanged.connect(self.keywordSelected)
         self.keywordSelected()
 
-
     def selectFileDirectory(self):
         directory = QFileDialog().getExistingDirectory(self, "Directory", QDir.currentPath(), QFileDialog.ShowDirsOnly)
         self.__file_name.setText(str(directory))
@@ -108,7 +105,6 @@ class ExportPanel(QWidget):
 
     def updateFileExportType(self):
         keyword = self.__kw_model[self.__keywords.currentIndex()]
-
         self.__file_type_combo.clear()
         if self.isGenKw(keyword):
             self.__file_type_model = self.__gen_kw_file_types
@@ -116,8 +112,6 @@ class ExportPanel(QWidget):
             self.__file_type_model = self.__field_kw_file_types
 
         self.__file_type_combo.addItems(self.__file_type_model)
-
-
 
     def export(self):
         report_step = 0

@@ -22,12 +22,14 @@ class GenKw(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def exportParameters(self, file_name):
+        """ @type: str """
         py_fileH = open(file_name , "w")
         cfile  = CFILE( py_fileH )
         GenKw.cNamespace().export_parameters(self, cfile)
         py_fileH.close()
 
     def exportTemplate(self, file_name):
+        """ @type: str """
         GenKw.cNamespace().export_template(self, file_name)
 
     def free(self):
