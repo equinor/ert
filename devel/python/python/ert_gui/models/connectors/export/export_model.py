@@ -31,7 +31,6 @@ class ExportModel(ErtConnector):
         @type report_step: int
         @type state: EnkfStateType
         @type selected_case: str
-
         """
         file_name  =  str(path + "/" + keyword + "_%d")
         fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
@@ -39,6 +38,15 @@ class ExportModel(ErtConnector):
 
 
     def exportGenKw(self, keyword, path, iactive, file_type, report_step, state, selected_case):
+        """
+        @type keyword: str
+        @type path: str
+        @type iactive: BoolVector
+        @type file_type: EnkfFieldFileFormatEnum
+        @type report_step: int
+        @type state: EnkfStateType
+        @type selected_case: str
+        """
         enkf_config_node = self.ert().ensembleConfig().getNode(keyword)
         assert isinstance(enkf_config_node, EnkfConfigNode)
         node = EnkfNode(enkf_config_node)
