@@ -461,8 +461,24 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   if (config_item_set( config , RERUN_START_KEY ))
     analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , RERUN_START_KEY ));
 
-  if (config_item_set( config , MIN_REALIZATIONS_KEY ))
-    analysis_config_set_min_realisations( analysis , config_get_value_as_int( config , MIN_REALIZATIONS_KEY ));
+  if (config_item_set( config , MIN_REALIZATIONS_KEY )) {
+    double percent                            = 0.0;
+    config_content_node_type * config_content = config_get_value_node(config , MIN_REALIZATIONS_KEY);
+    char * min_realizations_string            = config_content_node_alloc_joined_string(config_content, " ");
+
+    if (util_sscanf_percent(min_realizations_string, &percent)) {
+      if (config_item_set(config, NUM_REALIZATIONS_KEY)) {
+        int num_realizations = config_get_value_as_int(config, NUM_REALIZATIONS_KEY);
+        int min_realizations = num_realizations * percent;
+        analysis_config_set_min_realisations(analysis, min_realizations);
+      }
+    } else {
+      int min_realizations = 0;
+      util_sscanf_int(min_realizations_string, &min_realizations);
+      analysis_config_set_min_realisations( analysis , min_realizations);
+    }
+    free(min_realizations_string);
+  }
   
   if (config_item_set( config , STOP_LONG_RUNNING_KEY ))
     analysis_config_set_stop_long_running( analysis , config_get_value_as_bool( config , STOP_LONG_RUNNING_KEY ));
@@ -610,7 +626,7 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ENKF_RERUN_KEY              , false , CONFIG_BOOL);
   config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);
   config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
-  config_add_key_value( config , MIN_REALIZATIONS_KEY        , false , CONFIG_INT );
+  config_add_key_value( config , MIN_REALIZATIONS_KEY        , false , CONFIG_STRING );
   config_add_key_value( config , MAX_RUNTIME_KEY             , false , CONFIG_INT );
   
   item = config_add_key_value( config , STOP_LONG_RUNNING_KEY, false,  CONFIG_BOOL ); 
