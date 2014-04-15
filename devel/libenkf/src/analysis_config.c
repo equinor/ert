@@ -467,11 +467,9 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
     char * min_realizations_string            = config_content_node_alloc_joined_string(config_content, " ");
 
     if (util_sscanf_percent(min_realizations_string, &percent)) {
-      if (config_item_set(config, NUM_REALIZATIONS_KEY)) {
-        int num_realizations = config_get_value_as_int(config, NUM_REALIZATIONS_KEY);
-        int min_realizations = num_realizations * percent;
-        analysis_config_set_min_realisations(analysis, min_realizations);
-      }
+      int num_realizations = config_get_value_as_int(config, NUM_REALIZATIONS_KEY);
+      int min_realizations = num_realizations * percent;
+      analysis_config_set_min_realisations(analysis, min_realizations);
     } else {
       int min_realizations = 0;
       util_sscanf_int(min_realizations_string, &min_realizations);
