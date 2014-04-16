@@ -13,13 +13,15 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert.enkf import EnkfVarType
+from ert.enkf import EnkfVarType, ErtImplType
 from ert_gui.models import ErtConnector
 
 class ExportKeywordModel(ErtConnector):
 
     def __init__(self):
         super(ExportKeywordModel, self).__init__()
+        self.__gen_kw = None
+        self.__field_kw = None
 
     def getKeylistFromImplType(self, ert_impl_type):
         return sorted(self.ert().ensembleConfig().getKeylistFromImplType(ert_impl_type))
@@ -33,3 +35,24 @@ class ExportKeywordModel(ErtConnector):
     def getImplementationType(self, key):
         config_node = self.ert().ensembleConfig().getNode(key)
         return config_node.getImplementationType()
+
+    def getGenKwKeyWords(self):
+        if self.__gen_kw is None:
+            self.__gen_kw = [key for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)]
+
+        return self.__gen_kw
+
+    def getFieldKeyWords(self):
+        if self.__field_kw is None:
+            self.__field_kw = self.getKeylistFromImplType(ErtImplType.FIELD)
+
+        return self.__field_kw
+
+    def getKeyWords(self):
+        return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords())
+
+    def isGenKw(self, key):
+        return key in self.__gen_kw
+
+    def isFieldKw(self, key):
+        return key in self.__field_kw
