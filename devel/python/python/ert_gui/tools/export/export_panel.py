@@ -17,7 +17,7 @@ import os
 from PyQt4.QtCore import QDir
 
 from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
-from ert.enkf import ErtImplType, EnkfFieldFileFormatEnum, EnkfStateType
+from ert.enkf import EnkfFieldFileFormatEnum, EnkfStateType
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.export import ExportKeywordModel, ExportModel
@@ -50,10 +50,9 @@ class ExportPanel(QWidget):
         self.__case_combo.setCurrentIndex(self.__case_model.indexOf(current_case))
         layout.addRow("Select case:",self.__case_combo)
 
-        self.__field_kw = ExportKeywordModel().getKeylistFromImplType(ErtImplType.FIELD)
-        self.__gen_kw = ExportModel().getGenKwKeyWords()
+        self.__export_keyword_model = ExportKeywordModel()
 
-        self.__kw_model = self.__field_kw + self.__gen_kw
+        self.__kw_model = self.__export_keyword_model.getKeyWords()
         self.__keywords = QComboBox()
         self.__keywords.addItems(self.__kw_model)
         layout.addRow("Select keyword:",self.__keywords)
@@ -97,16 +96,10 @@ class ExportPanel(QWidget):
         directory = QFileDialog().getExistingDirectory(self, "Directory", QDir.currentPath(), QFileDialog.ShowDirsOnly)
         self.__file_name.setText(str(directory))
 
-    def isGenKw(self, key):
-        return key in self.__gen_kw
-
-    def isFieldKw(self, key):
-        return key in self.__field_kw
-
     def updateFileExportType(self):
         keyword = self.__kw_model[self.__keywords.currentIndex()]
         self.__file_type_combo.clear()
-        if self.isGenKw(keyword):
+        if self.__export_keyword_model.isGenKw(keyword):
             self.__file_type_model = self.__gen_kw_file_types
         else:
             self.__file_type_model = self.__field_kw_file_types
@@ -128,9 +121,9 @@ class ExportPanel(QWidget):
         file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
         state = EnkfStateType.FORECAST
 
-        if self.isFieldKw(keyword):
+        if self.__export_keyword_model.isFieldKw(keyword):
             self.exportField(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
-        elif self.isGenKw(keyword):
+        elif self.__export_keyword_model.isGenKw(keyword):
             self.exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
 
 
@@ -146,16 +139,15 @@ class ExportPanel(QWidget):
 
         result = ExportModel().exportField(keyword, file_name, iactive, file_type, report_step, state, selected_case)
         if not result:
-            ret = QMessageBox.warning(self, "Warning",
-                                      '''Something did not work!''',
-                                       QMessageBox.Ok);
+            QMessageBox.warning(self, "Warning",'''Something did not work!''',QMessageBox.Ok);
 
     def createExportFilNameMask(self, keyword, current_case):
         path = self.__file_name.text()
+        impl_type = None
 
-        if self.isFieldKw(keyword):
+        if self.__export_keyword_model.isFieldKw(keyword):
             impl_type = ExportKeywordModel().getImplementationType(keyword)
-        elif self.isGenKw(keyword):
+        elif self.__export_keyword_model.isGenKw(keyword):
             impl_type = "Gen_Kw"
 
         path = str(path) + "/" + str(current_case) + "/" + str(impl_type) + "/" + str(keyword)
@@ -168,7 +160,7 @@ class ExportPanel(QWidget):
     def keywordSelected(self):
         self.updateFileExportType()
         key = self.__kw_model[self.__keywords.currentIndex()]
-        if self.isFieldKw(key):
+        if self.__export_keyword_model.isFieldKw(key):
             self.__dynamic = ExportKeywordModel().isDynamicField(key)
         else:
             self.__dynamic = False

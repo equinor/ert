@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ert.enkf import EnkfConfigNode, GenKw, EnkfNode, ErtImplType, NodeId
+from ert.enkf import EnkfConfigNode, GenKw, EnkfNode, NodeId
 from ert_gui.models import ErtConnector
 
 class ExportModel(ErtConnector):
@@ -53,13 +53,11 @@ class ExportModel(ErtConnector):
         fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
 
         for index, value in enumerate(iactive):
-            if node.tryLoad(fs, NodeId(report_step, index, state)):
-                gen_kw = GenKw.createCReference(node.valuePointer())
-                filename  =  str(path + "/" + keyword + "_{0}").format(index)
-                if file_type == "Parameter list":
-                    gen_kw.exportParameters(filename)
-                else:
-                    gen_kw.exportTemplate(filename)
-
-    def getGenKwKeyWords(self):
-         return [key for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)]
+            if value:
+                if node.tryLoad(fs, NodeId(report_step, index, state)):
+                    gen_kw = GenKw.createCReference(node.valuePointer())
+                    filename  =  str(path + "/" + keyword + "_{0}").format(index)
+                    if file_type == "Parameter list":
+                        gen_kw.exportParameters(filename)
+                    else:
+                        gen_kw.exportTemplate(filename)
