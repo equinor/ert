@@ -16,7 +16,7 @@
 from functools import partial
 from PyQt4.QtCore import QString
 
-from PyQt4.QtGui import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox
+from PyQt4.QtGui import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
 from ert_gui.models.connectors.run import AnalysisModuleVariablesModel
 
 
@@ -39,7 +39,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         else:
             analysis_module_variables_model = AnalysisModuleVariablesModel()
             self.blockSignals(True)
-            for variable_name in variable_names:
+
+            variable_names2 = self.sortVariables(variable_names)
+            for variable_name in variable_names2:
                 variable_type = analysis_module_variables_model.getVariableType(variable_name)
                 variable_value = analysis_module_variables_model.getVariableValue(self.__analysis_module_name, variable_name)
 
@@ -57,9 +59,28 @@ class AnalysisModuleVariablesPanel(QWidget):
                     spinner = self.createSpinBox(variable_name, variable_value, variable_type, analysis_module_variables_model)
                    
                 layout.addRow(label_name, spinner)
+                if variable_name == "LAMBDA0":
+                    label = QLabel("<span style=\"font-size:12pt; font-weight:300;font-style:italic;\"> Initial Lambda of -1.00 signifies that the value will be calculated</span>")
+                    layout.addRow(label, None)
 
         self.setLayout(layout)
         self.blockSignals(False)
+
+    def sortVariables(self, variable_list):
+        analysis_module_variables_model = AnalysisModuleVariablesModel()
+        sorted_list = ["#","#","#","#","#","#","#","#","#","#","#","#","#","#"]
+        result = []
+        for name in variable_list:
+            pos = analysis_module_variables_model.getVariablePosition(name)
+            sorted_list.insert(pos, name)
+            sorted_list.__delitem__(pos+1)
+
+        for item in sorted_list:
+            if item <> "#":
+                result.append(item)
+
+        return result
+
         
     def createSpinBox(self, variable_name, variable_value, variable_type, analysis_module_variables_model):
         spinner = QSpinBox()
