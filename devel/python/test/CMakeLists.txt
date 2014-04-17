@@ -443,7 +443,7 @@ set_property( TEST python.tests.ert.util.stringlist       PROPERTY LABELS Python
 set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.ecl.faults            PROPERTY LABELS Python )
 
-set_property( TEST python.tests.ert.ecl.statoil_faults        PROPERTY LABELS Python )
+set_property( TEST python.tests.ert.ecl.statoil_faults        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf                 PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.ecl_config           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_fs              PROPERTY LABELS Python:StatoilData )
