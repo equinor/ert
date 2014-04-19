@@ -352,5 +352,5 @@ class SumTest(ExtendedTestCase):
         gprod = sum.blockedProduction("GOPT:OP" , trange)
         wprod = wprod1 + wprod2 + wprod3 + wprod4 + wprod5
         for (w,f,g) in zip(wprod, fprod,gprod):
-            self.assertAlmostEqualScaled( w , f )
-            self.assertAlmostEqualScaled( w , g )
+            self.assertFloatEqual( w , f )
+            self.assertFloatEqual( w , g )
