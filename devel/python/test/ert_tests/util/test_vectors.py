@@ -180,6 +180,54 @@ class UtilTest(TestCase):
         self.assertEqual(len(vec), 16)
 
 
+    def test_pop(self):
+        a = IntVector()
+        a.append(1)
+        a.append(2)
+        
+        self.assertEqual( a.pop() , 2 )
+        self.assertEqual( len(a) , 1 )
+        self.assertEqual( a.pop() , 1 )
+        self.assertEqual( len(a) , 0 )
+        with self.assertRaises(ValueError):
+            a.pop()
+        
+
+    def test_shift(self):
+        a = IntVector()
+        a.append(1)
+        a.append(2)
+        a.append(3)
+        a.append(4)
+        a.append(5)
+        
+        with self.assertRaises(ValueError):
+            a >> -1
+
+
+        with self.assertRaises(ValueError):
+            a << -1
+
+        with self.assertRaises(ValueError):
+            a << -6
+
+        b = a << 2
+        self.assertEqual(list(b) , [3,4,5])
+        
+        print a
+        a <<= 2
+        print a
+        self.assertEqual(list(a) , [3,4,5])
+
+        b = a >> 2
+        self.assertEqual(list(b) , [0,0,3,4,5])
+
+        
+        a >>= 2
+        self.assertEqual(list(a) , [0,0,3,4,5])
+        
+        
+
 
     def test_int_vector(self):
         a = IntVector()
