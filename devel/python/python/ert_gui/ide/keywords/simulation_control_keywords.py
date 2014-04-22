@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import IntegerArgument, BoolArgument, StringArgument, ConfigurationLineDefinition, KeywordDefinition
+from ert_gui.ide.keywords.definitions import IntegerArgument, BoolArgument, StringArgument, ConfigurationLineDefinition, KeywordDefinition , PercentArgument
 
 
 class SimulationControlKeywords(object):
@@ -26,10 +26,11 @@ class SimulationControlKeywords(object):
 
     def addMinRealizations(self):
         min_realizations = ConfigurationLineDefinition(keyword=KeywordDefinition("MIN_REALIZATIONS"),
-                                                   arguments=[StringArgument(rest_of_line=True, allow_space=True)],
-                                                   documentation_link="keywords/min_realizations",
-                                                   required=False,
-                                                   group=self.group)
+                                                       arguments=[IntegerArgument(from_value = 0) , 
+                                                                  PercentArgument(from_value = 0 , to_value = 100)],
+                                                       documentation_link="keywords/min_realizations",
+                                                       required=False,
+                                                       group=self.group)
         return min_realizations
 
 
