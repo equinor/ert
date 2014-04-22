@@ -22,8 +22,7 @@ from ert.enkf.enkf_main import EnKFMain
 from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum, EnkfInitModeEnum, ErtImplType, RealizationStateEnum
 from ert.enkf.enums.enkf_truncation_type import EnkfTruncationType
 from ert.enkf.observations.summary_observation import SummaryObservation
-from ert.util.test_area import TestAreaContext
-from ert.test import ExtendedTestCase
+from ert.test import ExtendedTestCase , TestAreaContext
 
 
 
