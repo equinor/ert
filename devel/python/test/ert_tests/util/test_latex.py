@@ -6,7 +6,7 @@ except ImportError:
 import os
 from ert.util import LaTeX
 from ert.util.test_area import TestAreaContext
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 class LatexTest(ExtendedTestCase):

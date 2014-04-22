@@ -28,7 +28,7 @@ from ert.ecl import EclSum
 from ert.util import StringList, TimeVector, DoubleVector
 from ert.util.test_area import TestAreaContext
 
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 base = "ECLIPSE"

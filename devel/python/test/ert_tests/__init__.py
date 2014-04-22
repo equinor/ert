@@ -13,35 +13,25 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os
-import traceback
-from ert_tests.source_enumerator import SourceEnumerator
-from ert.test import ExtendedTestCase
-
-
-class ErtTestCase(ExtendedTestCase):
-
-
-    def assertEnumIsFullyDefined(self, enum_class, enum_name, source_path, verbose=False):
-        enum_values = SourceEnumerator.findEnumerators(enum_name, source_path)
-
-        for identifier, value in enum_values:
-            if verbose:
-                print("%s = %d" % (identifier, value))
-
-            self.assertTrue(enum_class.__dict__.has_key(identifier), "Enum does not have identifier: %s" % identifier)
-            class_value = enum_class.__dict__[identifier]
-            self.assertEqual(class_value, value, "Enum value for identifier: %s does not match: %s != %s" % (identifier, class_value, value))
-
-
-
-    def createTestPath(self, path):
-        """
-        @param: The test root path can be set by environment variable ERT_TEST_ROOT_PATH
-        """
-        file_path = os.path.realpath(__file__)
-        default_test_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../test-data/"))
-        test_root = os.path.realpath(os.environ.get("ERT_TEST_ROOT_PATH", default_test_root))
-        
-        return super(ErtTestCase , self).createTestPath(test_root , path)
-
+#import os
+#import traceback
+#from ert_tests.source_enumerator import SourceEnumerator
+#from ert.test import ExtendedTestCase
+#
+#
+#class ErtTestCase(ExtendedTestCase):
+#
+#
+#
+#
+#
+#    def createTestPath(self, path):
+#        """
+#        @param: The test root path can be set by environment variable ERT_TEST_ROOT_PATH
+#        """
+#        file_path = os.path.realpath(__file__)
+#        default_test_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../test-data/"))
+#        test_root = os.path.realpath(os.environ.get("ERT_TEST_ROOT_PATH", default_test_root))
+#        
+#        return super(ErtTestCase , self).createTestPath(test_root , path)
+#

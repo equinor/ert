@@ -24,7 +24,7 @@ from ert.ecl import EclFile, FortIO
 from ert.ecl.ecl_util import EclFileFlagEnum
 
 from ert.util.test_area import TestAreaContext
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 class EclFileTest(ExtendedTestCase):

@@ -19,7 +19,7 @@ import random
 from ert.ecl import EclKW, EclTypeEnum, EclFile, FortIO, EclFileFlagEnum
 from ert.util.test_area import TestAreaContext
 
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 def copy_long():
