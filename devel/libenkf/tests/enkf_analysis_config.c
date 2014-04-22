@@ -52,7 +52,6 @@ void test_min_realizations_percent(const char * num_realizations_str, const char
     test_assert_not_NULL(config_file_stream);
     fprintf(config_file_stream, num_realizations_str);
     fprintf(config_file_stream, min_realizations_str);
-    fflush(config_file_stream);
     fclose(config_file_stream);
 
     config_type * c = config_alloc();
@@ -144,7 +143,7 @@ int main(int argc , char ** argv) {
   }
   {
     const char * num_realizations_str = "NUM_REALIZATIONS 8\n";
-    const char * min_realizations_str = "MIN_REALIZATIONS 50 %%\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 50%%\n";
     int min_realizations              = 4;
     test_min_realizations_percent(num_realizations_str, min_realizations_str, min_realizations);
   }
@@ -156,7 +155,7 @@ int main(int argc , char ** argv) {
   }
   {
     const char * num_realizations_str = "NUM_REALIZATIONS 8\n";
-    const char * min_realizations_str = "MIN_REALIZATIONS 10  %%\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 10%%\n";
     int min_realizations              = 0;
     test_min_realizations_percent(num_realizations_str, min_realizations_str, min_realizations);
   }
