@@ -13,57 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import numbers
 import os
 import traceback
-
-try:
-    from unittest2 import TestCase
-except ImportError:
-    from unittest import TestCase
-
 from ert_tests.source_enumerator import SourceEnumerator
+from ert.test import ExtendedTestCase
 
 
-"""
-This class provides some extra functionality for testing values that are almost equal.
-"""
-class ExtendedTestCase(TestCase):
-    def assertFloatEqual(self, first, second, msg=None):
-        if isinstance(first, numbers.Number) and isinstance(second, numbers.Number):
-            tolerance = 1e-6
-            diff = abs(first - second)
-            scale = max(1, abs(first) + abs(second))
+class ErtTestCase(ExtendedTestCase):
 
-            self.assertTrue(diff < tolerance * scale, msg=msg)
-        else:
-            self.assertTrue(first == second, msg=msg)
-
-
-    def assertAlmostEqualList(self, first, second, msg=None):
-        if len(first) != len(second):
-            self.fail("Lists are not of same length!")
-
-        for index in range(len(first)):
-            self.assertFloatEqual(first[index], second[index], msg=msg)
-
-    def assertImportable(self, module_name):
-        try:
-            __import__(module_name)
-        except ImportError:
-            tb = traceback.format_exc()
-            self.fail("Module %s not found!\n\nTrace:\n%s" % (module_name, str(tb)))
-        except Exception:
-            tb = traceback.format_exc()
-            self.fail("Import of module %s caused errors!\n\nTrace:\n%s" % (module_name, str(tb)))
-
-    def assertFilesAreEqual(self, first, second):
-        if not self.__filesAreEqual(first, second):
-            self.fail("Buffer contents of files are not identical!")
-
-    def assertFilesAreNotEqual(self, first, second):
-        if self.__filesAreEqual(first, second):
-            self.fail("Buffer contents of files are identical!")
 
     def assertEnumIsFullyDefined(self, enum_class, enum_name, source_path, verbose=False):
         enum_values = SourceEnumerator.findEnumerators(enum_name, source_path)
@@ -77,11 +34,6 @@ class ExtendedTestCase(TestCase):
             self.assertEqual(class_value, value, "Enum value for identifier: %s does not match: %s != %s" % (identifier, class_value, value))
 
 
-    def __filesAreEqual(self, first, second):
-        buffer1 = open(first).read()
-        buffer2 = open(second).read()
-
-        return buffer1 == buffer2
 
     def createTestPath(self, path):
         """
@@ -91,12 +43,5 @@ class ExtendedTestCase(TestCase):
         default_test_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../test-data/"))
         test_root = os.path.realpath(os.environ.get("ERT_TEST_ROOT_PATH", default_test_root))
         
-        return os.path.realpath(os.path.join(test_root, path))
+        return super(ErtTestCase , self).createTestPath(test_root , path)
 
-    @staticmethod
-    def slowTestShouldNotRun():
-        """
-        @param: The slow test flag can be set by environment variable SKIP_SLOW_TESTS = [True|False]
-        """
-
-        return os.environ.get("SKIP_SLOW_TESTS", "False") == "True"
