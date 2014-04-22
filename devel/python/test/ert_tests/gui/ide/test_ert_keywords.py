@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import IntegerArgument, StringArgument, BoolArgument, PathArgument, FloatArgument
+from ert_gui.ide.keywords.definitions import IntegerArgument, StringArgument, BoolArgument, PathArgument, FloatArgument , PercentArgument
 from ert_gui.ide.keywords import ErtKeywords
 from ert_gui.ide.keywords.definitions.proper_name_argument import ProperNameArgument
 from ert_gui.ide.keywords.definitions.proper_name_format_argument import ProperNameFormatArgument
@@ -73,7 +73,7 @@ class ErtKeywordTest(ExtendedTestCase):
 
     def test_control_simulations_keywords(self):
         self.keywordTest("MAX_RUNTIME", [IntegerArgument], "keywords/max_runtime", "Simulation Control")
-        self.keywordTest("MIN_REALIZATIONS", [IntegerArgument], "keywords/min_realizations", "Simulation Control")
+        self.keywordTest("MIN_REALIZATIONS", [IntegerArgument,PercentArgument], "keywords/min_realizations", "Simulation Control")
         self.keywordTest("STOP_LONG_RUNNING", [BoolArgument], "keywords/stop_long_running", "Simulation Control")
 
     def test_parametrization_keywords(self):

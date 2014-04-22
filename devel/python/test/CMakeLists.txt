@@ -79,6 +79,7 @@ set(TEST_SOURCES
     ert_tests/gui/ide/test_ert_keywords.py
     ert_tests/gui/ide/test_float_argument.py
     ert_tests/gui/ide/test_integer_argument.py
+    ert_tests/gui/ide/test_percent_argument.py
     ert_tests/gui/ide/test_path_argument.py
     ert_tests/gui/ide/test_path_argument.py
     ert_tests/gui/ide/test_proper_name_argument.py
