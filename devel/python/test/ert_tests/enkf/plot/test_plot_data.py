@@ -1,7 +1,6 @@
-from ert.enkf import ErtTestContext
 from ert.enkf.plot_data import PlotBlockData, PlotBlockDataLoader, PlotBlockVector
 from ert.util import DoubleVector
-from ert.test import ExtendedTestCase
+from ert.test import ExtendedTestCase, ErtTestContext
 
 
 class PlotDataTest(ExtendedTestCase):

@@ -1,6 +1,6 @@
 from ert.enkf import ObsVector
-from ert.enkf import ErtTestContext
 from ert.util import BoolVector
+from ert.test import ErtTestContext
 from ert.test import ExtendedTestCase
 
 

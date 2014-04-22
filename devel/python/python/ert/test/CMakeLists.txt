@@ -1,7 +1,8 @@
 set(PYTHON_SOURCES
     __init__.py
-    test_run.py
+    ert_test_context.py
     extended_testcase.py
+    test_run.py
     source_enumerator.py
     test_area.py
 )
