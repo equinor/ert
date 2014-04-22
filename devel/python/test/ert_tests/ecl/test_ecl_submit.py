@@ -28,7 +28,7 @@ import shutil
 from ert.ecl import EclQueue, EclSum
 from ert.job_queue import QueueDriverEnum, RSHDriver
 from ert.util.test_area import TestAreaContext
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 path = "Statoil/ECLIPSE/Gurbat"

@@ -17,7 +17,7 @@
 import os
 from random import randint
 from ert.ecl import FortIO, EclTypeEnum, EclKW
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 from ert.util.test_area import TestAreaContext
 
 

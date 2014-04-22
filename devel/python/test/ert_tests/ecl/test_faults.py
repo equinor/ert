@@ -22,7 +22,7 @@ except ImportError:
 import time
 from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment
 from ert.ecl import EclGrid
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 class FaultTest(ExtendedTestCase):
     def setUp(self):

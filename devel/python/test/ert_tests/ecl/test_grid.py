@@ -23,7 +23,7 @@ import time
 from ert.ecl import EclTypeEnum, EclKW, EclGrid
 from ert.util import DoubleVector
 from ert.util.test_area import TestAreaContext
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 class GridTest(ExtendedTestCase):

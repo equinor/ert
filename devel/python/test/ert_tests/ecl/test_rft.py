@@ -18,7 +18,7 @@
 
 import datetime
 from ert.ecl import EclRFTFile, EclRFTCell, EclPLTCell
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 class RFTTest(ExtendedTestCase):
