@@ -24,6 +24,7 @@
 #define TORQUE_DRIVER_TYPE_ID 34873653
 #define TORQUE_JOB_TYPE_ID    12312312
 
+
 struct torque_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
   char * queue_name;
@@ -31,6 +32,7 @@ struct torque_driver_struct {
   char * qstat_cmd;
   char * qdel_cmd;
   char * num_cpus_per_node_char;
+  char * job_prefix;
   char * num_nodes_char;
   bool keep_qsub_output;
   int num_cpus_per_node;
@@ -63,6 +65,7 @@ void * torque_driver_alloc() {
   torque_driver->num_cpus_per_node = 1;
   torque_driver->num_nodes = 1;
   torque_driver->cluster_label = NULL;
+  torque_driver->job_prefix = NULL;
 
   torque_driver_set_option(torque_driver, TORQUE_QSUB_CMD, TORQUE_DEFAULT_QSUB_CMD);
   torque_driver_set_option(torque_driver, TORQUE_QSTAT_CMD, TORQUE_DEFAULT_QSTAT_CMD);
@@ -111,6 +114,10 @@ static bool torque_driver_set_keep_qsub_output(torque_driver_type * driver, cons
   }
 }
 
+static void torque_driver_set_job_prefix(torque_driver_type * driver, const char * job_prefix){
+    driver->job_prefix = job_prefix;
+}
+
 static void torque_driver_set_cluster_label(torque_driver_type * driver, const char* cluster_label) {
   driver->cluster_label = util_realloc_string_copy(driver->cluster_label, cluster_label);
 }
@@ -146,6 +153,8 @@ bool torque_driver_set_option(void * __driver, const char * option_key, const vo
       option_set = torque_driver_set_keep_qsub_output(driver, value);
     else if (strcmp(TORQUE_CLUSTER_LABEL, option_key) == 0)
       torque_driver_set_cluster_label(driver, value);
+    else if(strcmp(TORQUE_JOB_PREFIX_KEY, option_key) == 0)
+      torque_driver_set_job_prefix(driver, value);
     else
       option_set = false;
   }
@@ -171,6 +180,8 @@ const void * torque_driver_get_option(const void * __driver, const char * option
       return driver->keep_qsub_output ? "1" : "0";
     else if (strcmp(TORQUE_CLUSTER_LABEL, option_key) == 0)
       return driver->cluster_label;
+    else if(strcmp(TORQUE_JOB_PREFIX_KEY, option_key) == 0)
+        return driver->job_prefix;
     else {
       util_abort("%s: option_id:%s not recognized for TORQUE driver \n", __func__, option_key);
       return NULL;
@@ -187,6 +198,7 @@ void torque_driver_init_option_list(stringlist_type * option_list) {
   stringlist_append_ref(option_list, TORQUE_NUM_NODES);
   stringlist_append_ref(option_list, TORQUE_KEEP_QSUB_OUTPUT);
   stringlist_append_ref(option_list, TORQUE_CLUSTER_LABEL);
+  stringlist_append_ref(option_list, TORQUE_JOB_PREFIX_KEY);
 }
 
 torque_job_type * torque_job_alloc() {
@@ -329,12 +341,22 @@ void * torque_driver_submit_job(void * __driver,
         int argc,
         const char ** argv) {
   torque_driver_type * driver = torque_driver_safe_cast(__driver);
+  char * local_job_name = NULL;
+  if(driver->job_prefix != NULL){
+    local_job_name = util_alloc_sprintf("%s%s",driver->job_prefix, job_name);
+  }
+  else{
+     local_job_name = job_name;
+  }
   torque_job_type * job = torque_job_alloc();
   {
-    job->torque_jobnr = torque_driver_submit_shell_job(driver, run_path, job_name, submit_cmd, num_cpu, argc, argv);
+    job->torque_jobnr = torque_driver_submit_shell_job(driver, run_path, local_job_name, submit_cmd, num_cpu, argc, argv);
     job->torque_jobnr_char = util_alloc_sprintf("%ld", job->torque_jobnr);
   }
 
+  if(driver->job_prefix != NULL){
+      free(local_job_name);
+  }
   if (job->torque_jobnr > 0)
     return job;
   else {
