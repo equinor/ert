@@ -92,7 +92,7 @@ typedef enum { UNDEFINED_FORMAT         = 0,
                ECL_KW_FILE_ALL_CELLS    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
                ECL_GRDECL_FILE          = 5, 
                ECL_FILE                 = 6,       /* Assumes packed on export. */
-               FILE_FORMAT_NULL         = 7}       /* Used when the guess functions are given NULL to check -should never be read. */ field_file_format_type; 
+               FILE_FORMAT_NULL         = 7} field_file_format_type;  /* Used when the guess functions are given NULL to check -should never be read. */
 
                 
 /* active_cells currently not really implemented */

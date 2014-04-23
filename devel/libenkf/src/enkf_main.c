@@ -3469,14 +3469,30 @@ char * enkf_main_alloc_abs_path_to_init_file(const enkf_main_type * enkf_main, c
 }
 
 
+bool enkf_main_export_field(const enkf_main_type * enkf_main,
+                            const char * kw,
+                            const char * path,
+                            bool_vector_type * iactive,
+                            field_file_format_type file_type,
+                            int report_step,
+                            state_enum state)
+{
+    enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
+    bool result = enkf_main_export_field_with_fs(enkf_main, kw, path, iactive, file_type, report_step, state, fs);
+    return result;
+}
 
-bool enkf_main_export_field(const enkf_main_type * enkf_main, 
+
+
+
+bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
                             const char * kw, 
                             const char * path, 
                             bool_vector_type * iactive,
                             field_file_format_type file_type,
                             int report_step, 
-                            state_enum state) {
+                            state_enum state,
+                            enkf_fs_type * fs) {
   
   bool ret = false; 
   if (util_int_format_count(path) < 1) {
@@ -3506,7 +3522,6 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
     else
       printf("no init_file found, exporting 0 or fill value for inactive cells\n");
 
-    enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
     int iens;
     for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
       if (bool_vector_iget(iactive, iens)) {

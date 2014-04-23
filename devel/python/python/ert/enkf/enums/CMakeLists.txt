@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    enkf_field_file_format_enum.py
     enkf_fs_type_enum.py
     enkf_init_modes_enum.py
     enkf_obs_impl_type_enum.py
