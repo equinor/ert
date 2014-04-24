@@ -1,5 +1,5 @@
 from ert.util import Matrix
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 class MatrixTest(ExtendedTestCase):
     def test_matrix(self):
