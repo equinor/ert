@@ -16,7 +16,7 @@
 #  for more details. 
 
 from ert.config import ContentTypeEnum, UnrecognizedEnum, SchemaItem, ContentItem, ContentNode, ConfigParser
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 class ConfigTest(ExtendedTestCase):

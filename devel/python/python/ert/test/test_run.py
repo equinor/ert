@@ -17,7 +17,7 @@ import random
 import os.path
 import subprocess
 import argparse
-from   ert.util import TestAreaContext
+from  .test_area import TestAreaContext
 
 
 def path_exists( path ):

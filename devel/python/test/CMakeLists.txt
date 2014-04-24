@@ -3,7 +3,6 @@ set(RSH_SERVERS "" CACHE STRING  "List of nodes which will be used to test the R
 
 set(TEST_SOURCES
     ert_tests/__init__.py
-    ert_tests/source_enumerator.py
     ert_tests/run_tests.py
     ert_tests/test_ert_import.py
     ert_tests/import_tester.py

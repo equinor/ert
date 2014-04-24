@@ -1,6 +1,4 @@
-from ert.test_run import TestRun , path_exists
-from ert_tests import ExtendedTestCase
-
+from ert.test import TestRun , path_exists , ExtendedTestCase
     
 
 

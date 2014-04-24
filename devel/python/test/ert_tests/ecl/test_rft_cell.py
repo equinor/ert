@@ -18,7 +18,7 @@
 
 import warnings
 from ert.ecl import EclRFTCell, EclPLTCell
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 # def out_of_range():
