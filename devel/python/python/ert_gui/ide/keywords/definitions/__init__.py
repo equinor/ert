@@ -1,5 +1,6 @@
 from .argument_definition import ArgumentDefinition
 from .integer_argument import IntegerArgument
+from .percent_argument import PercentArgument
 from .string_argument import StringArgument
 from .bool_argument import BoolArgument
 from .float_argument import FloatArgument

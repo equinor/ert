@@ -24,10 +24,7 @@ class HelpedWidget(QWidget):
     def __init__(self, widget_label="", help_link=""):
         QWidget.__init__(self)
 
-        self.validation_label = QLabel()
-        self.validation_label.setParent(self)
-        self.validation_label.setMinimumSize(QSize(16, 16))
-        self.validation_label.setMaximumSize(QSize(16, 16))
+
 
         if not widget_label == "":
             self.label = widget_label + ":"
@@ -40,7 +37,6 @@ class HelpedWidget(QWidget):
 
         self.widget_layout = QHBoxLayout()
         self.widget_layout.setMargin(0)
-        self.widget_layout.addWidget(self.validation_label)
         self.setLayout(self.widget_layout)
         self.setMinimumHeight(20)
 
@@ -71,14 +67,12 @@ class HelpedWidget(QWidget):
         if message == "":
             self.validation_type = None
             self.validation_message = None
-            self.validation_label.setPixmap(QPixmap())
             HelpedWidget.__error_popup.hide()
             self.validationChanged.emit(True)
 
         else:
             self.validation_type = validation_type
             self.validation_message = message
-            self.validation_label.setPixmap(resourceImage(validation_type))
             HelpedWidget.__error_popup.presentError(self, self.validation_message)
             self.validationChanged.emit(False)
 
@@ -89,9 +83,6 @@ class HelpedWidget(QWidget):
     def isValid(self):
         return self.validation_message is None
 
-
-    def hideValidationLabel(self):
-        self.validation_label.setHidden(True)
 
     def enterEvent(self, event):
         QWidget.enterEvent(self, event)

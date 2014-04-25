@@ -17,7 +17,7 @@
 
 import os
 from ert.enkf import AnalysisConfig
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 class AnalysisConfigTest(ExtendedTestCase):

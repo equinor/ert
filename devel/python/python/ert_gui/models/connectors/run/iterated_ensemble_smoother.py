@@ -72,12 +72,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         analysis_config = self.ert().analysisConfig()
         analysis_iter_config = analysis_config.getAnalysisIterConfig()
-        max_iterations = analysis_iter_config.getMaxNumIterations()
-        total_num_iterations = 0
-        failed_iterations = 0
+        num_retries_per_iteration = analysis_iter_config.getNumRetries()
+        num_tries = 0
         current_iteration = 1
 
-        while current_iteration <= NumberOfIterationsModel().getValue() and total_num_iterations < max_iterations:
+        while current_iteration <= NumberOfIterationsModel().getValue() and num_tries < num_retries_per_iteration:
             target_fs = self.createTargetCaseFileSystem(current_iteration)
 
             pre_analysis_iter_num = analysis_module.getInt("ITER")
@@ -91,18 +90,18 @@ class IteratedEnsembleSmoother(BaseRunModel):
             if analysis_success:
                 self.ert().getEnkfFsManager().switchFileSystem(target_fs)
                 self.runAndPostProcess(active_realization_mask, current_iteration, phase_count, EnkfInitModeEnum.INIT_NONE)
+                num_tries = 0
                 current_iteration += 1
             else:
                 self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(target_fs, 0, EnkfStateType.ANALYZED)
                 self.runAndPostProcess(active_realization_mask, current_iteration - 1 , phase_count, EnkfInitModeEnum.INIT_NONE)
-                failed_iterations += 1
+                num_tries += 1
 
-
-            total_num_iterations += 1
 
 
         if current_iteration == phase_count:
             self.setPhase(phase_count, "Simulations completed.")
         else:
-            raise ErtRunError("Iterated Ensemble Smoother stopped: maximum number of iterations (%d iterations) reached. Number of failed iterations: %d" % (max_iterations, failed_iterations))
+            raise ErtRunError("Iterated Ensemble Smoother stopped: maximum number of iteration retries (%d retries) reached for iteration %d" % (num_retries_per_iteration, current_iteration))
+
 

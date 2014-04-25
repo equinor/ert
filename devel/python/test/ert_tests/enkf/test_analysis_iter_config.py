@@ -17,7 +17,7 @@
 
 import os
 from ert.enkf import AnalysisIterConfig
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 class AnalysisIterConfigTest(ExtendedTestCase):
@@ -33,5 +33,5 @@ class AnalysisIterConfigTest(ExtendedTestCase):
         c.setNumIterations(1)
         self.assertTrue( c.numIterationsSet() )
 
-        self.assertEqual( c.getMaxNumIterations(),  2)
+        
 

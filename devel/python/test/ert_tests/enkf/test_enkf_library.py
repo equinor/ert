@@ -6,8 +6,7 @@ from ert.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig, PlotCo
 from ert.enkf.enkf_main import EnKFMain
 
 from ert.enkf.util import TimeMap
-from ert.util.test_area import TestAreaContext
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase , TestAreaContext
 
 
 class EnKFLibraryTest(ExtendedTestCase):
