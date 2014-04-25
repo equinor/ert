@@ -35,10 +35,9 @@ struct analysis_iter_config_struct {
   char            * case_fmt;
   stringlist_type * storage;
   int               num_iterations;
-  int               max_num_iterations;
+  int               num_iter_tries;
   bool              case_set;   
   bool              num_iterations_set; 
-  bool              max_num_iterations_set;
 };
 
 
@@ -56,20 +55,12 @@ bool analysis_iter_config_num_iterations_set( const analysis_iter_config_type * 
 }
 
 
-void analysis_iter_config_set_max_num_iterations( analysis_iter_config_type * config , int max_num_iterations) {
-  config->max_num_iterations = max_num_iterations;
-  config->max_num_iterations_set = true;
+void analysis_iter_config_set_num_retries_per_iteration( analysis_iter_config_type * config , int num_iter_tries) {
+  config->num_iter_tries = num_iter_tries;
 }
 
-int analysis_iter_config_get_max_num_iterations( const analysis_iter_config_type * config ) {
-  if (analysis_iter_config_max_num_iterations_set(config))
-    return config->max_num_iterations;
-  else
-    return (2 * analysis_iter_config_get_num_iterations(config));
-}
-
-bool analysis_iter_config_max_num_iterations_set( const analysis_iter_config_type * config ) {
-  return config->max_num_iterations_set;
+int analysis_iter_config_get_num_retries_per_iteration( const analysis_iter_config_type * config ) {
+  return config->num_iter_tries;
 }
 
 
@@ -95,9 +86,9 @@ analysis_iter_config_type * analysis_iter_config_alloc() {
    analysis_iter_config_set_case_fmt( config, DEFAULT_ANALYSIS_ITER_CASE);
    config->storage = stringlist_alloc_new();
    analysis_iter_config_set_num_iterations( config , DEFAULT_ANALYSIS_NUM_ITERATIONS );
+   analysis_iter_config_set_num_retries_per_iteration(config, DEFAULT_ITER_RETRY_COUNT);
 
    config->num_iterations_set = false;
-   config->max_num_iterations_set = false;
    config->case_set = false;
    return config;
 }
@@ -122,7 +113,7 @@ const char * analysis_iter_config_iget_case( analysis_iter_config_type * config 
 void analysis_iter_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ITER_CASE_KEY        , false , CONFIG_STRING);
   config_add_key_value( config , ITER_COUNT_KEY       , false , CONFIG_INT);
-  config_add_key_value( config , MAX_ITER_COUNT_KEY   , false , CONFIG_INT);
+  config_add_key_value( config , ITER_RETRY_COUNT_KEY , false , CONFIG_INT);
 }
 
 
@@ -133,8 +124,8 @@ void analysis_iter_config_init(analysis_iter_config_type * iter_config , const c
   if (config_item_set( config , ITER_COUNT_KEY ))
     analysis_iter_config_set_num_iterations( iter_config , config_get_value_as_int( config , ITER_COUNT_KEY ));
 
-  if (config_item_set( config , MAX_ITER_COUNT_KEY ))
-    analysis_iter_config_set_max_num_iterations( iter_config , config_get_value_as_int( config , MAX_ITER_COUNT_KEY ));
+  if (config_item_set( config , ITER_RETRY_COUNT_KEY ))
+    analysis_iter_config_set_num_retries_per_iteration( iter_config , config_get_value_as_int( config , ITER_RETRY_COUNT_KEY ));
 }
 
 

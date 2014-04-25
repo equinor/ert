@@ -2,8 +2,8 @@ import os
 from ert.enkf import EnkfFs
 from ert.enkf import EnKFMain
 from ert.enkf import EnkfFsManager
-from ert.enkf import ErtTestContext
-from ert_tests import ExtendedTestCase
+from ert.test import ErtTestContext
+from ert.test import ExtendedTestCase
 
 
 class EnKFFSManagerTest2(ExtendedTestCase):

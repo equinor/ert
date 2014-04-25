@@ -312,7 +312,7 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
    spesific file.
 */
 
-void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fortio_type * restart_fortio , int report_step) {
+void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , void * filestream , int report_step) {
   if (enkf_node->ecl_write != NULL) {
     char * node_eclfile = enkf_config_node_alloc_outfile(enkf_node->config , report_step); /* Will return NULL if the node does not have any outfile format. */
     /*
@@ -321,7 +321,7 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fo
       is then the responsability of the low-level implementation to
       do "the right thing".
     */
-    enkf_node->ecl_write(enkf_node->data , path , node_eclfile , restart_fortio);
+    enkf_node->ecl_write(enkf_node->data , path , node_eclfile , filestream);
     util_safe_free( node_eclfile );
   }
 }

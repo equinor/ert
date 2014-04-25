@@ -231,7 +231,8 @@ def main(argv):
 
         window.show()
         splash.finish(window)
-
+        window.activateWindow()
+        window.raise_()
         finished_code = app.exec_()
 
         ert.ert().free()

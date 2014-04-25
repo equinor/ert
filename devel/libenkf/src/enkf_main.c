@@ -1961,29 +1961,29 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations_to
     }
 
     { // Iteration 1 - num_iterations [iteration 1, num iterations]
-      int max_num_iterations = analysis_iter_config_get_max_num_iterations(iter_config);
-      int total_num_iterations_run = 0;
-      current_iteration            = 1;
+      int num_retries_per_iteration = analysis_iter_config_get_num_retries_per_iteration(iter_config);
+      int num_tries     = 0;
+      current_iteration = 1;
 
-      while ((current_iteration <= num_iterations_to_run) && (total_num_iterations_run < max_num_iterations)) {
+      while ((current_iteration <= num_iterations_to_run) && (num_tries < num_retries_per_iteration)) {
         const char * target_fs_name = analysis_iter_config_iget_case( iter_config , current_iteration );
 
         if (enkf_main_run_analysis(enkf_main, target_fs_name, current_iteration)) {
           enkf_main_select_fs(enkf_main, target_fs_name);
           if (!enkf_main_run_simulation_and_postworkflow(enkf_main, current_iteration, iactive))
             break;
+          num_tries = 0;
           ++current_iteration;
         } else {
           fprintf(stderr, "\nAnalysis failed, rerunning simulation on changed initial parameters\n");
           enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false );
           enkf_main_init_current_case_from_existing(enkf_main, target_fs, 0, ANALYZED);
           enkf_fs_decref(target_fs);
+          ++num_tries;
 
           if (!enkf_main_run_simulation_and_postworkflow(enkf_main, current_iteration-1, iactive))
             break;
         }
-
-        ++total_num_iterations_run;
       }
     }
 
@@ -2157,6 +2157,9 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
 
   item = config_add_schema_item(config , RFTPATH_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+
+  item = config_add_schema_item(config, GEN_KW_EXPORT_FILE_KEY, false );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
 
   item = config_add_schema_item(config , LOCAL_CONFIG_KEY  , false  );
@@ -3466,14 +3469,30 @@ char * enkf_main_alloc_abs_path_to_init_file(const enkf_main_type * enkf_main, c
 }
 
 
+bool enkf_main_export_field(const enkf_main_type * enkf_main,
+                            const char * kw,
+                            const char * path,
+                            bool_vector_type * iactive,
+                            field_file_format_type file_type,
+                            int report_step,
+                            state_enum state)
+{
+    enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
+    bool result = enkf_main_export_field_with_fs(enkf_main, kw, path, iactive, file_type, report_step, state, fs);
+    return result;
+}
 
-bool enkf_main_export_field(const enkf_main_type * enkf_main, 
+
+
+
+bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
                             const char * kw, 
                             const char * path, 
                             bool_vector_type * iactive,
                             field_file_format_type file_type,
                             int report_step, 
-                            state_enum state) {
+                            state_enum state,
+                            enkf_fs_type * fs) {
   
   bool ret = false; 
   if (util_int_format_count(path) < 1) {
@@ -3503,7 +3522,6 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
     else
       printf("no init_file found, exporting 0 or fill value for inactive cells\n");
 
-    enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
     int iens;
     for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
       if (bool_vector_iget(iactive, iens)) {

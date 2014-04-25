@@ -6,6 +6,7 @@ from .field import Field
 
 from .enkf_config_node import EnkfConfigNode
 from .enkf_node import EnkfNode
+from .gen_kw import GenKw
 
 __all__ = ["GenDataConfig",
            "GenKwConfig",
@@ -13,4 +14,5 @@ __all__ = ["GenDataConfig",
            "SummaryConfig",
            "Field",
            "EnkfConfigNode",
-           "EnkfNode"]
+           "EnkfNode",
+           "GenKw"]

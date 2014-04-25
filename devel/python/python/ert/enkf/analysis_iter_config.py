@@ -32,9 +32,9 @@ class AnalysisIterConfig(BaseCClass):
     def numIterationsSet(self):
         return AnalysisIterConfig.cNamespace().num_iterations_set(self)
 
-    def getMaxNumIterations(self):
+    def getNumRetries(self):
         """ @rtype: int """
-        return AnalysisIterConfig.cNamespace().get_max_num_iterations(self)
+        return AnalysisIterConfig.cNamespace().get_num_retries(self)
 
     def getCaseFormat(self):
         """ @rtype: str """
@@ -57,7 +57,7 @@ AnalysisIterConfig.cNamespace().alloc = cwrapper.prototype("c_void_p analysis_it
 AnalysisIterConfig.cNamespace().free = cwrapper.prototype("void analysis_iter_config_free( analysis_iter_config )")
 AnalysisIterConfig.cNamespace().set_num_iterations = cwrapper.prototype("void analysis_iter_config_set_num_iterations(analysis_iter_config, int)")
 AnalysisIterConfig.cNamespace().get_num_iterations = cwrapper.prototype("int analysis_iter_config_get_num_iterations(analysis_iter_config)")
-AnalysisIterConfig.cNamespace().get_max_num_iterations = cwrapper.prototype("int analysis_iter_config_get_max_num_iterations(analysis_iter_config)")
+AnalysisIterConfig.cNamespace().get_num_retries = cwrapper.prototype("int analysis_iter_config_get_num_retries_per_iteration(analysis_iter_config)")
 AnalysisIterConfig.cNamespace().num_iterations_set = cwrapper.prototype("bool analysis_iter_config_num_iterations_set(analysis_iter_config)")
 AnalysisIterConfig.cNamespace().set_case_fmt = cwrapper.prototype("void analysis_iter_config_set_case_fmt( analysis_iter_config , char* )")
 AnalysisIterConfig.cNamespace().get_case_fmt = cwrapper.prototype("char* analysis_iter_config_get_case_fmt( analysis_iter_config)")

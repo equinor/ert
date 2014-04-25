@@ -1,3 +1,4 @@
+from .enkf_field_file_format_enum import EnkfFieldFileFormatEnum
 from .load_fail_type_enum import LoadFailTypeEnum
 from .enkf_var_type_enum import EnkfVarType
 from .enkf_state_type_enum import EnkfStateType
@@ -9,7 +10,8 @@ from .realization_state_enum import RealizationStateEnum
 from .enkf_truncation_type import EnkfTruncationType
 from .enkf_fs_type_enum import EnKFFSType
 
-__all__ = ["LoadFailTypeEnum",
+__all__ = ["EnkfFieldFileFormatEnum",
+           "LoadFailTypeEnum",
            "EnkfVarType",
            "EnkfStateType",
            "EnkfRunEnum",

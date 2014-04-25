@@ -22,8 +22,7 @@ except ImportError:
 import time
 from ert.ecl import EclTypeEnum, EclKW, EclGrid
 from ert.util import DoubleVector
-from ert.util.test_area import TestAreaContext
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase , TestAreaContext
 
 
 class GridTest(ExtendedTestCase):
@@ -46,6 +45,10 @@ class GridTest(ExtendedTestCase):
     def test_EGRID( self ):
         grid = EclGrid(self.egrid_file())
         self.assertTrue(grid)
+        dims = grid.dims
+        self.assertEqual(dims[0] , grid.getNX())
+        self.assertEqual(dims[1] , grid.getNY())
+        self.assertEqual(dims[2] , grid.getNZ())
 
 
     def create(self, filename, load_actnum=True):

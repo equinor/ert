@@ -15,6 +15,7 @@ class AnalysisModuleKeywords(object):
         ert_keywords.addKeyword(self.addIterCount())
         ert_keywords.addKeyword(self.addStdCutoff())
         ert_keywords.addKeyword(self.addSingleNodeUpdate())
+        ert_keywords.addKeyword(self.addIterRetryCount())
 
 
 
@@ -76,6 +77,15 @@ class AnalysisModuleKeywords(object):
                                                  required=False,
                                                  group=self.group)
         return iter_count
+
+
+    def addIterRetryCount(self):
+        retry_count = ConfigurationLineDefinition(keyword=KeywordDefinition("ITER_RETRY_COUNT"),
+                                                 arguments=[IntegerArgument()],
+                                                 documentation_link="keywords/iter_retry_count",
+                                                 required=False,
+                                                 group=self.group)
+        return retry_count
 
 
     def addStdCutoff(self):

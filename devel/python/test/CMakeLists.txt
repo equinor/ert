@@ -3,7 +3,6 @@ set(RSH_SERVERS "" CACHE STRING  "List of nodes which will be used to test the R
 
 set(TEST_SOURCES
     ert_tests/__init__.py
-    ert_tests/source_enumerator.py
     ert_tests/run_tests.py
     ert_tests/test_ert_import.py
     ert_tests/import_tester.py
@@ -29,6 +28,8 @@ set(TEST_SOURCES
     ert_tests/ecl/test_rft_cell.py
     ert_tests/ecl/test_sum.py
     ert_tests/ecl/test_ecl_sum_vector.py
+    ert_tests/ecl/test_faults.py
+    ert_tests/ecl/test_statoil_faults.py
 
     ert_tests/enkf/__init__.py
     ert_tests/enkf/test_ert_context.py
@@ -77,6 +78,7 @@ set(TEST_SOURCES
     ert_tests/gui/ide/test_ert_keywords.py
     ert_tests/gui/ide/test_float_argument.py
     ert_tests/gui/ide/test_integer_argument.py
+    ert_tests/gui/ide/test_percent_argument.py
     ert_tests/gui/ide/test_path_argument.py
     ert_tests/gui/ide/test_path_argument.py
     ert_tests/gui/ide/test_proper_name_argument.py
@@ -368,7 +370,13 @@ add_test( NAME python.tests.ert.ecl.ecl_sum_vector
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_sum_vector.EclSumVectorTest)
 
 
+add_test( NAME python.tests.ert.ecl.faults
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_faults.FaultTest )
 
+add_test( NAME python.tests.ert.ecl.statoil_faults
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_statoil_faults.StatoilFaultTest )
 
 #SCHED
 add_test( NAME python.tests.ert.sched.sched
@@ -433,7 +441,9 @@ set_property( TEST python.tests.ert.test_run              PROPERTY LABELS Python
 set_property( TEST python.tests.ert.import                PROPERTY LABELS Python)
 set_property( TEST python.tests.ert.util.stringlist       PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python )
+set_property( TEST python.tests.ert.ecl.faults            PROPERTY LABELS Python )
 
+set_property( TEST python.tests.ert.ecl.statoil_faults        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf                 PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.ecl_config           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_fs              PROPERTY LABELS Python:StatoilData )

@@ -16,7 +16,7 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf.data import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig
-from ert.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum
+from ert.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
 from ert.ecl import EclGrid
 
 
@@ -34,8 +34,8 @@ class EnkfConfigNode(BaseCClass):
         """ @rtype: ErtImplType """
         return EnkfConfigNode.cNamespace().get_impl_type(self)
 
-    # def get_var_type( self ):
-    #     return EnkfConfigNode.cNamespace().get_var_type(self)
+    def getVariableType( self ):
+         return EnkfConfigNode.cNamespace().get_var_type(self)
 
     def getPointerReference(self):
         return EnkfConfigNode.cNamespace().get_ref(self)
@@ -125,7 +125,7 @@ EnkfConfigNode.cNamespace().get_enkf_outfile = cwrapper.prototype("char* enkf_co
 EnkfConfigNode.cNamespace().get_min_std_file = cwrapper.prototype("char* enkf_config_node_get_min_std_file(enkf_config_node)")
 EnkfConfigNode.cNamespace().get_enkf_infile = cwrapper.prototype("char* enkf_config_node_get_enkf_infile(enkf_config_node)")
 EnkfConfigNode.cNamespace().get_init_file_fmt = cwrapper.prototype("char* enkf_config_node_get_init_file_fmt(enkf_config_node)")
-EnkfConfigNode.cNamespace().get_var_type = cwrapper.prototype("c_void_p enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
+EnkfConfigNode.cNamespace().get_var_type = cwrapper.prototype("enkf_var_type_enum enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
 EnkfConfigNode.cNamespace().get_obs_keys = cwrapper.prototype("stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)")
 EnkfConfigNode.cNamespace().alloc_summary_node = cwrapper.prototype("enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)")
 EnkfConfigNode.cNamespace().alloc_field_node = cwrapper.prototype("enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, c_void_p, bool)")
