@@ -1,6 +1,7 @@
 from OpenGL.GL import *
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QMainWindow, QDockWidget
+import sys
 from ert.ecl import EclTypeEnum, EclKW, EclGrid
 from ert_gui.viewer import Texture3D, Bounds, SliceViewer, SliceSettingsWidget, Texture1D
 
@@ -126,12 +127,16 @@ def createColorScales():
     }
 
 
-def createDataStructures():
-    nx, ny, nz, grid_data, bounds = loadGridData("/Volumes/Statoil/data/faultregion/grid.grdecl")
-    # nx, ny, nz, grid_data, bounds = loadGridData("/Volumes/Statoil/data/TestCase/eclipse/include/example_grid_sim.GRDECL")
+def createDataStructures(grid_path=None, grid_data_path=None):
+    if grid_path is not None:
+        nx, ny, nz, grid_data, bounds = loadGridData(grid_path)
+        data, data_range = loadKWData(grid_data_path, "FLTBLCK", ecl_type=EclTypeEnum.ECL_INT_TYPE)
+    else:
+        # nx, ny, nz, grid_data, bounds = loadGridData("/Volumes/Statoil/data/faultregion/grid.grdecl")
+        # data, data_range = loadKWData("/Volumes/Statoil/data/faultregion/fltblck.grdecl", "FLTBLCK", ecl_type=EclTypeEnum.ECL_INT_TYPE)
 
-    data, data_range = loadKWData("/Volumes/Statoil/data/faultregion/fltblck.grdecl", "FLTBLCK", ecl_type=EclTypeEnum.ECL_INT_TYPE)
-    # data, data_range = loadKWData("/Volumes/Statoil/data/TestCase/eclipse/include/example_permx.GRDECL", "PERMX", ecl_type=EclTypeEnum.ECL_FLOAT_TYPE)
+        nx, ny, nz, grid_data, bounds = loadGridData("/Volumes/Statoil/data/TestCase/eclipse/include/example_grid_sim.GRDECL")
+        data, data_range = loadKWData("/Volumes/Statoil/data/TestCase/eclipse/include/example_permx.GRDECL", "PERMX", ecl_type=EclTypeEnum.ECL_FLOAT_TYPE)
 
     grid_texture = Texture3D(nx, ny, nz, grid_data, GL_RGBA32F, GL_RGBA)
     attribute_texture = Texture3D(nx, ny, nz, data)
@@ -144,11 +149,19 @@ def createDataStructures():
 
 
 if __name__ == '__main__':
+
+    grid_path = None
+    grid_data_path = None
+
+    if len(sys.argv) == 3:
+        grid_path = sys.argv[1]
+        grid_data_path = sys.argv[2]
+
     app = QApplication(["Slice Viewer"])
     window = QMainWindow()
     window.resize(1024, 768)
 
-    textures, bounds, nx, ny, nz, data_range = createDataStructures()
+    textures, bounds, nx, ny, nz, data_range = createDataStructures(grid_path, grid_data_path)
 
     color_scales = createColorScales()
     textures["color_scale"] = color_scales[color_scales.keys()[0]]
@@ -164,6 +177,9 @@ if __name__ == '__main__':
     slice_settings.colorScalesChanged.connect(viewer.changeColorScale)
     slice_settings.regionToggling.connect(viewer.useRegionScaling)
     slice_settings.toggleInterpolation.connect(viewer.useInterpolationOnData)
+    slice_settings.mirrorX.connect(viewer.mirrorX)
+    slice_settings.mirrorY.connect(viewer.mirrorY)
+    slice_settings.mirrorZ.connect(viewer.mirrorZ)
 
 
     dock_widget = QDockWidget("Settings")
