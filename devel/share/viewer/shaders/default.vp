@@ -27,7 +27,7 @@ void main() {
     vec3 vb = normalize(vec3(0.0, 2.0, s12 - s10));
     normal = normalize(cross(va, vb));
 
-//    normal = (gl_ModelViewMatrix * vec4(normal, 0.0)).xyz;
+    //normal = (gl_ModelViewMatrix * vec4(normal, 0.0)).xyz;
 
     gl_Position = gl_ModelViewProjectionMatrix * p;
 }

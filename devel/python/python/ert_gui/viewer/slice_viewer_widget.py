@@ -65,6 +65,7 @@ class SliceViewer(QGLWidget):
         self.__region_scaling = False
 
 
+
     def createShader(self):
         vp = self.createShaderSource("default.vp")
         fp = self.createShaderSource("texturing.fp")
@@ -113,9 +114,8 @@ class SliceViewer(QGLWidget):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
-
-
         self.__camera.applyCamera()
+
 
         glScalef(1.0 / self.__volume_bounds.diffX, 1.0 / self.__volume_bounds.diffY, 1.0)
         glScalef(1.0, 1.0, 1.0 / self.__volume_bounds.diffZ)
@@ -124,8 +124,8 @@ class SliceViewer(QGLWidget):
         glTranslate(0, 0, -self.__volume_bounds.minZ - self.__volume_bounds.diffZ / 2.0)
 
         glTranslate(-0.5, -0.5, 0.0)
-        self.__vbo.draw()
 
+        self.__vbo.draw()
 
         index = 0
         for key, texture in self.__textures.iteritems():
@@ -172,8 +172,6 @@ class SliceViewer(QGLWidget):
         else:
             self.__width = float(width) / height
             self.__height = 1.0
-
-
 
     def createShaderSource(self, shader_path):
         root_path = os.getenv("ERT_SHARE_PATH")
@@ -256,3 +254,15 @@ class SliceViewer(QGLWidget):
                 self.__textures["grid_data"].setFilterMode(GL_NEAREST)
 
             self.updateGL()
+
+    def mirrorX(self, on):
+        self.__camera.mirrorX(on)
+        self.updateGL()
+
+    def mirrorY(self, on):
+        self.__camera.mirrorY(on)
+        self.updateGL()
+
+    def mirrorZ(self, on):
+        self.__camera.mirrorZ(on)
+        self.updateGL()

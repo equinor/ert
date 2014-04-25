@@ -11,6 +11,9 @@ class SliceSettingsWidget(QWidget):
     currentSliceChanged = pyqtSignal(int)
     colorScalesChanged = pyqtSignal(QString)
     toggleInterpolation = pyqtSignal(bool)
+    mirrorX = pyqtSignal(bool)
+    mirrorY = pyqtSignal(bool)
+    mirrorZ = pyqtSignal(bool)
 
     def __init__(self, max_slice_count, color_scales):
         QWidget.__init__(self)
@@ -26,6 +29,9 @@ class SliceSettingsWidget(QWidget):
         self.addComboBox("Color scale", self.colorScalesChanged, color_scales)
         self.addCheckBox("Region scaling", self.regionToggling)
         self.addCheckBox("Interpolate data", self.toggleInterpolation)
+        self.addCheckBox("Mirror X", self.mirrorX)
+        self.addCheckBox("Mirror Y", self.mirrorY)
+        self.addCheckBox("Mirror Z", self.mirrorZ)
 
         self.setLayout(self.__layout)
 

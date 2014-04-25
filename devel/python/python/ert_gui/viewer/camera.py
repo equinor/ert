@@ -16,6 +16,10 @@ class Camera(object):
 
         self.__orthographic_projection = False
 
+        self.__mirror_x = False
+        self.__mirror_y = False
+        self.__mirror_z = False
+
         self.resetCamera()
 
 
@@ -45,6 +49,15 @@ class Camera(object):
         glMatrixMode(GL_MODELVIEW)
         glTranslate(0.0, 0.0, -1.0)
         glRotate(self.__quaternion.getAngleAsDegrees(), self.__quaternion.X, self.__quaternion.Y, self.__quaternion.Z)
+
+        if self.__mirror_x:
+            glScale(-1.0, 1.0, 1.0)
+
+        if self.__mirror_y:
+            glScale(1.0, -1.0, 1.0)
+
+        if self.__mirror_z:
+            glScale(1.0, 1.0, -1.0)
 
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
@@ -84,5 +97,14 @@ class Camera(object):
 
     def useOrthographicProjection(self, on):
         self.__orthographic_projection = on
+
+    def mirrorX(self, on):
+        self.__mirror_x = on
+
+    def mirrorY(self, on):
+        self.__mirror_y = on
+
+    def mirrorZ(self, on):
+        self.__mirror_z = on
 
 
