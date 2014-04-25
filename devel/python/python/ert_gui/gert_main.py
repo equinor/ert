@@ -123,6 +123,7 @@ from ert_gui.tools import HelpCenter
 
 from ert_gui.tools.help import HelpTool
 from ert_gui.tools.ide import IdeTool
+from ert_gui.tools.load_results import LoadResultsTool
 from ert_gui.tools.manage_cases import ManageCasesTool
 from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.export import ExportTool
@@ -223,6 +224,7 @@ def main(argv):
         window.addTool(ExportTool())
         window.addTool(WorkflowsTool(ert.reloadERT))
         window.addTool(ManageCasesTool())
+        window.addTool(LoadResultsTool())
         window.addTool(help_tool)
 
 
