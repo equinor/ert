@@ -194,6 +194,8 @@ class EnKFMain(BaseCClass):
         assert isinstance(keyword, str)
         return EnKFMain.cNamespace().export_field_with_fs(self, keyword, path, iactive, file_type, report_step, state, enkfFs)
 
+    def loadFromFowardModel(self, realization, iteration, realizations_msg_list):
+        EnKFMain.cNamespace().load_from_forward_model(self, iteration, realization, realizations_msg_list)
 
 
 ##################################################################
@@ -256,5 +258,5 @@ EnKFMain.cNamespace().export_field = cwrapper.prototype("bool enkf_main_export_f
 
 EnKFMain.cNamespace().export_field_with_fs = cwrapper.prototype("bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_state_type_enum, enkf_fs_manager)")
 
-
+EnKFMain.cNamespace().load_from_forward_model = cwrapper.prototype("void enkf_main_load_from_forward_model(enkf_main, int, bool_vector, stringlist)")
 
