@@ -584,34 +584,27 @@ void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_type * ar
   bool_vector_type * iterations           = NULL;
 
 
-  int delimiter = 0;
-  if (stringlist_get_size(args) > 0) {
-    delimiter = stringlist_find_first(args, "|");
-    int_vector_type * star_token = stringlist_find(args, "*");
-    if (delimiter == -1) {
-      if (int_vector_size(star_token) > 0)
-        realizations = bool_vector_alloc(ensemble_size, true);
-      else
-        realizations = alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args), ensemble_size);
-      iterations     = bool_vector_alloc(1, true);
-    } else {
-      if ((int_vector_size(star_token) > 0) && (int_vector_iget(star_token,0) < delimiter))
-        realizations = bool_vector_alloc(ensemble_size, true);
-      else
-        realizations = alloc_iactive_vector_from_range(args, 0, delimiter, ensemble_size);
-
-      if (model_config_runpath_requires_iter(model_config) && ((stringlist_get_size(args) - delimiter) >= 0) ) {
-        if (((int_vector_size(star_token) > 0) && (int_vector_iget(star_token, 0) > delimiter)) ||
-            ((int_vector_size(star_token) > 1) && (int_vector_iget(star_token, 1) > delimiter)))
-          iterations = bool_vector_alloc(num_iterations, true);
-        else
-          iterations = alloc_iactive_vector_from_range(args, delimiter+1, stringlist_get_size(args), 1);
-      } else
-        iterations = bool_vector_alloc(1, true);
-    }
-  } else {
+  if (stringlist_get_size(args) <= 0) {
     realizations = bool_vector_alloc(ensemble_size, true);
     iterations   = bool_vector_alloc(1, true);
+  } else {
+    int delimiter = stringlist_find_first(args, "|");
+
+    if (0 == strcmp("*", stringlist_iget(args,0)))
+      realizations = bool_vector_alloc(ensemble_size, true);
+    else if (-1 == delimiter)
+      realizations = alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args), ensemble_size);
+    else
+      realizations = alloc_iactive_vector_from_range(args, 0, delimiter, ensemble_size);
+
+    if ((-1 == delimiter) || !model_config_runpath_requires_iter(model_config))
+      iterations = bool_vector_alloc(1, true);
+    else if (stringlist_get_size(args) <= (delimiter+1))
+      iterations = bool_vector_alloc(1, true);
+    else if (0 == strcmp("*", stringlist_iget(args, (delimiter+1))))
+      iterations = bool_vector_alloc(num_iterations, true);
+    else
+      iterations = alloc_iactive_vector_from_range(args, delimiter+1, stringlist_get_size(args), 1);
   }
 
   enkf_main_export_runpath_file(enkf_main, realizations, iterations);
