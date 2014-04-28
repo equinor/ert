@@ -30,6 +30,12 @@
 #include <ert/enkf/enkf_main_jobs.h>
 
 
+ert_test_context_type * create_context( const char * config_file, const char * name ) {
+  ert_test_context_type * test_context = ert_test_context_alloc(name , config_file , NULL);
+  test_assert_not_NULL(test_context);
+  return test_context;
+}
+
 void test_create_case_job(ert_test_context_type * test_context, const char * job_name , const char * job_file) {
   stringlist_type * args = stringlist_alloc_new();
   stringlist_append_copy( args , "newly_created_case");
@@ -235,7 +241,8 @@ static void test_export_runpath_file(ert_test_context_type * test_context,
                                     const char * job_name,
                                     const char * job_file,
                                     stringlist_type * args,
-                                    int linecount) {
+                                    int_vector_type * iens_values,
+                                    int_vector_type * iter_values) {
 
   ert_test_context_install_workflow_job( test_context , job_name , job_file );
   test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
@@ -245,95 +252,210 @@ static void test_export_runpath_file(ert_test_context_type * test_context,
     qc_module_type * qc_module       = enkf_main_get_qc_module( enkf_main );
     const char * runpath_file_name   = qc_module_get_runpath_list_file(qc_module);
 
-    test_assert_true(util_file_exists(runpath_file_name));
+    ecl_config_type * ecl_config            = enkf_main_get_ecl_config(enkf_main);
+    const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
+    const char * base_fmt                   = ecl_config_get_eclbase(ecl_config);
+    const char * runpath_fmt                = model_config_get_runpath_as_char(model_config);
 
+    test_assert_true(util_file_exists(runpath_file_name));
     FILE * file = util_fopen(runpath_file_name, "r");
-    test_assert_int_equal(linecount, util_count_content_file_lines(file));
+
+    int file_iens = 0;
+    char file_path[256];
+    char file_base[256];
+    int file_iter = 0;
+    char * cwd = util_alloc_cwd();
+    int counter = 0;
+    int iens_index = 0;
+    int iter_index = 0;
+
+    while (4 == fscanf( file , "%d %s %s %d" , &file_iens , file_path , file_base, &file_iter)) {
+      ++ counter;
+
+      test_assert_true(int_vector_size(iens_values) >= iens_index+1);
+      test_assert_true(int_vector_size(iter_values) >= iter_index+1);
+
+      int iens = int_vector_iget(iens_values, iens_index);
+      int iter = int_vector_iget(iter_values, iter_index);
+
+      test_assert_int_equal(file_iens, iens);
+      test_assert_int_equal(file_iter, iter);
+
+      char * base = util_alloc_sprintf("--%d", iens);
+      if (base_fmt && (util_int_format_count(base_fmt) == 1))
+        base = util_alloc_sprintf(base_fmt, iens);
+
+      test_assert_string_equal(base, file_base);
+
+      char * runpath = "";
+      if (util_int_format_count(runpath_fmt) == 1)
+        runpath = util_alloc_sprintf(runpath_fmt, iens);
+      else if (util_int_format_count(runpath_fmt) == 2)
+        runpath = util_alloc_sprintf(runpath_fmt, iens,iter);
+
+      char * path = util_alloc_filename(cwd, runpath, NULL);
+      test_assert_string_equal(path, file_path);
+
+      if (iens_index+1 < int_vector_size(iens_values))
+        ++iens_index;
+      else if ((iens_index+1 == int_vector_size(iens_values))) {
+        ++iter_index;
+        iens_index = 0;
+      }
+
+      free(base);
+      free(runpath);
+      free(path);
+    }
+
+    int linecount = int_vector_size(iens_values) * int_vector_size(iter_values);
+    test_assert_int_equal(linecount, counter);
+    free(cwd);
     fclose(file);
   }
 }
 
 
 
-void test_export_runpath_files(ert_test_context_type * test_context,
-                               bool iter,
+void test_export_runpath_files(const char * config_file,
+                               const char * config_file_iterations,
                                const char * job_file_export_runpath) {
 
   stringlist_type * args = stringlist_alloc_new();
   const char * job_name  = "export_job";
 
-  if (iter) {
-    {
-      int linecount = 5;
-      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
-    }
-    {
-      stringlist_append_copy( args, "0-1"); //realization range
-      int linecount = 2;
-      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
-      stringlist_clear(args);
-    }
-    {
-      stringlist_append_copy( args, "0,3-5"); //realization range
-      stringlist_append_copy( args, "|"); //realization range
-      int linecount = 4;
-      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
-      stringlist_clear(args);
-    }
+  ert_test_context_type * test_context_iterations = create_context( config_file_iterations, "enkf_workflow_job_test_export_runpath_iter" );
 
-    {
-      stringlist_append_copy( args, "1-2"); //realization range
-      stringlist_append_copy( args, "|");   //delimiter
-      stringlist_append_copy( args, "1-3"); //iteration range
+  {
+    int_vector_type * iens_values = int_vector_alloc(5,0);
+    const int iens[5] = {0,1,2,3,4};
+    int_vector_set_many(iens_values, 0, &iens[0], 5);
+    int_vector_type * iter_values = int_vector_alloc(1,0);
 
-      int linecount = 6;
-      test_export_runpath_file(test_context, job_name , job_file_export_runpath, args, linecount);
-      stringlist_clear(args);
-    }
-    {
-      stringlist_append_copy( args, "*");   //realization range
-      stringlist_append_copy( args, "|");   //delimiter
-      stringlist_append_copy( args, "*");   //iteration range
+    test_export_runpath_file(test_context_iterations, job_name, job_file_export_runpath, args, iens_values, iter_values);
 
-      int linecount = 20;
-      test_export_runpath_file(test_context, "JOB11", job_file_export_runpath, args, linecount);
-      stringlist_clear(args);
-    }
+    int_vector_free(iens_values);
+    int_vector_free(iter_values);
+  }
+  {
+    stringlist_append_copy( args, "0-2"); //realization range
 
-    {
-      stringlist_append_copy( args, "1,2"); //realization range
-      stringlist_append_copy( args, "|");   //delimiter
-      stringlist_append_copy( args, "*");   //iteration range
+    int_vector_type * iens_values = int_vector_alloc(3,0);
+    const int iens[] = {0,1,2};
+    int_vector_set_many(iens_values, 0, &iens[0], 3);
+    int_vector_type * iter_values = int_vector_alloc(1,0);
 
-      int linecount = 8;
-      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
-      stringlist_clear(args);
-    }
-  } else {
-    {
-      int linecount = 25;
-      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
-    }
-    {
-      stringlist_append_copy( args, "1,2"); //realization range
-      stringlist_append_copy( args, "|");   //delimiter
-      stringlist_append_copy( args, "1-3"); //iteration range
-      int linecount = 2;
-      test_export_runpath_file(test_context, job_name , job_file_export_runpath, args, linecount);
-      stringlist_clear(args);
-    }
+    test_export_runpath_file(test_context_iterations, job_name, job_file_export_runpath, args, iens_values, iter_values);
 
-    {
-      stringlist_append_copy( args, "1-3"); //realization range
-      stringlist_append_copy( args, "|");   //delimiter
-      stringlist_append_copy( args, "0");   //iteration range
+    int_vector_free(iens_values);
+    int_vector_free(iter_values);
 
-      int linecount = 3;
-      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
-      stringlist_clear(args);
-    }
+    stringlist_clear(args);
+  }
+  {
+    stringlist_append_copy( args, "0,3-5"); //realization range
+
+    int_vector_type * iens_values = int_vector_alloc(4,0);
+    const int iens[] = {0,3,4,5};
+    int_vector_set_many(iens_values, 0, &iens[0], 4);
+    int_vector_type * iter_values = int_vector_alloc(1,0);
+
+    test_export_runpath_file(test_context_iterations, job_name, job_file_export_runpath, args, iens_values, iter_values);
+
+    int_vector_free(iens_values);
+    int_vector_free(iter_values);
+
+    stringlist_clear(args);
+  }
+  {
+    stringlist_append_copy( args, "1-2"); //realization range
+    stringlist_append_copy( args, "|");   //delimiter
+    stringlist_append_copy( args, "1-3"); //iteration range
+
+    int_vector_type * iens_values = int_vector_alloc(2,0);
+    int iens[] = {1,2};
+    int_vector_set_many(iens_values, 0, &iens[0], 2);
+    int_vector_type * iter_values = int_vector_alloc(3,0);
+    int iter[] = {1,2,3};
+    int_vector_set_many(iter_values, 0, &iter[0], 3);
+
+    test_export_runpath_file(test_context_iterations, job_name, job_file_export_runpath, args, iens_values, iter_values);
+
+    int_vector_free(iens_values);
+    int_vector_free(iter_values);
+
+    stringlist_clear(args);
+  }
+  {
+    stringlist_append_copy( args, "*");   //realization range
+    stringlist_append_copy( args, "|");   //delimiter
+    stringlist_append_copy( args, "*");   //iteration range
+
+    int_vector_type * iens_values = int_vector_alloc(5,0);
+    int iens[] = {0,1,2,3,4};
+    int_vector_set_many(iens_values, 0, &iens[0], 5);
+    int_vector_type * iter_values = int_vector_alloc(4,0);
+    int iter[] = {0,1,2,3};
+    int_vector_set_many(iter_values, 0, &iter[0], 4);
+
+    test_export_runpath_file(test_context_iterations, job_name, job_file_export_runpath, args, iens_values, iter_values);
+
+    int_vector_free(iens_values);
+    int_vector_free(iter_values);
+
+    stringlist_clear(args);
   }
 
+  ert_test_context_free(test_context_iterations);
+  ert_test_context_type * test_context = create_context( config_file, "enkf_workflow_job_test_export_runpath" );
+
+  {
+    int_vector_type * iens_values = int_vector_alloc(1,0);
+    int_vector_init_range(iens_values, 0, 24, 1);
+    int_vector_type * iter_values = int_vector_alloc(1,0);
+
+    test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, iens_values, iter_values);
+
+    int_vector_free(iens_values);
+    int_vector_free(iter_values);
+
+    stringlist_clear(args);
+  }
+  {
+    stringlist_append_copy( args, "1-3"); //realization range
+
+    int_vector_type * iens_values = int_vector_alloc(3,0);
+    int iens[] = {1,2,3};
+    int_vector_set_many(iens_values, 0, &iens[0], 3);
+    int_vector_type * iter_values = int_vector_alloc(1,0);
+
+    test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, iens_values, iter_values);
+
+    int_vector_free(iens_values);
+    int_vector_free(iter_values);
+
+    stringlist_clear(args);
+  }
+  {
+    stringlist_append_copy( args, "1,2"); //realization range
+    stringlist_append_copy( args, "|");   //delimiter
+    stringlist_append_copy( args, "1-3"); //iteration range
+
+    int_vector_type * iens_values = int_vector_alloc(2,0);
+    int iens[] = {1,2};
+    int_vector_set_many(iens_values, 0, &iens[0], 2);
+    int_vector_type * iter_values = int_vector_alloc(1,0);
+
+    test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, iens_values, iter_values);
+
+    int_vector_free(iens_values);
+    int_vector_free(iter_values);
+
+    stringlist_clear(args);
+  }
+
+
+  ert_test_context_free(test_context);
 
 
   stringlist_free( args );
@@ -341,11 +463,6 @@ void test_export_runpath_files(ert_test_context_type * test_context,
 
 
 
-ert_test_context_type * create_context( const char * config_file, const char * name ) {
-  ert_test_context_type * test_context = ert_test_context_alloc(name , config_file , NULL);
-  test_assert_not_NULL(test_context);
-  return test_context;
-}
 
 
 int main(int argc , const char ** argv) {
@@ -374,15 +491,10 @@ int main(int argc , const char ** argv) {
     test_rank_realizations_on_observations_job(test_context, "JOB6" , job_file_observation_ranking);
     test_rank_realizations_on_data_job(test_context , "JOB7" , job_file_data_ranking);
     test_export_ranking(test_context, "JOB8" , job_file_ranking_export);
-    test_export_runpath_files(test_context, false, job_file_export_runpath);
   }
   ert_test_context_free( test_context );
 
-  {
-    ert_test_context_type * test_context_iterations = create_context( config_file_iterations, "enkf_workflow_job_test" );
-    test_export_runpath_files(test_context_iterations, true, job_file_export_runpath);
-    ert_test_context_free( test_context_iterations );
-  }
+  test_export_runpath_files(config_file, config_file_iterations, job_file_export_runpath);
 
   exit(0);
 }
