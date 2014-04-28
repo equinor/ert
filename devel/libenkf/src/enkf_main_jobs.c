@@ -534,7 +534,7 @@ static void enkf_main_export_runpath_file(enkf_main_type * enkf_main,
     if (bool_vector_iget(iterations, iter)) {
       for (int iens = 0; iens < bool_vector_size(realizations); ++iens) {
         if (bool_vector_iget(realizations, iens)) {
-        char * basename = NULL;
+          char * basename = NULL;
           if (basename_fmt)
             basename = util_alloc_sprintf(basename_fmt, iens);
           else
