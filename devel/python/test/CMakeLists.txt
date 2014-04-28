@@ -30,6 +30,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_ecl_sum_vector.py
     ert_tests/ecl/test_faults.py
     ert_tests/ecl/test_statoil_faults.py
+    ert_tests/ecl/test_npv.py
 
     ert_tests/enkf/__init__.py
     ert_tests/enkf/test_ert_context.py
@@ -377,6 +378,10 @@ add_test( NAME python.tests.ert.ecl.faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_faults.FaultTest )
 
+add_test( NAME python.tests.ert.ecl.ecl_npv
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_npv.NPVTest)
+
 add_test( NAME python.tests.ert.ecl.statoil_faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_statoil_faults.StatoilFaultTest )
@@ -441,6 +446,7 @@ set_property( TEST python.tests.ert.ecl.ecl_region        PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_file          PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_queue_LOCAL   PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.tests.ert.ecl.ecl_sum           PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.ecl.ecl_npv           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_kw            PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_rft           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python:StatoilData )
