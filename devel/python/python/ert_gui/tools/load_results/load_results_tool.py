@@ -24,6 +24,8 @@ class LoadResultsTool(Tool):
         super(LoadResultsTool, self).__init__("Load results manually", "tools/load_manually", util.resourceIcon("ide/table_import"))
         self.__import_widget = None
         self.__dialog = None
+        self.setVisable(False)
+
 
     def trigger(self):
         if self.__import_widget is None:
@@ -35,3 +37,5 @@ class LoadResultsTool(Tool):
     def load(self):
         self.__import_widget.load()
         self.__dialog.accept()
+
+

@@ -1,4 +1,4 @@
-from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtCore import Qt, QSize, pyqtSignal
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QAction
 from ert_gui.models.connectors.init import CaseList
 from ert_gui.models.connectors.run import SimulationModeModel
@@ -12,6 +12,9 @@ from ert_gui.widgets.helped_widget import HelpedWidget
 
 
 class SimulationPanel(QWidget):
+
+    show_advanced_options = pyqtSignal(bool)
+
     def __init__(self):
         QWidget.__init__(self)
 
@@ -80,6 +83,7 @@ class SimulationPanel(QWidget):
 
 
     def toggleAdvanced(self, show_advanced):
+        self.show_advanced_options.emit(show_advanced)
         for panel in self.simulation_widgets.values():
             panel.toggleAdvancedOptions(show_advanced)
 
