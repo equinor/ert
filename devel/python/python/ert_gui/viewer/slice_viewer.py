@@ -151,8 +151,7 @@ def createDataStructures(grid_path=None, grid_data_path=None):
     return textures, bounds, nx, ny, nz, data_range
 
 
-def readPolylines():
-    root_path = "/Volumes/Statoil/data/faultregion"
+def readPolylines(root_path):
     polyline_files = ["pol1.xyz",
                       "pol2.xyz",
                       "pol3.xyz",
@@ -167,10 +166,11 @@ def readPolylines():
 
     polylines = []
 
-    for polyline_file in polyline_files:
-        path = os.path.join(root_path, polyline_file)
-        polyline = XYZReader.readXYZFile(path)
-        polylines.append(polyline)
+    if os.path.exists(root_path):
+        for polyline_file in polyline_files:
+            path = os.path.join(root_path, polyline_file)
+            polyline = XYZReader.readXYZFile(path)
+            polylines.append(polyline)
 
     return polylines
 
@@ -189,7 +189,8 @@ if __name__ == '__main__':
 
     textures, bounds, nx, ny, nz, data_range = createDataStructures(grid_path, grid_data_path)
 
-    polylines = readPolylines()
+
+    polylines = readPolylines(root_path="/Volumes/Statoil/data/faultregion")
 
     color_scales = createColorScales()
     textures["color_scale"] = color_scales[color_scales.keys()[0]]
