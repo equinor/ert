@@ -46,3 +46,6 @@ class Tool(object):
     def getAction(self):
         return self.__action
 
+    def setVisable(self, visable):
+        self.__action.setVisible(visable)
+

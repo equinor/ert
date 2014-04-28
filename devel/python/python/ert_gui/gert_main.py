@@ -214,7 +214,9 @@ def main(argv):
 
 
         window = GertMainWindow()
-        window.setWidget(SimulationPanel())
+        simulation_panel = SimulationPanel()
+        window.setWidget(simulation_panel)
+
 
         help_tool = HelpTool("ERT", window)
 
@@ -224,7 +226,9 @@ def main(argv):
         window.addTool(ExportTool())
         window.addTool(WorkflowsTool(ert.reloadERT))
         window.addTool(ManageCasesTool())
-        window.addTool(LoadResultsTool())
+        load_results_tool = LoadResultsTool()
+        simulation_panel.show_advanced_options.connect(load_results_tool.setVisable)
+        window.addTool(load_results_tool)
         window.addTool(help_tool)
 
 
