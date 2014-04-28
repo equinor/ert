@@ -234,6 +234,7 @@ target_link_libraries( enkf_workflow_job_test enkf test_util )
 
 add_test( enkf_workflow_job_test
           ${EXECUTABLE_OUTPUT_PATH}/enkf_workflow_job_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config
+                                                           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/enkf_state_runpath/config_runpath_multiple_iterations
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/CREATE_CASE
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/INIT_CASE_FROM_EXISTING
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS
@@ -241,7 +242,8 @@ add_test( enkf_workflow_job_test
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/OBSERVATION_RANKING
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/DATA_RANKING
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RANKING
-                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/INIT_MISFIT_TABLE)
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/INIT_MISFIT_TABLE
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RUNPATH)
 
 
 

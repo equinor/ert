@@ -230,8 +230,120 @@ void test_init_misfit_table(ert_test_context_type * test_context , const char * 
 
 
 
-ert_test_context_type * create_context( const char * config_file ) {
-  ert_test_context_type * test_context = ert_test_context_alloc("LoadResultsJob" , config_file , NULL);
+
+static void test_export_runpath_file(ert_test_context_type * test_context,
+                                    const char * job_name,
+                                    const char * job_file,
+                                    stringlist_type * args,
+                                    int linecount) {
+
+  ert_test_context_install_workflow_job( test_context , job_name , job_file );
+  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
+
+  {
+    const enkf_main_type * enkf_main = ert_test_context_get_main(test_context);
+    qc_module_type * qc_module       = enkf_main_get_qc_module( enkf_main );
+    const char * runpath_file_name   = qc_module_get_runpath_list_file(qc_module);
+
+    test_assert_true(util_file_exists(runpath_file_name));
+
+    FILE * file = util_fopen(runpath_file_name, "r");
+    test_assert_int_equal(linecount, util_count_content_file_lines(file));
+    fclose(file);
+  }
+}
+
+
+
+void test_export_runpath_files(ert_test_context_type * test_context,
+                               bool iter,
+                               const char * job_file_export_runpath) {
+
+  stringlist_type * args = stringlist_alloc_new();
+  const char * job_name  = "export_job";
+
+  if (iter) {
+    {
+      int linecount = 5;
+      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
+    }
+    {
+      stringlist_append_copy( args, "0-1"); //realization range
+      int linecount = 2;
+      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
+      stringlist_clear(args);
+    }
+    {
+      stringlist_append_copy( args, "0,3-5"); //realization range
+      stringlist_append_copy( args, "|"); //realization range
+      int linecount = 4;
+      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
+      stringlist_clear(args);
+    }
+
+    {
+      stringlist_append_copy( args, "1-2"); //realization range
+      stringlist_append_copy( args, "|");   //delimiter
+      stringlist_append_copy( args, "1-3"); //iteration range
+
+      int linecount = 6;
+      test_export_runpath_file(test_context, job_name , job_file_export_runpath, args, linecount);
+      stringlist_clear(args);
+    }
+    {
+      stringlist_append_copy( args, "*");   //realization range
+      stringlist_append_copy( args, "|");   //delimiter
+      stringlist_append_copy( args, "*");   //iteration range
+
+      int linecount = 20;
+      test_export_runpath_file(test_context, "JOB11", job_file_export_runpath, args, linecount);
+      stringlist_clear(args);
+    }
+
+    {
+      stringlist_append_copy( args, "1,2"); //realization range
+      stringlist_append_copy( args, "|");   //delimiter
+      stringlist_append_copy( args, "*");   //iteration range
+
+      int linecount = 8;
+      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
+      stringlist_clear(args);
+    }
+  } else {
+    {
+      int linecount = 25;
+      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
+    }
+    {
+      stringlist_append_copy( args, "1,2"); //realization range
+      stringlist_append_copy( args, "|");   //delimiter
+      stringlist_append_copy( args, "1-3"); //iteration range
+      int linecount = 2;
+      test_export_runpath_file(test_context, job_name , job_file_export_runpath, args, linecount);
+      stringlist_clear(args);
+    }
+
+    {
+      stringlist_append_copy( args, "1-3"); //realization range
+      stringlist_append_copy( args, "|");   //delimiter
+      stringlist_append_copy( args, "0");   //iteration range
+
+      int linecount = 3;
+      test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, linecount);
+      stringlist_clear(args);
+    }
+  }
+
+
+
+  stringlist_free( args );
+}
+
+
+
+ert_test_context_type * create_context( const char * config_file, const char * name ) {
+  ert_test_context_type * test_context = ert_test_context_alloc(name , config_file , NULL);
+  test_assert_not_NULL(test_context);
   return test_context;
 }
 
@@ -240,17 +352,19 @@ int main(int argc , const char ** argv) {
   enkf_main_install_SIGNALS();
   
   const char * config_file                  = argv[1];
-  const char * job_file_create_case         = argv[2];
-  const char * job_file_init_case_job       = argv[3];
-  const char * job_file_load_results        = argv[4];
-  const char * job_file_load_results_iter   = argv[5];
-  const char * job_file_observation_ranking = argv[6];
-  const char * job_file_data_ranking        = argv[7];
-  const char * job_file_ranking_export      = argv[8];
-  const char * job_file_init_misfit_table   = argv[9];
+  const char * config_file_iterations       = argv[2];
+  const char * job_file_create_case         = argv[3];
+  const char * job_file_init_case_job       = argv[4];
+  const char * job_file_load_results        = argv[5];
+  const char * job_file_load_results_iter   = argv[6];
+  const char * job_file_observation_ranking = argv[7];
+  const char * job_file_data_ranking        = argv[8];
+  const char * job_file_ranking_export      = argv[9];
+  const char * job_file_init_misfit_table   = argv[10];
+  const char * job_file_export_runpath      = argv[11];
 
 
-  ert_test_context_type * test_context = create_context( config_file );
+  ert_test_context_type * test_context = create_context( config_file, "enkf_workflow_job_test" );
   {
     test_create_case_job(test_context, "JOB1" , job_file_create_case);
     test_init_case_job(test_context, "JOB2", job_file_init_case_job);
@@ -260,7 +374,15 @@ int main(int argc , const char ** argv) {
     test_rank_realizations_on_observations_job(test_context, "JOB6" , job_file_observation_ranking);
     test_rank_realizations_on_data_job(test_context , "JOB7" , job_file_data_ranking);
     test_export_ranking(test_context, "JOB8" , job_file_ranking_export);
+    test_export_runpath_files(test_context, false, job_file_export_runpath);
   }
   ert_test_context_free( test_context );
+
+  {
+    ert_test_context_type * test_context_iterations = create_context( config_file_iterations, "enkf_workflow_job_test" );
+    test_export_runpath_files(test_context, true, job_file_export_runpath);
+    ert_test_context_free( test_context_iterations );
+  }
+
   exit(0);
 }
