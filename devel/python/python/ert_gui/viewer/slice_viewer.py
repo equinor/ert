@@ -1,8 +1,10 @@
+import os
 from OpenGL.GL import *
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QMainWindow, QDockWidget
 import sys
 from ert.ecl import EclTypeEnum, EclKW, EclGrid
+from ert.geo.xyz_reader import XYZReader
 from ert_gui.viewer import Texture3D, Bounds, SliceViewer, SliceSettingsWidget, Texture1D
 
 
@@ -138,6 +140,7 @@ def createDataStructures(grid_path=None, grid_data_path=None):
         nx, ny, nz, grid_data, bounds = loadGridData("/Volumes/Statoil/data/TestCase/eclipse/include/example_grid_sim.GRDECL")
         data, data_range = loadKWData("/Volumes/Statoil/data/TestCase/eclipse/include/example_permx.GRDECL", "PERMX", ecl_type=EclTypeEnum.ECL_FLOAT_TYPE)
 
+
     grid_texture = Texture3D(nx, ny, nz, grid_data, GL_RGBA32F, GL_RGBA)
     attribute_texture = Texture3D(nx, ny, nz, data)
 
@@ -147,6 +150,29 @@ def createDataStructures(grid_path=None, grid_data_path=None):
 
     return textures, bounds, nx, ny, nz, data_range
 
+
+def readPolylines():
+    root_path = "/Volumes/Statoil/data/faultregion"
+    polyline_files = ["pol1.xyz",
+                      "pol2.xyz",
+                      "pol3.xyz",
+                      "pol4.xyz",
+                      "pol5.xyz",
+                      "pol6.xyz",
+                      "pol7.xyz",
+                      "pol8.xyz",
+                      "pol9.xyz",
+                      "pol10.xyz",
+                      "pol11.xyz"]
+
+    polylines = []
+
+    for polyline_file in polyline_files:
+        path = os.path.join(root_path, polyline_file)
+        polyline = XYZReader.readXYZFile(path)
+        polylines.append(polyline)
+
+    return polylines
 
 if __name__ == '__main__':
 
@@ -163,10 +189,12 @@ if __name__ == '__main__':
 
     textures, bounds, nx, ny, nz, data_range = createDataStructures(grid_path, grid_data_path)
 
+    polylines = readPolylines()
+
     color_scales = createColorScales()
     textures["color_scale"] = color_scales[color_scales.keys()[0]]
 
-    viewer = SliceViewer(textures=textures, volume_bounds=bounds, color_scales=color_scales, data_range=data_range)
+    viewer = SliceViewer(textures=textures, volume_bounds=bounds, color_scales=color_scales, data_range=data_range, polylines=polylines)
     viewer.setSliceSize(width=nx, height=ny)
 
     slice_settings = SliceSettingsWidget(max_slice_count=nz, color_scales=color_scales.keys())
@@ -180,6 +208,7 @@ if __name__ == '__main__':
     slice_settings.mirrorX.connect(viewer.mirrorX)
     slice_settings.mirrorY.connect(viewer.mirrorY)
     slice_settings.mirrorZ.connect(viewer.mirrorZ)
+    slice_settings.toggleFlatPolylines.connect(viewer.toggleFlatPolylines)
 
 
     dock_widget = QDockWidget("Settings")

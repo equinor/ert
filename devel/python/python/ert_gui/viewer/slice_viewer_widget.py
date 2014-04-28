@@ -3,12 +3,13 @@ from OpenGL.GL import *
 from PyQt4.QtCore import Qt
 from PyQt4.QtOpenGL import QGLWidget
 from ert_gui.viewer import ShaderSource, Texture3D, ShaderProgram, VertexBufferObject, Bounds, Camera
+from ert_gui.viewer.polyline_drawer import PolylineDrawer
 
 
 class SliceViewer(QGLWidget):
 
 
-    def __init__(self, textures=None, volume_bounds=None, color_scales=None, data_range=None, parent=None):
+    def __init__(self, textures=None, volume_bounds=None, color_scales=None, data_range=None, polylines=None, parent=None):
         """
         @type textures: dict of (str, Texture3D)
         @type volume_bounds: Bounds
@@ -43,6 +44,11 @@ class SliceViewer(QGLWidget):
         else:
             self.__data_range = data_range
 
+        if polylines is None:
+            self.__polylines = []
+        else:
+            self.__polylines = polylines
+
         self.__current_slice = 0
 
 
@@ -63,6 +69,7 @@ class SliceViewer(QGLWidget):
         self.__hide_inactive_cells = False
         self.__lighting = False
         self.__region_scaling = False
+        self.__flat_polylines = False
 
 
 
@@ -125,7 +132,9 @@ class SliceViewer(QGLWidget):
 
         glTranslate(-0.5, -0.5, 0.0)
 
+
         self.__vbo.draw()
+
 
         index = 0
         for key, texture in self.__textures.iteritems():
@@ -134,6 +143,12 @@ class SliceViewer(QGLWidget):
             index += 1
 
         self.__shader.unbindProgram()
+
+        for polyline in self.__polylines:
+            if self.__flat_polylines:
+                PolylineDrawer.drawPolylineFlat(polyline, self.__volume_bounds.minZ)
+            else:
+                PolylineDrawer.drawPolyline(polyline)
 
         glPopAttrib()
         glPopMatrix()
@@ -265,4 +280,8 @@ class SliceViewer(QGLWidget):
 
     def mirrorZ(self, on):
         self.__camera.mirrorZ(on)
+        self.updateGL()
+
+    def toggleFlatPolylines(self, on):
+        self.__flat_polylines = on
         self.updateGL()
