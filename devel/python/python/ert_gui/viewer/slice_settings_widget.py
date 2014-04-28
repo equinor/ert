@@ -14,6 +14,7 @@ class SliceSettingsWidget(QWidget):
     mirrorX = pyqtSignal(bool)
     mirrorY = pyqtSignal(bool)
     mirrorZ = pyqtSignal(bool)
+    toggleFlatPolylines = pyqtSignal(bool)
 
     def __init__(self, max_slice_count, color_scales):
         QWidget.__init__(self)
@@ -32,6 +33,7 @@ class SliceSettingsWidget(QWidget):
         self.addCheckBox("Mirror X", self.mirrorX)
         self.addCheckBox("Mirror Y", self.mirrorY)
         self.addCheckBox("Mirror Z", self.mirrorZ)
+        self.addCheckBox("Flat polylines", self.toggleFlatPolylines)
 
         self.setLayout(self.__layout)
 
