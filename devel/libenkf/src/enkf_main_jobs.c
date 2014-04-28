@@ -25,10 +25,11 @@
 #include <unistd.h>    
 
 
-static bool_vector_type * alloc_iactive_vector_from_range(const stringlist_type * range, int startindex, int ens_size) {
+static bool_vector_type * alloc_iactive_vector_from_range(const stringlist_type * range, int startindex, int endindex, int ens_size) {
   bool_vector_type * iactive;
-  if (stringlist_get_size(range) > startindex) {
-    char * arg_string = stringlist_alloc_joined_substring( range, startindex, stringlist_get_size(range), "");
+  int range_list_size = stringlist_get_size(range);
+  if ((range_list_size > startindex) && (range_list_size >= endindex)) {
+    char * arg_string = stringlist_alloc_joined_substring( range, startindex, endindex, "");
     iactive = bool_vector_alloc(ens_size, false);
     string_util_update_active_mask( arg_string, iactive );
     free ( arg_string );
@@ -147,7 +148,7 @@ void * enkf_main_analysis_update_JOB( void * self , const stringlist_type * args
 void * enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, ens_size);
+  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args), ens_size);
 
   bool_vector_iset( iactive , ens_size - 1 , true );
   enkf_main_run_exp( enkf_main , iactive , true , 0 , 0 , ANALYZED);
@@ -302,7 +303,7 @@ void * enkf_main_init_case_from_existing_JOB( void * self , const stringlist_typ
 /*****************************************************************/
 
 static void * enkf_main_load_results_JOB__( enkf_main_type * enkf_main , int iter , const stringlist_type * args) {
-  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, enkf_main_get_ensemble_size(enkf_main));
+  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args), enkf_main_get_ensemble_size(enkf_main));
   int ens_size = enkf_main_get_ensemble_size(enkf_main);
   stringlist_type ** realizations_msg_list = util_calloc(ens_size, sizeof * realizations_msg_list);
   for (int iens = 0; iens < ens_size; ++iens)
@@ -365,7 +366,7 @@ static void enkf_main_jobs_export_field(const enkf_main_type * enkf_main, const 
       return;
   }
 
-  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 4, enkf_main_get_ensemble_size(enkf_main));
+  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 4, stringlist_get_size(args), enkf_main_get_ensemble_size(enkf_main));
   enkf_main_export_field(enkf_main,field, file_name, iactive, file_type, report_step, state) ;
   bool_vector_free(iactive);
 }
@@ -509,6 +510,114 @@ void * enkf_main_init_misfit_table_JOB(void * self, const stringlist_type * args
 
   misfit_ensemble_type * misfit_ensemble = enkf_fs_get_misfit_ensemble( fs );
   misfit_ensemble_initialize( misfit_ensemble , ensemble_config , enkf_obs , fs , ens_size , history_length, force_update);
+
+  return NULL;
+}
+
+
+
+
+static void enkf_main_export_runpath_file(enkf_main_type * enkf_main,
+                                          const bool_vector_type * realizations,
+                                          const bool_vector_type * iterations) {
+
+  ecl_config_type * ecl_config            = enkf_main_get_ecl_config(enkf_main);
+  const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
+  const char * basename_fmt               = ecl_config_get_eclbase(ecl_config);
+  const char * runpath_fmt                = model_config_get_runpath_as_char(model_config);
+
+
+  runpath_list_type * runpath_list = runpath_list_alloc();
+  char * cwd = util_alloc_cwd();
+
+  for (int iter = 0; iter < bool_vector_size(iterations); ++iter) {
+    if (bool_vector_iget(iterations, iter)) {
+      for (int iens = 0; iens < bool_vector_size(realizations); ++iens) {
+        if (bool_vector_iget(realizations, iens)) {
+        char * basename = NULL;
+          if (basename_fmt)
+            basename = util_alloc_sprintf(basename_fmt, iens);
+          else
+            basename = util_alloc_sprintf("ecl%d", iens);
+          char * runpath = NULL;
+          if (model_config_runpath_requires_iter(model_config)) {
+            runpath = util_alloc_sprintf(runpath_fmt, iens, iter);
+          }
+          else
+            runpath = util_alloc_sprintf(runpath_fmt, iens);
+
+          char * path = util_alloc_filename(cwd, runpath, NULL);
+
+          runpath_list_add(runpath_list, iens, iter, path, basename);
+
+          free(basename);
+          free(runpath);
+          free(path);
+        }
+      }
+    }
+  }
+
+  {
+    qc_module_type * qc_module     = enkf_main_get_qc_module( enkf_main );
+    const char * runpath_file_name = qc_module_get_runpath_list_file(qc_module);
+    FILE * file_stream = util_mkdir_fopen(runpath_file_name, "w");
+    runpath_list_fprintf(runpath_list, file_stream);
+    fclose(file_stream);
+  }
+
+  free(cwd);
+  runpath_list_free(runpath_list);
+}
+
+
+
+
+void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_type * args)  {
+  enkf_main_type * enkf_main              = enkf_main_safe_cast( self );
+  int ensemble_size                       = enkf_main_get_ensemble_size(enkf_main);
+  analysis_config_type * analysis_config  = enkf_main_get_analysis_config(enkf_main);
+  analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
+  int num_iterations                      = analysis_iter_config_get_num_iterations(iter_config);
+  const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
+  bool_vector_type * realizations         = NULL;
+  bool_vector_type * iterations           = NULL;
+
+
+  int delimiter = 0;
+  if (stringlist_get_size(args) > 0) {
+    delimiter = stringlist_find_first(args, "|");
+    int_vector_type * star_token = stringlist_find(args, "*");
+    if (delimiter == -1) {
+      if (int_vector_size(star_token) > 0)
+        realizations = bool_vector_alloc(ensemble_size, true);
+      else
+        realizations = alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args), ensemble_size);
+      iterations     = bool_vector_alloc(1, true);
+    } else {
+      if ((int_vector_size(star_token) > 0) && (int_vector_iget(star_token,0) < delimiter))
+        realizations = bool_vector_alloc(ensemble_size, true);
+      else
+        realizations = alloc_iactive_vector_from_range(args, 0, delimiter, ensemble_size);
+
+      if (model_config_runpath_requires_iter(model_config) && ((stringlist_get_size(args) - delimiter) >= 0) ) {
+        if (((int_vector_size(star_token) > 0) && (int_vector_iget(star_token, 0) > delimiter)) ||
+            ((int_vector_size(star_token) > 1) && (int_vector_iget(star_token, 1) > delimiter)))
+          iterations = bool_vector_alloc(num_iterations, true);
+        else
+          iterations = alloc_iactive_vector_from_range(args, delimiter+1, stringlist_get_size(args), 1);
+      } else
+        iterations = bool_vector_alloc(1, true);
+    }
+  } else {
+    realizations = bool_vector_alloc(ensemble_size, true);
+    iterations   = bool_vector_alloc(1, true);
+  }
+
+  enkf_main_export_runpath_file(enkf_main, realizations, iterations);
+
+  bool_vector_free(realizations);
+  bool_vector_free(iterations);
 
   return NULL;
 }
