@@ -433,7 +433,7 @@ add_test( NAME python.tests.ert.analysis.analysis_module
 
 #GEOMETRY
 
-add_test( NAME python.tests.ert.geometry.polylione
+add_test( NAME python.tests.ert.geometry.polyline
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_polyline.PolylineTest)
 
