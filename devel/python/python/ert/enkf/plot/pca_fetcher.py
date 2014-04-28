@@ -55,24 +55,28 @@ class PcaDataFetcher(DataFetcher):
 
             self.ert().getObservations().getObservationAndMeasureData(fs, local_obsdata, state, active_list, meas_data, obs_data)
 
+            meas_data.deactivateZeroStdSamples(obs_data)
+
             active_size = len(obs_data)
-            S = meas_data.createS(active_size)
-            D_obs = obs_data.createDobs(active_size)
 
-            truncation, ncomp = self.truncationOrNumberOfComponents(truncation_or_ncomp)
+            if active_size > 0:
+                S = meas_data.createS(active_size)
+                D_obs = obs_data.createDobs(active_size)
 
-            obs_data.scale(S, D_obs=D_obs)
-            EnkfLinalg.calculatePrincipalComponents(S, D_obs, truncation, ncomp, pc, pc_obs, singular_values)
-            if self.__prior_singular_values is None:
-                self.__prior_singular_values = singular_values
-            else:
-                for row in range(pc.rows()):
-                    factor = singular_values[row]/self.__prior_singular_values[row]
-                    pc.scaleRow( row , factor )
-                    pc_obs.scaleRow( row , factor )
+                truncation, ncomp = self.truncationOrNumberOfComponents(truncation_or_ncomp)
 
-            
-            return PcaPlotData(local_obsdata.getName(), pc , pc_obs , singular_values)
+                obs_data.scale(S, D_obs=D_obs)
+                EnkfLinalg.calculatePrincipalComponents(S, D_obs, truncation, ncomp, pc, pc_obs, singular_values)
+                if self.__prior_singular_values is None:
+                    self.__prior_singular_values = singular_values
+                else:
+                    for row in range(pc.rows()):
+                        factor = singular_values[row]/self.__prior_singular_values[row]
+                        pc.scaleRow( row , factor )
+                        pc_obs.scaleRow( row , factor )
+
+
+                return PcaPlotData(local_obsdata.getName(), pc , pc_obs , singular_values)
         return None
 
 
@@ -141,38 +145,39 @@ class PcaDataFetcher(DataFetcher):
         if len(local_obsdata) > 0:
             pca_data = self.calculatePrincipalComponent(fs, local_obsdata)
 
-            data["x"] = []
-            data["y"] = []
-            data["obs_y"] = []
+            if pca_data is not None:
+                data["x"] = []
+                data["y"] = []
+                data["obs_y"] = []
 
-            data["min_x"] = 1
-            data["max_x"] = len(pca_data)
+                data["min_x"] = 1
+                data["max_x"] = len(pca_data)
 
-            component_number = 0
-            for pca_vector in pca_data:
-                component_number += 1
-                data["x"].append(component_number)
+                component_number = 0
+                for pca_vector in pca_data:
+                    component_number += 1
+                    data["x"].append(component_number)
 
-                obs_y = pca_vector.getObservation()
+                    obs_y = pca_vector.getObservation()
 
-                if data["min_y"] is None or data["min_y"] > obs_y:
-                    data["min_y"] = obs_y
+                    if data["min_y"] is None or data["min_y"] > obs_y:
+                        data["min_y"] = obs_y
 
-                if data["max_y"] is None or data["max_y"] < obs_y:
-                    data["max_y"] = obs_y
+                    if data["max_y"] is None or data["max_y"] < obs_y:
+                        data["max_y"] = obs_y
 
-                data["obs_y"].append(obs_y)
-                for index, value in enumerate(pca_vector):
-                    if len(data["y"]) == index:
-                        data["y"].append([])
+                    data["obs_y"].append(obs_y)
+                    for index, value in enumerate(pca_vector):
+                        if len(data["y"]) == index:
+                            data["y"].append([])
 
-                    y = data["y"][index]
-                    y.append(value)
+                        y = data["y"][index]
+                        y.append(value)
 
-                    if data["min_y"] is None or data["min_y"] > value:
-                        data["min_y"] = value
+                        if data["min_y"] is None or data["min_y"] > value:
+                            data["min_y"] = value
 
-                    if data["max_y"] is None or data["max_y"] < value:
-                        data["max_y"] = value
+                        if data["max_y"] is None or data["max_y"] < value:
+                            data["max_y"] = value
 
         return data
