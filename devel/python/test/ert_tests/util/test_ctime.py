@@ -36,3 +36,43 @@ class CTimeTest(TestCase):
         
         self.assertEqual( (c1 + c2)*0.5 , date(2000 , 1 , 1))
         
+
+    def test_range(self):
+        
+        d1 = date(2000 , 1 , 1)
+        dt1 = datetime(2000, 1,1,0,0,0)
+        c1 = ctime(d1)
+
+        d0 = date(1999 , 1 , 1)
+        dt0 = datetime(1999, 1,1,0,0,0)
+        c0 = ctime( d0 )
+
+        d2 = date(2001, 1 , 1)
+        dt2 = datetime(2001, 1,1,0,0,0)
+        c2 = ctime( d2 )
+
+        self.assertTrue( c1.inRange(d0 , dt2 ))
+        self.assertTrue( c1.inRange(c0 , d2 ))
+        self.assertTrue( c1.inRange(dt0 , c2 ))
+
+        self.assertFalse( c0.inRange(d1 , dt2 ))
+        self.assertFalse( c0.inRange(c1 , d2 ))
+        self.assertFalse( c0.inRange(dt1 , c2 ))
+
+        self.assertTrue( c0.inRange(d0 , dt2 ))
+        self.assertTrue( c0.inRange(c0 , d2 ))
+        self.assertTrue( c0.inRange(dt0 , c2 ))
+
+        self.assertFalse( c2.inRange(d0 , dt2 ))
+        self.assertFalse( c2.inRange(c0 , d2 ))
+        self.assertFalse( c2.inRange(dt0 , c2 ))
+
+        self.assertTrue( c2.inRange(d0 , dt2 , includeUpperLimit = True))
+        self.assertTrue( c2.inRange(c0 , d2 , includeUpperLimit = True))
+        self.assertTrue( c2.inRange(dt0 , c2 , includeUpperLimit = True))
+
+        
+
+        
+
+
