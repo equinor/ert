@@ -380,7 +380,7 @@ int main(int argc , const char ** argv) {
 
   {
     ert_test_context_type * test_context_iterations = create_context( config_file_iterations, "enkf_workflow_job_test" );
-    test_export_runpath_files(test_context, true, job_file_export_runpath);
+    test_export_runpath_files(test_context_iterations, true, job_file_export_runpath);
     ert_test_context_free( test_context_iterations );
   }
 
