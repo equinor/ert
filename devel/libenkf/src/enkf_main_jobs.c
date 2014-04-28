@@ -538,7 +538,7 @@ static void enkf_main_export_runpath_file(enkf_main_type * enkf_main,
           if (basename_fmt)
             basename = util_alloc_sprintf(basename_fmt, iens);
           else
-            basename = util_alloc_sprintf("ecl%d", iens);
+            basename = util_alloc_sprintf("--%d", iens);
           char * runpath = NULL;
           if (model_config_runpath_requires_iter(model_config)) {
             runpath = util_alloc_sprintf(runpath_fmt, iens, iter);
