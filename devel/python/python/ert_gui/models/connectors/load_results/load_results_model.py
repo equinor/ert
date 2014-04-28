@@ -14,8 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
+from ert.util import StringList
 
-from ert.enkf import EnkfConfigNode, GenKw, EnkfNode, NodeId
 from ert_gui.models import ErtConnector
 
 class LoadResultsModel(ErtConnector):
@@ -29,13 +29,33 @@ class LoadResultsModel(ErtConnector):
         @type realisations: BoolVector
         @type iterations: BoolVector
         """
-        pass
+        realizations_msg_list = StringList()
+
+        for index, value in enumerate(iterations):
+            if value:
+                self.ert().loadFromFowardModel(realisations, index, realizations_msg_list)
+
+
+
+
 
     def getIterationCount(self):
+        """ @rtype: int """
         run_path = self.ert().getModelConfig().getRunpathAsString()
+        formated = None
+        try:
+            formated = run_path % (0, 0)
+        except TypeError:
+            return 0
 
-        formated = run_path % 0, 0
+        iteration = 0
+        valid_directory = True
+        while valid_directory:
+            formated = run_path % (0, iteration)
+            valid_directory = os.path.exists(formated)
+            if valid_directory:
+                iteration += 1
 
-        have_iterations = isinstance(formated, str)
+        return iteration
 
-        test = os.path.exists("/")
+

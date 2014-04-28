@@ -19,6 +19,7 @@ from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.load_results import LoadResultsModel
 from ert_gui.tools.load_results import LoadResultsRealizationsModel
+from ert_gui.tools.load_results.load_results_iterations_model import LoadResultsIterationsModel
 from ert_gui.tools.manage_cases.all_cases_model import AllCasesModel
 from ert_gui.widgets.string_box import StringBox
 
@@ -48,19 +49,23 @@ class LoadResultsPanel(QWidget):
 
 
         self.__active_realizations_model = LoadResultsRealizationsModel(EnsembleSizeModel().getValue())
-        self.__active_realizations_field = StringBox(self.__active_realizations_model, "Active realizations", "config/simulation/active_realizations")
+        self.__active_realizations_field = StringBox(self.__active_realizations_model, "Realizations to load", "load_results_manually/Realizations")
         self.__active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow(self.__active_realizations_field.getLabel(), self.__active_realizations_field)
 
-
         self.__iterations_count = LoadResultsModel().getIterationCount()
 
-        self.__iterations = QLineEdit()
-        self.__iterations.setMinimumWidth(250)
-
-        layout.addRow("Iteration to load:", self.__iterations)
+        self._iterations_model = LoadResultsIterationsModel(self.__iterations_count)
+        self._iterations_field = StringBox(self._iterations_model, "Iteration to load", "load_results_manually/iterations")
+        self._iterations_field.setValidator(RangeStringArgument())
+        layout.addRow(self._iterations_field.getLabel(), self._iterations_field)
 
         self.setLayout(layout)
 
     def load(self):
-        pass
+        all_cases = self.__case_model.getAllItems()
+        selected_case  = all_cases[self.__case_combo.currentIndex()]
+        realizations = self.__active_realizations_model.getActiveRealizationsMask()
+        iterations = self._iterations_model.getActiveRealizationsMask()
+
+        LoadResultsModel().loadResults(selected_case, realizations, iterations)
