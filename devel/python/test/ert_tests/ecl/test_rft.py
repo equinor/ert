@@ -56,6 +56,10 @@ class RFTTest(ExtendedTestCase):
             self.assertIsInstance(cell, EclRFTCell)
             rft.sort()
 
+        for h in rftFile.headers:
+            print h
+            self.assertIsInstance( h[1] , datetime.date )
+
 
     def test_PLT_load( self ):
         pltFile = EclRFTFile(self.PLT_file)
