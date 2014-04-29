@@ -23,6 +23,7 @@ import time
 from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment
 from ert.ecl import EclGrid
 from ert.test import ExtendedTestCase
+from ert.geo import Polyline
 
 class FaultTest(ExtendedTestCase):
     def setUp(self):
@@ -129,6 +130,19 @@ class FaultTest(ExtendedTestCase):
         S3 = FaultSegment(40 , 30)
         with self.assertRaises(AssertionError):
             fl.append(S3)
+            
+        pl = fl.getPolyline( )
+        self.assertIsInstance( pl , Polyline )
+        self.assertEqual( len(pl) , len(fl) + 1 )
+
+        S3 = FaultSegment(20 , 30)
+        fl.append( S3 )
+        pl = fl.getPolyline( )
+        self.assertIsInstance( pl , Polyline )
+        self.assertEqual( len(pl) , len(fl) + 1 )
+
+
+
 
     def test_load(self):
         faults = FaultCollection(self.grid , self.faults1)
