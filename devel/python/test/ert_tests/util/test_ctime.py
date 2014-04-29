@@ -67,9 +67,9 @@ class CTimeTest(TestCase):
         self.assertFalse( c2.inRange(c0 , d2 ))
         self.assertFalse( c2.inRange(dt0 , c2 ))
 
-        self.assertTrue( c2.inRange(d0 , dt2 , includeUpperLimit = True))
-        self.assertTrue( c2.inRange(c0 , d2 , includeUpperLimit = True))
-        self.assertTrue( c2.inRange(dt0 , c2 , includeUpperLimit = True))
+        self.assertTrue( c2.inRange(d0 , dt2 , include_upper_limit= True))
+        self.assertTrue( c2.inRange(c0 , d2 , include_upper_limit= True))
+        self.assertTrue( c2.inRange(dt0 , c2 , include_upper_limit= True))
 
         
 
