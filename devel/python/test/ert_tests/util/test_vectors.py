@@ -24,7 +24,7 @@ try:
 except ImportError:
     from unittest import TestCase
 
-from ert.util import DoubleVector, IntVector, BoolVector, TimeVector, ctime
+from ert.util import DoubleVector, IntVector, BoolVector, TimeVector, CTime
 
 
 class UtilTest(TestCase):
@@ -289,8 +289,8 @@ class UtilTest(TestCase):
     def test_time_vector(self):
         time_vector = TimeVector()
 
-        time1 = ctime(datetime.datetime(2013, 8, 13, 0, 0, 0))
-        time2 = ctime(datetime.datetime(2013, 8, 13, 1, 0, 0))
+        time1 = CTime(datetime.datetime(2013, 8, 13, 0, 0, 0))
+        time2 = CTime(datetime.datetime(2013, 8, 13, 1, 0, 0))
 
         time_vector.setDefault(time2)
 
