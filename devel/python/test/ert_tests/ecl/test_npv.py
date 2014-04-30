@@ -27,7 +27,7 @@ except ImportError:
 from ert.ecl import EclSum
 from ert.ecl import EclNPV , NPVPriceVector
 
-from ert.util import StringList, TimeVector, DoubleVector , ctime
+from ert.util import StringList, TimeVector, DoubleVector , CTime
 from ert.test import ExtendedTestCase , TestAreaContext
 
 
@@ -170,12 +170,12 @@ class NPVTest(ExtendedTestCase):
             vec.eval( datetime.date( 1999 , 1 , 1))
 
         self.assertEqual( datetime.date( 2000 , 1 , 1 ) , NPVPriceVector.assertDate( datetime.date(2000,1,1) )) 
-        self.assertEqual( datetime.date( 2000 , 1 , 1 ) , NPVPriceVector.assertDate( ctime(datetime.date(2000,1,1)) ))
+        self.assertEqual( datetime.date( 2000 , 1 , 1 ) , NPVPriceVector.assertDate( CTime(datetime.date(2000,1,1)) ))
         
 
         self.assertEqual( 100 , vec.eval( datetime.date( 2000 , 1 , 10)))
         self.assertEqual( 100 , vec.eval( datetime.datetime( 2000 , 1 , 10 , 0,0,0)))
-        self.assertEqual( 100 , vec.eval( ctime(datetime.datetime( 2000 , 1 , 10 , 0,0,0))))
+        self.assertEqual( 100 , vec.eval( CTime(datetime.datetime( 2000 , 1 , 10 , 0,0,0))))
         
         self.assertEqual( 300 , vec.eval( datetime.date( 2000 , 4, 1)))
 

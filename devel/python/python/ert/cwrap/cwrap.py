@@ -23,7 +23,7 @@ correct restype and argtypes attributes of the function objects.
 import ctypes
 import re
 import sys
-from ert.cwrap import BaseCClass
+from ert.cwrap import BaseCClass, BaseCValue
 import inspect
 
 
@@ -155,6 +155,13 @@ class CWrapper:
 
                     func.errcheck = returnFunction
 
+                elif issubclass(return_type, BaseCValue):
+                    func.restype = return_type.type()
+
+                    def returnFunction(result, func, arguments):
+                        return return_type(result)
+
+                    func.errcheck = returnFunction
 
             if len(arguments) == 1 and arguments[0].strip() == "":
                 func.argtypes = []
