@@ -546,13 +546,10 @@ static void enkf_main_export_runpath_file(enkf_main_type * enkf_main,
           else
             runpath = util_alloc_sprintf(runpath_fmt, iens);
 
-          char * path = util_alloc_filename(cwd, runpath, NULL);
-
-          runpath_list_add(runpath_list, iens, iter, path, basename);
+          runpath_list_add(runpath_list, iens, iter, runpath, basename);
 
           free(basename);
           free(runpath);
-          free(path);
         }
       }
     }
