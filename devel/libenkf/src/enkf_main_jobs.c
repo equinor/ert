@@ -518,8 +518,8 @@ void * enkf_main_init_misfit_table_JOB(void * self, const stringlist_type * args
 
 
 static void enkf_main_export_runpath_file(enkf_main_type * enkf_main,
-                                          const bool_vector_type * realizations,
-                                          const bool_vector_type * iterations) {
+                                          const int_vector_type * realizations,
+                                          const int_vector_type * iterations) {
 
   ecl_config_type * ecl_config            = enkf_main_get_ecl_config(enkf_main);
   const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
@@ -530,28 +530,26 @@ static void enkf_main_export_runpath_file(enkf_main_type * enkf_main,
   runpath_list_type * runpath_list = runpath_list_alloc();
   char * cwd = util_alloc_cwd();
 
-  for (int iter = 0; iter < bool_vector_size(iterations); ++iter) {
-    if (bool_vector_iget(iterations, iter)) {
-      for (int iens = 0; iens < bool_vector_size(realizations); ++iens) {
-        if (bool_vector_iget(realizations, iens)) {
-          char * basename = NULL;
-          if (basename_fmt)
-            basename = util_alloc_sprintf(basename_fmt, iens);
-          else
-            basename = util_alloc_sprintf("--%d", iens);
-          char * runpath = NULL;
-          if (model_config_runpath_requires_iter(model_config)) {
-            runpath = util_alloc_sprintf(runpath_fmt, iens, iter);
-          }
-          else
-            runpath = util_alloc_sprintf(runpath_fmt, iens);
-
-          runpath_list_add(runpath_list, iens, iter, runpath, basename);
-
-          free(basename);
-          free(runpath);
-        }
+  for (int iter = 0; iter < int_vector_size(iterations); ++iter) {
+    for (int iens = 0; iens < int_vector_size(realizations); ++iens) {
+      int iter_value = int_vector_iget(iterations, iter);
+      int iens_value = int_vector_iget(realizations, iens);
+      char * basename = NULL;
+      if (basename_fmt)
+        basename = util_alloc_sprintf(basename_fmt, iens_value);
+      else
+        basename = util_alloc_sprintf("--%d", iens_value);
+      char * runpath = NULL;
+      if (model_config_runpath_requires_iter(model_config)) {
+        runpath = util_alloc_sprintf(runpath_fmt, iens_value, iter_value);
       }
+      else
+        runpath = util_alloc_sprintf(runpath_fmt, iens_value);
+
+      runpath_list_add(runpath_list, iens_value, iter_value, runpath, basename);
+
+      free(basename);
+      free(runpath);
     }
   }
 
@@ -577,37 +575,42 @@ void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_type * ar
   analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
   int num_iterations                      = analysis_iter_config_get_num_iterations(iter_config);
   const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
-  bool_vector_type * realizations         = NULL;
-  bool_vector_type * iterations           = NULL;
+  int_vector_type * realizations          = int_vector_alloc(1, 0);
+  int_vector_init_range(realizations, 0, ensemble_size-1, 1);
+  int_vector_type * iterations            = int_vector_alloc(1, 0);
 
 
-  if (stringlist_get_size(args) <= 0) {
-    realizations = bool_vector_alloc(ensemble_size, true);
-    iterations   = bool_vector_alloc(1, true);
-  } else {
-    int delimiter = stringlist_find_first(args, "|");
+  if (stringlist_get_size(args) > 0) {
+    int offset = 0;
+    while (true) {
+      if (offset == stringlist_get_size( args ))
+        break;
+      if (0 == strcmp("|" , stringlist_iget( args, offset )))
+        break;
+       ++offset;
+    }
 
-    if (0 == strcmp("*", stringlist_iget(args,0)))
-      realizations = bool_vector_alloc(ensemble_size, true);
-    else if (-1 == delimiter)
-      realizations = alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args), ensemble_size);
-    else
-      realizations = alloc_iactive_vector_from_range(args, 0, delimiter, ensemble_size);
+    if (0 != strcmp("*", stringlist_iget(args,0))) {
+      char * range_str = stringlist_alloc_joined_substring( args, 0, offset, "");
+      string_util_init_value_list(range_str, realizations);
+      free(range_str);
+    }
 
-    if ((-1 == delimiter) || !model_config_runpath_requires_iter(model_config))
-      iterations = bool_vector_alloc(1, true);
-    else if (stringlist_get_size(args) <= (delimiter+1))
-      iterations = bool_vector_alloc(1, true);
-    else if (0 == strcmp("*", stringlist_iget(args, (delimiter+1))))
-      iterations = bool_vector_alloc(num_iterations, true);
-    else
-      iterations = alloc_iactive_vector_from_range(args, delimiter+1, stringlist_get_size(args), 1);
+    if ((offset < stringlist_get_size(args)) && model_config_runpath_requires_iter(model_config)) {
+      if (0 == strcmp("*", stringlist_iget(args, (offset+1))))
+        int_vector_init_range(iterations, 0, num_iterations-1, 1);
+      else {
+        char * range_str = stringlist_alloc_joined_substring( args, offset+1, stringlist_get_size(args), "");
+        string_util_init_value_list(range_str, iterations);
+        free(range_str);
+       }
+    }
   }
 
   enkf_main_export_runpath_file(enkf_main, realizations, iterations);
 
-  bool_vector_free(realizations);
-  bool_vector_free(iterations);
+  int_vector_free(realizations);
+  int_vector_free(iterations);
 
   return NULL;
 }
