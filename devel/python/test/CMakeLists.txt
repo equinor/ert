@@ -412,6 +412,10 @@ add_test( NAME python.tests.ert.cwrap.basecenum
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.cwrap.test_basecenum.BaseCEnumTest)
 
+add_test( NAME python.tests.ert.cwrap.basecvalue
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.cwrap.test_basecvalue.BaseCValueTest)
+
 #TESTRUN
 add_test( NAME python.tests.ert.test_run
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

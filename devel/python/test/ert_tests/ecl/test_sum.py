@@ -116,6 +116,17 @@ class SumTest(ExtendedTestCase):
         self.assertEqual(sum.start_time, datetime.datetime(2000, 1, 1, 0, 0, 0))
         self.assertEqual(sum.end_time, datetime.datetime(2004, 12, 31, 0, 0, 0))
         self.assertTrue(sum.check_sim_time(datetime.datetime(2004, 12, 31, 0, 0, 0)))
+        self.assertEqual(sum.end_date , datetime.date(2004, 12, 31))
+        
+
+
+    def test_dates2( self ):
+        sum = EclSum(self.createTestPath("Statoil/ECLIPSE/FF12/FF12_2013B3_AMAP2"))
+        self.assertEqual(sum.end_date , datetime.date(2045, 1, 1))
+
+
+
+
 
     def test_keys(self):
         sum = self.ecl_sum
