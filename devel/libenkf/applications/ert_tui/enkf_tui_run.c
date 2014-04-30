@@ -251,7 +251,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
       for (iens = 0; iens < ens_size; ++iens) {
         if (bool_vector_iget(iactive , iens)) {
           const enkf_state_type * state = enkf_main_iget_state( enkf_main , iens );
-          runpath_list_add( runpath_list , iens , enkf_state_get_run_path( state ) , enkf_state_get_eclbase( state ));
+          runpath_list_add( runpath_list , iens , iter, enkf_state_get_run_path( state ) , enkf_state_get_eclbase( state ));
         }
       }
       qc_module_export_runpath_list( qc_module );

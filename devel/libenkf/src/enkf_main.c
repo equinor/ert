@@ -1581,6 +1581,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
 
             runpath_list_add( runpath_list , 
                               iens , 
+                              iter ,
                               enkf_state_get_run_path( enkf_state ) , 
                               enkf_state_get_eclbase( enkf_state ));
             {
