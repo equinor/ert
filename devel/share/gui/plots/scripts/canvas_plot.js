@@ -19,6 +19,7 @@ function Plot(element, x_dimension, y_dimension) {
     this.plot = new BasePlot(element, x_dimension, y_dimension);
 
     this.horizontal_draw_direction = true;
+    this.waiting_for_render_restart = false;
 
 
     this.line_renderers = [];
@@ -197,7 +198,19 @@ Plot.prototype.setRenderingFinishedCallback = function(callback) {
 };
 
 Plot.prototype.renderNow = function(){
-    this.plot.render();
+    if(!this.tracker.isRunning()) {
+        this.waiting_for_render_restart = false;
+        this.plot.render();
+    } else {
+        if(!this.waiting_for_render_restart) {
+            this.tracker.forceStop();
+            this.waiting_for_render_restart = true;
+
+            window.setTimeout(function () {
+                self.renderNow();
+            }, 15);
+        }
+    }
 };
 
 Plot.prototype.getTitle = function(){
