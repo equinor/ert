@@ -1,8 +1,12 @@
+import os
 from OpenGL.GL import *
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QMainWindow, QDockWidget
 import sys
-from ert.ecl import EclTypeEnum, EclKW, EclGrid
+import traceback
+from ert.ecl import EclTypeEnum, EclKW, EclGrid 
+from ert.ecl.faults import  FaultCollection
+from ert.geo.xyz_reader import XYZReader
 from ert_gui.viewer import Texture3D, Bounds, SliceViewer, SliceSettingsWidget, Texture1D
 
 
@@ -43,7 +47,8 @@ def loadGridData(path):
     for z in range(nz):
         for y in range(ny):
             for x in range(nx):
-                x, y, z = grid.get_corner_xyz(0, global_index=index)
+                # x, y, z = grid.get_corner_xyz(0, global_index=index)
+                x, y, z = grid.get_xyz(global_index=index)
                 active = grid.active(global_index=index)
                 if active:
                     active = 1.0
@@ -60,7 +65,7 @@ def loadGridData(path):
 
     print(bounds)
 
-    return nx, ny, nz, grid_data, bounds
+    return nx, ny, nz, grid_data, bounds,grid
 
 
 def loadKWData(path, keyword, ecl_type=EclTypeEnum.ECL_FLOAT_TYPE):
@@ -127,16 +132,31 @@ def createColorScales():
     }
 
 
-def createDataStructures(grid_path=None, grid_data_path=None):
+def loadFaults(grid , fault_file):
+    faults = FaultCollection( grid )
+    faults.load( fault_file )        
+    try:
+        faults.load( fault_file )        
+    except Exception as e:
+        traceback.print_tb(e)
+        print("Loading from fault file:%s failed" % fault_file)
+
+    return faults
+        
+    
+
+def createDataStructures(grid_path=None, grid_data_path=None , polyline_root_path = None):
     if grid_path is not None:
-        nx, ny, nz, grid_data, bounds = loadGridData(grid_path)
+        nx, ny, nz, grid_data, bounds, grid = loadGridData(grid_path)
         data, data_range = loadKWData(grid_data_path, "FLTBLCK", ecl_type=EclTypeEnum.ECL_INT_TYPE)
+        faults = loadFaults( grid , os.path.join(polyline_root_path , "faults.grdecl"))
     else:
         # nx, ny, nz, grid_data, bounds = loadGridData("/Volumes/Statoil/data/faultregion/grid.grdecl")
         # data, data_range = loadKWData("/Volumes/Statoil/data/faultregion/fltblck.grdecl", "FLTBLCK", ecl_type=EclTypeEnum.ECL_INT_TYPE)
 
-        nx, ny, nz, grid_data, bounds = loadGridData("/Volumes/Statoil/data/TestCase/eclipse/include/example_grid_sim.GRDECL")
+        nx, ny, nz, grid_data, bounds, grid = loadGridData("/Volumes/Statoil/data/TestCase/eclipse/include/example_grid_sim.GRDECL")
         data, data_range = loadKWData("/Volumes/Statoil/data/TestCase/eclipse/include/example_permx.GRDECL", "PERMX", ecl_type=EclTypeEnum.ECL_FLOAT_TYPE)
+        faults = loadFaults( grid , os.path.join("/Volumes/Statoil/data/TestCase/eclipse/include" , "example_faults_sim.GRDECL"))
 
     grid_texture = Texture3D(nx, ny, nz, grid_data, GL_RGBA32F, GL_RGBA)
     attribute_texture = Texture3D(nx, ny, nz, data)
@@ -145,28 +165,56 @@ def createDataStructures(grid_path=None, grid_data_path=None):
     textures = {"grid": grid_texture,
                 "grid_data": attribute_texture}
 
-    return textures, bounds, nx, ny, nz, data_range
+    return textures, bounds, nx, ny, nz, data_range , faults
 
+
+def readPolylines(root_path):
+    polyline_files = ["pol1.xyz",
+                      "pol2.xyz",
+                      "pol3.xyz",
+                      "pol4.xyz",
+                      "pol5.xyz",
+                      "pol6.xyz",
+                      "pol7.xyz",
+                      "pol8.xyz",
+                      "pol9.xyz",
+                      "pol10.xyz",
+                      "pol11.xyz"]
+
+    polylines = []
+
+    if root_path is not None and os.path.exists(root_path):
+        for polyline_file in polyline_files:
+            path = os.path.join(root_path, polyline_file)
+            polyline = XYZReader.readXYZFile(path)
+            polylines.append(polyline)
+
+    return polylines
 
 if __name__ == '__main__':
 
     grid_path = None
     grid_data_path = None
+    polyline_root_path = None
 
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 4:
         grid_path = sys.argv[1]
         grid_data_path = sys.argv[2]
-
+        polyline_root_path = sys.argv[3]
+        
     app = QApplication(["Slice Viewer"])
     window = QMainWindow()
     window.resize(1024, 768)
 
-    textures, bounds, nx, ny, nz, data_range = createDataStructures(grid_path, grid_data_path)
+    textures, bounds, nx, ny, nz, data_range , faults = createDataStructures(grid_path, grid_data_path , polyline_root_path)
+
+
+    polylines = readPolylines(root_path=polyline_root_path)
 
     color_scales = createColorScales()
     textures["color_scale"] = color_scales[color_scales.keys()[0]]
 
-    viewer = SliceViewer(textures=textures, volume_bounds=bounds, color_scales=color_scales, data_range=data_range)
+    viewer = SliceViewer(textures=textures, volume_bounds=bounds, color_scales=color_scales, data_range=data_range, polylines=polylines , faults = faults)
     viewer.setSliceSize(width=nx, height=ny)
 
     slice_settings = SliceSettingsWidget(max_slice_count=nz, color_scales=color_scales.keys())
@@ -180,6 +228,7 @@ if __name__ == '__main__':
     slice_settings.mirrorX.connect(viewer.mirrorX)
     slice_settings.mirrorY.connect(viewer.mirrorY)
     slice_settings.mirrorZ.connect(viewer.mirrorZ)
+    slice_settings.toggleFlatPolylines.connect(viewer.toggleFlatPolylines)
 
 
     dock_widget = QDockWidget("Settings")
