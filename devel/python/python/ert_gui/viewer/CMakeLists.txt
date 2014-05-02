@@ -3,6 +3,7 @@ set(PYTHON_SOURCES
     bounds.py
     camera.py
     opengl_tools.py
+    polyline_drawer.py
     shader_program.py
     shader_source.py
     slice_settings_widget.py
