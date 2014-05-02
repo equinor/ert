@@ -1,6 +1,7 @@
 import numbers
 import os
 import os.path
+import traceback
 
 try:
     from unittest2 import TestCase
@@ -18,9 +19,6 @@ class ExtendedTestCase(TestCase):
         self.__testdata_root = None
         super(ExtendedTestCase , self).__init__(*args , **kwargs)
 
-        
-
-        
 
     def assertFloatEqual(self, first, second, msg=None):
         if isinstance(first, numbers.Number) and isinstance(second, numbers.Number):
