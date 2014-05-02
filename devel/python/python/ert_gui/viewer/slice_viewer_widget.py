@@ -9,7 +9,7 @@ from ert_gui.viewer.polyline_drawer import PolylineDrawer
 class SliceViewer(QGLWidget):
 
 
-    def __init__(self, textures=None, volume_bounds=None, color_scales=None, data_range=None, polylines=None, parent=None):
+    def __init__(self, textures=None, volume_bounds=None, color_scales=None, data_range=None, polylines=None, faults = None , parent=None):
         """
         @type textures: dict of (str, Texture3D)
         @type volume_bounds: Bounds
@@ -48,6 +48,12 @@ class SliceViewer(QGLWidget):
             self.__polylines = []
         else:
             self.__polylines = polylines
+
+        if faults is None:
+            self.__faults = [ ]
+        else:
+            self.__faults = faults
+
 
         self.__current_slice = 0
 
@@ -149,6 +155,18 @@ class SliceViewer(QGLWidget):
                 PolylineDrawer.drawPolylineFlat(polyline, self.__volume_bounds.minZ)
             else:
                 PolylineDrawer.drawPolyline(polyline)
+
+
+        for fault in self.__faults:
+            layer = fault[8]
+            for fault_line in layer:
+                    
+                polyline = fault_line.getPolyline()
+                if self.__flat_polylines:
+                    PolylineDrawer.drawPolylineFlat(polyline, self.__volume_bounds.minZ)
+                else:
+                    PolylineDrawer.drawPolyline(polyline)
+                    
 
         glPopAttrib()
         glPopMatrix()
