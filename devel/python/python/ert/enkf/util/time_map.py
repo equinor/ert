@@ -15,7 +15,7 @@
 #  for more details.
 from ert.cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB
-from ert.util import ctime
+from ert.util import CTime
 
 
 class TimeMap(BaseCClass):
@@ -35,7 +35,7 @@ class TimeMap(BaseCClass):
 
 
     def __getitem__(self, index):
-        """ @rtype: ctime """
+        """ @rtype: CTime """
         if not isinstance(index, int):
             raise TypeError("Expected an integer")
 
