@@ -70,7 +70,7 @@ class EnkfObs(BaseCClass):
 
 
     def getObservationTime(self, index):
-        """ @rtype: ctime """
+        """ @rtype: CTime """
         return EnkfObs.cNamespace().iget_obs_time(self, index)
 
 
