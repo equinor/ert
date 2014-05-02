@@ -47,7 +47,8 @@ def loadGridData(path):
     for z in range(nz):
         for y in range(ny):
             for x in range(nx):
-                x, y, z = grid.get_corner_xyz(0, global_index=index)
+                # x, y, z = grid.get_corner_xyz(0, global_index=index)
+                x, y, z = grid.get_xyz(global_index=index)
                 active = grid.active(global_index=index)
                 if active:
                     active = 1.0
@@ -153,9 +154,9 @@ def createDataStructures(grid_path=None, grid_data_path=None , polyline_root_pat
         # nx, ny, nz, grid_data, bounds = loadGridData("/Volumes/Statoil/data/faultregion/grid.grdecl")
         # data, data_range = loadKWData("/Volumes/Statoil/data/faultregion/fltblck.grdecl", "FLTBLCK", ecl_type=EclTypeEnum.ECL_INT_TYPE)
 
-        nx, ny, nz, grid_data, bounds,grid = loadGridData("/Volumes/Statoil/data/TestCase/eclipse/include/example_grid_sim.GRDECL")
+        nx, ny, nz, grid_data, bounds, grid = loadGridData("/Volumes/Statoil/data/TestCase/eclipse/include/example_grid_sim.GRDECL")
         data, data_range = loadKWData("/Volumes/Statoil/data/TestCase/eclipse/include/example_permx.GRDECL", "PERMX", ecl_type=EclTypeEnum.ECL_FLOAT_TYPE)
-        faults = loadFaults( grid , os.path.join("/Volumes/Statoil/data/TestCase/eclipse/include" , "faults.grdecl"))
+        faults = loadFaults( grid , os.path.join("/Volumes/Statoil/data/TestCase/eclipse/include" , "example_faults_sim.GRDECL"))
 
     grid_texture = Texture3D(nx, ny, nz, grid_data, GL_RGBA32F, GL_RGBA)
     attribute_texture = Texture3D(nx, ny, nz, data)
@@ -182,7 +183,7 @@ def readPolylines(root_path):
 
     polylines = []
 
-    if os.path.exists(root_path):
+    if root_path is not None and os.path.exists(root_path):
         for polyline_file in polyline_files:
             path = os.path.join(root_path, polyline_file)
             polyline = XYZReader.readXYZFile(path)
