@@ -29,11 +29,16 @@ class LoadResultsModel(ErtConnector):
         @type realisations: BoolVector
         @type iterations: BoolVector
         """
-        realizations_msg_list = StringList()
+        current_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
+        fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
+
+        self.ert().getEnkfFsManager().switchFileSystem(fs)
 
         for index, value in enumerate(iterations):
             if value:
-                self.ert().loadFromFowardModel(realisations, index, realizations_msg_list)
+                self.ert().loadFromForwardModel(realisations, index)
+
+        self.ert().getEnkfFsManager().switchFileSystem(current_fs)
 
 
 

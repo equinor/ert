@@ -46,6 +46,8 @@ class Tool(object):
     def getAction(self):
         return self.__action
 
-    def setVisable(self, visable):
-        self.__action.setVisible(visable)
+    def setVisible(self, visible):
+        self.__action.setVisible(visible)
 
+    def setEnabled(self, enabled):
+        self.__action.setEnabled(enabled)
