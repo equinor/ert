@@ -13,8 +13,6 @@ from ert_gui.widgets.helped_widget import HelpedWidget
 
 class SimulationPanel(QWidget):
 
-    show_advanced_options = pyqtSignal(bool)
-
     def __init__(self):
         QWidget.__init__(self)
 
@@ -72,18 +70,10 @@ class SimulationPanel(QWidget):
 
 
     def getActions(self):
-        """ @rtype: list of QAction """
-        advanced_toggle_action = QAction("Show Advanced Options", self)
-        advanced_toggle_action.setObjectName("AdvancedSimulationOptions")
-        advanced_toggle_action.setCheckable(True)
-        advanced_toggle_action.setChecked(False)
-        advanced_toggle_action.toggled.connect(self.toggleAdvanced)
-
-        return [advanced_toggle_action]
+        return []
 
 
-    def toggleAdvanced(self, show_advanced):
-        self.show_advanced_options.emit(show_advanced)
+    def toggleAdvancedMode(self, show_advanced):
         for panel in self.simulation_widgets.values():
             panel.toggleAdvancedOptions(show_advanced)
 
