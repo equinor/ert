@@ -3,7 +3,6 @@ set(RSH_SERVERS "" CACHE STRING  "List of nodes which will be used to test the R
 
 set(TEST_SOURCES
     ert_tests/__init__.py
-    ert_tests/source_enumerator.py
     ert_tests/run_tests.py
     ert_tests/test_ert_import.py
     ert_tests/import_tester.py
@@ -31,6 +30,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_ecl_sum_vector.py
     ert_tests/ecl/test_faults.py
     ert_tests/ecl/test_statoil_faults.py
+    ert_tests/ecl/test_npv.py
 
     ert_tests/enkf/__init__.py
     ert_tests/enkf/test_ert_context.py
@@ -89,6 +89,10 @@ set(TEST_SOURCES
 
     ert_tests/gui/ide/wizards/__init__.py
     ert_tests/gui/ide/wizards/test_tree_structure.py
+
+    ert_tests/geometry/__init__.py
+    ert_tests/geometry/test_polyline.py
+    ert_tests/geometry/test_intersection.py
 
 
     ert_tests/run/__init__.py
@@ -375,6 +379,10 @@ add_test( NAME python.tests.ert.ecl.faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_faults.FaultTest )
 
+add_test( NAME python.tests.ert.ecl.ecl_npv
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_npv.NPVTest)
+
 add_test( NAME python.tests.ert.ecl.statoil_faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_statoil_faults.StatoilFaultTest )
@@ -408,6 +416,10 @@ add_test( NAME python.tests.ert.cwrap.basecenum
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.cwrap.test_basecenum.BaseCEnumTest)
 
+add_test( NAME python.tests.ert.cwrap.basecvalue
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.cwrap.test_basecvalue.BaseCValueTest)
+
 #TESTRUN
 add_test( NAME python.tests.ert.test_run
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -424,6 +436,17 @@ add_test( NAME python.tests.ert.analysis.analysis_module
 
 
 
+#GEOMETRY
+
+add_test( NAME python.tests.ert.geometry.polyline
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_polyline.PolylineTest)
+
+add_test( NAME python.tests.ert.geometry.intersection
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_intersection.IntersectionTest)
+
+
 set_property( TEST python.tests.ert.sched.sched           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.fortio            PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_grdecl        PROPERTY LABELS Python:StatoilData )
@@ -432,6 +455,7 @@ set_property( TEST python.tests.ert.ecl.ecl_region        PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_file          PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_queue_LOCAL   PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.tests.ert.ecl.ecl_sum           PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.ecl.ecl_npv           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_kw            PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_rft           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python:StatoilData )

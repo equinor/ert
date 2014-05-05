@@ -18,7 +18,7 @@ from _ctypes import ArgumentError
 import os
 import datetime
 from ert.ecl import EclFile
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 

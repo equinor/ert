@@ -22,7 +22,8 @@ except ImportError:
 import time
 from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment
 from ert.ecl import EclGrid
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
+from ert.geo import Polyline
 
 class FaultTest(ExtendedTestCase):
     def setUp(self):
@@ -93,48 +94,64 @@ class FaultTest(ExtendedTestCase):
         fl = FaultLine(self.grid , 10)
         S1 = FaultSegment(0 , 10)
         S2 = FaultSegment(10 , 20)
-        fl.append( S1 )
-        fl.append( S2 )
+        fl.tryAppend( S1 )
+        fl.tryAppend( S2 )
         fl.verify()
         S3 = FaultSegment(20 , 30)
-        fl.append( S3 )
+        fl.tryAppend( S3 )
         fl.verify()
         #---
         fl = FaultLine(self.grid , 10)
         S1 = FaultSegment(0 , 10)
         S2 = FaultSegment(20 , 10)
-        fl.append( S1 )
-        fl.append( S2 )
+        fl.tryAppend( S1 )
+        self.assertTrue( fl.tryAppend( S2 ) ) 
         fl.verify()
         #---
         fl = FaultLine(self.grid , 10)
         S1 = FaultSegment(10 , 0)
         S2 = FaultSegment(20 , 10)
-        fl.append( S1 )
-        fl.append( S2 )
+        fl.tryAppend( S1 )
+        fl.tryAppend( S2 )
         fl.verify()
         #---
         fl = FaultLine(self.grid , 10)
         S1 = FaultSegment(10 , 0)
         S2 = FaultSegment(10 , 20)
-        fl.append( S1 )
-        fl.append( S2 )
+        fl.tryAppend( S1 )
+        fl.tryAppend( S2 )
         fl.verify()
 
         fl = FaultLine(self.grid , 10)
         S1 = FaultSegment(10 , 0)
         S2 = FaultSegment(10 , 20)
-        fl.append( S1 )
-        fl.append( S2 )
+        fl.tryAppend( S1 )
+        fl.tryAppend( S2 )
         S3 = FaultSegment(40 , 30)
-        with self.assertRaises(AssertionError):
-            fl.append(S3)
+        self.assertTrue( fl.tryAppend(S3) == False )
+        self.assertEqual( len(fl) , 2 )
+            
+        pl = fl.getPolyline( )
+        self.assertIsInstance( pl , Polyline )
+        self.assertEqual( len(pl) , len(fl) + 1 )
+
+        S3 = FaultSegment(20 , 30)
+        fl.tryAppend( S3 )
+        pl = fl.getPolyline( )
+        self.assertIsInstance( pl , Polyline )
+        self.assertEqual( len(pl) , len(fl) + 1 )
+
+
+
 
     def test_load(self):
         faults = FaultCollection(self.grid , self.faults1)
         self.assertEqual( 3 , len(faults))
         faults.load( self.faults2 )
         self.assertEqual( 7 , len(faults))
+        fault1 = faults["F1"]
+        layer8 = fault1[8]
+        self.assertEqual( len(layer8) , 1 ) 
     
     
     def test_iter(self):

@@ -1,7 +1,7 @@
 from ert.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert.enkf.state_map import StateMap
-from ert.util.test_area import TestAreaContext
-from ert_tests import ExtendedTestCase
+from ert.test import TestAreaContext
+from ert.test import ExtendedTestCase
 
 
 class StateMapTest(ExtendedTestCase):

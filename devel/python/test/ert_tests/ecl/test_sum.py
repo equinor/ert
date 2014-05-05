@@ -26,9 +26,8 @@ except ImportError:
 from ert.ecl import EclSum
 
 from ert.util import StringList, TimeVector, DoubleVector
-from ert.util.test_area import TestAreaContext
 
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase , TestAreaContext
 
 
 base = "ECLIPSE"
@@ -117,6 +116,17 @@ class SumTest(ExtendedTestCase):
         self.assertEqual(sum.start_time, datetime.datetime(2000, 1, 1, 0, 0, 0))
         self.assertEqual(sum.end_time, datetime.datetime(2004, 12, 31, 0, 0, 0))
         self.assertTrue(sum.check_sim_time(datetime.datetime(2004, 12, 31, 0, 0, 0)))
+        self.assertEqual(sum.end_date , datetime.date(2004, 12, 31))
+        
+
+
+    def test_dates2( self ):
+        sum = EclSum(self.createTestPath("Statoil/ECLIPSE/FF12/FF12_2013B3_AMAP2"))
+        self.assertEqual(sum.end_date , datetime.date(2045, 1, 1))
+
+
+
+
 
     def test_keys(self):
         sum = self.ecl_sum
@@ -279,9 +289,79 @@ class SumTest(ExtendedTestCase):
         key_index = self.ecl_sum.get_general_var_index("FOPT")
         self.assertIsInstance(self.ecl_sum.alloc_data_vector(key_index, True), DoubleVector)
 
-        
+    def test_timeRange(self):
+        sum = EclSum(self.case)
+        with self.assertRaises(TypeError):
+            trange = sum.timeRange(interval = "1")
+            trange = sum.timeRange(interval = "1X")
+            trange = sum.timeRange(interval = "YY")
+            trange = sum.timeRange(interval = "MY")
+
+        with self.assertRaises(ValueError):
+            trange = sum.timeRange( start = datetime.datetime(2000,1,1) , end = datetime.datetime(1999,1,1) )
+
+        sim_start = datetime.datetime(2000, 1, 1, 0, 0, 0)
+        sim_end = datetime.datetime(2004, 12, 31, 0, 0, 0)
+        trange = sum.timeRange( interval = "1Y")
+        self.assertTrue( trange[0] == datetime.date( 2000 , 1 , 1 ))
+        self.assertTrue( trange[1] == datetime.date( 2001 , 1 , 1 ))
+        self.assertTrue( trange[2] == datetime.date( 2002 , 1 , 1 ))
+        self.assertTrue( trange[3] == datetime.date( 2003 , 1 , 1 ))
+        self.assertTrue( trange[4] == datetime.date( 2004 , 1 , 1 ))
+        self.assertTrue( trange[5] == datetime.date( 2005 , 1 , 1 ))
+
+        trange = sum.timeRange( interval = "1M")
+        self.assertTrue( trange[0] == datetime.date( 2000 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2005 , 1 , 1 ))
+
+        trange = sum.timeRange( start = datetime.date( 2002 , 1 , 15), interval = "1M")
+        self.assertTrue( trange[0] == datetime.date( 2002 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2005 , 1 , 1 ))
+
+        trange = sum.timeRange( start = datetime.date( 2002 , 1 , 15) , end = datetime.date( 2003 , 1 , 15), interval = "1M")
+        self.assertTrue( trange[0] == datetime.date( 2002 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2003 , 2 , 1 ))
+
+        trange = sum.timeRange( start = datetime.date( 2002 , 1 , 15) , end = datetime.datetime( 2003 , 1 , 15,0,0,0), interval = "1M")
+        self.assertTrue( trange[0] == datetime.date( 2002 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2003 , 2 , 1 ))
+
+
+
     # Loading this dataset is a test of loading a case where one report step is missing.
     def test_Heidrun(self):
         sum = EclSum( self.createTestPath("Statoil/ECLIPSE/Heidrun/Summary/FF12_2013B3_CLEAN_RS"))
         self.assertEqual( 452 , len(sum))
         self.assertFloatEqual( 1.8533144e+8 , sum.get_last_value("FOPT"))
+
+    def test_regularProduction(self):
+        sum = EclSum(self.case)
+        with self.assertRaises(TypeError):
+            trange = TimeVector.createRegular( sum.start_time , sum.end_time , "1M" )
+            prod = sum.blockedProduction("FOPR" , trange)
+            
+        with self.assertRaises(KeyError):
+            trange = TimeVector.createRegular( sum.start_time , sum.end_time , "1M" )
+            prod = sum.blockedProduction("NoNotThis" , trange)
+
+        trange = sum.timeRange(interval = "2Y")
+        self.assertTrue( trange[0]  == datetime.date( 2000 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2006 , 1 , 1 ))
+
+        trange = sum.timeRange(interval = "5Y")
+        self.assertTrue( trange[0]  == datetime.date( 2000 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2005 , 1 , 1 ))
+        
+        trange = sum.timeRange(interval = "6M")
+        wprod1 = sum.blockedProduction("WOPT:OP_1" , trange)
+        wprod2 = sum.blockedProduction("WOPT:OP_2" , trange)
+        wprod3 = sum.blockedProduction("WOPT:OP_3" , trange)
+        wprod4 = sum.blockedProduction("WOPT:OP_4" , trange)
+        wprod5 = sum.blockedProduction("WOPT:OP_5" , trange)
+    
+        fprod = sum.blockedProduction("FOPT" , trange)
+        gprod = sum.blockedProduction("GOPT:OP" , trange)
+        wprod = wprod1 + wprod2 + wprod3 + wprod4 + wprod5
+        for (w,f,g) in zip(wprod, fprod,gprod):
+            self.assertFloatEqual( w , f )
+            self.assertFloatEqual( w , g )

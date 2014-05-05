@@ -214,8 +214,6 @@ BasePlot.prototype.render = function() {
     this.render_finished = false;
     this.render_callback_finished = false;
 
-    this.resetLegends();
-
     this.title.text(this.getTitle());
 
     if (this.dimension_x.getUnit() == "") {
@@ -238,6 +236,8 @@ BasePlot.prototype.render = function() {
     if(this.pre_render_callback != null) {
         this.pre_render_callback(data);
     }
+
+    this.resetLegends();
 
     var axis = this.plot_group.select(".y.axis").call(this.y_axis);
     this.dimension_y.relabel(axis);
@@ -265,8 +265,6 @@ BasePlot.prototype.render = function() {
     if(this.render_refcase) {
         this.renderRefcase(overlay_context, data);
     }
-
-    this.legend_group.selectAll(".plot-legend").data(this.legend_list).call(this.legend);
 
     overlay_context.restore();
     context.restore();
@@ -391,6 +389,7 @@ BasePlot.prototype.finishedRendering = function(){
 BasePlot.prototype.emitFinishedRendering = function(){
     if(this.rendering_finished_callback != null){
         if(this.render_finished && this.render_callback_finished) {
+            this.legend_group.selectAll(".plot-legend").data(this.legend_list).call(this.legend);
             this.rendering_finished_callback();
         }
     }

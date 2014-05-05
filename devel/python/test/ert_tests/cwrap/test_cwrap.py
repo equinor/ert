@@ -1,5 +1,5 @@
 from ert.cwrap import CWrapper, BaseCClass, clib
-from ert_tests import ExtendedTestCase
+from ert.test  import ExtendedTestCase
 
 test_lib  = clib.ert_load("libert_util") # create a local namespace (so we don't overwrite StringList)
 cwrapper =  CWrapper(test_lib)

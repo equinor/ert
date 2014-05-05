@@ -1,7 +1,7 @@
 import re
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QSpinBox, QValidator, QLineEdit, QCompleter, QListView, QStringListModel
-from ert.util import ctime
+from ert.util import CTime
 
 
 class ListSpinBox(QSpinBox):
@@ -15,7 +15,7 @@ class ListSpinBox(QSpinBox):
 
         list = []
         for item in self.__items:
-            assert isinstance(item, ctime)
+            assert isinstance(item, CTime)
             date = item.date()
             list.append(self.convertToString(date))
 

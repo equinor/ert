@@ -1,7 +1,7 @@
 import time
 from ert.util import ThreadPool
 from ert.util.thread_pool import Task
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase
 
 
 class ThreadPoolTest(ExtendedTestCase):

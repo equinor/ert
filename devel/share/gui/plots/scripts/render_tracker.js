@@ -68,10 +68,17 @@ IncrementalRenderTracker.prototype.stoppedRendering = function() {
 //    console.log("Rendering time: " + this.runningTime() + " ms");
 };
 
+IncrementalRenderTracker.prototype.isRunning = function() {
+    return this.is_running;
+};
+
 IncrementalRenderTracker.prototype.runningTime = function() {
     return (Date.now() - this.rendering_start);
 };
 
+IncrementalRenderTracker.prototype.forceStop = function() {
+    this.should_stop = true;
+};
 
 
 
