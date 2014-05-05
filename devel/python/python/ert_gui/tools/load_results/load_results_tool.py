@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from ert_gui.models.connectors.load_results import LoadResultsModel
 from ert_gui.tools import Tool
 from ert_gui.tools.load_results import LoadResultsPanel
 from ert_gui.widgets import util
@@ -24,7 +25,9 @@ class LoadResultsTool(Tool):
         super(LoadResultsTool, self).__init__("Load results manually", "tools/load_manually", util.resourceIcon("ide/table_import"))
         self.__import_widget = None
         self.__dialog = None
-        self.setVisable(False)
+        self.setVisible(False)
+
+
 
 
     def trigger(self):
@@ -37,5 +40,10 @@ class LoadResultsTool(Tool):
     def load(self):
         self.__import_widget.load()
         self.__dialog.accept()
+
+    def toggleAdvancedMode(self, advanced_mode):
+        self.setVisible(advanced_mode)
+        if LoadResultsModel().getIterationCount() == 0:
+            self.setEnabled(False)
 
 
