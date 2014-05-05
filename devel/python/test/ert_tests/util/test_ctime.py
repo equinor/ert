@@ -84,6 +84,14 @@ class CTimeTest(TestCase):
         with self.assertRaises(TypeError):
             t0 >= 0.5
 
+        t3 = CTime(date(2050 , 1 , 1 ))
+        t4 = CTime(date(2060 , 1 , 1 ))
+        self.assertTrue( t1 < t3 )
+        self.assertTrue( t3 < t4 )
+
+        t5 = CTime(t4)
+        self.assertTrue( t4 == t5 )
+
 
 
     def test_range(self):
