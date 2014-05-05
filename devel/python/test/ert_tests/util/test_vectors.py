@@ -304,6 +304,9 @@ class UtilTest(TestCase):
         tv1 = TimeVector( default_value = datetime.date( 2000 , 1,1) , initial_size = 2)
         self.assertEqual( tv1[0] , datetime.date(2000,1,1))
 
+        tv2 = TimeVector()
+        tv2.append( time2 )
+        print tv2
 
 
     def test_permutation_vector(self):
