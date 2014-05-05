@@ -1,6 +1,6 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
-from ert.util import ctime
+from ert.util import CTime
 
 
 
@@ -17,7 +17,7 @@ class EnsemblePlotDataVector(BaseCClass):
         return EnsemblePlotDataVector.cNamespace().get_value(self, index)
 
     def getTime(self, index):
-        """ @rtype: ctime """
+        """ @rtype: CTime """
         return EnsemblePlotDataVector.cNamespace().get_time(self, index)
 
     def isActive(self, index):

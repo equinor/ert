@@ -22,8 +22,7 @@ except ImportError:
 import time
 from ert.ecl import EclTypeEnum, EclKW, EclGrid
 from ert.util import DoubleVector
-from ert.util.test_area import TestAreaContext
-from ert_tests import ExtendedTestCase
+from ert.test import ExtendedTestCase , TestAreaContext
 
 
 class GridTest(ExtendedTestCase):
@@ -38,9 +37,60 @@ class GridTest(ExtendedTestCase):
     def grdecl_file(self):
         return self.createTestPath("Statoil/ECLIPSE/Gurbat/include/example_grid_sim.GRDECL")
 
+    def test_corner(self):
+        grid = EclGrid(self.egrid_file())
+        nx = grid.getNX()
+        ny = grid.getNY()
+        nz = grid.getNZ()
+        (x1,y1,z1) = grid.get_corner_xyz( 0 , ijk = (0,0,0))
+        (x2,y2,z2) = grid.getLayerXYZ( 0 , 0 )
+        self.assertEqual(x1,x2)
+        self.assertEqual(y1,y2)
+        self.assertEqual(z1,z2)
+
+        (x1,y1,z1) = grid.get_corner_xyz( 0 , ijk = (0,1,0))
+        (x2,y2,z2) = grid.getLayerXYZ( (nx + 1) , 0 )
+        self.assertEqual(x1,x2)
+        self.assertEqual(y1,y2)
+        self.assertEqual(z1,z2)
+
+        (x1,y1,z1) = grid.get_corner_xyz( 1 , ijk = (nx - 1,0,0))
+        (x2,y2,z2) = grid.getLayerXYZ( nx , 0 )
+        self.assertEqual(x1,x2)
+        self.assertEqual(y1,y2)
+        self.assertEqual(z1,z2)
+
+        (x1,y1,z1) = grid.get_corner_xyz( 4 , ijk = (0,0,nz-1))
+        (x2,y2,z2) = grid.getLayerXYZ( 0 , nz )
+        self.assertEqual(x1,x2)
+        self.assertEqual(y1,y2)
+        self.assertEqual(z1,z2)
+
+        (x1,y1,z1) = grid.get_corner_xyz( 7 , ijk = (nx-1,ny-1,nz-1))
+        (x2,y2,z2) = grid.getLayerXYZ( (nx + 1)*(ny + 1) - 1 , nz )
+        self.assertEqual(x1,x2)
+        self.assertEqual(y1,y2)
+        self.assertEqual(z1,z2)
+
+
+    
+        with self.assertRaises(IndexError):
+            grid.getLayerXYZ( -1 , 0 )
+
+        with self.assertRaises(IndexError):
+            grid.getLayerXYZ( (nx + 1)*(ny + 1) , 0 )
+
+        with self.assertRaises(IndexError):
+            grid.getLayerXYZ( 0 , -1 )
+
+        with self.assertRaises(IndexError):
+            grid.getLayerXYZ( 0 , nz + 1 )
+
+
     def test_GRID( self ):
         grid = EclGrid(self.grid_file())
         self.assertTrue(grid)
+
 
 
     def test_EGRID( self ):
@@ -50,6 +100,7 @@ class GridTest(ExtendedTestCase):
         self.assertEqual(dims[0] , grid.getNX())
         self.assertEqual(dims[1] , grid.getNY())
         self.assertEqual(dims[2] , grid.getNZ())
+
 
 
     def create(self, filename, load_actnum=True):

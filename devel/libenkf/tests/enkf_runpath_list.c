@@ -36,7 +36,7 @@ void * add_pathlist( void * arg ) {
   
   int i;
   for (i=0; i < bs; i++) 
-    runpath_list_add( list , i + offset , "Path" , "Basename");
+    runpath_list_add( list , i + offset , 0,  "Path" , "Basename");
 
   return NULL;
 }
@@ -50,17 +50,22 @@ int main(int argc , char ** argv) {
 
   test_assert_int_equal( runpath_list_size( list ) , 0 );
 
-  runpath_list_add( list , 3 , "path" , "base");
-  runpath_list_add( list , 2 , "path" , "base");
-  runpath_list_add( list , 1 , "path" , "base");
+  runpath_list_add( list , 3 , 0, "path" , "base");
+  runpath_list_add( list , 2 , 0, "path" , "base");
+  runpath_list_add( list , 1 , 0, "path" , "base");
+
+  runpath_list_add( list , 3 , 1, "path" , "base");
+  runpath_list_add( list , 2 , 1, "path" , "base");
+  runpath_list_add( list , 1 , 1, "path" , "base");
   
-  test_assert_int_equal( runpath_list_size( list ) , 3 );
+  test_assert_int_equal( runpath_list_size( list ) , 6 );
   test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 3 );
   test_assert_int_equal( runpath_list_iget_iens( list , 2 ) , 1 );
+  test_assert_int_equal( runpath_list_iget_iter( list , 3 ) , 1 );
   runpath_list_sort( list );
 
   test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 1 );
-  test_assert_int_equal( runpath_list_iget_iens( list , 2 ) , 3 );
+  test_assert_int_equal( runpath_list_iget_iens( list , 4 ) , 3 );
   runpath_list_clear( list );
   test_assert_int_equal( runpath_list_size( list ) , 0 );
 
@@ -109,14 +114,16 @@ int main(int argc , char ** argv) {
 
       {
         int file_iens;
+        int file_iter;
         char file_path[256];
         char file_base[256];
         int iens;
         FILE * stream = util_fopen( filename, "r");
         for (iens = 0; iens < threads * block_size; iens++) {
-          int fscanf_return = fscanf( stream , "%d %s %s" , &file_iens , file_path , file_base);
-          test_assert_int_equal(fscanf_return, 3 );
+          int fscanf_return = fscanf( stream , "%d %s %s %d" , &file_iens , file_path , file_base, &file_iter);
+          test_assert_int_equal(fscanf_return, 4 );
           test_assert_int_equal( file_iens , iens );
+          test_assert_int_equal( file_iter , 0 );
         }
         fclose( stream );
       }

@@ -5,14 +5,23 @@ class SourceEnumerator(object):
     @classmethod
     def findDevRoot(cls, root_directory_name = "devel"):
         dev_root = os.path.dirname(os.path.realpath(__file__))
+        while True:
+            print("Looking at:%s" % dev_root)
 
-        while os.path.basename(dev_root) != root_directory_name:
+            dev_path = os.path.join(dev_root , root_directory_name)
+            if os.path.exists( dev_path ):
+                dev_root = os.path.join(dev_root , root_directory_name)
+                print("break: %s" % dev_path)
+                break
+                
             head, tail = os.path.split(dev_root)
             dev_root = head
             if tail == "":
                 raise ValueError("Source root: '%s' not found!" % root_directory_name)
 
+        print("Returning:%s " % dev_root)
         return dev_root
+
 
     @classmethod
     def findSourceFile(cls, path):
@@ -21,7 +30,7 @@ class SourceEnumerator(object):
         source_file = os.path.join(dev_root, path)
 
         if not os.path.exists(source_file):
-            raise ValueError("File not found: %s" % path)
+            raise ValueError("File not found: %s:%s" % (path , source_file))
 
         return source_file
 

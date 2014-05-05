@@ -30,7 +30,7 @@ class ReportStepsModel(ErtConnector, ListModelMixin):
 
 
     def getList(self):
-        """ @rtype: list of ctime """
+        """ @rtype: list of CTime """
 
         time_list = [c_time for c_time in self.getReportSteps()]
         if len(time_list) > 0:

@@ -1,0 +1,11 @@
+set(PYTHON_SOURCES
+    __init__.py
+    ert_test_context.py
+    extended_testcase.py
+    test_run.py
+    source_enumerator.py
+    test_area.py
+)
+
+add_python_package("python.ert.test"  ${PYTHON_INSTALL_PREFIX}/ert/test "${PYTHON_SOURCES}" True)
+

@@ -2,7 +2,6 @@ from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import QWidget, QHBoxLayout, QLabel
 from ert_gui.models.connectors.plot.report_steps import ReportStepsModel
 from ert_gui.widgets.list_spin_box import ListSpinBox
-from ert.util.ctime import ctime
 
 
 class ReportStepWidget(QWidget):
@@ -34,7 +33,7 @@ class ReportStepWidget(QWidget):
         self.reportStepTimeSelected.emit(self.__items[index])
 
     def getSelectedValue(self):
-        """ @rtype: ctime """
+        """ @rtype: CTime """
         index = self.__time_spinner.value()
         return self.__items[index]
 

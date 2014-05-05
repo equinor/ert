@@ -1,10 +1,9 @@
 import os
 from ert.enkf import EnkfFs
 from ert.enkf import EnKFMain
-from ert.enkf import ErtTestContext
 from ert.enkf.enums import EnKFFSType
-from ert_tests import ExtendedTestCase
-from ert.util.test_area import TestAreaContext
+from ert.test import ExtendedTestCase , TestAreaContext
+from ert.test import ErtTestContext
 
 
 class EnKFFSTest(ExtendedTestCase):
