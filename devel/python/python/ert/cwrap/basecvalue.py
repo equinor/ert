@@ -35,4 +35,4 @@ class BaseCValue(object):
         if c_value_object is not None and not isinstance(c_value_object, BaseCValue):
             raise ValueError("c_class_object must be a BaseCValue instance!")
 
-        return c_value_object.value()
+        return cls.DATA_TYPE.from_param( c_value_object.__value )
