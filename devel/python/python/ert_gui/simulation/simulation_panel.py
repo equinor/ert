@@ -1,4 +1,4 @@
-from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtCore import Qt, QSize, pyqtSignal
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QAction
 from ert_gui.models.connectors.init import CaseList
 from ert_gui.models.connectors.run import SimulationModeModel
@@ -12,6 +12,7 @@ from ert_gui.widgets.helped_widget import HelpedWidget
 
 
 class SimulationPanel(QWidget):
+
     def __init__(self):
         QWidget.__init__(self)
 
@@ -69,17 +70,10 @@ class SimulationPanel(QWidget):
 
 
     def getActions(self):
-        """ @rtype: list of QAction """
-        advanced_toggle_action = QAction("Show Advanced Options", self)
-        advanced_toggle_action.setObjectName("AdvancedSimulationOptions")
-        advanced_toggle_action.setCheckable(True)
-        advanced_toggle_action.setChecked(False)
-        advanced_toggle_action.toggled.connect(self.toggleAdvanced)
-
-        return [advanced_toggle_action]
+        return []
 
 
-    def toggleAdvanced(self, show_advanced):
+    def toggleAdvancedMode(self, show_advanced):
         for panel in self.simulation_widgets.values():
             panel.toggleAdvancedOptions(show_advanced)
 
