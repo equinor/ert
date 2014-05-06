@@ -60,6 +60,10 @@
         ordinal_dimension.setUnit("Principal Component");
         value_dimension.setUnit("Value");
         plot = new PcaPlot(d3.select("body"), ordinal_dimension, value_dimension);
+        
+        plot.setRenderingFinishedCallback(function() {
+            plot_data_source.renderingFinished();
+        });
     }
 
     function updatePlot() {
