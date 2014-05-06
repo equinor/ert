@@ -1,5 +1,5 @@
 from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget
+from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction
 
 
 class GertMainWindow(QMainWindow):
@@ -10,6 +10,8 @@ class GertMainWindow(QMainWindow):
 
         self.resize(300, 700)
         self.setWindowTitle('ERT')
+
+        self.__main_widget = None
 
         self.central_widget = QWidget()
         self.central_layout = QVBoxLayout()
@@ -52,6 +54,15 @@ class GertMainWindow(QMainWindow):
         file_menu.addAction("Close", self.__quit)
         self.__view_menu = self.menuBar().addMenu("&View")
 
+        """ @rtype: list of QAction """
+        advanced_toggle_action = QAction("Show Advanced Options", self)
+        advanced_toggle_action.setObjectName("AdvancedSimulationOptions")
+        advanced_toggle_action.setCheckable(True)
+        advanced_toggle_action.setChecked(False)
+        advanced_toggle_action.toggled.connect(self.toggleAdvancedMode)
+
+        self.__view_menu.addAction(advanced_toggle_action)
+
 
     def __quit(self):
         self.__saveSettings()
@@ -76,8 +87,17 @@ class GertMainWindow(QMainWindow):
         self.restoreGeometry(settings.value("geometry").toByteArray())
         self.restoreState(settings.value("windowState").toByteArray())
 
+    def toggleAdvancedMode(self, advanced_mode):
+        if hasattr(self.__main_widget, "toggleAdvancedMode"):
+            self.__main_widget.toggleAdvancedMode(advanced_mode)
+
+        for tool in self.tools.values():
+            if hasattr(tool, "toggleAdvancedMode"):
+                tool.toggleAdvancedMode(advanced_mode)
+
 
     def setWidget(self, widget):
+        self.__main_widget = widget
         actions = widget.getActions()
         for action in actions:
             self.__view_menu.addAction(action)
