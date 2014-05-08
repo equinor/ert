@@ -387,7 +387,7 @@ add_executable(obs_vector_tests obs_vector_tests.c)
 target_link_libraries(obs_vector_tests enkf test_util )
 add_test(obs_vector_tests ${EXECUTABLE_OUTPUT_PATH}/obs_vector_tests)
 
-add_test( enkf_runpath_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_runpath_list )
+add_test( enkf_runpath_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_runpath_list ${CMAKE_CURRENT_SOURCE_DIR}/data/config/runpath_list/config )
 add_test( enkf_site_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_site_config /project/res/etc/ERT/site-config)
 add_test( enkf_time_map1  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map )
 add_test( enkf_time_map2  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST )
