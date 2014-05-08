@@ -30,10 +30,10 @@ class GenDataConfig(BaseCClass):
     def get_initial_size(self):
         return GenDataConfig.cNamespace().get_initial_size(self)
 
-    def get_output_format(self):
+    def getOutputFormat(self):
         return GenDataConfig.cNamespace().get_output_format(self)
 
-    def get_input_format(self):
+    def getInputFormat(self):
         return GenDataConfig.cNamespace().get_input_format(self)
 
     def free(self):
