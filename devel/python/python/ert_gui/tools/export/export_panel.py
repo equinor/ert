@@ -78,6 +78,7 @@ class ExportPanel(QWidget):
 
         self.__gen_kw_file_types = ["Parameter list", "Template based"]
         self.__field_kw_file_types = ["Eclipse GRDECL", "RMS roff"]
+        self.__gen_data_file_types = ["Gen data"]
 
         self.__file_type_model = self.__field_kw_file_types
         self.__file_type_combo = QComboBox()
@@ -101,6 +102,8 @@ class ExportPanel(QWidget):
         self.__file_type_combo.clear()
         if self.__export_keyword_model.isGenKw(keyword):
             self.__file_type_model = self.__gen_kw_file_types
+        elif self.__export_keyword_model.isGenDataKw(keyword):
+            self.__file_type_model = self.__gen_data_file_types
         else:
             self.__file_type_model = self.__field_kw_file_types
 
@@ -125,7 +128,11 @@ class ExportPanel(QWidget):
             self.exportField(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
         elif self.__export_keyword_model.isGenKw(keyword):
             self.exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
+        elif self.__export_keyword_model.isGenDataKw(keyword):
+            self.exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
 
+    def exportGenData(self, keyword, file_name, iactive, file_type_key, report_step, state, selected_case):
+        ExportModel().exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
 
     def exportGenKw(self, keyword, file_name, iactive, file_type_key, report_step, state, selected_case):
         ExportModel().exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
