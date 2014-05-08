@@ -20,8 +20,10 @@ class ExportKeywordModel(ErtConnector):
 
     def __init__(self):
         super(ExportKeywordModel, self).__init__()
-        self.__gen_kw = None
-        self.__field_kw = None
+        self.__gen_kw = []
+        self.__field_kw = []
+        self.__gen_data = None
+        self.__gen_param = None
 
     def getKeylistFromImplType(self, ert_impl_type):
         return sorted(self.ert().ensembleConfig().getKeylistFromImplType(ert_impl_type))
@@ -42,6 +44,18 @@ class ExportKeywordModel(ErtConnector):
 
         return self.__gen_kw
 
+    def getGenDataKeyWords(self):
+        if self.__gen_data is None:
+            gen_data_list = []
+            for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA):
+                if self.ert().ensembleConfig().getNode(key).getDataModelConfig().getOutputFormat() is not None:
+                    gen_data_list.append(key)
+                elif self.ert().ensembleConfig().getNode(key).getDataModelConfig().getInputFormat() is not None:
+                    gen_data_list.append(key)
+            self.__gen_data = gen_data_list
+
+        return self.__gen_data
+
     def getFieldKeyWords(self):
         if self.__field_kw is None:
             self.__field_kw = self.getKeylistFromImplType(ErtImplType.FIELD)
@@ -49,10 +63,15 @@ class ExportKeywordModel(ErtConnector):
         return self.__field_kw
 
     def getKeyWords(self):
-        return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords())
+        #return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords() + self.getGenDataKeyWords())
+        return self.getGenDataKeyWords()
 
     def isGenKw(self, key):
         return key in self.__gen_kw
 
     def isFieldKw(self, key):
         return key in self.__field_kw
+
+    def isGenDataKw(self, key):
+        return key in self.__gen_data
+    
