@@ -2867,7 +2867,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
     enkf_main_init_subst_list( enkf_main );
     ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh );
-    enkf_main_init_data_kw( enkf_main , config );
     
     analysis_config_load_internal_modules( enkf_main->analysis_config );
     analysis_config_init( enkf_main->analysis_config , config );
@@ -2882,8 +2881,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
                        ecl_config_get_last_history_restart( enkf_main->ecl_config ),
                        ecl_config_get_sched_file(enkf_main->ecl_config) ,
                        ecl_config_get_refcase( enkf_main->ecl_config ));
-
+    
     enkf_main_init_qc( enkf_main , config );
+    enkf_main_init_data_kw( enkf_main , config );
     enkf_main_update_num_cpu( enkf_main );
     {
       const config_content_item_type * pred_item = config_get_content_item( config , SCHEDULE_PREDICTION_FILE_KEY );
@@ -3382,6 +3382,18 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
   int iw;
   for (iw = 0; iw < stringlist_get_size( workflows ); iw++) 
     enkf_main_run_workflow( enkf_main , stringlist_iget( workflows , iw ));
+}
+
+
+void enkf_main_load_from_forward_model_from_gui(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive){
+    const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
+    stringlist_type ** realizations_msg_list = util_calloc( ens_size , sizeof * realizations_msg_list );
+    int iens = 0;
+    for (; iens < ens_size; ++iens) {
+      realizations_msg_list[iens] = stringlist_alloc_new();
+    }
+    enkf_main_load_from_forward_model(enkf_main, iter , iactive, realizations_msg_list);
+    free(realizations_msg_list);
 }
 
 

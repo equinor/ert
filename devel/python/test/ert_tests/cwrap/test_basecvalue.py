@@ -5,15 +5,10 @@ from ert.test import ExtendedTestCase
 
 class UnsignedByteValue(BaseCValue):
     DATA_TYPE = c_ubyte
-    def __init__(self, value):
-        super(UnsignedByteValue, self).__init__(value)
 
 
 class TimeTValue(BaseCValue):
     DATA_TYPE = c_long
-    def __init__(self, value):
-        super(TimeTValue, self).__init__(value)
-
 
 
 class BaseCValueTest(ExtendedTestCase):
@@ -24,7 +19,6 @@ class BaseCValueTest(ExtendedTestCase):
 
         self.ert_wrapper.registerType("time_t", TimeTValue)
         self.make_date = self.ert_wrapper.prototype("time_t util_make_date(int, int, int)")
-
 
 
     def test_illegal_type(self):
@@ -59,10 +53,10 @@ class BaseCValueTest(ExtendedTestCase):
     def test_from_param(self):
         test_value = UnsignedByteValue(127)
 
-        self.assertEqual(UnsignedByteValue.from_param(test_value), 127)
+        self.assertEqual(UnsignedByteValue.from_param(test_value).value, 127)
 
         with self.assertRaises(AttributeError):
-            self.assertEqual(UnsignedByteValue.from_param(None), 0)
+            UnsignedByteValue.from_param(None)
 
         with self.assertRaises(ValueError):
            UnsignedByteValue.from_param("exception")
@@ -73,4 +67,3 @@ class BaseCValueTest(ExtendedTestCase):
 
         self.assertIsInstance(future, TimeTValue)
         self.assertEqual(future.value(), 2524604400)
-
