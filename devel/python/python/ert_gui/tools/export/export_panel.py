@@ -68,7 +68,7 @@ class ExportPanel(QWidget):
 
         self.__file_name = QLineEdit()
         self.__file_name.setEnabled(False)
-        self.__file_name.setText(QDir.currentPath())
+        self.__file_name.setText(QDir.currentPath()+"/export")
         self.__file_name.setMinimumWidth(250)
 
         file_name_layout = QHBoxLayout()
