@@ -15,7 +15,7 @@ class PlotToolBar(QToolBar):
     def __init__(self):
         QToolBar.__init__(self, "PlotTools")
 
-        self.setObjectName("PlotToolbar")
+        self.setObjectName("PlotToolBar")
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
         self.__x_min, self.__x_min_action = self.addScaler("x_min", "X Minimum", spinner_type=CTime, select_min_time_value=True)
@@ -88,8 +88,8 @@ class PlotToolBar(QToolBar):
 
 
     def getReportStep(self):
-        """ @rtype: int """
-        return self.__report_step_widget.getSelectedValue().ctime()
+        """ @rtype: CTime """
+        return self.__report_step_widget.getSelectedValue()
 
 
     def setScales(self, x_min, x_max, y_min, y_max):

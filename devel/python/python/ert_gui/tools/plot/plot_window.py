@@ -1,6 +1,5 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
-import time
 from ert.util import CTime
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, ExportPlot, CustomizePlotWidget, PlotToolBar, PlotMetricsTracker, PlotPanelTracker
@@ -150,22 +149,36 @@ class PlotWindow(QMainWindow):
                 y_min, y_max = self.__plot_metrics_tracker.getScalesForType(y_axis_type_name)
 
                 model.setScales(x_min, x_max, y_min, y_max)
+
                 plot_panel.renderNow()
 
 
     def exportActivePlot(self):
-        if self.__central_tab.currentIndex() > -1:
-            active_plot =  self.__central_tab.currentWidget()
-            assert isinstance(active_plot, PlotPanel)
+        active_plot = self.getActivePlot()
 
-            if self.__exporter is None:
-                path = None
-            else:
-                path = self.__exporter.getCurrentPath()
+        if self.__exporter is None:
+            path = None
+        else:
+            path = self.__exporter.getCurrentPath()
 
-            self.__exporter = ExportPlot(active_plot, self.__plot_metrics_widget.getSettings(), self.__customize_plot_widget.getCustomSettings(), path)
 
-            self.__exporter.export()
+        report_step = self.__toolbar.getReportStep()
+
+        x_axis_type_name = active_plot.xAxisType()
+        y_axis_type_name = active_plot.yAxisType()
+
+        x_min, x_max = self.__plot_metrics_tracker.getScalesForType(x_axis_type_name)
+        y_min, y_max = self.__plot_metrics_tracker.getScalesForType(y_axis_type_name)
+
+        settings = {"x_min": x_min,
+                    "x_max": x_max,
+                    "y_min": y_min,
+                    "y_max": y_max,
+                    "report_step": report_step}
+
+        self.__exporter = ExportPlot(active_plot, settings, self.__customize_plot_widget.getCustomSettings(), path)
+
+        self.__exporter.export()
 
 
     def addPlotPanel(self, name, path, short_name=None):
@@ -226,8 +239,8 @@ class PlotWindow(QMainWindow):
         key = str(key)
         old_data_type_key = self.__plot_metrics_tracker.getDataTypeKey()
         self.__plot_metrics_tracker.setDataTypeKey(key)
-        plot_data_fetcher = PlotDataFetcher()
 
+        plot_data_fetcher = PlotDataFetcher()
         self.__plot_data = plot_data_fetcher.getPlotDataForKeyAndCases(key, self.__plot_cases)
         self.__plot_data.setParent(self)
 

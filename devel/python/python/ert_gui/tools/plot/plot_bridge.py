@@ -62,7 +62,10 @@ class PlotBridge(QObject):
         if report_step_time is None:
             report_step_time = "null"
 
-        self.__web_page.mainFrame().evaluateJavaScript("setReportStepTime(%s);" % (report_step_time))
+        if isinstance(report_step_time, CTime):
+            report_step_time = report_step_time.ctime()
+
+        self.__web_page.mainFrame().evaluateJavaScript("setReportStepTime(%s);" % report_step_time)
 
 
     def setScales(self, x_min, x_max, y_min, y_max):
