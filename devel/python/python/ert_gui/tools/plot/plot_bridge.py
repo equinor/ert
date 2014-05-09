@@ -2,6 +2,7 @@ import json
 import os
 from PyQt4.QtCore import QObject, pyqtSlot, pyqtSignal, QUrl
 from PyQt4.QtWebKit import QWebPage
+from ert.util import CTime
 from ert_gui.tools.plot.data import PlotData
 
 class PlotWebPage(QWebPage):
@@ -64,42 +65,33 @@ class PlotBridge(QObject):
         self.__web_page.mainFrame().evaluateJavaScript("setReportStepTime(%s);" % (report_step_time))
 
 
-    def setScales(self, time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max):
-        if value_min is None:
-            value_min = "null"
+    def setScales(self, x_min, x_max, y_min, y_max):
+        if x_min is None:
+            x_min = "null"
 
-        if value_max is None:
-            value_max = "null"
+        if x_max is None:
+            x_max = "null"
 
-        if time_min is None:
-            time_min = "null"
-        else:
-            time_min = time_min.ctime()
+        if y_min is None:
+            y_min = "null"
 
-        if time_max is None:
-            time_max = "null"
-        else:
-            time_max = time_max.ctime()
+        if y_max is None:
+            y_max = "null"
 
-        if depth_min is None:
-            depth_min = "null"
+        if isinstance(x_min, CTime):
+            x_min = x_min.ctime()
 
-        if depth_max is None:
-            depth_max = "null"
+        if isinstance(x_max, CTime):
+            x_max = x_max.ctime()
 
-        if index_min is None:
-            index_min = "null"
-        if index_max is None:
-            index_max = "null"
+        if isinstance(y_min, CTime):
+            y_min = y_min.ctime()
 
-        if count_min is None:
-            count_min = "null"
-        if count_max is None:
-            count_max = "null"
+        if isinstance(y_max, CTime):
+            y_max = y_max.ctime()
 
-
-        scales = (time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max)
-        self.__web_page.mainFrame().evaluateJavaScript("setScales(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);" % scales)
+        scales = (x_min, x_max, y_min, y_max)
+        self.__web_page.mainFrame().evaluateJavaScript("setScales(%s,%s,%s,%s);" % scales)
 
     @pyqtSlot(result=QObject)
     def getPlotData(self):
@@ -134,7 +126,6 @@ class PlotBridge(QObject):
     def getPage(self):
         return self.__web_page
 
-
     def setCustomSettings(self, settings):
         json_settings = json.dumps(settings)
         self.__web_page.mainFrame().evaluateJavaScript("setCustomSettings(%s);" % json_settings)
@@ -142,24 +133,34 @@ class PlotBridge(QObject):
     def renderNow(self):
         self.__web_page.mainFrame().evaluateJavaScript("renderNow()")
 
-    def setPlotSettings(self, settings):
-        time_min = settings["time_min"]
-        time_max = settings["time_max"]
-        value_min = settings["value_min"]
-        value_max = settings["value_max"]
-        depth_min = settings["depth_min"]
-        depth_max = settings["depth_max"]
-        index_min = settings["index_min"]
-        index_max = settings["index_max"]
-        count_min = settings["count_min"]
-        count_max = settings["count_max"]
-        self.setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max)
-
-        self.setReportStepTime(settings["report_step_time"])
-
 
     def getPlotTitle(self):
         return self.__web_page.mainFrame().evaluateJavaScript("getPlotTitle();" ).toString()
+
+
+    def xAxisType(self):
+        """ @rtype: str """
+        axis_type = self.__web_page.mainFrame().evaluateJavaScript("xAxisType();")
+
+        if axis_type.isNull():
+            return None
+
+        return str(axis_type.toString())
+
+
+    def yAxisType(self):
+        """ @rtype: str """
+        axis_type = self.__web_page.mainFrame().evaluateJavaScript("yAxisType();")
+
+        if axis_type.isNull():
+            return None
+
+        return str(axis_type.toString())
+
+
+    def isReportStepCapable(self):
+        """ @rtype: bool """
+        return self.__web_page.mainFrame().evaluateJavaScript("isReportStepCapable();" ).toBool()
 
 
 

@@ -59,6 +59,8 @@ class PlotDataFetcher(ErtConnector):
         pca_data_fetcher = PcaDataFetcher(self.ert())
         return pca_data_fetcher.supportsKey(key) or DataTypeKeysModel().isCustomPcaKey(key)
 
+    def isCustomPcaDataKey(self, key):
+        return DataTypeKeysModel().isCustomPcaKey(key)
 
     def fetchGenData(self, gen_data_fetcher, key, cases):
         plot_data = PlotData(key)
