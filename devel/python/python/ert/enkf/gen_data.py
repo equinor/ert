@@ -33,7 +33,7 @@ GenData.cNamespace().alloc       = cwrapper.prototype("c_void_p gen_data_alloc()
 GenData.cNamespace().free        = cwrapper.prototype("void gen_data_free(gen_data)")
 GenData.cNamespace().size = cwrapper.prototype("int gen_data_get_size(gen_data)")
 
-GenData.cNamespace().export = cwrapper.prototype("void gen_data_export(gen_data , char, gen_data_file_format_type, fortio)")
+GenData.cNamespace().export = cwrapper.prototype("void gen_data_export(gen_data , char*, gen_data_file_format_type, fortio)")
 
 
 

@@ -91,11 +91,11 @@ class ExportModel(ErtConnector):
 
         for index, active in enumerate(iactive):
             if active:
-                node_id = NodeId(report_step, index, state)
+                node_id = NodeId(int(report_step), index, state)
 
                 if node.tryLoad(fs, node_id):
                     gen_data = node.asGenData()
 
-                    filename  =  str(path + "/" + keyword + "_{0}").format(index)
+                    filename  =  str(path + "/" + keyword + "_{0}").format(index) + ".txt"
                     gen_data.export(filename,export_type ,None)
 
