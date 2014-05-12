@@ -20,8 +20,8 @@ class ExportKeywordModel(ErtConnector):
 
     def __init__(self):
         super(ExportKeywordModel, self).__init__()
-        self.__gen_kw = []
-        self.__field_kw = []
+        self.__gen_kw = None
+        self.__field_kw = None
         self.__gen_data = None
         self.__gen_param = None
 
@@ -76,9 +76,8 @@ class ExportKeywordModel(ErtConnector):
         return self.__field_kw
 
     def getKeyWords(self):
-        #return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords() + self.getGenDataKeyWords())
-        return self.getGenDataKeyWords()
-
+        return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords() + self.getGenDataKeyWords())
+        
     def isGenKw(self, key):
         return key in self.__gen_kw
 
@@ -87,3 +86,13 @@ class ExportKeywordModel(ErtConnector):
 
     def isGenDataKw(self, key):
         return key in self.__gen_data
+
+    def getGenDataReportSteps(self, key):
+        gen_data_list=[]
+        obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
+        for obs_key in obs_keys:
+            obs_vector = self.ert().getObservations()[obs_key]
+            for report_step in obs_vector:
+                gen_data_list.append(str(report_step))
+
+        return gen_data_list

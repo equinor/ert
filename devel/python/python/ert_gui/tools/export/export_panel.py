@@ -35,7 +35,6 @@ class ExportPanel(QWidget):
         self.setMinimumWidth(500)
         self.setMinimumHeight(200)
         self.__dynamic = False
-        self.__dynamic_plot_forcast = False
 
         self.setWindowTitle("Export data")
         self.activateWindow()
@@ -95,6 +94,9 @@ class ExportPanel(QWidget):
         self.__plot_f_a.addItems(self.__plot_f_a_model)
         layout.addRow("Plot Forecast/Analyzed:", self.__plot_f_a)
 
+        self.__gen_data_report_step_model=[]
+        self.__gen_data_report_step = QComboBox()
+        layout.addRow("Report step:", self.__gen_data_report_step)
 
         self.setLayout(layout)
         self.__keywords.currentIndexChanged.connect(self.keywordSelected)
@@ -117,14 +119,13 @@ class ExportPanel(QWidget):
         self.__file_type_combo.addItems(self.__file_type_model)
 
     def export(self):
-        report_step = 0
-        if self.__dynamic:
-            report_step = self.__report_step.text()
         keyword = self.__kw_model[self.__keywords.currentIndex()]
+        report_step = self.getReportStep(keyword)
+
         all_cases = self.__case_model.getAllItems()
         selected_case  = all_cases[self.__case_combo.currentIndex()]
 
-        file_name = self.createExportFilNameMask(keyword, selected_case)
+        file_name = self.createExportFileNameMask(keyword, selected_case, report_step)
 
         iactive = self.__active_realizations_model.getActiveRealizationsMask()
 
@@ -139,6 +140,16 @@ class ExportPanel(QWidget):
             self.exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
         elif self.__export_keyword_model.isGenDataKw(keyword):
             self.exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
+
+    def getReportStep(self, key):
+        report_step = 0
+        if self.__dynamic:
+            report_step = self.__report_step.text()
+
+        if self.__export_keyword_model.isGenDataKw(key):
+            report_step = self.__gen_data_report_step_model[self.__gen_data_report_step.currentIndex()]
+
+        return report_step
 
 
     def findState(self, key):
@@ -161,8 +172,6 @@ class ExportPanel(QWidget):
         return EnkfStateType.FORECAST
 
 
-
-
     def exportGenData(self, keyword, file_name, iactive, file_type_key, report_step, state, selected_case):
         ExportModel().exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
 
@@ -180,7 +189,7 @@ class ExportPanel(QWidget):
         if not result:
             QMessageBox.warning(self, "Warning",'''Something did not work!''',QMessageBox.Ok);
 
-    def createExportFilNameMask(self, keyword, current_case):
+    def createExportFileNameMask(self, keyword, current_case, report_step):
         path = self.__file_name.text()
         impl_type = None
 
@@ -193,6 +202,9 @@ class ExportPanel(QWidget):
 
         path = str(path) + "/" + str(current_case) + "/" + str(impl_type) + "/" + str(keyword)
 
+        if self.__export_keyword_model.isGenDataKw(keyword):
+            path = path + "_" + report_step
+
         if not QDir(path).exists():
             os.makedirs(path);
 
@@ -201,14 +213,22 @@ class ExportPanel(QWidget):
     def keywordSelected(self):
         self.updateFileExportType()
         key = self.__kw_model[self.__keywords.currentIndex()]
+        self.__dynamic = False
         if self.__export_keyword_model.isFieldKw(key):
-            self.__dynamic = ExportKeywordModel().isDynamicField(key)
-        elif self.__export_keyword_model.isGenDataKw(key):
-            self.__dynamic_plot_forcast = ExportKeywordModel().isDynamicPlot(key)
-        else:
-            self.__dynamic = False
+            self.__dynamic = self.__export_keyword_model.isDynamicField(key)
 
-        self.__plot_f_a.setVisible(self.__dynamic_plot_forcast)
-        self.layout().labelForField(self.__plot_f_a).setVisible(self.__dynamic_plot_forcast)
+        self.__plot_f_a.setVisible(self.__export_keyword_model.isGenDataKw(key))
+        self.layout().labelForField(self.__plot_f_a).setVisible(self.__export_keyword_model.isGenDataKw(key))
+
         self.__report_step.setVisible(self.__dynamic)
         self.layout().labelForField(self.__report_step).setVisible(self.__dynamic)
+
+        self.__gen_data_report_step.setVisible(self.__export_keyword_model.isGenDataKw(key))
+        self.layout().labelForField(self.__gen_data_report_step).setVisible(self.__export_keyword_model.isGenDataKw(key))
+
+        if self.__export_keyword_model.isGenDataKw(key):
+            data = self.__export_keyword_model.getGenDataReportSteps(key)
+            self.__gen_data_report_step_model = data
+            self.__gen_data_report_step.clear()
+            self.__gen_data_report_step.addItems(self.__gen_data_report_step_model)
+
