@@ -14,14 +14,15 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, EnkfFs, NodeId
+from ert.enkf import ENKF_LIB, EnkfFs, NodeId, GenData
 from ert.enkf.data import EnkfConfigNode
+from ert.enkf.data.gen_data_config import GenDataConfig
 from ert.enkf.enums import EnkfStateType
 
 
 class EnkfNode(BaseCClass):
     def __init__(self, config_node, private=False):
-        assert isinstance(config_node, EnkfConfigNode)
+        assert isinstance(config_node, (EnkfConfigNode, GenDataConfig))
 
         if private:
             c_pointer = EnkfNode.cNamespace().alloc_private(config_node)
@@ -39,6 +40,11 @@ class EnkfNode(BaseCClass):
 
     def valuePointer(self):
         return EnkfNode.cNamespace().value_ptr(self)
+
+    def asGenData(self):
+        """ @rtype: GenData """
+        #todo sjekk impl type
+        return GenData.createCReference(self.valuePointer(), self)
 
 
     # def vector_storage(self):

@@ -17,7 +17,7 @@ import os
 from PyQt4.QtCore import QDir
 
 from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
-from ert.enkf import EnkfFieldFileFormatEnum, EnkfStateType
+from ert.enkf import EnkfFieldFileFormatEnum, EnkfStateType, EnkfVarType
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.export import ExportKeywordModel, ExportModel
@@ -35,6 +35,7 @@ class ExportPanel(QWidget):
         self.setMinimumWidth(500)
         self.setMinimumHeight(200)
         self.__dynamic = False
+        self.__dynamic_plot_forcast = False
 
         self.setWindowTitle("Export data")
         self.activateWindow()
@@ -89,6 +90,12 @@ class ExportPanel(QWidget):
         self.__report_step = QLineEdit()
         layout.addRow("Report step:", self.__report_step)
 
+        self.__plot_f_a_model = ["Forcast","Analyzed"]
+        self.__plot_f_a = QComboBox()
+        self.__plot_f_a.addItems(self.__plot_f_a_model)
+        layout.addRow("Plot Forecast/Analyzed:", self.__plot_f_a)
+
+
         self.setLayout(layout)
         self.__keywords.currentIndexChanged.connect(self.keywordSelected)
         self.keywordSelected()
@@ -122,7 +129,9 @@ class ExportPanel(QWidget):
         iactive = self.__active_realizations_model.getActiveRealizationsMask()
 
         file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
-        state = EnkfStateType.FORECAST
+
+
+        state = self.findState(keyword)
 
         if self.__export_keyword_model.isFieldKw(keyword):
             self.exportField(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
@@ -130,6 +139,29 @@ class ExportPanel(QWidget):
             self.exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
         elif self.__export_keyword_model.isGenDataKw(keyword):
             self.exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
+
+
+    def findState(self, key):
+        if not self.__export_keyword_model.isGenDataKw(key):
+            return EnkfStateType.FORECAST
+
+        type = self.__export_keyword_model.getVarType(key)
+
+        if type == EnkfVarType.PARAMETER:
+            return EnkfStateType.ANALYZED
+
+        selected_plot_f_a = self.__plot_f_a_model[self.__plot_f_a.currentIndex()]
+
+        if selected_plot_f_a == "Forcast":
+            return EnkfStateType.FORECAST
+
+        if selected_plot_f_a == "Analyzed":
+            return EnkfStateType.ANALYZED
+
+        return EnkfStateType.FORECAST
+
+
+
 
     def exportGenData(self, keyword, file_name, iactive, file_type_key, report_step, state, selected_case):
         ExportModel().exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
@@ -154,6 +186,8 @@ class ExportPanel(QWidget):
 
         if self.__export_keyword_model.isFieldKw(keyword):
             impl_type = ExportKeywordModel().getImplementationType(keyword)
+        elif self.__export_keyword_model.isGenDataKw(keyword):
+            impl_type = "Gen_Data"
         elif self.__export_keyword_model.isGenKw(keyword):
             impl_type = "Gen_Kw"
 
@@ -169,8 +203,12 @@ class ExportPanel(QWidget):
         key = self.__kw_model[self.__keywords.currentIndex()]
         if self.__export_keyword_model.isFieldKw(key):
             self.__dynamic = ExportKeywordModel().isDynamicField(key)
+        elif self.__export_keyword_model.isGenDataKw(key):
+            self.__dynamic_plot_forcast = ExportKeywordModel().isDynamicPlot(key)
         else:
             self.__dynamic = False
 
+        self.__plot_f_a.setVisible(self.__dynamic_plot_forcast)
+        self.layout().labelForField(self.__plot_f_a).setVisible(self.__dynamic_plot_forcast)
         self.__report_step.setVisible(self.__dynamic)
         self.layout().labelForField(self.__report_step).setVisible(self.__dynamic)
