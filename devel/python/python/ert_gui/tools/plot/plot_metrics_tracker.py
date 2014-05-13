@@ -51,6 +51,9 @@ class PlotMetricsTracker(object):
 
 
     def setScalesForType(self, scale_name, min_value, max_value):
+        if not scale_name in self.__scales[self.__data_type_key]:
+            raise KeyError("Scale name '%s' not registered!" % scale_name)
+
         self.__scales[self.__data_type_key][scale_name] = (min_value, max_value)
 
 
