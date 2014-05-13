@@ -70,6 +70,8 @@ set(TEST_SOURCES
     ert_tests/gui/test_model.py
     ert_tests/gui/test_observable.py
 
+    ert_tests/gui/plot/test_plot_metrics_tracker.py
+
     ert_tests/gui/ide/__init__.py
     ert_tests/gui/ide/test_bool_argument.py
     ert_tests/gui/ide/test_configuration_line.py
@@ -237,6 +239,10 @@ if (ERT_BUILD_GUI)
    add_test( NAME python.tests.ert_gui.models.observable
              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.test_observable.ObservableTest)
+
+   add_test( NAME python.tests.ert_gui.plot.plot_metrics_tracker
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.plot.test_plot_metrics_tracker.PlotMetricTrackerTest)
 
    add_test( NAME python.tests.ert_gui.ide.bool_argument
              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
