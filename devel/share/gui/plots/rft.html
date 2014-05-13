@@ -76,8 +76,8 @@
         plot.resize(width, height - 75);
     }
 
-    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max) {
-        plot.setScales(value_min, value_max, depth_min, depth_max);
+    function setScales(x_min, x_max, y_min, y_max) {
+        plot.setScales(x_min, x_max, y_min, y_max);
     }
 
     function setReportStepTime(report_step_time) {
@@ -107,6 +107,18 @@
 
     function getPlotTitle(){
         return plot.getTitle();
+    }
+
+    function xAxisType() {
+        return "value";
+    }
+
+    function yAxisType() {
+        return "depth";
+    }
+
+    function isReportStepCapable() {
+        return false;
     }
 
 </script>

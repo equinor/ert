@@ -81,8 +81,8 @@
     function createPlot() {
         histogram_div = d3.select("body").append("div").attr("class", "histogram-div");
         count_dimension = BasePlotIntegerDimension();
-        value_dimension = BasePlotValueDimension();
         count_dimension.setUnit("# of realizations");
+        value_dimension = BasePlotValueDimension();
         for (var index = 0; index < STYLES.ensemble_colors.length; index++) {
             var histogram = new Histogram(histogram_div, value_dimension, count_dimension);
             histogram.setVisible(false);
@@ -217,12 +217,12 @@
         }
     }
 
-    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max) {
-        custom_min_x = value_min;
-        custom_max_x = value_max;
+    function setScales(x_min, x_max, y_min, y_max) {
+        custom_min_x = x_min;
+        custom_max_x = x_max;
 
-        custom_min_y = count_min;
-        custom_max_y = count_max;
+        custom_min_y = y_min;
+        custom_max_y = y_max;
     }
 
     function setReportStepTime(report_step_time) {
@@ -245,6 +245,18 @@
 
     function getPlotTitle(){
         return histograms[0].getTitle();
+    }
+
+    function xAxisType() {
+        return "value";
+    }
+
+    function yAxisType() {
+        return "count";
+    }
+
+    function isReportStepCapable() {
+        return true;
     }
 
 </script>
