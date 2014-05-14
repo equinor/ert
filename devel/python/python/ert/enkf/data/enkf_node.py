@@ -22,7 +22,7 @@ from ert.enkf.enums import EnkfStateType
 
 class EnkfNode(BaseCClass):
     def __init__(self, config_node, private=False):
-        assert isinstance(config_node, (EnkfConfigNode, GenDataConfig))
+        assert isinstance(config_node, EnkfConfigNode)
 
         if private:
             c_pointer = EnkfNode.cNamespace().alloc_private(config_node)
