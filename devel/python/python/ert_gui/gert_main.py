@@ -114,6 +114,7 @@ import sys
 import os
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QSplashScreen
+import time
 from ert.enkf import EnKFMain
 from ert.util import Version
 from ert_gui.main_window import GertMainWindow
@@ -221,6 +222,8 @@ def main(argv):
         window.addTool(ManageCasesTool())
         window.addTool(LoadResultsTool())
         window.addTool(help_tool)
+
+        time.sleep(2)
 
         window.show()
         splash.finish(window)
