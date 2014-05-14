@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    ert_splash.py
     gert_main.py
     ide_test.py
     main_window.py
