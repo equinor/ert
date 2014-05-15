@@ -79,12 +79,21 @@ class ExportKeywordModel(ErtConnector):
         return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords() + self.getGenDataKeyWords())
         
     def isGenKw(self, key):
+        if self.__gen_kw is None:
+            return False
+
         return key in self.__gen_kw
 
     def isFieldKw(self, key):
+        if self.__field_kw is None:
+            return False
+
         return key in self.__field_kw
 
     def isGenDataKw(self, key):
+        if self.__gen_data is None:
+            return False
+
         return key in self.__gen_data
 
     def getGenDataReportSteps(self, key):
