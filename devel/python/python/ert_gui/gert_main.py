@@ -114,8 +114,11 @@ import sys
 import os
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QSplashScreen
+import time
 from ert.enkf import EnKFMain
+from ert.util import Version
 from ert_gui.main_window import GertMainWindow
+from ert_gui.ert_splash import ErtSplash
 from ert_gui.models import ErtConnector
 from ert_gui.pages.summary_panel import SummaryPanel
 from ert_gui.simulation.simulation_panel import SimulationPanel
@@ -162,17 +165,17 @@ def main(argv):
     app = QApplication(argv) #Early so that QT is initialized before other imports
     app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
 
-    splash = QSplashScreen(resourceImage("newsplash"), Qt.WindowStaysOnTopHint)
+    splash = ErtSplash()
+    splash.version = "Version %s" % Version.getVersion()
+    splash.timestamp = Version.getBuildTime()
+
     splash.show()
-    splash.showMessage("Starting up...", Qt.AlignLeft, Qt.white)
-    app.processEvents()
+
+    now = time.time()
 
     help_center = HelpCenter("ERT")
     help_center.setHelpLinkPrefix(os.getenv("ERT_SHARE_PATH") + "/gui/help/")
     help_center.setHelpMessageLink("welcome_to_ert")
-
-    splash.showMessage("Bootstrapping...", Qt.AlignLeft, Qt.white)
-    app.processEvents()
 
     strict = True
     site_config = os.getenv("ERT_SITE_CONFIG")
@@ -208,14 +211,8 @@ def main(argv):
         ert = Ert(EnKFMain(enkf_config, site_config=site_config, strict=strict))
         ErtConnector.setErt(ert.ert())
 
-
-        splash.showMessage("Creating GUI...", Qt.AlignLeft, Qt.white)
-        app.processEvents()
-
-
         window = GertMainWindow()
         window.setWidget(SimulationPanel())
-
 
         help_tool = HelpTool("ERT", window)
 
@@ -228,9 +225,10 @@ def main(argv):
         window.addTool(LoadResultsTool())
         window.addTool(help_tool)
 
+        sleep_time = 2 - (time.time() - now)
 
-        splash.showMessage("Communicating with ERT...", Qt.AlignLeft, Qt.white)
-        app.processEvents()
+        if sleep_time > 0:
+            time.sleep(sleep_time)
 
         window.show()
         splash.finish(window)
