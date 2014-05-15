@@ -171,6 +171,8 @@ def main(argv):
 
     splash.show()
 
+    now = time.time()
+
     help_center = HelpCenter("ERT")
     help_center.setHelpLinkPrefix(os.getenv("ERT_SHARE_PATH") + "/gui/help/")
     help_center.setHelpMessageLink("welcome_to_ert")
@@ -223,7 +225,10 @@ def main(argv):
         window.addTool(LoadResultsTool())
         window.addTool(help_tool)
 
-        time.sleep(2)
+        sleep_time = 2 - (time.time() - now)
+
+        if sleep_time > 0:
+            time.sleep(sleep_time)
 
         window.show()
         splash.finish(window)
