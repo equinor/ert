@@ -20,7 +20,7 @@ from ert.util import Version
 from ert_gui.widgets import util
 
 
-class VersionDialog(QDialog):
+class AboutDialog(QDialog):
 
     def __init__(self, parent):
         QDialog.__init__(self, parent)

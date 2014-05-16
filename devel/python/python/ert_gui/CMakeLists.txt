@@ -5,7 +5,7 @@ set(PYTHON_SOURCES
     ide_test.py
     main_window.py
     newconfig.py
-    version_dialog.py
+    about_dialog.py
 )
 
 add_python_package("python.ert_gui"  ${PYTHON_INSTALL_PREFIX}/ert_gui "${PYTHON_SOURCES}" True)

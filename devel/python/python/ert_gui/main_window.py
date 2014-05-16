@@ -1,6 +1,6 @@
 from PyQt4.QtCore import QSettings, Qt
 from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction
-from ert_gui.version_dialog import VersionDialog
+from ert_gui.about_dialog import AboutDialog
 
 
 class GertMainWindow(QMainWindow):
@@ -115,7 +115,7 @@ class GertMainWindow(QMainWindow):
         self.central_layout.addWidget(widget)
 
     def __showAboutMessage(self):
-        diag = VersionDialog(self)
+        diag = AboutDialog(self)
         diag.show()
         pass
 
