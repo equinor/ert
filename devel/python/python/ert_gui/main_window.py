@@ -69,7 +69,8 @@ class GertMainWindow(QMainWindow):
         self.__view_menu.addAction(advanced_toggle_action)
 
         """ @rtype: list of QAction """
-        show_about = self.__help_menu.addAction("ERT &Version")
+        show_about = self.__help_menu.addAction("About")
+        show_about.setMenuRole(QAction.ApplicationSpecificRole)
         show_about.triggered.connect(self.__showAboutMessage)
 
 
