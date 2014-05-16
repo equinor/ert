@@ -25,7 +25,7 @@ class AboutDialog(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
 
-        self.setWindowTitle("Version")
+        self.setWindowTitle("About")
         self.setModal(True)
         self.setFixedSize(QSize(400, 240))
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
