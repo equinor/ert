@@ -27,7 +27,7 @@ class AboutDialog(QDialog):
 
         self.setWindowTitle("About")
         self.setModal(True)
-        self.setFixedSize(QSize(400, 240))
+        self.setFixedSize(QSize(600, 480))
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCancelButtonHint)
@@ -38,7 +38,7 @@ class AboutDialog(QDialog):
 
         scene = QGraphicsScene(self)
         view = QGraphicsView(scene)
-        image = image.scaledToHeight(160,Qt.SmoothTransformation)
+        image = image.scaledToHeight(240,Qt.SmoothTransformation)
         item = QGraphicsPixmapItem(image)
         scene.addItem(item)
         scene.setSceneRect(0,0,image.width(),image.height())
@@ -81,12 +81,30 @@ class AboutDialog(QDialog):
 
         inner_layout.addLayout(text_layout)
 
+
+        gpl = QLabel()
+        gpl.setText("ERT is free software: you can redistribute it and/or modify \
+          it under the terms of the GNU General Public License as published by \
+          the Free Software Foundation, either version 3 of the License, or \
+          (at your option) any later version. <br> <br>\
+           \
+          ERT is distributed in the hope that it will be useful, but WITHOUT ANY \
+          WARRANTY; without even the implied warranty of MERCHANTABILITY or \
+          FITNESS FOR A PARTICULAR PURPOSE.  <br> <br>\
+          \
+          See the GNU General Public License at <a href=\"http://www.gnu.org/licenses/gpl.html\">www.gnu.org</a> for more details. ")
+        gpl.setWordWrap(True)
+        gpl_layout = QVBoxLayout()
+        gpl_layout.addWidget(gpl)
+        layout.addLayout(gpl_layout)
+
         self.__button_layout = QHBoxLayout()
         self.close_button = QPushButton("Close")
         self.close_button.clicked.connect(self.accept)
         self.__button_layout.addStretch()
         self.__button_layout.addWidget(self.close_button)
         self.__button_layout.addStretch()
+
         layout.addLayout(self.__button_layout)
 
         self.setLayout(layout)
