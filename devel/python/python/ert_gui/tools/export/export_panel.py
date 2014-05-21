@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-from PyQt4.QtCore import QDir
+from PyQt4.QtCore import QDir, pyqtSignal
 
 from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
 from ert.enkf import EnkfFieldFileFormatEnum, EnkfStateType
@@ -28,6 +28,8 @@ from ert_gui.widgets.string_box import StringBox
 
 
 class ExportPanel(QWidget):
+
+    updateExportButton = pyqtSignal(str, bool)
 
     def __init__(self):
         QWidget.__init__(self)
@@ -60,15 +62,18 @@ class ExportPanel(QWidget):
         self.__active_realizations_model = ExportRealizationsModel(EnsembleSizeModel().getValue())
         self.__active_realizations_field = StringBox(self.__active_realizations_model, "Active realizations", "config/simulation/active_realizations")
         self.__active_realizations_field.setValidator(RangeStringArgument())
+        self.__active_realizations_field.validationChanged.connect(self.validateExportDialog)
         layout.addRow(self.__active_realizations_field.getLabel(), self.__active_realizations_field)
 
         file_name_button= QToolButton()
         file_name_button.setText("Browse")
         file_name_button.clicked.connect(self.selectFileDirectory)
 
+        self.__defaultPath = QDir.currentPath()+"/export"
         self.__file_name = QLineEdit()
         self.__file_name.setEnabled(False)
-        self.__file_name.setText(QDir.currentPath()+"/export")
+        self.__file_name.setText(self.__defaultPath)
+        self.__file_name.textChanged.connect(self.validateExportDialog)
         self.__file_name.setMinimumWidth(250)
 
         file_name_layout = QHBoxLayout()
@@ -93,8 +98,9 @@ class ExportPanel(QWidget):
         self.keywordSelected()
 
     def selectFileDirectory(self):
-        directory = QFileDialog().getExistingDirectory(self, "Directory", QDir.currentPath(), QFileDialog.ShowDirsOnly)
-        self.__file_name.setText(str(directory))
+        directory = QFileDialog().getExistingDirectory(self, "Directory", self.__file_name.text(), QFileDialog.ShowDirsOnly)
+        if str(directory).__len__() > 0:
+            self.__file_name.setText(str(directory))
 
     def updateFileExportType(self):
         keyword = self.__kw_model[self.__keywords.currentIndex()]
@@ -167,3 +173,21 @@ class ExportPanel(QWidget):
 
         self.__report_step.setVisible(self.__dynamic)
         self.layout().labelForField(self.__report_step).setVisible(self.__dynamic)
+
+    def setSelectedCase(self, selected_case):
+        self.__case_combo.setCurrentIndex(self.__case_model.indexOf(selected_case))
+
+    def validateExportDialog(self):
+        validRealizations = False
+        if self.__active_realizations_field.isValid():
+            validRealizations = True
+
+        validPath = False
+        path = str(self.__file_name.text())
+        if path.__len__()>0:
+            validPath = True
+
+        if validRealizations and validPath:
+            self.updateExportButton.emit("export", True)
+        else:
+            self.updateExportButton.emit("export", False)
