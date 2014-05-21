@@ -33,7 +33,7 @@ class PlotScalesWidget(QWidget):
         self.__checkbox.setChecked(False)
 
         self.__stack = QStackedWidget()
-        self.__stack.setSizePolicy(QSizePolicy(QSizePolicy.Minimum))
+        self.__stack.setSizePolicy(QSizePolicy(QSizePolicy.Preferred))
         self.__stack.addWidget(self.__integer_spinner)
         self.__stack.addWidget(self.__double_spinner)
         self.__stack.addWidget(self.__time_spinner)
@@ -47,9 +47,11 @@ class PlotScalesWidget(QWidget):
     def createDoubleSpinner(self, minimum, maximum):
         spinner = QDoubleSpinBox()
         spinner.setEnabled(False)
-        spinner.setMinimumWidth(75)
+        spinner.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        spinner.setMinimumWidth(95)
         spinner.setRange(minimum, maximum)
         spinner.setKeyboardTracking(False)
+        spinner.setDecimals(10)
 
         spinner.editingFinished.connect(self.plotScaleChanged)
         spinner.valueChanged.connect(self.plotScaleChanged)
