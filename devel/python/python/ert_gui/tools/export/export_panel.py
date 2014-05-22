@@ -94,7 +94,7 @@ class ExportPanel(QWidget):
         self.__report_step = QLineEdit()
         layout.addRow("Report step:", self.__report_step)
 
-        self.__plot_f_a_model = ["Forcast","Analyzed"]
+        self.__plot_f_a_model = ["Forecast","Analyzed"]
         self.__plot_f_a = QComboBox()
         self.__plot_f_a.addItems(self.__plot_f_a_model)
         layout.addRow("Plot Forecast/Analyzed:", self.__plot_f_a)
@@ -169,7 +169,7 @@ class ExportPanel(QWidget):
 
         selected_plot_f_a = self.__plot_f_a_model[self.__plot_f_a.currentIndex()]
 
-        if selected_plot_f_a == "Forcast":
+        if selected_plot_f_a == "Forecast":
             return EnkfStateType.FORECAST
 
         if selected_plot_f_a == "Analyzed":
@@ -212,7 +212,7 @@ class ExportPanel(QWidget):
             path = path + "_" + report_step
 
         if not QDir(path).exists():
-            os.makedirs(path);
+            os.makedirs(path)
 
         return path
 
@@ -246,10 +246,8 @@ class ExportPanel(QWidget):
         if self.__active_realizations_field.isValid():
             validRealizations = True
 
-        validPath = False
         path = str(self.__file_name.text())
-        if path.__len__()>0:
-            validPath = True
+        validPath = len(path) > 0
 
         if validRealizations and validPath:
             self.updateExportButton.emit("export", True)
