@@ -17,7 +17,7 @@ import os
 from PyQt4.QtCore import QDir
 
 from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
-from ert.enkf import EnkfFieldFileFormatEnum, EnkfStateType
+from ert.enkf import EnkfFieldFileFormatEnum, EnkfStateType, EnkfVarType
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.export import ExportKeywordModel, ExportModel
@@ -78,6 +78,7 @@ class ExportPanel(QWidget):
 
         self.__gen_kw_file_types = ["Parameter list", "Template based"]
         self.__field_kw_file_types = ["Eclipse GRDECL", "RMS roff"]
+        self.__gen_data_file_types = ["Gen data"]
 
         self.__file_type_model = self.__field_kw_file_types
         self.__file_type_combo = QComboBox()
@@ -87,6 +88,15 @@ class ExportPanel(QWidget):
 
         self.__report_step = QLineEdit()
         layout.addRow("Report step:", self.__report_step)
+
+        self.__plot_f_a_model = ["Forcast","Analyzed"]
+        self.__plot_f_a = QComboBox()
+        self.__plot_f_a.addItems(self.__plot_f_a_model)
+        layout.addRow("Plot Forecast/Analyzed:", self.__plot_f_a)
+
+        self.__gen_data_report_step_model=[]
+        self.__gen_data_report_step = QComboBox()
+        layout.addRow("Report step:", self.__gen_data_report_step)
 
         self.setLayout(layout)
         self.__keywords.currentIndexChanged.connect(self.keywordSelected)
@@ -101,31 +111,69 @@ class ExportPanel(QWidget):
         self.__file_type_combo.clear()
         if self.__export_keyword_model.isGenKw(keyword):
             self.__file_type_model = self.__gen_kw_file_types
+        elif self.__export_keyword_model.isGenDataKw(keyword):
+            self.__file_type_model = self.__gen_data_file_types
         else:
             self.__file_type_model = self.__field_kw_file_types
 
         self.__file_type_combo.addItems(self.__file_type_model)
 
     def export(self):
-        report_step = 0
-        if self.__dynamic:
-            report_step = self.__report_step.text()
         keyword = self.__kw_model[self.__keywords.currentIndex()]
+        report_step = self.getReportStep(keyword)
+
         all_cases = self.__case_model.getAllItems()
         selected_case  = all_cases[self.__case_combo.currentIndex()]
 
-        file_name = self.createExportFilNameMask(keyword, selected_case)
+        file_name = self.createExportFileNameMask(keyword, selected_case, report_step)
 
         iactive = self.__active_realizations_model.getActiveRealizationsMask()
 
         file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
-        state = EnkfStateType.FORECAST
+
+
+        state = self.findState(keyword)
 
         if self.__export_keyword_model.isFieldKw(keyword):
             self.exportField(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
         elif self.__export_keyword_model.isGenKw(keyword):
             self.exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
+        elif self.__export_keyword_model.isGenDataKw(keyword):
+            self.exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
 
+    def getReportStep(self, key):
+        report_step = 0
+        if self.__dynamic:
+            report_step = self.__report_step.text()
+
+        if self.__export_keyword_model.isGenDataKw(key):
+            report_step = self.__gen_data_report_step_model[self.__gen_data_report_step.currentIndex()]
+
+        return report_step
+
+
+    def findState(self, key):
+        if not self.__export_keyword_model.isGenDataKw(key):
+            return EnkfStateType.FORECAST
+
+        type = self.__export_keyword_model.getVarType(key)
+
+        if type == EnkfVarType.PARAMETER:
+            return EnkfStateType.ANALYZED
+
+        selected_plot_f_a = self.__plot_f_a_model[self.__plot_f_a.currentIndex()]
+
+        if selected_plot_f_a == "Forcast":
+            return EnkfStateType.FORECAST
+
+        if selected_plot_f_a == "Analyzed":
+            return EnkfStateType.ANALYZED
+
+        return EnkfStateType.FORECAST
+
+
+    def exportGenData(self, keyword, file_name, iactive, file_type_key, report_step, state, selected_case):
+        ExportModel().exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
 
     def exportGenKw(self, keyword, file_name, iactive, file_type_key, report_step, state, selected_case):
         ExportModel().exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
@@ -141,16 +189,21 @@ class ExportPanel(QWidget):
         if not result:
             QMessageBox.warning(self, "Warning",'''Something did not work!''',QMessageBox.Ok);
 
-    def createExportFilNameMask(self, keyword, current_case):
+    def createExportFileNameMask(self, keyword, current_case, report_step):
         path = self.__file_name.text()
         impl_type = None
 
         if self.__export_keyword_model.isFieldKw(keyword):
             impl_type = ExportKeywordModel().getImplementationType(keyword)
+        elif self.__export_keyword_model.isGenDataKw(keyword):
+            impl_type = "Gen_Data"
         elif self.__export_keyword_model.isGenKw(keyword):
             impl_type = "Gen_Kw"
 
         path = str(path) + "/" + str(current_case) + "/" + str(impl_type) + "/" + str(keyword)
+
+        if self.__export_keyword_model.isGenDataKw(keyword):
+            path = path + "_" + report_step
 
         if not QDir(path).exists():
             os.makedirs(path);
@@ -160,10 +213,22 @@ class ExportPanel(QWidget):
     def keywordSelected(self):
         self.updateFileExportType()
         key = self.__kw_model[self.__keywords.currentIndex()]
+        self.__dynamic = False
         if self.__export_keyword_model.isFieldKw(key):
-            self.__dynamic = ExportKeywordModel().isDynamicField(key)
-        else:
-            self.__dynamic = False
+            self.__dynamic = self.__export_keyword_model.isDynamicField(key)
+
+        self.__plot_f_a.setVisible(self.__export_keyword_model.isGenDataKw(key))
+        self.layout().labelForField(self.__plot_f_a).setVisible(self.__export_keyword_model.isGenDataKw(key))
 
         self.__report_step.setVisible(self.__dynamic)
         self.layout().labelForField(self.__report_step).setVisible(self.__dynamic)
+
+        self.__gen_data_report_step.setVisible(self.__export_keyword_model.isGenDataKw(key))
+        self.layout().labelForField(self.__gen_data_report_step).setVisible(self.__export_keyword_model.isGenDataKw(key))
+
+        if self.__export_keyword_model.isGenDataKw(key):
+            data = self.__export_keyword_model.getGenDataReportSteps(key)
+            self.__gen_data_report_step_model = data
+            self.__gen_data_report_step.clear()
+            self.__gen_data_report_step.addItems(self.__gen_data_report_step_model)
+

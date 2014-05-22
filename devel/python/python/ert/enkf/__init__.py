@@ -24,6 +24,7 @@ from .enums import *
 
 from .node_id import NodeId
 
+from .gen_data import GenData
 from .enkf_linalg import EnkfLinalg
 from .util import TimeMap
 from .state_map import StateMap
