@@ -33,7 +33,7 @@ class ExportTool(Tool):
 
         self.__export_widget.setSelectedCase(CaseSelectorModel().getCurrentChoice())
         self.__dialog = ClosableDialog("Export", self.__export_widget, self.parent())
-        self.__export_widget.updateExportButton.connect(self.__dialog.toggelButton)
+        self.__export_widget.updateExportButton.connect(self.__dialog.toggleButton)
         self.__dialog.addButton("Export", self.export)
         self.__dialog.exec_()
 

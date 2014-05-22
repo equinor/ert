@@ -65,7 +65,7 @@ class ClosableDialog(QDialog):
         self.__button_layout.insertWidget(1,button)
         button.clicked.connect(listner)
 
-    def toggelButton(self, caption, enabled):
+    def toggleButton(self, caption, enabled):
         button = self.findChild(QPushButton,str(caption).capitalize())
         if button is not None:
             button.setEnabled(enabled)
