@@ -18,6 +18,7 @@ from ert.enkf import ENKF_LIB, EnkfFs, NodeId, GenData
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.data.gen_data_config import GenDataConfig
 from ert.enkf.enums import EnkfStateType
+from ert.enkf.enums.ert_impl_type_enum import ErtImplType
 
 
 class EnkfNode(BaseCClass):
@@ -43,7 +44,9 @@ class EnkfNode(BaseCClass):
 
     def asGenData(self):
         """ @rtype: GenData """
-        #todo sjekk impl type
+        impl_type = EnkfNode.cNamespace().get_impl_type(self)
+        assert impl_type == ErtImplType.GEN_DATA
+
         return GenData.createCReference(self.valuePointer(), self)
 
 
@@ -85,6 +88,7 @@ EnkfNode.cNamespace().value_ptr = cwrapper.prototype("c_void_p enkf_node_value_p
 # EnkfNode.cNamespace().vector_storage = cwrapper.prototype("bool enkf_node_vector_storage(enkf_node)")
 
 EnkfNode.cNamespace().try_load = cwrapper.prototype("bool enkf_node_try_load(enkf_node, enkf_fs, node_id)")
+EnkfNode.cNamespace().get_impl_type = cwrapper.prototype("ert_impl_type_enum enkf_node_get_impl_type(enkf_node)")
 
 #todo fix this
 # EnkfNode.cNamespace().get_config = cwrapper.prototype("c_void_p enkf_node_get_config(enkf_node)")
