@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QString, QRegExp
 from PyQt4.QtGui import  QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
 
 
@@ -36,6 +36,7 @@ class ClosableDialog(QDialog):
 
         self.__button_layout = QHBoxLayout()
         self.close_button = QPushButton("Close")
+        self.close_button.setObjectName("CLOSE")
         self.close_button.clicked.connect(self.accept)
         self.__button_layout.addStretch()
         self.__button_layout.addWidget(self.close_button)
@@ -60,5 +61,13 @@ class ClosableDialog(QDialog):
 
     def addButton(self, caption, listner):
         button = QPushButton(caption)
+        button.setObjectName(str(caption).capitalize())
         self.__button_layout.insertWidget(1,button)
         button.clicked.connect(listner)
+
+    def toggleButton(self, caption, enabled):
+        button = self.findChild(QPushButton,str(caption).capitalize())
+        if button is not None:
+            button.setEnabled(enabled)
+
+

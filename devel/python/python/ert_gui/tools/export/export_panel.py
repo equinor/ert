@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-from PyQt4.QtCore import QDir
+from PyQt4.QtCore import QDir, pyqtSignal
 
 from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
 from ert.enkf import EnkfFieldFileFormatEnum, EnkfStateType, EnkfVarType
@@ -28,6 +28,8 @@ from ert_gui.widgets.string_box import StringBox
 
 
 class ExportPanel(QWidget):
+
+    updateExportButton = pyqtSignal(str, bool)
 
     def __init__(self):
         QWidget.__init__(self)
@@ -60,15 +62,18 @@ class ExportPanel(QWidget):
         self.__active_realizations_model = ExportRealizationsModel(EnsembleSizeModel().getValue())
         self.__active_realizations_field = StringBox(self.__active_realizations_model, "Active realizations", "config/simulation/active_realizations")
         self.__active_realizations_field.setValidator(RangeStringArgument())
+        self.__active_realizations_field.validationChanged.connect(self.validateExportDialog)
         layout.addRow(self.__active_realizations_field.getLabel(), self.__active_realizations_field)
 
         file_name_button= QToolButton()
         file_name_button.setText("Browse")
         file_name_button.clicked.connect(self.selectFileDirectory)
 
+        self.__defaultPath = QDir.currentPath()+"/export"
         self.__file_name = QLineEdit()
         self.__file_name.setEnabled(False)
-        self.__file_name.setText(QDir.currentPath()+"/export")
+        self.__file_name.setText(self.__defaultPath)
+        self.__file_name.textChanged.connect(self.validateExportDialog)
         self.__file_name.setMinimumWidth(250)
 
         file_name_layout = QHBoxLayout()
@@ -89,7 +94,7 @@ class ExportPanel(QWidget):
         self.__report_step = QLineEdit()
         layout.addRow("Report step:", self.__report_step)
 
-        self.__plot_f_a_model = ["Forcast","Analyzed"]
+        self.__plot_f_a_model = ["Forecast","Analyzed"]
         self.__plot_f_a = QComboBox()
         self.__plot_f_a.addItems(self.__plot_f_a_model)
         layout.addRow("Plot Forecast/Analyzed:", self.__plot_f_a)
@@ -103,8 +108,9 @@ class ExportPanel(QWidget):
         self.keywordSelected()
 
     def selectFileDirectory(self):
-        directory = QFileDialog().getExistingDirectory(self, "Directory", QDir.currentPath(), QFileDialog.ShowDirsOnly)
-        self.__file_name.setText(str(directory))
+        directory = QFileDialog().getExistingDirectory(self, "Directory", self.__file_name.text(), QFileDialog.ShowDirsOnly)
+        if str(directory).__len__() > 0:
+            self.__file_name.setText(str(directory))
 
     def updateFileExportType(self):
         keyword = self.__kw_model[self.__keywords.currentIndex()]
@@ -163,7 +169,7 @@ class ExportPanel(QWidget):
 
         selected_plot_f_a = self.__plot_f_a_model[self.__plot_f_a.currentIndex()]
 
-        if selected_plot_f_a == "Forcast":
+        if selected_plot_f_a == "Forecast":
             return EnkfStateType.FORECAST
 
         if selected_plot_f_a == "Analyzed":
@@ -206,7 +212,7 @@ class ExportPanel(QWidget):
             path = path + "_" + report_step
 
         if not QDir(path).exists():
-            os.makedirs(path);
+            os.makedirs(path)
 
         return path
 
@@ -232,3 +238,18 @@ class ExportPanel(QWidget):
             self.__gen_data_report_step.clear()
             self.__gen_data_report_step.addItems(self.__gen_data_report_step_model)
 
+    def setSelectedCase(self, selected_case):
+        self.__case_combo.setCurrentIndex(self.__case_model.indexOf(selected_case))
+
+    def validateExportDialog(self):
+        validRealizations = False
+        if self.__active_realizations_field.isValid():
+            validRealizations = True
+
+        path = str(self.__file_name.text())
+        validPath = len(path) > 0
+
+        if validRealizations and validPath:
+            self.updateExportButton.emit("export", True)
+        else:
+            self.updateExportButton.emit("export", False)
