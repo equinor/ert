@@ -32,56 +32,68 @@ class AboutDialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCancelButtonHint)
 
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
 
+        main_layout.addLayout(self.createTopLayout())
+        main_layout.addLayout(self.createGplLayout())
+        main_layout.addLayout(self.createButtonLayout())
+
+        self.setLayout(main_layout)
+
+
+    def createTopLayout(self):
+        top_layout = QHBoxLayout()
+
+        image_label = QLabel()
         image = util.resourceImage("splash.jpg")
+        image_label.setPixmap(image.scaled(200, 240, Qt.KeepAspectRatio))
 
-        scene = QGraphicsScene(self)
-        view = QGraphicsView(scene)
-        image = image.scaledToHeight(240,Qt.SmoothTransformation)
-        item = QGraphicsPixmapItem(image)
-        scene.addItem(item)
-        scene.setSceneRect(0,0,image.width(),image.height())
-        view.setFixedSize(image.width(),image.height())
-        view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        view.show()
+        top_layout.addWidget(image_label)
 
-        inner_layout = QHBoxLayout()
-        inner_layout.addWidget(view)
+        top_layout.addLayout(self.createInfoLayout(), 1)
 
-        layout.addLayout(inner_layout)
-        text_layout = QVBoxLayout()
+        return top_layout
+
+    @staticmethod
+    def createInfoLayout():
+        info_layout = QVBoxLayout()
 
         ert = QLabel()
+        ert.setAlignment(Qt.AlignHCenter)
+
         title_font = QFont()
         title_font.setPointSize(40)
         ert.setFont(title_font)
         ert.setText("ERT")
-        title_layout = QHBoxLayout()
-        title_layout.addStretch()
-        title_layout.addWidget(ert)
-        title_layout.addStretch()
 
-        text_layout.addLayout(title_layout)
-
+        info_layout.addWidget(ert)
+        info_layout.addStretch(1)
         ert_title = QLabel()
+        ert_title.setAlignment(Qt.AlignHCenter)
         ert_title.setText("Ensemble based Reservoir Tool")
-
-        text_layout.addWidget(ert_title)
+        info_layout.addWidget(ert_title)
 
         version = QLabel()
+        version.setAlignment(Qt.AlignHCenter)
         version.setText("Version: %s" % Version.getVersion())
-        text_layout.addWidget(version)
+        info_layout.addWidget(version)
 
         timestamp = QLabel()
+        timestamp.setAlignment(Qt.AlignHCenter)
         timestamp.setText("Build time: %s" % Version.getBuildTime())
-        text_layout.addWidget(timestamp)
-        text_layout.addStretch()
+        info_layout.addWidget(timestamp)
 
-        inner_layout.addLayout(text_layout)
+        git_commit = QLabel()
+        git_commit.setAlignment(Qt.AlignHCenter)
+        git_commit.setText("Git commit hash: %s" % Version.getGitCommit(short=True))
+        info_layout.addWidget(git_commit)
+
+        info_layout.addStretch(5)
+
+        return info_layout
 
 
+    def createGplLayout(self):
         gpl = QLabel()
         gpl.setText("ERT is free software: you can redistribute it and/or modify \
           it under the terms of the GNU General Public License as published by \
@@ -96,24 +108,16 @@ class AboutDialog(QDialog):
         gpl.setWordWrap(True)
         gpl_layout = QVBoxLayout()
         gpl_layout.addWidget(gpl)
-        layout.addLayout(gpl_layout)
+        return gpl_layout
 
-        self.__button_layout = QHBoxLayout()
-        self.close_button = QPushButton("Close")
-        self.close_button.clicked.connect(self.accept)
-        self.__button_layout.addStretch()
-        self.__button_layout.addWidget(self.close_button)
-        self.__button_layout.addStretch()
+    def createButtonLayout(self):
+        button_layout = QHBoxLayout()
 
-        layout.addLayout(self.__button_layout)
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.accept)
 
-        self.setLayout(layout)
+        button_layout.addStretch()
+        button_layout.addWidget(close_button)
+        button_layout.addStretch()
 
-
-    def keyPressEvent(self, q_key_event):
-        if not self.close_button.isEnabled() and q_key_event.key() == Qt.Key_Escape:
-            pass
-        else:
-            QDialog.keyPressEvent(self, q_key_event)
-
-
+        return button_layout
