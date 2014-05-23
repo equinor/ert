@@ -170,7 +170,8 @@ def main(argv):
     splash.timestamp = Version.getBuildTime()
 
     splash.show()
-
+    splash.repaint()
+    
     now = time.time()
 
     help_center = HelpCenter("ERT")

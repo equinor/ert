@@ -9,6 +9,7 @@ from .enkf_init_modes_enum import EnkfInitModeEnum
 from .realization_state_enum import RealizationStateEnum
 from .enkf_truncation_type import EnkfTruncationType
 from .enkf_fs_type_enum import EnKFFSType
+from .gen_data_file_type_enum import GenDataFileType
 
 __all__ = ["EnkfFieldFileFormatEnum",
            "LoadFailTypeEnum",
@@ -20,4 +21,5 @@ __all__ = ["EnkfFieldFileFormatEnum",
            "EnkfInitModeEnum",
            "RealizationStateEnum",
            "EnkfTruncationType",
-           "EnKFFSType"]
+           "EnKFFSType",
+           "GenDataFileType"]

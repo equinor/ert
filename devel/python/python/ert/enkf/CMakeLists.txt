@@ -25,6 +25,7 @@ set(PYTHON_SOURCES
     plot_config.py
     site_config.py
     state_map.py
+    gen_data.py
 )
 
 add_python_package("python.ert.enkf"  ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)
