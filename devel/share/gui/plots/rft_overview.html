@@ -119,6 +119,38 @@
     function isReportStepCapable() {
         return false;
     }
+
+    function getXMin() {
+        var data = plot_data_source.getTemporaryData();
+        if(!data.hasBoundaries()) {
+            return null;
+        }
+        return data.minX();
+    }
+
+    function getXMax() {
+        var data = plot_data_source.getTemporaryData();
+        if(!data.hasBoundaries()) {
+            return null;
+        }
+        return data.maxX();
+    }
+
+    function getYMin() {
+        var data = plot_data_source.getTemporaryData();
+        if(!data.hasBoundaries()) {
+            return null;
+        }
+        return data.minY();
+    }
+
+    function getYMax() {
+        var data = plot_data_source.getTemporaryData();
+        if(!data.hasBoundaries()) {
+            return null;
+        }
+        return data.maxY();
+    }
 </script>
 
 <body onload="initialize();">

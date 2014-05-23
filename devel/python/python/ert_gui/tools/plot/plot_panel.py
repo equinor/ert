@@ -110,6 +110,14 @@ class PlotPanel(QWidget):
         """ @rtype: str """
         return self.__plot_bridge.yAxisType()
 
+    def getXScales(self, data):
+        """ @rtype: (float, float) """
+        return self.__plot_bridge.getXScales(data)
+
+    def getYScales(self, data):
+        """ @rtype: (float, float) """
+        return self.__plot_bridge.getYScales(data)
+
 
     def isReportStepCapable(self):
         """ @rtype: bool """

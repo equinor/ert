@@ -1,6 +1,6 @@
 import json
 import os
-from PyQt4.QtCore import QObject, pyqtSlot, pyqtSignal, QUrl
+from PyQt4.QtCore import QObject, pyqtSlot, pyqtSignal, QUrl, QVariant
 from PyQt4.QtWebKit import QWebPage
 from ert.util import CTime
 from ert_gui.tools.plot.data import PlotData
@@ -27,6 +27,7 @@ class PlotBridge(QObject):
         self.__html_ready = False
         self.__data = PlotData("invalid", parent=self)
         self.__size = None
+        self.__temporary_data_object = None
 
         self.applyContextObject()
 
@@ -100,6 +101,7 @@ class PlotBridge(QObject):
     def getPlotData(self):
         return self.__data
 
+
     @pyqtSlot()
     def htmlInitialized(self):
         # print("[%s] Initialized!" % self.__name)
@@ -164,6 +166,57 @@ class PlotBridge(QObject):
     def isReportStepCapable(self):
         """ @rtype: bool """
         return self.__web_page.mainFrame().evaluateJavaScript("isReportStepCapable();" ).toBool()
+
+
+    @pyqtSlot(result=QObject)
+    def getTemporaryData(self):
+        return self.__temporary_data_object
+
+
+    def getXScales(self, data):
+        """ @rtype: (float, float) """
+        self.__temporary_data_object = data
+        x_min = self.__web_page.mainFrame().evaluateJavaScript("getXMin();")
+        x_max = self.__web_page.mainFrame().evaluateJavaScript("getXMax();")
+
+        if x_min.isNull():
+            x_min = None
+        elif x_min.typeName() == "double":
+            x_min = x_min.toDouble()[0]
+        else:
+            raise TypeError("Unknown type %s for x_min" % x_min.typeName())
+
+        if x_max.isNull():
+            x_max = None
+        elif x_max.typeName() == "double":
+            x_max = x_max.toDouble()[0]
+        else:
+            raise TypeError("Unknown type %s for x_max" % x_max.typeName())
+
+        return x_min, x_max
+
+
+    def getYScales(self, data):
+        """ @rtype: (float, float) """
+        self.__temporary_data_object = data
+        y_min = self.__web_page.mainFrame().evaluateJavaScript("getYMin();")
+        y_max = self.__web_page.mainFrame().evaluateJavaScript("getYMax();")
+
+        if y_min.isNull():
+            y_min = None
+        elif y_min.typeName() == "double":
+            y_min = y_min.toDouble()[0]
+        else:
+            raise TypeError("Unknown type %s for y_min" % y_min.typeName())
+
+        if y_max.isNull():
+            y_max = None
+        elif y_max.typeName() == "double":
+            y_max = y_max.toDouble()[0]
+        else:
+            raise TypeError("Unknown type %s for y_max" % y_max.typeName())
+
+        return y_min, y_max
 
 
 
