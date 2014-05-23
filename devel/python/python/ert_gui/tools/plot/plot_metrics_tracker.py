@@ -3,6 +3,7 @@ class PlotMetricsTracker(object):
         super(PlotMetricsTracker, self).__init__()
 
         self.__data_type_key = None
+        self.__data_type_key_support_report_steps = False
         self.__scale_types = {}
 
         self.__scales = {}
@@ -65,3 +66,19 @@ class PlotMetricsTracker(object):
             return None, None
 
         return scale_tracker[scale_name]
+
+    def setDataTypeKeySupportsReportSteps(self, supports_report_steps):
+        self.__data_type_key_support_report_steps = supports_report_steps
+
+    def dataTypeSupportsReportStep(self):
+        return self.__data_type_key_support_report_steps
+
+    def resetScaleType(self, scale_name):
+        self.setScalesForType(scale_name, None, None)
+
+    def hasScale(self, scale_name):
+        if scale_name is None:
+            return True
+
+        scale_tracker = self.__scales[self.__data_type_key]
+        return not scale_tracker[scale_name] == (None, None)
