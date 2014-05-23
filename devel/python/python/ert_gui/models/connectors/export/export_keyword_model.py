@@ -22,15 +22,30 @@ class ExportKeywordModel(ErtConnector):
         super(ExportKeywordModel, self).__init__()
         self.__gen_kw = None
         self.__field_kw = None
+        self.__gen_data = None
+        self.__gen_param = None
 
     def getKeylistFromImplType(self, ert_impl_type):
         return sorted(self.ert().ensembleConfig().getKeylistFromImplType(ert_impl_type))
 
+    def isDynamicPlot(self, key):
+        variable_type = self.getVarType(key)
+        return_value = False
+        if variable_type == EnkfVarType.DYNAMIC_STATE:
+            return_value = True
+        elif variable_type == EnkfVarType.DYNAMIC_RESULT:
+            return_value = True
+
+        return return_value
 
     def isDynamicField(self, key):
+        return self.getVarType(key) == EnkfVarType.DYNAMIC_STATE
+
+
+    def getVarType(self, key):
         config_node = self.ert().ensembleConfig().getNode(key)
         variable_type = config_node.getVariableType()
-        return variable_type == EnkfVarType.DYNAMIC_STATE
+        return variable_type
 
     def getImplementationType(self, key):
         config_node = self.ert().ensembleConfig().getNode(key)
@@ -42,6 +57,18 @@ class ExportKeywordModel(ErtConnector):
 
         return self.__gen_kw
 
+    def getGenDataKeyWords(self):
+        if self.__gen_data is None:
+            gen_data_list = []
+            for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA):
+                if self.ert().ensembleConfig().getNode(key).getDataModelConfig().getOutputFormat() is not None:
+                    gen_data_list.append(key)
+                elif self.ert().ensembleConfig().getNode(key).getDataModelConfig().getInputFormat() is not None:
+                    gen_data_list.append(key)
+            self.__gen_data = gen_data_list
+
+        return self.__gen_data
+
     def getFieldKeyWords(self):
         if self.__field_kw is None:
             self.__field_kw = self.getKeylistFromImplType(ErtImplType.FIELD)
@@ -49,10 +76,32 @@ class ExportKeywordModel(ErtConnector):
         return self.__field_kw
 
     def getKeyWords(self):
-        return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords())
-
+        return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords() + self.getGenDataKeyWords())
+        
     def isGenKw(self, key):
+        if self.__gen_kw is None:
+            return False
+
         return key in self.__gen_kw
 
     def isFieldKw(self, key):
+        if self.__field_kw is None:
+            return False
+
         return key in self.__field_kw
+
+    def isGenDataKw(self, key):
+        if self.__gen_data is None:
+            return False
+
+        return key in self.__gen_data
+
+    def getGenDataReportSteps(self, key):
+        gen_data_list=[]
+        obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
+        for obs_key in obs_keys:
+            obs_vector = self.ert().getObservations()[obs_key]
+            for report_step in obs_vector:
+                gen_data_list.append(str(report_step))
+
+        return gen_data_list

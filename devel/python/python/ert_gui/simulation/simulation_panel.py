@@ -1,6 +1,7 @@
 from PyQt4.QtCore import Qt, QSize, pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QAction
-from ert_gui.models.connectors.init import CaseList
+from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QAction, \
+    QMessageBox
+from ert_gui.models.connectors.init import CaseList, CaseSelectorModel
 from ert_gui.models.connectors.run import SimulationModeModel
 from ert_gui.pages.run_dialog import RunDialog
 from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel, IteratedEnsembleSmootherPanel
@@ -83,13 +84,18 @@ class SimulationPanel(QWidget):
 
 
     def runSimulation(self):
-        run_model = self.getCurrentSimulationMode()
+        case_name = CaseSelectorModel().getCurrentChoice()
+        message = "Are you sure you want to use case '%s' for running of simulations?" % case_name
+        start_simulations = QMessageBox.question(self, "Start simulations?", message, QMessageBox.Yes | QMessageBox.No )
 
-        dialog = RunDialog(run_model)
-        dialog.startSimulation()
-        dialog.exec_()
+        if start_simulations == QMessageBox.Yes:
+            run_model = self.getCurrentSimulationMode()
 
-        CaseList().externalModificationNotification() # simulations may have added new cases.
+            dialog = RunDialog(run_model)
+            dialog.startSimulation()
+            dialog.exec_()
+
+            CaseList().externalModificationNotification() # simulations may have added new cases.
 
 
     def toggleSimulationMode(self):

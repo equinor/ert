@@ -1,5 +1,6 @@
 from PyQt4.QtCore import QSettings, Qt
 from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction
+from ert_gui.about_dialog import AboutDialog
 
 
 class GertMainWindow(QMainWindow):
@@ -28,6 +29,8 @@ class GertMainWindow(QMainWindow):
 
         self.setCorner(Qt.TopRightCorner, Qt.RightDockWidgetArea)
         self.setCorner(Qt.BottomRightCorner, Qt.BottomDockWidgetArea)
+        self.__view_menu = None
+        self.__help_menu = None
 
         self.__createMenu()
         self.__fetchSettings()
@@ -53,6 +56,8 @@ class GertMainWindow(QMainWindow):
         file_menu = self.menuBar().addMenu("&File")
         file_menu.addAction("Close", self.__quit)
         self.__view_menu = self.menuBar().addMenu("&View")
+        self.__help_menu = self.menuBar().addMenu("&Help")
+        """:type: QMenu"""
 
         """ @rtype: list of QAction """
         advanced_toggle_action = QAction("Show Advanced Options", self)
@@ -62,6 +67,11 @@ class GertMainWindow(QMainWindow):
         advanced_toggle_action.toggled.connect(self.toggleAdvancedMode)
 
         self.__view_menu.addAction(advanced_toggle_action)
+
+        """ @rtype: list of QAction """
+        show_about = self.__help_menu.addAction("About")
+        show_about.setMenuRole(QAction.ApplicationSpecificRole)
+        show_about.triggered.connect(self.__showAboutMessage)
 
 
     def __quit(self):
@@ -103,6 +113,11 @@ class GertMainWindow(QMainWindow):
             self.__view_menu.addAction(action)
 
         self.central_layout.addWidget(widget)
+
+    def __showAboutMessage(self):
+        diag = AboutDialog(self)
+        diag.show()
+        pass
 
 
 
