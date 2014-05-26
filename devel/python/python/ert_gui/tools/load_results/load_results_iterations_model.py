@@ -21,39 +21,30 @@ from ert_gui.models.mixins import BasicModelMixin
 class LoadResultsIterationsModel(BasicModelMixin):
 
 
-    def __init__(self, realization_count):
-        self.__realization_count = realization_count
-        self.__active_realizations = self.getDefaultValue()
+    def __init__(self, iterations_count):
+        self.__iterations_count = iterations_count
+        self.__active_iteration = self.getDefaultValue()
         self.__custom = False
         super(LoadResultsIterationsModel, self).__init__()
 
-
     def getValue(self):
         """ @rtype: str """
-        return self.__active_realizations
+        return self.__active_iteration
 
-    def setValue(self, active_realizations):
-        if active_realizations is None or active_realizations.strip() == "" or active_realizations == self.getDefaultValue():
+    def setValue(self, active_iterations):
+        if active_iterations is None or active_iterations.strip() == "" or active_iterations == self.getDefaultValue():
             self.__custom = False
-            self.__active_realizations = self.getDefaultValue()
+            self.__active_iteration = self.getDefaultValue()
         else:
             self.__custom = True
-            self.__active_realizations = active_realizations
-
+            self.__active_iteration = active_iterations
 
     def getDefaultValue(self):
-        return "0-%d" % (self.__realization_count - 1)
+        return 0
 
-    def getActiveRealizationsMask(self):
-        mask = BoolVector.active_mask(self.getValue())
-
-        if mask is None:
-            raise ValueError("Error while parsing range string!")
-
-        if len(mask) > self.__realization_count:
-            raise ValueError("Mask size changed %d != %d!" % (self.__realization_count, len(mask)))
-
-        return mask
+    def getActiveIteration(self):
+        """ @rtype: int """
+        return int(self.__active_iteration)
 
 
 
