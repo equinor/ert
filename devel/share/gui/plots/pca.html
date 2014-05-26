@@ -120,6 +120,55 @@
     function isReportStepCapable() {
         return false;
     }
+
+    function getXMin() {
+        var data = plot_data_source.getTemporaryData();
+        if(data.hasUserData("PCA")) {
+            data = data.getUserData("PCA");
+
+            if(data.hasBoundaries()) {
+                return data.minX();
+            }
+        }
+        return null;
+    }
+
+    function getXMax() {
+        var data = plot_data_source.getTemporaryData();
+        if(data.hasUserData("PCA")) {
+            data = data.getUserData("PCA");
+
+            if(data.hasBoundaries()) {
+                return data.maxX();
+            }
+        }
+        return null;
+    }
+
+    function getYMin() {
+        var data = plot_data_source.getTemporaryData();
+        if(data.hasUserData("PCA")) {
+            data = data.getUserData("PCA");
+
+            if(data.hasBoundaries()) {
+                return data.minY();
+            }
+        }
+        return null;
+    }
+
+    function getYMax() {
+        var data = plot_data_source.getTemporaryData();
+        if(data.hasUserData("PCA")) {
+            data = data.getUserData("PCA");
+
+            if(data.hasBoundaries()) {
+                return data.maxY();
+            }
+        }
+        return null;
+    }
+
 </script>
 
 <body onload="initialize();">
