@@ -23,23 +23,40 @@ class LoadResultsModel(ErtConnector):
     def __init__(self):
         super(LoadResultsModel, self).__init__()
 
-    def loadResults(self, selected_case, realisations, iterations):
+    def loadResults(self, selected_case, realisations, iteration):
         """
         @type selected_case: str
         @type realisations: BoolVector
-        @type iterations: BoolVector
+        @type iteration: int
         """
         current_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
 
         self.ert().getEnkfFsManager().switchFileSystem(fs)
 
-        for index, value in enumerate(iterations):
-            if value:
-                self.ert().loadFromForwardModel(realisations, index)
+        self.ert().loadFromForwardModel(realisations, iteration)
 
         self.ert().getEnkfFsManager().switchFileSystem(current_fs)
 
+
+    def isValidRunPath(self):
+        """ @rtype: bool """
+        run_path = self.ert().getModelConfig().getRunpathAsString()
+        hasIterations = True
+        try:
+            formated = run_path % (0, 0)
+            return True
+        except TypeError:
+            hasIterations = False
+
+        hasRealization = True
+        try:
+            formated = run_path % 0
+            return True
+        except TypeError:
+            hasRealization = False
+
+        return False
 
 
 

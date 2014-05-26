@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QLineEdit
-from ert_gui.ide.keywords.definitions import RangeStringArgument
+from ert_gui.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.load_results import LoadResultsModel
@@ -57,7 +57,7 @@ class LoadResultsPanel(QWidget):
 
         self._iterations_model = LoadResultsIterationsModel(self.__iterations_count)
         self._iterations_field = StringBox(self._iterations_model, "Iteration to load", "load_results_manually/iterations")
-        self._iterations_field.setValidator(RangeStringArgument())
+        self._iterations_field.setValidator(IntegerArgument())
         layout.addRow(self._iterations_field.getLabel(), self._iterations_field)
 
         self.setLayout(layout)
@@ -66,6 +66,10 @@ class LoadResultsPanel(QWidget):
         all_cases = self.__case_model.getAllItems()
         selected_case  = all_cases[self.__case_combo.currentIndex()]
         realizations = self.__active_realizations_model.getActiveRealizationsMask()
-        iterations = self._iterations_model.getActiveRealizationsMask()
+        iteration = self._iterations_model.getActiveIteration()
 
-        LoadResultsModel().loadResults(selected_case, realizations, iterations)
+        LoadResultsModel().loadResults(selected_case, realizations, iteration)
+
+    def setCurrectCase(self):
+        current_case = CaseSelectorModel().getCurrentChoice()
+        self.__case_combo.setCurrentIndex(self.__case_model.indexOf(current_case))
