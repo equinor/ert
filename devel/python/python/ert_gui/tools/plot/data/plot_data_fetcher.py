@@ -62,6 +62,9 @@ class PlotDataFetcher(ErtConnector):
     def isCustomPcaDataKey(self, key):
         return DataTypeKeysModel().isCustomPcaKey(key)
 
+    def dataTypeKeySupportsReportSteps(self, key):
+        return self.isSummaryKey(key)
+
     def fetchGenData(self, gen_data_fetcher, key, cases):
         plot_data = PlotData(key)
 
@@ -225,3 +228,5 @@ class PlotDataFetcher(ErtConnector):
                 pca_plot_data.addEnsembleData(pca_ensemble_plot_data)
 
         return pca_plot_data
+
+

@@ -1,5 +1,5 @@
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QCheckBox, QDoubleSpinBox, QSpinBox, QStackedWidget, QSizePolicy
+from PyQt4.QtCore import pyqtSignal, Qt
+from PyQt4.QtGui import QWidget, QVBoxLayout, QCheckBox, QDoubleSpinBox, QSpinBox, QStackedWidget, QSizePolicy, QLabel
 
 from ert.util import CTime
 from ert_gui.models.connectors.plot import ReportStepsModel
@@ -15,7 +15,7 @@ class PlotScalesWidget(QWidget):
         self.__type_key = type_key
         self.__type = None
 
-        self.__double_spinner = self.createDoubleSpinner(minimum=-99999999.0, maximum=99999999.0)
+        self.__double_spinner = self.createDoubleSpinner(minimum=-999999999.0, maximum=999999999.0)
         self.__integer_spinner = self.createIntegerSpinner(minimum=0, maximum=999999999)
 
         self.__time_map = ReportStepsModel().getList()
@@ -29,27 +29,27 @@ class PlotScalesWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.__checkbox = QCheckBox(title)
-        self.__checkbox.setChecked(False)
+        self.__label = QLabel(title)
+        self.__label.setAlignment(Qt.AlignHCenter)
 
         self.__stack = QStackedWidget()
-        self.__stack.setSizePolicy(QSizePolicy(QSizePolicy.Minimum))
+        self.__stack.setSizePolicy(QSizePolicy(QSizePolicy.Preferred))
         self.__stack.addWidget(self.__integer_spinner)
         self.__stack.addWidget(self.__double_spinner)
         self.__stack.addWidget(self.__time_spinner)
 
         layout.addWidget(self.__stack)
-        layout.addWidget(self.__checkbox)
+        layout.addWidget(self.__label)
 
-        self.__checkbox.stateChanged.connect(self.toggleCheckbox)
         self.setLayout(layout)
 
     def createDoubleSpinner(self, minimum, maximum):
         spinner = QDoubleSpinBox()
-        spinner.setEnabled(False)
-        spinner.setMinimumWidth(75)
+        spinner.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        spinner.setMinimumWidth(105)
         spinner.setRange(minimum, maximum)
         spinner.setKeyboardTracking(False)
+        spinner.setDecimals(8)
 
         spinner.editingFinished.connect(self.plotScaleChanged)
         spinner.valueChanged.connect(self.plotScaleChanged)
@@ -58,7 +58,6 @@ class PlotScalesWidget(QWidget):
 
     def createIntegerSpinner(self, minimum, maximum):
         spinner = QSpinBox()
-        spinner.setEnabled(False)
         spinner.setMinimumWidth(75)
         spinner.setRange(minimum, maximum)
         spinner.setKeyboardTracking(False)
@@ -73,7 +72,6 @@ class PlotScalesWidget(QWidget):
             return "%s" % (str(item.date()))
 
         spinner = ListSpinBox(self.__time_map)
-        spinner.setEnabled(False)
         spinner.setMinimumWidth(75)
 
         if select_minimum_value:
@@ -98,25 +96,7 @@ class PlotScalesWidget(QWidget):
             raise TypeError("Unsupported spinner type: %s" % self.__type)
 
 
-    def toggleCheckbox(self):
-        checked = self.isChecked()
-        self.__double_spinner.setEnabled(checked)
-        self.__integer_spinner.setEnabled(checked)
-        self.__time_spinner.setEnabled(checked)
-        self.plotScaleChanged.emit()
-
-
-    def isChecked(self):
-        return self.__checkbox.isChecked()
-
-
-    def setChecked(self, checked):
-        self.__checkbox.setChecked(checked)
-
-
     def setValue(self, value):
-        self.setChecked(value is not None)
-
         if value is not None:
             if self.__type is int:
                 self.__integer_spinner.setValue(int(value))
@@ -142,9 +122,9 @@ class PlotScalesWidget(QWidget):
         font.setPointSize(size)
         self.__time_spinner.setFont(font)
 
-        font = self.__checkbox.font()
+        font = self.__label.font()
         font.setPointSize(size)
-        self.__checkbox.setFont(font)
+        self.__label.setFont(font)
 
 
     def setType(self, spinner_type):

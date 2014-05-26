@@ -9,6 +9,7 @@ class PlotToolBar(QToolBar):
     FONT_SIZE = 11
 
     exportClicked = pyqtSignal()
+    resetScalesClicked = pyqtSignal()
     reportStepChanged = pyqtSignal()
     plotScalesChanged = pyqtSignal()
 
@@ -17,6 +18,9 @@ class PlotToolBar(QToolBar):
 
         self.setObjectName("PlotToolBar")
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+
+        self.__reset_scales = self.createAction("Reset Scales", util.resourceIcon("ide/transform_scale"))
+        self.__reset_scales.triggered.connect(self.resetScalesClicked)
 
         self.__x_min, self.__x_min_action = self.addScaler("x_min", "X Minimum", spinner_type=CTime, select_min_time_value=True)
         self.__x_max, self.__x_max_action = self.addScaler("x_max", "X Maximum", spinner_type=CTime)
@@ -31,16 +35,20 @@ class PlotToolBar(QToolBar):
 
         self.addSeparator()
 
-        export_action = self.addAction("Export")
-        export_action.setText("Export Plot")
-        export_action.setIcon(util.resourceIcon("ide/table_export"))
-        w = self.widgetForAction(export_action)
+        export_action = self.createAction("Export Plot", util.resourceIcon("ide/table_export"))
+        export_action.triggered.connect(self.exportClicked)
+
+
+    def createAction(self, title, icon):
+        action = self.addAction(title)
+        action.setIcon(icon)
+
+        w = self.widgetForAction(action)
         font = w.font()
         font.setPointSize(PlotToolBar.FONT_SIZE)
         w.setFont(font)
 
-        export_action.triggered.connect(self.exportClicked)
-
+        return action
 
     def addScaler(self, type_key, title, spinner_type, select_min_time_value=False):
         scaler = PlotScalesWidget(type_key, title, select_min_time_value=select_min_time_value)
@@ -74,17 +82,11 @@ class PlotToolBar(QToolBar):
 
 
     def getXScales(self):
-        x_min = None if not self.__x_min.isChecked() else self.__x_min.getValue()
-        x_max = None if not self.__x_max.isChecked() else self.__x_max.getValue()
-
-        return x_min, x_max
+        return (self.__x_min.getValue()), (self.__x_max.getValue())
 
 
     def getYScales(self):
-        y_min = None if not self.__y_min.isChecked() else self.__y_min.getValue()
-        y_max = None if not self.__y_max.isChecked() else self.__y_max.getValue()
-
-        return y_min, y_max
+        return (self.__y_min.getValue()), (self.__y_max.getValue())
 
 
     def getReportStep(self):
