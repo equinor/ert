@@ -91,15 +91,12 @@ class PlotWindow(QMainWindow):
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
 
 
-    def fetchDefaultScales(self):
+    def fetchDefaultXScales(self):
         if self.__plot_data is not None:
             active_plot = self.getActivePlot()
             x_axis_type_name = active_plot.xAxisType()
-            y_axis_type_name = active_plot.yAxisType()
 
             x_axis_type = self.__plot_metrics_tracker.getType(x_axis_type_name)
-            y_axis_type = self.__plot_metrics_tracker.getType(y_axis_type_name)
-
 
             if x_axis_type is not None:
                 x_min, x_max = active_plot.getXScales(self.__plot_data)
@@ -110,14 +107,23 @@ class PlotWindow(QMainWindow):
 
                 self.__plot_metrics_tracker.setScalesForType(x_axis_type_name, x_min, x_max)
 
-            if y_axis_type is not None:
-                y_min, y_max = active_plot.getYScales(self.__plot_data)
 
-                if y_axis_type is CTime and y_min is not None and y_max is not None:
-                    y_min = int(y_min)
-                    y_max = int(y_max)
 
-                self.__plot_metrics_tracker.setScalesForType(y_axis_type_name, y_min, y_max)
+    def fetchDefaultYScales(self):
+            if self.__plot_data is not None:
+                active_plot = self.getActivePlot()
+                y_axis_type_name = active_plot.yAxisType()
+
+                y_axis_type = self.__plot_metrics_tracker.getType(y_axis_type_name)
+
+                if y_axis_type is not None:
+                    y_min, y_max = active_plot.getYScales(self.__plot_data)
+
+                    if y_axis_type is CTime and y_min is not None and y_max is not None:
+                        y_min = int(y_min)
+                        y_max = int(y_max)
+
+                    self.__plot_metrics_tracker.setScalesForType(y_axis_type_name, y_min, y_max)
 
 
     def resetCurrentScales(self):
@@ -153,8 +159,11 @@ class PlotWindow(QMainWindow):
             y_axis_type_name = active_plot.yAxisType()
             y_axis_type = self.__plot_metrics_tracker.getType(y_axis_type_name)
 
-            if not self.__plot_metrics_tracker.hasScale(x_axis_type_name) or not self.__plot_metrics_tracker.hasScale(y_axis_type_name):
-                self.fetchDefaultScales()
+            if not self.__plot_metrics_tracker.hasScale(x_axis_type_name):
+                self.fetchDefaultXScales()
+
+            if not self.__plot_metrics_tracker.hasScale(y_axis_type_name):
+                self.fetchDefaultYScales()
 
             x_min, x_max = self.__plot_metrics_tracker.getScalesForType(x_axis_type_name)
             y_min, y_max = self.__plot_metrics_tracker.getScalesForType(y_axis_type_name)

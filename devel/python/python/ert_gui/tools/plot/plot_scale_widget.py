@@ -46,10 +46,10 @@ class PlotScalesWidget(QWidget):
     def createDoubleSpinner(self, minimum, maximum):
         spinner = QDoubleSpinBox()
         spinner.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
-        spinner.setMinimumWidth(95)
+        spinner.setMinimumWidth(105)
         spinner.setRange(minimum, maximum)
         spinner.setKeyboardTracking(False)
-        spinner.setDecimals(10)
+        spinner.setDecimals(8)
 
         spinner.editingFinished.connect(self.plotScaleChanged)
         spinner.valueChanged.connect(self.plotScaleChanged)
