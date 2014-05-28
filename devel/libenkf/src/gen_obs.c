@@ -291,8 +291,8 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
 
 
 
-void gen_obs_get_observations(gen_obs_type * gen_obs , obs_data_type * obs_data, int report_step , const active_list_type * __active_list) {
-  gen_data_config_load_active( gen_obs->data_config , report_step , true);
+void gen_obs_get_observations(gen_obs_type * gen_obs , obs_data_type * obs_data, enkf_fs_type * fs, int report_step , const active_list_type * __active_list) {
+  gen_data_config_load_active( gen_obs->data_config , fs, report_step , true);
   {
     int iobs;
     active_mode_type active_mode                  = active_list_get_mode( __active_list );

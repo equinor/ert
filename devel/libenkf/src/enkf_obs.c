@@ -423,7 +423,7 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
       int report_step = obs_tstep_list_iget( tstep_list , i );
       if (obs_vector_iget_active(obs_vector , report_step)) {                             /* The observation is active for this report step.     */
         const active_list_type * active_list = local_obsdata_node_get_active_list( obs_node );
-        obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list);  /* Collect the observed data in the obs_data instance. */
+        obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list, fs);  /* Collect the observed data in the obs_data instance. */
         obs_vector_measure(obs_vector , fs , state , report_step , ens_active_list , meas_data , active_list);
       } 
     }
