@@ -4,11 +4,13 @@ from ert.enkf.enums.enkf_state_type_enum import EnkfStateType
 from ert.enkf.node_id import NodeId
 from ert.test import ErtTestContext
 from ert.test.extended_testcase import ExtendedTestCase
+from ert.util import BoolVector
 
 test_lib  = clib.ert_load("libenkf")
 cwrapper =  CWrapper(test_lib)
 
 get_active_mask = cwrapper.prototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )")
+update_active_mask = cwrapper.prototype("void gen_data_config_update_active( gen_data_config, enkf_fs, int, bool_vector)")
 
 class GenDataConfigTest(ExtendedTestCase):
     def setUp(self):
@@ -18,27 +20,46 @@ class GenDataConfigTest(ExtendedTestCase):
         with ErtTestContext("gen_data_config_test", self.config_file) as test_context:
             ert = test_context.getErt()
 
-            fs =  ert.getEnkfFsManager().getFileSystem(case1)
+            fs1 =  ert.getEnkfFsManager().getFileSystem(case1)
             config_node = ert.ensembleConfig().getNode("TIMESHIFT")
             data_node = EnkfNode(config_node)
-            data_node.tryLoad(fs, NodeId(60, 0, EnkfStateType.FORECAST))
+            data_node.tryLoad(fs1, NodeId(60, 0, EnkfStateType.FORECAST))
 
-            first_active_mask = get_active_mask( config_node.getDataModelConfig() )
-            first_active_mask_length = len(first_active_mask)
+            active_mask = get_active_mask( config_node.getDataModelConfig() )
+            first_active_mask_length = len(active_mask)
             self.assertEqual(first_active_mask_length, 2560)
 
-            fs =  ert.getEnkfFsManager().getFileSystem(case2)
+            fs2 =  ert.getEnkfFsManager().getFileSystem(case2)
             data_node = EnkfNode(config_node)
-            data_node.tryLoad(fs, NodeId(60, 0, EnkfStateType.FORECAST))
+            data_node.tryLoad(fs2, NodeId(60, 0, EnkfStateType.FORECAST))
 
-            second_active_mask = get_active_mask( config_node.getDataModelConfig() )
-            self.assertEqual(len(second_active_mask), 2560)
+            active_mask = get_active_mask( config_node.getDataModelConfig() )
+            second_active_mask_len = len(active_mask)
+            self.assertEqual(second_active_mask_len, 2560)
+            self.assertEqual(first_active_mask_length, second_active_mask_len)
 
-            self.assertEqual(first_active_mask_length, len(second_active_mask))
+            # Setting one element to False, load different case, check, reload, and check.
+            self.assertTrue(BoolVector.cNamespace().iget(active_mask, 10))
+            active_mask_modified = active_mask.copy();
+            active_mask_modified[10] = False
+            update_active_mask(config_node.getDataModelConfig(), fs2, 60, active_mask_modified)
+            active_mask = get_active_mask( config_node.getDataModelConfig() )
+            self.assertFalse(active_mask[10])
+
+            #Load first - check element is true
+            data_node = EnkfNode(config_node)
+            data_node.tryLoad(fs1, NodeId(60, 0, EnkfStateType.FORECAST))
+            active_mask = get_active_mask( config_node.getDataModelConfig() )
+            self.assertTrue(active_mask[10])
+
+            # Reload second again, should now be false at 10, due to the update further up
+            data_node = EnkfNode(config_node)
+            data_node.tryLoad(fs2, NodeId(60, 0, EnkfStateType.FORECAST))
+            active_mask = get_active_mask( config_node.getDataModelConfig() )
+            self.assertFalse(active_mask[10])
 
 
     def test_loading_two_cases_with_and_withough_active_file(self):
-        self.load_active_masks("default", "missing-active")
         self.load_active_masks("missing-active", "default")
 
 
