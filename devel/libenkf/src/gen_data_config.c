@@ -437,7 +437,6 @@ void gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type *
   if (fs != config->previous_fs) {
     config->previous_fs = fs;
     fs_changed = true;
-    fprintf(stderr, "FS is changed \n");
   }
 
   if (config->previous_fs == NULL)
@@ -455,7 +454,7 @@ void gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type *
           bool_vector_fread( config->active_mask , stream );
           fclose( stream );
         } else {
-          fprintf(stdout,"** Warning: could not find file %s, filling active vector with true. \n",filename);
+          fprintf(stdout,"** Info: could not active data elements file %s, filling active vector with true. \n",filename);
           bool_vector_reset( config->active_mask );
           bool_vector_iset( config->active_mask, int_vector_iget( config->data_size_vector, report_step ) - 1, true);
         }
