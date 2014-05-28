@@ -29,6 +29,6 @@ class CaseSelectorModel(ErtConnector, ChoiceModelMixin):
         case = str(case)
         if not case == "":
             enkf_fs = self.ert().getEnkfFsManager().getFileSystem(case)
-            if not None:
+            if not enkf_fs is None:
                 self.ert().getEnkfFsManager().switchFileSystem(enkf_fs)
             self.observable().notify(self.CURRENT_CHOICE_CHANGED_EVENT)
