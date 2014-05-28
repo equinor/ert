@@ -441,9 +441,11 @@ void gen_data_config_load_active( gen_data_config_type * config , int report_ste
         if (stream != NULL) {
           bool_vector_fread( config->active_mask , stream );
           fclose( stream );
-        } else 
-          fprintf(stderr,"** Warning: could not find file:%s \n",filename);
-
+        } else {
+          fprintf(stdout,"** Warning: could not find file %s, filling active vector with true. \n",filename);
+          bool_vector_reset( config->active_mask );
+          bool_vector_iset( config->active_mask, int_vector_iget( config->data_size_vector, report_step ) - 1, true);
+        }
         free( filename );
       }
     }
@@ -451,7 +453,6 @@ void gen_data_config_load_active( gen_data_config_type * config , int report_ste
   }
   pthread_mutex_unlock( &config->update_lock );
 }
-
 
 
 void gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size) {
