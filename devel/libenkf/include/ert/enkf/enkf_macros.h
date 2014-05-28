@@ -37,6 +37,7 @@ extern "C" {
 #include <ert/enkf/enkf_serialize.h>
 #include <ert/enkf/active_list.h>
 #include <ert/enkf/meas_data.h>
+#include <ert/enkf/enkf_fs_type.h>
 
 
 #define CONFIG_STD_FIELDS \
@@ -109,13 +110,13 @@ void * prefix ## _alloc__(const void *void_config) {                            
 
 
 #define VOID_READ_FROM_BUFFER(prefix)                                              \
-  void prefix ## _read_from_buffer__(void * void_arg , buffer_type * buffer , int report_step, state_enum state) { \
+  void prefix ## _read_from_buffer__(void * void_arg , buffer_type * buffer , enkf_fs_type * fs, int report_step, state_enum state) { \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg );                       \
-   prefix ## _read_from_buffer(arg , buffer , report_step, state);            \
+   prefix ## _read_from_buffer(arg , buffer , fs, report_step, state);            \
 }
 
 #define VOID_WRITE_TO_BUFFER_HEADER(prefix) bool prefix ## _write_to_buffer__(const void * , buffer_type * , int , state_enum);
-#define VOID_READ_FROM_BUFFER_HEADER(prefix) void prefix ## _read_from_buffer__(void * , buffer_type * , int, state_enum);
+#define VOID_READ_FROM_BUFFER_HEADER(prefix) void prefix ## _read_from_buffer__(void * , buffer_type * ,  enkf_fs_type * , int, state_enum);
 
 #define VOID_FLOAD(prefix)                                                         \
 bool prefix ## _fload__(void * void_arg , const char * filename) {                 \
