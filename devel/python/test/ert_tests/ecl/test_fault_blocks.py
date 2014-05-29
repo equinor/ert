@@ -19,14 +19,26 @@ try:
 except ImportError:
     from unittest import skipIf
 
-from ert.ecl import EclGrid
+from ert.ecl import EclGrid, EclTypeEnum , EclKW , EclRegion
 from ert.test import ExtendedTestCase
-from ert.ecl.faults import FaultBlock
+from ert.ecl.faults import FaultBlock, FaultBlockLayer
+
 
 
 class FaultBlockTest(ExtendedTestCase):
     def setUp(self):
         self.grid = EclGrid.create_rectangular( (10,10,10) , (1,1,1) )
+        self.kw = EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_INT_TYPE )
+        self.kw.assign( 1 )
+
+        reg = EclRegion( self.grid , False )
+
+        for k in range(self.grid.getNZ()):
+            reg.clear( )
+            reg.select_kslice( k , k )
+            self.kw.assign( k , mask = reg )
+            self.kw[ k * self.grid.getNX() * self.grid.getNY() + 7] = 177
+    
 
     def test_fault_block(self):
         fault_block = FaultBlock( self.grid , 77 )
@@ -38,3 +50,52 @@ class FaultBlockTest(ExtendedTestCase):
         
         self.assertFloatEqual( x0 , xc )
         self.assertFloatEqual( y0 , yc )
+
+
+
+
+    def test_fault_block_layer(self):
+        with self.assertRaises(ValueError):
+            layer = FaultBlockLayer( self.grid , self.kw , -1 )
+
+        with self.assertRaises(ValueError):
+            layer = FaultBlockLayer( self.grid , self.kw , self.grid.size  )
+            
+        with self.assertRaises(ValueError):
+            layer = FaultBlockLayer( self.grid , EclKW.create( "FAULTBLK" , 1 , EclTypeEnum.ECL_INT_TYPE ) , 0)
+
+        with self.assertRaises(ValueError):
+            layer = FaultBlockLayer( self.grid , EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE ) , 0)
+
+        layer = FaultBlockLayer( self.grid , self.kw , 1 )
+        self.assertEqual( 2 , layer.size() )
+        self.assertEqual( 2 , len(layer) )
+
+        with self.assertRaises(TypeError):
+            ls = layer["JJ"]
+
+        l = []
+        for blk in layer:
+            l.append( blk )
+        self.assertEqual( len(l) , 2 )
+
+        l0 = layer[0]
+        l1 = layer[1]
+        self.assertTrue( isinstance(l1 , FaultBlock ))
+
+        with self.assertRaises(IndexError):
+            l2 = layer[2]
+
+            
+        self.assertEqual( False , layer.hasBlock( 77 ))
+        self.assertEqual( True , layer.hasBlock( 1 ))
+        self.assertEqual( True , layer.hasBlock( 177 ))
+
+
+        l1 = layer.getBlock( 1 )
+        self.assertTrue( isinstance(l1 , FaultBlock ))
+        
+        l177 = layer.getBlock( 177 )
+        with self.assertRaises(KeyError):
+            l =layer.getBlock(66)
+
