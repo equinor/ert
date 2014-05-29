@@ -23,6 +23,9 @@ from ert.ecl import EclGrid, EclTypeEnum , EclKW , EclRegion
 from ert.test import ExtendedTestCase
 from ert.ecl.faults import FaultBlock, FaultBlockLayer
 
+def create_FaultBlock():
+    grid = EclGrid.create_rectangular( (10,10,10) , (1,1,1) )
+    return FaultBlock(grid , 0 , 0)
 
 
 class FaultBlockTest(ExtendedTestCase):
@@ -51,6 +54,15 @@ class FaultBlockTest(ExtendedTestCase):
         self.assertFloatEqual( x0 , xc )
         self.assertFloatEqual( y0 , yc )
 
+
+    def test_fault_block_gc(self):
+        fault_block = create_FaultBlock()
+        fault_block.addCell( 0 , 0)
+        (x0,y0,z0) = self.grid.get_xyz( global_index = 0 )
+        (xc,yc) = fault_block.getCentroid()
+        
+        self.assertFloatEqual( x0 , xc )
+        self.assertFloatEqual( y0 , yc )
 
 
 
