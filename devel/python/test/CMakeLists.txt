@@ -30,6 +30,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_ecl_sum_vector.py
     ert_tests/ecl/test_faults.py
     ert_tests/ecl/test_statoil_faults.py
+    ert_tests/ecl/test_fault_blocks.py
     ert_tests/ecl/test_npv.py
 
     ert_tests/enkf/__init__.py
@@ -391,6 +392,10 @@ add_test( NAME python.tests.ert.ecl.ecl_sum_vector
 add_test( NAME python.tests.ert.ecl.faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_faults.FaultTest )
+
+add_test( NAME python.tests.ert.ecl.fault_blocks
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_fault_blocks.FaultBlockTest )
 
 add_test( NAME python.tests.ert.ecl.ecl_npv
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
