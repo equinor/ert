@@ -21,7 +21,7 @@ except ImportError:
 
 from ert.ecl import EclGrid, EclTypeEnum , EclKW , EclRegion
 from ert.test import ExtendedTestCase
-from ert.ecl.faults import FaultBlock, FaultBlockLayer
+from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCollection
 
 def create_FaultBlock():
     grid = EclGrid.create_rectangular( (10,10,10) , (1,1,1) )
@@ -111,3 +111,18 @@ class FaultBlockTest(ExtendedTestCase):
         with self.assertRaises(KeyError):
             l =layer.getBlock(66)
 
+
+
+    def test_fault_block_collection(self):
+        collection = FaultBlockCollection( self.grid , self.kw )
+        self.assertTrue( len(collection) , self.grid.getNZ() )
+
+        layer_list = []
+        for layer in collection:
+            layer_list.append( layer )
+        
+        for k in range(self.grid.getNZ()):
+            self.assertEqual( collection[k], collection.getLayer(k) )
+
+        self.assertTrue( len(layer_list) , self.grid.getNZ() )
+        
