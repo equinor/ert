@@ -41,10 +41,10 @@ class FaultBlockTest(ExtendedTestCase):
     
 
     def test_fault_block(self):
-        fault_block = FaultBlock( self.grid , 77 )
+        fault_block = FaultBlock( self.grid , 0 , 77 )
         self.assertEqual( 77 , fault_block.getBlockID() )
         
-        fault_block.addCell( 0 )
+        fault_block.addCell( 0 , 0)
         (x0,y0,z0) = self.grid.get_xyz( global_index = 0 )
         (xc,yc) = fault_block.getCentroid()
         
