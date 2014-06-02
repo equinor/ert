@@ -65,6 +65,7 @@
     var custom_min_y = null;
     var custom_max_y = null;
 
+
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
             createPlot();
@@ -81,8 +82,8 @@
     function createPlot() {
         histogram_div = d3.select("body").append("div").attr("class", "histogram-div");
         count_dimension = BasePlotIntegerDimension();
-        value_dimension = BasePlotValueDimension();
         count_dimension.setUnit("# of realizations");
+        value_dimension = BasePlotValueDimension();
         for (var index = 0; index < STYLES.ensemble_colors.length; index++) {
             var histogram = new Histogram(histogram_div, value_dimension, count_dimension);
             histogram.setVisible(false);
@@ -217,12 +218,12 @@
         }
     }
 
-    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max) {
-        custom_min_x = value_min;
-        custom_max_x = value_max;
+    function setScales(x_min, x_max, y_min, y_max) {
+        custom_min_x = x_min;
+        custom_max_x = x_max;
 
-        custom_min_y = count_min;
-        custom_max_y = count_max;
+        custom_min_y = y_min;
+        custom_max_y = y_max;
     }
 
     function setReportStepTime(report_step_time) {
@@ -246,6 +247,56 @@
     function getPlotTitle(){
         return histograms[0].getTitle();
     }
+
+    function xAxisType() {
+        return "value";
+    }
+
+    function yAxisType() {
+        return "count";
+    }
+
+    function isReportStepCapable() {
+        return true;
+    }
+
+    function getXMin() {
+        var data = plot_data_source.getTemporaryData();
+        return data.minY();
+    }
+
+    function getXMax() {
+        var data = plot_data_source.getTemporaryData();
+        return data.maxY();
+    }
+
+    function getYMin() {
+        return 0;
+    }
+
+    function getYMax() {
+        var data = plot_data_source.getTemporaryData();
+
+        if (data != null && data.isValid()) {
+            var histogram_data;
+
+            if (stored_report_step_time == null) {
+                histogram_data = data.histogramData(data.maxX());
+            } else {
+                histogram_data = data.histogramData(stored_report_step_time);
+            }
+            value_dimension.setIsLogScale(data.shouldUseLogScale());
+//            value_dimension.setDomain(histogram_data.min(), histogram_data.max()); // min/max for current report step
+            value_dimension.setDomain(data.minY(), data.maxY()); // min/max for whole dataset
+
+            var case_list = data.caseList();
+            var max_bin_count = findMaxBinCount(case_list, histogram_data);
+            return max_bin_count + 1;
+        }
+
+        return 1;
+    }
+
 
 </script>
 

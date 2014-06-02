@@ -148,3 +148,7 @@ PcaPlot.prototype.renderNow = function(){
 PcaPlot.prototype.getTitle = function(){
     return this.plot.getTitle();
 };
+
+PcaPlot.prototype.setRenderingFinishedCallback = function(callback) {
+    this.plot.setRenderingFinishedCallback(callback);
+};

@@ -56,7 +56,7 @@ function Histogram(element, x_dimension, y_dimension) {
 
     var x_label = axis_label_group.append("div")
         .attr("class", "x axis-label")
-        .text("")
+        .text("");
 
     var y_label = axis_label_group.append("div")
         .attr("class", "y axis-label")

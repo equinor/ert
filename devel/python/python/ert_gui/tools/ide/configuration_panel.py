@@ -1,16 +1,17 @@
 import re
 import shutil
 from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QStyle, QMessageBox, QSizePolicy
+from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QStyle, QMessageBox, QSizePolicy, QFileDialog
 from ert_gui.ide.highlighter import KeywordHighlighter
 from ert_gui.ide.keywords.definitions.path_argument import PathArgument
 from ert_gui.tools.ide import IdePanel
+from ert_gui.widgets import util
 from ert_gui.widgets.search_box import SearchBox
 
 
 class ConfigurationPanel(QWidget):
 
-    reloadApplication = pyqtSignal()
+    reloadApplication = pyqtSignal(str)
 
     def __init__(self, config_file_path, help_tool):
         QWidget.__init__(self)
@@ -19,15 +20,12 @@ class ConfigurationPanel(QWidget):
 
         toolbar = QToolBar("toolbar")
 
-        # start_icon = toolbar.style().standardIcon(QStyle.SP_MediaPlay)
-        # start_action = toolbar.addAction(start_icon, "Run simulations")
-        # start_action.triggered.connect(self.start)
-        #
-        # toolbar.addSeparator()
 
-        save_icon = toolbar.style().standardIcon(QStyle.SP_DialogSaveButton)
-        save_action = toolbar.addAction(save_icon, "Save")
+        save_action = toolbar.addAction(util.resourceIcon("ide/disk"), "Save")
         save_action.triggered.connect(self.save)
+
+        save_as_action = toolbar.addAction(util.resourceIcon("ide/save_as"), "Save As")
+        save_as_action.triggered.connect(self.saveAs)
 
         # reload_icon = toolbar.style().standardIcon(QStyle.SP_BrowserReload)
         # reload_action = toolbar.addAction(reload_icon, "Reload")
@@ -38,12 +36,9 @@ class ConfigurationPanel(QWidget):
         toolbar.addAction(help_tool.getAction())
 
 
-
         stretchy_separator = QWidget()
         stretchy_separator.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         toolbar.addWidget(stretchy_separator)
-
-
 
 
         search = SearchBox()
@@ -79,21 +74,9 @@ class ConfigurationPanel(QWidget):
 
 
 
-        # self.addLabeledSeparator("Case initialization")
-        # case_combo = ComboChoice(CaseSelectorModel(), "Current case", "init/current_case_selection")
-        # case_configurator = CaseInitializationConfigurationPanel()
-        # self.addRow(case_combo, case_configurator)
-        #
-        # self.addLabeledSeparator("Queue System")
-        #
-        # queue_system_selector = QueueSystemSelector()
-        # queue_system_combo = ComboChoice(queue_system_selector, "Queue system", "config/queue_system/queue_system")
-        # queue_system_configurator = QueueSystemConfigurationPanel()
-        # self.addRow(queue_system_combo, queue_system_configurator)
-
-
     def getName(self):
         return "Configuration"
+
 
     def save(self):
         backup_path = "%s.backup" % self.config_file_path
@@ -106,11 +89,27 @@ class ConfigurationPanel(QWidget):
         result = QMessageBox.information(self, "Reload required!", message, QMessageBox.Yes | QMessageBox.No)
 
         if result == QMessageBox.Yes:
-            self.reload()
+            self.reload(self.config_file_path)
 
 
-    def reload(self):
-        self.reloadApplication.emit()
+    def saveAs(self):
+        config_file = QFileDialog.getSaveFileName(self, "Save Configuration File As")
+
+        config_file = str(config_file)
+
+        if len(config_file) > 0:
+            with open(config_file, "w") as f:
+                f.write(self.ide_panel.getText())
+
+            message = "The current configuration file has been saved to a new file. Do you want to restart Ert using the new configuration file?"
+            result = QMessageBox.information(self, "Restart Ert?", message, QMessageBox.Yes | QMessageBox.No)
+
+            if result == QMessageBox.Yes:
+                self.reload(config_file)
+
+
+    def reload(self, path):
+        self.reloadApplication.emit(path)
 
     def start(self):
         print("Start!")

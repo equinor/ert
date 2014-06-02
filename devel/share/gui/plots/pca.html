@@ -60,6 +60,9 @@
         ordinal_dimension.setUnit("Principal Component");
         value_dimension.setUnit("Value");
         plot = new PcaPlot(d3.select("body"), ordinal_dimension, value_dimension);
+        plot.setRenderingFinishedCallback(function() {
+            plot_data_source.renderingFinished();
+        });
     }
 
     function updatePlot() {
@@ -73,8 +76,8 @@
         plot.resize(width, height - 75);
     }
 
-    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max) {
-        plot.setScales(0, 1, value_min, value_max);
+    function setScales(x_min, x_max, y_min, y_max) {
+        plot.setScales(x_min, x_max, y_min, y_max);
     }
 
     function setReportStepTime(report_step_time) {
@@ -104,6 +107,66 @@
 
     function getPlotTitle(){
         return plot.getTitle();
+    }
+
+    function xAxisType() {
+        return null;
+    }
+
+    function yAxisType() {
+        return "pca";
+    }
+
+    function isReportStepCapable() {
+        return false;
+    }
+
+    function getXMin() {
+        var data = plot_data_source.getTemporaryData();
+        if(data.hasUserData("PCA")) {
+            data = data.getUserData("PCA");
+
+            if(data.hasBoundaries()) {
+                return data.minX();
+            }
+        }
+        return null;
+    }
+
+    function getXMax() {
+        var data = plot_data_source.getTemporaryData();
+        if(data.hasUserData("PCA")) {
+            data = data.getUserData("PCA");
+
+            if(data.hasBoundaries()) {
+                return data.maxX();
+            }
+        }
+        return null;
+    }
+
+    function getYMin() {
+        var data = plot_data_source.getTemporaryData();
+        if(data.hasUserData("PCA")) {
+            data = data.getUserData("PCA");
+
+            if(data.hasBoundaries()) {
+                return data.minY();
+            }
+        }
+        return null;
+    }
+
+    function getYMax() {
+        var data = plot_data_source.getTemporaryData();
+        if(data.hasUserData("PCA")) {
+            data = data.getUserData("PCA");
+
+            if(data.hasBoundaries()) {
+                return data.maxY();
+            }
+        }
+        return null;
     }
 
 </script>

@@ -304,6 +304,10 @@ class UtilTest(TestCase):
         tv1 = TimeVector( default_value = datetime.date( 2000 , 1,1) , initial_size = 2)
         self.assertEqual( tv1[0] , datetime.date(2000,1,1))
 
+        tv2 = TimeVector()
+        tv2.append( time2 )
+        print tv2
+
 
     def test_permutation_vector(self):
         vector = DoubleVector()
@@ -373,3 +377,6 @@ class UtilTest(TestCase):
         trange = TimeVector.createRegular(start , end , "2Y")
         for (y,t) in zip(xrange(1980,2022,2) , trange):
             self.assertTrue( t == datetime.datetime(y,1,1,0,0,0) )
+
+        trange = TimeVector.createRegular(start , datetime.date(2050, 1 , 1) , "1Y")
+        

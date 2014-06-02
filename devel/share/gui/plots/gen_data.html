@@ -60,7 +60,7 @@
         value_dimension = BasePlotValueDimension();
         index_dimension.setUnit("Index");
         plot = new Plot(d3.select("body"), index_dimension, value_dimension);
-        plot.setRenderingFinishedCallback(function() {
+        plot.setRenderingFinishedCallback(function () {
             plot_data_source.renderingFinished();
         });
     }
@@ -75,23 +75,23 @@
         plot.resize(width, height - 75);
     }
 
-    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max, index_min, index_max, count_min, count_max) {
-        plot.setScales(index_min, index_max, value_min, value_max);
+    function setScales(x_min, x_max, y_min, y_max) {
+        plot.setScales(x_min, x_max, y_min, y_max);
     }
 
     function setReportStepTime(report_step_time) {
         // Not supported by this plot
     }
 
-    function supportsPlotProperties(time, value, depth, index, histogram){
+    function supportsPlotProperties(time, value, depth, index, histogram) {
         return index;
     }
 
-    function getPrintWidth(){
+    function getPrintWidth() {
         return 1600;
     }
 
-    function getPrintHeight(){
+    function getPrintHeight() {
         return 1200;
     }
 
@@ -100,14 +100,45 @@
         STYLES.updateColors(settings);
     }
 
-    function renderNow(){
+    function renderNow() {
         plot.renderNow();
     }
 
-    function getPlotTitle(){
+    function getPlotTitle() {
         return plot.getTitle();
     }
 
+    function xAxisType() {
+        return "index";
+    }
+
+    function yAxisType() {
+        return "value";
+    }
+
+    function isReportStepCapable() {
+        return false;
+    }
+
+    function getXMin() {
+        var data = plot_data_source.getTemporaryData();
+        return data.minX();
+    }
+
+    function getXMax() {
+        var data = plot_data_source.getTemporaryData();
+        return data.maxX();
+    }
+
+    function getYMin() {
+        var data = plot_data_source.getTemporaryData();
+        return data.minY();
+    }
+
+    function getYMax() {
+        var data = plot_data_source.getTemporaryData();
+        return data.maxY();
+    }
 </script>
 
 <body onload="initialize();">
