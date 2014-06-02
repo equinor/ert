@@ -94,65 +94,66 @@ static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
   arg_pack_type * arg_pack           = arg_pack_safe_cast( void_arg );
   enkf_main_type * enkf_main         = arg_pack_iget_ptr( arg_pack , 0);
   const stringlist_type * param_list = arg_pack_iget_const_ptr( arg_pack , 1 );
-  int iens1                          = arg_pack_iget_int( arg_pack , 2 );
-  int iens2                          = arg_pack_iget_int( arg_pack , 3 );
-  init_mode_enum init_mode           = arg_pack_iget_int( arg_pack , 4 );
-  int iens;
-
-  for (iens = iens1; iens < iens2; iens++) {
-    enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
-    enkf_state_initialize( state , enkf_main_get_fs( enkf_main ) , param_list , init_mode);
-  }
-
+  int iens                          = arg_pack_iget_int( arg_pack , 2 );
+  init_mode_enum init_mode           = arg_pack_iget_int( arg_pack , 3 );
+  printf("Step 2 iens %d \n", iens);
+  enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
+  enkf_state_initialize( state , enkf_main_get_fs( enkf_main ) , param_list , init_mode);
   return NULL;
 }
 
-
-void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2, init_mode_enum init_mode) {
-  int num_cpu               = 4;
+void enkf_main_initialize_from_scratch_with_bool_vector(enkf_main_type * enkf_main , const stringlist_type * param_list ,const bool_vector_type * iens_mask , init_mode_enum init_mode) {
+  int num_cpu = 4;
+  int ens_size               = enkf_main_get_ensemble_size( enkf_main );
   thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
-  int ens_sub_size          = (iens2 - iens1 + 1) / num_cpu;
-  arg_pack_type ** arg_list = util_calloc( num_cpu , sizeof * arg_list );
+  arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
   int i;
+  int iens;
+  
+  for (iens = 0; iens < ens_size; iens++) {
+    arg_list[iens] = arg_pack_alloc();
+    if (bool_vector_safe_iget(iens_mask , iens)) {
+        printf("Setting up ensemble member %d ", iens);
+        if (init_mode == INIT_CONDITIONAL) {
+          printf(" using conditional initialization (keep existing parameter values).\n");
+        }
+        else if (init_mode == INIT_FORCE) {
+          printf(" using forced initialization (initialize from scratch).\n");
+        }
+        else if (init_mode == INIT_NONE) {
+          printf(" not initializing at all.\n");
+        }
+        fflush( stdout );
+        arg_pack_append_ptr( arg_list[iens] , enkf_main );
+        arg_pack_append_const_ptr( arg_list[iens] , param_list );
+        arg_pack_append_int( arg_list[iens] , iens );
+        arg_pack_append_int( arg_list[iens] , init_mode );
 
-  printf("Setting up ensemble members from %d to %d", iens1, iens2);
-  if (init_mode == INIT_CONDITIONAL) {
-    printf(" using conditional initialization (keep existing parameter values).\n");
-  }
-  else if (init_mode == INIT_FORCE) {
-    printf(" using forced initialization (initialize from scratch).\n");
-  }
-  else if (init_mode == INIT_NONE) {
-    printf(" not initializing at all.\n");
-  }
-  fflush( stdout );
-
-  for (i = 0; i < num_cpu;  i++) {
-    arg_list[i] = arg_pack_alloc();
-    arg_pack_append_ptr( arg_list[i] , enkf_main );
-    arg_pack_append_const_ptr( arg_list[i] , param_list );
-    {
-      int start_iens = i * ens_sub_size;
-      int end_iens   = start_iens + ens_sub_size;
-
-      if (i == (num_cpu - 1)){
-        end_iens = iens2 + 1;  /* Input is upper limit inclusive. */
-        if(ens_sub_size == 0)
-          start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
-      }
-      arg_pack_append_int( arg_list[i] , start_iens );
-      arg_pack_append_int( arg_list[i] , end_iens );
+        thread_pool_add_job( tp , enkf_main_initialize_from_scratch_mt , arg_list[iens]);
     }
-    arg_pack_append_int( arg_list[i] , init_mode );
-    thread_pool_add_job( tp , enkf_main_initialize_from_scratch_mt , arg_list[i]);
+
   }
   thread_pool_join( tp );
-  for (i = 0; i < num_cpu; i++)
+  for (i = 0; i < ens_size; i++){
     arg_pack_free( arg_list[i] );
+  }
   free( arg_list );
   thread_pool_free( tp );
   printf("Done setting up ensemble.\n");
 }
+
+void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2, init_mode_enum init_mode) {
+    int iens;
+    int ens_size = enkf_main_get_ensemble_size( enkf_main );
+    bool_vector_type * iens_mask = bool_vector_alloc(ens_size,false);
+
+    for (iens = iens1; iens < iens2; iens++) {
+            bool_vector_iset( iens_mask , iens , true );
+    }
+    enkf_main_initialize_from_scratch_with_bool_vector(enkf_main, param_list, iens_mask, init_mode);
+    bool_vector_free(iens_mask);
+}
+
 
 
 

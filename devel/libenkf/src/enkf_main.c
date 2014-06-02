@@ -1718,7 +1718,7 @@ void enkf_main_init_run( enkf_main_type * enkf_main, const bool_vector_type * ia
   {
     const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-    enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , active_ens_size - 1 , init_mode );
+    enkf_main_initialize_from_scratch_with_bool_vector(enkf_main , param_list , iactive , init_mode );
     stringlist_free( param_list );
   }
 }
