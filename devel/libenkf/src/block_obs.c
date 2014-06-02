@@ -258,7 +258,7 @@ void block_obs_free( block_obs_type * block_obs) {
 
 
 
-void block_obs_get_observations(const block_obs_type * block_obs,  obs_data_type * obs_data,  int report_step , const active_list_type * __active_list) {
+void block_obs_get_observations(const block_obs_type * block_obs,  obs_data_type * obs_data, enkf_fs_type * fs,  int report_step , const active_list_type * __active_list) {
   int i;
   int obs_size                 = block_obs_get_size( block_obs );
   int active_size              = active_list_get_active_size( __active_list , obs_size);

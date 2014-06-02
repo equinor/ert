@@ -113,9 +113,12 @@
 import sys
 import os
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication, QSplashScreen
+from PyQt4.QtGui import QApplication, QSplashScreen, QFileDialog
+import time
 from ert.enkf import EnKFMain
+from ert.util import Version
 from ert_gui.main_window import GertMainWindow
+from ert_gui.ert_splash import ErtSplash
 from ert_gui.models import ErtConnector
 from ert_gui.pages.summary_panel import SummaryPanel
 from ert_gui.simulation.simulation_panel import SimulationPanel
@@ -146,10 +149,9 @@ class Ert(object):
         assert isinstance(enkf_main, EnKFMain)
         self.__ert = enkf_main
 
-    def reloadERT(self):
+    def reloadERT(self, config_file):
         python_executable = sys.executable
         ert_gui_main = sys.argv[0]
-        config_file = self.__ert.getUserConfigFile()
 
         self.__ert.free()
         os.execl(python_executable, python_executable, ert_gui_main, config_file)
@@ -162,85 +164,97 @@ def main(argv):
     app = QApplication(argv) #Early so that QT is initialized before other imports
     app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
 
-    splash = QSplashScreen(resourceImage("newsplash"), Qt.WindowStaysOnTopHint)
-    splash.show()
-    splash.showMessage("Starting up...", Qt.AlignLeft, Qt.white)
-    app.processEvents()
+    if len(argv) == 1:
+        config_file = QFileDialog.getOpenFileName(None, "Open Configuration File")
+
+        config_file = str(config_file)
+
+        if len(config_file) == 0:
+            print("-----------------------------------------------------------------")
+            print("-- You must supply the name of configuration file as the first --")
+            print("-- commandline argument:                                       --")
+            print("--                                                             --")
+            print("-- bash%  gert <config_file>                                   --")
+            print("--                                                             --")
+            print("-- If the configuration file does not exist, gert will create  --")
+            print("-- create a new configuration file.                            --")
+            print("-----------------------------------------------------------------")
+
+            sys.exit(1)
+    else:
+        config_file = argv[1]
 
     help_center = HelpCenter("ERT")
     help_center.setHelpLinkPrefix(os.getenv("ERT_SHARE_PATH") + "/gui/help/")
     help_center.setHelpMessageLink("welcome_to_ert")
 
-    splash.showMessage("Bootstrapping...", Qt.AlignLeft, Qt.white)
-    app.processEvents()
-
     strict = True
     site_config = os.getenv("ERT_SITE_CONFIG")
-    if len(argv) == 1:
-        print("-----------------------------------------------------------------")
-        print("-- You must supply the name of configuration file as the first --")
-        print("-- commandline argument:                                       --")
-        print("--                                                             --")
-        print("-- bash%  gert <config_file>                                   --")
-        print("--                                                             --")
-        print("-- If the configuration file does not exist, gert will create  --")
-        print("-- create a new configuration file.                            --")
-        print("-----------------------------------------------------------------")
-    else:
-        enkf_config = argv[1]
-        if not os.path.exists(enkf_config):
-            print("Trying to start new config")
-            new_configuration_dialog = NewConfigurationDialog(enkf_config)
-            success = new_configuration_dialog.exec_()
-            if not success:
-                print("Can not run without a configuration file.")
-                sys.exit(1)
-            else:
-                enkf_config = new_configuration_dialog.getConfigurationPath()
-                first_case_name = new_configuration_dialog.getCaseName()
-                dbase_type = new_configuration_dialog.getDBaseType()
-                num_realizations = new_configuration_dialog.getNumberOfRealizations()
-                storage_path = new_configuration_dialog.getStoragePath()
 
-                EnKFMain.createNewConfig(enkf_config, storage_path, first_case_name, dbase_type, num_realizations)
-                strict = False
+    if not os.path.exists(config_file):
+        print("Trying to start new config")
+        new_configuration_dialog = NewConfigurationDialog(config_file)
+        success = new_configuration_dialog.exec_()
+        if not success:
+            print("Can not run without a configuration file.")
+            sys.exit(1)
+        else:
+            config_file = new_configuration_dialog.getConfigurationPath()
+            first_case_name = new_configuration_dialog.getCaseName()
+            dbase_type = new_configuration_dialog.getDBaseType()
+            num_realizations = new_configuration_dialog.getNumberOfRealizations()
+            storage_path = new_configuration_dialog.getStoragePath()
 
-        ert = Ert(EnKFMain(enkf_config, site_config=site_config, strict=strict))
-        ErtConnector.setErt(ert.ert())
+            EnKFMain.createNewConfig(config_file, storage_path, first_case_name, dbase_type, num_realizations)
+            strict = False
 
 
-        splash.showMessage("Creating GUI...", Qt.AlignLeft, Qt.white)
-        app.processEvents()
+    if os.path.isdir(config_file):
+        print("The specified configuration file is a directory!")
+        sys.exit(1)
 
 
-        window = GertMainWindow()
-        window.setWidget(SimulationPanel())
+    splash = ErtSplash()
+    splash.version = "Version %s" % Version.getVersion()
+    splash.timestamp = Version.getBuildTime()
+
+    splash.show()
+    splash.repaint()
+
+    now = time.time()
 
 
-        help_tool = HelpTool("ERT", window)
+    ert = Ert(EnKFMain(config_file, site_config=site_config, strict=strict))
+    ErtConnector.setErt(ert.ert())
 
-        window.addDock("Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
-        window.addTool(IdeTool(os.path.basename(enkf_config), ert.reloadERT, help_tool))
-        window.addTool(PlotTool())
-        window.addTool(ExportTool())
-        window.addTool(WorkflowsTool(ert.reloadERT))
-        window.addTool(ManageCasesTool())
-        window.addTool(LoadResultsTool())
-        window.addTool(help_tool)
+    window = GertMainWindow()
+    window.setWidget(SimulationPanel())
 
+    help_tool = HelpTool("ERT", window)
 
-        splash.showMessage("Communicating with ERT...", Qt.AlignLeft, Qt.white)
-        app.processEvents()
+    window.addDock("Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
+    window.addTool(IdeTool(os.path.basename(config_file), ert.reloadERT, help_tool))
+    window.addTool(PlotTool())
+    window.addTool(ExportTool())
+    window.addTool(WorkflowsTool(ert.reloadERT))
+    window.addTool(ManageCasesTool())
+    window.addTool(LoadResultsTool())
+    window.addTool(help_tool)
 
-        window.show()
-        splash.finish(window)
-        window.activateWindow()
-        window.raise_()
-        finished_code = app.exec_()
+    sleep_time = 2 - (time.time() - now)
 
-        ert.ert().free()
+    if sleep_time > 0:
+        time.sleep(sleep_time)
 
-        sys.exit(finished_code)
+    window.show()
+    splash.finish(window)
+    window.activateWindow()
+    window.raise_()
+    finished_code = app.exec_()
+
+    ert.ert().free()
+
+    sys.exit(finished_code)
 
 
 if __name__ == "__main__":

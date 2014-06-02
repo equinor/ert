@@ -773,10 +773,10 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
 }
 /*****************************************************************/
 
-void obs_vector_iget_observations(const obs_vector_type * obs_vector , int report_step , obs_data_type * obs_data, const active_list_type * active_list) {
+void obs_vector_iget_observations(const obs_vector_type * obs_vector, int report_step , obs_data_type * obs_data, const active_list_type * active_list, enkf_fs_type * fs) {
   void * obs_node = vector_iget( obs_vector->nodes , report_step );
   if ( obs_node != NULL) 
-    obs_vector->get_obs(obs_node , obs_data , report_step , active_list);
+    obs_vector->get_obs(obs_node , obs_data , fs, report_step , active_list);
 }
 
 

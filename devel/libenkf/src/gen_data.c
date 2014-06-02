@@ -41,6 +41,7 @@
 #include <ert/enkf/gen_data.h>
 #include <ert/enkf/gen_data_common.h>
 #include <ert/enkf/gen_common.h>
+#include <ert/enkf/enkf_fs.h>
 
 /**
    The file implements a general data type which can be used to update
@@ -158,7 +159,7 @@ bool gen_data_write_to_buffer(const gen_data_type * gen_data , buffer_type * buf
 
 
 
-void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer , int report_step, state_enum state) {
+void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer , enkf_fs_type * fs,  int report_step, state_enum state) {
   int size;
   enkf_util_assert_buffer_type(buffer , GEN_DATA);
   size = buffer_fread_int(buffer);
@@ -170,7 +171,7 @@ void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer ,
     buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size );
   }
   gen_data_assert_size( gen_data , size , report_step );
-  gen_data_config_load_active( gen_data->config , report_step , false );
+  gen_data_config_load_active( gen_data->config , fs, report_step , false );
 }
 
 
@@ -211,7 +212,7 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
   gen_data_assert_size(gen_data , size, report_step);
 
   if (gen_data_config_is_dynamic( gen_data->config )) 
-    gen_data_config_update_active( gen_data->config , report_step , gen_data->active_mask);
+    gen_data_config_update_active( gen_data->config , NULL,  report_step , gen_data->active_mask);
 
   gen_data_realloc_data(gen_data);
 
@@ -232,8 +233,6 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
 }
       
       
-
-
 
 /**
    This functions loads data from file. Observe that there is *NO*

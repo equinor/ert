@@ -35,6 +35,7 @@
 #include <ert/enkf/enkf_util.h>
 #include <ert/enkf/summary.h>
 #include <ert/enkf/summary_config.h>
+#include <ert/enkf/enkf_fs.h>
 
 /*****************************************************************/
 
@@ -138,7 +139,7 @@ void summary_copy(const summary_type *src , summary_type * target) {
 
 
 
-void summary_read_from_buffer(summary_type * summary , buffer_type * buffer, int report_step, state_enum state) {
+void summary_read_from_buffer(summary_type * summary , buffer_type * buffer, enkf_fs_type * fs, int report_step, state_enum state) {
   enkf_util_assert_buffer_type( buffer , SUMMARY );
   if (summary->vector_storage) {
     double_vector_type * storage_vector = SELECT_VECTOR( summary , state );

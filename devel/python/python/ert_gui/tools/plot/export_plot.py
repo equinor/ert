@@ -30,6 +30,7 @@ class ExportPlot(object):
         self.__settings = settings
         self.__custom_settings = custom_settings
         self.__bridge = None
+        """:type: PlotBridge """
         self.__plot_bridge_org = active_plot_panel.getPlotBridge()
         self.__width = self.__plot_bridge_org.getPrintWidth()
         self.__height = self.__plot_bridge_org.getPrintHeight() + 20
@@ -81,7 +82,15 @@ class ExportPlot(object):
         self.__bridge.setPlotData(data)
         self.__bridge.updatePlotSize(QSize(self.__width, self.__height))
         self.__bridge.setCustomSettings(self.__custom_settings)
-        self.__bridge.setPlotSettings(self.__settings)
+
+        self.__bridge.setReportStepTime(self.__settings["report_step"])
+
+        x_min = self.__settings["x_min"]
+        x_max = self.__settings["x_max"]
+        y_min = self.__settings["y_min"]
+        y_max = self.__settings["y_max"]
+        self.__bridge.setScales(x_min, x_max, y_min, y_max)
+
         self.__bridge.renderingFinished.connect(self.performExport)
 
 

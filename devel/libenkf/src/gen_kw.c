@@ -134,7 +134,7 @@ bool gen_kw_write_to_buffer(const gen_kw_type *gen_kw , buffer_type * buffer,  i
 
 
 #define MULTFLT 102
-void gen_kw_read_from_buffer(gen_kw_type * gen_kw , buffer_type * buffer, int report_step, state_enum state) {
+void gen_kw_read_from_buffer(gen_kw_type * gen_kw , buffer_type * buffer, enkf_fs_type * fs, int report_step, state_enum state) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   ert_impl_type file_type;
   file_type = buffer_fread_int(buffer);

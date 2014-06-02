@@ -20,7 +20,8 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
-
+  
+#include <ert/util/type_macros.h>
 #include <ert/util/util.h>
 #include <ert/util/rng.h>
 #include <ert/util/matrix.h>
@@ -48,6 +49,7 @@ struct fwd_step_enkf_data_struct {
   long                   option_flags;
   double                 r2_limit;
 };
+
 
 static UTIL_SAFE_CAST_FUNCTION_CONST( fwd_step_enkf_data , FWD_STEP_ENKF_TYPE_ID )
 static UTIL_SAFE_CAST_FUNCTION( fwd_step_enkf_data , FWD_STEP_ENKF_TYPE_ID )
