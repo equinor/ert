@@ -111,6 +111,14 @@ class FaultBlockTest(ExtendedTestCase):
         with self.assertRaises(KeyError):
             l =layer.getBlock(66)
 
+        with self.assertRaises(KeyError):
+            layer.delBlock(66)
+
+        layer.delBlock(177)
+        self.assertEqual( 1 , len(layer))
+        blk = layer[0]
+        self.assertEqual( blk.getBlockID() , 1 ) 
+
 
 
     def test_fault_block_collection(self):
