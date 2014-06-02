@@ -184,15 +184,6 @@ def main(argv):
     else:
         config_file = argv[1]
 
-    splash = ErtSplash()
-    splash.version = "Version %s" % Version.getVersion()
-    splash.timestamp = Version.getBuildTime()
-
-    splash.show()
-    splash.repaint()
-    
-    now = time.time()
-
     help_center = HelpCenter("ERT")
     help_center.setHelpLinkPrefix(os.getenv("ERT_SHARE_PATH") + "/gui/help/")
     help_center.setHelpMessageLink("welcome_to_ert")
@@ -216,6 +207,22 @@ def main(argv):
 
             EnKFMain.createNewConfig(config_file, storage_path, first_case_name, dbase_type, num_realizations)
             strict = False
+
+
+    if os.path.isdir(config_file):
+        print("The specified configuration file is a directory!")
+        sys.exit(1)
+
+
+    splash = ErtSplash()
+    splash.version = "Version %s" % Version.getVersion()
+    splash.timestamp = Version.getBuildTime()
+
+    splash.show()
+    splash.repaint()
+
+    now = time.time()
+
 
     ert = Ert(EnKFMain(config_file, site_config=site_config, strict=strict))
     ErtConnector.setErt(ert.ert())
