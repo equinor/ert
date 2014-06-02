@@ -40,8 +40,8 @@ typedef enum { GEN_DATA_UNDEFINED = 0,
   gen_data_file_format_type;
 
   bool                         gen_data_config_is_dynamic( const gen_data_config_type * config );
-  void                         gen_data_config_set_dynamic( gen_data_config_type * config , enkf_fs_type * fs);
-  void                         gen_data_config_load_active( gen_data_config_type * config , int report_step , bool force_load);
+  void                         gen_data_config_set_dynamic( gen_data_config_type * config );
+  void                         gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type * fs, int report_step , bool force_load);
     
   /* 
      Observe that the format ASCII_template can *NOT* be used for
@@ -58,7 +58,7 @@ typedef enum { GEN_DATA_UNDEFINED = 0,
   int                          gen_data_config_get_initial_size( const gen_data_config_type * config );
   void                         gen_data_config_assert_size(gen_data_config_type *  , int , int);
   const bool_vector_type     * gen_data_config_get_active_mask( const gen_data_config_type * config );
-  void                         gen_data_config_update_active(gen_data_config_type * config , int report_step , const bool_vector_type * data_mask);
+  void                         gen_data_config_update_active(gen_data_config_type * config , enkf_fs_type * fs,  int report_step , const bool_vector_type * data_mask);
   const bool     *             gen_data_config_get_iactive(const gen_data_config_type * );
   void                         gen_data_config_ecl_write(const gen_data_config_type *  , const char * , char * );
   void                         gen_data_config_get_template_data( const gen_data_config_type * , char ** , int * , int * , int *);

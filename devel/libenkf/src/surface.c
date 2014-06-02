@@ -94,7 +94,7 @@ void surface_copy(const surface_type *src , surface_type * target) {
 
 
 
-void surface_read_from_buffer(surface_type * surface , buffer_type * buffer, int report_step, state_enum state) {
+void surface_read_from_buffer(surface_type * surface , buffer_type * buffer, enkf_fs_type * fs, int report_step, state_enum state) {
   int  size = surface_config_get_data_size( surface->config );
   enkf_util_assert_buffer_type( buffer , SURFACE );
   buffer_fread( buffer , surface->data , sizeof * surface->data , size);

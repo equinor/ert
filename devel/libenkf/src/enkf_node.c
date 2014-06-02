@@ -75,10 +75,10 @@
    |  |  |              |        |                |  field_config     |
    |  |  |              |        |                |                   |
    ===|  |  field       |  o------                |                   |
-   |  |              |                         |                   |
-   ===|              |                         =====================
-   |              |
-   ================
+   |     |              |                         |                   |
+   ===   |              |                         =====================
+         |              |
+         ================
 
 
    To summarize in words:
@@ -573,7 +573,7 @@ static void enkf_node_buffer_load( enkf_node_type * enkf_node , enkf_fs_type * f
       enkf_fs_fread_node( fs , buffer , node_key , var_type , report_step , iens , state );
     
     buffer_fskip_time_t( buffer );
-    enkf_node->read_from_buffer(enkf_node->data , buffer , report_step , state );
+    enkf_node->read_from_buffer(enkf_node->data , buffer , fs , report_step , state );
     buffer_free( buffer );
   }
 }

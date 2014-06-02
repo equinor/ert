@@ -44,7 +44,7 @@ extern "C" {
 
 
   typedef void   (obs_free_ftype)                (void *);
-  typedef void   (obs_get_ftype)                 (const void * , obs_data_type * , int , const active_list_type * );
+  typedef void   (obs_get_ftype)                 (const void * , obs_data_type * , enkf_fs_type *, int , const active_list_type * );
   typedef void   (obs_meas_ftype)                (const void * , const void *, node_id_type , meas_data_type * , const active_list_type * );
   typedef void   (obs_user_get_ftype)            (void * , const char * , double * , double * , bool *); 
   typedef void   (obs_scale_std_ftype)           (void * , double ); 
@@ -62,7 +62,7 @@ extern "C" {
   void                 obs_vector_free(obs_vector_type * );
   int                  obs_vector_get_num_active(const obs_vector_type * );
   bool                 obs_vector_iget_active(const obs_vector_type * , int );
-  void                 obs_vector_iget_observations(const obs_vector_type *  , int  , obs_data_type * , const active_list_type * active_list);
+  void                 obs_vector_iget_observations(const obs_vector_type *  , int  , obs_data_type * , const active_list_type * active_list, enkf_fs_type * fs);
   bool                 obs_vector_has_data( const obs_vector_type * obs_vector , const bool_vector_type * active_mask , enkf_fs_type * fs);
   void                 obs_vector_measure(const obs_vector_type *  , enkf_fs_type * fs, state_enum state , int report_step , const int_vector_type * ens_active_list , meas_data_type * , const active_list_type * active_list);
   const char         * obs_vector_get_state_kw(const obs_vector_type * );

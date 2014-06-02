@@ -38,6 +38,7 @@
 #include <ert/enkf/field.h>
 #include <ert/enkf/field_config.h>
 #include <ert/enkf/enkf_serialize.h>
+#include <ert/enkf/enkf_fs.h>
 
 
 GET_DATA_SIZE_HEADER(field);
@@ -387,7 +388,7 @@ void field_copy(const field_type *src , field_type * target ) {
 
 
 
-void field_read_from_buffer(field_type * field , buffer_type * buffer, int report_step, state_enum state) {
+void field_read_from_buffer(field_type * field , buffer_type * buffer, enkf_fs_type * fs, int report_step, state_enum state) {
   int byte_size = field_config_get_byte_size( field->config );
   enkf_util_assert_buffer_type(buffer , FIELD);
   buffer_fread_compressed(buffer , buffer_get_remaining_size( buffer ) , field->data , byte_size);

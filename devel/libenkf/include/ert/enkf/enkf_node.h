@@ -60,7 +60,7 @@ extern "C" {
                                                    void * );   /* fortio or FILE inistance for writing elements in restart files. */
   
   typedef bool          (fload_ftype)                     (      void *  , const char *);
-  typedef void          (read_from_buffer_ftype)          (      void *  , buffer_type * , int, state_enum );
+  typedef void          (read_from_buffer_ftype)          (      void *  , buffer_type * , enkf_fs_type * ,  int, state_enum );
   typedef bool          (write_to_buffer_ftype)           (const void *  , buffer_type * , int, state_enum );
   typedef bool          (has_data_ftype)                  (const void *  , int , state_enum); 
   
