@@ -1,6 +1,5 @@
 set(PYTHON_SOURCES
     __init__.py
-    configuration_panel.py
     popup_dialog.py
     queue_system_configuration.py
     run_dialog.py
