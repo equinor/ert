@@ -147,7 +147,7 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const string
     int ens_size = enkf_main_get_ensemble_size( enkf_main );
     bool_vector_type * iens_mask = bool_vector_alloc(ens_size,false);
 
-    for (iens = iens1; iens < iens2; iens++) {
+    for (iens = iens1; iens <= iens2; iens++) {
             bool_vector_iset( iens_mask , iens , true );
     }
     enkf_main_initialize_from_scratch_with_bool_vector(enkf_main, param_list, iens_mask, init_mode);
