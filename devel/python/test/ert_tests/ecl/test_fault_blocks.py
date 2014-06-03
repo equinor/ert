@@ -99,9 +99,9 @@ class FaultBlockTest(ExtendedTestCase):
             l2 = layer[2]
 
             
-        self.assertEqual( False , layer.hasBlock( 77 ))
-        self.assertEqual( True , layer.hasBlock( 1 ))
-        self.assertEqual( True , layer.hasBlock( 177 ))
+        self.assertEqual( False , 77 in layer)
+        self.assertEqual( True , 1 in layer)
+        self.assertEqual( True , 177 in layer)
 
 
         l1 = layer.getBlock( 1 )
