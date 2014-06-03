@@ -80,7 +80,6 @@ class FaultBlockTest(ExtendedTestCase):
             layer = FaultBlockLayer( self.grid , EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE ) , 0)
 
         layer = FaultBlockLayer( self.grid , self.kw , 1 )
-        self.assertEqual( 2 , layer.size() )
         self.assertEqual( 2 , len(layer) )
 
         with self.assertRaises(TypeError):
