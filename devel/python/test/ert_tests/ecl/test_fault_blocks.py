@@ -21,7 +21,7 @@ except ImportError:
 
 from ert.ecl import EclGrid, EclTypeEnum , EclKW , EclRegion
 from ert.test import ExtendedTestCase
-from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCollection
+from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCollection, FaultBlockCell
 
 def create_FaultBlock():
     grid = EclGrid.create_rectangular( (10,10,10) , (1,1,1) )
@@ -53,7 +53,30 @@ class FaultBlockTest(ExtendedTestCase):
         
         self.assertFloatEqual( x0 , xc )
         self.assertFloatEqual( y0 , yc )
+        fault_block.addCell( 1 , 1)
+        fault_block.addCell( 2 , 2)
 
+        self.assertEqual(len(fault_block) , 3)
+        
+        self.assertTrue( isinstance(fault_block[0] , FaultBlockCell)  )
+
+        cell = fault_block[0]
+        self.assertEqual( cell.i , 0 )
+        self.assertEqual( cell.j , 0 )
+        self.assertEqual( cell.k , 0 )
+
+        self.assertEqual( cell.x , x0 )
+        self.assertEqual( cell.y , y0 )
+        self.assertEqual( cell.z , z0 )
+
+        with self.assertRaises(TypeError):
+            c = fault_block["STRING"]
+
+        with self.assertRaises(IndexError):
+            c = fault_block[len(fault_block)]
+            
+        self.assertEqual( fault_block[-1].x , fault_block[len(fault_block) - 1].x)
+        
 
     def test_fault_block_gc(self):
         fault_block = create_FaultBlock()
