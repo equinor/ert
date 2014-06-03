@@ -96,6 +96,7 @@ set(TEST_SOURCES
     ert_tests/geometry/__init__.py
     ert_tests/geometry/test_polyline.py
     ert_tests/geometry/test_intersection.py
+    ert_tests/geometry/test_convex_hull.py
 
 
     ert_tests/run/__init__.py
@@ -457,6 +458,11 @@ add_test( NAME python.tests.ert.geometry.polyline
 add_test( NAME python.tests.ert.geometry.intersection
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_intersection.IntersectionTest)
+
+add_test( NAME python.tests.ert.geometry.convex_hull
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_convex_hull.ConvexHullTest)
+
 
 
 set_property( TEST python.tests.ert.sched.sched           PROPERTY LABELS Python:StatoilData )
