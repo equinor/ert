@@ -112,9 +112,9 @@ class FaultBlockTest(ExtendedTestCase):
             l =layer.getBlock(66)
 
         with self.assertRaises(KeyError):
-            layer.delBlock(66)
+            layer.deleteBlock(66)
 
-        layer.delBlock(177)
+        layer.deleteBlock(177)
         self.assertEqual( 1 , len(layer))
         blk = layer[0]
         self.assertEqual( blk.getBlockID() , 1 ) 
@@ -130,7 +130,7 @@ class FaultBlockTest(ExtendedTestCase):
         layer.addBlock(102)
         layer.addBlock(103)
 
-        layer.delBlock(2)
+        layer.deleteBlock(2)
         blk1 = layer.getBlock( 103 )
         blk2 = layer[-1]
         self.assertEqual( blk1.getBlockID() , blk2.getBlockID() )
