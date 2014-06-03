@@ -301,7 +301,7 @@ static int torque_driver_submit_shell_job(torque_driver_type * driver,
   torque_job_create_submit_script(script_filename, submit_cmd, job_argc, job_argv);
   {
     int p_units_from_driver = driver->num_cpus_per_node * driver->num_nodes;
-    if (num_cpu != p_units_from_driver) {
+    if (num_cpu > p_units_from_driver) {
       util_abort("%s: Error in config, job's config requires %d processing units, but config says %s: %d, and %s: %d, which multiplied becomes: %d \n",
               __func__, num_cpu, TORQUE_NUM_CPUS_PER_NODE, driver->num_cpus_per_node, TORQUE_NUM_NODES, driver->num_nodes, p_units_from_driver);
     }
