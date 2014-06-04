@@ -30,6 +30,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_ecl_sum_vector.py
     ert_tests/ecl/test_faults.py
     ert_tests/ecl/test_statoil_faults.py
+    ert_tests/ecl/test_fault_blocks.py
     ert_tests/ecl/test_npv.py
 
     ert_tests/enkf/__init__.py
@@ -96,6 +97,7 @@ set(TEST_SOURCES
     ert_tests/geometry/__init__.py
     ert_tests/geometry/test_polyline.py
     ert_tests/geometry/test_intersection.py
+    ert_tests/geometry/test_convex_hull.py
 
 
     ert_tests/run/__init__.py
@@ -391,6 +393,14 @@ add_test( NAME python.tests.ert.ecl.faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_faults.FaultTest )
 
+add_test( NAME python.tests.ert.ecl.fault_blocks
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_fault_blocks.FaultBlockTest )
+
+add_test( NAME python.tests.ert.ecl.fault_blocks_statoil
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_fault_blocks_statoil.FaultBlockTest )
+
 add_test( NAME python.tests.ert.ecl.ecl_npv
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_npv.NPVTest)
@@ -458,6 +468,11 @@ add_test( NAME python.tests.ert.geometry.intersection
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_intersection.IntersectionTest)
 
+add_test( NAME python.tests.ert.geometry.convex_hull
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_convex_hull.ConvexHullTest)
+
+
 
 set_property( TEST python.tests.ert.sched.sched           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.fortio            PROPERTY LABELS Python:StatoilData )
@@ -474,12 +489,15 @@ set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python:StatoilData:Slow )
 #set_property( TEST python.tests.import_local             PROPERTY LABELS Python:StatoilBuild )
 
+
 set_property( TEST python.tests.ert.test_run              PROPERTY LABELS Python)
 set_property( TEST python.tests.ert.import                PROPERTY LABELS Python)
 set_property( TEST python.tests.ert.util.stringlist       PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.ecl.faults            PROPERTY LABELS Python )
 
+
+set_property( TEST python.tests.ert.ecl.fault_blocks_statoil  PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.statoil_faults        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf                 PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.ecl_config           PROPERTY LABELS Python:StatoilData )

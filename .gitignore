@@ -8,7 +8,7 @@
 *.user.*
 #pyCharm project
 .idea
-
+ert.iml
 #to make python tests run in-source
 devel/python/lib64
 
