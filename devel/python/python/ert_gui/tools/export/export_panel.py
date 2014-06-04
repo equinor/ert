@@ -94,11 +94,6 @@ class ExportPanel(QWidget):
         self.__report_step = QLineEdit()
         layout.addRow("Report step:", self.__report_step)
 
-        self.__plot_f_a_model = ["Forecast","Analyzed"]
-        self.__plot_f_a = QComboBox()
-        self.__plot_f_a.addItems(self.__plot_f_a_model)
-        layout.addRow("Plot Forecast/Analyzed:", self.__plot_f_a)
-
         self.__gen_data_report_step_model=[]
         self.__gen_data_report_step = QComboBox()
         layout.addRow("Report step:", self.__gen_data_report_step)
@@ -138,7 +133,7 @@ class ExportPanel(QWidget):
         file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
 
 
-        state = self.findState(keyword)
+        state = EnkfStateType.FORECAST
 
         if self.__export_keyword_model.isFieldKw(keyword):
             self.exportField(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
@@ -156,27 +151,6 @@ class ExportPanel(QWidget):
             report_step = self.__gen_data_report_step_model[self.__gen_data_report_step.currentIndex()]
 
         return report_step
-
-
-    def findState(self, key):
-        if not self.__export_keyword_model.isGenDataKw(key):
-            return EnkfStateType.FORECAST
-
-        type = self.__export_keyword_model.getVarType(key)
-
-        if type == EnkfVarType.PARAMETER:
-            return EnkfStateType.ANALYZED
-
-        selected_plot_f_a = self.__plot_f_a_model[self.__plot_f_a.currentIndex()]
-
-        if selected_plot_f_a == "Forecast":
-            return EnkfStateType.FORECAST
-
-        if selected_plot_f_a == "Analyzed":
-            return EnkfStateType.ANALYZED
-
-        return EnkfStateType.FORECAST
-
 
     def exportGenData(self, keyword, file_name, iactive, file_type_key, report_step, state, selected_case):
         ExportModel().exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
@@ -222,9 +196,6 @@ class ExportPanel(QWidget):
         self.__dynamic = False
         if self.__export_keyword_model.isFieldKw(key):
             self.__dynamic = self.__export_keyword_model.isDynamicField(key)
-
-        self.__plot_f_a.setVisible(self.__export_keyword_model.isGenDataKw(key))
-        self.layout().labelForField(self.__plot_f_a).setVisible(self.__export_keyword_model.isGenDataKw(key))
 
         self.__report_step.setVisible(self.__dynamic)
         self.layout().labelForField(self.__report_step).setVisible(self.__dynamic)
