@@ -24,8 +24,12 @@ class PolylineTest(ExtendedTestCase):
         polyline.addPoint(1, 1, 0)
         self.assertEqual(len(polyline), 2)
 
+        polyline.addPoint(1, 1.5)
+        self.assertEqual(len(polyline), 3)
+
         self.assertEqual(polyline[0], (0, 0, 0))
         self.assertEqual(polyline[1], (1, 1, 0))
+        self.assertEqual(polyline[2], (1, 1.5))
 
         polyline.addPoint(0, 1, 0)
         self.assertFalse(polyline.isClosed())
