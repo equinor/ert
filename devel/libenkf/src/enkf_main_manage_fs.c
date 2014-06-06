@@ -96,7 +96,6 @@ static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
   const stringlist_type * param_list = arg_pack_iget_const_ptr( arg_pack , 1 );
   int iens                          = arg_pack_iget_int( arg_pack , 2 );
   init_mode_enum init_mode           = arg_pack_iget_int( arg_pack , 3 );
-  printf("Step 2 iens %d \n", iens);
   enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
   enkf_state_initialize( state , enkf_main_get_fs( enkf_main ) , param_list , init_mode);
   return NULL;
