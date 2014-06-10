@@ -112,6 +112,8 @@ class ExportPanel(QWidget):
         self.__file_type_combo.clear()
         if self.__export_keyword_model.isGenKw(keyword):
             self.__file_type_model = self.__gen_kw_file_types
+        elif self.__export_keyword_model.isGenParamKw(keyword):
+            self.__file_type_model = self.__gen_data_file_types
         elif self.__export_keyword_model.isGenDataKw(keyword):
             self.__file_type_model = self.__gen_data_file_types
         else:
@@ -133,19 +135,30 @@ class ExportPanel(QWidget):
         file_type_key = self.__file_type_model[self.__file_type_combo.currentIndex()]
 
 
-        state = EnkfStateType.FORECAST
+        state = self.getEnkfStateType(keyword)
 
         if self.__export_keyword_model.isFieldKw(keyword):
             self.exportField(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
         elif self.__export_keyword_model.isGenKw(keyword):
             self.exportGenKw(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
+        elif self.__export_keyword_model.isGenParamKw(keyword):
+            self.exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
         elif self.__export_keyword_model.isGenDataKw(keyword):
             self.exportGenData(keyword, file_name, iactive, file_type_key, report_step, state, selected_case)
+
+    def getEnkfStateType(self, key):
+        if self.__export_keyword_model.isGenParamKw(key):
+            return EnkfStateType.ANALYZED
+        else:
+            return EnkfStateType.FORECAST
 
     def getReportStep(self, key):
         report_step = 0
         if self.__dynamic:
             report_step = self.__report_step.text()
+
+        if self.__export_keyword_model.isGenParamKw(key):
+            return report_step
 
         if self.__export_keyword_model.isGenDataKw(key):
             report_step = self.__gen_data_report_step_model[self.__gen_data_report_step.currentIndex()]
@@ -179,11 +192,13 @@ class ExportPanel(QWidget):
             impl_type = "Gen_Data"
         elif self.__export_keyword_model.isGenKw(keyword):
             impl_type = "Gen_Kw"
+        elif self.__export_keyword_model.isGenParamKw(keyword):
+            impl_type = "Gen_Param"
 
         path = str(path) + "/" + str(current_case) + "/" + str(impl_type) + "/" + str(keyword)
 
         if self.__export_keyword_model.isGenDataKw(keyword):
-            path = path + "_" + report_step
+            path = path + "_" + str(report_step)
 
         if not QDir(path).exists():
             os.makedirs(path)
