@@ -49,3 +49,12 @@ class PointInPolygonTest(ExtendedTestCase):
         self.assertFalse(GeometryTools.pointInPolygon(p1, poly))
         self.assertTrue(GeometryTools.pointInPolygon(p2, poly))
 
+
+    def test_point_in_polygon_with_3_element_points(self):
+        p1 = (0.5, 0.51, 0.2)
+        p2 = (0.5, 0.49, 0.1)
+
+        poly = [(0,0,9), (0,1,9), (0.6,0.5), (0.4,0.5,9), (1,1), (1,0,9)]
+
+        self.assertFalse(GeometryTools.pointInPolygon(p1, poly))
+        self.assertTrue(GeometryTools.pointInPolygon(p2, poly))
