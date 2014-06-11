@@ -73,8 +73,9 @@ struct gen_data_config_struct {
      instance. See documentation above.
   */
   bool                           dynamic;
-  enkf_fs_type                 * previous_fs;                   /* NBNB This will be NULL in the case of instances which are used as parameters. */
-  int                            ens_size;     
+  enkf_fs_type                 * read_fs;                   /* NBNB This will be NULL in the case of instances which are used as parameters. */
+  enkf_fs_type                 * write_fs;
+  int                            ens_size;
   bool                           mask_modified;
   bool_vector_type             * active_mask;
   int                            active_report_step;
@@ -148,7 +149,8 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   config->active_mask        = bool_vector_alloc(0 , true ); /* Elements are explicitly set to FALSE - this MUST default to true. */ 
   config->active_report_step = -1;
   config->ens_size           = -1;
-  config->previous_fs        = NULL;
+  config->read_fs        = NULL;
+  config->write_fs           = NULL;
   config->dynamic            = false;
   pthread_mutex_init( &config->update_lock , NULL );
 
@@ -379,17 +381,11 @@ void gen_data_config_assert_size(gen_data_config_type * config , int data_size, 
    This MUST be called after gen_data_config_assert_size(). 
 */
 
-void gen_data_config_update_active(gen_data_config_type * config , enkf_fs_type * fs, int report_step , const bool_vector_type * data_mask) {
-  bool fs_changed = false;
-  if (fs != config->previous_fs) {
-    config->previous_fs = fs;
-    fs_changed = true;
-  }
-
+void gen_data_config_update_active(gen_data_config_type * config, int report_step , const bool_vector_type * data_mask) {
   pthread_mutex_lock( &config->update_lock );
   {
     if ( int_vector_iget( config->data_size_vector , report_step ) > 0) {
-      if (config->active_report_step != report_step || fs_changed) {
+      if (config->active_report_step != report_step) {
         /* This is the first ensemeble member loading for this
            particular report_step. */
         bool_vector_reset( config->active_mask );
@@ -413,7 +409,7 @@ void gen_data_config_update_active(gen_data_config_type * config , enkf_fs_type 
            i.e. we update the on-disk representation.
         */
         char * filename = util_alloc_sprintf("%s_active" , config->key );
-        FILE * stream   = enkf_fs_open_case_tstep_file( fs , filename , report_step , "w");
+        FILE * stream   = enkf_fs_open_case_tstep_file( config->write_fs , filename , report_step , "w");
         
         bool_vector_fwrite( config->active_mask , stream );
 
@@ -433,15 +429,14 @@ void gen_data_config_update_active(gen_data_config_type * config , enkf_fs_type 
    This function will load an active map from the enkf_fs filesystem.
 */
 void gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type * fs,  int report_step , bool force_load) {
+
+
   bool fs_changed = false;
-  if (fs != config->previous_fs) {
-    config->previous_fs = fs;
+  if (fs != config->read_fs) {
+    config->read_fs = fs;
     fs_changed = true;
   }
 
-  if (config->previous_fs == NULL)
-    return;                /* This is used as a GEN_PARAM instance - and the loading of mask is not an option. */
-  
   
   pthread_mutex_lock( &config->update_lock );
   {
@@ -471,6 +466,9 @@ void gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size)
   config->ens_size = ens_size;
 }
 
+void gen_data_config_set_write_fs(gen_data_config_type * config, enkf_fs_type * write_fs) {
+  config->write_fs = write_fs;
+}
 
 void gen_data_config_set_dynamic( gen_data_config_type * config ) {
   config->dynamic = true;

@@ -10,7 +10,7 @@ test_lib  = clib.ert_load("libenkf")
 cwrapper =  CWrapper(test_lib)
 
 get_active_mask = cwrapper.prototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )")
-update_active_mask = cwrapper.prototype("void gen_data_config_update_active( gen_data_config, enkf_fs, int, bool_vector)")
+update_active_mask = cwrapper.prototype("void gen_data_config_update_active( gen_data_config, int, bool_vector)")
 
 class GenDataConfigTest(ExtendedTestCase):
     def setUp(self):
@@ -40,9 +40,13 @@ class GenDataConfigTest(ExtendedTestCase):
 
             # Setting one element to False, load different case, check, reload, and check.
             self.assertTrue(BoolVector.cNamespace().iget(active_mask, 10))
-            active_mask_modified = active_mask.copy();
+            active_mask_modified = active_mask.copy()
             active_mask_modified[10] = False
-            update_active_mask(config_node.getDataModelConfig(), fs2, 60, active_mask_modified)
+
+            # Must switch filesystem, because the update mask (writes to storage)
+            # functionality uses the current filesystem (current case)
+            ert.getEnkfFsManager().switchFileSystem(fs2)
+            update_active_mask(config_node.getDataModelConfig(),  60, active_mask_modified)
             active_mask = get_active_mask( config_node.getDataModelConfig() )
             self.assertFalse(active_mask[10])
 
@@ -59,7 +63,7 @@ class GenDataConfigTest(ExtendedTestCase):
             self.assertFalse(active_mask[10])
 
 
-    def test_loading_two_cases_with_and_withough_active_file(self):
+    def test_loading_two_cases_with_and_without_active_file(self):
         self.load_active_masks("missing-active", "default")
 
 
