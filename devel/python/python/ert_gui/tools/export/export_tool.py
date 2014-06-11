@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from ert_gui.models.connectors.export import ExportKeywordModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 
 from ert_gui.tools import Tool
@@ -26,6 +27,7 @@ class ExportTool(Tool):
         super(ExportTool, self).__init__("Export Data", "tools/export", util.resourceIcon("ide/table_export"))
         self.__export_widget = None
         self.__dialog = None
+        self.setEnabled(ExportKeywordModel().hasKeywords())
 
     def trigger(self):
         if self.__export_widget is None:
