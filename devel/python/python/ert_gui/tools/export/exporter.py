@@ -66,7 +66,7 @@ class Exporter():
         elif self.__export_keyword_model.isGenParamKw(keyword):
             impl_type = "Gen_Param"
 
-        path = str(path) + "/" + str(current_case) + "/" + str(impl_type) + "/" + str(keyword)
+        path = os.path.join(str(path), str(current_case), str(impl_type), str(keyword))
 
         if self.__export_keyword_model.isGenDataKw(keyword):
             path = path + "_" + str(report_step)
