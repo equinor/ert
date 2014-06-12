@@ -171,7 +171,10 @@ void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer ,
     buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size );
   }
   gen_data_assert_size( gen_data , size , report_step );
-  gen_data_config_load_active( gen_data->config , fs, report_step , false );
+
+  if (gen_data_config_is_dynamic(gen_data->config)) {
+    gen_data_config_load_active( gen_data->config , fs, report_step , false );
+  }
 }
 
 
@@ -212,7 +215,7 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
   gen_data_assert_size(gen_data , size, report_step);
 
   if (gen_data_config_is_dynamic( gen_data->config )) 
-    gen_data_config_update_active( gen_data->config , NULL,  report_step , gen_data->active_mask);
+    gen_data_config_update_active( gen_data->config ,  report_step , gen_data->active_mask);
 
   gen_data_realloc_data(gen_data);
 

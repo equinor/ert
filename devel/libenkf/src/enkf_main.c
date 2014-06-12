@@ -2508,6 +2508,7 @@ void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
     if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) {
       gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
       gen_data_config_set_dynamic( gen_data_config );
+      gen_data_config_set_write_fs( gen_data_config, enkf_main->dbase);
       gen_data_config_set_ens_size( gen_data_config , enkf_main->ens_size );
     }
   }
