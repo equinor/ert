@@ -81,7 +81,14 @@ class ExportKeywordModel(ErtConnector):
 
     def getKeyWords(self):
         return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords() + self.getGenDataKeyWords())
-        
+
+    def hasKeywords(self):
+        keys = self.getKeyWords()
+        if keys.count >0:
+            return True
+        else:
+            return False
+
     def isGenKw(self, key):
         if self.__gen_kw is None:
             return False
