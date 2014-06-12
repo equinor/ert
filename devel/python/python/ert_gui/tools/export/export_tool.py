@@ -28,8 +28,8 @@ class ExportTool(Tool):
         super(ExportTool, self).__init__("Export Data", "tools/export", util.resourceIcon("ide/table_export"))
         self.__export_widget = None
         self.__dialog = None
-self.__exporter = None
-self.setEnabled(ExportKeywordModel().hasKeywords())
+        self.__exporter = None
+        self.setEnabled(ExportKeywordModel().hasKeywords())
 
 
     def trigger(self):
