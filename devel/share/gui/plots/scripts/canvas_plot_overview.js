@@ -39,19 +39,8 @@ function OverviewPlot(element, x_dimension, y_dimension) {
                 var y_min_values = ensemble_data.yMinValues();
                 var y_max_values = ensemble_data.yMaxValues();
 
-                var x_area_values = [];
-                var y_area_values = [];
-
-
-                for (var j = 0; j < values.length; j++) {
-                    x_area_values.push(values[j]);
-                    y_area_values.push(y_min_values[j]);
-                }
-
-                for (var k = values.length - 1; k >= 0; k--) {
-                    x_area_values.push(values[k]);
-                    y_area_values.push(y_max_values[k]);
-                }
+                var x_area_values = CanvasPlotArea.mergePoints(values, values);
+                var y_area_values = CanvasPlotArea.mergePoints(y_min_values, y_max_values);
 
 
                 self.plot.area_renderer.style(style);

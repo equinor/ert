@@ -17,24 +17,14 @@
 
 function StatisticsPlot(element, x_dimension, y_dimension) {
     this.plot = new BasePlot(element, x_dimension, y_dimension);
-    this.plot.setRenderObservations(false);
-    this.plot.setRenderRefcase(false);
 
-    this.horizontal_draw_direction = true;
+    var horizontal_draw_direction = true;
 
-    this.line_renderers = [];
-    for (var index = 1; index <= 5; index++) {
-        var renderer = this.plot.createLineRenderer();
-        renderer.style(STYLES["ensemble_" + (index)]);
-        this.line_renderers.push(renderer)
-    }
+    var line_renderer = this.plot.createLineRenderer();
+    var stippled_line_renderer = this.plot.createStippledLineRenderer();
+    var area_renderer = this.plot.createAreaRenderer();
+    var dark_area_renderer = this.plot.createAreaRenderer();
 
-    this.stippled_line_renderers = [];
-    for (var index = 1; index <= 5; index++) {
-        var renderer = this.plot.createStippledLineRenderer();
-        renderer.style(STYLES["ensemble_" + (index)]);
-        this.stippled_line_renderers.push(renderer)
-    }
 
     var self = this;
 
@@ -48,7 +38,7 @@ function StatisticsPlot(element, x_dimension, y_dimension) {
                 var ensemble_data = data.ensembleData(case_name);
 
                 var values = ensemble_data.xValues();
-                if (!self.horizontal_draw_direction) {
+                if (!horizontal_draw_direction) {
                     values = ensemble_data.yValues();
                 }
 
@@ -56,22 +46,59 @@ function StatisticsPlot(element, x_dimension, y_dimension) {
                 var y_max_values = ensemble_data.yMaxValues();
                 var median = ensemble_data.xPercentile(0.5);
                 var p10 = ensemble_data.xPercentile(0.1);
+                var p33 = ensemble_data.xPercentile(0.33);
+                var p67 = ensemble_data.xPercentile(0.67);
                 var p90 = ensemble_data.xPercentile(0.9);
 
-                var line_renderer = self.line_renderers[i];
-                var stippled_line_renderer = self.stippled_line_renderers[i];
-                if (self.horizontal_draw_direction) {
-                    line_renderer(context, values, y_max_values);
-                    line_renderer(context, values, y_min_values);
+                var area_values = CanvasPlotArea.mergePoints(values, values);
+
+                var area_style = {
+                        stroke: "rgba(255,255, 255, 0.0)",
+                        fill: style["fill"],
+                        stroke_width: 1
+                };
+
+                var dark_area_style = {
+                            stroke: "rgba(255,255, 255, 0.0)",
+                            fill: STYLES.darker(style["fill"]),
+                            stroke_width: 1
+                    };
+
+                var stipple_style = {
+                        stroke: style["stroke"],
+                        fill: "rgba(255, 255, 255, 0.0)",
+                        stroke_width: style["stroke_width"],
+                        line_cap: "butt"
+                };
+
+                line_renderer.style(style);
+                stippled_line_renderer.style(stipple_style);
+                stippled_line_renderer.stippleLength(5);
+                area_renderer.style(area_style);
+                dark_area_renderer.style(dark_area_style);
+
+                if (horizontal_draw_direction) {
+                    stippled_line_renderer(context, values, y_max_values);
+                    stippled_line_renderer(context, values, y_min_values);
+
+                    area_renderer(context, area_values, CanvasPlotArea.mergePoints(p10, p90));
+                    dark_area_renderer(context, area_values, CanvasPlotArea.mergePoints(p33, p67));
+
                     stippled_line_renderer(context, values, median);
-                    line_renderer(context, values, p10);
-                    line_renderer(context, values, p90);
+
                 } else {
-                    line_renderer(context, y_max_values, values);
-                    line_renderer(context, y_min_values, values);
+                    stippled_line_renderer(context, y_max_values, values);
+                    stippled_line_renderer(context, y_min_values, values);
+
+                    area_renderer(context, CanvasPlotArea.mergePoints(p10, p90), area_values);
+                    dark_area_renderer(context, CanvasPlotArea.mergePoints(p33, p67), area_values);
+
+                    stippled_line_renderer(context, median, values);
                 }
 
-
+                self.plot.addLegend(area_style, "P10 - P90", CanvasPlotLegend.filledCircle);
+                self.plot.addLegend(dark_area_style, "P33 - P67", CanvasPlotLegend.filledCircle);
+                self.plot.addLegend(stipple_style, "Min - Median - Max", CanvasPlotLegend.stippledLine);
                 self.plot.addLegend(style, case_name, CanvasPlotLegend.filledCircle);
             }
             self.plot.renderCallbackFinishedRendering();

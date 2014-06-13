@@ -118,6 +118,12 @@ function CanvasPlotStippledLine() {
         return render;
     };
 
+    render.stippleLength = function (value) {
+        if (!arguments.length) return stipple_length;
+        stipple_length = value;
+        return render;
+    };
+
 
     return render;
 }
