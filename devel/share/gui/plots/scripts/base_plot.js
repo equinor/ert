@@ -364,6 +364,10 @@ BasePlot.prototype.createCrossRenderer = function() {
     return CanvasCross().x(this.x).y(this.y);
 };
 
+BasePlot.prototype.createStippledLineRenderer = function() {
+    return CanvasPlotStippledLine().x(this.x).y(this.y);
+};
+
 
 BasePlot.prototype.setVerticalErrorBar = function(vertical){
     this.vertical_error_bar = vertical;
