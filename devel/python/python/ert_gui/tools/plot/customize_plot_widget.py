@@ -13,6 +13,8 @@ class CustomizePlotWidget(QWidget):
 
         self.__layout = QVBoxLayout()
         self.addCheckBox("error_bar_only", "Show only error bars", False)
+        self.addCheckBox("show_observations", "Show observations", True)
+        self.addCheckBox("show_refcase", "Show refcase", True)
         self.__layout.addSpacing(20)
 
         self.addColorChooser("observation", "Observation", QColor(0, 0, 0, 255))
