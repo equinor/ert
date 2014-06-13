@@ -57,6 +57,7 @@ class PlotWindow(QMainWindow):
 
         self.addPlotPanel("Ensemble plot", "gui/plots/simple_plot.html", short_name="Plot")
         self.addPlotPanel("Ensemble overview plot", "gui/plots/simple_overview_plot.html", short_name="oPlot")
+        self.addPlotPanel("Ensemble statistics", "gui/plots/ensemble_statistics_plot.html", short_name="Stats")
         self.addPlotPanel("Histogram", "gui/plots/histogram.html", short_name="Histogram")
         self.addPlotPanel("Distribution", "gui/plots/gen_kw.html", short_name="Distribution")
         self.addPlotPanel("RFT plot", "gui/plots/rft.html", short_name="RFT")
