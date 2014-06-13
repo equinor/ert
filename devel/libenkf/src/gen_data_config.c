@@ -424,6 +424,24 @@ void gen_data_config_update_active(gen_data_config_type * config, int report_ste
 }
 
 
+bool gen_data_config_has_active_mask( const gen_data_config_type * config , enkf_fs_type * fs , int report_step) {
+  bool   has_mask;
+  {
+    char * filename = util_alloc_sprintf("%s_active" , config->key );
+    FILE * stream   = enkf_fs_open_excase_tstep_file( fs , filename , report_step);
+    
+    if (stream == NULL) 
+      has_mask = false;
+    else {
+      has_mask = true;
+      fclose( stream );
+    }    
+    
+    free( filename );
+  }
+  return has_mask;
+}
+
 
 /**
    This function will load an active map from the enkf_fs filesystem.
@@ -437,6 +455,8 @@ void gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type *
     fs_changed = true;
   }
 
+  if (!config->dynamic)
+    return;                /* This is used as a GEN_PARAM instance - and the loading of mask is not an option. */
   
   pthread_mutex_lock( &config->update_lock );
   {
@@ -449,9 +469,21 @@ void gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type *
           bool_vector_fread( config->active_mask , stream );
           fclose( stream );
         } else {
-          fprintf(stdout,"** Info: could not active data elements file %s, filling active vector with true. \n",filename);
-          bool_vector_reset( config->active_mask );
-          bool_vector_iset( config->active_mask, int_vector_iget( config->data_size_vector, report_step ) - 1, true);
+          int gen_data_size = int_vector_safe_iget( config->data_size_vector, report_step );
+          if (gen_data_size < 0) {
+            fprintf(stderr,"** Fatal internal error in function:%s \n",__func__);
+            fprintf(stderr,"\n");
+            fprintf(stderr,"   1: The active mask file:%s was not found \n",filename);
+            fprintf(stderr,"   2: The size of the gen_data vectors has not been set\n");
+            fprintf(stderr,"\n");
+            fprintf(stderr,"We can not create a suitable active_mask. Code should call gen_data_config_has_active_mask()\n\n");
+            
+            util_abort("%s: fatal internal error - could not create a suitable active_mask \n",__func__);
+          } else {
+            fprintf(stdout,"** Info: could not locate active data elements file %s, filling active vector with true all elements active \n",filename);
+            bool_vector_reset( config->active_mask );
+            bool_vector_iset( config->active_mask, gen_data_size - 1, true);
+          }
         }
         free( filename );
       }
