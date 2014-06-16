@@ -29,14 +29,8 @@ class LoadResultsModel(ErtConnector):
         @type realisations: BoolVector
         @type iteration: int
         """
-        current_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
-
-        self.ert().getEnkfFsManager().switchFileSystem(fs)
-
-        self.ert().loadFromForwardModel(realisations, iteration)
-
-        self.ert().getEnkfFsManager().switchFileSystem(current_fs)
+        self.ert().loadFromForwardModel(realisations, iteration, fs)
 
 
     def isValidRunPath(self):
@@ -58,7 +52,9 @@ class LoadResultsModel(ErtConnector):
 
         return False
 
-
+    def getCurrentRunPath(self):
+        """ @rtype: str """
+        return self.ert().getModelConfig().getRunpathAsString()
 
 
     def getIterationCount(self):
