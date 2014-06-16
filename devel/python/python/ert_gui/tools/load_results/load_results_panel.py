@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QLineEdit
+from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QLineEdit, QLabel, QTextEdit
 from ert_gui.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
@@ -39,13 +39,20 @@ class LoadResultsPanel(QWidget):
         layout = QFormLayout()
         current_case = CaseSelectorModel().getCurrentChoice()
 
+        run_path_text = QTextEdit()
+        run_path_text.setText(self.readCurrentRunPath)
+        run_path_text.setDisabled(True)
+        run_path_text.setFixedHeight(80)
+
+        layout.addRow("Load data from current run path: ",run_path_text)
+
         self.__case_model = AllCasesModel()
         self.__case_combo = QComboBox()
         self.__case_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
         self.__case_combo.setMinimumContentsLength(20)
         self.__case_combo.setModel(self.__case_model)
         self.__case_combo.setCurrentIndex(self.__case_model.indexOf(current_case))
-        layout.addRow("Select case:",self.__case_combo)
+        layout.addRow("Load into case:",self.__case_combo)
 
 
         self.__active_realizations_model = LoadResultsRealizationsModel(EnsembleSizeModel().getValue())
@@ -61,6 +68,13 @@ class LoadResultsPanel(QWidget):
         layout.addRow(self._iterations_field.getLabel(), self._iterations_field)
 
         self.setLayout(layout)
+
+    def readCurrentRunPath(self):
+        run_path = LoadResultsModel().getCurrentRunPath()
+        run_path = run_path.replace("<ERTCASE>",current_case)
+        run_path = run_path.replace("<ERT-CASE>",current_case)
+        return run_path
+
 
     def load(self):
         all_cases = self.__case_model.getAllItems()
