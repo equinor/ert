@@ -60,14 +60,18 @@ class ExportKeywordModel(ErtConnector):
     def getGenDataKeyWords(self):
         if self.__gen_data is None:
             gen_data_list = []
+            gen_param_list = []
             for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA):
+                if self.getVarType(key) == EnkfVarType.PARAMETER:
+                    gen_param_list.append(key)
+                    continue
                 if self.ert().ensembleConfig().getNode(key).getDataModelConfig().getOutputFormat() is not None:
                     gen_data_list.append(key)
                 elif self.ert().ensembleConfig().getNode(key).getDataModelConfig().getInputFormat() is not None:
                     gen_data_list.append(key)
             self.__gen_data = gen_data_list
-
-        return self.__gen_data
+            self.__gen_param = gen_param_list
+        return self.__gen_data + self.__gen_param
 
     def getFieldKeyWords(self):
         if self.__field_kw is None:
@@ -77,7 +81,14 @@ class ExportKeywordModel(ErtConnector):
 
     def getKeyWords(self):
         return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords() + self.getGenDataKeyWords())
-        
+
+    def hasKeywords(self):
+        keys = self.getKeyWords()
+        if keys.count >0:
+            return True
+        else:
+            return False
+
     def isGenKw(self, key):
         if self.__gen_kw is None:
             return False
@@ -95,6 +106,12 @@ class ExportKeywordModel(ErtConnector):
             return False
 
         return key in self.__gen_data
+
+    def isGenParamKw(self, key):
+        if self.__gen_param is None:
+            return False
+
+        return key in self.__gen_param
 
     def getGenDataReportSteps(self, key):
         gen_data_list=[]

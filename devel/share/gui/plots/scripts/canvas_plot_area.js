@@ -38,7 +38,6 @@ function CanvasPlotArea() {
         context.closePath();
         context.stroke();
         context.fill();
-
     }
 
     render.x = function(value) {
@@ -61,3 +60,18 @@ function CanvasPlotArea() {
 
     return render;
 }
+
+//append list_2 reversed to list_1 as a new list
+CanvasPlotArea.mergePoints = function(list_1, list_2) {
+    var result = [];
+
+    for (var j = 0; j < list_1.length; j++) {
+        result.push(list_1[j]);
+    }
+
+    for (var k = list_2.length - 1; k >= 0; k--) {
+        result.push(list_2[k]);
+    }
+
+    return result;
+};
