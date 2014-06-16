@@ -383,11 +383,11 @@ BasePlot.prototype.setCustomSettings = function (settings) {
         this.error_bar_only = settings["error_bar_only"];
     }
 
-    if ("show_observations") {
+    if ("show_observations" in settings) {
         this.setRenderObservations(settings["show_observations"]);
     }
 
-    if ("show_refcase") {
+    if ("show_refcase" in settings) {
         this.setRenderRefcase(settings["show_refcase"]);
     }
 };
