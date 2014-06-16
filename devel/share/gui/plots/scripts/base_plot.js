@@ -364,6 +364,14 @@ BasePlot.prototype.createCrossRenderer = function() {
     return CanvasCross().x(this.x).y(this.y);
 };
 
+BasePlot.prototype.createStippledLineRenderer = function() {
+    return CanvasPlotStippledLine().x(this.x).y(this.y);
+};
+
+BasePlot.prototype.createAreaRenderer = function() {
+    return CanvasPlotArea().x(this.x).y(this.y);
+};
+
 
 BasePlot.prototype.setVerticalErrorBar = function(vertical){
     this.vertical_error_bar = vertical;
@@ -373,6 +381,14 @@ BasePlot.prototype.setVerticalErrorBar = function(vertical){
 BasePlot.prototype.setCustomSettings = function (settings) {
     if ("error_bar_only" in settings) {
         this.error_bar_only = settings["error_bar_only"];
+    }
+
+    if ("show_observations" in settings) {
+        this.setRenderObservations(settings["show_observations"]);
+    }
+
+    if ("show_refcase" in settings) {
+        this.setRenderRefcase(settings["show_refcase"]);
     }
 };
 

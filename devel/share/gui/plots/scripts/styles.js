@@ -109,6 +109,17 @@ STYLES.rgbToHex = function(r, g, b) {
     return "#" + CanvasPlotLegend.componentToHex(r) + CanvasPlotLegend.componentToHex(g) + CanvasPlotLegend.componentToHex(b);
 };
 
+STYLES.darker = function(color) {
+    var rgba = STYLES.parseColor(color);
+
+    var f = 0.80;
+    var a = rgba[3];
+    var r = parseInt(rgba[0] * f);
+    var g = parseInt(rgba[1] * f);
+    var b = parseInt(rgba[2] * f);
+
+    return STYLES.asRgba(r, g, b, a);
+};
 
 STYLES.blendWithWhite = function(color, result_alpha) {
     var rgba = STYLES.parseColor(color);

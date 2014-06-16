@@ -55,14 +55,16 @@ class PlotWindow(QMainWindow):
         self.__plot_panels = []
         """:type: list of PlotPanel"""
 
-        self.addPlotPanel("Ensemble plot", "gui/plots/simple_plot.html", short_name="Plot")
-        self.addPlotPanel("Ensemble overview plot", "gui/plots/simple_overview_plot.html", short_name="oPlot")
+        self.addPlotPanel("Ensemble plot", "gui/plots/simple_plot.html", short_name="EP")
+        self.addPlotPanel("Ensemble overview plot", "gui/plots/simple_overview_plot.html", short_name="EOP")
+        self.addPlotPanel("Ensemble statistics", "gui/plots/ensemble_statistics_plot.html", short_name="ES")
         self.addPlotPanel("Histogram", "gui/plots/histogram.html", short_name="Histogram")
         self.addPlotPanel("Distribution", "gui/plots/gen_kw.html", short_name="Distribution")
         self.addPlotPanel("RFT plot", "gui/plots/rft.html", short_name="RFT")
         self.addPlotPanel("RFT overview plot", "gui/plots/rft_overview.html", short_name="oRFT")
         self.addPlotPanel("Ensemble plot", "gui/plots/gen_data.html", short_name="epGenData")
         self.addPlotPanel("Ensemble overview plot", "gui/plots/gen_data_overview.html", short_name="eopGenData")
+        self.addPlotPanel("Ensemble statistics", "gui/plots/gen_data_statistics_plot.html", short_name="esGenData")
         self.addPlotPanel("PCA plot", "gui/plots/pca.html", short_name="PCA")
 
         self.__data_type_keys_widget = DataTypeKeysWidget()
