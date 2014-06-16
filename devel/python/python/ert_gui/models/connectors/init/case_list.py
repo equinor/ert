@@ -14,6 +14,7 @@ class CaseList(ErtConnector, ListModelMixin):
     def addItem(self, value):
         # Creates a new filesystem. Value should be a case that does not exist
         enkf_fs = self.ert().getEnkfFsManager().getFileSystem(value)
+        self.ert().getEnkfFsManager().switchFileSystem(enkf_fs)
         self.observable().notify(ListModelMixin.LIST_CHANGED_EVENT)
 
 
