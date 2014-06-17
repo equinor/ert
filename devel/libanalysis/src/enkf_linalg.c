@@ -85,7 +85,6 @@ int enkf_linalg_svd_truncation(const matrix_type * S ,
   int nrows = matrix_get_rows(S);
   int ncolumns= matrix_get_columns(S);
 
-  printf("%s:    1111 \n",__func__);
   if (((truncation > 0) && (ncomp < 0)) ||
       ((truncation < 0) && (ncomp > 0))) {
 
@@ -95,7 +94,6 @@ int enkf_linalg_svd_truncation(const matrix_type * S ,
         matrix_dgesvd(DGESVD_MIN_RETURN , store_V0T , workS , sig0 , U0 , V0T);  
         matrix_free( workS );
       }
-      printf("%s:    2222 \n",__func__);
       int i;
 
       if (ncomp > 0)
@@ -122,10 +120,8 @@ int enkf_linalg_svd_truncation(const matrix_type * S ,
           }
         }
       }
-      printf("%s:    33333 \n",__func__);
       matrix_resize(U0 , nrows , num_significant , true);
       matrix_resize(V0T , num_significant , ncolumns , true);
-      printf("%s:    4444 \n",__func__);
   }
   else 
     util_abort("%s:  truncation:%g  ncomp:%d  - invalid ambigous input.\n",__func__ , truncation , ncomp );
