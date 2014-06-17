@@ -397,24 +397,27 @@ void rml_enkf_init_Csc(rml_enkf_data_type * data){
   }
 }
 
+// Calculates update from data mismatch (delta m_1). Also provides SVD for later use.
 static void rml_enkf_initA__(rml_enkf_data_type * data, matrix_type * A, matrix_type * S, matrix_type * Cd, matrix_type * E, matrix_type * D, matrix_type * Udr, double * Wdr, matrix_type * VdTr) {
 
   int ens_size      = matrix_get_columns( S );
   double nsc        = 1/sqrt(ens_size-1);
   int nsign;
+
+	// Perform SVD of tmp, where: tmp = diag_sqrt(Cd^(-1)) * centered(S) / sqrt(N-1) = Ud * Wd * Vd(T)
   {
     int nrobs         = matrix_get_rows( S );
     matrix_type *tmp  = matrix_alloc (nrobs, ens_size);
-    matrix_subtract_row_mean( S );   
-    matrix_inplace_diag_sqrt(Cd);
-    matrix_matmul(tmp , Cd , S );
-    matrix_scale(tmp , nsc);
-  
-    // SVD(S)  = Ud * Wd * Vd(T)
+    matrix_subtract_row_mean( S );                        // Center S
+    matrix_inplace_diag_sqrt(Cd);                         // Assumes that Cd is diag!
+    matrix_matmul(tmp , Cd , S );                         //
+    matrix_scale(tmp , nsc);                              //
+
     nsign = enkf_linalg_svd_truncation(tmp , data->truncation , -1 , DGESVD_MIN_RETURN  , Wdr , Udr , VdTr);
     matrix_free( tmp );
   }
   
+	// Calc X3
   {
     matrix_type * X3  = matrix_alloc( ens_size, ens_size );
     {
@@ -422,6 +425,7 @@ static void rml_enkf_initA__(rml_enkf_data_type * data, matrix_type * A, matrix_
       matrix_type * X2  = matrix_alloc( nsign, ens_size );
       
       
+			// See LM-EnRML algorithm in Oliver'2013 (Comp. Geo.) for meaning
       enkf_linalg_rml_enkfX1(X1, Udr ,D ,Cd );                         // X1 = Ud(T)*Cd(-1/2)*D   -- D= -(dk-d0)
       enkf_linalg_rml_enkfX2(X2, Wdr ,X1 ,data->lambda + 1 , nsign);   // X2 = ((a*Ipd)+Wd^2)^-1  * X1
       enkf_linalg_rml_enkfX3(X3, VdTr ,Wdr,X2, nsign);                 // X3 = Vd *Wd*X2
@@ -430,6 +434,7 @@ static void rml_enkf_initA__(rml_enkf_data_type * data, matrix_type * A, matrix_
       matrix_free(X1);
     }
     
+		// Update A
     {
       matrix_type * dA1 = matrix_alloc( matrix_get_rows(A) , ens_size);
       matrix_type * Dm = matrix_alloc_copy( A );
