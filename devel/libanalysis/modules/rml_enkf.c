@@ -341,7 +341,12 @@ void rml_enkf_data_free( void * arg ) {
 //**********************************************
 // Actual Algorithm, called through updateA()
 //**********************************************
+
+// Just (pre)calculates data->Am = Um*Wm^(-1).
 static void rml_enkf_init1__( rml_enkf_data_type * data) {
+	// Differentiate this routine from init2__, which actually calculates the prior mismatch update.
+	// This routine does not change any ensemble matrix.
+	// Um*Wm^(-1) are the scaled, truncated, right singular vectors of data->prior
   
 
   int state_size    = matrix_get_rows( data->active_prior );
@@ -355,15 +360,15 @@ static void rml_enkf_init1__( rml_enkf_data_type * data) {
 
   matrix_subtract_row_mean(Dm);
 
-
-  //This routine only computes the SVD of Ensemble State matrix  
-
   for (int i=0; i < state_size; i++){
     double sc = nsc / (data->Csc[i]);
     matrix_scale_row( Dm , i , sc);
   }
+
+  // Um Wm VmT = Dm; nsign1 = num of non-zero singular values.
   int nsign1 = enkf_linalg_svd_truncation(Dm , data->truncation , -1 , DGESVD_MIN_RETURN  , Wm , Um , VmT);
   
+	// Am = Um*Wm^(-1). I.e. scale *columns* of Um
   enkf_linalg_rml_enkfAm(Um, Wm, nsign1);
 
   data->Am = matrix_alloc_copy( Um );
