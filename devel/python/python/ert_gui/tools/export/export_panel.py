@@ -21,7 +21,7 @@ from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.export import ExportKeywordModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.tools.export import ExportRealizationsModel
-from ert_gui.tools.manage_cases.all_cases_model import AllCasesModel
+from ert_gui.models.qt.all_cases_model import AllCasesModel
 from ert_gui.widgets.string_box import StringBox
 
 
