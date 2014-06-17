@@ -338,6 +338,35 @@ void rml_enkf_data_free( void * arg ) {
 
 
 
+
+//**********************************************
+// Notation
+//**********************************************
+/*
+ * X1-X7, intermediate calculations in iterations. See D.Oliver algorithm
+ *
+ * Variable name in code <-> D.Oliver notation       <-> Description
+ * -------------------------------------------------------------------------------------------------------------
+ * A                     <-> m_l                     <-> Ensemble matrix. Updated in-place by iterations.
+ * data->state           <-> m_(l-1)                 <-> "A" from the previous iteration. Backs up A in case the update is bad.
+ * data->prior           <->                         <-> Previously: "active_prior". Stores A from before iter0, i.e. the actual prior.
+ * Acopy                 <->                         <-> Eliminated from code. Copy of A (at each iteration, before acceptance/rejection decision)
+ * data->prior0          <-> m_pr                    <-> Eliminated from code. Same as prior, but also includes columns (j) for which ens_mask[j]==false.
+ *                                                       Seems pointless. Only creates confusion.
+ *
+ * Am                    <-> A_m                     <-> Am = Um*Wm^(-1)
+ * Csc                   <-> C_sc^(1/2)              <-> State scalings. Note the square root.
+ * Dm  (in init1__)      <-> Delta m                 <-> Anomalies of prior wrt. its mean (row i scaled by 1/(Csc[i]*sqrt(N-1)))
+ * Dm  (in initA__)      <-> Csc * Delta m           <-> Anomalies of A wrt. its mean (only scaled by 1/sqrt(N-1))
+ * Dk1 (in init2__)      <-> Delta m                 <-> Anomailes of A (row i scaled by 1/(Csc[i]*sqrt(N-1)))
+ * Dk  (in init2__)      <-> C_sc^(-1) * (m - m_pr ) <-> Anomalies wrt. prior (as opposed to the mean; only scaled by Csc)
+ * dA1 (in initA__)      <-> delta m_1               <-> Ensemble updates coming from data mismatch
+ * dA2 (in init2__)      <-> delta m_2               <-> Ensemble updates coming from prior mismatch
+*/
+
+
+
+
 //**********************************************
 // Actual Algorithm, called through updateA()
 //**********************************************
