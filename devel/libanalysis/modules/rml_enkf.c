@@ -528,13 +528,15 @@ void rml_enkf_init2__( rml_enkf_data_type * data, matrix_type *A, matrix_type *A
   matrix_free(Dk1);
 }
 
+
+// Initialize state and prior from A. Initialize lambda0, lambda. Call initA__, init1__
 static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, matrix_type * S, matrix_type * R, matrix_type * dObs, matrix_type * E, matrix_type * D, matrix_type * Cd) {
         
-  matrix_type * Skm = matrix_alloc(matrix_get_columns(D),matrix_get_columns(D));
   int ens_size      = matrix_get_columns( S );
   int nrobs         = matrix_get_rows( S );
   int nrmin         = util_int_min( ens_size , nrobs); 
   int state_size    = matrix_get_rows( A );
+  matrix_type * Skm = matrix_alloc(ens_size, ens_size);    // Mismatch
   matrix_type * Ud  = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
   matrix_type * VdT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
   double * Wd       = util_calloc( nrmin , sizeof * Wd ); 
@@ -548,11 +550,15 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, m
   else
     data->lambda = data->lambda0;
   
+	// state = A, prior0 = A, active_prior = prior0 (NB: size difference)
   rml_enkf_common_store_state( data->state  , A , data->ens_mask );
   rml_enkf_common_store_state( data->prior0 , A , data->ens_mask );
   rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
+	// Update dependant on data mismatch
   rml_enkf_initA__(data , A, S , Cd , E , D , Ud , Wd , VdT);
+	// Update dependant on prior mismatch. This should be zero (coz iter0).
+	// Therefore the purpose of init1__ is just to prepare some matrices.
   if (data->use_prior) {
     rml_enkf_init_Csc( data );
     rml_enkf_init1__(data );
