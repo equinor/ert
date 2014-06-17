@@ -73,6 +73,7 @@ void enkf_linalg_genX2(matrix_type * X2 , const matrix_type * S , const matrix_t
 
 /*This function is similar to enkf_linalg_svdS but it returns the eigen values without its inverse and also give the matrices truncated U VT and Sig0*/
 
+// Trunc.SVD(S)  = U0 * Sig0 * V0T
 int enkf_linalg_svd_truncation(const matrix_type * S , 
                                double truncation , 
                                int ncomp ,
@@ -696,15 +697,15 @@ double enkf_linalg_data_mismatch(matrix_type *D , matrix_type *R , matrix_type *
 {
   matrix_type * tmp = matrix_alloc (matrix_get_columns(D), matrix_get_columns(R));
   double mismatch;
-  matrix_matmul_with_transpose(tmp, D, R,true, false);
-  matrix_matmul(Sk, tmp, D);
+  matrix_matmul_with_transpose(tmp, D, R,true, false); // tmp = D' * R, i.e. N-by-p
+  matrix_matmul(Sk, tmp, D); // Sk = D' * R * D
   // Calculate the mismatch 
   mismatch = matrix_trace(Sk)/(matrix_get_columns(D));
   
   return mismatch;
 }
 
-
+// Cd = SampCov(E) (including (N-1) normalization)
 void enkf_linalg_Covariance(matrix_type *Cd, const matrix_type *E, double nsc ,int nrobs)
 {
   matrix_matmul_with_transpose(Cd, E, E,false,true);
@@ -720,7 +721,7 @@ void enkf_linalg_Covariance(matrix_type *Cd, const matrix_type *E, double nsc ,i
 
 
 
-
+// Scale columns (not rows!) of Um by entries in diagonal Wm
 void enkf_linalg_rml_enkfAm(matrix_type * Um, const double * Wm,int nsign1){
   for (int i=0; i< nsign1 ; i++) {
     double sc = 1 / Wm[i];
