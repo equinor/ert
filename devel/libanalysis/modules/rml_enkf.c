@@ -572,42 +572,57 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, m
   free( Wd );
 }
 
+// Main routine. Controls the iterations. Called from analysis_module.c: analysis_module_updateA()
 void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matrix_type * R, matrix_type * dObs, matrix_type * E, matrix_type * D) {
+// A : ensemble matrix
+// R : (Inv?) Obs error cov.
+// S : measured ensemble
+// dObs: observed data
+// E : perturbations for obs
+// D = dObs + E - S : Innovations (wrt pert. obs)
 
 
+
+  double Sk_new;   // Mismatch
+  double  Std_new; // Std dev(Mismatch)
   rml_enkf_data_type * data = rml_enkf_data_safe_cast( module_data );
-  double Sk_new;
-  double  Std_new;
-  int nrobs         = matrix_get_rows( S );
-  int ens_size      = matrix_get_columns( S );
-  double nsc        = 1/sqrt(ens_size-1); 
-  matrix_type * Cd  = matrix_alloc( nrobs, nrobs );
+  int nrobs                 = matrix_get_rows( S );           // Num obs
+  int ens_size              = matrix_get_columns( S );        // N
+  double nsc                = 1/sqrt(ens_size-1);             // Scale factor
+  matrix_type * Cd          = matrix_alloc( nrobs, nrobs );   // Cov(E), where E = measurement perturbations?
+
  
-  
-  enkf_linalg_Covariance(Cd ,E ,nsc, nrobs);
-  matrix_inv(Cd);
+  // Empirical error covar. R is left unused. Investigate? 
+  enkf_linalg_Covariance(Cd ,E ,nsc, nrobs); // Cd = SampCov(E) (including (N-1) normalization)
+  matrix_inv(Cd); // In-place inversion
 
   rml_enkf_open_log_file(data);
+	fprintf(stdout,"\nIter %d --> %d", data->iteration_nr, data->iteration_nr + 1);
 
 
   if (data->iteration_nr == 0) {
+		// IF ITERATION 0
     rml_enkf_updateA_iter0(data , A , S , R , dObs , E , D , Cd);
     data->iteration_nr++;
   } else {
-    int nrmin         = util_int_min( ens_size , nrobs); 
-    matrix_type * Ud  = matrix_alloc( nrobs , nrmin    );    /* Left singular vectors.  */
-    matrix_type * VdT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
-    double * Wd       = util_calloc( nrmin , sizeof * Wd ); 
-    matrix_type * Skm = matrix_alloc(matrix_get_columns(D),matrix_get_columns(D));
-    matrix_type * Acopy  = matrix_alloc_copy (A);
-    Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
-    Std_new = matrix_diag_std(Skm,Sk_new);
-    
+		// IF ITERATION 1, 2, ...
+    int nrmin           = util_int_min( ens_size , nrobs);      // Min(p,N)
+    matrix_type * Ud    = matrix_alloc( nrobs , nrmin    );     // Left singular vectors.  */
+    matrix_type * VdT   = matrix_alloc( nrmin , ens_size );     // Right singular vectors. */
+    double * Wd         = util_calloc( nrmin , sizeof * Wd );   // Singular values, vector
+    matrix_type * Skm   = matrix_alloc(ens_size,ens_size);      // Mismatch
+    Sk_new              = enkf_linalg_data_mismatch(D,Cd,Skm);  // Skm = D'*inv(Cd)*D; Sk_new = trace(Skm)/N
+    Std_new             = matrix_diag_std(Skm,Sk_new);          // Standard deviation of mismatches.
+		matrix_type * Acopy  = matrix_alloc_copy (A);
+
+
+		// Lambda = Normalized data mismatch (rounded)
     if (data->lambda_recalculate)
       data->lambda = pow(10 , floor(log10(Sk_new / (2*nrobs))) );
     
     rml_enkf_common_recover_state( data->prior0 , data->active_prior , data->ens_mask );
 
+		// Accept/Reject update? Lambda calculation.
     {
       bool mismatch_reduced = false;
       bool std_reduced = false;
@@ -618,12 +633,15 @@ void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matr
       if (Std_new <= data->Std)
         std_reduced = true;
 
+			fprintf(stdout,"\nWriting iter info to file now. Iter %d --> %d", data->iteration_nr, data->iteration_nr + 1);
 			rml_enkf_write_iter_info(data, Sk_new, Std_new);
 
       if (mismatch_reduced) {
         /*
           Stop check: if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
         */
+				
+				// Reduce Lambda
         if (std_reduced) 
           data->lambda = data->lambda * data->lambda_reduce_factor;
 
@@ -633,16 +651,22 @@ void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matr
         data->Std=Std_new;
         data->iteration_nr++;
       } else {
+				// Increase lambda
         data->lambda = data->lambda * data->lambda_increase_factor;
+				// A = data->state
         rml_enkf_common_recover_state( data->state , A , data->ens_mask );
       }
     }
 
+		// Update dependant on data mismatch (delta m_1)
     rml_enkf_initA__(data , A , S , Cd , E , D , Ud , Wd , VdT);
+		// Update dependant on prior mismatch (delta m_2)
     if (data->use_prior) {
       rml_enkf_init_Csc( data );
       rml_enkf_init2__(data , A , Acopy , Wd , VdT);
     }
+		
+		// Free
     matrix_free(Acopy);
     matrix_free(Skm);
     matrix_free( Ud );
