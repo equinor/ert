@@ -453,7 +453,9 @@ static void rml_enkf_initA__(rml_enkf_data_type * data, matrix_type * A, matrix_
   }
 }
 
+// Calculate prior mismatch update (delta m_2).
 void rml_enkf_init2__( rml_enkf_data_type * data, matrix_type *A, matrix_type *Acopy, double * Wdr, matrix_type * VdTr) {
+	// Distinguish from init1__ which only makes preparations, and is only called at iter=0
 
 
   int state_size   = matrix_get_rows( Acopy );
@@ -462,6 +464,20 @@ void rml_enkf_init2__( rml_enkf_data_type * data, matrix_type *A, matrix_type *A
 
   matrix_type *Am  = matrix_alloc_copy(data->Am);
   matrix_type *Apr = matrix_alloc_copy(data->active_prior);
+
+ // fprintf(stdout,"\n");
+ // fprintf(stdout,"A: %d x %d\n", matrix_get_rows(A), matrix_get_columns(A));
+ // fprintf(stdout,"prior : %d x %d\n", matrix_get_rows(data->prior), matrix_get_columns(data->prior));
+ // fprintf(stdout,"state : %d x %d\n", matrix_get_rows(data->state), matrix_get_columns(data->state));
+ // fprintf(stdout,"Apr : %d x %d\n", matrix_get_rows(Apr), matrix_get_columns(Apr));
+ // fprintf(stdout,"Am : %d x %d\n", matrix_get_rows(Am), matrix_get_columns(Am));
+ // Example:
+ // A            : 27760 x 10
+ // prior        : 27760 x 10
+ // state        : 27760 x 50
+ // prior0       : 27760 x 50
+ // Apr          : 27760 x 10
+ // Am           : 27760 x 1
 
 
   int nsign1 = matrix_get_columns(data->Am);
@@ -474,6 +490,8 @@ void rml_enkf_init2__( rml_enkf_data_type * data, matrix_type *A, matrix_type *A
   matrix_type * dA2 = matrix_alloc(state_size , ens_size);
   matrix_type * Dk1 = matrix_alloc_copy( Acopy );
   
+	// Dk = Csc^(-1) * (A - Aprior)
+	// X4 = Am' * Dk
   {
     matrix_type * Dk = matrix_alloc_copy( Acopy );
     matrix_inplace_sub(Dk, Apr);
@@ -481,15 +499,21 @@ void rml_enkf_init2__( rml_enkf_data_type * data, matrix_type *A, matrix_type *A
     matrix_dgemm(X4 , Am , Dk , true, false, 1.0, 0.0);
     matrix_free(Dk);
   }
+	// X5 = Am * X4
   matrix_matmul(X5 , Am , X4);
-  
-  matrix_subtract_row_mean(Dk1);
-  rml_enkf_common_scaleA(Dk1 , data->Csc , true);
-  matrix_scale(Dk1,nsc);
 
+  // Dk1 = Csc^(-1)/sqrt(N-1) * A*(I - 1/N*ones(m,N))
+  matrix_subtract_row_mean(Dk1);                  // Dk1 = Dk1 * (I - 1/N*ones(m,N))
+  zzz_enkf_common_scaleA(Dk1 , data->Csc , true); // Dk1 = Csc^(-1) * Dk1
+  matrix_scale(Dk1,nsc);                          // Dk1 = Dk1 / sqrt(N-1)
+
+	// X6 = Dk1' * X5
   matrix_dgemm(X6, Dk1, X5, true, false, 1.0, 0.0);
+  
+	// X7
   enkf_linalg_rml_enkfX7(X7, VdTr , Wdr , data->lambda + 1, X6);
   
+	// delta m_2
   rml_enkf_common_scaleA(Dk1 , data->Csc , false);
   matrix_matmul(dA2 , Dk1 , X7);
   matrix_inplace_sub(A, dA2);
