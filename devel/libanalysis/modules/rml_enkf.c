@@ -248,17 +248,31 @@ void rml_enkf_log_line( rml_enkf_data_type * data , const char * fmt , ...) {
   }
 }
 
-static void rml_enkf_write_log_header( rml_enkf_data_type * data ) {
+static void rml_enkf_write_log_header( rml_enkf_data_type * data, const char * format) {
   if (data->log_stream) {
-    const char * column1 = "\"Iteration Number\"";
-    const char * column2 = "\"Lambda Value\"";
-    const char * column3 = "\"Current Object Function Value\"";
-    const char * column4 = "\"Previous Object Function Value\"";
-    const char * column5 = "\"Current Standard Deviation\"";
+    const char * column1 = "Iter#";
+    const char * column2 = "Lambda";
+    const char * column3 = "Sk old";
+    const char * column4 = "Sk_new";
+    const char * column5 = "std(Sk)";
 
-    if (data->log_stream) {
-      rml_enkf_log_line(data, "%-23s %-19s %-36s %-37s %-33s\n", column1, column2, column3, column4, column5);
-    }
+         rml_enkf_log_line(data, format, column1, column2, column3, column4, column5);
+  }
+}
+
+static void rml_enkf_write_iter_info( rml_enkf_data_type * data , double Sk_new, double Std_new ) {
+  if (data->log_stream) {
+
+         const char * format =         "\n%2d-->%-2d %-7.3f %-7.3f --> %-7.3f %-7.3f";
+         const char * format_headers = "\n%7s %-7s %-7s --> %-7s %-7s";
+
+         static int has_printed_header = 0;
+         if (!has_printed_header) {
+                 rml_enkf_write_log_header( data, format_headers );
+                 has_printed_header = 1;
+         }
+
+         rml_enkf_log_line( data , format, data->iteration_nr, data->iteration_nr+1,  data->lambda, data->Sk, Sk_new, Std_new);
   }
 }
 
@@ -268,7 +282,6 @@ static void rml_enkf_open_log_file( rml_enkf_data_type * data ) {
     if ( data->iteration_nr == 0) {
       if (data->clear_log){
         data->log_stream = util_mkdir_fopen( data->log_file , "w");
-        rml_enkf_write_log_header(data);
       }
       else
         data->log_stream = util_mkdir_fopen( data->log_file , "a");
@@ -508,11 +521,8 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, m
     rml_enkf_init1__(data );
   }
 
-  {
-    const char * prev_obj_func_value_dummy = "-";
-    rml_enkf_log_line( data , "%-d-%-21d %-19.5f %-36.5f %-37s %-33.5f \n", data->iteration_nr, data->iteration_nr+1, data->lambda, data->Sk , prev_obj_func_value_dummy, data->Std);
-  }
-  
+  rml_enkf_write_iter_info(data, data->Sk, data->Std);
+
   matrix_free( Skm );
   matrix_free( Ud );
   matrix_free( VdT );
@@ -565,9 +575,7 @@ void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matr
       if (Std_new <= data->Std)
         std_reduced = true;
 
-      if (data->log_stream){
-        rml_enkf_log_line( data , "%-d-%-21d %-19.5f %-36.5f %-37.5f %-33.5f \n", data->iteration_nr, data->iteration_nr+1,  data->lambda, Sk_new, data->Sk, Std_new);
-      }
+			rml_enkf_write_iter_info(data, Sk_new, Std_new);
 
       if (mismatch_reduced) {
         /*
@@ -621,7 +629,7 @@ void rml_enkf_init_update(void * arg, const bool_vector_type * ens_mask, const m
 
 
 //**********************************************
-// More Set / Get
+// Set / Get basic types
 //**********************************************
 bool rml_enkf_set_int( void * arg , const char * var_name , int value) {
   rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
