@@ -528,7 +528,6 @@ void rml_enkf_init2__( rml_enkf_data_type * data, matrix_type *A, matrix_type *A
   matrix_free(Dk1);
 }
 
-
 // Initialize state and prior from A. Initialize lambda0, lambda. Call initA__, init1__
 static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, matrix_type * S, matrix_type * R, matrix_type * dObs, matrix_type * E, matrix_type * D, matrix_type * Cd) {
         
@@ -684,6 +683,7 @@ void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matr
   matrix_free(Cd);
 }
 
+// Called from analysis_module.c: analysis_module_init_update()
 void rml_enkf_init_update(void * arg, const bool_vector_type * ens_mask, const matrix_type * S, const matrix_type * R, const matrix_type * dObs, const matrix_type * E, const matrix_type * D ) {
   
   rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
