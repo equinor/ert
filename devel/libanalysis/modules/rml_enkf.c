@@ -264,7 +264,7 @@ static void rml_enkf_write_iter_info( rml_enkf_data_type * data , double Sk_new,
   if (data->log_stream) {
 
          const char * format =         "\n%2d-->%-2d %-7.3f %-7.3f --> %-7.3f %-7.3f";
-         const char * format_headers = "\n%7s %-7s %-7s --> %-7s %-7s";
+         const char * format_headers = "\n%-7s %-7s %-7s --> %-7s %-7s";
 
          static int has_printed_header = 0;
          if (!has_printed_header) {
