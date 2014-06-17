@@ -325,12 +325,8 @@ void rml_enkf_data_free( void * arg ) {
 
 
 
-
-
-
-
 //**********************************************
-// Actual algorithm
+// Actual Algorithm, called through updateA()
 //**********************************************
 static void rml_enkf_init1__( rml_enkf_data_type * data) {
   
@@ -380,15 +376,7 @@ void rml_enkf_init_Csc(rml_enkf_data_type * data){
   }
 }
 
-static void rml_enkf_initA__(rml_enkf_data_type * data, 
-                             matrix_type * A ,
-                             matrix_type * S , 
-                             matrix_type * Cd , 
-                             matrix_type * E , 
-                             matrix_type * D ,
-                             matrix_type * Udr,
-                             double * Wdr,
-                             matrix_type * VdTr) {
+static void rml_enkf_initA__(rml_enkf_data_type * data, matrix_type * A, matrix_type * S, matrix_type * Cd, matrix_type * E, matrix_type * D, matrix_type * Udr, double * Wdr, matrix_type * VdTr) {
 
   int ens_size      = matrix_get_columns( S );
   double nsc        = 1/sqrt(ens_size-1);
@@ -439,11 +427,7 @@ static void rml_enkf_initA__(rml_enkf_data_type * data,
   }
 }
 
-void rml_enkf_init2__( rml_enkf_data_type * data,
-                       matrix_type *A,
-                       matrix_type *Acopy,
-                       double * Wdr,
-                       matrix_type * VdTr) {
+void rml_enkf_init2__( rml_enkf_data_type * data, matrix_type *A, matrix_type *Acopy, double * Wdr, matrix_type * VdTr) {
 
 
   int state_size   = matrix_get_rows( Acopy );
@@ -494,14 +478,7 @@ void rml_enkf_init2__( rml_enkf_data_type * data,
   matrix_free(Dk1);
 }
 
-static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
-                                          matrix_type * A , 
-                                          matrix_type * S , 
-                                          matrix_type * R , 
-                                          matrix_type * dObs , 
-                                          matrix_type * E , 
-                                          matrix_type * D,
-                                          matrix_type * Cd) {
+static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, matrix_type * S, matrix_type * R, matrix_type * dObs, matrix_type * E, matrix_type * D, matrix_type * Cd) {
         
   matrix_type * Skm = matrix_alloc(matrix_get_columns(D),matrix_get_columns(D));
   int ens_size      = matrix_get_columns( S );
@@ -542,13 +519,7 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
   free( Wd );
 }
 
-void rml_enkf_updateA(void * module_data , 
-                      matrix_type * A , 
-                      matrix_type * S , 
-                      matrix_type * R , 
-                      matrix_type * dObs , 
-                      matrix_type * E , 
-                      matrix_type * D) {
+void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matrix_type * R, matrix_type * dObs, matrix_type * E, matrix_type * D) {
 
 
   rml_enkf_data_type * data = rml_enkf_data_safe_cast( module_data );
@@ -638,16 +609,7 @@ void rml_enkf_updateA(void * module_data ,
   matrix_free(Cd);
 }
 
-
-
-
-void rml_enkf_init_update(void * arg , 
-                                 const bool_vector_type * ens_mask , 
-                                 const matrix_type * S , 
-                                 const matrix_type * R , 
-                                 const matrix_type * dObs , 
-                                 const matrix_type * E , 
-                                 const matrix_type * D ) {
+void rml_enkf_init_update(void * arg, const bool_vector_type * ens_mask, const matrix_type * S, const matrix_type * R, const matrix_type * dObs, const matrix_type * E, const matrix_type * D ) {
   
   rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
   bool_vector_memcpy( module_data->ens_mask , ens_mask );
