@@ -18,9 +18,8 @@ from ert_gui.ide.keywords.definitions import RangeStringArgument, IntegerArgumen
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.load_results import LoadResultsModel
-from ert_gui.tools.load_results import LoadResultsRealizationsModel
-from ert_gui.tools.load_results.load_results_iterations_model import LoadResultsIterationsModel
-from ert_gui.tools.manage_cases.all_cases_model import AllCasesModel
+from ert_gui.tools.load_results import LoadResultsRealizationsModel, LoadResultsIterationsModel
+from ert_gui.models.qt.all_cases_model import AllCasesModel
 from ert_gui.widgets.string_box import StringBox
 
 
@@ -40,7 +39,7 @@ class LoadResultsPanel(QWidget):
         current_case = CaseSelectorModel().getCurrentChoice()
 
         run_path_text = QTextEdit()
-        run_path_text.setText(self.readCurrentRunPath)
+        run_path_text.setText(self.readCurrentRunPath())
         run_path_text.setDisabled(True)
         run_path_text.setFixedHeight(80)
 
@@ -70,6 +69,7 @@ class LoadResultsPanel(QWidget):
         self.setLayout(layout)
 
     def readCurrentRunPath(self):
+        current_case = CaseSelectorModel().getCurrentChoice()
         run_path = LoadResultsModel().getCurrentRunPath()
         run_path = run_path.replace("<ERTCASE>",current_case)
         run_path = run_path.replace("<ERT-CASE>",current_case)
