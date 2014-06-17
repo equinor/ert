@@ -62,6 +62,7 @@
 #include <ert/enkf/field_config.h>
 #include <ert/enkf/gen_kw.h>
 #include <ert/enkf/summary.h>
+#include <ert/enkf/gen_data.h>
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/model_config.h>
@@ -684,11 +685,13 @@ static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state
 static void enkf_state_log_GEN_DATA_load( const enkf_node_type * enkf_node , int report_step , stringlist_type * msg_list) { 
   /* In interactive mode we explicitly report the loads of GEN_DATA instances. */
   char * load_file = enkf_config_node_alloc_infile(enkf_node_get_config( enkf_node ) , report_step);
+  int data_size = gen_data_get_size( enkf_node_value_ptr( enkf_node ));
   stringlist_append_owned_ref( msg_list , 
-                               util_alloc_sprintf("Loaded GEN_DATA:%s instance for step:%d from file:%s" , 
+                               util_alloc_sprintf("Loaded GEN_DATA:%s instance for step:%d from file:%s size:%d" , 
                                                   enkf_node_get_key( enkf_node ) , 
                                                   report_step , 
-                                                  load_file ));
+                                                  load_file ,
+                                                  data_size));
   free( load_file );
 }
 

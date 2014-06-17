@@ -74,7 +74,22 @@ UTIL_SAFE_CAST_FUNCTION(obs_vector , OBS_VECTOR_TYPE_ID)
 /*****************************************************************/
 
 
-static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instance, const char * obs_key , const history_type * history , int size) {
+static void obs_vector_prefer_RESTART_warning() {
+  fprintf(stderr," -------------------------------------------------------------------------------\n");
+  fprintf(stderr," Warning: For GEN_OBS observations it is highly recommended to use the RESTART  \n");
+  fprintf(stderr,"          keyword to denote the time of the observation. The RESTART value      \n");
+  fprintf(stderr,"          should be matched with the report step embedded as part of the        \n");
+  fprintf(stderr,"          GEN_DATA result file created by the forward model.                    \n");
+  fprintf(stderr,"\n");
+  fprintf(stderr,"          In the future use OF DATA and DAYS will not be possible for GEN_OBS   \n");
+  fprintf(stderr," -------------------------------------------------------------------------------\n");
+  fprintf(stderr,"\n");
+  fprintf(stderr,"\n");
+}
+
+
+
+static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instance, const char * obs_key , const history_type * history , int size , bool prefer_restart) {
   int obs_restart_nr = -1;  /* To shut up compiler warning. */
   
   if(conf_instance_has_item(conf_instance, "RESTART")) {
@@ -84,9 +99,13 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
   } else if(conf_instance_has_item(conf_instance, "DATE")) {
     time_t obs_date = conf_instance_get_item_value_time_t(conf_instance, "DATE"  );
     obs_restart_nr  = history_get_restart_nr_from_time_t( history , obs_date );
+    if (prefer_restart)
+      obs_vector_prefer_RESTART_warning();
   } else if (conf_instance_has_item(conf_instance, "DAYS")) {
     double days = conf_instance_get_item_value_double(conf_instance, "DAYS");
     obs_restart_nr  = history_get_restart_nr_from_days( history , days );
+    if (prefer_restart)
+      obs_vector_prefer_RESTART_warning();
   }  else
     util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
   
@@ -385,7 +404,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
     const char * sum_key         = conf_instance_get_item_value_ref(   conf_instance, "KEY"   );
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
     int          size            = history_get_last_restart( history );
-    int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
+    int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size , false);
 
     if (obs_restart_nr == 0) {
       int day,month,year;
@@ -420,7 +439,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
     int          size            = history_get_last_restart( history );
     obs_vector_type * obs_vector = obs_vector_alloc( GEN_OBS , obs_key , ensemble_config_get_node(ensemble_config , state_kw ), size);
-    int          obs_restart_nr   = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
+    int          obs_restart_nr   = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size , true);
     const char * index_file       = NULL;
     const char * index_list       = NULL;
     const char * obs_file         = NULL;
@@ -673,7 +692,7 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     int    * obs_j     = util_calloc(num_obs_pts , sizeof * obs_j    );
     int    * obs_k     = util_calloc(num_obs_pts , sizeof * obs_k    );
 
-    obs_restart_nr = __conf_instance_get_restart_nr(conf_instance , obs_label , history  , size);  
+    obs_restart_nr = __conf_instance_get_restart_nr(conf_instance , obs_label , history  , size, false);  
     
     /** Build the observation. */
     for(int obs_pt_nr = 0; obs_pt_nr < num_obs_pts; obs_pt_nr++) {
