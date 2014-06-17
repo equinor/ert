@@ -39,6 +39,10 @@
 typedef struct rml_enkf_data_struct rml_enkf_data_type;
 
 
+
+//**********************************************
+// DEFAULT PARAMS
+//**********************************************
 /*
   Observe that only one of the settings subspace_dimension and
   truncation can be valid at a time; otherwise the svd routine will
@@ -73,6 +77,14 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 #define  CLEAR_LOG_KEY               "CLEAR_LOG" 
 
 
+
+
+#define RML_ENKF_TYPE_ID 261123
+
+
+//**********************************************
+// RML "object" data definition
+//**********************************************
 /*
   The configuration data used by the rml_enkf module is contained in a
   rml_enkf_data_struct instance. The data type used for the rml_enkf
@@ -91,10 +103,6 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
   destructor or free() function registered with the .freef field of
   the analysis table.
 */
-
-
-#define RML_ENKF_TYPE_ID 261123
-
 struct rml_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
   double    truncation;            // Controlled by config key: ENKF_TRUNCATION_KEY
@@ -129,6 +137,13 @@ static UTIL_SAFE_CAST_FUNCTION( rml_enkf_data , RML_ENKF_TYPE_ID )
 static UTIL_SAFE_CAST_FUNCTION_CONST( rml_enkf_data , RML_ENKF_TYPE_ID )
 
 
+
+
+
+
+//**********************************************
+// Set / Get
+//**********************************************
 double rml_enkf_get_truncation( rml_enkf_data_type * data ) {
   return data->truncation;
 }
@@ -159,35 +174,25 @@ double rml_enkf_get_lambda_min( const rml_enkf_data_type * data ) {
   return data->lambda_min;
 }
 
-
 void rml_enkf_set_lambda_increase_factor( rml_enkf_data_type * data , double increase_factor) {
   data->lambda_increase_factor = increase_factor;
-}
-
-void rml_enkf_set_lambda_reduce_factor( rml_enkf_data_type * data , double reduce_factor) {
-  data->lambda_reduce_factor = reduce_factor;
 }
 
 double rml_enkf_get_lambda_increase_factor( const rml_enkf_data_type * data ) {
   return data->lambda_increase_factor;
 }
 
+void rml_enkf_set_lambda_reduce_factor( rml_enkf_data_type * data , double reduce_factor) {
+  data->lambda_reduce_factor = reduce_factor;
+}
+
 double rml_enkf_get_lambda_reduce_factor( const rml_enkf_data_type * data ) {
   return data->lambda_reduce_factor;
-}
-
-bool rml_enkf_get_clear_log( const rml_enkf_data_type * data ) {
-  return data->clear_log;
-}
-
-void rml_enkf_set_clear_log( rml_enkf_data_type * data , bool clear_log) {
-  data->clear_log = clear_log;
 }
 
 bool rml_enkf_get_use_prior( const rml_enkf_data_type * data ) {
   return data->use_prior;
 }
-
 
 void rml_enkf_set_use_prior( rml_enkf_data_type * data , bool use_prior) {
   data->use_prior = use_prior;
@@ -203,14 +208,27 @@ void rml_enkf_set_subspace_dimension( rml_enkf_data_type * data , int subspace_d
     data->truncation = INVALID_TRUNCATION;
 }
 
-
 void rml_enkf_set_iteration_nr( rml_enkf_data_type * data , int iteration_nr) {
   data->iteration_nr = iteration_nr;
 }
 
-
 int rml_enkf_get_iteration_nr( const rml_enkf_data_type * data ) {
   return data->iteration_nr;
+}
+
+
+
+
+
+//**********************************************
+// Log-file related stuff
+//**********************************************
+bool rml_enkf_get_clear_log( const rml_enkf_data_type * data ) {
+  return data->clear_log;
+}
+
+void rml_enkf_set_clear_log( rml_enkf_data_type * data , bool clear_log) {
+  data->clear_log = clear_log;
 }
 
 void rml_enkf_set_log_file( rml_enkf_data_type * data , const char * log_file ) {
@@ -221,7 +239,6 @@ const char * rml_enkf_get_log_file( const rml_enkf_data_type * data) {
   return data->log_file;
 }
 
-
 void rml_enkf_log_line( rml_enkf_data_type * data , const char * fmt , ...) {
   if (data->log_stream) {
     va_list ap;
@@ -231,7 +248,41 @@ void rml_enkf_log_line( rml_enkf_data_type * data , const char * fmt , ...) {
   }
 }
 
+static void rml_enkf_write_log_header( rml_enkf_data_type * data ) {
+  if (data->log_stream) {
+    const char * column1 = "\"Iteration Number\"";
+    const char * column2 = "\"Lambda Value\"";
+    const char * column3 = "\"Current Object Function Value\"";
+    const char * column4 = "\"Previous Object Function Value\"";
+    const char * column5 = "\"Current Standard Deviation\"";
 
+    if (data->log_stream) {
+      rml_enkf_log_line(data, "%-23s %-19s %-36s %-37s %-33s\n", column1, column2, column3, column4, column5);
+    }
+  }
+}
+
+static void rml_enkf_open_log_file( rml_enkf_data_type * data ) {
+  data->log_stream = NULL;
+  if (data->log_file) {
+    if ( data->iteration_nr == 0) {
+      if (data->clear_log){
+        data->log_stream = util_mkdir_fopen( data->log_file , "w");
+        rml_enkf_write_log_header(data);
+      }
+      else
+        data->log_stream = util_mkdir_fopen( data->log_file , "a");
+    } else
+      data->log_stream = util_fopen( data->log_file , "a");
+  }
+}
+
+
+
+
+//**********************************************
+// Memory
+//**********************************************
 void * rml_enkf_data_alloc( rng_type * rng) {
   rml_enkf_data_type * data = util_malloc( sizeof * data);
   UTIL_TYPE_ID_INIT( data , RML_ENKF_TYPE_ID );
@@ -259,7 +310,6 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   return data;
 }
 
-
 void rml_enkf_data_free( void * arg ) { 
   rml_enkf_data_type * data = rml_enkf_data_safe_cast( arg );
 
@@ -273,6 +323,15 @@ void rml_enkf_data_free( void * arg ) {
 }
 
 
+
+
+
+
+
+
+//**********************************************
+// Actual algorithm
+//**********************************************
 static void rml_enkf_init1__( rml_enkf_data_type * data) {
   
 
@@ -305,8 +364,6 @@ static void rml_enkf_init1__( rml_enkf_data_type * data) {
   free(Wm);
 }
 
-
-
 void rml_enkf_init_Csc(rml_enkf_data_type * data){
   int state_size = matrix_get_rows( data->active_prior );
   int ens_size   = matrix_get_columns( data->active_prior );
@@ -322,11 +379,6 @@ void rml_enkf_init_Csc(rml_enkf_data_type * data){
 
   }
 }
-
-
-
-
-
 
 static void rml_enkf_initA__(rml_enkf_data_type * data, 
                              matrix_type * A ,
@@ -387,8 +439,6 @@ static void rml_enkf_initA__(rml_enkf_data_type * data,
   }
 }
 
-
-
 void rml_enkf_init2__( rml_enkf_data_type * data,
                        matrix_type *A,
                        matrix_type *Acopy,
@@ -444,7 +494,6 @@ void rml_enkf_init2__( rml_enkf_data_type * data,
   matrix_free(Dk1);
 }
 
-
 static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
                                           matrix_type * A , 
                                           matrix_type * S , 
@@ -491,37 +540,6 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data,
   matrix_free( Ud );
   matrix_free( VdT );
   free( Wd );
-}
-
-
-static void rml_enkf_write_log_header( rml_enkf_data_type * data ) {
-  if (data->log_stream) {
-    const char * column1 = "\"Iteration Number\"";
-    const char * column2 = "\"Lambda Value\"";
-    const char * column3 = "\"Current Object Function Value\"";
-    const char * column4 = "\"Previous Object Function Value\"";
-    const char * column5 = "\"Current Standard Deviation\"";
-
-    if (data->log_stream) {
-      rml_enkf_log_line(data, "%-23s %-19s %-36s %-37s %-33s\n", column1, column2, column3, column4, column5);
-    }
-  }
-}
-
-static void rml_enkf_open_log_file( rml_enkf_data_type * data )
-{
-  data->log_stream = NULL;
-  if (data->log_file) {
-    if ( data->iteration_nr == 0) {
-      if (data->clear_log){
-        data->log_stream = util_mkdir_fopen( data->log_file , "w");
-        rml_enkf_write_log_header(data);
-      }
-      else
-        data->log_stream = util_mkdir_fopen( data->log_file , "a");
-    } else
-      data->log_stream = util_fopen( data->log_file , "a");
-  }
 }
 
 void rml_enkf_updateA(void * module_data , 
@@ -637,6 +655,70 @@ void rml_enkf_init_update(void * arg ,
 
 
 
+
+
+
+//**********************************************
+// More Set / Get
+//**********************************************
+bool rml_enkf_set_int( void * arg , const char * var_name , int value) {
+  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
+  {
+    bool name_recognized = true;
+    
+    if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
+      rml_enkf_set_subspace_dimension( module_data , value );
+    else if (strcmp( var_name , ITER_KEY) == 0)
+      rml_enkf_set_iteration_nr( module_data , value );
+    else
+      name_recognized = false;
+
+    return name_recognized;
+  }
+}
+
+int rml_enkf_get_int( const void * arg, const char * var_name) {
+  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , ITER_KEY) == 0)
+      return module_data->iteration_nr;
+    else
+      return -1;
+  }
+}
+
+bool rml_enkf_set_bool( void * arg , const char * var_name , bool value) {
+  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
+  {
+    bool name_recognized = true;
+    
+    if (strcmp( var_name , USE_PRIOR_KEY) == 0)
+      rml_enkf_set_use_prior( module_data , value );
+    else if (strcmp( var_name , CLEAR_LOG_KEY) == 0)
+      rml_enkf_set_clear_log( module_data , value );
+    else if (strcmp( var_name , LAMBDA_RECALCULATE_KEY) == 0)
+      rml_enkf_set_lambda_recalculate( module_data , value );
+    else
+      name_recognized = false;
+
+    return name_recognized;
+  }
+}
+
+bool rml_enkf_get_bool( const void * arg, const char * var_name) {
+  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , USE_PRIOR_KEY) == 0)
+      return module_data->use_prior;
+    else if (strcmp(var_name , CLEAR_LOG_KEY) == 0) 
+      return module_data->clear_log;
+    else if (strcmp(var_name , LAMBDA_RECALCULATE_KEY) == 0) 
+      return module_data->lambda_recalculate;
+    else
+       return false;
+  }
+}
+
 bool rml_enkf_set_double( void * arg , const char * var_name , double value) {
   rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
   {
@@ -659,39 +741,21 @@ bool rml_enkf_set_double( void * arg , const char * var_name , double value) {
   }
 }
 
-
-bool rml_enkf_set_int( void * arg , const char * var_name , int value) {
-  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
+double rml_enkf_get_double( const void * arg, const char * var_name) {
+  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
   {
-    bool name_recognized = true;
-    
-    if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
-      rml_enkf_set_subspace_dimension( module_data , value );
-    else if (strcmp( var_name , ITER_KEY) == 0)
-      rml_enkf_set_iteration_nr( module_data , value );
+    if (strcmp(var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
+      return module_data->lambda_reduce_factor;
+    if (strcmp(var_name , LAMBDA_INCREASE_FACTOR_KEY) == 0)
+      return module_data->lambda_increase_factor;
+    if (strcmp(var_name , LAMBDA0_KEY) == 0)
+      return module_data->lambda0;
+    if (strcmp(var_name , LAMBDA_MIN_KEY) == 0)
+      return module_data->lambda_min;
+    if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
+      return module_data->truncation;
     else
-      name_recognized = false;
-
-    return name_recognized;
-  }
-}
-
-
-bool rml_enkf_set_bool( void * arg , const char * var_name , bool value) {
-  rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
-  {
-    bool name_recognized = true;
-    
-    if (strcmp( var_name , USE_PRIOR_KEY) == 0)
-      rml_enkf_set_use_prior( module_data , value );
-    else if (strcmp( var_name , CLEAR_LOG_KEY) == 0)
-      rml_enkf_set_clear_log( module_data , value );
-    else if (strcmp( var_name , LAMBDA_RECALCULATE_KEY) == 0)
-      rml_enkf_set_lambda_recalculate( module_data , value );
-    else
-      name_recognized = false;
-
-    return name_recognized;
+      return -1;
   }
 }
 
@@ -710,15 +774,12 @@ bool rml_enkf_set_string( void * arg , const char * var_name , const char * valu
   }
 }
 
-
 long rml_enkf_get_options( void * arg , long flag ) {
   rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
   {
     return module_data->option_flags;
   }
 }
-
-
 
 bool rml_enkf_has_var( const void * arg, const char * var_name) {
   {
@@ -747,20 +808,6 @@ bool rml_enkf_has_var( const void * arg, const char * var_name) {
   }
 }
 
-
-
-
-int rml_enkf_get_int( const void * arg, const char * var_name) {
-  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
-  {
-    if (strcmp(var_name , ITER_KEY) == 0)
-      return module_data->iteration_nr;
-    else
-      return -1;
-  }
-}
-
-
 void * rml_enkf_get_ptr( const void * arg , const char * var_name ) {
   const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
   {
@@ -772,45 +819,13 @@ void * rml_enkf_get_ptr( const void * arg , const char * var_name ) {
 }
 
 
-bool rml_enkf_get_bool( const void * arg, const char * var_name) {
-  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
-  {
-    if (strcmp(var_name , USE_PRIOR_KEY) == 0)
-      return module_data->use_prior;
-    else if (strcmp(var_name , CLEAR_LOG_KEY) == 0) 
-      return module_data->clear_log;
-    else if (strcmp(var_name , LAMBDA_RECALCULATE_KEY) == 0) 
-      return module_data->lambda_recalculate;
-    else
-       return false;
-  }
-}
-
-
-
-double rml_enkf_get_double( const void * arg, const char * var_name) {
-  const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
-  {
-    if (strcmp(var_name , LAMBDA_REDUCE_FACTOR_KEY) == 0)
-      return module_data->lambda_reduce_factor;
-    if (strcmp(var_name , LAMBDA_INCREASE_FACTOR_KEY) == 0)
-      return module_data->lambda_increase_factor;
-    if (strcmp(var_name , LAMBDA0_KEY) == 0)
-      return module_data->lambda0;
-    if (strcmp(var_name , LAMBDA_MIN_KEY) == 0)
-      return module_data->lambda_min;
-    if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
-      return module_data->truncation;
-    else
-      return -1;
-  }
-}
 
 
 
 
-
-
+//**********************************************
+// Symbol table
+//**********************************************
 #ifdef INTERNAL_LINK
 #define SYMBOL_TABLE rml_enkf_symbol_table
 #else
