@@ -48,10 +48,10 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
   you have repeated calls to both of these functions the end result
   might be a surprise.  
 */
-#define INVALID_SUBSPACE_DIMENSION  -1
-#define INVALID_TRUNCATION          -1
-#define DEFAULT_SUBSPACE_DIMENSION  INVALID_SUBSPACE_DIMENSION
-#define DEFAULT_USE_PRIOR           true
+#define INVALID_SUBSPACE_DIMENSION     -1
+#define INVALID_TRUNCATION             -1
+#define DEFAULT_SUBSPACE_DIMENSION     INVALID_SUBSPACE_DIMENSION
+#define DEFAULT_USE_PRIOR              true
 #define DEFAULT_LAMBDA_INCREASE_FACTOR 4
 #define DEFAULT_LAMBDA_REDUCE_FACTOR   0.1
 #define DEFAULT_LAMBDA0                -1
