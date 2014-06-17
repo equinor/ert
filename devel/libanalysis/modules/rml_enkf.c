@@ -378,7 +378,10 @@ static void rml_enkf_init1__( rml_enkf_data_type * data) {
   free(Wm);
 }
 
+// Creates state scaling matrix
 void rml_enkf_init_Csc(rml_enkf_data_type * data){
+	// This seems a strange choice of scaling matrix. Review?
+	
   int state_size = matrix_get_rows( data->active_prior );
   int ens_size   = matrix_get_columns( data->active_prior );
 
