@@ -533,7 +533,7 @@ void rml_enkf_init2__( rml_enkf_data_type * data, matrix_type *A, matrix_type *A
 
   // Dk1 = Csc^(-1)/sqrt(N-1) * A*(I - 1/N*ones(m,N))
   matrix_subtract_row_mean(Dk1);                  // Dk1 = Dk1 * (I - 1/N*ones(m,N))
-  zzz_enkf_common_scaleA(Dk1 , data->Csc , true); // Dk1 = Csc^(-1) * Dk1
+  rml_enkf_common_scaleA(Dk1 , data->Csc , true); // Dk1 = Csc^(-1) * Dk1
   matrix_scale(Dk1,nsc);                          // Dk1 = Dk1 / sqrt(N-1)
 
 	// X6 = Dk1' * X5
