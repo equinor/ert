@@ -20,18 +20,14 @@ class LoadResultsManuallyTest(ExtendedTestCase):
             realisations = BoolVector(default_value=True,initial_size=25)
             iteration = 0
 
-
             ert.loadFromForwardModel(realisations, iteration, load_into)
 
-            load_from_case_state_map = load_from.getStateMap()
             load_into_case_state_map = load_into.getStateMap()
 
-            load_from_states = [state for state in load_from_case_state_map]
             load_into_states = [state for state in load_into_case_state_map]
 
-
-            self.assertListEqual(load_from_states, load_into_states)
-
+            self.assertIsNotNone(load_into_states)
+            self.assertTrue(load_into_states.__len__()>0)
 
 
 
