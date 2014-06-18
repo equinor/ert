@@ -1,5 +1,5 @@
-from ert.test import ErtTestContext
-from ert.test.extended_testcase import ExtendedTestCase
+from ert.enkf.enums.realization_state_enum import RealizationStateEnum
+from ert.test import ErtTestContext, ExtendedTestCase
 from ert.util import BoolVector
 
 
@@ -18,6 +18,7 @@ class LoadResultsManuallyTest(ExtendedTestCase):
 
             ert.getEnkfFsManager().switchFileSystem(load_from)
             realisations = BoolVector(default_value=True,initial_size=25)
+            realisations[7] = False
             iteration = 0
 
             ert.loadFromForwardModel(realisations, iteration, load_into)
@@ -26,8 +27,12 @@ class LoadResultsManuallyTest(ExtendedTestCase):
 
             load_into_states = [state for state in load_into_case_state_map]
 
-            self.assertIsNotNone(load_into_states)
-            self.assertTrue(load_into_states.__len__()>0)
+            expected = [RealizationStateEnum.STATE_HAS_DATA] * 25
+            expected[7] = RealizationStateEnum.STATE_UNDEFINED
+            
+            self.assertListEqual(load_into_states, expected)
+
+
 
 
 
