@@ -193,7 +193,7 @@ add_test( NAME python.tests.ert.enkf.enkf_obs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_obs.EnKFObsTest)
 
-add_test( NAME python.tests.ert.enkf.test_enkf_load_results_manually
+add_test( NAME python.tests.ert.enkf.enkf_load_results_manually
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest)
 
@@ -514,6 +514,7 @@ set_property( TEST python.tests.ert.enkf.enkf_fs              PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.enkf_fs_manager1     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_fs_manager2     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_obs             PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.enkf_load_results_manually     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data_config PROPERTY LABELS Python:StatoilData )
 
