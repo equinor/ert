@@ -680,11 +680,13 @@ void enkf_linalg_rml_enkfX3(matrix_type *X3, matrix_type *VdTr, double *Wdr, mat
     This routine computes X3 for RML_EnKF module as X3 = Vd *Wd*X2 
   */
 
+	printf("\nWd: ");
   matrix_type *tmp = matrix_alloc_copy(VdTr);
   for (int i=0; i< nsign ; i++) {
-    printf("The value of Wd(%d) is = %5.2f \n",i, Wdr[i]);
+		printf("%5.2f ", Wdr[i]);
     matrix_scale_row(tmp, i, Wdr[i]);
   }
+	printf("\n\n");
 
   matrix_matmul_with_transpose( X3 , tmp , X2 , true, false);
   matrix_free(tmp);
@@ -739,12 +741,13 @@ void enkf_linalg_rml_enkfX7(matrix_type * X7, matrix_type * VdT, double * Wdr, d
   matrix_type *tmp1 = matrix_alloc_copy(VdT);
   matrix_type *tmp2 = matrix_alloc(ens_size,ens_size);
 
-  for (int i=0; i< nsign ; i++) {
+
+  for (int i=0; i < nsign ; i++) {
     double scale_factor = 1 / ( a + (Wdr[i]*Wdr[i]));
-    printf("Wdr[%d] : %g  scale_factor:%g \n",i , Wdr[i] , scale_factor);
-    matrix_scale_row(tmp1, i , scale_factor);
+    matrix_scale_row( tmp1 , i , scale_factor);
   }
- 
+  
+
   matrix_matmul_with_transpose(tmp2, tmp1, VdT, true, false);
   matrix_matmul(X7, tmp2, X6);
   matrix_free(tmp1);
