@@ -175,10 +175,24 @@ class EnkfFsManager(BaseCClass):
         EnkfFsManager.cNamespace().initialize_from_scratch(self, parameter_list, iens1, iens2, force_init)
 
 
+    def isCaseMounted(self, case_name, mount_root=None):
+        if mount_root is None:
+            mount_root = self.__mount_root
+
+        full_case_name = self.__createFullCaseName(mount_root, case_name)
+
+        return full_case_name in self.__fs_rotator
+
+
     def getStateMapForCase(self, case):
         """ @rtype: StateMap """
         assert isinstance(case, str)
-        return EnkfFsManager.cNamespace().alloc_readonly_state_map(self, case)
+
+        if self.isCaseMounted(case):
+            fs = self.getFileSystem(case)
+            return fs.getStateMap()
+        else:
+            return EnkfFsManager.cNamespace().alloc_readonly_state_map(self, case)
 
     def getTimeMapForCase(self, case):
         """ @rtype: TimeMap """
