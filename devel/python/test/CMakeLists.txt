@@ -40,6 +40,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_enkf_fs_manager1.py
     ert_tests/enkf/test_enkf_fs_manager2.py
     ert_tests/enkf/test_enkf_library.py
+    ert_tests/enkf/test_enkf_load_results_manually.py
     ert_tests/enkf/test_analysis_config.py
     ert_tests/enkf/test_analysis_iter_config.py
     ert_tests/enkf/test_state_map.py
@@ -192,6 +193,9 @@ add_test( NAME python.tests.ert.enkf.enkf_obs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_obs.EnKFObsTest)
 
+add_test( NAME python.tests.ert.enkf.test_enkf_load_results_manually
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest)
 
 add_test( NAME python.tests.ert.enkf.enkf_fs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
