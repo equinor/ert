@@ -33,6 +33,11 @@
 #include <rml_enkf_common.h>
 
 
+// Explanation
+// zzz_enkf_common_store_state(  state , A ,ens_mask) assigns A to state. RESIZES state to rows(A)-by-LEN(ens_mask)
+// zzz_enkf_common_recover_state(state , A ,ens_mask) assigns state to A. RESIZES A to rows(state)-by-SUM(ens_mask)
+
+
 void rml_enkf_common_store_state( matrix_type * state , const matrix_type * A , const bool_vector_type * ens_mask ) { 
   matrix_resize( state , matrix_get_rows( A ) , bool_vector_size( ens_mask ) , false);
   {
@@ -69,6 +74,7 @@ void rml_enkf_common_recover_state( const matrix_type * state , matrix_type * A 
 
 
 
+// Scale rows by the entries in the vector Csc
 void rml_enkf_common_scaleA(matrix_type *A , const double * Csc, bool invert ){
   int nrows = matrix_get_rows(A);
   if (invert) {
