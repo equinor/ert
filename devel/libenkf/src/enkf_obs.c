@@ -337,17 +337,7 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
             matrix_iset(error_covar , j , i  , covar * corr );
         }
       }
-      {
-        char * filename = util_alloc_sprintf( "/tmp/covar/%s_%04d-%04d" , obs_vector_get_obs_key( obs_vector ), 
-                                              obs_tstep_list_iget( tstep_list , 0 ),
-                                              obs_tstep_list_get_last( tstep_list ));
-        FILE * stream = util_mkdir_fopen( filename , "w");
 
-        matrix_fprintf(error_covar , "%7.3f " , stream );
-        fclose( stream );
-
-        free( filename );
-      }
     }
     
     
