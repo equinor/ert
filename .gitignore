@@ -33,3 +33,6 @@ devel/python/lib64
 /devel/GTAGS
 /devel/gtags.sh
 /cmake.sh
+
+# Vim backup files
+*.sw[o-q]
