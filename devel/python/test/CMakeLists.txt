@@ -100,6 +100,7 @@ set(TEST_SOURCES
     ert_tests/geometry/test_intersection.py
     ert_tests/geometry/test_convex_hull.py
     ert_tests/geometry/test_point_in_polygon.py
+    ert_tests/geometry/test_polygon_slicing.py
 
 
     ert_tests/run/__init__.py
@@ -481,6 +482,9 @@ add_test( NAME python.tests.ert.geometry.point_in_polygon
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_point_in_polygon.PointInPolygonTest)
 
+add_test( NAME python.tests.ert.geometry.polygon_slicing
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_polygon_slicing.PolygonSlicingTest)
 
 
 set_property( TEST python.tests.ert.sched.sched           PROPERTY LABELS Python:StatoilData )
