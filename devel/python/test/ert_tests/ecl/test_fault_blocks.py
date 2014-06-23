@@ -87,6 +87,26 @@ class FaultBlockTest(ExtendedTestCase):
             
         self.assertEqual( fault_block[-1].x , fault_block[len(fault_block) - 1].x)
         
+        
+    def test_fault_block_assign2region(self):
+        fault_block = create_FaultBlock()
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [2] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [2] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 3 )
+        self.assertEqual( [2,3] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 1 )
+        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
+
+       
+ 
 
     def test_fault_block_gc(self):
         fault_block = create_FaultBlock()
