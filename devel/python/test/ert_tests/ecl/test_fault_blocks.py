@@ -57,6 +57,16 @@ class FaultBlockTest(ExtendedTestCase):
         fault_block.addCell( 2 , 2)
 
         self.assertEqual(len(fault_block) , 3)
+
+        g_list = fault_block.getGlobalIndexList()
+        self.assertEqual(len(g_list) , 3)
+        self.assertEqual( g_list[0] , 0 )
+        self.assertEqual( g_list[1] , 1 + self.grid.getNX() )
+        self.assertEqual( g_list[2] , 2*(1 + self.grid.getNX()) )
+        
+        g_list[0] = 1000
+        g_list2 = fault_block.getGlobalIndexList()
+        self.assertEqual( g_list2[0] , 0 )
         
         self.assertTrue( isinstance(fault_block[0] , FaultBlockCell)  )
 
