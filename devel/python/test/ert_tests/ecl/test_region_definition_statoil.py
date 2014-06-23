@@ -47,7 +47,8 @@ class RegionDefinitionTest(ExtendedTestCase):
         self.poly_file10 = self.createTestPath("Statoil/ECLIPSE/Mariner/pol10.xyz")
         self.poly_file11 = self.createTestPath("Statoil/ECLIPSE/Mariner/pol11.xyz")
 
-        self.faultblocks = FaultBlockCollection( self.grid , self.kw )
+        self.faultblocks = FaultBlockCollection( self.grid )
+        self.faultblocks.scanKeyword( self.kw )
 
         
     def test_create(self):

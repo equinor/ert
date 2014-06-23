@@ -43,7 +43,8 @@ class RegionDefinitionTest(ExtendedTestCase):
                 self.fault_block_kw[g1] = 1
                 self.fault_block_kw[g2] = 2
 
-        self.fault_blocks = FaultBlockCollection( self.grid , self.fault_block_kw )
+        self.fault_blocks = FaultBlockCollection( self.grid )
+        self.fault_blocks.scanKeyword( self.fault_block_kw )
 
 
     

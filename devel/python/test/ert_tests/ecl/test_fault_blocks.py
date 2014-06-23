@@ -192,7 +192,7 @@ class FaultBlockTest(ExtendedTestCase):
 
 
     def test_fault_block_collection(self):
-        collection = FaultBlockCollection( self.grid , self.kw )
+        collection = FaultBlockCollection( self.grid  )
         self.assertTrue( len(collection) , self.grid.getNZ() )
 
         layer_list = []
@@ -204,3 +204,4 @@ class FaultBlockTest(ExtendedTestCase):
 
         self.assertTrue( len(layer_list) , self.grid.getNZ() )
         
+        collection.scanKeyword( self.kw )
