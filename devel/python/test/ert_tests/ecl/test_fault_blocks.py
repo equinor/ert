@@ -121,22 +121,19 @@ class FaultBlockTest(ExtendedTestCase):
 
     def test_fault_block_layer(self):
         with self.assertRaises(ValueError):
-            layer = FaultBlockLayer( self.grid , self.kw , -1 )
+            layer = FaultBlockLayer( self.grid , -1 )
 
         with self.assertRaises(ValueError):
-            layer = FaultBlockLayer( self.grid , self.kw , self.grid.size  )
+            layer = FaultBlockLayer( self.grid , self.grid.size  )
             
         layer = FaultBlockLayer( self.grid , 1 )
         self.assertEqual( 1 , layer.getK() )
 
         kw = EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE )
         with self.assertRaises(ValueError):
-            layer = FaultBlockLayer( self.grid , EclKW.create( "FAULTBLK" , 1 , EclTypeEnum.ECL_INT_TYPE ) , 0)
+            layer.scanKeyword( kw )
 
-        with self.assertRaises(ValueError):
-            layer = FaultBlockLayer( self.grid , EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE ) , 0)
-
-        layer = FaultBlockLayer( self.grid , self.kw , 1 )
+        layer.scanKeyword( self.kw )
         self.assertEqual( 2 , len(layer) )
 
         with self.assertRaises(TypeError):
