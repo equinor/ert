@@ -47,7 +47,7 @@ typedef enum { GEN_DATA_UNDEFINED = 0,
      Observe that the format ASCII_template can *NOT* be used for
      loading files.
   */
-  gen_data_config_type       * gen_data_config_alloc_empty( const char * key );
+  gen_data_config_type       * gen_data_config_alloc( const char * key );
   void                         gen_data_config_set_write_fs( gen_data_config_type * config, enkf_fs_type * write_fs);
   void                         gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size );
   gen_data_file_format_type    gen_data_config_get_input_format ( const gen_data_config_type * );
@@ -74,7 +74,13 @@ typedef enum { GEN_DATA_UNDEFINED = 0,
                               gen_data_file_format_type output_format ,
                               const char * template_ecl_file          , 
                               const char * template_data_key          );
-  
+
+  void                        gen_data_config_set_active_report_steps_from_string( gen_data_config_type *config , const char * range_string);
+  const int_vector_type     * gen_data_config_get_active_report_steps( const gen_data_config_type *config);
+  int                         gen_data_config_iget_report_step( const gen_data_config_type *config , int index);
+  void                        gen_data_config_add_report_step( gen_data_config_type * config , int report_step);
+  bool                        gen_data_config_has_report_step( const gen_data_config_type * config , int report_step);
+  int                         gen_data_config_num_report_step( const gen_data_config_type * config );
   const char * gen_data_config_get_template_file( const gen_data_config_type * config );
   const char * gen_data_config_get_template_key( const gen_data_config_type * config );
   void gen_data_config_fprintf_config( const gen_data_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile , 

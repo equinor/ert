@@ -24,6 +24,7 @@
 #include <ert/util/util.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
+#include <ert/util/string_util.h>
 
 #include <ert/config/config.h>
 
@@ -65,6 +66,7 @@ struct gen_data_config_struct {
   gen_data_file_format_type      input_format;          /* The format used for loading gen_data instances when the forward model has completed *AND* for loading the initial files.*/
   gen_data_file_format_type      output_format;         /* The format used when gen_data instances are written to disk for the forward model. */
   int_vector_type              * data_size_vector;      /* Data size, i.e. number of elements , indexed with report_step */
+  int_vector_type              * active_report_steps;   /* The report steps where we expect to load data for this instance. */
   bool                           update_valid; 
   pthread_mutex_t                update_lock;  
   /*****************************************************************/
@@ -127,7 +129,7 @@ int gen_data_config_get_byte_size( const gen_data_config_type * config , int rep
 
 
 
-gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
+gen_data_config_type * gen_data_config_alloc( const char * key ) {
   gen_data_config_type * config = util_malloc(sizeof * config );
   UTIL_TYPE_ID_INIT( config , GEN_DATA_CONFIG_ID);
 
@@ -145,11 +147,12 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   config->input_format       = GEN_DATA_UNDEFINED;
   config->output_format      = GEN_DATA_UNDEFINED;
   config->data_size_vector   = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
+  config->active_report_steps= int_vector_alloc( 0 , 0 );
   config->update_valid       = false;
   config->active_mask        = bool_vector_alloc(0 , true ); /* Elements are explicitly set to FALSE - this MUST default to true. */ 
   config->active_report_step = -1;
   config->ens_size           = -1;
-  config->read_fs        = NULL;
+  config->read_fs            = NULL;
   config->write_fs           = NULL;
   config->dynamic            = false;
   pthread_mutex_init( &config->update_lock , NULL );
@@ -319,6 +322,7 @@ gen_data_file_format_type gen_data_config_check_format( const void * format_stri
 
 void gen_data_config_free(gen_data_config_type * config) {
   int_vector_free( config->data_size_vector );
+  int_vector_free( config->active_report_steps );
   
   util_safe_free( config->key );
   util_safe_free( config->template_buffer );
@@ -493,6 +497,38 @@ void gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type *
   pthread_mutex_unlock( &config->update_lock );
 }
 
+int gen_data_config_num_report_step( const gen_data_config_type * config ) {
+  return int_vector_size( config->active_report_steps );
+}
+
+bool gen_data_config_has_report_step( const gen_data_config_type * config , int report_step) {
+  return int_vector_contains_sorted( config->active_report_steps , report_step );
+}
+
+void gen_data_config_add_report_step( gen_data_config_type * config , int report_step) {
+  if (config->dynamic) {
+    if (!gen_data_config_has_report_step( config , report_step)) {
+      int_vector_append( config->active_report_steps , report_step );
+      int_vector_sort( config->active_report_steps );
+    }
+  }
+}
+
+int gen_data_config_iget_report_step( const gen_data_config_type *config , int index) {
+  return int_vector_iget( config->active_report_steps , index );
+}
+
+void gen_data_config_set_active_report_steps_from_string( gen_data_config_type *config , const char * range_string) {
+  if (config->dynamic) {
+    int_vector_reset( config->active_report_steps );
+    string_util_update_active_list(range_string , config->active_report_steps );
+  }
+}
+
+
+const int_vector_type * gen_data_config_get_active_report_steps( const gen_data_config_type *config) {
+  return config->active_report_steps;
+}
 
 void gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size) {
   config->ens_size = ens_size;
