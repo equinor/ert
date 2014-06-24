@@ -46,7 +46,7 @@ class FaultBlockTest(ExtendedTestCase):
     def test_fault_block(self):
         fault_block = FaultBlock( self.grid , 0 , 77 )
         self.assertEqual( 77 , fault_block.getBlockID() )
-        
+
         fault_block.addCell( 0 , 0)
         (x0,y0,z0) = self.grid.get_xyz( global_index = 0 )
         (xc,yc) = fault_block.getCentroid()
@@ -126,6 +126,10 @@ class FaultBlockTest(ExtendedTestCase):
         with self.assertRaises(ValueError):
             layer = FaultBlockLayer( self.grid , self.kw , self.grid.size  )
             
+        layer = FaultBlockLayer( self.grid , 1 )
+        self.assertEqual( 1 , layer.getK() )
+
+        kw = EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE )
         with self.assertRaises(ValueError):
             layer = FaultBlockLayer( self.grid , EclKW.create( "FAULTBLK" , 1 , EclTypeEnum.ECL_INT_TYPE ) , 0)
 
