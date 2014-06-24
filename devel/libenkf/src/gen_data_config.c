@@ -129,7 +129,7 @@ int gen_data_config_get_byte_size( const gen_data_config_type * config , int rep
 
 
 
-gen_data_config_type * gen_data_config_alloc( const char * key ) {
+gen_data_config_type * gen_data_config_alloc( const char * key , bool dynamic ) {
   gen_data_config_type * config = util_malloc(sizeof * config );
   UTIL_TYPE_ID_INIT( config , GEN_DATA_CONFIG_ID);
 
@@ -154,7 +154,7 @@ gen_data_config_type * gen_data_config_alloc( const char * key ) {
   config->ens_size           = -1;
   config->read_fs            = NULL;
   config->write_fs           = NULL;
-  config->dynamic            = false;
+  config->dynamic            = dynamic;
   pthread_mutex_init( &config->update_lock , NULL );
 
   return config;
@@ -536,10 +536,6 @@ void gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size)
 
 void gen_data_config_set_write_fs(gen_data_config_type * config, enkf_fs_type * write_fs) {
   config->write_fs = write_fs;
-}
-
-void gen_data_config_set_dynamic( gen_data_config_type * config ) {
-  config->dynamic = true;
 }
 
 

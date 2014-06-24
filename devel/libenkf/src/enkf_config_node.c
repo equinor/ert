@@ -340,9 +340,9 @@ enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , load_
 
 /*****************************************************************/
 
-enkf_config_node_type * enkf_config_node_new_gen_data( const char * key , bool forward_init) {
+enkf_config_node_type * enkf_config_node_new_gen_data( const char * key , bool dynamic , bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( INVALID , GEN_DATA , key , forward_init);
-  config_node->data = gen_data_config_alloc( key );
+  config_node->data = gen_data_config_alloc( key , dynamic );
   return config_node;
 }
 

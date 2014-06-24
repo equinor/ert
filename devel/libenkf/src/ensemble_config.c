@@ -386,7 +386,7 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
           }
           
           if (util_int_format_count( result_file ) == 1) {
-            config_node = ensemble_config_add_gen_data( ensemble_config , node_key , forward_init);
+            config_node = ensemble_config_add_gen_data( ensemble_config , node_key , true , forward_init);
             enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
             {
               const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
@@ -433,7 +433,7 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
               fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
           }
           
-          config_node   = ensemble_config_add_gen_data( ensemble_config , node_key , forward_init);
+          config_node   = ensemble_config_add_gen_data( ensemble_config , node_key , false , forward_init);
           enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
           {
             const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
@@ -861,8 +861,8 @@ enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * confi
 }
 
 
-enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key , bool forward_init) {
-  enkf_config_node_type * config_node = enkf_config_node_new_gen_data( key , forward_init);
+enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key , bool dynamic , bool forward_init) {
+  enkf_config_node_type * config_node = enkf_config_node_new_gen_data( key , dynamic , forward_init);
   ensemble_config_add_node__( config , config_node );
   return config_node;
 }

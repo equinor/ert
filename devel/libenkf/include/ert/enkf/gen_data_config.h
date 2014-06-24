@@ -40,14 +40,13 @@ typedef enum { GEN_DATA_UNDEFINED = 0,
   gen_data_file_format_type;
 
   bool                         gen_data_config_is_dynamic( const gen_data_config_type * config );
-  void                         gen_data_config_set_dynamic( gen_data_config_type * config );
   void                         gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type * fs, int report_step , bool force_load);
     
   /* 
      Observe that the format ASCII_template can *NOT* be used for
      loading files.
   */
-  gen_data_config_type       * gen_data_config_alloc( const char * key );
+  gen_data_config_type       * gen_data_config_alloc( const char * key , bool dynamic );
   void                         gen_data_config_set_write_fs( gen_data_config_type * config, enkf_fs_type * write_fs);
   void                         gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size );
   gen_data_file_format_type    gen_data_config_get_input_format ( const gen_data_config_type * );

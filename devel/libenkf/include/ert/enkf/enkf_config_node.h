@@ -42,7 +42,7 @@ extern "C" {
 
   bool                    enkf_config_node_has_vector( const enkf_config_node_type * node , enkf_fs_type * fs , int iens , state_enum state);
   bool                    enkf_config_node_has_node( const enkf_config_node_type * node , enkf_fs_type * fs , node_id_type node_id);
-  enkf_config_node_type * enkf_config_node_new_gen_data( const char * key, bool forward_init );
+  enkf_config_node_type * enkf_config_node_new_gen_data( const char * key, bool dynamic , bool forward_init );
   bool                    enkf_config_node_vector_storage( const enkf_config_node_type * config_node);
 
   void enkf_config_node_update_gen_data( enkf_config_node_type * config_node, 

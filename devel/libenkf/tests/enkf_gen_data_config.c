@@ -29,7 +29,7 @@
 
 void test_report_steps_param() {
 
-  gen_data_config_type * config = gen_data_config_alloc("KEY");
+  gen_data_config_type * config = gen_data_config_alloc("KEY" , false);
   test_assert_false( gen_data_config_is_dynamic( config ));
   test_assert_int_equal( 0 , gen_data_config_num_report_step( config ));
   test_assert_false( gen_data_config_has_report_step( config , 0 ));
@@ -50,8 +50,7 @@ void test_report_steps_param() {
 
 
 void test_report_steps_dynamic() {
-  gen_data_config_type * config = gen_data_config_alloc("KEY");
-  gen_data_config_set_dynamic( config );
+  gen_data_config_type * config = gen_data_config_alloc("KEY" , true);
   test_assert_true( gen_data_config_is_dynamic( config ));
   test_assert_int_equal( 0 , gen_data_config_num_report_step( config ));
   test_assert_false( gen_data_config_has_report_step( config , 0 ));
