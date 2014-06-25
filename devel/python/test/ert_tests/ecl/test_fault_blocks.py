@@ -46,7 +46,7 @@ class FaultBlockTest(ExtendedTestCase):
     def test_fault_block(self):
         fault_block = FaultBlock( self.grid , 0 , 77 )
         self.assertEqual( 77 , fault_block.getBlockID() )
-        
+
         fault_block.addCell( 0 , 0)
         (x0,y0,z0) = self.grid.get_xyz( global_index = 0 )
         (xc,yc) = fault_block.getCentroid()
@@ -57,6 +57,16 @@ class FaultBlockTest(ExtendedTestCase):
         fault_block.addCell( 2 , 2)
 
         self.assertEqual(len(fault_block) , 3)
+
+        g_list = fault_block.getGlobalIndexList()
+        self.assertEqual(len(g_list) , 3)
+        self.assertEqual( g_list[0] , 0 )
+        self.assertEqual( g_list[1] , 1 + self.grid.getNX() )
+        self.assertEqual( g_list[2] , 2*(1 + self.grid.getNX()) )
+        
+        g_list[0] = 1000
+        g_list2 = fault_block.getGlobalIndexList()
+        self.assertEqual( g_list2[0] , 0 )
         
         self.assertTrue( isinstance(fault_block[0] , FaultBlockCell)  )
 
@@ -77,6 +87,26 @@ class FaultBlockTest(ExtendedTestCase):
             
         self.assertEqual( fault_block[-1].x , fault_block[len(fault_block) - 1].x)
         
+        
+    def test_fault_block_assign2region(self):
+        fault_block = create_FaultBlock()
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [2] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [2] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 3 )
+        self.assertEqual( [2,3] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 1 )
+        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
+
+       
+ 
 
     def test_fault_block_gc(self):
         fault_block = create_FaultBlock()
@@ -91,18 +121,19 @@ class FaultBlockTest(ExtendedTestCase):
 
     def test_fault_block_layer(self):
         with self.assertRaises(ValueError):
-            layer = FaultBlockLayer( self.grid , self.kw , -1 )
+            layer = FaultBlockLayer( self.grid , -1 )
 
         with self.assertRaises(ValueError):
-            layer = FaultBlockLayer( self.grid , self.kw , self.grid.size  )
+            layer = FaultBlockLayer( self.grid , self.grid.size  )
             
-        with self.assertRaises(ValueError):
-            layer = FaultBlockLayer( self.grid , EclKW.create( "FAULTBLK" , 1 , EclTypeEnum.ECL_INT_TYPE ) , 0)
+        layer = FaultBlockLayer( self.grid , 1 )
+        self.assertEqual( 1 , layer.getK() )
 
+        kw = EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE )
         with self.assertRaises(ValueError):
-            layer = FaultBlockLayer( self.grid , EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE ) , 0)
+            layer.scanKeyword( kw )
 
-        layer = FaultBlockLayer( self.grid , self.kw , 1 )
+        layer.scanKeyword( self.kw )
         self.assertEqual( 2 , len(layer) )
 
         with self.assertRaises(TypeError):
@@ -161,7 +192,7 @@ class FaultBlockTest(ExtendedTestCase):
 
 
     def test_fault_block_collection(self):
-        collection = FaultBlockCollection( self.grid , self.kw )
+        collection = FaultBlockCollection( self.grid  )
         self.assertTrue( len(collection) , self.grid.getNZ() )
 
         layer_list = []
@@ -173,3 +204,4 @@ class FaultBlockTest(ExtendedTestCase):
 
         self.assertTrue( len(layer_list) , self.grid.getNZ() )
         
+        collection.scanKeyword( self.kw )

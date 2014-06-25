@@ -38,6 +38,20 @@ class PolylineTest(ExtendedTestCase):
         self.assertTrue(polyline.isClosed())
 
 
+
+    def test_construction_default(self):
+        with self.assertRaises(TypeError):
+            pl = Polyline( init_points = 1 )
+
+        with self.assertRaises(TypeError):
+            pl = Polyline( init_points = [1.23] )
+
+        pl = Polyline( init_points = [(1,0) , (1,1) , (1,2)])
+        self.assertEqual( len(pl) , 3 )
+
+
+
+
     def test_iteration(self):
         values = [(0, 0, 0),
                   (1, 0, 0),

@@ -31,7 +31,8 @@ class FaultBlockTest(ExtendedTestCase):
 
         
     def test_load(self):
-        faultBlocks = FaultBlockCollection( self.grid , self.kw )
+        faultBlocks = FaultBlockCollection( self.grid )
+        faultBlocks.scanKeyword( self.kw )
 
         for layer in faultBlocks:
             for block in layer:

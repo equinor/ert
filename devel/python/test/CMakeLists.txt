@@ -31,6 +31,8 @@ set(TEST_SOURCES
     ert_tests/ecl/test_faults.py
     ert_tests/ecl/test_statoil_faults.py
     ert_tests/ecl/test_fault_blocks.py
+    ert_tests/ecl/test_region_definition_statoil.py
+    ert_tests/ecl/test_region_definition.py
     ert_tests/ecl/test_npv.py
 
     ert_tests/enkf/__init__.py
@@ -403,6 +405,14 @@ add_test( NAME python.tests.ert.ecl.fault_blocks
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_fault_blocks.FaultBlockTest )
 
+add_test( NAME python.tests.ert.ecl.region_definition_statoil
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_region_definition_statoil.RegionDefinitionTest )
+
+add_test( NAME python.tests.ert.ecl.region_definition
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_region_definition.RegionDefinitionTest )
+
 add_test( NAME python.tests.ert.ecl.fault_blocks_statoil
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_fault_blocks_statoil.FaultBlockTest )
@@ -509,7 +519,7 @@ set_property( TEST python.tests.ert.util.stringlist       PROPERTY LABELS Python
 set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.ecl.faults            PROPERTY LABELS Python )
 
-
+set_property( TEST python.tests.ert.ecl.region_definition_statoil PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.fault_blocks_statoil  PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.statoil_faults        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf                 PROPERTY LABELS Python:StatoilData )

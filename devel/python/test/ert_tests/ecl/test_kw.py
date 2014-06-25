@@ -103,6 +103,42 @@ class KWTest(ExtendedTestCase):
         file2.close()
         self.assertFilesAreEqual(name1, name2)
 
+        
+    def test_sum( self ):
+        kw_string = EclKW.create( "STRING" , 100 , EclTypeEnum.ECL_CHAR_TYPE )
+        with self.assertRaises(ValueError):
+            kw_string.sum()
+
+
+        kw_int = EclKW.create( "INT" , 4 , EclTypeEnum.ECL_INT_TYPE )
+        kw_int[0] = 1
+        kw_int[1] = 2
+        kw_int[2] = 3
+        kw_int[3] = 4
+        self.assertEqual( kw_int.sum() , 10 )
+
+        kw_d = EclKW.create( "D" , 4 , EclTypeEnum.ECL_DOUBLE_TYPE )
+        kw_d[0] = 1
+        kw_d[1] = 2
+        kw_d[2] = 3
+        kw_d[3] = 4
+        self.assertEqual( kw_d.sum() , 10 )
+
+        kw_f = EclKW.create( "F" , 4 , EclTypeEnum.ECL_FLOAT_TYPE )
+        kw_f[0] = 1
+        kw_f[1] = 2
+        kw_f[2] = 3
+        kw_f[3] = 4
+        self.assertEqual( kw_f.sum() , 10 )
+
+        kw_b = EclKW.create( "F" , 4 , EclTypeEnum.ECL_BOOL_TYPE )
+        kw_b[0] = False
+        kw_b[1] = True
+        kw_b[2] = False
+        kw_b[3] = True
+        self.assertEqual( kw_b.sum() , 2 )
+
+
 
     def test_sub_copy(self):
         unrst_file_path = self.createTestPath("Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST")
