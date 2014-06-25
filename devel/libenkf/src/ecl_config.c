@@ -248,9 +248,11 @@ ui_return_type * ecl_config_validate_schedule_file(const ecl_config_type * ecl_c
    changed either ...)
 */
 
-void ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file)
+void ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file, const char * schedule_target_file)
 {
-  {
+  if (schedule_target_file)
+      ecl_config->schedule_target_file = util_alloc_string_copy(schedule_target_file);
+  else {
     char * base; /* The schedule target file will be without any path component */
     char * ext;
     util_alloc_file_components(schedule_file, NULL, &base, &ext);
@@ -542,7 +544,7 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
     ui_return_type * ui_return = ecl_config_validate_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
     if (ui_return_get_status(ui_return) == UI_RETURN_OK)
       ecl_config_set_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
-    else 
+    else
       util_abort("%s: failed to set eclbase format. Error:%s\n", __func__ , ui_return_get_last_error(ui_return));
     ui_return_free(ui_return);
   }
@@ -559,9 +561,18 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
   }
   
   if (config_item_set(config, SCHEDULE_FILE_KEY)) {
+    const char * schedule_target_file = config_safe_iget(config, SCHEDULE_FILE_KEY, 0, 1);
+    if (schedule_target_file) {
+      ui_return_type * ui_return_sched_target_file = ecl_config_validate_schedule_file(ecl_config, schedule_target_file);
+      if (!ui_return_get_status(ui_return_sched_target_file) == UI_RETURN_OK) {
+         util_abort("%s: failed to set target schedule file. Error:%s\n",__func__ , ui_return_get_last_error(ui_return_sched_target_file));
+      }
+      ui_return_free(ui_return_sched_target_file);
+    }
+
     ui_return_type * ui_return = ecl_config_validate_schedule_file(ecl_config, config_iget(config, SCHEDULE_FILE_KEY, 0, 0));
     if (ui_return_get_status(ui_return) == UI_RETURN_OK)
-      ecl_config_set_schedule_file(ecl_config, config_iget(config, SCHEDULE_FILE_KEY, 0, 0));
+      ecl_config_set_schedule_file(ecl_config, config_iget(config, SCHEDULE_FILE_KEY, 0, 0), schedule_target_file);
     else
       util_abort("%s: failed to set schedule file. Error:%s\n",__func__ , ui_return_get_last_error(ui_return));
 
@@ -866,7 +877,7 @@ void ecl_config_add_config_items(config_type * config)
   config_schema_item_type * item;
 
   item = config_add_schema_item(config, SCHEDULE_FILE_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
+  config_schema_item_set_argc_minmax(item, 1, 2);
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
   /*
    Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a

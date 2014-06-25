@@ -43,7 +43,7 @@ extern "C" {
   void                  ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_file);
   ui_return_type *      ecl_config_validate_data_file(const ecl_config_type * ecl_config, const char * data_file);
 
-  void                  ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file);
+  void                  ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file, const char * schedule_target_file);
   ui_return_type *      ecl_config_validate_schedule_file(const ecl_config_type * ecl_config , const char * schedule_file);
   const char *          ecl_config_get_schedule_file( const ecl_config_type * ecl_config );
   const char          * ecl_config_get_schedule_target(const ecl_config_type * );
