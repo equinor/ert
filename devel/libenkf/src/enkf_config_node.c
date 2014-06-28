@@ -338,13 +338,81 @@ enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , load_
 }
 
 
-/*****************************************************************/
 
-enkf_config_node_type * enkf_config_node_new_gen_data( const char * key , bool dynamic , bool forward_init) {
-  enkf_config_node_type * config_node = enkf_config_node_alloc__( INVALID , GEN_DATA , key , forward_init);
-  config_node->data = gen_data_config_alloc( key , dynamic );
+
+enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM( const char * node_key , 
+                                                          bool forward_init , 
+                                                          gen_data_file_format_type input_format , 
+                                                          gen_data_file_format_type output_format , 
+                                                          const char * init_file_fmt , 
+                                                          const char * ert_outfile_fmt) {
+
+  enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , GEN_DATA , node_key , forward_init );
+  config_node->data = gen_data_config_alloc_GEN_PARAM( node_key , output_format , input_format);
+    
+  enkf_config_node_update( config_node ,               /* Generic update - needs the format settings from the special.*/
+                           init_file_fmt ,
+                           ert_outfile_fmt , 
+                           NULL , 
+                           NULL );
+  
   return config_node;
 }
+
+
+
+
+enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_result( const char * key , 
+                                                                gen_data_file_format_type input_format,
+                                                                const char * enkf_infile_fmt ) {
+  
+  if (gen_data_config_valid_result_format( enkf_infile_fmt )) {
+    enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_RESULT , GEN_DATA , key , false);
+    config_node->data = gen_data_config_alloc_GEN_DATA_result( key , input_format );
+    
+    enkf_config_node_update( config_node ,               /* Generic update - needs the format settings from the special.*/
+                             NULL , 
+                             NULL , 
+                             enkf_infile_fmt ,
+                             NULL ); 
+    
+    return config_node;
+  } else {
+    fprintf(stderr, "** ERROR: The RESULT_FILE setting for %s is invalid - must have an embedded %%d - and be a relative path.\n" , key );
+    return NULL;
+  }
+}
+
+
+enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_state( const char * key, 
+                                                               bool forward_init , 
+                                                               gen_data_file_format_type input_format,
+                                                               gen_data_file_format_type output_format,
+                                                               const char * init_file_fmt           , 
+                                                               const char * template_ecl_file       , 
+                                                               const char * template_data_key       ,
+                                                               const char * enkf_outfile_fmt        , 
+                                                               const char * enkf_infile_fmt         , 
+                                                               const char * min_std_file) {
+  
+  if (gen_data_config_valid_result_format( enkf_infile_fmt )) {
+    enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_STATE , GEN_DATA , key , forward_init);
+    config_node->data = gen_data_config_alloc_GEN_DATA_state( key , output_format , input_format );
+
+    enkf_config_node_update(config_node ,               /* Generic update - needs the format settings from the special.*/
+                            init_file_fmt ,
+                            enkf_outfile_fmt , 
+                            enkf_infile_fmt, 
+                            min_std_file); 
+
+    return config_node;
+  } else {
+    fprintf(stderr, "** ERROR: The RESULT_FILE setting for %s is invalid - must have an embedded %%d - and be a relative path.\n" , key );
+    return NULL;
+  }
+}
+
+
 
 /*****************************************************************/
 
@@ -458,72 +526,6 @@ void enkf_config_node_update_general_field( enkf_config_node_type * config_node 
 
 /*****************************************************************/
 
-
-void enkf_config_node_update_gen_data( enkf_config_node_type * config_node, 
-                                       gen_data_file_format_type input_format,
-                                       gen_data_file_format_type output_format,
-                                       const char * init_file_fmt           , 
-                                       const char * template_ecl_file       , 
-                                       const char * template_data_key       ,
-                                       const char * enkf_outfile_fmt        , 
-                                       const char * enkf_infile_fmt         , 
-                                       const char * min_std_file) {
-
-  {
-    enkf_var_type var_type = INVALID_VAR;
-    /*
-      The var type parameter is determined by inspecting the
-      combination of input parameters. It is possible to specify an
-      invalid input combination; that should be identified with a call
-      to gen_data_config_is_valid() in the calling scope.
-
-
-      PARAMETER:      init_file_fmt    != NULL
-                      enkf_outfile_fmt != NULL
-                      enkf_infile_fmt  == NULL
-
-      DYNAMIC_STATE:  init_file_fmt    != NULL
-                      enkf_outfile_fmt != NULL
-                      enkf_infile_fmt  != NULL
-
-      DYNAMIC_RESULT: init_file_fmt    == NULL
-                      enkf_outfile_fmt == NULL
-                      enkf_infile_fmt  != NULL                
-
-    */
-    
-    if ((init_file_fmt != NULL) && (enkf_outfile_fmt != NULL) && (enkf_infile_fmt == NULL)) var_type = PARAMETER;
-
-    if ((init_file_fmt != NULL) && (enkf_outfile_fmt != NULL) && (enkf_infile_fmt != NULL)) var_type = DYNAMIC_STATE;
-
-    if ((init_file_fmt == NULL) && (enkf_outfile_fmt == NULL) && (enkf_infile_fmt != NULL)) var_type = DYNAMIC_RESULT;
-
-    config_node->var_type = var_type;  /* Can be stuck with INVALID_VAR */
-  }
-
-  if (enkf_infile_fmt)
-    if (util_int_format_count(enkf_infile_fmt) != 1)
-      util_abort("%s: Fatal error when updating GEN_DATA key:%s the enkf_infile_fmt must contain exactly one %%d format specifier \n" , enkf_config_node_get_key( config_node ));
-
-
-  if (config_node->var_type != INVALID_VAR) {
-    gen_data_config_update(config_node->data ,           /* Special update */ 
-                           config_node->var_type , 
-                           input_format , 
-                           output_format ,          
-                           template_ecl_file , 
-                           template_data_key);
-    
-    enkf_config_node_update( config_node ,               /* Generic update - needs the format settings from the special.*/
-                             init_file_fmt ,
-                             enkf_outfile_fmt , 
-                             enkf_infile_fmt, 
-                             min_std_file); 
-  }
-  
-}
-
-/*****************************************************************/                   
 
 enkf_config_node_type * enkf_config_node_container_iget( const enkf_config_node_type * node , int index) {
   return vector_iget( node->container_nodes , index );

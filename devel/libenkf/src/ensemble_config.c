@@ -232,7 +232,7 @@ bool ensemble_config_have_forward_init( const ensemble_config_type * ensemble_co
   return ensemble_config->have_forward_init;
 }
 
-void ensemble_config_add_node__( ensemble_config_type * ensemble_config , enkf_config_node_type * node) {
+void ensemble_config_add_node( ensemble_config_type * ensemble_config , enkf_config_node_type * node) {
   
   const char * key = enkf_config_node_get_key( node );
   if (ensemble_config_has_key(ensemble_config , key)) 
@@ -355,8 +355,30 @@ void ensemble_config_add_config_items(config_type * config) {
 }
 
 
+
+/*
+  The var type parameter is determined by inspecting the
+  combination of input parameters. It is possible to specify an
+  invalid input combination; that should be identified with a call
+  to gen_data_config_is_valid() in the calling scope.
+  
+  
+  PARAMETER:      init_file_fmt    != NULL
+                  enkf_outfile_fmt != NULL
+                  enkf_infile_fmt  == NULL
+
+  DYNAMIC_STATE:  init_file_fmt    != NULL
+                  enkf_outfile_fmt != NULL
+                  enkf_infile_fmt  != NULL
+
+  DYNAMIC_RESULT: init_file_fmt    == NULL
+                  enkf_outfile_fmt == NULL
+                  enkf_infile_fmt  != NULL                
+
+*/
+    
+
 void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_type * config) {
-/* gen_param  - should be unified with the gen_data*/
   const config_content_item_type * item = config_get_content_item( config , GEN_DATA_KEY );
   if (item != NULL) {
     int i;
@@ -377,24 +399,31 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
           const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
           const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
           const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
-          enkf_config_node_type * config_node;
           bool forward_init = false;
           
           if (forward_string) {
             if (!util_sscanf_bool( forward_string , &forward_init))
               fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
           }
+
           
-          if (util_int_format_count( result_file ) == 1) {
-            config_node = ensemble_config_add_gen_data( ensemble_config , node_key , true , forward_init);
-            enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
-            {
-              const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
-              if (!gen_data_config_is_valid( gen_data_config ))
-                util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , node_key);
-            }
-          } else
-            fprintf(stderr , "** WARNING: The RESULT_FILE: attribute must point to a filename format with an embedded %%d - the GEN_DATA key:%s will be ignored\n", node_key);
+          {
+            enkf_config_node_type * config_node = NULL;
+            
+            if ((init_file_fmt == NULL) && (ecl_file == NULL) && (result_file != NULL)) 
+              config_node = enkf_config_node_alloc_GEN_DATA_result( node_key , input_format , result_file);
+            else if ((init_file_fmt != NULL) && (ecl_file != NULL) && (result_file != NULL)) 
+              config_node = enkf_config_node_alloc_GEN_DATA_state( node_key , forward_init , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
+
+            if (template) 
+              gen_data_config_set_template( enkf_config_node_get_ref( config_node ) , template , data_key);
+
+            if (config_node) 
+              ensemble_config_add_node( ensemble_config , config_node );
+            else
+              fprintf(stderr,"** ERROR: The keyword:%s was not correctly configured - ignored\n", node_key );
+          }
+ 
         }
         hash_free( options );
       }
@@ -422,10 +451,8 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
           const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
           const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
           const char * data_key                   = hash_safe_get( options , KEY_KEY);
-          const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
           const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
-          const char *  forward_string            = hash_safe_get( options , FORWARD_INIT_KEY );
-          enkf_config_node_type * config_node;
+          const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
           bool forward_init = false;
           
           if (forward_string) {
@@ -433,12 +460,19 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
               fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
           }
           
-          config_node   = ensemble_config_add_gen_data( ensemble_config , node_key , false , forward_init);
-          enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
           {
-            const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
-            if (!gen_data_config_is_valid( gen_data_config ))
-              util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , node_key);
+            //Must check the input here before allocating; or alternatively possibly return NULL.
+            // IO formats +  init_file_fmt , ecl_file must be set                                                           
+            
+            enkf_config_node_type * config_node = enkf_config_node_alloc_GEN_PARAM( node_key , forward_init , input_format , output_format , init_file_fmt , ecl_file);
+            
+            if (template) 
+              gen_data_config_set_template( enkf_config_node_get_ref( config_node ) , template , data_key);
+            
+            if (min_std_file)
+              enkf_config_node_update_min_std( config_node , min_std_file );
+            
+            ensemble_config_add_node( ensemble_config , config_node );
           }
         }
         hash_free( options );
@@ -849,23 +883,18 @@ int ensemble_config_get_observations( const ensemble_config_type * config , enkf
 
 enkf_config_node_type * ensemble_config_add_field( ensemble_config_type * config , const char * key , ecl_grid_type * ecl_grid , bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_alloc_field( key , ecl_grid , config->field_trans_table , forward_init);
-  ensemble_config_add_node__( config , config_node );
+  ensemble_config_add_node( config , config_node );
   return config_node;
 }
 
 
 enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key , bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_new_gen_kw( key , config->gen_kw_format_string , forward_init);
-  ensemble_config_add_node__( config , config_node );
+  ensemble_config_add_node( config , config_node );
   return config_node;
 }
 
 
-enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key , bool dynamic , bool forward_init) {
-  enkf_config_node_type * config_node = enkf_config_node_new_gen_data( key , dynamic , forward_init);
-  ensemble_config_add_node__( config , config_node );
-  return config_node;
-}
 
 
 /**
@@ -892,7 +921,7 @@ enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensem
   } else {
     if ((ensemble_config->refcase == NULL) || (ecl_sum_has_general_var( ensemble_config->refcase , key ))) {
       config_node = enkf_config_node_alloc_summary( key , load_fail);
-      ensemble_config_add_node__(ensemble_config , config_node );
+      ensemble_config_add_node(ensemble_config , config_node );
     } else
       fprintf(stderr,"** warning: the refcase:%s does not contain the summary key:\"%s\" - will be ignored.\n", ecl_sum_get_case( ensemble_config->refcase ) , key);
   }
@@ -903,7 +932,7 @@ enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensem
 
 enkf_config_node_type * ensemble_config_add_surface( ensemble_config_type * ensemble_config , const char * key , bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_new_surface( key , forward_init );
-  ensemble_config_add_node__( ensemble_config , config_node );
+  ensemble_config_add_node( ensemble_config , config_node );
   return config_node;
 }
 
@@ -922,7 +951,7 @@ enkf_config_node_type * ensemble_config_add_container( ensemble_config_type * en
 
   {
     enkf_config_node_type * config_node = enkf_config_node_new_container( local_key );
-    ensemble_config_add_node__( ensemble_config , config_node );
+    ensemble_config_add_node( ensemble_config , config_node );
     if (random_key)
       free( local_key );
     return config_node;

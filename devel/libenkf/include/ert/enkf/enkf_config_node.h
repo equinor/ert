@@ -42,19 +42,65 @@ extern "C" {
 
   bool                    enkf_config_node_has_vector( const enkf_config_node_type * node , enkf_fs_type * fs , int iens , state_enum state);
   bool                    enkf_config_node_has_node( const enkf_config_node_type * node , enkf_fs_type * fs , node_id_type node_id);
-  enkf_config_node_type * enkf_config_node_new_gen_data( const char * key, bool dynamic , bool forward_init );
   bool                    enkf_config_node_vector_storage( const enkf_config_node_type * config_node);
 
-  void enkf_config_node_update_gen_data( enkf_config_node_type * config_node, 
-                                         gen_data_file_format_type input_format,
-                                         gen_data_file_format_type output_format,
-                                         const char * init_file_fmt     ,  
-                                         const char * template_ecl_file , 
-                                         const char * template_data_key ,
-                                         const char * enkf_outfile_fmt  ,
-                                         const char * enkf_infile_fmt   , 
-                                         const char * min_std_file);
+  enkf_config_node_type * enkf_config_node_new_GEN_PARAM( const char * key , bool forward_init);
+  enkf_config_node_type * enkf_config_node_new_GEN_DATA( const char * key , bool forward_init);
+
+
+  enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM( const char * node_key , 
+                                                            bool forward_init , 
+                                                            gen_data_file_format_type input_format , 
+                                                            gen_data_file_format_type output_format , 
+                                                            const char * init_file_fmt , 
+                                                            const char * ert_outfile_fmt);
   
+  
+  enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_state( const char * key, 
+                                                                 bool forward_init , 
+                                                                 gen_data_file_format_type input_format,
+                                                                 gen_data_file_format_type output_format,
+                                                                 const char * init_file_fmt           , 
+                                                                 const char * template_ecl_file       , 
+                                                                 const char * template_data_key       ,
+                                                                 const char * enkf_outfile_fmt        , 
+                                                                 const char * enkf_infile_fmt         , 
+                                                                 const char * min_std_file);
+
+
+  
+  enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_result( const char * key , 
+                                                                  gen_data_file_format_type input_format,
+                                                                  const char * enkf_infile_fmt );
+
+
+
+
+  void enkf_config_node_update_GEN_PARAM( enkf_config_node_type * config_node, 
+                                          gen_data_file_format_type input_format,
+                                          gen_data_file_format_type output_format,
+                                          const char * init_file_fmt           , 
+                                          const char * template_ecl_file       , 
+                                          const char * template_data_key       ,
+                                          const char * enkf_outfile_fmt        , 
+                                          const char * min_std_file);
+
+
+  void enkf_config_node_update_GEN_DATA_result( enkf_config_node_type * config_node, 
+                                                gen_data_file_format_type input_format,
+                                                const char * enkf_infile_fmt );
+  
+  
+  void enkf_config_node_update_GEN_DATA_state( enkf_config_node_type * config_node, 
+                                               gen_data_file_format_type input_format,
+                                               gen_data_file_format_type output_format,
+                                               const char * init_file_fmt     ,  
+                                               const char * template_ecl_file , 
+                                               const char * template_data_key ,
+                                               const char * enkf_outfile_fmt  ,
+                                               const char * enkf_infile_fmt   , 
+                                               const char * min_std_file);
+ 
   
   enkf_config_node_type * enkf_config_node_new_surface( const char * key , bool forward_init);
   

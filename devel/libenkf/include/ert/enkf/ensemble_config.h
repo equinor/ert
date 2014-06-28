@@ -43,6 +43,8 @@ typedef struct ensemble_config_struct ensemble_config_type;
   const char             * ensemble_config_get_gen_kw_format( const ensemble_config_type * ensemble_config );
   enkf_config_node_type  * ensemble_config_add_container( ensemble_config_type * ensemble_config , const char * key);
   enkf_config_node_type  * ensemble_config_add_surface( ensemble_config_type * ensemble_config , const char * key , bool forward_init);
+
+  void                     ensemble_config_add_node( ensemble_config_type * ensemble_config , enkf_config_node_type * node);
   enkf_config_node_type  * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key , bool dynamic , bool forward_init);
   enkf_config_node_type  * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key, load_fail_type load_fail);
   enkf_config_node_type  * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key , bool forward_init);

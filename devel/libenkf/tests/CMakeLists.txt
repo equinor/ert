@@ -16,6 +16,14 @@ add_executable( enkf_gen_data_config enkf_gen_data_config.c )
 target_link_libraries( enkf_gen_data_config enkf test_util )
 add_test( enkf_gen_data_config ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_data_config)
 
+add_executable( enkf_gen_data_config_parse enkf_gen_data_config_parse.c )
+target_link_libraries( enkf_gen_data_config enkf test_util )
+add_test( enkf_gen_data_config_parse ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_data_config_parse)
+
+add_executable( enkf_enkf_config_node_gen_data enkf_enkf_config_node_gen_data.c )
+target_link_libraries( enkf_enkf_config_node_gen_data enkf test_util )
+add_test( enkf_enkf_config_node_gen_data ${EXECUTABLE_OUTPUT_PATH}/enkf_enkf_config_node_gen_data)
+
 add_executable( enkf_block_obs enkf_block_obs.c )
 target_link_libraries( enkf_block_obs enkf test_util )
 add_test( enkf_block_obs ${EXECUTABLE_OUTPUT_PATH}/enkf_block_obs ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID)
