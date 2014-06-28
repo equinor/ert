@@ -56,10 +56,10 @@ void * enkf_main_exit_JOB(void * self , const stringlist_type * args ) {
 /**
    This job is purely added to make sure we have a job in the
    internal-gui/config subdirectory. As soon as there is a real job
-   there; this can be removed. 
+   there; this can be removed.
 */
+
 void * enkf_main_dummy_JOB(void * self , const stringlist_type * args ) {
-  enkf_main_type  * enkf_main = enkf_main_safe_cast( self );
   return NULL;
 }
 

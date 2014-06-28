@@ -66,7 +66,8 @@ typedef struct ensemble_config_struct ensemble_config_type;
   void                          ensemble_config_init_internalization( ensemble_config_type * );
   void                          ensemble_config_del_node(ensemble_config_type * , const char * );
   void                          ensemble_config_add_config_items(config_type * );
-  
+
+  void                          ensemble_config_add_GEN_DATA_config_item( config_type * config );
   void                          ensemble_config_add_GEN_PARAM_config_item( config_type * config );
   void                          ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_type * config );
 

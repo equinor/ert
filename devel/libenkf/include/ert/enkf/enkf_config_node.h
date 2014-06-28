@@ -47,6 +47,7 @@ extern "C" {
   enkf_config_node_type * enkf_config_node_new_GEN_PARAM( const char * key , bool forward_init);
   enkf_config_node_type * enkf_config_node_new_GEN_DATA( const char * key , bool forward_init);
 
+  void enkf_config_node_update_min_std( enkf_config_node_type * config_node , const char * min_std_file );
 
   enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM( const char * node_key , 
                                                             bool forward_init , 
