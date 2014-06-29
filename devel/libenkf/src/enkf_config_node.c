@@ -347,6 +347,7 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM( const char * node_key 
                                                           const char * init_file_fmt , 
                                                           const char * ert_outfile_fmt) {
 
+
   enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , GEN_DATA , node_key , forward_init );
   config_node->data = gen_data_config_alloc_GEN_PARAM( node_key , output_format , input_format);
     
@@ -842,6 +843,79 @@ void enkf_config_node_fprintf_config( const enkf_config_node_type * config_node 
     util_abort("%s: internal error - function can not store configuration for: %s variables. \n",__func__ , enkf_types_get_impl_name( config_node->impl_type) );
   }
   fprintf( stream , "\n");
+}
+/*****************************************************************/
+
+void enkf_config_node_add_GEN_PARAM_config_schema( config_type * config ) {
+  config_schema_item_type * item;
+  item = config_add_schema_item(config , GEN_PARAM_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX);
+}
+
+
+void enkf_config_node_add_GEN_DATA_config_schema( config_type * config ) {
+  config_schema_item_type * item;
+  item = config_add_schema_item(config , GEN_DATA_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
+}
+
+
+
+enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const config_content_node_type * node ) {
+  enkf_config_node_type * config_node   = NULL;
+  const char * node_key                 = config_content_node_iget( node , 0 );
+  const char * ecl_file                 = config_content_node_iget( node , 1 );
+  {
+    hash_type * options = hash_alloc();
+    
+    config_content_node_init_opt_hash( node , options , 2 );
+    {
+      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
+      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
+      const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
+      const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
+      const char * data_key                   = hash_safe_get( options , KEY_KEY);
+      const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
+      const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
+      bool forward_init = false;
+      bool valid_input = true;
+
+      
+      if (input_format == GEN_DATA_UNDEFINED)
+        valid_input = false;
+
+      if (input_format == ASCII_TEMPLATE)
+        valid_input = false;
+
+      if (output_format == GEN_DATA_UNDEFINED)
+        valid_input = false;
+
+      if (init_file_fmt == NULL)
+        valid_input = false;
+
+      if (valid_input) {
+
+        if (forward_string) {
+          if (!util_sscanf_bool( forward_string , &forward_init))
+            fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
+        }
+
+        config_node = enkf_config_node_alloc_GEN_PARAM( node_key , forward_init , input_format , output_format , init_file_fmt , ecl_file);
+
+        if (template) {
+          bool template_set_ok = gen_data_config_set_template( enkf_config_node_get_ref( config_node ) , template , data_key);
+          if (!template_set_ok)
+            fprintf(stderr,"** Warning: the template settings were not applied correctly - ignored\n");
+        }
+        
+        if (min_std_file)
+          enkf_config_node_update_min_std( config_node , min_std_file );
+
+      }
+    }
+    hash_free( options );
+  }
+  return config_node;
 }
 
 

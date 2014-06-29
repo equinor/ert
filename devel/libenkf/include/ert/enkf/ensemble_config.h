@@ -67,8 +67,6 @@ typedef struct ensemble_config_struct ensemble_config_type;
   void                          ensemble_config_del_node(ensemble_config_type * , const char * );
   void                          ensemble_config_add_config_items(config_type * );
 
-  void                          ensemble_config_add_GEN_DATA_config_item( config_type * config );
-  void                          ensemble_config_add_GEN_PARAM_config_item( config_type * config );
   void                          ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_type * config );
 
   enkf_config_node_type       * ensemble_config_get_node(const ensemble_config_type * , const char * );
@@ -76,13 +74,15 @@ typedef struct ensemble_config_struct ensemble_config_type;
   stringlist_type             * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type *  , int var_mask);
   stringlist_type             * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *  , ert_impl_type );
   bool                          ensemble_config_iget_keep_runpath(const ensemble_config_type * , int );
-  ensemble_config_type        * ensemble_config_alloc_empty( );
+  ensemble_config_type        * ensemble_config_alloc( );
   void                          ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FILE * stream );
 
   enkf_config_node_type  * ensemble_config_add_STATIC_node(ensemble_config_type * ,
                                                            const char    * );
 
-
+  
+  UTIL_IS_INSTANCE_HEADER( ensemble_config );
+  UTIL_SAFE_CAST_HEADER( ensemble_config );
 
 #ifdef __cplusplus
 }

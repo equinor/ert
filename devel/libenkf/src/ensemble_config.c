@@ -32,6 +32,7 @@
 #include <ert/util/thread_pool.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/subst_func.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/ecl/ecl_grid.h>
 
@@ -67,7 +68,10 @@
 #include <ert/enkf/enkf_defaults.h>
 
 
+#define ENSEMBLE_CONFIG_TYPE_ID 8825306
+
 struct ensemble_config_struct {
+  UTIL_TYPE_ID_DECLARATION;
   pthread_mutex_t          mutex;
   char                   * gen_kw_format_string;   /* format string used when creating gen_kw search/replace strings. */
   hash_type              * config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
@@ -77,6 +81,9 @@ struct ensemble_config_struct {
   bool                     have_forward_init;
 };
 
+
+UTIL_IS_INSTANCE_FUNCTION( ensemble_config , ENSEMBLE_CONFIG_TYPE_ID )
+UTIL_SAFE_CAST_FUNCTION( ensemble_config , ENSEMBLE_CONFIG_TYPE_ID )
 
 
 /**
@@ -135,9 +142,10 @@ void ensemble_config_set_refcase( ensemble_config_type * ensemble_config , const
 
 
 
-ensemble_config_type * ensemble_config_alloc_empty( ) {
-
+ensemble_config_type * ensemble_config_alloc( ) {
   ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config );
+
+  UTIL_TYPE_ID_INIT( ensemble_config , ENSEMBLE_CONFIG_TYPE_ID );
   ensemble_config->config_nodes          = hash_alloc();
   ensemble_config->field_trans_table     = field_trans_table_alloc();    
   ensemble_config->refcase               = NULL;
@@ -233,13 +241,15 @@ bool ensemble_config_have_forward_init( const ensemble_config_type * ensemble_co
 }
 
 void ensemble_config_add_node( ensemble_config_type * ensemble_config , enkf_config_node_type * node) {
-  
-  const char * key = enkf_config_node_get_key( node );
-  if (ensemble_config_has_key(ensemble_config , key)) 
-    util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
-  
-  hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
-  ensemble_config->have_forward_init |= enkf_config_node_use_forward_init( node );
+  if (node) {
+    const char * key = enkf_config_node_get_key( node );
+    if (ensemble_config_has_key(ensemble_config , key)) 
+      util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
+    
+    hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
+    ensemble_config->have_forward_init |= enkf_config_node_use_forward_init( node );
+  } else
+    util_abort("%s: internal error - tried to add NULL node to ensemble configuration \n",__func__);
 }
 
 
@@ -289,11 +299,7 @@ void ensemble_config_clear_obs_keys(ensemble_config_type * ensemble_config) {
 
 
 
-void ensemble_config_add_GEN_PARAM_config_item( config_type * config ) {
-  config_schema_item_type * item;
-  item = config_add_schema_item(config , GEN_PARAM_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 5 , CONFIG_DEFAULT_ARG_MAX);
-}
+
 
 
 void ensemble_config_add_config_items(config_type * config) {
@@ -314,7 +320,6 @@ void ensemble_config_add_config_items(config_type * config) {
 
   /*****************************************************************/
   
-  ensemble_config_add_GEN_PARAM_config_item( config );
   
   item = config_add_schema_item(config , GEN_KW_KEY , false  );
   config_schema_item_set_argc_minmax(item , 4 , 6);
@@ -331,9 +336,8 @@ void ensemble_config_add_config_items(config_type * config) {
   
 
 
-  
-  item = config_add_schema_item(config , GEN_DATA_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
+  enkf_config_node_add_GEN_PARAM_config_schema( config );
+  enkf_config_node_add_GEN_DATA_config_schema( config );
 
   item = config_add_schema_item(config , SUMMARY_KEY , false  );   /* can have several summary keys on each line. */
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
@@ -436,47 +440,12 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
   /* gen_param  - should be unified with the gen_data*/
   const config_content_item_type * item = config_get_content_item( config , GEN_PARAM_KEY );
   if (item != NULL) {
-    int i;
-    for (i=0; i < config_content_item_get_size(item); i++) {
+    for (int i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
-      const char * node_key                 = config_content_node_iget( node , 0 );
-      const char * ecl_file                 = config_content_node_iget( node , 1 );
-      {
-        hash_type * options = hash_alloc();
-        
-        config_content_node_init_opt_hash( node , options , 2 );
-        {
-          gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
-          gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
-          const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
-          const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
-          const char * data_key                   = hash_safe_get( options , KEY_KEY);
-          const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
-          const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
-          bool forward_init = false;
-          
-          if (forward_string) {
-            if (!util_sscanf_bool( forward_string , &forward_init))
-              fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
-          }
-          
-          {
-            //Must check the input here before allocating; or alternatively possibly return NULL.
-            // IO formats +  init_file_fmt , ecl_file must be set                                                           
-            
-            enkf_config_node_type * config_node = enkf_config_node_alloc_GEN_PARAM( node_key , forward_init , input_format , output_format , init_file_fmt , ecl_file);
-            
-            if (template) 
-              gen_data_config_set_template( enkf_config_node_get_ref( config_node ) , template , data_key);
-            
-            if (min_std_file)
-              enkf_config_node_update_min_std( config_node , min_std_file );
-            
-            ensemble_config_add_node( ensemble_config , config_node );
-          }
-        }
-        hash_free( options );
-      }
+      enkf_config_node_type * config_node = enkf_config_node_alloc_GEN_PARAM_from_config( node );
+      if (config_node)
+        ensemble_config_add_node( ensemble_config , config_node );
+      
     }
   }
 }

@@ -129,13 +129,78 @@ void test_set_invalid_format() {
 }
 
 
+void test_format_check() {
+  test_assert_int_equal( GEN_DATA_UNDEFINED , gen_data_config_check_format( NULL ));
+  test_assert_int_equal( GEN_DATA_UNDEFINED , gen_data_config_check_format("Error?"));
+  test_assert_int_equal( ASCII              , gen_data_config_check_format("ASCII"));
+  test_assert_int_equal( ASCII_TEMPLATE     , gen_data_config_check_format("ASCII_TEMPLATE"));
+  test_assert_int_equal( BINARY_DOUBLE      , gen_data_config_check_format("BINARY_DOUBLE"));
+  test_assert_int_equal( BINARY_FLOAT       , gen_data_config_check_format("BINARY_FLOAT"));
+}
+
+
+void test_set_template_invalid() {
+  test_work_area_type * work_area = test_work_area_alloc("GEN_DATA_SET_TEMPLATE_INVALID");
+  gen_data_config_type * config = gen_data_config_alloc_GEN_PARAM("KEY" , ASCII , ASCII);
+      
+  test_assert_false( gen_data_config_set_template( config , "does/not/exist" , NULL ) );
+  
+  {
+    FILE * stream = util_fopen("template.txt" , "w");
+    fprintf(stream , "Header1\n<KEY>\nHeader2\n");
+    fclose( stream );
+    
+    gen_data_config_set_template( config , "template.txt" , "<KEY>");
+    test_assert_string_equal( "template.txt" , gen_data_config_get_template_file( config ));
+    test_assert_string_equal( "<KEY>" , gen_data_config_get_template_key( config ));
+    
+    
+    {
+      char * buffer;
+      int data_offset , buffer_size , data_skip;
+      gen_data_config_get_template_data( config , &buffer , &data_offset , &buffer_size , &data_skip);
+      
+        test_assert_string_equal( buffer , "Header1\n<KEY>\nHeader2\n");
+        test_assert_int_equal( data_offset , 8  );
+        test_assert_int_equal( buffer_size , 22 );
+        test_assert_int_equal( data_skip   , 5  );
+    }
+  }
+
+
+  {
+    FILE * stream = util_fopen("template2.txt" , "w");
+    fprintf(stream , "Template XYZ - lots of shit .... \n");
+    fclose( stream );
+    
+    test_assert_false( gen_data_config_set_template( config , "template2.txt" , "<KEY>"));
+
+    test_assert_string_equal( "template.txt" , gen_data_config_get_template_file( config ));
+    test_assert_string_equal( "<KEY>" , gen_data_config_get_template_key( config ));
+    {
+      char * buffer;
+      int data_offset , buffer_size , data_skip;
+      gen_data_config_get_template_data( config , &buffer , &data_offset , &buffer_size , &data_skip);
+      
+        test_assert_string_equal( buffer , "Header1\n<KEY>\nHeader2\n");
+        test_assert_int_equal( data_offset , 8  );
+        test_assert_int_equal( buffer_size , 22 );
+        test_assert_int_equal( data_skip   , 5  );
+    }
+  }
+
+  gen_data_config_free( config );
+  test_work_area_free( work_area );
+}
+
+
 
 void test_set_template() {
   test_work_area_type * work_area = test_work_area_alloc("GEN_DATA_SET_TEMPLATE");
   {
     gen_data_config_type * config = gen_data_config_alloc_GEN_PARAM("KEY" , ASCII , ASCII);
     
-    gen_data_config_set_template( config , NULL , NULL );
+    test_assert_true( gen_data_config_set_template( config , NULL , NULL ) );
     test_assert_NULL( gen_data_config_get_template_file( config ));
     test_assert_NULL( gen_data_config_get_template_key( config ));
     
@@ -156,7 +221,7 @@ void test_set_template() {
       fprintf(stream , "Header\n");
       fclose( stream );
 
-      gen_data_config_set_template( config , "template.txt" , NULL );
+      test_assert_true( gen_data_config_set_template( config , "template.txt" , NULL ));
       test_assert_string_equal( "template.txt" , gen_data_config_get_template_file( config ));
       test_assert_NULL( gen_data_config_get_template_key( config ));
 
@@ -212,7 +277,7 @@ void test_set_template() {
     }
 
 
-    gen_data_config_set_template( config , NULL , "KEY");
+    test_assert_true( gen_data_config_set_template( config , NULL , "KEY"));
     test_assert_NULL( gen_data_config_get_template_file( config ));
     test_assert_NULL( gen_data_config_get_template_key( config ));
     
@@ -240,7 +305,9 @@ int main(int argc , char ** argv) {
   test_report_steps_dynamic();
   test_result_format();
   test_set_template();
+  test_set_template_invalid();
   test_set_invalid_format();
+  test_format_check();
   
   exit(0);
 }

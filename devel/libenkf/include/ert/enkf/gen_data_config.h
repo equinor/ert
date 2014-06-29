@@ -42,7 +42,9 @@ typedef enum { GEN_DATA_UNDEFINED = 0,
   bool                         gen_data_config_is_dynamic( const gen_data_config_type * config );
   void                         gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type * fs, int report_step , bool force_load);
   bool                         gen_data_config_valid_result_format(const char * result_file_fmt);
-  void                         gen_data_config_set_template( gen_data_config_type * config , const char * template_ecl_file , const char * template_data_key );
+  bool                         gen_data_config_set_template( gen_data_config_type * config , const char * template_ecl_file , const char * template_data_key );
+
+  bool gen_data_config_has_active_mask( const gen_data_config_type * config , enkf_fs_type * fs , int report_step);
   
   /* 
      Observe that the format ASCII_template can *NOT* be used for

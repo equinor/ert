@@ -17,7 +17,7 @@ target_link_libraries( enkf_gen_data_config enkf test_util )
 add_test( enkf_gen_data_config ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_data_config)
 
 add_executable( enkf_gen_data_config_parse enkf_gen_data_config_parse.c )
-target_link_libraries( enkf_gen_data_config enkf test_util )
+target_link_libraries( enkf_gen_data_config_parse enkf test_util )
 add_test( enkf_gen_data_config_parse ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_data_config_parse)
 
 add_executable( enkf_enkf_config_node_gen_data enkf_enkf_config_node_gen_data.c )
@@ -48,6 +48,10 @@ add_test( enkf_plot_data_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data_fs ${PROJEC
 
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf test_util )
+
+add_executable( enkf_ensemble_config enkf_ensemble_config.c )
+target_link_libraries( enkf_ensemble_config enkf test_util )
+add_test( enkf_ensemble_config ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble_config)
 
 add_executable( enkf_pca_plot enkf_pca_plot.c )
 target_link_libraries( enkf_pca_plot enkf test_util)

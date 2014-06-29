@@ -227,32 +227,52 @@ const bool_vector_type * gen_data_config_get_active_mask( const gen_data_config_
 
 
 
-void gen_data_config_set_template( gen_data_config_type * config , const char * template_ecl_file , const char * template_data_key ) {
-  gen_data_config_reset_template(config);
-  
-  if (template_ecl_file != NULL) {
-    char *data_ptr;
-    config->template_buffer = util_fread_alloc_file_content( template_ecl_file , &config->template_buffer_size);
-    if (template_data_key != NULL) {
-      data_ptr = strstr(config->template_buffer , template_data_key);
-      if (data_ptr == NULL) 
-        util_abort("%s: template:%s can not be used - could not find data key:%s \n",__func__ , template_ecl_file , template_data_key);
-      else {
-        config->template_data_offset = data_ptr - config->template_buffer;
-        config->template_data_skip   = strlen( template_data_key );
+bool gen_data_config_set_template( gen_data_config_type * config , const char * template_ecl_file , const char * template_data_key ) {
+  char * template_buffer = NULL;
+  bool   template_valid = true;
+  int    template_buffer_size;
+
+  if (template_ecl_file) {
+    if (util_file_readable( template_ecl_file )) {
+      template_buffer = util_fread_alloc_file_content( template_ecl_file , &template_buffer_size);
+      if (template_data_key) {
+        if (strstr(template_buffer , template_data_key) == NULL)
+          template_valid = false;
       }
-    } else { /* We are using a template without a template_data_key - the
-                data is assumed to come at the end of the template. */
-      config->template_data_offset = strlen( config->template_buffer );
-      config->template_data_skip   = 0;
+    } else
+      template_valid = false;
+  }
+  
+  if (template_valid) {
+
+    gen_data_config_reset_template(config);
+    if (template_ecl_file != NULL) {
+      char *data_ptr;
+      config->template_buffer = template_buffer;
+      config->template_buffer_size = template_buffer_size;
+      if (template_data_key != NULL) {
+        data_ptr = strstr(config->template_buffer , template_data_key);
+        if (data_ptr == NULL) 
+          util_abort("%s: template:%s can not be used - could not find data key:%s \n",__func__ , template_ecl_file , template_data_key);
+        else {
+          config->template_data_offset = data_ptr - config->template_buffer;
+          config->template_data_skip   = strlen( template_data_key );
+        }
+      } else { /* We are using a template without a template_data_key - the
+                  data is assumed to come at the end of the template. */
+        config->template_data_offset = strlen( config->template_buffer );
+        config->template_data_skip   = 0;
+      }
+      
+      config->template_file = util_realloc_string_copy( config->template_file , template_ecl_file );
+      config->template_key  = util_realloc_string_copy( config->template_key , template_data_key );
+      
+      if (config->output_format != ASCII_TEMPLATE)
+        fprintf(stderr,"**WARNING: The template settings will ignored for key:%s - use OUTPUT_FORMAT:ASCII_TEMPLATE to get template behaviour\n", config->key);
     }
-    
-    config->template_file = util_realloc_string_copy( config->template_file , template_ecl_file );
-    config->template_key  = util_realloc_string_copy( config->template_key , template_data_key );
-    
-    if (config->output_format != ASCII_TEMPLATE)
-      fprintf(stderr,"**WARNING: The template settings will ignored for key:%s - use OUTPUT_FORMAT:ASCII_TEMPLATE to get template behaviour\n", config->key);
+
   } 
+  return template_valid;
 }
 
 
@@ -296,8 +316,6 @@ gen_data_file_format_type gen_data_config_check_format( const void * format_stri
     else if (strcmp(format_string , "BINARY_FLOAT") == 0)
       type = BINARY_FLOAT;
     
-    if (type == GEN_DATA_UNDEFINED)
-      util_exit("Sorry: format:\"%s\" not recognized - valid values: ASCII / ASCII_TEMPLATE / BINARY_DOUBLE / BINARY_FLOAT \n", format_string);
   }
   
   return type;

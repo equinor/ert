@@ -24,6 +24,8 @@ extern "C" {
 
 #include <ert/util/stringlist.h>
 
+#include <ert/config/config.h>
+
 #include <ert/ecl/ecl_grid.h>
 
 #include <ert/enkf/field_trans.h>
@@ -208,6 +210,12 @@ extern "C" {
 
   bool                  enkf_config_node_use_forward_init(const enkf_config_node_type * config_node);
   void                  enkf_config_node_set_forward_init(enkf_config_node_type * config_node, bool forward_init);
+
+  /*****************************************************************/
+  
+  void                    enkf_config_node_add_GEN_DATA_config_schema( config_type * config );
+  void                    enkf_config_node_add_GEN_PARAM_config_schema( config_type * config );
+  enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const config_content_node_type * config_node );
       
 UTIL_IS_INSTANCE_HEADER( enkf_config_node );
 UTIL_SAFE_CAST_HEADER(enkf_config_node);

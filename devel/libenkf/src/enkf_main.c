@@ -2336,7 +2336,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->logh               = log_open( NULL , DEFAULT_LOG_LEVEL );
   enkf_main->rng_config         = rng_config_alloc( );
   enkf_main->site_config        = site_config_alloc_empty();
-  enkf_main->ensemble_config    = ensemble_config_alloc_empty();
+  enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->plot_config        = plot_config_alloc_default();                       
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
