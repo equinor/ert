@@ -301,8 +301,8 @@ bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * fi
         free( active_file );
       }
     }
+    gen_data_set_data__(gen_data , size , report_step , load_type , buffer );
   } 
-  gen_data_set_data__(gen_data , size , report_step , load_type , buffer );
   util_safe_free(buffer);
   return has_file;
 }
@@ -314,22 +314,8 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename) {
 
 
 
-
-/**
-   The gen_data_forward_load() function is called by enkf_node objects
-   which represent dynamic data. The gen_data objects are very weakly
-   structured; and in particular we do not know in advance whether a
-   particular file should be present or not, it is therefor not an
-   error as such if a file can not be found. For this reason this
-   function must return true unconditionally, otherwise the scalling
-   scope will interpret a false return value as an error and signal
-   load failure.
-*/
-
-
 bool gen_data_forward_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
-  gen_data_fload_with_report_step( gen_data , ecl_file , report_step );
-  return true;
+  return gen_data_fload_with_report_step( gen_data , ecl_file , report_step );
 }
 
 
