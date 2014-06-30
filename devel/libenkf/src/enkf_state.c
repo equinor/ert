@@ -1767,14 +1767,18 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state, enkf_fs_type * 
     util_make_path(run_info->run_path);
     {
       if (ecl_config_get_schedule_target( ecl_config ) != NULL) {
-        char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target( ecl_config ) , NULL);
+
+        char * schedule_file_target = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target( ecl_config ) , NULL);
+        char * schedule_file_target_path = util_split_alloc_dirname(schedule_file_target);
+        util_make_path(schedule_file_target_path);
+        free(schedule_file_target_path);
 
         if (run_info->run_mode == ENKF_ASSIMILATION)
-          sched_file_fprintf_i( ecl_config_get_sched_file( ecl_config ) , run_info->step2 , schedule_file);
+          sched_file_fprintf_i( ecl_config_get_sched_file( ecl_config ) , run_info->step2 , schedule_file_target);
         else
-          sched_file_fprintf( ecl_config_get_sched_file( ecl_config ) , schedule_file);
+          sched_file_fprintf( ecl_config_get_sched_file( ecl_config ) , schedule_file_target);
         
-        free(schedule_file);
+        free(schedule_file_target);
       }
     }
 
