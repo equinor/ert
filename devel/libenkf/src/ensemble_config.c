@@ -388,49 +388,10 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
     int i;
     for (i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
-      const char * node_key                 = config_content_node_iget( node , 0 );
-      {
-        hash_type * options = hash_alloc();
-        
-        config_content_node_init_opt_hash( node , options , 1 );
-        {
-          gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
-          gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
-          const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
-          const char * ecl_file                   = hash_safe_get( options , ECL_FILE_KEY); 
-          const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
-          const char * data_key                   = hash_safe_get( options , KEY_KEY);
-          const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
-          const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
-          const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
-          bool forward_init = false;
-          
-          if (forward_string) {
-            if (!util_sscanf_bool( forward_string , &forward_init))
-              fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
-          }
-
-          
-          {
-            enkf_config_node_type * config_node = NULL;
-            
-            if ((init_file_fmt == NULL) && (ecl_file == NULL) && (result_file != NULL)) 
-              config_node = enkf_config_node_alloc_GEN_DATA_result( node_key , input_format , result_file);
-            else if ((init_file_fmt != NULL) && (ecl_file != NULL) && (result_file != NULL)) 
-              config_node = enkf_config_node_alloc_GEN_DATA_state( node_key , forward_init , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
-
-            if (template) 
-              gen_data_config_set_template( enkf_config_node_get_ref( config_node ) , template , data_key);
-
-            if (config_node) 
-              ensemble_config_add_node( ensemble_config , config_node );
-            else
-              fprintf(stderr,"** ERROR: The keyword:%s was not correctly configured - ignored\n", node_key );
-          }
- 
-        }
-        hash_free( options );
-      }
+      enkf_config_node_type * config_node = enkf_config_node_alloc_GEN_PARAM_from_config( node );
+      if (config_node)
+        ensemble_config_add_node( ensemble_config , config_node );
+      
     }
   }
 }

@@ -22,6 +22,7 @@
 #include <stdio.h>
 
 #include <ert/util/stringlist.h>
+#include <ert/util/string_util.h>
 #include <ert/util/util.h>
 #include <ert/util/path_fmt.h>
 #include <ert/util/bool_vector.h>
@@ -367,21 +368,16 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_result( const char * key
                                                                 gen_data_file_format_type input_format,
                                                                 const char * enkf_infile_fmt ) {
   
-  if (gen_data_config_valid_result_format( enkf_infile_fmt )) {
-    enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_RESULT , GEN_DATA , key , false);
-    config_node->data = gen_data_config_alloc_GEN_DATA_result( key , input_format );
-    
-    enkf_config_node_update( config_node ,               /* Generic update - needs the format settings from the special.*/
-                             NULL , 
-                             NULL , 
-                             enkf_infile_fmt ,
-                             NULL ); 
-    
-    return config_node;
-  } else {
-    fprintf(stderr, "** ERROR: The RESULT_FILE setting for %s is invalid - must have an embedded %%d - and be a relative path.\n" , key );
-    return NULL;
-  }
+  enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_RESULT , GEN_DATA , key , false);
+  config_node->data = gen_data_config_alloc_GEN_DATA_result( key , input_format );
+  
+  enkf_config_node_update( config_node ,               /* Generic update - needs the format settings from the special.*/
+                           NULL , 
+                           NULL , 
+                           enkf_infile_fmt ,
+                           NULL ); 
+  
+  return config_node;
 }
 
 
@@ -859,6 +855,103 @@ void enkf_config_node_add_GEN_DATA_config_schema( config_type * config ) {
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
 }
 
+
+
+enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const config_content_node_type * node ) {
+  enkf_config_node_type * config_node   = NULL;
+  const char * node_key                 = config_content_node_iget( node , 0 );
+  {
+    hash_type * options = hash_alloc();
+    
+    config_content_node_init_opt_hash( node , options , 1 );
+    {
+      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
+      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
+      const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
+      const char * ecl_file                   = hash_safe_get( options , ECL_FILE_KEY); 
+      const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
+      const char * data_key                   = hash_safe_get( options , KEY_KEY);
+      const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
+      const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
+      const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
+      const char * report_steps_string        = hash_safe_get( options , REPORT_STEPS_KEY );
+      int_vector_type * report_steps          = int_vector_alloc(0,0);
+      bool forward_init = false;
+      bool valid_input = true;
+      
+      if (input_format == GEN_DATA_UNDEFINED)
+        valid_input = false;
+
+      if (!gen_data_config_valid_result_format( result_file )) {
+        fprintf(stderr, "** ERROR: The RESULT_FILE:%s setting for %s is invalid - must have an embedded %%d - and be a relative path.\n" , result_file , node_key );
+        valid_input = false;
+      }
+      
+      if (report_steps_string) {
+        if (!string_util_update_active_list( report_steps_string , report_steps )) {
+          valid_input = false;
+          fprintf(stderr,"** ERROR: The REPORT_STEPS:%s attribute was not valid.\n",report_steps_string); 
+        }
+      } else {
+        fprintf(stderr,"** ERROR: As of July 2014 the GEN_DATA keywords must have a REPORT_STEPS:xxxx \n");
+        fprintf(stderr,"          attribute to indicate which report step(s) you want to load data \n");
+        fprintf(stderr,"          from. By requiring the user to enter this information in advance\n");
+        fprintf(stderr,"          it is easier for ERT for to check that the results are valid, and\n");
+        fprintf(stderr,"          handle errors with the GEN_DATA results gracefully.\n");
+        fprintf(stderr,"          \n");
+        fprintf(stderr,"          You can list several report steps separated with ',' and ranges with '-' \n");
+        fprintf(stderr,"          but observe that spaces is NOT ALLOWED. \n");
+        fprintf(stderr,"          \n");
+        fprintf(stderr,"           - load from report step 100:                 REPORT_STEPS:100 \n");
+        fprintf(stderr,"           - load from report steps 10, 20 and 30-40    REPORT_STEPS:10,20,30-40 \n");
+        fprintf(stderr,"          \n");
+        fprintf(stderr,"          The GEN_DATA keyword: %s will be ignored\n",node_key);
+        valid_input = false;
+      }
+      
+      if (valid_input) {
+
+        if (forward_string) {
+          if (!util_sscanf_bool( forward_string , &forward_init))
+            fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
+        }
+
+        if ((init_file_fmt == NULL) && 
+            (ecl_file      == NULL) && 
+            (result_file   != NULL)) 
+          config_node = enkf_config_node_alloc_GEN_DATA_result( node_key , input_format , result_file);
+        else if ((init_file_fmt != NULL) && 
+                 (ecl_file      != NULL) && 
+                 (result_file   != NULL)) 
+          config_node = enkf_config_node_alloc_GEN_DATA_state( node_key , 
+                                                               forward_init , 
+                                                               input_format , 
+                                                               output_format , 
+                                                               init_file_fmt , 
+                                                               template , 
+                                                               data_key , 
+                                                               ecl_file , 
+                                                               result_file , 
+                                                               min_std_file);
+        
+        {
+          gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+
+          if (template) 
+            gen_data_config_set_template( gen_data_config , template , data_key);
+          
+          for (int i=0; i < int_vector_size( report_steps ); i++) 
+            gen_data_config_add_report_step( gen_data_config , int_vector_iget( report_steps , i ));
+        }
+      }
+      
+      int_vector_free( report_steps );
+    }
+    hash_free( options );
+  }
+  
+  return config_node;
+}
 
 
 enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const config_content_node_type * node ) {

@@ -58,6 +58,7 @@ enkf_config_node_type * parse_alloc_GEN_PARAM( const char * config_string , bool
 
 
 
+
 void test_parse_gen_param() {
   test_work_area_type * work_area = test_work_area_alloc("GEN_PARAM_parse");
 
@@ -101,6 +102,7 @@ void test_parse_gen_param() {
     test_assert_string_equal( "ECLFILE" , enkf_config_node_get_enkf_outfile( config_node ));
     test_assert_NULL(  enkf_config_node_get_enkf_infile( config_node ));
     test_assert_string_equal( "INIT%d" , enkf_config_node_get_init_file_fmt( config_node ));
+    test_assert_int_equal( PARAMETER , enkf_config_node_get_var_type( config_node ));
     {
       gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
       test_assert_int_equal( BINARY_DOUBLE , gen_data_config_get_input_format( gen_data_config ));
@@ -115,8 +117,118 @@ void test_parse_gen_param() {
 
 
 
+enkf_config_node_type * parse_alloc_GEN_DATA_result( const char * config_string , bool parse_valid) {
+  config_type * config = config_alloc();
+  enkf_config_node_type * enkf_config_node = NULL;
+  
+  enkf_config_node_add_GEN_DATA_config_schema( config );
+  {
+    FILE * stream = util_fopen("config.txt" , "w");
+    fprintf(stream , config_string);
+    fclose( stream );
+  }
+  test_assert_bool_equal( parse_valid , config_parse( config , "config.txt" , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_IGNORE , true));
+  if (parse_valid) {
+    const config_content_item_type * config_item = config_get_content_item( config , GEN_DATA_KEY );
+    const config_content_node_type * config_node = config_content_item_iget_node( config_item , 0 );
+    
+    enkf_config_node = enkf_config_node_alloc_GEN_DATA_from_config( config_node );
+  }
+  config_free( config );
+  return enkf_config_node;
+}
+
+
+
+void test_parse_gen_data_result() {
+  test_work_area_type * work_area = test_work_area_alloc("GEN_DATA_RESULT_parse");
+  // Parse error: missing KEY
+  {
+    enkf_config_node_type * config_node = parse_alloc_GEN_DATA_result( "GEN_DATA\n" , false);
+    test_assert_NULL( config_node );
+  }
+
+  // Validation error: missing INPUT_FORMAT:
+  {
+    enkf_config_node_type * config_node = parse_alloc_GEN_DATA_result( "GEN_DATA GEN_DATA_KEY  RESULT_FILE:Results%%d  REPORT_STEPS:10 \n" , true);
+    test_assert_NULL( config_node );
+  }
+
+
+  // Validation error: Invalid INPUT_FORMAT:
+  {
+    enkf_config_node_type * config_node = parse_alloc_GEN_DATA_result( "GEN_DATA GEN_DATA_KEY  RESULT_FILE:Results%%d  INPUT_FORMAT:AsCiiiiii REPORT_STEPS:10 \n" , true);
+    test_assert_NULL( config_node );
+  }
+
+
+  // Validation error: missing RESULT_FILE:
+  {
+    enkf_config_node_type * config_node = parse_alloc_GEN_DATA_result( "GEN_DATA GEN_DATA_KEY  INPUT_FORMAT:ASCII   REPORT_STEPS:10 \n" , true);
+    test_assert_NULL( config_node );
+  }
+
+
+  // Validation error: Invalid RESULT_FILE:
+  {
+    enkf_config_node_type * config_node = parse_alloc_GEN_DATA_result( "GEN_DATA GEN_DATA_KEY  RESULT_FILE:Results INPUT_FORMAT:ASCII   REPORT_STEPS:10 \n" , true);
+    test_assert_NULL( config_node );
+  }
+
+  // Validation error: Missing REPORT_STEPS:
+  {
+    enkf_config_node_type * config_node = parse_alloc_GEN_DATA_result( "GEN_DATA GEN_DATA_KEY  RESULT_FILE:Results%%d INPUT_FORMAT:ASCII  \n" , true);
+    test_assert_NULL( config_node );
+  }
+
+  // Validation error: Invalid REPORT_STEPS
+  {
+    enkf_config_node_type * config_node = parse_alloc_GEN_DATA_result( "GEN_DATA GEN_DATA_KEY  RESULT_FILE:Results%%d INPUT_FORMAT:ASCII  REPORT_STEPS:XXX\n" , true);
+    test_assert_NULL( config_node );
+  }
+
+  // Valid
+  {
+    enkf_config_node_type * config_node = parse_alloc_GEN_DATA_result( "GEN_DATA GEN_DATA_KEY  RESULT_FILE:Results%%d INPUT_FORMAT:ASCII  REPORT_STEPS:10,20,30\n" , true);
+    test_assert_true( enkf_config_node_is_instance( config_node ));
+
+    test_assert_string_equal( "Results%d" , enkf_config_node_get_enkf_infile( config_node ));
+    test_assert_NULL( enkf_config_node_get_init_file_fmt( config_node ));
+    test_assert_NULL( enkf_config_node_get_enkf_outfile( config_node ));
+    test_assert_int_equal( DYNAMIC_RESULT , enkf_config_node_get_var_type( config_node ));
+    {
+      gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+      test_assert_int_equal( ASCII              , gen_data_config_get_input_format( gen_data_config ));
+      test_assert_int_equal( GEN_DATA_UNDEFINED , gen_data_config_get_output_format( gen_data_config ));
+      
+      test_assert_int_equal( 3 , gen_data_config_num_report_step( gen_data_config ));
+      test_assert_int_equal( 10 , gen_data_config_iget_report_step( gen_data_config , 0 ));
+      test_assert_int_equal( 30 , gen_data_config_iget_report_step( gen_data_config , 2 ));
+      
+
+      test_assert_true( gen_data_config_has_report_step( gen_data_config , 10 ));
+      test_assert_true( gen_data_config_has_report_step( gen_data_config , 20 ));
+      test_assert_true( gen_data_config_has_report_step( gen_data_config , 30 ));
+
+      test_assert_false( gen_data_config_has_report_step( gen_data_config , 05 ));
+      test_assert_false( gen_data_config_has_report_step( gen_data_config , 15 ));
+      test_assert_false( gen_data_config_has_report_step( gen_data_config , 25 ));
+      test_assert_false( gen_data_config_has_report_step( gen_data_config , 35 ));
+    }
+    
+
+    enkf_config_node_free( config_node );
+  }
+    
+  test_work_area_free( work_area );
+}
+
+
+
+
 int main(int argc , char ** argv) {
   test_parse_gen_param();
+  test_parse_gen_data_result();
   exit(0);
 }
 

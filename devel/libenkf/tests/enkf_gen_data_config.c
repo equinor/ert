@@ -92,6 +92,7 @@ void test_report_steps_dynamic() {
 
 
 
+
 void test_result_format() {
   test_assert_true( gen_data_config_valid_result_format("path/file%d/extra"));
   test_assert_true( gen_data_config_valid_result_format("file%04d"));
@@ -100,6 +101,8 @@ void test_result_format() {
   test_assert_false( gen_data_config_valid_result_format("/path/file%s"));
   test_assert_false( gen_data_config_valid_result_format("/path/file"));
   test_assert_false( gen_data_config_valid_result_format("/path/file%f"));
+
+  test_assert_false( gen_data_config_valid_result_format(NULL));
 }
 
 

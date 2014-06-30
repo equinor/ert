@@ -195,7 +195,7 @@ gen_data_config_type * gen_data_config_alloc_GEN_DATA_result( const char * key ,
     util_abort("%s: Sorry can not use INPUT_FORMAT:ASCII_TEMPLATE\n",__func__);
   
   if (input_format == GEN_DATA_UNDEFINED)
-    util_abort("%s: Sorry must specify valid values for both input format\n",__func__);
+    util_abort("%s: Sorry must specify valid values for input format.\n",__func__);
   
   config->input_format  = input_format;
   return config;
@@ -575,14 +575,17 @@ void gen_data_config_get_template_data( const gen_data_config_type * config ,
 
 
 bool gen_data_config_valid_result_format(const char * result_file_fmt) {
-  if (util_is_abs_path( result_file_fmt ))
-    return false;
-  else {
-    if (util_int_format_count(result_file_fmt) == 1)
-      return true;
-    else
+  if (result_file_fmt) {
+    if (util_is_abs_path( result_file_fmt ))
       return false;
-  }
+    else {
+      if (util_int_format_count(result_file_fmt) == 1)
+        return true;
+      else
+        return false;
+    }
+  } else
+    return false;
 }
                  
 
