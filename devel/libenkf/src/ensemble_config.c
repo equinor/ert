@@ -388,7 +388,7 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
     int i;
     for (i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
-      enkf_config_node_type * config_node = enkf_config_node_alloc_GEN_PARAM_from_config( node );
+      enkf_config_node_type * config_node = enkf_config_node_alloc_GEN_DATA_from_config( node );
       if (config_node)
         ensemble_config_add_node( ensemble_config , config_node );
       
