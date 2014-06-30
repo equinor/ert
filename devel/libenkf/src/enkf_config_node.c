@@ -940,8 +940,11 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const confi
           if (template) 
             gen_data_config_set_template( gen_data_config , template , data_key);
           
-          for (int i=0; i < int_vector_size( report_steps ); i++) 
-            gen_data_config_add_report_step( gen_data_config , int_vector_iget( report_steps , i ));
+          for (int i=0; i < int_vector_size( report_steps ); i++) { 
+            int report_step = int_vector_iget( report_steps , i );
+            gen_data_config_add_report_step( gen_data_config , report_step);
+            enkf_config_node_set_internalize( config_node , report_step );
+          }
         }
       }
       

@@ -214,8 +214,16 @@ void test_parse_gen_data_result() {
       test_assert_false( gen_data_config_has_report_step( gen_data_config , 15 ));
       test_assert_false( gen_data_config_has_report_step( gen_data_config , 25 ));
       test_assert_false( gen_data_config_has_report_step( gen_data_config , 35 ));
+
     }
-    
+    test_assert_true( enkf_config_node_internalize( config_node , 10 ));
+    test_assert_true( enkf_config_node_internalize( config_node , 20 ));
+    test_assert_true( enkf_config_node_internalize( config_node , 30 ));    
+
+    test_assert_false( enkf_config_node_internalize( config_node , 05 ));
+    test_assert_false( enkf_config_node_internalize( config_node , 15 ));
+    test_assert_false( enkf_config_node_internalize( config_node , 25 ));
+    test_assert_false( enkf_config_node_internalize( config_node , 35 ));    
 
     enkf_config_node_free( config_node );
   }
