@@ -3124,16 +3124,16 @@ const enkf_state_type ** enkf_main_get_ensemble_const( const enkf_main_type * en
 
    -----
 
-   For performance reason model_config contains two bool vectors
-   __load_state and __load_result; if they are true the state and
-   summary are loaded from disk, otherwise no loading is
-   performed. This implies that if we do not want to internalize the
-   full state but for instance the pressure (i.e. for an RFT) we must
-   set the __load_state variable for the actual report step to
-   true. For this reason calls enkf_config_node_internalize() must be
-   accompanied by calls to model_config_set_load_state|results() -
-   this is ensured when using this function to manipulate the
-   configuration of internalization.
+   For performance reason model_config contains the bool vector
+   __load_eclipse_restart; if it is true the ECLIPSE restart state is
+   loaded from disk, otherwise no loading is performed. This implies
+   that if we do not want to internalize the full state but for
+   instance the pressure (i.e. for an RFT) we must set the
+   __load_state variable for the actual report step to true. For this
+   reason calls enkf_config_node_internalize() must be accompanied by
+   calls to model_config_set_load_state|results() - this is ensured
+   when using this function to manipulate the configuration of
+   internalization.
 
 */
 
@@ -3141,7 +3141,6 @@ const enkf_state_type ** enkf_main_get_ensemble_const( const enkf_main_type * en
 void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type run_mode ) {
   /* Clearing old internalize flags. */
   model_config_init_internalization( enkf_main->model_config );
-  ensemble_config_init_internalization( enkf_main->ensemble_config );
 
   /* Internalizing the initial state. */
   model_config_set_internalize_state( enkf_main->model_config , 0);
