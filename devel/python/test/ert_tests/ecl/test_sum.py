@@ -365,3 +365,16 @@ class SumTest(ExtendedTestCase):
         for (w,f,g) in zip(wprod, fprod,gprod):
             self.assertFloatEqual( w , f )
             self.assertFloatEqual( w , g )
+
+
+
+    def test_writer(self):
+        writer = EclSum.writer("CASE" , datetime.date( 2000 , 1 , 1) , 10 , 10 , 5)
+        self.assertIsInstance(self.ecl_sum, EclSum)
+
+        
+        writer.addVariable( "FOPT" )
+        self.assertTrue( writer.has_key( "FOPT" ))
+        
+        writer.addTStep( 1 , 100 )
+        
