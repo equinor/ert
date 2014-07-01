@@ -16,6 +16,10 @@ add_executable( enkf_gen_data_config enkf_gen_data_config.c )
 target_link_libraries( enkf_gen_data_config enkf test_util )
 add_test( enkf_gen_data_config ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_data_config)
 
+add_executable( enkf_gen_obs_load enkf_gen_obs_load.c )
+target_link_libraries( enkf_gen_obs_load enkf test_util )
+add_test( enkf_gen_obs_load ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_obs_load ${PROJECT_SOURCE_DIR}/test-data/local/config/gen_data/config )
+
 add_executable( enkf_gen_data_config_parse enkf_gen_data_config_parse.c )
 target_link_libraries( enkf_gen_data_config_parse enkf test_util )
 add_test( enkf_gen_data_config_parse ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_data_config_parse)
