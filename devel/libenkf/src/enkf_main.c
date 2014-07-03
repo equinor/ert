@@ -1716,7 +1716,6 @@ void enkf_main_init_run( enkf_main_type * enkf_main, const bool_vector_type * ia
   enkf_main_init_internalization(enkf_main , run_mode);
   
   {
-    const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
     enkf_main_initialize_from_scratch_with_bool_vector(enkf_main , param_list , iactive , init_mode );
     stringlist_free( param_list );
@@ -2337,7 +2336,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->logh               = log_open( NULL , DEFAULT_LOG_LEVEL );
   enkf_main->rng_config         = rng_config_alloc( );
   enkf_main->site_config        = site_config_alloc_empty();
-  enkf_main->ensemble_config    = ensemble_config_alloc_empty();
+  enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->plot_config        = plot_config_alloc_default();                       
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
@@ -2504,10 +2503,9 @@ void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
   stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( enkf_main->ensemble_config , GEN_DATA);
   for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
     enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( gen_data_keys , i));
-    enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-    if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) {
-      gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
-      gen_data_config_set_dynamic( gen_data_config );
+    gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+
+    if (gen_data_config_is_dynamic( gen_data_config )) {
       gen_data_config_set_write_fs( gen_data_config, enkf_main->dbase);
       gen_data_config_set_ens_size( gen_data_config , enkf_main->ens_size );
     }
@@ -3126,16 +3124,16 @@ const enkf_state_type ** enkf_main_get_ensemble_const( const enkf_main_type * en
 
    -----
 
-   For performance reason model_config contains two bool vectors
-   __load_state and __load_result; if they are true the state and
-   summary are loaded from disk, otherwise no loading is
-   performed. This implies that if we do not want to internalize the
-   full state but for instance the pressure (i.e. for an RFT) we must
-   set the __load_state variable for the actual report step to
-   true. For this reason calls enkf_config_node_internalize() must be
-   accompanied by calls to model_config_set_load_state|results() -
-   this is ensured when using this function to manipulate the
-   configuration of internalization.
+   For performance reason model_config contains the bool vector
+   __load_eclipse_restart; if it is true the ECLIPSE restart state is
+   loaded from disk, otherwise no loading is performed. This implies
+   that if we do not want to internalize the full state but for
+   instance the pressure (i.e. for an RFT) we must set the
+   __load_state variable for the actual report step to true. For this
+   reason calls enkf_config_node_internalize() must be accompanied by
+   calls to model_config_set_load_state|results() - this is ensured
+   when using this function to manipulate the configuration of
+   internalization.
 
 */
 
@@ -3143,7 +3141,6 @@ const enkf_state_type ** enkf_main_get_ensemble_const( const enkf_main_type * en
 void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type run_mode ) {
   /* Clearing old internalize flags. */
   model_config_init_internalization( enkf_main->model_config );
-  ensemble_config_init_internalization( enkf_main->ensemble_config );
 
   /* Internalizing the initial state. */
   model_config_set_internalize_state( enkf_main->model_config , 0);

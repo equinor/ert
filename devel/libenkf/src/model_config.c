@@ -98,7 +98,7 @@ struct model_config_struct {
 
   /** The results are always loaded. */
   bool_vector_type    * internalize_state;          /* Should the (full) state be internalized (at this report_step). */
-  bool_vector_type    * __load_state;               /* Internal variable: is it necessary to load the state? */
+  bool_vector_type    * __load_eclipse_restart;     /* Internal variable: is it necessary to load the state? */
 };
 
 
@@ -352,7 +352,7 @@ model_config_type * model_config_alloc() {
   model_config->jobname_fmt               = NULL;
   model_config->forward_model             = NULL;
   model_config->internalize_state         = bool_vector_alloc( 0 , false );
-  model_config->__load_state              = bool_vector_alloc( 0 , false ); 
+  model_config->__load_eclipse_restart    = bool_vector_alloc( 0 , false ); 
   model_config->history_source            = HISTORY_SOURCE_INVALID;
   model_config->runpath_map               = hash_alloc(); 
   model_config->gen_kw_export_file_name   = NULL;
@@ -452,7 +452,7 @@ void model_config_init(model_config_type * model_config ,
   if (model_config->history != NULL) {
     int num_restart = history_get_last_restart( model_config->history );
     bool_vector_iset( model_config->internalize_state , num_restart - 1 , false );
-    bool_vector_iset( model_config->__load_state      , num_restart - 1 , false );
+    bool_vector_iset( model_config->__load_eclipse_restart      , num_restart - 1 , false );
   }
 
   /*
@@ -527,7 +527,7 @@ void model_config_free(model_config_type * model_config) {
     forward_model_free(model_config->forward_model);
 
   bool_vector_free(model_config->internalize_state);
-  bool_vector_free(model_config->__load_state);
+  bool_vector_free(model_config->__load_eclipse_restart);
   hash_free(model_config->runpath_map);
   if (model_config->case_names != NULL) stringlist_free( model_config->case_names );
   free(model_config);
@@ -580,24 +580,24 @@ forward_model_type * model_config_get_forward_model( const model_config_type * c
 /* Setting everything back to the default value: false. */
 void model_config_init_internalization( model_config_type * config ) {
   bool_vector_reset(config->internalize_state);
-  bool_vector_reset(config->__load_state);
+  bool_vector_reset(config->__load_eclipse_restart);
 }
 
 
 /**
    This function sets the internalize_state flag to true for
-   report_step. Because of the coupling to the __load_state variable
+   report_step. Because of the coupling to the __load_eclipse_restart variable
    this function can __ONLY__ be used to set internalize to true. 
 */
 
 void model_config_set_internalize_state( model_config_type * config , int report_step) {
   bool_vector_iset(config->internalize_state , report_step , true);
-  bool_vector_iset(config->__load_state      , report_step , true);
+  bool_vector_iset(config->__load_eclipse_restart      , report_step , true);
 }
 
 
 void model_config_set_load_state( model_config_type * config , int report_step) {
-  bool_vector_iset(config->__load_state , report_step , true);
+  bool_vector_iset(config->__load_eclipse_restart , report_step , true);
 }
 
 
@@ -611,7 +611,7 @@ bool model_config_internalize_state( const model_config_type * config , int repo
 /*****************************************************************/
 
 bool model_config_load_state( const model_config_type * config , int report_step) {
-  return bool_vector_iget(config->__load_state , report_step);
+  return bool_vector_iget(config->__load_eclipse_restart , report_step);
 }
 
 

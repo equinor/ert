@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2013  Statoil ASA, Norway. 
     
-   The file 'enkf_ensemble.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'enkf_gen_data_config_parse.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -15,32 +15,36 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
+
+
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/util.h>
-#include <ert/util/thread_pool.h>
-#include <ert/util/arg_pack.h>
-
-#include <ert/config/config.h>
-
-#include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/ensemble_config.h>
-#include <ert/enkf/time_map.h>
 
-
-
-
-
-
-
-int main(int argc , char ** argv) {
-  ensemble_config_type * ensemble = ensemble_config_alloc();
-  ensemble_config_free( ensemble );
-  exit(0);
+void add_NULL_node( void * arg) {
+  ensemble_config_type * ens_config = ensemble_config_safe_cast( arg );
+  ensemble_config_add_node( ens_config , NULL );
 }
 
+
+
+void test_abort_on_add_NULL() {
+  ensemble_config_type * ensemble_config = ensemble_config_alloc();
+
+  test_assert_true( ensemble_config_is_instance( ensemble_config ));
+  test_assert_util_abort("ensemble_config_add_node" , add_NULL_node , ensemble_config );
+
+  ensemble_config_free( ensemble_config );
+}
+
+
+int main( int argc , char ** argv) {
+  test_abort_on_add_NULL();
+  exit(0);
+}

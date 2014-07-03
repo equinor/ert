@@ -130,6 +130,20 @@ class UtilTest(TestCase):
 
 
 
+    def test_contains_int(self):
+        iv = IntVector()
+        iv[0] = 1
+        iv[1] = 10
+        iv[2] = 100
+        iv[3] = 1000
+
+        self.assertTrue( 1 in iv )
+        self.assertTrue( 10 in iv )
+        self.assertTrue( 88 not in iv )
+        self.assertTrue( 99 not in iv )
+        
+
+
     def test_activeMask(self):
         active_list = BoolVector.active_mask("1 , 4 - 7 , 10")
         self.assertTrue(len(active_list) == 11)
@@ -324,6 +338,20 @@ class UtilTest(TestCase):
 
         for index, value in enumerate(range(1, 6)):
             self.assertEqual(vector[index], value)
+
+    
+    def test_contains_time(self):        
+        start = datetime.datetime(2010 , 1 , 1 , 0,0,0)
+        end = datetime.datetime(2010 , 2 , 1 , 0,0,0)
+        other = datetime.datetime(2010 , 1 , 15 , 0,0,0)
+        
+        tv = TimeVector()
+        tv.append( start )
+        tv.append( end )
+
+        self.assertTrue( start in tv )
+        self.assertTrue( end in tv )
+        self.assertTrue( other not in tv)
 
 
 

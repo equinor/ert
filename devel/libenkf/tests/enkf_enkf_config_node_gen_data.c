@@ -1,7 +1,8 @@
 /*
    Copyright (C) 2013  Statoil ASA, Norway. 
     
-   The file 'enkf_ensemble.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'enkf_enkf_config_node_gen_data.c' is part of ERT -
+   Ensemble based Reservoir Tool.
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -15,32 +16,21 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <unistd.h>
+
 
 #include <ert/util/test_util.h>
-#include <ert/util/util.h>
-#include <ert/util/thread_pool.h>
-#include <ert/util/arg_pack.h>
 
-#include <ert/config/config.h>
-
-#include <ert/ecl/ecl_sum.h>
-
-#include <ert/enkf/ensemble_config.h>
-#include <ert/enkf/time_map.h>
+#include <ert/enkf/enkf_config_node.h>
 
 
-
-
-
-
-
-int main(int argc , char ** argv) {
-  ensemble_config_type * ensemble = ensemble_config_alloc();
-  ensemble_config_free( ensemble );
-  exit(0);
+void test_create() {
+  enkf_config_node_type * node = enkf_config_node_alloc_GEN_PARAM("key" , false, ASCII , ASCII , "init%d" , "out.txt");
+  enkf_config_node_free( node );
 }
 
+
+
+int main( int argc , char **argv ) {
+  test_create();
+  exit(0);
+}

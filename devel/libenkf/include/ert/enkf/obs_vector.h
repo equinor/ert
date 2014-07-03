@@ -93,7 +93,7 @@ extern "C" {
 
   double                  obs_vector_total_chi2(const obs_vector_type * , enkf_fs_type * , int , state_enum  );
   void                    obs_vector_ensemble_total_chi2(const obs_vector_type *  , enkf_fs_type *  , int  , state_enum , double * );
-  const enkf_config_node_type * obs_vector_get_config_node(const obs_vector_type * );
+  enkf_config_node_type * obs_vector_get_config_node(const obs_vector_type * );
   const char            * obs_vector_get_obs_key( const obs_vector_type * obs_vector);
   
   UTIL_SAFE_CAST_HEADER(obs_vector);

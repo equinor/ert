@@ -851,7 +851,7 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
                 
               } else {
                 *result |= LOAD_FAILURE; 
-                log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
+                log_add_fmt_message(shared_info->logh , 1 , stderr , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
                   
                 if (interactive) 
                   stringlist_append_owned_ref(msg_list , 

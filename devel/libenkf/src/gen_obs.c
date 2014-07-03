@@ -292,7 +292,7 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
 
 
 void gen_obs_get_observations(gen_obs_type * gen_obs , obs_data_type * obs_data, enkf_fs_type * fs, int report_step , const active_list_type * __active_list) {
-  bool_vector_type * forward_model_active = NULL;
+  const bool_vector_type * forward_model_active = NULL;
   if (gen_data_config_has_active_mask( gen_obs->data_config , fs, report_step)) {
     gen_data_config_load_active( gen_obs->data_config , fs, report_step , true);
     forward_model_active = gen_data_config_get_active_mask( gen_obs->data_config );
