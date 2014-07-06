@@ -108,6 +108,8 @@ set(TEST_SOURCES
     ert_tests/run/__init__.py
     ert_tests/run/test_run.py
 
+    ert_tests/server/test_server.py
+
     ecl_isosurf.py
     ens_config_test.py
     grav_test.py
@@ -495,6 +497,17 @@ add_test( NAME python.tests.ert.geometry.point_in_polygon
 add_test( NAME python.tests.ert.geometry.polygon_slicing
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.geometry.test_polygon_slicing.PolygonSlicingTest)
+
+
+#SERVER
+
+add_test( NAME python.tests.ert.server.socket
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.server.test_socket.SocketTest)
+
+add_test( NAME python.tests.ert.server.server
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.server.test_server.ServerTest)
 
 
 set_property( TEST python.tests.ert.sched.sched           PROPERTY LABELS Python:StatoilData )
