@@ -1,7 +1,7 @@
 set (destination ${CMAKE_INSTALL_PREFIX}/bin)
 
 if (INSTALL_ERT)
-   set( application_list )
+   set( application_list ert_tcp_server ert_tcp_client)
 
    foreach(prog ${application_list} )
       install(PROGRAMS ${prog} DESTINATION ${destination})
