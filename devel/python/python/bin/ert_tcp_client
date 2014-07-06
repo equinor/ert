@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+import sys
+import socket
+import json
+
+class Connection(object):
+    def __init__(self , port , host = "localhost"):
+        self.socket = socket.socket( socket.AF_INET , socket.SOCK_STREAM)
+        self.port = port
+        self.host = host
+        try:
+            self.socket.connect((self.host , self.port))
+        except socket.error:
+            sys.exit("Failed to connect to port:%d at %s." % (port , host))
+
+
+    def sendRecv(self , send):
+        self.socket.sendall( json.dumps(send) + "\n" )
+        recv = self.socket.recv(1024)
+        return json.loads(recv)
+
+
+def readArgv():
+    while True:
+        arg_string = raw_input("Argument list:    ==> ")
+        if arg_string:
+            try:
+                argv = json.loads("[" + arg_string + "]")
+                break
+            except ValueError:
+                print "Failed to parse \'[ %s ]\' as valid Json" % arg_string
+        else:
+            argv = []
+            break
+    return argv
+
+
+#-----------------------------------------------------------------
+
+
+port = int(sys.argv[1])
+
+while True:
+    conn = Connection(port)
+    cmd = raw_input("Function to send: ==> ")
+
+    argv = readArgv()
+
+    cmdExpr = [cmd] + argv
+    print "Return from server: %s\n" % conn.sendRecv(cmdExpr)
+    if cmd == "QUIT":
+        break
