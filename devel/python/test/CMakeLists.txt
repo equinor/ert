@@ -109,6 +109,7 @@ set(TEST_SOURCES
     ert_tests/run/test_run.py
 
     ert_tests/server/test_server.py
+    ert_tests/server/test_socket.py
 
     ecl_isosurf.py
     ens_config_test.py
