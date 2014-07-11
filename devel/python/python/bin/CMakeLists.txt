@@ -1,8 +1,11 @@
-set (destination ${CMAKE_INSTALL_PREFIX}/bin)
+set( application_list ert_tcp_server ert_tcp_client)
+foreach(prog ${application_list} )
+   file(COPY ${prog} DESTINATION ${EXECUTABLE_OUTPUT_PATH})             
+endforeach()
+
 
 if (INSTALL_ERT)
-   set( application_list ert_tcp_server ert_tcp_client)
-
+   set (destination ${CMAKE_INSTALL_PREFIX}/bin)
    foreach(prog ${application_list} )
       install(PROGRAMS ${prog} DESTINATION ${destination})
       if (INSTALL_GROUP)
