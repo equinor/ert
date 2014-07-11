@@ -25,7 +25,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <pthread.h>
-#include <limits.h>
 
 #include <ert/util/path_fmt.h>
 #include <ert/util/thread_pool.h>
@@ -1631,9 +1630,9 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const
 
   if (run_path != NULL) {
     /** Make absolutely sure the path available as <RUNPATH> is absolute. */
-    char abs_runpath[PATH_MAX];
-    realpath( run_path , abs_runpath );
+    char * abs_runpath = util_alloc_realpath( run_path );
     enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , abs_runpath      , NULL);
+    free( abs_runpath );
   }
 
 
