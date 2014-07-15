@@ -224,7 +224,7 @@ void gen_kw_write_export_file(const gen_kw_type * gen_kw, FILE * filestream) {
     const char * parameter    = gen_kw_config_iget_name(gen_kw->config , ikw);
     int width                 = 60 - (strlen(key) + strlen(parameter) + 1);
     double transformed_value  = gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] );
-    const char * print_string = util_alloc_sprintf("%s:%s %*.5f\n", key, parameter, width, transformed_value);
+    const char * print_string = util_alloc_sprintf("%s:%s %e\n", key, parameter, width, transformed_value);
     fprintf(filestream, print_string);
   }
 }
