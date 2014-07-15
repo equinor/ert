@@ -1,8 +1,15 @@
 set(PYTHON_SOURCES
     __init__.py
 )
-
 add_python_package("python.ert"  ${PYTHON_INSTALL_PREFIX}/ert "${PYTHON_SOURCES}" True)
+
+
+set( ERT_SITE_INIT_TARGET  ""  CACHE FILE "Name of optional external site init module for top level ert package")
+if (EXISTS ${ERT_SITE_INIT_TARGET})
+   message(STATUS "Using ert site init module: ${ERT_SITE_INIT_TARGET}")
+   install(FILES ${ERT_SITE_INIT_TARGET} DESTINATION ${PYTHON_INSTALL_PREFIX}/ert RENAME ert_site_init.py)  
+endif()
+
 
 add_subdirectory(analysis)
 add_subdirectory(config)
