@@ -100,7 +100,6 @@ typedef struct enkf_state_struct    enkf_state_type;
                                       ensemble_config_type * ,
                                       const site_config_type * ,
                                       const ecl_config_type * ,
-                                      log_type * logh,
                                       ert_templates_type * templates,
                                       subst_list_type    * parent_subst);
   void               enkf_state_update_node( enkf_state_type * enkf_state , const char * node_key );

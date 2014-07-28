@@ -256,14 +256,13 @@ static void run_info_complete_run(run_info_type * run_info) {
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(const site_config_type * site_config , model_config_type * model_config, const ecl_config_type * ecl_config , log_type * logh , ert_templates_type * templates) {
+static shared_info_type * shared_info_alloc(const site_config_type * site_config , model_config_type * model_config, const ecl_config_type * ecl_config , ert_templates_type * templates) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info );
 
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
   shared_info->job_queue    = site_config_get_job_queue( site_config );
   shared_info->site_config  = site_config;
   shared_info->model_config = model_config;
-  shared_info->logh         = logh;
   shared_info->templates    = templates;
   shared_info->ecl_config   = ecl_config;
   return shared_info;
@@ -469,7 +468,7 @@ enkf_state_type * enkf_state_alloc(int iens,
                                    ensemble_config_type      * ensemble_config,
                                    const site_config_type    * site_config,
                                    const ecl_config_type     * ecl_config,
-                                   log_type                  * logh,
+
                                    ert_templates_type        * templates,
                                    subst_list_type           * subst_parent) { 
   
@@ -477,7 +476,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   UTIL_TYPE_ID_INIT( enkf_state , ENKF_STATE_TYPE_ID );
 
   enkf_state->ensemble_config   = ensemble_config;
-  enkf_state->shared_info       = shared_info_alloc(site_config , model_config , ecl_config , logh, templates);
+  enkf_state->shared_info       = shared_info_alloc(site_config , model_config , ecl_config , templates);
   enkf_state->run_info          = run_info_alloc();
   
   enkf_state->node_hash         = hash_alloc();

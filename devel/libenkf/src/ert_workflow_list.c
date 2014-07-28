@@ -40,6 +40,7 @@
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/job_queue/workflow_job_monitor.h>
+#include <ert/enkf/ert_log.h>
 
 
 struct ert_workflow_list_struct {
@@ -122,7 +123,7 @@ bool ert_workflow_list_has_job( const ert_workflow_list_type * workflow_list , c
 }
 
 
-void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path , log_type * logh) {
+void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path ) {
   DIR * dirH = opendir( path );
   if (dirH) {
     while (true) {
@@ -132,8 +133,8 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
           char * full_path = util_alloc_filename( path , entry->d_name , NULL );
           
           if (util_is_file( full_path )) {
-            if (log_is_open( logh ))
-              log_add_message( logh , 1 , NULL , util_alloc_sprintf("Adding workflow job:%s " , full_path ), true);
+            if (ert_log_is_open())
+              ert_log_add_message( 1 , NULL , util_alloc_sprintf("Adding workflow job:%s " , full_path ), true);
             ert_workflow_list_add_job( workflow_list , entry->d_name , full_path );
           }
           
@@ -148,7 +149,7 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
 }
 
 
-void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config , log_type * logh) {
+void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config ) {
   /* Adding jobs */
   {
     const config_content_item_type * jobpath_item = config_get_content_item( config , WORKFLOW_JOB_DIRECTORY_KEY);
@@ -157,7 +158,7 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_typ
         config_content_node_type * path_node = config_content_item_iget_node( jobpath_item , i );
                
         for (int j=0; j < config_content_node_get_size( path_node ); j++) 
-          ert_workflow_list_add_jobs_in_directory( workflow_list , config_content_node_iget_as_abspath( path_node , j ) , logh);
+          ert_workflow_list_add_jobs_in_directory( workflow_list , config_content_node_iget_as_abspath( path_node , j ) );
       }
     }
   }
