@@ -133,8 +133,9 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
           char * full_path = util_alloc_filename( path , entry->d_name , NULL );
           
           if (util_is_file( full_path )) {
-            if (ert_log_is_open())
+           if (ert_log_is_open())
               ert_log_add_message( 1 , NULL , util_alloc_sprintf("Adding workflow job:%s " , full_path ), true);
+
             ert_workflow_list_add_job( workflow_list , entry->d_name , full_path );
           }
           
