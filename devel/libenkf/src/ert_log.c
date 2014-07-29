@@ -6,10 +6,10 @@ log_type             * logh;               /* Handle to an open log file. */
 
 void ert_log_init_log( int log_level,const char * log_file_name,const char * user_log_file_name,bool verbose){
   logh = log_open( NULL , DEFAULT_LOG_LEVEL );
-
+  printf("Opening log");
   if (log_level != NULL)
     log_set_level(logh, log_level);
-
+    printf("Opening log 1");
   if (log_file_name && log_file_name[0] != '\0')
     log_reopen( logh , log_file_name);
   else {
@@ -17,7 +17,7 @@ void ert_log_init_log( int log_level,const char * log_file_name,const char * use
     log_reopen( logh , log_file );
     free( log_file );
   }
-
+printf("Opening log4");
   if (verbose)
     printf("Activity will be logged to ..............: %s \n",log_get_filename( logh ));
   log_add_message(logh , 1 , NULL , "ert configuration loaded" , false);
@@ -58,4 +58,8 @@ int ert_log_get_log_level(){
 
 char * ert_log_get_filename(){
     return log_get_filename(logh);
+}
+
+log_type * ert_log_get_logh() {
+  return logh;
 }

@@ -13,4 +13,5 @@ void ert_log_close();
 bool ert_log_is_open();
 int ert_log_get_log_level();
 char * ert_log_get_filename();
+log_type * ert_log_get_logh();
 #endif // ERTLOG_H
