@@ -6,8 +6,8 @@ log_type             * logh;               /* Handle to an open log file. */
 
 void ert_log_init_log( int log_level,const char * log_file_name,const char * user_log_file_name,bool verbose){
   logh = log_open( NULL , DEFAULT_LOG_LEVEL );
-  if (log_level != NULL)
-    log_set_level(logh, log_level);
+
+  log_set_level(logh, log_level);
 
   if (log_file_name && log_file_name[0] != '\0')
     log_reopen( logh , log_file_name);

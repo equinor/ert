@@ -2812,7 +2812,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main_set_site_config_file( enkf_main , site_config );
     enkf_main_set_user_config_file( enkf_main , model_config );
     //enkf_main_init_log( enkf_main , config );
-    ert_log_init_log(config_get_value_as_int(config , LOG_LEVEL_KEY), config_get_value(config , LOG_FILE_KEY), enkf_main->user_config_file, enkf_main->verbose);
+    int log_key_level = DEFAULT_LOG_LEVEL;
+    if(config_item_set( config , LOG_LEVEL_KEY))
+        log_key_level = config_get_value_as_int(config , LOG_LEVEL_KEY);
+    const char * log_key_file = DEFAULT_LOG_FILE;
+    if (config_item_set( config , LOG_FILE_KEY))
+        log_key_file = config_get_value(config , LOG_FILE_KEY);
+    ert_log_init_log(log_key_level, log_key_file, enkf_main->user_config_file, enkf_main->verbose);
     /*
       Initializing the various 'large' sub config objects. 
     */
