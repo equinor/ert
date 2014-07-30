@@ -2317,6 +2317,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
+   ert_log_open_empty();
   enkf_main->dbase              = NULL;
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;

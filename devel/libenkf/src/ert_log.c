@@ -73,3 +73,7 @@ log_type * ert_log_get_logh() {
       ert_log_init_log(1,NULL,NULL,true);
   return logh;
 }
+
+void ert_log_open_empty(){
+    logh=log_open(NULL, DEFAULT_LOG_LEVEL);
+}
