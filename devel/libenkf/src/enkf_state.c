@@ -34,7 +34,6 @@
 #include <ert/util/stringlist.h>
 #include <ert/util/node_ctype.h>
 #include <ert/util/subst_list.h>
-#include <ert/util/log.h>
 #include <ert/util/timer.h>
 #include <ert/util/time_t_vector.h>
 #include <ert/util/rng.h>

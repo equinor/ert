@@ -26,7 +26,6 @@ extern "C" {
 #include <stdlib.h>
 
 #include <ert/util/matrix.h>
-#include <ert/util/log.h>
 #include <ert/util/rng.h>
 #include <ert/util/double_vector.h>
 

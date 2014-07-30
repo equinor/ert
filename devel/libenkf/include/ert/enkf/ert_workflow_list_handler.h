@@ -24,7 +24,6 @@ extern "C" {
 #endif
 
 #include <ert/util/subst_list.h>
-#include <ert/util/log.h>
 
 #include <ert/config/config.h>
 #include <ert/config/config_error.h>

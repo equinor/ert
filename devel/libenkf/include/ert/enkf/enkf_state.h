@@ -29,7 +29,7 @@ extern "C" {
 #include <ert/util/rng.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/matrix.h>
-#include <ert/util/log.h>
+
 
 #include <ert/sched/sched_file.h>
  

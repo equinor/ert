@@ -21,7 +21,6 @@
 #include <string.h>
 
 #include <ert/util/util.h>
-#include <ert/util/log.h>
 #include <ert/util/double_vector.h>
 
 #include <ert/ecl/ecl_sum.h>
