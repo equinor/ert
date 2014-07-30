@@ -33,6 +33,7 @@ extern "C" {
 #include <ert/util/matrix.h>
 #include <ert/util/path_fmt.h>
 #include <ert/util/ui_return.h>
+#include <ert/util/log.h>
 
 #include <ert/sched/sched_file.h>
 
