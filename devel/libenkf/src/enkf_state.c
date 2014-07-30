@@ -71,6 +71,7 @@
 #include <ert/enkf/member_config.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/state_map.h>
+#include <ert/enkf/ert_log.h>
 
 #define  ENKF_STATE_TYPE_ID 78132
 
@@ -744,7 +745,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                   enkf_node_store_vector( node , fs , iens , FORECAST );
                 else {
                   *result |= LOAD_FAILURE; 
-                  log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:----] Failed to load data for vector node:%s.",iens , enkf_node_get_key( node ));
+                  ert_log_add_fmt_message( 3 , NULL , "[%03d:----] Failed to load data for vector node:%s.",iens , enkf_node_get_key( node ));
                   if (interactive) 
                     stringlist_append_owned_ref( msg_list , util_alloc_sprintf("Failed to load vector:%s" , enkf_node_get_key( node )));
                 } 
@@ -825,7 +826,7 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
             enkf_state_log_GEN_DATA_load( node , 0 , msg_list );
         } else {
           *result |= LOAD_FAILURE; 
-          log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:----] Failed to load data for vector node:%s.",iens , enkf_node_get_key( node ));
+          ert_log_add_fmt_message(3 , NULL , "[%03d:----] Failed to load data for vector node:%s.",iens , enkf_node_get_key( node ));
           if (interactive) 
             stringlist_append_owned_ref( msg_list , util_alloc_sprintf("Failed to load vector:%s" , enkf_node_get_key( node )));
         }
@@ -848,7 +849,7 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
                 
               } else {
                 *result |= LOAD_FAILURE; 
-                log_add_fmt_message(shared_info->logh , 1 , stderr , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
+                ert_log_add_fmt_message(1 , stderr , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
                   
                 if (interactive) 
                   stringlist_append_owned_ref(msg_list , 
@@ -1049,7 +1050,7 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
                 enkf_node_store( enkf_node , fs, store_vectors , node_id );
               } else {
                 *result |= LOAD_FAILURE; 
-                log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
+                ert_log_add_fmt_message( 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
                 
                 if (interactive) 
                   stringlist_append_owned_ref(msg_list , util_alloc_sprintf("Failed to load: %s at step:%d" , enkf_node_get_key( enkf_node ) , report_step));
@@ -1903,12 +1904,12 @@ static void enkf_state_internal_retry(enkf_state_type * enkf_state , enkf_fs_typ
   const int iens                          = member_config_get_iens( my_config );
 
   if (load_failure)
-    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d - %04d] Failed to load all data.",iens , run_info->step1 , run_info->step2);
+    ert_log_add_fmt_message( 1 , NULL , "[%03d:%04d - %04d] Failed to load all data.",iens , run_info->step1 , run_info->step2);
   else
-    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d - %04d] Forward model failed.",iens, run_info->step1 , run_info->step2);
+    ert_log_add_fmt_message( 1 , NULL , "[%03d:%04d - %04d] Forward model failed.",iens, run_info->step1 , run_info->step2);
   
   if (run_info->num_internal_submit < run_info->max_internal_submit) {
-    log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d] Resampling and resubmitting realization." ,iens);
+    ert_log_add_fmt_message( 1 , NULL , "[%03d] Resampling and resubmitting realization." ,iens);
     {
       /* Reinitialization of the nodes */
       stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
@@ -2068,7 +2069,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
      in this scope whether the results can be loaded back; if that
      is OK the final status is updated, otherwise: restart.
   */
-  log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
+  ert_log_add_fmt_message( 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
   enkf_state_load_from_forward_model(enkf_state , fs , &result , false , NULL); 
   
   if (result & REPORT_STEP_INCOMPATIBLE) {
@@ -2086,7 +2087,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
       (should be avoided) to JOB_RUN_OK.
     */
     run_info->run_status = JOB_RUN_OK;
-    log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_info->step1, run_info->step2);
+    ert_log_add_fmt_message( 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_info->step1, run_info->step2);
     
     enkf_state_clear_runpath( enkf_state );
     run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
@@ -2128,7 +2129,7 @@ static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * e
       return false;
     }
   } else {
-    log_add_fmt_message(shared_info->logh, 1, NULL, "[%03d:%04d-%04d] FAILED COMPLETELY.", iens, run_info->step1, run_info->step2);
+    ert_log_add_fmt_message( 1, NULL, "[%03d:%04d-%04d] FAILED COMPLETELY.", iens, run_info->step1, run_info->step2);
 
     if (run_info->run_status != JOB_LOAD_FAILURE)
       run_info->run_status = JOB_RUN_FAILURE;
