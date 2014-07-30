@@ -125,7 +125,6 @@ typedef struct shared_info_struct {
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / TORQUE / rsh / local / ... )*/ 
   const site_config_type      * site_config;
-  log_type                    * logh;              /* The log handle. */
   ert_templates_type          * templates; 
   const ecl_config_type       * ecl_config;
 } shared_info_type;
