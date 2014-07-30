@@ -23,7 +23,7 @@ void ert_log_init_log( int log_level,const char * log_file_name,const char * use
 
 void ert_log_add_message(int message_level , FILE * dup_stream , char* message, bool free_message) {
     if(logh==NULL)
-        ert_log_init_log(1,NULL,true);
+        ert_log_init_log(1,NULL,NULL,true);
     log_add_message(logh, message_level, dup_stream, message, free_message);
 }
 
@@ -52,24 +52,24 @@ bool ert_log_is_open(){
 
 void ert_log_set_log_level(int log_level){
     if(logh==NULL)
-        ert_log_init_log(1,NULL,true);
+        ert_log_init_log(1,NULL,NULL,true);
     log_set_level(logh, log_level);
 }
 
 int ert_log_get_log_level(){
     if(logh==NULL)
-        ert_log_init_log(1,NULL,true);
+        ert_log_init_log(1,NULL,NULL,true);
     return log_get_level(logh);
 }
 
 char * ert_log_get_filename(){
     if(logh==NULL)
-        ert_log_init_log(1,NULL,true);
+        ert_log_init_log(1,NULL,NULL,true);
     return log_get_filename(logh);
 }
 
 log_type * ert_log_get_logh() {
   if(logh==NULL)
-      ert_log_init_log(1,NULL,true);
+      ert_log_init_log(1,NULL,NULL,true);
   return logh;
 }
