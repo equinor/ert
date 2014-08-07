@@ -73,6 +73,12 @@ class SumTest(ExtendedTestCase):
         self.assertAlmostEqualList(v, [8.20773632e+08, 9.68444032e+08, 1.02515213e+09])
 
 
+    def test_LLINEAR(self):
+        sum = EclSum( self.createTestPath("Statoil/ECLIPSE/Heidrun/LGRISSUE/EM-LTAA-ISEG_CARFIN_NWPROPS"))
+        self.assertTrue( sum.has_key("LLINEARS") )
+
+        
+
     def test_wells(self):
         wells = self.ecl_sum.wells()
         wells.sort()
