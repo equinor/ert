@@ -1,6 +1,10 @@
 cmake_minimum_required( VERSION 2.8 )
 project( ERT C CXX )
 
+if(POLICY CMP0042)
+  cmake_policy(SET CMP0042 OLD)
+endif()
+
 set( ERT_VERSION_MAJOR 1 )
 set( ERT_VERSION_MINOR 7 )
 set( ERT_VERSION_MICRO X )
