@@ -44,6 +44,26 @@ class GridTest(ExtendedTestCase):
         self.assertEqual( grid.getNZ() , 30 )
         self.assertEqual( grid.getGlobalSize() , 30*10*20 )
 
+        
+
+    def test_node_pos(self):
+        grid = EclGrid.create_rectangular( (10,20,30) , (1,1,1) )
+        with self.assertRaises(IndexError):
+            grid.getNodePos(-1,0,0)
+
+        with self.assertRaises(IndexError):
+            grid.getNodePos(11,0,0)
+
+        p0 = grid.getNodePos(0,0,0)
+        self.assertEqual( p0 , (0,0,0))
+
+        p7 = grid.getNodePos(10,20,30)
+        self.assertEqual( p7 , (10,20,30))
+
+
+
+
+
 
     def test_corner(self):
         grid = EclGrid(self.egrid_file())
