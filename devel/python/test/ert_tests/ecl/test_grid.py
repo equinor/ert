@@ -238,6 +238,19 @@ class GridTest(ExtendedTestCase):
         with self.assertRaises(IOError):
             g = EclGrid("/does/not/exist.EGRID")
 
+    def test_boundingBox(self):
+        grid = EclGrid.create_rectangular((10,10,10) , (1,1,1))
+        with self.assertRaises(ValueError):
+            bbox = grid.getBoundingBox2D(layer = -1 )
+
+        with self.assertRaises(ValueError):
+            bbox = grid.getBoundingBox2D( layer = 11 )
+
+        bbox = grid.getBoundingBox2D( layer = 10 )
+        self.assertEqual( bbox , ((0,0) , (10, 0) , (10 , 10) , (0,10)))
+
+
+
 
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow test of dual grid skipped!")
     def test_dual(self):
