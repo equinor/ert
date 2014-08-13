@@ -1,7 +1,7 @@
 
 from ert.geo import Polyline, GeometryTools
 from ert.geo.xyz_reader import XYZReader
-from ert.test.extended_testcase import ExtendedTestCase
+from ert.test import ExtendedTestCase , TestAreaContext
 
 
 class PolylineTest(ExtendedTestCase):
@@ -90,6 +90,31 @@ class PolylineTest(ExtendedTestCase):
         self.assertEqual(polyline[20], (396202.413086, 6606091.935028, 1542.620972))  # last point
 
 
+    def test_closed(self):
+        pl = Polyline( init_points = [(1,0) , (1,1) , (0,2)])
+        self.assertFalse( pl.isClosed() )
+        pl.addPoint( 1,0 )
+        self.assertEqual( 4 , len(pl) ) 
+        self.assertTrue( pl.isClosed() )
+
+        pl = Polyline( init_points = [(1,0) , (1,1) , (0,2)])
+        self.assertFalse( pl.isClosed() )
+        pl.assertClosed( )
+        self.assertEqual( 4 , len(pl) ) 
+        self.assertTrue( pl.isClosed() )
+        
+
+    def test_save(self):
+        with TestAreaContext("polyline/fwrite") as work_area:
+            p1 = Polyline( init_points = [(1,0) , (1,1) , (1,2)])
+            p2 = Polyline( init_points = [(1,0) , (1,1) , (1,2)])
+            self.assertTrue( p1 == p2 )
+
+            p1.saveXYFile("poly.xy")
+            
+            p2 = XYZReader.readXYFile("poly.xy")
+            self.assertTrue( p1 == p2 )
+            
 
     def test_unzip(self):
         p2 = Polyline( init_points = [(1,0) , (1,1) , (1,2)])
@@ -109,6 +134,7 @@ class PolylineTest(ExtendedTestCase):
 
         with self.assertRaises(ValueError):
             (x,y) = p3.unzip()
+
 
     def test_intersection(self):
         p1 = Polyline( init_points = [(0,0) , (1,0)])
