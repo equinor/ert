@@ -91,9 +91,24 @@ class PolylineTest(ExtendedTestCase):
 
 
 
+    def test_unzip(self):
+        p2 = Polyline( init_points = [(1,0) , (1,1) , (1,2)])
+        p3 = Polyline( init_points = [(1,0,1) , (1,1,2) , (1,2,3)])
+        (x,y) = p2.unzip()
+        self.assertEqual( x , [1,1,1])
+        self.assertEqual( y , [0,1,2])
+
+        (x,y,z) = p3.unzip()
+        self.assertEqual( x , [1,1,1])
+        self.assertEqual( y , [0,1,2])
+        self.assertEqual( z , [1,2,3])
 
 
+        with self.assertRaises(ValueError):
+            (x,y,z) = p2.unzip()
 
+        with self.assertRaises(ValueError):
+            (x,y) = p3.unzip()
 
     def test_intersection(self):
         p1 = Polyline( init_points = [(0,0) , (1,0)])
