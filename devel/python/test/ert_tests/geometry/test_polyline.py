@@ -1,4 +1,5 @@
-from ert.geo import Polyline
+
+from ert.geo import Polyline, GeometryTools
 from ert.geo.xyz_reader import XYZReader
 from ert.test.extended_testcase import ExtendedTestCase
 
@@ -94,3 +95,19 @@ class PolylineTest(ExtendedTestCase):
 
 
 
+    def test_intersection(self):
+        p1 = Polyline( init_points = [(0,0) , (1,0)])
+        p2 = Polyline( init_points = [(0.5 , 0.5) , (0.5,-0.5)])
+        p3 = Polyline( init_points = [(0,1) , (1,1)])
+
+        self.assertTrue(GeometryTools.polylinesIntersect( p1 , p2 ))
+        self.assertFalse( GeometryTools.polylinesIntersect( p2 , p3 ))
+        self.assertFalse( GeometryTools.polylinesIntersect( p1 , p3 ))
+
+        self.assertTrue( p1.intersects(p2) )
+        self.assertTrue( p2.intersects(p1) )
+
+        self.assertTrue( not p1.intersects(p3) )
+        self.assertTrue( not p3.intersects(p1) )
+
+        
