@@ -20,7 +20,7 @@ except ImportError:
     from unittest import skipIf
 
 import time
-from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment, RegionDefinition, FaultBlockCollection
+from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment, RegionDefinition, FaultBlockLayer
 from ert.ecl import EclGrid, EclKW, EclTypeEnum
 from ert.test import ExtendedTestCase
 from ert.geo import Polyline
@@ -47,8 +47,11 @@ class RegionDefinitionTest(ExtendedTestCase):
         self.poly_file10 = self.createTestPath("Statoil/ECLIPSE/Mariner/pol10.xyz")
         self.poly_file11 = self.createTestPath("Statoil/ECLIPSE/Mariner/pol11.xyz")
 
-        self.faultblocks = FaultBlockCollection( self.grid )
-        self.faultblocks.scanKeyword( self.kw )
+        self.fault_blocks = []
+        for k in range(self.grid.getNZ()):
+            blocks = FaultBlockLayer( self.grid , k)
+            blocks.scanKeyword( self.kw )
+            self.fault_blocks.append( blocks )
 
         
     def test_create(self):
@@ -68,8 +71,7 @@ class RegionDefinitionTest(ExtendedTestCase):
         region_kw.assign( 0 )
         
         for k in range(self.grid.getNZ()):
-            block_list = defRegion.findBlocks( self.grid , self.faultblocks[k] )
-            for block in block_list:
-                print "Layer:%d Including block:%d in region:%d" % (k , block.getBlockID() , defRegion.getRegionID())
+            with self.assertRaises(NotImplementedError):
+                block_list = defRegion.findInternalBlocks( self.grid , self.fault_blocks[k] )
         
         
