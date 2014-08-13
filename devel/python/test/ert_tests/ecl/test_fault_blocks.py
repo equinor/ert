@@ -20,12 +20,8 @@ except ImportError:
     from unittest import skipIf
 
 from ert.ecl import EclGrid, EclTypeEnum , EclKW , EclRegion
-from ert.test import ExtendedTestCase
-from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCollection, FaultBlockCell
-
-def create_FaultBlock():
-    grid = EclGrid.create_rectangular( (10,10,10) , (1,1,1) )
-    return FaultBlock(grid , 0 , 0)
+from ert.test import ExtendedTestCase , TestAreaContext
+from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCell
 
 
 class FaultBlockTest(ExtendedTestCase):
@@ -191,16 +187,26 @@ class FaultBlockTest(ExtendedTestCase):
 
 
 
-    def test_fault_block_collection(self):
-        collection = FaultBlockCollection( self.grid  )
-        self.assertTrue( len(collection) , self.grid.getNZ() )
+        fault_block.assignToRegion( 1 )
+        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
 
-        layer_list = []
-        for layer in collection:
-            layer_list.append( layer )
-        
-        for k in range(self.grid.getNZ()):
-            self.assertEqual( collection[k], collection.getLayer(k) )
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
+
+
+
+    def test_fault_block_layer_export(self):
+        layer = FaultBlockLayer( self.grid , 1 )
+        kw1 = EclKW.create( "FAULTBLK" , self.grid.size + 1 , EclTypeEnum.ECL_INT_TYPE )
+        with self.assertRaises(ValueError):
+            layer.exportKeyword( kw1 )
+
+        kw2 = EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE )
+        with self.assertRaises(TypeError):
+            layer.exportKeyword(kw2)
+
+            
+
 
         self.assertTrue( len(layer_list) , self.grid.getNZ() )
         
