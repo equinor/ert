@@ -39,6 +39,19 @@ class RegionTest(ExtendedTestCase):
         fipnum.mul(-1, mask=reg)
         self.assertTrue(fipnum.equal(fipnum_copy))
 
+    def test_equal(self):
+        reg1 = EclRegion(self.grid , False)
+        reg2 = EclRegion(self.grid , False)
+
+        self.assertTrue( reg1 == reg2 )
+
+        reg1.select_islice(4 , 6)
+        self.assertFalse( reg1 == reg2 )
+        reg2.select_islice(4,7)
+        self.assertFalse( reg1 == reg2 )
+        reg1.select_islice(7,7)
+        self.assertTrue( reg1 == reg2 )
+        
 
     def test_kw_idiv(self):
         P = self.rst_file["PRESSURE"][5]
