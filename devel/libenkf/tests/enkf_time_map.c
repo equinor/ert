@@ -86,6 +86,82 @@ void test_inconsistent_summary( const char * case1, const char * case2) {
   ecl_sum_free( ecl_sum2 );
 }
 
+static void alloc_index_map( void * arg) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+  time_map_type * map = arg_pack_iget_ptr( arg_pack , 0 );
+  ecl_sum_type * sum  = arg_pack_iget_ptr( arg_pack , 1 );
+
+  time_map_alloc_index_map( map , sum );
+}
+
+
+
+void test_index_map( const char * case1, const char * case2 , const char * case3 , const char * case4) {
+  ecl_sum_type * ecl_sum1  = ecl_sum_fread_alloc_case( case1 , ":");
+  ecl_sum_type * ecl_sum2  = ecl_sum_fread_alloc_case( case2 , ":");
+  ecl_sum_type * ecl_sum3  = ecl_sum_fread_alloc_case( case3 , ":");
+  ecl_sum_type * ecl_sum4  = ecl_sum_fread_alloc_case( case4 , ":");
+
+  time_map_type * ecl_map = time_map_alloc(  );
+
+  {
+    int_vector_type * index_map = time_map_alloc_index_map( ecl_map , ecl_sum1 );
+    test_assert_int_equal( int_vector_size( index_map ) , 0);
+    int_vector_free( index_map );
+  }
+
+  test_assert_true( time_map_summary_update( ecl_map , ecl_sum1 ) );
+  {
+    int_vector_type * index_map = time_map_alloc_index_map( ecl_map , ecl_sum1 );
+    int i;
+    for (i=0; i < int_vector_size( index_map ); i++)
+      test_assert_int_equal( i , int_vector_iget( index_map , i ));
+    
+    test_assert_int_equal( int_vector_size( index_map ) , ecl_sum_get_last_report_step( ecl_sum1) + 1);
+    int_vector_free( index_map );
+  }
+
+  /* case2 has an extra tstep in the middle of the case. */
+  time_map_set_strict( ecl_map , false );
+  test_assert_false( time_map_summary_update( ecl_map , ecl_sum2 ) );
+  {
+    int_vector_type * index_map = time_map_alloc_index_map( ecl_map , ecl_sum2 );
+    test_assert_int_equal( int_vector_size( index_map ) , ecl_sum_get_last_report_step( ecl_sum2));
+    test_assert_int_equal( int_vector_iget( index_map , 24) , 24);
+    test_assert_int_equal( int_vector_iget( index_map , 25) , 26);
+    int_vector_free( index_map );
+  }
+
+  
+  /* case3 has an extra tstep in the middle, and ends prematurely */
+  test_assert_false( time_map_summary_update( ecl_map , ecl_sum3 ) );
+  {
+    int_vector_type * index_map = time_map_alloc_index_map( ecl_map , ecl_sum3 );
+    test_assert_int_equal( int_vector_size( index_map ) , ecl_sum_get_last_report_step( ecl_sum3));
+    int_vector_free( index_map );
+  }
+
+
+  /* case4 has a missing tstep in the middle - that is not handled; and we abort */
+  test_assert_false( time_map_summary_update( ecl_map , ecl_sum4 ) );
+  {
+    arg_pack_type * arg = arg_pack_alloc();
+    arg_pack_append_ptr( arg , ecl_map );
+    arg_pack_append_ptr( arg , ecl_sum4 );
+
+    test_assert_util_abort( "time_map_alloc_index_map" , alloc_index_map , arg);
+    arg_pack_free( arg );
+  }
+  
+  
+
+  time_map_free( ecl_map );
+  ecl_sum_free( ecl_sum1 );
+  ecl_sum_free( ecl_sum2 );
+  ecl_sum_free( ecl_sum3 );
+  ecl_sum_free( ecl_sum4 );
+}
+
 
 void simple_test() {
   time_map_type * time_map = time_map_alloc(  );
@@ -231,8 +307,8 @@ int main(int argc , char ** argv) {
     thread_test();
   } else {
     ecl_test( argv[1] );
-    if (argc > 2) 
-      test_inconsistent_summary( argv[1] , argv[2]);
+    test_inconsistent_summary( argv[1] , argv[2]);
+    test_index_map(argv[1] , argv[2] , argv[3] , argv[4]);
   }
   
   test_read_only();  

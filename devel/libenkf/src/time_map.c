@@ -336,6 +336,96 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
 
 
 
-
-
 /*****************************************************************/
+
+
+/*
+  This function creates an integer index mapping from the time map
+  into the summary case. In general the time <-> report step mapping
+  of the summary data should coincide exactly with the one maintained
+  in the time_map, however we allow extra timesteps in the summary
+  instance. The extra timesteps will be ignored, holes in the summary
+  timestep is not allowed - that will lead to a hard crash.
+
+     time map                      Summary                        
+     -------------------------------------------------
+     0: 01/01/2000   <-------      0: 01/01/2000         
+                              
+     1: 01/02/2000   <-------      1: 01/02/2000         
+                              
+     2: 01/03/2000   <-\           2: 02/02/2000 (Ignored)         
+                        \                           
+                         \--       3: 01/03/2000    
+                              
+     3: 01/04/2000   <-------      4: 01/04/2000                             
+
+
+     index_map = { 0 , 1 , 3 , 4 }
+
+  Observe that the time_map_update_summary() must be called prior to
+  calling this function, to ensure that the time_map is sufficiently
+  long. If timesteps are missing from the summary case we crash hard:
+
+
+     time map                      Summary                        
+     -------------------------------------------------
+     0: 01/01/2000   <-------      0: 01/01/2000         
+                              
+     1: 01/02/2000   <-------      1: 01/02/2000         
+                              
+     2: 01/03/2000                 ## ERROR -> util_abort()
+                              
+     3: 01/04/2000   <-------      2: 01/04/2000                             
+
+*/
+
+
+
+int_vector_type * time_map_alloc_index_map( time_map_type * map , const ecl_sum_type * ecl_sum ) {
+  int_vector_type * index_map = int_vector_alloc(0 , -1 );
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    int time_map_index = 0;
+    int sum_index = 0;
+    
+    while (true) {
+      time_t map_time = time_map_iget__( map , time_map_index);
+      if (map_time == DEFAULT_TIME)
+        break;
+
+      {
+        time_t sum_time;
+        
+        while (true) {
+          sum_time = ecl_sum_iget_sim_time( ecl_sum , sum_index );
+          
+          if (sum_time > map_time) {
+            int day,month,year;
+            util_set_date_values( map_time , &day , &month , &year);
+            util_abort("%s: The eclipse summary cases is missing data for date:%02d/%02d/%4d - aborting\n", __func__ , day , month , year);
+          } else if (sum_time < map_time) {
+            sum_index++;
+            if (sum_index > ecl_sum_get_last_report_step( ecl_sum ))
+              break;
+          } else
+            break;
+          
+        } 
+        
+        if (sum_time == map_time)
+          int_vector_iset( index_map , time_map_index , sum_index);
+        else
+          break;
+
+          
+        time_map_index++;
+        if (time_map_index == time_map_get_size( map ))
+          break;
+        
+      }
+    }
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+
+  return index_map;
+}

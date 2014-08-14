@@ -24,6 +24,7 @@ extern "C" {
 #include <time.h>
 
 #include <ert/util/type_macros.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/ecl/ecl_sum.h>
 
@@ -51,6 +52,7 @@ typedef struct time_map_struct time_map_type;
   double           time_map_get_end_days( time_map_type * map);
   bool             time_map_is_readonly( const time_map_type * tm);
   time_map_type  * time_map_fread_alloc_readonly( const char * filename);
+  int_vector_type * time_map_alloc_index_map( time_map_type * map , const ecl_sum_type * ecl_sum );
 
 #ifdef __cplusplus 
 }
