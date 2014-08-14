@@ -71,7 +71,7 @@ void * read_file( void * self , const stringlist_type * args) {
 static void create_exjob( const char * workflow , const char * bin_path) 
 {
   FILE * stream = util_fopen( workflow , "w");
-  fprintf(stream , "EXECUTABLE  \"%s/create file\"\n" , bin_path);  
+  fprintf(stream , "EXECUTABLE  \"%s/create_file\"\n" , bin_path);
   fprintf(stream , "ARG_TYPE    1   INT\n");
   fprintf(stream , "MIN_ARG     2\n");
   fprintf(stream , "MAX_ARG     2\n");
