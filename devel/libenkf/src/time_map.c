@@ -32,6 +32,9 @@
 #define DEFAULT_TIME  -1
 
 
+static void time_map_update_abort( time_map_type * map , int step , time_t time);
+static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_type * ecl_sum);
+
 #define TIME_MAP_TYPE_ID 7751432
 struct time_map_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -39,11 +42,13 @@ struct time_map_struct {
   pthread_rwlock_t     rw_lock;
   bool                 modified;
   bool                 read_only;
+  bool                 strict;
 };
 
 
 UTIL_SAFE_CAST_FUNCTION( time_map , TIME_MAP_TYPE_ID )
 UTIL_IS_INSTANCE_FUNCTION( time_map , TIME_MAP_TYPE_ID ) 
+
 
 time_map_type * time_map_alloc( ) {
   time_map_type * map = util_malloc( sizeof * map );
@@ -52,13 +57,23 @@ time_map_type * time_map_alloc( ) {
   map->map = time_t_vector_alloc(0 , DEFAULT_TIME );
   map->modified = false;
   map->read_only = false;
+  map->strict = true;
   pthread_rwlock_init( &map->rw_lock , NULL);
   return map;
 }
 
+bool time_map_is_strict( const time_map_type * time_map ){ 
+  return time_map->strict;
+}
+
+
+void time_map_set_strict( time_map_type * time_map , bool strict) {
+  time_map->strict = strict;
+}
+
 
 time_map_type * time_map_fread_alloc_readonly( const char * filename) {
-  time_map_type * tm = time_map_alloc();
+  time_map_type * tm = time_map_alloc( true );
 
   if (util_file_exists(filename)) 
     time_map_fread( tm , filename );
@@ -253,6 +268,10 @@ bool time_map_update( time_map_type * map , int step , time_t time) {
     updateOK = time_map_update__( map , step , time );
   }  
   pthread_rwlock_unlock( &map->rw_lock );
+
+  if (map->strict && !updateOK)
+    time_map_update_abort(map , step , time);
+
   return updateOK;
 }
 
@@ -265,6 +284,9 @@ bool time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum
     updateOK = time_map_summary_update__( map , ecl_sum );
   }
   pthread_rwlock_unlock( &map->rw_lock );
+  
+  if (map->strict && !updateOK)
+    time_map_summary_update_abort( map , ecl_sum );
   return updateOK;
 }
 
@@ -281,37 +303,33 @@ void time_map_clear( time_map_type * map ) {
 
 /*****************************************************************/
 
-void time_map_update_strict( time_map_type * map , int step , time_t time) {
-  if (!time_map_update( map , step , time )) {
-    time_t current_time = time_map_iget__( map , step );
-    int current[3];
-    int new[3];
+static void time_map_update_abort( time_map_type * map , int step , time_t time) {
+  time_t current_time = time_map_iget__( map , step );
+  int current[3];
+  int new[3];
     
-    util_set_date_values( current_time , &current[0] , &current[1] , &current[2]);
-    util_set_date_values( time , &new[0] , &new[1] , &new[2]);
+  util_set_date_values( current_time , &current[0] , &current[1] , &current[2]);
+  util_set_date_values( time , &new[0] , &new[1] , &new[2]);
     
-    util_abort("%s: time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",__func__ , step , 
-               new[0]     , new[1]     , new[2] , 
-               current[0] , current[1] , current[2]);
-    
-  }
+  util_abort("%s: time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",__func__ , step , 
+             new[0]     , new[1]     , new[2] , 
+             current[0] , current[1] , current[2]);
 }
 
-void time_map_summary_update_strict( time_map_type * map , const ecl_sum_type * ecl_sum) {
-  if (!time_map_summary_update( map , ecl_sum)) {
-    /* 
-       If the normal summary update fails we just play through all
-       time steps to pinpoint exactly the step where the update fails.
-    */
-    int first_step = ecl_sum_get_first_report_step( ecl_sum );
-    int last_step  = ecl_sum_get_last_report_step( ecl_sum );
-    int step;
+
+static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_type * ecl_sum) {
+  /* 
+     If the normal summary update fails we just play through all
+     time steps to pinpoint exactly the step where the update fails.
+  */
+  int first_step = ecl_sum_get_first_report_step( ecl_sum );
+  int last_step  = ecl_sum_get_last_report_step( ecl_sum );
+  int step;
     
-    for (step = first_step; step <= last_step; step++) {
-      if (ecl_sum_has_report_step(ecl_sum , step)) {
-        time_t time = ecl_sum_get_report_time( ecl_sum , step ); 
-        time_map_update_strict( map , step , time );
-      }
+  for (step = first_step; step <= last_step; step++) {
+    if (ecl_sum_has_report_step(ecl_sum , step)) {
+      time_t time = ecl_sum_get_report_time( ecl_sum , step ); 
+      time_map_update( map , step , time );
     }
   }
 }
