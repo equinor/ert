@@ -10,7 +10,6 @@ set( ERT_VERSION_MINOR 7 )
 set( ERT_VERSION_MICRO X )
 
 
-option( ERT_DOC             "Build ERT documantation" OFF)
 option( BUILD_ERT           "Build the full ERT application - Linux only" OFF)
 option( BUILD_ENS_PLOT      "Build small Eclipse plotting program - no" OFF)
 option( BUILD_TESTS         "Should the tests be built" OFF)
@@ -21,6 +20,7 @@ option( BUILD_SHARED_LIBS   "Build shared libraries" ON )
 option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON)
 option( ERT_BUILD_GUI       "Should the pyQt based gui be compiled and installed" OFF )
 option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" OFF)
+option( ERT_DOC             "Build ERT documantation" OFF)
 
 
 include( CheckFunctionExists )
@@ -138,6 +138,7 @@ add_subdirectory( libecl )
 
 include_directories( ${PROJECT_SOURCE_DIR}/libecl_well/include )
 add_subdirectory( libecl_well )
+add_subdirectory( docs )
 
 
 #-----------------------------------------------------------------

@@ -1,8 +1,11 @@
-if (ERT_DOC)
-	add_custom_command(OUTPUT doc_python
-                   COMMAND sphinx-apidoc -e -o python ../python/python/
-                   COMMAND make html
+if(ERT_DOC)
+	
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Static DESTINATION ${PROJECT_BINARY_DIR}/tmp_doc/)
+	
+	
+	add_custom_target(doc_out ALL
+                   COMMAND ${CMAKE_COMMAND} -Dpsd=${PROJECT_SOURCE_DIR} -Dccsd=${CMAKE_CURRENT_SOURCE_DIR} -Dpbd=${PROJECT_BINARY_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/build_doc.cmake  
                    )
 
-	add_custom_target(part_out
-                  DEPENDS part.out)
+	INSTALL( DIRECTORY ${PROJECT_BINARY_DIR}/tmp_doc/_build/ DESTINATION ${PROJECT_BINARY_DIR}/documentation/ )
+endif()
