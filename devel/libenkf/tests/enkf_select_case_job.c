@@ -45,9 +45,8 @@ int main(int argc , const char ** argv) {
   enkf_main_type * enkf_main = enkf_main_bootstrap( NULL , config_file , true , true );  
   stringlist_type * args = stringlist_alloc_new();
   ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list(enkf_main);
-  log_type * logh = enkf_main_get_logh(enkf_main); 
 
-  ert_workflow_list_add_jobs_in_directory(workflow_list, job_dir_path, logh); 
+  ert_workflow_list_add_jobs_in_directory(workflow_list, job_dir_path);
   stringlist_append_copy( args , "NewCase");
 
   test_assert_string_not_equal( "NewCase" , enkf_main_get_current_fs( enkf_main ));

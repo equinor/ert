@@ -207,6 +207,11 @@ add_test( NAME python.tests.ert.enkf.enkf_fs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs.EnKFFSTest)
 
+add_test( NAME python.tests.ert.enkf.ert_log
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_log.ErtLogTest)
+
+
 add_test( NAME python.tests.ert.enkf.enkf_fs_manager1
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs_manager1.EnKFFSManagerTest1)
