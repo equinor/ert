@@ -24,7 +24,7 @@
 #include <ert/enkf/enkf_defaults.h>
 
 
-log_type             * logh;               /* Handle to an open log file. */
+static log_type * logh;               /* Handle to an open log file. */
 
 void ert_log_init_log( int log_level,const char * log_file_name,const char * user_log_file_name,bool verbose){
   logh = log_open( NULL , DEFAULT_LOG_LEVEL );
@@ -48,9 +48,9 @@ void ert_log_add_message_py(int message_level, char* message){
 }
 
 void ert_log_add_message(int message_level , FILE * dup_stream , char* message, bool free_message) {
-    if(logh==NULL)
-        ert_log_init_log(1,NULL,NULL,true);
-    log_add_message(logh, message_level, dup_stream, message, free_message);
+   if(logh==NULL)
+      ert_log_init_log(1,NULL,NULL,true);
+   log_add_message(logh, message_level, dup_stream, message, free_message);
 }
 
 void ert_log_add_fmt_message(int message_level , FILE * dup_stream , const char * fmt , ...) {
