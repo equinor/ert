@@ -729,7 +729,6 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
        
         
         /* The actual loading internalizing - from ecl_sum -> enkf_node. */
-        const shared_info_type   * shared_info = enkf_state->shared_info;
         const int iens                         = member_config_get_iens( enkf_state->my_config );
         const int step2                        = ecl_sum_get_last_report_step( summary );  /* Step2 is just taken from the number of steps found in the summary file. */
         {
@@ -809,7 +808,6 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
                                             stringlist_type * msg_list) {
   {
     run_info_type      * run_info      = enkf_state->run_info;
-    shared_info_type   * shared_info   = enkf_state->shared_info;
     member_config_type * my_config     = enkf_state->my_config;
     const int  iens                    = member_config_get_iens( my_config ); 
     stringlist_type * keylist_GEN_DATA = ensemble_config_alloc_keylist_from_impl_type(enkf_state->ensemble_config , GEN_DATA );
@@ -2056,7 +2054,6 @@ static void enkf_state_clear_runpath( const enkf_state_type * enkf_state ) {
 */
 
 static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , enkf_fs_type * fs) {
-  const shared_info_type    * shared_info = enkf_state->shared_info;
   run_info_type             * run_info    = enkf_state->run_info;
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
@@ -2111,7 +2108,6 @@ bool enkf_state_complete_forward_modelOK__(void * arg ) {
 
 
 static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , enkf_fs_type * fs, bool is_retry) {
-  const shared_info_type    * shared_info = enkf_state->shared_info;
   run_info_type             * run_info    = enkf_state->run_info;
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
