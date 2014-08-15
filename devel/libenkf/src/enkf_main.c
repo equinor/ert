@@ -2812,14 +2812,23 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
     enkf_main_set_site_config_file( enkf_main , site_config );
     enkf_main_set_user_config_file( enkf_main , model_config );
-    //enkf_main_init_log( enkf_main , config );
-    int log_key_level = DEFAULT_LOG_LEVEL;
-    if(config_item_set( config , LOG_LEVEL_KEY))
-        log_key_level = config_get_value_as_int(config , LOG_LEVEL_KEY);
-    const char * log_key_file = DEFAULT_LOG_FILE;
-    if (config_item_set( config , LOG_FILE_KEY))
-        log_key_file = config_get_value(config , LOG_FILE_KEY);
-    ert_log_init_log(log_key_level, log_key_file, enkf_main->user_config_file, enkf_main->verbose);
+
+    {
+      char * log_file;
+      int log_level = DEFAULT_LOG_LEVEL;
+      if(config_item_set( config , LOG_LEVEL_KEY))
+        log_level = config_get_value_as_int(config , LOG_LEVEL_KEY);
+
+      if (config_item_set( config , LOG_FILE_KEY))
+        log_file = util_alloc_string_copy( config_get_value(config , LOG_FILE_KEY));
+      else
+        log_file = util_alloc_filename( NULL , enkf_main->user_config_file , "log");
+
+      ert_log_init_log(log_level, log_file ,  enkf_main->verbose);
+      
+      free( log_file );
+    }
+
     /*
       Initializing the various 'large' sub config objects. 
     */
