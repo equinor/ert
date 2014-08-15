@@ -3336,10 +3336,6 @@ bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow 
   }
 }
 
-log_type * enkf_main_get_logh( const enkf_main_type * enkf_main ) {
-  return ert_log_get_logh();
-}
-
 
 void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type * workflows) {
   int iw;
