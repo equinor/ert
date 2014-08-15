@@ -88,10 +88,10 @@ int ert_log_get_log_level(){
     return log_get_level(logh);
 }
 
-char * ert_log_get_filename(){
-    if(logh==NULL)
-        ert_log_init_log(1,NULL,NULL,true);
-    return log_get_filename(logh);
+const char * ert_log_get_filename() {
+  if(logh==NULL)
+  ert_log_init_log(1,NULL,NULL,true);
+return log_get_filename(logh);
 }
 
 log_type * ert_log_get_logh() {

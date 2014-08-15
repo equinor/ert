@@ -35,7 +35,11 @@ void ert_log_add_message_py(int message_level, char* message);
 void ert_log_close();
 bool ert_log_is_open();
 int ert_log_get_log_level();
-char * ert_log_get_filename();
+const char * ert_log_get_filename();
 log_type * ert_log_get_logh();
 void ert_log_open_empty();
+
+#ifdef __cplusplus
+}
+#endif
 #endif // ERTLOG_H
