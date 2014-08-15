@@ -14,6 +14,7 @@ set(TEST_SOURCES
     ert_tests/cwrap/test_cwrap.py
 
     ert_tests/ecl/__init__.py
+    ert_tests/ecl/test_deprecation.py
     ert_tests/ecl/test_ecl_default.py
     ert_tests/ecl/test_ecl_file.py
     ert_tests/ecl/test_ecl_submit.py
@@ -404,6 +405,9 @@ add_test( NAME python.tests.ert.ecl.ecl_sum_vector
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_sum_vector.EclSumVectorTest)
 
+add_test( NAME python.tests.ert.ecl.layer
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_layer.LayerTest )
 
 add_test( NAME python.tests.ert.ecl.faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -432,6 +436,10 @@ add_test( NAME python.tests.ert.ecl.ecl_npv
 add_test( NAME python.tests.ert.ecl.statoil_faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_statoil_faults.StatoilFaultTest )
+
+add_test( NAME python.tests.ert.ecl.ecl_deprecation
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_deprecation.DeprecationTest )
 
 #SCHED
 add_test( NAME python.tests.ert.sched.sched
@@ -529,6 +537,7 @@ set_property( TEST python.tests.ert.ecl.ecl_kw            PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_rft           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python:StatoilData:Slow )
+set_property( TEST python.tests.ert.ecl.ecl_deprecation   PROPERTY LABELS Python )
 #set_property( TEST python.tests.import_local             PROPERTY LABELS Python:StatoilBuild )
 
 

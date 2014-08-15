@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #  Copyright (C) 2014  Statoil ASA, Norway. 
 #   
-#  The file 'test_fault_blocks.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'test_layer.py' is part of ERT - Ensemble based Reservoir Tool.
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -19,22 +19,31 @@ try:
 except ImportError:
     from unittest import skipIf
 
-from ert.ecl import EclGrid, EclTypeEnum , EclKW
+import time
+from ert.ecl.faults import Layer
 from ert.test import ExtendedTestCase
-from ert.ecl.faults import FaultBlock, FaultBlockLayer
 
-class FaultBlockTest(ExtendedTestCase):
+class LayerTest(ExtendedTestCase):
     def setUp(self):
-        self.grid = EclGrid( self.createTestPath("Statoil/ECLIPSE/Mariner/MARINER.EGRID"))
-        fileH = open( self.createTestPath("Statoil/ECLIPSE/Mariner/faultblock.grdecl") )
-        self.kw = EclKW.read_grdecl( fileH , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE )
+        pass
 
 
+    def test_create_layer(self):
+        layer = Layer(10,10)
+        self.assertTrue( isinstance( layer , Layer ))
+
+
+    def test_add_cell(self):
+        layer = Layer(10,10)
+        with self.assertRaises(ValueError):
+            layer[100,100] = 199
+
+        with self.assertRaises(ValueError):
+            layer[100,"X"] = 199
+
+        with self.assertRaises(ValueError):
+            layer[100] = 199
+
+        layer[5,5] = 88
+        self.assertEqual(layer[5,5] , 88)
         
-    def test_load(self):
-        for k in range(self.grid.getNZ()):
-            faultBlocks = FaultBlockLayer(self.grid , k)
-            faultBlocks.scanKeyword( self.kw )
-            for block in faultBlocks:
-                centroid = block.getCentroid()
-                
