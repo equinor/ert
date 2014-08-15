@@ -77,7 +77,7 @@ void test_inconsistent_summary( const char * case1, const char * case2) {
     vector_type * arg = vector_alloc_new();
     vector_append_ref( arg , ecl_map );
     vector_append_ref( arg , ecl_sum2 );
-    test_assert_util_abort("time_map_update_abort" , map_update , arg);
+    test_assert_util_abort("time_map_summary_update_abort" , map_update , arg);
     vector_free( arg );
   }
   
@@ -96,12 +96,62 @@ static void alloc_index_map( void * arg) {
 
 
 
-void test_index_map( const char * case1, const char * case2 , const char * case3 , const char * case4) {
+void test_refcase( const char * refcase_name , const char * case1, const char * case2 , const char * case3 , const char * case4) {
+  ecl_sum_type * refcase   = ecl_sum_fread_alloc_case( refcase_name , ":");
   ecl_sum_type * ecl_sum1  = ecl_sum_fread_alloc_case( case1 , ":");
   ecl_sum_type * ecl_sum2  = ecl_sum_fread_alloc_case( case2 , ":");
   ecl_sum_type * ecl_sum3  = ecl_sum_fread_alloc_case( case3 , ":");
   ecl_sum_type * ecl_sum4  = ecl_sum_fread_alloc_case( case4 , ":");
 
+  {
+    time_map_type * ecl_map = time_map_alloc(  );
+    test_assert_false( time_map_has_refcase( ecl_map ));
+    test_assert_true( time_map_attach_refcase( ecl_map , refcase ) );
+    test_assert_true( time_map_has_refcase( ecl_map ));
+    time_map_free( ecl_map );
+  }
+
+
+  {
+    time_map_type * ecl_map = time_map_alloc(  );
+    time_map_attach_refcase( ecl_map , refcase );
+    test_assert_true( time_map_summary_update( ecl_map , ecl_sum1 ) );
+  }
+  
+  {
+    time_map_type * ecl_map = time_map_alloc(  );
+    
+    time_map_set_strict( ecl_map , false );
+    time_map_attach_refcase( ecl_map , refcase );
+    
+    test_assert_false( time_map_summary_update( ecl_map , ecl_sum2 ) );
+    test_assert_int_equal( 25 , time_map_get_size( ecl_map ));
+    test_assert_true( time_map_summary_update( ecl_map , ecl_sum1 ) );
+    test_assert_int_equal( 63 , time_map_get_size( ecl_map ));
+  }
+  
+  {
+    time_map_type * ecl_map = time_map_alloc(  );
+    test_assert_true( time_map_summary_update( ecl_map , ecl_sum2 ) );
+    test_assert_false( time_map_attach_refcase( ecl_map , refcase ));
+  }
+  
+  
+
+  ecl_sum_free( refcase );
+  ecl_sum_free( ecl_sum1 );
+  ecl_sum_free( ecl_sum2 );
+  ecl_sum_free( ecl_sum3 );
+  ecl_sum_free( ecl_sum4 );
+}
+
+
+void test_index_map( const char * case1, const char * case2 , const char * case3 , const char * case4) {
+  ecl_sum_type * ecl_sum1  = ecl_sum_fread_alloc_case( case1 , ":");
+  ecl_sum_type * ecl_sum2  = ecl_sum_fread_alloc_case( case2 , ":");
+  ecl_sum_type * ecl_sum3  = ecl_sum_fread_alloc_case( case3 , ":");
+  ecl_sum_type * ecl_sum4  = ecl_sum_fread_alloc_case( case4 , ":");
+  
   time_map_type * ecl_map = time_map_alloc(  );
 
   {
@@ -309,6 +359,7 @@ int main(int argc , char ** argv) {
     ecl_test( argv[1] );
     test_inconsistent_summary( argv[1] , argv[2]);
     test_index_map(argv[1] , argv[2] , argv[3] , argv[4]);
+    test_refcase( argv[1] , argv[1] , argv[2] , argv[3] , argv[4]);
   }
   
   test_read_only();  
