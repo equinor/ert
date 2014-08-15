@@ -6,7 +6,7 @@ import sys
 import traceback
 from ert.ecl import EclTypeEnum, EclKW, EclGrid 
 from ert.ecl.faults import  FaultCollection
-from ert.geo.xyz_reader import XYZReader
+from ert.geo.xyz_io import XYZIo
 from ert_gui.viewer import Texture3D, Bounds, SliceViewer, SliceSettingsWidget, Texture1D
 
 
@@ -186,7 +186,7 @@ def readPolylines(root_path):
     if root_path is not None and os.path.exists(root_path):
         for polyline_file in polyline_files:
             path = os.path.join(root_path, polyline_file)
-            polyline = XYZReader.readXYZFile(path)
+            polyline = XYZIo.readXYZFile(path)
             polylines.append(polyline)
 
     return polylines

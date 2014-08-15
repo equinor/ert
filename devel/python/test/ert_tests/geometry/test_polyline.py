@@ -1,6 +1,6 @@
 
 from ert.geo import Polyline, GeometryTools
-from ert.geo.xyz_reader import XYZReader
+from ert.geo.xyz_io import XYZIo
 from ert.test import ExtendedTestCase , TestAreaContext
 
 
@@ -71,9 +71,9 @@ class PolylineTest(ExtendedTestCase):
 
     def test_read_xyz_from_file(self):
         with self.assertRaises(ValueError):
-            XYZReader.readXYZFile("does/not/exist.xyz")
+            XYZIo.readXYZFile("does/not/exist.xyz")
 
-        polyline = XYZReader.readXYZFile(self.polyline)
+        polyline = XYZIo.readXYZFile(self.polyline)
 
         self.assertEqual(polyline.name(), "pol11.xyz")
         self.assertEqual(len(polyline), 13)
@@ -81,7 +81,7 @@ class PolylineTest(ExtendedTestCase):
         self.assertEqual(polyline[0], (390271.843750, 6606121.334396, 1441.942627))  # first point
         self.assertEqual(polyline[12], (389789.263184, 6605784.945099, 1446.627808))  # last point
 
-        polyline = XYZReader.readXYZFile(self.closed_polyline)
+        polyline = XYZIo.readXYZFile(self.closed_polyline)
 
         self.assertEqual(polyline.name(), "pol8.xyz")
         self.assertEqual(len(polyline), 21)
@@ -110,9 +110,9 @@ class PolylineTest(ExtendedTestCase):
             p2 = Polyline( init_points = [(1,0) , (1,1) , (1,2)])
             self.assertTrue( p1 == p2 )
 
-            p1.saveXYFile("poly.xy")
+            XYZIo.saveXYFile(p1 , "poly.xy")
             
-            p2 = XYZReader.readXYFile("poly.xy")
+            p2 = XYZIo.readXYFile("poly.xy")
             self.assertTrue( p1 == p2 )
             
 
