@@ -435,14 +435,14 @@ bool enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path ,
 
 
 
-bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step1, int report_step2 , int iens ) {
+bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , const int_vector_type * time_index , int iens ) {
   bool loadOK;
   FUNC_ASSERT(enkf_node->forward_load_vector);
   {
-    loadOK = enkf_node->forward_load_vector(enkf_node->data , NULL  , ecl_sum , restart_block , report_step1 , report_step2);
+    loadOK = enkf_node->forward_load_vector(enkf_node->data , NULL  , ecl_sum , restart_block , time_index);
   }
   // This is broken ....
-  enkf_node->__node_id.report_step = report_step1;
+  enkf_node->__node_id.report_step = 0;//report_step1;
   enkf_node->__node_id.state       = FORECAST;
   enkf_node->__node_id.iens        = iens; 
   
