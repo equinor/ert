@@ -80,6 +80,7 @@ bool time_map_attach_refcase( time_map_type * time_map , const ecl_sum_type * re
   {
     int step;
     for (step = 0; step < time_map_get_size(time_map); step++) {
+      printf("step: %d/%d \n",step, time_map_get_size( time_map ));
       time_t current_time = time_map_iget__( time_map , step );
       time_t sim_time = ecl_sum_get_report_time( refcase , step );
       
@@ -314,15 +315,9 @@ double time_map_get_end_days( time_map_type * map) {
 
 /*****************************************************************/
 
-bool time_map_update( time_map_type * map , int step , time_t time) {
-  bool updateOK;
-  time_map_assert_writable( map );
-  pthread_rwlock_wrlock( &map->rw_lock );
-  {
-    updateOK = time_map_update__( map , step , time );
-  }  
-  pthread_rwlock_unlock( &map->rw_lock );
 
+bool time_map_update( time_map_type * map , int step , time_t time) {
+  bool updateOK = time_map_try_update( map , step , time );
   if (!updateOK) {
     if (map->strict)
       time_map_update_abort(map , step , time);
@@ -333,14 +328,21 @@ bool time_map_update( time_map_type * map , int step , time_t time) {
 }
 
 
-bool time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum) {
+bool time_map_try_update( time_map_type * map , int step , time_t time) {
   bool updateOK;
   time_map_assert_writable( map );
   pthread_rwlock_wrlock( &map->rw_lock );
   {
-    updateOK = time_map_summary_update__( map , ecl_sum );
-  }
+    updateOK = time_map_update__( map , step , time );
+  }  
   pthread_rwlock_unlock( &map->rw_lock );
+  return updateOK;
+}
+
+
+
+bool time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum) {
+  bool updateOK = time_map_try_summary_update( map , ecl_sum );
   
   if (!updateOK) {
     if (map->strict)
@@ -351,6 +353,22 @@ bool time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum
   
   return updateOK;
 }
+
+
+bool time_map_try_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum) {
+  bool updateOK;
+
+  time_map_assert_writable( map );
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    updateOK = time_map_summary_update__( map , ecl_sum );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+
+  return updateOK;
+}
+
+
 
 
 void time_map_clear( time_map_type * map ) {
@@ -525,3 +543,6 @@ int_vector_type * time_map_alloc_index_map( time_map_type * map , const ecl_sum_
 
   return index_map;
 }
+
+
+

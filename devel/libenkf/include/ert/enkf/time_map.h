@@ -33,6 +33,8 @@ typedef struct time_map_struct time_map_type;
   UTIL_SAFE_CAST_HEADER( time_map  );
   UTIL_IS_INSTANCE_HEADER( time_map );
 
+  bool             time_map_try_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum);
+  bool             time_map_try_update( time_map_type * map , int step , time_t time);
   bool             time_map_attach_refcase( time_map_type * time_map , const ecl_sum_type * refcase);
   bool             time_map_has_refcase( const time_map_type * time_map );
   bool             time_map_is_strict( const time_map_type * time_map );
