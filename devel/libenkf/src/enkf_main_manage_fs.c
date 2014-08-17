@@ -507,6 +507,19 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
       }
 
       new_fs = enkf_fs_mount( new_mount_point );
+      {
+        const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+        const ecl_sum_type * refcase = model_config_get_refcase( model_config );
+
+        if (refcase) {
+          time_map_type * time_map = enkf_fs_get_time_map( new_fs );
+          if (time_map_attach_refcase( time_map , refcase))
+            time_map_set_strict( time_map , false );
+          else 
+            ert_log_add_fmt_message(1 , stderr , "Warning mismatch between refcase:%s and existing case:%s" , ecl_sum_get_case( refcase ) , new_mount_point);
+        }
+      }
+
       free( new_mount_point );
     }
     return new_fs;
