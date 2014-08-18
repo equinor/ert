@@ -20,6 +20,8 @@ option( BUILD_SHARED_LIBS   "Build shared libraries" ON )
 option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON)
 option( ERT_BUILD_GUI       "Should the pyQt based gui be compiled and installed" OFF )
 option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" OFF)
+option( ERT_DOC             "Build ERT documantation" OFF)
+
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
@@ -136,6 +138,7 @@ add_subdirectory( libecl )
 
 include_directories( ${PROJECT_SOURCE_DIR}/libecl_well/include )
 add_subdirectory( libecl_well )
+add_subdirectory( docs )
 
 
 #-----------------------------------------------------------------
