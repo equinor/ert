@@ -135,7 +135,16 @@ from ert_gui.widgets import util
 
 import ert_gui.widgets.util
 
-ert_gui.widgets.util.img_prefix = os.getenv("ERT_SHARE_PATH") + "/gui/img/"
+if os.getenv("ERT_SHARE_PATH"):
+    ert_share_path = os.getenv("ERT_SHARE_PATH")
+else:
+    # If the ERT_SHARE_PATH variable is not set we try to use the
+    # source location relative to the location of the current file;
+    # assuming we are in the source directory. Will not work if we are
+    # in an arbitrary build directory.
+    ert_share_path = os.path.realpath( os.path.join( os.path.dirname( os.path.abspath( __file__)) , "../../../share"))
+    
+ert_gui.widgets.util.img_prefix = ert_share_path + "/gui/img/"
 
 from ert_gui.newconfig import NewConfigurationDialog
 
