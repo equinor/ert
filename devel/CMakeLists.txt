@@ -138,7 +138,6 @@ add_subdirectory( libecl )
 
 include_directories( ${PROJECT_SOURCE_DIR}/libecl_well/include )
 add_subdirectory( libecl_well )
-add_subdirectory( docs )
 
 
 #-----------------------------------------------------------------
@@ -171,5 +170,8 @@ endif()
 if (BUILD_PYTHON)
    include(cmake/python.cmake2)
    add_subdirectory( python )
+   if(ERT_DOC)
+      add_subdirectory( docs )
+   endif()
 endif()
 
