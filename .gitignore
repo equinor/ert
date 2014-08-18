@@ -8,7 +8,7 @@
 *.user.*
 #pyCharm project
 .idea
-ert.iml
+
 #to make python tests run in-source
 devel/python/lib64
 
@@ -34,5 +34,3 @@ devel/python/lib64
 /devel/gtags.sh
 /cmake.sh
 
-# Vim backup files
-*.sw[o-q]
