@@ -456,6 +456,13 @@ add_test( NAME python.tests.ert.job_queue.workflow_job
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_job.WorkflowJobTest)
 
+add_test( NAME python.tests.ert.job_queue.workflow
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow.WorkflowTest)
+
+add_test( NAME python.tests.ert.job_queue.workflow_joblist
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_joblist.WorkflowJoblistTest)
 
 #CONFIG
 add_test( NAME python.tests.ert.config

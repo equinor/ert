@@ -82,3 +82,5 @@ from .ext_joblist import ExtJoblist
 from .forward_model import ForwardModel
 
 from .workflow_job import WorkflowJob
+from .workflow_joblist import WorkflowJoblist
+from .workflow import Workflow

@@ -246,3 +246,17 @@ void workflow_free__( void * arg ) {
 const config_error_type * workflow_get_last_error( const workflow_type * workflow) {
   return workflow->last_error;
 }
+
+int workflow_size(const workflow_type * workflow) {
+    return vector_get_size( workflow->cmd_list );
+}
+
+workflow_job_type * workflow_iget_job( const workflow_type * workflow, int index) {
+    const cmd_type * cmd = vector_iget_const( workflow->cmd_list , index );
+    return cmd->workflow_job;
+}
+
+stringlist_type * workflow_iget_arguments( const workflow_type * workflow, int index) {
+    const cmd_type * cmd = vector_iget_const( workflow->cmd_list , index );
+    return cmd->arglist;
+}
