@@ -20,6 +20,8 @@ option( BUILD_SHARED_LIBS   "Build shared libraries" ON )
 option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON)
 option( ERT_BUILD_GUI       "Should the pyQt based gui be compiled and installed" OFF )
 option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" OFF)
+option( ERT_DOC             "Build ERT documantation" OFF)
+
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
@@ -168,5 +170,8 @@ endif()
 if (BUILD_PYTHON)
    include(cmake/python.cmake2)
    add_subdirectory( python )
+   if(ERT_DOC)
+      add_subdirectory( docs )
+   endif()
 endif()
 

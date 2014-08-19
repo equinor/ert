@@ -21,7 +21,6 @@
 #include <string.h>
 
 #include <ert/util/util.h>
-#include <ert/util/log.h>
 
 #include <ert/geometry/geo_surface.h>
 

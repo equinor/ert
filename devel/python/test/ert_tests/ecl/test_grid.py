@@ -44,6 +44,26 @@ class GridTest(ExtendedTestCase):
         self.assertEqual( grid.getNZ() , 30 )
         self.assertEqual( grid.getGlobalSize() , 30*10*20 )
 
+        
+
+    def test_node_pos(self):
+        grid = EclGrid.create_rectangular( (10,20,30) , (1,1,1) )
+        with self.assertRaises(IndexError):
+            grid.getNodePos(-1,0,0)
+
+        with self.assertRaises(IndexError):
+            grid.getNodePos(11,0,0)
+
+        p0 = grid.getNodePos(0,0,0)
+        self.assertEqual( p0 , (0,0,0))
+
+        p7 = grid.getNodePos(10,20,30)
+        self.assertEqual( p7 , (10,20,30))
+
+
+
+
+
 
     def test_corner(self):
         grid = EclGrid(self.egrid_file())
@@ -51,31 +71,31 @@ class GridTest(ExtendedTestCase):
         ny = grid.getNY()
         nz = grid.getNZ()
         
-        (x1,y1,z1) = grid.get_corner_xyz( 0 , ijk = (0,0,0))
+        (x1,y1,z1) = grid.getCellCorner( 0 , ijk = (0,0,0))
         (x2,y2,z2) = grid.getLayerXYZ( 0 , 0 )
         self.assertEqual(x1,x2)
         self.assertEqual(y1,y2)
         self.assertEqual(z1,z2)
 
-        (x1,y1,z1) = grid.get_corner_xyz( 0 , ijk = (0,1,0))
+        (x1,y1,z1) = grid.getCellCorner( 0 , ijk = (0,1,0))
         (x2,y2,z2) = grid.getLayerXYZ( (nx + 1) , 0 )
         self.assertEqual(x1,x2)
         self.assertEqual(y1,y2)
         self.assertEqual(z1,z2)
 
-        (x1,y1,z1) = grid.get_corner_xyz( 1 , ijk = (nx - 1,0,0))
+        (x1,y1,z1) = grid.getCellCorner( 1 , ijk = (nx - 1,0,0))
         (x2,y2,z2) = grid.getLayerXYZ( nx , 0 )
         self.assertEqual(x1,x2)
         self.assertEqual(y1,y2)
         self.assertEqual(z1,z2)
 
-        (x1,y1,z1) = grid.get_corner_xyz( 4 , ijk = (0,0,nz-1))
+        (x1,y1,z1) = grid.getCellCorner( 4 , ijk = (0,0,nz-1))
         (x2,y2,z2) = grid.getLayerXYZ( 0 , nz )
         self.assertEqual(x1,x2)
         self.assertEqual(y1,y2)
         self.assertEqual(z1,z2)
 
-        (x1,y1,z1) = grid.get_corner_xyz( 7 , ijk = (nx-1,ny-1,nz-1))
+        (x1,y1,z1) = grid.getCellCorner( 7 , ijk = (nx-1,ny-1,nz-1))
         (x2,y2,z2) = grid.getLayerXYZ( (nx + 1)*(ny + 1) - 1 , nz )
         self.assertEqual(x1,x2)
         self.assertEqual(y1,y2)
@@ -217,6 +237,19 @@ class GridTest(ExtendedTestCase):
     def test_raise_IO_error(self):
         with self.assertRaises(IOError):
             g = EclGrid("/does/not/exist.EGRID")
+
+    def test_boundingBox(self):
+        grid = EclGrid.create_rectangular((10,10,10) , (1,1,1))
+        with self.assertRaises(ValueError):
+            bbox = grid.getBoundingBox2D(layer = -1 )
+
+        with self.assertRaises(ValueError):
+            bbox = grid.getBoundingBox2D( layer = 11 )
+
+        bbox = grid.getBoundingBox2D( layer = 10 )
+        self.assertEqual( bbox , ((0,0) , (10, 0) , (10 , 10) , (0,10)))
+
+
 
 
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow test of dual grid skipped!")

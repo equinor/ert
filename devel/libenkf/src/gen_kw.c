@@ -24,7 +24,6 @@
 #include <ert/util/util.h>
 #include <ert/util/buffer.h>
 #include <ert/util/matrix.h>
-#include <ert/util/log.h>
 #include <ert/util/rng.h>
 #include <ert/util/subst_list.h>
 

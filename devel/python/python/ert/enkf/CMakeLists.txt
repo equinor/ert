@@ -11,6 +11,7 @@ set(PYTHON_SOURCES
     enkf_simulation_runner.py
     enkf_state.py
     ens_config.py
+    ert_log.py
     ert_template.py
     ert_templates.py
     ert_workflow_list.py

@@ -28,12 +28,12 @@ extern "C" {
 #include <ert/util/stringlist.h>
 #include <ert/util/set.h>
 #include <ert/util/subst_list.h>
-#include <ert/util/log.h>  
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/matrix.h>
 #include <ert/util/path_fmt.h>
 #include <ert/util/ui_return.h>
+#include <ert/util/log.h>
 
 #include <ert/sched/sched_file.h>
 
@@ -82,7 +82,7 @@ extern "C" {
   const char                  * enkf_main_get_log_file( const enkf_main_type * enkf_main );
   void                          enkf_main_set_log_level( enkf_main_type * enkf_main , int log_level );
   int                           enkf_main_get_log_level( const enkf_main_type * enkf_main );
-  log_type                    * enkf_main_get_logh( const enkf_main_type * enkf_main );
+
   member_config_type          * enkf_main_iget_member_config(const enkf_main_type * enkf_main , int iens);
   void                          enkf_main_del_unused_static(enkf_main_type * , int );
   const char                  * enkf_main_get_data_file(const enkf_main_type * );

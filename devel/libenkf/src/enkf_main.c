@@ -44,7 +44,6 @@
 #include <ert/util/msg.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/set.h>
-#include <ert/util/log.h>
 #include <ert/util/node_ctype.h>
 #include <ert/util/string_util.h>
 #include <ert/util/type_vector_functions.h>
@@ -106,6 +105,7 @@
 #include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/field.h>
 #include <ert/job_queue/workflow_job_monitor.h>
+#include <ert/enkf/ert_log.h>
 
 /**/
 
@@ -151,7 +151,6 @@ struct enkf_main_struct {
   analysis_config_type * analysis_config;
   local_config_type    * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type   * templates;          /* Run time templates */
-  log_type             * logh;               /* Handle to an open log file. */
   plot_config_type     * plot_config;        /* Information about plotting. */
   rng_config_type      * rng_config;
   rng_type             * rng;
@@ -289,10 +288,6 @@ model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main
   return enkf_main->model_config;
 }
 
-log_type * enkf_main_get_logh( const enkf_main_type * enkf_main ) {
-  return enkf_main->logh;
-}
-
 plot_config_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
   return enkf_main->plot_config;
 }
@@ -422,9 +417,7 @@ void enkf_main_free(enkf_main_type * enkf_main){
   if (enkf_main->dbase != NULL) 
     enkf_fs_decref( enkf_main->dbase );
 
-  if (log_is_open( enkf_main->logh ))
-    log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
-  log_close( enkf_main->logh );
+  ert_log_close();
 
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
@@ -1435,12 +1428,12 @@ static void enkf_main_report_run_failure( const enkf_main_type * enkf_main , int
 
   const char * stderr_file = job_queue_iget_stderr_file( job_queue , queue_index );
   if (stderr_file == NULL) 
-    log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" , 
+    ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" ,
                          job_queue_iget_run_path( job_queue , queue_index), 
                          job_queue_iget_failed_job( job_queue , queue_index),
                          job_queue_iget_error_reason( job_queue , queue_index ));
   else
-    log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s  Check file:%s" , 
+    ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s  Check file:%s" ,
                          job_queue_iget_run_path( job_queue , queue_index), 
                          job_queue_iget_failed_job( job_queue , queue_index),
                          job_queue_iget_error_reason( job_queue , queue_index ),
@@ -1454,7 +1447,7 @@ static void enkf_main_report_load_failure( const enkf_main_type * enkf_main , in
   const enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
   int queue_index = enkf_state_get_queue_index( enkf_state );
 
-  log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s - Could not load all required data",
+  ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s - Could not load all required data",
                        job_queue_iget_run_path( job_queue , queue_index));
 }
 
@@ -1528,11 +1521,11 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
         printf("Starting forward step: %d -> %d\n",step1 , step2);
     }
 
-    log_add_message(enkf_main->logh , 1 , NULL , "===================================================================", false);
+    ert_log_add_fmt_message( 1 , NULL , "===================================================================", false);
     if (run_mode == ENKF_ASSIMILATION)
-      log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
+      ert_log_add_fmt_message( 1 , NULL , "Forward model: %d -> %d ",step1,step2);
     else
-      log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> ??? ",step1);
+      ert_log_add_fmt_message( 1 , NULL , "Forward model: %d -> ??? ",step1);
 
     job_size = bool_vector_count_equal( iactive , true );
     {
@@ -1606,7 +1599,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
       }
       if (run_mode != INIT_ONLY) {
         job_queue_submit_complete( job_queue );
-        log_add_message(enkf_main->logh , 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
+        ert_log_add_message( 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
         
         int max_runtime = analysis_config_get_max_runtime(enkf_main_get_analysis_config( enkf_main )); 
         job_queue_set_max_job_duration(job_queue, max_runtime); 
@@ -1647,7 +1640,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
       }
       enkf_fs_fsync( enkf_main->dbase );
       if (totalOK) 
-        log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded.");
+        ert_log_add_fmt_message( 1 , NULL , "All jobs complete and data loaded.");
 
       return totalOK;
     } else
@@ -2324,6 +2317,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
+   ert_log_open_empty();
   enkf_main->dbase              = NULL;
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;
@@ -2333,7 +2327,6 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->rng                = NULL; 
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
-  enkf_main->logh               = log_open( NULL , DEFAULT_LOG_LEVEL );
   enkf_main->rng_config         = rng_config_alloc( );
   enkf_main->site_config        = site_config_alloc_empty();
   enkf_main->ensemble_config    = ensemble_config_alloc();
@@ -2450,7 +2443,6 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
                                                    enkf_main->ensemble_config                                   ,
                                                    enkf_main->site_config                                       ,
                                                    enkf_main->ecl_config                                        ,
-                                                   enkf_main->logh                                              ,
                                                    enkf_main->templates                                         ,
                                                    enkf_main->subst_list);
     enkf_main->ens_size = new_ens_size;
@@ -2598,44 +2590,6 @@ void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
 
 /*****************************************************************/
 
-
-void enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file ) {
-  log_reopen( enkf_main->logh , log_file);
-}
-
-
-const char * enkf_main_get_log_file( const enkf_main_type * enkf_main ) {
-  return log_get_filename( enkf_main->logh );
-}
-
-
-void enkf_main_set_log_level( enkf_main_type * enkf_main , int log_level ) {
-  log_set_level( enkf_main->logh , log_level);
-}
-
-
-int enkf_main_get_log_level( const enkf_main_type * enkf_main ) {
-  return log_get_level( enkf_main->logh );
-}
-
-
-static void enkf_main_init_log( enkf_main_type * enkf_main , const config_type * config ) {
-  if (config_item_set( config , LOG_LEVEL_KEY))
-    enkf_main_set_log_level( enkf_main , config_get_value_as_int(config , LOG_LEVEL_KEY));
-  
-  if (config_item_set( config , LOG_FILE_KEY))
-    enkf_main_set_log_file( enkf_main , config_get_value(config , LOG_FILE_KEY));
-  else {
-    char * log_file = util_alloc_filename(NULL , enkf_main->user_config_file , DEFAULT_LOG_FILE);
-    enkf_main_set_log_file( enkf_main , log_file );
-    free( log_file );
-  }
-  
-  if (enkf_main->verbose)
-    printf("Activity will be logged to ..............: %s \n",log_get_filename( enkf_main->logh ));
-  log_add_message(enkf_main->logh , 1 , NULL , "ert configuration loaded" , false);
-}
-
 static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * config ) {
   {
     const subst_list_type * define_list = config_get_define_list( config );
@@ -2736,7 +2690,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
         site_config_init( enkf_main->site_config , config );
         analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, config);
         ert_report_list_site_init( enkf_main->report_list , config );
-        ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh);
+        ert_workflow_list_init( enkf_main->workflow_list , config );
       } else {
         fprintf(stderr , "** ERROR: Parsing site configuration file:%s failed \n\n" , site_config_file);
         config_fprintf_errors( config , true , stderr );
@@ -2858,14 +2812,21 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
     enkf_main_set_site_config_file( enkf_main , site_config );
     enkf_main_set_user_config_file( enkf_main , model_config );
-    enkf_main_init_log( enkf_main , config );
+    //enkf_main_init_log( enkf_main , config );
+    int log_key_level = DEFAULT_LOG_LEVEL;
+    if(config_item_set( config , LOG_LEVEL_KEY))
+        log_key_level = config_get_value_as_int(config , LOG_LEVEL_KEY);
+    const char * log_key_file = DEFAULT_LOG_FILE;
+    if (config_item_set( config , LOG_FILE_KEY))
+        log_key_file = config_get_value(config , LOG_FILE_KEY);
+    ert_log_init_log(log_key_level, log_key_file, enkf_main->user_config_file, enkf_main->verbose);
     /*
       Initializing the various 'large' sub config objects. 
     */
     rng_config_init( enkf_main->rng_config , config );
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
     enkf_main_init_subst_list( enkf_main );
-    ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh );
+    ert_workflow_list_init( enkf_main->workflow_list , config );
     
     analysis_config_load_internal_modules( enkf_main->analysis_config );
     analysis_config_init( enkf_main->analysis_config , config );
@@ -3218,11 +3179,11 @@ void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * str
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
   fprintf( stream , CONFIG_COMMENT_FORMAT  , "Here comes configuration information about the ERT logging.");
   fprintf( stream , CONFIG_KEY_FORMAT      , LOG_FILE_KEY );
-  fprintf( stream , CONFIG_ENDVALUE_FORMAT , enkf_main_get_log_file( enkf_main ));
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , ert_log_get_filename());
 
-  if (enkf_main_get_log_level( enkf_main ) != DEFAULT_LOG_LEVEL) {
+  if (ert_log_get_log_level() != DEFAULT_LOG_LEVEL) {
     fprintf(stream , CONFIG_KEY_FORMAT      , LOG_LEVEL_KEY );
-    fprintf(stream , CONFIG_INT_FORMAT , enkf_main_get_log_level( enkf_main ));
+    fprintf(stream , CONFIG_INT_FORMAT , ert_log_get_log_level());
     fprintf(stream , "\n");
   }
   
