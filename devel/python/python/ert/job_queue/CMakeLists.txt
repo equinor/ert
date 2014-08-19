@@ -7,6 +7,7 @@ set(PYTHON_SOURCES
     job.py
     job_status_type_enum.py
     queue.py
+    workflow_job.py
 )
 
 add_python_package("python.ert.job_queue"  ${PYTHON_INSTALL_PREFIX}/ert/job_queue "${PYTHON_SOURCES}" True)

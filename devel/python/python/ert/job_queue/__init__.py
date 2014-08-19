@@ -80,3 +80,5 @@ from .driver import QueueDriverEnum, Driver, LSFDriver, RSHDriver, LocalDriver
 from .ext_job import ExtJob
 from .ext_joblist import ExtJoblist
 from .forward_model import ForwardModel
+
+from .workflow_job import WorkflowJob
