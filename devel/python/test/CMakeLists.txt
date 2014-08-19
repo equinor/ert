@@ -57,6 +57,7 @@ set(TEST_SOURCES
 
     ert_tests/job_queue/__init__.py
     ert_tests/job_queue/test_job_queue.py
+    ert_tests/job_queue/test_workflow_job.py
 
     ert_tests/sched/__init__.py
     ert_tests/sched/test_sched.py
@@ -451,11 +452,16 @@ add_test( NAME python.tests.ert.job_queue.job_status_type_enum
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_job_queue.JobQueueTest)
 
+add_test( NAME python.tests.ert.job_queue.workflow_job
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_job.WorkflowJobTest)
+
 
 #CONFIG
 add_test( NAME python.tests.ert.config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.config.test_config.ConfigTest)
+
 
 #CWRAP
 add_test( NAME python.tests.ert.cwrap
@@ -473,6 +479,7 @@ add_test( NAME python.tests.ert.cwrap.basecenum
 add_test( NAME python.tests.ert.cwrap.basecvalue
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.cwrap.test_basecvalue.BaseCValueTest)
+
 
 #TESTRUN
 add_test( NAME python.tests.ert.test_run
