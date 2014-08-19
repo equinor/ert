@@ -261,6 +261,8 @@ int site_config_install_job(site_config_type * site_config, const char * job_nam
     return 1; /* Some undocumented error condition - the job is NOT added. */
 }
 
+
+
 /**
    Will NOT remove shared jobs.
  */
@@ -280,6 +282,16 @@ static void site_config_add_jobs(site_config_type * site_config, const config_ty
       site_config_install_job(site_config, job_key, description_file);
     }
   }
+  if (config_item_set(config, INSTALL_JOB_DIRECTORY_KEY)) {
+    const config_content_item_type * content_item = config_get_content_item(config, INSTALL_JOB_DIRECTORY_KEY);
+    int num_dirs = config_content_item_get_size(content_item);
+    for (int dir_nr = 0; dir_nr < num_dirs; dir_nr++) {
+      config_content_node_type * node = config_content_item_iget_node(content_item, dir_nr);
+      const char * directory = config_content_node_iget_as_abspath(node, 0);
+      ext_joblist_add_jobs_in_directory(site_config->joblist  , directory, site_config->__license_root_path, site_config->user_mode );
+    }
+  }
+
 }
 
 hash_type * site_config_get_env_hash(const site_config_type * site_config) {
@@ -1097,6 +1109,10 @@ void site_config_add_config_items(config_type * config, bool site_mode) {
   item = config_add_schema_item(config, INSTALL_JOB_KEY, false);
   config_schema_item_set_argc_minmax(item, 2, 2);
   config_schema_item_iset_type(item, 1, CONFIG_EXISTING_PATH);
+
+  item = config_add_schema_item(config, INSTALL_JOB_DIRECTORY_KEY, false);
+  config_schema_item_set_argc_minmax(item, 1, 1);
+  config_schema_item_iset_type(item, 0, CONFIG_PATH);
 
   /* Items related to the reports. */
   item = config_add_schema_item(config, REPORT_SEARCH_PATH_KEY, false);
