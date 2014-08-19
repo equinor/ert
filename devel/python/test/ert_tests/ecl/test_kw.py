@@ -102,6 +102,7 @@ class KWTest(ExtendedTestCase):
             file2.write(fmt % d)
         file2.close()
         self.assertFilesAreEqual(name1, name2)
+        self.assertEqual( kw.getEclType() , data_type )
 
         
     def test_sum( self ):

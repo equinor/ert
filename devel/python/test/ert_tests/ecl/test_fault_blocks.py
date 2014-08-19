@@ -20,12 +20,8 @@ except ImportError:
     from unittest import skipIf
 
 from ert.ecl import EclGrid, EclTypeEnum , EclKW , EclRegion
-from ert.test import ExtendedTestCase
-from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCollection, FaultBlockCell
-
-def create_FaultBlock():
-    grid = EclGrid.create_rectangular( (10,10,10) , (1,1,1) )
-    return FaultBlock(grid , 0 , 0)
+from ert.test import ExtendedTestCase , TestAreaContext
+from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCell
 
 
 class FaultBlockTest(ExtendedTestCase):
@@ -41,82 +37,93 @@ class FaultBlockTest(ExtendedTestCase):
             reg.select_kslice( k , k )
             self.kw.assign( k , mask = reg )
             self.kw[ k * self.grid.getNX() * self.grid.getNY() + 7] = 177
-    
-
-    def test_fault_block(self):
-        fault_block = FaultBlock( self.grid , 0 , 77 )
-        self.assertEqual( 77 , fault_block.getBlockID() )
-
-        fault_block.addCell( 0 , 0)
-        (x0,y0,z0) = self.grid.get_xyz( global_index = 0 )
-        (xc,yc) = fault_block.getCentroid()
-        
-        self.assertFloatEqual( x0 , xc )
-        self.assertFloatEqual( y0 , yc )
-        fault_block.addCell( 1 , 1)
-        fault_block.addCell( 2 , 2)
-
-        self.assertEqual(len(fault_block) , 3)
-
-        g_list = fault_block.getGlobalIndexList()
-        self.assertEqual(len(g_list) , 3)
-        self.assertEqual( g_list[0] , 0 )
-        self.assertEqual( g_list[1] , 1 + self.grid.getNX() )
-        self.assertEqual( g_list[2] , 2*(1 + self.grid.getNX()) )
-        
-        g_list[0] = 1000
-        g_list2 = fault_block.getGlobalIndexList()
-        self.assertEqual( g_list2[0] , 0 )
-        
-        self.assertTrue( isinstance(fault_block[0] , FaultBlockCell)  )
-
-        cell = fault_block[0]
-        self.assertEqual( cell.i , 0 )
-        self.assertEqual( cell.j , 0 )
-        self.assertEqual( cell.k , 0 )
-
-        self.assertEqual( cell.x , x0 )
-        self.assertEqual( cell.y , y0 )
-        self.assertEqual( cell.z , z0 )
-
-        with self.assertRaises(TypeError):
-            c = fault_block["STRING"]
-
-        with self.assertRaises(IndexError):
-            c = fault_block[len(fault_block)]
             
-        self.assertEqual( fault_block[-1].x , fault_block[len(fault_block) - 1].x)
+
+            
+    def test_fault_block(self):
+        grid = EclGrid.create_rectangular( (5,5,1) , (1,1,1) )
+        kw = EclKW.create( "FAULTBLK" , grid.size , EclTypeEnum.ECL_INT_TYPE )
+        kw.assign( 0 )
+        for j in range(1,4):
+            for i in range(1,4):
+                g = i + j*grid.getNX()
+                kw[g] = 1
+
+        layer = FaultBlockLayer( grid , 0 )
+        layer.scanKeyword( kw )
+        block = layer[1]
+
+        self.assertEqual( (2.50 , 2.50) , block.getCentroid() )
+        self.assertEqual( len(block) , 9)
+        self.assertEqual( layer , block.getParentLayer() )
+
         
+    def test_neighbours(self):
+
+        with TestAreaContext("python/fault_block_layer/neighbour") as work_area:
+            with open("kw.grdecl","w") as fileH:
+                fileH.write("FAULTBLK \n")
+                fileH.write("1 1 1 0 0\n")
+                fileH.write("1 2 2 0 3\n")
+                fileH.write("4 2 2 3 3\n")
+                fileH.write("4 4 4 0 0\n")
+                fileH.write("4 4 4 0 5\n")
+                fileH.write("/\n")
+
+            kw = EclKW.read_grdecl(open("kw.grdecl") , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE)
         
-    def test_fault_block_assign2region(self):
-        fault_block = create_FaultBlock()
-        fault_block.assignToRegion( 2 )
-        self.assertEqual( [2] , list(fault_block.getRegionList()))
+        grid = EclGrid.create_rectangular( (5,5,1) , (1,1,1) )
+        layer = FaultBlockLayer( grid , 0 )
 
-        fault_block.assignToRegion( 2 )
-        self.assertEqual( [2] , list(fault_block.getRegionList()))
+        layer.loadKeyword( kw )
+        block1 = layer.getBlock( 1 )
+        block2 = layer.getBlock( 2 )
+        block3 = layer.getBlock( 3 )
+        block4 = layer.getBlock( 4 )
+        block5 = layer.getBlock( 5 )
+        self.assertEqual( block1.getParentLayer() , layer )
 
-        fault_block.assignToRegion( 3 )
-        self.assertEqual( [2,3] , list(fault_block.getRegionList()))
+        #Expected: 1 -> {2,4}, 2 -> {1,3,4}, 3 -> {2}, 4 -> {1,2}, 5-> {}
+                
+        neighbours = block1.getNeighbours()
+        self.assertEqual( len(neighbours) , 2)
+        self.assertTrue( block2 in neighbours )
+        self.assertTrue( block4 in neighbours )
 
-        fault_block.assignToRegion( 1 )
-        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
+        neighbours = block2.getNeighbours()
+        self.assertEqual( len(neighbours) , 3)
+        self.assertTrue( block1 in neighbours )
+        self.assertTrue( block3 in neighbours )
+        self.assertTrue( block4 in neighbours )
+                
+        neighbours = block3.getNeighbours()
+        self.assertEqual( len(neighbours) , 1)
+        self.assertTrue( block2 in neighbours )
 
-        fault_block.assignToRegion( 2 )
-        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
+        neighbours = block4.getNeighbours()
+        self.assertEqual( len(neighbours) , 2)
+        self.assertTrue( block1 in neighbours )
+        self.assertTrue( block2 in neighbours )
 
-       
- 
+        neighbours = block5.getNeighbours()
+        self.assertEqual( len(neighbours) , 0)
 
-    def test_fault_block_gc(self):
-        fault_block = create_FaultBlock()
-        fault_block.addCell( 0 , 0)
-        (x0,y0,z0) = self.grid.get_xyz( global_index = 0 )
-        (xc,yc) = fault_block.getCentroid()
+
+
+
+    def test_fault_block_edge(self):
+        grid = EclGrid.create_rectangular( (5,5,1) , (1,1,1) )
+        kw = EclKW.create( "FAULTBLK" , grid.size , EclTypeEnum.ECL_INT_TYPE )
+        kw.assign( 0 )
+        for j in range(1,4):
+            for i in range(1,4):
+                g = i + j*grid.getNX()
+                kw[g] = 1
+
+        layer = FaultBlockLayer( grid , 0 )
+        #with self.assertRaises:
+        #    layer.getEdgePolygon( )
         
-        self.assertFloatEqual( x0 , xc )
-        self.assertFloatEqual( y0 , yc )
-
 
 
     def test_fault_block_layer(self):
@@ -147,27 +154,28 @@ class FaultBlockTest(ExtendedTestCase):
         l0 = layer[0]
         l1 = layer[1]
         self.assertTrue( isinstance(l1 , FaultBlock ))
+        l0.getCentroid()
+        l1.getBlockID()
 
         with self.assertRaises(IndexError):
             l2 = layer[2]
 
             
-        self.assertEqual( False , 77 in layer)
         self.assertEqual( True , 1 in layer)
-        self.assertEqual( True , 177 in layer)
-
+        self.assertEqual( True , 2 in layer)
+        self.assertEqual( False , 77 in layer)
+        self.assertEqual( False , 177 in layer)
 
         l1 = layer.getBlock( 1 )
         self.assertTrue( isinstance(l1 , FaultBlock ))
         
-        l177 = layer.getBlock( 177 )
         with self.assertRaises(KeyError):
             l =layer.getBlock(66)
 
         with self.assertRaises(KeyError):
             layer.deleteBlock(66)
 
-        layer.deleteBlock(177)
+        layer.deleteBlock(2)
         self.assertEqual( 1 , len(layer))
         blk = layer[0]
         self.assertEqual( blk.getBlockID() , 1 ) 
@@ -178,6 +186,10 @@ class FaultBlockTest(ExtendedTestCase):
         blk2 = layer.addBlock(2)
         self.assertEqual( len(layer) , 2 ) 
         
+        blk3 = layer.addBlock()
+        self.assertEqual( len(layer) , 3 ) 
+        
+
         layer.addBlock(100)
         layer.addBlock(101)
         layer.addBlock(102)
@@ -188,20 +200,34 @@ class FaultBlockTest(ExtendedTestCase):
         blk2 = layer[-1]
         self.assertEqual( blk1.getBlockID() , blk2.getBlockID() )
 
+        fault_block = layer[0]
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [2] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [2] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 3 )
+        self.assertEqual( [2,3] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 1 )
+        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
+
+        fault_block.assignToRegion( 2 )
+        self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
 
 
 
-    def test_fault_block_collection(self):
-        collection = FaultBlockCollection( self.grid  )
-        self.assertTrue( len(collection) , self.grid.getNZ() )
+    def test_fault_block_layer_export(self):
+        layer = FaultBlockLayer( self.grid , 1 )
+        kw1 = EclKW.create( "FAULTBLK" , self.grid.size + 1 , EclTypeEnum.ECL_INT_TYPE )
+        with self.assertRaises(ValueError):
+            layer.exportKeyword( kw1 )
 
-        layer_list = []
-        for layer in collection:
-            layer_list.append( layer )
-        
-        for k in range(self.grid.getNZ()):
-            self.assertEqual( collection[k], collection.getLayer(k) )
+        kw2 = EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE )
+        with self.assertRaises(TypeError):
+            layer.exportKeyword(kw2)
 
-        self.assertTrue( len(layer_list) , self.grid.getNZ() )
-        
-        collection.scanKeyword( self.kw )
+            
+
+
