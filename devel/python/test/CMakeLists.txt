@@ -49,6 +49,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_enkf_obs.py
     ert_tests/enkf/plot/test_plot_data.py
     ert_tests/enkf/data/test_gen_data_config.py
+    ert_tests/enkf/data/test_gen_kw.py
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
@@ -243,6 +244,10 @@ add_test( NAME python.tests.ert.enkf.plot.plot_block_data
 add_test( NAME python.tests.ert.enkf.data.gen_data_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_gen_data_config.GenDataConfigTest)
+
+add_test( NAME python.tests.ert.enkf.data.gen_kw
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_gen_kw.GenKwTest)
 
 add_test( NAME python.tests.ert.enkf.ert_test_context
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -545,6 +550,7 @@ set_property( TEST python.tests.ert.enkf.enkf_obs             PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.enkf_load_results_manually     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data_config PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.data.gen_kw PROPERTY LABELS Python:StatoilData )
 
 if (ERT_BUILD_GUI)
    set_property( TEST python.tests.ert_gui.import         PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
