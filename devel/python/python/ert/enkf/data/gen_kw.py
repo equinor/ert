@@ -15,11 +15,16 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper, CFILE
 from ert.enkf import ENKF_LIB
+from ert.enkf.data import GenKwConfig
 
 
 class GenKw(BaseCClass):
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self, gen_kw_config):
+        """
+         @type gen_kw_config: GenKwConfig
+        """
+        c_ptr = GenKw.cNamespace().alloc(gen_kw_config)
+        super(GenKw, self).__init__(c_ptr)
 
     def exportParameters(self, file_name):
         """ @type: str """
@@ -36,18 +41,41 @@ class GenKw(BaseCClass):
         GenKw.cNamespace().free(self)
 
 
-    def getNode(self, gen_kw_config):
-        """ @rtype: GenKw """
-        return GenKw.cNamespace().alloc(gen_kw_config)
+    def __getitem__(self, key):
+        """
+        @type key: int or str
+        @rtype: float
+        """
+        if isinstance(key, str):
+            return GenKw.cNamespace().data_get(self, key, False)
+        elif isinstance(key, int):
+            return GenKw.cNamespace().data_iget(self, key, False)
+
+
+    def __setitem__(self, key, value):
+        """
+        @type key: int or str
+        @type value: float
+        """
+        if isinstance(key, str):
+            return GenKw.cNamespace().data_set(self, key, value)
+        elif isinstance(key, int):
+            return GenKw.cNamespace().data_iset(self, key, value)
+
+
+
+
 
     ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("gen_kw", GenKw)
-cwrapper.registerType("gen_kw_obj", GenKw.createPythonObject)
-cwrapper.registerType("gen_kw_ref", GenKw.createCReference)
+cwrapper.registerObjectType("gen_kw", GenKw)
 
 GenKw.cNamespace().free = cwrapper.prototype("void gen_kw_free(gen_kw_config)")
-GenKw.cNamespace().alloc = cwrapper.prototype("gen_kw_obj gen_kw_alloc(gen_kw_config)")
+GenKw.cNamespace().alloc = cwrapper.prototype("c_void_p gen_kw_alloc(gen_kw_config)")
 GenKw.cNamespace().export_parameters = cwrapper.prototype("void gen_kw_write_export_file(gen_kw , FILE)")
 GenKw.cNamespace().export_template = cwrapper.prototype("void gen_kw_ecl_write_template(gen_kw , char* )")
+GenKw.cNamespace().data_iget = cwrapper.prototype("double gen_kw_data_iget(gen_kw, int, bool)")
+GenKw.cNamespace().data_iset = cwrapper.prototype("void gen_kw_data_iset(gen_kw, int, double)")
+GenKw.cNamespace().data_get = cwrapper.prototype("double gen_kw_data_get(gen_kw, char*, bool)")
+GenKw.cNamespace().data_set = cwrapper.prototype("void gen_kw_data_set(gen_kw, char*, double)")
