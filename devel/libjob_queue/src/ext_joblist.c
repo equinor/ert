@@ -154,26 +154,19 @@ hash_type * ext_joblist_get_jobs( const ext_joblist_type * joblist ) {
 
 void ext_joblist_add_jobs_in_directory(ext_joblist_type * joblist  , const char * path, const char * license_root_path, bool user_mode ) {
   DIR * dirH = opendir( path );
-  printf("\n Path \n");
-  printf(path);
-  printf("\n");
-
   if (dirH) {
     while (true) {
       struct dirent * entry = readdir( dirH );
       if (entry != NULL) {
         if ((strcmp(entry->d_name , ".") != 0) && (strcmp(entry->d_name , "..") != 0)) {
           char * full_path = util_alloc_filename( path , entry->d_name , NULL );
-
           if (util_is_file( full_path )) {
-
               ext_job_type * new_job = ext_job_fscanf_alloc(entry->d_name, license_root_path, user_mode, full_path);
               if (new_job != NULL) {
                 ext_joblist_add_job(joblist, entry->d_name, new_job);
               }
             //ert_workflow_list_add_job( workflow_list , entry->d_name , full_path );
           }
-
           free( full_path );
         }
       } else
