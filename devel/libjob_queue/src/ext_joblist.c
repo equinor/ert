@@ -165,7 +165,6 @@ void ext_joblist_add_jobs_in_directory(ext_joblist_type * joblist  , const char 
               if (new_job != NULL) {
                 ext_joblist_add_job(joblist, entry->d_name, new_job);
               }
-            //ert_workflow_list_add_job( workflow_list , entry->d_name , full_path );
           }
           free( full_path );
         }
@@ -174,7 +173,7 @@ void ext_joblist_add_jobs_in_directory(ext_joblist_type * joblist  , const char 
     }
     closedir( dirH );
   } else
-    fprintf(stderr, "** Warning: failed to open workflow/jobs directory: %s\n", path);
+    fprintf(stderr, "** Warning: failed to open jobs directory: %s\n", path);
 }
 
 
