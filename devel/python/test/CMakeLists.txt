@@ -255,6 +255,10 @@ add_test( NAME python.tests.ert.enkf.ert_test_context
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_context.ErtTestContextTest)
 
+add_test( NAME python.tests.ert.enkf.ert_script
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_script.ErtScriptTest)
+
 
 #GUI
 if (ERT_BUILD_GUI) 
@@ -455,6 +459,10 @@ add_test( NAME python.tests.ert.job_queue.job_status_type_enum
 add_test( NAME python.tests.ert.job_queue.workflow_job
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_job.WorkflowJobTest)
+
+add_test( NAME python.tests.ert.job_queue.workflow_job_monitor
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_job_monitor.WorkflowJobMonitorTest)
 
 add_test( NAME python.tests.ert.job_queue.workflow
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
