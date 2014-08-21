@@ -1,5 +1,6 @@
 from ert.cwrap import BaseCClass, CWrapper
-from ert.job_queue import JOB_QUEUE_LIB, WorkflowJoblist, WorkflowJob
+from ert.job_queue import JOB_QUEUE_LIB, WorkflowJoblist, WorkflowJob, WorkflowJobMonitor
+from ert.util import SubstitutionList
 
 class Workflow(BaseCClass):
 
@@ -23,6 +24,29 @@ class Workflow(BaseCClass):
         args = Workflow.cNamespace().iget_args(self, index)
         return job, args
 
+    def __iter__(self):
+        index = 0
+
+        for index in range(len(self)):
+            yield self[index]
+            index += 1
+
+    def run(self, monitor, ert, verbose=False, context=None):
+        """
+        @type monitor: WorkflowJobMonitor
+        @type ert: ert.enkf.enkf_main.EnKFMain
+        @type verbose: bool
+        @type context: SubstitutionList
+        @rtype: bool
+        """
+        success = Workflow.cNamespace().try_compile(self, context)
+
+        if success:
+            for job, args in self:
+                return_value = job.run(monitor, ert, verbose, args)
+
+        return success
+
 
     def free(self):
         Workflow.cNamespace().free(self)
@@ -37,3 +61,5 @@ Workflow.cNamespace().free  = cwrapper.prototype("void     workflow_free(workflo
 Workflow.cNamespace().count = cwrapper.prototype("int      workflow_size(workflow)")
 Workflow.cNamespace().iget_job   = cwrapper.prototype("workflow_job_ref workflow_iget_job(workflow, int)")
 Workflow.cNamespace().iget_args  = cwrapper.prototype("stringlist_ref   workflow_iget_arguments(workflow, int)")
+
+Workflow.cNamespace().try_compile = cwrapper.prototype("bool workflow_try_compile(workflow, subst_list)")

@@ -1,42 +1,58 @@
-from ert.job_queue import Workflow, WorkflowJoblist
+from ert.job_queue import Workflow, WorkflowJoblist, WorkflowJobMonitor
 from ert.test import ExtendedTestCase, TestAreaContext
+from ert.util import SubstitutionList
+from ert_tests.job_queue.workflow_common import WorkflowCommon
 
 
 class WorkflowTest(ExtendedTestCase):
 
-
-    def createWorkflowFiles(self):
-        with open("workflow", "w") as f:
-            f.write("PRINT Step1\n")
-            f.write("PRINT Step2:AnotherString\n")
-
-
-        with open("print_job", "w") as f:
-            f.write("INTERNAL True\n")
-            f.write("SCRIPT print\n")
-            f.write("MIN_ARG 1\n")
-            f.write("MAX_ARG 1\n")
-            f.write("ARG_TYPE 0 STRING\n")
-
-
     def test_workflow(self):
         with TestAreaContext("python/job_queue/workflow") as work_area:
-            self.createWorkflowFiles()
+            WorkflowCommon.createExternalDumpJob()
 
             joblist = WorkflowJoblist()
-            joblist.addJobFromFile("PRINT", "print_job")
+            self.assertTrue(joblist.addJobFromFile("DUMP", "dump_job"))
 
-            self.assertTrue("PRINT" in joblist)
+            with self.assertRaises(UserWarning):
+                joblist.addJobFromFile("KNOCK", "knock_job")
+
+            self.assertTrue("DUMP" in joblist)
 
 
-            workflow = Workflow("workflow", joblist)
+            workflow = Workflow("dump_workflow", joblist)
 
             self.assertEqual(len(workflow), 2)
 
             job, args = workflow[0]
-            self.assertEqual(job, joblist["PRINT"])
-            self.assertEqual(args[0], "Step1")
+            self.assertEqual(job, joblist["DUMP"])
+            self.assertEqual(args[0], "dump1")
+            self.assertEqual(args[1], "dump_text_1")
 
             job, args = workflow[1]
-            self.assertEqual(job, joblist["PRINT"])
-            self.assertEqual(args[0], "Step2:AnotherString")
+            self.assertEqual(job, joblist["DUMP"])
+
+
+    def test_workflow_run(self):
+        with TestAreaContext("python/job_queue/workflow") as work_area:
+            WorkflowCommon.createExternalDumpJob()
+
+            joblist = WorkflowJoblist()
+            self.assertTrue(joblist.addJobFromFile("DUMP", "dump_job"))
+            self.assertTrue("DUMP" in joblist)
+
+            workflow = Workflow("dump_workflow", joblist)
+
+            self.assertTrue(len(workflow), 2)
+
+            monitor = WorkflowJobMonitor()
+
+            context = SubstitutionList()
+            context.addItem("<PARAM>", "text")
+
+            self.assertTrue(workflow.run(monitor, None, verbose=True, context=context))
+
+            with open("dump1", "r") as f:
+                self.assertEqual(f.read(), "dump_text_1")
+
+            with open("dump2", "r") as f:
+                self.assertEqual(f.read(), "dump_text_2")

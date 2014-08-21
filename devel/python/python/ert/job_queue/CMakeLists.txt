@@ -9,6 +9,7 @@ set(PYTHON_SOURCES
     queue.py
     workflow.py
     workflow_job.py
+    workflow_job_monitor.py
     workflow_joblist.py
 )
 

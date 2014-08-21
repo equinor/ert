@@ -1,7 +1,10 @@
 from ert.cwrap import clib, CWrapper
 from ert.job_queue import WorkflowJob
+from ert.job_queue.workflow_job_monitor import WorkflowJobMonitor
 from ert.test import TestAreaContext
 from ert.test.extended_testcase import ExtendedTestCase
+from ert.util import StringList
+from ert_tests.job_queue.workflow_common import WorkflowCommon
 
 test_lib  = clib.ert_load("libjob_queue") # create a local namespace
 cwrapper =  CWrapper(test_lib)
@@ -46,6 +49,29 @@ class WorkflowJobTest(ExtendedTestCase):
             f.write("ARG_TYPE 4 STRING\n")
 
 
+
+    def test_read_internal_function(self):
+        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+            self.createWorkflowJobs()
+
+            config = alloc_config()
+            workflow_job = alloc_from_file("Test", config, "workflow_job_1")
+
+            self.assertEqual(workflow_job.name(), "Test")
+            self.assertTrue(workflow_job.isInternal())
+
+            self.assertFalse(workflow_job.isInternalScript())
+            self.assertIsNone(workflow_job.getInternalScriptPath())
+
+
+            workflow_job = alloc_from_file("TestScript", config, "workflow_job_2")
+            self.assertEqual(workflow_job.name(), "TestScript")
+            self.assertTrue(workflow_job.isInternal())
+
+            self.assertTrue(workflow_job.isInternalScript())
+            self.assertEqual(workflow_job.getInternalScriptPath(), "/path/to/script")
+
+
     def test_read_config_file(self):
         with TestAreaContext("python/job_queue/workflow_job") as work_area:
             self.createWorkflowJobs()
@@ -78,3 +104,25 @@ class WorkflowJobTest(ExtendedTestCase):
             self.assertEqual(job.minimumArgumentCount(), 4)
             self.assertEqual(job.maximumArgumentCount(), 5)
             self.assertEqual(job.argumentTypes(), [str, int, float, bool ,str])
+
+
+    def test_run_external_job(self):
+
+        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+            WorkflowCommon.createExternalDumpJob()
+
+            config = alloc_config()
+            job = alloc_from_file("DUMP", config, "dump_job")
+
+            monitor = WorkflowJobMonitor()
+
+            arguments = StringList()
+            arguments.append("test")
+            arguments.append("text")
+
+            self.assertIsNone(job.run(monitor, None, False, arguments))
+
+            with open("test", "r") as f:
+                self.assertEqual(f.read(), "text")
+
+

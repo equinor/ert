@@ -54,6 +54,21 @@ class WorkflowJob(BaseCClass):
         return result
 
 
+    def run(self, monitor, ert, verbose, arguments):
+        """
+        @type monitor: ert.job_queue.workflow_job_monitor.WorkflowJobMonitor
+        @type ert: ert.enkf.enkf_main.EnKFMain
+        @type verbose: bool
+        @type arguments: StringList
+        @rtype: ctypes.c_void_p
+        """
+
+        if self.isInternalScript():
+            print("Running jobs of this type is not yet supported!")
+            return None
+        else:
+            return WorkflowJob.cNamespace().run(self, monitor, ert, verbose, arguments)
+
     def free(self):
         WorkflowJob.cNamespace().free(self)
 
@@ -72,3 +87,5 @@ WorkflowJob.cNamespace().get_internal_script = cwrapper.prototype("char*  workfl
 WorkflowJob.cNamespace().min_arg  = cwrapper.prototype("int  workflow_job_get_min_arg(workflow_job)")
 WorkflowJob.cNamespace().max_arg  = cwrapper.prototype("int  workflow_job_get_max_arg(workflow_job)")
 WorkflowJob.cNamespace().arg_type = cwrapper.prototype("config_content_type_enum workflow_job_iget_argtype(workflow_job, int)")
+
+WorkflowJob.cNamespace().run = cwrapper.prototype("c_void_p workflow_job_run(workflow_job, workflow_job_monitor, c_void_p, bool, stringlist)")

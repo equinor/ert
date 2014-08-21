@@ -1,3 +1,4 @@
+import os
 from ert.cwrap import BaseCClass, CWrapper
 from ert.job_queue import JOB_QUEUE_LIB, WorkflowJob
 
@@ -20,6 +21,9 @@ class WorkflowJoblist(BaseCClass):
          @type filepath: str
          @rtype: bool
         """
+        if not os.path.exists(filepath):
+            raise UserWarning("Job file '%s' does not exist!" % filepath)
+
         return WorkflowJoblist.cNamespace().add_job_from_file(self, name, filepath)
 
     def __contains__(self, item):
