@@ -108,7 +108,7 @@ static void workflow_store_error( workflow_type * workflow , const config_error_
 
 
 
-static bool workflow_try_compile( workflow_type * script , const subst_list_type * context) {
+bool workflow_try_compile( workflow_type * script , const subst_list_type * context) {
   if (util_file_exists( script->src_file )) {
     const char * src_file = script->src_file;
     char * tmp_file = NULL;
