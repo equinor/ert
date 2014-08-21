@@ -2,7 +2,7 @@ from ert.job_queue import WorkflowJoblist, WorkflowJob
 from ert.test import ExtendedTestCase, TestAreaContext
 
 
-class WorkflowTest(ExtendedTestCase):
+class WorkflowJoblistTest(ExtendedTestCase):
 
     def test_workflow_joblist_creation(self):
         joblist = WorkflowJoblist()
