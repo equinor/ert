@@ -398,7 +398,7 @@ static void * workflow_job_run_external( const workflow_job_type * job, workflow
   return NULL;
 }
 
-void * workflow_job_run( const workflow_job_type * job,workflow_job_monitor_type * monitor, void * self , bool verbose , const stringlist_type * arg) {
+void * workflow_job_run( const workflow_job_type * job, workflow_job_monitor_type * monitor, void * self , bool verbose , const stringlist_type * arg) {
   if (job->internal) {
     if (workflow_job_is_internal_script(job)) {
         fprintf(stderr, "*** Can not run internal script workflow jobs using this method: workflow_job_run()\n");
