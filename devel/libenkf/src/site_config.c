@@ -261,8 +261,6 @@ int site_config_install_job(site_config_type * site_config, const char * job_nam
     return 1; /* Some undocumented error condition - the job is NOT added. */
 }
 
-
-
 /**
    Will NOT remove shared jobs.
  */
