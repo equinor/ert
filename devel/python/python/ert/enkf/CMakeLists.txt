@@ -12,7 +12,6 @@ set(PYTHON_SOURCES
     enkf_state.py
     ens_config.py
     ert_log.py
-    ert_script.py
     ert_template.py
     ert_templates.py
     ert_workflow_list.py

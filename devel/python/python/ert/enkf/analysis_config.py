@@ -16,6 +16,7 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf import AnalysisIterConfig
+from ert.analysis import AnalysisModule
 
 
 class AnalysisConfig(BaseCClass):

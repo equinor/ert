@@ -56,8 +56,13 @@ set(TEST_SOURCES
     ert_tests/analysis/test_analysis_module.py
 
     ert_tests/job_queue/__init__.py
+    ert_tests/job_queue/test_ert_script.py
     ert_tests/job_queue/test_job_queue.py
+    ert_tests/job_queue/test_workflow.py
     ert_tests/job_queue/test_workflow_job.py
+    ert_tests/job_queue/test_workflow_job_monitor.py
+    ert_tests/job_queue/test_workflow_joblist.py
+    ert_tests/job_queue/workflow_common.py
 
     ert_tests/sched/__init__.py
     ert_tests/sched/test_sched.py
@@ -255,9 +260,7 @@ add_test( NAME python.tests.ert.enkf.ert_test_context
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_context.ErtTestContextTest)
 
-add_test( NAME python.tests.ert.enkf.ert_script
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_script.ErtScriptTest)
+
 
 
 #GUI
@@ -471,6 +474,12 @@ add_test( NAME python.tests.ert.job_queue.workflow
 add_test( NAME python.tests.ert.job_queue.workflow_joblist
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_joblist.WorkflowJoblistTest)
+
+add_test( NAME python.tests.ert.job_queue.ert_script
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_ert_script.ErtScriptTest)
+
+
 
 #CONFIG
 add_test( NAME python.tests.ert.config

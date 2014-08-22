@@ -17,7 +17,6 @@
 
 import ert.cwrap.clib as clib
 
-import ert.analysis
 ENKF_LIB = clib.ert_load("libenkf")
 
 from .enums import *
@@ -61,6 +60,3 @@ from .enkf_fs_manager import EnkfFsManager
 
 from .enkf_main import EnKFMain
 from .ert_log import ErtLog
-
-from .ert_script import ErtScript
-

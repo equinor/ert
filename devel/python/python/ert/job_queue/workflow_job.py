@@ -1,5 +1,5 @@
 from ert.cwrap import BaseCClass, CWrapper
-from ert.job_queue import JOB_QUEUE_LIB
+from ert.job_queue import JOB_QUEUE_LIB, ErtScript
 from ert.config import ContentTypeEnum
 
 
@@ -64,8 +64,9 @@ class WorkflowJob(BaseCClass):
         """
 
         if self.isInternalScript():
-            print("Running jobs of this type is not yet supported!")
-            return None
+            script_obj = ErtScript.loadScriptFromFile(self.getInternalScriptPath())
+            script = script_obj(ert)
+            return script.initializeAndRun(self.argumentTypes(), arguments, verbose=verbose)
         else:
             return WorkflowJob.cNamespace().run(self, monitor, ert, verbose, arguments)
 

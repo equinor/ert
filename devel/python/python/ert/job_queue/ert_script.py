@@ -2,11 +2,13 @@ import inspect
 import imp
 import sys
 import traceback
-from ert.enkf import EnKFMain
 
 class ErtScript(object):
 
     def __init__(self, ert):
+        """
+        @type ert: ert.enkf.EnKFMain
+        """
         super(ErtScript, self).__init__()
 
         if not hasattr(self, "run"):
@@ -19,11 +21,11 @@ class ErtScript(object):
         return self.__verbose
 
     def ert(self):
+        """ @rtype: ert.enkf.EnKFMain """
         return self.__ert
 
     def initializeAndRun(self, argument_types, argument_values, verbose=False):
         """
-        @type ert: EnKFMain
         @type argument_types: list of type
         @type argument_values: list of string
         @type verbose: bool
@@ -51,10 +53,6 @@ class ErtScript(object):
             sys.stderr.write("The script '%s' caused an error during load:\n" % path)
             traceback.print_exception(sys.exc_type, sys.exc_value, None)
             return None
-
-
-
-
 
     @staticmethod
     def __findErtScriptImplementations(module):
