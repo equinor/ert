@@ -112,7 +112,7 @@ void time_map_set_strict( time_map_type * time_map , bool strict) {
 
 
 time_map_type * time_map_fread_alloc_readonly( const char * filename) {
-  time_map_type * tm = time_map_alloc( true );
+  time_map_type * tm = time_map_alloc();
 
   if (util_file_exists(filename)) 
     time_map_fread( tm , filename );
