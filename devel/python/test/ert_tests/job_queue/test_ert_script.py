@@ -1,5 +1,6 @@
+from ert.job_queue import ErtScript
 from ert.test import TestAreaContext, ExtendedTestCase
-from ert.enkf import ErtScript
+from ert_tests.job_queue.workflow_common import WorkflowCommon
 
 
 class ReturnErtScript(ErtScript):
@@ -19,12 +20,7 @@ class ErtScriptTest(ExtendedTestCase):
 
     @staticmethod
     def createScripts():
-        with open("subtract_script.py", "w") as f:
-            f.write("from ert.enkf import ErtScript\n")
-            f.write("\n")
-            f.write("class SubtractScript(ErtScript):\n")
-            f.write("    def run(self, arg1, arg2):\n")
-            f.write("        return arg1 - arg2\n")
+        WorkflowCommon.createErtScriptsJob()
 
         with open("syntax_error_script.py", "w") as f:
             f.write("from ert.enkf not_legal_syntax ErtScript\n")

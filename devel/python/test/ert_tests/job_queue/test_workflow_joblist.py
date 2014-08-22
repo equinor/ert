@@ -1,5 +1,6 @@
 from ert.job_queue import WorkflowJoblist, WorkflowJob
 from ert.test import ExtendedTestCase, TestAreaContext
+from ert_tests.job_queue.workflow_common import WorkflowCommon
 
 
 class WorkflowJoblistTest(ExtendedTestCase):
@@ -19,33 +20,23 @@ class WorkflowJoblistTest(ExtendedTestCase):
         self.assertEqual(job.name(), job_ref.name())
 
 
-    def createWorkflowJobs(self):
-        with open("workflow_job_1", "w") as f:
-            f.write("INTERNAL True\n")
-            f.write("FUNCTION enkf_main_select_case_JOB\n")
-            f.write("MIN_ARG 1\n")
-            f.write("MAX_ARG 1\n")
-            f.write("ARG_TYPE 0 STRING\n")
-
-        with open("workflow_job_2", "w") as f:
-            f.write("INTERNAL True\n")
-            f.write("SCRIPT /path/to/script\n")
-            f.write("MIN_ARG 1\n")
-            f.write("MAX_ARG 1\n")
-            f.write("ARG_TYPE 0 STRING\n")
-
 
     def test_workflow_joblist_with_files(self):
         with TestAreaContext("python/job_queue/workflow_joblist") as work_area:
-            self.createWorkflowJobs()
+            WorkflowCommon.createErtScriptsJob()
+            WorkflowCommon.createExternalDumpJob()
+            WorkflowCommon.createInternalFunctionJob()
 
             joblist = WorkflowJoblist()
 
-            joblist.addJobFromFile("FILE_JOB", "workflow_job_1")
-            joblist.addJobFromFile("SCRIPT_JOB", "workflow_job_2")
+            joblist.addJobFromFile("DUMP_JOB", "dump_job")
+            joblist.addJobFromFile("SELECT_CASE_JOB", "select_case_job")
+            joblist.addJobFromFile("SUBTRACT_SCRIPT_JOB", "subtract_script_job")
 
-            self.assertTrue("FILE_JOB" in joblist)
-            self.assertTrue("SCRIPT_JOB" in joblist)
+            self.assertTrue("DUMP_JOB" in joblist)
+            self.assertTrue("SELECT_CASE_JOB" in joblist)
+            self.assertTrue("SUBTRACT_SCRIPT_JOB" in joblist)
 
-            job = joblist["SCRIPT_JOB"]
-            self.assertTrue(job.isInternalScript())
+            self.assertFalse((joblist["DUMP_JOB"]).isInternal())
+            self.assertTrue((joblist["SELECT_CASE_JOB"]).isInternal())
+            self.assertTrue((joblist["SUBTRACT_SCRIPT_JOB"]).isInternal())

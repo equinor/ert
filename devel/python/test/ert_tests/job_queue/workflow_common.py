@@ -30,14 +30,42 @@ class WorkflowCommon(object):
 
 
     @staticmethod
-    def createInternalScriptJob():
-
-        # with open("ert_info.py", "w") as f:
-        #     f.write("import ert.enkf.")
-
-        with open("script_job", "w") as f:
+    def createInternalFunctionJob():
+        with open("select_case_job", "w") as f:
             f.write("INTERNAL True\n")
-            f.write("SCRIPT /path/to/script\n")
+            f.write("FUNCTION enkf_main_select_case_JOB\n")
             f.write("MIN_ARG 1\n")
             f.write("MAX_ARG 1\n")
             f.write("ARG_TYPE 0 STRING\n")
+
+        with open("printf_job", "w") as f:
+            f.write("INTERNAL True\n")
+            f.write("FUNCTION printf\n")
+            f.write("MIN_ARG 4\n")
+            f.write("MAX_ARG 5\n")
+            f.write("ARG_TYPE 0 STRING\n")
+            f.write("ARG_TYPE 1 INT\n")
+            f.write("ARG_TYPE 2 FLOAT\n")
+            f.write("ARG_TYPE 3 BOOL\n")
+            f.write("ARG_TYPE 4 STRING\n")
+
+
+
+    @staticmethod
+    def createErtScriptsJob():
+        with open("subtract_script.py", "w") as f:
+            f.write("from ert.job_queue import ErtScript\n")
+            f.write("\n")
+            f.write("class SubtractScript(ErtScript):\n")
+            f.write("    def run(self, arg1, arg2):\n")
+            f.write("        return arg1 - arg2\n")
+
+
+        with open("subtract_script_job", "w") as f:
+            f.write("INTERNAL True\n")
+            f.write("SCRIPT subtract_script.py\n")
+            f.write("MIN_ARG 2\n")
+            f.write("MAX_ARG 2\n")
+            f.write("ARG_TYPE 0 FLOAT\n")
+            f.write("ARG_TYPE 1 FLOAT\n")
+
