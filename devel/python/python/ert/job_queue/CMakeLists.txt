@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     driver.py
+    ert_script.py
     ext_job.py
     ext_joblist.py
     forward_model.py
