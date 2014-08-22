@@ -4,15 +4,18 @@ Created on 8. juli 2014
 @author: perroe
 '''
 
-from PyQt4.QtGui import QFormLayout
+from PyQt4.QtGui import QFormLayout, QToolButton
 from ert_gui.ide.keywords.definitions import RangeStringArgument, \
     ProperNameFormatStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import SensitivityStudy, \
     ActiveRealizationsModel, RunPathModel, SensitivityTargetCaseFormatModel
+from ert_gui.simulation import SensitivityStudyParametersPanel
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
+from ert_gui.widgets import util
 from ert_gui.widgets.active_label import ActiveLabel
+from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice
 from ert_gui.widgets.string_box import StringBox
 
@@ -50,6 +53,13 @@ class SensitivityStudyPanel(SimulationConfigPanel):
         self.iterated_target_case_format_field.setValidator(ProperNameFormatStringArgument())
         layout.addRow(self.iterated_target_case_format_field.getLabel(), self.iterated_target_case_format_field)
 
+        self.parameters_popup_button = QToolButton()
+        self.parameters_popup_button.setIcon(util.resourceIcon("ide/small/cog_edit.png"))
+        self.parameters_popup_button.clicked.connect(self.showParametersPopup)
+        self.parameters_popup_button.setMaximumSize(20, 20)
+
+        layout.addRow("Parameters:", self.parameters_popup_button)
+
         active_realizations_model = ActiveRealizationsModel()
         self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
         self.active_realizations_field.setValidator(RangeStringArgument(number_of_realizations_model.getValue()))
@@ -66,6 +76,13 @@ class SensitivityStudyPanel(SimulationConfigPanel):
         '''
 
         return self.active_realizations_field.isValid()
+
+    def showParametersPopup(self):
+        parameter_panel = SensitivityStudyParametersPanel()
+        dialog = ClosableDialog("Edit variables", parameter_panel, self.parent())
+
+        dialog.exec_()
+
 
     def toggleAdvancedOptions(self, show_advanced):
         self.active_realizations_field.setVisible(show_advanced)
