@@ -507,7 +507,7 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
       }
 
       new_fs = enkf_fs_mount( new_mount_point );
-      {
+      if (new_fs) {
         const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
         const ecl_sum_type * refcase = model_config_get_refcase( model_config );
 
