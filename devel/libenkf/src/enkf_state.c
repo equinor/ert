@@ -1,4 +1,4 @@
- /*
+/*
    Copyright (C) 2011  Statoil ASA, Norway. 
     
    The file 'enkf_state.c' is part of ERT - Ensemble based Reservoir Tool. 
@@ -722,15 +722,32 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
       ecl_sum_type * summary = enkf_state_load_ecl_sum( enkf_state , msg_list , result );
       /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
       if (summary != NULL) {
-      
+        int_vector_type * time_index;
+        {
+          time_map_type * time_map = enkf_fs_get_time_map( fs );
+          time_map_summary_update( time_map , summary );
+          time_index = time_map_alloc_index_map( time_map , summary );
+        }
+
+        /* 
+           Now there are two related / conflicting(?) systems for
+           checking summary time consistency, both internally in the
+           time_map and also through the
+           enkf_state_report_step_compatible() function.
+        */
+        
         /*Check the loaded summary against the reference ecl_sum_type */
         if (!enkf_state_report_step_compatible(enkf_state, summary)) 
           *result |= REPORT_STEP_INCOMPATIBLE;  
-       
+
+
         
         /* The actual loading internalizing - from ecl_sum -> enkf_node. */
-        const int iens                         = member_config_get_iens( enkf_state->my_config );
-        const int step2                        = ecl_sum_get_last_report_step( summary );  /* Step2 is just taken from the number of steps found in the summary file. */
+        const int iens   = member_config_get_iens( enkf_state->my_config );
+        const int step2  = ecl_sum_get_last_report_step( summary );  /* Step2 is just taken from the number of steps found in the summary file. */
+        
+        int_vector_iset_block( time_index , 0 , load_start , -1 );
+        int_vector_resize( time_index , step2 + 1);
         {
           hash_iter_type * iter = hash_iter_alloc( enkf_state->node_hash );
 
@@ -740,7 +757,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                 enkf_node_get_impl_type(node) == SUMMARY) {
               {
                 enkf_node_try_load_vector( node , fs , iens , FORECAST );  // Ensure that what is currently on file is loaded before we update.
-                if (enkf_node_forward_load_vector( node , run_info->run_path , summary , NULL , load_start, step2 , iens)) 
+                if (enkf_node_forward_load_vector( node , run_info->run_path , summary , NULL , time_index , iens)) 
                   enkf_node_store_vector( node , fs , iens , FORECAST );
                 else {
                   *result |= LOAD_FAILURE; 
@@ -754,11 +771,8 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
           
           hash_iter_free(iter);
         }
-        {
-          time_map_type * time_map = enkf_fs_get_time_map( fs );
-          time_map_summary_update_strict( time_map , summary );
-        }
         ecl_sum_free( summary ); 
+        int_vector_free( time_index );
         return true;
       } else {
         fprintf(stderr , "** Warning: could not load ECLIPSE summary data from %s - this will probably fail later ...\n" , enkf_state->run_info->run_path);
@@ -816,9 +830,10 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
       enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( keylist_GEN_DATA , ikey));
       
       if (enkf_node_vector_storage(node)) {
-        
+
+        util_abort("%s: holy shit - vector storage not correctly implemented for GEN_DATA\n",__func__);
         enkf_node_try_load_vector( node , fs , iens , FORECAST);
-        if (enkf_node_forward_load_vector( node , run_info->run_path , NULL , NULL , load_start, last_report , iens)) {
+        if (enkf_node_forward_load_vector( node , run_info->run_path , NULL , NULL , NULL , iens)) {
           enkf_node_store_vector( node , fs , iens , FORECAST );
           if (interactive)
             enkf_state_log_GEN_DATA_load( node , 0 , msg_list );

@@ -24,20 +24,15 @@
 #include <ert/enkf/enkf_defaults.h>
 
 
-static log_type * logh;               /* Handle to an open log file. */
+static log_type * logh = NULL;               /* Handle to an open log file. */
 
-void ert_log_init_log( int log_level,const char * log_file_name,const char * user_log_file_name,bool verbose){
+void ert_log_init_log( int log_level , const char * log_file_name, bool verbose){
   logh = log_open( NULL , DEFAULT_LOG_LEVEL );
-
+  
   log_set_level(logh, log_level);
-
-  if (log_file_name && log_file_name[0] != '\0')
+  if (log_file_name)
     log_reopen( logh , log_file_name);
-  else {
-    char * log_file = util_alloc_filename(NULL , user_log_file_name , DEFAULT_LOG_FILE);
-    log_reopen( logh , log_file );
-    free( log_file );
-  }
+
   if (verbose)
     printf("Activity will be logged to ..............: %s \n",log_get_filename( logh ));
   log_add_message(logh , 1 , NULL , "ert configuration loaded" , false);
@@ -49,7 +44,7 @@ void ert_log_add_message_py(int message_level, char* message){
 
 void ert_log_add_message(int message_level , FILE * dup_stream , char* message, bool free_message) {
    if(logh==NULL)
-      ert_log_init_log(1,NULL,NULL,true);
+     ert_log_init_log(1,NULL,true);
    log_add_message(logh, message_level, dup_stream, message, free_message);
 }
 
@@ -78,28 +73,28 @@ bool ert_log_is_open(){
 
 void ert_log_set_log_level(int log_level){
     if(logh==NULL)
-        ert_log_init_log(1,NULL,NULL,true);
+        ert_log_init_log(1,NULL,true);
     log_set_level(logh, log_level);
 }
 
 int ert_log_get_log_level(){
-    if(logh==NULL)
-        ert_log_init_log(1,NULL,NULL,true);
-    return log_get_level(logh);
+  if(logh==NULL)
+    ert_log_init_log(1,NULL,true);
+  return log_get_level(logh);
 }
 
 const char * ert_log_get_filename() {
   if(logh==NULL)
-  ert_log_init_log(1,NULL,NULL,true);
-return log_get_filename(logh);
+    ert_log_init_log(1,NULL,true);
+  return log_get_filename(logh);
 }
 
 log_type * ert_log_get_logh() {
   if(logh==NULL)
-      ert_log_init_log(1,NULL,NULL,true);
+    ert_log_init_log(1,NULL,true);
   return logh;
 }
 
 void ert_log_open_empty(){
-    logh=log_open(NULL, DEFAULT_LOG_LEVEL);
+  logh = log_open(NULL, DEFAULT_LOG_LEVEL);
 }
