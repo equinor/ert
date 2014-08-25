@@ -17,29 +17,19 @@
 */
 #include <stdlib.h>
 #include <stdbool.h>
+#include <ert/util/test_util.h>.
 #include <ert/job_queue/ext_joblist.h>
 
-bool load_job_directory(ext_joblist_type * joblist , const char * path, const char * license_root_path) {
+void load_job_directory(ext_joblist_type * joblist , const char * path, const char * license_root_path) {
   bool user_mode = false;
-  bool OK = false;
-
   ext_joblist_add_jobs_in_directory(joblist  , path, license_root_path, user_mode );
-  if (ext_joblist_has_job(joblist, "TROLL_CONTACT")) {
-    OK = true;
-  }
-  return OK;
+  test_assert_true( ext_joblist_has_job(joblist, "TROLL_CONTACT"));
 }
 
 int main( int argc , char ** argv) {
     int status = 0;
     ext_joblist_type * joblist = ext_joblist_alloc();
-    bool OK = true;
-
-    OK = load_job_directory(  joblist , argv[1], argv[2] );
-
-    if (!OK){
-      status = 1;
-    }
+    load_job_directory(joblist , argv[1], argv[2] );
     ext_joblist_free(joblist);
     exit( status );
 }

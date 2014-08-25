@@ -165,6 +165,9 @@ void ext_joblist_add_jobs_in_directory(ext_joblist_type * joblist  , const char 
               if (new_job != NULL) {
                 ext_joblist_add_job(joblist, entry->d_name, new_job);
               }
+              else{
+                  fprintf(stderr," Failed to add forward model job: %s \n",full_path);
+              }
           }
           free( full_path );
         }
