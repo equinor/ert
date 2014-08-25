@@ -1,0 +1,6 @@
+STDOUT  troll_contact.stdout
+STDERR  troll_contact.stderr
+
+PORTABLE_EXE   /d/proj/bg/enkf/Scripts/troll_contact.py
+TARGET_FILE    CONTACT_OK
+ARGLIST        <CWD>   <ECLBASE>  <TSTEP1>   <TSTEP2>
