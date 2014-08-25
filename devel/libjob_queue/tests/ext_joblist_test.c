@@ -17,7 +17,7 @@
 */
 #include <stdlib.h>
 #include <stdbool.h>
-#include <ert/util/test_util.h>.
+#include <ert/util/test_util.h>
 #include <ert/job_queue/ext_joblist.h>
 
 void load_job_directory(ext_joblist_type * joblist , const char * path, const char * license_root_path) {
