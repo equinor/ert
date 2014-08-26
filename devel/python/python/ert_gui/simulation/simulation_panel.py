@@ -1,10 +1,11 @@
-from PyQt4.QtCore import Qt, QSize, pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QAction, \
+from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, \
     QMessageBox
 from ert_gui.models.connectors.init import CaseList, CaseSelectorModel
 from ert_gui.models.connectors.run import SimulationModeModel
 from ert_gui.pages.run_dialog import RunDialog
-from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel, IteratedEnsembleSmootherPanel
+from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel, \
+    IteratedEnsembleSmootherPanel, SensitivityStudyPanel
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 from ert_gui.widgets import util
 
@@ -54,6 +55,7 @@ class SimulationPanel(QWidget):
         self.simulation_widgets = {}
 
         self.addSimulationConfigPanel(EnsembleExperimentPanel())
+        self.addSimulationConfigPanel(SensitivityStudyPanel())
         self.addSimulationConfigPanel(EnsembleSmootherPanel())
         self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel())
 

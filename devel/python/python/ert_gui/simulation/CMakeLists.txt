@@ -3,6 +3,7 @@ set(PYTHON_SOURCES
     ensemble_experiment_panel.py
     ensemble_smoother_panel.py
     iterated_ensemble_smoother_panel.py
+    sensitivity_study_panel.py
     simulation_config_panel.py
     simulation_panel.py
     analysis_module_variables_panel.py
