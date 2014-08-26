@@ -1,0 +1,6 @@
+STDOUT  troll_pressure.stdout
+STDERR  troll_pressure.stderr
+
+PORTABLE_EXE   /d/proj/bg/enkf/Scripts/troll_pressure.py
+TARGET_FILE    PRESSURE_OK
+ARGLIST        <CWD>   <ECLBASE>  <TSTEP1>   <TSTEP2>

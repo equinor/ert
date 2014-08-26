@@ -112,7 +112,35 @@ double gen_kw_data_iget( gen_kw_type * gen_kw, int index , bool do_transform )
 }
 
 
+void gen_kw_data_iset( gen_kw_type * gen_kw, int index , double value )
+{
+  int size = gen_kw_config_get_data_size( gen_kw->config );
+  if (( index < 0 ) || ( index >= size ))
+    util_abort( "%s: index:%d invalid. Valid interval: [0,%d>.\n" , __func__ , index , size );
 
+  gen_kw->data[index] = value;
+}
+
+
+double gen_kw_data_get( gen_kw_type * gen_kw, const char * subkey, bool do_transform )
+{
+  int index = gen_kw_config_get_index(gen_kw->config, subkey);
+  return gen_kw_data_iget(gen_kw, index, do_transform);
+}
+
+void gen_kw_data_set( gen_kw_type * gen_kw, const char * subkey, double value )
+{
+  int index = gen_kw_config_get_index(gen_kw->config, subkey);
+  return gen_kw_data_iset(gen_kw, index, value);
+}
+
+
+bool gen_kw_data_has_key( gen_kw_type * gen_kw, const char * subkey )
+{
+  int index = gen_kw_config_get_index(gen_kw->config, subkey);
+  bool has_key = ((0 <= index) && (gen_kw_data_size(gen_kw) > index))? true : false;
+  return has_key;
+}
 
 bool gen_kw_write_to_buffer(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_step, state_enum state) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );

@@ -27,6 +27,7 @@
 #include <ert/util/matrix.h>
 #include <ert/util/rng.h>
 #include <ert/util/hash.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_file.h>
@@ -75,7 +76,7 @@ extern "C" {
   typedef void *        (alloc_ftype)                     (const void *);
   typedef bool          (initialize_ftype)                (      void *  , int , const char * , rng_type * );
   typedef bool          (forward_load_ftype)              (void *  , const char * , const ecl_sum_type * , const ecl_file_type * , int);
-  typedef bool          (forward_load_vector_ftype)       (void *  , const char * , const ecl_sum_type * , const ecl_file_type * , int , int);
+  typedef bool          (forward_load_vector_ftype)       (void *  , const char * , const ecl_sum_type * , const ecl_file_type * , const int_vector_type * );
   typedef void          (realloc_data_ftype)              (void * );
   typedef void          (free_data_ftype)                 (void * );
   typedef void          (node_free_ftype)                 (      void *);
@@ -134,7 +135,7 @@ extern "C" {
   void             enkf_node_serialize(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column);
   void             enkf_node_deserialize(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column);
   
-  bool             enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step1, int report_step2 , int iens );
+  bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , const int_vector_type * time_index , int iens );
   bool             enkf_node_forward_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_file_type * , int, int );
   void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int , int);
   void             enkf_node_ecl_write (const enkf_node_type *, const char * , void * , int);

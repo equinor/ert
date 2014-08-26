@@ -15,39 +15,88 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper, CFILE
 from ert.enkf import ENKF_LIB
+from ert.enkf.data import GenKwConfig
 
 
 class GenKw(BaseCClass):
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self, gen_kw_config):
+        """
+         @type gen_kw_config: GenKwConfig
+        """
+        c_ptr = GenKw.cNamespace().alloc(gen_kw_config)
+        super(GenKw, self).__init__(c_ptr)
 
     def exportParameters(self, file_name):
         """ @type: str """
-        py_fileH = open(file_name , "w")
-        cfile  = CFILE( py_fileH )
-        GenKw.cNamespace().export_parameters(self, cfile)
-        py_fileH.close()
+        with open(file_name , "w") as py_file:
+            cfile  = CFILE( py_file )
+            GenKw.cNamespace().export_parameters(self, cfile)
+
 
     def exportTemplate(self, file_name):
         """ @type: str """
         GenKw.cNamespace().export_template(self, file_name)
 
+
+    def __getitem__(self, key):
+        """
+        @type key: int or str
+        @rtype: float
+        """
+        do_transform = False
+        if isinstance(key, str):
+            if not key in self:
+                raise KeyError("Key %s does not exist" % (key))
+            return GenKw.cNamespace().data_get(self, key, do_transform)
+        elif isinstance(key, int):
+            if not 0 <= key < len(self):
+                raise IndexError("Index out of range 0 <= %d < %d" % (key, len(self)))
+            return GenKw.cNamespace().data_iget(self, key, do_transform)
+        else:
+            raise TypeError("Illegal type for indexing, must be int or str, got: %s" % (key))
+
+
+    def __setitem__(self, key, value):
+        """
+        @type key: int or str
+        @type value: float
+        """
+        if isinstance(key, str):
+            if not key in self:
+                raise KeyError("Key %s does not exist" % (key))
+            GenKw.cNamespace().data_set(self, key, value)
+        elif isinstance(key, int):
+            if not 0 <= key < len(self):
+                raise IndexError("Index out of range 0 <= %d < %d" % (key, len(self)))
+            GenKw.cNamespace().data_iset(self, key, value)
+        else:
+            raise TypeError("Illegal type for indexing, must be int or str, got: %s" % (key))
+
+
+    def __len__(self):
+        """ @rtype: int """
+        return GenKw.cNamespace().size(self)
+
+    def __contains__(self, item):
+        return GenKw.cNamespace().has_key(self, item)
+
+
     def free(self):
         GenKw.cNamespace().free(self)
 
 
-    def getNode(self, gen_kw_config):
-        """ @rtype: GenKw """
-        return GenKw.cNamespace().alloc(gen_kw_config)
-
     ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("gen_kw", GenKw)
-cwrapper.registerType("gen_kw_obj", GenKw.createPythonObject)
-cwrapper.registerType("gen_kw_ref", GenKw.createCReference)
+cwrapper.registerObjectType("gen_kw", GenKw)
 
 GenKw.cNamespace().free = cwrapper.prototype("void gen_kw_free(gen_kw_config)")
-GenKw.cNamespace().alloc = cwrapper.prototype("gen_kw_obj gen_kw_alloc(gen_kw_config)")
+GenKw.cNamespace().alloc = cwrapper.prototype("c_void_p gen_kw_alloc(gen_kw_config)")
 GenKw.cNamespace().export_parameters = cwrapper.prototype("void gen_kw_write_export_file(gen_kw , FILE)")
 GenKw.cNamespace().export_template = cwrapper.prototype("void gen_kw_ecl_write_template(gen_kw , char* )")
+GenKw.cNamespace().data_iget = cwrapper.prototype("double gen_kw_data_iget(gen_kw, int, bool)")
+GenKw.cNamespace().data_iset = cwrapper.prototype("void gen_kw_data_iset(gen_kw, int, double)")
+GenKw.cNamespace().data_get = cwrapper.prototype("double gen_kw_data_get(gen_kw, char*, bool)")
+GenKw.cNamespace().data_set = cwrapper.prototype("void gen_kw_data_set(gen_kw, char*, double)")
+GenKw.cNamespace().size = cwrapper.prototype("int gen_kw_data_size(gen_kw)")
+GenKw.cNamespace().has_key = cwrapper.prototype("bool gen_kw_data_has_key(gen_kw, char*)")

@@ -47,9 +47,11 @@ set(TEST_SOURCES
     ert_tests/enkf/test_analysis_config.py
     ert_tests/enkf/test_analysis_iter_config.py
     ert_tests/enkf/test_state_map.py
+    ert_tests/enkf/test_time_map.py
     ert_tests/enkf/test_enkf_obs.py
     ert_tests/enkf/plot/test_plot_data.py
     ert_tests/enkf/data/test_gen_data_config.py
+    ert_tests/enkf/data/test_gen_kw.py
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
@@ -98,6 +100,7 @@ set(TEST_SOURCES
     ert_tests/gui/ide/test_path_argument.py
     ert_tests/gui/ide/test_proper_name_argument.py
     ert_tests/gui/ide/test_proper_name_format_argument.py
+    ert_tests/gui/ide/test_proper_name_format_string_argument.py
     ert_tests/gui/ide/test_range_string_argument.py
     ert_tests/gui/ide/test_tokens.py
 
@@ -243,6 +246,10 @@ add_test( NAME python.tests.ert.enkf.state_map
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_state_map.StateMapTest)
 
+add_test( NAME python.tests.ert.enkf.time_map
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_time_map.TimeMapTest)
+
 add_test( NAME python.tests.ert.enkf.ecl_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ecl_config.EclConfigTest)
@@ -255,6 +262,10 @@ add_test( NAME python.tests.ert.enkf.plot.plot_block_data
 add_test( NAME python.tests.ert.enkf.data.gen_data_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_gen_data_config.GenDataConfigTest)
+
+add_test( NAME python.tests.ert.enkf.data.gen_kw
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_gen_kw.GenKwTest)
 
 add_test( NAME python.tests.ert.enkf.ert_test_context
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -300,6 +311,10 @@ if (ERT_BUILD_GUI)
    add_test( NAME python.tests.ert_gui.ide.proper_name_format_argument
              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_proper_name_format_argument.ProperNameFormatArgumentTest)
+
+   add_test( NAME python.tests.ert_gui.ide.proper_name_format_string_argument
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_proper_name_format_string_argument.ProperNameFormatStringArgumentTest)
 
     add_test( NAME python.tests.ert_gui.ide.range_string_argument
               WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

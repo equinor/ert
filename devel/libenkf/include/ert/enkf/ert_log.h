@@ -28,7 +28,7 @@ extern "C" {
 
 #include <ert/util/log.h>
 
-void ert_log_init_log(int log_level,const char * log_file_name,const char * user_log_file_name,bool verbose);
+void ert_log_init_log(int log_level,const char * log_file_name, bool verbose);
 void ert_log_add_fmt_message(int message_level , FILE * dup_stream , const char * fmt , ...);
 void ert_log_add_message(int message_level , FILE * dup_stream , char* message, bool free_message);
 void ert_log_add_message_py(int message_level, char* message);

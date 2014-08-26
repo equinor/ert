@@ -286,7 +286,7 @@ enkf_fs_type * enkf_fs_get_ref( enkf_fs_type * fs ) {
 static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point ) {
   enkf_fs_type * fs          = util_malloc(sizeof * fs );
   UTIL_TYPE_ID_INIT( fs , ENKF_FS_TYPE_ID );
-  fs->time_map               = time_map_alloc();
+  fs->time_map               = time_map_alloc(  );
   fs->cases_config           = cases_config_alloc();
   fs->state_map              = state_map_alloc();
   fs->misfit_ensemble        = misfit_ensemble_alloc();
