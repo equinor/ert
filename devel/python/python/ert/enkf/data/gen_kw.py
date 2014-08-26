@@ -45,7 +45,7 @@ class GenKw(BaseCClass):
         """
         do_transform = False
         if isinstance(key, str):
-            if not GenKw.cNamespace().has_key(self, key):
+            if not key in self:
                 raise KeyError("Key %s does not exist" % (key))
             return GenKw.cNamespace().data_get(self, key, do_transform)
         elif isinstance(key, int):
@@ -62,7 +62,7 @@ class GenKw(BaseCClass):
         @type value: float
         """
         if isinstance(key, str):
-            if not GenKw.cNamespace().has_key(self, key):
+            if not key in self:
                 raise KeyError("Key %s does not exist" % (key))
             GenKw.cNamespace().data_set(self, key, value)
         elif isinstance(key, int):
@@ -76,6 +76,9 @@ class GenKw(BaseCClass):
     def __len__(self):
         """ @rtype: int """
         return GenKw.cNamespace().size(self)
+
+    def __contains__(self, item):
+        return GenKw.cNamespace().has_key(self, item)
 
 
     def free(self):

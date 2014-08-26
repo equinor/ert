@@ -35,6 +35,8 @@ class GenKwTest(ExtendedTestCase):
             with self.assertRaises(KeyError):
                 gen_kw["MULTFLT_2"]
 
+            self.assertTrue("MULTFLT" in gen_kw )
+
 
 
 
