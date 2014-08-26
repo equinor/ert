@@ -10,9 +10,7 @@ class GenKwTest(ExtendedTestCase):
             with open(parameter_file, "w") as f:
                 f.write("MULTFLT  NORMAL  0   1")
 
-            gen_kw_config = GenKwConfig("MULTFLT", "%s")
-            self.assertIsInstance(gen_kw_config, GenKwConfig)
-            gen_kw_config.set_parameter_file(parameter_file)
+            gen_kw_config = GenKwConfig("MULTFLT", "%s", "MULTFLT.txt")
 
             gen_kw = GenKw(gen_kw_config)
             self.assertIsInstance(gen_kw, GenKw)

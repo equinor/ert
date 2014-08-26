@@ -19,7 +19,7 @@ from ert.util import StringList
 
 
 class GenKwConfig(BaseCClass):
-    def __init__(self, key, tag_fmt):
+    def __init__(self, key, tag_fmt, parameter_file=None):
         """
          @type key: str
          @type tag_fmt: str
@@ -27,13 +27,16 @@ class GenKwConfig(BaseCClass):
         c_ptr = GenKwConfig.cNamespace().alloc_empty(key, tag_fmt)
         super(GenKwConfig, self).__init__(c_ptr)
 
-    def get_template_file(self):
+        if parameter_file is not None:
+            self.setParameterFile(parameter_file)
+
+    def getTemplateFile(self):
         return GenKwConfig.cNamespace().get_template_file(self)
 
-    def get_parameter_file(self):
+    def getParameterFile(self):
         return GenKwConfig.cNamespace().get_parameter_file(self)
 
-    def set_parameter_file(self, parameter_file):
+    def setParameterFile(self, parameter_file):
         GenKwConfig.cNamespace().set_parameter_file(self, parameter_file)
 
     def getKeyWords(self):
