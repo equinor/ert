@@ -13,14 +13,36 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import os
+import errno 
+
 from ert.cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB
 from ert.util import CTime
 
 
 class TimeMap(BaseCClass):
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self, filename = None):
+        c_ptr = TimeMap.cNamespace().alloc()
+        super(TimeMap, self).__init__(c_ptr)
+        if filename:
+            self.load(filename)
+
+
+    def load(self, filename):
+        if os.path.isfile( filename ):
+            TimeMap.cNamespace().load(self , filename)
+        else:
+            raise IOError(( errno.ENOENT , "File not found: %s" % filename))
+
+
+    def isStrict(self):
+        return TimeMap.cNamespace().is_strict( self )
+
+
+    def setStrict(self , strict):
+        return TimeMap.cNamespace().set_strict( self , strict)
+        
 
     def getSimulationDays(self, step):
         """ @rtype: double """
@@ -46,6 +68,18 @@ class TimeMap(BaseCClass):
         return TimeMap.cNamespace().iget(self, index)
 
 
+
+    def update(self , index , time):
+        if TimeMap.cNamespace().try_update(self , index , CTime(time)):
+            return True
+        else:
+            if self.isStrict():
+                raise Exception("Tried to update with inconsistent value")
+            else:
+                return False
+            
+
+
     def __iter__(self):
         cur = 0
 
@@ -60,6 +94,19 @@ class TimeMap(BaseCClass):
     def free(self):
         TimeMap.cNamespace().free(self)
 
+
+    def dump(self):
+        """ 
+        Will return a list of tuples (step , CTime , days).
+        """
+        step_list = []
+        for step,t in enumerate(self):
+            step_list.append( (step , t , self.getSimulationDays( step )) )
+        return step_list
+
+
+
+        
 ##################################################################
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("time_map", TimeMap)
@@ -71,6 +118,12 @@ cwrapper.registerType("time_map_ref", TimeMap.createCReference)
 ##################################################################
 
 TimeMap.cNamespace().free = cwrapper.prototype("void time_map_free( time_map )")
+TimeMap.cNamespace().fread_alloc_readonly = cwrapper.prototype("c_void_p time_map_fread_alloc_readonly(char*)")
+TimeMap.cNamespace().alloc = cwrapper.prototype("c_void_p time_map_alloc()")
+TimeMap.cNamespace().load = cwrapper.prototype("bool time_map_fread(time_map , char*)")
 TimeMap.cNamespace().iget_sim_days = cwrapper.prototype("double time_map_iget_sim_days(time_map, int)")
 TimeMap.cNamespace().iget = cwrapper.prototype("time_t time_map_iget(time_map, int)")
 TimeMap.cNamespace().size = cwrapper.prototype("int time_map_get_size(time_map)")
+TimeMap.cNamespace().try_update = cwrapper.prototype("bool time_map_try_update(time_map , int , time_t)")
+TimeMap.cNamespace().is_strict = cwrapper.prototype("bool time_map_is_strict( time_map )")
+TimeMap.cNamespace().set_strict = cwrapper.prototype("void time_map_set_strict( time_map , bool)")

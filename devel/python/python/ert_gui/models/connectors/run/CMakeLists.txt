@@ -10,6 +10,8 @@ set(PYTHON_SOURCES
     iterated_ensemble_smoother.py
     number_of_iterations.py
     run_path.py
+    sensitivity_study.py
+    sensitivity_target_case_format_model.py
     simulation_mode.py
     simulations_tracker.py
     target_case_format_model.py

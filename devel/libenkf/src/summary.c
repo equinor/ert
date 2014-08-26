@@ -21,7 +21,6 @@
 #include <string.h>
 
 #include <ert/util/util.h>
-#include <ert/util/log.h>
 #include <ert/util/double_vector.h>
 
 #include <ert/ecl/ecl_sum.h>
@@ -315,7 +314,7 @@ bool summary_forward_load(summary_type * summary , const char * ecl_file_name , 
 
 
 
-bool summary_forward_load_vector(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step1, int report_step2) {
+bool summary_forward_load_vector(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , const int_vector_type * time_index) {
   bool loadOK = false;
 
   if (summary->vector_storage) {
@@ -333,8 +332,11 @@ bool summary_forward_load_vector(summary_type * summary , const char * ecl_file_
         */
         
         if (!ecl_sum_has_general_var(ecl_sum , var_key)) {
-          for (int report_step = report_step1; report_step <= report_step2; report_step++) 
-            double_vector_iset( storage_vector , report_step , 0);
+          for (int step = 0; step < int_vector_size( time_index ); step++) {
+            int summary_step = int_vector_iget( time_index , step );
+            if (summary_step >= 0)
+              double_vector_iset( storage_vector , summary_step , 0);
+          }
           loadOK = true;  
           
           if (load_fail_action == LOAD_FAIL_WARN)
@@ -346,14 +348,18 @@ bool summary_forward_load_vector(summary_type * summary , const char * ecl_file_
         
       
       if (normal_load) {
-        int sum_index  = ecl_sum_get_general_var_params_index( ecl_sum , var_key );
-        for (int report_step = report_step1; report_step <= report_step2; report_step++) {
+        int key_index  = ecl_sum_get_general_var_params_index( ecl_sum , var_key );
+
+        for (int store_index = 0; store_index < int_vector_size( time_index ); store_index++) {
+          int summary_index = int_vector_iget( time_index , store_index );
           
-          if (ecl_sum_has_report_step( ecl_sum , report_step )) {
-            int last_report_index = ecl_sum_iget_report_end( ecl_sum , report_step );
-            
-            double_vector_iset( storage_vector , report_step , ecl_sum_iget(ecl_sum , last_report_index  , sum_index ));
+          if (summary_index >= 0) {
+            if (ecl_sum_has_report_step( ecl_sum , summary_index )) {
+              int last_ministep_index = ecl_sum_iget_report_end( ecl_sum , summary_index );
+              double_vector_iset( storage_vector , store_index , ecl_sum_iget(ecl_sum , last_ministep_index  , key_index ));
+            }
           }
+
         }
         loadOK = true;
       }

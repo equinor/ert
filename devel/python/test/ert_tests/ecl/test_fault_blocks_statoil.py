@@ -21,7 +21,7 @@ except ImportError:
 
 from ert.ecl import EclGrid, EclTypeEnum , EclKW
 from ert.test import ExtendedTestCase
-from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCollection
+from ert.ecl.faults import FaultBlock, FaultBlockLayer
 
 class FaultBlockTest(ExtendedTestCase):
     def setUp(self):
@@ -29,12 +29,12 @@ class FaultBlockTest(ExtendedTestCase):
         fileH = open( self.createTestPath("Statoil/ECLIPSE/Mariner/faultblock.grdecl") )
         self.kw = EclKW.read_grdecl( fileH , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE )
 
+
         
     def test_load(self):
-        faultBlocks = FaultBlockCollection( self.grid )
-        faultBlocks.scanKeyword( self.kw )
-
-        for layer in faultBlocks:
-            for block in layer:
+        for k in range(self.grid.getNZ()):
+            faultBlocks = FaultBlockLayer(self.grid , k)
+            faultBlocks.scanKeyword( self.kw )
+            for block in faultBlocks:
                 centroid = block.getCentroid()
                 

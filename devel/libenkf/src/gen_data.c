@@ -24,7 +24,6 @@
 
 #include <ert/util/util.h>
 #include <ert/util/matrix.h>
-#include <ert/util/log.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/rng.h>
 

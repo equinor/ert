@@ -26,9 +26,9 @@ extern "C" {
 #include <stdlib.h>
 
 #include <ert/util/matrix.h>
-#include <ert/util/log.h>
 #include <ert/util/rng.h>
 #include <ert/util/double_vector.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_sum.h>
@@ -149,12 +149,12 @@ bool prefix ## _forward_load__(void * void_arg , const char * ecl_file  , const 
   /*****************************************************************/
 
 #define VOID_FORWARD_LOAD_VECTOR(prefix) \
-  bool prefix ## _forward_load_vector__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step1 , int report_step2) { \
+  bool prefix ## _forward_load_vector__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, const int_vector_type * time_index) { \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg );                         \
-   return prefix ## _forward_load_vector(arg , ecl_file , ecl_sum , restart_file , report_step1 , report_step2); \
+   return prefix ## _forward_load_vector(arg , ecl_file , ecl_sum , restart_file , time_index); \
 }
 
-#define VOID_FORWARD_LOAD_VECTOR_HEADER(prefix) bool prefix ## _forward_load_vector__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int , int);
+#define VOID_FORWARD_LOAD_VECTOR_HEADER(prefix) bool prefix ## _forward_load_vector__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , const int_vector_type * );
 
 
 /*****************************************************************/

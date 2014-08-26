@@ -1,0 +1,6 @@
+STDOUT  troll_gravity.stdout
+STDERR  troll_gravity.stderr
+
+PORTABLE_EXE   /d/proj/bg/enkf/Scripts/troll_gravity.py
+TARGET_FILE    GRAVITY_OK
+ARGLIST        <CWD>   <ECLBASE>  <TSTEP1>   <TSTEP2>

@@ -14,6 +14,7 @@ set(TEST_SOURCES
     ert_tests/cwrap/test_cwrap.py
 
     ert_tests/ecl/__init__.py
+    ert_tests/ecl/test_deprecation.py
     ert_tests/ecl/test_ecl_default.py
     ert_tests/ecl/test_ecl_file.py
     ert_tests/ecl/test_ecl_submit.py
@@ -46,6 +47,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_analysis_config.py
     ert_tests/enkf/test_analysis_iter_config.py
     ert_tests/enkf/test_state_map.py
+    ert_tests/enkf/test_time_map.py
     ert_tests/enkf/test_enkf_obs.py
     ert_tests/enkf/plot/test_plot_data.py
     ert_tests/enkf/data/test_gen_data_config.py
@@ -92,6 +94,7 @@ set(TEST_SOURCES
     ert_tests/gui/ide/test_path_argument.py
     ert_tests/gui/ide/test_proper_name_argument.py
     ert_tests/gui/ide/test_proper_name_format_argument.py
+    ert_tests/gui/ide/test_proper_name_format_string_argument.py
     ert_tests/gui/ide/test_range_string_argument.py
     ert_tests/gui/ide/test_tokens.py
 
@@ -208,6 +211,11 @@ add_test( NAME python.tests.ert.enkf.enkf_fs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs.EnKFFSTest)
 
+add_test( NAME python.tests.ert.enkf.ert_log
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_log.ErtLogTest)
+
+
 add_test( NAME python.tests.ert.enkf.enkf_fs_manager1
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_fs_manager1.EnKFFSManagerTest1)
@@ -231,6 +239,10 @@ add_test( NAME python.tests.ert.enkf.analysis_iter_config
 add_test( NAME python.tests.ert.enkf.state_map
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_state_map.StateMapTest)
+
+add_test( NAME python.tests.ert.enkf.time_map
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_time_map.TimeMapTest)
 
 add_test( NAME python.tests.ert.enkf.ecl_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -291,6 +303,10 @@ if (ERT_BUILD_GUI)
    add_test( NAME python.tests.ert_gui.ide.proper_name_format_argument
              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_proper_name_format_argument.ProperNameFormatArgumentTest)
+
+   add_test( NAME python.tests.ert_gui.ide.proper_name_format_string_argument
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_proper_name_format_string_argument.ProperNameFormatStringArgumentTest)
 
     add_test( NAME python.tests.ert_gui.ide.range_string_argument
               WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -404,6 +420,9 @@ add_test( NAME python.tests.ert.ecl.ecl_sum_vector
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_sum_vector.EclSumVectorTest)
 
+add_test( NAME python.tests.ert.ecl.layer
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_layer.LayerTest )
 
 add_test( NAME python.tests.ert.ecl.faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -432,6 +451,10 @@ add_test( NAME python.tests.ert.ecl.ecl_npv
 add_test( NAME python.tests.ert.ecl.statoil_faults
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_statoil_faults.StatoilFaultTest )
+
+add_test( NAME python.tests.ert.ecl.ecl_deprecation
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_deprecation.DeprecationTest )
 
 #SCHED
 add_test( NAME python.tests.ert.sched.sched
@@ -529,6 +552,7 @@ set_property( TEST python.tests.ert.ecl.ecl_kw            PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_rft           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python:StatoilData:Slow )
+set_property( TEST python.tests.ert.ecl.ecl_deprecation   PROPERTY LABELS Python )
 #set_property( TEST python.tests.import_local             PROPERTY LABELS Python:StatoilBuild )
 
 
