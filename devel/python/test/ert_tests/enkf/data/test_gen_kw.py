@@ -2,10 +2,10 @@ from ert.enkf.data import GenKw, GenKwConfig
 from ert.test import TestAreaContext, ExtendedTestCase
 
 
-class GenKwResOptTest(ExtendedTestCase):
+class GenKwTest(ExtendedTestCase):
 
     def test_gen_kw_get_set(self):
-        with TestAreaContext("enkf/data/gen_kw_res_opt"):
+        with TestAreaContext("enkf/data/gen_kwt"):
             parameter_file ="MULTFLT.txt"
             with open(parameter_file, "w") as f:
                 f.write("MULTFLT  NORMAL  0   1")
