@@ -44,6 +44,7 @@ double           gen_kw_data_iget( gen_kw_type * , int , bool );
 void             gen_kw_data_iset( gen_kw_type * , int , double );
 double           gen_kw_data_get( gen_kw_type * , const char * , bool );
 void             gen_kw_data_set( gen_kw_type *, const char *, double );
+bool             gen_kw_data_has_key( gen_kw_type *, const char *);
 void             gen_kw_ens_write(const gen_kw_type * , const char *);
 void             gen_kw_ens_read(gen_kw_type * , const char *);
 void             gen_kw_truncate(gen_kw_type * );

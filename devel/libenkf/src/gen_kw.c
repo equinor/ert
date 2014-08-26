@@ -136,6 +136,13 @@ void gen_kw_data_set( gen_kw_type * gen_kw, const char * subkey, double value )
 }
 
 
+bool gen_kw_data_has_key( gen_kw_type * gen_kw, const char * subkey )
+{
+  int index = gen_kw_config_get_index(gen_kw->config, subkey);
+  bool has_key = ((0 <= index) && (gen_kw_data_size(gen_kw) > index))? true : false;
+  return has_key;
+}
+
 bool gen_kw_write_to_buffer(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_step, state_enum state) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   buffer_fwrite_int( buffer , GEN_KW );
