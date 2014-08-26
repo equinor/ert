@@ -98,6 +98,7 @@ extern "C" {
 #define  IMAGE_VIEWER_KEY                  "IMAGE_VIEWER"      
 #define  INIT_SECTION_KEY                  "INIT_SECTION"
 #define  INSTALL_JOB_KEY                   "INSTALL_JOB"
+#define  INSTALL_JOB_DIRECTORY_KEY         "INSTALL_JOB_DIRECTORY"
 #define  JOB_SCRIPT_KEY                    "JOB_SCRIPT"
 #define  JOBNAME_KEY                       "JOBNAME"
 #define  KEEP_RUNPATH_KEY                  "KEEP_RUNPATH"  

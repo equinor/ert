@@ -52,6 +52,12 @@ add_test( enkf_plot_data_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data_fs ${PROJEC
 
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf test_util )
+add_test( enkf_time_map1  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map )
+add_test( enkf_time_map2  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE 
+                          ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/ModifiedSummary/EXTRA_TSTEP 
+                          ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/ModifiedSummary/SHORT 
+                          ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/ModifiedSummary/MISSING_TSTEP )
+
 
 add_executable( enkf_ensemble_config enkf_ensemble_config.c )
 target_link_libraries( enkf_ensemble_config enkf test_util )
@@ -409,8 +415,7 @@ add_test(obs_vector_tests ${EXECUTABLE_OUTPUT_PATH}/obs_vector_tests)
 
 add_test( enkf_runpath_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_runpath_list ${CMAKE_CURRENT_SOURCE_DIR}/data/config/runpath_list/config )
 add_test( enkf_site_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_site_config /project/res/etc/ERT/site-config)
-add_test( enkf_time_map1  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map )
-add_test( enkf_time_map2  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST )
+
 add_test( enkf_ensemble_GEN_PARAM  ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble_GEN_PARAM ${CMAKE_CURRENT_SOURCE_DIR}/data/ensemble/GEN_PARAM )
 add_test( enkf_ensemble  ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble )
 add_test( enkf_state_map  ${EXECUTABLE_OUTPUT_PATH}/enkf_state_map )
