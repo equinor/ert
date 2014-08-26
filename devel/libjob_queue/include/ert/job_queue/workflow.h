@@ -28,6 +28,7 @@ extern "C" {
 
 #include <ert/config/config_error.h>
 
+#include <ert/job_queue/workflow_job.h>
 #include <ert/job_queue/workflow_joblist.h>
 #include <ert/job_queue/workflow_job_monitor.h>
 
@@ -42,6 +43,11 @@ extern "C" {
   int                       workflow_get_stack_size( const workflow_type * workflow );
   void                    * workflow_iget_stack_ptr( const workflow_type * workflow , int index);
   void                    * workflow_pop_stack( workflow_type * workflow );
+
+  int                       workflow_size( const workflow_type * workflow);
+  workflow_job_type       * workflow_iget_job( const workflow_type * workflow, int index);
+  stringlist_type         * workflow_iget_arguments( const workflow_type * workflow, int index);
+  bool                      workflow_try_compile( workflow_type * script , const subst_list_type * context);
 
 #ifdef __cplusplus
 }
