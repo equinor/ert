@@ -16,12 +16,18 @@
 
 from collections import namedtuple
 
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import QWidget, QHBoxLayout, QTableWidget, QTableWidgetItem, \
     QCheckBox, QHeaderView, QLabel
 
+from ert_gui.ide.keywords.definitions import FloatArgument
+from ert_gui.models.connectors.run import SensitivityStudyParametersModel, \
+    SensivityStudyParametersConstantValueModel, SensivityStudyParametersIsIncludedModel
+from ert_gui.widgets.checkbox import CheckBox
+from ert_gui.widgets.string_box import StringBox
 
-class SensitivityStudyParametersPanel(QWidget):
+
+class SensitivityStudyParametersPanel(QTableWidget):
 
     Column = namedtuple("Column_tuple", "index header")
 
@@ -32,52 +38,49 @@ class SensitivityStudyParametersPanel(QWidget):
     column_list = ["name", "is_active", "const_value"]
 
     def __init__(self, parent=None):
-        QWidget.__init__(self, parent)
-
-        # For test purposes. Will be read from config later.
-        # model = SensitivityStudyParametersModel()
-        parameters = ["para_1", "para_2", "para_3"] # model.getParameters()
-        is_active = [True, True, False] # model...
-        constant_value = [0, 1, 2] # model...
+        model = SensitivityStudyParametersModel()
+        parameters = model.getParameters()
         n_parameters = len(parameters)
         
-        layout = QHBoxLayout()
-
-        table = QTableWidget(n_parameters, len(self.columns), self)
-        table.verticalHeader().setResizeMode(QHeaderView.Fixed)
-        table.verticalHeader().hide()
+        super(QTableWidget, self).__init__(n_parameters, len(self.columns), parent)
+        self.verticalHeader().setResizeMode(QHeaderView.Fixed)
+        self.verticalHeader().hide()
         
         headers = [self.columns[col_id].header for col_id in self.column_list]
-        table.setHorizontalHeaderLabels(headers)
-        # table.setVerticalHeaderLabels(parameters)
-        table.setMinimumWidth(400)
+        self.setHorizontalHeaderLabels(headers)
 
         for row in range(n_parameters):
-            param_name_widget = QLabel(parameters[row])
-            table.setCellWidget(row, self.columns["name"].index, param_name_widget)
+            param_name = parameters[row]
+            
+            param_name_widget = QLabel(param_name)
+            param_name_widget.setMargin(5)
+            self.setCellWidget(row, self.columns["name"].index, param_name_widget)
           
-            const_value_item = QTableWidgetItem(str(constant_value[row]))
-            const_value_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            const_value_item
-            table.setItem(row, self.columns["const_value"].index, const_value_item)
+            const_value_model = SensivityStudyParametersConstantValueModel(param_name, model)
+            const_value_widget = StringBox(const_value_model, "Constant value", 
+                                         "config/simulation/sensitivity_parameter_constant_value")
+            const_value_widget.setValidator(FloatArgument())
+            const_value_widget.setAlignment(Qt.AlignRight)
+            self.setCellWidget(row, self.columns["const_value"].index, const_value_widget)
 
-            is_active_widget = QWidget()
-            is_active_layout = QHBoxLayout(is_active_widget)
-            is_active_checkbox = QCheckBox()
-            is_active_checkbox.setChecked(is_active[row])
-            is_active_layout.addWidget(is_active_checkbox)
-            is_active_layout.setAlignment(Qt.AlignCenter)
-            is_active_layout.setContentsMargins(0, 0, 0, 0)
-            is_active_widget.setLayout(is_active_layout)
-            table.setCellWidget(row, self.columns["is_active"].index, is_active_widget)
-            if not is_active[row]:
-                const_value_item.setFlags(const_value_item.flags() & (not Qt.ItemIsEditable))
+            is_active_model = SensivityStudyParametersIsIncludedModel(param_name, model)
+            is_active_widget = CheckBox(is_active_model, "Is included", 
+                                        "config/simulation/sensitivity_parameter_is_included", show_label=False)
+            self.setCellWidget(row, self.columns["is_active"].index, is_active_widget)
 
 
-        layout.addWidget(table)
+        self.resizeColumnsToContents()
+        self.setMinimumWidth(self.sizeHint().width())
 
-        self.setLayout(layout)
         self.blockSignals(False)
 
-    def ValueChanged(self):
-        return False
+    def sizeHint(self):
+        height = QTableWidget.sizeHint(self).height()
+        
+        width = self.horizontalHeader().length()
+        
+        margins = self.contentsMargins()
+        width += margins.left() + margins.right()
+        
+        return QSize(width, height)
+        
