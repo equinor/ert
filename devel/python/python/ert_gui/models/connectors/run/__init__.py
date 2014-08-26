@@ -1,5 +1,6 @@
 from .target_case_model import TargetCaseModel
 from .target_case_format_model import TargetCaseFormatModel
+from .sensitivity_target_case_format_model import SensitivityTargetCaseFormatModel
 from .analysis_module_model import AnalysisModuleModel
 from .iterated_analysis_module_model import IteratedAnalysisModuleModel
 from .active_realizations_model import ActiveRealizationsModel
@@ -9,6 +10,7 @@ from .base_run_model import BaseRunModel
 from .ensemble_experiment import EnsembleExperiment
 from .ensemble_smoother import EnsembleSmoother
 from .iterated_ensemble_smoother import IteratedEnsembleSmoother
+from .sensitivity_study import SensitivityStudy
 from .simulation_mode import SimulationModeModel
 
 from .simulations_tracker import SimulationsTracker
