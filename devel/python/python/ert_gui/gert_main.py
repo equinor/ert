@@ -135,6 +135,12 @@ from ert_gui.widgets import util
 
 import ert_gui.widgets.util
 
+try:
+    import site_config
+    site_config_file = site_config.config_file
+except ImportError:
+    site_config_file = None
+
 if os.getenv("ERT_SHARE_PATH"):
     ert_share_path = os.getenv("ERT_SHARE_PATH")
 else:
@@ -198,7 +204,8 @@ def main(argv):
     help_center.setHelpMessageLink("welcome_to_ert")
 
     strict = True
-    site_config = os.getenv("ERT_SITE_CONFIG")
+    if os.getenv("ERT_SITE_CONFIG"):
+        site_config_file = os.getenv("ERT_SITE_CONFIG")
 
     if not os.path.exists(config_file):
         print("Trying to start new config")
@@ -233,7 +240,7 @@ def main(argv):
     now = time.time()
 
 
-    ert = Ert(EnKFMain(config_file, site_config=site_config, strict=strict))
+    ert = Ert(EnKFMain(config_file, site_config = site_config_file, strict=strict))
     ErtConnector.setErt(ert.ert())
 
     window = GertMainWindow()
