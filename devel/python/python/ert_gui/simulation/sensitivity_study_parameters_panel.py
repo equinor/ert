@@ -17,7 +17,7 @@
 from collections import namedtuple
 
 from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import QTableWidget, QHeaderView, QLabel
+from PyQt4.QtGui import QTableWidget, QHeaderView, QLabel, QTableWidgetItem
 
 from ert_gui.ide.keywords.definitions import FloatArgument
 from ert_gui.models.connectors.run import SensitivityStudyParametersModel, \
@@ -63,6 +63,10 @@ class SensitivityStudyParametersPanel(QTableWidget):
                 const_value_widget.setValidator(FloatArgument())
                 const_value_widget.setAlignment(Qt.AlignRight)
                 self.setCellWidget(row, self.columns["const_value"].index, const_value_widget)
+            else:
+                empty_item = QTableWidgetItem()
+                empty_item.setFlags(empty_item.flags() ^ Qt.ItemIsEditable)
+                self.setItem(row, self.columns["const_value"].index, empty_item)
 
 
             is_active_model = SensivityStudyParametersIsIncludedModel(param_name, model)
