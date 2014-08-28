@@ -88,5 +88,7 @@ class SensitivityStudyParametersPanel(QTableWidget):
         margins = self.contentsMargins()
         width += margins.left() + margins.right()
         
+        width += self.verticalScrollBar().sizeHint().width()
+        
         return QSize(width, height)
         
