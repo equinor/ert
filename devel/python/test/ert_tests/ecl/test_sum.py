@@ -60,6 +60,19 @@ class SumTest(ExtendedTestCase):
             sum = EclSum("Does/not/exist")
 
 
+    def test_KeyError(self):
+        sum = self.ecl_sum
+        with self.assertRaises(KeyError):
+            v = sum["KeyMissing"]
+        
+        with self.assertRaises(KeyError):
+            v = sum.get_interp("Missing" , days = 750)
+
+        with self.assertRaises(KeyError):
+            v = sum.get_interp_vector("Missing" , days_list = [750])
+
+
+
     def test_contains(self):
         self.assertTrue( "FOPT" in self.ecl_sum)
         self.assertFalse( "MISSING" in self.ecl_sum )
