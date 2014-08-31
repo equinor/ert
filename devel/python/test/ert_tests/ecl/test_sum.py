@@ -60,6 +60,9 @@ class SumTest(ExtendedTestCase):
             sum = EclSum("Does/not/exist")
 
 
+    def test_contains(self):
+        self.assertTrue( "FOPT" in self.ecl_sum)
+        self.assertFalse( "MISSING" in self.ecl_sum )
     def test_interp(self):
         sum = self.ecl_sum
 
