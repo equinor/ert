@@ -50,6 +50,14 @@ class WorkflowCommon(object):
             f.write("ARG_TYPE 4 STRING\n")
 
 
+        with open("concatenate_job", "w") as f:
+            f.write("INTERNAL True\n")
+            f.write("FUNCTION strcat\n")
+            f.write("MIN_ARG 2\n")
+            f.write("MAX_ARG 2\n")
+            f.write("ARG_TYPE 0 STRING\n")
+            f.write("ARG_TYPE 1 STRING\n")
+
 
     @staticmethod
     def createErtScriptsJob():
@@ -69,3 +77,55 @@ class WorkflowCommon(object):
             f.write("ARG_TYPE 0 FLOAT\n")
             f.write("ARG_TYPE 1 FLOAT\n")
 
+
+    @staticmethod
+    def createWaitJob():
+        with open("wait_job.py", "w") as f:
+            f.write("#!/usr/bin/env python\n")
+            f.write("from ert.job_queue import ErtScript\n")
+            f.write("import time, sys\n")
+            f.write("\n")
+            f.write("class WaitScript(ErtScript):\n")
+            f.write("    def dump(self, filename, content):\n")
+            f.write("        with open(filename, 'w') as f:\n")
+            f.write("            f.write(content)\n")
+            f.write("\n")
+            f.write("    def run(self, arg):\n")
+            f.write("        self.dump('wait_started', 'text')\n")
+            f.write("        start = time.time()\n")
+            f.write("        diff = 0\n")
+            f.write("        while not self.isCancelled() and diff < arg: \n")
+            f.write("           time.sleep(0.2)\n")
+            f.write("           diff = time.time() - start\n")
+            f.write("\n")
+            f.write("        if self.isCancelled():\n")
+            f.write("            self.dump('wait_cancelled', 'text')\n")
+            f.write("        else:\n")
+            f.write("            self.dump('wait_finished', 'text')\n")
+            f.write("\n")
+            f.write("        return None\n")
+            f.write("\n")
+            f.write("if __name__ == '__main__':\n") #This part only run when used in external mode
+            f.write("   WaitScript(None).run(sys.argv[1])\n")
+
+
+        st = os.stat("wait_job.py")
+        os.chmod("wait_job.py", st.st_mode | stat.S_IEXEC) # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+
+        with open("wait_job", "w") as f:
+            f.write("INTERNAL True\n")
+            f.write("SCRIPT wait_job.py\n")
+            f.write("MIN_ARG 1\n")
+            f.write("MAX_ARG 1\n")
+            f.write("ARG_TYPE 0 INT\n")
+
+        with open("external_wait_job", "w") as f:
+            f.write("INTERNAL False\n")
+            f.write("EXECUTABLE wait_job.py\n")
+            f.write("MIN_ARG 1\n")
+            f.write("MAX_ARG 1\n")
+            f.write("ARG_TYPE 0 INT\n")
+
+
+        with open("wait_workflow", "w") as f:
+            f.write("WAIT 10\n")

@@ -17,12 +17,21 @@ class ErtScript(object):
         self.__verbose = False
         self.__ert = ert
 
+        self.__is_cancelled = False
+
     def isVerbose(self):
         return self.__verbose
 
     def ert(self):
         """ @rtype: ert.enkf.EnKFMain """
         return self.__ert
+
+    def isCancelled(self):
+        """ @rtype: bool """
+        return self.__is_cancelled
+
+    def cancel(self):
+        self.__is_cancelled = True
 
     def initializeAndRun(self, argument_types, argument_values, verbose=False):
         """

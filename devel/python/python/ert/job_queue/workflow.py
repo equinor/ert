@@ -1,5 +1,6 @@
+import time
 from ert.cwrap import BaseCClass, CWrapper
-from ert.job_queue import JOB_QUEUE_LIB, WorkflowJoblist, WorkflowJob, WorkflowJobMonitor
+from ert.job_queue import JOB_QUEUE_LIB, WorkflowJoblist, WorkflowJob
 from ert.util import SubstitutionList
 
 class Workflow(BaseCClass):
@@ -11,6 +12,10 @@ class Workflow(BaseCClass):
         """
         c_ptr = Workflow.cNamespace().alloc(src_file, job_list)
         super(Workflow, self).__init__(c_ptr)
+
+        self.__running = False
+        self.__cancelled = False
+        self.__current_job = None
 
     def __len__(self):
         return Workflow.cNamespace().count(self)
@@ -25,15 +30,11 @@ class Workflow(BaseCClass):
         return job, args
 
     def __iter__(self):
-        index = 0
-
         for index in range(len(self)):
             yield self[index]
-            index += 1
 
-    def run(self, monitor, ert, verbose=False, context=None):
+    def run(self, ert, verbose=False, context=None):
         """
-        @type monitor: WorkflowJobMonitor
         @type ert: ert.enkf.enkf_main.EnKFMain
         @type verbose: bool
         @type context: SubstitutionList
@@ -42,14 +43,35 @@ class Workflow(BaseCClass):
         success = Workflow.cNamespace().try_compile(self, context)
 
         if success:
+            self.__running = True
             for job, args in self:
-                return_value = job.run(monitor, ert, verbose, args)
+                self.__current_job = job
+                if not self.__cancelled:
+                    return_value = job.run(ert, args, verbose)
 
+        self.__current_job = None
+        self.__running = False
         return success
 
 
     def free(self):
         Workflow.cNamespace().free(self)
+
+    def isRunning(self):
+        return self.__running
+
+    def cancel(self):
+        if self.__current_job is not None:
+            self.__current_job.cancel()
+
+        self.__cancelled = True
+
+    def isCancelled(self):
+        return self.__cancelled
+
+    def wait(self):
+        while self.isRunning():
+            time.sleep(1)
 
 
 CWrapper.registerObjectType("workflow", Workflow)
