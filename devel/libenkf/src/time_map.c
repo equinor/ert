@@ -80,7 +80,6 @@ bool time_map_attach_refcase( time_map_type * time_map , const ecl_sum_type * re
   {
     int step;
     for (step = 0; step < time_map_get_size(time_map); step++) {
-      //printf("step: %d/%d \n",step, time_map_get_size( time_map ));
       time_t current_time = time_map_iget__( time_map , step );
       time_t sim_time = ecl_sum_get_report_time( refcase , step );
       
