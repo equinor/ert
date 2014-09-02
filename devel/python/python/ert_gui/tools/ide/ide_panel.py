@@ -41,7 +41,8 @@ class IdePanel(QPlainTextEdit):
 
 
     def getText(self):
-        return str(self.document().toPlainText())
+        return self.document().toPlainText()
+
 
     def eventFilter(self, qobject, qevent):
         if qobject == self and qevent.type() == QEvent.ToolTip:
