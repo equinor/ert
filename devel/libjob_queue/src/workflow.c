@@ -174,7 +174,7 @@ bool workflow_try_compile( workflow_type * script , const subst_list_type * cont
 }
 
 
-bool workflow_run(workflow_type * workflow , workflow_job_monitor_type * monitor, void * self , bool verbose , const subst_list_type * context) {
+bool workflow_run(workflow_type * workflow, void * self , bool verbose , const subst_list_type * context) {
   vector_clear( workflow->stack );
   workflow_try_compile( workflow , context);
   
@@ -182,7 +182,7 @@ bool workflow_run(workflow_type * workflow , workflow_job_monitor_type * monitor
     int icmd;
     for (icmd = 0; icmd < vector_get_size( workflow->cmd_list ); icmd++) {
       const cmd_type * cmd = vector_iget_const( workflow->cmd_list , icmd );
-      void * return_value = workflow_job_run( cmd->workflow_job , monitor, self , verbose , cmd->arglist );
+      void * return_value = workflow_job_run( cmd->workflow_job, self , verbose , cmd->arglist );
       vector_push_front_ref( workflow->stack , return_value );
     }
     return true;

@@ -30,7 +30,6 @@ extern "C" {
 #include <ert/config/config_error.h>
 
 #include <ert/job_queue/workflow.h>
-#include <ert/job_queue/workflow_job_monitor.h>
 
 
   typedef struct ert_workflow_list_struct ert_workflow_list_type;
@@ -45,8 +44,8 @@ extern "C" {
   void                       ert_workflow_list_add_alias( ert_workflow_list_type * workflow_list , const char * real_name , const char * alias);
   void                       ert_workflow_list_add_config_items( config_type * config );
   void                       ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config );
-  bool                       ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , workflow_job_monitor_type *monitor, const char * workflow_name , void * self);
-  bool                       ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , workflow_job_monitor_type *monitor, workflow_type * workflow, bool verbose , void * self);
+  bool                       ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list, const char * workflow_name , void * self);
+  bool                       ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list, workflow_type * workflow, bool verbose , void * self);
   bool                       ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name );
   stringlist_type          * ert_workflow_list_alloc_namelist( ert_workflow_list_type * workflow_list );
   const config_error_type  * ert_workflow_list_get_last_error( const ert_workflow_list_type * workflow_list);

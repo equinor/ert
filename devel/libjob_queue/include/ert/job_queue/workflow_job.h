@@ -24,7 +24,6 @@ extern "C" {
 #endif
 
 #include <ert/config/config.h>
-#include <ert/job_queue/workflow_job_monitor.h>
 
   
   typedef void * (workflow_job_ftype) (void * self , const stringlist_type * arg );
@@ -41,14 +40,17 @@ extern "C" {
 
   void           workflow_job_update_config_compiler( const workflow_job_type * workflow_job , config_type * config_compiler );
   void           workflow_job_set_executable( workflow_job_type * workflow_job , const char * executable);
+  char *         workflow_job_get_executable( workflow_job_type * workflow_job);
 
   void           workflow_job_set_internal_script( workflow_job_type * workflow_job , const char * script_path);
   char*          workflow_job_get_internal_script_path( workflow_job_type * workflow_job);
   bool           workflow_job_is_internal_script( workflow_job_type * workflow_job);
 
   void           workflow_job_set_function( workflow_job_type * workflow_job , const char * function);
+  char *         workflow_job_get_function( workflow_job_type * workflow_job);
   void           workflow_job_set_module( workflow_job_type * workflow_job , const char * module);
-  void *         workflow_job_run( const workflow_job_type * job ,workflow_job_monitor_type * monitor, void * self , bool verbose , const stringlist_type * arg);
+  char *         workflow_job_get_module( workflow_job_type * workflow_job);
+  void *         workflow_job_run( const workflow_job_type * job, void * self , bool verbose , const stringlist_type * arg);
 
   int           workflow_job_get_min_arg( const workflow_job_type * workflow_job );
   int           workflow_job_get_max_arg( const workflow_job_type * workflow_job );

@@ -29,7 +29,6 @@
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_main_jobs.h>
-#include <ert/job_queue/workflow_job_monitor.h>
 
 
 int main(int argc , const char ** argv) {
