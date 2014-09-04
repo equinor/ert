@@ -70,6 +70,10 @@ void ert_workflow_list_set_verbose( ert_workflow_list_type * workflow_list , boo
 }
 
 
+subst_list_type * ert_workflow_list_get_context(const ert_workflow_list_type * workflow_list) {
+    return workflow_list->context;
+}
+
 void ert_workflow_list_free( ert_workflow_list_type * workflow_list ) {
   hash_free( workflow_list->workflows );
   stringlist_free( workflow_list->path_list );
@@ -121,6 +125,10 @@ bool ert_workflow_list_has_job( const ert_workflow_list_type * workflow_list , c
   return workflow_joblist_has_job( workflow_list->joblist , job_name );
 }
 
+
+const workflow_job_type * ert_workflow_list_get_job( const ert_workflow_list_type * workflow_list , const char * job_name) {
+    return workflow_joblist_get_job(workflow_list->joblist, job_name);
+}
 
 void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path ) {
   DIR * dirH = opendir( path );

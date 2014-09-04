@@ -30,6 +30,7 @@ extern "C" {
 #include <ert/config/config_error.h>
 
 #include <ert/job_queue/workflow.h>
+#include <ert/job_queue/workflow_job.h>
 
 
   typedef struct ert_workflow_list_struct ert_workflow_list_type;
@@ -41,6 +42,7 @@ extern "C" {
   void                       ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path );
   void                       ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const char * job_name , const char * config_file );
   bool                       ert_workflow_list_has_job( const ert_workflow_list_type * workflow_list , const char * job_name);
+  const workflow_job_type *  ert_workflow_list_get_job( const ert_workflow_list_type * workflow_list , const char * job_name);
   void                       ert_workflow_list_add_alias( ert_workflow_list_type * workflow_list , const char * real_name , const char * alias);
   void                       ert_workflow_list_add_config_items( config_type * config );
   void                       ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config );
@@ -51,7 +53,9 @@ extern "C" {
   const config_error_type  * ert_workflow_list_get_last_error( const ert_workflow_list_type * workflow_list);
   void                       ert_workflow_list_set_verbose( ert_workflow_list_type * workflow_list , bool verbose);
   bool                       ert_workflow_list_run_workflow_blocking(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self);
-  
+  subst_list_type *          ert_workflow_list_get_context(const ert_workflow_list_type * workflow_list);
+
+
 #ifdef __cplusplus
 }
 #endif
