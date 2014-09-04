@@ -58,6 +58,8 @@ typedef struct time_map_struct time_map_type;
   bool             time_map_is_readonly( const time_map_type * tm);
   time_map_type  * time_map_fread_alloc_readonly( const char * filename);
   int_vector_type * time_map_alloc_index_map( time_map_type * map , const ecl_sum_type * ecl_sum );
+  int              time_map_lookup_time( time_map_type * map , time_t time);
+  int              time_map_lookup_days( time_map_type * map , double sim_days);
 
 #ifdef __cplusplus 
 }

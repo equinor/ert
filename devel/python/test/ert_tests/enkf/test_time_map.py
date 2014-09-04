@@ -87,3 +87,60 @@ class TimeMapTest(ExtendedTestCase):
         self.assertEqual( tm[1] , datetime.date(2000,1,2) )
 
 
+    def test_in(self):
+        tm = TimeMap()
+        tm[0] = datetime.date(2000,1,1)
+        tm[1] = datetime.date(2000,1,2)
+        tm[2] = datetime.date(2000,1,3)
+
+        self.assertTrue( datetime.date(2000,1,1) in tm )
+        self.assertTrue( datetime.date(2000,1,2) in tm )
+        self.assertTrue( datetime.date(2000,1,3) in tm )
+
+        self.assertFalse( datetime.date(2001,1,3) in tm )
+        self.assertFalse( datetime.date(1999,1,3) in tm )
+
+        
+    def test_lookupDate(self):
+        tm = TimeMap()
+        tm[0] = datetime.date(2000,1,1)
+        tm[1] = datetime.date(2000,1,2)
+        tm[2] = datetime.date(2000,1,3)
+
+        self.assertEqual( 0 , tm.lookupTime( datetime.date(2000,1,1)))
+        self.assertEqual( 0 , tm.lookupTime( datetime.datetime(2000,1,1,0,0,0)))
+
+        self.assertEqual( 2 , tm.lookupTime( datetime.date(2000,1,3)))
+        self.assertEqual( 2 , tm.lookupTime( datetime.datetime(2000,1,3,0,0,0)))
+        
+        with self.assertRaises(ValueError):
+            tm.lookupTime( datetime.date(1999,10,10))
+
+
+    def test_lookupDays(self):
+        tm = TimeMap()
+
+        with self.assertRaises(ValueError):
+            tm.lookupDays( 0  )
+        
+        tm[0] = datetime.date(2000,1,1)
+        tm[1] = datetime.date(2000,1,2)
+        tm[2] = datetime.date(2000,1,3)
+
+        self.assertEqual( 0 , tm.lookupDays( 0 ))
+        self.assertEqual( 1 , tm.lookupDays( 1 ))
+        self.assertEqual( 2 , tm.lookupDays( 2 ))
+        
+        with self.assertRaises(ValueError):
+            tm.lookupDays( -1  )
+
+        with self.assertRaises(ValueError):
+            tm.lookupDays( 0.50  )
+
+        with self.assertRaises(ValueError):
+            tm.lookupDays( 3  )
+
+            
+
+        
+

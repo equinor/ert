@@ -102,6 +102,30 @@ class TimeMap(BaseCClass):
             yield self[cur]
             cur += 1
 
+    def __contains__(self , time):
+        index = TimeMap.cNamespace().lookup_time(self , CTime(time))
+        if index >= 0:
+            return True
+        else:
+            return False
+
+
+    def lookupTime(self , time):
+        index = TimeMap.cNamespace().lookup_time(self , CTime(time))
+        if index >= 0:
+            return index
+        else:
+            raise ValueError("The time:%s was not found in the time_map instance" % time)
+
+
+    def lookupDays(self , days):
+        index = TimeMap.cNamespace().lookup_days(self , days)
+        if index >= 0:
+            return index
+        else:
+            raise ValueError("The days: %s was not found in the time_map instance" % days)
+            
+
     def __len__(self):
         """ @rtype: int """
         return TimeMap.cNamespace().size(self)
@@ -143,3 +167,5 @@ TimeMap.cNamespace().size = cwrapper.prototype("int time_map_get_size(time_map)"
 TimeMap.cNamespace().try_update = cwrapper.prototype("bool time_map_try_update(time_map , int , time_t)")
 TimeMap.cNamespace().is_strict = cwrapper.prototype("bool time_map_is_strict( time_map )")
 TimeMap.cNamespace().set_strict = cwrapper.prototype("void time_map_set_strict( time_map , bool)")
+TimeMap.cNamespace().lookup_time = cwrapper.prototype("int time_map_lookup_time( time_map , time_t)")
+TimeMap.cNamespace().lookup_days = cwrapper.prototype("int time_map_lookup_days( time_map , double)")

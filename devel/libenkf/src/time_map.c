@@ -417,6 +417,41 @@ bool time_map_try_summary_update( time_map_type * map , const ecl_sum_type * ecl
 }
 
 
+int time_map_lookup_time( time_map_type * map , time_t time) {
+  int index = -1;
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    int current_index = 0;
+    while (true) {
+      if (current_index >= time_t_vector_size( map->map )) 
+        break;
+
+      if (time_map_iget__( map , current_index ) == time) {
+        index = current_index;
+        break;
+      }
+      
+      current_index++;
+    }
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+  return index;
+}
+
+
+int time_map_lookup_days( time_map_type * map , double sim_days) {
+  int index = -1;
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    if (time_t_vector_size( map->map ) > 0) {
+      time_t time = time_map_iget__(map , 0 );
+      util_inplace_forward_days( &time , sim_days );
+      index = time_map_lookup_time( map , time );
+    }
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+  return index;
+}
 
 
 void time_map_clear( time_map_type * map ) {
