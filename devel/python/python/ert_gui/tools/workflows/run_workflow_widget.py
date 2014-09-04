@@ -85,13 +85,7 @@ class RunWorkflowWidget(QWidget):
             if cancel == QMessageBox.Yes:
                 self.__workflow_runner.cancel()
                 self.__running_workflow_dialog.disableCloseButton()
-                # self.__workflow_runner.wait()
-                # self.__running_workflow_dialog.accept()
 
-                #todo is this still necessary????
-                # if not self.__workflow_runner.isExternalWorkflow():
-                #     internal workflow we need to shutdown ERT to continue
-                    # sys.exit(0)
 
     def startWorkflow(self):
         self.__running_workflow_dialog = WorkflowDialog("Running Workflow", self.createSpinWidget(), self)
