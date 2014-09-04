@@ -53,7 +53,16 @@ class WorkflowJobTest(ExtendedTestCase):
 
             self.assertEqual(job.minimumArgumentCount(), 4)
             self.assertEqual(job.maximumArgumentCount(), 5)
-            self.assertEqual(job.argumentTypes(), [str, int, float, bool ,str])
+            self.assertEqual(job.argumentTypes(), [str, int, float, bool, str])
+
+            self.assertTrue(job.run(None, ["x %d %f %d %s", 1, 2.5, True]))
+            self.assertTrue(job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y"]))
+
+            with self.assertRaises(UserWarning): # Too few arguments
+                job.run(None, ["x %d %f", 1, 2.5])
+
+            with self.assertRaises(UserWarning): # Too many arguments
+                job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"])
 
 
     def test_run_external_job(self):
@@ -82,3 +91,4 @@ class WorkflowJobTest(ExtendedTestCase):
             result = job.run(None, ["1", "2"])
 
             self.assertEqual(result, -1)
+
