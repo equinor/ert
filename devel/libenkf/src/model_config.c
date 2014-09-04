@@ -46,6 +46,7 @@
 #include <ert/enkf/fs_types.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
+#include <ert/enkf/time_map.h>
 
 /**
    This struct contains configuration which is specific to this
@@ -78,6 +79,7 @@ struct model_config_struct {
   stringlist_type      * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
   char                 * case_table_file; 
   forward_model_type   * forward_model;             /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
+  time_map_type        * external_time_map;
   history_type         * history;                   /* The history object. */
   path_fmt_type        * current_runpath;           /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
   char                 * current_path_key;
@@ -351,6 +353,7 @@ model_config_type * model_config_alloc() {
   model_config->history                   = NULL;
   model_config->jobname_fmt               = NULL;
   model_config->forward_model             = NULL;
+  model_config->external_time_map         = NULL;
   model_config->internalize_state         = bool_vector_alloc( 0 , false );
   model_config->__load_eclipse_restart    = bool_vector_alloc( 0 , false ); 
   model_config->history_source            = HISTORY_SOURCE_INVALID;
@@ -447,13 +450,24 @@ void model_config_init(model_config_type * model_config ,
     
   }
       
-
-
   if (model_config->history != NULL) {
     int num_restart = history_get_last_restart( model_config->history );
     bool_vector_iset( model_config->internalize_state , num_restart - 1 , false );
     bool_vector_iset( model_config->__load_eclipse_restart      , num_restart - 1 , false );
   }
+
+  if (config_item_set( config , TIME_MAP_KEY)) {
+    const char * filename = config_get_value_as_path( config , TIME_MAP_KEY);
+    time_map_type * time_map = time_map_alloc();
+    if (time_map_fscanf( time_map , filename))
+      model_config->external_time_map = time_map;
+    else {
+      time_map_free( time_map );
+      fprintf(stderr,"** ERROR: Loading external time map from:%s failed \n", filename);
+    }
+  }
+  
+
 
   /*
     The full treatment of the SCHEDULE_PREDICTION_FILE keyword is in
@@ -520,16 +534,22 @@ void model_config_free(model_config_type * model_config) {
   util_safe_free( model_config->case_table_file );
   util_safe_free( model_config->current_path_key);
 
-  if (model_config->history != NULL)
+  if (model_config->history)
     history_free(model_config->history);
-
-  if (model_config->forward_model != NULL)
+  
+  if (model_config->forward_model)
     forward_model_free(model_config->forward_model);
+  
+  if (model_config->external_time_map)
+    time_map_free( model_config->external_time_map );
+
 
   bool_vector_free(model_config->internalize_state);
   bool_vector_free(model_config->__load_eclipse_restart);
   hash_free(model_config->runpath_map);
-  if (model_config->case_names != NULL) stringlist_free( model_config->case_names );
+
+  if (model_config->case_names) 
+    stringlist_free( model_config->case_names );
   free(model_config);
 }
 
@@ -553,6 +573,15 @@ bool model_config_has_history(const model_config_type * config) {
 
 history_type * model_config_get_history(const model_config_type * config) {
   return config->history;
+}
+
+/**
+   Will be NULL unless the user has explicitly loaded an external time
+   map with the TIME_MAP config option.
+*/
+
+time_map_type * model_config_get_external_time_map( const model_config_type * config) {
+  return config->external_time_map;
 }
 
 int model_config_get_last_history_restart(const model_config_type * config) {

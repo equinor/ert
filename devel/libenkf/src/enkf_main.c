@@ -337,6 +337,7 @@ qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main ) {
 void enkf_main_reload_obs( enkf_main_type * enkf_main) {
   enkf_obs_reload(enkf_main->obs , 
                   model_config_get_history(enkf_main->model_config), 
+                  model_config_get_external_time_map(enkf_main->model_config), 
                   ecl_config_get_grid( enkf_main->ecl_config ),
                   ecl_config_get_refcase( enkf_main->ecl_config ) , 
                   analysis_config_get_std_cutoff(enkf_main->analysis_config),
@@ -355,6 +356,7 @@ void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_fi
   if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs ))) {
     enkf_obs_load(enkf_main->obs , 
                   model_config_get_history(enkf_main->model_config), 
+                  model_config_get_external_time_map(enkf_main->model_config), 
                   obs_config_file , 
                   ecl_config_get_grid( enkf_main->ecl_config ),
                   ecl_config_get_refcase( enkf_main->ecl_config ) , 
@@ -2144,6 +2146,8 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
 
+  config_add_key_value(config , TIME_MAP_KEY , false , CONFIG_EXISTING_PATH);
+
   item = config_add_schema_item(config , RFT_CONFIG_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
@@ -2162,11 +2166,11 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
 
-  item = config_add_schema_item(config , HISTORY_SOURCE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1);
   {
     stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) { REFCASE_KEY } , 1);
-
+    
+    item = config_add_schema_item(config , HISTORY_SOURCE_KEY , false  );
+    config_schema_item_set_argc_minmax(item , 1 , 1);
     config_schema_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
     config_schema_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
     config_schema_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
