@@ -77,3 +77,13 @@ class TimeMapTest(ExtendedTestCase):
             self.assertEqual( datetime.date(2000,10,16) , tm[3])
 
                 
+    def test_setitem(self):
+        tm = TimeMap()
+        tm[0] = datetime.date(2000,1,1)
+        tm[1] = datetime.date(2000,1,2)
+        self.assertEqual(2 , len(tm))
+
+        self.assertEqual( tm[0] , datetime.date(2000,1,1) )
+        self.assertEqual( tm[1] , datetime.date(2000,1,2) )
+
+

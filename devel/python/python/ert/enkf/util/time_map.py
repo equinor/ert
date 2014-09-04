@@ -80,6 +80,8 @@ class TimeMap(BaseCClass):
 
         return TimeMap.cNamespace().iget(self, index)
 
+    def __setitem__(self , index , time):
+        self.update( index , time )
 
 
     def update(self , index , time):
