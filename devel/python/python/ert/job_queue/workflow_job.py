@@ -77,13 +77,22 @@ class WorkflowJob(BaseCClass):
         @rtype: ctypes.c_void_p
         """
 
+        min_arg = self.minimumArgumentCount()
+        if min_arg > 0 and len(arguments) < min_arg:
+            raise UserWarning("The job: %s requires at least %d arguments, %d given." % (self.name(), min_arg, len(arguments)))
+
+        max_arg = self.maximumArgumentCount()
+        if 0 < max_arg < len(arguments):
+            raise UserWarning("The job: %s can only have %d arguments, %d given." % (self.name(), max_arg, len(arguments)))
+
+
         if self.isInternalScript():
             script_obj = ErtScript.loadScriptFromFile(self.getInternalScriptPath())
             self.__script = script_obj(ert)
             return self.__script.initializeAndRun(self.argumentTypes(), arguments, verbose=verbose)
 
         elif self.isInternal() and not self.isInternalScript():
-            self.__script = FunctionErtScript(ert, self.functionName(), self.argumentTypes())
+            self.__script = FunctionErtScript(ert, self.functionName(), self.argumentTypes(), argument_count=len(arguments))
             return self.__script.initializeAndRun(self.argumentTypes(), arguments, verbose=verbose)
 
         elif not self.isInternal():

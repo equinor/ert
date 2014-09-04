@@ -43,8 +43,14 @@ class ErtScript(object):
         self.__verbose = verbose
 
         arguments = []
+
+
         for index, arg_value in enumerate(argument_values):
-            arg_type = argument_types[index]
+            if index < len(argument_types):
+                arg_type = argument_types[index]
+            else:
+                arg_type = str
+
             arguments.append(arg_type(arg_value))
 
         return self.run(*arguments)

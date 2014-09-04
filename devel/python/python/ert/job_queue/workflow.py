@@ -1,4 +1,5 @@
 import time
+from ert.config import ConfigError
 from ert.cwrap import BaseCClass, CWrapper
 from ert.job_queue import JOB_QUEUE_LIB, WorkflowJoblist, WorkflowJob
 from ert.util import SubstitutionList
@@ -40,14 +41,15 @@ class Workflow(BaseCClass):
         @type context: SubstitutionList
         @rtype: bool
         """
+        self.__running = True
         success = Workflow.cNamespace().try_compile(self, context)
 
         if success:
-            self.__running = True
             for job, args in self:
                 self.__current_job = job
                 if not self.__cancelled:
                     return_value = job.run(ert, args, verbose)
+                    #todo store results?
 
         self.__current_job = None
         self.__running = False
@@ -73,6 +75,18 @@ class Workflow(BaseCClass):
         while self.isRunning():
             time.sleep(1)
 
+    def getLastError(self):
+        """ @rtype: ConfigError """
+        return Workflow.cNamespace().get_last_error(self)
+
+    @classmethod
+    def createCReference(cls, c_pointer, parent=None):
+        workflow = super(Workflow, cls).createCReference(c_pointer, parent)
+        workflow.__running = False
+        workflow.__cancelled = False
+        workflow.__current_job = None
+        return workflow
+
 
 CWrapper.registerObjectType("workflow", Workflow)
 
@@ -85,3 +99,4 @@ Workflow.cNamespace().iget_job   = cwrapper.prototype("workflow_job_ref workflow
 Workflow.cNamespace().iget_args  = cwrapper.prototype("stringlist_ref   workflow_iget_arguments(workflow, int)")
 
 Workflow.cNamespace().try_compile = cwrapper.prototype("bool workflow_try_compile(workflow, subst_list)")
+Workflow.cNamespace().get_last_error = cwrapper.prototype("config_error_ref workflow_get_last_error(workflow)")

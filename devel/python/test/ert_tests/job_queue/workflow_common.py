@@ -90,23 +90,23 @@ class WorkflowCommon(object):
             f.write("        with open(filename, 'w') as f:\n")
             f.write("            f.write(content)\n")
             f.write("\n")
-            f.write("    def run(self, arg):\n")
-            f.write("        self.dump('wait_started', 'text')\n")
+            f.write("    def run(self, number, wait_time):\n")
+            f.write("        self.dump('wait_started_%d' % number, 'text')\n")
             f.write("        start = time.time()\n")
             f.write("        diff = 0\n")
-            f.write("        while not self.isCancelled() and diff < arg: \n")
+            f.write("        while not self.isCancelled() and diff < wait_time: \n")
             f.write("           time.sleep(0.2)\n")
             f.write("           diff = time.time() - start\n")
             f.write("\n")
             f.write("        if self.isCancelled():\n")
-            f.write("            self.dump('wait_cancelled', 'text')\n")
+            f.write("            self.dump('wait_cancelled_%d' % number, 'text')\n")
             f.write("        else:\n")
-            f.write("            self.dump('wait_finished', 'text')\n")
+            f.write("            self.dump('wait_finished_%d' % number, 'text')\n")
             f.write("\n")
             f.write("        return None\n")
             f.write("\n")
             f.write("if __name__ == '__main__':\n") #This part only run when used in external mode
-            f.write("   WaitScript(None).run(sys.argv[1])\n")
+            f.write("   WaitScript(None).run(int(sys.argv[1]), int(sys.argv[2]))\n")
 
 
         st = os.stat("wait_job.py")
@@ -115,17 +115,26 @@ class WorkflowCommon(object):
         with open("wait_job", "w") as f:
             f.write("INTERNAL True\n")
             f.write("SCRIPT wait_job.py\n")
-            f.write("MIN_ARG 1\n")
-            f.write("MAX_ARG 1\n")
+            f.write("MIN_ARG 2\n")
+            f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 INT\n")
+            f.write("ARG_TYPE 1 INT\n")
 
         with open("external_wait_job", "w") as f:
             f.write("INTERNAL False\n")
             f.write("EXECUTABLE wait_job.py\n")
-            f.write("MIN_ARG 1\n")
-            f.write("MAX_ARG 1\n")
+            f.write("MIN_ARG 2\n")
+            f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 INT\n")
+            f.write("ARG_TYPE 1 INT\n")
 
 
         with open("wait_workflow", "w") as f:
-            f.write("WAIT 10\n")
+            f.write("WAIT 0 1\n")
+            f.write("WAIT 1 10\n")
+            f.write("WAIT 2 1\n")
+
+
+        with open("fast_wait_workflow", "w") as f:
+            f.write("WAIT 0 1\n")
+            f.write("EXTERNAL_WAIT 1 1\n")
