@@ -48,6 +48,7 @@ typedef struct time_map_struct time_map_type;
   time_t           time_map_iget( time_map_type * map , int step );
   void             time_map_fwrite( time_map_type * map , const char * filename);
   void             time_map_fread( time_map_type * map , const char * filename);
+  bool             time_map_fscanf(time_map_type * map , const char * filename);
   double           time_map_iget_sim_days( time_map_type * map , int step );
   int              time_map_get_last_step( time_map_type * map);
   int              time_map_get_size( time_map_type * map);

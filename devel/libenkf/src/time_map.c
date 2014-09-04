@@ -121,6 +121,53 @@ time_map_type * time_map_fread_alloc_readonly( const char * filename) {
 }
 
 
+bool time_map_fscanf(time_map_type * map , const char * filename) {
+  bool fscanf_ok = true;
+  if (util_is_file( filename )) {
+    time_t_vector_type * time_vector = time_t_vector_alloc(0,0);
+    
+    {
+      FILE * stream = util_fopen(filename , "r");
+      time_t last_date = 0;
+      while (true) {
+        char date_string[128];
+        if (fscanf(stream , "%s" , date_string) == 1) {
+          time_t date;
+          if (util_sscanf_date(date_string , &date)) {
+            if (date > last_date)
+              time_t_vector_append( time_vector , date );
+            else {
+              fprintf(stderr,"** ERROR: The dates in %s must be in stricly increasing order\n",filename);
+              fscanf_ok = false;
+              break;
+            }
+          } else {
+            fprintf(stderr,"** ERROR: The string \'%s\' was not correctly parsed as a date (format: DD/MM/YYYY) ",date_string);
+            fscanf_ok = false;
+            break;
+          }
+          last_date = date;
+        } else 
+          break;
+      }
+      fclose( stream );
+
+      if (fscanf_ok) {
+        int i;
+        time_map_clear( map );
+        for (i=0; i < time_t_vector_size( time_vector ); i++)
+          time_map_update( map , i , time_t_vector_iget( time_vector , i ));
+      }
+      
+    }
+    time_t_vector_free( time_vector );
+  } else
+    return fscanf_ok = false;
+
+  return fscanf_ok;
+}
+
+
 bool time_map_equal( const time_map_type * map1 , const time_map_type * map2) {
   return time_t_vector_equal( map1->map , map2->map );
 }
@@ -135,6 +182,8 @@ void time_map_free( time_map_type * map ) {
 bool time_map_is_readonly( const time_map_type * tm) {
   return tm->read_only;
 }
+
+
 
 /**
    Must hold the write lock. When a refcase is supplied we gurantee
