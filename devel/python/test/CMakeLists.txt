@@ -608,6 +608,7 @@ set_property( TEST python.tests.ert.enkf.enkf_fs_manager1     PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.enkf_fs_manager2     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_obs             PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_load_results_manually     PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.ert_test_context     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data_config PROPERTY LABELS Python:StatoilData )
 
