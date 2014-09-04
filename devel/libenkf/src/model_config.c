@@ -231,7 +231,7 @@ const char * model_config_get_gen_kw_export_file( const model_config_type * mode
 
    if (run_mode == ENKF_ASSIMILATION)
      model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file                   , 
-                                                         history_get_last_restart(model_config->history) , 
+                                                         model_config_get_last_history_restart(model_config) , 
                                                          run_mode);
    
  }
@@ -451,7 +451,7 @@ void model_config_init(model_config_type * model_config ,
   }
       
   if (model_config->history != NULL) {
-    int num_restart = history_get_last_restart( model_config->history );
+    int num_restart = model_config_get_last_history_restart(model_config);
     bool_vector_iset( model_config->internalize_state , num_restart - 1 , false );
     bool_vector_iset( model_config->__load_eclipse_restart      , num_restart - 1 , false );
   }
@@ -588,8 +588,12 @@ int model_config_get_last_history_restart(const model_config_type * config) {
   if (config->history)
     return history_get_last_restart( config->history );
   else {
-    fprintf(stderr,"** Warning: Trying to get the last restart number - no history object has been registered.\n");
-    return 0;
+    if (config->external_time_map)
+      return time_map_get_last_step( config->external_time_map);
+    else {
+      fprintf(stderr,"** Warning: Trying to get the last restart number - no history/time_map object has been registered.\n");
+      return 0;
+    }
   }
 }
 
