@@ -10,10 +10,10 @@ class ErtTestContextTest(ExtendedTestCase):
             testContext = ErtTestContext("ExistTest" , "Does/not/exist")
 
 
-    def initFromCaseTest(self, context):
+    def initFromCaseTest(self, context, root_path):
         ert = context.getErt()
 
-        init_case_job = self.createSharePath("workflows/jobs/internal/config/INIT_CASE_FROM_EXISTING")
+        init_case_job = self.createSharePath("%s/INIT_CASE_FROM_EXISTING" % root_path)
         self.assertTrue(context.installWorkflowJob("INIT_CASE_JOB", init_case_job))
         self.assertTrue(context.runWorkflowJob("INIT_CASE_JOB", "default", "new_not_current_case"))
 
@@ -27,15 +27,16 @@ class ErtTestContextTest(ExtendedTestCase):
         self.assertEqual(len(default_fs.getStateMap()), len(new_fs.getStateMap()))
 
 
-    def createCaseTest(self, context):
-        create_case_job = self.createSharePath("workflows/jobs/internal/config/CREATE_CASE")
+    def createCaseTest(self, context, root_path):
+        create_case_job = self.createSharePath("%s/CREATE_CASE" % root_path)
         self.assertTrue(context.installWorkflowJob("CREATE_CASE_JOB", create_case_job))
         self.assertTrue(context.runWorkflowJob("CREATE_CASE_JOB", "newly_created_case"))
         self.assertDirectoryExists("storage/newly_created_case")
 
-    def selectCaseTest(self, context):
+
+    def selectCaseTest(self, context, root_path):
         ert = context.getErt()
-        select_case_job = self.createSharePath("workflows/jobs/internal/config/SELECT_CASE")
+        select_case_job = self.createSharePath("%s/SELECT_CASE" % root_path)
 
         default_fs = ert.getEnkfFsManager().getCurrentFileSystem()
 
@@ -68,15 +69,22 @@ class ErtTestContextTest(ExtendedTestCase):
         self.assertTrue(context.runWorkflowJob("OBS_RANK_JOB", "NameOfObsRanking6", "|", "UnrecognizableObservation"))
 
 
-    def test_workflow_jobs(self):
+    def test_workflow_function_jobs(self):
 
-        with ErtTestContext("python/enkf/ert_test_context_workflow_job", self.config) as context:
-            self.createCaseTest(context)
-            self.selectCaseTest(context)
-            self.initFromCaseTest(context)
+        with ErtTestContext("python/enkf/ert_test_context_workflow_function_job", self.config) as context:
+            self.createCaseTest(context, root_path="workflows/jobs/internal/config")
+            self.selectCaseTest(context, root_path="workflows/jobs/internal/config")
+            self.initFromCaseTest(context, root_path="workflows/jobs/internal/config")
             self.loadResultsTest(context)
             self.rankRealizationsOnObservationsTest(context)
 
 
+
+    def test_workflow_ert_script_jobs(self):
+
+        with ErtTestContext("python/enkf/ert_test_context_workflow_ert_script_job", self.config) as context:
+            self.createCaseTest(context, root_path="workflows/jobs/ert-scripts/config")
+            self.selectCaseTest(context, root_path="workflows/jobs/ert-scripts/config")
+            self.initFromCaseTest(context, root_path="workflows/jobs/ert-scripts/config")
 
 

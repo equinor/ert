@@ -7,7 +7,7 @@ class ErtScript(object):
 
     def __init__(self, ert):
         """
-        @type ert: ert.enkf.EnKFMain
+        @type ert: EnKFMain
         """
         super(ErtScript, self).__init__()
 
@@ -23,7 +23,7 @@ class ErtScript(object):
         return self.__verbose
 
     def ert(self):
-        """ @rtype: ert.enkf.EnKFMain """
+        """ @rtype: EnKFMain """
         return self.__ert
 
     def isCancelled(self):
