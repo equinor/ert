@@ -160,7 +160,9 @@ bool qc_module_has_workflow( const qc_module_type * qc_module ) {
     return true;
 }
 
-
+const workflow_type * qc_module_get_workflow( const qc_module_type * qc_module ) {
+    return qc_module->qc_workflow;
+}
 
 /*****************************************************************/
 

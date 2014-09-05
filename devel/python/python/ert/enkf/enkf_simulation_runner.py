@@ -1,3 +1,4 @@
+import sys
 from ert.cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB, EnkfFs
 from ert.enkf.enums import EnkfInitModeEnum
@@ -9,6 +10,8 @@ class EnkfSimulationRunner(BaseCClass):
     def __init__(self, enkf_main):
         assert isinstance(enkf_main, BaseCClass)
         super(EnkfSimulationRunner, self).__init__(enkf_main.from_param(enkf_main).value, parent=enkf_main, is_reference=True)
+        self.ert = enkf_main
+        """:type: EnKFMain """
 
     def runSimpleStep(self, active_realization_mask, initialization_mode, iter_nr):
         """ @rtype: bool """
@@ -20,10 +23,18 @@ class EnkfSimulationRunner(BaseCClass):
     def runEnsembleExperiment(self, active_realization_mask):
         """ @rtype: bool """
         iter_nr = 0
-        return self.runSimpleStep(active_realization_mask , EnkfInitModeEnum.INIT_CONDITIONAL , iter_nr)
+        return self.runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iter_nr)
+
 
     def runPostWorkflow(self):
-        EnkfSimulationRunner.cNamespace().run_post_workflow(self)
+        post_simulation_hook = self.ert.getPostSimulationHook()
+        if post_simulation_hook.hasWorkflow():
+
+            if not post_simulation_hook.checkRunpathListFile():
+                sys.stderr.write("")
+            workflow = post_simulation_hook.getWorkflow()
+            workflow_list = self.ert.getWorkflowList()
+            workflow.run(self.ert, context=workflow_list.getContext())
 
 
     def smootherUpdate(self, target_fs):
@@ -41,4 +52,3 @@ EnkfSimulationRunner.cNamespace().run_smoother      = cwrapper.prototype("void e
 
 EnkfSimulationRunner.cNamespace().run_simple_step   = cwrapper.prototype("bool enkf_main_run_simple_step(enkf_simulation_runner, bool_vector, enkf_init_mode_enum, int)")
 EnkfSimulationRunner.cNamespace().smoother_update   = cwrapper.prototype("bool enkf_main_smoother_update(enkf_simulation_runner, enkf_fs)")
-EnkfSimulationRunner.cNamespace().run_post_workflow = cwrapper.prototype("void enkf_main_run_post_workflow(enkf_simulation_runner)")
