@@ -1,4 +1,3 @@
-import sys
 from ert.cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB, EnkfFs
 from ert.enkf.enums import EnkfInitModeEnum
@@ -29,9 +28,7 @@ class EnkfSimulationRunner(BaseCClass):
     def runPostWorkflow(self):
         post_simulation_hook = self.ert.getPostSimulationHook()
         if post_simulation_hook.hasWorkflow():
-
-            if not post_simulation_hook.checkRunpathListFile():
-                sys.stderr.write("")
+            post_simulation_hook.checkRunpathListFile()
             workflow = post_simulation_hook.getWorkflow()
             workflow_list = self.ert.getWorkflowList()
             workflow.run(self.ert, context=workflow_list.getContext())
