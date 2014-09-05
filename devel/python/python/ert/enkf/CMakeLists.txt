@@ -24,6 +24,7 @@ set(PYTHON_SOURCES
     node_id.py
     obs_data.py
     plot_config.py
+    post_simulation_hook.py
     site_config.py
     state_map.py
 )
