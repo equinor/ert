@@ -88,6 +88,7 @@ class SumTest(ExtendedTestCase):
         v = sum.get_interp_vector("WGPT:OP_2", date_list=[datetime.date(2002, 1, 1), datetime.date(2003, 1, 1), datetime.date(2004, 1, 1)])
         self.assertAlmostEqualList(v, [8.20773632e+08, 9.68444032e+08, 1.02515213e+09])
 
+        self.assertEqual(sum.get_interp("FOPT" , days = 0) , 0)
 
     def test_LLINEAR(self):
         sum = EclSum( self.createTestPath("Statoil/ECLIPSE/Heidrun/LGRISSUE/EM-LTAA-ISEG_CARFIN_NWPROPS"))
