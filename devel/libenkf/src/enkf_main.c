@@ -1362,6 +1362,14 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
                                      ministep , 
                                      meas_forecast , 
                                      obs_data );
+        else if (target_fs != source_fs) {
+          ert_log_add_fmt_message( 1 , stderr , "No active observations. Parameters copied directly: %s -> %s" , enkf_fs_get_case_name( enkf_main_get_fs( enkf_main )) , enkf_fs_get_case_name( target_fs));
+          enkf_main_init_case_from_existing( enkf_main , 
+                                             enkf_main_get_fs( enkf_main ) , 
+                                             0 , 
+                                             ANALYZED , 
+                                             target_fs );
+        }
       }
       fclose( log_stream );
 
