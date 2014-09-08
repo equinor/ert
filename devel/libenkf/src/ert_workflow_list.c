@@ -102,8 +102,10 @@ workflow_type * ert_workflow_list_add_workflow( ert_workflow_list_type * workflo
 
 
 void ert_workflow_list_add_alias( ert_workflow_list_type * workflow_list , const char * real_name , const char * alias) {
-  workflow_type * workflow = ert_workflow_list_get_workflow( workflow_list , real_name );
-  hash_insert_ref( workflow_list->workflows , alias , workflow );
+  if (!util_string_equal( real_name , alias)) {
+    workflow_type * workflow = ert_workflow_list_get_workflow( workflow_list , real_name );
+    hash_insert_ref( workflow_list->workflows , alias , workflow );
+  }
 }
 
 
