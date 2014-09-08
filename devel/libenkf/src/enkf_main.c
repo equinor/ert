@@ -2637,7 +2637,8 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
 
 
 void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_type * config ) {
-  if (model_config_has_history( enkf_main->model_config )) {
+  const enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
+  if (enkf_obs_have_obs( enkf_obs )) {
     enkf_main->local_config  = local_config_alloc( );
     
     /* First create the default ALL_ACTIVE configuration. */
