@@ -223,7 +223,7 @@ workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * 
 
 
 static UTIL_SAFE_CAST_FUNCTION( workflow , WORKFLOW_TYPE_ID )
-
+UTIL_IS_INSTANCE_FUNCTION( workflow , WORKFLOW_TYPE_ID)
 
 void workflow_free( workflow_type * workflow ) {
   free( workflow->src_file );
