@@ -11,7 +11,7 @@ alloc_from_file = cwrapper.prototype("workflow_job_obj workflow_job_config_alloc
 
 class FunctionErtScriptTest(ExtendedTestCase):
 
-    def test_power(self):
+    def test_concatenation(self):
         with TestAreaContext("python/job_queue/workflow_job") as work_area:
             WorkflowCommon.createInternalFunctionJob()
 

@@ -81,9 +81,8 @@ class WorkflowCommon(object):
     @staticmethod
     def createWaitJob():
         with open("wait_job.py", "w") as f:
-            f.write("#!/usr/bin/env python\n")
             f.write("from ert.job_queue import ErtScript\n")
-            f.write("import time, sys\n")
+            f.write("import time\n")
             f.write("\n")
             f.write("class WaitScript(ErtScript):\n")
             f.write("    def dump(self, filename, content):\n")
@@ -104,13 +103,16 @@ class WorkflowCommon(object):
             f.write("            self.dump('wait_finished_%d' % number, 'text')\n")
             f.write("\n")
             f.write("        return None\n")
-            f.write("\n")
-            f.write("if __name__ == '__main__':\n") #This part only run when used in external mode
-            f.write("   WaitScript(None).run(int(sys.argv[1]), int(sys.argv[2]))\n")
 
 
-        st = os.stat("wait_job.py")
-        os.chmod("wait_job.py", st.st_mode | stat.S_IEXEC) # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        with open("external_wait_job.sh", "w") as f:
+            f.write("#!/usr/bin/env bash\n")
+            f.write("echo \"text\" > wait_started_$1\n")
+            f.write("sleep $2\n")
+            f.write("echo \"text\" > wait_finished_$1\n")
+
+        st = os.stat("external_wait_job.sh")
+        os.chmod("external_wait_job.sh", st.st_mode | stat.S_IEXEC) # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 
         with open("wait_job", "w") as f:
             f.write("INTERNAL True\n")
@@ -122,7 +124,7 @@ class WorkflowCommon(object):
 
         with open("external_wait_job", "w") as f:
             f.write("INTERNAL False\n")
-            f.write("EXECUTABLE wait_job.py\n")
+            f.write("EXECUTABLE external_wait_job.sh\n")
             f.write("MIN_ARG 2\n")
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 INT\n")
@@ -133,7 +135,6 @@ class WorkflowCommon(object):
             f.write("WAIT 0 1\n")
             f.write("WAIT 1 10\n")
             f.write("WAIT 2 1\n")
-
 
         with open("fast_wait_workflow", "w") as f:
             f.write("WAIT 0 1\n")
