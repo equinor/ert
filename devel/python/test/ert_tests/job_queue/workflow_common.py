@@ -50,9 +50,9 @@ class WorkflowCommon(object):
             f.write("ARG_TYPE 4 STRING\n")
 
 
-        with open("concatenate_job", "w") as f:
+        with open("compare_job", "w") as f:
             f.write("INTERNAL True\n")
-            f.write("FUNCTION strcat\n")
+            f.write("FUNCTION strcmp\n")
             f.write("MIN_ARG 2\n")
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 STRING\n")
