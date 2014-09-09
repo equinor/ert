@@ -88,6 +88,24 @@ class SumTest(ExtendedTestCase):
         v = sum.get_interp_vector("WGPT:OP_2", date_list=[datetime.date(2002, 1, 1), datetime.date(2003, 1, 1), datetime.date(2004, 1, 1)])
         self.assertAlmostEqualList(v, [8.20773632e+08, 9.68444032e+08, 1.02515213e+09])
 
+        self.assertEqual(sum.get_interp("FOPT" , days = 0) , 0)
+
+        self.assertEqual(sum.get_interp("WOPR:OP_1" , days = 0) , 0)
+        self.assertEqual(sum.get_interp("WOPR:OP_1" , date=datetime.date(2000,1,1)) , 0)
+
+        self.assertEqual(sum.get_interp("WOPR:OP_1" , days = 31) , 7996)
+        self.assertEqual(sum.get_interp("WOPR:OP_1" , date=datetime.date(2000,2,1)) , 7996)
+
+        FPR = sum["FPR"]
+        self.assertFloatEqual(sum.get_interp("FPR" , days = 0)  , FPR[0].value)
+        self.assertFloatEqual(sum.get_interp("FPR" , days = 31) , FPR[1].value)
+
+        with self.assertRaises(ValueError):
+            sum.get_interp("WOPR:OP_1")
+
+        with self.assertRaises(ValueError):
+            sum.get_interp("WOPR:OP_1" , days=10 , date = datetime.date(2000,1,1))
+
 
     def test_LLINEAR(self):
         sum = EclSum( self.createTestPath("Statoil/ECLIPSE/Heidrun/LGRISSUE/EM-LTAA-ISEG_CARFIN_NWPROPS"))
