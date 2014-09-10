@@ -25,7 +25,8 @@ except ImportError:
 
 import time
 import shutil
-from ert.ecl import EclQueue, EclSum
+from ert.ecl import EclSum
+from ert.ecl.ecl_queue import EclQueue
 from ert.job_queue import QueueDriverEnum, RSHDriver
 from ert.test import ExtendedTestCase , TestAreaContext
 
