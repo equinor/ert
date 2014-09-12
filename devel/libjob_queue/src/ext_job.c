@@ -747,7 +747,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , "STDIN"               , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "STDOUT"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "STDERR"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
-      item = config_add_schema_item(config , "EXECUTABLE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
+      item = config_add_schema_item(config , "EXECUTABLE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type(item, 0, CONFIG_PATH);
       item = config_add_schema_item(config , "TARGET_FILE"         , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "ERROR_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "START_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
@@ -765,11 +765,19 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       if (config_item_set(config , "ERROR_FILE"))            ext_job_set_error_file(ext_job       , config_iget(config  , "ERROR_FILE" , 0,0));
       if (config_item_set(config , "TARGET_FILE"))           ext_job_set_target_file(ext_job      , config_iget(config  , "TARGET_FILE" , 0,0));
       if (config_item_set(config , "START_FILE"))            ext_job_set_start_file(ext_job       , config_iget(config  , "START_FILE" , 0,0));
-      if (config_item_set(config , "EXECUTABLE"))            ext_job_set_executable(ext_job       , config_iget(config  , "EXECUTABLE" , 0,0));
       if (config_item_set(config , "MAX_RUNNING"))           ext_job_set_max_running(ext_job      , config_iget_as_int(config  , "MAX_RUNNING" , 0,0));
       if (config_item_set(config , "MAX_RUNNING_MINUTES"))   ext_job_set_max_time(ext_job         , config_iget_as_int(config  , "MAX_RUNNING_MINUTES" , 0,0));
  
       
+      {
+          const char * executable = config_get_value_as_abspath(config  , "EXECUTABLE");
+          if(!util_file_exists(executable)){
+            executable = config_iget(config  , "EXECUTABLE" , 0,0);
+            fprintf(stderr , "** The way of setting the executable:%s must be relative to the job description file or absulute path must be given.\n ** This config will not work in future releases, Please update job: %s \n" , executable , ext_job->name );
+          }
+          if (config_item_set(config , "EXECUTABLE"))            ext_job_set_executable(ext_job       , executable);
+      }
+
 
       {
         config_content_node_type * arg_node = config_get_value_node( config , "ARGLIST");
