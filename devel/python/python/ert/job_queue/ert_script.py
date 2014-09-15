@@ -7,7 +7,7 @@ class ErtScript(object):
 
     def __init__(self, ert):
         """
-        @type ert: ert.enkf.EnKFMain
+        @type ert: EnKFMain
         """
         super(ErtScript, self).__init__()
 
@@ -17,12 +17,21 @@ class ErtScript(object):
         self.__verbose = False
         self.__ert = ert
 
+        self.__is_cancelled = False
+
     def isVerbose(self):
         return self.__verbose
 
     def ert(self):
-        """ @rtype: ert.enkf.EnKFMain """
+        """ @rtype: EnKFMain """
         return self.__ert
+
+    def isCancelled(self):
+        """ @rtype: bool """
+        return self.__is_cancelled
+
+    def cancel(self):
+        self.__is_cancelled = True
 
     def initializeAndRun(self, argument_types, argument_values, verbose=False):
         """
@@ -34,8 +43,14 @@ class ErtScript(object):
         self.__verbose = verbose
 
         arguments = []
+
+
         for index, arg_value in enumerate(argument_values):
-            arg_type = argument_types[index]
+            if index < len(argument_types):
+                arg_type = argument_types[index]
+            else:
+                arg_type = str
+
             arguments.append(arg_type(arg_value))
 
         return self.run(*arguments)

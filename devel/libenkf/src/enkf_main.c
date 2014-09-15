@@ -104,7 +104,6 @@
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/field.h>
-#include <ert/job_queue/workflow_job_monitor.h>
 #include <ert/enkf/ert_log.h>
 
 /**/

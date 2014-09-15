@@ -82,8 +82,10 @@ from .ext_joblist import ExtJoblist
 from .forward_model import ForwardModel
 
 from .ert_script import ErtScript
+from .function_ert_script import FunctionErtScript
+from .external_ert_script import ExternalErtScript
 
-from .workflow_job_monitor import WorkflowJobMonitor
 from .workflow_job import WorkflowJob
 from .workflow_joblist import WorkflowJoblist
 from .workflow import Workflow
+from .workflow_runner import WorkflowRunner
