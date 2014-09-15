@@ -346,12 +346,14 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
       if (path_executable != NULL) {
         ext_job_set_executable( ext_job , path_executable );
         free( path_executable );
-      } else 
+      } else {
         /* We take the chance that user will supply a valid subst key for this later;
            if the final executable is not an actually executable file when exporting the
            job from ext_job_python_fprintf() a big warning will be written on stderr.
         */
-        ext_job->executable = util_realloc_string_copy(ext_job->executable , executable);
+        fprintf(stderr , "** Unable to locate the executable:%s must be relative to the job description file or absulute path must be given.\n ** This job has been marked as invalid, Please update job: %s \n" , executable , ext_job->name );
+        ext_job->__valid = false;
+      }
     }
   } else {
     /* 
@@ -747,7 +749,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , "STDIN"               , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "STDOUT"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "STDERR"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
-      item = config_add_schema_item(config , "EXECUTABLE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type(item, 0, CONFIG_PATH);
+      item = config_add_schema_item(config , "EXECUTABLE"          , true ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type(item, 0, CONFIG_PATH);
       item = config_add_schema_item(config , "TARGET_FILE"         , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "ERROR_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "START_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
@@ -775,7 +777,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
             executable = config_iget(config  , "EXECUTABLE" , 0,0);
             fprintf(stderr , "** The way of setting the executable:%s must be relative to the job description file or absulute path must be given.\n ** This config will not work in future releases, Please update job: %s \n" , executable , ext_job->name );
           }
-          if (config_item_set(config , "EXECUTABLE"))            ext_job_set_executable(ext_job       , executable);
+          ext_job_set_executable(ext_job       , executable);
       }
 
 
