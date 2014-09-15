@@ -95,7 +95,7 @@ class ErtTestContext(object):
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("ert_test", ErtTest)
 
-ErtTest.cNamespace().alloc = cwrapper.prototype("c_void_p ert_test_context_alloc( char* , char* , char*)")
+ErtTest.cNamespace().alloc = cwrapper.prototype("c_void_p ert_test_context_alloc_python( char* , char* , char*)")
 ErtTest.cNamespace().set_store = cwrapper.prototype("c_void_p ert_test_context_set_store( ert_test , bool)")
 ErtTest.cNamespace().free = cwrapper.prototype("void ert_test_context_free( ert_test )")
 ErtTest.cNamespace().get_enkf_main = cwrapper.prototype("enkf_main_ref ert_test_context_get_main( ert_test )")
