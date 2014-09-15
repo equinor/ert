@@ -42,6 +42,7 @@ bool                    ert_test_context_run_worklow_job( ert_test_context_type 
 void                    ert_test_context_fwrite_workflow_job( FILE * stream , const char * job_name , const stringlist_type * args);
 bool                    ert_test_context_install_workflow( ert_test_context_type * test_context , const char * workflow_name , const char * workflow_file);
 bool                    ert_test_context_run_worklow( ert_test_context_type * test_context , const char * workflow_name);
+const            char * ert_test_context_get_cwd( const ert_test_context_type * test_context );
 
 UTIL_IS_INSTANCE_HEADER( ert_test_context );
 

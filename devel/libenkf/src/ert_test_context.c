@@ -90,6 +90,11 @@ enkf_main_type * ert_test_context_get_main( ert_test_context_type * test_context
 }
 
 
+const char * ert_test_context_get_cwd( const ert_test_context_type * test_context ) {
+  return test_work_area_get_cwd( test_context->work_area );
+}
+
+
 
 void ert_test_context_free( ert_test_context_type * test_context ) {
 
