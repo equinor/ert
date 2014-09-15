@@ -39,7 +39,7 @@ ert_test_context_type * create_context( const char * config_file, const char * n
 void test_create_case_job(ert_test_context_type * test_context, const char * job_name , const char * job_file) {
   stringlist_type * args = stringlist_alloc_new();
   stringlist_append_copy( args , "newly_created_case");
-  ert_test_context_install_workflow_job( test_context , job_name , job_file );
+  test_assert_true( ert_test_context_install_workflow_job( test_context , job_name , job_file ));
   test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
 
   char * new_case = util_alloc_filename( "storage" , "newly_created_case" , NULL);
@@ -54,7 +54,7 @@ void test_init_case_job(ert_test_context_type * test_context, const char * job_n
   stringlist_type * args = stringlist_alloc_new();
   enkf_main_type * enkf_main = ert_test_context_get_main(test_context);
 
-  ert_test_context_install_workflow_job( test_context , "JOB" , job_file );
+  test_assert_true( ert_test_context_install_workflow_job( test_context , "JOB" , job_file ) );
 
   printf("1: Current case: %s \n",enkf_main_get_current_fs( enkf_main ));
   //Test init current case from existing
