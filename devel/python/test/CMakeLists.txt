@@ -59,11 +59,12 @@ set(TEST_SOURCES
 
     ert_tests/job_queue/__init__.py
     ert_tests/job_queue/test_ert_script.py
+    ert_tests/job_queue/test_function_ert_script.py
     ert_tests/job_queue/test_job_queue.py
     ert_tests/job_queue/test_workflow.py
     ert_tests/job_queue/test_workflow_job.py
-    ert_tests/job_queue/test_workflow_job_monitor.py
     ert_tests/job_queue/test_workflow_joblist.py
+    ert_tests/job_queue/test_workflow_runner.py
     ert_tests/job_queue/workflow_common.py
 
     ert_tests/sched/__init__.py
@@ -478,10 +479,6 @@ add_test( NAME python.tests.ert.job_queue.workflow_job
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_job.WorkflowJobTest)
 
-add_test( NAME python.tests.ert.job_queue.workflow_job_monitor
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_job_monitor.WorkflowJobMonitorTest)
-
 add_test( NAME python.tests.ert.job_queue.workflow
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow.WorkflowTest)
@@ -493,6 +490,14 @@ add_test( NAME python.tests.ert.job_queue.workflow_joblist
 add_test( NAME python.tests.ert.job_queue.ert_script
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_ert_script.ErtScriptTest)
+
+add_test( NAME python.tests.ert.job_queue.function_ert_script
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_function_ert_script.FunctionErtScriptTest)
+
+add_test( NAME python.tests.ert.job_queue.workflow_runner
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_runner.WorkflowRunnerTest)
 
 
 
@@ -603,6 +608,7 @@ set_property( TEST python.tests.ert.enkf.enkf_fs_manager1     PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.enkf_fs_manager2     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_obs             PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.enkf_load_results_manually     PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.ert_test_context     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data_config PROPERTY LABELS Python:StatoilData )
 

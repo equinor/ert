@@ -30,7 +30,6 @@
 #include <ert/config/config.h>
 
 #include <ert/job_queue/workflow_job.h>
-#include <ert/job_queue/workflow_job_monitor.h>
 
 
 /* The default values are interepreted as no limit. */
@@ -173,6 +172,9 @@ void workflow_job_set_executable( workflow_job_type * workflow_job , const char 
   workflow_job->executable = util_realloc_string_copy( workflow_job->executable , executable );
 }
 
+char* workflow_job_get_executable( workflow_job_type * workflow_job) {
+    return workflow_job->executable;
+}
 
 void workflow_job_set_internal_script( workflow_job_type * workflow_job , const char * script_path ) {
   workflow_job->internal_script_path = util_realloc_string_copy( workflow_job->internal_script_path , script_path );
@@ -193,11 +195,17 @@ void workflow_job_set_module( workflow_job_type * workflow_job , const char * mo
   workflow_job->module = util_realloc_string_copy( workflow_job->module , module );
 }
 
+char * workflow_job_get_module( workflow_job_type * workflow_job) {
+    return workflow_job->module;
+}
 
 void workflow_job_set_function( workflow_job_type * workflow_job , const char * function) {
   workflow_job->function = util_realloc_string_copy( workflow_job->function , function );
 }
 
+char * workflow_job_get_function( workflow_job_type * workflow_job) {
+    return workflow_job->function;
+}
 
 void workflow_job_iset_argtype( workflow_job_type * workflow_job , int iarg , config_item_types type) {
   if (type == CONFIG_STRING || type == CONFIG_INT || type == CONFIG_FLOAT || type == CONFIG_BOOL)
@@ -367,28 +375,24 @@ void workflow_job_free__( void * arg) {
   discard it.  
 */
 
-static void * workflow_job_run_internal( const workflow_job_type * job , workflow_job_monitor_type * monitor, void * self , bool verbose , const stringlist_type * arg) {
-    workflow_job_monitor_set_pid(monitor, getpid());
+static void * workflow_job_run_internal( const workflow_job_type * job, void * self , bool verbose , const stringlist_type * arg) {
     return job->dl_func( self , arg );
 }
 
 
-static void * workflow_job_run_external( const workflow_job_type * job, workflow_job_monitor_type * monitor, bool verbose , const stringlist_type * arg) {
+static void * workflow_job_run_external( const workflow_job_type * job, bool verbose , const stringlist_type * arg) {
   char ** argv = stringlist_alloc_char_copy( arg );
-  bool blocking =  workflow_job_monitor_get_blocking(monitor);
-  pid_t pid = util_fork_exec( job->executable ,
+
+  util_fork_exec( job->executable ,
                   stringlist_get_size( arg ),
                   (const char **) argv , 
-                  blocking ,
+                  true ,
                   NULL , 
                   NULL , 
                   NULL , 
                   NULL , 
                   NULL );
-  if(!blocking){
-      workflow_job_monitor_set_pid(monitor, pid);
-      waitpid(pid , NULL , 0);
-  }
+
   if (argv != NULL) {
     int i;
     for (i=0; i < stringlist_get_size( arg ); i++)
@@ -398,15 +402,16 @@ static void * workflow_job_run_external( const workflow_job_type * job, workflow
   return NULL;
 }
 
-void * workflow_job_run( const workflow_job_type * job, workflow_job_monitor_type * monitor, void * self , bool verbose , const stringlist_type * arg) {
+/* This is the old C way and will only be used from the TUI */
+void * workflow_job_run( const workflow_job_type * job, void * self , bool verbose , const stringlist_type * arg) {
   if (job->internal) {
     if (workflow_job_is_internal_script(job)) {
         fprintf(stderr, "*** Can not run internal script workflow jobs using this method: workflow_job_run()\n");
         return NULL;
     } else {
-        return workflow_job_run_internal( job, monitor, self, verbose, arg );
+        return workflow_job_run_internal( job, self, verbose, arg );
     }
   } else {
-    return workflow_job_run_external( job, monitor, verbose, arg );
+    return workflow_job_run_external( job, verbose, arg );
   }
 }
