@@ -3,7 +3,7 @@
     
    The file 'enkf_tui_workflow.c' is part of ERT - Ensemble based Reservoir Tool. 
     
-   ERT is free software: you can redistribute it and/or modify 
+   ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by 
    the Free Software Foundation, either version 3 of the License, or 
    (at your option) any later version. 
@@ -42,7 +42,6 @@
 #include <enkf_tui_help.h>
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
-#include <ert/job_queue/workflow_job_monitor.h>
 
 
 void enkf_tui_workflow_run( void * arg ) {

@@ -15,7 +15,6 @@ set(PYTHON_SOURCES
     ert_template.py
     ert_templates.py
     ert_workflow_list.py
-    ert_workflow_list_handler.py
     gen_data.py
     local_config.py
     local_obsdata.py
@@ -25,6 +24,7 @@ set(PYTHON_SOURCES
     node_id.py
     obs_data.py
     plot_config.py
+    post_simulation_hook.py
     site_config.py
     state_map.py
 )

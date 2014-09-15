@@ -1,7 +1,6 @@
 from ert.cwrap import clib, CWrapper
-from ert.job_queue import WorkflowJob, WorkflowJobMonitor
+from ert.job_queue import WorkflowJob
 from ert.test import TestAreaContext, ExtendedTestCase
-from ert.util import StringList
 from ert_tests.job_queue.workflow_common import WorkflowCommon
 
 test_lib  = clib.ert_load("libjob_queue") # create a local namespace
@@ -19,7 +18,6 @@ class WorkflowJobTest(ExtendedTestCase):
         self.assertEqual(workflow_job.name(), "Test")
 
 
-
     def test_read_internal_function(self):
         with TestAreaContext("python/job_queue/workflow_job") as work_area:
             WorkflowCommon.createInternalFunctionJob()
@@ -30,6 +28,7 @@ class WorkflowJobTest(ExtendedTestCase):
 
             self.assertEqual(workflow_job.name(), "SELECT_CASE")
             self.assertTrue(workflow_job.isInternal())
+            self.assertEqual(workflow_job.functionName(), "enkf_main_select_case_JOB")
 
             self.assertFalse(workflow_job.isInternalScript())
             self.assertIsNone(workflow_job.getInternalScriptPath())
@@ -38,6 +37,7 @@ class WorkflowJobTest(ExtendedTestCase):
             workflow_job = alloc_from_file("SUBTRACT", config, "subtract_script_job")
             self.assertEqual(workflow_job.name(), "SUBTRACT")
             self.assertTrue(workflow_job.isInternal())
+            self.assertIsNone(workflow_job.functionName())
 
             self.assertTrue(workflow_job.isInternalScript())
             self.assertTrue(workflow_job.getInternalScriptPath().endswith("subtract_script.py"))
@@ -53,7 +53,16 @@ class WorkflowJobTest(ExtendedTestCase):
 
             self.assertEqual(job.minimumArgumentCount(), 4)
             self.assertEqual(job.maximumArgumentCount(), 5)
-            self.assertEqual(job.argumentTypes(), [str, int, float, bool ,str])
+            self.assertEqual(job.argumentTypes(), [str, int, float, bool, str])
+
+            self.assertTrue(job.run(None, ["x %d %f %d %s", 1, 2.5, True]))
+            self.assertTrue(job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y"]))
+
+            with self.assertRaises(UserWarning): # Too few arguments
+                job.run(None, ["x %d %f", 1, 2.5])
+
+            with self.assertRaises(UserWarning): # Too many arguments
+                job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"])
 
 
     def test_run_external_job(self):
@@ -64,13 +73,9 @@ class WorkflowJobTest(ExtendedTestCase):
             config = alloc_config()
             job = alloc_from_file("DUMP", config, "dump_job")
 
-            monitor = WorkflowJobMonitor()
+            self.assertFalse(job.isInternal())
 
-            arguments = StringList()
-            arguments.append("test")
-            arguments.append("text")
-
-            self.assertIsNone(job.run(monitor, None, False, arguments))
+            self.assertIsNone(job.run(None, ["test", "text"]))
 
             with open("test", "r") as f:
                 self.assertEqual(f.read(), "text")
@@ -83,12 +88,7 @@ class WorkflowJobTest(ExtendedTestCase):
             config = alloc_config()
             job = alloc_from_file("SUBTRACT", config, "subtract_script_job")
 
-            monitor = WorkflowJobMonitor()
-
-            arguments = StringList()
-            arguments.append("1")
-            arguments.append("2")
-
-            result = job.run(monitor, None, False, arguments)
+            result = job.run(None, ["1", "2"])
 
             self.assertEqual(result, -1)
+

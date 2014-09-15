@@ -55,7 +55,7 @@ class ErtScriptTest(ExtendedTestCase):
 
 
     def test_ert_script_from_file(self):
-        with TestAreaContext("python/enkf/ert_script") as work_area:
+        with TestAreaContext("python/job_queue/ert_script") as work_area:
             ErtScriptTest.createScripts()
 
             script_object = ErtScript.loadScriptFromFile("subtract_script.py")

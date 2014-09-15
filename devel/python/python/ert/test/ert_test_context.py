@@ -22,21 +22,50 @@ class ErtTest(BaseCClass):
 
     def __init__(self, test_name, model_config, site_config=None, store_area=False):
         if not os.path.exists(model_config):
-            raise IOError("The configuration file: %s does not exist" % model_config )
+            raise IOError("The configuration file: %s does not exist" % model_config)
         else:
             c_ptr = ErtTest.cNamespace().alloc(test_name, model_config, site_config)
             super(ErtTest, self).__init__(c_ptr)
-            self.setStore( store_area )
+            self.setStore(store_area)
+
+        self.__ert = None
 
     def setStore(self, store):
         ErtTest.cNamespace().set_store(self, store)
 
     def getErt(self):
         """ @rtype: EnKFMain """
-        return ErtTest.cNamespace().get_enkf_main(self)
+        if self.__ert is None:
+            self.__ert = ErtTest.cNamespace().get_enkf_main(self)
+
+        return self.__ert
 
     def free(self):
         ErtTest.cNamespace().free(self)
+
+    def installWorkflowJob(self, job_name, job_path):
+        """ @rtype: bool """
+        if os.path.exists(job_path) and os.path.isfile(job_path):
+            ert = self.getErt()
+            workflow_list = ert.getWorkflowList()
+
+            workflow_list.addJob(job_name, job_path)
+            return workflow_list.hasJob(job_name)
+        else:
+            return False
+
+    def runWorkflowJob(self, job_name, *arguments):
+        """ @rtype: bool """
+        ert = self.getErt()
+        workflow_list = ert.getWorkflowList()
+
+        if workflow_list.hasJob(job_name):
+            job = workflow_list.getJob(job_name)
+            job.run(ert, [arg for arg in arguments])
+            return True
+        else:
+            return False
+
 
 
 class ErtTestContext(object):

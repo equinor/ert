@@ -39,7 +39,6 @@
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
-#include <ert/job_queue/workflow_job_monitor.h>
 #include <ert/enkf/ert_log.h>
 
 
@@ -70,6 +69,10 @@ void ert_workflow_list_set_verbose( ert_workflow_list_type * workflow_list , boo
   workflow_list->verbose = verbose;
 }
 
+
+subst_list_type * ert_workflow_list_get_context(const ert_workflow_list_type * workflow_list) {
+    return workflow_list->context;
+}
 
 void ert_workflow_list_free( ert_workflow_list_type * workflow_list ) {
   hash_free( workflow_list->workflows );
@@ -122,6 +125,10 @@ bool ert_workflow_list_has_job( const ert_workflow_list_type * workflow_list , c
   return workflow_joblist_has_job( workflow_list->joblist , job_name );
 }
 
+
+const workflow_job_type * ert_workflow_list_get_job( const ert_workflow_list_type * workflow_list , const char * job_name) {
+    return workflow_joblist_get_job(workflow_list->joblist, job_name);
+}
 
 void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path ) {
   DIR * dirH = opendir( path );
@@ -219,8 +226,8 @@ bool  ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , co
 }
 
 
-bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list , workflow_job_monitor_type * monitor, workflow_type * workflow, bool verbose , void * self) {
-    bool runOK = workflow_run( workflow , monitor, self , verbose , workflow_list->context);
+bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list, workflow_type * workflow, bool verbose , void * self) {
+    bool runOK = workflow_run( workflow, self , verbose , workflow_list->context);
   if (runOK)
     workflow_list->last_error = NULL;
   else
@@ -232,16 +239,14 @@ bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list , w
 
 bool ert_workflow_list_run_workflow_blocking(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self) {
   workflow_type * workflow = ert_workflow_list_get_workflow( workflow_list , workflow_name );
-  workflow_job_monitor_type * monitor = workflow_job_monitor_alloc();
-  bool result = ert_workflow_list_run_workflow__( workflow_list , monitor, workflow , workflow_list->verbose , self);
-  workflow_job_monitor_free( monitor );
+  bool result = ert_workflow_list_run_workflow__( workflow_list, workflow , workflow_list->verbose , self);
   return result;
 }
 
 
-bool ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  ,workflow_job_monitor_type * monitor, const char * workflow_name , void * self) {
+bool ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list, const char * workflow_name , void * self) {
   workflow_type * workflow = ert_workflow_list_get_workflow( workflow_list , workflow_name );
-  return ert_workflow_list_run_workflow__( workflow_list , monitor, workflow , workflow_list->verbose , self);
+  return ert_workflow_list_run_workflow__( workflow_list, workflow , workflow_list->verbose , self);
 }
 
 
