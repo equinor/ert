@@ -277,7 +277,9 @@ add_executable( enkf_select_case_job enkf_select_case_job.c )
 target_link_libraries( enkf_select_case_job  enkf test_util )
 
 add_test( enkf_select_case_job
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_select_case_job ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields/config )
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_select_case_job 
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields/config 
+          ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal-tui/config/SELECT_CASE)
 
 
 #-----------------------------------------------------------------
