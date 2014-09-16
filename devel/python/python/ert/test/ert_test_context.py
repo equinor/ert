@@ -67,6 +67,14 @@ class ErtTest(BaseCClass):
             return False
 
 
+    def getCwd(self):
+        """
+        Returns the current working directory of this context.
+        @rtype: string
+        """
+        return ErtTest.cNamespace().get_cwd( self )
+
+
 
 class ErtTestContext(object):
     def __init__(self, test_name, model_config, site_config=None, store_area=False):
@@ -91,12 +99,22 @@ class ErtTestContext(object):
         return self.__test_context.getErt()
 
 
+    def getCwd(self):
+        """
+        Returns the current working directory of this context.
+        @rtype: string
+        """
+        return self.__test_context.getCwd()
+
+
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("ert_test", ErtTest)
 
-ErtTest.cNamespace().alloc = cwrapper.prototype("c_void_p ert_test_context_alloc( char* , char* , char*)")
+ErtTest.cNamespace().alloc = cwrapper.prototype("c_void_p ert_test_context_alloc_python( char* , char* , char*)")
 ErtTest.cNamespace().set_store = cwrapper.prototype("c_void_p ert_test_context_set_store( ert_test , bool)")
 ErtTest.cNamespace().free = cwrapper.prototype("void ert_test_context_free( ert_test )")
 ErtTest.cNamespace().get_enkf_main = cwrapper.prototype("enkf_main_ref ert_test_context_get_main( ert_test )")
+ErtTest.cNamespace().get_cwd = cwrapper.prototype("char* ert_test_context_get_cwd( ert_test )")
 
