@@ -2628,7 +2628,7 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
   if (enkf_main->rng != NULL)
     rng_config_init_rng(enkf_main->rng_config, enkf_main->rng);
   else
-    enkf_main->rng = rng_config_alloc_rng( enkf_main->rng_config );
+    enkf_main->rng = rng_config_alloc_init_rng( enkf_main->rng_config );
 }
 
 

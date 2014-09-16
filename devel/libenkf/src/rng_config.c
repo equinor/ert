@@ -116,7 +116,7 @@ rng_type * rng_config_init_rng__(const rng_config_type * rng_config, rng_type * 
   return rng;
 }
 
-rng_type * rng_config_alloc_rng( const rng_config_type * rng_config ) {
+rng_type * rng_config_alloc_init_rng( const rng_config_type * rng_config ) {
   rng_type * rng = rng_alloc(rng_config_get_type(rng_config) , INIT_DEFAULT);
   return rng_config_init_rng__(rng_config, rng);
 }
