@@ -1,4 +1,4 @@
-from ert.job_queue import Workflow, WorkflowJoblist, WorkflowJobMonitor
+from ert.job_queue import Workflow, WorkflowJoblist
 from ert.test import ExtendedTestCase, TestAreaContext
 from ert.util import SubstitutionList
 from ert_tests.job_queue.workflow_common import WorkflowCommon
@@ -44,12 +44,10 @@ class WorkflowTest(ExtendedTestCase):
 
             self.assertTrue(len(workflow), 2)
 
-            monitor = WorkflowJobMonitor()
-
             context = SubstitutionList()
             context.addItem("<PARAM>", "text")
 
-            self.assertTrue(workflow.run(monitor, None, verbose=True, context=context))
+            self.assertTrue(workflow.run(None, verbose=True, context=context))
 
             with open("dump1", "r") as f:
                 self.assertEqual(f.read(), "dump_text_1")
