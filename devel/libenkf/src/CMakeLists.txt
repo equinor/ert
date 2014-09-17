@@ -71,8 +71,7 @@ set( source_files
      ert_report_list.c 
      runpath_list.c 
      ert_workflow_list.c
-     ert_workflow_list_handler.c
-     analysis_iter_config.c 
+     analysis_iter_config.c
      enkf_main_jobs.c 
      ecl_refcase_list.c 
      local_obsdata_node.c 
@@ -168,8 +167,7 @@ set( header_files
      ert_report_list.h 
      runpath_list.h 
      ert_workflow_list.h
-     ert_workflow_list_handler.h
-     analysis_iter_config.h 
+     analysis_iter_config.h
      ecl_refcase_list.h 
      local_obsdata_node.h 
      local_obsdata.h 

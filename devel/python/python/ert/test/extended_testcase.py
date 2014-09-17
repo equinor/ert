@@ -17,6 +17,7 @@ This class provides some extra functionality for testing values that are almost 
 class ExtendedTestCase(TestCase):
     def __init__(self , *args , **kwargs):
         self.__testdata_root = None
+        self.__share_root = None
         super(ExtendedTestCase , self).__init__(*args , **kwargs)
 
 
@@ -59,6 +60,21 @@ class ExtendedTestCase(TestCase):
         if self.__filesAreEqual(first, second):
             self.fail("Buffer contents of files are identical!")
 
+    def assertFileExists(self, path):
+        if not os.path.exists(path) or not os.path.isfile(path):
+            self.fail("The file: %s does not exist!" % path)
+
+    def assertDirectoryExists(self, path):
+        if not os.path.exists(path) or not os.path.isdir(path):
+            self.fail("The directory: %s does not exist!" % path)
+
+    def assertFileDoesNotExist(self, path):
+        if os.path.exists(path) and os.path.isfile(path):
+            self.fail("The file: %s exists!" % path)
+
+    def assertDirectoryDoesNotExist(self, path):
+        if os.path.exists(path) and os.path.isdir(path):
+            self.fail("The directory: %s exists!" % path)
 
     def __filesAreEqual(self, first, second):
         buffer1 = open(first).read()
@@ -78,14 +94,18 @@ class ExtendedTestCase(TestCase):
             self.assertEqual(class_value, value, "Enum value for identifier: %s does not match: %s != %s" % (identifier, class_value, value))
 
 
-    def setTestDataRoot(self , testdata_root):
+    def setTestDataRoot(self, testdata_root):
         self.__testdata_root = testdata_root
         if not os.path.exists(self.__testdata_root):
             raise IOError("Path:%s not found" % self.__testdata_root)
 
+    def setShareRoot(self, share_root):
+        self.__share_root = share_root
+        if not os.path.exists(self.__share_root):
+            raise IOError("Path: %s not found" % self.__share_root)
 
 
-    def createTestPath(self, path , testdata_root = None):
+    def createTestPath(self, path, testdata_root=None):
         if testdata_root is None and self.__testdata_root is None:
             file_path = os.path.realpath(__file__)
             build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../devel/test-data/"))
@@ -104,13 +124,37 @@ class ExtendedTestCase(TestCase):
         root_path = self.__testdata_root 
         if testdata_root is not None:
             if not os.path.exists(testdata_root):
-                raise IOError("Path:%s not found" % testdata_root)
+                raise IOError("Path: %s not found" % testdata_root)
 
             root_path = testdata_root
 
         return os.path.realpath(os.path.join(root_path , path))
 
 
+    def createSharePath(self, path, share_root=None):
+        if share_root is None and self.__share_root is None:
+            file_path = os.path.realpath(__file__)
+            build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../devel/share/"))
+            src_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../share/"))
+
+            if os.path.exists(build_root):
+                root = os.path.realpath( os.environ.get("ERT_SHARE_PATH", build_root))
+            elif os.path.exists(src_root):
+                root = os.path.realpath( os.environ.get("ERT_SHARE_PATH", src_root))
+            else:
+                root = None
+
+            self.setShareRoot(root)
+
+
+        root_path = self.__share_root
+        if share_root is not None:
+            if not os.path.exists(share_root):
+                raise IOError("Path: %s not found" % share_root)
+
+            root_path = share_root
+
+        return os.path.realpath(os.path.join(root_path , path))
 
     @staticmethod
     def slowTestShouldNotRun():

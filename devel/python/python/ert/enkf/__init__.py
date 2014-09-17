@@ -30,7 +30,6 @@ from .state_map import StateMap
 from .enkf_fs import EnkfFs
 
 from .ert_workflow_list import ErtWorkflowList
-from .ert_workflow_list_handler import ErtWorkflowListHandler
 
 from .observations import SummaryObservation, ObsVector
 
@@ -54,9 +53,13 @@ from .local_config import LocalConfig
 from .model_config import ModelConfig
 from .plot_config import PlotConfig
 from .site_config import SiteConfig
+from .post_simulation_hook import PostSimulationHook
 
 from .enkf_simulation_runner import EnkfSimulationRunner
 from .enkf_fs_manager import EnkfFsManager
 
 from .enkf_main import EnKFMain
 from .ert_log import ErtLog
+
+
+from ert.job_queue import ErtScript as ErtScript

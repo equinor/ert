@@ -104,7 +104,6 @@
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/field.h>
-#include <ert/job_queue/workflow_job_monitor.h>
 #include <ert/enkf/ert_log.h>
 
 /**/
@@ -2624,12 +2623,12 @@ rng_config_type * enkf_main_get_rng_config( const enkf_main_type * enkf_main ) {
   return enkf_main->rng_config;
 }
 
+
 void enkf_main_rng_init( enkf_main_type * enkf_main) {
-  if (enkf_main->rng != NULL) {
-    rng_free( enkf_main->rng );
-    enkf_main->rng = NULL;
-  }
-  enkf_main->rng = rng_config_alloc_rng( enkf_main->rng_config );
+  if (enkf_main->rng != NULL)
+    rng_config_init_rng(enkf_main->rng_config, enkf_main->rng);
+  else
+    enkf_main->rng = rng_config_alloc_init_rng( enkf_main->rng_config );
 }
 
 
@@ -2834,6 +2833,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     */
     rng_config_init( enkf_main->rng_config , config );
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
+
     enkf_main_init_subst_list( enkf_main );
     ert_workflow_list_init( enkf_main->workflow_list , config );
     
