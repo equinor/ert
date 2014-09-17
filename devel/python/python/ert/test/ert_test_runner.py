@@ -22,7 +22,7 @@ class ErtTestRunner(object):
         if tests.countTestCases() > 0:
             print("Running %d tests in %s" % (tests.countTestCases(), path))
 
-        testRunner = TextTestRunner()
+        testRunner = TextTestRunner(verbosity=3)
         testRunner.run(tests)
 
 
