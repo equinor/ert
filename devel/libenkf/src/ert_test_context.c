@@ -42,31 +42,56 @@ struct ert_test_context_struct {
 UTIL_IS_INSTANCE_FUNCTION( ert_test_context , ERT_TEST_CONTEXT_TYPE_ID )
 
 
+static ert_test_context_type * ert_test_context_alloc__( const char * test_name , const char * model_config , const char * site_config, bool python_mode) {
+  ert_test_context_type * test_context = util_malloc( sizeof * test_context );
+  UTIL_TYPE_ID_INIT( test_context , ERT_TEST_CONTEXT_TYPE_ID );
+
+  /*
+    This environment variable is set to ensure that test context will
+    parse the correct files when loading site config. 
+  */
+  if (python_mode)
+    setenv("ERT_UI_MODE" , "gui" , 1);
+  else
+    setenv("ERT_UI_MODE" , "tui" , 1);
+
+
+  if (util_file_exists(model_config)) {
+    test_context->work_area = test_work_area_alloc(test_name);
+    test_work_area_set_store( test_context->work_area , false );
+    test_work_area_copy_parent_content(test_context->work_area , model_config );
+    {
+      char * config_file = util_split_alloc_filename( model_config );
+      test_context->enkf_main = enkf_main_bootstrap( site_config , config_file , true , false );
+      free( config_file );
+    }
+    test_context->rng = rng_alloc( MZRAN , INIT_DEV_URANDOM );
+  } else {
+    test_context->enkf_main = NULL;
+    test_context->work_area = NULL;
+    test_context->rng = NULL;
+  }
+  return test_context;
+}
+
 ert_test_context_type * ert_test_context_alloc( const char * test_name , const char * model_config , const char * site_config) {
-   ert_test_context_type * test_context = util_malloc( sizeof * test_context );
-   UTIL_TYPE_ID_INIT( test_context , ERT_TEST_CONTEXT_TYPE_ID );
-   if (util_file_exists(model_config)) {
-     test_context->work_area = test_work_area_alloc(test_name);
-     test_work_area_set_store( test_context->work_area , false );
-     test_work_area_copy_parent_content(test_context->work_area , model_config );
-     {
-       char * config_file = util_split_alloc_filename( model_config );
-       test_context->enkf_main = enkf_main_bootstrap( site_config , config_file , true , false );
-       free( config_file );
-     }
-     test_context->rng = rng_alloc( MZRAN , INIT_DEV_URANDOM );
-   } else {
-     test_context->enkf_main = NULL;
-     test_context->work_area = NULL;
-     test_context->rng = NULL;
-   }
-   return test_context;
+  return ert_test_context_alloc__( test_name , model_config , site_config , false );
+}
+
+
+ert_test_context_type * ert_test_context_alloc_python( const char * test_name , const char * model_config , const char * site_config) {
+  return ert_test_context_alloc__( test_name , model_config , site_config , true );
 }
 
 
 
 enkf_main_type * ert_test_context_get_main( ert_test_context_type * test_context ) {
   return test_context->enkf_main;
+}
+
+
+const char * ert_test_context_get_cwd( const ert_test_context_type * test_context ) {
+  return test_work_area_get_cwd( test_context->work_area );
 }
 
 

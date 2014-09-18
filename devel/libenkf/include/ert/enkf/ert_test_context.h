@@ -34,6 +34,7 @@ typedef struct ert_test_context_struct ert_test_context_type;
 
 void                    ert_test_context_set_store( ert_test_context_type * test_context , bool store);
 ert_test_context_type * ert_test_context_alloc( const char * test_name , const char * model_config , const char * site_config);
+ert_test_context_type * ert_test_context_alloc_python( const char * test_name , const char * model_config , const char * site_config);
 void                    ert_test_context_free( ert_test_context_type * test_context );
 enkf_main_type        * ert_test_context_get_main( ert_test_context_type * test_context );
 bool                    ert_test_context_install_workflow_job( ert_test_context_type * test_context , const char * job_name , const char * job_file);
@@ -41,6 +42,7 @@ bool                    ert_test_context_run_worklow_job( ert_test_context_type 
 void                    ert_test_context_fwrite_workflow_job( FILE * stream , const char * job_name , const stringlist_type * args);
 bool                    ert_test_context_install_workflow( ert_test_context_type * test_context , const char * workflow_name , const char * workflow_file);
 bool                    ert_test_context_run_worklow( ert_test_context_type * test_context , const char * workflow_name);
+const            char * ert_test_context_get_cwd( const ert_test_context_type * test_context );
 
 UTIL_IS_INSTANCE_HEADER( ert_test_context );
 

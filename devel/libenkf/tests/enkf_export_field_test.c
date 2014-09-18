@@ -30,80 +30,85 @@
 
 
 void test_export_field(ert_test_context_type * test_context , const char * job_name , const char * job_file) {
-  ert_test_context_install_workflow_job( test_context , job_name , job_file );
-  stringlist_type * args = stringlist_alloc_new();
 
-  stringlist_append_copy(args, "PERMZ");
-  stringlist_append_copy(args, "TEST_EXPORT/test_export_field/PermZ%d.grdecl");
-  stringlist_append_copy(args, "0");
-  stringlist_append_copy(args, "FORECAST");
-  stringlist_append_copy(args, "0, 2");
-
-  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
-
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field/PermZ0.grdecl"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field/PermZ2.grdecl"));
-
-  stringlist_free( args );
+  test_assert_true( ert_test_context_install_workflow_job( test_context , job_name , job_file ));
+  {
+    stringlist_type * args = stringlist_alloc_new();
+    
+    stringlist_append_copy(args, "PERMZ");
+    stringlist_append_copy(args, "TEST_EXPORT/test_export_field/PermZ%d.grdecl");
+    stringlist_append_copy(args, "0");
+    stringlist_append_copy(args, "FORECAST");
+    stringlist_append_copy(args, "0, 2");
+    
+    test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
+    stringlist_free( args );
+  }
+  test_assert_true( util_file_exists("TEST_EXPORT/test_export_field/PermZ0.grdecl") );
+  test_assert_true( util_file_exists("TEST_EXPORT/test_export_field/PermZ2.grdecl") );
 }
 
 
 void job_file_export_field_ecl_grdecl(ert_test_context_type * test_context , const char * job_name , const char * job_file) {
   ert_test_context_install_workflow_job( test_context , job_name , job_file );
-  stringlist_type * args = stringlist_alloc_new();
-
-  stringlist_append_copy(args, "PERMX");
-  stringlist_append_copy(args, "TEST_EXPORT/test_export_field_ecl_grdecl/PermX%d.grdecl");
-  stringlist_append_copy(args, "0");
-  stringlist_append_copy(args, "ANALYZED");
-  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
-
-  stringlist_clear(args);
-  stringlist_append_copy(args, "PERMZ");
-  stringlist_append_copy(args, "TEST_EXPORT/test_export_field_ecl_grdecl/PermZ%d");
-  stringlist_append_copy(args, "0");
-  stringlist_append_copy(args, "FORECAST");
-  stringlist_append_copy(args, "0-1");
-  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
-
-
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX0.grdecl"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX1.grdecl"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX2.grdecl"));
-
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermZ0"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermZ1"));
-
-  stringlist_free( args );
+  {
+    stringlist_type * args = stringlist_alloc_new();
+    
+    stringlist_append_copy(args, "PERMX");
+    stringlist_append_copy(args, "TEST_EXPORT/test_export_field_ecl_grdecl/PermX%d.grdecl");
+    stringlist_append_copy(args, "0");
+    stringlist_append_copy(args, "ANALYZED");
+    test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
+    
+    stringlist_clear(args);
+    stringlist_append_copy(args, "PERMZ");
+    stringlist_append_copy(args, "TEST_EXPORT/test_export_field_ecl_grdecl/PermZ%d");
+    stringlist_append_copy(args, "0");
+    stringlist_append_copy(args, "FORECAST");
+    stringlist_append_copy(args, "0-1");
+    test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
+    
+    
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX0.grdecl"));
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX1.grdecl"));
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX2.grdecl"));
+    
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermZ0"));
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermZ1"));
+    
+    stringlist_free( args );
+  }
 }
 
 
 void job_file_export_field_rms_roff(ert_test_context_type * test_context , const char * job_name , const char * job_file) {
-  ert_test_context_install_workflow_job( test_context , job_name , job_file );
-  stringlist_type * args = stringlist_alloc_new();
-
-  stringlist_append_copy(args, "PERMZ");
-  stringlist_append_copy(args, "TEST_EXPORT/test_export_field_rms_roff/PermZ%d");
-  stringlist_append_copy(args, "0");
-  stringlist_append_copy(args, "ANALYZED");
-  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
-
-  stringlist_clear(args);
-  stringlist_append_copy(args, "PERMX");
-  stringlist_append_copy(args, "TEST_EXPORT/test_export_field_rms_roff/PermX%d.roff");
-  stringlist_append_copy(args, "0");
-  stringlist_append_copy(args, "FORECAST");
-  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
-
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ0"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ1"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ2"));
-
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX0.roff"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX1.roff"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX2.roff"));
-
-  stringlist_free( args );
+  test_assert_true( ert_test_context_install_workflow_job( test_context , job_name , job_file ) );
+  {
+    stringlist_type * args = stringlist_alloc_new();
+    
+    stringlist_append_copy(args, "PERMZ");
+    stringlist_append_copy(args, "TEST_EXPORT/test_export_field_rms_roff/PermZ%d");
+    stringlist_append_copy(args, "0");
+    stringlist_append_copy(args, "ANALYZED");
+    test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
+    
+    stringlist_clear(args);
+    stringlist_append_copy(args, "PERMX");
+    stringlist_append_copy(args, "TEST_EXPORT/test_export_field_rms_roff/PermX%d.roff");
+    stringlist_append_copy(args, "0");
+    stringlist_append_copy(args, "FORECAST");
+    test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
+    
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ0"));
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ1"));
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ2"));
+    
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX0.roff"));
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX1.roff"));
+    test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX2.roff"));
+    
+    stringlist_free( args );
+  }
 }
 
 
@@ -117,6 +122,9 @@ int main(int argc , const char ** argv) {
   const char * job_file_export_field_rms_roff   = argv[4];
 
   ert_test_context_type * test_context = ert_test_context_alloc("ExportFieldsJobs" , config_file , NULL);
+  enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
+
+  enkf_main_select_fs( enkf_main , "default" );
   {
     test_export_field(test_context, "JOB1" , job_file_export_field);
     test_export_field(test_context, "JOB2" , job_file_export_field_ecl_grdecl);
