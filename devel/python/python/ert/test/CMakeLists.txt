@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     ert_test_context.py
+    ert_test_runner.py
     extended_testcase.py
     test_run.py
     source_enumerator.py
