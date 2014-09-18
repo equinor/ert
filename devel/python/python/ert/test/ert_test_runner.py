@@ -9,7 +9,7 @@ except ImportError:
 class ErtTestRunner(object):
 
     @staticmethod
-    def runTestsInDirectory(path=".", recursive=True):
+    def runTestsInDirectory(path=".", recursive=True, test_verbosity=3):
         if recursive:
             for (root, dirnames, filenames) in os.walk( path ):
                 for directory in dirnames:
@@ -22,16 +22,16 @@ class ErtTestRunner(object):
         if tests.countTestCases() > 0:
             print("Running %d tests in %s" % (tests.countTestCases(), path))
 
-        testRunner = TextTestRunner(verbosity=3)
+        testRunner = TextTestRunner(verbosity=test_verbosity)
         testRunner.run(tests)
 
 
     @staticmethod
-    def runTestsInClass(classpath):
+    def runTestsInClass(classpath, test_verbosity=3):
         klass = ErtTestRunner.importClass(classpath)
         loader = TestLoader()
         tests = loader.loadTestsFromTestCase(klass)
-        testRunner = TextTestRunner()
+        testRunner = TextTestRunner(verbosity=test_verbosity)
         testRunner.run(tests)
 
     @staticmethod
