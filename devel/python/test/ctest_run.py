@@ -9,7 +9,7 @@ except ImportError:
 PYTHONPATH = sys.argv[1]
 sys.path.insert(0, PYTHONPATH)
 
-from ert_tests.run_tests import getTestsFromTestClass
+from ert.test import ErtTestRunner
 
 
 def runTestCase(tests):
@@ -39,7 +39,7 @@ try:
 except IndexError:
     pass
 
-tests = getTestsFromTestClass(test_class_path, argv)
+tests = ErtTestRunner.getTestsFromTestClass(test_class_path, argv)
 
 if runTestCase(tests):
     sys.exit(0)
