@@ -112,17 +112,6 @@ void enkf_main_initialize_from_scratch_with_bool_vector(enkf_main_type * enkf_ma
   for (iens = 0; iens < ens_size; iens++) {
     arg_list[iens] = arg_pack_alloc();
     if (bool_vector_safe_iget(iens_mask , iens)) {
-        printf("Setting up ensemble member %d ", iens);
-        if (init_mode == INIT_CONDITIONAL) {
-          printf(" using conditional initialization (keep existing parameter values).\n");
-        }
-        else if (init_mode == INIT_FORCE) {
-          printf(" using forced initialization (initialize from scratch).\n");
-        }
-        else if (init_mode == INIT_NONE) {
-          printf(" not initializing at all.\n");
-        }
-        fflush( stdout );
         arg_pack_append_ptr( arg_list[iens] , enkf_main );
         arg_pack_append_const_ptr( arg_list[iens] , param_list );
         arg_pack_append_int( arg_list[iens] , iens );
@@ -138,7 +127,6 @@ void enkf_main_initialize_from_scratch_with_bool_vector(enkf_main_type * enkf_ma
   }
   free( arg_list );
   thread_pool_free( tp );
-  printf("Done setting up ensemble.\n");
 }
 
 void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2, init_mode_enum init_mode) {

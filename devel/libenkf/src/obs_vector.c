@@ -81,7 +81,7 @@ static void obs_vector_prefer_RESTART_warning() {
   fprintf(stderr,"          should be matched with the report step embedded as part of the        \n");
   fprintf(stderr,"          GEN_DATA result file created by the forward model.                    \n");
   fprintf(stderr,"\n");
-  fprintf(stderr,"          In the future use OF DATA and DAYS will not be possible for GEN_OBS   \n");
+  fprintf(stderr,"          In the future use OF DATE and DAYS will not be possible for GEN_OBS   \n");
   fprintf(stderr," -------------------------------------------------------------------------------\n");
   fprintf(stderr,"\n");
   fprintf(stderr,"\n");
@@ -89,26 +89,29 @@ static void obs_vector_prefer_RESTART_warning() {
 
 
 
-static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instance, const char * obs_key , const history_type * history , int size , bool prefer_restart) {
+static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instance, const char * obs_key , time_map_type * obs_time , bool prefer_restart) {
   int obs_restart_nr = -1;  /* To shut up compiler warning. */
   
   if(conf_instance_has_item(conf_instance, "RESTART")) {
     obs_restart_nr = conf_instance_get_item_value_int(conf_instance, "RESTART");
-    if(obs_restart_nr > size)
-      util_abort("%s: Observation %s occurs at restart %i, but history file has only %i restarts.\n", __func__, obs_key, obs_restart_nr, size);
+    if (obs_restart_nr > time_map_get_last_step( obs_time))
+      util_abort("%s: Observation %s occurs at restart %i, but history file has only %i restarts.\n", __func__, obs_key, obs_restart_nr, time_map_get_last_step( obs_time));
   } else if(conf_instance_has_item(conf_instance, "DATE")) {
     time_t obs_date = conf_instance_get_item_value_time_t(conf_instance, "DATE"  );
-    obs_restart_nr  = history_get_restart_nr_from_time_t( history , obs_date );
+    obs_restart_nr  = time_map_lookup_time( obs_time , obs_date );
     if (prefer_restart)
       obs_vector_prefer_RESTART_warning();
   } else if (conf_instance_has_item(conf_instance, "DAYS")) {
     double days = conf_instance_get_item_value_double(conf_instance, "DAYS");
-    obs_restart_nr  = history_get_restart_nr_from_days( history , days );
+    obs_restart_nr  = time_map_lookup_days( obs_time , days );
     if (prefer_restart)
       obs_vector_prefer_RESTART_warning();
   }  else
     util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
   
+  if (obs_restart_nr < 0)
+    util_abort("%s: Failed to look up restart nr correctly \n",__func__);
+
   return obs_restart_nr;
 }
 
@@ -391,7 +394,7 @@ int obs_vector_get_last_active_step(const obs_vector_type * obs_vector) {
 */
 
 
-void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type * conf_instance , const history_type * history, ensemble_config_type * ensemble_config) {
+void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type * conf_instance , time_map_type * obs_time ,  ensemble_config_type * ensemble_config) {
   if(!conf_instance_is_of_class(conf_instance, "SUMMARY_OBSERVATION"))
     util_abort("%s: internal error. expected \"SUMMARY_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
@@ -403,12 +406,11 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
     const char * error_mode      = conf_instance_get_item_value_ref(   conf_instance, "ERROR_MODE");
     const char * sum_key         = conf_instance_get_item_value_ref(   conf_instance, "KEY"   );
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
-    int          size            = history_get_last_restart( history );
-    int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size , false);
+    int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , obs_time , false);
 
     if (obs_restart_nr == 0) {
       int day,month,year;
-      time_t start_time = history_get_time_t_from_restart_nr( history , 0 );
+      time_t start_time = time_map_iget( obs_time , 0 );
       util_set_date_values( start_time , &day , &month , &year);
       
       fprintf(stderr,"** ERROR: It is unfortunately not possible to use summary observations from the\n");
@@ -429,7 +431,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
 
 
 
-obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history, const ensemble_config_type * ensemble_config) {
+obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type * conf_instance , time_map_type * obs_time , const ensemble_config_type * ensemble_config) {
   if(!conf_instance_is_of_class(conf_instance, "GENERAL_OBSERVATION"))
     util_abort("%s: internal error. expected \"GENERAL_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
@@ -437,8 +439,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
   const char * state_kw        = conf_instance_get_item_value_ref(   conf_instance, "DATA" );              
   if (ensemble_config_has_key( ensemble_config , state_kw )) {
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
-    int          size            = history_get_last_restart( history );
-    int          obs_restart_nr   = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size , true);
+    int          obs_restart_nr   = __conf_instance_get_restart_nr(conf_instance , obs_key , obs_time , true);
     const char * index_file       = NULL;
     const char * index_list       = NULL;
     const char * obs_file         = NULL;
@@ -467,7 +468,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
         const gen_data_config_type * config = enkf_config_node_get_ref( config_node );
         
         if (gen_data_config_has_report_step( config , obs_restart_nr)) { 
-          obs_vector = obs_vector_alloc( GEN_OBS , obs_key , ensemble_config_get_node(ensemble_config , state_kw ), size);
+          obs_vector = obs_vector_alloc( GEN_OBS , obs_key , ensemble_config_get_node(ensemble_config , state_kw ), time_map_get_last_step( obs_time ));
           if (conf_instance_has_item(conf_instance , "VALUE")) {
             scalar_value = conf_instance_get_item_value_double(conf_instance , "VALUE");
             scalar_error = conf_instance_get_item_value_double(conf_instance , "ERROR");
@@ -498,6 +499,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
 
 bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , 
                                               const conf_instance_type * conf_instance , 
+                                              time_map_type * obs_time , 
                                               const history_type * history , 
                                               ensemble_config_type * ensemble_config, 
                                               double std_cutoff ) {
@@ -533,7 +535,7 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector ,
     
     
     // Get time series data from history object and allocate
-    size = history_get_last_restart(history);
+    size = time_map_get_last_step( obs_time );
     if (history_init_ts( history , sum_key , value , valid )) {
 
       // Create  the standard deviation vector
@@ -658,8 +660,8 @@ static const char * __summary_kw( const char * field_name ) {
 
 obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type * conf_instance , 
                                                           const ecl_grid_type * grid , 
+                                                          time_map_type * obs_time , 
                                                           const ecl_sum_type * refcase , 
-                                                          const history_type * history, 
                                                           ensemble_config_type * ensemble_config) {
 
   if(!conf_instance_is_of_class(conf_instance, "BLOCK_OBSERVATION"))
@@ -687,7 +689,7 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
   
   if (OK) {
     obs_vector_type * obs_vector = NULL;
-    int          size = history_get_last_restart( history );
+    int          size = time_map_get_last_step( obs_time );
     int          obs_restart_nr ;
     
     stringlist_type * summary_keys    = stringlist_alloc_new();
@@ -700,7 +702,7 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     int    * obs_j     = util_calloc(num_obs_pts , sizeof * obs_j    );
     int    * obs_k     = util_calloc(num_obs_pts , sizeof * obs_k    );
 
-    obs_restart_nr = __conf_instance_get_restart_nr(conf_instance , obs_label , history  , size, false);  
+    obs_restart_nr = __conf_instance_get_restart_nr(conf_instance , obs_label , obs_time  , false);  
     
     /** Build the observation. */
     for(int obs_pt_nr = 0; obs_pt_nr < num_obs_pts; obs_pt_nr++) {

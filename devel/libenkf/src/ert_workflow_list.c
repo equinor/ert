@@ -27,6 +27,7 @@
 #include <ert/util/stringlist.h>
 #include <ert/util/util.h>
 #include <ert/util/subst_list.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/config/config.h>
 #include <ert/config/config_error.h>
@@ -42,9 +43,13 @@
 #include <ert/enkf/ert_log.h>
 
 
+#define ERT_WORKFLOW_LIST_TYPE_ID 8856275
+
 struct ert_workflow_list_struct {
+  UTIL_TYPE_ID_DECLARATION;
   stringlist_type         * path_list;
   hash_type               * workflows;
+  hash_type               * alias_map;
   workflow_joblist_type   * joblist;
   const subst_list_type   * context;
   const config_error_type * last_error;
@@ -55,8 +60,10 @@ struct ert_workflow_list_struct {
 
 ert_workflow_list_type * ert_workflow_list_alloc(const subst_list_type * context) {
   ert_workflow_list_type * workflow_list = util_malloc( sizeof * workflow_list );
+  UTIL_TYPE_ID_INIT( workflow_list , ERT_WORKFLOW_LIST_TYPE_ID );
   workflow_list->path_list  = stringlist_alloc_new();
   workflow_list->workflows  = hash_alloc();
+  workflow_list->alias_map  = hash_alloc();
   workflow_list->joblist    = workflow_joblist_alloc();
   workflow_list->context    = context;
   workflow_list->last_error = NULL;
@@ -64,6 +71,9 @@ ert_workflow_list_type * ert_workflow_list_alloc(const subst_list_type * context
   return workflow_list;
 }
 
+
+
+UTIL_IS_INSTANCE_FUNCTION( ert_workflow_list , ERT_WORKFLOW_LIST_TYPE_ID )
 
 void ert_workflow_list_set_verbose( ert_workflow_list_type * workflow_list , bool verbose) {
   workflow_list->verbose = verbose;
@@ -76,6 +86,7 @@ subst_list_type * ert_workflow_list_get_context(const ert_workflow_list_type * w
 
 void ert_workflow_list_free( ert_workflow_list_type * workflow_list ) {
   hash_free( workflow_list->workflows );
+  hash_free( workflow_list->alias_map );
   stringlist_free( workflow_list->path_list );
   workflow_joblist_free( workflow_list->joblist );
   free( workflow_list );
@@ -86,14 +97,21 @@ void ert_workflow_list_free( ert_workflow_list_type * workflow_list ) {
 workflow_type * ert_workflow_list_add_workflow( ert_workflow_list_type * workflow_list , const char * workflow_file , const char * workflow_name) {
   if (util_file_exists( workflow_file )) {
     workflow_type * workflow = workflow_alloc( workflow_file , workflow_list->joblist );
-    if (workflow_name != NULL) 
-      hash_insert_hash_owned_ref( workflow_list->workflows , workflow_name , workflow , workflow_free__);    
-    else {
-      char * name;
+    char * name;
+
+    if (workflow_name == NULL) 
       util_alloc_file_components( workflow_file , NULL , &name , NULL );
-      hash_insert_hash_owned_ref( workflow_list->workflows , name , workflow , workflow_free__);    
+    else 
+      name = workflow_name;
+
+
+    hash_insert_hash_owned_ref( workflow_list->workflows , name , workflow , workflow_free__);    
+    if (hash_has_key( workflow_list->alias_map , name))
+      hash_del( workflow_list->alias_map , name);
+
+    if (workflow_name == NULL) 
       free( name );
-    }
+
     return workflow;
   } else
     return NULL;
@@ -102,8 +120,8 @@ workflow_type * ert_workflow_list_add_workflow( ert_workflow_list_type * workflo
 
 
 void ert_workflow_list_add_alias( ert_workflow_list_type * workflow_list , const char * real_name , const char * alias) {
-  workflow_type * workflow = ert_workflow_list_get_workflow( workflow_list , real_name );
-  hash_insert_ref( workflow_list->workflows , alias , workflow );
+  if (!util_string_equal( real_name , alias)) 
+    hash_insert_ref( workflow_list->alias_map , alias , real_name );
 }
 
 
@@ -218,11 +236,18 @@ void ert_workflow_list_add_config_items( config_type * config ) {
 
 
 workflow_type *  ert_workflow_list_get_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name ) {
-  return hash_get( workflow_list->workflows , workflow_name );
+  const char * lookup_name = workflow_name;
+
+  if (hash_has_key( workflow_list->alias_map , workflow_name))
+    lookup_name = hash_get( workflow_list->alias_map , workflow_name );
+
+  return hash_get( workflow_list->workflows , lookup_name );
 }
 
 bool  ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name ) {
-  return hash_has_key( workflow_list->workflows , workflow_name );
+  return 
+    hash_has_key( workflow_list->workflows , workflow_name ) || 
+    hash_has_key( workflow_list->alias_map , workflow_name);
 }
 
 
@@ -259,4 +284,9 @@ stringlist_type * ert_workflow_list_alloc_namelist( ert_workflow_list_type * wor
 
 const config_error_type * ert_workflow_list_get_last_error( const ert_workflow_list_type * workflow_list) {
   return workflow_list->last_error;
+}
+
+
+int ert_workflow_list_get_size( const ert_workflow_list_type * workflow_list) {
+  return hash_get_size( workflow_list->workflows ) + hash_get_size( workflow_list->alias_map);
 }

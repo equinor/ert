@@ -35,6 +35,7 @@ extern "C" {
 #include <ert/enkf/enkf_state.h>
 #include <ert/enkf/meas_data.h>
 #include <ert/enkf/obs_data.h>
+#include <ert/enkf/time_map.h>
 #include <ert/enkf/obs_vector.h>
 #include <ert/enkf/local_obsset.h>
 #include <ert/enkf/enkf_types.h>
@@ -53,14 +54,20 @@ extern "C" {
   
   void              enkf_obs_load(enkf_obs_type * enkf_obs,
                                   const history_type * history , 
+                                  time_map_type * external_time_map,
                                   const char           * config_file,
                                   const ecl_grid_type  * grid , 
                                   const ecl_sum_type   * refcase , 
                                   double std_cutoff , 
                                   ensemble_config_type * ensemble_config);
   
-  void            enkf_obs_reload( enkf_obs_type * enkf_obs , const history_type * history , 
-                                   const ecl_grid_type * grid , const ecl_sum_type * refcase , double std_cutoff , ensemble_config_type * ensemble_config );
+  void            enkf_obs_reload( enkf_obs_type * enkf_obs , 
+                                   const history_type * history , 
+                                   time_map_type * external_time_map,
+                                   const ecl_grid_type * grid , 
+                                   const ecl_sum_type * refcase , 
+                                   double std_cutoff , 
+                                   ensemble_config_type * ensemble_config );
   
   void enkf_obs_get_obs_and_measure(
                                     const enkf_obs_type    * enkf_obs,
@@ -102,7 +109,7 @@ extern "C" {
 
   stringlist_type * enkf_obs_alloc_keylist(enkf_obs_type * enkf_obs );
   stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string);
-  time_t            enkf_obs_iget_obs_time(enkf_obs_type * enkf_obs , int report_step);
+  time_t            enkf_obs_iget_obs_time(const enkf_obs_type * enkf_obs , int report_step);
   void              enkf_obs_fprintf_config( const enkf_obs_type * enkf_obs , FILE * stream);
   void              enkf_obs_scale_std(enkf_obs_type * enkf_obs, double scale_factor);
   

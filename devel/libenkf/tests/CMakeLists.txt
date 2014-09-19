@@ -33,6 +33,11 @@ target_link_libraries( enkf_block_obs enkf test_util )
 add_test( enkf_block_obs ${EXECUTABLE_OUTPUT_PATH}/enkf_block_obs ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID)
 
 
+add_executable( enkf_ert_workflow_list enkf_ert_workflow_list.c )
+target_link_libraries( enkf_ert_workflow_list enkf test_util )
+add_test( enkf_ert_workflow_list ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_workflow_list ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/SCALE_STD)
+
+
 add_executable( enkf_obs_fs enkf_obs_fs.c )
 target_link_libraries( enkf_obs_fs enkf test_util )
 add_test( enkf_obs_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config )
