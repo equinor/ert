@@ -22,6 +22,10 @@ class ExtendedTestCase(TestCase):
 
 
     def assertFloatEqual(self, first, second, msg=None):
+
+        if msg is None:
+            msg = "Value %f and %f are not almost equal!" % (first, second)
+
         if isinstance(first, numbers.Number) and isinstance(second, numbers.Number):
             tolerance = 1e-6
             diff = abs(first - second)
