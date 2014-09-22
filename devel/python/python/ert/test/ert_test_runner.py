@@ -7,17 +7,15 @@ except ImportError:
 
 
 class ErtTestRunner(object):
+    global_result = 0
 
     @staticmethod
-    def runTestsInDirectory(path=".", recursive=True, test_verbosity=3, text_test_runner=None):
-        if text_test_runner is None:
-            text_test_runner = TextTestRunner(verbosity=test_verbosity)
+    def runTestsInDirectory(path=".", recursive=True, test_verbosity=3):
 
         if recursive:
             for (root, dirnames, filenames) in os.walk( path ):
                 for directory in dirnames:
-                    ErtTestRunner.runTestsInDirectory(os.path.join(root, directory), recursive, test_verbosity, text_test_runner)
-
+                    ErtTestRunner.runTestsInDirectory(os.path.join(root, directory), recursive, test_verbosity)
 
         loader = TestLoader()
         tests = loader.discover(path)
@@ -25,8 +23,13 @@ class ErtTestRunner(object):
         if tests.countTestCases() > 0:
             print("Running %d tests in %s" % (tests.countTestCases(), path))
 
-        text_test_runner.run(tests)
+        testRunner = TextTestRunner(verbosity=test_verbosity)
+        result = testRunner.run(tests)
 
+        if not result.wasSuccessful():
+            ErtTestRunner.global_result = 1
+
+        return ErtTestRunner.global_result
 
 
 
