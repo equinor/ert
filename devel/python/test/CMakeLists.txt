@@ -122,6 +122,8 @@ set(TEST_SOURCES
     ert_tests/server/test_server.py
     ert_tests/server/test_socket.py
 
+    ert_tests/well/test_ecl_well.py
+
     ecl_isosurf.py
     ens_config_test.py
     grav_test.py
@@ -573,6 +575,12 @@ add_test( NAME python.tests.ert.server.socket
 add_test( NAME python.tests.ert.server.server
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.server.test_server.ServerTest)
+
+
+# ECL_WELL
+add_test( NAME python.tests.ert.well.ecl_well
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.well.test_ecl_well.EclWellTest)
 
 
 set_property( TEST python.tests.ert.sched.sched           PROPERTY LABELS Python:StatoilData )

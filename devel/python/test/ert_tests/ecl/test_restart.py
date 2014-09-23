@@ -77,11 +77,11 @@ class RestartTest(ExtendedTestCase):
 
     def report_list_file_test(self, fname, rlist0):
         rlist = EclFile.file_report_list(fname)
-        self.assertAlmostEqualList(rlist, rlist0)
+        self.assertListEqual(rlist, rlist0)
 
         f = EclFile(fname)
         rlist = f.report_list
-        self.assertAlmostEqualList(rlist, rlist0)
+        self.assertListEqual(rlist, rlist0)
 
 
     def test_report_list(self):
