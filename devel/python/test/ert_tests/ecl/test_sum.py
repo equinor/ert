@@ -76,6 +76,8 @@ class SumTest(ExtendedTestCase):
     def test_contains(self):
         self.assertTrue( "FOPT" in self.ecl_sum)
         self.assertFalse( "MISSING" in self.ecl_sum )
+
+
     def test_interp(self):
         sum = self.ecl_sum
 
@@ -116,15 +118,15 @@ class SumTest(ExtendedTestCase):
     def test_wells(self):
         wells = self.ecl_sum.wells()
         wells.sort()
-        self.assertListEqual(wells, ["OP_1", "OP_2", "OP_3", "OP_4", "OP_5", "WI_1", "WI_2", "WI_3"])
+        self.assertListEqual([well for well in wells], ["OP_1", "OP_2", "OP_3", "OP_4", "OP_5", "WI_1", "WI_2", "WI_3"])
 
         wells = self.ecl_sum.wells(pattern="*_3")
         wells.sort()
-        self.assertListEqual(wells, ["OP_3", "WI_3"])
+        self.assertListEqual([well for well in wells], ["OP_3", "WI_3"])
 
         groups = self.ecl_sum.groups()
         groups.sort()
-        self.assertListEqual(groups, ['GMWIN', 'OP', 'WI'])
+        self.assertListEqual([group for group in groups], ['GMWIN', 'OP', 'WI'])
 
 
     def test_last( self ):
@@ -299,7 +301,7 @@ class SumTest(ExtendedTestCase):
     def test_stringlist_reference(self):
         sum = EclSum(self.case)
         wells = sum.wells()
-        self.assertListEqual(wells, ['OP_1', 'OP_2', 'OP_3', 'OP_4', 'OP_5', 'WI_1', 'WI_2', 'WI_3'])
+        self.assertListEqual([well for well in wells], ['OP_1', 'OP_2', 'OP_3', 'OP_4', 'OP_5', 'WI_1', 'WI_2', 'WI_3'])
         self.assertIsInstance(wells, StringList)
 
 
