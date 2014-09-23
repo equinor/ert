@@ -116,24 +116,24 @@ class SumTest(ExtendedTestCase):
     def test_wells(self):
         wells = self.ecl_sum.wells()
         wells.sort()
-        self.assertAlmostEqualList(wells, ["OP_1", "OP_2", "OP_3", "OP_4", "OP_5", "WI_1", "WI_2", "WI_3"])
+        self.assertListEqual(wells, ["OP_1", "OP_2", "OP_3", "OP_4", "OP_5", "WI_1", "WI_2", "WI_3"])
 
         wells = self.ecl_sum.wells(pattern="*_3")
         wells.sort()
-        self.assertAlmostEqualList(wells, ["OP_3", "WI_3"])
+        self.assertListEqual(wells, ["OP_3", "WI_3"])
 
         groups = self.ecl_sum.groups()
         groups.sort()
-        self.assertAlmostEqualList(groups, ['GMWIN', 'OP', 'WI'])
+        self.assertListEqual(groups, ['GMWIN', 'OP', 'WI'])
 
 
     def test_last( self ):
         last = self.ecl_sum.get_last("FOPT")
-        self.assertAlmostEqual(last.value, 38006336.0)
-        self.assertAlmostEqual(last.days, 1826.0)
+        self.assertFloatEqual(last.value, 38006336.0)
+        self.assertFloatEqual(last.days, 1826.0)
         self.assertEqual(last.date, datetime.datetime(2004, 12, 31, 0, 0, 0))
 
-        self.assertAlmostEqual(self.ecl_sum.get_last_value("FGPT"), 6605249024.0)
+        self.assertFloatEqual(self.ecl_sum.get_last_value("FGPT"), 6605249024.0)
         self.assertEqual( len(self.ecl_sum) , 63 )
 
 
@@ -299,7 +299,7 @@ class SumTest(ExtendedTestCase):
     def test_stringlist_reference(self):
         sum = EclSum(self.case)
         wells = sum.wells()
-        self.assertAlmostEqualList(wells, ['OP_1', 'OP_2', 'OP_3', 'OP_4', 'OP_5', 'WI_1', 'WI_2', 'WI_3'])
+        self.assertListEqual(wells, ['OP_1', 'OP_2', 'OP_3', 'OP_4', 'OP_5', 'WI_1', 'WI_2', 'WI_3'])
         self.assertIsInstance(wells, StringList)
 
 

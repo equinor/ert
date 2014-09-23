@@ -33,7 +33,7 @@ class ExtendedTestCase(TestCase):
 
             self.assertTrue(diff < tolerance * scale, msg=msg)
         else:
-            self.assertTrue(first == second, msg=msg)
+            self.fail("Elements not comparable as float: %s and %s" % (first, second))
 
 
     def assertAlmostEqualList(self, first, second, msg=None):
