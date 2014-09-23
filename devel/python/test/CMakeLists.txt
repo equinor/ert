@@ -598,7 +598,7 @@ set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.tests.ert.ecl.ecl_deprecation   PROPERTY LABELS Python )
 #set_property( TEST python.tests.import_local             PROPERTY LABELS Python:StatoilBuild )
-
+set_property( TEST python.tests.ert.well.ecl_well         PROPERTY LABELS Python:StatoilData )
 
 set_property( TEST python.tests.ert.test_run              PROPERTY LABELS Python)
 set_property( TEST python.tests.ert.import                PROPERTY LABELS Python)
