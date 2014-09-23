@@ -22,6 +22,10 @@ class ExtendedTestCase(TestCase):
 
 
     def assertFloatEqual(self, first, second, msg=None):
+
+        if msg is None:
+            msg = "Value %f and %f are not almost equal!" % (first, second)
+
         if isinstance(first, numbers.Number) and isinstance(second, numbers.Number):
             tolerance = 1e-6
             diff = abs(first - second)
@@ -29,7 +33,7 @@ class ExtendedTestCase(TestCase):
 
             self.assertTrue(diff < tolerance * scale, msg=msg)
         else:
-            self.assertTrue(first == second, msg=msg)
+            self.fail("Elements not comparable as float: %s and %s" % (first, second))
 
 
     def assertAlmostEqualList(self, first, second, msg=None):

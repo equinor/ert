@@ -239,15 +239,15 @@ class FaultTest(ExtendedTestCase):
         fl1 = fault_layer[0]
         nb_cells1 = fl1.getNeighborCells()
         true_nb_cells1 = [(0, nx) , (1,nx + 1), (2,nx+2) , (3,nx + 3) , (4,nx+4)]
-        self.assertAlmostEqualList( nb_cells1 , true_nb_cells1 )
+        self.assertListEqual( nb_cells1 , true_nb_cells1 )
         
         fl2 = fault_layer[1]
         nb_cells2 = fl2.getNeighborCells()
         true_nb_cells2 = [(6, nx+6) , (7,nx + 7), (8 , nx+8) , (9,nx + 9)]
-        self.assertAlmostEqualList( nb_cells2 , true_nb_cells2 )
+        self.assertListEqual( nb_cells2 , true_nb_cells2 )
                                
         nb_cells = fault_layer.getNeighborCells()
-        self.assertAlmostEqualList( nb_cells , true_nb_cells1  + true_nb_cells2)
+        self.assertListEqual( nb_cells , true_nb_cells1  + true_nb_cells2)
 
         
         fault = faults["FY0"]
@@ -255,7 +255,7 @@ class FaultTest(ExtendedTestCase):
         fl1 = fault_layer[0]
         nb_cells1 = fl1.getNeighborCells()
         true_nb_cells1 = [(-1,0) , (-1,1), (-1,2)]
-        self.assertAlmostEqualList( nb_cells1 , true_nb_cells1 )
+        self.assertListEqual( nb_cells1 , true_nb_cells1 )
 
 
         fault = faults["FYNY"]
@@ -263,14 +263,14 @@ class FaultTest(ExtendedTestCase):
         fl1 = fault_layer[0]
         nb_cells1 = fl1.getNeighborCells()
         true_nb_cells1 = [(nx * (ny - 1) , -1), (nx * (ny - 1) + 1 , -1), (nx * (ny - 1) + 2, -1)]
-        self.assertAlmostEqualList( nb_cells1 , true_nb_cells1 )
+        self.assertListEqual( nb_cells1 , true_nb_cells1 )
 
         fault = faults["FX"]
         fault_layer = fault[0]
         fl1 = fault_layer[0]
         nb_cells1 = fl1.getNeighborCells()
         true_nb_cells1 = [(0,1) , (nx , nx+1) , (2*nx , 2*nx + 1)]
-        self.assertAlmostEqualList( nb_cells1 , true_nb_cells1 )
+        self.assertListEqual( nb_cells1 , true_nb_cells1 )
 
 
         fault = faults["FX0"]
@@ -278,12 +278,12 @@ class FaultTest(ExtendedTestCase):
         fl1 = fault_layer[0]
         nb_cells1 = fl1.getNeighborCells()
         true_nb_cells1 = [(-1 , 0) , (-1 , nx) , (-1 , 2*nx)]
-        self.assertAlmostEqualList( nb_cells1 , true_nb_cells1 )
+        self.assertListEqual( nb_cells1 , true_nb_cells1 )
 
         fault = faults["FXNX"]
         fault_layer = fault[0]
         fl1 = fault_layer[0]
         nb_cells1 = fl1.getNeighborCells()
         true_nb_cells1 = [(nx -1 , -1) , (2*nx -1 , -1) , (3*nx - 1 , -1)]
-        self.assertAlmostEqualList( nb_cells1 , true_nb_cells1 )
+        self.assertListEqual( nb_cells1 , true_nb_cells1 )
 

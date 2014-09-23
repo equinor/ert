@@ -3,15 +3,17 @@ import re
 
 class SourceEnumerator(object):
     @classmethod
-    def findDevRoot(cls, root_directory_name = "devel"):
+    def findDevRoot(cls, root_directory_name = "devel", verbose=False):
         dev_root = os.path.dirname(os.path.realpath(__file__))
         while True:
-            print("Looking at:%s" % dev_root)
+            if verbose:
+                print("Looking at: %s" % dev_root)
 
             dev_path = os.path.join(dev_root , root_directory_name)
             if os.path.exists( dev_path ):
                 dev_root = os.path.join(dev_root , root_directory_name)
-                print("break: %s" % dev_path)
+                if verbose:
+                    print("break: %s" % dev_path)
                 break
                 
             head, tail = os.path.split(dev_root)
@@ -19,7 +21,9 @@ class SourceEnumerator(object):
             if tail == "":
                 raise ValueError("Source root: '%s' not found!" % root_directory_name)
 
-        print("Returning:%s " % dev_root)
+        if verbose:
+            print("Returning: %s " % dev_root)
+
         return dev_root
 
 
