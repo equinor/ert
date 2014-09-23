@@ -7,31 +7,29 @@ except ImportError:
 
 
 class ErtTestRunner(object):
-    global_result = 0
 
     @staticmethod
-    def runTestsInDirectory(path=".", recursive=True, test_verbosity=3):
-
-        if recursive:
-            for (root, dirnames, filenames) in os.walk( path ):
-                for directory in dirnames:
-                    ErtTestRunner.runTestsInDirectory(os.path.join(root, directory), recursive, test_verbosity)
-
+    def findTestsInDirectory(path, recursive=True):
         loader = TestLoader()
         tests = loader.discover(path)
 
+        for (root, dirnames, filenames) in os.walk( path ):
+            for directory in dirnames:
+                tests.addTests(ErtTestRunner.findTestsInDirectory(os.path.join(root, directory), recursive))
+
+        return tests
+
+
+    @staticmethod
+    def runTestsInDirectory(path=".", recursive=True, test_verbosity=3):
+        tests = ErtTestRunner.findTestsInDirectory(path, recursive)
         if tests.countTestCases() > 0:
             print("Running %d tests in %s" % (tests.countTestCases(), path))
 
-        testRunner = TextTestRunner(verbosity=test_verbosity)
-        result = testRunner.run(tests)
+        test_runner = TextTestRunner(verbosity=test_verbosity)
+        result = test_runner.run(tests)
 
-        if not result.wasSuccessful():
-            ErtTestRunner.global_result = 1
-
-        return ErtTestRunner.global_result
-
-
+        return result.wasSuccessful()
 
 
     @staticmethod
@@ -42,6 +40,7 @@ class ErtTestRunner(object):
         testRunner = TextTestRunner(verbosity=test_verbosity)
         testRunner.run(tests)
 
+
     @staticmethod
     def importClass(classpath):
         dot = classpath.rfind(".")
@@ -49,12 +48,10 @@ class ErtTestRunner(object):
         m = __import__(classpath[0:dot], globals(), locals(), [class_name])
         return getattr(m, class_name)
 
+
     @staticmethod
     def getTestsFromTestClass(test_class_path, argv=None):
         klass = ErtTestRunner.importClass(test_class_path)
         klass.argv = argv
         loader = TestLoader()
         return loader.loadTestsFromTestCase(klass)
-
-
-
