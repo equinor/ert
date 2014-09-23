@@ -1,5 +1,6 @@
 import datetime
 from ert.ecl import EclGrid
+from ert.ecl.ecl_file import EclFile
 from ert.test import ExtendedTestCase
 from ert.util.ctime import CTime
 from ert.well import WellInfo, WellConnection, WellTypeEnum, WellConnectionDirectionEnum, WellSegment
@@ -44,6 +45,50 @@ class EclWellTest(ExtendedTestCase):
             EclWellTest.__well_info = WellInfo(grid, rst_path_1)
 
         return EclWellTest.__well_info
+
+
+    def test_construction(self):
+        grid_path = self.createTestPath("Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID")
+        rst_path_1 = self.createTestPath("Statoil/ECLIPSE/Gurbat/ECLIPSE.X0011")
+        rst_path_2 = self.createTestPath("Statoil/ECLIPSE/Gurbat/ECLIPSE.X0022")
+        rst_path_3 = self.createTestPath("Statoil/ECLIPSE/Gurbat/ECLIPSE.X0035")
+        rst_path_4 = self.createTestPath("Statoil/ECLIPSE/Gurbat/ECLIPSE.X0061")
+
+        grid = EclGrid(grid_path)
+
+        def checkWellInfo(well_info, well_count, report_step_count):
+            self.assertEqual(len(well_info), well_count)
+
+            for index, well_time_line in enumerate(well_info):
+                self.assertEqual(len(well_time_line), report_step_count[index])
+
+        well_info = WellInfo(grid, rst_path_1)
+        checkWellInfo(well_info, well_count=5, report_step_count=[1, 1, 1, 1, 1])
+
+        well_info = WellInfo(grid, EclFile(rst_path_1))
+        checkWellInfo(well_info, well_count=5, report_step_count=[1, 1, 1, 1, 1])
+
+        well_info = WellInfo(grid, [rst_path_1, rst_path_2, rst_path_3])
+        checkWellInfo(well_info, well_count=8, report_step_count=[3, 3, 3, 3, 3, 2, 2, 2])
+
+        well_info = WellInfo(grid, [EclFile(rst_path_1), EclFile(rst_path_2), rst_path_3, EclFile(rst_path_4)])
+        checkWellInfo(well_info, well_count=8, report_step_count=[4, 4, 4, 4, 4, 3, 3, 3])
+
+
+        well_info = WellInfo(grid)
+        well_info.addWellFile(rst_path_1)
+
+        checkWellInfo(well_info, well_count=5, report_step_count=[1, 1, 1, 1, 1])
+
+        well_info.addWellFile(EclFile(rst_path_2))
+        checkWellInfo(well_info, well_count=8, report_step_count=[2, 2, 2, 2, 2, 1, 1, 1])
+
+        well_info.addWellFile(EclFile(rst_path_3))
+        checkWellInfo(well_info, well_count=8, report_step_count=[3, 3, 3, 3, 3, 2, 2, 2])
+
+        well_info.addWellFile(rst_path_4)
+        checkWellInfo(well_info, well_count=8, report_step_count=[4, 4, 4, 4, 4, 3, 3, 3])
+
 
 
     def test_well_type_enum(self):
