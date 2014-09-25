@@ -309,26 +309,28 @@ void ext_job_set_max_time( ext_job_type * ext_job , int max_time ) {
 
 /**
   @executable parameter:
-  The raw executable as read from config that
-  has been made an absolute path of, with the assumption that the path
-  was a relative path from the location of the job description file to
-  the executable.
+  The raw executable is either
+    - an absolute path read directly from config
+    - an absolute path constructed from the relative path from config
+      with the assumption that the path was a relative path from the
+      location of the job description file to the executable.
 
   @executable_raw parameter:
-  The raw data read from config, unprocessed.
+  The raw executable as read from config, unprocessed.
 
-  This method does the following checks:
+  This method have the following logic:
 
      @executable exists:
-        We verify that the executable is indeed executable for the
-        current user; if this check fails the job is marked as invalid
-        and later discarded.
+         We store the full path as the executable field of the job; and
+         try to update the mode of the full_path executable to make sure it
+         is executable.
 
      @executable does not exist, but @executable_raw exists:
         We have found an executable relative to the current working
         directory. This is deprecated behaviour, support will later be
         removed. Suggest new path to executable to user, relative to job
-        description file
+        description file and do a recursive call to this method, using
+        the absolute path as @executable parameter
 
      @executable does not exist, @executable_raw does not exist and
      is an absolute path:
@@ -336,88 +338,88 @@ void ext_job_set_max_time( ext_job_type * ext_job , int max_time ) {
 
      @executable does not exist, @executable_raw does not exist and
      is a relative path:
-        Search trough the PATH variable to try to locate the executable
+        Search trough the PATH variable to try to locate the executable.
+        If found, do a recursive call to this method, using the absolute path
+        as @executable parameter
 
 */
 
 void ext_job_set_executable(ext_job_type * ext_job, const char * executable, const char * executable_raw) {
 
   if (util_file_exists(executable)) {
-      /*
-         The @executable parameter points to an existing file; we store
-         the full path as the executable field of the job; we also try
-         to update the mode of the full_path executable to make sure it
-         is executable.
-      */
-      char * full_path = util_alloc_realpath( executable );
-      __update_mode( full_path , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH);  /* u:rwx  g:rwx  o:rx */
-      ext_job->executable = util_realloc_string_copy(ext_job->executable , full_path);
-      free( full_path );
-  } else {
-    if (util_file_exists(executable_raw)) {
-      /*
-         This "if" case means that we have found an executable relative
-         to the current working directory. This is deprecated behaviour,
-         support will be removed
-      */
-      char * full_path                = util_alloc_abs_path(executable_raw);
-      char * path_to_job_descr_file   = util_alloc_abs_path(ext_job_get_config_file(ext_job));
-      char * new_relative_path_to_exe = util_alloc_rel_path(path_to_job_descr_file, full_path);
-
-      fprintf(stderr , "** The executable:%s for job %s must be relative to the job description file, or an absolute path must be given.\n"
-                       "   This job config will not work in future releases, Please update job EXECUTABLE for job %s to: %s \n"
-                           , executable_raw , ext_job->name, ext_job->name, new_relative_path_to_exe );
-
-      ext_job_set_executable(ext_job, full_path, NULL);
-
-      free(new_relative_path_to_exe);
-      free(path_to_job_descr_file);
-      free(full_path);
-
-    } else {
-      if (util_is_abs_path( executable_raw )) {
-        /* If you have given an absolute path (i.e. starting with '/' to
-           a non existing job we mark it as invalid - no possibility to
-           provide context replacement afterwards. The job will be
-           discarded by the calling scope.
-        */
-        fprintf(stderr , "** The executable:%s can not be found - job:%s will not be available.\n" , executable , ext_job->name );
-        ext_job->__valid = false;
-      } else {
-          /* Go through the PATH variable to try to locate the executable. */
-          char * path_executable = util_alloc_PATH_executable( executable_raw );
-
-          if (path_executable != NULL) {
-            ext_job_set_executable( ext_job , path_executable, NULL );
-            free( path_executable );
-          } else {
-            /* We take the chance that user will supply a valid subst key for this later;
-               if the final executable is not an actually executable file when exporting the
-               job from ext_job_python_fprintf() a big warning will be written on stderr.
-            */
-            fprintf(stderr , "** Unable to locate the executable %s for job %s:"
-                               " Path to executable must be relative to the job description file, or an absolute path"
-                               " Please update job EXECUTABLE for job %s \n" , executable , ext_job->name, ext_job->name);
-            ext_job->__valid = false;
-          }
-        }
-      }
-    }
-  
     /*
-       If in the end we do not have execute rights to the executable :
-       discard the job.
+       The @executable parameter points to an existing file; we store
+       the full path as the executable field of the job; we also try
+       to update the mode of the full_path executable to make sure it
+       is executable.
     */
-    if (ext_job->executable != NULL) {
-      if (util_file_exists(executable)) {
-        if (!util_is_executable( ext_job->executable )) {
-          fprintf(stderr , "** You do not have execute rights to:%s - job will not be available.\n" , ext_job->executable);
-          ext_job->__valid = false;  /* Mark the job as NOT successfully installed - the ext_job
-                                        instance will later be freed and discarded. */
+    char * full_path = util_alloc_realpath( executable );
+    __update_mode( full_path , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH);  /* u:rwx  g:rwx  o:rx */
+    ext_job->executable = util_realloc_string_copy(ext_job->executable , full_path);
+    free( full_path );
+  } else if (util_file_exists(executable_raw)) {
+    /*
+       This "if" case means that we have found an executable relative
+       to the current working directory. This is deprecated behaviour,
+       support will be removed
+    */
+    char * full_path                  = util_alloc_abs_path(executable_raw);
+    const char * job_description_file = ext_job_get_config_file(ext_job);
+    char * path_to_job_descr_file     = util_split_alloc_dirname(job_description_file);
+    char * new_relative_path_to_exe = util_alloc_rel_path(path_to_job_descr_file, full_path);
+
+    fprintf(stderr , "** Warning: the executable: %s for job %s must be relative to the job description file, or an absolute path must be given.\n"
+                     "   This job config will not work in future releases. Please update job EXECUTABLE for job %s to: %s \n"
+                         , executable_raw , ext_job->name, ext_job->name, new_relative_path_to_exe );
+
+    ext_job_set_executable(ext_job, full_path, NULL);
+
+    free(new_relative_path_to_exe);
+    free(path_to_job_descr_file);
+    free(full_path);
+   } else  if (util_is_abs_path( executable_raw )) {
+    /* If you have given an absolute path (i.e. starting with '/' to
+       a non existing job we mark it as invalid - no possibility to
+       provide context replacement afterwards. The job will be
+       discarded by the calling scope.
+    */
+    fprintf(stderr , "** Warning: the executable:%s can not be found,\n"
+                     "   job:%s will not be available.\n" , executable , ext_job->name );
+    ext_job->__valid = false;
+  } else {
+    /* Go through the PATH variable to try to locate the executable. */
+    char * path_executable = util_alloc_PATH_executable( executable_raw );
+
+    if (path_executable != NULL) {
+      ext_job_set_executable( ext_job , path_executable, NULL );
+      free( path_executable );
+    } else {
+      /* We take the chance that user will supply a valid subst key for this later;
+         if the final executable is not an actually executable file when exporting the
+         job from ext_job_python_fprintf() a big warning will be written on stderr.
+      */
+      fprintf(stderr , "** Warning: Unable to locate the executable %s for job %s.\n"
+                       "   Path to executable must be relative to the job description file, or an absolute path.\n"
+                       "   Please update job EXECUTABLE for job %s. \n" , executable , ext_job->name, ext_job->name);
+      ext_job->__valid = false;
+    }
+  }
+
+  /*
+     If in the end we do not have execute rights to the executable :
+     discard the job.
+  */
+  if (ext_job->executable != NULL) {
+    if (util_file_exists(executable)) {
+      if (!util_is_executable( ext_job->executable )) {
+        fprintf(stderr , "** You do not have execute rights to:%s - job will not be available.\n" , ext_job->executable);
+        ext_job->__valid = false;  /* Mark the job as NOT successfully installed - the ext_job
+                                      instance will later be freed and discarded. */
       }
     }
   }
 }
+
 
 
 /**
