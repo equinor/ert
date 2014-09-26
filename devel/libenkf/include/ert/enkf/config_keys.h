@@ -175,6 +175,8 @@ extern "C" {
 #define  LOAD_WORKFLOW_JOB_KEY             "LOAD_WORKFLOW_JOB"
 #define  STOP_LONG_RUNNING_KEY             "STOP_LONG_RUNNING"
 #define  MAX_RUNTIME_KEY                   "MAX_RUNTIME"
+#define  TIME_MAP_KEY                      "TIME_MAP"
+
 
 #define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"
 
