@@ -23,7 +23,7 @@
 void load_job_directory(ext_joblist_type * joblist , const char * path, const char * license_root_path) {
   bool user_mode = false;
   ext_joblist_add_jobs_in_directory(joblist  , path, license_root_path, user_mode );
-  test_assert_true( ext_joblist_has_job(joblist, "TROLL_CONTACT"));
+  test_assert_true( ext_joblist_has_job(joblist, "SYMLINK"));
 }
 
 int main( int argc , char ** argv) {
