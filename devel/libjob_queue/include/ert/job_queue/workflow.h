@@ -47,7 +47,8 @@ extern "C" {
   workflow_job_type       * workflow_iget_job( const workflow_type * workflow, int index);
   stringlist_type         * workflow_iget_arguments( const workflow_type * workflow, int index);
   bool                      workflow_try_compile( workflow_type * script , const subst_list_type * context);
-
+  UTIL_IS_INSTANCE_HEADER( workflow );
+  
 #ifdef __cplusplus
 }
 #endif
