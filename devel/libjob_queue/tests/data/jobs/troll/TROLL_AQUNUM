@@ -1,6 +1,0 @@
-STDOUT  troll_aqunum.stdout
-STDERR  troll_aqunum.stderr
-
-PORTABLE_EXE   /d/proj/bg/enkf/bin/troll_aqunum
-TARGET_FILE    <AQUNUM_FILE>
-ARGLIST        <AQUNUM_SIZE>   <AQUNUM_TEMPLATE>  <AQUNUM_FILE>   <CONFIG_FILE>
