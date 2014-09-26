@@ -35,6 +35,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_region_definition_statoil.py
     ert_tests/ecl/test_region_definition.py
     ert_tests/ecl/test_npv.py
+    ert_tests/ecl/test_indexed_read.py
 
     ert_tests/enkf/__init__.py
     ert_tests/enkf/test_ert_context.py
@@ -467,6 +468,10 @@ add_test( NAME python.tests.ert.ecl.ecl_deprecation
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_deprecation.DeprecationTest )
 
+add_test( NAME python.tests.ert.ecl.indexed_read
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_indexed_read.EclIndexedReadTest )
+
 #SCHED
 add_test( NAME python.tests.ert.sched.sched
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -595,6 +600,7 @@ set_property( TEST python.tests.ert.ecl.ecl_npv           PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_kw            PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_rft           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.ecl.indexed_read      PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.tests.ert.ecl.ecl_deprecation   PROPERTY LABELS Python )
 #set_property( TEST python.tests.import_local             PROPERTY LABELS Python:StatoilBuild )
