@@ -14,7 +14,9 @@ add_test( enkf_plot_data ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data)
 
 add_executable( enkf_gen_data_config enkf_gen_data_config.c )
 target_link_libraries( enkf_gen_data_config enkf test_util )
-add_test( enkf_gen_data_config ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_data_config)
+add_test( enkf_gen_data_config ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_data_config
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/gendata_test/RFT_E-3H_21
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/gendata_test/RFT_E-3H_21_empty)
 
 add_executable( enkf_gen_obs_load enkf_gen_obs_load.c )
 target_link_libraries( enkf_gen_obs_load enkf test_util )
