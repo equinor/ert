@@ -51,6 +51,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_time_map.py
     ert_tests/enkf/test_enkf_obs.py
     ert_tests/enkf/plot/test_plot_data.py
+    ert_tests/enkf/data/test_gen_data.py
     ert_tests/enkf/data/test_gen_data_config.py
     ert_tests/enkf/data/test_gen_kw.py
 
@@ -262,6 +263,9 @@ add_test( NAME python.tests.ert.enkf.plot.plot_block_data
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.plot.test_plot_data.PlotDataTest)
 
+add_test( NAME python.tests.ert.enkf.data.gen_data
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_gen_data.GenDataTest)
 
 add_test( NAME python.tests.ert.enkf.data.gen_data_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

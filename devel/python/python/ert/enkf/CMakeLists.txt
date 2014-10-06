@@ -15,7 +15,6 @@ set(PYTHON_SOURCES
     ert_template.py
     ert_templates.py
     ert_workflow_list.py
-    gen_data.py
     local_config.py
     local_obsdata.py
     local_obsdata_node.py
