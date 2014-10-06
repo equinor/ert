@@ -112,6 +112,15 @@ double gen_kw_data_iget( gen_kw_type * gen_kw, int index , bool do_transform )
 }
 
 
+void gen_kw_data_set_vector( gen_kw_type * gen_kw, const double_vector_type * values ) {
+  int size = gen_kw_config_get_data_size( gen_kw->config );
+  if (size == double_vector_size( values )) {
+    for (int index = 0; index < size; index++)
+      gen_kw->data[index] = double_vector_iget( values , index);
+  } else
+    util_abort( "%s: Invalid size for vector:%d  gen_Kw:%d \n",__func__ , double_vector_size( values ) , size);
+}
+
 void gen_kw_data_iset( gen_kw_type * gen_kw, int index , double value )
 {
   int size = gen_kw_config_get_data_size( gen_kw->config );

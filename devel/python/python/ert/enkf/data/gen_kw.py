@@ -14,6 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper, CFILE
+
+from ert.util import DoubleVector
+
 from ert.enkf import ENKF_LIB
 from ert.enkf.data import GenKwConfig
 
@@ -73,6 +76,21 @@ class GenKw(BaseCClass):
             raise TypeError("Illegal type for indexing, must be int or str, got: %s" % (key))
 
 
+    def setValues(self , values):
+        if len(values) == len(self):
+            if isinstance(values , DoubleVector):
+                GenKw.cNamespace().set_values( self , d )
+            else:
+                d = DoubleVector()
+                for (index,v) in enumerate(values):
+                    if isinstance(v, (int,long,float)):
+                        d[index] = v
+                    else:
+                        raise TypeError("Values must numeric: %s is invalid" % v)
+                GenKw.cNamespace().set_values( self , d )
+        else:
+            raise ValueError("Size mismatch between GenKW and values")
+
     def __len__(self):
         """ @rtype: int """
         return GenKw.cNamespace().size(self)
@@ -96,6 +114,7 @@ GenKw.cNamespace().export_parameters = cwrapper.prototype("void gen_kw_write_exp
 GenKw.cNamespace().export_template = cwrapper.prototype("void gen_kw_ecl_write_template(gen_kw , char* )")
 GenKw.cNamespace().data_iget = cwrapper.prototype("double gen_kw_data_iget(gen_kw, int, bool)")
 GenKw.cNamespace().data_iset = cwrapper.prototype("void gen_kw_data_iset(gen_kw, int, double)")
+GenKw.cNamespace().set_values = cwrapper.prototype("void gen_kw_data_set_vector(gen_kw, double_vector)")
 GenKw.cNamespace().data_get = cwrapper.prototype("double gen_kw_data_get(gen_kw, char*, bool)")
 GenKw.cNamespace().data_set = cwrapper.prototype("void gen_kw_data_set(gen_kw, char*, double)")
 GenKw.cNamespace().size = cwrapper.prototype("int gen_kw_data_size(gen_kw)")
