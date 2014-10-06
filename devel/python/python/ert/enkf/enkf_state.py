@@ -22,21 +22,10 @@ class EnKFState(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def kill_simulation(self):
-        EnKFState.cNamespace().kill_simulation(self)
 
-    def resubmit_simulation(self, sim_number):
-        EnKFState.cNamespace().resubmit_simulation(self, sim_number)
 
-    def getRunStatus(self):
-        """ @rtype: JobStatusType """
-        return EnKFState.cNamespace().get_run_status(self)
 
-    def get_start_time(self):
-        return EnKFState.cNamespace().get_start_time(self)
 
-    def get_submit_time(self):
-        return EnKFState.cNamespace().get_submit_time(self)
 
     def free(self):
         EnKFState.cNamespace().free(self)
@@ -46,9 +35,4 @@ cwrapper.registerType("enkf_state", EnKFState)
 cwrapper.registerType("enkf_state_obj", EnKFState.createPythonObject)
 cwrapper.registerType("enkf_state_ref", EnKFState.createCReference)
 
-EnKFState.cNamespace().free = cwrapper.prototype("void enkf_state_free( enkf_state )")
-EnKFState.cNamespace().kill_simulation = cwrapper.prototype("void enkf_state_kill_simulation(enkf_state)")
-EnKFState.cNamespace().resubmit_simulation = cwrapper.prototype("void enkf_state_resubmit_simulation(enkf_state, int)")
-EnKFState.cNamespace().get_run_status = cwrapper.prototype("job_status_type_enum enkf_state_get_run_status(enkf_state)")
-EnKFState.cNamespace().get_start_time = cwrapper.prototype("int enkf_state_get_start_time(enkf_state)")
-EnKFState.cNamespace().get_submit_time = cwrapper.prototype("int enkf_state_get_submit_time(enkf_state)")
+
