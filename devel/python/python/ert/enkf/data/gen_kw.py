@@ -13,6 +13,8 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import os.path
+
 from ert.cwrap import BaseCClass, CWrapper, CFILE
 
 from ert.util import DoubleVector
@@ -76,6 +78,20 @@ class GenKw(BaseCClass):
             raise TypeError("Illegal type for indexing, must be int or str, got: %s" % (key))
 
 
+    def eclWrite(self , path , filename , export_file = None):
+        if not path is None:
+            if not os.path.isdir(path):
+                raise IOError("The directory:%s does not exist" % path)
+                
+                
+        if export_file:
+            with open(export_file , "w") as fileH:
+                GenKw.cNamespace().ecl_write(self , path , filename , CFILE( fileH ))
+        else:
+            GenKw.cNamespace().ecl_write(self , path , filename , None )
+
+            
+
     def setValues(self , values):
         if len(values) == len(self):
             if isinstance(values , DoubleVector):
@@ -119,3 +135,4 @@ GenKw.cNamespace().data_get = cwrapper.prototype("double gen_kw_data_get(gen_kw,
 GenKw.cNamespace().data_set = cwrapper.prototype("void gen_kw_data_set(gen_kw, char*, double)")
 GenKw.cNamespace().size = cwrapper.prototype("int gen_kw_data_size(gen_kw)")
 GenKw.cNamespace().has_key = cwrapper.prototype("bool gen_kw_data_has_key(gen_kw, char*)")
+GenKw.cNamespace().ecl_write = cwrapper.prototype("void gen_kw_ecl_write(gen_kw, char* , char* , FILE)")

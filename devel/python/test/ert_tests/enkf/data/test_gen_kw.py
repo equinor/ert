@@ -84,6 +84,22 @@ class GenKwTest(ExtendedTestCase):
             self.assertEqual(gen_kw["MULTFLT1"] , 0)
             self.assertEqual(gen_kw["MULTFLT2"] , 1)
             self.assertEqual(gen_kw["MULTFLT3"] , 2)
+    def test_gen_kw_ecl_write(self):
+        with TestAreaContext("enkf/data/gen_kwt"):
+            (gen_kw_config , gen_kw) = create_gen_kw()
+    
+            with self.assertRaises(IOError):
+                gen_kw.eclWrite( "tmp" , "file.txt")
+
+            gen_kw.eclWrite( None , "file.txt")
+            self.assertTrue( os.path.isfile( "file.txt" ))
+            
+            os.mkdir("tmp")
+            gen_kw.eclWrite( "tmp" , "file.txt")
+            self.assertTrue( os.path.isfile( "tmp/file.txt" ))
+
+            gen_kw.eclWrite( "tmp" , "file.txt" , "tmp/export.txt")
+            self.assertTrue( os.path.isfile( "tmp/export.txt" ))
 
 
 
