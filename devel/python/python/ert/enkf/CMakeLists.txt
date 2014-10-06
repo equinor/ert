@@ -26,6 +26,7 @@ set(PYTHON_SOURCES
     post_simulation_hook.py
     site_config.py
     state_map.py
+    run_arg.py
 )
 
 add_python_package("python.ert.enkf"  ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)

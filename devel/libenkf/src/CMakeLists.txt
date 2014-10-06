@@ -84,6 +84,7 @@ set( source_files
      state_map.c    
      ert_test_context.c
      ert_log.c)
+     run_arg.c
 
 set( header_files 
      ert_report.h 
@@ -179,6 +180,7 @@ set( header_files
      state_map.h
      ert_test_context.h
      ert_log.h)
+     run_arg.h
 
 
 add_library( enkf  ${LIBRARY_TYPE} ${source_files} )

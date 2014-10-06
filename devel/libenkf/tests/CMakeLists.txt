@@ -18,6 +18,14 @@ add_test( enkf_gen_data_config ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_data_config
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/gendata_test/RFT_E-3H_21
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/gendata_test/RFT_E-3H_21_empty)
 
+add_executable( enkf_ert_run_context enkf_ert_run_context.c )
+target_link_libraries( enkf_ert_run_context enkf test_util )
+add_test( enkf_ert_run_context ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_run_context)
+
+add_executable( enkf_run_arg enkf_run_arg.c )
+target_link_libraries( enkf_run_arg enkf test_util )
+add_test( enkf_run_arg ${EXECUTABLE_OUTPUT_PATH}/enkf_run_arg)
+
 add_executable( enkf_gen_obs_load enkf_gen_obs_load.c )
 target_link_libraries( enkf_gen_obs_load enkf test_util )
 add_test( enkf_gen_obs_load ${EXECUTABLE_OUTPUT_PATH}/enkf_gen_obs_load ${PROJECT_SOURCE_DIR}/test-data/local/config/gen_data/config )

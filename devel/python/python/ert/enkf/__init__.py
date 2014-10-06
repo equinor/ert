@@ -56,7 +56,8 @@ from .post_simulation_hook import PostSimulationHook
 
 from .enkf_simulation_runner import EnkfSimulationRunner
 from .enkf_fs_manager import EnkfFsManager
-
+from .run_arg import RunArg
+from .ert_run_context import ErtRunContext
 from .enkf_main import EnKFMain
 from .ert_log import ErtLog
 
