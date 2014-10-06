@@ -78,6 +78,9 @@ class EnkfNode(BaseCClass):
 
         return EnkfNode.cNamespace().try_load(self, fs, node_id)
 
+    def save(self , fs , node_id ):
+        EnkfNode.cNamespace().store(self , fs , True , node_id)
+
 
     def free(self):
         EnkfNode.cNamespace().free(self)
@@ -97,6 +100,6 @@ EnkfNode.cNamespace().value_ptr = cwrapper.prototype("c_void_p enkf_node_value_p
 
 EnkfNode.cNamespace().try_load = cwrapper.prototype("bool enkf_node_try_load(enkf_node, enkf_fs, node_id)")
 EnkfNode.cNamespace().get_impl_type = cwrapper.prototype("ert_impl_type_enum enkf_node_get_impl_type(enkf_node)")
-
+EnkfNode.cNamespace().store = cwrapper.prototype("void enkf_node_store(enkf_node, enkf_fs , bool , node_id)")
 #todo fix this
 # EnkfNode.cNamespace().get_config = cwrapper.prototype("c_void_p enkf_node_get_config(enkf_node)")
