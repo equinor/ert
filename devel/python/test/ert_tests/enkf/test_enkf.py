@@ -22,7 +22,7 @@ from ert.util import BoolVector
 from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfVarType, ObsVector , RunArg
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enkf_main import EnKFMain
-from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum, EnkfInitModeEnum, ErtImplType, RealizationStateEnum
+from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum, EnkfInitModeEnum, ErtImplType, RealizationStateEnum , EnkfRunType
 from ert.enkf.enums.enkf_field_file_format_enum import EnkfFieldFileFormatEnum
 from ert.enkf.enums.enkf_truncation_type import EnkfTruncationType
 from ert.enkf.observations.summary_observation import SummaryObservation
@@ -52,13 +52,11 @@ class EnKFTest(ExtendedTestCase):
         self.assertEnumIsFullyDefined(EnkfInitModeEnum, "init_mode_enum", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(RealizationStateEnum, "realisation_state_enum", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(EnkfTruncationType, "truncation_type", "libenkf/include/ert/enkf/enkf_types.h")
+        self.assertEnumIsFullyDefined(EnkfRunType, "run_mode_type" , "libenkf/include/ert/enkf/enkf_types.h")
 
         self.assertEnumIsFullyDefined(EnkfObservationImplementationType, "obs_impl_type", "libenkf/include/ert/enkf/obs_vector.h")
         self.assertEnumIsFullyDefined(LoadFailTypeEnum, "load_fail_type", "libenkf/include/ert/enkf/summary_config.h")
         self.assertEnumIsFullyDefined(EnkfFieldFileFormatEnum, "field_file_format_type", "libenkf/include/ert/enkf/field_config.h" )
-
-        self.assertEqual(EnkfRunEnum.ENKF_ASSIMILATION, 1)
-        self.assertEqual(EnkfRunEnum.ENSEMBLE_EXPERIMENT, 2)
 
 
     def test_observations(self):
