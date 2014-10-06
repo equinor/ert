@@ -39,9 +39,6 @@ void create_runpath(enkf_main_type * enkf_main ) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = bool_vector_alloc(0,false);
 
-  state_enum init_state    = ANALYZED; 
-  int start_report         = 0;
-  int init_step_parameters = 0;
   bool_vector_iset( iactive , ens_size - 1 , true );
   enkf_main_run_exp(enkf_main , iactive , false );
   bool_vector_free(iactive);
@@ -83,7 +80,7 @@ int main(int argc , char ** argv) {
   enkf_main_type * enkf_main = enkf_main_bootstrap( NULL , config_file , strict , true );
   enkf_fs_type * init_fs = enkf_main_get_fs(enkf_main);
   enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
-  run_arg_type * run_arg = run_arg_alloc_INIT_ONLY( init_fs , 0 ,0 , "simulations/run0");
+  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( init_fs , 0 ,0 , "simulations/run0");
   enkf_node_type * field_node = enkf_state_get_node( state , "PORO" );
   
   bool forward_init;
@@ -100,12 +97,9 @@ int main(int argc , char ** argv) {
     util_copy_file( init_file , "simulations/run0/petro.grdecl");
 
   {
-    run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
     bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size(enkf_main) , true);
-    //enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);     /* This is ugly */
     int error = 0;
     stringlist_type * msg_list = stringlist_alloc_new();  
-    enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
     enkf_state_load_from_forward_model( state , run_arg ,  &error , false , msg_list );
     stringlist_free( msg_list );
     bool_vector_free( iactive );

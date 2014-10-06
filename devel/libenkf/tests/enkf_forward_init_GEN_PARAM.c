@@ -34,9 +34,6 @@ void create_runpath(enkf_main_type * enkf_main ) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = bool_vector_alloc(0,false);
 
-  state_enum init_state    = ANALYZED; 
-  int start_report         = 0;
-  int init_step_parameters = 0;
   bool_vector_iset( iactive , ens_size - 1 , true );
   enkf_main_run_exp(enkf_main , iactive , false );
   bool_vector_free(iactive);
@@ -86,7 +83,7 @@ int main(int argc , char ** argv) {
     if (forward_init) {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-      run_arg_type * run_arg = run_arg_alloc_INIT_ONLY( fs , 0 , 0 , "simulations/run0");
+      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , 0 , 0 , "simulations/run0");
       enkf_node_type * gen_param_node = enkf_state_get_node( state , "PARAM" );
       node_id_type node_id = {.report_step = 0 ,  
                               .iens = 0,
@@ -95,16 +92,8 @@ int main(int argc , char ** argv) {
       create_runpath( enkf_main );
       test_assert_true( util_is_directory( "simulations/run0" ));
       
-      {
-        run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
-        bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size( enkf_main ) , true);
-        //enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);     /* This is ugly */
-        test_assert_false( enkf_node_has_data( gen_param_node , fs, node_id ));
-        util_unlink_existing( "simulations/run0/PARAM_INIT" );
-        bool_vector_free( iactive );
-      }
-      
-
+      test_assert_false( enkf_node_has_data( gen_param_node , fs, node_id ));
+      util_unlink_existing( "simulations/run0/PARAM_INIT" );
 
       {
         FILE * stream = util_fopen("simulations/run0/PARAM_INIT" , "w");
@@ -116,13 +105,6 @@ int main(int argc , char ** argv) {
         int error = 0;
         stringlist_type * msg_list = stringlist_alloc_new();
 
-        {
-          run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
-          bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size(enkf_main) , true);
-          //enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE );     /* This is ugly */
-          bool_vector_free( iactive );
-        }
-        
         test_assert_true( enkf_node_forward_init( gen_param_node , "simulations/run0" , 0 ));
         
         enkf_state_forward_init( state , run_arg ,  &error );
