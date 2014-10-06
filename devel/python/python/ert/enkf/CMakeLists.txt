@@ -27,6 +27,7 @@ set(PYTHON_SOURCES
     site_config.py
     state_map.py
     run_arg.py
+    ert_run_context.py
 )
 
 add_python_package("python.ert.enkf"  ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)

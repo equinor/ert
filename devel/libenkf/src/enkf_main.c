@@ -1995,6 +1995,39 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations_to
 }
 
 
+ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , const bool_vector_type * iactive , init_mode_type init_mode , int iter) {
+  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main->subst_list , init_mode , iter );
+}
+
+
+ert_run_context_type * enkf_main_alloc_ert_run_context_INIT_ONLY(const enkf_main_type * enkf_main , enkf_fs_type * fs , const bool_vector_type * iactive , init_mode_type init_mode , int iter) {
+  return ert_run_context_alloc_INIT_ONLY( fs , iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main->subst_list , init_mode , iter );
+}
+
+ert_run_context_type * enkf_main_alloc_ert_run_context_ENKF_ASSIMILATION( const enkf_main_type * enkf_main , 
+                                                                      enkf_fs_type * fs , 
+                                                                      const bool_vector_type * iactive ,
+                                                                      init_mode_type init_mode , 
+                                                                      state_enum init_state_parameter ,
+                                                                      state_enum init_state_dynamic   ,
+                                                                      int step1                       , 
+                                                                      int step2                       ,
+                                                                      int iter) {
+
+  return ert_run_context_alloc_ENKF_ASSIMILATION( enkf_main_get_fs( enkf_main ) , 
+                                                  iactive , 
+                                                  model_config_get_runpath_fmt( enkf_main->model_config ) , 
+                                                  enkf_main->subst_list , 
+                                                  init_mode , 
+                                                  init_state_parameter, 
+                                                  init_state_dynamic , 
+                                                  step1 ,  // init_step parameter
+                                                  step2 , 
+                                                  iter );
+
+}
+
+
 
 /**
    This function creates a local_config file corresponding to the

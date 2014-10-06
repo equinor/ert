@@ -61,6 +61,7 @@ extern "C" {
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/pca_plot_data.h>
 #include <ert/enkf/field_config.h>
+#include <ert/enkf/ert_run_context.h>
   
   /*****************************************************************/
   
@@ -350,6 +351,20 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
 
   state_map_type  * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path);
   time_map_type   * enkf_main_alloc_readonly_time_map( const enkf_main_type * enkf_main , const char * case_path );
+
+  ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , const bool_vector_type * iactive , init_mode_type init_mode , int iter);
+  ert_run_context_type * enkf_main_alloc_ert_run_context_INIT_ONLY(const enkf_main_type * enkf_main , enkf_fs_type * fs , const bool_vector_type * iactive , init_mode_type init_mode , int iter);
+  ert_run_context_type * enkf_main_alloc_ert_run_context_ENKF_ASSIMILATION( const enkf_main_type * enkf_main , 
+                                                                        enkf_fs_type * fs , 
+                                                                        const bool_vector_type * iactive ,
+                                                                        init_mode_type init_mode , 
+                                                                        state_enum init_state_parameter ,
+                                                                        state_enum init_state_dynamic   ,
+                                                                        int step1                       , 
+                                                                        int step2                       ,
+                                                                        int iter);
+
+
 
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
