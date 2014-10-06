@@ -59,5 +59,5 @@ class ServerTest(ExtendedTestCase):
             
             cmd = ["STATUS"]
             res = ert_server.evalCmd( cmd )
-            self.assertEqual( res , ["OPEN"] )
+            self.assertEqual( res , ["READY"] )
             

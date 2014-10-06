@@ -9,7 +9,7 @@ port = int(sys.argv[2])
 ert_socket = ErtSocket(config_file , port)
 
 status = ert_socket.evalCmd(["STATUS"])
-if status[0] == "OPEN":
+if status[0] == "READY":
     ert_socket.listen()
 else:
     sys.exit("Failed to open ERT handle to:%s " % config_file)
