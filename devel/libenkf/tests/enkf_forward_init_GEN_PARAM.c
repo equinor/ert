@@ -27,6 +27,7 @@
 #include <ert/util/arg_pack.h>
 
 #include <ert/enkf/enkf_main.h>
+#include <ert/enkf/run_arg.h>
 
 
 void create_runpath(enkf_main_type * enkf_main ) {
@@ -37,7 +38,7 @@ void create_runpath(enkf_main_type * enkf_main ) {
   int start_report         = 0;
   int init_step_parameters = 0;
   bool_vector_iset( iactive , ens_size - 1 , true );
-  enkf_main_run_exp(enkf_main , iactive , false , init_step_parameters , start_report , init_state);
+  enkf_main_run_exp(enkf_main , iactive , false );
   bool_vector_free(iactive);
 }
 
@@ -85,6 +86,7 @@ int main(int argc , char ** argv) {
     if (forward_init) {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
+      run_arg_type * run_arg = run_arg_alloc_INIT_ONLY( fs , 0 , 0 , "simulations/run0");
       enkf_node_type * gen_param_node = enkf_state_get_node( state , "PARAM" );
       node_id_type node_id = {.report_step = 0 ,  
                               .iens = 0,
@@ -96,7 +98,7 @@ int main(int argc , char ** argv) {
       {
         run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
         bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size( enkf_main ) , true);
-        enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);     /* This is ugly */
+        //enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);     /* This is ugly */
         test_assert_false( enkf_node_has_data( gen_param_node , fs, node_id ));
         util_unlink_existing( "simulations/run0/PARAM_INIT" );
         bool_vector_free( iactive );
@@ -117,20 +119,20 @@ int main(int argc , char ** argv) {
         {
           run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
           bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size(enkf_main) , true);
-          enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE );     /* This is ugly */
+          //enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE );     /* This is ugly */
           bool_vector_free( iactive );
         }
         
         test_assert_true( enkf_node_forward_init( gen_param_node , "simulations/run0" , 0 ));
         
-        enkf_state_forward_init( state , fs , &error );
+        enkf_state_forward_init( state , run_arg ,  &error );
         test_assert_int_equal(0, error); 
          {
           enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
           state_map_type * state_map = enkf_fs_get_state_map(fs);
           state_map_iset(state_map , 0 , STATE_INITIALIZED);
         }
-        enkf_state_load_from_forward_model( state , fs , &error , false , msg_list );
+         enkf_state_load_from_forward_model( state , run_arg , &error , false , msg_list );
 
         stringlist_free( msg_list );
         test_assert_int_equal(0, error); 
@@ -162,6 +164,7 @@ int main(int argc , char ** argv) {
         test_assert_double_equal( 3 , v3);
       }
       util_clear_directory( "simulations" , true , true );
+      run_arg_free( run_arg );
     }
     enkf_main_free( enkf_main );
   }
