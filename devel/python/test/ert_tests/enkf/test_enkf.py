@@ -16,7 +16,10 @@
 #  for more details.
 
 import os
-from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfRunEnum, EnkfVarType, ObsVector
+
+from ert.util import BoolVector
+
+from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfVarType, ObsVector , RunArg
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enkf_main import EnKFMain
 from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum, EnkfInitModeEnum, ErtImplType, RealizationStateEnum
@@ -139,3 +142,38 @@ class EnKFTest(ExtendedTestCase):
             EnKFMain.createNewConfig(config_file, "storage" , firste_case_name, dbase_type, num_realizations)
             main = EnKFMain(config_file, self.site_config_file)
             self.assertEqual(main.getEnsembleSize(), num_realizations)
+
+
+    def test_run_context(self):
+        with TestAreaContext("enkf_test") as work_area:
+            work_area.copy_directory(self.case_directory)
+            main = EnKFMain("simple_config/minimum_config", self.site_config_file)
+            fs_manager = main.getEnkfFsManager()
+            fs = fs_manager.getCurrentFileSystem( )
+            iactive = BoolVector(initial_size = 10 , default_value = True)
+            iactive[0] = False
+            iactive[1] = False
+            run_context = main.getRunContextENSEMPLE_EXPERIMENT( fs , iactive )
+            
+            self.assertEqual( len(run_context) , 8 )
+            
+            with self.assertRaises(IndexError):
+                run_context[8]
+
+            with self.assertRaises(TypeError):
+                run_context["String"]
+
+            run_arg = run_context[0]
+            self.assertTrue( isinstance( run_arg , RunArg ))
+            
+            with self.assertRaises(ValueError):
+                run_context.iensGet(0)
+
+
+            with self.assertRaises(ValueError):
+                run_context.iensGet(1)
+                
+            arg0 = run_context[0]
+            arg2 = run_context.iensGet( 2 )
+            #self.assertEqual( arg0 , arg2 )
+
