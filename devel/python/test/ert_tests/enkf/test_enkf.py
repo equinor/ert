@@ -49,7 +49,7 @@ class EnKFTest(ExtendedTestCase):
         self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(EnkfStateType, "state_enum", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(ErtImplType, "ert_impl_type", "libenkf/include/ert/enkf/enkf_types.h")
-        self.assertEnumIsFullyDefined(EnkfInitModeEnum, "init_mode_enum", "libenkf/include/ert/enkf/enkf_types.h")
+        self.assertEnumIsFullyDefined(EnkfInitModeEnum, "init_mode_type", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(RealizationStateEnum, "realisation_state_enum", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(EnkfTruncationType, "truncation_type", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(EnkfRunType, "run_mode_type" , "libenkf/include/ert/enkf/enkf_types.h")
