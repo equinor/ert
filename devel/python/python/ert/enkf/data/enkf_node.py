@@ -14,8 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, EnkfFs, NodeId, GenData
-from ert.enkf.data import EnkfConfigNode
+from ert.enkf import ENKF_LIB, EnkfFs, NodeId
+from ert.enkf.data import EnkfConfigNode , GenKw , GenData
 from ert.enkf.data.gen_data_config import GenDataConfig
 from ert.enkf.enums import EnkfStateType
 from ert.enkf.enums.ert_impl_type_enum import ErtImplType
@@ -48,6 +48,14 @@ class EnkfNode(BaseCClass):
         assert impl_type == ErtImplType.GEN_DATA
 
         return GenData.createCReference(self.valuePointer(), self)
+
+
+    def asGenKw(self):
+        impl_type = EnkfNode.cNamespace().get_impl_type(self)
+        assert impl_type == ErtImplType.GEN_KW
+
+        return GenKw.createCReference(self.valuePointer(), self)
+
 
 
     # def vector_storage(self):
