@@ -21,14 +21,36 @@ from ert.job_queue import JobStatusType
 class EnKFState(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
+        
+    
+    def __getitem__(self , kw):
+        if isinstance(kw , str):
+            if kw in self:
+                node = EnKFState.cNamespace().get_node( self , kw )
+                node.setParent( self )
+                return node
+            else:
+                raise KeyError("The state object does not have node:%s" % kw)
+        else:
+            raise TypeError("The kw type must be string. Input:%s" % kw)
 
 
+    def __contains__(self , kw):
+        return EnKFState.cNamespace().has_key( self , kw )
 
 
+    def hasKey(self , kw):
+        return kw in self
+
+
+    def getNode(self , kw):
+        return self[kw]
 
 
     def free(self):
         EnKFState.cNamespace().free(self)
+
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("enkf_state", EnKFState)
@@ -36,3 +58,6 @@ cwrapper.registerType("enkf_state_obj", EnKFState.createPythonObject)
 cwrapper.registerType("enkf_state_ref", EnKFState.createCReference)
 
 
+EnKFState.cNamespace().free     = cwrapper.prototype("void enkf_state_free( enkf_state )")
+EnKFState.cNamespace().has_key  = cwrapper.prototype("bool enkf_state_has_node( enkf_state , char* )")
+EnKFState.cNamespace().get_node = cwrapper.prototype("enkf_node_ref enkf_state_get_node( enkf_state , char* )")
