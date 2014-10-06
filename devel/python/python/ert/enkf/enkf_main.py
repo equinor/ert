@@ -40,6 +40,14 @@ class EnKFMain(BaseCClass):
     def createNewConfig(config_file, storage_path, case_name, dbase_type, num_realizations):
         EnKFMain.cNamespace().create_new_config(config_file, storage_path, case_name, dbase_type, num_realizations)
 
+    def getRealisation(self , iens):
+        """ @rtype: EnKFState """
+        if 0 <= iens < len(self):
+            return EnKFMain.cNamespace().iget_state(self, iens).setParent(self)
+        else:
+            raise IndexError("iens value:%d invalid Valid range: [0,%d)" % (iens , len(self)))
+
+
     def set_eclbase(self, eclbase):
         EnKFMain.cNamespace().set_eclbase(self, eclbase)
 
