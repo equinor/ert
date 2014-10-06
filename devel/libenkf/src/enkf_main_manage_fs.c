@@ -422,7 +422,8 @@ static void enkf_main_create_fs( const enkf_main_type * enkf_main , const char *
 
   enkf_fs_create_fs( new_mount_point,
                      model_config_get_dbase_type( enkf_main->model_config ) ,
-                     model_config_get_dbase_args( enkf_main->model_config ));
+                     model_config_get_dbase_args( enkf_main->model_config ) , 
+                     false );
 
   free( new_mount_point );
 }

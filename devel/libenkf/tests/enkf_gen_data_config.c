@@ -98,8 +98,7 @@ void test_gendata_fload(const char * filename) {
   gen_data_type * gen_data = gen_data_alloc(config);
 
   const char * cwd = test_work_area_get_cwd(work_area);
-  enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL);
-  enkf_fs_type * write_fs = enkf_fs_mount( cwd );
+  enkf_fs_type * write_fs =   enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL , true);
   gen_data_config_set_write_fs(config, write_fs);
   gen_data_fload(gen_data, filename);
   int data_size = gen_data_config_get_data_size(config, 0);
@@ -118,8 +117,7 @@ void test_gendata_fload_empty_file(const char * filename) {
   gen_data_type * gen_data = gen_data_alloc(config);
 
   const char * cwd = test_work_area_get_cwd(work_area);
-  enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL);
-  enkf_fs_type * write_fs = enkf_fs_mount( cwd );
+  enkf_fs_type * write_fs = enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL , true);
   gen_data_config_set_write_fs(config, write_fs);
   gen_data_fload(gen_data, filename);
   int data_size = gen_data_config_get_data_size(config, 0);

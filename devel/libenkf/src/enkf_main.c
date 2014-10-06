@@ -2489,14 +2489,6 @@ static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
 }
 
 
-/*
-void enkf_main_create_fs( enkf_main_type * enkf_main , const char * fs_path) {
-  fs_driver_impl driver_id = model_config_get_dbase_type( enkf_main->model_config );
-  void * arg = NULL;
-  
-  enkf_fs_create_fs( fs_path , driver_id , arg );
-}
-*/
 
 
 
