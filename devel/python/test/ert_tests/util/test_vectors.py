@@ -408,3 +408,12 @@ class UtilTest(TestCase):
 
         trange = TimeVector.createRegular(start , datetime.date(2050, 1 , 1) , "1Y")
         
+
+    def test_asList(self):
+        v = IntVector()
+        v[0] = 100
+        v[1] = 10
+        v[2] = 1
+
+        l = v.asList()
+        self.assertListEqual( l , [100,10,1] )
