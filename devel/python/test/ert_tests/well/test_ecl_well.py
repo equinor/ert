@@ -1,6 +1,5 @@
 import datetime
-from ert.ecl import EclGrid
-from ert.ecl.ecl_file import EclFile
+from ert.ecl import EclGrid, EclFile, EclFileFlagEnum
 from ert.test import ExtendedTestCase
 from ert.util.ctime import CTime
 from ert.well import WellInfo, WellConnection, WellTypeEnum, WellConnectionDirectionEnum, WellSegment
@@ -42,7 +41,10 @@ class EclWellTest(ExtendedTestCase):
 
             grid = EclGrid(grid_path)
 
-            EclWellTest.__well_info = WellInfo(grid, rst_path_1)
+            rst_file = EclFile(rst_path_1, EclFileFlagEnum.ECL_FILE_CLOSE_STREAM)
+
+            EclWellTest.__well_info = WellInfo(grid, rst_file)
+
 
         return EclWellTest.__well_info
 
