@@ -14,6 +14,8 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import math
+
 try:
     from unittest2 import skipIf
 except ImportError:
@@ -308,3 +310,21 @@ class GridTest(ExtendedTestCase):
         grid2 = EclGrid(case)
         self.assertEqual(grid1.nactive, grid2.nactive)
         self.assertEqual(grid1.nactive, 34770)
+
+
+    def test_no_mapaxes_check_for_nan(self):
+        grid_paths = ["Statoil/ECLIPSE/NoMapaxes/ECLIPSE.EGRID", "Statoil/ECLIPSE/NoMapaxes/ECLIPSE.GRID"]
+
+        for grid_path in grid_paths:
+            test_grid_path = self.createTestPath(grid_path)
+            grid = EclGrid(test_grid_path)
+
+            xyz = grid.get_xyz(ijk=(0, 0, 0))
+            self.assertFalse(math.isnan(xyz[0]))
+            self.assertFalse(math.isnan(xyz[1]))
+            self.assertFalse(math.isnan(xyz[2]))
+
+            xyz = grid.get_xyz(ijk=(1, 1, 1))
+            self.assertFalse(math.isnan(xyz[0]))
+            self.assertFalse(math.isnan(xyz[1]))
+            self.assertFalse(math.isnan(xyz[2]))
