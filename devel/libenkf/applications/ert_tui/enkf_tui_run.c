@@ -139,10 +139,6 @@ void enkf_tui_run_exp(void * enkf_main) {
   const int ens_size          = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive  = bool_vector_alloc(0,false);
 
-  state_enum init_state    = ANALYZED; 
-  int start_report         = 0;
-  int init_step_parameters = 0;
-  
   {
 
     char * prompt = util_alloc_sprintf("Which realizations to simulate (Ex: 1,3-5) <Enter for all> [M to return to menu] : " , ens_size);
@@ -168,9 +164,6 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = bool_vector_alloc(0,false);
 
-  state_enum init_state    = ANALYZED; 
-  int start_report         = 0;
-  int init_step_parameters = 0;
   {
     char * prompt = util_alloc_sprintf("Which realizations to create[ensemble size:%d] : " , ens_size);
     char * select_string;
