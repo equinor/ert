@@ -29,15 +29,16 @@ def path_exists( path ):
 
 class TestRun(object):
     default_ert_cmd = "ert"
-    default_ert_version = "stable"
     default_path_prefix = None
+    ert_version="stable"
 
-    def __init__(self , config_file , args = [] , name = None):
+    def __init__(self , config_file , args = [] , name = None, ert_version = "stable"):
         if os.path.exists( config_file ) and os.path.isfile( config_file ):
             self.parseArgs(args)
             self.__ert_cmd = TestRun.default_ert_cmd
             self.path_prefix = TestRun.default_path_prefix
             self.config_file = config_file
+            self.ert_version = ert_version
             
             self.check_list = []
             self.workflows = []
@@ -57,7 +58,7 @@ class TestRun(object):
     
     def parseArgs(self , args):
         parser = argparse.ArgumentParser()
-        parser.add_argument("-v" , "--version" , default = self.default_ert_version)
+        parser.add_argument("-v" , "--version" , default = self.ert_version)
         parser.add_argument("args" , nargs="*")
         result = parser.parse_args(args)
         self.ert_version = result.version
