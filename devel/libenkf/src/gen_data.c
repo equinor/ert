@@ -475,6 +475,19 @@ double gen_data_iget_double(const gen_data_type * gen_data, int index) {
 }
 
 
+void gen_data_export_data(const gen_data_type * gen_data , double_vector_type * export_data) {
+  ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+  if (internal_type == ECL_DOUBLE_TYPE) 
+    double_vector_memcpy_from_data( export_data , (const double *) gen_data->data , gen_data_get_size( gen_data ));
+  else {
+    double_vector_reset( export_data );
+    float * float_data = (float *) gen_data->data;
+    for (int i = 0; i < gen_data_get_size( gen_data ); i++)
+      double_vector_iset( export_data , i , float_data[i]);
+  }
+}
+
+
 
 /**
    The filesystem will (currently) store gen_data instances which do

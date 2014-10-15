@@ -2,14 +2,22 @@
 import sys
 from ert.server import ErtSocket
 
+if len(sys.argv) < 3:
+    sys.exit("\nUsage:\n   ert_tcp_server   config_file   port\n")
 
 config_file = sys.argv[1]
 port = int(sys.argv[2])
+if len(sys.argv) >= 4:
+   host = sys.argv[3]
+else:
+   host = "localhost"
 
-ert_socket = ErtSocket(config_file , port)
+
+
+ert_socket = ErtSocket(config_file , port, host)
 
 status = ert_socket.evalCmd(["STATUS"])
-if status[0] == "OPEN":
+if status[0] == "READY":
     ert_socket.listen()
 else:
     sys.exit("Failed to open ERT handle to:%s " % config_file)
