@@ -1,7 +1,10 @@
-set( application_list ert_tcp_server ert_tcp_client)
-foreach(prog ${application_list} )
-   file(COPY ${prog} DESTINATION ${EXECUTABLE_OUTPUT_PATH})             
-endforeach()
+if (BUILD_ERT)
+   set( application_list ert_tcp_server ert_tcp_client)
+   foreach(prog ${application_list} )
+      file(COPY ${prog} DESTINATION ${EXECUTABLE_OUTPUT_PATH})             
+   endforeach()
+endif()
+
 
 
 if (INSTALL_ERT)

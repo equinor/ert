@@ -4,7 +4,7 @@ import socket
 import json
 
 class Connection(object):
-    def __init__(self , port , host = "localhost"):
+    def __init__(self , port , host):
         self.socket = socket.socket( socket.AF_INET , socket.SOCK_STREAM)
         self.port = port
         self.host = host
@@ -35,18 +35,56 @@ def readArgv():
     return argv
 
 
+
+def parseCmdLine(line):
+    arg_list = []
+    for item in line.split():
+        try:
+            int_value = int(item)
+            arg_list.append( int_value )
+            continue
+        except ValueError:
+            pass
+
+        try:
+            float_value = float(item)
+            arg_list.append( float_value )
+            continue
+        except ValueError:
+            pass
+
+        arg_list.append( unicode( item ) )
+    return arg_list
+         
+
+
+
+def runCmdFile(filename, port , host):
+    with open(filename) as fileH:
+        for line in fileH.readlines():
+            cmd = parseCmdLine(line[:-1])
+            if cmd:
+                conn = Connection(port,host)
+                conn.sendRecv( cmd )
+            
 #-----------------------------------------------------------------
 
 
 port = int(sys.argv[1])
+host = "localhost"
+#if len(sys.argv) >=3:
+#    host = sys.argv[2]
+#else:
+#    host = "localhost"
+
+runCmdFile( sys.argv[2] , port , host )
 
 while True:
-    conn = Connection(port)
     cmd = raw_input("Function to send: ==> ")
-
     argv = readArgv()
-
     cmdExpr = [cmd] + argv
+    
+    conn = Connection(port,host)
     print "Return from server: %s\n" % conn.sendRecv(cmdExpr)
     if cmd == "QUIT":
         break
