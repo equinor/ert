@@ -455,17 +455,19 @@ static void job_queue_node_free_error_info( job_queue_node_type * node ) {
 
 static void job_queue_node_fscanf_EXIT( job_queue_node_type * node ) {
   job_queue_node_free_error_info( node );
-  if (util_file_exists( node->exit_file )) {
-    char * xml_buffer = util_fread_alloc_file_content( node->exit_file, NULL);
-    
-    node->failed_job     = __alloc_tag_content( xml_buffer , "job" );
-    node->error_reason   = __alloc_tag_content( xml_buffer , "reason" );
-    node->stderr_capture = __alloc_tag_content( xml_buffer , "stderr");
-    node->stderr_file    = __alloc_tag_content( xml_buffer , "stderr_file");
-
-    free( xml_buffer );
-  } else
-    node->failed_job = util_alloc_sprintf("EXIT file:%s not found - load failure?" , node->exit_file);
+  if (node->exit_file) {
+    if (util_file_exists( node->exit_file )) {
+      char * xml_buffer = util_fread_alloc_file_content( node->exit_file, NULL);
+      
+      node->failed_job     = __alloc_tag_content( xml_buffer , "job" );
+      node->error_reason   = __alloc_tag_content( xml_buffer , "reason" );
+      node->stderr_capture = __alloc_tag_content( xml_buffer , "stderr");
+      node->stderr_file    = __alloc_tag_content( xml_buffer , "stderr_file");
+      
+      free( xml_buffer );
+    } else
+      node->failed_job = util_alloc_sprintf("EXIT file:%s not found - load failure?" , node->exit_file);
+  }
 }
 
 
