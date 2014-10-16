@@ -152,3 +152,18 @@ class PolylineTest(ExtendedTestCase):
         self.assertTrue( not p3.intersects(p1) )
 
         
+    def test_add(self):
+        l1 = Polyline( init_points = [(-1,0.5) , (0.5, 0.5)])
+        l2 = Polyline( init_points = [(-1,0.5) , (0.5, 0.5)])
+
+        l3 = l1 + l2
+        self.assertEqual( len(l3) , 4 )
+        self.assertEqual( l1[0] , l3[0] )
+        self.assertEqual( l1[1] , l3[1] )
+        self.assertEqual( l1[0] , l3[2] )
+        self.assertEqual( l1[1] , l3[3] )
+
+        l4 = l1
+        l4 += l2
+        self.assertEqual(l3 , l4)
+
