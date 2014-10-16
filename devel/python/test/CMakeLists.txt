@@ -83,6 +83,7 @@ set(TEST_SOURCES
     ert_tests/util/test_vectors.py
     ert_tests/util/test_ui_return.py
     ert_tests/util/test_thread_pool.py
+    ert_tests/util/test_work_area.py
 
     ert_tests/gui/__init__.py
     ert_tests/gui/test_model.py
@@ -188,6 +189,9 @@ add_test( NAME python.tests.ert.util.hash
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_hash.HashTest)
 
+add_test( NAME python.tests.ert.util.work_area
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_work_area.WorkAreaTest)
 
 #add_test( NAME python.tests.ert.util.latex
 #          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
