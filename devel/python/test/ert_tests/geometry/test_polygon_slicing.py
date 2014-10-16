@@ -39,6 +39,7 @@ class PolygonSlicingTest(ExtendedTestCase):
 
 
 
+
     def test_slicing_short_line_segment(self):
         p0 = (0.0, 0.0)
         p1 = (0.0, 1.0)
@@ -102,12 +103,27 @@ class PolygonSlicingTest(ExtendedTestCase):
 
 
     def test_ray_polyline_intersections(self):
-        p0 = (0.5, 0.0)
-        ray = (0.0, 1.0)
+        #             /.\
+        #              .
+        #              .
+        #  (4)---------+----(3)
+        #     /________:_____:_________
+        #     \        .     |
+        #         (1)--+----(2)
+        #          |   .
+        #          |   .
+        #         (0)  .
 
+        
         polygon = [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 2.0), (-1.0, 2.0)]
 
-        intersections = GeometryTools.rayPolygonIntersections(p0, ray, polygon)
+        p0 = (0.5, 0.0)
+        ray0 = (0.0, 1.0)
+        intersections0 = GeometryTools.rayPolygonIntersections(p0, ray0, polygon)
+        self.assertEqual(intersections0, [(1, (0.5, 1.0)), (3, (0.5, 2.0))])
 
-        self.assertEqual(intersections, [(1, (0.5, 1.0)), (3, (0.5, 2.0))])
 
+        p1 = (1.5, 1.5)
+        ray1 = (-1.0, 0.0)
+        intersections1 = GeometryTools.rayPolygonIntersections(p1, ray1, polygon)
+        self.assertEqual(intersections1, [(2, (1, 1.5))])
