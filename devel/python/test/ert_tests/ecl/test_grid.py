@@ -252,6 +252,23 @@ class GridTest(ExtendedTestCase):
         self.assertEqual( bbox , ((0,0) , (10, 0) , (10 , 10) , (0,10)))
 
 
+        with self.assertRaises(ValueError):
+            grid.getBoundingBox2D( lower_left = (-1,0) )
+
+        with self.assertRaises(ValueError):
+            grid.getBoundingBox2D( lower_left = (6,10) )
+
+        bbox = grid.getBoundingBox2D( lower_left = (3,3) )
+        self.assertEqual( bbox , ((3,3) , (10,3) , (10,10) , (3,10)))
+
+        with self.assertRaises(ValueError):
+            grid.getBoundingBox2D( lower_left = (3,3) , upper_right = (2,2))
+
+        bbox = grid.getBoundingBox2D( lower_left = (3,3) , upper_right = (7,7))
+        self.assertEqual( bbox , ((3,3) , (7,3) , (7,7) , (3,7)))
+
+
+
 
 
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow test of dual grid skipped!")
