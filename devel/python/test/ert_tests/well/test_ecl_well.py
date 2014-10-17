@@ -211,8 +211,8 @@ class EclWellTest(ExtendedTestCase):
         self.assertEqual(open_states[True], 53)
         self.assertEqual(open_states[False], 169)
 
-        self.assertEqual(msw_states[True], 222)
-        self.assertEqual(msw_states[False], 0)
+        self.assertEqual(msw_states[True], 169)
+        self.assertEqual(msw_states[False], 53)
 
         self.assertEqual(well_types[WellTypeEnum.UNDOCUMENTED_ZERO], 0)
         self.assertEqual(well_types[WellTypeEnum.WATER_INJECTOR], 0)
@@ -342,7 +342,7 @@ class EclWellTest(ExtendedTestCase):
         well_time_line = well_info[well_name]
         well_state = well_time_line[0]
 
-        self.assertTrue(well_state.isMultiSegmentWell())
+        self.assertFalse(well_state.isMultiSegmentWell())
 
         self.assertTrue(well_state.hasGlobalConnections())
         global_connections = well_state.globalConnections()
