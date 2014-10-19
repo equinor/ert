@@ -155,6 +155,10 @@ class FaultTest(ExtendedTestCase):
         layer8 = fault1[8]
         self.assertEqual( len(layer8) , 1 ) 
     
+        with self.assertRaises(IOError):
+            faults.load("No/this/does/not/exist")
+
+            
     
     def test_iter(self):
         faults = FaultCollection(self.grid , self.faults1 , self.faults2)
