@@ -174,7 +174,12 @@ class PolylineTest(ExtendedTestCase):
         l1 = Polyline( init_points = [(-1,0.5) , (0.5, 0.5)])
         l2 = Polyline( init_points = [(0.25,0.25) , (0.75, 0.75)])
         
-        
+        # Bound is not closed
+        with self.assertRaises(AssertionError):
+            GeometryTools.extendToEdge( bound , l1 )
+            
+        bound.assertClosed()
+        # l1 is not fully contained in bound
         with self.assertRaises(ValueError):
             GeometryTools.extendToEdge( bound , l1 )
 
