@@ -20,8 +20,8 @@ try:
 except ImportError:
     from unittest import skipIf
 
-from ert.ecl import EclFile, FortIO
-from ert.ecl.ecl_util import EclFileFlagEnum
+from ert.ecl import EclFile, FortIO, EclKW , openFortIO , openEclFile
+from ert.ecl import EclFileFlagEnum, EclTypeEnum
 
 from ert.test import ExtendedTestCase , TestAreaContext
 
@@ -69,6 +69,22 @@ class EclFileTest(ExtendedTestCase):
             fortio.close()
             rst_file.close()
             self.assertFilesAreEqual("ECLIPSE.UNRST", self.test_file)
+
+
+    def test_context( self ):
+        with TestAreaContext("python/ecl_file/context"):
+            kw1 = EclKW.create( "KW1" , 100 , EclTypeEnum.ECL_INT_TYPE)
+            kw2 = EclKW.create( "KW2" , 100 , EclTypeEnum.ECL_INT_TYPE)
+            with openFortIO("TEST" , mode = FortIO.WRITE_MODE) as f:
+                kw1.fwrite( f )
+                kw2.fwrite( f )
+
+            with openEclFile("TEST") as ecl_file:
+                self.assertEqual( len(ecl_file) , 2 )
+                self.assertTrue( ecl_file.has_kw("KW1"))
+                self.assertTrue( ecl_file.has_kw("KW2"))
+
+        
 
 
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow file test skipped!")
@@ -127,4 +143,5 @@ class EclFileTest(ExtendedTestCase):
             # Random failure ....
             self.assertFilesAreEqual("ECLIPSE.FUNRST", self.test_fmt_file)
 
+            
             
