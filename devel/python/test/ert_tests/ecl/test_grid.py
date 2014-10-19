@@ -22,8 +22,8 @@ except ImportError:
     from unittest import skipIf
 
 import time
-from ert.ecl import EclTypeEnum, EclKW, EclGrid
-from ert.util import DoubleVector
+from ert.ecl import EclTypeEnum, EclKW, EclGrid, EclFile, openEclFile
+from ert.util import DoubleVector, IntVector
 from ert.test import ExtendedTestCase , TestAreaContext
 
 
@@ -184,6 +184,42 @@ class GridTest(ExtendedTestCase):
         grid = self.create(self.grdecl_file())
         self.assertTrue(grid)
     
+    
+    def test_grdecl_load(self):
+        with self.assertRaises(IOError):
+            grid = EclGrid.loadFromGrdecl("/file/does/not/exists")
+
+        with TestAreaContext("python/grid-test/grdeclLoad"):
+            with open("grid.grdecl","w") as f:
+                f.write("Hei ...")
+                
+            with self.assertRaises(ValueError):
+                grid = EclGrid.loadFromGrdecl("grid.grdecl")
+        
+            actnum = IntVector(default_value = 1 , initial_size = 1000)
+            actnum[0] = 0
+            g1 = EclGrid.create_rectangular((10,10,10) , (1,1,1) , actnum = actnum )
+            self.assertEqual( g1.getNumActive() , actnum.elementSum() )
+            g1.save_EGRID("G.EGRID")
+
+            with openEclFile("G.EGRID") as f:
+                with open("grid.grdecl" , "w") as f2:
+                    f2.write("SPECGRID\n")
+                    f2.write("  10  10  10  \'F\' /\n")
+
+                    coord_kw = f["COORD"][0]
+                    coord_kw.write_grdecl( f2 )
+                    
+                    zcorn_kw = f["ZCORN"][0]
+                    zcorn_kw.write_grdecl( f2 )
+                
+                    actnum_kw = f["ACTNUM"][0]
+                    actnum_kw.write_grdecl( f2 )
+            
+            g2 = EclGrid.loadFromGrdecl("grid.grdecl")
+            self.assertTrue( g1.equal( g2 ))
+                    
+
     
     def test_ACTNUM(self):
         g1 = self.create(self.grdecl_file())
