@@ -40,7 +40,7 @@ class GridTest(ExtendedTestCase):
         return self.createTestPath("Statoil/ECLIPSE/Gurbat/include/example_grid_sim.GRDECL")
 
     def test_dims(self):
-        grid = EclGrid.create_rectangular( (10,20,30) , (1,1,1) )
+        grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) )
         self.assertEqual( grid.getNX() , 10 )
         self.assertEqual( grid.getNY() , 20 )
         self.assertEqual( grid.getNZ() , 30 )
@@ -49,7 +49,7 @@ class GridTest(ExtendedTestCase):
         
 
     def test_node_pos(self):
-        grid = EclGrid.create_rectangular( (10,20,30) , (1,1,1) )
+        grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) )
         with self.assertRaises(IndexError):
             grid.getNodePos(-1,0,0)
 
@@ -154,7 +154,7 @@ class GridTest(ExtendedTestCase):
             a1 = 1.0
             a2 = 2.0
             a3 = 3.0
-            grid = EclGrid.create_rectangular((9, 9, 9), (a1, a2, a3))
+            grid = EclGrid.createRectangular((9, 9, 9), (a1, a2, a3))
             grid.save_EGRID("rect.EGRID")
             grid2 = EclGrid("rect.EGRID")
             self.assertTrue(grid)
@@ -198,7 +198,7 @@ class GridTest(ExtendedTestCase):
         
             actnum = IntVector(default_value = 1 , initial_size = 1000)
             actnum[0] = 0
-            g1 = EclGrid.create_rectangular((10,10,10) , (1,1,1) , actnum = actnum )
+            g1 = EclGrid.createRectangular((10,10,10) , (1,1,1) , actnum = actnum )
             self.assertEqual( g1.getNumActive() , actnum.elementSum() )
             g1.save_EGRID("G.EGRID")
 
@@ -277,7 +277,7 @@ class GridTest(ExtendedTestCase):
             g = EclGrid("/does/not/exist.EGRID")
 
     def test_boundingBox(self):
-        grid = EclGrid.create_rectangular((10,10,10) , (1,1,1))
+        grid = EclGrid.createRectangular((10,10,10) , (1,1,1))
         with self.assertRaises(ValueError):
             bbox = grid.getBoundingBox2D(layer = -1 )
 
