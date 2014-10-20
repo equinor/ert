@@ -1,26 +1,32 @@
 #!/usr/bin/env python
 import sys
 import os.path
-from ert.ecl import EclGrid,EclKW,EclTypeEnum
+from ert.ecl import EclGrid,EclKW,EclTypeEnum,FortIO
 from ert.ecl.faults import RegionDefinition,FaultBlockLayer,FaultCollection
-
+from ert.util import installAbortSignals
 
 fault_block_header   = "FAULTBLK"
 default_region_value = 0
 region_output_file   = "regions.grdecl"
 
 
+def cmp_blocks(b1,b2):
+    return cmp(b1.getBlockID() , b2.getBlockID())
+
 
 def loadGrid(grid_file):
     """ @rtype: EclGrid """
-    with open(grid_file, "r") as f:
-        specgrid = EclKW.read_grdecl(f, "SPECGRID", ecl_type=EclTypeEnum.ECL_INT_TYPE, strict=False)
-        zcorn = EclKW.read_grdecl(f, "ZCORN")
-        coord = EclKW.read_grdecl(f, "COORD")
-        actnum = EclKW.read_grdecl(f, "ACTNUM", ecl_type=EclTypeEnum.ECL_INT_TYPE)
-        mapaxes = EclKW.read_grdecl(f, "MAPAXES")
+    if FortIO.isFortranFile( grid_file ):
+        return EclGrid( grid_file )
+    else:
+        with open(grid_file, "r") as f:
+            specgrid = EclKW.read_grdecl(f, "SPECGRID", ecl_type=EclTypeEnum.ECL_INT_TYPE, strict=False)
+            zcorn = EclKW.read_grdecl(f, "ZCORN")
+            coord = EclKW.read_grdecl(f, "COORD")
+            actnum = EclKW.read_grdecl(f, "ACTNUM", ecl_type=EclTypeEnum.ECL_INT_TYPE)
+            mapaxes = EclKW.read_grdecl(f, "MAPAXES")
         
-    return EclGrid.create(specgrid, zcorn, coord, actnum, mapaxes=mapaxes)
+        return EclGrid.create(specgrid, zcorn, coord, actnum, mapaxes=mapaxes)
 
 
 def loadMessage(msg):
@@ -28,6 +34,9 @@ def loadMessage(msg):
     sys.stdout.write(msg)
     sys.stdout.flush()
 
+
+def usage(argv):
+    sys.exit("Required arguments: config_file grid_file fault_block_file fault_files...")
 
 
 def loadCommandLineArgs( argv ):
@@ -46,7 +55,7 @@ def loadCommandLineArgs( argv ):
         (path,file) = os.path.split( config_file )
         if path:
             os.chdir( path )
-            print "Changing working directory to:%s" % path
+            print "Changing working directory to:%s" % path,
             
         loadMessage( "Loading region definitions from: %s" % file)
         with open(file) as fileH:
@@ -54,20 +63,22 @@ def loadCommandLineArgs( argv ):
                 tmp = line.split()
                 region_list.append(( int(tmp[0]) , tuple(tmp[1:])))
     else:
-        sys.exit("Could not find region configuration file:%s" % config_file)
+        sys.exit("\nCould not find region configuration file:%s" % config_file)
     
     if os.path.isfile( grid_file ):
         loadMessage( "Loading grid from: %s" % grid_file)
         grid = loadGrid( grid_file )
     else:
-        sys.exit("Could not find file:%s with grid data" % grid_file)
+        sys.exit("\nCould not find file:%s with grid data" % grid_file)
 
     if os.path.isfile( fault_block_file ):
         loadMessage( "Loading fault blocks from: %s" % fault_block_file)
         with open( fault_block_file , "r") as fileH:
             fault_block_kw = EclKW.read_grdecl( fileH , fault_block_header , ecl_type = EclTypeEnum.ECL_INT_TYPE )
             if fault_block_kw is None:
-                sys.exit("Failed to load fault blocks from file:%s" % fault_block_file )
+                sys.exit("\nFailed to load fault blocks from file:%s" % fault_block_file )
+    else:
+        sys.exit("\nCould not load fault blocks from:%s" % fault_block_file)
 
     faults = FaultCollection( grid )
     loadMessage( "Loading fault defintions from: %s" % ", ".join( faults_files ))
@@ -92,6 +103,7 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
     split_block_kw = EclKW.create("FAULTBLK" , grid.getGlobalSize() , EclTypeEnum.ECL_INT_TYPE)
     
     klist = range(grid.getNZ())
+    klist = [30]
     for k in klist:
         print "%d/%d" % (region_id , k)
         org_blocks = FaultBlockLayer( grid , k )
@@ -99,12 +111,38 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
         org_blocks.exportKeyword( new_fault_block_kw )
 
         split_blocks = region_def.splitFaultBlocks( grid , org_blocks )
-        internal_blocks = region_def.findInternalBlocks( grid , split_blocks )
+        for fault in faults:
+            split_blocks.addFaultBarrier( fault )
         split_blocks.exportKeyword( split_block_kw )
-    
+
+        fileH = open("split_blocks.grdecl","w")
+        split_block_kw.write_grdecl( fileH )
+        fileH.close()
+        
+        # Region3 : 81
+        # Region4 : 44
+        # Region5 : 80
+        start_block = split_blocks.getBlock( 80 )
+        print start_block
+        print start_block.getCentroid()
+        
+        internal_blocks = region_def.findInternalBlocks( grid , start_block , split_blocks )
+        
+        
         for block in internal_blocks:
             for g in block.getGlobalIndexList():
                 region_kw[g] = region_id
+
+        print "-----------------------------------------------------------------"
+        internal_blocks.sort( cmp_blocks )
+        for block in internal_blocks:
+            print "Block:%d [" % block.getBlockID(),
+            for b in block.getNeighbours():
+                print b.getBlockID(),
+            print "]"
+            
+
+
 
 
     fileH = open("init_blocks.grdecl","w")
@@ -116,6 +154,7 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
     fileH.close()
         
 
+installAbortSignals()
 (region_list , grid , fault_block_kw , faults) = loadCommandLineArgs( sys.argv )
 
 region_kw = EclKW.create("REGIONS" , grid.getGlobalSize() , EclTypeEnum.ECL_INT_TYPE)
