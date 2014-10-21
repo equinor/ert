@@ -39,33 +39,7 @@ class GridTest(ExtendedTestCase):
     def grdecl_file(self):
         return self.createTestPath("Statoil/ECLIPSE/Gurbat/include/example_grid_sim.GRDECL")
 
-    def test_dims(self):
-        grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) )
-        self.assertEqual( grid.getNX() , 10 )
-        self.assertEqual( grid.getNY() , 20 )
-        self.assertEqual( grid.getNZ() , 30 )
-        self.assertEqual( grid.getGlobalSize() , 30*10*20 )
-
         
-
-    def test_node_pos(self):
-        grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) )
-        with self.assertRaises(IndexError):
-            grid.getNodePos(-1,0,0)
-
-        with self.assertRaises(IndexError):
-            grid.getNodePos(11,0,0)
-
-        p0 = grid.getNodePos(0,0,0)
-        self.assertEqual( p0 , (0,0,0))
-
-        p7 = grid.getNodePos(10,20,30)
-        self.assertEqual( p7 , (10,20,30))
-
-
-
-
-
 
     def test_corner(self):
         grid = EclGrid(self.egrid_file())
