@@ -414,6 +414,10 @@ add_test( NAME python.tests.ert.ecl.ecl_grid_statoil
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_grid_statoil.GridTest )
 
+add_test( NAME python.tests.ert.ecl.ecl_grid
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_grid.GridTest )
+
 add_test( NAME python.tests.ert.ecl.ecl_kw
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_kw.KWTest )
@@ -635,6 +639,7 @@ set_property( TEST python.tests.ert.import                PROPERTY LABELS Python
 set_property( TEST python.tests.ert.util.stringlist       PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.ecl.faults            PROPERTY LABELS Python )
+set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python )
 
 set_property( TEST python.tests.ert.ecl.region_definition_statoil PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.fault_blocks_statoil  PROPERTY LABELS Python:StatoilData )
