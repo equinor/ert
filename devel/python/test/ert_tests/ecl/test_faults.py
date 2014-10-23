@@ -22,7 +22,7 @@ except ImportError:
 import time
 from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment
 from ert.ecl import EclGrid
-from ert.test import ExtendedTestCase
+from ert.test import ExtendedTestCase, TestAreaContext
 from ert.geo import Polyline
 
 class FaultTest(ExtendedTestCase):
@@ -225,8 +225,45 @@ class FaultTest(ExtendedTestCase):
                     fl.verify()
 
 
+    def test_fault_line_order(self):
+        nx = 120
+        ny = 60
+        nz = 43
+        grid = EclGrid.create_rectangular( (nx , ny , nz) , (1,1,1) )
+        with TestAreaContext("python/faults/line_order"):
+            with open("faults.grdecl" , "w") as f:
+                f.write("""FAULTS
+\'F\'              105  107     50   50      1   43    \'Y\'    /
+\'F\'              108  108     50   50      1   43    \'X\'    /
+\'F\'              108  108     50   50     22   43    \'Y\'    /
+\'F\'              109  109     49   49      1   43    \'Y\'    /
+\'F\'              110  110     49   49      1   43    \'X\'    /
+\'F\'              111  111     48   48      1   43    \'Y\'    /
+/
+""")                
+            with open("faults.grdecl") as f:
+                faults = FaultCollection( grid , "faults.grdecl" )
+        
+        fault = faults["F"]
+        layer = fault[29]
+        self.assertEqual(len(layer) , 2)
 
-                    
+        line1 = layer[0]
+        line2 = layer[1]
+        self.assertEqual(len(line1) , 4)
+        self.assertEqual(len(line2) , 2)
+        
+        seg0 = line1[0]
+        seg1 = line1[1]
+        seg2 = line1[2]
+        seg3 = line1[3]
+        self.assertEqual( seg0.getCorners() , (50 * (nx + 1) + 104 , 50 * (nx + 1) + 107))
+        self.assertEqual( seg1.getCorners() , (50 * (nx + 1) + 107 , 50 * (nx + 1) + 108))
+        self.assertEqual( seg2.getCorners() , (50 * (nx + 1) + 108 , 49 * (nx + 1) + 108))
+        self.assertEqual( seg3.getCorners() , (49 * (nx + 1) + 108 , 49 * (nx + 1) + 109))
+        
+
+
 
     def test_neighbour_cells(self):
         nx = 10

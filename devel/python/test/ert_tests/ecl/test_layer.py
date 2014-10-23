@@ -20,8 +20,10 @@ except ImportError:
     from unittest import skipIf
 
 import time
-from ert.ecl.faults import Layer
-from ert.test import ExtendedTestCase
+from ert.ecl import EclGrid
+from ert.ecl.faults import Layer , FaultCollection
+from ert.test import ExtendedTestCase , TestAreaContext
+
 
 class LayerTest(ExtendedTestCase):
     def setUp(self):
@@ -47,3 +49,110 @@ class LayerTest(ExtendedTestCase):
         layer[5,5] = 88
         self.assertEqual(layer[5,5] , 88)
         
+
+
+    def test_contact(self):
+        nx = 20
+        ny = 10
+        layer = Layer(nx,ny)
+        grid = EclGrid.createRectangular( (nx,ny,1) , (1,1,1) )
+        
+        with self.assertRaises(IndexError):
+            layer.cellContact( (-1,0),(1,1) )
+
+        with self.assertRaises(IndexError):
+            layer.cellContact( (20,0),(1,1) )
+
+
+        self.assertFalse( layer.cellContact((0,0) , (2,0)) )
+        self.assertFalse( layer.cellContact((1,0) , (1,0)) )
+
+        self.assertTrue( layer.cellContact((0,0) , (1,0)) )
+        self.assertTrue( layer.cellContact((1,0) , (0,0)) )
+
+        self.assertTrue( layer.cellContact((0,0) , (0,1)) )
+        self.assertTrue( layer.cellContact((0,1) , (0,0)) )
+
+        self.assertFalse( layer.cellContact((0,0) , (1,1)) )
+        self.assertFalse( layer.cellContact((1,1) , (0,0)) )
+        
+        self.assertTrue( layer.cellContact((4,0) , (5,0)) )
+        self.assertTrue( layer.cellContact((0,4) , (0,5)) )
+        
+        with TestAreaContext("Layer/barrier"):
+            with open("faults.grdecl" , "w") as f:
+                f.write("FAULTS\n")
+                f.write("\'FX\'   5   5   1   10   1   1  'X'  /\n")
+                f.write("\'FY\'   1   10   5   5   1   1  'Y'  /\n")
+                f.write("/")
+                
+            faults = FaultCollection( grid , "faults.grdecl")
+            
+        layer.addFaultBarrier( faults["FX"] , 0 )
+        self.assertFalse( layer.cellContact((4,0) , (5,0)) )
+
+        layer.addFaultBarrier( faults["FY"] , 0 )
+        self.assertFalse( layer.cellContact((0,4) , (0,5)) )
+
+        self.assertFalse( layer.cellContact((9,4) , (9,5)) )
+        self.assertTrue( layer.cellContact((10,4) , (10,5)) )
+        
+    
+    def test_fault_barrier(self):
+        nx = 120
+        ny = 60
+        nz = 43
+        grid = EclGrid.create_rectangular( (nx , ny , nz) , (1,1,1) )
+        with TestAreaContext("python/faults/line_order"):
+            with open("faults.grdecl" , "w") as f:
+                f.write("""FAULTS
+\'F\'              105  107     50   50      1   43    \'Y\'    / 
+\'F\'              108  108     50   50      1   43    \'X\'    /
+\'F\'              108  108     50   50     22   43    \'Y\'    /
+\'F\'              109  109     49   49      1   43    \'Y\'    /
+\'F\'              110  110     49   49      1   43    \'X\'    /
+\'F\'              111  111     48   48      1   43    \'Y\'    /
+/
+""")                
+            with open("faults.grdecl") as f:
+                faults = FaultCollection( grid , "faults.grdecl" )
+
+
+        # Fault layout:                
+        #
+        # +---+---+---+---+
+        #                 |
+        #                 +---+   +  
+        #                         |
+        #                         +---+ 
+
+        
+        fault = faults["F"]
+        layer = Layer(nx,ny)
+        fault_pairs = [((104,49),(104,50)),
+                       ((105,49),(105,50)),
+                       ((106,49),(106,50)),
+                       ((107,49),(108,49)),
+                       ((107,49),(107,50)),
+                       ((108,48),(108,49)),
+                       ((109,48),(110,48)),
+                       ((110,47),(110,48))]
+        gap_pair = ((109,48),(109,49))
+
+
+        for p1,p2 in fault_pairs:
+            self.assertTrue(layer.cellContact( p1 , p2 ))
+
+        p1,p2 = gap_pair
+        self.assertTrue(layer.cellContact( p1 , p2 ))
+
+
+        layer.addFaultBarrier(fault , 30 , link_segments = False)
+        for p1,p2 in fault_pairs:
+            self.assertFalse(layer.cellContact( p1 , p2 ))
+        p1,p2 = gap_pair
+        self.assertTrue(layer.cellContact( p1 , p2 ))
+
+        layer.addFaultBarrier(fault , 30)
+        p1,p2 = gap_pair
+        self.assertFalse(layer.cellContact( p1 , p2 ))
