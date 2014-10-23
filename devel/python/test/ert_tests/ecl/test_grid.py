@@ -63,6 +63,21 @@ class GridTest(ExtendedTestCase):
             with self.assertRaises(IOError):
                 EclGrid("TEST.EGRID")
 
+    def test_posXY1(self):
+        nx = 4
+        ny = 1
+        nz = 1
+        grid = EclGrid.createRectangular( (nx,ny,nz) , (1,1,1) )
+        (i,j) = grid.findCellXY( 0.5 , 0.5, 0 )   
+        self.assertEqual(i , 0)
+        self.assertEqual(j , 0)
+
+        (i,j) = grid.findCellXY( 3.5 , 0.5, 0 )   
+        self.assertEqual(i , 3)
+        self.assertEqual(j , 0)
+
+
+
 
     def test_posXY(self):
         nx = 10
