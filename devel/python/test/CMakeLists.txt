@@ -445,7 +445,7 @@ add_test( NAME python.tests.ert.ecl.ecl_sum_vector
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_sum_vector.EclSumVectorTest)
 
-add_test( NAME python.tests.ert.ecl.ecl_sum
+add_test( NAME python.tests.ert.ecl.ecl_sum_time_range
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_sum.EclSumTest)
 
