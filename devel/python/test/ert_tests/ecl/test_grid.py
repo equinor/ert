@@ -89,3 +89,19 @@ class GridTest(ExtendedTestCase):
                 p = grid.findCellXY(i + 0.5 , j+ 0.5 , 0)
                 self.assertEqual( p[0] , i )
                 self.assertEqual( p[1] , j )
+        
+        c = grid.findCellCornerXY( 0.10 , 0.10 , 0 )
+        self.assertEqual(c , 0)
+        
+        c = grid.findCellCornerXY( 0.90 , 0.90 , 0 )
+        self.assertEqual( c , (nx + 1) + 1 )
+
+        c = grid.findCellCornerXY( 0.10 , 0.90 , 0 )
+        self.assertEqual( c , (nx + 1) )
+
+        c = grid.findCellCornerXY( 0.90 , 0.90 , 0 )
+        self.assertEqual( c , (nx + 1) + 1 )
+
+        c = grid.findCellCornerXY( 0.90 , 0.10 , 0 )
+        self.assertEqual( c , 1 )
+        
