@@ -40,4 +40,4 @@ class EclSumTest(ExtendedTestCase):
     def test_time_range_month(self):
         real_range = self.ecl_sum.timeRange(interval = "1m", extend_end = False)
         extended_range = self.ecl_sum.timeRange(interval = "1m", extend_end = True)
-        assert real_range[-1] > extended_range[-1]
+        assert real_range[-1] < extended_range[-1]
