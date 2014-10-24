@@ -643,6 +643,7 @@ set_property( TEST python.tests.ert.enkf.ert_test_context     PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data_config PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data        PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.ecl.ecl_sum_time_range    PROPERTY LABELS Python:StatoilData )
 
 if (ERT_BUILD_GUI)
    set_property( TEST python.tests.ert_gui.import         PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
