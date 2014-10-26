@@ -66,3 +66,17 @@ void job_queue_manager_wait( job_queue_manager_type * manager) {
   pthread_join( manager->queue_thread , NULL );   
 }
 
+
+
+bool job_queue_manager_is_running( const job_queue_manager_type * manager) {
+  return job_queue_is_running( manager->job_queue );
+}
+
+int job_queue_manager_get_num_running( const job_queue_manager_type * manager) {
+  return job_queue_get_num_running( manager->job_queue );
+}
+
+
+int job_queue_manager_get_num_complete( const job_queue_manager_type * manager) {
+  return job_queue_get_num_complete( manager->job_queue );
+}
