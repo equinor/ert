@@ -123,7 +123,8 @@ typedef struct enkf_state_struct    enkf_state_type;
 
   rng_type         * enkf_state_get_rng( const enkf_state_type * enkf_state );
   unsigned int       enkf_state_get_random( enkf_state_type * enkf_state );
-  run_status_type enkf_state_get_simple_run_status(const enkf_state_type * state);
+  run_status_type    enkf_state_get_simple_run_status(const enkf_state_type * state);
+  void               enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value , const char * doc_string);
 
 /******************************************************************/
 /* Forward model callbacks: */
