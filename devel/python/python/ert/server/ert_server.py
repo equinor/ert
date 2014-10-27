@@ -22,6 +22,7 @@ import os
 from ert.enkf import EnKFMain,RunArg
 from ert.enkf.enums import EnkfRunType , EnkfStateType
 from ert.enkf import NodeId
+from ert.util import installAbortSignals
 
 from .run_context import RunContext
 
@@ -34,6 +35,8 @@ class ErtServer(object):
     site_config = None
 
     def __init__(self , config_file = None):
+        installAbortSignals()
+
         self.ert_handle = None
         if config_file:
             if os.path.exists(config_file):
@@ -42,6 +45,7 @@ class ErtServer(object):
                 raise IOError("The config file:%s does not exist" % config_file)
         self.initCmdTable()
         self.run_context = None
+
 
 
 
