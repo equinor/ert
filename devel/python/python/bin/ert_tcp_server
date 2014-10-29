@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import sys
+import time
+import socket
 from ert.server import ErtSocket
 
 if len(sys.argv) < 3:
@@ -13,8 +15,25 @@ else:
    host = "localhost"
 
 
+timeout    = 60
+sleep_time = 5
+start_time = time.time()
+while True:
+    try:
+        ert_socket = ErtSocket(config_file , port, host)
+        print "\nERT Server is accepting connections on port:%d => " % port,
+        sys.stdout.flush()
+        break
+    except socket.error:
+        print "FAILED to start ErtServer: Will retry in %d seconds ... " % sleep_time,
+        sys.stdout.flush()
+        if time.time() - start_time > 60:
+            sys.exit("Failed to open ERT handle to:%s " % config_file)
 
-ert_socket = ErtSocket(config_file , port, host)
+        time.sleep( sleep_time )
+        print 
+
+
 
 status = ert_socket.evalCmd(["STATUS"])
 if status[0] == "READY":
