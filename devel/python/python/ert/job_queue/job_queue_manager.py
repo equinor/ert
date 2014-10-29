@@ -48,6 +48,9 @@ class JobQueueManager(BaseCClass):
     def free(self):
         JobQueueManager.cNamespace().free(self)
 
+    def jobComplete(self , job_index):
+        return JobQueueManager.cNamespace().job_complete( self , job_index )
+        
     
         
 
@@ -62,3 +65,4 @@ JobQueueManager.cNamespace().start_queue       = cwrapper.prototype("void job_qu
 JobQueueManager.cNamespace().get_num_running   = cwrapper.prototype("int job_queue_manager_get_num_running( job_queue_manager )")
 JobQueueManager.cNamespace().get_num_complete  = cwrapper.prototype("int job_queue_manager_get_num_complete( job_queue_manager )")
 JobQueueManager.cNamespace().is_running        = cwrapper.prototype("bool job_queue_manager_is_running( job_queue_manager )")
+JobQueueManager.cNamespace().job_complete      = cwrapper.prototype("bool job_queue_manager_job_complete( job_queue_manager , int)")
