@@ -78,6 +78,8 @@ class EnkfNode(BaseCClass):
 
         return EnkfNode.cNamespace().try_load(self, fs, node_id)
 
+    def name(self):
+        return EnkfNode.cNamespace().get_name(self)
     def save(self , fs , node_id ):
         EnkfNode.cNamespace().store(self , fs , True , node_id)
 
