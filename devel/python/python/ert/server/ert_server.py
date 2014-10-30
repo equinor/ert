@@ -29,6 +29,12 @@ from .run_context import RunContext
 class ErtCmdError(Exception):
     pass
 
+def SUCCESS(res):
+    return ["OK"] + res
+
+
+def ERROR(msg , exception = None):
+    return ["ERROR", msg]
 
 
 class ErtServer(object):

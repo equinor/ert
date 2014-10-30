@@ -21,7 +21,7 @@ import threading
 import json
 import traceback
 
-from ert.server import ErtServer
+from ert.server import ErtServer, SUCCESS , ERROR
 
 class ErtHandler(SocketServer.StreamRequestHandler):
     ert_server = None
