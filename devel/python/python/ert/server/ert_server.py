@@ -34,15 +34,16 @@ class ErtCmdError(Exception):
 class ErtServer(object):
     site_config = None
 
-    def __init__(self , config_file = None):
+    def __init__(self , config_file , logger):
         installAbortSignals()
 
         self.ert_handle = None
-        if config_file:
-            if os.path.exists(config_file):
-                self.open( config_file )
-            else:
-                raise IOError("The config file:%s does not exist" % config_file)
+        if os.path.exists(config_file):
+            self.open( config_file )
+        else:
+            raise IOError("The config file:%s does not exist" % config_file)
+
+        self.logger = logger
         self.initCmdTable()
         self.run_context = None
         self.init_fs = None

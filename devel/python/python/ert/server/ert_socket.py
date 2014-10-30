@@ -26,7 +26,7 @@ from ert.server import ErtServer
 class ErtHandler(SocketServer.StreamRequestHandler):
     ert_server = None
     config_file = None
-    
+    logger = None
     
     def handle(self):
         data = self.rfile.readline().strip()
@@ -58,7 +58,6 @@ class ErtHandler(SocketServer.StreamRequestHandler):
 
         
     def handleQuit(self):
-        print "Handling QUIT - shutting down ert server"
         self.wfile.write(json.dumps(["QUIT"]))
         shutdown_thread = threading.Thread( target = self.server.shutdown )
         shutdown_thread.start()
@@ -71,17 +70,19 @@ class ThreadedSocket(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 
 class ErtSocket(object):
 
-    def __init__(self , config_file , port , host = "localhost"):
+    def __init__(self , config_file , port , host , logger):
         self.server = ThreadedSocket((host , port) , ErtHandler)
-        self.open(config_file)
+        self.open(config_file , logger)
 
 
-    def open(self , config_file):
+    def open(self , config_file , logger):
         try:
-            ert_server = ErtServer( config_file )
+            ert_server = ErtServer( config_file , logger )
         except Exception:
             ert_server = ErtServer( )
+
         ErtHandler.ert_server = ert_server
+
 
 
     def evalCmd(self , cmd):
