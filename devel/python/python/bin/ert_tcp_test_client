@@ -5,6 +5,7 @@ import json
 import time
 from   argparse import ArgumentParser
 
+from ert.server import ErtClient
 default_host = "localhost"
 default_port = 2000
 
@@ -33,31 +34,6 @@ default_port = 2000
 # with --host=hostname:port
 
 
-class Connection(object):
-    def __init__(self , port , host):
-        self.socket = socket.socket( socket.AF_INET , socket.SOCK_STREAM)
-        self.port = port
-        self.host = host
-        self.socket.setblocking(1)
-        try:
-            self.socket.connect((self.host , self.port))
-        except socket.error:
-            sys.exit("Failed to connect to port:%d at %s." % (port , host))
-
-
-    def sendRecv(self , data):
-        self.socket.sendall( json.dumps(data) + "\n" )
-        recv = self.socket.recv(1024)
-        return json.loads(recv)
-
-
-    @staticmethod
-    def runCommand( cmd , port , host):
-        conn = Connection( port , host )
-        return conn.sendRecv( cmd )
-
-
-
 
 
 def runClient(args):
@@ -78,7 +54,7 @@ def runJsonFile(filename , port , host):
                         runClient( cmd[1:] )
                     else:
                         print "Sending: %s" % cmd
-                        result = Connection.runCommand( cmd , port , host )
+                        result = ErtClient.runCommand( cmd , port , host )
                         print "Result:  %s" % result
                         print
                 except ValueError,e:
@@ -88,7 +64,7 @@ def runJsonFile(filename , port , host):
 
 def block_while_running():
     while True:
-        tmp = Connection.runCommand( ["STATUS"] , port , host )
+        tmp = ErtClient.runCommand( ["STATUS"] , port , host )
         result = str(tmp[0])
         if result == "COMPLETE":
             break
