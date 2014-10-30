@@ -2,17 +2,65 @@
 import sys
 import time
 import socket
+import os.path
+import argparse
+import logging
+
 from ert.server import ErtSocket
 
-if len(sys.argv) < 3:
-    sys.exit("\nUsage:\n   ert_tcp_server   config_file   port\n")
+default_port = 2000
 
-config_file = sys.argv[1]
-port = int(sys.argv[2])
-if len(sys.argv) >= 4:
-   host = sys.argv[3]
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--port"      , type=int , default = default_port , dest="port")
+parser.add_argument("--localhost" , default = False , action = "store_true" , dest="localhost")
+parser.add_argument("--log-file"  , default = "ert-server.log" , dest="log_file")
+parser.add_argument("--log-level" , type=int , default= 1 , dest="log_level")
+parser.add_argument("config_file" )
+
+args = parser.parse_args()
+
+config_file = args.config_file
+port = args.port
+log_level = args.log_level
+
+
+# If the log-file is given as a relative path (the default) the log
+# file will be located in the same directory as the ert configuration file.
+if os.path.isabs( args.log_file ):
+    log_file = args.log_file
 else:
-   host = "localhost"
+    config_path = os.path.dirname( os.path.abspath( config_file ))
+    log_file = os.path.join( config_path , args.log_file )
+
+
+# By default the server will bind with the publicly available hostname
+# socket.gethostname() - meaning that clients can connect from
+# anywhere, but by using the --localhost switch the server can be
+# instructed to only accept connections from localhost.
+if args.localhost:
+    host = "localhost"
+else:
+    host = socket.gethostname()
+
+# Create a logger object.
+logger = logging.Logger("ert-server")
+formatter = logging.Formatter("%(levelname)s:%(message)s")
+if args.log_level == 0:
+    handler = logging.NullHandler()
+else:
+    handler = logging.FileHandler(log_file , mode = "w")
+handler.setFormatter( formatter )
+logger.addHandler( handler )
+
+
+if log_level == 0:
+    # In this case the NullHandler is used - makes no difference what the level is set to.
+    pass
+elif log_level == 1: 
+    logger.setLevel(logging.INFO)
+elif log_level == 2:
+    logger.setLevel(logger.DEBUG)
 
 
 timeout    = 60
@@ -20,7 +68,7 @@ sleep_time = 5
 start_time = time.time()
 while True:
     try:
-        ert_socket = ErtSocket(config_file , port, host)
+        ert_socket = ErtSocket(config_file , port, host , logger)
         print "\nERT Server is accepting connections on port:%d => " % port,
         sys.stdout.flush()
         break

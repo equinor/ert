@@ -21,6 +21,7 @@ import os
 import signal
 import json
 import sys 
+import logging
 
 try:
     from unittest2 import skipIf, skipUnless, skipIf
@@ -38,7 +39,8 @@ class ServerTest(ExtendedTestCase):
     def setUp(self):
         self.config_path = self.createTestPath("local/resopt/config/simple")
         self.config_file = "config"
-
+        self.logger = loggin.getLogger("test")
+        self.logger.addHandler( logging.NUllHandler )
 
     def testCreate(self):
         with TestAreaContext("server/server") as work_area:
@@ -47,22 +49,14 @@ class ServerTest(ExtendedTestCase):
             with self.assertRaises(IOError):
                 ert_server = ErtServer( "Does/not/exist" )
                 
-            ert_server = ErtServer(self.config_file)
+            ert_server = ErtServer(self.config_file , self.logger)
             self.assertTrue( ert_server.isConnected() )
+            with self.assertRaises(ErtCmdError):
+                res = ert_server.evalCmd( ["UNKNWON-COMMAND"])
+
             ert_server.close()
             self.assertTrue( not ert_server.isConnected() )
             
-            ert_server = ErtServer()
-            self.assertTrue( not ert_server.isConnected() )
-            ert_server.open( self.config_file )
-            self.assertTrue( ert_server.isConnected() )
-            
-            cmd = ["STATUS"]
-            res = ert_server.evalCmd( cmd )
-            self.assertEqual( res , ["READY"] )
-
-            with self.assertRaises(ErtCmdError):
-                res = ert_server.evalCmd( ["UNKNWON-COMMAND"])
             
 
     def testSimulations(self):
@@ -70,7 +64,7 @@ class ServerTest(ExtendedTestCase):
             work_area.copy_directory_content(self.config_path)
 
             
-            ert_server = ErtServer(self.config_file)
+            ert_server = ErtServer(self.config_file , self.logger)
             cmd = ["INIT_SIMULATIONS"]
             with self.assertRaises(ErtCmdError):
                 res = ert_server.evalCmd( cmd )
