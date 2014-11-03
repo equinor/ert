@@ -28,7 +28,7 @@ try:
 except ImportError:
     from unittest import skipIf, skipUnless, skipIf
 
-from ert.server import ErtServer,ErtCmdError
+from ert.server import ErtServer
 from ert.util import StringList, TimeVector, DoubleVector
 
 from ert.test import ExtendedTestCase , TestAreaContext
@@ -39,19 +39,20 @@ class ServerTest(ExtendedTestCase):
     def setUp(self):
         self.config_path = self.createTestPath("local/resopt/config/simple")
         self.config_file = "config"
-        self.logger = loggin.getLogger("test")
-        self.logger.addHandler( logging.NUllHandler )
+        self.logger = logging.getLogger("test")
+        self.logger.addHandler( logging.NullHandler )
+
 
     def testCreate(self):
         with TestAreaContext("server/server") as work_area:
             work_area.copy_directory_content(self.config_path)
 
             with self.assertRaises(IOError):
-                ert_server = ErtServer( "Does/not/exist" )
+                ert_server = ErtServer( "Does/not/exist" , self.logger)
                 
             ert_server = ErtServer(self.config_file , self.logger)
             self.assertTrue( ert_server.isConnected() )
-            with self.assertRaises(ErtCmdError):
+            with self.assertRaises(KeyError):
                 res = ert_server.evalCmd( ["UNKNWON-COMMAND"])
 
             ert_server.close()
@@ -66,15 +67,20 @@ class ServerTest(ExtendedTestCase):
             
             ert_server = ErtServer(self.config_file , self.logger)
             cmd = ["INIT_SIMULATIONS"]
-            with self.assertRaises(ErtCmdError):
+            with self.assertRaises(IndexError):
+                res = ert_server.evalCmd( cmd )
+
+            cmd = ["UNKNOWN_COMMAND"]
+            with self.assertRaises(KeyError):
                 res = ert_server.evalCmd( cmd )
                 
-            cmd = ["INIT_SIMULATIONS" , 100 , "Init_case"]
-            res = ert_server.evalCmd( cmd )
+            cmd = ["GET_RESULT"]   # Missing arguments
+            with self.assertRaises(IndexError):
+                res = ert_server.evalCmd( cmd )
 
-            cmd = ["STATUS"]
-            res = ert_server.evalCmd( cmd )
-            self.assertEqual( res , ["RUNNING" , 0 , 0 ])
-            
-            cmd = ["START_SIMULATION" , "0"]
-            
+            cmd = ["GET_RESULT" , 1 , 1 , "KW"]  #Missing keyword
+            with self.assertRaises(KeyError):
+                res = ert_server.evalCmd( cmd )
+                
+
+                        

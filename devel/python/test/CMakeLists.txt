@@ -591,13 +591,13 @@ add_test( NAME python.tests.ert.geometry.polygon_slicing
 
 #SERVER
 
-#add_test( NAME python.tests.ert.server.socket
-#          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-#          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.server.test_socket.SocketTest)
+add_test( NAME python.tests.ert.server.socket
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.server.test_socket.SocketTest)
 
-#add_test( NAME python.tests.ert.server.server
-#          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-#          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.server.test_server.ServerTest)
+add_test( NAME python.tests.ert.server.server
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.server.test_server.ServerTest)
 
 
 # ECL_WELL
