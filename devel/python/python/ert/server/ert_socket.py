@@ -20,6 +20,7 @@ import sys
 import threading
 import json
 import traceback
+import socket
 
 from ert.server import ErtServer, SUCCESS , ERROR
 
@@ -29,38 +30,38 @@ class ErtHandler(SocketServer.StreamRequestHandler):
     logger = None
     
     def handle(self):
-        data = self.rfile.readline().strip()
+        string_data = self.rfile.readline().strip()
         try:
-            json_data = json.loads( data )
-            if json_data[0] == "QUIT":
-                self.handleQuit()
-            else:
-                self.evalJson( json_data )
+            data = json.loads( string_data )
         except Exception,e:
-            self.handleInvalidJSON(data , "%s %s" % (e , traceback.format_exc()))
+            self.returnString(ERROR( "Invalid JSON input" , exception = e))
+            return
             
-
-
-    def evalJson(self , json_data):
-        cmd = json_data[0]
-        if cmd == "ECHO":
-            self.wfile.write( json.dumps( json_data[1:] ))
+        if data[0] == "QUIT":
+            self.handleQuit()
         else:
-            result = self.ert_server.evalCmd( json_data )
-            self.wfile.write( json.dumps( result ))
-            
-
-    
-    def handleInvalidJSON(self , data , e):
-        json_string = json.dumps({"ERROR" : "%s" % e , "input" : "%s" % data})
-        self.wfile.write( json_string )
+            self.evalCmd( data )
 
 
+    def returnToClient(self , data):
+        self.wfile.write(json.dumps(data))
         
+
+    def evalCmd(self , data):
+        try:
+            result = self.ert_server.evalCmd( data )
+        except Exception,e:
+            result = ERROR( "Exception raised" , exception = e)
+
+        self.returnToClient( result )
+
+
+
     def handleQuit(self):
-        self.wfile.write(json.dumps(["QUIT"]))
         shutdown_thread = threading.Thread( target = self.server.shutdown )
         shutdown_thread.start()
+        self.returnToClient( SUCCESS(["QUIT"]) )
+
 
 
 class ThreadedSocket(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
@@ -75,13 +76,28 @@ class ErtSocket(object):
         self.open(config_file , logger)
 
 
-    def open(self , config_file , logger):
-        try:
-            ert_server = ErtServer( config_file , logger )
-        except Exception:
-            ert_server = ErtServer( )
+    @staticmethod
+    def connect(config_file , port , host , logger , info_callback = None , timeout = 60 , sleep_time = 5):
+        start_time = time.time()
+        ert_socket = None
+        while True:
+            try:
+                ert_socket = ErtSocket(config_file , port, host , logger)
+                break
+            except socket.error:
+                if info_callback:
+                    info_callback( config_file , host , port )
+                    
+                if time.time() - start_time > timeout:
+                    break
+                    
+            time.sleep( sleep_time )
+        return ert_socket
 
-        ErtHandler.ert_server = ert_server
+
+
+    def open(self , config_file , logger):
+        ErtHandler.ert_server = ErtServer( config_file , logger )
 
 
 

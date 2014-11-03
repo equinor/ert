@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+import sys
 import socket
 import json
 
@@ -32,7 +33,13 @@ class ErtClient(object):
     def sendRecv(self , data):
         self.socket.sendall( json.dumps(data) + "\n" )
         recv = self.socket.recv(1024)
-        return json.loads(recv)
+        result = json.loads(recv)
+
+        if result[0] in ["OK" , "ERROR"]:
+            return result[1:]
+        else:
+            raise Exception("Ert server returned result[0] == %s - must have OK|ERROR as first element in return list" % result[0])
+            
 
 
     @staticmethod

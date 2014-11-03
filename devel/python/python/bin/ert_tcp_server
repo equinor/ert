@@ -10,6 +10,12 @@ from ert.server import ErtSocket
 
 default_port = 2000
 
+def connect_callback( config_file , host , port):
+    print "\nFAILED to start ErtServer: Will retry in %d seconds ... " % sleep_time,
+    sys.stdout.flush()
+                
+
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--port"      , type=int , default = default_port , dest="port")
@@ -63,29 +69,15 @@ elif log_level == 2:
     logger.setLevel(logger.DEBUG)
 
 
-timeout    = 60
-sleep_time = 5
-start_time = time.time()
-while True:
-    try:
-        ert_socket = ErtSocket(config_file , port, host , logger)
+socket = ErtSocket.connect(config_file , port , host , logger)
+if socket is None:
+    sys.exit("Failed to open ERT handle to:%s " % config_file)
+else:
+    status = ert_socket.evalCmd(["STATUS"])
+    if status[0] == "READY":
         print "\nERT Server is accepting connections on port:%d => " % port,
         sys.stdout.flush()
-        break
-    except socket.error:
-        print "FAILED to start ErtServer: Will retry in %d seconds ... " % sleep_time,
-        sys.stdout.flush()
-        if time.time() - start_time > 60:
-            sys.exit("Failed to open ERT handle to:%s " % config_file)
-
-        time.sleep( sleep_time )
-        print 
-
-
-
-status = ert_socket.evalCmd(["STATUS"])
-if status[0] == "READY":
-    ert_socket.listen()
-else:
-    sys.exit("Failed to open ERT handle to:%s " % config_file)
+        ert_socket.listen()
+    else:
+        sys.exit("Failed to open ERT handle to:%s " % config_file)
 

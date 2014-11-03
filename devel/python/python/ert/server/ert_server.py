@@ -18,6 +18,8 @@ import sys
 import threading
 import json
 import os
+import traceback
+
 
 from ert.enkf import EnKFMain,RunArg,EnkfFsManager
 from ert.enkf.enums import EnkfRunType, EnkfStateType, ErtImplType , EnkfVarType , RealizationStateEnum
@@ -26,15 +28,22 @@ from ert.util import installAbortSignals
 
 from .run_context import RunContext
 
-class ErtCmdError(Exception):
-    pass
+# The server will always return SUCCESS(), or alternatively raise an
+# exception. The ert_socket layer will catch the exception an return
+# an error message to the client. The error message will be created
+# with the ERROR function below.
+
 
 def SUCCESS(res):
     return ["OK"] + res
-
+    
 
 def ERROR(msg , exception = None):
-    return ["ERROR", msg]
+    result = ["ERROR", msg]
+    if exception:
+        result.append( "%s" % exception )
+    return result
+            
 
 
 class ErtServer(object):
@@ -62,7 +71,6 @@ class ErtServer(object):
         self.cmd_table = {"STATUS" : self.handleSTATUS ,
                           "INIT_SIMULATIONS" : self.handleINIT_SIMULATIONS ,
                           "ADD_SIMULATION" : self.handleADD_SIMULATION ,
-                          "SET_VARIABLE" : self.handleSET_VARIABLE ,
                           "GET_RESULT" : self.handleGET_RESULT }
 
 
@@ -97,27 +105,27 @@ class ErtServer(object):
         if func:
             return func(cmd_expr[1:])
         else:
-            raise ErtCmdError("The command:%s was not recognized" % cmd)
+            raise KeyError("The command:%s was not recognized" % cmd)
 
 
     def handleSTATUS(self , args):
         if self.isConnected():
             if self.run_context is None:
-                return ["READY"]
+                return SUCCESS(["READY"])
             else:
                 if self.run_context.isRunning():
                     if len(args) == 0:
-                        return ["RUNNING" , self.run_context.getNumRunning() , self.run_context.getNumComplete()]
+                        return SUCCESS(["RUNNING" , self.run_context.getNumRunning() , self.run_context.getNumComplete()])
                     else:
                         iens = args[0]
                         if self.run_context.realisationComplete(iens):
-                            return ["COMPLETE"]
+                            return SUCCESS(["COMPLETE"])
                         else:
-                            return ["RUNNING"]
+                            return SUCCESS(["RUNNING"])
                 else:
-                    return ["COMPLETE"]
+                    return SUCCESS(["COMPLETE"])
         else:
-            return ["CLOSED"]
+            return SUCCESS(["CLOSED"])
 
     
     def initSimulations(self , args):
@@ -152,9 +160,9 @@ class ErtServer(object):
                 
                 result = ["OK"]
                 
-            return result
+            return SUCCESS(result)
         else:
-            raise ErtCmdError("The INIT_SIMULATIONS command expects three arguments: [ensemble_size , init_case, run_case]")
+            raise IndexError("The INIT_SIMULATIONS command expects three arguments: [ensemble_size , init_case, run_case]")
 
 
     
@@ -173,34 +181,14 @@ class ErtServer(object):
             node_id = NodeId(report_step , iens , EnkfStateType.FORECAST )
             if node.tryLoad( fs , node_id ):
                 data = gen_data.getData()
-                return ["OK"] + data.asList()
+                return SUCCESS( ["OK"] + data.asList() )
             else:
-                raise ErtCmdError("Loading iens:%d  report:%d   kw:%s   failed" % (iens , report_step , kw))
+                raise Exception("Loading iens:%d  report:%d   kw:%s   failed" % (iens , report_step , kw))
         else:
-            raise ErtCmdError("The keyword:%s is not recognized" % kw)
+            raise KeyError("The keyword:%s is not recognized" % kw)
 
 
 
-
-    def handleSET_VARIABLE(self , args):
-        geo_id = args[0]
-        pert_id = args[1]
-        iens = args[2]
-        kw = str(args[3])
-
-        ensembleConfig = self.ert_handle.ensembleConfig()
-        if ensembleConfig.hasKey(kw):
-            state = self.ert_handle[iens]
-            node = state[kw]
-            gen_kw = node.asGenKw()
-            gen_kw.setValues(args[4:])
-            
-            fs = self.ert_handle.getEnkfFsManager().getCurrentFileSystem()
-            node_id = NodeId(0 , iens , EnkfStateType.ANALYZED )
-            node.save( fs , node_id )
-        else:
-            raise ErtCmdError("The keyword:%s is not recognized" % kw)
-            
 
 
     # ["ADD_SIMULATION" , 0 , 1 , 1 [ ["KW1" , ...] , ["KW2" , ....]]]
