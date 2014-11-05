@@ -127,6 +127,7 @@ set(TEST_SOURCES
     ert_tests/server/test_socket.py
 
     ert_tests/well/test_ecl_well.py
+    ert_tests/well/test_ecl_well2.py
 
     ecl_isosurf.py
     ens_config_test.py
@@ -605,6 +606,11 @@ add_test( NAME python.tests.ert.well.ecl_well
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.well.test_ecl_well.EclWellTest)
 
 
+add_test( NAME python.tests.ert.well.ecl_well2
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.well.test_ecl_well2.EclWellTest2)
+
+
 set_property( TEST python.tests.ert.sched.sched           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.fortio            PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_grdecl        PROPERTY LABELS Python:StatoilData )
@@ -622,6 +628,7 @@ set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_deprecation   PROPERTY LABELS Python )
 #set_property( TEST python.tests.import_local             PROPERTY LABELS Python:StatoilBuild )
 set_property( TEST python.tests.ert.well.ecl_well         PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.well.ecl_well2        PROPERTY LABELS Python:StatoilData )
 
 set_property( TEST python.tests.ert.test_run              PROPERTY LABELS Python)
 set_property( TEST python.tests.ert.import                PROPERTY LABELS Python)
