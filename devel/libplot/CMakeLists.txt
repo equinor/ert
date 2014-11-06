@@ -5,9 +5,10 @@ set( PLPLOT_INCLUDE_PATH ${PLPLOT_ROOT}/include )
 set( PLPLOT_LIB_PATH     ${PLPLOT_ROOT}/lib )
 
 list(APPEND CMAKE_LIBRARY_PATH ${PLPLOT_LIB_PATH})
+list(APPEND CMAKE_INCLUDE_PATH ${PLPLOT_INCLUDE_PATH})
 
 find_library(PLPLOT_LIBRARY NAMES plplotd)
-find_path( PLPLOT_HEADER  plplot/plplot.h  ${PLPLOT_INCLUDE_PATH} )
+find_path( PLPLOT_HEADER  plplot/plplot.h)
 
 include_directories( ${PLPLOT_INCLUDE_PATH} )
 include_directories( ${PLPLOT_HEADER} )
