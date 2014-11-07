@@ -86,7 +86,7 @@ class ErtSocket(object):
                 break
             except socket.error:
                 if info_callback:
-                    info_callback( config_file , host , port )
+                    info_callback( sleep_time , host , port )
                     
                 if time.time() - start_time > timeout:
                     break

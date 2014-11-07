@@ -5,13 +5,14 @@ import socket
 import os.path
 import argparse
 import logging
+import functools
 
 from ert.server import ErtSocket
 
 default_port = 2000
 
-def connect_callback( config_file , host , port):
-    print "\nFAILED to start ErtServer: Will retry in %d seconds ... " % sleep_time,
+def connect_callback( sleep_time , host , port):
+    print "\nFAILED to start ErtServer on %s:%d - will retry in %d seconds ... " % (host , port , sleep_time) ,
     sys.stdout.flush()
                 
 
@@ -69,13 +70,13 @@ elif log_level == 2:
     logger.setLevel(logger.DEBUG)
 
 
-socket = ErtSocket.connect(config_file , port , host , logger)
-if socket is None:
+ert_socket = ErtSocket.connect(config_file , port , host , logger , info_callback = connect_callback )
+if ert_socket is None:
     sys.exit("Failed to open ERT handle to:%s " % config_file)
 else:
     status = ert_socket.evalCmd(["STATUS"])
-    if status[0] == "READY":
-        print "\nERT Server is accepting connections on port:%d => " % port,
+    if status == ["OK" , "READY"]:
+        print "\nERT Server is accepting connections on %s:%d => " % (host , port),
         sys.stdout.flush()
         ert_socket.listen()
     else:

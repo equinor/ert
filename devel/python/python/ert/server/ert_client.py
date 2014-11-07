@@ -35,8 +35,11 @@ class ErtClient(object):
         recv = self.socket.recv(1024)
         result = json.loads(recv)
 
-        if result[0] in ["OK" , "ERROR"]:
+        result0 = result[0]
+        if result0 == "OK":
             return result[1:]
+        elif result0 == "ERROR":
+            raise Exception("Ert server returned error: %s" % result[1:])
         else:
             raise Exception("Ert server returned result[0] == %s - must have OK|ERROR as first element in return list" % result[0])
             
