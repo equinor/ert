@@ -78,7 +78,18 @@ class EnkfNode(BaseCClass):
 
         return EnkfNode.cNamespace().try_load(self, fs, node_id)
 
+    def name(self):
+        return EnkfNode.cNamespace().get_name(self)
+
+
+    def load(self , fs , node_id):
+        if not self.tryLoad(fs , node_id):
+            raise Exception("Could not load")
+
     def save(self , fs , node_id ):
+        assert isinstance(fs, EnkfFs)
+        assert isinstance(node_id, NodeId)
+        
         EnkfNode.cNamespace().store(self , fs , True , node_id)
 
 
@@ -92,6 +103,7 @@ cwrapper.registerObjectType("enkf_node", EnkfNode)
 EnkfNode.cNamespace().free = cwrapper.prototype("void enkf_node_free( enkf_node )")
 EnkfNode.cNamespace().alloc = cwrapper.prototype("c_void_p enkf_node_alloc(enkf_node)")
 EnkfNode.cNamespace().alloc_private = cwrapper.prototype("c_void_p enkf_node_alloc_private_container(enkf_node)")
+EnkfNode.cNamespace().get_name = cwrapper.prototype("char* enkf_node_get_key(enkf_node)")
 
 # EnkfNode.cNamespace().user_get = cwrapper.prototype("bool enkf_node_user_get_no_id(enkf_node , enkf_fs , char*  , int, int , c_uint, double*)")
 # EnkfNode.cNamespace().user_get_vector = cwrapper.prototype("bool enkf_node_user_get_vector( enkf_node , enkf_fs , char*, int, c_uint, double_vector)")
