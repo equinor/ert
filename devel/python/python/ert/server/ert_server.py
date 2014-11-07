@@ -18,7 +18,6 @@ import sys
 import threading
 import json
 import os
-import threading 
 
 from ert.enkf import EnKFMain,RunArg,EnkfFsManager
 from ert.enkf.enums import EnkfRunType, EnkfStateType, ErtImplType , EnkfVarType , RealizationStateEnum
