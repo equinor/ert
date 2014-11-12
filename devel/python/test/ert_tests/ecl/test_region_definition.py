@@ -20,7 +20,7 @@ except ImportError:
     from unittest import skipIf
 
 import time
-from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment, RegionDefinition, FaultBlockLayer
+from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment, RegionDefinition, FaultBlockLayer , RegionTools
 from ert.ecl import EclGrid, EclKW, EclTypeEnum
 from ert.test import ExtendedTestCase
 from ert.geo import Polyline
@@ -78,10 +78,10 @@ class RegionDefinitionTest(ExtendedTestCase):
         block_list2 = []
 
         with self.assertRaises(NotImplementedError):
-            block_list1 = reg1.findInternalBlocks(self.grid , reg1.splitFaultBlocks(self.grid , self.fault_blocks[0]))
+            block_list1 = RegionTools.findInternalBlocks(reg1 , self.grid , RegionTools.splitFaultBlocks(reg1 , self.grid , self.fault_blocks[0]))
 
         with self.assertRaises(NotImplementedError):
-            block_list2 = reg2.findInternalBlocks(self.grid , reg2.splitFaultBlocks(self.grid , self.fault_blocks[0]))
+            block_list2 = RegionTools.findInternalBlocks(reg2 , self.grid , RegionTools.splitFaultBlocks(reg2 , self.grid , self.fault_blocks[0]))
 
         if block_list1:
             for block in block_list1:
