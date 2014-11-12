@@ -20,7 +20,7 @@ except ImportError:
     from unittest import skipIf
 
 import time
-from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment, RegionDefinition, FaultBlockLayer
+from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment, RegionDefinition, FaultBlockLayer, RegionTools
 from ert.ecl import EclGrid, EclKW, EclTypeEnum
 from ert.test import ExtendedTestCase
 from ert.geo import Polyline

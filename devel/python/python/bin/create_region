@@ -2,7 +2,7 @@
 import sys
 import os.path
 from ert.ecl import EclGrid,EclKW,EclTypeEnum,FortIO
-from ert.ecl.faults import RegionDefinition,FaultBlockLayer,FaultCollection
+from ert.ecl.faults import RegionDefinition,FaultBlockLayer,FaultCollection,RegionTools
 from ert.util import installAbortSignals
 
 fault_block_header   = "FAULTBLK"
@@ -110,7 +110,7 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
         org_blocks.scanKeyword( fault_block_kw )
         org_blocks.exportKeyword( new_fault_block_kw )
 
-        split_blocks = region_def.splitFaultBlocks( grid , org_blocks )
+        split_blocks = RegionTools.splitFaultBlocks( region_def , grid , org_blocks )
         for fault in faults:
             split_blocks.addFaultBarrier( fault )
         split_blocks.exportKeyword( split_block_kw )
@@ -126,7 +126,7 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
         print start_block
         print start_block.getCentroid()
         
-        internal_blocks = region_def.findInternalBlocks( grid , start_block , split_blocks )
+        internal_blocks = RegionTools.findInternalBlocks( region_def , grid , start_block , split_blocks )
         
         
         for block in internal_blocks:
