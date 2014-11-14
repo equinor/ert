@@ -147,6 +147,7 @@ set(TEST_SOURCES
 
     ert_tests/geometry/__init__.py
     ert_tests/geometry/test_polyline.py
+    ert_tests/geometry/test_cpolyline.py
     ert_tests/geometry/test_intersection.py
     ert_tests/geometry/test_convex_hull.py
     ert_tests/geometry/test_point_in_polygon.py
@@ -393,6 +394,7 @@ addPythonTest(ert.geometry.intersection ert_tests.geometry.test_intersection.Int
 addPythonTest(ert.geometry.convex_hull ert_tests.geometry.test_convex_hull.ConvexHullTest)
 addPythonTest(ert.geometry.point_in_polygon ert_tests.geometry.test_point_in_polygon.PointInPolygonTest)
 addPythonTest(ert.geometry.polygon_slicing ert_tests.geometry.test_polygon_slicing.PolygonSlicingTest)
+addPythonTest(ert.geometry.cpolyline ert_tests.geometry.test_cpolyline.CPolylineTest)
 
 #SERVER
 addPythonTest(ert.server.socket ert_tests.server.test_socket.SocketTest LABELS StatoilData)
