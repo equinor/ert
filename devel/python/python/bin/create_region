@@ -111,8 +111,12 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
         org_blocks.exportKeyword( new_fault_block_kw )
 
         split_blocks = RegionTools.splitFaultBlocks( region_def , grid , org_blocks )
-        for fault in faults:
+        for fault in region_def.faults():
             split_blocks.addFaultBarrier( fault )
+
+        for pl in region_def.polylines():
+            split_blocks.addPolylineBarrier( pl )
+        
         split_blocks.exportKeyword( split_block_kw )
 
         fileH = open("split_blocks.grdecl","w")
@@ -120,9 +124,9 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
         fileH.close()
         
         # Region3 : 81
-        # Region4 : 44
+        # Region4 : 44 -> [44 , 53, 78]
         # Region5 : 80
-        start_block = split_blocks.getBlock( 80 )
+        start_block = split_blocks.getBlock( 44 )
         print start_block
         print start_block.getCentroid()
         
@@ -140,8 +144,16 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
             for b in block.getNeighbours():
                 print b.getBlockID(),
             print "]"
-            
 
+        print "-----------------------------------------------------------------"
+        expected = [44,53,78]
+        for b in expected:
+            block = split_blocks.getBlock(b)
+            print "Block:%d [" % block.getBlockID(),
+            for b in block.getNeighbours():
+                print b.getBlockID(),
+            print "]"
+            
 
 
 
