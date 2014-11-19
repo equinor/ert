@@ -53,18 +53,27 @@ class ErtServer(object):
         installAbortSignals()
 
         self.ert_handle = None
+        self.logger = logger
         if os.path.exists(config_file):
             self.open( config_file )
         else:
             raise IOError("The config file:%s does not exist" % config_file)
 
-        self.logger = logger
         self.initCmdTable()
         self.run_context = None
         self.init_fs = None
         self.run_fs = None
         self.run_count = 0
 
+
+    def SUCCESS(self , res):
+        self.logger.debug("Success: returning: %s" , res)
+        return SUCCESS(res)
+
+
+    def ERROR(self , res):
+        self.logger.debug("ERROR: returning: %s" , res)
+        return ERROR(res)
 
 
     def initCmdTable(self):
@@ -77,11 +86,12 @@ class ErtServer(object):
     def open(self , config_file):
         self.config_file = config_file
         self.ert_handle = EnKFMain( config_file , ErtServer.site_config )
-        
+        self.logger.info("Have connect ert handle to:%s" , config_file)
 
 
     def close(self):
         # More cleanup first ...
+        self.logger.info("Shutting down ert handle")
         self.ert_handle = None
 
 
@@ -101,7 +111,8 @@ class ErtServer(object):
     def evalCmd(self , cmd_expr):
         cmd = cmd_expr[0]
         func = self.cmd_table.get(cmd)
-
+        self.logger.info("Received command: %s" % cmd)
+        
         if func:
             return func(cmd_expr[1:])
         else:
@@ -111,21 +122,21 @@ class ErtServer(object):
     def handleSTATUS(self , args):
         if self.isConnected():
             if self.run_context is None:
-                return SUCCESS(["READY"])
+                return self.SUCCESS(["READY"])
             else:
                 if self.run_context.isRunning():
                     if len(args) == 0:
-                        return SUCCESS(["RUNNING" , self.run_context.getNumRunning() , self.run_context.getNumComplete()])
+                        return self.SUCCESS(["RUNNING" , self.run_context.getNumRunning() , self.run_context.getNumComplete()])
                     else:
                         iens = args[0]
                         if self.run_context.realisationComplete(iens):
-                            return SUCCESS(["COMPLETE"])
+                            return self.SUCCESS(["COMPLETE"])
                         else:
-                            return SUCCESS(["RUNNING"])
+                            return self.SUCCESS(["RUNNING"])
                 else:
-                    return SUCCESS(["COMPLETE"])
+                    return self.SUCCESS(["COMPLETE"])
         else:
-            return SUCCESS(["CLOSED"])
+            return self.SUCCESS(["CLOSED"])
 
     
     def initSimulations(self , args):
@@ -160,7 +171,7 @@ class ErtServer(object):
                 
                 result = ["OK"]
                 
-            return SUCCESS(result)
+            return self.SUCCESS(result)
         else:
             raise IndexError("The INIT_SIMULATIONS command expects three arguments: [ensemble_size , init_case, run_case]")
 
@@ -181,7 +192,7 @@ class ErtServer(object):
             node_id = NodeId(report_step , iens , EnkfStateType.FORECAST )
             if node.tryLoad( fs , node_id ):
                 data = gen_data.getData()
-                return SUCCESS( ["OK"] + data.asList() )
+                return self.SUCCESS( ["OK"] + data.asList() )
             else:
                 raise Exception("Loading iens:%d  report:%d   kw:%s   failed" % (iens , report_step , kw))
         else:
