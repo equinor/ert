@@ -52,6 +52,7 @@ class ErtServer(object):
     def __init__(self , config_file , logger):
         installAbortSignals()
 
+        self.queue_lock = threading.Lock()
         self.ert_handle = None
         self.logger = logger
         if os.path.exists(config_file):
@@ -160,9 +161,8 @@ class ErtServer(object):
 
     def handleINIT_SIMULATIONS(self , args):
         if len(args) == 3:
-            lock = threading.Lock()
             result = []
-            with lock:
+            with self.queue_lock:
                 if self.run_context is None:
                     self.initSimulations( args )
                 else:
