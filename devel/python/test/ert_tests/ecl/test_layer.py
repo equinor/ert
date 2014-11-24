@@ -156,3 +156,33 @@ class LayerTest(ExtendedTestCase):
         layer.addFaultBarrier(fault , 30)
         p1,p2 = gap_pair
         self.assertFalse(layer.cellContact( p1 , p2 ))
+
+
+    def test_contact2(self):
+        nx = 10
+        ny = 10
+        layer = Layer(nx,ny)
+        grid = EclGrid.createRectangular( (nx,ny,1) , (1,1,1) )
+
+        # Too short
+        with self.assertRaises(ValueError):
+            layer.addIJBarrier( [(1,5)] )
+
+        # Out of range
+        with self.assertRaises(ValueError):
+            layer.addIJBarrier( [(10,15),(5,5)] )
+
+        # Out of range
+        with self.assertRaises(ValueError):
+            layer.addIJBarrier( [(7,7),(-5,5)] )
+            
+        # Must have either i1 == i2 or j1 == j2
+        with self.assertRaises(ValueError):
+            layer.addIJBarrier( [(7,8),(6,5)] )
+
+        p1 = (0 , 4)
+        p2 = (0 , 5)
+        self.assertTrue(layer.cellContact( p1 , p2 ))
+        layer.addIJBarrier( [(0,5) , (nx , 5)] )
+        self.assertFalse(layer.cellContact( p1 , p2 ))
+
