@@ -64,15 +64,14 @@ class ErtHandler(SocketServer.StreamRequestHandler):
 
 
 
-class ThreadedSocket(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class ErtSocketServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     pass
     
-
 
 class ErtSocket(object):
 
     def __init__(self , config_file , port , host , logger):
-        self.server = ThreadedSocket((host , port) , ErtHandler)
+        self.server = ErtSocketServer((host , port) , ErtHandler)
         self.open(config_file , logger)
 
 

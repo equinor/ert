@@ -47,7 +47,7 @@ class SocketTest(ExtendedTestCase):
          self.host = "localhost"
          
          self.logger = logging.Logger("ert-server-test")
-         self.logger.addHandler( logging.NullHandler )
+         self.logger.addHandler( logging.NullHandler() )
 
 
 
