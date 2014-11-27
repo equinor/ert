@@ -39,6 +39,12 @@ class GridTest(ExtendedTestCase):
     def grdecl_file(self):
         return self.createTestPath("Statoil/ECLIPSE/Gurbat/include/example_grid_sim.GRDECL")
 
+    def test_loadFromFile(self):
+        g1 = EclGrid.loadFromFile( self.egrid_file() )
+        g2 = EclGrid.loadFromFile( self.grdecl_file() )
+
+        self.assertTrue( isinstance( g1 , EclGrid ) )
+        self.assertTrue( isinstance( g2 , EclGrid ) )
         
 
     def test_corner(self):
