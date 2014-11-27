@@ -99,3 +99,10 @@ class CPolylineTest(ExtendedTestCase):
 
         p2 = CPolyline( name = "Poly2" )
         self.assertEqual( p2.getName() , "Poly2")
+        
+
+    def test_unzip(self):
+        pl = CPolyline( init_points = [(0,3) , (1,4) , (2,5)] )
+        x,y = pl.unzip()
+        self.assertEqual(x , [0,1,2])
+        self.assertEqual(y , [3,4,5])
