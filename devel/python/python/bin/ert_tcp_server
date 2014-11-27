@@ -65,9 +65,9 @@ if log_level == 0:
     # In this case the NullHandler is used - makes no difference what the level is set to.
     pass
 elif log_level == 1: 
-    logger.setLevel(logging.INFO)
+    logger.setLevel( logging.INFO )
 elif log_level == 2:
-    logger.setLevel(logger.DEBUG)
+    logger.setLevel( logging.DEBUG )
 
 
 ert_socket = ErtSocket.connect(config_file , port , host , logger , info_callback = connect_callback )
