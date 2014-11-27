@@ -1,8 +1,9 @@
+import gc
 
 from ert.geo import CPolylineCollection , CPolyline
 from ert.geo.xyz_io import XYZIo
 from ert.test import ExtendedTestCase , TestAreaContext
-
+from ert.util import DoubleVector
 
 class CPolylineCollectionTest(ExtendedTestCase):
 
@@ -48,3 +49,49 @@ class CPolylineCollectionTest(ExtendedTestCase):
         self.assertEqual( len(pc) , 2 )
 
         
+    def create_collection(self):
+        collection = CPolylineCollection()
+        p1 = CPolyline( name = "POLY1" , init_points = [(0,10) , (1,11) , (2,12)])
+        p2 = CPolyline( name = "POLY2" , init_points = [(0,100) , (10,110) , (20,120)])
+        collection.addPolyline( p1 )
+        collection.addPolyline( p2 )
+
+        tail  = p1[-1]
+        self.assertEqual( tail , (2,12))
+        self.assertEqual(p1.getName() , "POLY1")
+        
+        tail  = p2[-1]
+        self.assertEqual( tail , (20,120))
+        self.assertEqual(p2.getName() , "POLY2")
+        
+        return collection
+
+
+    def test_gc_polyline(self):
+        # This should test that the elements in the collection can be
+        # safely accessed, even after the polyline objects p1 and p2
+        # from create_collection() have gone out of scope.
+        c = self.create_collection()
+        v = DoubleVector(initial_size = 10000)
+        
+        p1 = c[0]
+        tail  = p1[-1]
+        self.assertEqual( tail , (2,12))
+        self.assertEqual(p1.getName() , "POLY1")
+        
+        p2 = c[1]
+        tail  = p2[-1]
+        self.assertEqual( tail , (20,120))
+        self.assertEqual(p2.getName() , "POLY2")
+
+
+    def get_polyline(self):
+        collection = self.create_collection()
+        return collection[0]
+        
+
+    def test_gc_collection(self):
+        p1 = self.get_polyline()
+        tail  = p1[-1]
+        self.assertEqual( tail , (2,12))
+        self.assertEqual( p1.getName() , "POLY1")
