@@ -95,7 +95,7 @@ class CPolylineTest(ExtendedTestCase):
         
     def test_name(self):
         p1 = CPolyline()
-        self.assertTrue( p1.name() is None )
+        self.assertTrue( p1.getName() is None )
 
         p2 = CPolyline( name = "Poly2" )
-        self.assertEqual( p2.name() , "Poly2")
+        self.assertEqual( p2.getName() , "Poly2")
