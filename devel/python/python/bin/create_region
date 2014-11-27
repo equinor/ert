@@ -114,9 +114,10 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
         for fault in region_def.faults():
             split_blocks.addFaultBarrier( fault )
 
-        for pl in region_def.polylines():
-            split_blocks.addPolylineBarrier( pl )
-        
+        for fault,extend_to in region_def.faultConnections():
+            split_blocks.addFaultLink( fault , extend_to )
+            
+
         split_blocks.exportKeyword( split_block_kw )
 
         fileH = open("split_blocks.grdecl","w")
@@ -141,7 +142,7 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
         internal_blocks.sort( cmp_blocks )
         for block in internal_blocks:
             print "Block:%d [" % block.getBlockID(),
-            for b in block.getNeighbours():
+            for b in block.getNeighbours( polylines = region_def.polylines() ):
                 print b.getBlockID(),
             print "]"
 
@@ -150,7 +151,7 @@ def updateRegionsKeyword( region_kw , region_config , grid , fault_block_kw , fa
         for b in expected:
             block = split_blocks.getBlock(b)
             print "Block:%d [" % block.getBlockID(),
-            for b in block.getNeighbours():
+            for b in block.getNeighbours( polylines = region_def.polylines() ):
                 print b.getBlockID(),
             print "]"
             

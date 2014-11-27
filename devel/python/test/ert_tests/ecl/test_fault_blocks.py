@@ -21,7 +21,7 @@ except ImportError:
 
 from ert.ecl import EclGrid, EclTypeEnum , EclKW , EclRegion
 from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCell,FaultCollection
-from ert.geo import Polyline
+from ert.geo import Polyline , CPolylineCollection
 from ert.test import ExtendedTestCase , TestAreaContext
 
 
@@ -109,6 +109,8 @@ class FaultBlockTest(ExtendedTestCase):
         neighbours = block5.getNeighbours()
         self.assertEqual( len(neighbours) , 0)
 
+        
+
 
     def test_neighbours2(self):
         nx = 8
@@ -146,6 +148,26 @@ class FaultBlockTest(ExtendedTestCase):
         self.assertTrue( b2 in nb )
         self.assertTrue( b3 in nb )
         
+        polylines1 = CPolylineCollection()
+        p1 = polylines1.createPolyline(name="P1")
+        p1.addPoint(4,0)
+        p1.addPoint(4,4)
+        p1.addPoint(4,8)
+        nb = b1.getNeighbours( polylines = polylines1 )
+        self.assertFalse( b2 in nb )
+        self.assertTrue( b3 in nb )
+
+
+        polylines2 = CPolylineCollection()
+        p1 = polylines2.createPolyline(name="P2")
+        p1.addPoint(0,4)
+        p1.addPoint(4,4)
+        nb = b1.getNeighbours( polylines = polylines2 )
+        self.assertTrue( b2 in nb )
+        self.assertFalse( b3 in nb )
+
+        
+
         layer.addFaultBarrier( faults["FY"] )
         nb = b1.getNeighbours()
         self.assertTrue( b2 in nb )
@@ -154,7 +176,6 @@ class FaultBlockTest(ExtendedTestCase):
         layer.addFaultBarrier( faults["FX"] )
         nb = b1.getNeighbours()
         self.assertEqual( len(nb) , 0 )
-
 
 
     def test_neighbours3(self):
