@@ -32,6 +32,21 @@ class FaultTest(ExtendedTestCase):
         self.grid = EclGrid.create_rectangular( (151,100,50) , (1,1,1))
         
         
+    def test_PolylineIJ(self):
+        nx = 10
+        ny = 10
+        nz = 10
+        grid = EclGrid.create_rectangular( (nx,ny,nz) , (0.1,0.1,0.1))
+        f = Fault(grid , "F")
+        f.addRecord(0 , 1 , 0 , 0 , 0,0 , "Y-")
+        f.addRecord(2 , 2 , 0 , 1 , 0,0 , "X-")
+        f.addRecord(2 , 2 , 1 , 1 , 0,0 , "Y")
+        
+        pl = f.getIJPolyline( 0 )
+        print pl
+        self.assertEqual(pl , [(0,0) , (2,0) , (2,2) , (3,2)])
+        
+
     def test_empty_collection(self):
         faults = FaultCollection(self.grid)
         self.assertEqual(0 , len(faults))
@@ -158,7 +173,66 @@ class FaultTest(ExtendedTestCase):
         with self.assertRaises(IOError):
             faults.load("No/this/does/not/exist")
 
-            
+
+    def test_connect_faults(self):
+        grid = EclGrid.create_rectangular( (100,100,10) , (1,1,1))
+
+        #    Fault1                    Fault4
+        #      |                         |
+        #      |                         |
+        #      |                         |
+        #      |   -------  Fault2       |
+        #      |                         |
+        #      |                         |
+        #
+        #          -------- Fault3
+        #
+
+        fault1 = Fault(grid , "Fault1")
+        fault2 = Fault(grid , "Fault2")
+        fault3 = Fault(grid , "Fault3")
+        fault4 = Fault(grid , "Fault4")
+
+        fault1.addRecord(1 , 1 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+        fault2.addRecord(5 , 10 , 15 , 15 , 0 , 0 , "Y")
+        fault3.addRecord(5 , 10 , 5 , 5 , 0 , 0 , "Y")
+        fault4.addRecord(20 , 20 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+
+        
+        for other_fault in [fault2 , fault3,fault4]:
+            with self.assertRaises(ValueError):
+                fault1.extendToFault( other_fault ,0)
+
+        with self.assertRaises(ValueError):
+            fault2.extendToFault( fault3 , 0)
+
+        for other_fault in [fault1 , fault2,fault4]:
+            with self.assertRaises(ValueError):
+                fault3.extendToFault( other_fault ,0 )
+
+        for other_fault in [fault1 , fault2,fault3]:
+            with self.assertRaises(ValueError):
+                fault4.extendToFault( other_fault , 0)
+
+        ext21 = fault2.extendToFault( fault1 , 0)
+        self.assertEqual(len(ext21) , 2)
+        p0 = ext21[0]
+        p1 = ext21[1]
+        self.assertEqual(p0 , (5 , 16))
+        self.assertEqual(p1 , (2 , 16))
+        
+    
+        ext24 = fault2.extendToFault( fault4,0 )
+        self.assertEqual(len(ext24) , 2)
+        p0 = ext24[0]
+        p1 = ext24[1]
+        self.assertEqual(p0 , (11
+ , 16))
+        self.assertEqual(p1 , (21 , 16))
+                
+        
+        
+
     
     def test_iter(self):
         faults = FaultCollection(self.grid , self.faults1 , self.faults2)

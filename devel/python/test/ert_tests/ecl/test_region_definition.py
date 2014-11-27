@@ -51,14 +51,6 @@ class RegionDefinitionTest(ExtendedTestCase):
 
 
     
-    def test_add_edge(self):
-        createRegion = RegionDefinition( 1 )
-        with self.assertRaises(TypeError):
-            createRegion.addEdge("Poly1")
-
-        with self.assertRaises(TypeError):
-            createRegion.addEdge(112)
-            
 
     def test_update(self):
         reg1 = RegionDefinition( 1 )
@@ -66,8 +58,8 @@ class RegionDefinitionTest(ExtendedTestCase):
 
         self.assertTrue( not reg1.hasPolygon() )
 
-        reg1.addEdge( self.poly1 )
-        reg2.addEdge( self.poly2 )
+        reg1.addPolyline( self.poly1 )
+        reg2.addPolyline( self.poly2 )
         
         self.assertTrue( reg1.hasPolygon() )
         
