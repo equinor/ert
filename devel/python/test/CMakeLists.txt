@@ -37,8 +37,6 @@ set(TEST_SOURCES
     ert_tests/ecl/test_faults.py
     ert_tests/ecl/test_statoil_faults.py
     ert_tests/ecl/test_fault_blocks.py
-    ert_tests/ecl/test_region_definition_statoil.py
-    ert_tests/ecl/test_region_definition.py
     ert_tests/ecl/test_npv.py
     ert_tests/ecl/test_indexed_read.py
 
@@ -340,7 +338,9 @@ addPythonTest(ert.ecl.ecl_sum_vector ert_tests.ecl.test_ecl_sum_vector.EclSumVec
 addPythonTest(ert.ecl.ecl_sum_time_range ert_tests.ecl.test_ecl_sum.EclSumTest LABELS StatoilData)
 addPythonTest(ert.ecl.layer ert_tests.ecl.test_layer.LayerTest )
 addPythonTest(ert.ecl.faults ert_tests.ecl.test_faults.FaultTest )
+addPythonTest(ert.ecl.statoil_faults ert_tests.ecl.test_faults.StatoilFaultTest LABELS StatoilData)
 addPythonTest(ert.ecl.fault_blocks ert_tests.ecl.test_fault_blocks.FaultBlockTest )
+addPythonTest(ert.ecl.fault_blocks_statoil ert_tests.ecl.test_fault_blocks_statoil.FaultBlockTest LABELS StatoilData)
 addPythonTest(ert.ecl.region_definition_statoil ert_tests.ecl.test_region_definition_statoil.RegionDefinitionTest LABELS StatoilData)
 addPythonTest(ert.ecl.region_definition ert_tests.ecl.test_region_definition.RegionDefinitionTest )
 addPythonTest(ert.ecl.fault_blocks_statoil ert_tests.ecl.test_fault_blocks_statoil.FaultBlockTest LABELS StatoilData)
@@ -349,15 +349,19 @@ addPythonTest(ert.ecl.statoil_faults ert_tests.ecl.test_statoil_faults.StatoilFa
 addPythonTest(ert.ecl.ecl_deprecation ert_tests.ecl.test_deprecation.DeprecationTest )
 addPythonTest(ert.ecl.indexed_read ert_tests.ecl.test_indexed_read.EclIndexedReadTest LABELS StatoilData)
 
+
+
 if (NOT ${NFS_RUNPATH} STREQUAL "")
     if (ERT_LSF_SUBMIT_TEST)
         addPythonTest(ert.ecl.ecl_queue_LSF ert_tests.ecl.test_ecl_submit.LSFSubmitTest ARGUMENTS ${NFS_RUNPATH} LABELS StatoilData:Slow)
     endif()
 
+
     if (NOT ${RSH_SERVERS} STREQUAL "")
         addPythonTest(ert.ecl.ecl_queue_RSH ert_tests.ecl.test_ecl_submit.RSHSubmitTest ARGUMENTS ${NFS_RUNPATH} ${RSH_SERVERS} LABELS StatoilData:Slow)
     endif()
 endif()
+
 
 #SCHED
 addPythonTest(ert.sched.sched ert_tests.sched.test_sched.SchedFileTest LABELS StatoilData)
