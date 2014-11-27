@@ -62,6 +62,8 @@ class FaultTest(ExtendedTestCase):
         with self.assertRaises(IndexError):
             f = faults[0]
 
+        self.assertFalse( "NAME" in faults )
+
 
     def test_splitLine(self):
         faults = FaultCollection(self.grid)
@@ -241,8 +243,13 @@ class FaultTest(ExtendedTestCase):
         for f in faults:
             c += 1
         self.assertEqual( c , len(faults))
-    
-    
+        
+        for f in ["F1","F2","F3" ,"F4"]:
+            self.assertTrue( f in faults )
+        
+        self.assertFalse("FX" in faults )
+
+            
     
     def test_fault(self):
         f = Fault(self.grid , "NAME")
