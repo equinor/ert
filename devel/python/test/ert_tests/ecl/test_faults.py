@@ -23,7 +23,7 @@ import time
 from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment
 from ert.ecl import EclGrid
 from ert.test import ExtendedTestCase, TestAreaContext
-from ert.geo import Polyline
+from ert.geo import Polyline , CPolyline
 
 class FaultTest(ExtendedTestCase):
     def setUp(self):
@@ -408,4 +408,43 @@ class FaultTest(ExtendedTestCase):
         nb_cells1 = fl1.getNeighborCells()
         true_nb_cells1 = [(nx -1 , -1) , (2*nx -1 , -1) , (3*nx - 1 , -1)]
         self.assertListEqual( nb_cells1 , true_nb_cells1 )
+
+
+    def test_polyline_intersection(self):
+        grid = EclGrid.create_rectangular( (100,100,10) , (0.25 , 0.25 , 1))
+
+        #    Fault1                    Fault4
+        #      |                         |
+        #      |                         |
+        #      |                         |
+        #      |   -------  Fault2       |
+        #      |                         |
+        #      |                         |
+        #                              (5 , 2.50) 
+        #          -------- Fault3
+        #
+
+        fault1 = Fault(grid , "Fault1")
+        fault2 = Fault(grid , "Fault2")
+        fault3 = Fault(grid , "Fault3")
+        fault4 = Fault(grid , "Fault4")
+
+        fault1.addRecord(1 , 1 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+        fault2.addRecord(5 , 10 , 15 , 15 , 0 , 0 , "Y")
+        fault3.addRecord(5 , 10 , 5 , 5 , 0 , 0 , "Y")
+        fault4.addRecord(20 , 20 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+
+        
+        polyline = Polyline( init_points = [(4 , 4) , (8,4)])
+        self.assertTrue( fault4.intersectsPolyline( polyline , 0))
+
+        cpolyline = CPolyline( init_points = [(4 , 4) , (8,4)])
+        self.assertTrue( fault4.intersectsPolyline( cpolyline , 0))
+        
+        polyline = Polyline( init_points = [(8 , 4) , (16,4)])
+        self.assertFalse( fault4.intersectsPolyline( polyline , 0))
+
+        cpolyline = CPolyline( init_points = [(8 , 4) , (16,4)])
+        self.assertFalse( fault4.intersectsPolyline( cpolyline , 0))
+        
 
