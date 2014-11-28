@@ -43,12 +43,11 @@ class FaultTest(ExtendedTestCase):
         f.addRecord(2 , 2 , 1 , 1 , 0,0 , "Y")
         
         pl = f.getIJPolyline( 0 )
-        print pl
         self.assertEqual(pl , [(0,0) , (2,0) , (2,2) , (3,2)])
         
 
     def test_empty_collection(self):
-        faults = FaultCollection(self.grid)
+        faults = FaultCollection()
         self.assertEqual(0 , len(faults))
 
         self.assertFalse( faults.hasFault("FX") )
@@ -64,7 +63,15 @@ class FaultTest(ExtendedTestCase):
 
         self.assertFalse( "NAME" in faults )
 
+    def test_collection_invalid_arg(self):
+        with self.assertRaises(ValueError):
+            faults = FaultCollection(self.faults1)
 
+        with self.assertRaises(ValueError):
+            faults = FaultCollection(self.faults1 , self.faults2)
+
+        
+        
     def test_splitLine(self):
         faults = FaultCollection(self.grid)
         with self.assertRaises(ValueError):
@@ -166,14 +173,14 @@ class FaultTest(ExtendedTestCase):
     def test_load(self):
         faults = FaultCollection(self.grid , self.faults1)
         self.assertEqual( 3 , len(faults))
-        faults.load( self.faults2 )
+        faults.load( self.grid , self.faults2 )
         self.assertEqual( 7 , len(faults))
         fault1 = faults["F1"]
         layer8 = fault1[8]
         self.assertEqual( len(layer8) , 1 ) 
     
         with self.assertRaises(IOError):
-            faults.load("No/this/does/not/exist")
+            faults.load(self.grid , "No/this/does/not/exist")
 
 
     def test_connect_faults(self):
