@@ -58,6 +58,37 @@ class FaultBlockTest(ExtendedTestCase):
         self.assertEqual( len(block) , 9)
         self.assertEqual( layer , block.getParentLayer() )
 
+
+    def test_get_ijk(self):
+        with TestAreaContext("python/fault_block_layer/neighbour") as work_area:
+            with open("kw.grdecl","w") as fileH:
+                fileH.write("FAULTBLK \n")
+                fileH.write("1 1 1 0 0\n")
+                fileH.write("1 2 2 0 3\n")
+                fileH.write("4 2 2 3 3\n")
+                fileH.write("4 4 4 0 0\n")
+                fileH.write("4 4 4 0 5\n")
+                fileH.write("/\n")
+
+            kw = EclKW.read_grdecl(open("kw.grdecl") , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE)
+        
+        grid = EclGrid.create_rectangular( (5,5,1) , (1,1,1) )
+        layer = FaultBlockLayer( grid , 0 )
+        layer.loadKeyword( kw )
+
+        block = layer[0,0]
+        self.assertEqual( block.getBlockID() , 1 )
+
+        block = layer[2,2]
+        self.assertEqual( block.getBlockID() , 2 )
+
+        with self.assertRaises(ValueError):
+            layer[3,3]
+
+        with self.assertRaises(IndexError):
+            layer[5,5]
+
+                
         
     def test_neighbours(self):
 
