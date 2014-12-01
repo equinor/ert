@@ -76,11 +76,20 @@ class CPolylineTest(ExtendedTestCase):
     def test_extend_to_bbox(self):
         bbox = [(0,0) , (10,0) , (10,10) , (0,10)]
 
+        polyline = CPolyline( init_points = [(11,11) , (13,13)])
+        with self.assertRaises(ValueError):
+            polyline.extendToBBox( bbox , start = False )
+            
+
         polyline = CPolyline( init_points = [(1,1) , (3,3)])
+
         line1 = polyline.extendToBBox( bbox , start = True )
-        
         self.assertEqual( line1 , CPolyline( init_points = [(1,1) , (0,0)]))
-                          
+
+        line1 = polyline.extendToBBox( bbox , start = False  )
+        self.assertEqual( line1 , CPolyline( init_points = [(3,3) , (10,10)]))
+        
+        
 
 
     def test_item(self):
