@@ -1,3 +1,4 @@
+import math
 
 from ert.geo import CPolyline
 from ert.geo.xyz_io import XYZIo
@@ -54,6 +55,13 @@ class CPolylineTest(ExtendedTestCase):
         self.assertEqual(y,1)
 
 
+    def test_length(self):
+        polyline = CPolyline( init_points = [(0,1)])
+        self.assertEqual( polyline.segmentLength() , 0 )
+
+        polyline = CPolyline( init_points = [(0,0) , (1,0) , (1,1) , (2,2)])
+        self.assertEqual( polyline.segmentLength() , 2 + math.sqrt(2))
+        
 
 
     def test_item(self):
