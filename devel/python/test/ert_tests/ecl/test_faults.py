@@ -235,14 +235,148 @@ class FaultTest(ExtendedTestCase):
         self.assertEqual(len(ext24) , 2)
         p0 = ext24[0]
         p1 = ext24[1]
-        self.assertEqual(p0 , (11
- , 16))
+        self.assertEqual(p0 , (11 , 16))
         self.assertEqual(p1 , (21 , 16))
                 
         
-        
+    def test_intersect_intRays(self):
+        p1 = (0,0)
+        dir1 = (1,0)
+        p2 = (0,0)
+        dir2 = (0,1)
 
+        line = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual( line , [] )
+        
+        # Opposite direction
+        p3 = (-1,0)
+        dir3 = (-1,0)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p3,dir3))
+
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p3,dir3),(p1,dir1))
+
+        # Parallell with offset
+        p4 = (0,1)
+        dir4 = (1,0)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p4,dir4))
+
+        p5 = (0,1)
+        dir5 = (-1,0)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p5,dir5))
+
+        p6 = (1,1)
+        dir6 = (1,0)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p6,dir6))
+
+        p2 = (-1,0)
+        dir2 = (-1,0)
+        join = Fault.intersectFaultRays(( p2,dir1),(p1,dir2))
+        self.assertEqual( join , [p2 , p1])
+
+        join = Fault.intersectFaultRays(( p1,dir3),(p3,dir1))
+        self.assertEqual( join , [p1 , p3])
+        
+        p2 = (1,0)
+        dir2 = (1,0)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2))
+        self.assertEqual( join , [p1 , p2])
+
+        # Orthogonal
+        p2 = (1,1)
+        dir2 = (0,1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+            
+        p2 = (0,1)
+        dir2 = (0,1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (-1,0)
+        dir2 = (0,1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (-1,1)
+        dir2 = (0,1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (-1,1)
+        dir2 = (0,-1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (3,-1)
+        dir2 = (0,-1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (1,-1)
+        dir2 = (0,1)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual(join , [p1 , (1,0) , p2])
+
+        p2 = (1,1)
+        dir2 = (0,-1)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual(join , [p1 , (1,0) , p2])
+
+        p2 = (0,3)
+        dir2 = (0,-1)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual(join , [p1 , p2])
+
+        p2 = (3,0)
+        dir2 = (0,-1)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual(join , [p1 , p2])
+
+
+    def test_join_faults(self):
+        grid = EclGrid.create_rectangular( (100,100,10) , (1,1,1))
+
+        #    Fault1                    Fault4
+        #      |                         |
+        #      |                         |
+        #      |                         |
+        #      |   -------  Fault2       |
+        #      |                         |
+        #      |                         |
+        #
+        #          -------- Fault3
+        #
+
+        fault1 = Fault(grid , "Fault1")
+        fault2 = Fault(grid , "Fault2")
+        fault3 = Fault(grid , "Fault3")
+        fault4 = Fault(grid , "Fault4")
+
+        fault1.addRecord(1 , 1 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+        fault2.addRecord(5 , 10 , 15 , 15 , 0 , 0 , "Y")
+        fault3.addRecord(5 , 10 , 5 , 5 , 0 , 0 , "Y")
+        fault4.addRecord(20 , 20 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+
+        rays = fault1.getEndRays(0)
+        self.assertEqual( rays[0] , [(2,10) , (0,-1)])
+        self.assertEqual( rays[1] , [(2,100) , (0,1)])
+
+        with self.assertRaises(ValueError):
+            Fault.joinFaults( fault1 , fault4 , 0 )
+
+        with self.assertRaises(ValueError):
+            Fault.joinFaults( fault2 , fault3 ,0 )
+        
+        extra = Fault.joinFaults( fault1 , fault3 , 0)
+        self.assertEqual( extra , [(2,10) , (2,6) , (5,6)] )
+        
     
+        
     def test_iter(self):
         faults = FaultCollection(self.grid , self.faults1 , self.faults2)
         self.assertEqual( 7 , len(faults))
@@ -331,7 +465,7 @@ class FaultTest(ExtendedTestCase):
 """)                
             with open("faults.grdecl") as f:
                 faults = FaultCollection( grid , "faults.grdecl" )
-        
+                
         fault = faults["F"]
         layer = fault[29]
         self.assertEqual(len(layer) , 2)
@@ -349,6 +483,7 @@ class FaultTest(ExtendedTestCase):
         self.assertEqual( seg1.getCorners() , (50 * (nx + 1) + 107 , 50 * (nx + 1) + 108))
         self.assertEqual( seg2.getCorners() , (50 * (nx + 1) + 108 , 49 * (nx + 1) + 108))
         self.assertEqual( seg3.getCorners() , (49 * (nx + 1) + 108 , 49 * (nx + 1) + 109))
+        
         
 
 
