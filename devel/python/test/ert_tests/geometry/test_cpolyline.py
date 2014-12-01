@@ -55,6 +55,16 @@ class CPolylineTest(ExtendedTestCase):
         self.assertEqual(y,1)
 
 
+    def test_equal(self):
+        pl1 = CPolyline(name = "Poly1" , init_points = [(0,0) , (1,1) , (2,2)])
+        pl2 = CPolyline(name = "Poly2" , init_points = [(0,0) , (1,1) , (2,2)])
+        pl3 = CPolyline(init_points = [(0,0) , (1,1) , (2,3)])
+
+        self.assertEqual( pl1 , pl1 )
+        self.assertEqual( pl1 , pl2 )
+        self.assertFalse( pl1 == pl3 )
+
+
     def test_length(self):
         polyline = CPolyline( init_points = [(0,1)])
         self.assertEqual( polyline.segmentLength() , 0 )
@@ -62,6 +72,15 @@ class CPolylineTest(ExtendedTestCase):
         polyline = CPolyline( init_points = [(0,0) , (1,0) , (1,1) , (2,2)])
         self.assertEqual( polyline.segmentLength() , 2 + math.sqrt(2))
         
+
+    def test_extend_to_bbox(self):
+        bbox = [(0,0) , (10,0) , (10,10) , (0,10)]
+
+        polyline = CPolyline( init_points = [(1,1) , (3,3)])
+        line1 = polyline.extendToBBox( bbox , start = True )
+        
+        self.assertEqual( line1 , CPolyline( init_points = [(1,1) , (0,0)]))
+                          
 
 
     def test_item(self):
