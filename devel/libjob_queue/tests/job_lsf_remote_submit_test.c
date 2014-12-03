@@ -27,7 +27,8 @@
 
 
 void test_submit(lsf_driver_type * driver , const char * server , const char * bsub_cmd , const char * bjobs_cmd , const char * bkill_cmd , const char * cmd) {
-
+  
+  test_assert_true( lsf_driver_set_option(driver , LSF_DEBUG_OUTPUT , "TRUE" ) );
   test_assert_true( lsf_driver_set_option(driver , LSF_SERVER , server ) );
   
   if (bsub_cmd != NULL)
@@ -42,7 +43,6 @@ void test_submit(lsf_driver_type * driver , const char * server , const char * b
   {
     char * run_path = util_alloc_cwd();
     lsf_job_type * job = lsf_driver_submit_job( driver , cmd , 1 , run_path , "NAME" , 0 , NULL );
-    
     if (job) {
       {
         int lsf_status = lsf_driver_get_job_status_lsf( driver , job );
@@ -69,14 +69,18 @@ void test_submit(lsf_driver_type * driver , const char * server , const char * b
 
 
 int main( int argc , char ** argv) {
-  lsf_driver_type * driver = lsf_driver_alloc();
-  stringlist_type * server_list = stringlist_alloc_from_split( argv[2] , " ");
-  int iarg;
-  for (iarg = 0; iarg < stringlist_get_size( server_list ); iarg++) {
-    const char * server = stringlist_iget( server_list , iarg );
-    test_submit(driver , server , NULL , NULL , NULL , argv[1]);
+  util_install_signals();
+  {
+    int iarg;
+    lsf_driver_type * driver = lsf_driver_alloc();
+    
+    for (iarg = 2; iarg < argc; iarg++) {
+      const char * server = argv[iarg];
+      printf("Testing lsf server:%s \n",server);
+      test_submit(driver , server , NULL , NULL , NULL , argv[1]);
+    }
+    
+    lsf_driver_free( driver );
   }
-  stringlist_free( server_list );
-
   exit(0);
 }
