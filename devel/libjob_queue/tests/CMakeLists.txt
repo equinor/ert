@@ -42,7 +42,7 @@ add_test( job_queue_driver_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_driver_test 
 #   NULL:  Submit using the linked in library functions.
 #   LOCAL: Submit using shell commands on the current server
 #
-set(LSF_SERVERS "LOCAL" CACHE STRING  "List of LSF servers for testing")
+set(LSF_SERVER "" CACHE STRING  "List of LSF servers for testing")
 
 if (HAVE_LSF_LIBRARY)
    add_executable( job_lsf_test job_lsf_test.c )
@@ -58,14 +58,23 @@ if (HAVE_LSF_LIBRARY)
    add_test( job_lsb ${EXECUTABLE_OUTPUT_PATH}/job_lsb )
 endif()
 
-add_executable( job_lsf_submit_test job_lsf_submit_test.c )
-target_link_libraries( job_lsf_submit_test job_queue util test_util )
+add_executable( job_lsf_remote_submit_test job_lsf_remote_submit_test.c )
+target_link_libraries( job_lsf_remote_submit_test job_queue util test_util )
+
+add_executable( job_lsf_library_submit_test job_lsf_library_submit_test.c )
+target_link_libraries( job_lsf_library_submit_test job_queue util test_util )
+
 add_executable( job_program job_program.c )
 
-if (LSF_SERVERS)
-   add_test( job_lsf_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_program ${LSF_SERVERS})
-   set_property( TEST job_lsf_submit_test PROPERTY LABELS LSF)
+if (LSF_SERVER)
+   add_test( job_lsf_remote_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_remote_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_program ${LSF_SERVER} NULL LOCAL)
+   add_test( job_lsf_library_submit_test ssh ${LSF_SERVER} ${PROJECT_SOURCE_DIR}/test-data/Statoil/LSF/run_lsf_test.py  ${EXECUTABLE_OUTPUT_PATH}/job_lsf_library_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_program)
+   set_property( TEST job_lsf_library_submit_test PROPERTY LABELS StatoilData)
+else()
+   add_test( job_lsf_remote_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_remote_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_program NULL LOCAL)
 endif()
+set_property( TEST job_lsf_remote_submit_test PROPERTY LABELS StatoilData)
+
 
 add_executable( job_torque_test job_torque_test.c )
 target_link_libraries( job_torque_test job_queue util test_util )
