@@ -146,6 +146,12 @@ if (ISREG_POSIX)
   add_definitions( -DHAVE_ISREG )
 endif()
 
+try_compile( HAVE_SIGBUS ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_have_sigbus.c )
+if (HAVE_SIGBUS)
+  add_definitions( -DHAVE_SIGBUS )
+endif()
+
+
 check_type_size(time_t SIZE_OF_TIME_T)
 if (${SIZE_OF_TIME_T} EQUAL 8)
     try_run( RUN_RESULT COMPILE_RESULT ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_mktime_before1970.c )
