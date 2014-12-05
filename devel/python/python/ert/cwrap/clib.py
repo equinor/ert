@@ -30,6 +30,18 @@ so_extension = {"linux"  : "so",
                 "darwin" : "dylib" }
 
 
+# Passing None to the CDLL() function means to open a lib handle to
+# the current runnning process, i.e. like dlopen( NULL ). We must
+# special case this to avoid creating the bogus argument 'None.so'.
+def lib_name(lib , platform_key):
+    if lib is None:
+        so_name = None
+    else:
+        so_name = "%s.%s" % (lib , so_extension[ platform_key ])
+    return so_name
+
+
+
 def __load( lib_list, ert_prefix):
     """
     Thin wrapper around the ctypes.CDLL function for loading shared library.
@@ -50,10 +62,9 @@ def __load( lib_list, ert_prefix):
     dll = None
     platform_key = platform.system().lower()
     for lib in lib_list:
-        so_name = "%s.%s" % (lib , so_extension[ platform_key ])
-
+        so_name = lib_name( lib , platform_key )
         try:
-            if ert_prefix:
+            if ert_prefix and so_name:
                 ert_lib = os.path.join(ert_lib_path , so_name)
                 dll = ctypes.CDLL(ert_lib, ctypes.RTLD_GLOBAL)
             else:
