@@ -50,12 +50,14 @@ def __load( lib_list, ert_prefix):
     dll = None
     platform_key = platform.system().lower()
     for lib in lib_list:
+        so_name = "%s.%s" % (lib , so_extension[ platform_key ])
+
         try:
             if ert_prefix:
-                ert_lib = os.path.join(ert_lib_path , "%s.%s" % (lib , so_extension[ platform_key ]))
+                ert_lib = os.path.join(ert_lib_path , so_name)
                 dll = ctypes.CDLL(ert_lib, ctypes.RTLD_GLOBAL)
             else:
-                dll = ctypes.CDLL(lib, ctypes.RTLD_GLOBAL)
+                dll = ctypes.CDLL(so_name , ctypes.RTLD_GLOBAL)
             return dll
         except Exception, exc:
             error_list[lib] = exc
