@@ -60,6 +60,9 @@ class ConfigParser(BaseCClass):
     def add(self, keyword, required=False):
         return ConfigParser.cNamespace().add(self, keyword, required).setParent( self )
 
+    def asList(self):
+        return [x for x in self]
+
 
     def getSchemaItem(self , keyword):
         if keyword in self:
