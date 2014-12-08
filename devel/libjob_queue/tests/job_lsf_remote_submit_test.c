@@ -52,7 +52,7 @@ void test_submit(lsf_driver_type * driver , const char * server , const char * b
       
       lsf_driver_kill_job( driver , job );
       lsf_driver_set_bjobs_refresh_interval( driver , 0 );
-      sleep(1);
+      sleep(2);
 
       {
         int lsf_status = lsf_driver_get_job_status_lsf( driver , job );
