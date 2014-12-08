@@ -45,9 +45,35 @@ class SchemaItem(BaseCClass):
 
 
 
+<<<<<<< HEAD
 
 
 class ConfigParser(BaseCClass):
+=======
+class ContentItem(BaseCClass):
+    # Not possible to create new python instances of this class
+    def __init__(self):
+        raise NotImplementedError("Class can not be instantiated directly!")
+
+
+    def __len__(self):
+        return ContentItem.cNamespace().size(self)
+
+
+    def __getitem__(self, index):
+        if isinstance(index, int):
+            if (index >= 0) and (index < self.__len__()):
+                return ContentItem.cNamespace().iget_content_node(self, index).setParent(self)
+            else:
+                raise IndexError
+        else:
+            raise TypeError("[] operator must have integer index")
+
+
+class ContentNode(BaseCClass):
+    typed_get = {}
+    
+>>>>>>> ERT-747: Added type conversion to config get
     def __init__(self):
         c_ptr = ConfigParser.cNamespace().alloc()
         super(ConfigParser, self).__init__(c_ptr)
@@ -56,9 +82,39 @@ class ConfigParser(BaseCClass):
     def __contains__(self , keyword):
         return ConfigParser.cNamespace().has_schema_item( self , keyword )
 
+<<<<<<< HEAD
 
     def add(self, keyword, required=False):
         return ConfigParser.cNamespace().add(self, keyword, required).setParent( self )
+=======
+    def __assertIndex__(self , index):
+        if isinstance(index, int):
+            if index < 0:
+                index += len(self)
+                
+            if not 0 <= index < len(self):
+                raise IndexError
+        else:
+            raise TypeError("Invalid argument type: %s" % index)
+
+                
+    def __getitem__(self, index):
+        self.__assertIndex__(index)
+        
+        content_type = ContentNode.cNamespace().iget_type(self, index)
+        typed_get = self.typed_get[content_type]
+        return typed_get( self , index )
+
+        
+    def content(self, sep=" "):
+        return ContentNode.cNamespace().get_full_string(self, sep)
+>>>>>>> ERT-747: Added type conversion to config get
+
+
+    def igetString(self , index):
+        self.__assertIndex__(index)
+        return ContentNode.cNamespace().iget(self , index )
+
 
     def asList(self):
         return [x for x in self]
