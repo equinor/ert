@@ -15,7 +15,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-
 from ert.config import ContentTypeEnum, UnrecognizedEnum, SchemaItem, ContentItem, ContentNode, ConfigParser, ConfigContent, CONFIG_LIB
 from ert.test import ExtendedTestCase, TestAreaContext
 from ert.cwrap import CWrapper
@@ -104,13 +103,19 @@ class ConfigTest(ExtendedTestCase):
         self.assertEqual(len(content_item), 1)
         with self.assertRaises(TypeError):
             content_item["BJARNE"]
-        
         with self.assertRaises(IndexError):
             content_item[10]
 
         content_node = content_item[0]
         self.assertIsInstance(content_node, ContentNode)
         self.assertEqual(len(content_node), 2)
+
+        with self.assertRaises(TypeError):
+            content_item["BJARNE"]
+
+        with self.assertRaises(IndexError):
+            content_item[10]
+
 
         self.assertEqual(content_node[1], "be-lx633214:2")
         self.assertEqual(content_node.content(sep=","), "be-lx655082:2,be-lx633214:2")
