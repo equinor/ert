@@ -18,7 +18,7 @@ import warnings
 import time
 
 from ert.test import ExtendedTestCase
-from ert.ecl import EclGrid,EclKW,EclTypeEnum
+from ert.ecl import EclGrid,EclKW,EclTypeEnum,EclGrid,EclRegion
 
 
 class DeprecationTest(ExtendedTestCase):
@@ -44,3 +44,19 @@ class DeprecationTest(ExtendedTestCase):
         with warnings.catch_warnings():
             kw.min_max
 
+    # Added in 1.8.x development
+    def test_EclRegion_properties(self):
+        grid = EclGrid.create_rectangular( (10,10,10) , (1,1,1))
+        region = EclRegion( grid , False )
+
+        with warnings.catch_warnings():
+            region.active_size
+
+        with warnings.catch_warnings():
+            region.global_size
+
+        with warnings.catch_warnings():
+            region.global_list
+
+        with warnings.catch_warnings():
+            region.active_list
