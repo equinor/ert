@@ -374,6 +374,18 @@ class UtilTest(TestCase):
 
 
 
+    def test_element_sum(self):
+        dv = DoubleVector()
+        iv = IntVector()
+        for i in range(10):
+            dv.append(i+1)
+            iv.append(i+1)
+
+        self.assertEqual( dv.elementSum() , 55 )
+        self.assertEqual( iv.elementSum() , 55 )
+
+        
+
     def test_time_vector_regular(self):
         start = datetime.datetime(2010 , 1 , 1 , 0,0,0)
         end = datetime.datetime(2010 , 2 , 1 , 0,0,0)

@@ -141,3 +141,15 @@ class FortIOTest(ExtendedTestCase):
 
             self.assertTrue( kw1 == kw2 )
                 
+    
+    def test_is_fortran_file(self):
+        with TestAreaContext("python/fortio/guess"):
+            kw1 = EclKW.create("KW" , 12345 , EclTypeEnum.ECL_FLOAT_TYPE)
+            with openFortIO("fortran_file" , mode = FortIO.WRITE_MODE) as f:
+                kw1.fwrite( f )
+                
+            with open("text_file" , "w") as f:
+                kw1.write_grdecl( f )
+
+            self.assertTrue( FortIO.isFortranFile( "fortran_file" ))
+            self.assertFalse( FortIO.isFortranFile( "text_file" ))
