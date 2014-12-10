@@ -139,7 +139,7 @@ class ContentNode(BaseCClass):
             else:
                 raise Exception("Parsing:%s failed" % config_file)
         else:
-            raise IOError("File: %s does not exists")
+            raise IOError("File: %s does not exists" % config_file)
 
 
     def free(self):
