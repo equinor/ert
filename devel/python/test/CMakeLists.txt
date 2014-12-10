@@ -20,7 +20,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_ecl_submit.py
     ert_tests/ecl/test_fortio.py
     ert_tests/ecl/test_grdecl.py
-    ert_tests/ecl/test_grid.py
+    ert_tests/ecl/test_grid_statoil.py
     ert_tests/ecl/test_kw.py
     ert_tests/ecl/test_legacy_ecl.py
     ert_tests/ecl/test_region.py
@@ -410,6 +410,10 @@ add_test( NAME python.tests.ert.ecl.ecl_grdecl
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_grdecl.GRDECLTest )
 
+add_test( NAME python.tests.ert.ecl.ecl_grid_statoil
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_grid_statoil.GridTest )
+
 add_test( NAME python.tests.ert.ecl.ecl_grid
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_grid.GridTest )
@@ -624,7 +628,7 @@ set_property( TEST python.tests.ert.ecl.ecl_kw            PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_rft           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.indexed_read      PROPERTY LABELS Python:StatoilData )
-set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python:StatoilData:Slow )
+set_property( TEST python.tests.ert.ecl.ecl_grid_statoil  PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.tests.ert.ecl.ecl_deprecation   PROPERTY LABELS Python )
 #set_property( TEST python.tests.import_local             PROPERTY LABELS Python:StatoilBuild )
 set_property( TEST python.tests.ert.well.ecl_well         PROPERTY LABELS Python:StatoilData )
@@ -635,6 +639,7 @@ set_property( TEST python.tests.ert.import                PROPERTY LABELS Python
 set_property( TEST python.tests.ert.util.stringlist       PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.ecl.faults            PROPERTY LABELS Python )
+set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python )
 
 set_property( TEST python.tests.ert.ecl.region_definition_statoil PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.fault_blocks_statoil  PROPERTY LABELS Python:StatoilData )
