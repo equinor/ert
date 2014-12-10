@@ -14,7 +14,9 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-from ert.ecl import EclSum
+import datetime
+from ert.cwrap import CFILE
+from ert.ecl import EclSum, EclSumKeyWordVector
 from ert.test import ExtendedTestCase
 
 try:
@@ -41,3 +43,11 @@ class EclSumTest(ExtendedTestCase):
         real_range = self.ecl_sum.timeRange(interval = "1m", extend_end = False)
         extended_range = self.ecl_sum.timeRange(interval = "1m", extend_end = True)
         assert real_range[-1] < extended_range[-1]
+
+    def test_dump_csv_line(self):
+        ecl_sum_vector = EclSumKeyWordVector(self.ecl_sum)
+        ecl_sum_vector.add_keywords("F*")
+        dtime = datetime.datetime( 2002 , 01 , 01 , 0 , 0 , 0 )
+        test_file_name = self.createTestPath("dump.csv")
+        outputH = open(test_file_name , "w")
+        self.ecl_sum.dump_csv_line( dtime, ecl_sum_vector, outputH)
