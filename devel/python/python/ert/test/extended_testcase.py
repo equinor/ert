@@ -9,7 +9,7 @@ except ImportError:
     from unittest import TestCase
 
 from .source_enumerator import SourceEnumerator
-
+from ert.util import installAbortSignals
 
 """
 This class provides some extra functionality for testing values that are almost equal.
@@ -18,6 +18,7 @@ class ExtendedTestCase(TestCase):
     def __init__(self , *args , **kwargs):
         self.__testdata_root = None
         self.__share_root = None
+        installAbortSignals()
         super(ExtendedTestCase , self).__init__(*args , **kwargs)
 
 
