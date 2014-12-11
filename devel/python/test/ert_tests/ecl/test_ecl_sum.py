@@ -15,6 +15,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 import datetime
+import os.path
 from ert.cwrap import CFILE
 from ert.ecl import EclSum, EclSumKeyWordVector
 from ert.test import ExtendedTestCase
@@ -51,3 +52,4 @@ class EclSumTest(ExtendedTestCase):
         test_file_name = self.createTestPath("dump.csv")
         outputH = open(test_file_name , "w")
         self.ecl_sum.dump_csv_line( dtime, ecl_sum_vector, outputH)
+        assert os.path.isfile(test_file_name)
