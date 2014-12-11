@@ -376,6 +376,40 @@ class FaultTest(ExtendedTestCase):
         self.assertEqual( extra , [(2,10) , (2,6) , (5,6)] )
         
     
+    def test_contact(self):
+        grid = EclGrid.create_rectangular( (100,100,10) , (1,1,1))
+
+        #    Fault1                    Fault4
+        #      |                         |
+        #      |                         |
+        #      |                         |
+        #      |   ----------------------+--  Fault2       
+        #      |                         |
+        #      |                         |
+        #
+        #          -------- Fault3
+        #
+
+        fault1 = Fault(grid , "Fault1")
+        fault2 = Fault(grid , "Fault2")
+        fault3 = Fault(grid , "Fault3")
+        fault4 = Fault(grid , "Fault4")
+
+        fault1.addRecord(1 , 1 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+        fault2.addRecord(5 , 30 , 15 , 15 , 0 , 0 , "Y")
+        fault3.addRecord(2 , 10 , 9 , 9 , 0 , 0 , "Y")
+        fault4.addRecord(20 , 20 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+
+        self.assertFalse( fault1.intersectsFault(fault2 , 0) )
+        self.assertFalse( fault2.intersectsFault(fault1 , 0) )
+        
+        self.assertTrue( fault2.intersectsFault(fault4 , 0) )        
+        self.assertTrue( fault4.intersectsFault(fault2 , 0) )
+
+        self.assertTrue( fault1.intersectsFault(fault1 , 0) )        
+        self.assertTrue( fault3.intersectsFault(fault3 , 0) )
+        
+
         
     def test_iter(self):
         faults = FaultCollection(self.grid , self.faults1 , self.faults2)
