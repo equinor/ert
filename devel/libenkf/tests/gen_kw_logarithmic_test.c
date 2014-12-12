@@ -23,6 +23,7 @@
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.h>
 #include <ert/util/util.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/ecl/fortio.h>
 #include <ert/util/type_macros.h>
@@ -40,11 +41,33 @@ void test_write_gen_kw_export_file(enkf_main_type * enkf_main)
 {
   enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
   test_assert_not_NULL(state);
-  enkf_node_type * enkf_node = enkf_state_get_node( state , "MULTFLT" );
+  enkf_node_type * enkf_node  = enkf_state_get_node( state , "MULTFLT" );
+  enkf_node_type * enkf_node2 = enkf_state_get_node( state , "MULTFLT2" );
   test_assert_not_NULL(enkf_node);
-  test_assert_true(enkf_node_get_impl_type(enkf_node) == GEN_KW);
-  gen_kw_type * gen_kw = enkf_node_value_ptr(enkf_node);
-  gen_kw_data_iset(gen_kw, 0, 0.01); //Instead of rng init
+  test_assert_not_NULL(enkf_node2);
+  test_assert_true(enkf_node_get_impl_type(enkf_node)  == GEN_KW);
+  test_assert_true(enkf_node_get_impl_type(enkf_node2) == GEN_KW);
+
+  gen_kw_type * gen_kw  = enkf_node_value_ptr(enkf_node);
+  gen_kw_type * gen_kw2 = enkf_node_value_ptr(enkf_node2);
+
+
+  {
+    rng_type * rng                       = rng_alloc( MZRAN , INIT_DEFAULT );
+    const enkf_config_node_type * config = enkf_node_get_config(enkf_node);
+    const int    data_size               = enkf_config_node_get_data_size( config, 0 );
+    const double                    mean = 0.0; /* Mean and std are hardcoded - the variability should be in the transformation. */
+    const double                    std  = 1.0;
+
+    for (int i=0; i < data_size; ++i) {
+      double random_number = enkf_util_rand_normal(mean , std , rng);
+      gen_kw_data_iset(gen_kw,  i, random_number);
+      gen_kw_data_iset(gen_kw2, i, random_number);
+    }
+
+    rng_free(rng);
+  }
+
 
   {
     enkf_fs_type * init_fs = enkf_main_get_fs( enkf_main );
@@ -58,7 +81,14 @@ void test_write_gen_kw_export_file(enkf_main_type * enkf_main)
   {
     int buffer_size = 0;
     char * file_content = util_fread_alloc_file_content("simulations/run0/parameters.txt", &buffer_size);
-    test_assert_true(NULL != strstr(file_content, "LOG_"));
+
+    stringlist_type * token_list = stringlist_alloc_from_split(file_content, " \n");
+    double value = stringlist_iget_as_double(token_list, 5, NULL);
+
+    test_assert_true(value > 0.0); //Verify precision
+    test_assert_true(NULL != strstr(file_content, "LOG_")); //Verify log entry
+
+    stringlist_free(token_list);
     free(file_content);
   }
 }

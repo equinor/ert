@@ -63,6 +63,7 @@ void test_write_gen_kw_export_file(enkf_main_type * enkf_main)
   run_arg_type * run_arg = run_arg_alloc_INIT_ONLY( init_fs , 0 ,0 , "simulations/run0");
   test_assert_not_NULL(state);
   enkf_node_type * enkf_node = enkf_state_get_node( state , "MULTFLT" );
+
   test_assert_not_NULL(enkf_node);
   const enkf_config_node_type * config_node = enkf_node_get_config(enkf_node);
   test_assert_not_NULL(config_node);
