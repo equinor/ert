@@ -211,6 +211,16 @@ add_test( gen_kw_test
           ${EXECUTABLE_OUTPUT_PATH}/gen_kw_test
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert/config_GEN_KW_true)
 
+
+add_executable( gen_kw_logarithmic_test gen_kw_logarithmic_test.c )
+target_link_libraries( gen_kw_logarithmic_test enkf test_util )
+
+add_test( gen_kw_logarithmic_test
+          ${EXECUTABLE_OUTPUT_PATH}/gen_kw_logarithmic_test
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/gen_kw_logarithmic/config_GEN_KW_logarithmic)
+
+
+
 #-----------------------------------------------------------------
 
 add_executable( enkf_forward_init_GEN_KW enkf_forward_init_GEN_KW.c )
