@@ -49,7 +49,8 @@ class EclSumTest(ExtendedTestCase):
         ecl_sum_vector = EclSumKeyWordVector(self.ecl_sum)
         ecl_sum_vector.add_keywords("F*")
         dtime = datetime.datetime( 2002 , 01 , 01 , 0 , 0 , 0 )
-        test_file_name = self.createTestPath("dump.csv")
-        outputH = open(test_file_name , "w")
-        self.ecl_sum.dump_csv_line( dtime, ecl_sum_vector, outputH)
-        assert os.path.isfile(test_file_name)
+        with TestAreaContext("EclSum/csv_dump"):
+            test_file_name = self.createTestPath("dump.csv")
+            outputH = open(test_file_name , "w")
+            self.ecl_sum.dump_csv_line( dtime, ecl_sum_vector, outputH)
+            assert os.path.isfile(test_file_name)
