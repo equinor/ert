@@ -43,7 +43,10 @@ class EclSumTest(ExtendedTestCase):
 
     def test_dump_csv_line(self):
         ecl_sum_vector = EclSumKeyWordVector(self.ecl_sum)
-        ecl_sum_vector.add_keywords("F*")
+        ecl_sum_vector.addKeywords("F*")
+
+        
+
         dtime = datetime.datetime( 2002 , 01 , 01 , 0 , 0 , 0 )
         with TestAreaContext("EclSum/csv_dump"):
             test_file_name = self.createTestPath("dump.csv")
