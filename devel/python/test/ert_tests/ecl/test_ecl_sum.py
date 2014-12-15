@@ -45,7 +45,8 @@ class EclSumTest(ExtendedTestCase):
         ecl_sum_vector = EclSumKeyWordVector(self.ecl_sum)
         ecl_sum_vector.addKeywords("F*")
 
-        
+        with self.assertRaises(KeyError):
+            ecl_sum_vector.addKeyword("MISSING")
 
         dtime = datetime.datetime( 2002 , 01 , 01 , 0 , 0 , 0 )
         with TestAreaContext("EclSum/csv_dump"):
