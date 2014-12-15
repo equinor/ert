@@ -18,12 +18,8 @@ import datetime
 import os.path
 from ert.cwrap import CFILE
 from ert.ecl import EclSum, EclSumKeyWordVector
-from ert.test import ExtendedTestCase
+from ert.test import ExtendedTestCase , TestAreaContext
 
-try:
-    from unittest2 import skipIf
-except ImportError:
-    from unittest import skipIf
 
 class EclSumTest(ExtendedTestCase):
     def setUp(self):
@@ -52,5 +48,5 @@ class EclSumTest(ExtendedTestCase):
         with TestAreaContext("EclSum/csv_dump"):
             test_file_name = self.createTestPath("dump.csv")
             outputH = open(test_file_name , "w")
-            self.ecl_sum.dump_csv_line( dtime, ecl_sum_vector, outputH)
+            self.ecl_sum.dumpCSVLine( dtime, ecl_sum_vector, outputH)
             assert os.path.isfile(test_file_name)
