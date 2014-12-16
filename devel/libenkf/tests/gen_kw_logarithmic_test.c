@@ -86,7 +86,7 @@ void test_write_gen_kw_export_file(enkf_main_type * enkf_main)
     double value = stringlist_iget_as_double(token_list, 5, NULL);
 
     test_assert_true(value > 0.0); //Verify precision
-    test_assert_true(NULL != strstr(file_content, "LOG_")); //Verify log entry
+    test_assert_true(NULL != strstr(file_content, "LOG10_")); //Verify log entry
 
     stringlist_free(token_list);
     free(file_content);
