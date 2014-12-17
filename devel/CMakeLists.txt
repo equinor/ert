@@ -6,7 +6,7 @@ if(POLICY CMP0042)
 endif()
 
 set( ERT_VERSION_MAJOR 1 )
-set( ERT_VERSION_MINOR 7 )
+set( ERT_VERSION_MINOR 8 )
 set( ERT_VERSION_MICRO X )
 
 
