@@ -95,3 +95,32 @@ class CPolylineCollectionTest(ExtendedTestCase):
         tail  = p1[-1]
         self.assertEqual( tail , (2,12))
         self.assertEqual( p1.getName() , "POLY1")
+    
+    def create_coll2(self):
+        coll1 = self.create_collection()
+        coll2 = coll1.shallowCopy()
+        coll1.addPolyline( CPolyline( name = "POLY3" , init_points = [(1,1) , (2,2) , (1,3) , (1,1)]))
+        
+        self.assertEqual(len(coll1) , 3)
+        self.assertTrue( "POLY3" in coll1 )
+
+        self.assertEqual(len(coll2) , 2)
+        self.assertFalse( "POLY3" in coll2 )
+        
+        return coll2
+        
+
+    def test_shallow_copy(self):
+        coll2 = self.create_coll2()
+        self.assertEqual(len(coll2) , 2)
+        
+        p1 = coll2["POLY1"]
+        tail  = p1[-1]
+        self.assertEqual( tail , (2,12))
+        self.assertEqual(p1.getName() , "POLY1")
+
+        p2 = coll2["POLY2"]
+        tail  = p2[-1]
+        self.assertEqual( tail , (20,120))
+        self.assertEqual(p2.getName() , "POLY2")
+        
