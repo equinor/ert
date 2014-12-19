@@ -69,11 +69,12 @@ class EnkfFs(BaseCClass):
         self.__checkIfUmounted()
         return EnkfFs.cNamespace().is_read_only(self)
 
-
     def refCount(self):
         self.__checkIfUmounted()
         return self.cNamespace().get_refcount(self)
 
+    def writeCount(self):
+        return self.cNamespace().get_writecount(self)
 
     @classmethod
     def exists(cls, path):
@@ -116,3 +117,4 @@ EnkfFs.cNamespace().get_state_map = cwrapper.prototype("state_map_ref enkf_fs_ge
 EnkfFs.cNamespace().exists = cwrapper.prototype("bool enkf_fs_exists(char*)")
 EnkfFs.cNamespace().get_case_name = cwrapper.prototype("char* enkf_fs_get_case_name(enkf_fs)")
 EnkfFs.cNamespace().is_read_only = cwrapper.prototype("bool enkf_fs_is_read_only(enkf_fs)")
+EnkfFs.cNamespace().get_writecount = cwrapper.prototype("int enkf_fs_get_write_count(enkf_fs)");
