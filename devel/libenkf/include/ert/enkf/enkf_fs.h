@@ -105,6 +105,11 @@ extern "C" {
   cases_config_type    * enkf_fs_get_cases_config( const enkf_fs_type * fs);
   misfit_ensemble_type * enkf_fs_get_misfit_ensemble( const enkf_fs_type * fs );
 
+  void             enkf_fs_increase_write_count(enkf_fs_type * fs);
+  void             enkf_fs_decrease_write_count(enkf_fs_type * fs);
+  int              enkf_fs_get_write_count(const enkf_fs_type * fs);
+
+
   UTIL_SAFE_CAST_HEADER( enkf_fs );
   UTIL_IS_INSTANCE_HEADER( enkf_fs );
 
