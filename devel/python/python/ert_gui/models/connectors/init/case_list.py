@@ -18,7 +18,7 @@ class CaseList(ErtConnector, ListModelMixin):
         self.observable().notify(ListModelMixin.LIST_CHANGED_EVENT)
 
 
-    def getAllCasesWithData(self):
+    def getAllCasesWithDataAndNotRunning(self):
         cases = self.getList()
         cases_with_data_and_not_running = []
         for case in cases:
