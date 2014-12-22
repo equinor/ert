@@ -156,7 +156,6 @@ static ert_run_context_type * ert_run_context_alloc(const bool_vector_type * iac
   context->run_mode = run_mode;
   context->init_mode = init_mode;
   context->iter = iter;
-
   ert_run_context_set_init_fs(context, init_fs);
   ert_run_context_set_result_fs(context, result_fs);
   ert_run_context_set_update_target_fs(context, update_target_fs);
@@ -366,20 +365,21 @@ enkf_fs_type * ert_run_context_get_update_target_fs(const ert_run_context_type *
 }
 
 void ert_run_context_set_init_fs(ert_run_context_type * context, enkf_fs_type * init_fs) {
-  if (init_fs)
-    context->init_fs = init_fs;
+  context->init_fs = (init_fs) ? init_fs : NULL;
 }
 
 void ert_run_context_set_result_fs(ert_run_context_type * context, enkf_fs_type * result_fs) {
   if (result_fs) {
     context->result_fs = result_fs;
     enkf_fs_increase_write_count(result_fs);
-  }
+  } else
+    context->result_fs = NULL;
 }
 
 void ert_run_context_set_update_target_fs(ert_run_context_type * context, enkf_fs_type * update_target_fs) {
   if (update_target_fs) {
     context->update_target_fs = update_target_fs;
     enkf_fs_increase_write_count(update_target_fs);
-  }
+  } else
+    context->update_target_fs = NULL;
 }
