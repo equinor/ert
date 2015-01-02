@@ -9,12 +9,11 @@ Welcome to ert's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   Static/index
-
-   python/ert
-   python/ert_gui
+   user/index
+   code/index
+   ${ERT_DOC_LINK}
 
 
 Indices and tables
