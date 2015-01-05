@@ -265,11 +265,13 @@ UTIL_IS_INSTANCE_FUNCTION( ert_run_context , ERT_RUN_CONTEXT_TYPE_ID );
 
 
 void ert_run_context_free( ert_run_context_type * context ) {
-  if (context->result_fs)
+  if (context->result_fs) {
     enkf_fs_decrease_write_count(context->result_fs);
+  }
 
-  if (context->update_target_fs)
+  if (context->update_target_fs) {
     enkf_fs_decrease_write_count(context->update_target_fs);
+  }
 
   vector_free( context->run_args );
   bool_vector_free( context->iactive );
