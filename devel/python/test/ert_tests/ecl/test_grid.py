@@ -18,6 +18,7 @@ import os.path
 from unittest import skipIf
 import time
 
+from ert.util import IntVector
 from ert.ecl import EclGrid
 from ert.ecl.faults import Layer , FaultCollection
 from ert.test import ExtendedTestCase , TestAreaContext
@@ -35,6 +36,23 @@ class GridTest(ExtendedTestCase):
         self.assertEqual( grid.getNY() , 20 )
         self.assertEqual( grid.getNZ() , 30 )
         self.assertEqual( grid.getGlobalSize() , 30*10*20 )
+
+
+    def test_create(self):
+        with self.assertRaises(ValueError):
+            grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) , actnum = [0,1,1,2])
+            
+        with self.assertRaises(ValueError):
+            grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) , actnum = IntVector(initial_size = 10))
+
+        actnum = IntVector(default_value = 1 , initial_size = 6000)
+        actnum[0] = 0
+        actnum[1] = 0
+        grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) , actnum = actnum)
+        self.assertEqual( grid.getNumActive( ) , 30*20*10 - 2)
+
+
+
 
     def test_node_pos(self):
         grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) )
