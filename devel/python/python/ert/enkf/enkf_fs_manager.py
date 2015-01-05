@@ -108,6 +108,16 @@ class EnkfFsManager(BaseCClass):
         return fs
 
 
+    def isCaseRunning(self, case_name, mount_root=None):
+        """ Returns true if case is mounted and write_count > 0
+        @rtype: bool
+        """
+        if self.isCaseMounted(case_name, mount_root):
+            case_fs = self.getFileSystem(case_name, mount_root)
+            return case_fs.writeCount() > 0
+        return False
+
+
     def getCurrentFileSystem(self):
         """ Returns the currently selected file system
         @rtype: EnkfFs
