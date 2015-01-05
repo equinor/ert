@@ -158,13 +158,13 @@ class FaultTest(ExtendedTestCase):
         self.assertEqual( len(fl) , 2 )
             
         pl = fl.getPolyline( )
-        self.assertIsInstance( pl , Polyline )
+        self.assertIsInstance( pl , CPolyline )
         self.assertEqual( len(pl) , len(fl) + 1 )
 
         S3 = FaultSegment(20 , 30)
         fl.tryAppend( S3 )
         pl = fl.getPolyline( )
-        self.assertIsInstance( pl , Polyline )
+        self.assertIsInstance( pl , CPolyline )
         self.assertEqual( len(pl) , len(fl) + 1 )
 
 
