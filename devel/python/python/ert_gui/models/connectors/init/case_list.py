@@ -23,17 +23,13 @@ class CaseList(ErtConnector, ListModelMixin):
         cases_with_data_and_not_running = []
         for case in cases:
             case_has_data = False
-            case_not_running = False
             state_map = self.ert().getEnkfFsManager().getStateMapForCase(case)
 
             for state in state_map:
                 if state == RealizationStateEnum.STATE_HAS_DATA:
                     case_has_data = True
-                case_fs = self.ert().getEnkfFsManager().getFileSystem(case)
-                if case_fs.writeCount() == 0:
-                    case_not_running  = True
 
-            if case_has_data and case_not_running:
+            if case_has_data and not self.ert().getEnkfFsManager().isCaseRunning(case):
                 cases_with_data_and_not_running.append(case)
 
         return cases_with_data_and_not_running
