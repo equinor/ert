@@ -1,6 +1,6 @@
 import math
 
-from ert.geo import CPolyline
+from ert.geo import CPolyline , Polyline
 from ert.geo.xyz_io import XYZIo
 from ert.test import ExtendedTestCase , TestAreaContext
 
@@ -126,8 +126,32 @@ class CPolylineTest(ExtendedTestCase):
         self.assertTrue(polyline.segmentIntersects( (0.5 , 0.5) , (0.5 , -0.5)))
         self.assertTrue(polyline.segmentIntersects( (0.5 , 0.5) , (1.5 , 0.5)))
 
-        self.assertFalse(polyline.segmentIntersects( (0.5 , 0.5) , (0.5 , 1.5)))
-        self.assertFalse(polyline.segmentIntersects( (0.5 , 0.5) , (-0.5 , 0.5)))
+        self.assertFalse(polyline.segmentIntersects( (0.5 , 0.5) , ( 0.5  , 1.5)))
+        self.assertFalse(polyline.segmentIntersects( (0.5 , 0.5) , (-0.5  , 0.5)))
+        self.assertFalse(polyline.segmentIntersects( (0.5 , 1.5) , ( 1.5  , 1.5)))
+
+        self.assertTrue( polyline.segmentIntersects( (1.0 , 1.0) , ( 1.5  , 1.5)))
+        self.assertTrue( polyline.segmentIntersects( ( 1.5  , 1.5) , (1.0 , 1.0)))
+        self.assertTrue( polyline.segmentIntersects( ( 1  , 0) , (1.0 , 1.0)))
+
+
+
+    def test_intersects(self):
+        polyline1 = CPolyline( init_points = [(0,0), (1,0) , (1,1)])
+        polyline2 = CPolyline( init_points = [(0.50,0.50) , (1.50,0.50)])
+        polyline3 =  Polyline( init_points = [(0.50,0.50) , (1.50,0.50)])
+        polyline4 = CPolyline( init_points = [(0.50,1.50) , (1.50,1.50)])
+
+        self.assertTrue( polyline1.intersects( polyline2 ))
+        self.assertTrue( polyline1.intersects( polyline3 ))
+        self.assertFalse( polyline1.intersects( polyline4 ))
+        
+
+    def test_intersects2(self):
+        polyline = CPolyline( init_points = [(2,10),(2,100)])
+        self.assertTrue( polyline.intersects( polyline ))
+
+
         
     def test_name(self):
         p1 = CPolyline()
@@ -142,3 +166,6 @@ class CPolylineTest(ExtendedTestCase):
         x,y = pl.unzip()
         self.assertEqual(x , [0,1,2])
         self.assertEqual(y , [3,4,5])
+
+
+    
