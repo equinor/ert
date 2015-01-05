@@ -25,6 +25,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_grdecl.py
     ert_tests/ecl/test_grid_statoil.py
     ert_tests/ecl/test_kw.py
+    ert_tests/ecl/test_ecl_3dkw.py
     ert_tests/ecl/test_legacy_ecl.py
     ert_tests/ecl/test_region.py
     ert_tests/ecl/test_restart.py
@@ -515,6 +516,10 @@ add_test( NAME python.tests.ert.ecl.ecl_grid
 add_test( NAME python.tests.ert.ecl.ecl_kw
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_kw.KWTest )
+
+add_test( NAME python.tests.ert.ecl.ecl_3dkw
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_3dkw.Ecl3DKWTest )
 
 add_test( NAME python.tests.ert.ecl.legacy_ecl
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
