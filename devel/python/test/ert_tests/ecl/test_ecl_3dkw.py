@@ -137,3 +137,10 @@ class Ecl3DKWTest(ExtendedTestCase):
         self.assertEqual( kw_active_size[0,0,0] , 66)
         with self.assertRaises(ValueError):
             kw_active_size[0,0,0] = 88
+
+
+    def test_default(self):
+        grid = EclGrid.createRectangular( (10,10,10) , (1,1,1))
+        kw  = Ecl3DKW.create( "KW" , grid , EclTypeEnum.ECL_FLOAT_TYPE )
+        kw.setDefault(55)
+        self.assertTrue( 55 , kw.getDefault())
