@@ -37,6 +37,9 @@ class GridTest(ExtendedTestCase):
         self.assertEqual( grid.getNZ() , 30 )
         self.assertEqual( grid.getGlobalSize() , 30*10*20 )
 
+        self.assertEqual( grid.getDims() , (10,20,30,6000) )
+        
+
 
     def test_create(self):
         with self.assertRaises(ValueError):
