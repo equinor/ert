@@ -116,6 +116,28 @@ class FaultTest(ExtendedTestCase):
             f = fl[0]
 
 
+
+    def test_faultLine_center(self):
+        nx = 10
+        ny = 10
+        nz = 2
+        grid = EclGrid.create_rectangular( (nx,ny,nz) , (0.1,0.1,0.1))
+        fl = FaultLine(grid , 0)
+        C1 = (nx + 1) * 5 + 3
+        C2 = C1  +  2
+        C3 = C2  +  2
+
+        s1 = FaultSegment( C1 , C2 )
+        s2 = FaultSegment( C2 , C3 )
+
+        fl.tryAppend( s1 )
+        fl.tryAppend( s2 )
+        
+        self.assertEqual( len(fl) , 2 )
+        self.assertEqual( fl.center() , (0.50 , 0.50) )
+        
+
+
     def test_faultLine(self):
         fl = FaultLine(self.grid , 10)
         S1 = FaultSegment(0 , 10)
@@ -471,7 +493,8 @@ class FaultTest(ExtendedTestCase):
         self.assertEqual(s0.getC1() , 10 )
         self.assertEqual(s0.getC2() , 0 )
         
-    
+        
+
     
     def test_fault_line(self ):
         faults = FaultCollection(self.grid , self.faults1 , self.faults2)
@@ -644,3 +667,5 @@ class FaultTest(ExtendedTestCase):
             f2 = faults["F2"]
             self.assertEqual( 2 , f1.numLines(0))
             self.assertEqual( 1 , f2.numLines(0))
+
+
