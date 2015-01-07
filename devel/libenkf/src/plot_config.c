@@ -62,7 +62,6 @@ void plot_config_set_height(plot_config_type * plot_config , int height) {
 
 void plot_config_set_path(plot_config_type * plot_config , const char * plot_path) {
   plot_config->plot_path = util_realloc_string_copy(plot_config->plot_path , plot_path);
-  util_make_path( plot_path );
 }
 
 void plot_config_set_image_type(plot_config_type * plot_config , const char * image_type) {
