@@ -114,7 +114,7 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_data_type
     meas_block_calculate_ens_stats( meas_block );
     {
       int iobs;
-      for (iobs =0; iobs < meas_block_get_total_size( meas_block ); iobs++) {
+      for (iobs =0; iobs < meas_block_get_total_obs_size( meas_block ); iobs++) {
         if (meas_block_iget_active( meas_block , iobs )) {
           double ens_std  = meas_block_iget_ens_std( meas_block , iobs );
           if (ens_std <= std_cutoff) {
@@ -156,7 +156,7 @@ void enkf_analysis_deactivate_std_zero(obs_data_type * obs_data , meas_data_type
     meas_block_calculate_ens_stats( meas_block );
     {
       int iobs;
-      for (iobs =0; iobs < meas_block_get_total_size( meas_block ); iobs++) {
+      for (iobs =0; iobs < meas_block_get_total_obs_size( meas_block ); iobs++) {
         if (meas_block_iget_active( meas_block , iobs )) {
           double ens_std  = meas_block_iget_ens_std( meas_block , iobs );
           if (ens_std <= 0.0) {

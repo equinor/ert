@@ -207,7 +207,7 @@ void meas_block_deactivate( meas_block_type * meas_block , int iobs ) {
 }
 
 
-int meas_block_get_total_size( const meas_block_type * meas_block ) {
+int meas_block_get_total_obs_size( const meas_block_type * meas_block ) {
   return meas_block->obs_size;
 }
 
