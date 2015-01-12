@@ -56,7 +56,6 @@ struct meas_block_struct {
   int          ens_stride;
   int          obs_stride;
   int          data_size;
-  int          report_step;  /* Not really necessary ?? */
   char       * obs_key;
   double     * data;
   bool       * active;
@@ -77,7 +76,7 @@ static UTIL_SAFE_CAST_FUNCTION( meas_block , MEAS_BLOCK_TYPE_ID )
    value.
 */
 
-static meas_block_type * meas_block_alloc( const char * obs_key , int report_step , int ens_size , int obs_size) {
+meas_block_type * meas_block_alloc( const char * obs_key , int ens_size , int obs_size) {
   meas_block_type * meas_block = util_malloc( sizeof * meas_block );
   UTIL_TYPE_ID_INIT( meas_block , MEAS_BLOCK_TYPE_ID );
   meas_block->ens_size    = ens_size;
@@ -88,7 +87,6 @@ static meas_block_type * meas_block_alloc( const char * obs_key , int report_ste
   meas_block->ens_stride  = 1;
   meas_block->obs_stride  = ens_size + 2;
   meas_block->data_size   = (ens_size + 2) * obs_size;
-  meas_block->report_step = report_step;
   {
     int i;
     for (i=0; i  <obs_size; i++)
@@ -261,7 +259,7 @@ meas_block_type * meas_data_add_block( meas_data_type * matrix , const char * ob
   pthread_mutex_lock( &matrix->data_mutex );
   {
     if (!set_has_key( matrix->lookup_keys , lookup_key )) {
-      meas_block_type  * new_block = meas_block_alloc(obs_key , report_step , matrix->ens_size , obs_size);
+      meas_block_type  * new_block = meas_block_alloc(obs_key , matrix->ens_size , obs_size);
       vector_append_owned_ref( matrix->data , new_block , meas_block_free__ );
       set_add_key( matrix->lookup_keys , lookup_key );
     }
