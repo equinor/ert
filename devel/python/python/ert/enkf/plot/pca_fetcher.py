@@ -46,7 +46,7 @@ class PcaDataFetcher(DataFetcher):
         state_map = fs.getStateMap()
         ens_mask = BoolVector(False, self.ert().getEnsembleSize())
         state_map.selectMatching(ens_mask, RealizationStateEnum.STATE_HAS_DATA)
-        active_list = BoolVector.createActiveList(ens_mask)
+        active_list = ens_mask.createActiveList( )
 
         if len(active_list) > 0:
             state = EnkfStateType.FORECAST
