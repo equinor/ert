@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'config.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'config.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -60,32 +60,32 @@ A keyword can occure many times.
 
 /**
 
-                                                              
-                           =============================                                
+
+                           =============================
                            | config_type object        |
-                           |                           |                                
-                           | Contains 'all' the        |                                
-                           | configuration information.|                                
-                           |                           |                                
-                           =============================                                
+                           |                           |
+                           | Contains 'all' the        |
+                           | configuration information.|
+                           |                           |
+                           =============================
                                |                   |
-                               |                   \________________________                                             
-                               |                                            \          
-                              KEY1                                         KEY2   
-                               |                                             |  
-                              \|/                                           \|/ 
-                   =========================                      =========================          
-                   | config_item object    |                      | config_item object    |                     
-                   |                       |                      |                       |                     
-                   | Indexed by a keyword  |                      | Indexed by a keyword  |                     
-                   | which is the first    |                      | which is the first    |                     
-                   | string in the         |                      | string in the         |                     
-                   | config file.          |                      | config file.          |                     
-                   |                       |                      |                       |                                                                           
-                   =========================                      =========================                     
+                               |                   \________________________
+                               |                                            \
+                              KEY1                                         KEY2
+                               |                                             |
+                              \|/                                           \|/
+                   =========================                      =========================
+                   | config_item object    |                      | config_item object    |
+                   |                       |                      |                       |
+                   | Indexed by a keyword  |                      | Indexed by a keyword  |
+                   | which is the first    |                      | which is the first    |
+                   | string in the         |                      | string in the         |
+                   | config file.          |                      | config file.          |
+                   |                       |                      |                       |
+                   =========================                      =========================
                        |             |                                        |
                        |             |                                        |
-                      \|/           \|/                                      \|/  
+                      \|/           \|/                                      \|/
 ============================  ============================   ============================
 | config_item_node object  |  | config_item_node object  |   | config_item_node object  |
 |                          |  |                          |   |                          |
@@ -118,7 +118,7 @@ In this case the whole config object will contain three items,
 corresponding to the keywords OUTFILE, INPUT and OPTIONS. The two
 first will again only contain one node each, whereas the OPTIONS item
 will contain three nodes, corresponding to the three times the keyword
-"OPTIONS" appear in the config file. 
+"OPTIONS" appear in the config file.
 */
 
 
@@ -126,7 +126,7 @@ will contain three nodes, corresponding to the three times the keyword
 
 
 
- 
+
 
 
 
@@ -134,7 +134,7 @@ will contain three nodes, corresponding to the three times the keyword
 struct config_struct {
   vector_type          * content_list;              /* Vector of content_content_node instances. */
   hash_type            * content_items;
-  hash_type            * schema_items;              
+  hash_type            * schema_items;
   config_error_type    * parse_errors;
   set_type             * parsed_files;              /* A set of config files whcih have been parsed - to protect against circular includes. */
   hash_type            * messages;                  /* Can print a (warning) message when a keyword is encountered. */
@@ -155,8 +155,8 @@ struct config_struct {
 
 
 
-/** 
-    Adds a new node as side-effect ... 
+/**
+    Adds a new node as side-effect ...
 */
 static config_content_node_type * config_get_new_content_node(config_type * config , config_content_item_type * item) {
   config_content_node_type * new_node = config_content_item_alloc_node( item , config_content_item_get_path_elm( item ));
@@ -181,8 +181,8 @@ static config_content_node_type * config_get_new_content_node(config_type * conf
   calling scope will free it.
 */
 
-static void config_content_item_set_arg__(config_type * config , config_content_item_type * item , stringlist_type * token_list , 
-                                          const config_path_elm_type * path_elm , 
+static void config_content_item_set_arg__(config_type * config , config_content_item_type * item , stringlist_type * token_list ,
+                                          const config_path_elm_type * path_elm ,
                                           const char * config_file ) {
 
   int argc = stringlist_get_size( token_list ) - 1;
@@ -191,7 +191,7 @@ static void config_content_item_set_arg__(config_type * config , config_content_
     config_content_item_clear(item);
   } else {
     const config_schema_item_type * schema_item = config_content_item_get_schema( item );
-    
+
     /* Filtering based on DEFINE statements */
     if (subst_list_get_size( config->define_list ) > 0) {
       int iarg;
@@ -201,7 +201,7 @@ static void config_content_item_set_arg__(config_type * config , config_content_
       }
     }
 
-    
+
     /* Filtering based on environment variables */
     if (config_schema_item_expand_envvar( schema_item )) {
       int iarg;
@@ -228,11 +228,11 @@ static void config_content_item_set_arg__(config_type * config , config_content_
       if (config_schema_item_validate_set(schema_item , token_list , config_file,  path_elm , config->parse_errors)) {
         config_content_node_type * node = config_get_new_content_node(config , item);
         config_content_node_set(node , token_list);
-      } 
+      }
     }
   }
 }
- 
+
 
 
 
@@ -246,9 +246,9 @@ config_type * config_alloc() {
   config->content_list      = vector_alloc_new();
   config->path_elm_storage  = vector_alloc_new();
   config->path_elm_stack    = vector_alloc_new();
-  
+
   config->schema_items    = hash_alloc();
-  config->content_items   = hash_alloc(); 
+  config->content_items   = hash_alloc();
   config->parse_errors    = config_error_alloc();
   config->parsed_files    = set_alloc_empty();
   config->messages        = hash_alloc();
@@ -262,7 +262,7 @@ config_type * config_alloc() {
 
 
 const subst_list_type * config_get_define_list( const config_type * config) {
-  return config->define_list;   
+  return config->define_list;
 }
 
 
@@ -283,7 +283,7 @@ void config_clear(config_type * config) {
   vector_clear( config->path_elm_stack );
 
   util_safe_free( config->config_file );
-  util_safe_free( config->abs_path );    
+  util_safe_free( config->abs_path );
   if (config->invoke_path != NULL) {
     config_root_path_free( config->invoke_path );
     config->invoke_path = NULL;
@@ -298,7 +298,7 @@ void config_free(config_type * config) {
   config_error_free( config->parse_errors );
   set_free(config->parsed_files);
   subst_list_free( config->define_list );
-  
+
   vector_free( config->path_elm_storage );
   vector_free( config->path_elm_stack );
   vector_free( config->content_list );
@@ -333,10 +333,10 @@ static void config_insert_schema_item(config_type * config , const char * kw , c
 */
 
 
-config_schema_item_type * config_add_schema_item(config_type * config , 
-                                                 const char  * kw, 
-                                                 bool  required) { 
-  
+config_schema_item_type * config_add_schema_item(config_type * config ,
+                                                 const char  * kw,
+                                                 bool  required) {
+
   config_schema_item_type * item = config_schema_item_alloc( kw , required );
   config_insert_schema_item(config , kw , item , false);
   return item;
@@ -345,12 +345,12 @@ config_schema_item_type * config_add_schema_item(config_type * config ,
 
 
 /**
-  This is a minor wrapper for adding an item with the properties. 
+  This is a minor wrapper for adding an item with the properties.
 
     1. It has argc_minmax = {1,1}
-    
+
    The value can than be extracted with config_get_value() and
-   config_get_value_as_xxxx functions. 
+   config_get_value_as_xxxx functions.
 */
 
 config_schema_item_type * config_add_key_value( config_type * config , const char * key , bool required , config_item_types item_type) {
@@ -373,7 +373,7 @@ config_schema_item_type * config_get_schema_item(const config_type * config , co
 
 /*
   Due to the possibility of aliases we must go through the canonical
-  keyword which is internalized in the schema_item.  
+  keyword which is internalized in the schema_item.
 */
 
 
@@ -406,9 +406,9 @@ config_content_item_type * config_get_content_item( const config_type * config ,
       return hash_get( config->content_items , kw );
     else
       return NULL;
-    
+
   } else
-    return NULL;   
+    return NULL;
 }
 
 
@@ -459,7 +459,7 @@ char ** config_alloc_active_list(const config_type * config, int * _active_size)
 static void config_validate_content_item(const config_type * config , const config_content_item_type * item) {
   const config_schema_item_type *  schema_item = config_content_item_get_schema( item );
   const char * schema_kw = config_schema_item_get_kw( schema_item );
-  
+
   {
     int i;
     for (i = 0; i < config_schema_item_num_required_children(schema_item); i++) {
@@ -469,7 +469,7 @@ static void config_validate_content_item(const config_type * config , const conf
         config_error_add( config->parse_errors , error_message );
       }
     }
-    
+
     if (config_schema_item_has_required_children_value( schema_item )) {
       int inode;
       for (inode = 0; inode < config_content_item_get_size(item); inode++) {
@@ -480,7 +480,7 @@ static void config_validate_content_item(const config_type * config , const conf
         for (is = 0; is < stringlist_get_size(values); is++) {
           const char * value = stringlist_iget(values , is);
           stringlist_type * required_children = config_schema_item_get_required_children_value( schema_item , value );
-          
+
           if (required_children != NULL) {
             int ic;
             for (ic = 0; ic < stringlist_get_size( required_children ); ic++) {
@@ -494,7 +494,7 @@ static void config_validate_content_item(const config_type * config , const conf
         }
       }
     }
-  } 
+  }
 }
 
 
@@ -529,14 +529,14 @@ static config_path_elm_type * config_add_path_elm( config_type * config , const 
     current_path_elm = NULL;
   else
     current_path_elm = vector_get_last_const(config->path_elm_stack);
-  
+
   {
     config_path_elm_type * new_path_elm;
 
     {
       char * rel_path = NULL;
       if (path != NULL) {
-        if (current_path_elm == NULL) 
+        if (current_path_elm == NULL)
           rel_path = util_alloc_rel_path( config_root_path_get_abs_path(config->invoke_path) , path);
         else
           rel_path = config_path_elm_alloc_relpath( current_path_elm , path );
@@ -586,7 +586,7 @@ static config_path_elm_type * config_add_path_elm( config_type * config , const 
    validate: whether we should validate when complete, that should
              typically only be done at the last parsing.
 
-      
+
    define_kw: This a string which can serve as a "#define" for the
    parsing. The define_kw keyword should have two arguments - a key
    and a value. If the define_kw is present all __subsequent__
@@ -595,7 +595,7 @@ static config_path_elm_type * config_add_path_elm( config_type * config , const 
    key, i.e. add leading and trailing 'magic' characters.
 
 
-   Example:  
+   Example:
    --------
 
    char * add_angular_brackets(const char * key) {
@@ -604,7 +604,7 @@ static config_path_elm_type * config_add_path_elm( config_type * config , const 
 
 
 
-   config_parse(... , "myDEF" , add_angular_brackets , ...) 
+   config_parse(... , "myDEF" , add_angular_brackets , ...)
 
 
    Config file:
@@ -612,8 +612,8 @@ static config_path_elm_type * config_add_path_elm( config_type * config , const 
    myDEF   Name         BJARNE
    myDEF   sexual-pref  Dogs
    ...
-   ... 
-   PERSON  <Name> 28 <sexual-pref>      
+   ...
+   PERSON  <Name> 28 <sexual-pref>
    ...
    ------------
 
@@ -624,19 +624,19 @@ static config_path_elm_type * config_add_path_elm( config_type * config , const 
 */
 
 
-static void config_parse__(config_type * config , 
-                           path_stack_type * path_stack , 
-                           const char * config_input , 
-                           const char * comment_string , 
+static void config_parse__(config_type * config ,
+                           path_stack_type * path_stack ,
+                           const char * config_input ,
+                           const char * comment_string ,
                            const char * include_kw ,
-                           const char * define_kw , 
+                           const char * define_kw ,
                            config_schema_unrecognized_enum unrecognized,
                            bool validate) {
 
   /* Guard against circular includes. */
   {
     char * abs_filename = util_alloc_realpath(config_input);
-    if (!set_add_key(config->parsed_files , abs_filename)) 
+    if (!set_add_key(config->parsed_files , abs_filename))
       util_exit("%s: file:%s already parsed - circular include ? \n",__func__ , abs_filename);
     free( abs_filename );
   }
@@ -661,24 +661,24 @@ static void config_parse__(config_type * config ,
       free( config_path );
     }
   }
-  
+
 
   {
     parser_type * parser = parser_alloc(" \t" , "\"", NULL , NULL , "--" , "\n");
     FILE * stream = util_fopen(config_file , "r");
     bool   at_eof = false;
-    
+
     while (!at_eof) {
       int    active_tokens;
       stringlist_type * token_list;
       char  *line_buffer;
-      
-      
+
+
       line_buffer  = util_fscanf_alloc_line(stream , &at_eof);
       if (line_buffer != NULL) {
         token_list = parser_tokenize_buffer(parser , line_buffer , true);
         active_tokens = stringlist_get_size( token_list );
-        
+
         /*
           util_split_string(line_buffer , " \t" , &tokens , &token_list);
           active_tokens = tokens;
@@ -686,7 +686,7 @@ static void config_parse__(config_type * config ,
           char * comment_ptr = NULL;
           if(comment_string != NULL)
           comment_ptr = strstr(token_list[i] , comment_string);
-          
+
           if (comment_ptr != NULL) {
           if (comment_ptr == token_list[i])
           active_tokens = i;
@@ -696,29 +696,29 @@ static void config_parse__(config_type * config ,
           }
           }
         */
-        
+
         if (active_tokens > 0) {
           const char * kw = stringlist_iget( token_list , 0 );
-          
+
           /*Treating the include keyword. */
           if (include_kw != NULL && (strcmp(include_kw , kw) == 0)) {
-            if (active_tokens != 2) 
+            if (active_tokens != 2)
               util_abort("%s: keyword:%s must have exactly one argument. \n",__func__ ,include_kw);
             {
               const char *include_file  = stringlist_iget( token_list , 1);
               if (util_file_exists( include_file ))
                 config_parse__(config , path_stack , include_file , comment_string , include_kw , define_kw , unrecognized, false); /* Recursive call */
-              else 
+              else
                 config_error_add(config->parse_errors , util_alloc_sprintf("%s file:%s not found" , include_kw , include_file));
             }
           } else if ((define_kw != NULL) && (strcmp(define_kw , kw) == 0)) {
             /* Treating the define keyword. */
-            if (active_tokens < 3) 
+            if (active_tokens < 3)
               util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
             {
               char * key   = util_alloc_string_copy( stringlist_iget(token_list ,1) );
               char * value = stringlist_alloc_joined_substring( token_list , 2 , active_tokens , " ");
-                
+
               {
                 char * filtered_value = subst_list_alloc_filtered_string( config->define_list , value);
                 config_add_define( config , key , filtered_value );
@@ -730,19 +730,19 @@ static void config_parse__(config_type * config ,
           } else {
             if (hash_has_key(config->messages , kw))
               printf("%s \n", (const char *) hash_get(config->messages , kw));
-              
+
             if (!config_has_schema_item(config , kw)) {
               if (unrecognized == CONFIG_UNRECOGNIZED_WARN)
                 fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s --- \n" , kw , config_input);
-              else if (unrecognized == CONFIG_UNRECOGNIZED_ERROR) 
+              else if (unrecognized == CONFIG_UNRECOGNIZED_ERROR)
                 config_error_add(config->parse_errors , util_alloc_sprintf("Keyword:%s is not recognized" , kw));
-                
+
             }
 
             if (config_has_schema_item(config , kw)) {
               char * config_cwd;
               util_alloc_file_components( config_file , &config_cwd , NULL , NULL );
-                
+
               if (!config_has_content_item( config , kw ))
                 config_add_content_item( config , kw , current_path_elm );
 
@@ -750,14 +750,14 @@ static void config_parse__(config_type * config ,
                 config_content_item_type * content_item = config_get_content_item( config , kw );
                 config_content_item_set_arg__(config , content_item , token_list , current_path_elm , config_file );
               }
-            } 
+            }
           }
         }
         stringlist_free(token_list);
         free(line_buffer);
       }
     }
-    if (validate) 
+    if (validate)
       config_validate(config , config_file);
     fclose(stream);
     parser_free( parser );
@@ -777,7 +777,7 @@ static void config_set_config_file( config_type * config , const char * config_f
 
 
 static void config_set_invoke_path( config_type * config ) {
-  if (config->invoke_path != NULL) 
+  if (config->invoke_path != NULL)
     config_root_path_free( config->invoke_path );
   config->invoke_path = config_root_path_alloc( NULL );
 }
@@ -797,14 +797,14 @@ void config_fprintf_errors( const config_type * config , bool add_count , FILE *
 
 
 
-bool config_parse(config_type * config , 
-                  const char * filename, 
-                  const char * comment_string , 
+bool config_parse(config_type * config ,
+                  const char * filename,
+                  const char * comment_string ,
                   const char * include_kw ,
-                  const char * define_kw , 
+                  const char * define_kw ,
                   config_schema_unrecognized_enum unrecognized_behaviour,
                   bool validate) {
-  
+
   if (util_file_readable( filename )) {
     path_stack_type * path_stack = path_stack_alloc();
     {
@@ -813,9 +813,9 @@ bool config_parse(config_type * config ,
       config_parse__(config , path_stack , filename , comment_string , include_kw , define_kw , unrecognized_behaviour , validate);
     }
     path_stack_free( path_stack );
-  } else 
+  } else
     config_error_add( config->parse_errors , util_alloc_sprintf("Could not open file:%s for parsing" , filename));
-    
+
   if (config_error_count( config->parse_errors ) == 0)
     return true;   // No errors
   else
@@ -826,10 +826,10 @@ bool config_parse(config_type * config ,
 
 
 /*****************************************************************/
-/* 
+/*
    Here comes some xxx_get() functions - many of them will fail if
    the item has not been added in the right way (this is to ensure that
-   the xxx_get() request is unambigous. 
+   the xxx_get() request is unambigous.
 */
 
 
@@ -844,7 +844,7 @@ bool config_parse(config_type * config ,
 */
 
 /**
-   Assume we installed a key 'KEY' which occurs three times in the final 
+   Assume we installed a key 'KEY' which occurs three times in the final
    config file:
 
    KEY  1    2     3
@@ -879,7 +879,7 @@ double config_iget_as_double(const config_type * config , const char * kw, int o
 }
 
 
-/** 
+/**
     As the config_get function, but the argc_minmax requiremnt has been removed.
 */
 const char * config_iget(const config_type * config , const char * kw, int occurence , int index) {
@@ -890,7 +890,7 @@ const char * config_iget(const config_type * config , const char * kw, int occur
 
 
 /**
-   This function will return NULL is the item has not been set, 
+   This function will return NULL is the item has not been set,
    however it must be installed with config_add_schema_item().
 */
 const char * config_safe_iget(const config_type * config , const char *kw, int occurence , int index) {
@@ -909,7 +909,7 @@ const char * config_safe_iget(const config_type * config , const char *kw, int o
 
 const stringlist_type * config_iget_stringlist_ref(const config_type * config , const char * kw, int occurence) {
   config_content_item_type * item = config_get_content_item(config , kw);
-  
+
   return config_content_item_iget_stringlist_ref(item , occurence);
 }
 
@@ -926,7 +926,7 @@ const stringlist_type * config_iget_stringlist_ref(const config_type * config , 
   stringlist.
 */
 
-  
+
 stringlist_type * config_alloc_complete_stringlist(const config_type* config , const char * kw) {
   bool copy = true;
   config_content_item_type * item = config_get_content_item(config , kw);
@@ -996,7 +996,7 @@ It is enforced that:
 
  * item is allocated with append_arg = true
  * item is allocated with argc_minmax = 2,2
- 
+
  The hash takes copy of the values in the hash so the config object
  can safefly be freed (opposite if copy == false).
 */
