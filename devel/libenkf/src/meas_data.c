@@ -212,6 +212,14 @@ int meas_block_get_total_obs_size( const meas_block_type * meas_block ) {
 }
 
 
+int meas_block_get_ens_size( const meas_block_type * meas_block ) {
+  return meas_block->ens_size;
+}
+
+
+
+
+
 
 /*****************************************************************/
 
