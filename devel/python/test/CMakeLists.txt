@@ -54,6 +54,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_summary_key_set.py
     ert_tests/enkf/test_time_map.py
     ert_tests/enkf/test_enkf_obs.py
+    ert_tests/enkf/test_meas_block.py
     ert_tests/enkf/test_run_arg.py
     ert_tests/enkf/test_runpath_list.py
     ert_tests/enkf/plot/test_plot_data.py
@@ -229,6 +230,10 @@ add_test( NAME python.tests.ert.enkf.enkf
 add_test( NAME python.tests.ert.enkf.enkf_obs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_obs.EnKFObsTest)
+
+add_test( NAME python.tests.ert.enkf.meas_block
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_meas_block.MeasBlockTest)
 
 add_test( NAME python.tests.ert.enkf.enkf_load_results_manually
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
