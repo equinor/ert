@@ -42,8 +42,8 @@ void               meas_block_deactivate( meas_block_type * meas_block , int iob
 
 void meas_data_fprintf( const meas_data_type * matrix , FILE * stream);
 
-  void               meas_data_reset(meas_data_type * );
-  meas_data_type *   meas_data_alloc( const int_vector_type * ens_active_list );
+void               meas_data_reset(meas_data_type * );
+meas_data_type *   meas_data_alloc( const int_vector_type * ens_active_list );
 void               meas_data_free(meas_data_type * );
 void               meas_data_add(meas_data_type * , int , double );
 matrix_type      * meas_data_allocS(const meas_data_type * matrix , int active_size);
