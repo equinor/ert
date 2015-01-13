@@ -65,7 +65,7 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
       int obs_count = 1;  /* Only for printing */
       for (block_nr =0; block_nr < obs_data_get_num_blocks( obs_data ); block_nr++) {
         const obs_block_type  * obs_block  = obs_data_iget_block_const( obs_data , block_nr);
-        const meas_block_type * meas_block = meas_data_iget_block_const( meas_data , block_nr );
+        meas_block_type * meas_block = meas_data_iget_block( meas_data , block_nr );
         const char * obs_key = obs_block_get_key( obs_block );
 
         for (int iobs = 0; iobs < obs_block_get_size( obs_block ); iobs++) {
@@ -111,7 +111,6 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_data_type
     obs_block_type  * obs_block  = obs_data_iget_block( obs_data , block_nr);
     meas_block_type * meas_block = meas_data_iget_block( meas_data , block_nr );
 
-    meas_block_calculate_ens_stats( meas_block );
     {
       int iobs;
       for (iobs =0; iobs < meas_block_get_total_obs_size( meas_block ); iobs++) {
@@ -153,7 +152,6 @@ void enkf_analysis_deactivate_std_zero(obs_data_type * obs_data , meas_data_type
     obs_block_type  * obs_block  = obs_data_iget_block( obs_data , block_nr);
     meas_block_type * meas_block = meas_data_iget_block( meas_data , block_nr );
 
-    meas_block_calculate_ens_stats( meas_block );
     {
       int iobs;
       for (iobs =0; iobs < meas_block_get_total_obs_size( meas_block ); iobs++) {

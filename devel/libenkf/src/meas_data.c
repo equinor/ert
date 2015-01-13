@@ -59,6 +59,7 @@ struct meas_block_struct {
   char       * obs_key;
   double     * data;
   bool       * active;
+  bool         stat_calculated;
 };
 
 
@@ -92,6 +93,7 @@ meas_block_type * meas_block_alloc( const char * obs_key , int ens_size , int ob
     for (i=0; i  <obs_size; i++)
       meas_block->active[i] = false;
   }
+  meas_block->stat_calculated = false;
   return meas_block;
 }
 
@@ -146,10 +148,11 @@ static void meas_data_assign_block( meas_block_type * target_block , const meas_
     int src_index    = src_iens * src_block->ens_stride + iobs * src_block->obs_stride;
     target_block->data[ target_index ] = src_block->data[ src_index ];
   }
+  target_block->stat_calculated = false;
 }
 
 
-void meas_block_calculate_ens_stats( meas_block_type * meas_block ) {
+static void meas_block_calculate_ens_stats( meas_block_type * meas_block ) {
   bool include_inactive = true;
   int iobs , iens;
   for (iobs =0; iobs < meas_block->obs_size; iobs++) {
@@ -171,8 +174,14 @@ void meas_block_calculate_ens_stats( meas_block_type * meas_block ) {
       }
     }
   }
+  meas_block->stat_calculated = true;
 }
 
+
+static void meas_block_assert_ens_stat( meas_block_type * meas_block ) {
+  if (!meas_block->stat_calculated)
+    meas_block_calculate_ens_stats( meas_block );
+}
 
 
 void meas_block_iset( meas_block_type * meas_block , int iens , int iobs , double value) {
@@ -181,18 +190,31 @@ void meas_block_iset( meas_block_type * meas_block , int iens , int iobs , doubl
   if (!meas_block->active[ iobs ])
     meas_block->active[ iobs ] = true;
 
+  meas_block->stat_calculated = false;
 }
 
 
-double meas_block_iget_ens_std( const meas_block_type * meas_block , int iobs) {
-  int std_index  = (meas_block->ens_size + 1) * meas_block->ens_stride + iobs * meas_block->obs_stride;
-  return meas_block->data[ std_index ];
+double meas_block_iget( const meas_block_type * meas_block , int iens , int iobs) {
+  int index = iens * meas_block->ens_stride + iobs * meas_block->obs_stride;
+  return meas_block->data[ index ];
 }
 
 
-double meas_block_iget_ens_mean( const meas_block_type * meas_block , int iobs) {
-  int mean_index  = meas_block->ens_size * meas_block->ens_stride + iobs * meas_block->obs_stride;
-  return meas_block->data[ mean_index ];
+double meas_block_iget_ens_std( meas_block_type * meas_block , int iobs) {
+  meas_block_assert_ens_stat( meas_block );
+  {
+    int std_index  = (meas_block->ens_size + 1) * meas_block->ens_stride + iobs * meas_block->obs_stride;
+    return meas_block->data[ std_index ];
+  }
+}
+
+
+double meas_block_iget_ens_mean( meas_block_type * meas_block , int iobs) {
+  meas_block_assert_ens_stat( meas_block );
+  {
+    int mean_index  = meas_block->ens_size * meas_block->ens_stride + iobs * meas_block->obs_stride;
+    return meas_block->data[ mean_index ];
+  }
 }
 
 
@@ -204,6 +226,7 @@ bool meas_block_iget_active( const meas_block_type * meas_block , int iobs) {
 void meas_block_deactivate( meas_block_type * meas_block , int iobs ) {
   if (meas_block->active[ iobs ])
     meas_block->active[ iobs ] = false;
+  meas_block->stat_calculated = false;
 }
 
 
@@ -279,7 +302,7 @@ meas_block_type * meas_data_add_block( meas_data_type * matrix , const char * ob
 
 
 
-meas_block_type * meas_data_iget_block( meas_data_type * matrix , int block_nr) {
+meas_block_type * meas_data_iget_block( const meas_data_type * matrix , int block_nr) {
   return vector_iget( matrix->data , block_nr);
 }
 

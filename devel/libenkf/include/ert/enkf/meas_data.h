@@ -36,8 +36,8 @@ typedef struct meas_block_struct  meas_block_type;
   UTIL_IS_INSTANCE_HEADER( meas_data );
 
 void               meas_block_iset( meas_block_type * meas_block , int iens , int iobs , double value);
-double             meas_block_iget_ens_mean( const meas_block_type * meas_block , int iobs );
-double             meas_block_iget_ens_std( const meas_block_type * meas_block , int iobs);
+double             meas_block_iget_ens_mean( meas_block_type * meas_block , int iobs );
+double             meas_block_iget_ens_std( meas_block_type * meas_block , int iobs);
 void               meas_block_deactivate( meas_block_type * meas_block , int iobs );
 
 void meas_data_fprintf( const meas_data_type * matrix , FILE * stream);
@@ -51,7 +51,7 @@ void               meas_data_deactivate(meas_data_type * meas_data, int index);
 int                meas_data_get_ens_size( const meas_data_type * meas_data );
 int                meas_data_get_nrobs( const meas_data_type * meas_data );
 meas_block_type  * meas_data_add_block( meas_data_type * matrix , const char * obs_key , int report_step , int obs_size);
-meas_block_type  * meas_data_iget_block( meas_data_type * matrix , int block_mnr);
+meas_block_type  * meas_data_iget_block( const meas_data_type * matrix , int block_mnr);
 const meas_block_type  * meas_data_iget_block_const( const meas_data_type * matrix , int block_nr );
 void               meas_block_calculate_ens_stats( meas_block_type * meas_block );
 int                meas_block_get_total_size( const meas_block_type * meas_block );
