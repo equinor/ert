@@ -51,13 +51,13 @@ void testS( ert_test_context_type * test_context ) {
         int_vector_append( step_list , s );
     }
 
-    meas_data = meas_data_alloc( active_list );
+    meas_data = meas_data_alloc( int_vector_size( active_list ) );
     obs_data = obs_data_alloc( );
 
     enkf_obs_get_obs_and_measure( enkf_obs , fs , step_list , FORECAST , active_list , meas_data , obs_data , obs_set);
     {
       FILE * stream = util_fopen("analysis/Smatrix" , "r");
-      matrix_type * S = meas_data_allocS( meas_data , active_size );
+      matrix_type * S = meas_data_allocS( meas_data );
       matrix_type * S0 = matrix_fread_alloc( stream );
 
       test_assert_true( matrix_equal( S0 , S ));

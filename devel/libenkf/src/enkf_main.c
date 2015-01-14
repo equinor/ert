@@ -1041,7 +1041,8 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
   state_map_select_matching( state_map , ens_mask , STATE_HAS_DATA );
   ens_active_list = bool_vector_alloc_active_list( ens_mask );
   if (int_vector_size( ens_active_list )) {
-    meas_data = meas_data_alloc( ens_active_list );
+    int active_ens_size = int_vector_size( ens_active_list );
+    meas_data = meas_data_alloc( active_ens_size );
 
     enkf_obs_get_obs_and_measure_data( enkf_main_get_obs( enkf_main ),
                                        enkf_main_get_fs( enkf_main ),
@@ -1302,9 +1303,10 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
         deactivating observations which should not be used in the update
         process.
       */
+      int                         active_ens_size = int_vector_size( ens_active_list );
       obs_data_type               * obs_data      = obs_data_alloc();
-      meas_data_type              * meas_forecast = meas_data_alloc( ens_active_list );
-      meas_data_type              * meas_analyzed = meas_data_alloc( ens_active_list );
+      meas_data_type              * meas_forecast = meas_data_alloc( active_ens_size );
+      meas_data_type              * meas_analyzed = meas_data_alloc( active_ens_size );
       local_config_type           * local_config  = enkf_main->local_config;
       const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , current_step );  /* Only last step considered when forming local update */
       hash_type                   * use_count     = hash_alloc();

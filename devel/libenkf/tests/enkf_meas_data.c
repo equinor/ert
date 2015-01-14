@@ -34,7 +34,7 @@ void create_test() {
   int_vector_append( ens_active_list , 30 );
 
   {
-    meas_data_type * meas_data = meas_data_alloc( ens_active_list );
+    meas_data_type * meas_data = meas_data_alloc( int_vector_size( ens_active_list) );
     test_assert_int_equal( 3 , meas_data_get_ens_size( meas_data ));
     
     meas_data_free( meas_data );

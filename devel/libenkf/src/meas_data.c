@@ -248,8 +248,7 @@ int meas_block_get_ens_size( const meas_block_type * meas_block ) {
 
 UTIL_IS_INSTANCE_FUNCTION( meas_data , MEAS_DATA_TYPE_ID )
 
-meas_data_type * meas_data_alloc( const int_vector_type * ens_active_list ) {
-  int ens_size = int_vector_size( ens_active_list );
+meas_data_type * meas_data_alloc( int ens_size ) {
   if (ens_size <= 0)
     util_abort("%s: ens_size must be > 0 - aborting \n",__func__);
   {
