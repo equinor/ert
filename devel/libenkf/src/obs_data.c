@@ -637,7 +637,7 @@ void obs_data_scale_kernel(const obs_data_type * obs_data , matrix_type *S , mat
 
 
 
-int obs_data_get_active_size(  obs_data_type * obs_data ) {
+int obs_data_get_active_size( const obs_data_type * obs_data ) {
     int active_size = 0;
     for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
       const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );

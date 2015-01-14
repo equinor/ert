@@ -67,7 +67,7 @@ matrix_type        * obs_data_allocE_non_centred(const obs_data_type * obs_data 
 void                 obs_data_scale_kernel(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , double *dObs);
 void                 obs_data_fprintf(const obs_data_type * , const meas_data_type * meas_data , FILE *);
 void                 obs_data_iget_value_std(const obs_data_type * obs_data , int index , double * value ,  double * std);
-int                  obs_data_get_active_size(  obs_data_type * obs_data );
+int                  obs_data_get_active_size(const obs_data_type * obs_data );
 int                  obs_data_get_num_blocks( const obs_data_type * obs_data );
 const char * obs_block_get_key( const obs_block_type * obs_block) ;
 
