@@ -547,53 +547,71 @@ matrix_type * obs_data_allocdObs(const obs_data_type * obs_data ) {
 }
 
 
+static void obs_data_scale_matrix(matrix_type * m , const double * scale_factor) {
+  const int rows    = matrix_get_rows( m );
+  const int columns = matrix_get_columns( m );
+  int i, j;
+
+  for  (i = 0; i < columns; i++)
+    for (j = 0; j < rows; j++)
+      matrix_imul(m , j,i, scale_factor[j]);
+
+}
+
+
+static void obs_data_scale_Rmatrix__( matrix_type * R , const double * scale_factor) {
+  int nrobs_active = matrix_get_rows( R );
+
+  /* Scale the error covariance matrix*/
+  for (int i=0; i < nrobs_active; i++)
+      for (int j=0; j < nrobs_active; j++)
+        matrix_imul(R , i , j , scale_factor[i] * scale_factor[j]);
+}
+
+
+static double * obs_data_alloc_scale_factor(const obs_data_type * obs_data ) {
+  int nrobs_active = obs_data_get_active_size( obs_data );
+  double * scale_factor  = util_calloc(nrobs_active , sizeof * scale_factor );
+  int obs_offset = 0;
+  for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+    const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );
+
+    /* Init. the scaling factor ( 1/std(dObs) ) */
+    obs_block_init_scaling( obs_block , scale_factor  , &obs_offset);
+  }
+
+  return scale_factor;
+}
+
+
+
 
 void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , matrix_type * dObs) {
   const int nrobs_active = matrix_get_rows( S );
   const int ens_size     = matrix_get_columns( S );
-  double * scale_factor  = util_calloc(nrobs_active , sizeof * scale_factor );
+  double * scale_factor  = obs_data_alloc_scale_factor( obs_data );
   int iens, iobs_active;
 
-  {
-    int obs_offset = 0;
-    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
-      const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );
+  /* Scale the forecasted data so that they (in theory) have the same variance
+     (if the prior distribution for the observation errors is correct) */
+  obs_data_scale_matrix( S , scale_factor );
 
-      /* Init. the scaling factor ( 1/std(dObs) ) */
-      obs_block_init_scaling( obs_block , scale_factor  , &obs_offset);
-    }
-  }
+  /* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where
+     each column contains a copy of the observed data
+  */
+  if (D != NULL)
+    obs_data_scale_matrix( D , scale_factor );
 
-
-  for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
-
-      /* Scale the forecasted data so that they (in theory) have the same variance
-         (if the prior distribution for the observation errors is correct) */
-      matrix_imul(S , iobs_active , iens , scale_factor[iobs_active]);
-
-      if (D != NULL)
-        /* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where
-           each column contains a copy of the observed data
-         */
-        matrix_imul(D , iobs_active , iens , scale_factor[iobs_active]);
-
-      if (E != NULL)
-        /* Same with E (used for low rank representation of the error covariance matrix*/
-        matrix_imul(E , iobs_active , iens , scale_factor[iobs_active]);
-    }
-  }
+  /* Same with E (used for low rank representation of the error covariance matrix*/
+  if (E != NULL)
+    obs_data_scale_matrix( E , scale_factor );
 
   if (dObs != NULL)
-    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++)
-      matrix_imul( dObs , iobs_active , 0 , scale_factor[iobs_active]);
+    obs_data_scale_matrix( dObs , scale_factor );
 
-  if (R != NULL) {
-    /* Scale the error covariance matrix*/
-    for (int i=0; i < nrobs_active; i++)
-      for (int j=0; j < nrobs_active; j++)
-        matrix_imul(R , i , j , scale_factor[i] * scale_factor[j]);
-  }
+  if (R != NULL)
+    obs_data_scale_Rmatrix__(R , scale_factor);
+
   free(scale_factor);
 }
 
