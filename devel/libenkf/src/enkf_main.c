@@ -1063,8 +1063,8 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
 
     {
       int active_size      = obs_data_get_active_size( obs_data );
-      matrix_type * S      = meas_data_allocS( meas_data , active_size );
-      matrix_type * dObs   = obs_data_allocdObs( obs_data , active_size );
+      matrix_type * S      = meas_data_allocS( meas_data );
+      matrix_type * dObs   = obs_data_allocdObs( obs_data );
       double truncation    = -1;
       int ncomp            = -1;
 
@@ -1139,9 +1139,9 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   int ens_size          = meas_data_get_ens_size( forecast );
   int active_size       = obs_data_get_active_size( obs_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
-  matrix_type * S       = meas_data_allocS( forecast , active_size );
+  matrix_type * S       = meas_data_allocS( forecast );
   matrix_type * R       = obs_data_allocR( obs_data , active_size );
-  matrix_type * dObs    = obs_data_allocdObs( obs_data , active_size );
+  matrix_type * dObs    = obs_data_allocdObs( obs_data );
   matrix_type * A       = matrix_alloc( matrix_start_size , ens_size );
   matrix_type * E       = NULL;
   matrix_type * D       = NULL;

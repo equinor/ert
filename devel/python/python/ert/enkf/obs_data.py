@@ -14,10 +14,17 @@ class ObsData(BaseCClass):
         """ @rtype: int """
         return ObsData.cNamespace().active_size(self)
 
-    def createDobs(self, size):
+
+    def addBlock(self , obs_key , obs_size):
+        error_covar = None 
+        error_covar_owner = False
+        return ObsData.cNamespace().add_block(self , obs_key , obs_size , error_covar , error_covar_owner)
+
+
+    def createDobs(self):
         """ @rtype: Matrix """
-        assert isinstance(size, int)
-        return ObsData.cNamespace().allocdObs(self, size)
+        return ObsData.cNamespace().allocdObs(self)
+
 
     def scale(self, S, E=None, D=None, R=None, D_obs=None):
         assert isinstance(S, Matrix)
@@ -27,21 +34,21 @@ class ObsData(BaseCClass):
         assert isinstance(D_obs, (Matrix, NoneType))
         ObsData.cNamespace().scale(self, S, E, D, R, D_obs)
 
+
     def free(self):
         ObsData.cNamespace().free(self)
 
 
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("obs_data", ObsData)
-cwrapper.registerType("obs_data_obj", ObsData.createPythonObject)
-cwrapper.registerType("obs_data_ref", ObsData.createCReference)
+cwrapper.registerObjectType("obs_data", ObsData)
 
 ObsData.cNamespace().alloc       = cwrapper.prototype("c_void_p obs_data_alloc()")
 ObsData.cNamespace().free        = cwrapper.prototype("void obs_data_free(obs_data)")
 ObsData.cNamespace().active_size = cwrapper.prototype("int obs_data_get_active_size(obs_data)")
+ObsData.cNamespace().add_block   = cwrapper.prototype("obs_block_ref obs_data_add_block(obs_data , char* , int , matrix , bool)")
 
-ObsData.cNamespace().allocdObs   = cwrapper.prototype("matrix_obj obs_data_allocdObs(obs_data, int)")
+ObsData.cNamespace().allocdObs   = cwrapper.prototype("matrix_obj obs_data_allocdObs(obs_data)")
 ObsData.cNamespace().scale       = cwrapper.prototype("void obs_data_scale(obs_data, matrix, matrix, matrix, matrix, matrix)")
 
 

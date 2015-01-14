@@ -100,7 +100,7 @@ struct obs_data_struct {
 
 static UTIL_SAFE_CAST_FUNCTION(obs_block , OBS_BLOCK_TYPE_ID )
 
-static obs_block_type * obs_block_alloc( const char * obs_key , int obs_size , matrix_type * error_covar , bool error_covar_owner) {
+obs_block_type * obs_block_alloc( const char * obs_key , int obs_size , matrix_type * error_covar , bool error_covar_owner) {
   obs_block_type * obs_block = util_malloc( sizeof * obs_block );
 
   UTIL_TYPE_ID_INIT( obs_block , OBS_BLOCK_TYPE_ID );
@@ -121,7 +121,7 @@ static obs_block_type * obs_block_alloc( const char * obs_key , int obs_size , m
 
 
 
-static void obs_block_free( obs_block_type * obs_block ) {
+void obs_block_free( obs_block_type * obs_block ) {
   free( obs_block->obs_key );
   free( obs_block->value );
   free( obs_block->std );
@@ -183,6 +183,13 @@ active_type obs_block_iget_active_mode( const obs_block_type * obs_block , int i
 int obs_block_get_size( const obs_block_type * obs_block ) {
   return obs_block->size;
 }
+
+
+int obs_block_get_active_size( const obs_block_type * obs_block ) {
+  return obs_block->active_size;
+}
+
+
 
 
 /*Function that sets each element of the scaling factor equal to 1 divided by the prior standard deviation (from the
@@ -320,6 +327,8 @@ static void obs_block_initD( const obs_block_type * obs_block , matrix_type * D,
   *__obs_offset = obs_offset;
 }
 
+
+/*****************************************************************/
 
 
 obs_data_type * obs_data_alloc() {
@@ -523,7 +532,8 @@ matrix_type * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_d
 }
 */
 
-matrix_type * obs_data_allocdObs(const obs_data_type * obs_data , int active_size) {
+matrix_type * obs_data_allocdObs(const obs_data_type * obs_data ) {
+  int active_size = obs_data_get_active_size( obs_data );
   matrix_type * dObs = matrix_alloc( active_size , 1 );
   {
     int obs_offset = 0;
