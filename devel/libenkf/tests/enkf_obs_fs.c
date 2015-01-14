@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2014  Statoil ASA, Norway. 
-    
-   The file 'enkf_obs_fs.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2014  Statoil ASA, Norway.
+
+   The file 'enkf_obs_fs.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,7 +39,7 @@ void testS( ert_test_context_type * test_context ) {
     local_obsset_type * obs_set = local_obsset_alloc( "OBSNAME" );
     meas_data_type * meas_data;
     int active_size = 0;
-    
+
 
     {
       for (int i= 0; i < enkf_main_get_ensemble_size( enkf_main); i++)
@@ -84,7 +84,7 @@ void test_iget(ert_test_context_type * test_context) {
   for (int iobs = 0; iobs < enkf_obs_get_size( enkf_obs ); iobs++) {
     obs_vector_type * vec1 = enkf_obs_iget_vector( enkf_obs , iobs );
     obs_vector_type * vec2 = enkf_obs_get_vector( enkf_obs , obs_vector_get_key( vec1 ));
-    
+
     test_assert_ptr_equal( vec1 , vec2 );
   }
 }
@@ -93,10 +93,10 @@ void test_iget(ert_test_context_type * test_context) {
 void test_container( ert_test_context_type * test_context ) {
   enkf_config_node_type * config_node = enkf_config_node_new_container( "CONTAINER" );
   enkf_config_node_type * wwct1_node = enkf_config_node_alloc_summary( "WWCT:OP_1" , LOAD_FAIL_SILENT);
-  enkf_config_node_type * wwct2_node = enkf_config_node_alloc_summary( "WWCT:OP_2" , LOAD_FAIL_SILENT);  
+  enkf_config_node_type * wwct2_node = enkf_config_node_alloc_summary( "WWCT:OP_2" , LOAD_FAIL_SILENT);
   enkf_config_node_type * wwct3_node = enkf_config_node_alloc_summary( "WWCT:OP_3" , LOAD_FAIL_SILENT);
 
-  
+
   enkf_config_node_update_container( config_node , wwct1_node );
   enkf_config_node_update_container( config_node , wwct2_node );
   enkf_config_node_update_container( config_node , wwct3_node );
@@ -104,11 +104,11 @@ void test_container( ert_test_context_type * test_context ) {
     enkf_node_type * container = enkf_node_deep_alloc( config_node );
     enkf_node_free( container );
   }
-  
+
 
   enkf_config_node_free( wwct3_node );
   enkf_config_node_free( wwct2_node );
-  enkf_config_node_free( wwct1_node );  
+  enkf_config_node_free( wwct1_node );
   enkf_config_node_free( config_node );
 }
 
