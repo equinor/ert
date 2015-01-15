@@ -1,5 +1,5 @@
 import numpy
-from pandas import MultiIndex, DataFrame
+from pandas import MultiIndex, DataFrame, pandas
 from ert.test import ExtendedTestCase
 
 
@@ -54,3 +54,16 @@ class NumpyAndPandasTest(ExtendedTestCase):
         self.assertFloatEqual(result["C4"][2]["B"], 4.4)
         self.assertFloatEqual(result["C4"][2]["C"], 4.4)
 
+
+
+    def test_pandas_concatenate(self):
+
+        d1 = DataFrame(data=[2, 4, 6, 8], columns=["A"], index=[1, 2, 3, 4])
+        d2 = DataFrame(data=[[1, 1.1], [3, 3.3], [5, 5.5], [7, 7.7], [9, 9.9]], columns=["A", "B"], index=[1, 2, 3, 4, 5])
+
+        result = pandas.concat([d1, d2], keys=[1, 2])
+
+        self.assertEqual(result["A"][1][2], 4)
+        self.assertEqual(result["A"][2][2], 3)
+        self.assertTrue(numpy.isnan(result["B"][1][1]))
+        self.assertFloatEqual(result["B"][2][4], 7.7)

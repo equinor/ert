@@ -72,6 +72,7 @@ set(TEST_SOURCES
 
     ert_tests/enkf/export/test_numpy_and_pandas.py
     ert_tests/enkf/export/test_design_matrix.py
+    ert_tests/enkf/export/test_export_join.py
     ert_tests/enkf/export/test_gen_kw_collector.py
     ert_tests/enkf/export/test_misfit_collector.py
     ert_tests/enkf/export/test_summary_collector.py
@@ -360,6 +361,10 @@ add_test( NAME python.tests.ert.enkf.export.numpy_and_pandas
 add_test( NAME python.tests.ert.enkf.export.design_matrix
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_design_matrix.DesignMatrixTest)
+
+add_test( NAME python.tests.ert.enkf.export.export_join
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_export_join.ExportJoinTest)
 
 add_test( NAME python.tests.ert.enkf.export.gen_kw_collector
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -753,6 +758,7 @@ set_property( TEST python.tests.ert.enkf.data.gen_data        PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.update               PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_kw_config   PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.design_matrix     PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.export.export_join       PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.gen_kw_collector  PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.misfit_collector  PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.summary_collector PROPERTY LABELS Python:StatoilData )
