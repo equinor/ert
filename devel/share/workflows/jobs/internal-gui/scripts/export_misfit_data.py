@@ -20,9 +20,8 @@ class ExportMisfitDataJob(ErtScript):
 
         active_list = self.createActiveList(fs)
 
-        for realization_number, active in enumerate(active_list):
-            if active:
-                runpath_node = runpath_list[realization_number]
+        for runpath_node in runpath_list:
+            if runpath_node.realization in active_list:
 
                 if not os.path.exists(runpath_node.runpath):
                     os.makedirs(runpath_node.runpath)
@@ -33,7 +32,7 @@ class ExportMisfitDataJob(ErtScript):
 
                 misfit_sum = 0.0
                 for obs_vector in ert.getObservations():
-                    misfit = obs_vector.getTotalChi2(fs, realization_number, EnkfStateType.FORECAST)
+                    misfit = obs_vector.getTotalChi2(fs, runpath_node.realization, EnkfStateType.FORECAST)
 
                     key = "MISFIT:%s" % obs_vector.getObservationKey()
                     parameters[key] = misfit
