@@ -44,9 +44,13 @@ class NumpyAndPandasTest(ExtendedTestCase):
         new_column = DataFrame(data=[4.0, 4.4, 4.8], index=[1, 2, 3], columns=["C4"])
         new_column.index.name = "REALIZATION"
 
-        print(data)
-        print(new_column)
-
         result = data.join(new_column, how='inner')
-        print(result)
+
+        self.assertFloatEqual(result["C4"][1]["A"], 4.0)
+        self.assertFloatEqual(result["C4"][1]["B"], 4.0)
+        self.assertFloatEqual(result["C4"][1]["C"], 4.0)
+
+        self.assertFloatEqual(result["C4"][2]["A"], 4.4)
+        self.assertFloatEqual(result["C4"][2]["B"], 4.4)
+        self.assertFloatEqual(result["C4"][2]["C"], 4.4)
 
