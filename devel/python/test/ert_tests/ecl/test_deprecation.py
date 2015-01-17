@@ -33,4 +33,6 @@ class DeprecationTest(ExtendedTestCase):
         with warnings.catch_warnings():
             grid.get_corner_xyz(0 , global_index = 10)
             
-            
+    def test_ecl_ecl_ecl(self):
+        with warnings.catch_warnings():
+            import ert.ecl.ecl as ecl

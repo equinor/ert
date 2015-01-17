@@ -24,13 +24,15 @@ set( src_list main.c enkf_tui_main.c  enkf_tui_fs.c  enkf_tui_ranking.c  enkf_tu
 execute_process(COMMAND date "+%Y-%m-%d %H:%M:%S" OUTPUT_VARIABLE BUILD_TIME )
 string(STRIP ${BUILD_TIME} BUILD_TIME)
 
+# The original commit here used git -C; which might be an improvement
+# but on git version 1.83 that switch is not recognized.
 find_package(Git)
 if(GIT_EXECUTABLE)
-execute_process(COMMAND ${GIT_EXECUTABLE} -C "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse HEAD
-                OUTPUT_VARIABLE GIT_COMMIT)
-string(STRIP "${GIT_COMMIT}" GIT_COMMIT)
+   execute_process(COMMAND ${GIT_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse HEAD
+                   OUTPUT_VARIABLE GIT_COMMIT)
+   string(STRIP "${GIT_COMMIT}" GIT_COMMIT)
 else()
-set(GIT_COMMIT)
+   set(GIT_COMMIT)
 endif()
 
 set_source_files_properties( main.c PROPERTIES COMPILE_DEFINITIONS "COMPILE_TIME_STAMP=\"${BUILD_TIME}\";GIT_COMMIT=\"${GIT_COMMIT}\";SITE_CONFIG_FILE=\"${SITE_CONFIG_FILE}\"")
