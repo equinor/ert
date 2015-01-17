@@ -397,7 +397,7 @@ static void enkf_main_write_current_case_file( const enkf_main_type * enkf_main,
   const char * base = CURRENT_CASE_FILE;
   char * current_case_file = util_alloc_filename(ens_path , base, NULL);
   FILE * stream = util_fopen( current_case_file  , "w");
-  fprintf(stream , case_path );
+  fprintf(stream, "%s", case_path);
   util_fclose(stream);
   free(current_case_file);
 }
