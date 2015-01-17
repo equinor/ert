@@ -9,6 +9,8 @@ class RngTest(ExtendedTestCase):
         self.assertEnumIsFullyDefined(RngAlgTypeEnum, "rng_alg_type", "libert_util/include/ert/util/rng.h")
         self.assertEnumIsFullyDefined(RngInitModeEnum, "rng_init_mode", "libert_util/include/ert/util/rng.h")
 
-    def test_rng(self):
-        rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_CLOCK)
+    def test_rng_default(self):
+        rng = RandomNumberGenerator()
         self.assertIsInstance(rng.getDouble(), float)
+
+        
