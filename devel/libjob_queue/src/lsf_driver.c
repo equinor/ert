@@ -530,6 +530,8 @@ static int lsf_driver_get_job_status_libary(void * __driver , void * __job) {
     }
 #else
     lsf_driver_internal_error( driver );
+    /* the above function calls exit(), so this value is never returned */
+    status = JOB_QUEUE_FAILED;
 #endif
     
     return status;
