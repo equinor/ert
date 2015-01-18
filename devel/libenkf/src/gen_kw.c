@@ -263,12 +263,12 @@ void gen_kw_write_export_file(const gen_kw_type * gen_kw, FILE * filestream) {
     int width                 = 60 - (strlen(key) + strlen(parameter) + 1);
     double transformed_value  = gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] );
     const char * print_string = util_alloc_sprintf("%s:%s %g\n", key, parameter, width, transformed_value);
-    fprintf(filestream, print_string);
+    fprintf(filestream, "%s", print_string);
 
     if (gen_kw_config_should_use_log_scale(gen_kw->config, ikw)) {
       double log_transformed_value = log10(transformed_value);
       const char * print_log_string = util_alloc_sprintf("LOG10_%s:%s %g\n", key, parameter, width, log_transformed_value);
-      fprintf(filestream, print_log_string);
+      fprintf(filestream, "%s", print_log_string);
     }
   }
 }
