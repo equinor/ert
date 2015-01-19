@@ -50,7 +50,7 @@ class PcaDataFetcher(DataFetcher):
 
         if len(active_list) > 0:
             state = EnkfStateType.FORECAST
-            meas_data = MeasData(active_list)
+            meas_data = MeasData(len(active_list))
             obs_data = ObsData()
 
             self.ert().getObservations().getObservationAndMeasureData(fs, local_obsdata, state, active_list, meas_data, obs_data)

@@ -18,9 +18,11 @@ set(PYTHON_SOURCES
     local_config.py
     local_obsdata.py
     local_obsdata_node.py
+    meas_block.py
     meas_data.py
     model_config.py
     node_id.py
+    obs_block.py
     obs_data.py
     plot_config.py
     post_simulation_hook.py

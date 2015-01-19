@@ -369,23 +369,24 @@ void obs_data_free(obs_data_type * obs_data) {
 
 
 
-matrix_type * obs_data_allocE(const obs_data_type * obs_data , rng_type * rng , int ens_size, int active_size ) {
+matrix_type * obs_data_allocE(const obs_data_type * obs_data , rng_type * rng , int active_ens_size ) {
   double *pert_mean , *pert_var;
   matrix_type * E;
   int iens, iobs_active;
+  int active_obs_size = obs_data_get_active_size( obs_data );
 
-  E         = matrix_alloc( active_size , ens_size);
+  E         = matrix_alloc( active_obs_size , active_ens_size);
 
-  pert_mean = util_calloc(active_size , sizeof * pert_mean );
-  pert_var  = util_calloc(active_size , sizeof * pert_var  );
+  pert_mean = util_calloc(active_obs_size , sizeof * pert_mean );
+  pert_var  = util_calloc(active_obs_size , sizeof * pert_var  );
   {
-    double * tmp = util_calloc( active_size * ens_size , sizeof * tmp );
+    double * tmp = util_calloc( active_obs_size * active_ens_size , sizeof * tmp );
     int i,j;
     int k = 0;
 
-    enkf_util_rand_stdnormal_vector(active_size * ens_size , tmp , rng);
-    for (j=0; j < ens_size; j++) {
-      for (i=0; i < active_size; i++) {
+    enkf_util_rand_stdnormal_vector(active_obs_size * active_ens_size , tmp , rng);
+    for (j=0; j < active_ens_size; j++) {
+      for (i=0; i < active_obs_size; i++) {
         matrix_iset( E , i , j , tmp[k]);
         k++;
       }
@@ -393,21 +394,21 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , rng_type * rng , 
     free(tmp);
   }
 
-  for (iobs_active = 0; iobs_active < active_size; iobs_active++) {
+  for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++) {
     pert_mean[iobs_active] = 0;
     pert_var[iobs_active]  = 0;
   }
 
-  for (iens = 0; iens < ens_size; iens++)
-    for (iobs_active = 0; iobs_active < active_size; iobs_active++)
+  for (iens = 0; iens < active_ens_size; iens++)
+    for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++)
       pert_mean[iobs_active] += matrix_iget(E , iobs_active , iens);
 
 
-  for (iobs_active = 0; iobs_active < active_size; iobs_active++)
-    pert_mean[iobs_active] /= ens_size;
+  for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++)
+    pert_mean[iobs_active] /= active_ens_size;
 
-  for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs_active = 0; iobs_active < active_size; iobs_active++) {
+  for  (iens = 0; iens < active_ens_size; iens++) {
+    for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++) {
       double tmp;
       matrix_iadd(E , iobs_active , iens , -pert_mean[iobs_active]);
       tmp = matrix_iget(E , iobs_active , iens);
@@ -441,10 +442,10 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , rng_type * rng , 
 */
 
 
-matrix_type * obs_data_allocE_non_centred(const obs_data_type * obs_data , rng_type * rng , int ens_size, int active_size ) {
+matrix_type * obs_data_allocE_non_centred(const obs_data_type * obs_data , rng_type * rng , int ens_size) {
   matrix_type * E;
-
-  E         = matrix_alloc( active_size , ens_size);
+  int active_size = obs_data_get_active_size( obs_data );
+  E  = matrix_alloc( active_size , ens_size);
 
   {
     double * tmp = util_calloc( active_size * ens_size , sizeof * tmp );
@@ -499,9 +500,8 @@ matrix_type * obs_data_allocD(const obs_data_type * obs_data , const matrix_type
 
 
 
-
-
-matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size) {
+matrix_type * obs_data_allocR(const obs_data_type * obs_data) {
+  int active_size = obs_data_get_active_size( obs_data );
   matrix_type * R = matrix_alloc( active_size , active_size );
   {
     int obs_offset = 0;
@@ -547,7 +547,7 @@ matrix_type * obs_data_allocdObs(const obs_data_type * obs_data ) {
 }
 
 
-static void obs_data_scale_matrix(matrix_type * m , const double * scale_factor) {
+static void obs_data_scale_matrix__(matrix_type * m , const double * scale_factor) {
   const int rows    = matrix_get_rows( m );
   const int columns = matrix_get_columns( m );
   int i, j;
@@ -584,30 +584,39 @@ static double * obs_data_alloc_scale_factor(const obs_data_type * obs_data ) {
 }
 
 
+void obs_data_scale_matrix(const obs_data_type * obs_data , matrix_type * matrix) {
+  double * scale_factor  = obs_data_alloc_scale_factor( obs_data );
+  obs_data_scale_matrix__( matrix , scale_factor );
+  free( scale_factor );
+}
+
+
+void obs_data_scale_Rmatrix(const obs_data_type * obs_data , matrix_type * R) {
+  double * scale_factor  = obs_data_alloc_scale_factor( obs_data );
+  obs_data_scale_Rmatrix__( R , scale_factor );
+  free( scale_factor );
+}
 
 
 void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , matrix_type * dObs) {
-  const int nrobs_active = matrix_get_rows( S );
-  const int ens_size     = matrix_get_columns( S );
   double * scale_factor  = obs_data_alloc_scale_factor( obs_data );
-  int iens, iobs_active;
 
   /* Scale the forecasted data so that they (in theory) have the same variance
      (if the prior distribution for the observation errors is correct) */
-  obs_data_scale_matrix( S , scale_factor );
+  obs_data_scale_matrix__( S , scale_factor );
 
   /* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where
      each column contains a copy of the observed data
   */
   if (D != NULL)
-    obs_data_scale_matrix( D , scale_factor );
+    obs_data_scale_matrix__( D , scale_factor );
 
   /* Same with E (used for low rank representation of the error covariance matrix*/
   if (E != NULL)
-    obs_data_scale_matrix( E , scale_factor );
+    obs_data_scale_matrix__( E , scale_factor );
 
   if (dObs != NULL)
-    obs_data_scale_matrix( dObs , scale_factor );
+    obs_data_scale_matrix__( dObs , scale_factor );
 
   if (R != NULL)
     obs_data_scale_Rmatrix__(R , scale_factor);

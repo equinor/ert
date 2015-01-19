@@ -1041,8 +1041,7 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
   state_map_select_matching( state_map , ens_mask , STATE_HAS_DATA );
   ens_active_list = bool_vector_alloc_active_list( ens_mask );
   if (int_vector_size( ens_active_list )) {
-    int active_ens_size = int_vector_size( ens_active_list );
-    meas_data = meas_data_alloc( active_ens_size );
+    meas_data = meas_data_alloc( ens_mask );
 
     enkf_obs_get_obs_and_measure_data( enkf_main_get_obs( enkf_main ),
                                        enkf_main_get_fs( enkf_main ),
@@ -1062,7 +1061,6 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
       }
 
     {
-      int active_size      = obs_data_get_active_size( obs_data );
       matrix_type * S      = meas_data_allocS( meas_data );
       matrix_type * dObs   = obs_data_allocdObs( obs_data );
       double truncation    = -1;
@@ -1136,30 +1134,30 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   const int matrix_start_size = 250000;
   thread_pool_type * tp       = thread_pool_alloc( cpu_threads , false );
   analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
-  int ens_size          = meas_data_get_ens_size( forecast );
+  int active_ens_size   = meas_data_get_active_ens_size( forecast );
   int active_size       = obs_data_get_active_size( obs_data );
-  matrix_type * X       = matrix_alloc( ens_size , ens_size );
+  matrix_type * X       = matrix_alloc( active_ens_size , active_ens_size );
   matrix_type * S       = meas_data_allocS( forecast );
-  matrix_type * R       = obs_data_allocR( obs_data , active_size );
+  matrix_type * R       = obs_data_allocR( obs_data );
   matrix_type * dObs    = obs_data_allocdObs( obs_data );
-  matrix_type * A       = matrix_alloc( matrix_start_size , ens_size );
+  matrix_type * A       = matrix_alloc( matrix_start_size , active_ens_size );
   matrix_type * E       = NULL;
   matrix_type * D       = NULL;
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
 
 
-  assert_matrix_size(X , "X" , ens_size , ens_size);
-  assert_matrix_size(S , "S" , active_size , ens_size);
+  assert_matrix_size(X , "X" , active_ens_size , active_ens_size);
+  assert_matrix_size(S , "S" , active_size , active_ens_size);
   assert_matrix_size(R , "R" , active_size , active_size);
   assert_size_equal( enkf_main_get_ensemble_size( enkf_main ) , ens_mask );
 
   if (analysis_module_check_option( module , ANALYSIS_NEED_ED)) {
-    E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
+    E = obs_data_allocE( obs_data , enkf_main->rng , active_ens_size );
     D = obs_data_allocD( obs_data , E , S );
 
-    assert_matrix_size( E , "E" , active_size , ens_size);
-    assert_matrix_size( D , "D" , active_size , ens_size);
+    assert_matrix_size( E , "E" , active_size , active_ens_size);
+    assert_matrix_size( D , "D" , active_size , active_ens_size);
   }
 
   if (analysis_module_check_option( module , ANALYSIS_SCALE_DATA))
@@ -1187,7 +1185,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     // Store PC:
     if (analysis_config_get_store_PC( enkf_main->analysis_config )) {
       double truncation    = -1;
-      int ncomp            = ens_size - 1;
+      int ncomp            = active_ens_size - 1;
       matrix_type * PC     = matrix_alloc(1,1);
       matrix_type * PC_obs = matrix_alloc(1,1);
       double_vector_type * singular_values = double_vector_alloc(0,0);
@@ -1303,10 +1301,9 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
         deactivating observations which should not be used in the update
         process.
       */
-      int                         active_ens_size = int_vector_size( ens_active_list );
       obs_data_type               * obs_data      = obs_data_alloc();
-      meas_data_type              * meas_forecast = meas_data_alloc( active_ens_size );
-      meas_data_type              * meas_analyzed = meas_data_alloc( active_ens_size );
+      meas_data_type              * meas_forecast = meas_data_alloc( ens_mask );
+      meas_data_type              * meas_analyzed = meas_data_alloc( ens_mask );
       local_config_type           * local_config  = enkf_main->local_config;
       const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , current_step );  /* Only last step considered when forming local update */
       hash_type                   * use_count     = hash_alloc();

@@ -29,6 +29,7 @@
 #include <ert/enkf/obs_vector.h>
 
 #include <ert/util/test_util.h>
+#include <ert/util/type_vector_functions.h>
 
 
 void test_valid_obs_vector( enkf_main_type * enkf_main , const char * obs_key) {
@@ -76,7 +77,13 @@ void test_measure( ert_test_context_type * test_context ) {
 
   for (int i=0; i < enkf_main_get_ensemble_size( enkf_main ); i++)
     int_vector_append( ens_active_list , i );
-  meas_data_RFT = meas_data_alloc( int_vector_size( ens_active_list ) );
+
+  {
+    bool_vector_type * ens_mask;
+    ens_mask = int_vector_alloc_mask( ens_active_list );
+    meas_data_RFT = meas_data_alloc( ens_mask );
+    bool_vector_free( ens_mask );
+  }
 
   obs_vector_measure( rft_obs , fs , FORECAST , 20 , ens_active_list , meas_data_RFT , active_list );
 

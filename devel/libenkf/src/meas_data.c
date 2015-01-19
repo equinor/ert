@@ -33,6 +33,7 @@
 #include <ert/util/set.h>
 #include <ert/util/vector.h>
 #include <ert/util/int_vector.h>
+#include <ert/util/type_vector_functions.h>
 
 #include <ert/enkf/meas_data.h>
 
@@ -42,16 +43,17 @@
 
 struct meas_data_struct {
   UTIL_TYPE_ID_DECLARATION;
-  int                 ens_size;
+  int                 active_ens_size;
   vector_type       * data;
   pthread_mutex_t     data_mutex;
   set_type          * lookup_keys;  /* Mangled obs_key and report_step */
+  bool_vector_type  * ens_mask;
 };
 
 
 struct meas_block_struct {
   UTIL_TYPE_ID_DECLARATION;
-  int          ens_size;
+  int          active_ens_size;
   int          obs_size;
   int          ens_stride;
   int          obs_stride;
@@ -60,10 +62,12 @@ struct meas_block_struct {
   double     * data;
   bool       * active;
   bool         stat_calculated;
+  const bool_vector_type * ens_mask;
+  int_vector_type  * index_map;
 };
 
 
-static UTIL_SAFE_CAST_FUNCTION( meas_block , MEAS_BLOCK_TYPE_ID )
+UTIL_SAFE_CAST_FUNCTION( meas_block , MEAS_BLOCK_TYPE_ID )
 
 
 /**
@@ -77,20 +81,22 @@ static UTIL_SAFE_CAST_FUNCTION( meas_block , MEAS_BLOCK_TYPE_ID )
    value.
 */
 
-meas_block_type * meas_block_alloc( const char * obs_key , int ens_size , int obs_size) {
+meas_block_type * meas_block_alloc( const char * obs_key , const bool_vector_type * ens_mask , int obs_size) {
   meas_block_type * meas_block = util_malloc( sizeof * meas_block );
   UTIL_TYPE_ID_INIT( meas_block , MEAS_BLOCK_TYPE_ID );
-  meas_block->ens_size    = ens_size;
+  meas_block->active_ens_size    = bool_vector_count_equal( ens_mask , true );
+  meas_block->ens_mask    = ens_mask;
   meas_block->obs_size    = obs_size;
   meas_block->obs_key     = util_alloc_string_copy( obs_key );
-  meas_block->data        = util_calloc( (ens_size + 2)     * obs_size , sizeof * meas_block->data   );
-  meas_block->active      = util_calloc(                      obs_size , sizeof * meas_block->active );
+  meas_block->data        = util_calloc( (meas_block->active_ens_size + 2)     * obs_size , sizeof * meas_block->data   );
+  meas_block->active      = util_calloc(                                  obs_size , sizeof * meas_block->active );
   meas_block->ens_stride  = 1;
-  meas_block->obs_stride  = ens_size + 2;
-  meas_block->data_size   = (ens_size + 2) * obs_size;
+  meas_block->obs_stride  = meas_block->active_ens_size + 2;
+  meas_block->data_size   = (meas_block->active_ens_size + 2) * obs_size;
+  meas_block->index_map   = bool_vector_alloc_active_index_list( meas_block->ens_mask , -1);
   {
     int i;
-    for (i=0; i  <obs_size; i++)
+    for (i=0; i < obs_size; i++)
       meas_block->active[i] = false;
   }
   meas_block->stat_calculated = false;
@@ -101,7 +107,7 @@ static void meas_block_fprintf( const meas_block_type * meas_block , FILE * stre
   int iens;
   int iobs;
   for (iobs = 0; iobs < meas_block->obs_size; iobs++) {
-    for (iens = 0; iens < meas_block->ens_size; iens++) {
+    for (iens = 0; iens < meas_block->active_ens_size; iens++) {
       int index = iens * meas_block->ens_stride + iobs * meas_block->obs_stride;
       fprintf(stream , " %10.2f ", meas_block->data[ index ]);
     }
@@ -110,10 +116,11 @@ static void meas_block_fprintf( const meas_block_type * meas_block , FILE * stre
 }
 
 
-static void meas_block_free( meas_block_type * meas_block ) {
+void meas_block_free( meas_block_type * meas_block ) {
   free( meas_block->obs_key );
   free( meas_block->data );
   free( meas_block->active );
+  int_vector_free( meas_block->index_map );
   free( meas_block );
 }
 
@@ -129,7 +136,7 @@ static void meas_block_initS( const meas_block_type * meas_block , matrix_type *
   int obs_offset = *__obs_offset;
   for (int iobs =0; iobs < meas_block->obs_size; iobs++) {
     if (meas_block->active[iobs]) {
-      for (int iens =0; iens < meas_block->ens_size; iens++) {
+      for (int iens =0; iens < meas_block->active_ens_size; iens++) {
         int obs_index = iens * meas_block->ens_stride + iobs* meas_block->obs_stride;
 
         matrix_iset( S , obs_offset, iens , meas_block->data[ obs_index ]);
@@ -140,7 +147,12 @@ static void meas_block_initS( const meas_block_type * meas_block , matrix_type *
   *__obs_offset = obs_offset;
 }
 
+bool meas_block_iens_active( const meas_block_type * meas_block , int iens) {
+  return bool_vector_iget( meas_block->ens_mask , iens);
+}
 
+
+/*
 static void meas_data_assign_block( meas_block_type * target_block , const meas_block_type * src_block , int target_iens , int src_iens ) {
   int iobs;
   for (iobs =0; iobs < target_block->obs_size; iobs++) {
@@ -150,7 +162,7 @@ static void meas_data_assign_block( meas_block_type * target_block , const meas_
   }
   target_block->stat_calculated = false;
 }
-
+*/
 
 static void meas_block_calculate_ens_stats( meas_block_type * meas_block ) {
   bool include_inactive = true;
@@ -159,16 +171,16 @@ static void meas_block_calculate_ens_stats( meas_block_type * meas_block ) {
     if (meas_block->active[iobs] || include_inactive) {
       double M1 = 0;
       double M2 = 0;
-      for (iens =0; iens < meas_block->ens_size; iens++) {
+      for (iens =0; iens < meas_block->active_ens_size; iens++) {
         int index = iens * meas_block->ens_stride + iobs * meas_block->obs_stride;
         M1 += meas_block->data[ index ];
         M2 += meas_block->data[ index ] * meas_block->data[ index ];
       }
       {
-        int mean_index = (meas_block->ens_size + 0) * meas_block->ens_stride + iobs * meas_block->obs_stride;
-        int std_index  = (meas_block->ens_size + 1) * meas_block->ens_stride + iobs * meas_block->obs_stride;
-        double mean    = M1 / meas_block->ens_size;
-        double var     = M2 / meas_block->ens_size - mean * mean;
+        int mean_index = (meas_block->active_ens_size + 0) * meas_block->ens_stride + iobs * meas_block->obs_stride;
+        int std_index  = (meas_block->active_ens_size + 1) * meas_block->ens_stride + iobs * meas_block->obs_stride;
+        double mean    = M1 / meas_block->active_ens_size;
+        double var     = M2 / meas_block->active_ens_size - mean * mean;
         meas_block->data[ mean_index ] = mean;
         meas_block->data[ std_index ]  = sqrt( util_double_max( 0.0 , var));
       }
@@ -184,26 +196,52 @@ static void meas_block_assert_ens_stat( meas_block_type * meas_block ) {
 }
 
 
-void meas_block_iset( meas_block_type * meas_block , int iens , int iobs , double value) {
-  int index = iens * meas_block->ens_stride + iobs * meas_block->obs_stride;
-  meas_block->data[ index ] = value;
-  if (!meas_block->active[ iobs ])
-    meas_block->active[ iobs ] = true;
+static void meas_block_assert_iens_active( const meas_block_type * meas_block , int iens) {
+  if (!bool_vector_iget( meas_block->ens_mask , iens ))
+    util_abort("%s: fatal error - trying to access inactive ensemble member:%d \n",__func__ , iens);
+}
 
-  meas_block->stat_calculated = false;
+
+void meas_block_iset( meas_block_type * meas_block , int iens , int iobs , double value) {
+  meas_block_assert_iens_active( meas_block , iens );
+  {
+    int active_iens = int_vector_iget( meas_block->index_map , iens );
+    int index = active_iens * meas_block->ens_stride + iobs * meas_block->obs_stride;
+    meas_block->data[ index ] = value;
+    if (!meas_block->active[ iobs ])
+      meas_block->active[ iobs ] = true;
+
+    meas_block->stat_calculated = false;
+  }
 }
 
 
 double meas_block_iget( const meas_block_type * meas_block , int iens , int iobs) {
-  int index = iens * meas_block->ens_stride + iobs * meas_block->obs_stride;
-  return meas_block->data[ index ];
+  meas_block_assert_iens_active( meas_block , iens );
+  {
+    int active_iens = int_vector_iget( meas_block->index_map , iens );
+    int index = active_iens * meas_block->ens_stride + iobs * meas_block->obs_stride;
+    return meas_block->data[ index ];
+  }
+}
+
+
+static int meas_block_get_active_obs_size( const meas_block_type * meas_block ) {
+  int obs_size = 0;
+  int i;
+
+  for (i=0; i < meas_block->obs_size; i++)
+    if (meas_block->active[i])
+      obs_size++;
+
+  return obs_size;
 }
 
 
 double meas_block_iget_ens_std( meas_block_type * meas_block , int iobs) {
   meas_block_assert_ens_stat( meas_block );
   {
-    int std_index  = (meas_block->ens_size + 1) * meas_block->ens_stride + iobs * meas_block->obs_stride;
+    int std_index  = (meas_block->active_ens_size + 1) * meas_block->ens_stride + iobs * meas_block->obs_stride;
     return meas_block->data[ std_index ];
   }
 }
@@ -212,7 +250,7 @@ double meas_block_iget_ens_std( meas_block_type * meas_block , int iobs) {
 double meas_block_iget_ens_mean( meas_block_type * meas_block , int iobs) {
   meas_block_assert_ens_stat( meas_block );
   {
-    int mean_index  = meas_block->ens_size * meas_block->ens_stride + iobs * meas_block->obs_stride;
+    int mean_index  = meas_block->active_ens_size * meas_block->ens_stride + iobs * meas_block->obs_stride;
     return meas_block->data[ mean_index ];
   }
 }
@@ -235,8 +273,13 @@ int meas_block_get_total_obs_size( const meas_block_type * meas_block ) {
 }
 
 
-int meas_block_get_ens_size( const meas_block_type * meas_block ) {
-  return meas_block->ens_size;
+int meas_block_get_active_ens_size( const meas_block_type * meas_block ) {
+  return meas_block->active_ens_size;
+}
+
+
+int meas_block_get_total_ens_size( const meas_block_type * meas_block ) {
+  return bool_vector_size( meas_block->ens_mask );
 }
 
 
@@ -248,20 +291,17 @@ int meas_block_get_ens_size( const meas_block_type * meas_block ) {
 
 UTIL_IS_INSTANCE_FUNCTION( meas_data , MEAS_DATA_TYPE_ID )
 
-meas_data_type * meas_data_alloc( int ens_size ) {
-  if (ens_size <= 0)
-    util_abort("%s: ens_size must be > 0 - aborting \n",__func__);
-  {
-    meas_data_type * meas = util_malloc(sizeof * meas );
-    UTIL_TYPE_ID_INIT( meas , MEAS_DATA_TYPE_ID );
+meas_data_type * meas_data_alloc( const bool_vector_type * ens_mask ) {
+  meas_data_type * meas = util_malloc(sizeof * meas );
+  UTIL_TYPE_ID_INIT( meas , MEAS_DATA_TYPE_ID );
 
-    meas->ens_size     = ens_size;
-    meas->data         = vector_alloc_new();
-    meas->lookup_keys  = set_alloc_empty();
-    pthread_mutex_init( &meas->data_mutex , NULL );
+  meas->data         = vector_alloc_new();
+  meas->lookup_keys  = set_alloc_empty();
+  meas->ens_mask     = bool_vector_alloc_copy( ens_mask );
+  meas->active_ens_size = bool_vector_count_equal( ens_mask , true );
+  pthread_mutex_init( &meas->data_mutex , NULL );
 
-    return meas;
-  }
+  return meas;
 }
 
 
@@ -269,6 +309,7 @@ meas_data_type * meas_data_alloc( int ens_size ) {
 void meas_data_free(meas_data_type * matrix) {
   vector_free( matrix->data );
   set_free( matrix->lookup_keys );
+  bool_vector_free( matrix->ens_mask );
   free( matrix );
 }
 
@@ -289,7 +330,7 @@ meas_block_type * meas_data_add_block( meas_data_type * matrix , const char * ob
   pthread_mutex_lock( &matrix->data_mutex );
   {
     if (!set_has_key( matrix->lookup_keys , lookup_key )) {
-      meas_block_type  * new_block = meas_block_alloc(obs_key , matrix->ens_size , obs_size);
+      meas_block_type  * new_block = meas_block_alloc(obs_key , matrix->ens_mask , obs_size);
       vector_append_owned_ref( matrix->data , new_block , meas_block_free__ );
       set_add_key( matrix->lookup_keys , lookup_key );
     }
@@ -311,10 +352,23 @@ const meas_block_type * meas_data_iget_block_const( const meas_data_type * matri
 }
 
 
+int meas_data_get_active_obs_size( const meas_data_type * matrix ) {
+  int obs_size = 0;
 
-matrix_type * meas_data_allocS(const meas_data_type * matrix, int active_size) {
-  int obs_offset = 0;
-  matrix_type * S  = matrix_alloc( active_size , matrix->ens_size );
+  for (int block_nr = 0; block_nr < vector_get_size( matrix->data ); block_nr++) {
+    const meas_block_type * meas_block = vector_iget_const( matrix->data , block_nr);
+    obs_size += meas_block_get_active_obs_size( meas_block );
+  }
+
+  return obs_size;
+}
+
+
+
+
+matrix_type * meas_data_allocS(const meas_data_type * matrix) {
+  int obs_offset  = 0;
+  matrix_type * S = matrix_alloc( meas_data_get_active_obs_size( matrix ) , matrix->active_ens_size);
 
   for (int block_nr = 0; block_nr < vector_get_size( matrix->data ); block_nr++) {
     const meas_block_type * meas_block = vector_iget_const( matrix->data , block_nr);
@@ -334,13 +388,19 @@ int meas_data_get_nrobs( const meas_data_type * meas_data ) {
 }
 
 
-int meas_data_get_ens_size( const meas_data_type * meas_data ) {
-  return meas_data->ens_size;
+int meas_data_get_active_ens_size( const meas_data_type * meas_data ) {
+  return meas_data->active_ens_size;
 }
 
 
+int meas_data_get_total_ens_size( const meas_data_type * meas_data ) {
+  return bool_vector_size( meas_data->ens_mask );
+}
+
+
+/*
 void meas_data_assign_vector(meas_data_type * target_matrix, const meas_data_type * src_matrix , int target_index , int src_index) {
-  if (target_matrix->ens_size != src_matrix->ens_size)
+  if (target_matrix->active_ens_size != src_matrix->active_ens_size)
     util_abort("%s: size mismatch \n",__func__);
 
   for (int block_nr = 0; block_nr < vector_get_size( target_matrix->data ); block_nr++) {
@@ -350,7 +410,7 @@ void meas_data_assign_vector(meas_data_type * target_matrix, const meas_data_typ
     meas_data_assign_block( target_block , src_block , target_index , src_index );
   }
 }
-
+*/
 
 
 

@@ -76,4 +76,3 @@ class MatrixTest(ExtendedTestCase):
         self.assertEqual(m, r)
 
 
-        

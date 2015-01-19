@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #include <ert/util/test_util.h>
+#include <ert/util/type_vector_functions.h>
 
 #include <ert/enkf/enkf_obs.h>
 #include <ert/enkf/ert_test_context.h>
@@ -51,7 +52,11 @@ void testS( ert_test_context_type * test_context ) {
         int_vector_append( step_list , s );
     }
 
-    meas_data = meas_data_alloc( int_vector_size( active_list ) );
+    {
+      bool_vector_type * ens_mask = int_vector_alloc_mask( active_list );
+      meas_data = meas_data_alloc( ens_mask );
+      bool_vector_free( ens_mask );
+    }
     obs_data = obs_data_alloc( );
 
     enkf_obs_get_obs_and_measure( enkf_obs , fs , step_list , FORECAST , active_list , meas_data , obs_data , obs_set);
