@@ -84,6 +84,7 @@ set(TEST_SOURCES
     ert_tests/analysis/test_rml.py
 
     ert_tests/job_queue/__init__.py
+    ert_tests/job_queue/test_ert_plugin.py
     ert_tests/job_queue/test_ert_script.py
     ert_tests/job_queue/test_function_ert_script.py
     ert_tests/job_queue/test_job_queue.py
@@ -611,6 +612,10 @@ add_test( NAME python.tests.ert.job_queue.workflow
 add_test( NAME python.tests.ert.job_queue.workflow_joblist
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_joblist.WorkflowJoblistTest)
+
+add_test( NAME python.tests.ert.job_queue.ert_plugin
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_ert_plugin.ErtPluginTest)
 
 add_test( NAME python.tests.ert.job_queue.ert_script
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
