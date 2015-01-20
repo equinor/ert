@@ -175,6 +175,11 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
 }
 
 
+stringlist_type * ert_workflow_list_get_job_names(const ert_workflow_list_type * workflow_list) {
+    return  workflow_joblist_get_job_names(workflow_list->joblist);
+}
+
+
 void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config ) {
   /* Adding jobs */
   {

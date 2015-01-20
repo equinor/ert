@@ -93,3 +93,7 @@ config_type * workflow_joblist_get_compiler( const workflow_joblist_type * jobli
 config_type * workflow_joblist_get_job_config( const workflow_joblist_type * joblist ) {
   return joblist->job_config;
 }
+
+stringlist_type * workflow_joblist_get_job_names(const workflow_joblist_type * joblist) {
+    return hash_alloc_stringlist(joblist->joblist);
+}

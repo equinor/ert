@@ -44,6 +44,7 @@ extern "C" {
   void                       ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const char * job_name , const char * config_file );
   bool                       ert_workflow_list_has_job( const ert_workflow_list_type * workflow_list , const char * job_name);
   const workflow_job_type *  ert_workflow_list_get_job( const ert_workflow_list_type * workflow_list , const char * job_name);
+  stringlist_type *          ert_workflow_list_get_job_names(const ert_workflow_list_type * workflow_list);
   void                       ert_workflow_list_add_alias( ert_workflow_list_type * workflow_list , const char * real_name , const char * alias);
   void                       ert_workflow_list_add_config_items( config_type * config );
   void                       ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config );
@@ -56,6 +57,7 @@ extern "C" {
   bool                       ert_workflow_list_run_workflow_blocking(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self);
   const subst_list_type *          ert_workflow_list_get_context(const ert_workflow_list_type * workflow_list);
   int                        ert_workflow_list_get_size( const ert_workflow_list_type * workflow_list);
+
 
   UTIL_IS_INSTANCE_HEADER( ert_workflow_list );
 
