@@ -829,7 +829,6 @@ void obs_vector_measure(const obs_vector_type * obs_vector ,
       node_id.iens = int_vector_iget( ens_active_list , active_iens_index );
 
       enkf_node_load(enkf_node , fs , node_id);
-      node_id.iens = active_iens_index;
       obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , node_id , meas_data , active_list);
     }
 

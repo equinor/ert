@@ -376,7 +376,7 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
             enkf_node_load( work_node , fs , node_id );
 
             meas_block_iset(meas_block ,
-                            iens_index , active_count ,
+                            iens , active_count ,
                             summary_get( enkf_node_value_ptr( work_node ) , node_id.report_step , node_id.state ));
 
           }
@@ -465,7 +465,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                   enkf_fs_type           * fs,
                                   const int_vector_type  * step_list ,
                                   state_enum               state,
-                                  const int_vector_type * ens_active_list ,
+                                  const int_vector_type    * ens_active_list ,
                                   meas_data_type           * meas_data,
                                   obs_data_type            * obs_data,
                                   const local_obsset_type  * obsset) {
