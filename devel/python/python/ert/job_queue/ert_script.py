@@ -57,7 +57,10 @@ class ErtScript(object):
             else:
                 arg_type = str
 
-            arguments.append(arg_type(arg_value))
+            if arg_value is not None:
+                arguments.append(arg_type(arg_value))
+            else:
+                arguments.append(None)
 
         try:
             return self.run(*arguments)
