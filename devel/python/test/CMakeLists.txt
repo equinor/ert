@@ -13,6 +13,9 @@ set(TEST_SOURCES
     ert_tests/cwrap/__init__.py
     ert_tests/cwrap/test_cwrap.py
 
+    ert_tests/testcase/__init__.py
+    ert_tests/testcase/test_testcase.py
+
     ert_tests/ecl/__init__.py
     ert_tests/ecl/test_deprecation.py
     ert_tests/ecl/test_ecl_default.py
@@ -166,6 +169,11 @@ if (ERT_BUILD_GUI)
              COMMAND python test/ctest_import.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} "ert_gui")
 endif()
 
+#TESTCASE
+
+add_test( NAME python.tests.ert.testcase.testcase
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.testcase.test_testcase.TestTestCase )
 
 #UTIL
 
