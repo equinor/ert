@@ -161,6 +161,14 @@ class ExtendedTestCase(TestCase):
 
         return os.path.realpath(os.path.join(root_path , path))
 
+    
+    def assertNotRaises(self, func):
+        try:
+            func()
+        except:
+            self.fail()
+
+
     @staticmethod
     def slowTestShouldNotRun():
         """
