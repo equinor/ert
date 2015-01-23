@@ -67,3 +67,15 @@ class NumpyAndPandasTest(ExtendedTestCase):
         self.assertEqual(result["A"][2][2], 3)
         self.assertTrue(numpy.isnan(result["B"][1][1]))
         self.assertFloatEqual(result["B"][2][4], 7.7)
+
+
+    def test_pandas_extend_index(self):
+        d1 = DataFrame(data=[2, 4, 6, 8], columns=["A"], index=[1, 2, 3, 4])
+        d1.index.name = "first"
+
+        d1["second"] = "default"
+        d1.set_index(["second"], append=True, inplace=True)
+        self.assertEqual(d1.index.names, ["first", "second"])
+
+        d1 = d1.reorder_levels(["second", "first"])
+        self.assertEqual(d1.index.names, ["second", "first"])
