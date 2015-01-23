@@ -26,6 +26,7 @@ extern "C" {
 #include <time.h>
 
 #include <ert/util/bool_vector.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/sched/history.h>
 
@@ -69,6 +70,7 @@ extern "C" {
   const char         * obs_vector_get_key(const obs_vector_type * );
   obs_impl_type        obs_vector_get_impl_type(const obs_vector_type * );
   int                  obs_vector_get_active_report_step(const obs_vector_type * );
+  const int_vector_type * obs_vector_get_step_list(const obs_vector_type * vector);
   void                 obs_vector_user_get(const obs_vector_type * obs_vector , const char * index_key , int report_step , double * value , double * std , bool * valid);
   int                  obs_vector_get_next_active_step(const obs_vector_type * , int );
   void               * obs_vector_iget_node(const obs_vector_type * , int );
@@ -96,6 +98,7 @@ extern "C" {
   enkf_config_node_type * obs_vector_get_config_node(const obs_vector_type * );
   const char            * obs_vector_get_obs_key( const obs_vector_type * obs_vector);
 
+  UTIL_IS_INSTANCE_HEADER(obs_vector);
   UTIL_SAFE_CAST_HEADER(obs_vector);
   VOID_FREE_HEADER(obs_vector);
 

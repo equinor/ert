@@ -60,6 +60,10 @@ add_executable( enkf_obs_vector_fs enkf_obs_vector_fs.c )
 target_link_libraries( enkf_obs_vector_fs enkf test_util )
 add_test( enkf_obs_vector_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_vector_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config )
 
+add_executable( enkf_obs_vector enkf_obs_vector.c )
+target_link_libraries( enkf_obs_vector enkf test_util )
+add_test( enkf_obs_vector ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_vector  )
+
 
 add_executable( enkf_plot_data_fs enkf_plot_data_fs.c )
 target_link_libraries( enkf_plot_data_fs enkf test_util )

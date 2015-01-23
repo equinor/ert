@@ -65,6 +65,7 @@ struct obs_vector_struct {
   enkf_config_node_type          * config_node; /* The config_node of the node type we are observing - shared reference */
   obs_impl_type                    obs_type;
   int                              num_active;  /* The total number of timesteps where this observation is active (i.e. nodes[ ] != NULL) */
+  int_vector_type                * step_list;
 };
 
 
@@ -140,6 +141,7 @@ obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key
   vector->user_get   = NULL;
   vector->chi2       = NULL;
   vector->scale_std  = NULL;
+  vector->step_list  = int_vector_alloc(0,0);
 
   switch (obs_type) {
   case(SUMMARY_OBS):
@@ -210,6 +212,7 @@ enkf_config_node_type * obs_vector_get_config_node(const obs_vector_type * obs_v
 void obs_vector_free(obs_vector_type * obs_vector) {
   vector_free( obs_vector->nodes );
   free(obs_vector->obs_key);
+  int_vector_free(obs_vector->step_list);
   free(obs_vector);
 }
 
@@ -261,8 +264,11 @@ void obs_vector_clear_nodes( obs_vector_type * obs_vector ) {
 void obs_vector_install_node(obs_vector_type * obs_vector , int index , void * node) {
   obs_vector_assert_node_type( obs_vector , node );
   {
-    if (vector_iget_const( obs_vector->nodes , index ) == NULL)
+    if (vector_iget_const( obs_vector->nodes , index ) == NULL) {
       obs_vector->num_active++;
+      int_vector_append( obs_vector->step_list , index );
+      int_vector_sort( obs_vector->step_list );
+    }
 
     vector_iset_owned_ref( obs_vector->nodes , index , node , obs_vector->freef );
   }
@@ -315,6 +321,10 @@ int obs_vector_get_active_report_step(const obs_vector_type * vector) {
   }
 }
 
+
+const int_vector_type * obs_vector_get_step_list(const obs_vector_type * vector) {
+  return vector->step_list;
+}
 
 
 bool obs_vector_iget_active(const obs_vector_type * vector, int index) {
