@@ -55,7 +55,15 @@ void test_submit(lsf_driver_type * driver , const char * server , const char * b
       sleep(2);
 
       {
-        int lsf_status = lsf_driver_get_job_status_lsf( driver , job );
+        int lsf_status = 0;
+        for(int i=0; i < 3; i++){
+          lsf_status = lsf_driver_get_job_status_lsf( driver , job );
+          if (lsf_status != JOB_STAT_EXIT){
+            sleep(8);
+          }else{
+            break;
+          }
+        }
         if (lsf_status != JOB_STAT_EXIT)
           test_error_exit("Got lsf_status:%d expected: %d \n",lsf_status , JOB_STAT_EXIT );
       }
