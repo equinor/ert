@@ -1,6 +1,3 @@
-import StringIO
-import cProfile
-import pstats
 import os
 import re
 import pandas
@@ -78,9 +75,6 @@ class RobustCSVExportJob(ErtPlugin):
 
         data = pandas.DataFrame()
 
-        # pr = cProfile.Profile()
-        # pr.enable()
-
         for index, case in enumerate(cases):
             case = case.strip()
 
@@ -114,12 +108,6 @@ class RobustCSVExportJob(ErtPlugin):
             data = pandas.concat([data, case_data])
 
         data.to_csv(output_file)
-
-        # pr.disable()
-        # s = StringIO.StringIO()
-        # ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
-        # ps.print_stats()
-        # print(s.getvalue())
 
         export_info = "Exported %d rows and %d columns to %s." % (len(data.index), len(data.columns), output_file)
         return export_info
