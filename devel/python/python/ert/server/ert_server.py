@@ -232,9 +232,10 @@ class ErtServer(object):
         
             run_id = NodeId(0 , iens , EnkfStateType.ANALYZED )
             node.save( self.run_fs , run_id )
-
+            
+        self.run_fs.fsync()
         state_map = self.run_fs.getStateMap()
         state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
-
+        
         self.run_context.startSimulation( iens )
         return self.handleSTATUS([])
