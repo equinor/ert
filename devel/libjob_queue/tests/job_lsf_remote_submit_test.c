@@ -56,10 +56,10 @@ void test_submit(lsf_driver_type * driver , const char * server , const char * b
 
       {
         int lsf_status = 0;
-        for(int i=0; i < 3; i++){
+        for(int i=0; i < 10; i++){
           lsf_status = lsf_driver_get_job_status_lsf( driver , job );
           if (lsf_status != JOB_STAT_EXIT){
-            sleep(8);
+            sleep(2);
           }else{
             break;
           }
