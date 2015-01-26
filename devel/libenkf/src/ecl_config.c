@@ -141,13 +141,13 @@ void ecl_config_set_data_file(ecl_config_type * ecl_config, const char * data_fi
   ecl_config->data_file = util_realloc_string_copy(ecl_config->data_file, data_file);
   {
     FILE * stream = util_fopen(ecl_config->data_file, "r");
-    parser_type * parser = parser_alloc(NULL, NULL, NULL, NULL, "--", "\n");
+    basic_parser_type * parser = basic_parser_alloc(NULL, NULL, NULL, NULL, "--", "\n");
     char * init_tag = enkf_util_alloc_tagged_string("INIT");
     
-    ecl_config->can_restart = parser_fseek_string(parser, stream, init_tag, false, true);
+    ecl_config->can_restart = basic_parser_fseek_string(parser, stream, init_tag, false, true);
     
     free(init_tag);
-    parser_free(parser);
+    basic_parser_free(parser);
     fclose(stream);
   }
   ecl_config->start_date = ecl_util_get_start_date(ecl_config->data_file);
