@@ -207,9 +207,10 @@ class ErtServer(object):
         geo_id = args[0]
         pert_id = args[1]
         iens = args[2]
+        self.logger.debug("ADD_SIMULATION  geo_id:%d  pert_id:%d  iens:%d" % (geo_id , pert_id , iens))
         kw_list = args[3]
         state = self.ert_handle.getRealisation( iens )
-        state.addSubstKeyword( "GEO_ID" , "%s" % geo_id )
+        state.addSubstKeyword( "GEO_ID" , "%d" % geo_id )
         
         elco_kw = [ l[0] for l in kw_list ]
         ens_config = self.ert_handle.ensembleConfig()
@@ -225,6 +226,7 @@ class ErtServer(object):
         for kw_arg in kw_list:
             kw = str(kw_arg[0])
             data = kw_arg[1:]
+            self.logger.debug("ADD_SIMULATION %s : %s" % (kw , data))
         
             node = state[kw]
             gen_kw = node.asGenKw()
@@ -232,9 +234,10 @@ class ErtServer(object):
         
             run_id = NodeId(0 , iens , EnkfStateType.ANALYZED )
             node.save( self.run_fs , run_id )
-
+            
+        self.run_fs.fsync()
         state_map = self.run_fs.getStateMap()
         state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
-
+        
         self.run_context.startSimulation( iens )
         return self.handleSTATUS([])

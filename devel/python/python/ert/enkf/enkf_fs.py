@@ -101,6 +101,10 @@ class EnkfFs(BaseCClass):
         self.umount()
 
 
+    def fsync(self):
+        EnkfFs.cNamespace().fsync(self)
+
+
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("enkf_fs", EnkfFs)
 
@@ -118,3 +122,4 @@ EnkfFs.cNamespace().exists = cwrapper.prototype("bool enkf_fs_exists(char*)")
 EnkfFs.cNamespace().get_case_name = cwrapper.prototype("char* enkf_fs_get_case_name(enkf_fs)")
 EnkfFs.cNamespace().is_read_only = cwrapper.prototype("bool enkf_fs_is_read_only(enkf_fs)")
 EnkfFs.cNamespace().get_writecount = cwrapper.prototype("int enkf_fs_get_write_count(enkf_fs)");
+EnkfFs.cNamespace().fsync = cwrapper.prototype("void enkf_fs_fsync(enkf_fs)");
