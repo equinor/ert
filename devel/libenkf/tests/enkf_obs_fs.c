@@ -36,23 +36,21 @@ void testS( ert_test_context_type * test_context ) {
     enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
     int_vector_type * active_list = int_vector_alloc(0,0);
     obs_data_type * obs_data = obs_data_alloc( );
-    local_obsdata_type * obs_set = enkf_obs_alloc_all_active_local_obs( enkf_obs , "OBSSET" , true);
+    local_obsdata_type * obs_set = local_obsdata_alloc( "KEY" );
+    bool_vector_type * ens_mask;
     meas_data_type * meas_data;
 
 
-    {
-      for (int i= 0; i < enkf_main_get_ensemble_size( enkf_main); i++)
-        int_vector_append( active_list , i );
-    }
+    for (int i= 0; i < enkf_main_get_ensemble_size( enkf_main); i++)
+      int_vector_append( active_list , i );
+    ens_mask = int_vector_alloc_mask( active_list);
 
-    {
-      bool_vector_type * ens_mask = int_vector_alloc_mask( active_list );
-      meas_data = meas_data_alloc( ens_mask );
-      bool_vector_free( ens_mask );
-    }
     obs_data = obs_data_alloc( );
+    meas_data = meas_data_alloc( ens_mask );
 
+    enkf_obs_add_local_nodes_with_data( enkf_obs  , obs_set , fs , ens_mask );
     enkf_obs_get_obs_and_measure_data( enkf_obs , fs , obs_set, FORECAST , active_list , meas_data , obs_data);
+
     {
       FILE * stream = util_fopen("analysis/Smatrix" , "r");
       matrix_type * S = meas_data_allocS( meas_data );
@@ -68,6 +66,7 @@ void testS( ert_test_context_type * test_context ) {
     meas_data_free( meas_data );
     obs_data_free( obs_data );
     local_obsdata_free( obs_set );
+    bool_vector_free( ens_mask );
   }
 }
 
@@ -77,7 +76,7 @@ void test_iget(ert_test_context_type * test_context) {
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
   enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
 
-  test_assert_int_equal( 30 , enkf_obs_get_size( enkf_obs ) );
+  test_assert_int_equal( 31 , enkf_obs_get_size( enkf_obs ) );
   for (int iobs = 0; iobs < enkf_obs_get_size( enkf_obs ); iobs++) {
     obs_vector_type * vec1 = enkf_obs_iget_vector( enkf_obs , iobs );
     obs_vector_type * vec2 = enkf_obs_get_vector( enkf_obs , obs_vector_get_key( vec1 ));
