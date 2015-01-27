@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, EnkfFs, LocalObsdata, MeasData, ObsData
+from ert.enkf import ENKF_LIB, EnkfFs, LocalObsdataNode , LocalObsdata, MeasData, ObsData
 from ert.enkf.enums import EnkfStateType
 
 from ert.enkf.observations import ObsVector
@@ -53,6 +53,19 @@ class EnkfObs(BaseCClass):
                 raise IndexError("Index must be in range: 0 <= %d < %d" % (key_or_index, len(self)))
         else:
             raise TypeError("Key or index must be of type str or int")
+
+
+    def createLocalObsdata(self , key , add_active_steps = True):
+        local_obs_data = LocalObsdata( key )
+        for obs_vector in self:
+            node = LocalObsdataNode( obs_vector.getObsKey() )
+            if add_active_steps:
+                node.addActiveTstep( obs_vector )
+
+            local_obs_data.addNode( node )
+    
+        return local_obs_data
+
 
     def get_config_file(self):
         """ @rtype: Str """
