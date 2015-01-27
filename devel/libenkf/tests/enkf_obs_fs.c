@@ -34,22 +34,15 @@ void testS( ert_test_context_type * test_context ) {
     enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
     enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
     enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-    int_vector_type * step_list = int_vector_alloc(0,0);
     int_vector_type * active_list = int_vector_alloc(0,0);
     obs_data_type * obs_data = obs_data_alloc( );
-    local_obsset_type * obs_set = local_obsset_alloc( "OBSNAME" );
+    local_obsdata_type * obs_set = enkf_obs_alloc_all_active_local_obs( enkf_obs , "OBSSET" , true);
     meas_data_type * meas_data;
-    int active_size = 0;
 
 
     {
       for (int i= 0; i < enkf_main_get_ensemble_size( enkf_main); i++)
         int_vector_append( active_list , i );
-      active_size = int_vector_size( active_list );
-    }
-    {
-      for (int s = 0; s < enkf_main_get_history_length( enkf_main ); s++)
-        int_vector_append( step_list , s );
     }
 
     {
@@ -59,7 +52,7 @@ void testS( ert_test_context_type * test_context ) {
     }
     obs_data = obs_data_alloc( );
 
-    enkf_obs_get_obs_and_measure( enkf_obs , fs , step_list , FORECAST , active_list , meas_data , obs_data , obs_set);
+    enkf_obs_get_obs_and_measure_data( enkf_obs , fs , obs_set, FORECAST , active_list , meas_data , obs_data);
     {
       FILE * stream = util_fopen("analysis/Smatrix" , "r");
       matrix_type * S = meas_data_allocS( meas_data );
@@ -71,11 +64,10 @@ void testS( ert_test_context_type * test_context ) {
       matrix_free( S0 );
       fclose( stream );
     }
-    int_vector_free( step_list );
     int_vector_free( active_list );
     meas_data_free( meas_data );
     obs_data_free( obs_data );
-    local_obsset_free( obs_set );
+    local_obsdata_free( obs_set );
   }
 }
 
@@ -85,7 +77,7 @@ void test_iget(ert_test_context_type * test_context) {
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
   enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
 
-  test_assert_int_equal( 29 , enkf_obs_get_size( enkf_obs ) );
+  test_assert_int_equal( 30 , enkf_obs_get_size( enkf_obs ) );
   for (int iobs = 0; iobs < enkf_obs_get_size( enkf_obs ); iobs++) {
     obs_vector_type * vec1 = enkf_obs_iget_vector( enkf_obs , iobs );
     obs_vector_type * vec2 = enkf_obs_get_vector( enkf_obs , obs_vector_get_key( vec1 ));
@@ -119,14 +111,17 @@ void test_container( ert_test_context_type * test_context ) {
 
 
 int main(int argc , char ** argv) {
-  const char * config_file = argv[1];
-  const char * site_config = NULL;
-  ert_test_context_type * test_context = ert_test_context_alloc( "ENKF_OBS_FS" , config_file , site_config );
+  util_install_signals();
   {
-    testS( test_context );
-    test_iget( test_context );
-    test_container( test_context );
+    const char * config_file = argv[1];
+    const char * site_config = NULL;
+    ert_test_context_type * test_context = ert_test_context_alloc( "ENKF_OBS_FS" , config_file , site_config );
+    {
+      testS( test_context );
+      test_iget( test_context );
+      test_container( test_context );
+    }
+    ert_test_context_free( test_context );
+    exit(0);
   }
-  ert_test_context_free( test_context );
-  exit(0);
 }

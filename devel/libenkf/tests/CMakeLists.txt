@@ -50,7 +50,7 @@ add_test( enkf_ert_workflow_list ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_workflow_lis
 
 add_executable( enkf_obs_fs enkf_obs_fs.c )
 target_link_libraries( enkf_obs_fs enkf test_util )
-add_test( enkf_obs_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config )
+add_test( enkf_obs_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config )
 
 add_executable( enkf_magic_string_in_workflows enkf_magic_string_in_workflows.c )
 target_link_libraries( enkf_magic_string_in_workflows enkf test_util )
