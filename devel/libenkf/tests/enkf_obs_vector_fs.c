@@ -43,14 +43,26 @@ void test_valid_obs_vector( enkf_main_type * enkf_main , const char * obs_key) {
 }
 
 
+/*
+  This test will modify the enkf_obs container with invalid data; must
+  be the last test.
+*/
+
 void test_invalid_obs_vector( enkf_main_type * enkf_main , const char * obs_key) {
   enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
   enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
-  obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-  bool_vector_type * active_mask = bool_vector_alloc( enkf_main_get_ensemble_size( enkf_main ) , true);
+  enkf_config_node_type * config_node = enkf_config_node_alloc_summary( "WWCT:OPX" , LOAD_FAIL_EXIT );
 
-  test_assert_false( obs_vector_has_data( obs_vector , active_mask , fs ));
-  bool_vector_free( active_mask );
+  test_assert_false( enkf_obs_has_key( enkf_obs , obs_key ));
+  enkf_obs_add_obs_vector( enkf_obs , obs_key , obs_vector_alloc( SUMMARY_OBS , obs_key , config_node , 10 ));
+  test_assert_true( enkf_obs_has_key( enkf_obs , obs_key ));
+  {
+    obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
+    bool_vector_type * active_mask = bool_vector_alloc( enkf_main_get_ensemble_size( enkf_main ) , true);
+
+    test_assert_false( obs_vector_has_data( obs_vector , active_mask , fs ));
+    bool_vector_free( active_mask );
+  }
 }
 
 void test_container( ert_test_context_type * test_context ) {
@@ -102,9 +114,9 @@ int main(int argc , char ** argv) {
 
   {
     test_valid_obs_vector( enkf_main , "WWCT:OP_3");
-    test_invalid_obs_vector( enkf_main , "GOPT:OP");
     test_container( context );
     test_measure( context );
+    test_invalid_obs_vector( enkf_main , "MISSING:DATA");
   }
   ert_test_context_free( context );
 }
