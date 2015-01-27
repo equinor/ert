@@ -10,6 +10,42 @@ class MeasData(BaseCClass):
         c_pointer = MeasData.cNamespace().alloc(ens_mask)
         super(MeasData, self).__init__(c_pointer)
 
+    def __len__(self):
+        return MeasData.cNamespace().get_num_blocks( self )
+
+
+    def __contains__(self , index):
+        if isinstance(index , str):
+            return MeasData.cNamespace().has_block( self , index)
+        else:
+            raise TypeError("The in operator expects a string argument")
+            
+
+    def __getitem__(self , index):
+        if isinstance(index , str):
+            if index in self:
+                return MeasData.cNamespace().get_block( self , index)
+            else:
+                raise KeyError("The obs block:%s is not recognized" % index)
+        elif isinstance(index,int):
+            if index < 0:
+                index += len(self)
+
+            if 0 <= index < len(self):
+                return MeasData.cNamespace().iget_block( self , index)
+            else:
+                raise IndexError("Index out of range")
+        else:
+            raise TypeError("The index variable must string or integer")
+
+
+    def __str__(self):
+        s = ""
+        for block in self:
+            s += "%s" % block
+            s += "\n"
+        return s
+
 
     def createS(self):
         """ @rtype: Matrix """
@@ -39,7 +75,6 @@ class MeasData(BaseCClass):
         return MeasData.cNamespace().get_total_ens_size(self)
 
 
-
     def free(self):
         MeasData.cNamespace().free(self)
 
@@ -55,8 +90,11 @@ MeasData.cNamespace().get_active_ens_size = cwrapper.prototype("int meas_data_ge
 MeasData.cNamespace().get_total_ens_size = cwrapper.prototype("int meas_data_get_total_ens_size( meas_data )")
 MeasData.cNamespace().allocS    = cwrapper.prototype("matrix_obj meas_data_allocS(meas_data)")
 MeasData.cNamespace().add_block = cwrapper.prototype("meas_block_ref meas_data_add_block(meas_data, char* , int , int)")
+MeasData.cNamespace().get_num_blocks = cwrapper.prototype("int meas_data_get_num_blocks( meas_data )")
+MeasData.cNamespace().has_block = cwrapper.prototype("bool meas_data_has_block( meas_data , char* )")
+MeasData.cNamespace().get_block = cwrapper.prototype("meas_block_ref meas_data_get_block( meas_data , char*)")
+MeasData.cNamespace().iget_block = cwrapper.prototype("meas_block_ref meas_data_iget_block( meas_data , int)")
 
 MeasData.cNamespace().deactivate_outliers  = cwrapper.prototype("void enkf_analysis_deactivate_std_zero(obs_data, meas_data)")
-
 
 

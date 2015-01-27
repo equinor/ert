@@ -30,7 +30,6 @@
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/util/matrix.h>
-#include <ert/util/set.h>
 #include <ert/util/vector.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/type_vector_functions.h>
@@ -46,7 +45,7 @@ struct meas_data_struct {
   int                 active_ens_size;
   vector_type       * data;
   pthread_mutex_t     data_mutex;
-  set_type          * lookup_keys;  /* Mangled obs_key and report_step */
+  hash_type         * blocks;
   bool_vector_type  * ens_mask;
 };
 
@@ -296,7 +295,7 @@ meas_data_type * meas_data_alloc( const bool_vector_type * ens_mask ) {
   UTIL_TYPE_ID_INIT( meas , MEAS_DATA_TYPE_ID );
 
   meas->data         = vector_alloc_new();
-  meas->lookup_keys  = set_alloc_empty();
+  meas->blocks       = hash_alloc();
   meas->ens_mask     = bool_vector_alloc_copy( ens_mask );
   meas->active_ens_size = bool_vector_count_equal( ens_mask , true );
   pthread_mutex_init( &meas->data_mutex , NULL );
@@ -308,7 +307,7 @@ meas_data_type * meas_data_alloc( const bool_vector_type * ens_mask ) {
 
 void meas_data_free(meas_data_type * matrix) {
   vector_free( matrix->data );
-  set_free( matrix->lookup_keys );
+  hash_free( matrix->blocks );
   bool_vector_free( matrix->ens_mask );
   free( matrix );
 }
@@ -316,23 +315,30 @@ void meas_data_free(meas_data_type * matrix) {
 
 
 void meas_data_reset(meas_data_type * matrix) {
-  set_clear( matrix->lookup_keys );
+  hash_clear( matrix->blocks );
   vector_clear( matrix->data );  /* Will dump and discard all the meas_block instances. */
 }
 
+
+/*
+   The obs_key is not alone unique over different report steps.
+*/
+static char * meas_data_alloc_key( const char * obs_key , int report_step) {
+  return util_alloc_sprintf( "%s-%d" , obs_key , report_step );
+}
 
 /**
    The code actually adding new blocks to the vector must be run in single-thread mode.
 */
 
 meas_block_type * meas_data_add_block( meas_data_type * matrix , const char * obs_key , int report_step , int obs_size) {
-  char * lookup_key = util_alloc_sprintf( "%s-%d" , obs_key , report_step );  /* The obs_key is not alone unique over different report steps. */
+  char * lookup_key = meas_data_alloc_key( obs_key , report_step );
   pthread_mutex_lock( &matrix->data_mutex );
   {
-    if (!set_has_key( matrix->lookup_keys , lookup_key )) {
+    if (!hash_has_key( matrix->blocks , lookup_key )) {
       meas_block_type  * new_block = meas_block_alloc(obs_key , matrix->ens_mask , obs_size);
       vector_append_owned_ref( matrix->data , new_block , meas_block_free__ );
-      set_add_key( matrix->lookup_keys , lookup_key );
+      hash_insert_ref( matrix->blocks , lookup_key , new_block );
     }
   }
   pthread_mutex_unlock( &matrix->data_mutex );
@@ -340,6 +346,17 @@ meas_block_type * meas_data_add_block( meas_data_type * matrix , const char * ob
   return vector_get_last( matrix->data );
 }
 
+
+/*
+  Observe that the key should compare with the keys created by meas_data_alloc_key().
+*/
+bool meas_data_has_block( const meas_data_type * matrix , const char * lookup_key) {
+  return hash_has_key( matrix->blocks , lookup_key);
+}
+
+meas_block_type * meas_data_get_block( const meas_data_type * matrix , const char * lookup_key) {
+  return hash_get( matrix->blocks , lookup_key );
+}
 
 
 meas_block_type * meas_data_iget_block( const meas_data_type * matrix , int block_nr) {
@@ -396,6 +413,12 @@ int meas_data_get_active_ens_size( const meas_data_type * meas_data ) {
 int meas_data_get_total_ens_size( const meas_data_type * meas_data ) {
   return bool_vector_size( meas_data->ens_mask );
 }
+
+
+int meas_data_get_num_blocks( const meas_data_type * meas_data ) {
+  return vector_get_size( meas_data->data );
+}
+
 
 
 /*
