@@ -121,11 +121,15 @@ int enkf_linalg_svd_truncation(const matrix_type * S ,
           }
         }
       }
-      matrix_resize(U0 , nrows , num_significant , true);
-      matrix_resize(V0T , num_significant , ncolumns , true);
+      if (num_significant > 0) {
+        matrix_resize(U0 , nrows , num_significant , true);
+        matrix_resize(V0T , num_significant , ncolumns , true);
+      } else
+        util_abort("%s: zero significant singular values\n",__func__);
   }
   else
     util_abort("%s:  truncation:%g  ncomp:%d  - invalid ambigous input.\n",__func__ , truncation , ncomp );
+
   return num_significant;
 }
 
