@@ -40,6 +40,24 @@ class MatrixTest(ExtendedTestCase):
         rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
         m.randomInit( rng )
 
+    def test_matrix_copy_column(self):
+        m = Matrix(10,2)
+        rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
+        m.randomInit( rng )
+
+        with self.assertRaises(ValueError):
+            m.copyColumn(0,2)
+
+        with self.assertRaises(ValueError):
+            m.copyColumn(2,0)
+
+        with self.assertRaises(ValueError):
+            m.copyColumn(-2,0)
+            
+        m.copyColumn(1, 0)
+        for i in range(m.rows()):
+            self.assertEqual( m[i,0] , m[i,1] )
+
     
     def test_matrix_scale(self):
         m = Matrix(2,2 , value = 1)
