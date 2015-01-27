@@ -56,15 +56,7 @@ class EnkfObs(BaseCClass):
 
 
     def createLocalObsdata(self , key , add_active_steps = True):
-        local_obs_data = LocalObsdata( key )
-        for obs_vector in self:
-            node = LocalObsdataNode( obs_vector.getObsKey() )
-            if add_active_steps:
-                node.addActiveTstep( obs_vector )
-
-            local_obs_data.addNode( node )
-    
-        return local_obs_data
+        return EnkfObs.cNamespace().create_all_active_obs( self , key , add_active_steps )
 
 
     def get_config_file(self):
@@ -125,3 +117,4 @@ EnkfObs.cNamespace().iget_obs_time = cwrapper.prototype("time_t enkf_obs_iget_ob
 EnkfObs.cNamespace().add_obs_vector = cwrapper.prototype("void enkf_obs_add_obs_vector(enkf_obs, char*, obs_vector)")
 
 EnkfObs.cNamespace().get_obs_and_measure_data = cwrapper.prototype("void enkf_obs_get_obs_and_measure_data(enkf_obs, enkf_fs, local_obsdata, enkf_state_type_enum, int_vector, meas_data, obs_data)")
+EnkfObs.cNamespace().create_all_active_obs       = cwrapper.prototype("local_obsdata_obj enkf_obs_alloc_all_active_local_obs( enkf_obs , char* , bool)");
