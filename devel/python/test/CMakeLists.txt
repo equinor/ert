@@ -64,6 +64,7 @@ set(TEST_SOURCES
     ert_tests/enkf/data/test_gen_data.py
     ert_tests/enkf/data/test_gen_data_config.py
     ert_tests/enkf/data/test_gen_kw.py
+    ert_tests/enkf/test_update.py
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
@@ -332,6 +333,11 @@ add_test( NAME python.tests.ert.enkf.run_arg
 add_test( NAME python.tests.ert.enkf.runpath_list
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_runpath_list.RunpathListTest)
+
+add_test( NAME python.tests.ert.enkf.update
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_update.UpdateTest)
+
 
 
 #GUI
@@ -704,6 +710,7 @@ set_property( TEST python.tests.ert.enkf.ert_test_context     PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data_config PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data        PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.update               PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_time_range    PROPERTY LABELS Python:StatoilData )
 
 if (ERT_BUILD_GUI)
