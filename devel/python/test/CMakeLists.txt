@@ -395,10 +395,13 @@ add_test( NAME python.tests.ert.ecl.ecl_queue_LOCAL
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_submit.LocalSubmitTest  )
 
 if (NOT ${NFS_RUNPATH} STREQUAL "")
-   add_test( NAME python.tests.ert.ecl.ecl_queue_LSF
-             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_submit.LSFSubmitTest ${NFS_RUNPATH} )
-   set_property( TEST python.tests.ert.ecl.ecl_queue_LSF     PROPERTY LABELS Python:StatoilData:Slow )
+   if (ERT_LSF_SUBMIT_TEST)
+      add_test( NAME python.tests.ert.ecl.ecl_queue_LSF
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_submit.LSFSubmitTest ${NFS_RUNPATH} )
+
+      set_property( TEST python.tests.ert.ecl.ecl_queue_LSF     PROPERTY LABELS Python:StatoilData:Slow )
+   endif()
 
    if (NOT ${RSH_SERVERS} STREQUAL "")
       add_test( NAME python.tests.ert.ecl.ecl_queue_RSH
