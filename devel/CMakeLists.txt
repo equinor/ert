@@ -143,6 +143,10 @@ add_subdirectory( libecl_well )
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
+   if (BUILD_TESTS)
+      option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit" OFF)
+   endif()
+
    include(cmake/ert_module_name.cmake)
 
    include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
