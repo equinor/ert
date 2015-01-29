@@ -51,6 +51,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_analysis_config.py
     ert_tests/enkf/test_analysis_iter_config.py
     ert_tests/enkf/test_state_map.py
+    ert_tests/enkf/test_summary_key_set.py
     ert_tests/enkf/test_time_map.py
     ert_tests/enkf/test_enkf_obs.py
     ert_tests/enkf/test_run_arg.py
@@ -264,6 +265,10 @@ add_test( NAME python.tests.ert.enkf.analysis_iter_config
 add_test( NAME python.tests.ert.enkf.state_map
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_state_map.StateMapTest)
+
+add_test( NAME python.tests.ert.enkf.summary_key_set
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_summary_key_set.SummaryKeySetTest)
 
 add_test( NAME python.tests.ert.enkf.time_map
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
