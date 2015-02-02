@@ -61,10 +61,22 @@ set(TEST_SOURCES
     ert_tests/enkf/test_run_arg.py
     ert_tests/enkf/test_runpath_list.py
     ert_tests/enkf/plot/test_plot_data.py
+
     ert_tests/enkf/data/test_gen_data.py
     ert_tests/enkf/data/test_gen_data_config.py
     ert_tests/enkf/data/test_gen_kw.py
+<<<<<<< HEAD
     ert_tests/enkf/test_update.py
+=======
+    ert_tests/enkf/data/test_gen_kw_config.py
+
+    ert_tests/enkf/export/test_numpy_and_pandas.py
+    ert_tests/enkf/export/test_design_matrix.py
+    ert_tests/enkf/export/test_export_join.py
+    ert_tests/enkf/export/test_gen_kw_collector.py
+    ert_tests/enkf/export/test_misfit_collector.py
+    ert_tests/enkf/export/test_summary_collector.py
+>>>>>>> ERT-797 - Implemented support for collecting summary data. gen_kw data and misfit data into Pandas data structures for simplified export and manipulation
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
@@ -72,6 +84,7 @@ set(TEST_SOURCES
     ert_tests/analysis/test_rml.py
 
     ert_tests/job_queue/__init__.py
+    ert_tests/job_queue/test_ert_plugin.py
     ert_tests/job_queue/test_ert_script.py
     ert_tests/job_queue/test_function_ert_script.py
     ert_tests/job_queue/test_job_queue.py
@@ -310,6 +323,20 @@ add_test( NAME python.tests.ert.enkf.plot.plot_block_data
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.plot.test_plot_data.PlotDataTest)
 
+add_test( NAME python.tests.ert.enkf.ert_test_context
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_context.ErtTestContextTest)
+
+add_test( NAME python.tests.ert.enkf.run_arg
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_run_arg.RunArg)
+
+add_test( NAME python.tests.ert.enkf.runpath_list
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_runpath_list.RunpathListTest)
+
+
+#enkf.data
 add_test( NAME python.tests.ert.enkf.data.gen_data
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_gen_data.GenDataTest)
@@ -322,17 +349,36 @@ add_test( NAME python.tests.ert.enkf.data.gen_kw
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_gen_kw.GenKwTest)
 
-add_test( NAME python.tests.ert.enkf.ert_test_context
+add_test( NAME python.tests.ert.enkf.data.gen_kw_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ert_context.ErtTestContextTest)
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_gen_kw_config.GenKwConfigTest)
 
-add_test( NAME python.tests.ert.enkf.run_arg
-          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_run_arg.RunArg)
 
-add_test( NAME python.tests.ert.enkf.runpath_list
+#enkf.export
+add_test( NAME python.tests.ert.enkf.export.numpy_and_pandas
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_runpath_list.RunpathListTest)
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_numpy_and_pandas.NumpyAndPandasTest)
+
+add_test( NAME python.tests.ert.enkf.export.design_matrix
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_design_matrix.DesignMatrixTest)
+
+add_test( NAME python.tests.ert.enkf.export.export_join
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_export_join.ExportJoinTest)
+
+add_test( NAME python.tests.ert.enkf.export.gen_kw_collector
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_gen_kw_collector.GenKwCollectorTest)
+
+add_test( NAME python.tests.ert.enkf.export.misfit_collector
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_misfit_collector.MisfitCollectorTest)
+
+add_test( NAME python.tests.ert.enkf.export.summary_collector
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_summary_collector.SummaryCollectorTest)
+
 
 add_test( NAME python.tests.ert.enkf.update
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -567,6 +613,10 @@ add_test( NAME python.tests.ert.job_queue.workflow_joblist
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_workflow_joblist.WorkflowJoblistTest)
 
+add_test( NAME python.tests.ert.job_queue.ert_plugin
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_ert_plugin.ErtPluginTest)
+
 add_test( NAME python.tests.ert.job_queue.ert_script
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_ert_script.ErtScriptTest)
@@ -711,6 +761,12 @@ set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.data.gen_data_config PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.update               PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.data.gen_kw_config   PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.export.design_matrix     PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.export.export_join       PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.export.gen_kw_collector  PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.export.misfit_collector  PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.export.summary_collector PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_time_range    PROPERTY LABELS Python:StatoilData )
 
 if (ERT_BUILD_GUI)

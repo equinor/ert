@@ -121,6 +121,7 @@ from ert_gui.main_window import GertMainWindow
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.models import ErtConnector
 from ert_gui.pages.summary_panel import SummaryPanel
+from ert_gui.tools.plugins import PluginHandler
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools import HelpCenter
 
@@ -130,6 +131,7 @@ from ert_gui.tools.load_results import LoadResultsTool
 from ert_gui.tools.manage_cases import ManageCasesTool
 from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.export import ExportTool
+from ert_gui.tools.plugins import PluginsTool
 from ert_gui.tools.workflows import WorkflowsTool
 from ert_gui.widgets import util
 
@@ -248,14 +250,17 @@ def main(argv):
     window = GertMainWindow()
     window.setWidget(SimulationPanel())
 
+    plugin_handler = PluginHandler(ert.ert(), ert.ert().getWorkflowList().getPluginJobs(), window)
+
     help_tool = HelpTool("ERT", window)
 
     window.addDock("Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
     window.addTool(IdeTool(os.path.basename(config_file), ert.reloadERT, help_tool))
     window.addTool(PlotTool())
     window.addTool(ExportTool())
-    window.addTool(WorkflowsTool(ert.reloadERT))
+    window.addTool(WorkflowsTool())
     window.addTool(ManageCasesTool())
+    window.addTool(PluginsTool(plugin_handler))
     window.addTool(LoadResultsTool())
     window.addTool(help_tool)
 
