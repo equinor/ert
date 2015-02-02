@@ -65,9 +65,7 @@ set(TEST_SOURCES
     ert_tests/enkf/data/test_gen_data.py
     ert_tests/enkf/data/test_gen_data_config.py
     ert_tests/enkf/data/test_gen_kw.py
-<<<<<<< HEAD
     ert_tests/enkf/test_update.py
-=======
     ert_tests/enkf/data/test_gen_kw_config.py
 
     ert_tests/enkf/export/test_numpy_and_pandas.py
@@ -76,7 +74,6 @@ set(TEST_SOURCES
     ert_tests/enkf/export/test_gen_kw_collector.py
     ert_tests/enkf/export/test_misfit_collector.py
     ert_tests/enkf/export/test_summary_collector.py
->>>>>>> ERT-797 - Implemented support for collecting summary data. gen_kw data and misfit data into Pandas data structures for simplified export and manipulation
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
