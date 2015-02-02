@@ -199,6 +199,17 @@ int runpath_list_iget_iter( runpath_list_type * list , int index) {
   return node->iter;
 }
 
+
+char * runpath_list_iget_runpath( runpath_list_type * list , int index) {
+    const runpath_node_type * node = runpath_list_iget_node( list , index );
+    return node->runpath;
+}
+
+char * runpath_list_iget_basename( runpath_list_type * list , int index) {
+    const runpath_node_type * node = runpath_list_iget_node( list , index );
+    return node->basename;
+}
+
 void runpath_list_fprintf(runpath_list_type * list ) {
   pthread_rwlock_rdlock( &list->lock );
   {
