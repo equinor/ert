@@ -46,11 +46,11 @@ class PcaDataFetcher(DataFetcher):
         state_map = fs.getStateMap()
         ens_mask = BoolVector(False, self.ert().getEnsembleSize())
         state_map.selectMatching(ens_mask, RealizationStateEnum.STATE_HAS_DATA)
-        active_list = BoolVector.createActiveList(ens_mask)
+        active_list = ens_mask.createActiveList( )
 
         if len(active_list) > 0:
             state = EnkfStateType.FORECAST
-            meas_data = MeasData(active_list)
+            meas_data = MeasData(len(active_list))
             obs_data = ObsData()
 
             self.ert().getObservations().getObservationAndMeasureData(fs, local_obsdata, state, active_list, meas_data, obs_data)

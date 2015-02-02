@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, EnkfFs, LocalObsdata, MeasData, ObsData
+from ert.enkf import ENKF_LIB, EnkfFs, LocalObsdataNode , LocalObsdata, MeasData, ObsData
 from ert.enkf.enums import EnkfStateType
 
 from ert.enkf.observations import ObsVector
@@ -53,6 +53,11 @@ class EnkfObs(BaseCClass):
                 raise IndexError("Index must be in range: 0 <= %d < %d" % (key_or_index, len(self)))
         else:
             raise TypeError("Key or index must be of type str or int")
+
+
+    def createLocalObsdata(self , key , add_active_steps = True):
+        return EnkfObs.cNamespace().create_all_active_obs( self , key , add_active_steps )
+
 
     def get_config_file(self):
         """ @rtype: Str """
@@ -112,3 +117,4 @@ EnkfObs.cNamespace().iget_obs_time = cwrapper.prototype("time_t enkf_obs_iget_ob
 EnkfObs.cNamespace().add_obs_vector = cwrapper.prototype("void enkf_obs_add_obs_vector(enkf_obs, char*, obs_vector)")
 
 EnkfObs.cNamespace().get_obs_and_measure_data = cwrapper.prototype("void enkf_obs_get_obs_and_measure_data(enkf_obs, enkf_fs, local_obsdata, enkf_state_type_enum, int_vector, meas_data, obs_data)")
+EnkfObs.cNamespace().create_all_active_obs       = cwrapper.prototype("local_obsdata_obj enkf_obs_alloc_all_active_local_obs( enkf_obs , char* , bool)");

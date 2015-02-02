@@ -60,6 +60,13 @@ class ObsVector(BaseCClass):
         else:
             raise AssertionError("Node type '%s' currently not supported!" % node_type)
 
+    def getStepList(self):
+        """
+        Will return an IntVector with the active report steps.
+        """
+        return ObsVector.cNamespace().get_step_list(self)
+
+
     def getActiveCount(self):
         """ @rtype: int """
         return ObsVector.cNamespace().get_num_active(self)
@@ -125,3 +132,5 @@ ObsVector.cNamespace().get_next_active_step = cwrapper.prototype("int obs_vector
 ObsVector.cNamespace().has_data = cwrapper.prototype("bool obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
 ObsVector.cNamespace().get_config_node = cwrapper.prototype("enkf_config_node_ref obs_vector_get_config_node(obs_vector)")
 ObsVector.cNamespace().get_total_chi2 = cwrapper.prototype("double obs_vector_total_chi2(obs_vector, enkf_fs, int, enkf_state_type_enum)")
+ObsVector.cNamespace().get_obs_key = cwrapper.prototype("char* obs_vector_get_obs_key(obs_vector)")
+ObsVector.cNamespace().get_step_list = cwrapper.prototype("int_vector_ref obs_vector_get_step_list(obs_vector)")

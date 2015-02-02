@@ -54,16 +54,22 @@ set(TEST_SOURCES
     ert_tests/enkf/test_summary_key_set.py
     ert_tests/enkf/test_time_map.py
     ert_tests/enkf/test_enkf_obs.py
+    ert_tests/enkf/test_meas_block.py
+    ert_tests/enkf/test_meas_data.py
+    ert_tests/enkf/test_obs_data.py
+    ert_tests/enkf/test_obs_block.py
     ert_tests/enkf/test_run_arg.py
     ert_tests/enkf/test_runpath_list.py
     ert_tests/enkf/plot/test_plot_data.py
     ert_tests/enkf/data/test_gen_data.py
     ert_tests/enkf/data/test_gen_data_config.py
     ert_tests/enkf/data/test_gen_kw.py
+    ert_tests/enkf/test_update.py
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
     ert_tests/analysis/test_analysis_module.py
+    ert_tests/analysis/test_rml.py
 
     ert_tests/job_queue/__init__.py
     ert_tests/job_queue/test_ert_script.py
@@ -89,6 +95,7 @@ set(TEST_SOURCES
     ert_tests/util/test_ui_return.py
     ert_tests/util/test_thread_pool.py
     ert_tests/util/test_work_area.py
+    ert_tests/util/test_rng.py
 
     ert_tests/gui/__init__.py
     ert_tests/gui/test_model.py
@@ -220,6 +227,10 @@ add_test( NAME python.tests.ert.util.stat
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_stat.StatTest )
 
+add_test( NAME python.tests.ert.util.rng
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_rng.RngTest )
+
 
 #ENKF
 add_test( NAME python.tests.ert.enkf.enkf
@@ -229,6 +240,22 @@ add_test( NAME python.tests.ert.enkf.enkf
 add_test( NAME python.tests.ert.enkf.enkf_obs
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_obs.EnKFObsTest)
+
+add_test( NAME python.tests.ert.enkf.meas_block
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_meas_block.MeasBlockTest)
+
+add_test( NAME python.tests.ert.enkf.meas_data
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_meas_data.MeasDataTest)
+
+add_test( NAME python.tests.ert.enkf.obs_data
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_obs_data.ObsDataTest)
+
+add_test( NAME python.tests.ert.enkf.obs_block
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_obs_block.ObsBlockTest)
 
 add_test( NAME python.tests.ert.enkf.enkf_load_results_manually
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -306,6 +333,11 @@ add_test( NAME python.tests.ert.enkf.run_arg
 add_test( NAME python.tests.ert.enkf.runpath_list
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_runpath_list.RunpathListTest)
+
+add_test( NAME python.tests.ert.enkf.update
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_update.UpdateTest)
+
 
 
 #GUI
@@ -587,6 +619,10 @@ add_test( NAME python.tests.ert.analysis.analysis_module
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.analysis.test_analysis_module.AnalysisModuleTest)
 
+add_test( NAME python.tests.ert.analysis.rml
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.analysis.test_rml.RMLTest)
+
 
 
 #GEOMETRY
@@ -674,6 +710,7 @@ set_property( TEST python.tests.ert.enkf.ert_test_context     PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data_config PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data        PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.update               PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_time_range    PROPERTY LABELS Python:StatoilData )
 
 if (ERT_BUILD_GUI)

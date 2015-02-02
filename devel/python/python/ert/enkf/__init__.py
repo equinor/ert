@@ -35,7 +35,9 @@ from .observations import SummaryObservation, ObsVector
 
 from .local_obsdata_node import LocalObsdataNode
 from .local_obsdata import LocalObsdata
+from .obs_block import ObsBlock
 from .obs_data import ObsData
+from .meas_block import MeasBlock
 from .meas_data import MeasData
 
 from .analysis_iter_config import AnalysisIterConfig
