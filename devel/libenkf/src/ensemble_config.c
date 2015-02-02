@@ -839,11 +839,8 @@ enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensem
       summary_config_update_load_fail_mode( summary_config , load_fail );
     }
   } else {
-    if ((ensemble_config->refcase == NULL) || (ecl_sum_has_general_var( ensemble_config->refcase , key ))) {
-      config_node = enkf_config_node_alloc_summary( key , load_fail);
-      ensemble_config_add_node(ensemble_config , config_node );
-    } else
-      fprintf(stderr,"** warning: the refcase:%s does not contain the summary key:\"%s\" - will be ignored.\n", ecl_sum_get_case( ensemble_config->refcase ) , key);
+    config_node = enkf_config_node_alloc_summary( key , load_fail);
+    ensemble_config_add_node(ensemble_config , config_node );
   }
 
   return config_node;
