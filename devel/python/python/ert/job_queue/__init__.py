@@ -83,6 +83,7 @@ from .ext_joblist import ExtJoblist
 from .forward_model import ForwardModel
 
 from .ert_script import ErtScript
+from .ert_plugin import ErtPlugin, CancelPluginException
 from .function_ert_script import FunctionErtScript
 from .external_ert_script import ExternalErtScript
 

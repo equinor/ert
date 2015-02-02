@@ -1,6 +1,6 @@
 import os.path
 from ert.cwrap import CWrapper, BaseCClass
-from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap, TimeMap
+from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap, TimeMap, RealizationStateEnum
 from ert.util import StringList
 
 
@@ -116,6 +116,23 @@ class EnkfFsManager(BaseCClass):
             case_fs = self.getFileSystem(case_name, mount_root)
             return case_fs.writeCount() > 0
         return False
+
+
+    def caseExists(self, case_name):
+        """ @rtype: bool """
+        return case_name in self.getCaseList()
+
+
+    def caseHasData(self, case_name):
+        """ @rtype: bool """
+        case_has_data = False
+        state_map = self.getStateMapForCase(case_name)
+
+        for state in state_map:
+            if state == RealizationStateEnum.STATE_HAS_DATA:
+                case_has_data = True
+
+        return case_has_data
 
 
     def getCurrentFileSystem(self):

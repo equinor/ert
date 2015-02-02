@@ -67,3 +67,4 @@ from .ert_log import ErtLog
 
 
 from ert.job_queue import ErtScript as ErtScript
+from ert.job_queue import ErtPlugin as ErtPlugin, CancelPluginException as CancelPluginException

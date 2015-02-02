@@ -664,7 +664,7 @@ static void config_parse__(config_type * config ,
 
 
   {
-    parser_type * parser = parser_alloc(" \t" , "\"", NULL , NULL , "--" , "\n");
+    basic_parser_type * parser = basic_parser_alloc(" \t" , "\"", NULL , NULL , "--" , "\n");
     FILE * stream = util_fopen(config_file , "r");
     bool   at_eof = false;
 
@@ -676,7 +676,7 @@ static void config_parse__(config_type * config ,
 
       line_buffer  = util_fscanf_alloc_line(stream , &at_eof);
       if (line_buffer != NULL) {
-        token_list = parser_tokenize_buffer(parser , line_buffer , true);
+        token_list = basic_parser_tokenize_buffer(parser , line_buffer , true);
         active_tokens = stringlist_get_size( token_list );
 
         /*
@@ -760,7 +760,7 @@ static void config_parse__(config_type * config ,
     if (validate)
       config_validate(config , config_file);
     fclose(stream);
-    parser_free( parser );
+    basic_parser_free( parser );
   }
   free(config_file);
   path_stack_pop( path_stack );
