@@ -448,3 +448,19 @@ class UtilTest(TestCase):
 
         l = v.asList()
         self.assertListEqual( l , [100,10,1] )
+
+
+
+    def test_count_equal(self):
+        v = IntVector(default_value = 77)
+        v[0]  = 1
+        v[10] = 1
+        v[20] = 1
+        self.assertEqual( v.countEqual(1) , 3 )
+
+
+        v = DoubleVector(default_value = 77)
+        v[0]  = 1
+        v[10] = 1
+        v[20] = 1
+        self.assertEqual( v.countEqual(1) , 3 )
