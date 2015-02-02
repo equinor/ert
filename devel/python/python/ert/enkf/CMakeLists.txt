@@ -27,6 +27,7 @@ set(PYTHON_SOURCES
     runpath_list.py
     site_config.py
     state_map.py
+    summary_key_set.py
     run_arg.py
     ert_run_context.py
 )

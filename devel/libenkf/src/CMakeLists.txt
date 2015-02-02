@@ -81,7 +81,8 @@ set( source_files
      pca_plot_vector.c 
      state_map.c 
      cases_config.c 
-     state_map.c    
+     state_map.c
+     summary_key_set.c
      ert_test_context.c
      ert_log.c
      run_arg.c
@@ -176,7 +177,8 @@ set( header_files
      obs_tstep_list.h 
      pca_plot_data.h 
      pca_plot_vector.h 
-     state_map.h 
+     state_map.h
+     summary_key_set.h
      cases_config.h 
      state_map.h
      ert_test_context.h
