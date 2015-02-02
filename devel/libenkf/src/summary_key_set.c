@@ -79,18 +79,21 @@ int summary_key_set_get_size(const summary_key_set_type * set) {
 
 
 bool summary_key_set_add_summary_key(summary_key_set_type * set, const char * summary_key) {
-    if(summary_key_set_has_summary_key(set, summary_key)) {
-        return false;
+    pthread_rwlock_wrlock( &set->rw_lock);
+    bool writable_and_non_existent = true;
+    if(hash_has_key(set->key_set, summary_key)) {
+        writable_and_non_existent = false;
     }
 
-    if(summary_key_set_is_read_only(set)) {
-        return false;
+    if(set->read_only) {
+        writable_and_non_existent = false;
     }
 
-    pthread_rwlock_rdlock( &set->rw_lock );
-    hash_insert_int(set->key_set, summary_key, 1);
+    if(writable_and_non_existent) {
+        hash_insert_int(set->key_set, summary_key, 1);
+    }
     pthread_rwlock_unlock( &set->rw_lock );
-    return true;
+    return writable_and_non_existent;
 }
 
 bool summary_key_set_has_summary_key(const summary_key_set_type * set, const char * summary_key) {
@@ -150,7 +153,7 @@ bool summary_key_set_fread(summary_key_set_type * set, const char * filename) {
                 stringlist_type * key_set = stringlist_fread_alloc(stream);
 
                 for (int i = 0; i < stringlist_get_size(key_set); i++) {
-                    summary_key_set_add_summary_key(set, stringlist_iget_copy(key_set, i));
+                    hash_insert_int(set->key_set, stringlist_iget_copy(key_set, i), 1);
                 }
                 stringlist_free(key_set);
                 fclose( stream );
