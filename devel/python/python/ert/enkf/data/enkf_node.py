@@ -84,7 +84,8 @@ class EnkfNode(BaseCClass):
 
     def load(self , fs , node_id):
         if not self.tryLoad(fs , node_id):
-            raise Exception("Could not load")
+            raise Exception("Could not load node:%s iens:%d  report:%d" % (self.name() , node_id.iens , node_id.report_step))
+            
 
     def save(self , fs , node_id ):
         assert isinstance(fs, EnkfFs)
