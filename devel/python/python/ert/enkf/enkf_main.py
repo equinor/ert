@@ -15,7 +15,7 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
 
-from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, PostSimulationHook
+from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsembleConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, PostSimulationHook
 from ert.enkf.enums import EnkfInitModeEnum
 from ert.util import SubstitutionList, Log
 
@@ -67,7 +67,7 @@ class EnKFMain(BaseCClass):
         EnKFMain.cNamespace().resize_ensemble(self, value)
 
     def ensembleConfig(self):
-        """ @rtype: EnsConfig """
+        """ @rtype: EnsembleConfig """
         return EnKFMain.cNamespace().get_ens_config(self).setParent(self)
 
     def analysisConfig(self):

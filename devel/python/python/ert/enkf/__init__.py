@@ -48,7 +48,7 @@ from .data import *
 
 from .enkf_obs import EnkfObs
 from .enkf_state import EnKFState
-from .ens_config import EnsConfig
+from .ensemble_config import EnsembleConfig
 from .ert_template import ErtTemplate
 from .ert_templates import ErtTemplates
 from .local_config import LocalConfig

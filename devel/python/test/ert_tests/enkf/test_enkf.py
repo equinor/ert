@@ -19,7 +19,7 @@ import os
 
 from ert.util import BoolVector
 
-from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfVarType, ObsVector , RunArg
+from ert.enkf import EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfVarType, ObsVector , RunArg
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enkf_main import EnKFMain
 from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum, EnkfInitModeEnum, ErtImplType, RealizationStateEnum , EnkfRunType
@@ -111,7 +111,7 @@ class EnKFTest(ExtendedTestCase):
 
             main = EnKFMain("simple_config/minimum_config", self.site_config_file)
 
-            self.assertIsInstance(main.ensembleConfig(), EnsConfig)
+            self.assertIsInstance(main.ensembleConfig(), EnsembleConfig)
             self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
             self.assertIsInstance(main.getModelConfig(), ModelConfig)
             #self.assertIsInstance(main.local_config(), LocalConfig) #warn: Should this be None?
