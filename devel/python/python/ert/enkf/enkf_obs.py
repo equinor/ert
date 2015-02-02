@@ -31,6 +31,7 @@ class EnkfObs(BaseCClass):
 
 
     def __iter__(self):
+        """ @rtype: ObsVector """
         iobs = 0
         while iobs < len(self):
             vector = self[iobs]
@@ -98,9 +99,7 @@ class EnkfObs(BaseCClass):
 
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("enkf_obs", EnkfObs)
-cwrapper.registerType("enkf_obs_obj", EnkfObs.createPythonObject)
-cwrapper.registerType("enkf_obs_ref", EnkfObs.createCReference)
+cwrapper.registerObjectType("enkf_obs", EnkfObs)
 
 EnkfObs.cNamespace().free = cwrapper.prototype("void enkf_obs_free( enkf_obs )")
 EnkfObs.cNamespace().get_size = cwrapper.prototype("int enkf_obs_get_size( enkf_obs )")

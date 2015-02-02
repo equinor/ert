@@ -328,12 +328,14 @@ void block_obs_measure(const block_obs_type * block_obs, const void * state , no
 
 
 
-double block_obs_chi2(const block_obs_type * block_obs,  const field_type * field_state, node_id_type node_id) {
+double block_obs_chi2(const block_obs_type * block_obs, const void * state, node_id_type node_id) {
   double sum_chi2 = 0;
   int obs_size = block_obs_get_size( block_obs );
+  block_obs_assert_data(block_obs, state);
+
   for (int i=0; i < obs_size; i++) {
     const point_obs_type * point_obs = block_obs_iget_point_const( block_obs , i );
-    double sim_value = point_obs_iget_data( point_obs , field_state , i, node_id );
+    double sim_value = point_obs_iget_data( point_obs , state , i, node_id );
     double x = (sim_value - point_obs->value) / point_obs->std;
     sum_chi2 += x*x;
   }

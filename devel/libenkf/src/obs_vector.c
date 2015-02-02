@@ -1018,7 +1018,7 @@ void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector ,
 double obs_vector_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , int iens, state_enum load_state) {
   int report_step;
   double sum_chi2 = 0;
-  enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
+  enkf_node_type * enkf_node = enkf_node_deep_alloc( obs_vector->config_node );
   node_id_type node_id = {.report_step = 0, .iens = iens , .state = load_state };
 
   for (report_step = 0; report_step < vector_get_size( obs_vector->nodes ); report_step++) {

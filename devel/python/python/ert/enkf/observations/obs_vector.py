@@ -40,6 +40,11 @@ class ObsVector(BaseCClass):
         """ @rtype: str """
         return ObsVector.cNamespace().get_state_kw(self)
 
+    def getObservationKey(self):
+        """ @rtype: str """
+        return ObsVector.cNamespace().get_observation_key(self)
+
+
     def getNode(self, index):
         """ @rtype: SummaryObservation or BlockObservation or GenObservation"""
 
@@ -99,6 +104,10 @@ class ObsVector(BaseCClass):
     def free(self):
         ObsVector.cNamespace().free(self)
 
+    def getTotalChi2(self, fs, realization_number, state):
+        """ @rtype: float """
+        return ObsVector.cNamespace().get_total_chi2(self, fs, realization_number, state)
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("obs_vector", ObsVector)
@@ -106,6 +115,7 @@ cwrapper.registerObjectType("obs_vector", ObsVector)
 ObsVector.cNamespace().alloc = cwrapper.prototype("c_void_p obs_vector_alloc(enkf_obs_impl_type, char*, enkf_config_node, int)")
 ObsVector.cNamespace().free = cwrapper.prototype("void obs_vector_free( obs_vector )")
 ObsVector.cNamespace().get_state_kw = cwrapper.prototype("char* obs_vector_get_state_kw( obs_vector )")
+ObsVector.cNamespace().get_observation_key = cwrapper.prototype("char* obs_vector_get_key( obs_vector )")
 ObsVector.cNamespace().iget_node = cwrapper.prototype("c_void_p obs_vector_iget_node( obs_vector, int)")
 ObsVector.cNamespace().get_num_active = cwrapper.prototype("int obs_vector_get_num_active( obs_vector )")
 ObsVector.cNamespace().iget_active = cwrapper.prototype("bool obs_vector_iget_active( obs_vector, int)")
@@ -114,3 +124,4 @@ ObsVector.cNamespace().install_node = cwrapper.prototype("void obs_vector_instal
 ObsVector.cNamespace().get_next_active_step = cwrapper.prototype("int obs_vector_get_next_active_step(obs_vector, int)")
 ObsVector.cNamespace().has_data = cwrapper.prototype("bool obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
 ObsVector.cNamespace().get_config_node = cwrapper.prototype("enkf_config_node_ref obs_vector_get_config_node(obs_vector)")
+ObsVector.cNamespace().get_total_chi2 = cwrapper.prototype("double obs_vector_total_chi2(obs_vector, enkf_fs, int, enkf_state_type_enum)")
