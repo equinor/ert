@@ -36,7 +36,7 @@ class MeasBlock(BaseCClass):
         return MeasBlock.cNamespace().get_total_ens_size(self)
 
         
-    def __assert_index__(self , index):
+    def __assert_index(self , index):
         if isinstance(index , tuple):
             iobs,iens = index
             if not 0 <= iobs < self.getObsSize():
@@ -54,12 +54,12 @@ class MeasBlock(BaseCClass):
 
 
     def __setitem__(self, index, value):
-        iobs , iens = self.__assert_index__(index)
+        iobs , iens = self.__assert_index(index)
         MeasBlock.cNamespace().iset_value( self , iens , iobs , value )
 
 
     def __getitem__(self, index):
-        iobs,iens = self.__assert_index__(index)
+        iobs,iens = self.__assert_index(index)
         return MeasBlock.cNamespace().iget_value( self , iens , iobs )
         
     def iensActive(self , iens):
