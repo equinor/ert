@@ -54,11 +54,8 @@ summary_key_set_type * summary_key_set_alloc() {
 
 summary_key_set_type * summary_key_set_alloc_from_file(const char * filename, bool read_only) {
     summary_key_set_type * set = summary_key_set_alloc();
-
     summary_key_set_fread(set, filename);
-
     set->read_only = read_only;
-
     return set;
 }
 
@@ -67,7 +64,7 @@ void summary_key_set_free(summary_key_set_type * set) {
     free(set);
 }
 
-int summary_key_set_get_size(const summary_key_set_type * set) {
+int summary_key_set_get_size(summary_key_set_type * set) {
   int size;
   pthread_rwlock_rdlock( &set->rw_lock );
   {
@@ -79,42 +76,47 @@ int summary_key_set_get_size(const summary_key_set_type * set) {
 
 
 bool summary_key_set_add_summary_key(summary_key_set_type * set, const char * summary_key) {
-    pthread_rwlock_wrlock( &set->rw_lock);
     bool writable_and_non_existent = true;
-    if(hash_has_key(set->key_set, summary_key)) {
-        writable_and_non_existent = false;
-    }
 
-    if(set->read_only) {
-        writable_and_non_existent = false;
-    }
+    pthread_rwlock_wrlock( &set->rw_lock);
+    {
 
-    if(writable_and_non_existent) {
-        hash_insert_int(set->key_set, summary_key, 1);
+        if(hash_has_key(set->key_set, summary_key)) {
+            writable_and_non_existent = false;
+        }
+
+        if(set->read_only) {
+            writable_and_non_existent = false;
+        }
+
+        if(writable_and_non_existent) {
+            hash_insert_int(set->key_set, summary_key, 1);
+        }
     }
     pthread_rwlock_unlock( &set->rw_lock );
+
     return writable_and_non_existent;
 }
 
-bool summary_key_set_has_summary_key(const summary_key_set_type * set, const char * summary_key) {
+bool summary_key_set_has_summary_key(summary_key_set_type * set, const char * summary_key) {
     bool has_key = false;
 
     pthread_rwlock_rdlock( &set->rw_lock );
-
-    has_key = hash_has_key(set->key_set, summary_key);
-
+    {
+        has_key = hash_has_key(set->key_set, summary_key);
+    }
     pthread_rwlock_unlock( &set->rw_lock );
 
     return has_key;
 }
 
-stringlist_type * summary_key_set_get_keys(const summary_key_set_type * set) {
+stringlist_type * summary_key_set_get_keys(summary_key_set_type * set) {
     stringlist_type * keys;
 
     pthread_rwlock_rdlock( &set->rw_lock );
-
-    keys = hash_alloc_stringlist(set->key_set);
-
+    {
+        keys = hash_alloc_stringlist(set->key_set);
+    }
     pthread_rwlock_unlock( &set->rw_lock );
 
     return keys;
