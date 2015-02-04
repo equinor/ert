@@ -5,6 +5,16 @@ from ert.test import ExtendedTestCase
 
 class PolygonSlicingTest(ExtendedTestCase):
 
+    def test_slicing_internal_hull(self):
+        polygon = [(2,2),(2,1),(1,1),(1,5),(5,5),(5,4),(4,4)]
+        edge =  [(0,0) , (10,0) , (10,10), (0,10) , (0,0)]
+
+        sliced = GeometryTools.slicePolygon(edge , polygon)
+        expected = [(2,2),(2,1),(1,1),(1,5),(5,5),(5,4),(4,4),(2.0,4.0)]
+        self.assertEqual(sliced, expected)
+
+
+
     def test_line_to_ray(self):
         p0 = (0.0, 0.0)
         p1 = (1.0, 1.0)
@@ -49,11 +59,11 @@ class PolygonSlicingTest(ExtendedTestCase):
         lp0 = (0.2, 0.5)
         lp1 = (0.4, 0.5)
         line = [lp0, lp1]
-
+    
         result = GeometryTools.slicePolygon(polygon, line)
-
+    
         expected = [(0.0, 0.5), p1, p2, (1.0, 0.5), lp1, lp0, (0.0, 0.5)]
-
+    
         self.assertEqual(result, expected)
 
 
