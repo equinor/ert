@@ -16,6 +16,16 @@
 
 
 import ert.cwrap.clib as clib
+import ert.util
+import ert.geo
+import ert.ecl
+import ert.rms
+import ert.analysis
+import ert.sched
+import ert.config
+import ert.job_queue
+
+
 
 ENKF_LIB = clib.ert_load("libenkf")
 
