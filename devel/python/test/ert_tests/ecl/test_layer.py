@@ -69,7 +69,7 @@ class LayerTest(ExtendedTestCase):
 
         self.assertTrue( layer.cellContact((0,0) , (1,0)) )
         self.assertTrue( layer.cellContact((1,0) , (0,0)) )
-
+        
         self.assertTrue( layer.cellContact((0,0) , (0,1)) )
         self.assertTrue( layer.cellContact((0,1) , (0,0)) )
 
@@ -96,6 +96,16 @@ class LayerTest(ExtendedTestCase):
 
         self.assertFalse( layer.cellContact((9,4) , (9,5)) )
         self.assertTrue( layer.cellContact((10,4) , (10,5)) )
+        
+    def test_get_barrier(self):
+        layer = Layer(10,10)
+        self.assertFalse( layer.leftBarrier(5,5) )
+        self.assertFalse( layer.bottomBarrier(5,5) )
+
+        layer.addIJBarrier([(1,1),(2,1),(2,2)])
+        self.assertTrue( layer.bottomBarrier(1,1) )
+        self.assertTrue( layer.leftBarrier(2,1) )
+        
         
     
     def test_fault_barrier(self):
