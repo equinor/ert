@@ -140,7 +140,7 @@ bool workflow_try_compile( workflow_type * script , const subst_list_type * cont
     
     {
       // Try to compile
-      config_type * config_compiler = workflow_joblist_get_compiler( script->joblist );
+      config_parser_type * config_compiler = workflow_joblist_get_compiler( script->joblist );
       script->compiled = false;
       workflow_clear( script );
       config_clear( config_compiler );
