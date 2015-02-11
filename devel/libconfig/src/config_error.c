@@ -54,7 +54,7 @@ void config_error_free( config_error_type * error ) {
 
 
 void config_error_add( config_error_type * error , char * new_error) {
-  stringlist_append_owned_ref( error->error_list , new_error );
+  stringlist_append_copy( error->error_list , new_error );
 }
 
 
