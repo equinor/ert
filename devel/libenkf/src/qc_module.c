@@ -162,7 +162,7 @@ const workflow_type * qc_module_get_workflow( const qc_module_type * qc_module )
 /*****************************************************************/
 
 
-void qc_module_init( qc_module_type * qc_module , const config_type * config) {
+void qc_module_init( qc_module_type * qc_module , const config_parser_type * config) {
   if (config_item_set( config , QC_PATH_KEY ))
     qc_module_set_path( qc_module , config_get_value( config , QC_PATH_KEY ));
 
@@ -177,7 +177,7 @@ void qc_module_init( qc_module_type * qc_module , const config_type * config) {
 
 
 
-void qc_module_add_config_items( config_type * config ) {
+void qc_module_add_config_items( config_parser_type * config ) {
   config_schema_item_type * item;
 
   item = config_add_schema_item( config , QC_PATH_KEY , false  );

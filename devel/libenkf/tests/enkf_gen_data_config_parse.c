@@ -34,7 +34,7 @@
 
 
 enkf_config_node_type * parse_alloc_GEN_PARAM( const char * config_string , bool parse_valid) {
-  config_type * config = config_alloc();
+  config_parser_type * config = config_alloc();
   enkf_config_node_type * enkf_config_node = NULL;
   
   enkf_config_node_add_GEN_PARAM_config_schema( config );
@@ -118,7 +118,7 @@ void test_parse_gen_param() {
 
 
 enkf_config_node_type * parse_alloc_GEN_DATA_result( const char * config_string , bool parse_valid) {
-  config_type * config = config_alloc();
+  config_parser_type * config = config_alloc();
   enkf_config_node_type * enkf_config_node = NULL;
   
   enkf_config_node_add_GEN_DATA_config_schema( config );

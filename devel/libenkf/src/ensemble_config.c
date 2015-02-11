@@ -313,7 +313,7 @@ void ensemble_config_clear_obs_keys(ensemble_config_type * ensemble_config) {
 
 
 
-void ensemble_config_add_config_items(config_type * config) {
+void ensemble_config_add_config_items(config_parser_type * config) {
   config_schema_item_type * item;
 
   /** 
@@ -393,7 +393,7 @@ void ensemble_config_add_config_items(config_type * config) {
 */
     
 
-void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_type * config) {
+void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_parser_type * config) {
   const config_content_item_type * item = config_get_content_item( config , GEN_DATA_KEY );
   if (item != NULL) {
     int i;
@@ -408,7 +408,7 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
 }
 
 
-void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_type * config) {
+void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_parser_type * config) {
   /* gen_param  - should be unified with the gen_data*/
   const config_content_item_type * item = config_get_content_item( config , GEN_PARAM_KEY );
   if (item != NULL) {
@@ -423,7 +423,7 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
 }
 
 
-void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const config_type * config ) {
+void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const config_parser_type * config ) {
   const config_content_item_type * gen_kw_item = config_get_content_item( config , GEN_KW_KEY );
   if (gen_kw_item != NULL) {
     int i;
@@ -462,7 +462,7 @@ void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const
 
 
 
-void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , const config_type * config ) {
+void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , const config_parser_type * config ) {
   const config_content_item_type * item = config_get_content_item( config , SURFACE_KEY );
   if (item != NULL) {
     int i;
@@ -506,7 +506,7 @@ void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , cons
 }
 
 
-void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , const config_type * config , const ecl_sum_type * refcase) {
+void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , const config_parser_type * config , const ecl_sum_type * refcase) {
   const config_content_item_type * item = config_get_content_item( config , SUMMARY_KEY );
 
   if (item != NULL) {
@@ -540,7 +540,7 @@ void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , cons
 }
 
 
-void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const config_type * config , ecl_grid_type * grid) {
+void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const config_parser_type * config , ecl_grid_type * grid) {
   const config_content_item_type * item = config_get_content_item( config , FIELD_KEY );
   if (item != NULL) {
     int i;
@@ -641,7 +641,7 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
    impossible to use wildcards when expanding summary variables.
 */
 
-void ensemble_config_init(ensemble_config_type * ensemble_config , const config_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
+void ensemble_config_init(ensemble_config_type * ensemble_config , const config_parser_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
   int i;
   ensemble_config_set_refcase( ensemble_config , refcase );
 

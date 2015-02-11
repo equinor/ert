@@ -842,14 +842,14 @@ void enkf_config_node_fprintf_config( const enkf_config_node_type * config_node 
 }
 /*****************************************************************/
 
-void enkf_config_node_add_GEN_PARAM_config_schema( config_type * config ) {
+void enkf_config_node_add_GEN_PARAM_config_schema( config_parser_type * config ) {
   config_schema_item_type * item;
   item = config_add_schema_item(config , GEN_PARAM_KEY , false  );
   config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX);
 }
 
 
-void enkf_config_node_add_GEN_DATA_config_schema( config_type * config ) {
+void enkf_config_node_add_GEN_DATA_config_schema( config_parser_type * config ) {
   config_schema_item_type * item;
   item = config_add_schema_item(config , GEN_DATA_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);

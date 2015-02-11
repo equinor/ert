@@ -31,7 +31,7 @@
 
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
-  config_type * config = config_alloc();
+  config_parser_type * config = config_alloc();
   
   config_add_schema_item( config , "SET" , true );
   config_add_schema_item( config , "NOTSET" , false );

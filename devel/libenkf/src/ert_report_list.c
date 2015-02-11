@@ -252,7 +252,7 @@ void ert_report_list_create( ert_report_list_type * report_list , const char * c
 }
 
 
-void ert_report_list_site_init( ert_report_list_type * report_list , config_type * config ) {
+void ert_report_list_site_init( ert_report_list_type * report_list , config_parser_type * config ) {
 
   /* Installing the directories to search in. */
   for (int i=0; i < config_get_occurences( config , REPORT_SEARCH_PATH_KEY ); i++) {
@@ -263,7 +263,7 @@ void ert_report_list_site_init( ert_report_list_type * report_list , config_type
 }
 
 
-void ert_report_list_init( ert_report_list_type * report_list , config_type * config , const ecl_sum_type * refcase) {
+void ert_report_list_init( ert_report_list_type * report_list , config_parser_type * config , const ecl_sum_type * refcase) {
   ert_report_list_site_init( report_list , config );
 
   if (config_item_set( config , REPORT_LARGE_KEY))
@@ -311,7 +311,7 @@ void ert_report_list_init( ert_report_list_type * report_list , config_type * co
 }
 
 
-void ert_report_list_add_config_items( config_type * config ) {
+void ert_report_list_add_config_items( config_parser_type * config ) {
   config_schema_item_type * item;
   
   item = config_add_schema_item(config , REPORT_LIST_KEY , false  );

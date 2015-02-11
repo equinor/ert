@@ -268,7 +268,7 @@ bool site_config_del_job(site_config_type * site_config, const char * job_name) 
   return ext_joblist_del_job(site_config->joblist, job_name);
 }
 
-static void site_config_add_jobs(site_config_type * site_config, const config_type * config) {
+static void site_config_add_jobs(site_config_type * site_config, const config_parser_type * config) {
   if (config_item_set(config, INSTALL_JOB_KEY)) {
     const config_content_item_type * content_item = config_get_content_item(config, INSTALL_JOB_KEY);
     int num_jobs = config_content_item_get_size(content_item);
@@ -654,7 +654,7 @@ static void site_config_install_job_queue(site_config_type * site_config) {
     site_config_set_job_queue__(site_config, site_config->driver_type);
 }
 
-void site_config_init_env(site_config_type * site_config, const config_type * config) {
+void site_config_init_env(site_config_type * site_config, const config_parser_type * config) {
   {
     config_content_item_type * setenv_item = config_get_content_item(config, SETENV_KEY);
     if (setenv_item != NULL) {
@@ -693,7 +693,7 @@ void site_config_init_env(site_config_type * site_config, const config_type * co
  */
 
 
-bool site_config_init(site_config_type * site_config, const config_type * config) {
+bool site_config_init(site_config_type * site_config, const config_parser_type * config) {
   site_config_add_jobs(site_config, config);
   site_config_init_env(site_config, config);
 
@@ -991,7 +991,7 @@ void site_config_fprintf_config(const site_config_type * site_config, FILE * str
 /*****************************************************************/
 
 
-void site_config_add_queue_config_items(config_type * config, bool site_mode) {
+void site_config_add_queue_config_items(config_parser_type * config, bool site_mode) {
   config_schema_item_type * item = config_add_schema_item(config, QUEUE_SYSTEM_KEY, site_mode);
   config_schema_item_set_argc_minmax(item, 1, 1);
   {
@@ -1028,7 +1028,7 @@ void site_config_add_queue_config_items(config_type * config, bool site_mode) {
   config_schema_item_iset_type(item, 0, CONFIG_INT);
 }
 
-void site_config_add_config_items(config_type * config, bool site_mode) {
+void site_config_add_config_items(config_parser_type * config, bool site_mode) {
   config_schema_item_type * item;
   ert_workflow_list_add_config_items(config);
   site_config_add_queue_config_items(config, site_mode);

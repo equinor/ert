@@ -130,7 +130,7 @@ void rng_config_init_rng( const rng_config_type * rng_config, rng_type * rng ) {
 
 /*****************************************************************/
 
-void rng_config_add_config_items( config_type * config ) {
+void rng_config_add_config_items( config_parser_type * config ) {
   config_schema_item_type * item;
 
   item= config_add_schema_item( config , STORE_SEED_KEY , false);
@@ -143,7 +143,7 @@ void rng_config_add_config_items( config_type * config ) {
 }
 
 
-void rng_config_init( rng_config_type * rng_config , config_type * config ) {
+void rng_config_init( rng_config_type * rng_config , config_parser_type * config ) {
   if (config_item_set( config , STORE_SEED_KEY ))
     rng_config_set_seed_store_file( rng_config , config_iget(config , STORE_SEED_KEY ,0,0));
   

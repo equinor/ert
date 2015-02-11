@@ -277,7 +277,7 @@ void analysis_config_load_internal_module( analysis_config_type * config ,
     fprintf(stderr,"** Warning: failed to load module %s from %s.\n",user_name , symbol_table);
 }
 
-void analysis_config_load_all_external_modules_from_config ( analysis_config_type * analysis, const config_type * config) {
+void analysis_config_load_all_external_modules_from_config ( analysis_config_type * analysis, const config_parser_type * config) {
   if (config_item_set( config, ANALYSIS_LOAD_KEY)) {
     const config_content_item_type * load_item = config_get_content_item( config , ANALYSIS_LOAD_KEY );
     if (load_item != NULL) {
@@ -436,7 +436,7 @@ void analysis_config_load_internal_modules( analysis_config_type * config ) {
    for enkf_defaults.h
 */
 
-void analysis_config_init( analysis_config_type * analysis , const config_type * config ) {
+void analysis_config_init( analysis_config_type * analysis , const config_parser_type * config ) {
   if (config_item_set( config , UPDATE_LOG_PATH_KEY ))
     analysis_config_set_log_path( analysis , config_get_value( config , UPDATE_LOG_PATH_KEY ));
   
@@ -605,7 +605,7 @@ analysis_config_type * analysis_config_alloc( rng_type * rng ) {
   is instantiated with defaults from enkf_defaults.h
 */
 
-void analysis_config_add_config_items( config_type * config ) {
+void analysis_config_add_config_items( config_parser_type * config ) {
   config_schema_item_type * item;
   
   config_add_key_value( config , ENKF_ALPHA_KEY              , false , CONFIG_FLOAT);

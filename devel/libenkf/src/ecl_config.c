@@ -538,7 +538,7 @@ ecl_config_type * ecl_config_alloc()
   return ecl_config;
 }
 
-void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
+void ecl_config_init(ecl_config_type * ecl_config, const config_parser_type * config)
 {
   if (config_item_set(config, ECLBASE_KEY)) {
     ui_return_type * ui_return = ecl_config_validate_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
@@ -856,7 +856,7 @@ bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)
   return ecl_io_config_get_unified_summary(ecl_config->io_config);
 }
 
-void ecl_config_static_kw_init(ecl_config_type * ecl_config, const config_type * config)
+void ecl_config_static_kw_init(ecl_config_type * ecl_config, const config_parser_type * config)
 {
   const config_content_item_type * content_item = config_get_content_item(config, STATIC_KW_KEY);
   if (content_item != NULL )
@@ -872,7 +872,7 @@ void ecl_config_static_kw_init(ecl_config_type * ecl_config, const config_type *
   }
 }
 
-void ecl_config_add_config_items(config_type * config)
+void ecl_config_add_config_items(config_parser_type * config)
 {
   config_schema_item_type * item;
 

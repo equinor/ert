@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2012  Statoil ASA, Norway. 
     
-   The file 'config_typeFail.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'config_parser_typeFail.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -30,7 +30,7 @@ void error(char * msg) {
 
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
-  config_type * config = config_alloc();
+  config_parser_type * config = config_alloc();
   bool OK;
   {
     config_schema_item_type * item  = config_add_schema_item(config , "TYPES_KEY" , false );

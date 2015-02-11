@@ -2217,7 +2217,7 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main ,
 
 
 
-static void enkf_main_init_user_config( const enkf_main_type * enkf_main , config_type * config ) {
+static void enkf_main_init_user_config( const enkf_main_type * enkf_main , config_parser_type * config ) {
   config_schema_item_type * item;
 
   /*****************************************************************/
@@ -2420,7 +2420,7 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 }
 
 
-static void enkf_main_init_qc( enkf_main_type * enkf_main , config_type * config ) {
+static void enkf_main_init_qc( enkf_main_type * enkf_main , config_parser_type * config ) {
   qc_module_init( enkf_main->qc_module , config );
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
 }
@@ -2733,7 +2733,7 @@ void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
 
 /*****************************************************************/
 
-static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * config ) {
+static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_parser_type * config ) {
   {
     const subst_list_type * define_list = config_get_define_list( config );
     for (int i=0; i < subst_list_get_size( define_list ); i++) {
@@ -2776,7 +2776,7 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
 }
 
 
-void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_type * config ) {
+void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_parser_type * config ) {
   const enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
   if (enkf_obs_have_obs( enkf_obs )) {
     enkf_main->local_config  = local_config_alloc( );
@@ -2827,7 +2827,7 @@ void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_typ
 static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * site_config_file) {
   if (site_config_file != NULL) {
     if (!util_file_exists(site_config_file))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config_file);
-    config_type * config = config_alloc();
+    config_parser_type * config = config_alloc();
     {
       site_config_add_config_items( config , true );
       if (config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false)) {
@@ -2930,7 +2930,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   if (!util_file_exists(model_config))
     util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
-    config_type * config;
+    config_parser_type * config;
     enkf_main            = enkf_main_alloc_empty( );
     enkf_main_set_verbose( enkf_main , verbose );
     enkf_main_bootstrap_site( enkf_main , site_config);

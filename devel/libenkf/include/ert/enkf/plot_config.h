@@ -44,9 +44,9 @@ const char  *      plot_config_get_viewer(const plot_config_type * plot_config )
 const char  *      plot_config_get_driver(const plot_config_type * plot_config );
 void               plot_config_free( plot_config_type * plot_config);
 plot_config_type * plot_config_alloc_default();
-void               plot_config_init(plot_config_type * plot_config , const config_type * config );
+void               plot_config_init(plot_config_type * plot_config , const config_parser_type * config );
 
-void               plot_config_add_config_items( config_type * config );
+void               plot_config_add_config_items( config_parser_type * config );
 void               plot_config_show_viewer_warning( plot_config_type * plot_config );
 
 void               plot_config_toggle_logy( plot_config_type * plot_config );

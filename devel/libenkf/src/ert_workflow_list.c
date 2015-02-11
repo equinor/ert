@@ -180,7 +180,7 @@ stringlist_type * ert_workflow_list_get_job_names(const ert_workflow_list_type *
 }
 
 
-void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config ) {
+void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_parser_type * config ) {
   /* Adding jobs */
   {
     const config_content_item_type * jobpath_item = config_get_content_item( config , WORKFLOW_JOB_DIRECTORY_KEY);
@@ -224,7 +224,7 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_typ
 }
 
 
-void ert_workflow_list_add_config_items( config_type * config ) {
+void ert_workflow_list_add_config_items( config_parser_type * config ) {
   config_schema_item_type * item = config_add_schema_item( config , WORKFLOW_JOB_DIRECTORY_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_PATH );

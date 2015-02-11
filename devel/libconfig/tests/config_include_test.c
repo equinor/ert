@@ -27,7 +27,7 @@
 #include <ert/config/config_parser.h>
 #include <ert/config/config_schema_item.h>
 
-void parse_test(config_type * config , 
+void parse_test(config_parser_type * config , 
                 const char * root_path ,     // The new working directory - the test will start by chdir() here.
                 const char * config_file ) { // The config_file, either as an absolute path - or relative from root_path
 
@@ -93,7 +93,7 @@ int main(int argc , char ** argv) {
   const char * abs_path    = argv[1];
   const char * config_file = argv[2];
   char       * abs_config_file = util_alloc_filename( abs_path , config_file , NULL);
-  config_type * config = config_alloc();
+  config_parser_type * config = config_alloc();
   
   {
     config_schema_item_type * schema_item;

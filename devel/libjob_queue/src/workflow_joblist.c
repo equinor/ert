@@ -33,8 +33,8 @@
 
 
 struct workflow_joblist_struct {
-  config_type * workflow_compiler;
-  config_type * job_config;
+  config_parser_type * workflow_compiler;
+  config_parser_type * job_config;
 
   hash_type   * joblist;
 };
@@ -85,12 +85,12 @@ bool workflow_joblist_add_job_from_file( workflow_joblist_type * joblist , const
 }
 
 
-config_type * workflow_joblist_get_compiler( const workflow_joblist_type * joblist ) {
+config_parser_type * workflow_joblist_get_compiler( const workflow_joblist_type * joblist ) {
   return joblist->workflow_compiler;
 }
 
 
-config_type * workflow_joblist_get_job_config( const workflow_joblist_type * joblist ) {
+config_parser_type * workflow_joblist_get_job_config( const workflow_joblist_type * joblist ) {
   return joblist->job_config;
 }
 

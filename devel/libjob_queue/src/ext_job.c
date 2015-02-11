@@ -798,7 +798,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
   
   if (util_entry_readable( config_file)) {
     ext_job_type * ext_job = ext_job_alloc(name , license_root_path , private_job);
-    config_type  * config  = config_alloc(  );
+    config_parser_type  * config  = config_alloc(  );
     
     ext_job_set_config_file( ext_job , config_file );
     {

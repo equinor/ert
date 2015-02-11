@@ -193,7 +193,7 @@ plot_config_type * plot_config_alloc_default() {
 }
 
 
-void plot_config_init(plot_config_type * plot_config , const config_type * config ) {
+void plot_config_init(plot_config_type * plot_config , const config_parser_type * config ) {
   if (config_item_set( config , PLOT_PATH_KEY))
     plot_config_set_path( plot_config , config_get_value( config , PLOT_PATH_KEY ));
 
@@ -233,7 +233,7 @@ void plot_config_init(plot_config_type * plot_config , const config_type * confi
 }
 
 
-void plot_config_add_config_items( config_type * config ) {
+void plot_config_add_config_items( config_parser_type * config ) {
   config_add_key_value(config , PLOT_HEIGHT_KEY       , false , CONFIG_INT);
   config_add_key_value(config , PLOT_WIDTH_KEY        , false , CONFIG_INT);
   config_add_key_value(config , PLOT_PATH_KEY         , false , CONFIG_STRING);

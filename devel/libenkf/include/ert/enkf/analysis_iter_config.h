@@ -35,8 +35,8 @@ typedef struct analysis_iter_config_struct analysis_iter_config_type;
   analysis_iter_config_type * analysis_iter_config_alloc();
   void                            analysis_iter_config_free( analysis_iter_config_type * config );
   const char *                    analysis_iter_config_iget_case( analysis_iter_config_type * config , int iter);
-  void                            analysis_iter_config_add_config_items( config_type * config );
-  void                            analysis_iter_config_init(analysis_iter_config_type * iter_config , const config_type * config);
+  void                            analysis_iter_config_add_config_items( config_parser_type * config );
+  void                            analysis_iter_config_init(analysis_iter_config_type * iter_config , const config_parser_type * config);
   bool                            analysis_iter_config_case_fmt_set( const analysis_iter_config_type * config );
   bool                            analysis_iter_config_num_iterations_set( const analysis_iter_config_type * config );
 

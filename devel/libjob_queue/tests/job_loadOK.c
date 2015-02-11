@@ -24,7 +24,7 @@
 
 
 
-bool loadConfig(config_type * config , const char * config_file , config_type * config_compiler) {
+bool loadConfig(config_parser_type * config , const char * config_file , config_parser_type * config_compiler) {
   bool OK = false;
   workflow_job_type * cmd = workflow_job_config_alloc( "NAME" , config , config_file);
   
@@ -42,8 +42,8 @@ bool loadConfig(config_type * config , const char * config_file , config_type * 
 int main( int argc , char ** argv) {
   int status = 0;
   {
-    config_type * config = workflow_job_alloc_config();
-    config_type * config_compiler = config_alloc();
+    config_parser_type * config = workflow_job_alloc_config();
+    config_parser_type * config_compiler = config_alloc();
     int iarg;
     bool OK = true;
 

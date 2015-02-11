@@ -410,7 +410,7 @@ static bool model_config_select_any_history( model_config_type * model_config , 
 
 
 void model_config_init(model_config_type * model_config , 
-                       const config_type * config , 
+                       const config_parser_type * config , 
                        int ens_size , 
                        const ext_joblist_type * joblist , 
                        int last_history_restart , 

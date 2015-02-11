@@ -35,7 +35,7 @@ int main(int argc , char ** argv) {
   ecl_config_type * ecl_config = ecl_config_alloc();
   ecl_refcase_list_type * refcase_list = ecl_config_get_refcase_list( ecl_config );
   {
-    config_type * config = config_alloc();
+    config_parser_type * config = config_alloc();
 
     ecl_config_add_config_items( config );
     test_assert_true( config_parse( config , config_file , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true));

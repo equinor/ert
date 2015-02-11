@@ -44,7 +44,7 @@ int main(int argc , char ** argv) {
     const char * argc_less = argv[2];
     const char * argc_more = argv[3];
     
-    config_type * config = config_alloc();
+    config_parser_type * config = config_alloc();
     config_schema_item_type * schema_item = config_add_schema_item( config , "ITEM" , false );
     config_schema_item_set_argc_minmax( schema_item , 2 , 2 );
     

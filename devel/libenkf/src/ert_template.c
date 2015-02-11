@@ -211,7 +211,7 @@ stringlist_type * ert_templates_alloc_list( ert_templates_type * ert_templates) 
 }
 
 
-void ert_templates_init( ert_templates_type * templates , const config_type * config ) {
+void ert_templates_init( ert_templates_type * templates , const config_parser_type * config ) {
   const config_content_item_type * template_item = config_get_content_item( config , RUN_TEMPLATE_KEY );
   if (template_item != NULL) {
     for (int i=0; i < config_content_item_get_size( template_item ); i++) {

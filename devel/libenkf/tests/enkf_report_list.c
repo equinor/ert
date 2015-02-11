@@ -27,7 +27,7 @@
 #include <ert/enkf/ert_report_list.h>
 
 int main(int argc , char ** argv) {
-  config_type * config = config_alloc();
+  config_parser_type * config = config_alloc();
   ert_report_list_type * report_list = ert_report_list_alloc( NULL , NULL );
 
   test_assert_not_NULL( report_list );

@@ -80,8 +80,8 @@ const char * workflow_job_get_name( const workflow_job_type * workflow_job ) {
 }
 
 
-config_type * workflow_job_alloc_config() {
-  config_type * config = config_alloc();
+config_parser_type * workflow_job_alloc_config() {
+  config_parser_type * config = config_alloc();
   {
     config_schema_item_type * item;
 
@@ -128,7 +128,7 @@ config_type * workflow_job_alloc_config() {
 
 static UTIL_SAFE_CAST_FUNCTION(workflow_job , WORKFLOW_JOB_TYPE_ID );
 
-void workflow_job_update_config_compiler( const workflow_job_type * workflow_job , config_type * config_compiler ) {
+void workflow_job_update_config_compiler( const workflow_job_type * workflow_job , config_parser_type * config_compiler ) {
   config_schema_item_type * item = config_add_schema_item( config_compiler , workflow_job->name , false );
   /*
      Ensure that the arg_types mapping is at least as large as the
@@ -298,7 +298,7 @@ static void workflow_job_validate( workflow_job_type * workflow_job ) {
 
 
 
-workflow_job_type * workflow_job_config_alloc( const char * name , config_type * config , const char * config_file) {
+workflow_job_type * workflow_job_config_alloc( const char * name , config_parser_type * config , const char * config_file) {
   config_clear( config );
   if (config_parse( config , config_file , "--", NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true)) {
     bool internal = DEFAULT_INTERNAL;

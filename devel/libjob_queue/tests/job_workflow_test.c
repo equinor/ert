@@ -107,7 +107,7 @@ int main( int argc , char ** argv) {
     if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exjob_file)) {
       remove( exjob_file );
       {
-        config_type * job_config = workflow_joblist_get_job_config( joblist );
+        config_parser_type * job_config = workflow_joblist_get_job_config( joblist );
         config_fprintf_errors( job_config , true , stdout );
       }
       test_error_exit("Loading job CREATE_FILE failed\n");
@@ -118,7 +118,7 @@ int main( int argc , char ** argv) {
       test_error_exit("Loading job READ_FILE failed\n");
     
     {
-      config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
+      config_parser_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
       if (config_get_schema_size( workflow_compiler ) != 2)
         test_error_exit("Config compiler - wrong size \n");
     }
@@ -161,7 +161,7 @@ int main( int argc , char ** argv) {
           
           
         } else {
-          config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
+          config_parser_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
           config_fprintf_errors( workflow_compiler , true ,stdout);
           unlink( tmp_file );
           test_error_exit("Workflow did not run\n");

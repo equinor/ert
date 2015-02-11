@@ -29,7 +29,7 @@
 #include <ert/config/config_path_elm.h>
 
 
-void test_define(config_type * config , const char * config_file) {
+void test_define(config_parser_type * config , const char * config_file) {
   test_assert_true( config_parse( config , config_file , NULL , NULL , "DEFINE" , CONFIG_UNRECOGNIZED_IGNORE , true ));
   {
     const subst_list_type * define_list = config_get_define_list( config );
@@ -47,8 +47,8 @@ void test_define(config_type * config , const char * config_file) {
 
 
 
-config_type * config_create_schema() {
-  config_type * config = config_alloc();
+config_parser_type * config_create_schema() {
+  config_parser_type * config = config_alloc();
   
   config_add_schema_item( config , "SET" , true );
   config_add_schema_item( config , "NOTSET" , false );
@@ -59,7 +59,7 @@ config_type * config_create_schema() {
 
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
-  config_type * config = config_create_schema();
+  config_parser_type * config = config_create_schema();
   
   test_define( config , config_file );
 

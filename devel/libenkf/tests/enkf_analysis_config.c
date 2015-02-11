@@ -54,7 +54,7 @@ void test_min_realizations_percent(const char * num_realizations_str, const char
     fprintf(config_file_stream, min_realizations_str);
     fclose(config_file_stream);
 
-    config_type * c = config_alloc();
+    config_parser_type * c = config_alloc();
     config_schema_item_type * item = config_add_schema_item(c , NUM_REALIZATIONS_KEY , true );
     config_schema_item_set_default_type(item, CONFIG_INT);
     config_schema_item_set_argc_minmax( item , 1 , 1);

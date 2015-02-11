@@ -52,7 +52,7 @@ void test_empty() {
 
 void test_init(const char * config_file) {
   site_config_type * site_config = site_config_alloc_empty();
-  config_type * config = config_alloc();
+  config_parser_type * config = config_alloc();
 
   site_config_add_config_items( config , true );
   if (!config_parse(config , config_file , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true)) {

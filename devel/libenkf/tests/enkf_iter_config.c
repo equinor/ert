@@ -73,7 +73,7 @@ int main(int argc , char ** argv) {
   char * config_file = create_config_file( enspath_fmt , runpath_fmt , iter_count);
   
 
-  config_type * config = config_alloc();
+  config_parser_type * config = config_alloc();
   analysis_iter_config_add_config_items( config );
   
   test_assert_true( config_parse( config , config_file , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR , true));
