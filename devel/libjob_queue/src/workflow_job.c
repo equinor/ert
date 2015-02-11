@@ -299,14 +299,17 @@ static void workflow_job_validate( workflow_job_type * workflow_job ) {
 
 
 workflow_job_type * workflow_job_config_alloc( const char * name , config_parser_type * config , const char * config_file) {
+  workflow_job_type * workflow_job = NULL;
   config_clear( config );
-  if (config_parse( config , config_file , "--", NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true)) {
+
+  config_content_type * content = config_parse( config , config_file , "--", NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
+  if (config_content_is_valid( content )) {
     bool internal = DEFAULT_INTERNAL;
     if (config_item_set( config , INTERNAL_KEY))
       internal = config_iget_as_bool( config , INTERNAL_KEY , 0 , 0 );
 
     {
-      workflow_job_type * workflow_job = workflow_job_alloc( name , internal );
+      workflow_job = workflow_job_alloc( name , internal );
 
       if (config_item_set( config , MIN_ARG_KEY))
         workflow_job_set_min_arg( workflow_job , config_iget_as_int( config , MIN_ARG_KEY , 0 , 0 ));
@@ -343,11 +346,10 @@ workflow_job_type * workflow_job_config_alloc( const char * name , config_parser
         workflow_job_free( workflow_job );
         workflow_job = NULL;
       }
-
-      return workflow_job;
     }
-  } else
-    return NULL;
+  }
+  config_content_free( content );
+  return workflow_job;
 }
 
 
