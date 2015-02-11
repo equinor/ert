@@ -26,7 +26,7 @@
 #include <ert/util/rng.h>
 #include <ert/util/type_macros.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/analysis/analysis_module.h>
 

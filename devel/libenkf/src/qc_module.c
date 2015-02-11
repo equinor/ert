@@ -22,7 +22,7 @@
 #include <ert/util/util.h>
 #include <ert/util/subst_list.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/job_queue/workflow.h>
 

@@ -32,7 +32,7 @@
 #include <ert/sched/history.h>
 #include <ert/sched/sched_file.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_util.h>

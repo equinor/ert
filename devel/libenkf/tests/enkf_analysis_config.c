@@ -26,7 +26,7 @@
 #include <ert/util/rng.h>
 
 #include <ert/enkf/analysis_config.h>
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 #include <ert/enkf/config_keys.h>
 
 

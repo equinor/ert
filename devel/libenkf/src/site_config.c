@@ -34,7 +34,7 @@
 #include <ert/job_queue/local_driver.h>
 #include <ert/job_queue/queue_driver.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 #include <ert/config/config_content_item.h>
 #include <ert/config/config_content_node.h>
 #include <ert/config/config_schema_item.h>

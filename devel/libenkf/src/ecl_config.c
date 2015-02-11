@@ -29,7 +29,7 @@
 
 #include <ert/sched/sched_file.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 #include <ert/config/config_schema_item.h>
 
 #include <ert/ecl/ecl_grid.h>

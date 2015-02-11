@@ -24,7 +24,7 @@
 #include <ert/util/util.h>
 #include <ert/util/path_stack.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 #include <ert/config/config_schema_item.h>
 
 void parse_test(config_type * config , 

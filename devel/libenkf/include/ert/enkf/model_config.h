@@ -28,7 +28,7 @@ extern "C" {
 #include <ert/util/path_fmt.h>
 #include <ert/util/type_macros.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/forward_model.h>

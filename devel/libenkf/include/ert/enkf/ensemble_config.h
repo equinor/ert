@@ -28,7 +28,7 @@ extern "C" {
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/enkf/summary_config.h>
 #include <ert/enkf/enkf_config_node.h>

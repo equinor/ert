@@ -44,7 +44,7 @@
 
 #include <ert/sched/sched_file.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/enkf/enkf_types.h>

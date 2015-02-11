@@ -20,7 +20,7 @@
 
 #include <ert/util/test_util.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 
 

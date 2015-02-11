@@ -19,7 +19,7 @@
 #include <stdbool.h>
 
 #include <ert/config/config_error.h>
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 
 void error(char * msg) {

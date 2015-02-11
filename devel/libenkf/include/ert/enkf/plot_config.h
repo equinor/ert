@@ -18,7 +18,7 @@
 
 #ifndef __PLOT_CONFIG_H__
 #define __PLOT_CONFIG_H__
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 #include <ert/ecl/ecl_sum.h>
 
 typedef struct plot_config_struct plot_config_type;

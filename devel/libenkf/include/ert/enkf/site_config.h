@@ -26,7 +26,7 @@ extern "C" {
 
 #include <ert/util/stringlist.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/ext_joblist.h>

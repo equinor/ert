@@ -25,7 +25,7 @@
 #include <ert/util/test_work_area.h>
 #include <ert/util/util.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/job_queue/workflow.h>
 #include <ert/job_queue/workflow_job.h>

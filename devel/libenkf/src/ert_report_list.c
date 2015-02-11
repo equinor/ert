@@ -26,7 +26,7 @@
 #include <ert/util/vector.h>
 #include <ert/util/subst_list.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/ecl/ecl_sum.h>
 

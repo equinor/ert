@@ -26,7 +26,7 @@ extern "C" {
 #include <ert/util/path_fmt.h>
 #include <ert/util/ui_return.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>

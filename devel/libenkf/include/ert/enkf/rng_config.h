@@ -25,7 +25,7 @@ extern "C" {
 
 #include <ert/util/rng.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 typedef struct rng_config_struct rng_config_type; 
 

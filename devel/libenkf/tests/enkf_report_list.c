@@ -22,7 +22,7 @@
 
 #include <ert/util/test_util.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/enkf/ert_report_list.h>
 

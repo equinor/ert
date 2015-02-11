@@ -24,7 +24,7 @@
 #include <ert/util/path_stack.h>
 #include <ert/util/util.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/enkf/ecl_config.h>
 #include <ert/enkf/ecl_refcase_list.h>

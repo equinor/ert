@@ -29,7 +29,7 @@ extern "C" {
 #include <ert/util/rng.h>
 #include <ert/util/stringlist.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/analysis/analysis_module.h>
 

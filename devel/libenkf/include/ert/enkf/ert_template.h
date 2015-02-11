@@ -26,7 +26,7 @@ extern "C" {
 #include <ert/util/subst_list.h>
 #include <ert/util/stringlist.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 typedef struct ert_template_struct  ert_template_type;
 typedef struct ert_templates_struct ert_templates_type;
