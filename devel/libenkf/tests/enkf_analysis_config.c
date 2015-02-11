@@ -25,8 +25,10 @@
 #include <ert/util/util.h>
 #include <ert/util/rng.h>
 
-#include <ert/enkf/analysis_config.h>
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
+
+#include <ert/enkf/analysis_config.h>
 #include <ert/enkf/config_keys.h>
 
 
@@ -60,7 +62,11 @@ void test_min_realizations_percent(const char * num_realizations_str, const char
     config_schema_item_set_argc_minmax( item , 1 , 1);
     item = config_add_schema_item(c , MIN_REALIZATIONS_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 2);
-    test_assert_true(config_parse(c , "config_file" , "--" , NULL , NULL , false , true ));
+    {
+      config_content_type * content = config_parse(c , "config_file" , "--" , NULL , NULL , false , true );
+      test_assert_true(config_content_is_valid(content));
+      config_content_free( content );
+    }
 
     analysis_config_type * ac = create_analysis_config( );
     analysis_config_init(ac, c);

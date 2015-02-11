@@ -30,7 +30,9 @@
 
 
 void test_define(config_parser_type * config , const char * config_file) {
-  test_assert_true( config_parse( config , config_file , NULL , NULL , "DEFINE" , CONFIG_UNRECOGNIZED_IGNORE , true ));
+  config_content_type * content = config_parse( config , config_file , NULL , NULL , "DEFINE" , CONFIG_UNRECOGNIZED_IGNORE , true );
+  test_assert_true( config_content_is_instance( content ));
+  test_assert_true(config_content_is_valid( content ));
   {
     const subst_list_type * define_list = config_get_define_list( config );
     test_assert_true( subst_list_has_key( define_list , "VAR1"));
@@ -43,6 +45,7 @@ void test_define(config_parser_type * config , const char * config_file) {
     test_assert_string_equal( subst_list_get_value( define_list , "VAR2") , "10");
     test_assert_string_equal( subst_list_get_value( define_list , "VARX") , "1");
   }
+  config_content_free( content );
 }
 
 

@@ -34,6 +34,7 @@ extern "C" {
 #include <ert/config/config_schema_item.h>
 #include <ert/config/config_content_item.h>
 #include <ert/config/config_content_node.h>
+#include <ert/config/config_content.h>
   
 #define ECL_COM_KW "--"
 #define ENKF_COM_KW "--"
@@ -49,7 +50,7 @@ typedef struct config_parser_struct              config_parser_type;
   void              config_free(config_parser_type *);
   config_parser_type *     config_alloc( );
   char       **     config_alloc_active_list(const config_parser_type * , int * );
-  bool              config_parse(config_parser_type * , const char * , const char * , const char * , const char * , config_schema_unrecognized_enum unrecognized_behaviour , bool );
+  config_content_type * config_parse(config_parser_type * , const char * , const char * , const char * , const char * , config_schema_unrecognized_enum unrecognized_behaviour , bool );
   bool              config_has_schema_item(const config_parser_type * config , const char * kw);
   void              config_clear(config_parser_type * config);
 

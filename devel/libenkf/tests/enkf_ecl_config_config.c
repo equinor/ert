@@ -25,6 +25,7 @@
 #include <ert/util/util.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 #include <ert/enkf/ecl_config.h>
 #include <ert/enkf/ecl_refcase_list.h>
@@ -36,11 +37,14 @@ int main(int argc , char ** argv) {
   ecl_refcase_list_type * refcase_list = ecl_config_get_refcase_list( ecl_config );
   {
     config_parser_type * config = config_alloc();
+    config_content_type * content;
 
     ecl_config_add_config_items( config );
-    test_assert_true( config_parse( config , config_file , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true));
+    content = config_parse( config , config_file , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
+    test_assert_true( config_content_is_valid( content ));
     ecl_config_init( ecl_config , config );
 
+    config_content_free( content );
     config_free( config );
   }
 

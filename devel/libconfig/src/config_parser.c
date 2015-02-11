@@ -797,13 +797,15 @@ void config_fprintf_errors( const config_parser_type * config , bool add_count ,
 
 
 
-bool config_parse(config_parser_type * config ,
-                  const char * filename,
-                  const char * comment_string ,
-                  const char * include_kw ,
-                  const char * define_kw ,
-                  config_schema_unrecognized_enum unrecognized_behaviour,
-                  bool validate) {
+config_content_type * config_parse(config_parser_type * config ,
+                                   const char * filename,
+                                   const char * comment_string ,
+                                   const char * include_kw ,
+                                   const char * define_kw ,
+                                   config_schema_unrecognized_enum unrecognized_behaviour,
+                                   bool validate) {
+
+  config_content_type * content = config_content_alloc( );
 
   if (util_file_readable( filename )) {
     path_stack_type * path_stack = path_stack_alloc();
@@ -817,9 +819,9 @@ bool config_parse(config_parser_type * config ,
     config_error_add( config->parse_errors , util_alloc_sprintf("Could not open file:%s for parsing" , filename));
 
   if (config_error_count( config->parse_errors ) == 0)
-    return true;   // No errors
-  else
-    return false;  // There were parse errors.
+    config_content_set_valid( content );
+
+  return content;
 }
 
 

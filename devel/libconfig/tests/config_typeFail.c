@@ -20,6 +20,7 @@
 
 #include <ert/config/config_error.h>
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 
 void error(char * msg) {
@@ -31,7 +32,6 @@ void error(char * msg) {
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
   config_parser_type * config = config_alloc();
-  bool OK;
   {
     config_schema_item_type * item  = config_add_schema_item(config , "TYPES_KEY" , false );
     config_schema_item_set_argc_minmax( item , 4 , 4 );
@@ -45,21 +45,27 @@ int main(int argc , char ** argv) {
     item = config_add_schema_item( config , "LONG_KEY" , false );
     config_schema_item_set_argc_minmax( item , 3 , CONFIG_DEFAULT_ARG_MAX);
   }
-  OK = config_parse(config , config_file , "--" , NULL , NULL , false , true );
 
-  if (OK) {
-    error("Parse error\n");
-  } else {
-    config_error_type * cerror = config_get_errors( config );
-    if (config_error_count( cerror ) > 0) {
-      int i;
-      for (i=0; i < config_error_count( cerror ); i++) {
-        printf("Error %d: %s \n",i , config_error_iget( cerror , i ));
+  {
+    config_content_type * content = config_parse(config , config_file , "--" , NULL , NULL , false , true );
+
+    if (config_content_is_valid( content )) {
+      error("Parse error\n");
+      config_content_free( content );
+    } else {
+      config_error_type * cerror = config_get_errors( config );
+      if (config_error_count( cerror ) > 0) {
+        int i;
+        for (i=0; i < config_error_count( cerror ); i++) {
+          printf("Error %d: %s \n",i , config_error_iget( cerror , i ));
+        }
       }
+      printf("Error count:%d \n",config_error_count( cerror ));
+      if (config_error_count( cerror ) != 5)
+        error("Wrong error count\n");
     }
-    printf("Error count:%d \n",config_error_count( cerror ));
-    if (config_error_count( cerror ) != 5)
-      error("Wrong error count\n");
+
+    config_content_free( content );
   }
   printf("OK \n");
   exit(0);

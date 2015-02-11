@@ -23,6 +23,7 @@
 #include <ert/util/test_util.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 #include <ert/enkf/ert_report_list.h>
 
@@ -32,7 +33,11 @@ int main(int argc , char ** argv) {
 
   test_assert_not_NULL( report_list );
   ert_report_list_add_config_items( config );
-  test_assert_true( config_parse( config , argv[1] , "--" , NULL, NULL , CONFIG_UNRECOGNIZED_IGNORE , true ));
+  {
+    config_content_type * content = config_parse( config , argv[1] , "--" , NULL, NULL , CONFIG_UNRECOGNIZED_IGNORE , true );
+    test_assert_true( config_content_is_valid(content) );
+    config_content_free( content );
+  }
   ert_report_list_init( report_list , config , NULL);
   
   test_assert_int_equal( 167 , ert_report_list_get_latex_timeout( report_list ));

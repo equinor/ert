@@ -74,9 +74,11 @@ int main(int argc , char ** argv) {
   
 
   config_parser_type * config = config_alloc();
+  config_content_type * content;
   analysis_iter_config_add_config_items( config );
-  
-  test_assert_true( config_parse( config , config_file , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR , true));
+
+  content = config_parse( config , config_file , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR , true);
+  test_assert_true( config_content_is_valid( content) );
 
   test_assert_true( config_item_set( config , ITER_CASE_KEY ));
   test_assert_true( config_item_set( config , ITER_COUNT_KEY ));
@@ -95,6 +97,7 @@ int main(int argc , char ** argv) {
    }
   remove( config_file );
   free( config_file );
+  config_content_free( content );
   config_free( config );
 
   test_set();

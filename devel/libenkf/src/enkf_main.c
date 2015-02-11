@@ -2828,9 +2828,10 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
   if (site_config_file != NULL) {
     if (!util_file_exists(site_config_file))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config_file);
     config_parser_type * config = config_alloc();
+    site_config_add_config_items( config , true );
     {
-      site_config_add_config_items( config , true );
-      if (config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false)) {
+      config_content_type * content = config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
+      if (config_content_is_valid( content )) {
         site_config_init( enkf_main->site_config , config );
         analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, config);
         ert_report_list_site_init( enkf_main->report_list , config );
@@ -2840,6 +2841,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
         config_fprintf_errors( config , true , stderr );
         exit(1);
       }
+      config_content_free( content );
     }
     config_free( config );
   }
@@ -2931,6 +2933,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
     config_parser_type * config;
+    config_content_type * content;
     enkf_main            = enkf_main_alloc_empty( );
     enkf_main_set_verbose( enkf_main , verbose );
     enkf_main_bootstrap_site( enkf_main , site_config);
@@ -2940,7 +2943,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     site_config_add_config_items( config , false );
     site_config_init_user_mode( enkf_main->site_config );
 
-    if (!config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true)) {
+    content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true);
+    if (!config_content_is_valid( content )) {
       config_fprintf_errors( config , true , stderr );
       exit(1);
     }
@@ -3116,6 +3120,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main_init_local_updates(enkf_main , config );
 
     }
+    config_content_free( content );
     config_free(config);
   }
   enkf_main_init_jobname( enkf_main );

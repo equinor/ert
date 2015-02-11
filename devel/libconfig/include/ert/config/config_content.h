@@ -31,6 +31,8 @@ typedef struct config_content_struct config_content_type;
 
   config_content_type * config_content_alloc();
   void config_content_free( config_content_type * content );
+  void config_content_set_valid( config_content_type * content);
+  bool config_content_is_valid( const config_content_type * content );
 
   UTIL_IS_INSTANCE_HEADER( config_content );
 

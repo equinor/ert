@@ -47,11 +47,24 @@ int main(int argc , char ** argv) {
     config_parser_type * config = config_alloc();
     config_schema_item_type * schema_item = config_add_schema_item( config , "ITEM" , false );
     config_schema_item_set_argc_minmax( schema_item , 2 , 2 );
-    
-    test_assert_true( config_parse( config  , argc_OK   , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR ,  true));
+
+    {
+      config_content_type * content = config_parse( config  , argc_OK   , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR ,  true);
+      test_assert_true( config_content_is_instance( content ));
+      test_assert_true(config_content_is_valid( content ));
+      config_content_free( content );
+    }
+                        
     config_clear( config );
 
-    test_assert_false( config_parse( config , argc_less , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR ,  true));
+    {
+      config_content_type * content = config_parse( config , argc_less , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR ,  true);
+      test_assert_true( config_content_is_instance( content ));
+      test_assert_false( config_content_is_valid( content ));
+      config_content_free( content );
+    }
+
+
     {
       const config_error_type * config_error = config_get_errors( config );
       const char * error_msg = "Error when parsing config_file:\"argc_less\" Keyword:ITEM must have at least 2 arguments.";
@@ -61,8 +74,13 @@ int main(int argc , char ** argv) {
     }
     config_clear( config );
 
+    {
+      config_content_type * content = config_parse( config , argc_more , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR ,  true);
+      test_assert_true( config_content_is_instance( content ));
+      test_assert_false( config_content_is_valid( content ));
+      config_content_free( content );
+    }
 
-    test_assert_false( config_parse( config , argc_more , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR ,  true));
     {
       const config_error_type * config_error = config_get_errors( config );
       const char * error_msg = "Error when parsing config_file:\"argc_more\" Keyword:ITEM must have maximum 2 arguments.";

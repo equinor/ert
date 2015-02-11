@@ -145,7 +145,9 @@ bool workflow_try_compile( workflow_type * script , const subst_list_type * cont
       workflow_clear( script );
       config_clear( config_compiler );
       {
-        if (config_parse( config_compiler , src_file , WORKFLOW_COMMENT_STRING , WORKFLOW_INCLUDE , NULL , CONFIG_UNRECOGNIZED_ERROR , true )) {
+        config_content_type * content = config_parse( config_compiler , src_file , WORKFLOW_COMMENT_STRING , WORKFLOW_INCLUDE , NULL , CONFIG_UNRECOGNIZED_ERROR , true );
+
+        if (config_content_is_valid( content )) {
           int cmd_line;
           for (cmd_line = 0; cmd_line < config_get_content_size(config_compiler); cmd_line++) {
             const config_content_node_type * node = config_iget_content_node( config_compiler , cmd_line );
@@ -158,6 +160,8 @@ bool workflow_try_compile( workflow_type * script , const subst_list_type * cont
           script->compiled = true;
         } else
           workflow_store_error( script , config_get_errors( config_compiler ));
+
+        config_content_free( content );
       }
     }
     

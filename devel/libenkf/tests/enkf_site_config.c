@@ -29,6 +29,7 @@
 #include <ert/util/test_work_area.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 #include <ert/ecl/ecl_sum.h>
 
@@ -53,16 +54,19 @@ void test_empty() {
 void test_init(const char * config_file) {
   site_config_type * site_config = site_config_alloc_empty();
   config_parser_type * config = config_alloc();
+  config_content_type * content;
 
   site_config_add_config_items( config , true );
-  if (!config_parse(config , config_file , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true)) {
+  content = config_parse(config , config_file , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true);
+  if (!config_content_is_valid(content)) {
     config_fprintf_errors( config , true , stdout );
     test_error_exit("Parsing site config file:%s failed \n",config_file );
   }
-
+  
   if (!site_config_init( site_config , config ))
     test_error_exit("Loading site_config from config failed\n");
   
+  config_content_free( content );
   config_free( config );
   site_config_free( site_config );
 }

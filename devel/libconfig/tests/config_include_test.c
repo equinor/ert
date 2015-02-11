@@ -26,6 +26,7 @@
 
 #include <ert/config/config_parser.h>
 #include <ert/config/config_schema_item.h>
+#include <ert/config/config_content.h>
 
 void parse_test(config_parser_type * config , 
                 const char * root_path ,     // The new working directory - the test will start by chdir() here.
@@ -53,7 +54,8 @@ void parse_test(config_parser_type * config ,
 
   {
     config_clear( config );
-    if (config_parse( config , config_file , "--" , "INCLUDE" , NULL , CONFIG_UNRECOGNIZED_IGNORE , true )) {
+    config_content_type * content = config_parse( config , config_file , "--" , "INCLUDE" , NULL , CONFIG_UNRECOGNIZED_IGNORE , true );
+    if (config_content_is_valid( content )) {
       
       char * relpath0 = util_alloc_filename( config_rel_path , path0, NULL);
       char * relpath1 = util_alloc_filename( config_rel_path , path1, NULL);
@@ -84,6 +86,7 @@ void parse_test(config_parser_type * config ,
       config_error_fprintf( error , true , stdout );
       test_error_exit("Hmm - parsing %s failed \n", config_file );
     }
+    config_content_free( content );
   }
   path_stack_pop( path_stack );
 }

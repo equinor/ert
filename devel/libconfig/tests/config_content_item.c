@@ -36,8 +36,12 @@ int main(int argc , char ** argv) {
   config_add_schema_item( config , "SET" , true );
   config_add_schema_item( config , "NOTSET" , false );
 
-  test_assert_true( config_parse( config , config_file , "--" , "INCLUDE" , NULL , CONFIG_UNRECOGNIZED_IGNORE , true ));
-
+  {
+    config_content_type * content = config_parse( config , config_file , "--" , "INCLUDE" , NULL , CONFIG_UNRECOGNIZED_IGNORE , true );
+    test_assert_true( config_content_is_instance( content ));
+    test_assert_true(config_content_is_valid( content ));
+    config_content_free( content );
+  }
   test_assert_not_NULL( config_get_content_item( config , "SET" ));
   test_assert_NULL( config_get_content_item( config , "NOTSET" ) );
   test_assert_NULL( config_get_content_item( config , "UNKNOWN" ) );

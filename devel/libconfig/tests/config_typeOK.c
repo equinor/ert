@@ -18,19 +18,16 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include <ert/util/test_util.h>
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 
-void error(char * msg) {
-  fprintf(stderr , msg);
-  exit(1);
-}
 
 
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
   config_parser_type * config = config_alloc();
-  bool OK;
   {
     config_schema_item_type * item  = config_add_schema_item(config , "TYPE_KEY" , false );
     config_schema_item_set_argc_minmax( item , 4 , 4 );
@@ -44,11 +41,12 @@ int main(int argc , char ** argv) {
     item = config_add_schema_item( config , "LONG_KEY" , false );
     config_schema_item_set_argc_minmax( item , 3 , CONFIG_DEFAULT_ARG_MAX );
   }
-  OK = config_parse(config , config_file , "--" , NULL , NULL , false , true );
+  {
+    config_content_type * content = config_parse(config , config_file , "--" , NULL , NULL , false , true );
+    test_assert_true( config_content_is_valid( content ));
+    config_content_free( content );
+  }
 
-  if (OK) {
-
-  } else error("Parse error\n");
 
   exit(0);
 }
