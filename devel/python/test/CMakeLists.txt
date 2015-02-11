@@ -526,6 +526,10 @@ add_test( NAME python.tests.ert.ecl.ecl_init_file
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_init_file.InitFileTest )
 
+add_test( NAME python.tests.ert.ecl.ecl_restart_file
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_restart_file.RestartFileTest )
+
 add_test( NAME python.tests.ert.ecl.legacy_ecl
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_legacy_ecl.LegacyEclTest)
@@ -733,6 +737,8 @@ set_property( TEST python.tests.ert.ecl.ecl_grdecl        PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_restart       PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_region        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_file          PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.ecl.ecl_init_file     PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.ecl.ecl_restart_file  PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_queue_LOCAL   PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.tests.ert.ecl.ecl_sum           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_npv           PROPERTY LABELS Python:StatoilData )
