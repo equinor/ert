@@ -2968,11 +2968,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     {
       char * log_file;
       int log_level = DEFAULT_LOG_LEVEL;
-      if(config_item_set( config , LOG_LEVEL_KEY))
-        log_level = config_get_value_as_int(config , LOG_LEVEL_KEY);
+      if(config_content_has_item( content , LOG_LEVEL_KEY))
+        log_level = config_content_get_value_as_int(content , LOG_LEVEL_KEY);
 
-      if (config_item_set( config , LOG_FILE_KEY))
-        log_file = util_alloc_string_copy( config_get_value(config , LOG_FILE_KEY));
+      if (config_content_has_item( content , LOG_FILE_KEY))
+        log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
       else
         log_file = util_alloc_filename( NULL , enkf_main->user_config_file , "log");
 
