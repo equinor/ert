@@ -823,39 +823,39 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
     {
       config_content_type * content = config_parse(config , config_file , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
       if (config_content_is_valid( content )) {
-        if (config_item_set(config , "STDIN"))                 ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
-        if (config_item_set(config , "STDOUT"))                ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));
-        if (config_item_set(config , "STDERR"))                ext_job_set_stderr_file(ext_job      , config_iget(config  , "STDERR" , 0,0));
-        if (config_item_set(config , "ERROR_FILE"))            ext_job_set_error_file(ext_job       , config_iget(config  , "ERROR_FILE" , 0,0));
-        if (config_item_set(config , "TARGET_FILE"))           ext_job_set_target_file(ext_job      , config_iget(config  , "TARGET_FILE" , 0,0));
-        if (config_item_set(config , "START_FILE"))            ext_job_set_start_file(ext_job       , config_iget(config  , "START_FILE" , 0,0));
-        if (config_item_set(config , "MAX_RUNNING"))           ext_job_set_max_running(ext_job      , config_iget_as_int(config  , "MAX_RUNNING" , 0,0));
-        if (config_item_set(config , "MAX_RUNNING_MINUTES"))   ext_job_set_max_time(ext_job         , config_iget_as_int(config  , "MAX_RUNNING_MINUTES" , 0,0));
-        
-        
+        if (config_content_has_item(content , "STDIN"))                 ext_job_set_stdin_file(ext_job       , config_content_iget(content  , "STDIN" , 0,0));
+        if (config_content_has_item(content , "STDOUT"))                ext_job_set_stdout_file(ext_job      , config_content_iget(content  , "STDOUT" , 0,0));
+        if (config_content_has_item(content , "STDERR"))                ext_job_set_stderr_file(ext_job      , config_content_iget(content  , "STDERR" , 0,0));
+        if (config_content_has_item(content , "ERROR_FILE"))            ext_job_set_error_file(ext_job       , config_content_iget(content  , "ERROR_FILE" , 0,0));
+        if (config_content_has_item(content , "TARGET_FILE"))           ext_job_set_target_file(ext_job      , config_content_iget(content  , "TARGET_FILE" , 0,0));
+        if (config_content_has_item(content , "START_FILE"))            ext_job_set_start_file(ext_job       , config_content_iget(content  , "START_FILE" , 0,0));
+        if (config_content_has_item(content , "MAX_RUNNING"))           ext_job_set_max_running(ext_job      , config_content_iget_as_int(content  , "MAX_RUNNING" , 0,0));
+        if (config_content_has_item(content , "MAX_RUNNING_MINUTES"))   ext_job_set_max_time(ext_job         , config_content_iget_as_int(content  , "MAX_RUNNING_MINUTES" , 0,0));
+
+
         {
-          const char * executable     = config_get_value_as_abspath(config  , "EXECUTABLE");
-          const char * executable_raw = config_iget(config  , "EXECUTABLE" , 0,0);
+          const char * executable     = config_content_get_value_as_abspath(content  , "EXECUTABLE");
+          const char * executable_raw = config_content_iget(content  , "EXECUTABLE" , 0,0);
           ext_job_set_executable(ext_job , executable, executable_raw);
         }
-        
-        
+
+
         {
-          config_content_node_type * arg_node = config_get_value_node( config , "ARGLIST");
-          if (arg_node != NULL) {
+          if (config_content_has_item( content , "ARGLIST")) {
+            config_content_node_type * arg_node = config_content_get_value_node( content , "ARGLIST");
             int i;
             for (i=0; i < config_content_node_get_size( arg_node ); i++)
               stringlist_append_copy( ext_job->argv , config_content_node_iget( arg_node , i ));
           }
         }
-        
+
 
         /**
            The code assumes that the hash tables are valid, can not be NULL:
         */
         {
-          const config_content_item_type * env_item = config_get_content_item( config , "ENV" );
-          if (env_item != NULL) {
+          if (config_content_has_item( content , "ENV")) {
+            const config_content_item_type * env_item = config_content_get_item( content , "ENV" );
             for (int ivar = 0; ivar < config_content_item_get_size( env_item ); ivar++) {
               const config_content_node_type * env_node = config_content_item_iget_node( env_item , ivar );
               for (int i=0; i < config_content_node_get_size( env_node ); i+= 2) {
@@ -866,12 +866,12 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
             }
           }
         }
-        
+
         /* Default mappings; these are used to set values in the argList
            which have not been supplied by the calling context. */
         {
-          const config_content_item_type * default_item = config_get_content_item( config , "DEFAULT");
-          if (default_item != NULL) {
+          if (config_content_has_item( content , "DEFAULT")) {
+            const config_content_item_type * default_item = config_content_get_item( content , "DEFAULT");
             for (int ivar = 0; ivar < config_content_item_get_size( default_item ); ivar++) {
               const config_content_node_type * default_node = config_content_item_iget_node( default_item , ivar );
               for (int i=0; i < config_content_node_get_size( default_node ); i+= 2) {
