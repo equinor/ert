@@ -55,6 +55,7 @@ external commands.
 
 import os
 import ert.util
+import ert.config
 import ert.cwrap.clib as clib
 
 
