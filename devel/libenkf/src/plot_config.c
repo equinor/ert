@@ -20,6 +20,9 @@
 
 #include <ert/util/util.h>
 
+#include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
+
 #include <ert/enkf/plot_config.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
@@ -193,33 +196,33 @@ plot_config_type * plot_config_alloc_default() {
 }
 
 
-void plot_config_init(plot_config_type * plot_config , const config_parser_type * config ) {
-  if (config_item_set( config , PLOT_PATH_KEY))
-    plot_config_set_path( plot_config , config_get_value( config , PLOT_PATH_KEY ));
+void plot_config_init(plot_config_type * plot_config , const config_content_type * config ) {
+  if (config_content_has_item( config , PLOT_PATH_KEY))
+    plot_config_set_path( plot_config , config_content_get_value( config , PLOT_PATH_KEY ));
 
-  if (config_item_set( config , PLOT_DRIVER_KEY))
-    plot_config_set_driver( plot_config , config_get_value( config , PLOT_DRIVER_KEY ));
+  if (config_content_has_item( config , PLOT_DRIVER_KEY))
+    plot_config_set_driver( plot_config , config_content_get_value( config , PLOT_DRIVER_KEY ));
 
-  if (config_item_set( config , IMAGE_VIEWER_KEY))
-    plot_config_set_viewer( plot_config , config_get_value( config , IMAGE_VIEWER_KEY ));
+  if (config_content_has_item( config , IMAGE_VIEWER_KEY))
+    plot_config_set_viewer( plot_config , config_content_get_value( config , IMAGE_VIEWER_KEY ));
 
-  if (config_item_set( config , PLOT_DRIVER_KEY))
-    plot_config_set_driver( plot_config , config_get_value( config , PLOT_DRIVER_KEY ));
+  if (config_content_has_item( config , PLOT_DRIVER_KEY))
+    plot_config_set_driver( plot_config , config_content_get_value( config , PLOT_DRIVER_KEY ));
 
-  if (config_item_set( config , PLOT_ERRORBAR_MAX_KEY))
-    plot_config_set_errorbar_max( plot_config , config_get_value_as_int( config , PLOT_ERRORBAR_MAX_KEY ));
+  if (config_content_has_item( config , PLOT_ERRORBAR_MAX_KEY))
+    plot_config_set_errorbar_max( plot_config , config_content_get_value_as_int( config , PLOT_ERRORBAR_MAX_KEY ));
 
-  if (config_item_set( config , PLOT_ERRORBAR_KEY))
-    plot_config_set_plot_errorbar( plot_config , config_get_value_as_bool( config , PLOT_ERRORBAR_KEY ));
+  if (config_content_has_item( config , PLOT_ERRORBAR_KEY))
+    plot_config_set_plot_errorbar( plot_config , config_content_get_value_as_bool( config , PLOT_ERRORBAR_KEY ));
 
-  if (config_item_set( config , PLOT_HEIGHT_KEY))
-    plot_config_set_height( plot_config , config_get_value_as_int( config , PLOT_HEIGHT_KEY ));
+  if (config_content_has_item( config , PLOT_HEIGHT_KEY))
+    plot_config_set_height( plot_config , config_content_get_value_as_int( config , PLOT_HEIGHT_KEY ));
 
-  if (config_item_set( config , PLOT_WIDTH_KEY))
-    plot_config_set_width( plot_config , config_get_value_as_int( config , PLOT_WIDTH_KEY ));
+  if (config_content_has_item( config , PLOT_WIDTH_KEY))
+    plot_config_set_width( plot_config , config_content_get_value_as_int( config , PLOT_WIDTH_KEY ));
 
-  if (config_item_set( config , PLOT_REFCASE_KEY)) {
-    const char * plot_refcase_string = config_get_value( config , PLOT_REFCASE_KEY );
+  if (config_content_has_item( config , PLOT_REFCASE_KEY)) {
+    const char * plot_refcase_string = config_content_get_value( config , PLOT_REFCASE_KEY );
     bool plot_refcase;
     if (!util_sscanf_bool( plot_refcase_string , &plot_refcase)) {
       fprintf(stderr ,

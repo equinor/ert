@@ -18,7 +18,10 @@
 
 #ifndef __PLOT_CONFIG_H__
 #define __PLOT_CONFIG_H__
+
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
+
 #include <ert/ecl/ecl_sum.h>
 
 typedef struct plot_config_struct plot_config_type;
@@ -44,7 +47,7 @@ const char  *      plot_config_get_viewer(const plot_config_type * plot_config )
 const char  *      plot_config_get_driver(const plot_config_type * plot_config );
 void               plot_config_free( plot_config_type * plot_config);
 plot_config_type * plot_config_alloc_default();
-void               plot_config_init(plot_config_type * plot_config , const config_parser_type * config );
+void               plot_config_init(plot_config_type * plot_config , const config_content_type * config );
 
 void               plot_config_add_config_items( config_parser_type * config );
 void               plot_config_show_viewer_warning( plot_config_type * plot_config );
