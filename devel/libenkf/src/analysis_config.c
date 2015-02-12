@@ -27,6 +27,7 @@
 #include <ert/util/type_macros.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 #include <ert/analysis/analysis_module.h>
 
@@ -277,17 +278,17 @@ void analysis_config_load_internal_module( analysis_config_type * config ,
     fprintf(stderr,"** Warning: failed to load module %s from %s.\n",user_name , symbol_table);
 }
 
-void analysis_config_load_all_external_modules_from_config ( analysis_config_type * analysis, const config_parser_type * config) {
-  if (config_item_set( config, ANALYSIS_LOAD_KEY)) {
-    const config_content_item_type * load_item = config_get_content_item( config , ANALYSIS_LOAD_KEY );
-    if (load_item != NULL) {
-      for (int i=0; i < config_content_item_get_size( load_item ); i++) {
-        const config_content_node_type * load_node = config_content_item_iget_node( load_item , i );
-        const char * user_name = config_content_node_iget( load_node , 0 );
-        const char * lib_name  = config_content_node_iget( load_node , 1 );
 
-        analysis_config_load_external_module( analysis , user_name , lib_name);
-      }
+void analysis_config_load_all_external_modules_from_config ( analysis_config_type * analysis, const config_content_type * config) {
+
+  if (config_content_has_item( config, ANALYSIS_LOAD_KEY)) {
+    const config_content_item_type * load_item = config_content_get_item( config , ANALYSIS_LOAD_KEY );
+    for (int i=0; i < config_content_item_get_size( load_item ); i++) {
+      const config_content_node_type * load_node = config_content_item_iget_node( load_item , i );
+      const char * user_name = config_content_node_iget( load_node , 0 );
+      const char * lib_name  = config_content_node_iget( load_node , 1 );
+
+      analysis_config_load_external_module( analysis , user_name , lib_name);
     }
   }
 }
@@ -436,38 +437,38 @@ void analysis_config_load_internal_modules( analysis_config_type * config ) {
    for enkf_defaults.h
 */
 
-void analysis_config_init( analysis_config_type * analysis , const config_parser_type * config ) {
-  if (config_item_set( config , UPDATE_LOG_PATH_KEY ))
-    analysis_config_set_log_path( analysis , config_get_value( config , UPDATE_LOG_PATH_KEY ));
+void analysis_config_init( analysis_config_type * analysis , const config_content_type * config ) {
+  if (config_content_has_item( config , UPDATE_LOG_PATH_KEY ))
+    analysis_config_set_log_path( analysis , config_content_get_value( config , UPDATE_LOG_PATH_KEY ));
 
-  if (config_item_set( config , STD_CUTOFF_KEY ))
-    analysis_config_set_std_cutoff( analysis , config_get_value_as_double( config , STD_CUTOFF_KEY ));
+  if (config_content_has_item( config , STD_CUTOFF_KEY ))
+    analysis_config_set_std_cutoff( analysis , config_content_get_value_as_double( config , STD_CUTOFF_KEY ));
 
-  if (config_item_set( config , ENKF_ALPHA_KEY ))
-    analysis_config_set_alpha( analysis , config_get_value_as_double( config , ENKF_ALPHA_KEY ));
+  if (config_content_has_item( config , ENKF_ALPHA_KEY ))
+    analysis_config_set_alpha( analysis , config_content_get_value_as_double( config , ENKF_ALPHA_KEY ));
 
-  if (config_item_set( config , ENKF_MERGE_OBSERVATIONS_KEY ))
-    analysis_config_set_merge_observations( analysis , config_get_value_as_bool( config , ENKF_MERGE_OBSERVATIONS_KEY ));
+  if (config_content_has_item( config , ENKF_MERGE_OBSERVATIONS_KEY ))
+    analysis_config_set_merge_observations( analysis , config_content_get_value_as_bool( config , ENKF_MERGE_OBSERVATIONS_KEY ));
 
-  if (config_item_set( config , ENKF_RERUN_KEY ))
-    analysis_config_set_rerun( analysis , config_get_value_as_bool( config , ENKF_RERUN_KEY ));
+  if (config_content_has_item( config , ENKF_RERUN_KEY ))
+    analysis_config_set_rerun( analysis , config_content_get_value_as_bool( config , ENKF_RERUN_KEY ));
 
-  if (config_item_set( config , UPDATE_RESULTS_KEY ))
-    analysis_config_set_update_results( analysis , config_get_value_as_bool( config , UPDATE_RESULTS_KEY ));
+  if (config_content_has_item( config , UPDATE_RESULTS_KEY ))
+    analysis_config_set_update_results( analysis , config_content_get_value_as_bool( config , UPDATE_RESULTS_KEY ));
 
-  if (config_item_set( config , SINGLE_NODE_UPDATE_KEY ))
-    analysis_config_set_single_node_update( analysis , config_get_value_as_bool( config , SINGLE_NODE_UPDATE_KEY ));
+  if (config_content_has_item( config , SINGLE_NODE_UPDATE_KEY ))
+    analysis_config_set_single_node_update( analysis , config_content_get_value_as_bool( config , SINGLE_NODE_UPDATE_KEY ));
 
-  if (config_item_set( config , RERUN_START_KEY ))
-    analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , RERUN_START_KEY ));
+  if (config_content_has_item( config , RERUN_START_KEY ))
+    analysis_config_set_rerun_start( analysis , config_content_get_value_as_int( config , RERUN_START_KEY ));
 
-  if (config_item_set( config , MIN_REALIZATIONS_KEY )) {
+  if (config_content_has_item( config , MIN_REALIZATIONS_KEY )) {
     double percent                            = 0.0;
-    config_content_node_type * config_content = config_get_value_node(config , MIN_REALIZATIONS_KEY);
+    config_content_node_type * config_content = config_content_get_value_node(config , MIN_REALIZATIONS_KEY);
     char * min_realizations_string            = config_content_node_alloc_joined_string(config_content, " ");
 
     if (util_sscanf_percent(min_realizations_string, &percent)) {
-      int num_realizations = config_get_value_as_int(config, NUM_REALIZATIONS_KEY);
+      int num_realizations = config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
       int min_realizations = num_realizations * percent/100;
       analysis_config_set_min_realisations(analysis, min_realizations);
     } else {
@@ -480,11 +481,11 @@ void analysis_config_init( analysis_config_type * analysis , const config_parser
     free(min_realizations_string);
   }
 
-  if (config_item_set( config , STOP_LONG_RUNNING_KEY ))
-    analysis_config_set_stop_long_running( analysis , config_get_value_as_bool( config , STOP_LONG_RUNNING_KEY ));
+  if (config_content_has_item( config , STOP_LONG_RUNNING_KEY ))
+    analysis_config_set_stop_long_running( analysis , config_content_get_value_as_bool( config , STOP_LONG_RUNNING_KEY ));
 
-  if (config_item_set( config, MAX_RUNTIME_KEY)) {
-    analysis_config_set_max_runtime( analysis, config_get_value_as_int( config, MAX_RUNTIME_KEY ));
+  if (config_content_has_item( config, MAX_RUNTIME_KEY)) {
+    analysis_config_set_max_runtime( analysis, config_content_get_value_as_int( config, MAX_RUNTIME_KEY ));
   }
 
 
@@ -494,8 +495,8 @@ void analysis_config_init( analysis_config_type * analysis , const config_parser
 
   /* Reload/copy modules. */
   {
-    const config_content_item_type * copy_item = config_get_content_item( config , ANALYSIS_COPY_KEY );
-    if (copy_item != NULL) {
+    if (config_content_has_item( config , ANALYSIS_COPY_KEY )) {
+      const config_content_item_type * copy_item = config_content_get_item( config , ANALYSIS_COPY_KEY );
       for (int i=0; i < config_content_item_get_size( copy_item ); i++) {
         const config_content_node_type * copy_node = config_content_item_iget_node( copy_item , i );
         const char * src_name = config_content_node_iget( copy_node , 0 );
@@ -509,8 +510,8 @@ void analysis_config_init( analysis_config_type * analysis , const config_parser
 
   /* Setting variables for analysis modules */
   {
-    const config_content_item_type * assign_item = config_get_content_item( config , ANALYSIS_SET_VAR_KEY );
-    if (assign_item != NULL) {
+    if (config_content_has_item( config , ANALYSIS_SET_VAR_KEY )) {
+      const config_content_item_type * assign_item = config_content_get_item( config , ANALYSIS_SET_VAR_KEY );
       for (int i=0; i < config_content_item_get_size( assign_item ); i++) {
         const config_content_node_type * assign_node = config_content_item_iget_node( assign_item , i );
 
@@ -537,8 +538,8 @@ void analysis_config_init( analysis_config_type * analysis , const config_parser
     }
   }
 
-  if (config_item_set( config, ANALYSIS_SELECT_KEY ))
-    analysis_config_select_module( analysis , config_get_value( config , ANALYSIS_SELECT_KEY ));
+  if (config_content_has_item( config, ANALYSIS_SELECT_KEY ))
+    analysis_config_select_module( analysis , config_content_get_value( config , ANALYSIS_SELECT_KEY ));
 
   analysis_iter_config_init( analysis->iter_config , config );
 }

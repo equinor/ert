@@ -2991,7 +2991,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     ert_workflow_list_init( enkf_main->workflow_list , content );
 
     analysis_config_load_internal_modules( enkf_main->analysis_config );
-    analysis_config_init( enkf_main->analysis_config , config );
+    analysis_config_init( enkf_main->analysis_config , content );
     ecl_config_init( enkf_main->ecl_config , content );
     plot_config_init( enkf_main->plot_config , config );
     ensemble_config_init( enkf_main->ensemble_config , config , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );

@@ -65,16 +65,16 @@ void test_min_realizations_percent(const char * num_realizations_str, const char
     {
       config_content_type * content = config_parse(c , "config_file" , "--" , NULL , NULL , false , true );
       test_assert_true(config_content_is_valid(content));
+
+      analysis_config_type * ac = create_analysis_config( );
+      analysis_config_init(ac, content);
+
+      test_assert_int_equal( min_realizations , analysis_config_get_min_realisations( ac ) );
+
+      analysis_config_free( ac );
       config_content_free( content );
+      config_free( c );
     }
-
-    analysis_config_type * ac = create_analysis_config( );
-    analysis_config_init(ac, c);
-
-    test_assert_int_equal( min_realizations , analysis_config_get_min_realisations( ac ) );
-
-    analysis_config_free( ac );
-    config_free( c );
   }
 
   test_work_area_free(work_area);

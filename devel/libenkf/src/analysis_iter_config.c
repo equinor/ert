@@ -117,15 +117,15 @@ void analysis_iter_config_add_config_items( config_parser_type * config ) {
 }
 
 
-void analysis_iter_config_init(analysis_iter_config_type * iter_config , const config_parser_type * config) {
-  if (config_item_set( config , ITER_CASE_KEY ))
-    analysis_iter_config_set_case_fmt( iter_config , config_get_value( config , ITER_CASE_KEY ));
+void analysis_iter_config_init(analysis_iter_config_type * iter_config , const config_content_type * config) {
+  if (config_content_has_item( config , ITER_CASE_KEY ))
+    analysis_iter_config_set_case_fmt( iter_config , config_content_get_value( config , ITER_CASE_KEY ));
 
-  if (config_item_set( config , ITER_COUNT_KEY ))
-    analysis_iter_config_set_num_iterations( iter_config , config_get_value_as_int( config , ITER_COUNT_KEY ));
+  if (config_content_has_item( config , ITER_COUNT_KEY ))
+    analysis_iter_config_set_num_iterations( iter_config , config_content_get_value_as_int( config , ITER_COUNT_KEY ));
 
-  if (config_item_set( config , ITER_RETRY_COUNT_KEY ))
-    analysis_iter_config_set_num_retries_per_iteration( iter_config , config_get_value_as_int( config , ITER_RETRY_COUNT_KEY ));
+  if (config_content_has_item( config , ITER_RETRY_COUNT_KEY ))
+    analysis_iter_config_set_num_retries_per_iteration( iter_config , config_content_get_value_as_int( config , ITER_RETRY_COUNT_KEY ));
 }
 
 
