@@ -1,6 +1,5 @@
 from cmd import Cmd
 import os
-import sys
 
 from ert.enkf import EnKFMain, ErtImplType
 from ert.job_queue import WorkflowRunner, ErtScript, CancelPluginException
@@ -47,11 +46,24 @@ def autoCompleteList(text, items):
 
 
 def createHelpFunction(help_message):
-    def help(self):
+    def helpFunction(self):
         print(help_message)
 
-    return help
+    return helpFunction
 
+
+def assertConfigLoaded(func):
+    def wrapper(self, *args, **kwargs):
+        result = False
+        if self.isConfigLoaded():
+            result = func(self, *args, **kwargs)
+
+        return result
+
+    wrapper.__doc__ = func.__doc__
+    wrapper.__name__ = func.__name__
+
+    return wrapper
 
 class ErtShell(Cmd):
     prompt = "--> "
@@ -124,14 +136,14 @@ class ErtShell(Cmd):
         return True
 
     def do_load_config(self, config_file):
-        if self.ert is not None:
-            self.ert.free()
-            self.ert = None
-
         if os.path.exists(config_file) and os.path.isfile(config_file):
+            if self.ert is not None:
+                self.ert.free()
+                self.ert = None
+
             self.ert = EnKFMain(config_file, site_config=self.site_config)
         else:
-            sys.stderr.write("Config file '%s' not found!\n" % config_file)
+            print("Error: Config file '%s' not found!\n" % config_file)
 
 
     def complete_load_config(self, text, line, begidx, endidx):
@@ -139,101 +151,99 @@ class ErtShell(Cmd):
         return getPossibleFilenameCompletions(argument)
 
 
+    @assertConfigLoaded
     def do_list_workflows(self, line):
-        if self.isConfigLoaded():
-            workflows = getWorkflowNames(self.ert)
-            if len(workflows) > 0:
-                self.columnize(workflows)
-            else:
-                print("No workflows available.")
+        workflows = getWorkflowNames(self.ert)
+        if len(workflows) > 0:
+            self.columnize(workflows)
+        else:
+            print("No workflows available.")
 
-
+    @assertConfigLoaded
     def do_run_workflow(self, workflow):
         workflow = workflow.strip()
-        if self.isConfigLoaded():
-            if workflow in getWorkflowNames(self.ert):
-                workflow_list = self.ert.getWorkflowList()
-                workflow = workflow_list[workflow]
-                context = workflow_list.getContext()
+        if workflow in getWorkflowNames(self.ert):
+            workflow_list = self.ert.getWorkflowList()
+            workflow = workflow_list[workflow]
+            context = workflow_list.getContext()
 
-                runner = WorkflowRunner(workflow, self.ert, context)
-                runner.run()
-                runner.wait()
-            else:
-                print("Error: Unknown workflow: '%s'" % workflow)
+            runner = WorkflowRunner(workflow, self.ert, context)
+            runner.run()
+            runner.wait()
+        else:
+            print("Error: Unknown workflow: '%s'" % workflow)
 
     def complete_run_workflow(self, text, line, begidx, endidx):
         return autoCompleteList(text, getWorkflowNames(self.ert))
 
-
+    @assertConfigLoaded
     def do_list_plugins(self, line):
-        if self.isConfigLoaded():
-            plugins = getPluginNames(self.ert)
-            if len(plugins) > 0:
-                self.columnize(plugins)
-            else:
-                print("No plugins available.")
+        plugins = getPluginNames(self.ert)
+        if len(plugins) > 0:
+            self.columnize(plugins)
+        else:
+            print("No plugins available.")
 
 
+    @assertConfigLoaded
     def do_run_plugin(self, plugin_name):
         plugin_name = plugin_name.strip()
-        if self.isConfigLoaded():
-            plugin_jobs = self.ert.getWorkflowList().getPluginJobs()
-            plugin_job = next((job for job in plugin_jobs if job.name() == plugin_name), None)
-            """ :type: ert.job_queue.WorkflowJob """
+        plugin_jobs = self.ert.getWorkflowList().getPluginJobs()
+        plugin_job = next((job for job in plugin_jobs if job.name() == plugin_name), None)
+        """ :type: ert.job_queue.WorkflowJob """
 
-            if plugin_job is not None:
-                try:
-                    script_obj = ErtScript.loadScriptFromFile(plugin_job.getInternalScriptPath())
-                    script = script_obj(self.ert)
-                    arguments = script.getArguments(None)
-                    # print(inspect.getargspec(script.run)) #todo: AutoComplete of workflow_job_script arguments...
-                    result = plugin_job.run(self.ert, arguments)
+        if plugin_job is not None:
+            try:
+                script_obj = ErtScript.loadScriptFromFile(plugin_job.getInternalScriptPath())
+                script = script_obj(self.ert)
+                arguments = script.getArguments(None)
+                # print(inspect.getargspec(script.run)) #todo: AutoComplete of workflow_job_script arguments...
+                result = plugin_job.run(self.ert, arguments)
 
-                    print(result)
-                except CancelPluginException:
-                    print("Plugin cancelled before execution!")
-            else:
-                print("Error: Unknown plugin: '%s'" % plugin_name)
+                print(result)
+            except CancelPluginException:
+                print("Plugin cancelled before execution!")
+        else:
+            print("Error: Unknown plugin: '%s'" % plugin_name)
 
 
     def complete_run_plugin(self, text, line, begidx, endidx):
         return autoCompleteList(text, getPluginNames(self.ert))
 
+    @assertConfigLoaded
     def do_list_summary_keys(self, line):
-        if self.isConfigLoaded():
-            keys = [key for key in self.ert.ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)]
-            self.columnize(sorted(keys))
+        keys = [key for key in self.ert.ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)]
+        self.columnize(sorted(keys))
 
+    @assertConfigLoaded
     def do_select_current_file_system(self, case_name):
         case_name = case_name.strip()
-        if self.isConfigLoaded():
-            if case_name in getFileSystemNames(self.ert):
-                fs = self.ert.getEnkfFsManager().getFileSystem(case_name)
-                self.ert.getEnkfFsManager().switchFileSystem(fs)
-            else:
-                print("Error: Unknown file system '%s'" % case_name)
+        if case_name in getFileSystemNames(self.ert):
+            fs = self.ert.getEnkfFsManager().getFileSystem(case_name)
+            self.ert.getEnkfFsManager().switchFileSystem(fs)
+        else:
+            print("Error: Unknown file system '%s'" % case_name)
 
     def complete_select_current_file_system(self, text, line, begidx, endidx):
         return autoCompleteList(text, getFileSystemNames(self.ert))
 
 
+    @assertConfigLoaded
     def do_list_file_systems(self, line):
-        if self.isConfigLoaded():
-            fs_list = getFileSystemNames(self.ert)
-            current_fs = self.ert.getEnkfFsManager().getCurrentFileSystem().getCaseName()
-            max_length = max([len(fs) for fs in fs_list])
-            format = "%1s %-" + str(max_length) + "s  %s"
-            for fs in fs_list:
-                current = ""
-                if fs == current_fs:
-                    current = "*"
+        fs_list = getFileSystemNames(self.ert)
+        current_fs = self.ert.getEnkfFsManager().getCurrentFileSystem().getCaseName()
+        max_length = max([len(fs) for fs in fs_list])
+        format = "%1s %-" + str(max_length) + "s  %s"
+        for fs in fs_list:
+            current = ""
+            if fs == current_fs:
+                current = "*"
 
-                state = "No Data"
-                if self.ert.getEnkfFsManager().caseHasData(fs):
-                    state = "Data"
+            state = "No Data"
+            if self.ert.getEnkfFsManager().caseHasData(fs):
+                state = "Data"
 
-                print(format % (current, fs, state))
+            print(format % (current, fs, state))
 
     def do_exit(self, line):
         return self.exit()
