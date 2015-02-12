@@ -1,6 +1,9 @@
 import os
 from ert.enkf import SummaryKeySet
+from ert.enkf.enkf_fs import EnkfFs
+from ert.enkf.enkf_main import EnKFMain
 from ert.test import ExtendedTestCase
+from ert.test.ert_test_context import ErtTestContext
 from ert.test.test_area import TestAreaContext
 
 
@@ -64,5 +67,33 @@ class SummaryKeySetTest(ExtendedTestCase):
 
             keys_from_file = SummaryKeySet(filename)
             self.assertItemsEqual(keys.keys(), keys_from_file.keys())
+
+
+    def test_with_enkf_fs(self):
+        config_file = self.createTestPath("Statoil/config/with_data/config")
+
+        with TestAreaContext("enkf/summary_key_set/enkf_fs", store_area=True) as context:
+            context.copy_parent_content(config_file)
+
+            fs = EnkfFs("storage/default")
+            summary_key_set = fs.getSummaryKeySet()
+            summary_key_set.addSummaryKey("FOPT")
+            summary_key_set.addSummaryKey("WWCT")
+            summary_key_set.addSummaryKey("WOPR")
+            fs.umount()
+
+            ert = EnKFMain("config", site_config=None)
+            fs = ert.getEnkfFsManager().getCurrentFileSystem()
+            summary_key_set = fs.getSummaryKeySet()
+            self.assertTrue("FOPT" in summary_key_set)
+            self.assertTrue("WWCT" in summary_key_set)
+            self.assertTrue("WOPR" in summary_key_set)
+
+            ensemble_config = ert.ensembleConfig()
+
+            self.assertTrue("FOPT" in ensemble_config)
+            self.assertTrue("WWCT" in ensemble_config)
+            self.assertTrue("WOPR" in ensemble_config)
+            self.assertFalse("TCPU" in ensemble_config)
 
 

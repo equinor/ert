@@ -44,6 +44,7 @@
 #include <ert/enkf/gen_data.h>
 #include <ert/enkf/time_map.h>
 #include <ert/enkf/state_map.h>
+#include <ert/enkf/summary_key_set.h>
 #include <ert/enkf/misfit_ensemble.h>
 #include <ert/enkf/cases_config.h>
 
@@ -205,6 +206,7 @@
 
 #define ENKF_FS_TYPE_ID       1089763
 #define ENKF_MOUNT_MAP        "enkf_mount_info"
+#define SUMMARY_KEY_SET_FILE  "summary-key-set"
 #define TIME_MAP_FILE         "time-map"
 #define STATE_MAP_FILE        "state-map"
 #define MISFIT_ENSEMBLE_FILE  "misfit-ensemble"
@@ -229,6 +231,7 @@ struct enkf_fs_struct {
   time_map_type          * time_map;
   cases_config_type      * cases_config;
   state_map_type         * state_map;
+  summary_key_set_type   * summary_key_set;
   misfit_ensemble_type   * misfit_ensemble;
   /*
      The variables below here are for storing arbitrary files within
@@ -290,6 +293,7 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point ) {
   fs->time_map               = time_map_alloc(  );
   fs->cases_config           = cases_config_alloc();
   fs->state_map              = state_map_alloc();
+  fs->summary_key_set        = summary_key_set_alloc();
   fs->misfit_ensemble        = misfit_ensemble_alloc();
   fs->index                  = NULL;
   fs->eclipse_static         = NULL;
@@ -517,6 +521,12 @@ static void enkf_fs_fsync_state_map( enkf_fs_type * fs ) {
   free( filename );
 }
 
+static void enkf_fs_fsync_summary_key_set( enkf_fs_type * fs ) {
+  char * filename = enkf_fs_alloc_case_filename( fs , SUMMARY_KEY_SET_FILE );
+  summary_key_set_fwrite( fs->summary_key_set , filename );
+  free( filename );
+}
+
 
 
 static void enkf_fs_fread_cases_config( enkf_fs_type * fs ) {
@@ -532,6 +542,12 @@ static void enkf_fs_fread_state_map( enkf_fs_type * fs ) {
   free( filename );
 }
 
+static void enkf_fs_fread_summary_key_set( enkf_fs_type * fs ) {
+  char * filename = enkf_fs_alloc_case_filename( fs , SUMMARY_KEY_SET_FILE );
+  summary_key_set_fread( fs->summary_key_set , filename );
+  free( filename );
+}
+
 
 state_map_type * enkf_fs_alloc_readonly_state_map( const char * mount_point ) {
   path_fmt_type * path_fmt = path_fmt_alloc_directory_fmt( DEFAULT_CASE_PATH );
@@ -544,6 +560,16 @@ state_map_type * enkf_fs_alloc_readonly_state_map( const char * mount_point ) {
   return state_map;
 }
 
+summary_key_set_type * enkf_fs_alloc_readonly_summary_key_set( const char * mount_point ) {
+  path_fmt_type * path_fmt = path_fmt_alloc_directory_fmt( DEFAULT_CASE_PATH );
+  char * filename = path_fmt_alloc_file( path_fmt , false , mount_point , SUMMARY_KEY_SET_FILE);
+
+  summary_key_set_type * summary_key_set = summary_key_set_alloc_from_file( filename, true );
+
+  path_fmt_free( path_fmt );
+  free( filename );
+  return summary_key_set;
+}
 
 time_map_type * enkf_fs_alloc_readonly_time_map( const char * mount_point ) {
   path_fmt_type * path_fmt = path_fmt_alloc_directory_fmt( DEFAULT_CASE_PATH );
@@ -607,6 +633,7 @@ enkf_fs_type * enkf_fs_mount( const char * mount_point ) {
     enkf_fs_fread_time_map( fs );
     enkf_fs_fread_cases_config( fs );
     enkf_fs_fread_state_map( fs );
+    enkf_fs_fread_summary_key_set( fs );
     enkf_fs_fread_misfit( fs );
 
     enkf_fs_get_ref( fs );
@@ -670,6 +697,7 @@ static void enkf_fs_umount( enkf_fs_type * fs ) {
       path_fmt_free( fs->case_tstep_member_fmt );
 
       state_map_free( fs->state_map );
+      summary_key_set_free(fs->summary_key_set);
       time_map_free( fs->time_map );
       cases_config_free( fs->cases_config );
       misfit_ensemble_free( fs->misfit_ensemble );
@@ -739,6 +767,7 @@ void enkf_fs_fsync( enkf_fs_type * fs ) {
   enkf_fs_fsync_time_map( fs );
   enkf_fs_fsync_cases_config( fs) ;
   enkf_fs_fsync_state_map( fs );
+  enkf_fs_fsync_summary_key_set( fs );
 }
 
 
@@ -1035,6 +1064,9 @@ state_map_type * enkf_fs_get_state_map( const enkf_fs_type * fs ) {
   return fs->state_map;
 }
 
+summary_key_set_type * enkf_fs_get_summary_key_set( const enkf_fs_type * fs ) {
+  return fs->summary_key_set;
+}
 
 misfit_ensemble_type * enkf_fs_get_misfit_ensemble( const enkf_fs_type * fs ) {
   return fs->misfit_ensemble;

@@ -565,7 +565,7 @@ static bool enkf_state_report_step_compatible(const enkf_state_type * enkf_state
 static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state , run_arg_type * run_arg , const model_config_type * model_config , int * result, bool interactive , stringlist_type * msg_list) {
   bool load_summary = ensemble_config_has_impl_type(enkf_state->ensemble_config, SUMMARY);
   if (load_summary) {
-    int        load_start                  = run_arg_get_load_start( run_arg );
+    int load_start = run_arg_get_load_start( run_arg );
   
     if (load_start == 0)  /* Do not attempt to load the "S0000" summary results. */
       load_start++;
