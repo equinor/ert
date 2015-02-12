@@ -54,8 +54,15 @@ def createHelpFunction(help_message):
 
 def assertConfigLoaded(func):
     def wrapper(self, *args, **kwargs):
-        result = False
-        if self.isConfigLoaded():
+        #prefixes should be either do_ or complete_
+        if func.__name__.startswith("complete_"):
+            result = []
+            verbose = False
+        else:
+            result = False
+            verbose = True
+
+        if self.isConfigLoaded(verbose=verbose):
             result = func(self, *args, **kwargs)
 
         return result
@@ -129,9 +136,10 @@ class ErtShell(Cmd):
             setattr(self.__class__, "help_%s" % help_key, createHelpFunction(help_map[help_key]))
 
 
-    def isConfigLoaded(self):
+    def isConfigLoaded(self, verbose=True):
         if self.ert is None:
-            print("Error: A config file has not been loaded!")
+            if verbose:
+                print("Error: A config file has not been loaded!")
             return False
         return True
 
@@ -173,8 +181,9 @@ class ErtShell(Cmd):
         else:
             print("Error: Unknown workflow: '%s'" % workflow)
 
+    @assertConfigLoaded
     def complete_run_workflow(self, text, line, begidx, endidx):
-        return autoCompleteList(text, getWorkflowNames(self.ert))
+        return  autoCompleteList(text, getWorkflowNames(self.ert))
 
     @assertConfigLoaded
     def do_list_plugins(self, line):
@@ -207,6 +216,7 @@ class ErtShell(Cmd):
             print("Error: Unknown plugin: '%s'" % plugin_name)
 
 
+    @assertConfigLoaded
     def complete_run_plugin(self, text, line, begidx, endidx):
         return autoCompleteList(text, getPluginNames(self.ert))
 
@@ -224,6 +234,7 @@ class ErtShell(Cmd):
         else:
             print("Error: Unknown file system '%s'" % case_name)
 
+    @assertConfigLoaded
     def complete_select_current_file_system(self, text, line, begidx, endidx):
         return autoCompleteList(text, getFileSystemNames(self.ert))
 
