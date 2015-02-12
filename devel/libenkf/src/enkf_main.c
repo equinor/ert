@@ -2988,7 +2988,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
 
     enkf_main_init_subst_list( enkf_main );
-    ert_workflow_list_init( enkf_main->workflow_list , config );
+    ert_workflow_list_init( enkf_main->workflow_list , content );
 
     analysis_config_load_internal_modules( enkf_main->analysis_config );
     analysis_config_init( enkf_main->analysis_config , config );

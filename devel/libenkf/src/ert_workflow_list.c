@@ -180,11 +180,11 @@ stringlist_type * ert_workflow_list_get_job_names(const ert_workflow_list_type *
 }
 
 
-void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_parser_type * config ) {
+void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_content_type * config ) {
   /* Adding jobs */
   {
-    const config_content_item_type * jobpath_item = config_get_content_item( config , WORKFLOW_JOB_DIRECTORY_KEY);
-    if (jobpath_item != NULL) {
+    if (config_content_has_item( config , WORKFLOW_JOB_DIRECTORY_KEY)) {
+      const config_content_item_type * jobpath_item = config_content_get_item( config , WORKFLOW_JOB_DIRECTORY_KEY);
       for (int i=0; i < config_content_item_get_size( jobpath_item ); i++) {
         config_content_node_type * path_node = config_content_item_iget_node( jobpath_item , i );
 
@@ -195,8 +195,8 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_par
   }
 
   {
-    const config_content_item_type * job_item = config_get_content_item( config , LOAD_WORKFLOW_JOB_KEY);
-    if (job_item != NULL) {
+    if (config_content_has_item( config , LOAD_WORKFLOW_JOB_KEY)) {
+      const config_content_item_type * job_item = config_content_get_item( config , LOAD_WORKFLOW_JOB_KEY);
       for (int i=0; i < config_content_item_get_size( job_item ); i++) {
         config_content_node_type * job_node = config_content_item_iget_node( job_item , i );
         const char * config_file = config_content_node_iget_as_path( job_node , 0 );
@@ -209,9 +209,8 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_par
 
   /* Adding workflows */
   {
-    const config_content_item_type * workflow_item = config_get_content_item( config , LOAD_WORKFLOW_KEY);
-
-    if (workflow_item != NULL) {
+    if (config_content_has_item( config , LOAD_WORKFLOW_KEY)) {
+      const config_content_item_type * workflow_item = config_content_get_item( config , LOAD_WORKFLOW_KEY);
       for (int i=0; i < config_content_item_get_size( workflow_item ); i++) {
         config_content_node_type * workflow_node = config_content_item_iget_node( workflow_item , i );
         const char * workflow_file = config_content_node_iget_as_path( workflow_node , 0 );

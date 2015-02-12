@@ -28,6 +28,7 @@ extern "C" {
 #include <ert/util/type_macros.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 #include <ert/config/config_error.h>
 
 #include <ert/job_queue/workflow.h>
@@ -47,7 +48,7 @@ extern "C" {
   stringlist_type *          ert_workflow_list_get_job_names(const ert_workflow_list_type * workflow_list);
   void                       ert_workflow_list_add_alias( ert_workflow_list_type * workflow_list , const char * real_name , const char * alias);
   void                       ert_workflow_list_add_config_items( config_parser_type * config );
-  void                       ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_parser_type * config );
+  void                       ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_content_type * config );
   bool                       ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list, const char * workflow_name , void * self);
   bool                       ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list, workflow_type * workflow, bool verbose , void * self);
   bool                       ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name );
