@@ -29,6 +29,7 @@ extern "C" {
 #include <ert/util/type_macros.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/forward_model.h>
@@ -66,7 +67,7 @@ extern "C" {
   bool                   model_config_has_history(const model_config_type * config);
   int                    model_config_get_last_history_restart(const model_config_type * );
   time_map_type        * model_config_get_external_time_map( const model_config_type * config);
-  void                   model_config_init(model_config_type * model_config , const config_parser_type * , int ens_size , const ext_joblist_type * , int , const sched_file_type * , const ecl_sum_type * refcase);
+  void                   model_config_init(model_config_type * model_config , const config_content_type * , int ens_size , const ext_joblist_type * , int , const sched_file_type * , const ecl_sum_type * refcase);
   void                   model_config_free(model_config_type *);
   bool                   model_config_runpath_requires_iter( const model_config_type * model_config );
   path_fmt_type        * model_config_get_runpath_fmt(const model_config_type * );

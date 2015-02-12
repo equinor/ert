@@ -33,6 +33,7 @@
 #include <ert/sched/sched_file.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_util.h>
@@ -410,7 +411,7 @@ static bool model_config_select_any_history( model_config_type * model_config , 
 
 
 void model_config_init(model_config_type * model_config ,
-                       const config_parser_type * config ,
+                       const config_content_type * config ,
                        int ens_size ,
                        const ext_joblist_type * joblist ,
                        int last_history_restart ,
@@ -421,25 +422,25 @@ void model_config_init(model_config_type * model_config ,
   model_config_set_refcase( model_config , refcase );
 
 
-  if (config_item_set( config , FORWARD_MODEL_KEY )) {
-    char * config_string = config_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");
+  if (config_content_has_item( config , FORWARD_MODEL_KEY )) {
+    char * config_string = config_content_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");
     forward_model_parse_init( model_config->forward_model , config_string );
     free(config_string);
   }
 
-  if (config_item_set( config , ENKF_SCHED_FILE_KEY))
-    model_config_set_enkf_sched_file(model_config , config_get_value(config , ENKF_SCHED_FILE_KEY ));
+  if (config_content_has_item( config , ENKF_SCHED_FILE_KEY))
+    model_config_set_enkf_sched_file(model_config , config_content_get_value(config , ENKF_SCHED_FILE_KEY ));
 
-  if (config_item_set( config, RUNPATH_KEY)) {
-    model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , config_get_value(config , RUNPATH_KEY) );
+  if (config_content_has_item( config, RUNPATH_KEY)) {
+    model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , config_content_get_value(config , RUNPATH_KEY) );
     model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
   }
 
   {
     history_source_type source_type = DEFAULT_HISTORY_SOURCE;
 
-    if (config_item_set( config , HISTORY_SOURCE_KEY)) {
-      const char * history_source = config_iget(config , HISTORY_SOURCE_KEY, 0,0);
+    if (config_content_has_item( config , HISTORY_SOURCE_KEY)) {
+      const char * history_source = config_content_iget(config , HISTORY_SOURCE_KEY, 0,0);
       source_type = history_get_source_type( history_source );
     }
 
@@ -456,8 +457,8 @@ void model_config_init(model_config_type * model_config ,
     bool_vector_iset( model_config->__load_eclipse_restart      , num_restart - 1 , false );
   }
 
-  if (config_item_set( config , TIME_MAP_KEY)) {
-    const char * filename = config_get_value_as_path( config , TIME_MAP_KEY);
+  if (config_content_has_item( config , TIME_MAP_KEY)) {
+    const char * filename = config_content_get_value_as_path( config , TIME_MAP_KEY);
     time_map_type * time_map = time_map_alloc();
     if (time_map_fscanf( time_map , filename))
       model_config->external_time_map = time_map;
@@ -476,41 +477,40 @@ void model_config_init(model_config_type * model_config ,
     present or not.
   */
 
-  if (config_item_set(config ,  SCHEDULE_PREDICTION_FILE_KEY))
+  if (config_content_has_item(config ,  SCHEDULE_PREDICTION_FILE_KEY))
     model_config->has_prediction = true;
   else
     model_config->has_prediction = false;
 
 
-  if (config_item_set(config ,  CASE_TABLE_KEY))
-    model_config_set_case_table( model_config , ens_size , config_iget( config , CASE_TABLE_KEY , 0,0));
+  if (config_content_has_item(config ,  CASE_TABLE_KEY))
+    model_config_set_case_table( model_config , ens_size , config_content_iget( config , CASE_TABLE_KEY , 0,0));
 
-  if (config_item_set( config , ENSPATH_KEY))
-    model_config_set_enspath( model_config , config_get_value(config , ENSPATH_KEY));
+  if (config_content_has_item( config , ENSPATH_KEY))
+    model_config_set_enspath( model_config , config_content_get_value(config , ENSPATH_KEY));
 
-  if (config_item_set( config , JOBNAME_KEY))
-    model_config_set_jobname_fmt( model_config , config_get_value(config , JOBNAME_KEY));
+  if (config_content_has_item( config , JOBNAME_KEY))
+    model_config_set_jobname_fmt( model_config , config_content_get_value(config , JOBNAME_KEY));
 
-  if (config_item_set( config , RFTPATH_KEY))
-    model_config_set_rftpath( model_config , config_get_value(config , RFTPATH_KEY));
+  if (config_content_has_item( config , RFTPATH_KEY))
+    model_config_set_rftpath( model_config , config_content_get_value(config , RFTPATH_KEY));
 
-  if (config_item_set( config , DBASE_TYPE_KEY))
-    model_config_set_dbase_type( model_config , config_get_value(config , DBASE_TYPE_KEY));
+  if (config_content_has_item( config , DBASE_TYPE_KEY))
+    model_config_set_dbase_type( model_config , config_content_get_value(config , DBASE_TYPE_KEY));
 
-  if (config_item_set( config , MAX_RESAMPLE_KEY))
-    model_config_set_max_internal_submit( model_config , config_get_value_as_int( config , MAX_RESAMPLE_KEY ));
+  if (config_content_has_item( config , MAX_RESAMPLE_KEY))
+    model_config_set_max_internal_submit( model_config , config_content_get_value_as_int( config , MAX_RESAMPLE_KEY ));
 
 
   {
     const char * export_file_name;
-    if (config_item_set( config , GEN_KW_EXPORT_FILE_KEY))
-      export_file_name = config_get_value(config, GEN_KW_EXPORT_FILE_KEY);
+    if (config_content_has_item( config , GEN_KW_EXPORT_FILE_KEY))
+      export_file_name = config_content_get_value(config, GEN_KW_EXPORT_FILE_KEY);
     else
       export_file_name = DEFAULT_GEN_KW_EXPORT_FILE;
 
     model_config_set_gen_kw_export_file(model_config, export_file_name);
    }
-
 }
 
 

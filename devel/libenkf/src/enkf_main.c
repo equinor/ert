@@ -2997,7 +2997,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     ensemble_config_init( enkf_main->ensemble_config , config , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
 
     model_config_init( enkf_main->model_config ,
-                       config ,
+                       content ,
                        enkf_main_get_ensemble_size( enkf_main ),
                        site_config_get_installed_jobs(enkf_main->site_config) ,
                        ecl_config_get_last_history_restart( enkf_main->ecl_config ),
