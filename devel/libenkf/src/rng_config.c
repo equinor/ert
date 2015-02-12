@@ -143,12 +143,12 @@ void rng_config_add_config_items( config_parser_type * config ) {
 }
 
 
-void rng_config_init( rng_config_type * rng_config , config_parser_type * config ) {
-  if (config_item_set( config , STORE_SEED_KEY ))
-    rng_config_set_seed_store_file( rng_config , config_iget(config , STORE_SEED_KEY ,0,0));
+void rng_config_init( rng_config_type * rng_config , config_content_type * config ) {
+  if (config_content_has_item( config , STORE_SEED_KEY ))
+    rng_config_set_seed_store_file( rng_config , config_content_iget(config , STORE_SEED_KEY ,0,0));
 
-  if (config_item_set( config , LOAD_SEED_KEY ))
-    rng_config_set_seed_load_file( rng_config , config_iget(config , LOAD_SEED_KEY ,0,0));
+  if (config_content_has_item( config , LOAD_SEED_KEY ))
+    rng_config_set_seed_load_file( rng_config , config_content_iget(config , LOAD_SEED_KEY ,0,0));
 }
 
 

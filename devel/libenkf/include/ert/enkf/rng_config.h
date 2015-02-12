@@ -26,11 +26,12 @@ extern "C" {
 #include <ert/util/rng.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 typedef struct rng_config_struct rng_config_type;
 
   void              rng_config_fprintf_config( rng_config_type * rng_config , FILE * stream );
-  void              rng_config_init( rng_config_type * rng_config , config_parser_type * config );
+  void              rng_config_init( rng_config_type * rng_config , config_content_type * config );
   void              rng_config_set_type( rng_config_type * rng_config , rng_alg_type type);
   rng_alg_type      rng_config_get_type(const rng_config_type * rng_config );
   const char      * rng_config_get_seed_load_file( const rng_config_type * rng_config );
