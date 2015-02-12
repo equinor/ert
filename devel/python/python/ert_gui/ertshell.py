@@ -41,7 +41,7 @@ def autoCompleteList(text, items):
     if not text:
         completions = items
     else:
-        completions = [item for item in items if item.startswith(text)]
+        completions = [item for item in items if item.lower().startswith(text.lower())]
     return completions
 
 
