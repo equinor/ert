@@ -24,10 +24,6 @@ class EnsembleConfig(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def hasKey(self, key):
-        """ @rtype: bool """
-        return EnsembleConfig.cNamespace().has_key(self, key)
-
     def getNode(self, key):
         """ @rtype: EnkfConfigNode """
         return EnsembleConfig.cNamespace().get_node(self, key).setParent(self)
