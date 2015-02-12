@@ -31,29 +31,30 @@
 #include <ert/enkf/ecl_refcase_list.h>
 
 int main(int argc , char ** argv) {
-  const char * config_file = argv[1];
-
-  ecl_config_type * ecl_config = ecl_config_alloc();
-  ecl_refcase_list_type * refcase_list = ecl_config_get_refcase_list( ecl_config );
+  util_install_signals();
   {
-    config_parser_type * config = config_alloc();
-    config_content_type * content;
+    const char * config_file = argv[1];
+    ecl_config_type * ecl_config = ecl_config_alloc();
+    ecl_refcase_list_type * refcase_list = ecl_config_get_refcase_list( ecl_config );
+    {
+      config_parser_type * config = config_alloc();
+      config_content_type * content;
 
-    ecl_config_add_config_items( config );
-    content = config_parse( config , config_file , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
-    test_assert_true( config_content_is_valid( content ));
-    ecl_config_init( ecl_config , config );
+      ecl_config_add_config_items( config );
+      content = config_parse( config , config_file , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
 
-    config_content_free( content );
-    config_free( config );
+      test_assert_true( config_content_is_valid( content ));
+      ecl_config_init( ecl_config , content );
+
+      config_content_free( content );
+      config_free( config );
+    }
+
+    test_assert_true( ecl_config_has_refcase( ecl_config ));
+    test_assert_int_equal( ecl_refcase_list_get_size( refcase_list) , 17);
+
+    ecl_config_free( ecl_config );
   }
-
-  test_assert_true( ecl_config_has_refcase( ecl_config ));
-  test_assert_int_equal( ecl_refcase_list_get_size( refcase_list) , 17);
-
-  ecl_config_free( ecl_config );
-
-
   exit(0);
 }
 

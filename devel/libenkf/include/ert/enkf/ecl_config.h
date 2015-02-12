@@ -27,6 +27,7 @@ extern "C" {
 #include <ert/util/ui_return.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
@@ -84,7 +85,7 @@ extern "C" {
 
 
   int                   ecl_config_get_num_cpu( const ecl_config_type * ecl_config );
-  void                  ecl_config_init( ecl_config_type * ecl_config , const config_parser_type * config);
+  void                  ecl_config_init( ecl_config_type * ecl_config , const config_content_type * config);
   void                  ecl_config_free( ecl_config_type *);
   bool                  ecl_config_include_static_kw(const ecl_config_type * , const char * );
   void                  ecl_config_add_static_kw(ecl_config_type *, const char *);
