@@ -2953,7 +2953,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       exit(1);
     }
 
-    site_config_init( enkf_main->site_config , config );                                   /*  <---- model_config : second pass. */
+    site_config_init( enkf_main->site_config , content );                                   /*  <---- model_config : second pass. */
 
     /*****************************************************************/
     /*

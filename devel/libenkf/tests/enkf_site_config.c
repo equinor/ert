@@ -111,6 +111,8 @@ void test_job_script() {
 int main(int argc , char ** argv) {
   const char * site_config_file = argv[1];
 
+  util_install_signals();
+
   test_empty();
   test_init( site_config_file );
   test_job_script();

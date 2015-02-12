@@ -63,7 +63,7 @@
    that means that the required validation of the config system, can
    not be used, instead every get must be preceeded by:
 
-      if (config_item_set(config , KEY)) ...
+      if (config_content_has_item(config , KEY)) ...
 
    Furthermore everything is done twice; first with config as a
    site-config instance, and later as user-config instance.
@@ -268,9 +268,9 @@ bool site_config_del_job(site_config_type * site_config, const char * job_name) 
   return ext_joblist_del_job(site_config->joblist, job_name);
 }
 
-static void site_config_add_jobs(site_config_type * site_config, const config_parser_type * config) {
-  if (config_item_set(config, INSTALL_JOB_KEY)) {
-    const config_content_item_type * content_item = config_get_content_item(config, INSTALL_JOB_KEY);
+static void site_config_add_jobs(site_config_type * site_config, const config_content_type * config) {
+  if (config_content_has_item(config, INSTALL_JOB_KEY)) {
+    const config_content_item_type * content_item = config_content_get_item(config, INSTALL_JOB_KEY);
     int num_jobs = config_content_item_get_size(content_item);
     for (int job_nr = 0; job_nr < num_jobs; job_nr++) {
       config_content_node_type * node = config_content_item_iget_node(content_item, job_nr);
@@ -280,8 +280,8 @@ static void site_config_add_jobs(site_config_type * site_config, const config_pa
       site_config_install_job(site_config, job_key, description_file);
     }
   }
-  if (config_item_set(config, INSTALL_JOB_DIRECTORY_KEY)) {
-    const config_content_item_type * content_item = config_get_content_item(config, INSTALL_JOB_DIRECTORY_KEY);
+  if (config_content_has_item(config, INSTALL_JOB_DIRECTORY_KEY)) {
+    const config_content_item_type * content_item = config_content_get_item(config, INSTALL_JOB_DIRECTORY_KEY);
     int num_dirs = config_content_item_get_size(content_item);
     printf("num_dirs = %d \n",num_dirs);
     for (int dir_nr = 0; dir_nr < num_dirs; dir_nr++) {
@@ -656,10 +656,10 @@ static void site_config_install_job_queue(site_config_type * site_config) {
     site_config_set_job_queue__(site_config, site_config->driver_type);
 }
 
-void site_config_init_env(site_config_type * site_config, const config_parser_type * config) {
+void site_config_init_env(site_config_type * site_config, const config_content_type * config) {
   {
-    config_content_item_type * setenv_item = config_get_content_item(config, SETENV_KEY);
-    if (setenv_item != NULL) {
+    if (config_content_has_item( config , SETENV_KEY)) {
+      config_content_item_type * setenv_item = config_content_get_item(config, SETENV_KEY);
       int i;
       for (i = 0; i < config_content_item_get_size(setenv_item); i++) {
         const config_content_node_type * setenv_node = config_content_item_iget_node(setenv_item, i);
@@ -672,8 +672,8 @@ void site_config_init_env(site_config_type * site_config, const config_parser_ty
   }
 
   {
-    config_content_item_type * path_item = config_get_content_item(config, UPDATE_PATH_KEY);
-    if (path_item != NULL) {
+    if (config_content_has_item( config , UPDATE_PATH_KEY)) {
+      config_content_item_type * path_item = config_content_get_item(config, UPDATE_PATH_KEY);
       int i;
       for (i = 0; i < config_content_item_get_size(path_item); i++) {
         const config_content_node_type * path_node = config_content_item_iget_node(path_item, i);
@@ -695,7 +695,7 @@ void site_config_init_env(site_config_type * site_config, const config_parser_ty
  */
 
 
-bool site_config_init(site_config_type * site_config, const config_parser_type * config) {
+bool site_config_init(site_config_type * site_config, const config_content_type * config) {
   site_config_add_jobs(site_config, config);
   site_config_init_env(site_config, config);
 
@@ -716,8 +716,8 @@ bool site_config_init(site_config_type * site_config, const config_parser_type *
      The string is supposed to be in OCTAL representation (without any
      prefix characters).
    */
-  if (config_item_set(config, UMASK_KEY)) {
-    const char * string_mask = config_get_value(config, UMASK_KEY);
+  if (config_content_has_item(config, UMASK_KEY)) {
+    const char * string_mask = config_content_get_value(config, UMASK_KEY);
     mode_t umask_value;
     if (util_sscanf_octal_int(string_mask, &umask_value))
       site_config_set_umask(site_config, umask_value);
@@ -725,56 +725,53 @@ bool site_config_init(site_config_type * site_config, const config_parser_type *
       util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n", __func__, string_mask);
   }
 
-  if (config_item_set(config, MAX_SUBMIT_KEY))
-    site_config_set_max_submit(site_config, config_get_value_as_int(config, MAX_SUBMIT_KEY));
+  if (config_content_has_item(config, MAX_SUBMIT_KEY))
+    site_config_set_max_submit(site_config, config_content_get_value_as_int(config, MAX_SUBMIT_KEY));
 
 
   /* LSF options */
   {
-    if (config_item_set(config, LSF_QUEUE_KEY))
-      site_config_set_lsf_queue(site_config, config_get_value(config, LSF_QUEUE_KEY));
+    if (config_content_has_item(config, LSF_QUEUE_KEY))
+      site_config_set_lsf_queue(site_config, config_content_get_value(config, LSF_QUEUE_KEY));
 
-    if (config_item_set(config, LSF_RESOURCES_KEY)) {
-      char * lsf_resource_request = config_alloc_joined_string(config, LSF_RESOURCES_KEY, " ");
+    if (config_content_has_item(config, LSF_RESOURCES_KEY)) {
+      char * lsf_resource_request = config_content_alloc_joined_string(config, LSF_RESOURCES_KEY, " ");
       site_config_set_lsf_request(site_config, lsf_resource_request);
       free(lsf_resource_request);
     }
 
-    if (config_item_set(config, MAX_RUNNING_LSF_KEY))
-      site_config_set_max_running_lsf(site_config, config_get_value_as_int(config, MAX_RUNNING_LSF_KEY));
+    if (config_content_has_item(config, MAX_RUNNING_LSF_KEY))
+      site_config_set_max_running_lsf(site_config, config_content_get_value_as_int(config, MAX_RUNNING_LSF_KEY));
 
-    if (config_item_set(config, LSF_SERVER_KEY))
-      site_config_set_lsf_server(site_config, config_get_value(config, LSF_SERVER_KEY));
+    if (config_content_has_item(config, LSF_SERVER_KEY))
+      site_config_set_lsf_server(site_config, config_content_get_value(config, LSF_SERVER_KEY));
   }
 
 
   /* RSH options */
   {
-    if (config_item_set(config, RSH_COMMAND_KEY))
-      site_config_set_rsh_command(site_config, config_get_value(config, RSH_COMMAND_KEY));
+    if (config_content_has_item(config, RSH_COMMAND_KEY))
+      site_config_set_rsh_command(site_config, config_content_get_value(config, RSH_COMMAND_KEY));
 
-    if (config_item_set(config, MAX_RUNNING_RSH_KEY))
-      site_config_set_max_running_rsh(site_config, config_get_value_as_int(config, MAX_RUNNING_RSH_KEY));
+    if (config_content_has_item(config, MAX_RUNNING_RSH_KEY))
+      site_config_set_max_running_rsh(site_config, config_content_get_value_as_int(config, MAX_RUNNING_RSH_KEY));
 
     /* Parsing the "host1:4" strings. */
-    {
-      const config_content_item_type * rsh_host_item = config_get_content_item(config, RSH_HOST_KEY);
-      if (rsh_host_item != NULL) {
-        stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config, RSH_HOST_KEY);
-        int i;
-        for (i = 0; i < stringlist_get_size(rsh_host_list); i++)
-          site_config_add_rsh_host_from_string(site_config, stringlist_iget(rsh_host_list, i));
+    if (config_content_has_item( config , RSH_HOST_KEY)) {
+      stringlist_type * rsh_host_list = config_content_alloc_complete_stringlist(config, RSH_HOST_KEY);
+      int i;
+      for (i = 0; i < stringlist_get_size(rsh_host_list); i++)
+        site_config_add_rsh_host_from_string(site_config, stringlist_iget(rsh_host_list, i));
 
-        stringlist_free(rsh_host_list);
-      }
+      stringlist_free(rsh_host_list);
     }
   }
 
 
-  if (config_item_set(config, QUEUE_SYSTEM_KEY)) {
+  if (config_content_has_item(config, QUEUE_SYSTEM_KEY)) {
     job_driver_type driver_type;
     {
-      const char * queue_system = config_get_value(config, QUEUE_SYSTEM_KEY);
+      const char * queue_system = config_content_get_value(config, QUEUE_SYSTEM_KEY);
       if (strcmp(queue_system, LSF_DRIVER_NAME) == 0) {
         driver_type = LSF_DRIVER;
       } else if (strcmp(queue_system, RSH_DRIVER_NAME) == 0)
@@ -792,22 +789,22 @@ bool site_config_init(site_config_type * site_config, const config_parser_type *
   }
 
   /* Parsing local options */
-  if (config_item_set(config, MAX_RUNNING_LOCAL_KEY))
-    site_config_set_max_running_local(site_config, config_iget_as_int(config, MAX_RUNNING_LOCAL_KEY, 0, 0));
+  if (config_content_has_item(config, MAX_RUNNING_LOCAL_KEY))
+    site_config_set_max_running_local(site_config, config_content_iget_as_int(config, MAX_RUNNING_LOCAL_KEY, 0, 0));
 
-  if (config_item_set(config, JOB_SCRIPT_KEY))
-    site_config_set_job_script(site_config, config_get_value_as_abspath(config, JOB_SCRIPT_KEY));
+  if (config_content_has_item(config, JOB_SCRIPT_KEY))
+    site_config_set_job_script(site_config, config_content_get_value_as_abspath(config, JOB_SCRIPT_KEY));
 
-  if (config_item_set(config, LICENSE_PATH_KEY))
-    site_config_set_license_root_path(site_config, config_get_value_as_abspath(config, LICENSE_PATH_KEY));
+  if (config_content_has_item(config, LICENSE_PATH_KEY))
+    site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
 
   site_config_install_job_queue(site_config);
 
   /* Setting QUEUE_OPTIONS */
   {
     int i;
-    for (i = 0; i < config_get_occurences(config, QUEUE_OPTION_KEY); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref(config, QUEUE_OPTION_KEY, i);
+    for (i = 0; i < config_content_get_occurences(config, QUEUE_OPTION_KEY); i++) {
+      const stringlist_type * tokens = config_content_iget_stringlist_ref(config, QUEUE_OPTION_KEY, i);
       const char * driver_name = stringlist_iget(tokens, 0);
       const char * option_key = stringlist_iget(tokens, 1);
       const char * option_value = stringlist_alloc_joined_substring(tokens, 2, stringlist_get_size(tokens), " ");
