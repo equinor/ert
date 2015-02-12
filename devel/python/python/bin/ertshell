@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+import os
+from PyQt4.QtGui import QApplication
+import sys
+from ert_gui.ertshell import ErtShell
+from ert_gui.tools import HelpCenter
+from ert_gui.widgets import util
+
+
+if __name__ == '__main__':
+    if os.getenv("ERT_SHARE_PATH"):
+        ert_share_path = os.getenv("ERT_SHARE_PATH")
+    else:
+        ert_share_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share"))
+
+    util.img_prefix = ert_share_path + "/gui/img/"
+
+    help_center = HelpCenter("ERT")
+    help_center.setHelpLinkPrefix(os.getenv("ERT_SHARE_PATH") + "/gui/help/")
+
+    try:
+        import site_config
+
+        site_config_file = site_config.config_file
+    except ImportError:
+        site_config_file = None
+
+    app = QApplication(sys.argv)
+    app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
+
+    ert_shell = ErtShell(site_config=site_config_file)
+    if len(sys.argv) > 1:
+        ert_shell.onecmd('load_config %s' % sys.argv[1])
+
+        if len(sys.argv) > 2:
+            for workflow in sys.argv[2:]:
+                ert_shell.onecmd('run_workflow %s' % workflow)
+
+    ert_shell.cmdloop()
