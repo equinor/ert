@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-    
-   The file 'analysis_iter_config.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+
+   The file 'analysis_iter_config.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 
@@ -36,13 +36,13 @@ struct analysis_iter_config_struct {
   stringlist_type * storage;
   int               num_iterations;
   int               num_iter_tries;
-  bool              case_set;   
-  bool              num_iterations_set; 
+  bool              case_set;
+  bool              num_iterations_set;
 };
 
 
 void analysis_iter_config_set_num_iterations( analysis_iter_config_type * config , int num_iterations) {
-  config->num_iterations = num_iterations; 
+  config->num_iterations = num_iterations;
   config->num_iterations_set = true;
 }
 
@@ -81,7 +81,7 @@ char * analysis_iter_config_get_case_fmt( analysis_iter_config_type * config) {
 
 
 analysis_iter_config_type * analysis_iter_config_alloc() {
-   analysis_iter_config_type * config = util_malloc( sizeof * config );  
+   analysis_iter_config_type * config = util_malloc( sizeof * config );
    config->case_fmt = NULL;
    analysis_iter_config_set_case_fmt( config, DEFAULT_ANALYSIS_ITER_CASE);
    config->storage = stringlist_alloc_new();
@@ -120,7 +120,7 @@ void analysis_iter_config_add_config_items( config_parser_type * config ) {
 void analysis_iter_config_init(analysis_iter_config_type * iter_config , const config_parser_type * config) {
   if (config_item_set( config , ITER_CASE_KEY ))
     analysis_iter_config_set_case_fmt( iter_config , config_get_value( config , ITER_CASE_KEY ));
-  
+
   if (config_item_set( config , ITER_COUNT_KEY ))
     analysis_iter_config_set_num_iterations( iter_config , config_get_value_as_int( config , ITER_COUNT_KEY ));
 

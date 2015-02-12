@@ -1,24 +1,24 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'model_config.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'model_config.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #ifndef __MODEL_CONFIG_H__
 #define __MODEL_CONFIG_H__
-#ifdef __cplusplus 
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -57,7 +57,7 @@ extern "C" {
   const char           * model_config_get_enspath( const model_config_type * model_config);
   const char           * model_config_get_rftpath( const model_config_type * model_config);
   fs_driver_impl         model_config_get_dbase_type(const model_config_type * model_config );
-  const ecl_sum_type   * model_config_get_refcase( const model_config_type * model_config ); 
+  const ecl_sum_type   * model_config_get_refcase( const model_config_type * model_config );
   void                   model_config_init_internalization( model_config_type * );
   void                   model_config_set_internalize_state( model_config_type *  , int );
   void                   model_config_set_load_state( model_config_type *  , int );
@@ -95,7 +95,7 @@ extern "C" {
 
   UTIL_IS_INSTANCE_HEADER( model_config);
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 }
 #endif
 #endif

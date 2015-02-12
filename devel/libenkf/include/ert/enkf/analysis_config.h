@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'analysis_config.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'analysis_config.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 
@@ -106,8 +106,8 @@ int                    analysis_config_get_min_realisations( const analysis_conf
 bool                   analysis_config_have_enough_realisations( const analysis_config_type * config , int realisations);
 void                   analysis_config_set_stop_long_running( analysis_config_type * config, bool stop_long_running );
 bool                   analysis_config_get_stop_long_running( const analysis_config_type * config);
-void                   analysis_config_set_max_runtime( analysis_config_type * config, int max_runtime  ); 
-int                    analysis_config_get_max_runtime( const analysis_config_type * config ); 
+void                   analysis_config_set_max_runtime( analysis_config_type * config, int max_runtime  );
+int                    analysis_config_get_max_runtime( const analysis_config_type * config );
 const char           * analysis_config_get_active_module_name( const analysis_config_type * config );
 
   UTIL_IS_INSTANCE_HEADER( analysis_config );

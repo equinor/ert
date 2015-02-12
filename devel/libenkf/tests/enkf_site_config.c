@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-    
-   The file 'enkf_site_config.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+
+   The file 'enkf_site_config.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #include <stdlib.h>
 #include <stdbool.h>
@@ -62,10 +62,10 @@ void test_init(const char * config_file) {
     config_fprintf_errors( config , true , stdout );
     test_error_exit("Parsing site config file:%s failed \n",config_file );
   }
-  
+
   if (!site_config_init( site_config , config ))
     test_error_exit("Loading site_config from config failed\n");
-  
+
   config_content_free( content );
   config_free( config );
   site_config_free( site_config );
@@ -77,7 +77,7 @@ void test_job_script() {
   {
     site_config_type * site_config = site_config_alloc_empty();
     test_assert_false( site_config_has_job_script( site_config ));
-    
+
     test_assert_false( site_config_set_job_script( site_config , "/does/not/exist" ));
     test_assert_false( site_config_has_job_script( site_config ));
 
@@ -111,7 +111,7 @@ int main(int argc , char ** argv) {
   test_empty();
   test_init( site_config_file );
   test_job_script();
-    
+
   exit(0);
 }
 

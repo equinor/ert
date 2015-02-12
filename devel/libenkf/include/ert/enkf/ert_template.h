@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'ert_template.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'ert_template.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #ifndef __ERT_TEMPLATE_H__
@@ -35,7 +35,7 @@ typedef struct ert_templates_struct ert_templates_type;
 stringlist_type   * ert_templates_alloc_list( ert_templates_type * ert_templates);
 ert_template_type * ert_template_alloc( const char * template_file , const char * target_file, subst_list_type * parent_subst) ;
 void                ert_template_free( ert_template_type * ert_tamplete );
-void                ert_template_instantiate( ert_template_type * ert_template , const char * path , const subst_list_type * arg_list ); 
+void                ert_template_instantiate( ert_template_type * ert_template , const char * path , const subst_list_type * arg_list );
 void                ert_template_add_arg( ert_template_type * ert_template , const char * key , const char * value );
 void                ert_template_free__(void * arg);
 
