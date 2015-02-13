@@ -3065,8 +3065,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
           enkf_main->pre_clear_runpath = config_content_get_value_as_bool( content , PRE_CLEAR_RUNPATH_KEY);
       }
 
-
-      ecl_config_static_kw_init( enkf_main->ecl_config , config );
+      ecl_config_static_kw_init( enkf_main->ecl_config , content );
 
       /* Installing templates */
       {
