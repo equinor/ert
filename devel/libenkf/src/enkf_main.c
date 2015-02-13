@@ -3071,7 +3071,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       ert_templates_init( enkf_main->templates , content );
 
       /*****************************************************************/
-      ert_report_list_init( enkf_main->report_list , config , ecl_config_get_refcase( enkf_main->ecl_config ));
+      ert_report_list_init( enkf_main->report_list , content , ecl_config_get_refcase( enkf_main->ecl_config ));
 
 
       /*****************************************************************/
