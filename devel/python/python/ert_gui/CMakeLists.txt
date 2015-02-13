@@ -1,7 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
     ert_splash.py
-    ertshell.py
     gert_main.py
     ide_test.py
     main_window.py
@@ -14,6 +13,7 @@ add_python_package("python.ert_gui"  ${PYTHON_INSTALL_PREFIX}/ert_gui "${PYTHON_
 add_subdirectory(ide)
 add_subdirectory(models)
 add_subdirectory(pages)
+add_subdirectory(shell)
 add_subdirectory(simulation)
 add_subdirectory(tools)
 add_subdirectory(viewer)
