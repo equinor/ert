@@ -153,9 +153,12 @@ void test_filename() {
 }
 
 int main(int argc , char ** argv) {
-  test_runpath_list();
-  test_config( argv[1] );
-  test_filename();
-  exit(0);
+  util_install_signals();
+  {
+    test_runpath_list();
+    test_config( argv[1] );
+    test_filename();
+    exit(0);
+  }
 }
 

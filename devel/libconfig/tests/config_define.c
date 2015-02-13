@@ -34,7 +34,7 @@ void test_define(config_parser_type * config , const char * config_file) {
   test_assert_true( config_content_is_instance( content ));
   test_assert_true(config_content_is_valid( content ));
   {
-    const subst_list_type * define_list = config_get_define_list( config );
+    const subst_list_type * define_list = config_content_get_define_list( content );
     test_assert_true( subst_list_has_key( define_list , "VAR1"));
     test_assert_true( subst_list_has_key( define_list , "VAR2"));
     test_assert_true( subst_list_has_key( define_list , "VARX"));
@@ -61,12 +61,15 @@ config_parser_type * config_create_schema() {
 
 
 int main(int argc , char ** argv) {
-  const char * config_file = argv[1];
-  config_parser_type * config = config_create_schema();
-  
-  test_define( config , config_file );
-
-  config_free( config );
-  exit(0);
+  util_install_signals();
+  {
+    const char * config_file = argv[1];
+    config_parser_type * config = config_create_schema();
+    
+    test_define( config , config_file );
+    
+    config_free( config );
+    exit(0);
+  }
 }
 

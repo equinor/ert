@@ -2519,27 +2519,27 @@ static void enkf_main_install_data_kw( enkf_main_type * enkf_main , hash_type * 
     }
     hash_iter_free(iter);
   }
+}
 
 
 
+static void enkf_main_install_common_data_kw( enkf_main_type * enkf_main ) {
   /*
      Installing the based (key,value) pairs which are common to all
      ensemble members, and independent of time.
   */
-  {
-    char * cwd                    = util_alloc_cwd();
-    char * date_string            = util_alloc_date_stamp();
-    const char * num_cpu_string   = "1";
+  char * cwd                    = util_alloc_cwd();
+  char * date_string            = util_alloc_date_stamp();
+  const char * num_cpu_string   = "1";
 
-    enkf_main_add_subst_kw( enkf_main , "CWD"          , cwd , "The current working directory we are running from - the location of the config file." , true);
-    enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , true);
-    enkf_main_add_subst_kw( enkf_main , "DATE"         , date_string , "The current date." , true);
-    enkf_main_add_subst_kw( enkf_main , "NUM_CPU"      , num_cpu_string , "The number of CPU used for one forward model." , true );
-    enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , qc_module_get_runpath_list_file( enkf_main->qc_module ) , "The name of a file with a list of run directories." , true);
+  enkf_main_add_subst_kw( enkf_main , "CWD"          , cwd , "The current working directory we are running from - the location of the config file." , true);
+  enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , true);
+  enkf_main_add_subst_kw( enkf_main , "DATE"         , date_string , "The current date." , true);
+  enkf_main_add_subst_kw( enkf_main , "NUM_CPU"      , num_cpu_string , "The number of CPU used for one forward model." , true );
+  enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , qc_module_get_runpath_list_file( enkf_main->qc_module ) , "The name of a file with a list of run directories." , true);
 
-    free( cwd );
-    free( date_string );
-  }
+  free( cwd );
+  free( date_string );
 }
 
 
@@ -2754,6 +2754,8 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_parser_t
     if (data_kw)
       hash_free( data_kw );
   }
+
+  enkf_main_install_common_data_kw( enkf_main );
 }
 
 
@@ -2776,7 +2778,7 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
 }
 
 
-void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_parser_type * config ) {
+void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_content_type * config ) {
   const enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
   if (enkf_obs_have_obs( enkf_obs )) {
     enkf_main->local_config  = local_config_alloc( );
@@ -2790,8 +2792,8 @@ void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_par
       /* Install custom local_config - if present.*/
       {
         int i;
-        for (i = 0; i < config_get_occurences( config , LOCAL_CONFIG_KEY); i++) {
-          const stringlist_type * files = config_iget_stringlist_ref(config , LOCAL_CONFIG_KEY , i);
+        for (i = 0; i < config_content_get_occurences( config , LOCAL_CONFIG_KEY); i++) {
+          const stringlist_type * files = config_content_iget_stringlist_ref(config , LOCAL_CONFIG_KEY , i);
           for (int j=0; j < stringlist_get_size( files ); j++)
             local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
         }
@@ -2810,7 +2812,7 @@ void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_par
       free(all_active_config_file);
     }
   } else
-    if (config_get_occurences( config , LOCAL_CONFIG_KEY) > 0)
+    if (config_content_get_occurences( config , LOCAL_CONFIG_KEY) > 0)
       fprintf(stderr,"** Warning: Not possible to configure local analysis without SCHEDULE or REFCASE - %s keyword(s) ignored\n", LOCAL_CONFIG_KEY);
 }
 
@@ -2832,13 +2834,14 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
     {
       config_content_type * content = config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
       if (config_content_is_valid( content )) {
-        site_config_init( enkf_main->site_config , config );
-        analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, config);
-        ert_report_list_site_init( enkf_main->report_list , config );
-        ert_workflow_list_init( enkf_main->workflow_list , config );
+        site_config_init( enkf_main->site_config , content );
+        analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
+        ert_report_list_site_init( enkf_main->report_list , content );
+        ert_workflow_list_init( enkf_main->workflow_list , content );
       } else {
+        config_error_type * errors = config_content_get_errors( content );
         fprintf(stderr , "** ERROR: Parsing site configuration file:%s failed \n\n" , site_config_file);
-        config_fprintf_errors( config , true , stderr );
+        config_error_fprintf( errors , true , stderr );
         exit(1);
       }
       config_content_free( content );
@@ -2945,7 +2948,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
     content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true);
     if (!config_content_is_valid( content )) {
-      config_fprintf_errors( config , true , stderr );
+      config_error_type * errors = config_content_get_errors( content );
+      config_error_fprintf( errors , true , stderr );
       exit(1);
     }
 
@@ -3117,7 +3121,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
          if you have created a personal local config that will be
          loaded on top.
       */
-      enkf_main_init_local_updates(enkf_main , config );
+      enkf_main_init_local_updates(enkf_main , content );
 
     }
     config_content_free( content );

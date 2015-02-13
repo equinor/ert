@@ -59,12 +59,15 @@ void test_init(const char * config_file) {
   site_config_add_config_items( config , true );
   content = config_parse(config , config_file , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true);
   if (!config_content_is_valid(content)) {
-    config_fprintf_errors( config , true , stdout );
-    test_error_exit("Parsing site config file:%s failed \n",config_file );
+    config_error_type * errors = config_content_get_errors( content );
+    config_error_fprintf( errors , true , stderr );
+    test_assert_true( false );
   }
 
-  if (!site_config_init( site_config , config ))
-    test_error_exit("Loading site_config from config failed\n");
+  if (!site_config_init( site_config , content )) {
+    printf("Loading site_config from config failed\n");
+    test_assert_true( false );
+  }
 
   config_content_free( content );
   config_free( config );

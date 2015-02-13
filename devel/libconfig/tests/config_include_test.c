@@ -53,10 +53,9 @@ void parse_test(config_parser_type * config ,
   config_rel_path = util_alloc_rel_path(  NULL , config_abs_path);
 
   {
-    config_clear( config );
     config_content_type * content = config_parse( config , config_file , "--" , "INCLUDE" , NULL , CONFIG_UNRECOGNIZED_IGNORE , true );
     if (config_content_is_valid( content )) {
-      
+
       char * relpath0 = util_alloc_filename( config_rel_path , path0, NULL);
       char * relpath1 = util_alloc_filename( config_rel_path , path1, NULL);
       char * relpath2 = util_alloc_filename( config_rel_path , path2, NULL);
@@ -68,21 +67,21 @@ void parse_test(config_parser_type * config ,
       char * abspath2 = util_alloc_filename( config_abs_path , path2, NULL);
       char * abspath3 = util_alloc_filename( config_abs_path , path3, NULL);
       char * abspath4 = util_alloc_filename( config_abs_path , path4, NULL);
-      
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH0") , relpath0 );
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH1") , relpath1 );
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH2") , relpath2 );
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH3") , relpath3 );
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH4") , relpath4 );
-      
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH0") , abspath0 );
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH1") , abspath1 );
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH2") , abspath2 );
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH3") , abspath3 );
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH4") , abspath4 );
-      
+
+      test_assert_string_equal(config_content_get_value_as_relpath(content , "PATH0") , relpath0 );
+      test_assert_string_equal(config_content_get_value_as_relpath(content , "PATH1") , relpath1 );
+      test_assert_string_equal(config_content_get_value_as_relpath(content , "PATH2") , relpath2 );
+      test_assert_string_equal(config_content_get_value_as_relpath(content , "PATH3") , relpath3 );
+      test_assert_string_equal(config_content_get_value_as_relpath(content , "PATH4") , relpath4 );
+
+      test_assert_string_equal(config_content_get_value_as_abspath(content , "PATH0") , abspath0 );
+      test_assert_string_equal(config_content_get_value_as_abspath(content , "PATH1") , abspath1 );
+      test_assert_string_equal(config_content_get_value_as_abspath(content , "PATH2") , abspath2 );
+      test_assert_string_equal(config_content_get_value_as_abspath(content , "PATH3") , abspath3 );
+      test_assert_string_equal(config_content_get_value_as_abspath(content , "PATH4") , abspath4 );
+
     } else {
-      config_error_type * error = config_get_errors( config );
+      const config_error_type * error = config_content_get_errors( content );
       config_error_fprintf( error , true , stdout );
       test_error_exit("Hmm - parsing %s failed \n", config_file );
     }

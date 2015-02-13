@@ -36,16 +36,15 @@ int main(int argc , char ** argv) {
     config_content_type * content = config_parse(config , config_file , "--" , NULL , NULL , false , true );
     test_assert_true(config_content_is_instance( content ));
     test_assert_true(config_content_is_valid( content ));
-    config_content_free( content );
-  }
-  
-  {
-    test_assert_int_equal( config_get_occurences( config , "APPEND" ) , 3);
+    test_assert_int_equal( config_content_get_occurences( content , "APPEND" ) , 3);
+
     {
-      const char * value = config_get_value( config , "APPEND");
+      const char * value = config_content_get_value( content , "APPEND");
       test_assert_string_equal( value , "VALUE3");
     }
-  } 
+
+    config_content_free( content );
+  }
 
   {
     config_content_type * content = config_parse( config , "DoesNotExist" , "--" , NULL , NULL , false , true);

@@ -229,7 +229,7 @@ void ert_templates_init( ert_templates_type * templates , const config_parser_ty
         if (value != NULL)
           ert_template_add_arg( template ,key , value );
         else
-          fprintf(stderr,"** Warning - failed to parse argument:%s as key:value - ignored \n",config_iget( config , "RUN_TEMPLATE" , i , iarg ));
+          fprintf(stderr,"** Warning - failed to parse argument:%s as key:value - ignored \n",config_content_iget( config , "RUN_TEMPLATE" , i , iarg ));
 
         free( key );
         util_safe_free( value );

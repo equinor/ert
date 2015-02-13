@@ -32,7 +32,7 @@
 */
 
 
-config_content_node_type * config_get_value_node( const config_parser_type * config , const char * kw) {
+/*config_content_node_type * config_get_value_node( const config_parser_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
   if (item != NULL) {
     config_content_node_type * node = config_content_item_get_last_node( item );
@@ -85,18 +85,10 @@ const char * config_get_value(const config_parser_type * config , const char * k
   config_content_node_type * node = config_get_value_node__( config , kw );
   return config_content_node_iget(node , 0);
 }
-
+*/
 
 /*****************************************************************/
 
-int config_get_content_size( const config_parser_type * config ) {
-  return vector_get_size(config->content_list);
-}
-
-
-const config_content_node_type * config_iget_content_node( const config_parser_type * config , int index) {
-  return vector_iget_const( config->content_list , index );
-}
 
 
 
@@ -109,6 +101,3 @@ int config_get_schema_size( const config_parser_type * config ) {
 
 
 
-config_error_type * config_get_errors( const config_parser_type * config ) {
-  return config->parse_errors;
-}

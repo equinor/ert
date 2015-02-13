@@ -55,44 +55,36 @@ int main(int argc , char ** argv) {
       config_content_free( content );
     }
 
-    config_clear( config );
-
     {
       config_content_type * content = config_parse( config , argc_less , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR ,  true);
       test_assert_true( config_content_is_instance( content ));
       test_assert_false( config_content_is_valid( content ));
+
+      {
+        const config_error_type * config_error = config_content_get_errors( content );
+        const char * error_msg = "Error when parsing config_file:\"argc_less\" Keyword:ITEM must have at least 2 arguments.";
+
+        test_assert_int_equal( config_error_count( config_error ) , 1);
+        test_assert_string_equal( config_error_iget( config_error , 0 ) , error_msg);
+      }
       config_content_free( content );
     }
-
-
-    {
-      const config_error_type * config_error = config_get_errors( config );
-      const char * error_msg = "Error when parsing config_file:\"argc_less\" Keyword:ITEM must have at least 2 arguments.";
-
-      test_assert_int_equal( config_error_count( config_error ) , 1);
-      test_assert_string_equal( config_error_iget( config_error , 0 ) , error_msg);
-    }
-    config_clear( config );
 
     {
       config_content_type * content = config_parse( config , argc_more , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR ,  true);
       test_assert_true( config_content_is_instance( content ));
       test_assert_false( config_content_is_valid( content ));
+      {
+        const config_error_type * config_error = config_content_get_errors( content );
+        const char * error_msg = "Error when parsing config_file:\"argc_more\" Keyword:ITEM must have maximum 2 arguments.";
+
+        test_assert_int_equal( config_error_count( config_error ) , 1);
+        test_assert_string_equal( config_error_iget( config_error , 0 ) , error_msg);
+      }
       config_content_free( content );
     }
-
-    {
-      const config_error_type * config_error = config_get_errors( config );
-      const char * error_msg = "Error when parsing config_file:\"argc_more\" Keyword:ITEM must have maximum 2 arguments.";
-
-      test_assert_int_equal( config_error_count( config_error ) , 1);
-      test_assert_string_equal( config_error_iget( config_error , 0 ) , error_msg);
-    }
-    config_clear( config );
-
 
     config_free( config );
     exit(0);
   }
 }
-

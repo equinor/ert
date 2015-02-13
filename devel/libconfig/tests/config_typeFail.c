@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include <ert/util/test_util.h>
+
 #include <ert/config/config_error.h>
 #include <ert/config/config_parser.h>
 #include <ert/config/config_content.h>
@@ -51,20 +53,16 @@ int main(int argc , char ** argv) {
 
     if (config_content_is_valid( content )) {
       error("Parse error\n");
-      config_content_free( content );
     } else {
-      config_error_type * cerror = config_get_errors( config );
+      const config_error_type * cerror = config_content_get_errors( content );
       if (config_error_count( cerror ) > 0) {
         int i;
         for (i=0; i < config_error_count( cerror ); i++) {
           printf("Error %d: %s \n",i , config_error_iget( cerror , i ));
         }
       }
-      printf("Error count:%d \n",config_error_count( cerror ));
-      if (config_error_count( cerror ) != 5)
-        error("Wrong error count\n");
+      test_assert_int_equal( 5 , config_error_count( cerror ));
     }
-
     config_content_free( content );
   }
   printf("OK \n");

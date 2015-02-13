@@ -104,20 +104,23 @@ void test_load_summary( enkf_main_type * enkf_main , const char * summary_key) {
 
 
 int main(int argc, char ** argv) {
-  const char * config_file = argv[1];
-  test_work_area_type * work_area = test_work_area_alloc( "enkf_main_fs" );
-  char * model_config;
-  util_alloc_file_components( config_file , NULL , &model_config , NULL);
-  test_work_area_set_store( work_area , true );
-  test_work_area_copy_parent_content( work_area , config_file );
+  util_install_signals();
   {
-    const char * site_config = "/project/res/etc/ERT/site-config";
-    enkf_main_type * enkf_main = enkf_main_bootstrap( site_config , model_config , false , false );
+    const char * config_file = argv[1];
+    test_work_area_type * work_area = test_work_area_alloc( "enkf_main_fs" );
+    char * model_config;
+    util_alloc_file_components( config_file , NULL , &model_config , NULL);
+    test_work_area_set_store( work_area , true );
+    test_work_area_copy_parent_content( work_area , config_file );
+    {
+      const char * site_config = "/project/res/etc/ERT/site-config";
+      enkf_main_type * enkf_main = enkf_main_bootstrap( site_config , model_config , false , false );
 
-    test_load_summary(enkf_main , "WWCT:OP_3");
-    test_load_GEN_KW( enkf_main , "MULTFLT" , "F3");
-    enkf_main_free( enkf_main );
+      test_load_summary(enkf_main , "WWCT:OP_3");
+      test_load_GEN_KW( enkf_main , "MULTFLT" , "F3");
+      enkf_main_free( enkf_main );
+    }
+    test_work_area_free( work_area );
+    exit(0);
   }
-  test_work_area_free( work_area );
-  exit(0);
 }
