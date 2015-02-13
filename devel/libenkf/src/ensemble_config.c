@@ -393,9 +393,9 @@ void ensemble_config_add_config_items(config_parser_type * config) {
 */
     
 
-void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_parser_type * config) {
-  const config_content_item_type * item = config_get_content_item( config , GEN_DATA_KEY );
-  if (item != NULL) {
+void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_content_type * config) {
+  if (config_content_has_item(config , GEN_DATA_KEY)) {
+    const config_content_item_type * item = config_content_get_item( config , GEN_DATA_KEY );
     int i;
     for (i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
@@ -408,10 +408,10 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
 }
 
 
-void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_parser_type * config) {
+void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_content_type * config) {
   /* gen_param  - should be unified with the gen_data*/
-  const config_content_item_type * item = config_get_content_item( config , GEN_PARAM_KEY );
-  if (item != NULL) {
+  if (config_content_has_item(config , GEN_PARAM_KEY)) {
+    const config_content_item_type * item = config_content_get_item( config , GEN_PARAM_KEY );
     for (int i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
       enkf_config_node_type * config_node = enkf_config_node_alloc_GEN_PARAM_from_config( node );
@@ -423,9 +423,9 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
 }
 
 
-void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const config_parser_type * config ) {
-  const config_content_item_type * gen_kw_item = config_get_content_item( config , GEN_KW_KEY );
-  if (gen_kw_item != NULL) {
+void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const config_content_type * config ) {
+  if (config_content_has_item(config , GEN_KW_KEY)) {
+    const config_content_item_type * gen_kw_item = config_content_get_item( config , GEN_KW_KEY );
     int i;
     for (i=0; i < config_content_item_get_size( gen_kw_item ); i++) {
       config_content_node_type * node = config_content_item_iget_node( gen_kw_item , i );
@@ -462,9 +462,9 @@ void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const
 
 
 
-void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , const config_parser_type * config ) {
-  const config_content_item_type * item = config_get_content_item( config , SURFACE_KEY );
-  if (item != NULL) {
+void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , const config_content_type * config ) {
+  if (config_content_has_item(config , SURFACE_KEY)) {
+    const config_content_item_type * item = config_content_get_item( config , SURFACE_KEY );
     int i;
     for (i=0; i < config_content_item_get_size( item ); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
@@ -506,10 +506,9 @@ void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , cons
 }
 
 
-void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , const config_parser_type * config , const ecl_sum_type * refcase) {
-  const config_content_item_type * item = config_get_content_item( config , SUMMARY_KEY );
-
-  if (item != NULL) {
+void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , const config_content_type * config , const ecl_sum_type * refcase) {
+  if (config_content_has_item(config , SUMMARY_KEY)) {
+    const config_content_item_type * item = config_content_get_item( config , SUMMARY_KEY );
     int i;
     for (i=0; i < config_content_item_get_size( item ); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
@@ -540,9 +539,9 @@ void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , cons
 }
 
 
-void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const config_parser_type * config , ecl_grid_type * grid) {
-  const config_content_item_type * item = config_get_content_item( config , FIELD_KEY );
-  if (item != NULL) {
+void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const config_content_type * config , ecl_grid_type * grid) {
+  if (config_content_has_item(config , FIELD_KEY)) {
+    const config_content_item_type * item = config_content_get_item( config , FIELD_KEY );
     int i;
     for (i=0; i < config_content_item_get_size( item ); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
@@ -641,13 +640,13 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
    impossible to use wildcards when expanding summary variables.
 */
 
-void ensemble_config_init(ensemble_config_type * ensemble_config , const config_parser_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
+void ensemble_config_init(ensemble_config_type * ensemble_config , const config_content_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
   int i;
   ensemble_config_set_refcase( ensemble_config , refcase );
 
-  if (config_item_set( config , GEN_KW_TAG_FORMAT_KEY))
-    ensemble_config_set_gen_kw_format( ensemble_config , config_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
-  
+  if (config_content_has_item( config , GEN_KW_TAG_FORMAT_KEY))
+    ensemble_config_set_gen_kw_format( ensemble_config , config_content_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
+
   ensemble_config_init_GEN_PARAM( ensemble_config , config );
   ensemble_config_init_GEN_DATA( ensemble_config , config );
   ensemble_config_init_GEN_KW(ensemble_config , config ); 
@@ -660,8 +659,8 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   
   /* Containers - this must come last, to ensure that the other nodes have been added. */
   {
-    for (i=0; i < config_get_occurences(config , CONTAINER_KEY ); i++) {
-      const stringlist_type * container_kw_list = config_iget_stringlist_ref(config , CONTAINER_KEY , i);
+    for (i=0; i < config_content_get_occurences(config , CONTAINER_KEY ); i++) {
+      const stringlist_type * container_kw_list = config_content_iget_stringlist_ref(config , CONTAINER_KEY , i);
       const char * container_key = stringlist_iget( container_kw_list , 0 );
       enkf_config_node_type * container_node = ensemble_config_add_container( ensemble_config , container_key );
       

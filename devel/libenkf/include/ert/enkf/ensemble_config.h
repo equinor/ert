@@ -29,6 +29,7 @@ extern "C" {
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 
 #include <ert/enkf/summary_config.h>
 #include <ert/enkf/enkf_config_node.h>
@@ -59,7 +60,7 @@ typedef struct ensemble_config_struct ensemble_config_type;
   const enkf_config_node_type  * ensemble_config_user_get_node(const ensemble_config_type *  , const char * , char **);
   ert_impl_type            ensemble_config_impl_type(const ensemble_config_type *, const char * );
   enkf_var_type            ensemble_config_var_type(const ensemble_config_type *, const char * );
-  void                     ensemble_config_init(ensemble_config_type * ensemble_config , const config_parser_type * config , ecl_grid_type * grid , const ecl_sum_type * refcase);
+  void                     ensemble_config_init(ensemble_config_type * ensemble_config , const config_content_type * config , ecl_grid_type * grid , const ecl_sum_type * refcase);
   void                     ensemble_config_free(ensemble_config_type * );
   bool                     ensemble_config_has_key(const ensemble_config_type * , const char * );
   bool                     ensemble_config_has_impl_type(const  ensemble_config_type * config, const ert_impl_type impl_type);
@@ -68,7 +69,7 @@ typedef struct ensemble_config_struct ensemble_config_type;
   void                          ensemble_config_del_node(ensemble_config_type * , const char * );
   void                          ensemble_config_add_config_items(config_parser_type * );
 
-  void                          ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_parser_type * config );
+  void                          ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_content_type * config );
 
   enkf_config_node_type          * ensemble_config_get_node(const ensemble_config_type * , const char * );
   enkf_config_node_type          * ensemble_config_get_or_create_summary_node(const ensemble_config_type * ensemble_config, const char * key);

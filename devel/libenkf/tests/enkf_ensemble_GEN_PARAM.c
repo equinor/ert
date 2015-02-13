@@ -50,7 +50,7 @@ int main(int argc , char ** argv) {
   content = config_parse( config , config_file , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true );
   test_assert_true( config_content_is_valid( content ) );
 
-  ensemble_config_init_GEN_PARAM( ensemble, config );
+  ensemble_config_init_GEN_PARAM( ensemble, content );
 
   config_content_free( content );
   config_free( config );
