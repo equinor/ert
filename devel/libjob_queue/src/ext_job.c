@@ -31,6 +31,8 @@
 #include <ert/util/parser.h>
 
 #include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
+#include <ert/config/config_error.h>
 
 #include <ert/job_queue/ext_job.h>
 
@@ -881,7 +883,8 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
           }
         }
       } else {
-        config_fprintf_errors( config , true , stderr );
+        config_error_type * error = config_content_get_errors( content );
+        config_error_fprintf( error , true , stderr );
         exit(1);
       }
       config_content_free( content );

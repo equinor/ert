@@ -143,14 +143,13 @@ bool workflow_try_compile( workflow_type * script , const subst_list_type * cont
       config_parser_type * config_compiler = workflow_joblist_get_compiler( script->joblist );
       script->compiled = false;
       workflow_clear( script );
-      config_clear( config_compiler );
       {
         config_content_type * content = config_parse( config_compiler , src_file , WORKFLOW_COMMENT_STRING , WORKFLOW_INCLUDE , NULL , CONFIG_UNRECOGNIZED_ERROR , true );
 
         if (config_content_is_valid( content )) {
           int cmd_line;
-          for (cmd_line = 0; cmd_line < config_get_content_size(config_compiler); cmd_line++) {
-            const config_content_node_type * node = config_iget_content_node( config_compiler , cmd_line );
+          for (cmd_line = 0; cmd_line < config_content_get_size(content); cmd_line++) {
+            const config_content_node_type * node = config_content_iget_node( content , cmd_line );
             const char * jobname = config_content_node_get_kw( node );
             const workflow_job_type * job = workflow_joblist_get_job( script->joblist , jobname );
             cmd_type * cmd = cmd_alloc( job , config_content_node_get_stringlist( node ));
@@ -159,7 +158,7 @@ bool workflow_try_compile( workflow_type * script , const subst_list_type * cont
           }
           script->compiled = true;
         } else
-          workflow_store_error( script , config_get_errors( config_compiler ));
+          workflow_store_error( script , config_content_get_errors( content ));
 
         config_content_free( content );
       }

@@ -106,10 +106,6 @@ int main( int argc , char ** argv) {
 
     if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exjob_file)) {
       remove( exjob_file );
-      {
-        config_parser_type * job_config = workflow_joblist_get_job_config( joblist );
-        config_fprintf_errors( job_config , true , stdout );
-      }
       test_error_exit("Loading job CREATE_FILE failed\n");
     } else
       remove( exjob_file );
@@ -157,12 +153,7 @@ int main( int argc , char ** argv) {
             free( return_value );
 
           }
-
-
-
         } else {
-          config_parser_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
-          config_fprintf_errors( workflow_compiler , true ,stdout);
           unlink( tmp_file );
           test_error_exit("Workflow did not run\n");
         }
