@@ -2,7 +2,7 @@
 import os
 from PyQt4.QtGui import QApplication
 import sys
-from ert_gui.ertshell import ErtShell
+from ert_gui.shell import ErtShell
 from ert_gui.tools import HelpCenter
 from ert_gui.widgets import util
 
@@ -34,6 +34,6 @@ if __name__ == '__main__':
 
         if len(sys.argv) > 2:
             for workflow in sys.argv[2:]:
-                ert_shell.onecmd('run_workflow %s' % workflow)
+                ert_shell.onecmd('workflows run %s' % workflow)
 
     ert_shell.cmdloop()
