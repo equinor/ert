@@ -2420,7 +2420,7 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 }
 
 
-static void enkf_main_init_qc( enkf_main_type * enkf_main , config_parser_type * config ) {
+static void enkf_main_init_qc( enkf_main_type * enkf_main , config_content_type * config ) {
   qc_module_init( enkf_main->qc_module , config );
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
 }

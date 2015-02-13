@@ -162,17 +162,17 @@ const workflow_type * qc_module_get_workflow( const qc_module_type * qc_module )
 /*****************************************************************/
 
 
-void qc_module_init( qc_module_type * qc_module , const config_parser_type * config) {
-  if (config_item_set( config , QC_PATH_KEY ))
-    qc_module_set_path( qc_module , config_get_value( config , QC_PATH_KEY ));
+void qc_module_init( qc_module_type * qc_module , const config_content_type * config) {
+  if (config_content_has_item( config , QC_PATH_KEY ))
+    qc_module_set_path( qc_module , config_content_get_value( config , QC_PATH_KEY ));
 
-  if (config_item_set( config , QC_WORKFLOW_KEY)) {
-    const char * qc_workflow = config_get_value_as_path(config , QC_WORKFLOW_KEY);
+  if (config_content_has_item( config , QC_WORKFLOW_KEY)) {
+    const char * qc_workflow = config_content_get_value_as_path(config , QC_WORKFLOW_KEY);
     qc_module_set_workflow( qc_module , qc_workflow );
   }
 
-  if (config_item_set( config, RUNPATH_FILE_KEY))
-    qc_module_set_runpath_list_file(qc_module, NULL, config_get_value(config, RUNPATH_FILE_KEY));
+  if (config_content_has_item( config, RUNPATH_FILE_KEY))
+    qc_module_set_runpath_list_file(qc_module, NULL, config_content_get_value(config, RUNPATH_FILE_KEY));
 }
 
 
