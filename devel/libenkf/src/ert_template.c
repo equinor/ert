@@ -211,9 +211,9 @@ stringlist_type * ert_templates_alloc_list( ert_templates_type * ert_templates) 
 }
 
 
-void ert_templates_init( ert_templates_type * templates , const config_parser_type * config ) {
-  const config_content_item_type * template_item = config_get_content_item( config , RUN_TEMPLATE_KEY );
-  if (template_item != NULL) {
+void ert_templates_init( ert_templates_type * templates , const config_content_type * config ) {
+  if (config_content_has_item( config , RUN_TEMPLATE_KEY)) {
+    const config_content_item_type * template_item = config_content_get_item( config , RUN_TEMPLATE_KEY );
     for (int i=0; i < config_content_item_get_size( template_item ); i++) {
       config_content_node_type * template_node = config_content_item_iget_node( template_item , i );
       const char * template_file = config_content_node_iget_as_path(template_node , 0 );
