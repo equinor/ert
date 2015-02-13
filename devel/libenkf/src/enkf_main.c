@@ -2733,9 +2733,9 @@ void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
 
 /*****************************************************************/
 
-static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_parser_type * config ) {
+static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_content_type * config ) {
   {
-    const subst_list_type * define_list = config_get_define_list( config );
+    const subst_list_type * define_list = config_content_get_define_list( config );
     for (int i=0; i < subst_list_get_size( define_list ); i++) {
       const char * key = subst_list_iget_key( define_list , i );
       const char * value = subst_list_iget_value( define_list , i );
@@ -2743,16 +2743,11 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_parser_t
     }
   }
 
-  {
-    config_content_item_type * data_item = config_get_content_item( config , DATA_KW_KEY );
-    hash_type      * data_kw = NULL;
-    if (data_item)
-      data_kw = config_content_item_alloc_hash(data_item , true);
-
+  if (config_content_has_item( config , DATA_KW_KEY)) {
+    config_content_item_type * data_item = config_content_get_item( config , DATA_KW_KEY );
+    hash_type      * data_kw = config_content_item_alloc_hash(data_item , true);
     enkf_main_install_data_kw( enkf_main , data_kw );
-
-    if (data_kw)
-      hash_free( data_kw );
+    hash_free( data_kw );
   }
 
   enkf_main_install_common_data_kw( enkf_main );
@@ -3004,8 +2999,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
                        ecl_config_get_sched_file(enkf_main->ecl_config) ,
                        ecl_config_get_refcase( enkf_main->ecl_config ));
 
-    enkf_main_init_qc( enkf_main , config );
-    enkf_main_init_data_kw( enkf_main , config );
+    enkf_main_init_qc( enkf_main , content );
+    enkf_main_init_data_kw( enkf_main , content );
     enkf_main_update_num_cpu( enkf_main );
     {
       const config_content_item_type * pred_item = config_get_content_item( config , SCHEDULE_PREDICTION_FILE_KEY );
