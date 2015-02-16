@@ -25,6 +25,9 @@ if __name__ == '__main__':
     except ImportError:
         site_config_file = None
 
+    if os.getenv("ERT_SITE_CONFIG"):
+        site_config_file = os.getenv("ERT_SITE_CONFIG")
+
     app = QApplication(sys.argv)
     app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
 
