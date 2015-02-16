@@ -3,6 +3,7 @@ import re
 import pandas
 from ert.enkf import ErtPlugin, CancelPluginException
 from ert.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader
+from ert.util import Profiler
 from ert_gui.models.mixins.connectorless import DefaultPathModel, DefaultBooleanModel
 from ert_gui.widgets.checkbox import CheckBox
 from ert_gui.widgets.custom_dialog import CustomDialog
@@ -10,23 +11,32 @@ from ert_gui.widgets.list_edit_box import ListEditBox
 from ert_gui.widgets.path_chooser import PathChooser
 
 
-
-"""
-Export of summary, misfit, design matrix data and gen kw into a single CSV file.
-
-The script expects a single argument:
-
-output_file: this is the path to the file to output the CSV data to
-
-Optional arguments:
-
-case_list: a comma separated list of cases to export (no spaces allowed) if no list is provided the current case is exported
-design_matrix: a path to a file containing the design matrix
-infer_iteration: If True the script will try to infer the iteration number by looking at the suffix of the case name (i.e. default_2 = iteration 2)
-                 If False the script will use the ordering of the case list: the first item will be iteration 0, the second item will be iteration 1...
-"""
-
 class RobustCSVExportJob(ErtPlugin):
+    """
+    Export of summary, misfit, design matrix data and gen kw into a single CSV file.
+
+    The script expects a single argument:
+
+    output_file: this is the path to the file to output the CSV data to
+
+    Optional arguments:
+
+    case_list: a comma separated list of cases to export (no spaces allowed)
+               if no list is provided the current case is exported
+
+    design_matrix: a path to a file containing the design matrix
+
+    infer_iteration: If True the script will try to infer the iteration number by looking at the suffix of the case name
+                     (i.e. default_2 = iteration 2)
+                     If False the script will use the ordering of the case list: the first item will be iteration 0,
+                     the second item will be iteration 1...
+
+    The script also looks for default values for output path and design matrix path to present in the GUI. These can
+    be specified with DATA_KW keyword in the config file:
+        DATA_KW CSV_OUTPUT_PATH <some path>
+        DATA_KW DESIGN_MATRIX_PATH <some path>
+    """
+
     INFER_HELP = ("<html>"
                  "If this is checked the iteration number will be inferred from the name i.e.:"
                  "<ul>"
@@ -56,7 +66,6 @@ class RobustCSVExportJob(ErtPlugin):
 
 
     def run(self, output_file, case_list=None, design_matrix_path=None, infer_iteration=True):
-
         cases = []
         if case_list is not None:
             cases = case_list.split(",")
@@ -90,9 +99,9 @@ class RobustCSVExportJob(ErtPlugin):
                 iteration_number = index
 
             summary_data = SummaryCollector.loadAllSummaryData(self.ert(), case)
-            summary_data["ITERATION"] = iteration_number
-            summary_data["CASE"] = case
-            summary_data.set_index(["CASE", "ITERATION"], append=True, inplace=True)
+            summary_data["Iteration"] = iteration_number
+            summary_data["Case"] = case
+            summary_data.set_index(["Case", "Iteration"], append=True, inplace=True)
 
             gen_kw_data = GenKwCollector.loadAllGenKwData(self.ert(), case)
 
@@ -107,6 +116,7 @@ class RobustCSVExportJob(ErtPlugin):
 
             data = pandas.concat([data, case_data])
 
+        data = data.reorder_levels(["Realization", "Iteration", "Date", "Case"])
         data.to_csv(output_file)
 
         export_info = "Exported %d rows and %d columns to %s." % (len(data.index), len(data.columns), output_file)
@@ -117,14 +127,11 @@ class RobustCSVExportJob(ErtPlugin):
         description = "The CSV export requires some information before it starts:"
         dialog = CustomDialog("Robust CSV Export", description, parent)
 
-        output_path_model = DefaultPathModel("output.csv")
+        default_csv_output_path = self.getDataKWValue("CSV_OUTPUT_PATH", default="output.csv")
+        output_path_model = DefaultPathModel(default_csv_output_path)
         output_path_chooser = PathChooser(output_path_model, path_label="Output file path")
 
-        design_matrix_default = ""
-        data_kw = self.ert().getDataKW()
-        if "DESIGN_MATRIX" in data_kw:
-            design_matrix_default = data_kw[data_kw.indexForKey("DESIGN_MATRIX")][1]
-
+        design_matrix_default = self.getDataKWValue("DESIGN_MATRIX_PATH", default="")
         design_matrix_path_model = DefaultPathModel(design_matrix_default, is_required=False, must_exist=True)
         design_matrix_path_chooser = PathChooser(design_matrix_path_model, path_label="Design Matrix path")
 
@@ -158,3 +165,8 @@ class RobustCSVExportJob(ErtPlugin):
         raise CancelPluginException("User cancelled!")
 
 
+    def getDataKWValue(self, name, default):
+        data_kw = self.ert().getDataKW()
+        if name in data_kw:
+            return data_kw[data_kw.indexForKey(name)][1]
+        return default
