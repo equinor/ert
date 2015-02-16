@@ -42,6 +42,17 @@ class KWTest(ExtendedTestCase):
         stat = os.stat(unrst_file_path)
         self.assertTrue(size == stat.st_size)
 
+    def test_min_max(self):
+        kw = EclKW.new("TEST", 3, EclTypeEnum.ECL_INT_TYPE)
+        kw[0] = 10
+        kw[1] = 5
+        kw[2] = 0
+
+        self.assertEqual( 10 , kw.getMax())
+        self.assertEqual( 0  , kw.getMin())
+        self.assertEqual( (0,10)  , kw.getMinMax())
+
+        
 
     def test_equal(self):
         kw1 = EclKW.new("TEST", 3, EclTypeEnum.ECL_CHAR_TYPE)

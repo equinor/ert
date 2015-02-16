@@ -15,15 +15,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 import warnings
-
-try:
-    from unittest2 import skipIf
-except ImportError:
-    from unittest import skipIf
-
 import time
-from ert.ecl import EclGrid
+
 from ert.test import ExtendedTestCase
+from ert.ecl import EclGrid,EclKW,EclTypeEnum,EclGrid,EclRegion
 
 
 class DeprecationTest(ExtendedTestCase):
@@ -36,3 +31,32 @@ class DeprecationTest(ExtendedTestCase):
     def test_ecl_ecl_ecl(self):
         with warnings.catch_warnings():
             import ert.ecl.ecl as ecl
+
+    # Added in 1.8.x development
+    def test_EclKW_min_max(self):
+        kw = EclKW.new("TEST", 3, EclTypeEnum.ECL_INT_TYPE)
+        with warnings.catch_warnings():
+            kw.min
+
+        with warnings.catch_warnings():
+            kw.max
+
+        with warnings.catch_warnings():
+            kw.min_max
+
+    # Added in 1.8.x development
+    def test_EclRegion_properties(self):
+        grid = EclGrid.create_rectangular( (10,10,10) , (1,1,1))
+        region = EclRegion( grid , False )
+
+        with warnings.catch_warnings():
+            region.active_size
+
+        with warnings.catch_warnings():
+            region.global_size
+
+        with warnings.catch_warnings():
+            region.global_list
+
+        with warnings.catch_warnings():
+            region.active_list
