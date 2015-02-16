@@ -1,3 +1,5 @@
+import shlex
+import textwrap
 from ert_gui.shell import createParameterizedHelpFunction, autoCompleteList
 
 
@@ -36,7 +38,7 @@ class ShellFunction(object):
     def helpKeywords(self):
         print(self.command_help_message % self.name)
         keywords = self.findKeywords()
-        help_format = " %-10s %-25s %s"
+        help_format = " %-15s %-25s %-40s"
         print(help_format % ("Keyword", "Parameter(s)", "Help"))
 
         for keyword in keywords:
@@ -46,13 +48,24 @@ class ShellFunction(object):
                 func = getattr(self, "help_%s" % keyword)
                 parameters, message = func()
 
-            print(help_format % (keyword, parameters, message))
+            message = textwrap.wrap(message, 40)
+            print(help_format % (keyword, parameters, message[0]))
+
+            if len(message) > 1:
+                for line in message[1:]:
+                    print(help_format % ("", "", line))
+
 
     def completeKeywords(self, text, line, begidx, endidx):
-        line = line[len(self.name) + 1:]
-        keyword, argument = self.__getKeywordAndArgument(line)
+        arguments = shlex.split(line)
+        assert arguments[0] == self.name
 
-        if text != keyword and keyword in self.findKeywords(): # the text != keyword is a bit of a hack
+        line = line[len(self.name) + 1:]
+        begidx = begidx - len(self.name) + 1
+        endidx = endidx - len(self.name) + 1
+        keyword, sep, arguments = line.partition(' ')
+
+        if begidx >= len(keyword) and keyword in self.findKeywords():
             if hasattr(self, "complete_%s" % keyword):
                 func = getattr(self, "complete_%s" % keyword)
                 return func(text, line, begidx, endidx)
@@ -62,23 +75,14 @@ class ShellFunction(object):
             return autoCompleteList(text, self.findKeywords())
 
     def doKeywords(self, line):
-        keyword, argument = self.__getKeywordAndArgument(line)
+        keyword, sep, arguments = line.partition(' ')
 
         if hasattr(self, "do_%s" % keyword):
             func = getattr(self, "do_%s" % keyword)
-            return func(argument)
+            return func(arguments)
         else:
             print("Error: Unknown keyword: '%s'" % keyword)
 
-
-    def __getKeywordAndArgument(self, line):
-        line = line.strip()
-        argument_index = line.find(" ")
-
-        keyword = line
-        argument = ""
-        if argument_index > 0:
-            keyword = line[:argument_index].strip()
-            argument = line[argument_index:].strip()
-
-        return keyword, argument
+    def splitArguments(self, line):
+        """ @rtype: list of str """
+        return shlex.split(line)
