@@ -109,6 +109,10 @@ class ConfigContent(BaseCClass):
             raise KeyError("Unrecognized key:%s" % key)
 
 
+    def hasKey(self,key):
+        return key in self
+
+
     def getValue(self , key , item_index = -1 , node_index = 0):
         item = self[key]
         return item.getValue( item_index , node_index )
