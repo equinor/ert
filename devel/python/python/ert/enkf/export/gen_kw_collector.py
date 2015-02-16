@@ -75,7 +75,7 @@ class GenKwCollector(object):
                 gen_kw_array[column_index][realization_index] = value
 
         gen_kw_data = DataFrame(data=numpy.transpose(gen_kw_array), index=realizations, columns=gen_kw_keys)
-        gen_kw_data.index.name = "REALIZATION"
+        gen_kw_data.index.name = "Realization"
 
         return gen_kw_data
 

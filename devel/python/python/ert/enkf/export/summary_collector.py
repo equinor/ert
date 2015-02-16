@@ -56,7 +56,7 @@ class SummaryCollector(object):
                         summary_row[column_index + index - 1] = value
 
 
-        multi_index = MultiIndex.from_product([realizations, dates], names=["REALIZATION", "DATE"])
+        multi_index = MultiIndex.from_product([realizations, dates], names=["Realization", "Date"])
         summary_data = DataFrame(data=numpy.transpose(summary_array), index=multi_index, columns=summary_keys)
         return summary_data
 

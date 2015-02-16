@@ -3,10 +3,11 @@ import os
 
 from ert.enkf import EnKFMain
 from ert_gui.shell.cases import Cases
+from ert_gui.shell.gen_kw_keys import GenKWKeys
 from ert_gui.shell.plugins import Plugins
 from ert_gui.shell.summary_keys import SummaryKeys
 from ert_gui.shell.workflows import Workflows
-from ert_gui.shell import autoCompleteList, extractFullArgument, getPossibleFilenameCompletions
+from ert_gui.shell import extractFullArgument, getPossibleFilenameCompletions
 
 
 class ErtShell(Cmd):
@@ -23,9 +24,11 @@ class ErtShell(Cmd):
             " |  Ensemble based Reservoir Tool  |\n" \
             " \_________________________________/\n" \
             "\n" \
-            "Interactive shell for working with Ert." \
+            "Interactive shell for working with ERT.\n" \
             "\n" \
-            "-- Type help for a list of supported commands. Type Ctrl+D or exit to end the shell session. Press Tab for auto complete."
+            "-- Type help for a list of supported commands.\n" \
+            "-- Type exit or press Ctrl+D to end the shell session.\n" \
+            "-- Press Tab for auto completion.\n"
 
 
     def __init__(self, site_config=None):
@@ -38,6 +41,7 @@ class ErtShell(Cmd):
         Cases(self)
         Plugins(self)
         SummaryKeys(self)
+        GenKWKeys(self)
 
     def ert(self):
         """ @rtype: ert.enkf.enkf_main.EnKFMain """
@@ -66,20 +70,16 @@ class ErtShell(Cmd):
                          "    Loads a config file.")))
 
     def do_exit(self, line):
-        return self.exit()
+        if self.ert() is not None:
+            self.ert().free()
+        return True
 
     def help_exit(self):
         return "\n".join(("exit",
                           "    End the shell session.")),
 
-    def do_EOF(self, line):
-        return self.exit()
+    do_EOF = do_exit
 
     def help_EOF(self):
         return "\n".join(("EOF",
-                          "    The same as exit. Ctrl+D to activate.")),
-
-    def exit(self):
-        if self.ert() is not None:
-            self.ert().free()
-        return True
+                          "    The same as exit. (Ctrl+D)")),
