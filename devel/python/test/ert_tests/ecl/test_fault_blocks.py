@@ -418,7 +418,60 @@ class FaultBlockTest(ExtendedTestCase):
             layer.exportKeyword(kw2)
 
             
+    def test_internal_blocks(self):
+        nx = 8
+        ny = 8
+        nz = 1
+        grid = EclGrid.createRectangular( (nx , ny , nz) , (1,1,1) )
+        layer = FaultBlockLayer( grid , 0 )
+        with TestAreaContext("python/FaultBlocks/internal_blocks"):
+            with open("faultblock.grdecl","w") as fileH:
+                fileH.write("FAULTBLK \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 4 4 1 2 5 5 2 \n")
+                fileH.write("1 4 4 1 2 5 5 2 \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("1 1 3 1 1 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("/\n")
+
+
+            kw = EclKW.reiniad_grdecl(open("faultblock.grdecl") , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE)
+            with open("faults.grdecl" , "w") as f:
+                f.write("FAULTS\n")
+                f.write("\'FX\'   4   4   1   4   1   1  'X'  /\n")
+                f.write("\'FX\'   5   5   4   4   1   1  'Y'  /\n")
+                f.write("\'FX\'   5   5   5   8   1   1  'X'  /\n")
+                f.write("/")
+            
+            faults = FaultCollection( grid , "faults.grdecl")
+
+        layer.loadKeyword( kw )
+        layer.addFaultBarrier( faults["FX"] )
+        b1 = layer.getBlock( 1 )
+        b2 = layer.getBlock( 2 )
+        b3 = layer.getBlock( 3 )
+        b4 = layer.getBlock( 4 )
+        b5 = layer.getBlock( 5 )
+
+
+        nb = b1.getNeighbours()
+        for b in nb:
+            print "Block:%d" % b.getBlockID()
+            
+        self.assertTrue( len(nb) == 2 )
+        self.assertTrue( b3 in nb )
+        self.assertTrue( b4 in nb )
+
+        nb = b2.getNeighbours()
+        self.assertTrue( len(nb) == 1 )
+        self.assertTrue( b5 in nb )
+
+
     
+
             
 
 

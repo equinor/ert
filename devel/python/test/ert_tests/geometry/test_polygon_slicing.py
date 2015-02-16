@@ -10,7 +10,7 @@ class PolygonSlicingTest(ExtendedTestCase):
         edge =  [(0,0) , (10,0) , (10,10), (0,10) , (0,0)]
 
         sliced = GeometryTools.slicePolygon(edge , polygon)
-        expected = [(2,2),(2,1),(1,1),(1,5),(5,5),(5,4),(4,4),(2.0,4.0)]
+        expected = [(2,2),(2,1),(1,1),(1,5),(5,5),(5,4),(4,4),(2.0,4.0),(2,2)]
         self.assertEqual(sliced, expected)
 
 
