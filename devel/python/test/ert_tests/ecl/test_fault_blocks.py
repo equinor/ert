@@ -438,7 +438,7 @@ class FaultBlockTest(ExtendedTestCase):
                 fileH.write("/\n")
 
 
-            kw = EclKW.reiniad_grdecl(open("faultblock.grdecl") , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE)
+            kw = EclKW.read_grdecl(open("faultblock.grdecl") , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE)
             with open("faults.grdecl" , "w") as f:
                 f.write("FAULTS\n")
                 f.write("\'FX\'   4   4   1   4   1   1  'X'  /\n")
