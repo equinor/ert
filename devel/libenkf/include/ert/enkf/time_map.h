@@ -60,7 +60,7 @@ typedef struct time_map_struct time_map_type;
   int_vector_type * time_map_alloc_index_map( time_map_type * map , const ecl_sum_type * ecl_sum );
   int              time_map_lookup_time( time_map_type * map , time_t time);
   int              time_map_lookup_days( time_map_type * map , double sim_days);
-
+  int              time_map_lookup_time_with_tolerance( time_map_type * map , time_t time , int seconds_before_tolerance, int seconds_after_tolerance);
 #ifdef __cplusplus
 }
 #endif

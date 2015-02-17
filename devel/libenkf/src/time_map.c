@@ -438,6 +438,63 @@ int time_map_lookup_time( time_map_type * map , time_t time) {
   return index;
 }
 
+static bool time_map_valid_time__(const time_map_type * map , time_t time) {
+  if (time_t_vector_size( map->map ) > 0) {
+    if ((time >= time_map_iget__(map , 0)) &&
+        (time <= time_map_iget__(map , time_t_vector_size( map->map ) - 1)))
+      return true;
+    else
+      return false;
+  } else
+    return false;
+}
+
+
+
+int time_map_lookup_time_with_tolerance( time_map_type * map , time_t time , int seconds_before_tolerance, int seconds_after_tolerance) {
+  int nearest_index = -1;
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    if (time_map_valid_time__( map , time )) {
+      time_t nearest_diff = 999999999999;
+      int current_index = 0;
+      while (true) {
+        time_t diff = time - time_map_iget__( map , current_index );
+        if (diff == 0) {
+          nearest_index = current_index;
+          break;
+        }
+
+        if (abs(diff) < nearest_diff) {
+          bool inside_tolerance = true;
+          if (seconds_after_tolerance >= 0) {
+            if (diff >= seconds_after_tolerance)
+              inside_tolerance = false;
+          }
+
+          if (seconds_before_tolerance >= 0) {
+            if (diff <= -seconds_before_tolerance)
+              inside_tolerance = false;
+          }
+
+          if (inside_tolerance) {
+            nearest_diff = diff;
+            nearest_index = current_index;
+          }
+        }
+
+        current_index++;
+
+        if (current_index >= time_t_vector_size( map->map ))
+          break;
+      }
+    }
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+  return nearest_index;
+}
+
+
 
 int time_map_lookup_days( time_map_type * map , double sim_days) {
   int index = -1;
