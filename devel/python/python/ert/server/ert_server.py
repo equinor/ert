@@ -19,7 +19,7 @@ import threading
 import json
 import os
 import traceback
-
+import datetime
 
 from ert.enkf import EnKFMain,RunArg,EnkfFsManager
 from ert.enkf.enums import EnkfRunType, EnkfStateType, ErtImplType , EnkfVarType , RealizationStateEnum
@@ -179,8 +179,14 @@ class ErtServer(object):
     
     def handleGET_RESULT(self , args):
         iens = args[0]
-        report_step = args[1]
         kw = str(args[2])
+
+        try:
+            year,month,day = args[1]
+            time_map = self.run_fs.getTimeMap( )
+            report_step = time_map.lookupTime( datetime.date( year , month , day) , tolerance_seconds_before = 24*3600 , tolerance_seconds_after = 24*3600)
+        except TypeError:
+            report_step = args[1]
 
         ensembleConfig = self.ert_handle.ensembleConfig()
         if ensembleConfig.hasKey( kw ):
