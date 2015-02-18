@@ -4,6 +4,7 @@ import os
 from ert.enkf import EnKFMain
 from ert_gui.shell.cases import Cases
 from ert_gui.shell.gen_kw_keys import GenKWKeys
+from ert_gui.shell.results import Results
 from ert_gui.shell.plugins import Plugins
 from ert_gui.shell.summary_keys import SummaryKeys
 from ert_gui.shell.workflows import Workflows
@@ -42,6 +43,7 @@ class ErtShell(Cmd):
         Plugins(self)
         SummaryKeys(self)
         GenKWKeys(self)
+        Results(self)
 
     def ert(self):
         """ @rtype: ert.enkf.enkf_main.EnKFMain """
