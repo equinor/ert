@@ -8,6 +8,7 @@ class Cases(ShellFunction):
         self.addHelpFunction("list", None, "Shows a list of all available cases.")
         self.addHelpFunction("select", "<case_name>", "Change the current file system to the named case.")
         self.addHelpFunction("create", "<case_name>", "Create a new case with the specified named.")
+        self.addHelpFunction("summary_key_set", None, "Shows a list of the stored summary keys.")
 
     @assertConfigLoaded
     def do_list(self, line):
@@ -52,4 +53,11 @@ class Cases(ShellFunction):
             self.ert().getEnkfFsManager().switchFileSystem(fs)
         else:
             print("Error: Case '%s' already exists!" % case_name)
+
+    @assertConfigLoaded
+    def do_summary_key_set(self, line):
+        fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
+        key_set = sorted([key for key in fs.getSummaryKeySet().keys()])
+        self.cmd.columnize(key_set)
+
 

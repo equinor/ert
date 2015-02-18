@@ -4,6 +4,7 @@ set(PYTHON_SOURCES
     ertshell.py
     gen_kw_keys.py
     plugins.py
+    results.py
     shell_function.py
     shell_tools.py
     summary_keys.py
