@@ -53,6 +53,6 @@ class MisfitCollector(object):
                 misfit_array[misfit_sum_index][realization_index] += misfit
 
         misfit_data = DataFrame(data=numpy.transpose(misfit_array), index=realizations, columns=misfit_keys)
-        misfit_data.index.name = "REALIZATION"
+        misfit_data.index.name = "Realization"
 
         return misfit_data
