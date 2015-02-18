@@ -2,6 +2,7 @@ set(PYTHON_SOURCES
     __init__.py
     cases.py
     ertshell.py
+    gen_kw_keys.py
     plugins.py
     shell_function.py
     shell_tools.py
