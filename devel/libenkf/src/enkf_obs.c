@@ -576,7 +576,6 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
         hash_clear( enkf_obs->obs_hash );     /* will reload even if it is called repeatedly with the */
                                               /* same config_file.                                    */
 
-
       /** Handle HISTORY_OBSERVATION instances. */
       {
         stringlist_type * hist_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "HISTORY_OBSERVATION");
@@ -588,8 +587,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
             const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
             obs_vector_type * obs_vector;
             enkf_config_node_type * config_node;
-
-            config_node = ensemble_config_add_summary( ensemble_config , obs_key , LOAD_FAIL_WARN );
+            config_node = ensemble_config_add_summary_observation( ensemble_config , obs_key , LOAD_FAIL_WARN );
             if (config_node != NULL) {
               obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ), last_report);
               if (obs_vector != NULL) {
@@ -598,9 +596,9 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
                                                              enkf_obs->obs_time ,
                                                              enkf_obs->history ,
                                                              ensemble_config,
-                                                             std_cutoff ))
+                                                             std_cutoff )) {
                   enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
-                else {
+                 } else {
                   fprintf(stderr,"** Could not load historical data for observation:%s - ignored\n",obs_key);
                   obs_vector_free( obs_vector );
                 }
@@ -629,7 +627,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
           obs_vector_type * obs_vector;
           enkf_config_node_type * config_node;
 
-          config_node = ensemble_config_add_summary( ensemble_config , sum_key , LOAD_FAIL_WARN );
+          config_node = ensemble_config_add_summary_observation( ensemble_config , sum_key , LOAD_FAIL_WARN );
           if (config_node != NULL) {
             obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , sum_key ), last_report);
             if (obs_vector != NULL) {

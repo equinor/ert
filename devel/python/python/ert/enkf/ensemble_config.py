@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB
+from ert.enkf import ENKF_LIB, SummaryKeyMatcher
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enums import EnkfVarType, ErtImplType
 from ert.util import StringList
@@ -64,9 +64,12 @@ class EnsembleConfig(BaseCClass):
     def __contains__(self, key):
         return EnsembleConfig.cNamespace().has_key(self, key)
 
+    def getSummaryKeyMatcher(self):
+        """ @rtype: SummaryKeyMatcher """
+        return EnsembleConfig.cNamespace().summary_key_matcher(self)
+
     def free(self):
         EnsembleConfig.cNamespace().free(self)
-
 
 
 cwrapper = CWrapper(ENKF_LIB)
@@ -82,3 +85,4 @@ EnsembleConfig.cNamespace().add_field = cwrapper.prototype("enkf_config_node_ref
 EnsembleConfig.cNamespace().alloc_keylist_from_var_type = cwrapper.prototype("stringlist_obj ensemble_config_alloc_keylist_from_var_type(ens_config, enkf_var_type_enum)")
 EnsembleConfig.cNamespace().alloc_keylist_from_impl_type = cwrapper.prototype("stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, ert_impl_type_enum)")
 EnsembleConfig.cNamespace().add_node = cwrapper.prototype("void ensemble_config_add_node( ens_config , enkf_config_node )")
+EnsembleConfig.cNamespace().summary_key_matcher = cwrapper.prototype("summary_key_matcher_ref ensemble_config_get_summary_key_matcher(ens_config)")
