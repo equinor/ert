@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, TimeMap, StateMap
+from ert.enkf import ENKF_LIB, TimeMap, StateMap, SummaryKeySet
 from ert.enkf.enums import EnKFFSType
 
 
@@ -104,6 +104,10 @@ class EnkfFs(BaseCClass):
     def fsync(self):
         EnkfFs.cNamespace().fsync(self)
 
+    def getSummaryKeySet(self):
+        """ @rtype: SummaryKeySet """
+        return EnkfFs.cNamespace().summary_key_set(self).setParent(self)
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("enkf_fs", EnkfFs)
@@ -121,5 +125,6 @@ EnkfFs.cNamespace().get_state_map = cwrapper.prototype("state_map_ref enkf_fs_ge
 EnkfFs.cNamespace().exists = cwrapper.prototype("bool enkf_fs_exists(char*)")
 EnkfFs.cNamespace().get_case_name = cwrapper.prototype("char* enkf_fs_get_case_name(enkf_fs)")
 EnkfFs.cNamespace().is_read_only = cwrapper.prototype("bool enkf_fs_is_read_only(enkf_fs)")
-EnkfFs.cNamespace().get_writecount = cwrapper.prototype("int enkf_fs_get_write_count(enkf_fs)");
-EnkfFs.cNamespace().fsync = cwrapper.prototype("void enkf_fs_fsync(enkf_fs)");
+EnkfFs.cNamespace().get_writecount = cwrapper.prototype("int enkf_fs_get_write_count(enkf_fs)")
+EnkfFs.cNamespace().fsync = cwrapper.prototype("void enkf_fs_fsync(enkf_fs)")
+EnkfFs.cNamespace().summary_key_set = cwrapper.prototype("summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)")

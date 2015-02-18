@@ -14,10 +14,10 @@ extern "C" {
   summary_key_set_type   * summary_key_set_alloc();
   summary_key_set_type   * summary_key_set_alloc_from_file(const char * filename, bool read_only);
   void                     summary_key_set_free(summary_key_set_type * set);
-  int                      summary_key_set_get_size(const summary_key_set_type * set);
+  int                      summary_key_set_get_size(summary_key_set_type * set);
   bool                     summary_key_set_add_summary_key(summary_key_set_type * set, const char * summary_key);
-  bool                     summary_key_set_has_summary_key(const summary_key_set_type * set, const char * summary_key);
-  stringlist_type *        summary_key_set_get_keys(const summary_key_set_type * set);
+  bool                     summary_key_set_has_summary_key(summary_key_set_type * set, const char * summary_key);
+  stringlist_type *        summary_key_set_get_keys(summary_key_set_type * set);
   bool                     summary_key_set_is_read_only(const summary_key_set_type * set);
 
   void                     summary_key_set_fwrite(summary_key_set_type * set, const char * filename);

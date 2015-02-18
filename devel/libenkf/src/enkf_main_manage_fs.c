@@ -16,6 +16,7 @@
    for more details. 
 */
 
+#include <ert/enkf/summary_key_set.h>
 
 bool enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path) {
   char * mount_point               = enkf_main_alloc_mount_point( enkf_main , case_path );
@@ -516,6 +517,18 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
 }
 
 
+static void __enkf_main_update_summary_config_from_fs(enkf_main_type * enkf_main, enkf_fs_type * fs) {
+    ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+    summary_key_set_type * summary_key_set = enkf_fs_get_summary_key_set(fs);
+    stringlist_type * keys = summary_key_set_get_keys(summary_key_set);
+
+    for(int i = 0; i < stringlist_get_size(keys); i++) {
+        char * key = stringlist_iget(keys, i);
+        ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
+    }
+}
+
+
 /**
    The enkf_fs instances employ a simple reference counting
    scheme. The main point with this system is to avoid opening the
@@ -547,7 +560,6 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
    this is not adhered to.
 */
 
-
 void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path /* Can be NULL */) {
   if (enkf_main->dbase != fs) {
     enkf_fs_incref( fs );
@@ -558,6 +570,8 @@ void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const ch
     enkf_main->dbase = fs;
     enkf_main_invalidate_cache(enkf_main);
     enkf_main_update_current_case(enkf_main, case_path);
+
+    __enkf_main_update_summary_config_from_fs(enkf_main, fs);
   }
 }
 

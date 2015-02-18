@@ -66,19 +66,21 @@
 #include <ert/enkf/ecl_config.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/summary_key_matcher.h>
 
 
 #define ENSEMBLE_CONFIG_TYPE_ID 8825306
 
 struct ensemble_config_struct {
   UTIL_TYPE_ID_DECLARATION;
-  pthread_mutex_t          mutex;
-  char                   * gen_kw_format_string;   /* format string used when creating gen_kw search/replace strings. */
-  hash_type              * config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
-  field_trans_table_type * field_trans_table;      /* a table of the transformations which are available to apply on fields. */
-  const ecl_sum_type     * refcase;                /* a ecl_sum reference instance - can be null (not owned by the ensemble
+  pthread_mutex_t            mutex;
+  char                     * gen_kw_format_string;   /* format string used when creating gen_kw search/replace strings. */
+  hash_type                * config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+  field_trans_table_type   * field_trans_table;      /* a table of the transformations which are available to apply on fields. */
+  const ecl_sum_type       * refcase;                /* a ecl_sum reference instance - can be null (not owned by the ensemble
                                                       config). is only used to check that summary keys are valid when adding. */
-  bool                     have_forward_init;
+  bool                       have_forward_init;
+  summary_key_matcher_type * summary_key_matcher;
 };
 
 
@@ -151,6 +153,7 @@ ensemble_config_type * ensemble_config_alloc( ) {
   ensemble_config->refcase               = NULL;
   ensemble_config->gen_kw_format_string  = util_alloc_string_copy( DEFAULT_GEN_KW_TAG_FORMAT );
   ensemble_config->have_forward_init     = false;
+  ensemble_config->summary_key_matcher   = summary_key_matcher_alloc();
   pthread_mutex_init( &ensemble_config->mutex , NULL);
   
   return ensemble_config;
@@ -161,6 +164,7 @@ ensemble_config_type * ensemble_config_alloc( ) {
 void ensemble_config_free(ensemble_config_type * ensemble_config) {
   hash_free( ensemble_config->config_nodes );
   field_trans_table_free( ensemble_config->field_trans_table );
+  summary_key_matcher_free(ensemble_config->summary_key_matcher);
   free( ensemble_config->gen_kw_format_string );
   free( ensemble_config );
 }
@@ -218,6 +222,13 @@ enkf_config_node_type * ensemble_config_get_node(const ensemble_config_type * en
   }
 }
 
+enkf_config_node_type * ensemble_config_get_or_create_summary_node(const ensemble_config_type * ensemble_config, const char * key) {
+    if (!hash_has_key(ensemble_config->config_nodes , key)) {
+        ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
+    }
+
+    return ensemble_config_get_node(ensemble_config, key);
+}
 
 /** 
     this will remove the config node indexed by key, it will use the
@@ -505,20 +516,23 @@ void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , cons
       int j;
       for (j= 0; j < config_content_node_get_size( node ); j++) {
         const char * key = config_content_node_iget( node , j );
-        
+
+        summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher, key);
+
         if (util_string_has_wildcard( key )) {
+            //todo: DEPRECATED. In the Future the matcher should take care of this.
           if (ensemble_config->refcase != NULL) {
             int k;
             stringlist_type * keys = stringlist_alloc_new ( );
 
-            ecl_sum_select_matching_general_var_list( ensemble_config->refcase , key , keys );   /* expanding the wildcard notatition with help of the refcase. */
-            for (k=0; k < stringlist_get_size( keys ); k++) 
+            ecl_sum_select_matching_general_var_list( ensemble_config->refcase , key , keys );   /* expanding the wildcard notation with help of the refcase. */
+            for (k=0; k < stringlist_get_size( keys ); k++)
               ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) , LOAD_FAIL_SILENT );
 
             stringlist_free( keys );
-          } else
-            util_exit("error: when using summary wildcards like: \"%s\" you must supply a valid refcase.\n",key);
-        } else 
+          }
+
+        } else
           ensemble_config_add_summary(ensemble_config , key , LOAD_FAIL_SILENT);
       }
     }
@@ -832,18 +846,27 @@ enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensem
 
   if (hash_has_key(ensemble_config->config_nodes, key)) {
     config_node = hash_get(ensemble_config->config_nodes, key);
-    if (enkf_config_node_get_impl_type( config_node ) != SUMMARY)
+    if (enkf_config_node_get_impl_type( config_node ) != SUMMARY) {
       util_abort("%s: ensemble key:%s already exists - but it is not of summary type\n",__func__ , key);
-    {
-      summary_config_type * summary_config = enkf_config_node_get_ref( config_node );
-      summary_config_update_load_fail_mode( summary_config , load_fail );
     }
+
+    summary_config_type * summary_config = enkf_config_node_get_ref( config_node );
+    summary_config_update_load_fail_mode( summary_config , load_fail );
+
   } else {
     config_node = enkf_config_node_alloc_summary( key , load_fail);
     ensemble_config_add_node(ensemble_config , config_node );
   }
 
   return config_node;
+}
+
+enkf_config_node_type * ensemble_config_add_summary_observation(ensemble_config_type * ensemble_config , const char * key , load_fail_type load_fail) {
+    enkf_config_node_type * config_node = ensemble_config_add_summary(ensemble_config, key, load_fail);
+
+    summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher, key);
+
+    return config_node;
 }
 
 
@@ -876,7 +899,9 @@ enkf_config_node_type * ensemble_config_add_container( ensemble_config_type * en
 }
 
 
-
+const summary_key_matcher_type * ensemble_config_get_summary_key_matcher(const ensemble_config_type * ensemble_config) {
+    return ensemble_config->summary_key_matcher;
+}
 
 /*****************************************************************/
 

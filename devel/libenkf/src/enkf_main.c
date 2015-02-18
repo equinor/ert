@@ -3072,6 +3072,16 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /*****************************************************************/
       ert_report_list_init( enkf_main->report_list , config , ecl_config_get_refcase( enkf_main->ecl_config ));
 
+
+      /*****************************************************************/
+      {
+        const char * select_case = NULL;
+        if (config_item_set( config , SELECT_CASE_KEY))
+          select_case = config_get_value( config , SELECT_CASE_KEY );
+
+        enkf_main_user_select_fs( enkf_main , select_case );
+      }
+
       {
         const char * obs_config_file;
         if (config_item_set(config , OBS_CONFIG_KEY))
@@ -3092,15 +3102,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         enkf_main_set_rft_config_file( enkf_main , rft_config_file );
       }
 
-
-      /*****************************************************************/
-      {
-        const char * select_case = NULL;
-        if (config_item_set( config , SELECT_CASE_KEY))
-          select_case = config_get_value( config , SELECT_CASE_KEY );
-
-        enkf_main_user_select_fs( enkf_main , select_case );
-      }
 
       /* Adding ensemble members */
       enkf_main_resize_ensemble( enkf_main  , config_iget_as_int(config , NUM_REALIZATIONS_KEY , 0 , 0) );

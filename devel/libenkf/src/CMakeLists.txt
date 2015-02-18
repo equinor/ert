@@ -83,6 +83,7 @@ set( source_files
      cases_config.c 
      state_map.c
      summary_key_set.c
+     summary_key_matcher.c
      ert_test_context.c
      ert_log.c
      run_arg.c
@@ -179,7 +180,8 @@ set( header_files
      pca_plot_vector.h 
      state_map.h
      summary_key_set.h
-     cases_config.h 
+     summary_key_matcher.h
+     cases_config.h
      state_map.h
      ert_test_context.h
      ert_log.h

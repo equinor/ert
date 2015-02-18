@@ -780,7 +780,7 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
 
         for (int i=0; i < stringlist_get_size( summary_keys ); i++) {
           const char * sum_key = stringlist_iget( summary_keys , i );
-          enkf_config_node_type * child_node = ensemble_config_add_summary( ensemble_config , sum_key , LOAD_FAIL_WARN );
+          enkf_config_node_type * child_node = ensemble_config_add_summary_observation( ensemble_config , sum_key , LOAD_FAIL_WARN );
           enkf_config_node_update_container( container_config , child_node );
         }
 

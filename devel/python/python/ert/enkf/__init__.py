@@ -37,6 +37,7 @@ from .enkf_linalg import EnkfLinalg
 from .util import TimeMap
 from .state_map import StateMap
 from .summary_key_set import SummaryKeySet
+from .summary_key_matcher import SummaryKeyMatcher
 from .enkf_fs import EnkfFs
 
 from .ert_workflow_list import ErtWorkflowList
@@ -58,7 +59,7 @@ from .data import *
 
 from .enkf_obs import EnkfObs
 from .enkf_state import EnKFState
-from .ens_config import EnsConfig
+from .ensemble_config import EnsembleConfig
 from .ert_template import ErtTemplate
 from .ert_templates import ErtTemplates
 from .local_config import LocalConfig
