@@ -144,6 +144,7 @@ set(TEST_SOURCES
     ert_tests/gui/ide/wizards/test_tree_structure.py
 
     ert_tests/geometry/__init__.py
+    ert_tests/geometry/test_geometry_tools.py
     ert_tests/geometry/test_polyline.py
     ert_tests/geometry/test_cpolyline.py
     ert_tests/geometry/test_cpolyline_collection.py
@@ -401,6 +402,7 @@ addPythonTest(ert.geometry.point_in_polygon ert_tests.geometry.test_point_in_pol
 addPythonTest(ert.geometry.polygon_slicing ert_tests.geometry.test_polygon_slicing.PolygonSlicingTest)
 addPythonTest(ert.geometry.cpolyline ert_tests.geometry.test_cpolyline.CPolylineTest)
 addPythonTest(ert.geometry.cpolyline_collection ert_tests.geometry.test_cpolyline_collection.CPolylineCollectionTest)
+addPythonTest(ert.geometry.geometry_tools ert_tests.geometry.test_geometry_tools.GeometryToolsTest )
 
 #SERVER
 addPythonTest(ert.server.socket ert_tests.server.test_socket.SocketTest LABELS StatoilData)
