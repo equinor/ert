@@ -173,7 +173,6 @@ class ConfigTest(ExtendedTestCase):
             self.assertEqual(  content.cNamespace().get_occurences( content , "KEY" ) , 1)
             self.assertEqual(  content.cNamespace().get_occurences( content , "MISSING-KEY" ) , 0)
             
->>>>>>> ERT-747: Config rewrite
 
 
     def test_schema(self):

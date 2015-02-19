@@ -3077,8 +3077,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /*****************************************************************/
       {
         const char * select_case = NULL;
-        if (config_item_set( config , SELECT_CASE_KEY))
-          select_case = config_get_value( config , SELECT_CASE_KEY );
+        if (config_content_has_item( content , SELECT_CASE_KEY))
+          select_case = config_content_get_value( content , SELECT_CASE_KEY );
 
         enkf_main_user_select_fs( enkf_main , select_case );
       }
