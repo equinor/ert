@@ -669,3 +669,24 @@ class FaultTest(ExtendedTestCase):
             self.assertEqual( 1 , f2.numLines(0))
 
 
+    def test_extend_to_polyline(self):
+        grid = EclGrid.create_rectangular( (3,3,1) , (1 , 1 , 1))
+
+        #  o   o   o   o
+        #               
+        #  o---o---o---o
+        #  
+        #  o===+   o   o
+        #  |   
+        #  o   o   o   o
+
+        fault = Fault(grid , "Fault")
+
+        fault.addRecord(0 , 0 , 0 , 0 , 0 , 0 , "X-")
+        fault.addRecord(0 , 0 , 0 , 0 , 0 , 0 , "Y")
+
+        polyline = CPolyline( init_points = [(0,2) , (3,2)])
+        points = fault.extendToPolyline( polyline , 0 )
+        self.assertEqual( points , [(1,1) , (2,2)])
+
+    
