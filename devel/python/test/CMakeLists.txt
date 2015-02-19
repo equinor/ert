@@ -779,6 +779,7 @@ set_property( TEST python.tests.ert.enkf.plot.plot_block_data PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.data.gen_data_config PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_data        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.update               PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.summary_key_set      PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.data.gen_kw_config   PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.design_matrix     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.export_join       PROPERTY LABELS Python:StatoilData )
