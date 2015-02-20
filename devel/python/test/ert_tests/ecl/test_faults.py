@@ -696,3 +696,36 @@ class FaultTest(ExtendedTestCase):
         end_join = fault1.endJoin( polyline2 , 0 )
         self.assertIsNone( end_join )
 
+
+    def test_extend_polyline_on(self):
+        grid = EclGrid.create_rectangular( (3,3,1) , (1 , 1 , 1))
+
+        #  o   o   o   o
+        #               
+        #  o---o---o---o
+        #  
+        #  o===o===o===o
+        #  
+        #  o   o   o   o
+
+        fault1 = Fault(grid , "Fault")
+        fault1.addRecord(0 , 2 , 0 , 0 , 0 , 0 , "Y")
+
+        polyline0 = CPolyline( init_points = [(0,2)])
+        polyline1 = CPolyline( init_points = [(0,2) , (3,2)])
+        polyline2 = CPolyline( init_points = [(1,3) , (1,2)])
+        polyline3 = CPolyline( init_points = [(1,3) , (1,0)])
+
+        with self.assertRaises(ValueError):
+            fault1.extendPolylineOnto( polyline0 , 0 )
+            
+        points = fault1.extendPolylineOnto( polyline1 , 0 )
+        self.assertIsNone( points )
+
+        points = fault1.extendPolylineOnto( polyline2 , 0)
+        self.assertEqual( points , [(1,2) , (1,1)])
+
+        points = fault1.extendPolylineOnto( polyline3 , 0)
+        self.assertIsNone( points )
+
+        
