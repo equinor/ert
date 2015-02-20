@@ -408,6 +408,6 @@ addPythonTest(ert.geometry.geometry_tools ert_tests.geometry.test_geometry_tools
 addPythonTest(ert.server.socket ert_tests.server.test_socket.SocketTest LABELS StatoilData)
 addPythonTest(ert.server.server ert_tests.server.test_server.ServerTest LABELS StatoilData)
 
+#ECL_WELL
 addPythonTest(ert.well.ecl_well ert_tests.well.test_ecl_well.EclWellTest LABELS StatoilData)
 addPythonTest(ert.well.ecl_well2 ert_tests.well.test_ecl_well2.EclWellTest2 LABELS StatoilData)
-
