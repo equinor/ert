@@ -27,7 +27,7 @@
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/job_queue/workflow_job.h>
 
@@ -80,8 +80,8 @@ const char * workflow_job_get_name( const workflow_job_type * workflow_job ) {
 }
 
 
-config_type * workflow_job_alloc_config() {
-  config_type * config = config_alloc();
+config_parser_type * workflow_job_alloc_config() {
+  config_parser_type * config = config_alloc();
   {
     config_schema_item_type * item;
 
@@ -128,7 +128,7 @@ config_type * workflow_job_alloc_config() {
 
 static UTIL_SAFE_CAST_FUNCTION(workflow_job , WORKFLOW_JOB_TYPE_ID );
 
-void workflow_job_update_config_compiler( const workflow_job_type * workflow_job , config_type * config_compiler ) {
+void workflow_job_update_config_compiler( const workflow_job_type * workflow_job , config_parser_type * config_compiler ) {
   config_schema_item_type * item = config_add_schema_item( config_compiler , workflow_job->name , false );
   /*
      Ensure that the arg_types mapping is at least as large as the
@@ -298,43 +298,44 @@ static void workflow_job_validate( workflow_job_type * workflow_job ) {
 
 
 
-workflow_job_type * workflow_job_config_alloc( const char * name , config_type * config , const char * config_file) {
-  config_clear( config );
-  if (config_parse( config , config_file , "--", NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true)) {
+workflow_job_type * workflow_job_config_alloc( const char * name , config_parser_type * config , const char * config_file) {
+  workflow_job_type * workflow_job = NULL;
+  config_content_type * content = config_parse( config , config_file , "--", NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
+  if (config_content_is_valid( content )) {
     bool internal = DEFAULT_INTERNAL;
-    if (config_item_set( config , INTERNAL_KEY))
-      internal = config_iget_as_bool( config , INTERNAL_KEY , 0 , 0 );
+    if (config_content_has_item( content , INTERNAL_KEY))
+      internal = config_content_iget_as_bool( content , INTERNAL_KEY , 0 , 0 );
 
     {
-      workflow_job_type * workflow_job = workflow_job_alloc( name , internal );
+      workflow_job = workflow_job_alloc( name , internal );
 
-      if (config_item_set( config , MIN_ARG_KEY))
-        workflow_job_set_min_arg( workflow_job , config_iget_as_int( config , MIN_ARG_KEY , 0 , 0 ));
+      if (config_content_has_item( content , MIN_ARG_KEY))
+        workflow_job_set_min_arg( workflow_job , config_content_iget_as_int( content , MIN_ARG_KEY , 0 , 0 ));
 
-      if (config_item_set( config , MAX_ARG_KEY))
-        workflow_job_set_max_arg( workflow_job , config_iget_as_int( config , MAX_ARG_KEY , 0 , 0 ));
+      if (config_content_has_item( content , MAX_ARG_KEY))
+        workflow_job_set_max_arg( workflow_job , config_content_iget_as_int( content , MAX_ARG_KEY , 0 , 0 ));
 
       {
         int i;
-        for (i=0; i < config_get_occurences( config , ARG_TYPE_KEY); i++) {
-          int iarg = config_iget_as_int( config , ARG_TYPE_KEY , i , 0 );
-          const char * arg_type = config_iget( config , ARG_TYPE_KEY , i , 1 );
+        for (i=0; i < config_content_get_occurences( content , ARG_TYPE_KEY); i++) {
+          int iarg = config_content_iget_as_int( content , ARG_TYPE_KEY , i , 0 );
+          const char * arg_type = config_content_iget( content , ARG_TYPE_KEY , i , 1 );
 
           workflow_job_iset_argtype_string( workflow_job , iarg , arg_type );
         }
       }
 
-      if (config_item_set( config , MODULE_KEY))
-        workflow_job_set_module( workflow_job , config_get_value( config , MODULE_KEY));  // Could be a pure so name; or a full path ..... Like executable
+      if (config_content_has_item( content , MODULE_KEY))
+        workflow_job_set_module( workflow_job , config_content_get_value( content , MODULE_KEY));  // Could be a pure so name; or a full path ..... Like executable
 
-      if (config_item_set( config , FUNCTION_KEY))
-        workflow_job_set_function( workflow_job , config_get_value( config , FUNCTION_KEY));
+      if (config_content_has_item( content , FUNCTION_KEY))
+        workflow_job_set_function( workflow_job , config_content_get_value( content , FUNCTION_KEY));
 
-      if (config_item_set( config , EXECUTABLE_KEY))
-        workflow_job_set_executable( workflow_job , config_get_value_as_abspath( config , EXECUTABLE_KEY));
+      if (config_content_has_item( content , EXECUTABLE_KEY))
+        workflow_job_set_executable( workflow_job , config_content_get_value_as_abspath( content , EXECUTABLE_KEY));
 
-      if (config_item_set( config , SCRIPT_KEY)) {
-        workflow_job_set_internal_script( workflow_job , config_get_value_as_abspath( config , SCRIPT_KEY));
+      if (config_content_has_item( content , SCRIPT_KEY)) {
+        workflow_job_set_internal_script( workflow_job , config_content_get_value_as_abspath( content , SCRIPT_KEY));
       }
 
       workflow_job_validate( workflow_job );
@@ -343,11 +344,10 @@ workflow_job_type * workflow_job_config_alloc( const char * name , config_type *
         workflow_job_free( workflow_job );
         workflow_job = NULL;
       }
-
-      return workflow_job;
     }
-  } else
-    return NULL;
+  }
+  config_content_free( content );
+  return workflow_job;
 }
 
 
