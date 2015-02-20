@@ -9,6 +9,8 @@ class Cases(ShellFunction):
         self.addHelpFunction("select", "<case_name>", "Change the current file system to the named case.")
         self.addHelpFunction("create", "<case_name>", "Create a new case with the specified named.")
         self.addHelpFunction("summary_key_set", None, "Shows a list of the stored summary keys.")
+        self.addHelpFunction("state", "[case_name]", "Shows a list of the states of the individual realizations. "
+                                                     "Uses the current case if no case name is provided.")
 
     @assertConfigLoaded
     def do_list(self, line):
@@ -38,7 +40,7 @@ class Cases(ShellFunction):
             fs = self.ert().getEnkfFsManager().getFileSystem(case_name)
             self.ert().getEnkfFsManager().switchFileSystem(fs)
         else:
-            print("Error: Unknown file system '%s'" % case_name)
+            print("Error: Unknown case '%s'" % case_name)
 
     @assertConfigLoaded
     def complete_select(self, text, line, begidx, endidx):
@@ -58,6 +60,23 @@ class Cases(ShellFunction):
     def do_summary_key_set(self, line):
         fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         key_set = sorted([key for key in fs.getSummaryKeySet().keys()])
-        self.cmd.columnize(key_set)
+        self.columnize(key_set)
 
+    @assertConfigLoaded
+    def do_state(self, case_name):
+        case_name = case_name.strip()
+        if not case_name:
+            case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
+        elif not case_name in self.getFileSystemNames():
+            print("Error: Unknown case name '%s'" % case_name)
+            return False
+
+        state_map = self.ert().getEnkfFsManager().getStateMapForCase(case_name)
+        states = ["%d: %s" % (index, state) for index, state in enumerate(state_map)]
+
+        self.columnize(states)
+
+    @assertConfigLoaded
+    def complete_state(self, text, line, begidx, endidx):
+        return autoCompleteList(text, self.getFileSystemNames())
 

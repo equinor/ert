@@ -16,7 +16,7 @@ class Plugins(ShellFunction):
     def do_list(self, line):
         plugins = self.getPluginNames()
         if len(plugins) > 0:
-            self.cmd.columnize(plugins)
+            self.columnize(plugins)
         else:
             print("No plugins available.")
 

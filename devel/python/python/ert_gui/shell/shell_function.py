@@ -1,3 +1,4 @@
+from math import floor
 import shlex
 import textwrap
 from ert_gui.shell import createParameterizedHelpFunction, autoCompleteList
@@ -9,6 +10,7 @@ class ShellFunction(object):
     def __init__(self, name, cmd):
         super(ShellFunction, self).__init__()
         self.cmd = cmd
+        """ :type: Cmd """
         self.name = name
         """ :type: ErtShell """
 
@@ -38,7 +40,10 @@ class ShellFunction(object):
     def helpKeywords(self):
         print(self.command_help_message % self.name)
         keywords = self.findKeywords()
-        help_format = " %-15s %-25s %-40s"
+        keyword_column_width = self.widthAsPercentageOfConsoleWidth(20)
+        parameter_column_width = self.widthAsPercentageOfConsoleWidth(30)
+        help_column_width = self.widthAsPercentageOfConsoleWidth(48)
+        help_format = " %-" + str(keyword_column_width) + "s %-" + str(parameter_column_width) + "s %-" + str(help_column_width) + "s"
         print(help_format % ("Keyword", "Parameter(s)", "Help"))
 
         for keyword in keywords:
@@ -48,7 +53,7 @@ class ShellFunction(object):
                 func = getattr(self, "help_%s" % keyword)
                 parameters, message = func()
 
-            message = textwrap.wrap(message, 40)
+            message = textwrap.wrap(message, help_column_width)
             print(help_format % (keyword, parameters, message[0]))
 
             if len(message) > 1:
@@ -86,3 +91,42 @@ class ShellFunction(object):
     def splitArguments(self, line):
         """ @rtype: list of str """
         return shlex.split(line)
+
+    def columnize(self, items):
+        self.cmd.columnize(items, self.getTerminalSize()[0])
+
+
+    def widthAsPercentageOfConsoleWidth(self, percentage):
+        width, height = self.getTerminalSize()
+        return int(floor(percentage * width / 100.0))
+
+
+    def getTerminalSize(self):
+        """
+         @rtype: tuple of (int,int)
+         @return: Console dimensions as: width, height
+        """
+        import os
+        env = os.environ
+
+        def ioctl_GWINSZ(fd):
+            try:
+                import fcntl, termios, struct, os
+                cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+            except:
+                return
+            return cr
+
+        cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
+
+        if not cr:
+            try:
+                fd = os.open(os.ctermid(), os.O_RDONLY)
+                cr = ioctl_GWINSZ(fd)
+                os.close(fd)
+            except:
+                pass
+
+        if not cr:
+            cr = (env.get('LINES', 25), env.get('COLUMNS', 80))
+        return int(cr[1]), int(cr[0])
