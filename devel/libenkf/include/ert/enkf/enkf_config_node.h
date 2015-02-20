@@ -24,7 +24,7 @@ extern "C" {
 
 #include <ert/util/stringlist.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 
 #include <ert/ecl/ecl_grid.h>
 
@@ -213,8 +213,8 @@ extern "C" {
 
   /*****************************************************************/
 
-  void                    enkf_config_node_add_GEN_DATA_config_schema( config_type * config );
-  void                    enkf_config_node_add_GEN_PARAM_config_schema( config_type * config );
+  void                    enkf_config_node_add_GEN_DATA_config_schema( config_parser_type * config );
+  void                    enkf_config_node_add_GEN_PARAM_config_schema( config_parser_type * config );
   enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const config_content_node_type * config_node );
   enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const config_content_node_type * node );
 

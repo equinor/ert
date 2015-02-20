@@ -29,7 +29,8 @@
 
 #include <ert/sched/sched_file.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
 #include <ert/config/config_schema_item.h>
 
 #include <ert/ecl/ecl_grid.h>
@@ -538,30 +539,30 @@ ecl_config_type * ecl_config_alloc()
   return ecl_config;
 }
 
-void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
+void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * config)
 {
-  if (config_item_set(config, ECLBASE_KEY)) {
-    ui_return_type * ui_return = ecl_config_validate_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
+  if (config_content_has_item(config, ECLBASE_KEY)) {
+    ui_return_type * ui_return = ecl_config_validate_eclbase(ecl_config, config_content_iget(config, ECLBASE_KEY, 0, 0));
     if (ui_return_get_status(ui_return) == UI_RETURN_OK)
-      ecl_config_set_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
+      ecl_config_set_eclbase(ecl_config, config_content_iget(config, ECLBASE_KEY, 0, 0));
     else
       util_abort("%s: failed to set eclbase format. Error:%s\n", __func__ , ui_return_get_last_error(ui_return));
     ui_return_free(ui_return);
   }
 
-  if (config_item_set(config, DATA_FILE_KEY)) 
+  if (config_content_has_item(config, DATA_FILE_KEY))
   {
-    ui_return_type * ui_return = ecl_config_validate_data_file(ecl_config, config_iget(config, DATA_FILE_KEY, 0, 0));
+    ui_return_type * ui_return = ecl_config_validate_data_file(ecl_config, config_content_iget(config, DATA_FILE_KEY, 0, 0));
     if (ui_return_get_status( ui_return ) == UI_RETURN_OK)
-      ecl_config_set_data_file( ecl_config, config_iget(config, DATA_FILE_KEY, 0, 0) );
+      ecl_config_set_data_file( ecl_config, config_content_iget(config, DATA_FILE_KEY, 0, 0) );
     else
       util_abort("%s: problem setting ECLIPSE data file\n",__func__ , ui_return_get_last_error(ui_return));
-    
+
     ui_return_free(ui_return);
   }
-  
-  if (config_item_set(config, SCHEDULE_FILE_KEY)) {
-    const char * schedule_target_file = config_safe_iget(config, SCHEDULE_FILE_KEY, 0, 1);
+
+  if (config_content_has_item(config, SCHEDULE_FILE_KEY)) {
+    const char * schedule_target_file = config_content_safe_iget(config, SCHEDULE_FILE_KEY, 0, 1);
     if (schedule_target_file) {
       ui_return_type * ui_return_sched_target_file = ecl_config_validate_schedule_file(ecl_config, schedule_target_file);
       if (!ui_return_get_status(ui_return_sched_target_file) == UI_RETURN_OK) {
@@ -570,46 +571,46 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
       ui_return_free(ui_return_sched_target_file);
     }
 
-    ui_return_type * ui_return = ecl_config_validate_schedule_file(ecl_config, config_iget(config, SCHEDULE_FILE_KEY, 0, 0));
+    ui_return_type * ui_return = ecl_config_validate_schedule_file(ecl_config, config_content_iget(config, SCHEDULE_FILE_KEY, 0, 0));
     if (ui_return_get_status(ui_return) == UI_RETURN_OK)
-      ecl_config_set_schedule_file(ecl_config, config_iget(config, SCHEDULE_FILE_KEY, 0, 0), schedule_target_file);
+      ecl_config_set_schedule_file(ecl_config, config_content_iget(config, SCHEDULE_FILE_KEY, 0, 0), schedule_target_file);
     else
       util_abort("%s: failed to set schedule file. Error:%s\n",__func__ , ui_return_get_last_error(ui_return));
 
     ui_return_free(ui_return);
   }
 
-  if (config_item_set(config, GRID_KEY)) {
-    const char * grid_file = config_iget(config, GRID_KEY, 0, 0);
+  if (config_content_has_item(config, GRID_KEY)) {
+    const char * grid_file = config_content_iget(config, GRID_KEY, 0, 0);
     ui_return_type * ui_return = ecl_config_validate_grid( ecl_config , grid_file);
     if (ui_return_get_status(ui_return) == UI_RETURN_OK)
       ecl_config_set_grid(ecl_config, grid_file );
     else
       util_abort("%s: failed to set grid file:%s  Error:%s \n",__func__ , grid_file , ui_return_get_last_error(ui_return));
-    
+
     ui_return_free( ui_return );
   }
-  
 
-  if (config_item_set(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY))
+
+  if (config_content_has_item(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY))
   {
     int iocc;
-    for (iocc = 0; iocc < config_get_occurences(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY); iocc++)
+    for (iocc = 0; iocc < config_content_get_occurences(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY); iocc++)
       ecl_config_add_fixed_length_schedule_kw(ecl_config,
-          config_iget(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY, iocc, 0),
-          config_iget_as_int(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY, iocc, 1));
+                                              config_content_iget(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY, iocc, 0),
+                                              config_content_iget_as_int(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY, iocc, 1));
   }
 
-  if (config_item_set(config, REFCASE_KEY))
+  if (config_content_has_item(config, REFCASE_KEY))
   {
-    const char * refcase_path = config_get_value_as_path(config, REFCASE_KEY);
+    const char * refcase_path = config_content_get_value_as_path(config, REFCASE_KEY);
     if (!ecl_config_load_refcase(ecl_config, refcase_path))
       fprintf(stderr, "** Warning: loading refcase:%s failed \n", refcase_path);
   }
 
-  if (config_item_set(config, REFCASE_LIST_KEY))
+  if (config_content_has_item(config, REFCASE_LIST_KEY))
   {
-    config_content_item_type * item = config_get_content_item(config, REFCASE_LIST_KEY);
+    config_content_item_type * item = config_content_get_item(config, REFCASE_LIST_KEY);
     int i;
     for (i = 0; i < config_content_item_get_size(item); i++)
     {
@@ -624,9 +625,9 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
   }
 
   /* Deprecated */
-  if (config_item_set(config, PLOT_REFCASE_LIST_KEY))
+  if (config_content_has_item(config, PLOT_REFCASE_LIST_KEY))
   {
-    const char * case_list_file = config_get_value(config, PLOT_REFCASE_LIST_KEY);
+    const char * case_list_file = config_content_get_value(config, PLOT_REFCASE_LIST_KEY);
     FILE * stream = util_fopen(case_list_file, "r");
     bool at_eof;
     do
@@ -642,8 +643,8 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
     fclose(stream);
   }
 
-  if (config_item_set(config, INIT_SECTION_KEY))
-    ecl_config_set_init_section(ecl_config, config_get_value(config, INIT_SECTION_KEY));
+  if (config_content_has_item(config, INIT_SECTION_KEY))
+    ecl_config_set_init_section(ecl_config, config_content_get_value(config, INIT_SECTION_KEY));
   else if (ecl_config->can_restart)
     /**
      This is a hard error - the datafile contains <INIT>, however
@@ -670,9 +671,9 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
    IFF the user has no intentitions of any form of restart, this is
    perfectly legitemate.
    */
-  if (config_item_set(config, END_DATE_KEY))
+  if (config_content_has_item(config, END_DATE_KEY))
   {
-    const char * date_string = config_get_value(config, END_DATE_KEY);
+    const char * date_string = config_content_get_value(config, END_DATE_KEY);
     time_t end_date;
     if (util_sscanf_date(date_string, &end_date))
       ecl_config_set_end_date(ecl_config, end_date);
@@ -856,14 +857,12 @@ bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)
   return ecl_io_config_get_unified_summary(ecl_config->io_config);
 }
 
-void ecl_config_static_kw_init(ecl_config_type * ecl_config, const config_type * config)
+void ecl_config_static_kw_init(ecl_config_type * ecl_config, const config_content_type * config)
 {
-  const config_content_item_type * content_item = config_get_content_item(config, STATIC_KW_KEY);
-  if (content_item != NULL )
-  {
+  if (config_content_has_item( config , STATIC_KW_KEY)) {
+    const config_content_item_type * content_item = config_content_get_item(config, STATIC_KW_KEY);
     int j;
-    for (j = 0; j < config_content_item_get_size(content_item); j++)
-    {
+    for (j = 0; j < config_content_item_get_size(content_item); j++) {
       const config_content_node_type * content_node = config_content_item_iget_node(content_item, j);
       int k;
       for (k = 0; k < config_content_node_get_size(content_node); k++)
@@ -872,7 +871,7 @@ void ecl_config_static_kw_init(ecl_config_type * ecl_config, const config_type *
   }
 }
 
-void ecl_config_add_config_items(config_type * config)
+void ecl_config_add_config_items(config_parser_type * config)
 {
   config_schema_item_type * item;
 

@@ -48,7 +48,7 @@
 #include <ert/util/string_util.h>
 #include <ert/util/type_vector_functions.h>
 
-#include <ert/config/config.h>
+#include <ert/config/config_parser.h>
 #include <ert/config/config_schema_item.h>
 
 #include <ert/ecl/ecl_util.h>
@@ -2217,7 +2217,7 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main ,
 
 
 
-static void enkf_main_init_user_config( const enkf_main_type * enkf_main , config_type * config ) {
+static void enkf_main_init_user_config( const enkf_main_type * enkf_main , config_parser_type * config ) {
   config_schema_item_type * item;
 
   /*****************************************************************/
@@ -2420,7 +2420,7 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 }
 
 
-static void enkf_main_init_qc( enkf_main_type * enkf_main , config_type * config ) {
+static void enkf_main_init_qc( enkf_main_type * enkf_main , config_content_type * config ) {
   qc_module_init( enkf_main->qc_module , config );
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
 }
@@ -2519,27 +2519,27 @@ static void enkf_main_install_data_kw( enkf_main_type * enkf_main , hash_type * 
     }
     hash_iter_free(iter);
   }
+}
 
 
 
+static void enkf_main_install_common_data_kw( enkf_main_type * enkf_main ) {
   /*
      Installing the based (key,value) pairs which are common to all
      ensemble members, and independent of time.
   */
-  {
-    char * cwd                    = util_alloc_cwd();
-    char * date_string            = util_alloc_date_stamp();
-    const char * num_cpu_string   = "1";
+  char * cwd                    = util_alloc_cwd();
+  char * date_string            = util_alloc_date_stamp();
+  const char * num_cpu_string   = "1";
 
-    enkf_main_add_subst_kw( enkf_main , "CWD"          , cwd , "The current working directory we are running from - the location of the config file." , true);
-    enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , true);
-    enkf_main_add_subst_kw( enkf_main , "DATE"         , date_string , "The current date." , true);
-    enkf_main_add_subst_kw( enkf_main , "NUM_CPU"      , num_cpu_string , "The number of CPU used for one forward model." , true );
-    enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , qc_module_get_runpath_list_file( enkf_main->qc_module ) , "The name of a file with a list of run directories." , true);
+  enkf_main_add_subst_kw( enkf_main , "CWD"          , cwd , "The current working directory we are running from - the location of the config file." , true);
+  enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , true);
+  enkf_main_add_subst_kw( enkf_main , "DATE"         , date_string , "The current date." , true);
+  enkf_main_add_subst_kw( enkf_main , "NUM_CPU"      , num_cpu_string , "The number of CPU used for one forward model." , true );
+  enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , qc_module_get_runpath_list_file( enkf_main->qc_module ) , "The name of a file with a list of run directories." , true);
 
-    free( cwd );
-    free( date_string );
-  }
+  free( cwd );
+  free( date_string );
 }
 
 
@@ -2733,9 +2733,9 @@ void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
 
 /*****************************************************************/
 
-static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * config ) {
+static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_content_type * config ) {
   {
-    const subst_list_type * define_list = config_get_define_list( config );
+    const subst_list_type * define_list = config_content_get_define_list( config );
     for (int i=0; i < subst_list_get_size( define_list ); i++) {
       const char * key = subst_list_iget_key( define_list , i );
       const char * value = subst_list_iget_value( define_list , i );
@@ -2743,17 +2743,14 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * c
     }
   }
 
-  {
-    config_content_item_type * data_item = config_get_content_item( config , DATA_KW_KEY );
-    hash_type      * data_kw = NULL;
-    if (data_item)
-      data_kw = config_content_item_alloc_hash(data_item , true);
-
+  if (config_content_has_item( config , DATA_KW_KEY)) {
+    config_content_item_type * data_item = config_content_get_item( config , DATA_KW_KEY );
+    hash_type      * data_kw = config_content_item_alloc_hash(data_item , true);
     enkf_main_install_data_kw( enkf_main , data_kw );
-
-    if (data_kw)
-      hash_free( data_kw );
+    hash_free( data_kw );
   }
+
+  enkf_main_install_common_data_kw( enkf_main );
 }
 
 
@@ -2776,7 +2773,7 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
 }
 
 
-void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_type * config ) {
+void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_content_type * config ) {
   const enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
   if (enkf_obs_have_obs( enkf_obs )) {
     enkf_main->local_config  = local_config_alloc( );
@@ -2790,8 +2787,8 @@ void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_typ
       /* Install custom local_config - if present.*/
       {
         int i;
-        for (i = 0; i < config_get_occurences( config , LOCAL_CONFIG_KEY); i++) {
-          const stringlist_type * files = config_iget_stringlist_ref(config , LOCAL_CONFIG_KEY , i);
+        for (i = 0; i < config_content_get_occurences( config , LOCAL_CONFIG_KEY); i++) {
+          const stringlist_type * files = config_content_iget_stringlist_ref(config , LOCAL_CONFIG_KEY , i);
           for (int j=0; j < stringlist_get_size( files ); j++)
             local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
         }
@@ -2810,7 +2807,7 @@ void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_typ
       free(all_active_config_file);
     }
   } else
-    if (config_get_occurences( config , LOCAL_CONFIG_KEY) > 0)
+    if (config_content_get_occurences( config , LOCAL_CONFIG_KEY) > 0)
       fprintf(stderr,"** Warning: Not possible to configure local analysis without SCHEDULE or REFCASE - %s keyword(s) ignored\n", LOCAL_CONFIG_KEY);
 }
 
@@ -2827,19 +2824,22 @@ void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_typ
 static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * site_config_file) {
   if (site_config_file != NULL) {
     if (!util_file_exists(site_config_file))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config_file);
-    config_type * config = config_alloc();
+    config_parser_type * config = config_alloc();
+    site_config_add_config_items( config , true );
     {
-      site_config_add_config_items( config , true );
-      if (config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false)) {
-        site_config_init( enkf_main->site_config , config );
-        analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, config);
-        ert_report_list_site_init( enkf_main->report_list , config );
-        ert_workflow_list_init( enkf_main->workflow_list , config );
+      config_content_type * content = config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
+      if (config_content_is_valid( content )) {
+        site_config_init( enkf_main->site_config , content );
+        analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
+        ert_report_list_site_init( enkf_main->report_list , content );
+        ert_workflow_list_init( enkf_main->workflow_list , content );
       } else {
+        config_error_type * errors = config_content_get_errors( content );
         fprintf(stderr , "** ERROR: Parsing site configuration file:%s failed \n\n" , site_config_file);
-        config_fprintf_errors( config , true , stderr );
+        config_error_fprintf( errors , true , stderr );
         exit(1);
       }
+      config_content_free( content );
     }
     config_free( config );
   }
@@ -2930,7 +2930,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   if (!util_file_exists(model_config))
     util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
-    config_type * config;
+    config_parser_type * config;
+    config_content_type * content;
     enkf_main            = enkf_main_alloc_empty( );
     enkf_main_set_verbose( enkf_main , verbose );
     enkf_main_bootstrap_site( enkf_main , site_config);
@@ -2940,12 +2941,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     site_config_add_config_items( config , false );
     site_config_init_user_mode( enkf_main->site_config );
 
-    if (!config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true)) {
-      config_fprintf_errors( config , true , stderr );
+    content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true);
+    if (!config_content_is_valid( content )) {
+      config_error_type * errors = config_content_get_errors( content );
+      config_error_fprintf( errors , true , stderr );
       exit(1);
     }
 
-    site_config_init( enkf_main->site_config , config );                                   /*  <---- model_config : second pass. */
+    site_config_init( enkf_main->site_config , content );                                   /*  <---- model_config : second pass. */
 
     /*****************************************************************/
     /*
@@ -2960,11 +2963,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     {
       char * log_file;
       int log_level = DEFAULT_LOG_LEVEL;
-      if(config_item_set( config , LOG_LEVEL_KEY))
-        log_level = config_get_value_as_int(config , LOG_LEVEL_KEY);
+      if(config_content_has_item( content , LOG_LEVEL_KEY))
+        log_level = config_content_get_value_as_int(content , LOG_LEVEL_KEY);
 
-      if (config_item_set( config , LOG_FILE_KEY))
-        log_file = util_alloc_string_copy( config_get_value(config , LOG_FILE_KEY));
+      if (config_content_has_item( content , LOG_FILE_KEY))
+        log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
       else
         log_file = util_alloc_filename( NULL , enkf_main->user_config_file , "log");
 
@@ -2976,32 +2979,33 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     /*
       Initializing the various 'large' sub config objects.
     */
-    rng_config_init( enkf_main->rng_config , config );
+    rng_config_init( enkf_main->rng_config , content );
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
 
     enkf_main_init_subst_list( enkf_main );
-    ert_workflow_list_init( enkf_main->workflow_list , config );
+    ert_workflow_list_init( enkf_main->workflow_list , content );
 
     analysis_config_load_internal_modules( enkf_main->analysis_config );
-    analysis_config_init( enkf_main->analysis_config , config );
-    ecl_config_init( enkf_main->ecl_config , config );
-    plot_config_init( enkf_main->plot_config , config );
-    ensemble_config_init( enkf_main->ensemble_config , config , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
+    analysis_config_init( enkf_main->analysis_config , content );
+    ecl_config_init( enkf_main->ecl_config , content );
+    plot_config_init( enkf_main->plot_config , content );
+
+    ensemble_config_init( enkf_main->ensemble_config , content , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
 
     model_config_init( enkf_main->model_config ,
-                       config ,
+                       content ,
                        enkf_main_get_ensemble_size( enkf_main ),
                        site_config_get_installed_jobs(enkf_main->site_config) ,
                        ecl_config_get_last_history_restart( enkf_main->ecl_config ),
                        ecl_config_get_sched_file(enkf_main->ecl_config) ,
                        ecl_config_get_refcase( enkf_main->ecl_config ));
 
-    enkf_main_init_qc( enkf_main , config );
-    enkf_main_init_data_kw( enkf_main , config );
+    enkf_main_init_qc( enkf_main , content );
+    enkf_main_init_data_kw( enkf_main , content );
     enkf_main_update_num_cpu( enkf_main );
     {
-      const config_content_item_type * pred_item = config_get_content_item( config , SCHEDULE_PREDICTION_FILE_KEY );
-      if (pred_item != NULL) {
+      if (config_content_has_item( content , SCHEDULE_PREDICTION_FILE_KEY )) {
+        const config_content_item_type * pred_item = config_content_get_item( content , SCHEDULE_PREDICTION_FILE_KEY );
         config_content_node_type * pred_node = config_content_item_get_last_node( pred_item );
         const char * template_file = config_content_node_iget_as_path( pred_node , 0 );
         {
@@ -3040,13 +3044,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       {
         char * keep_runpath_string   = NULL;
         char * delete_runpath_string = NULL;
-        int    ens_size              = config_get_value_as_int(config , NUM_REALIZATIONS_KEY);
+        int    ens_size              = config_content_get_value_as_int(content , NUM_REALIZATIONS_KEY);
 
-        if (config_item_set(config , KEEP_RUNPATH_KEY))
-          keep_runpath_string = config_alloc_joined_string(config , KEEP_RUNPATH_KEY , "");
+        if (config_content_has_item(content , KEEP_RUNPATH_KEY))
+          keep_runpath_string = config_content_alloc_joined_string(content , KEEP_RUNPATH_KEY , "");
 
-        if (config_item_set(config , DELETE_RUNPATH_KEY))
-          delete_runpath_string = config_alloc_joined_string(config , DELETE_RUNPATH_KEY , "");
+        if (config_content_has_item(content , DELETE_RUNPATH_KEY))
+          delete_runpath_string = config_content_alloc_joined_string(content , DELETE_RUNPATH_KEY , "");
 
         enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string , ens_size );
 
@@ -3057,35 +3061,32 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /* This is really in the wrong place ... */
       {
         enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
-        if (config_item_set(config , PRE_CLEAR_RUNPATH_KEY))
-          enkf_main->pre_clear_runpath = config_get_value_as_bool( config , PRE_CLEAR_RUNPATH_KEY);
+        if (config_content_has_item(content , PRE_CLEAR_RUNPATH_KEY))
+          enkf_main->pre_clear_runpath = config_content_get_value_as_bool( content , PRE_CLEAR_RUNPATH_KEY);
       }
 
-
-      ecl_config_static_kw_init( enkf_main->ecl_config , config );
+      ecl_config_static_kw_init( enkf_main->ecl_config , content );
 
       /* Installing templates */
-      {
-        ert_templates_init( enkf_main->templates , config );
-      }
+      ert_templates_init( enkf_main->templates , content );
 
       /*****************************************************************/
-      ert_report_list_init( enkf_main->report_list , config , ecl_config_get_refcase( enkf_main->ecl_config ));
+      ert_report_list_init( enkf_main->report_list , content , ecl_config_get_refcase( enkf_main->ecl_config ));
 
 
       /*****************************************************************/
       {
         const char * select_case = NULL;
-        if (config_item_set( config , SELECT_CASE_KEY))
-          select_case = config_get_value( config , SELECT_CASE_KEY );
+        if (config_content_has_item( content , SELECT_CASE_KEY))
+          select_case = config_content_get_value( content , SELECT_CASE_KEY );
 
         enkf_main_user_select_fs( enkf_main , select_case );
       }
 
       {
         const char * obs_config_file;
-        if (config_item_set(config , OBS_CONFIG_KEY))
-          obs_config_file = config_iget(config  , OBS_CONFIG_KEY , 0,0);
+        if (config_content_has_item(content , OBS_CONFIG_KEY))
+          obs_config_file = config_content_iget(content  , OBS_CONFIG_KEY , 0,0);
         else
           obs_config_file = NULL;
 
@@ -3096,15 +3097,24 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       {
         const char * rft_config_file = NULL;
-        if (config_item_set(config , RFT_CONFIG_KEY))
-          rft_config_file = config_iget(config , RFT_CONFIG_KEY , 0,0);
+        if (config_content_has_item(content , RFT_CONFIG_KEY))
+          rft_config_file = config_content_iget(content , RFT_CONFIG_KEY , 0,0);
 
         enkf_main_set_rft_config_file( enkf_main , rft_config_file );
       }
 
 
+      /*****************************************************************/
+      {
+        const char * select_case = NULL;
+        if (config_content_has_item( content , SELECT_CASE_KEY))
+          select_case = config_content_get_value( content , SELECT_CASE_KEY );
+
+        enkf_main_user_select_fs( enkf_main , select_case );
+      }
+
       /* Adding ensemble members */
-      enkf_main_resize_ensemble( enkf_main  , config_iget_as_int(config , NUM_REALIZATIONS_KEY , 0 , 0) );
+      enkf_main_resize_ensemble( enkf_main  , config_content_iget_as_int(content , NUM_REALIZATIONS_KEY , 0 , 0) );
 
       /*****************************************************************/
       /*
@@ -3113,9 +3123,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
          if you have created a personal local config that will be
          loaded on top.
       */
-      enkf_main_init_local_updates(enkf_main , config );
+      enkf_main_init_local_updates(enkf_main , content );
 
     }
+    config_content_free( content );
     config_free(config);
   }
   enkf_main_init_jobname( enkf_main );
