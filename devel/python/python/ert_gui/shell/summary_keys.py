@@ -20,7 +20,7 @@ class SummaryKeys(ShellFunction):
 
         result = ["*%s" % key if key in observation_keys else " %s" % key for key in keys]
 
-        self.cmd.columnize(result)
+        self.columnize(result)
 
     @assertConfigLoaded
     def do_observations(self, line):
@@ -32,7 +32,7 @@ class SummaryKeys(ShellFunction):
             obs_keys = ensemble_config.getNode(key).getObservationKeys()
             observation_keys.extend(obs_keys)
 
-        self.cmd.columnize(observation_keys)
+        self.columnize(observation_keys)
 
     @assertConfigLoaded
     def do_matchers(self, line):
@@ -40,7 +40,7 @@ class SummaryKeys(ShellFunction):
         summary_key_matcher = ensemble_config.getSummaryKeyMatcher()
         keys = sorted(["*%s" % key if summary_key_matcher.isRequired(key) else " %s" % key for key in summary_key_matcher.keys()])
 
-        self.cmd.columnize(keys)
+        self.columnize(keys)
 
     @assertConfigLoaded
     def do_add_matcher(self, line):

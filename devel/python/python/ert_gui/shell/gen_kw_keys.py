@@ -12,5 +12,5 @@ class GenKWKeys(ShellFunction):
         fetcher = EnsembleGenKWFetcher(self.ert())
         keys = sorted(fetcher.fetchSupportedKeys())
 
-        self.cmd.columnize(keys)
+        self.columnize(keys)
 
