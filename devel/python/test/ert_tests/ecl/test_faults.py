@@ -680,13 +680,19 @@ class FaultTest(ExtendedTestCase):
         #  |   
         #  o   o   o   o
 
-        fault = Fault(grid , "Fault")
+        fault1 = Fault(grid , "Fault")
 
-        fault.addRecord(0 , 0 , 0 , 0 , 0 , 0 , "X-")
-        fault.addRecord(0 , 0 , 0 , 0 , 0 , 0 , "Y")
+        fault1.addRecord(0 , 0 , 0 , 0 , 0 , 0 , "X-")
+        fault1.addRecord(0 , 0 , 0 , 0 , 0 , 0 , "Y")
 
         polyline = CPolyline( init_points = [(0,2) , (3,2)])
-        points = fault.extendToPolyline( polyline , 0 )
+        points = fault1.extendToPolyline( polyline , 0 )
         self.assertEqual( points , [(1,1) , (2,2)])
 
-    
+        end_join = fault1.endJoin( polyline , 0 )
+        self.assertEqual( end_join, [(1,1) , (0,2)] )
+        
+        polyline2 = CPolyline( init_points = [(0.8,2) , (0.8,0.8)])
+        end_join = fault1.endJoin( polyline2 , 0 )
+        self.assertIsNone( end_join )
+
