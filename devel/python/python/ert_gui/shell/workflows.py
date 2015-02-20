@@ -16,7 +16,7 @@ class Workflows(ShellFunction):
     def do_list(self, line):
         workflows = self.getWorkflowNames()
         if len(workflows) > 0:
-            self.cmd.columnize(workflows)
+            self.columnize(workflows)
         else:
             print("No workflows available.")
 
