@@ -98,21 +98,22 @@ class RobustCSVExportJob(ErtPlugin):
             else:
                 iteration_number = index
 
+            case_data = GenKwCollector.loadAllGenKwData(self.ert(), case)
+
+            if design_matrix_path is not None:
+               design_matrix_data = DesignMatrixReader.loadDesignMatrix(design_matrix_path)
+               case_data = case_data.join(design_matrix_data, how='inner')
+
+            misfit_data = MisfitCollector.loadAllMisfitData(self.ert(), case)
+
+            case_data = case_data.join(misfit_data, how='inner')
+
             summary_data = SummaryCollector.loadAllSummaryData(self.ert(), case)
             summary_data["Iteration"] = iteration_number
             summary_data["Case"] = case
             summary_data.set_index(["Case", "Iteration"], append=True, inplace=True)
 
-            gen_kw_data = GenKwCollector.loadAllGenKwData(self.ert(), case)
-
-            misfit_data = MisfitCollector.loadAllMisfitData(self.ert(), case)
-
-            case_data = summary_data.join(gen_kw_data, how='inner')
-            case_data = case_data.join(misfit_data, how='inner')
-
-            if design_matrix_path is not None:
-                design_matrix_data = DesignMatrixReader.loadDesignMatrix(design_matrix_path)
-                case_data = case_data.join(design_matrix_data, how='inner')
+            case_data = case_data.join(summary_data, how='inner')
 
             data = pandas.concat([data, case_data])
 
