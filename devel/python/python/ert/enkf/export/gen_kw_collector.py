@@ -21,7 +21,7 @@ class GenKwCollector(object):
     def getAllGenKwKeys(ert):
         """ @rtype: list of str """
         gen_kw_keys = ert.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
-        gen_kw_keys = sorted([key for key in gen_kw_keys], key=lambda k : k.lower())
+        gen_kw_keys = [key for key in gen_kw_keys]
 
         gen_kw_list = []
         for key in gen_kw_keys:
