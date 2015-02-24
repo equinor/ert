@@ -201,6 +201,7 @@ long lsf_job_get_jobnr( const lsf_job_type * job ) {
   return job->lsf_jobnr;
 }
 
+<<<<<<< HEAD
 int lsf_job_parse_bsub_stdout(const char * bsub_cmd, const char * stdout_file) {
   int     jobid = 0;
   if ((util_file_exists(stdout_file)) && (util_file_size(stdout_file) > 0)) {
@@ -222,6 +223,28 @@ int lsf_job_parse_bsub_stdout(const char * bsub_cmd, const char * stdout_file) {
       free( file_content );
       util_abort("%s: \n",__func__);
     }
+=======
+
+static int lsf_job_parse_bsub_stdout(const lsf_driver_type * driver , const char * stdout_file) {
+  int     jobid = -1;
+  FILE * stream = util_fopen(stdout_file , "r");
+  if (util_fseek_string(stream , "<" , true , true)) {
+    char * jobid_string = util_fscanf_alloc_upto(stream , ">" , false);
+    if (jobid_string != NULL) {
+      jobid = atoi( jobid_string );
+      free( jobid_string );
+    }
+  }
+  fclose( stream );
+
+  if (jobid == -1) {
+    char * file_content = util_fread_alloc_file_content( stdout_file , NULL );
+    fprintf(stderr,"Failed to get lsf job id from file: %s \n",stdout_file );
+    fprintf(stderr,"bsub command                      : %s \n",driver->bsub_cmd );
+    fprintf(stderr,"%s\n", file_content);
+    free( file_content );
+    util_exit("%s: \n",__func__);
+>>>>>>> ERT-747: White space change
   }
   return jobid;
 }
@@ -438,7 +461,11 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
     stringlist_free( remote_argv );
   }
 
+<<<<<<< HEAD
   job_id = lsf_job_parse_bsub_stdout(driver->bsub_cmd , tmp_file);
+=======
+  job_id = lsf_job_parse_bsub_stdout(driver , tmp_file);
+>>>>>>> ERT-747: White space change
   util_unlink_existing( tmp_file );
   free(tmp_file);
   return job_id;
