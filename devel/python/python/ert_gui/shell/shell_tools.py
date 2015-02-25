@@ -54,4 +54,4 @@ def getPossibleFilenameCompletions(text):
 
 def extractFullArgument(line, endidx):
     newstart = line.rfind(" ", 0, endidx)
-    return line[newstart:endidx]
+    return line[newstart:endidx].strip()

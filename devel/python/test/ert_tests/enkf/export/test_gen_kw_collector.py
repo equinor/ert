@@ -27,3 +27,13 @@ class GenKwCollectorTest(ExtendedTestCase):
 
             with self.assertRaises(KeyError):
                 realization_21 = data.loc[21]
+
+
+
+            data = GenKwCollector.loadAllGenKwData(ert, "default", ["FLUID_PARAMS:SGCR", "LOG10_MULTFLT:F3"])
+
+            self.assertFloatEqual(data["FLUID_PARAMS:SGCR"][0], 0.295136)
+            self.assertFloatEqual(data["LOG10_MULTFLT:F3"][0], -2.742916)
+
+            with self.assertRaises(KeyError):
+                data["GRID_PARAMS:MULTPV3"]

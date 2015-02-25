@@ -10,6 +10,7 @@ from ert_gui.shell.summary_keys import SummaryKeys
 from ert_gui.shell.workflows import Workflows
 from ert_gui.shell import extractFullArgument, getPossibleFilenameCompletions
 
+import matplotlib
 
 class ErtShell(Cmd):
     prompt = "--> "
@@ -37,6 +38,14 @@ class ErtShell(Cmd):
         self.__site_config = site_config
         self.__ert = None
         """ :type: EnKFMain """
+
+        matplotlib.rcParams["backend"] = "Qt4Agg"
+        matplotlib.rcParams["interactive"] = True
+
+        try:
+            matplotlib.style.use("ggplot") # available from version 1.4
+        except AttributeError:
+            pass
 
         Workflows(self)
         Cases(self)
