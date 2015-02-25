@@ -42,4 +42,20 @@ class GeometryToolsTest(ExtendedTestCase):
         self.assertEqual( GeometryTools.joinPolylines( l1 , l2 ) , [(1,1) , (2,0)] )
         
 
+    def test_join_extend_polylines_onto(self):
+        l1 = Polyline( init_points = [(0,1) , (1,1)])
+        l2 = CPolyline( init_points = [(2,0) , (2,2)])
+        l3 = CPolyline( init_points = [(0.5 , 0) , (0.5 , 2)])
+        l4 = Polyline( init_points = [(0,5) , (1,5)])
+        l5 = Polyline( init_points = [(0,5)])
+        
+        self.assertIsNone( GeometryTools.extendPolylineOnto( l1 , l3 ))
+        
+        with self.assertRaises( ValueError ):
+            GeometryTools.extendPolylineOnto( l1 , l5 )            
+
+        with self.assertRaises( ValueError ):
+            GeometryTools.extendPolylineOnto( l1 , l4 )            
+            
+        self.assertEqual( GeometryTools.extendPolylineOnto( l1 , l2 ) , [(1,1) , (2,1)])
 
