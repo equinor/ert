@@ -23,10 +23,11 @@ class SummaryCollector(object):
         return sorted([key for key in keys], key=lambda k : k.lower())
 
     @staticmethod
-    def loadAllSummaryData(ert, case_name):
+    def loadAllSummaryData(ert, case_name, keys=None):
         """
         @type ert: EnKFMain
         @type case_name: str
+        @type keys: list of str
         @rtype: DataFrame
         """
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
@@ -34,7 +35,10 @@ class SummaryCollector(object):
         time_map = fs.getTimeMap()
         dates = [time_map[index].datetime() for index in range(1, len(time_map))]
         realizations = SummaryCollector.createActiveList(ert, fs)
+
         summary_keys = SummaryCollector.getAllSummaryKeys(ert)
+        if keys is not None:
+            summary_keys = [key for key in keys if key in summary_keys] # ignore keys that doesn't exist
 
         summary_array = numpy.empty(shape=(len(summary_keys), len(realizations) * len(dates)), dtype=numpy.float64)
         summary_array.fill(numpy.nan)

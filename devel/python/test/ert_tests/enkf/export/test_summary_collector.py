@@ -27,3 +27,11 @@ class SummaryCollectorTest(ExtendedTestCase):
             with self.assertRaises(KeyError):
                 realization_21 = data.loc[21]
 
+
+            data = SummaryCollector.loadAllSummaryData(ert, "default", ["WWCT:OP_2", "WWCT:OP_3"])
+
+            self.assertFloatEqual(data["WWCT:OP_2"][0]["2000-02-01"], 0.0003561387420631945)
+            self.assertFloatEqual(data["WWCT:OP_3"][0]["2000-02-01"], 0.000117796211271)
+
+            with self.assertRaises(KeyError):
+                data["FOPR"]
