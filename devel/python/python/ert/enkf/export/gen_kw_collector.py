@@ -38,16 +38,21 @@ class GenKwCollector(object):
         return gen_kw_list
 
     @staticmethod
-    def loadAllGenKwData(ert, case_name):
+    def loadAllGenKwData(ert, case_name, keys=None):
         """
         @type ert: EnKFMain
         @type case_name: str
+        @type keys: list of str
         @rtype: DataFrame
         """
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
 
         realizations = GenKwCollector.createActiveList(ert, fs)
+
         gen_kw_keys = GenKwCollector.getAllGenKwKeys(ert)
+
+        if keys is not None:
+            gen_kw_keys = [key for key in keys if key in gen_kw_keys] # ignore keys that doesn't exist
 
         gen_kw_array = numpy.empty(shape=(len(gen_kw_keys), len(realizations)), dtype=numpy.float64)
         gen_kw_array.fill(numpy.nan)
