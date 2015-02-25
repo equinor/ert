@@ -48,6 +48,13 @@ class CPolylineCollectionTest(ExtendedTestCase):
             l.append(p)
         self.assertEqual( len(pc) , 2 )
 
+
+        points = [(0,1) , (1,1)]
+        pc.addPolyline( points , name = "XYZ")
+        self.assertTrue( "XYZ" in pc )
+
+
+
         
     def create_collection(self):
         collection = CPolylineCollection()
