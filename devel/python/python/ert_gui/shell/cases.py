@@ -11,6 +11,8 @@ class Cases(ShellFunction):
         self.addHelpFunction("summary_key_set", None, "Shows a list of the stored summary keys.")
         self.addHelpFunction("state", "[case_name]", "Shows a list of the states of the individual realizations. "
                                                      "Uses the current case if no case name is provided.")
+        self.addHelpFunction("time_map", "[case_name]", "Shows a list of the time/report steps of the case. "
+                                                        "Uses the current case if no case name is provided.")
 
     @assertConfigLoaded
     def do_list(self, line):
@@ -78,5 +80,23 @@ class Cases(ShellFunction):
 
     @assertConfigLoaded
     def complete_state(self, text, line, begidx, endidx):
+        return autoCompleteList(text, self.getFileSystemNames())
+
+    @assertConfigLoaded
+    def do_time_map(self, case_name):
+        case_name = case_name.strip()
+        if not case_name:
+            case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
+        elif not case_name in self.getFileSystemNames():
+            print("Error: Unknown case name '%s'" % case_name)
+            return False
+
+        time_map = self.ert().getEnkfFsManager().getTimeMapForCase(case_name)
+        report_steps = ["%d: %s" % (index, report_step_time) for index, report_step_time in enumerate(time_map)]
+
+        self.columnize(report_steps)
+
+    @assertConfigLoaded
+    def complete_time_map(self, text, line, begidx, endidx):
         return autoCompleteList(text, self.getFileSystemNames())
 
