@@ -103,8 +103,13 @@ ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * con
    (i.e. not set); we seek through
 */
 
-int gen_data_config_get_data_size( const gen_data_config_type * config , int report_step) {
+int gen_data_config_get_data_size__( const gen_data_config_type * config , int report_step) {
   int current_size = int_vector_safe_iget( config->data_size_vector , report_step );
+  return current_size;
+}
+
+int gen_data_config_get_data_size( const gen_data_config_type * config , int report_step) {
+  int current_size = gen_data_config_get_data_size__(config , report_step);
   if (current_size < 0)
     util_abort("%s: Size not set for object:%s report_step:%d - internal error: \n",__func__ , config->key , report_step);
   return current_size;
