@@ -26,7 +26,11 @@ class EnsembleConfig(BaseCClass):
 
     def getNode(self, key):
         """ @rtype: EnkfConfigNode """
-        return EnsembleConfig.cNamespace().get_node(self, key).setParent(self)
+        if key in self:
+            return EnsembleConfig.cNamespace().get_node(self, key).setParent(self)
+        else:
+            raise KeyError("The key:%s is not in the ensemble configuration" % key)
+
 
     def alloc_keylist(self):
         """ @rtype: StringList """
