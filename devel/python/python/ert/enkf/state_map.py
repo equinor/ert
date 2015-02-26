@@ -95,6 +95,18 @@ class StateMap(BaseCClass):
         StateMap.cNamespace().select_matching(self, select_target, select_mask)
 
 
+    def realizationList(self , state_value):
+        """
+        Will create a list of all realisations with state equal to @state_value.
+        @type select_mask: RealizationStateEnum
+        @rtype: IntVector
+        """
+        mask = BoolVector(False, len(self))
+        self.selectMatching(mask, state_value )
+        return BoolVector.createActiveList( mask ) 
+
+
+
     def free(self):
         StateMap.cNamespace().free(self)
 
