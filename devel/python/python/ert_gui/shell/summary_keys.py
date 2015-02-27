@@ -1,6 +1,7 @@
 from ert.enkf import ErtImplType
 from ert.enkf.export.summary_collector import SummaryCollector
-from ert_gui.shell import ShellFunction, assertConfigLoaded, autoCompleteList, extractFullArgument
+from ert.enkf.export.summary_observation_collector import SummaryObservationCollector
+from ert_gui.shell import ShellFunction, assertConfigLoaded, extractFullArgument, autoCompleteListWithSeparator, ShellPlot
 
 
 class SummaryKeys(ShellFunction):
@@ -10,9 +11,10 @@ class SummaryKeys(ShellFunction):
         self.addHelpFunction("list", None, "Shows a list of all available summary keys. (* = with observations)")
         self.addHelpFunction("observations", None, "Shows a list of all available summary key observations.")
         self.addHelpFunction("matchers", None, "Shows a list of all summary keys that the ensemble will match "
-                                              "against during simulations and manual load.")
+                                               "against during simulations and manual load.")
         self.addHelpFunction("add_matcher", "<summary_key>", "Add a matcher to the summary key matcher set.")
         self.addHelpFunction("plot", "<key_1> [key_2..key_n]", "Plot the specified key(s).")
+        self.addHelpFunction("plot_area", "<key_1> [key_2..key_n]", "Plot the area between the minimum and maximum for the specified key(s).")
 
     @assertConfigLoaded
     def do_list(self, line):
@@ -71,21 +73,61 @@ class SummaryKeys(ShellFunction):
             if key in self.summaryKeys():
                 case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
                 data = SummaryCollector.loadAllSummaryData(self.ert(), case_name, [key])
-                data.reset_index(inplace=True)
-                data = data.pivot(index="Date", columns="Realization", values=key)
-                plot = data.plot(alpha=0.75)
+                observation_data = None
+                if SummaryObservationCollector.summaryKeyHasObservations(self.ert(), key):
+                    observation_data = SummaryObservationCollector.loadObservationData(self.ert(), case_name, [key])
+
+                ShellPlot.plot(data, observation_data=observation_data, value_column=key)
             else:
                 print("Error: Unknown Summary key '%s'" % key)
 
     @assertConfigLoaded
     def complete_plot(self, text, line, begidx, endidx):
         key = extractFullArgument(line, endidx)
-        if ":" in key:
-            text = key
-            items = autoCompleteList(text, self.summaryKeys())
-            items = [item[item.rfind(":") + 1:] for item in items if ":" in item]
-        else:
-            items = autoCompleteList(text, self.summaryKeys())
+        return autoCompleteListWithSeparator(key, self.summaryKeys())
 
-        return items
+    @assertConfigLoaded
+    def do_plot_area(self, line):
+        keys = self.splitArguments(line)
+        if len(keys) == 0:
+            print("Error: Must have at least one Summary key")
+            return False
 
+        for key in keys:
+            if key in self.summaryKeys():
+                case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
+                data = SummaryCollector.loadAllSummaryData(self.ert(), case_name, [key])
+                observation_data = None
+                if SummaryObservationCollector.summaryKeyHasObservations(self.ert(), key):
+                    observation_data = SummaryObservationCollector.loadObservationData(self.ert(), case_name, [key])
+                ShellPlot.plotArea(data, value_column=key, observation_data=observation_data)
+            else:
+                print("Error: Unknown Summary key '%s'" % key)
+
+    @assertConfigLoaded
+    def complete_plot_area(self, text, line, begidx, endidx):
+        key = extractFullArgument(line, endidx)
+        return autoCompleteListWithSeparator(key, self.summaryKeys())
+
+    @assertConfigLoaded
+    def do_plot_quantile(self, line):
+        keys = self.splitArguments(line)
+        if len(keys) == 0:
+            print("Error: Must have at least one Summary key")
+            return False
+
+        for key in keys:
+            if key in self.summaryKeys():
+                case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
+                data = SummaryCollector.loadAllSummaryData(self.ert(), case_name, [key])
+                observation_data = None
+                if SummaryObservationCollector.summaryKeyHasObservations(self.ert(), key):
+                    observation_data = SummaryObservationCollector.loadObservationData(self.ert(), case_name, [key])
+                ShellPlot.plotQuantiles(data, value_column=key, observation_data=observation_data)
+            else:
+                print("Error: Unknown Summary key '%s'" % key)
+
+    @assertConfigLoaded
+    def complete_plot_quantile(self, text, line, begidx, endidx):
+        key = extractFullArgument(line, endidx)
+        return autoCompleteListWithSeparator(key, self.summaryKeys())
