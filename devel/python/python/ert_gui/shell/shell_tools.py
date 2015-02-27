@@ -9,6 +9,17 @@ def autoCompleteList(text, items):
     return completions
 
 
+def autoCompleteListWithSeparator(text, items, separator=":"):
+    if separator in text:
+        auto_complete_list = autoCompleteList(text, items)
+        auto_complete_list = [item[item.rfind(":") + 1:] for item in auto_complete_list if separator in item]
+    else:
+        auto_complete_list = autoCompleteList(text, items)
+
+    return auto_complete_list
+
+
+
 def createParameterizedHelpFunction(parameters, help_message):
     def helpFunction(self):
         return parameters, help_message
