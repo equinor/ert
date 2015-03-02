@@ -77,6 +77,7 @@ set(TEST_SOURCES
     ert_tests/enkf/export/test_gen_kw_collector.py
     ert_tests/enkf/export/test_misfit_collector.py
     ert_tests/enkf/export/test_summary_collector.py
+    ert_tests/enkf/export/test_summary_observation_collector.py
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
@@ -382,6 +383,10 @@ add_test( NAME python.tests.ert.enkf.export.misfit_collector
 add_test( NAME python.tests.ert.enkf.export.summary_collector
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_summary_collector.SummaryCollectorTest)
+
+add_test( NAME python.tests.ert.enkf.export.summary_observation_collector
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_summary_observation_collector.SummaryObservationCollectorTest)
 
 
 add_test( NAME python.tests.ert.enkf.update

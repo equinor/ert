@@ -6,6 +6,7 @@ set(PYTHON_SOURCES
     plugins.py
     results.py
     shell_function.py
+    shell_plot.py
     shell_tools.py
     summary_keys.py
     workflows.py
