@@ -1,4 +1,6 @@
+import atexit
 from cmd import Cmd
+import readline
 import os
 
 from ert.enkf import EnKFMain
@@ -12,25 +14,27 @@ from ert_gui.shell import extractFullArgument, getPossibleFilenameCompletions
 
 import matplotlib
 
+
 class ErtShell(Cmd):
     prompt = "--> "
-    intro = "  _________________________________ \n" \
-            " /                                 \\\n" \
-            " |   ______   ______   _______     |\n" \
-            " |  |  ____| |  __  \ |__   __|    |\n" \
-            " |  | |__    | |__) |    | |       |\n" \
-            " |  |  __|   |  _  /     | |       |\n" \
-            " |  | |____  | | \ \     | |       |\n" \
-            " |  |______| |_|  \_\    |_|       |\n" \
-            " |                                 |\n" \
-            " |  Ensemble based Reservoir Tool  |\n" \
-            " \_________________________________/\n" \
+    intro = " :::::::::::::::::::::::::::::::::::::\n" \
+            " ::                                 ::\n" \
+            " ::    ______   ______   _______    ::\n" \
+            " ::   |  ____| |  __  \ |__   __|   ::\n" \
+            " ::   | |__    | |__) |    | |      ::\n" \
+            " ::   |  __|   |  _  /     | |      ::\n" \
+            " ::   | |____  | | \ \     | |      ::\n" \
+            " ::   |______| |_|  \_\    |_|      ::\n" \
+            " ::                                 ::\n" \
+            " ::  Ensemble based Reservoir Tool  ::\n" \
+            " :::::::::::::::::::::::::::::::::::::\n" \
             "\n" \
             "Interactive shell for working with ERT.\n" \
             "\n" \
             "-- Type help for a list of supported commands.\n" \
             "-- Type exit or press Ctrl+D to end the shell session.\n" \
-            "-- Press Tab for auto completion.\n"
+            "-- Press Tab for auto completion.\n" \
+            "-- Arrow up/down for history.\n"
 
 
     def __init__(self, site_config=None):
@@ -39,8 +43,15 @@ class ErtShell(Cmd):
         self.__ert = None
         """ :type: EnKFMain """
 
+        self.__history_file = os.path.join(os.path.expanduser("~/.ertshell/ertshell.history"))
+        self.__init_history()
+
         matplotlib.rcParams["backend"] = "Qt4Agg"
         matplotlib.rcParams["interactive"] = True
+        matplotlib.rcParams["mathtext.default"] = "regular"
+        matplotlib.rcParams["verbose.level"] = "helpful"
+        matplotlib.rcParams["verbose.fileo"] = "sys.stderr"
+
 
         try:
             matplotlib.style.use("ggplot") # available from version 1.4
@@ -53,6 +64,20 @@ class ErtShell(Cmd):
         SummaryKeys(self)
         GenKWKeys(self)
         Results(self)
+
+    def __init_history(self):
+        try:
+            readline.read_history_file(self.__history_file)
+        except IOError:
+            pass
+        atexit.register(self.__save_history)
+
+    def __save_history(self):
+        if not os.path.exists(os.path.dirname(self.__history_file)):
+            os.makedirs(os.path.dirname(self.__history_file))
+
+        readline.write_history_file(self.__history_file)
+
 
     def ert(self):
         """ @rtype: ert.enkf.enkf_main.EnKFMain """
