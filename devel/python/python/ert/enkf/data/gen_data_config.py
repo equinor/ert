@@ -34,6 +34,9 @@ class GenDataConfig(BaseCClass):
         else:
             return data_size
             
+    def getActiveMask(self):
+         return GenDataConfig.cNamespace().get_active_mask(self)
+
     def getName(self):
         return GenDataConfig.cNamespace().get_key(self)
 
@@ -73,4 +76,5 @@ GenDataConfig.cNamespace().get_initial_size = cwrapper.prototype("int gen_data_c
 GenDataConfig.cNamespace().has_report_step = cwrapper.prototype("bool gen_data_config_has_report_step(gen_data_config, int)")
 GenDataConfig.cNamespace().get_data_size    = cwrapper.prototype("int gen_data_config_get_data_size__(gen_data_config , int)")
 GenDataConfig.cNamespace().get_key          = cwrapper.prototype("char* gen_data_config_get_key(gen_data_config)")
+GenDataConfig.cNamespace().get_active_mask  = cwrapper.prototype("bool_vector_ref gen_data_config_get_active_mask(gen_data_config)")
 
