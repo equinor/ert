@@ -792,6 +792,7 @@ set_property( TEST python.tests.ert.enkf.export.gen_kw_collector  PROPERTY LABEL
 set_property( TEST python.tests.ert.enkf.export.misfit_collector  PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.summary_collector PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_time_range    PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.export.summary_observation_collector PROPERTY LABELS Python:StatoilData)
 
 if (ERT_BUILD_GUI)
    set_property( TEST python.tests.ert_gui.import         PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
