@@ -381,6 +381,10 @@ add_test( NAME python.tests.ert.enkf.export.gen_data_collector
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_gen_data_collector.GenDataCollectorTest)
 
+add_test( NAME python.tests.ert.enkf.export.arg_loader
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_arg_loader.ArgLoaderTest)
+
 add_test( NAME python.tests.ert.enkf.export.misfit_collector
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.export.test_misfit_collector.MisfitCollectorTest)
@@ -794,6 +798,8 @@ set_property( TEST python.tests.ert.enkf.data.gen_kw_config   PROPERTY LABELS Py
 set_property( TEST python.tests.ert.enkf.export.design_matrix     PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.export_join       PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.gen_kw_collector  PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.export.gen_data_collector  PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.enkf.export.arg_loader          PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.misfit_collector  PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.enkf.export.summary_collector PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_sum_time_range    PROPERTY LABELS Python:StatoilData )
