@@ -1,5 +1,5 @@
 INTERNAL    True
-SCRIPT      ../scripts/robust_csv_export.py
+SCRIPT      ../scripts/csv_export.py
 MIN_ARG     1
 MAX_ARG     4
 ARG_TYPE    0  STRING
