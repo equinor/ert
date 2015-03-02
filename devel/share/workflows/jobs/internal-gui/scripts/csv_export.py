@@ -11,7 +11,7 @@ from ert_gui.widgets.list_edit_box import ListEditBox
 from ert_gui.widgets.path_chooser import PathChooser
 
 
-class RobustCSVExportJob(ErtPlugin):
+class CSVExportJob(ErtPlugin):
     """
     Export of summary, misfit, design matrix data and gen kw into a single CSV file.
 
@@ -23,6 +23,7 @@ class RobustCSVExportJob(ErtPlugin):
 
     case_list: a comma separated list of cases to export (no spaces allowed)
                if no list is provided the current case is exported
+               a single * can be used to export all cases
 
     design_matrix: a path to a file containing the design matrix
 
@@ -51,10 +52,10 @@ class RobustCSVExportJob(ErtPlugin):
                  "</html>")
 
     def getName(self):
-        return "Robust CSV Export"
+        return "CSV Export"
 
     def getDescription(self):
-        return "Export summary data, misfit, design matrix data and gen kw into a single CSV file."
+        return "Export GenKW, design matrix, misfit data and summary data into a single CSV file."
 
     def inferIterationNumber(self, case_name):
         pattern = re.compile("_([0-9]+$)")
@@ -67,12 +68,15 @@ class RobustCSVExportJob(ErtPlugin):
 
     def run(self, output_file, case_list=None, design_matrix_path=None, infer_iteration=True):
         cases = []
+
         if case_list is not None:
-            cases = case_list.split(",")
+            if case_list.strip() == "*":
+                cases = self.getAllCaseList()
+            else:
+                cases = case_list.split(",")
 
         if case_list is None or len(cases) == 0:
             cases = [self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()]
-
 
         if design_matrix_path is not None:
             if not os.path.exists(design_matrix_path):
@@ -80,7 +84,6 @@ class RobustCSVExportJob(ErtPlugin):
 
             if not os.path.isfile(design_matrix_path):
                 raise UserWarning("The design matrix is not a file!")
-
 
         data = pandas.DataFrame()
 
@@ -126,7 +129,7 @@ class RobustCSVExportJob(ErtPlugin):
 
     def getArguments(self, parent=None):
         description = "The CSV export requires some information before it starts:"
-        dialog = CustomDialog("Robust CSV Export", description, parent)
+        dialog = CustomDialog("CSV Export", description, parent)
 
         default_csv_output_path = self.getDataKWValue("CSV_OUTPUT_PATH", default="output.csv")
         output_path_model = DefaultPathModel(default_csv_output_path)
@@ -136,14 +139,12 @@ class RobustCSVExportJob(ErtPlugin):
         design_matrix_path_model = DefaultPathModel(design_matrix_default, is_required=False, must_exist=True)
         design_matrix_path_chooser = PathChooser(design_matrix_path_model, path_label="Design Matrix path")
 
-        fs_manager = self.ert().getEnkfFsManager()
-        all_case_list = fs_manager.getCaseList()
-        all_case_list = [case for case in all_case_list if fs_manager.caseHasData(case)]
+        all_case_list = self.getAllCaseList()
         list_edit = ListEditBox(all_case_list, "List of cases to export")
 
         infer_iteration_model = DefaultBooleanModel()
         infer_iteration_checkbox = CheckBox(infer_iteration_model, label="Infer iteration number", show_label=False)
-        infer_iteration_checkbox.setToolTip(RobustCSVExportJob.INFER_HELP)
+        infer_iteration_checkbox.setToolTip(CSVExportJob.INFER_HELP)
 
         dialog.addOption(output_path_chooser)
         dialog.addOption(design_matrix_path_chooser)
@@ -171,3 +172,9 @@ class RobustCSVExportJob(ErtPlugin):
         if name in data_kw:
             return data_kw[data_kw.indexForKey(name)][1]
         return default
+
+    def getAllCaseList(self):
+        fs_manager = self.ert().getEnkfFsManager()
+        all_case_list = fs_manager.getCaseList()
+        all_case_list = [case for case in all_case_list if fs_manager.caseHasData(case)]
+        return all_case_list
