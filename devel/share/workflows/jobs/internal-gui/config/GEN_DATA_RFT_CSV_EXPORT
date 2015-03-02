@@ -1,0 +1,10 @@
+INTERNAL    True
+SCRIPT      ../scripts/gen_data_rft_export.py
+MIN_ARG     4
+MAX_ARG     6
+ARG_TYPE    0  STRING
+ARG_TYPE    1  STRING
+ARG_TYPE    2  INT
+ARG_TYPE    3  STRING
+ARG_TYPE    4  STRING
+ARG_TYPE    5  BOOL
