@@ -3,8 +3,10 @@ set(PYTHON_SOURCES
     cases.py
     ertshell.py
     gen_kw_keys.py
+    plot_settings.py
     plugins.py
     results.py
+    shell_context.py
     shell_function.py
     shell_plot.py
     shell_tools.py
