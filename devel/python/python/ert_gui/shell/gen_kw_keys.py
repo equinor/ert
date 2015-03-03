@@ -1,11 +1,11 @@
 from ert.enkf.export.gen_kw_collector import GenKwCollector
-from ert_gui.shell import ShellFunction, assertConfigLoaded, extractFullArgument, autoCompleteListWithSeparator, \
-    ShellPlot
+from ert_gui.shell import ShellFunction, extractFullArgument, autoCompleteListWithSeparator, ShellPlot, \
+    assertConfigLoaded
 
 
 class GenKWKeys(ShellFunction):
-    def __init__(self, cmd):
-        super(GenKWKeys, self).__init__("gen_kw", cmd)
+    def __init__(self, shell_context):
+        super(GenKWKeys, self).__init__("gen_kw", shell_context)
         self.addHelpFunction("list", None, "Shows a list of all available gen_kw keys.")
         self.addHelpFunction("histogram", "<key_1> [key_2..key_n]", "Plot the histogram for the specified key(s).")
         self.addHelpFunction("density", "<key_1> [key_2..key_n]", "Plot the density for the specified key(s).")
@@ -27,11 +27,15 @@ class GenKWKeys(ShellFunction):
             print("Error: Must have at least one GenKW key")
             return False
 
+        case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
+
         for key in keys:
             if key in self.fetchSupportedKeys():
-                case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
-                data = GenKwCollector.loadAllGenKwData(self.ert(), case_name, [key])
-                ShellPlot.histogram(data, key, log_on_x=key.startswith("LOG10_"))
+
+                for case_name in case_list:
+                    data = GenKwCollector.loadAllGenKwData(self.ert(), case_name, [key])
+                    plot = ShellPlot(key)
+                    plot.histogram(data, key, log_on_x=key.startswith("LOG10_"))
             else:
                 print("Error: Unknown GenKW key '%s'" % key)
 
@@ -48,12 +52,15 @@ class GenKWKeys(ShellFunction):
             print("Error: Must have at least one GenKW key")
             return False
 
+        case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
+
         for key in keys:
             if key in self.fetchSupportedKeys():
-                case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
-                data = GenKwCollector.loadAllGenKwData(self.ert(), case_name, [key])
-
-                ShellPlot.density(data, key)
+                plot = ShellPlot(key)
+                for case_name in case_list:
+                    data = GenKwCollector.loadAllGenKwData(self.ert(), case_name, [key])
+                    plot.density(data, key, legend_label=case_name)
+                plot.showLegend()
             else:
                 print("Error: Unknown GenKW key '%s'" % key)
 

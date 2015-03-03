@@ -1,4 +1,6 @@
 from math import ceil, sqrt, floor
+import itertools
+from matplotlib.patches import Rectangle
 
 import matplotlib.pyplot as plt
 from pandas import DataFrame
@@ -8,36 +10,56 @@ from scipy.stats import gaussian_kde
 
 
 class ShellPlot(object):
-    @staticmethod
-    def plot(data, value_column, observation_data=None, color=None, legend=False):
+
+
+
+    def __init__(self, name):
+        super(ShellPlot, self).__init__()
+        clist = plt.rcParams['axes.color_cycle']
+        self.__color_cycle = itertools.cycle(clist)
+
+        self.figure = plt.figure()
+        self.figure.autofmt_xdate()
+        plt.title(name)
+
+        self.__legend_items = []
+        self.__legend_labels = []
+
+
+    def nextColor(self):
+        return self.__color_cycle.next()
+
+
+    def plotObservations(self, data, value_column, color='k'):
+        data = data.dropna()
+        plt.errorbar(x=data.index.values, y=data[value_column], yerr=data["STD_%s" % value_column],
+                         fmt='none', ecolor=color, alpha=0.8)
+
+
+    def plot(self, data, value_column, color=None, legend_label=''):
         if color is None:
-            clist = plt.rcParams['axes.color_cycle']
-            color = clist[0]
+            color = self.nextColor()
 
         data = data.reset_index()
         data = data.pivot(index="Date", columns="Realization", values=value_column)
 
-        figure = plt.figure()
-        figure.autofmt_xdate()
-
         plt.ylabel("Value")
         plt.xlabel("Date")
         plt.xticks(rotation=30)
-        plt.title(value_column)
-        plt.plot_date(x=data.index.values, y=data, color=color, alpha=0.8, marker=None, linestyle="-")
+        lines = plt.plot_date(x=data.index.values, y=data, color=color, alpha=0.8, marker=None, linestyle="-")
 
-        if observation_data is not None:
-            observation_data.dropna(inplace=True)
-            plt.errorbar(x=observation_data.index.values, y=observation_data[value_column], yerr=observation_data["STD_%s" %value_column],
-                         fmt='none', ecolor='k', alpha=0.8)
+        if len(lines) > 0:
+            self.__legend_items.append(lines[0])
+            self.__legend_labels.append(legend_label)
 
 
+    def showLegend(self):
+        plt.legend(self.__legend_items, self.__legend_labels)
 
-    @staticmethod
-    def plotArea(data, value_column, observation_data=None, color=None):
+
+    def plotArea(self, data, value_column, color=None, legend_label=''):
         if color is None:
-            clist = plt.rcParams['axes.color_cycle']
-            color = [clist[0]]
+            color = self.nextColor()
 
         data = data.reset_index()
         data = data.pivot(index="Date", columns="Realization", values=value_column)
@@ -47,25 +69,20 @@ class ShellPlot(object):
         df["Minimum"] = data.min(axis=1)
         df["Maximum"] = data.max(axis=1)
 
-        figure = plt.figure()
-        figure.autofmt_xdate()
-        plt.fill_between(df.index.values, df["Minimum"].values, df["Maximum"].values, alpha=0.8, color=color)
+        plt.fill_between(df.index.values, df["Minimum"].values, df["Maximum"].values, alpha=0.5, color=color)
         plt.ylabel("Value")
         plt.xlabel("Date")
         plt.xticks(rotation=30)
-        plt.title(value_column)
 
-        if observation_data is not None:
-            observation_data.dropna(inplace=True)
-            plt.errorbar(x=observation_data.index.values, y=observation_data[value_column], yerr=observation_data["STD_%s" %value_column],
-                         fmt='none', ecolor='k', alpha=0.8)
+        r = Rectangle((0, 0), 1, 1, color=color) # creates rectangle patch for legend use.
+
+        self.__legend_items.append(r)
+        self.__legend_labels.append(legend_label)
 
 
-    @staticmethod
-    def plotQuantiles(data, value_column, observation_data=None, color=None):
+    def plotQuantiles(self, data, value_column, color=None, legend_label=''):
         if color is None:
-            clist = plt.rcParams['axes.color_cycle']
-            color = clist[0]
+            color = self.nextColor()
 
         data = data.reset_index()
         data = data.pivot(index="Date", columns="Realization", values=value_column)
@@ -81,8 +98,6 @@ class ShellPlot(object):
         df["p67"] = data.quantile(0.67, axis=1)
         df["p90"] = data.quantile(0.90, axis=1)
 
-        figure = plt.figure()
-        figure.autofmt_xdate()
         plt.plot(df.index.values, df["Minimum"].values, alpha=1, linestyle="--", color=color)
         plt.plot(df.index.values, df["Maximum"].values, alpha=1, linestyle="--", color=color)
         plt.plot(df.index.values, df["p50"].values, alpha=1, linestyle="--", color=color)
@@ -92,40 +107,44 @@ class ShellPlot(object):
         plt.ylabel("Value")
         plt.xlabel("Date")
         plt.xticks(rotation=30)
-        plt.title(value_column)
 
-        if observation_data is not None:
-            observation_data.dropna(inplace=True)
-            plt.errorbar(x=observation_data.index.values, y=observation_data[value_column], yerr=observation_data["STD_%s" %value_column],
-                         fmt='none', ecolor='k', alpha=0.8)
+        r = Rectangle((0, 0), 1, 1, color=color) # creates rectangle patch for legend use.
 
-    @staticmethod
-    def histogram(data, name, log_on_x=False):
+        self.__legend_items.append(r)
+        self.__legend_labels.append(legend_label)
+
+
+    def histogram(self, data, name, log_on_x=False, color=None):
+        if color is None:
+            color = self.nextColor()
+
         bins = int(ceil(sqrt(len(data.index))))
 
         if log_on_x:
             bins = ShellPlot._histogramLogBins(data, bins)
 
-        plt.figure()
-        plt.hist(data[name].values, alpha=0.8, bins=bins)
+        plt.hist(data[name].values, alpha=0.8, bins=bins, color=color)
         plt.ylabel("Count")
-        plt.title(name)
 
         if log_on_x:
             plt.xticks(bins, ["$10^{%s}$" % (int(value) if value.is_integer() else "%.1f" % value) for value in bins]) #LaTeX formatting
 
-    @staticmethod
-    def density(data, name):
+    def density(self, data, name, legend_label='', color=None):
+        if color is None:
+            color = self.nextColor()
+
         values = data[name].values
         sample_range = values.max() - values.min()
         indexes = numpy.linspace(values.min() - 0.5 * sample_range, values.max() + 0.5 * sample_range, 1000)
         gkde = gaussian_kde(values)
         evaluated_gkde = gkde.evaluate(indexes)
 
-        plt.figure()
-        plt.title(name)
         plt.ylabel("Density")
-        plt.plot(indexes, evaluated_gkde)
+        lines = plt.plot(indexes, evaluated_gkde, linewidth=2, color=color)
+
+        if len(lines) > 0:
+            self.__legend_items.append(lines[0])
+            self.__legend_labels.append(legend_label)
 
 
     @staticmethod

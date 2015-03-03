@@ -1,10 +1,10 @@
 from ert.util import BoolVector
-from ert_gui.shell import ShellFunction, assertConfigLoaded, autoCompleteList
+from ert_gui.shell import ShellFunction, assertConfigLoaded
 
 
 class Results(ShellFunction):
-    def __init__(self, cmd):
-        super(Results, self).__init__("results", cmd)
+    def __init__(self, shell_context):
+        super(Results, self).__init__("results", shell_context)
 
         self.addHelpFunction("runpath", None, "Shows the current runpath.")
         self.addHelpFunction("load", "<realizations>", "Load results from the specified realizations.") #todo iterations

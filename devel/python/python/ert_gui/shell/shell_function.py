@@ -3,25 +3,47 @@ import shlex
 import textwrap
 from ert_gui.shell import createParameterizedHelpFunction, autoCompleteList
 
+def assertConfigLoaded(func):
+    def wrapper(self, *args, **kwargs):
+        # prefixes should be either do_ or complete_
+        if func.__name__.startswith("complete_"):
+            result = []
+            verbose = False
+        else:
+            result = False
+            verbose = True
+
+        if self.isConfigLoaded(verbose=verbose):
+            result = func(self, *args, **kwargs)
+
+        return result
+
+    wrapper.__doc__ = func.__doc__
+    wrapper.__name__ = func.__name__
+
+    return wrapper
+
 
 class ShellFunction(object):
     command_help_message = "The command: '%s' supports the following keywords:"
 
-    def __init__(self, name, cmd):
+    def __init__(self, name, shell_context):
         super(ShellFunction, self).__init__()
-        self.cmd = cmd
-        """ :type: Cmd """
+        self.__shell_context = shell_context
+        """ :type: ert_gui.shell.ShellContext """
         self.name = name
-        """ :type: ErtShell """
+        """ :type: str """
 
-        setattr(cmd.__class__, "do_%s" % name, self.doKeywords)
-        setattr(cmd.__class__, "complete_%s" % name, self.completeKeywords)
-        setattr(cmd.__class__, "help_%s" % name, self.helpKeywords)
+        setattr(self.shellContext().shell().__class__, "do_%s" % name, self.doKeywords)
+        setattr(self.shellContext().shell().__class__, "complete_%s" % name, self.completeKeywords)
+        setattr(self.shellContext().shell().__class__, "help_%s" % name, self.helpKeywords)
 
+    def shellContext(self):
+        return self.__shell_context
 
     def ert(self):
         """ @rtype: ert.enkf.enkf_main.EnKFMain """
-        return self.cmd.ert()
+        return self.__shell_context.ert()
 
     def isConfigLoaded(self, verbose=True):
         """ @rtype: bool """
@@ -93,7 +115,7 @@ class ShellFunction(object):
         return shlex.split(line)
 
     def columnize(self, items):
-        self.cmd.columnize(items, self.getTerminalSize()[0])
+        self.shellContext().shell().columnize(items, self.getTerminalSize()[0])
 
 
     def widthAsPercentageOfConsoleWidth(self, percentage):

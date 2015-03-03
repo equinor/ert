@@ -10,7 +10,7 @@ from ert_gui.shell.results import Results
 from ert_gui.shell.plugins import Plugins
 from ert_gui.shell.summary_keys import SummaryKeys
 from ert_gui.shell.workflows import Workflows
-from ert_gui.shell import extractFullArgument, getPossibleFilenameCompletions
+from ert_gui.shell import extractFullArgument, getPossibleFilenameCompletions, PlotSettings, ShellContext
 
 import matplotlib
 
@@ -40,8 +40,9 @@ class ErtShell(Cmd):
     def __init__(self, site_config=None):
         Cmd.__init__(self)
         self.__site_config = site_config
-        self.__ert = None
-        """ :type: EnKFMain """
+
+        shell_context = ShellContext(self)
+        self.__shell_context = shell_context
 
         self.__history_file = os.path.join(os.path.expanduser("~/.ertshell/ertshell.history"))
         self.__init_history()
@@ -58,12 +59,13 @@ class ErtShell(Cmd):
         except AttributeError:
             pass
 
-        Workflows(self)
-        Cases(self)
-        Plugins(self)
-        SummaryKeys(self)
-        GenKWKeys(self)
-        Results(self)
+        PlotSettings(shell_context)
+        Workflows(shell_context)
+        Cases(shell_context)
+        Plugins(shell_context)
+        SummaryKeys(shell_context)
+        GenKWKeys(shell_context)
+        Results(shell_context)
 
     def __init_history(self):
         try:
@@ -78,21 +80,12 @@ class ErtShell(Cmd):
 
         readline.write_history_file(self.__history_file)
 
-
-    def ert(self):
-        """ @rtype: ert.enkf.enkf_main.EnKFMain """
-        return self.__ert
-
     def emptyline(self):
         pass
 
     def do_load_config(self, config_file):
         if os.path.exists(config_file) and os.path.isfile(config_file):
-            if self.__ert is not None:
-                self.__ert.free()
-                self.__ert = None
-
-            self.__ert = EnKFMain(config_file, site_config=self.__site_config)
+            self.shellContext().setErt(EnKFMain(config_file, site_config=self.__site_config))
         else:
             print("Error: Config file '%s' not found!\n" % config_file)
 
@@ -106,8 +99,8 @@ class ErtShell(Cmd):
                          "    Loads a config file.")))
 
     def do_exit(self, line):
-        if self.ert() is not None:
-            self.ert().free()
+        if self.shellContext().ert() is not None:
+            self.shellContext().ert().free()
         return True
 
     def help_exit(self):
@@ -119,3 +112,6 @@ class ErtShell(Cmd):
     def help_EOF(self):
         return "\n".join(("EOF",
                           "    The same as exit. (Ctrl+D)")),
+
+    def shellContext(self):
+        return self.__shell_context
