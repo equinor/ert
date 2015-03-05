@@ -4,8 +4,8 @@ from ert_gui.shell import ShellFunction, assertConfigLoaded, autoCompleteList
 
 
 class Plugins(ShellFunction):
-    def __init__(self, cmd):
-        super(Plugins, self).__init__("plugins", cmd)
+    def __init__(self, shell_context):
+        super(Plugins, self).__init__("plugins", shell_context)
 
         self.addHelpFunction("list", None, "Shows a list of all available plugins.")
         self.addHelpFunction("run", "<plugin_name> [args]", "Run a named plugin with either arguments or default input GUI.")

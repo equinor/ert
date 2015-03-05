@@ -19,33 +19,11 @@ def autoCompleteListWithSeparator(text, items, separator=":"):
     return auto_complete_list
 
 
-
 def createParameterizedHelpFunction(parameters, help_message):
     def helpFunction(self):
         return parameters, help_message
 
     return helpFunction
-
-
-def assertConfigLoaded(func):
-    def wrapper(self, *args, **kwargs):
-        # prefixes should be either do_ or complete_
-        if func.__name__.startswith("complete_"):
-            result = []
-            verbose = False
-        else:
-            result = False
-            verbose = True
-
-        if self.isConfigLoaded(verbose=verbose):
-            result = func(self, *args, **kwargs)
-
-        return result
-
-    wrapper.__doc__ = func.__doc__
-    wrapper.__name__ = func.__name__
-
-    return wrapper
 
 
 def pathify(head, tail):

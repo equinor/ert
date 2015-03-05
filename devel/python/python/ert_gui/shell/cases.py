@@ -2,8 +2,8 @@ from ert_gui.shell import ShellFunction, autoCompleteList, assertConfigLoaded
 
 
 class Cases(ShellFunction):
-    def __init__(self, cmd):
-        super(Cases, self).__init__("case", cmd)
+    def __init__(self, shell_context):
+        super(Cases, self).__init__("case", shell_context)
 
         self.addHelpFunction("list", None, "Shows a list of all available cases.")
         self.addHelpFunction("select", "<case_name>", "Change the current file system to the named case.")
