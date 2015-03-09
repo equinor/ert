@@ -1,7 +1,9 @@
 set(PYTHON_SOURCES
     __init__.py
     cases.py
+    debug.py
     ertshell.py
+    gen_data_keys.py
     gen_kw_keys.py
     plot_settings.py
     plugins.py
