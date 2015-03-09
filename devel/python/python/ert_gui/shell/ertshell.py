@@ -4,7 +4,9 @@ import readline
 import os
 
 from ert.enkf import EnKFMain
+from ert_gui.shell.debug import Debug
 from ert_gui.shell.cases import Cases
+from ert_gui.shell.gen_data_keys import GenDataKeys
 from ert_gui.shell.gen_kw_keys import GenKWKeys
 from ert_gui.shell.results import Results
 from ert_gui.shell.plugins import Plugins
@@ -59,11 +61,13 @@ class ErtShell(Cmd):
         except AttributeError:
             pass
 
+        Debug(shell_context)
         PlotSettings(shell_context)
         Workflows(shell_context)
         Cases(shell_context)
         Plugins(shell_context)
         SummaryKeys(shell_context)
+        GenDataKeys(shell_context)
         GenKWKeys(shell_context)
         Results(shell_context)
 
@@ -97,6 +101,13 @@ class ErtShell(Cmd):
     def help_load_config(self):
         print("\n".join(("load_config config_file",
                          "    Loads a config file.")))
+
+    def do_cwd(self, line):
+        cwd = os.getcwd()
+        print("Current directory: %s" % cwd)
+
+    def help_cwd(self):
+        print("Show the current directory.")
 
     def do_exit(self, line):
         if self.shellContext().ert() is not None:

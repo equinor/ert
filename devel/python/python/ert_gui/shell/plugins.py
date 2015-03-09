@@ -40,6 +40,8 @@ class Plugins(ShellFunction):
                         arguments = script.getArguments(None)
                     result = plugin_job.run(self.ert(), arguments)
 
+                    self.shellContext()["debug"].setLastPluginResult(result)
+
                     print(result)
                 except CancelPluginException:
                     print("Plugin cancelled before execution!")
