@@ -39,6 +39,10 @@ class GenDataConfig(BaseCClass):
     def free(self):
         GenDataConfig.cNamespace().free(self)
 
+    def hasReportStep(self, report_step):
+        """ @rtype: bool """
+        return GenDataConfig.cNamespace().has_report_step(self, report_step)
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("gen_data_config", GenDataConfig)
@@ -55,4 +59,5 @@ GenDataConfig.cNamespace().get_input_format = cwrapper.prototype("gen_data_file_
 GenDataConfig.cNamespace().get_template_file = cwrapper.prototype("char* gen_data_config_get_template_file(gen_data_config)")
 GenDataConfig.cNamespace().get_template_key = cwrapper.prototype("char* gen_data_config_get_template_key(gen_data_config)")
 GenDataConfig.cNamespace().get_initial_size = cwrapper.prototype("int gen_data_config_get_initial_size(gen_data_config)")
+GenDataConfig.cNamespace().has_report_step = cwrapper.prototype("bool gen_data_config_has_report_step(gen_data_config, int)")
 
