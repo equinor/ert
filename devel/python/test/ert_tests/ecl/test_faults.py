@@ -14,14 +14,12 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-try:
-    from unittest2 import skipIf
-except ImportError:
-    from unittest import skipIf
 
+from unittest import skipIf
 import time
-from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment
-from ert.ecl import EclGrid
+
+from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment,FaultBlockLayer
+from ert.ecl import EclGrid, EclKW, EclTypeEnum
 from ert.test import ExtendedTestCase, TestAreaContext
 from ert.geo import Polyline , CPolyline
 
@@ -727,5 +725,45 @@ class FaultTest(ExtendedTestCase):
 
         points = fault1.extendPolylineOnto( polyline3 , 0)
         self.assertIsNone( points )
+
+        
+    def test_stepped(self):
+        grid = EclGrid.create_rectangular( (6,1,4) , (1,1,1))
+        f = Fault(grid , "F")
+        f.addRecord(4,4,0,0,0,1,"X")
+        f.addRecord(2,2,0,0,1,1,"Z")
+        f.addRecord(1,1,0,0,2,3,"X")
+        
+        block_kw = EclKW.create("FAULTBLK" , grid.getGlobalSize() , EclTypeEnum.ECL_INT_TYPE)
+        block_kw.assign(1)
+        block_kw[5] = 2
+        block_kw[11] = 2
+        block_kw[14:18] = 2
+        block_kw[14:18] = 2
+        block_kw[20:23] = 2
+        
+        layer0 = FaultBlockLayer( grid , 0 )
+        layer0.scanKeyword( block_kw )
+        layer0.addFaultBarrier( f )
+        self.assertTrue( layer0.cellContact((0,0) , (1,0)))
+        self.assertFalse( layer0.cellContact((4,0) , (5,0)))
+
+        layer1 = FaultBlockLayer( grid , 1 )
+        layer1.scanKeyword( block_kw )
+        layer1.addFaultBarrier( f )
+        self.assertTrue( layer1.cellContact((0,0) , (1,0)))
+        self.assertFalse( layer1.cellContact((4,0) , (5,0)))
+
+        layer2 = FaultBlockLayer( grid , 2 )
+        layer2.scanKeyword( block_kw )
+        layer2.addFaultBarrier( f )
+        self.assertTrue( layer2.cellContact((0,0) , (1,0)))
+        self.assertFalse( layer2.cellContact((1,0) , (2,0)))
+
+        layer3 = FaultBlockLayer( grid , 3 )
+        layer3.scanKeyword( block_kw )
+        layer3.addFaultBarrier( f )
+        self.assertTrue( layer3.cellContact((0,0) , (1,0)))
+        self.assertFalse( layer3.cellContact((1,0) , (2,0)))
 
         
