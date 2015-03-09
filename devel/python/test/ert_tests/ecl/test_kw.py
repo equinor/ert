@@ -246,6 +246,15 @@ class KWTest(ExtendedTestCase):
                 self.assertEqual(v1,v2)
 
 
+    def test_sliced_set(self):
+        kw = EclKW.create("REGIONS" , 10 , EclTypeEnum.ECL_INT_TYPE)
+        kw.assign(99)
+        kw[0:5] = 66
+        self.assertEqual(kw[0] , 66)
+        self.assertEqual(kw[4] , 66)
+        self.assertEqual(kw[5] , 99)
+
+
 
 #def cutoff( x , arg ):
 #    if x < arg:
