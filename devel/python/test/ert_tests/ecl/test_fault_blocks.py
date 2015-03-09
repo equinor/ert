@@ -14,10 +14,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-try:
-    from unittest2 import skipIf
-except ImportError:
-    from unittest import skipIf
+from unittest import skipIf
 
 from ert.ecl import EclGrid, EclTypeEnum , EclKW , EclRegion
 from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCell,FaultCollection
