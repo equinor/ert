@@ -14,12 +14,10 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-try:
-    from unittest2 import skipIf
-except ImportError:
-    from unittest import skipIf
-
+import os.path
+from unittest import skipIf
 import time
+
 from ert.ecl import EclGrid
 from ert.ecl.faults import Layer , FaultCollection
 from ert.test import ExtendedTestCase , TestAreaContext
@@ -51,3 +49,16 @@ class GridTest(ExtendedTestCase):
 
         p7 = grid.getNodePos(10,20,30)
         self.assertEqual( p7 , (10,20,30))
+
+    
+    def test_truncated_file(self):
+        grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) )
+        with TestAreaContext("python/ecl_grid/truncated"):
+            grid.save_EGRID( "TEST.EGRID")
+
+            size = os.path.getsize( "TEST.EGRID")
+            with open("TEST.EGRID" , "r+") as f:
+                f.truncate( size / 2 )
+
+            with self.assertRaises(IOError):
+                EclGrid("TEST.EGRID")
