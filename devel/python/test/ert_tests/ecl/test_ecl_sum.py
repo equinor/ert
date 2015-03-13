@@ -54,3 +54,30 @@ class EclSumTest(ExtendedTestCase):
             outputH = open(test_file_name , "w")
             self.ecl_sum.dumpCSVLine( dtime, ecl_sum_vector, outputH)
             assert os.path.isfile(test_file_name)
+
+
+    def test_truncated_smspec(self):
+        with TestAreaContext("EclSum/truncated_smspec") as ta:
+            ta.copy_file( self.test_file )
+            ta.copy_file( self.createTestPath( "Statoil/ECLIPSE/Gurbat/ECLIPSE.UNSMRY" ))
+            
+            file_size = os.path.getsize( "ECLIPSE.SMSPEC")
+            with open("ECLIPSE.SMSPEC","r+") as f:
+                f.truncate( file_size / 2 )
+                
+            with self.assertRaises(IOError):
+                EclSum( "ECLIPSE" )
+
+
+    def test_truncated_data(self):
+        with TestAreaContext("EclSum/truncated_data") as ta:
+            ta.copy_file( self.test_file )
+            ta.copy_file( self.createTestPath( "Statoil/ECLIPSE/Gurbat/ECLIPSE.UNSMRY" ))
+
+            
+            file_size = os.path.getsize( "ECLIPSE.UNSMRY")
+            with open("ECLIPSE.UNSMRY","r+") as f:
+                f.truncate( file_size / 2 )
+                
+            with self.assertRaises(IOError):
+                EclSum( "ECLIPSE" )
