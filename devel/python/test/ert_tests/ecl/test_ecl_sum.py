@@ -17,7 +17,7 @@
 import datetime
 import os.path
 from ert.cwrap import CFILE
-from ert.ecl import EclSum, EclSumKeyWordVector
+from ert.ecl import EclSum, EclSumKeyWordVector, EclFile,FortIO, openFortIO,openEclFile,EclKW
 from ert.test import ExtendedTestCase , TestAreaContext
 
 
@@ -79,5 +79,25 @@ class EclSumTest(ExtendedTestCase):
             with open("ECLIPSE.UNSMRY","r+") as f:
                 f.truncate( file_size / 2 )
                 
+            with self.assertRaises(IOError):
+                EclSum( "ECLIPSE" )
+
+
+    def test_missing_smspec_keyword(self):
+        with TestAreaContext("EclSum/truncated_data") as ta:
+            ta.copy_file( self.test_file )
+            ta.copy_file( self.createTestPath( "Statoil/ECLIPSE/Gurbat/ECLIPSE.UNSMRY" ))
+        
+            with openEclFile("ECLIPSE.SMSPEC") as f:
+                kw_list = []
+                for kw in f:
+                    kw_list.append(EclKW.copy( kw ) )
+            
+            with openFortIO("ECLIPSE.SMSPEC" , mode = FortIO.WRITE_MODE) as f:
+                for kw in kw_list:
+                    if kw.getName() == "KEYWORDS":
+                        continue
+                    kw.fwrite(f)
+            
             with self.assertRaises(IOError):
                 EclSum( "ECLIPSE" )
