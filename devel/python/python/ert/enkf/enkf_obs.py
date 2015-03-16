@@ -15,7 +15,7 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, EnkfFs, LocalObsdataNode , LocalObsdata, MeasData, ObsData
-from ert.enkf.enums import EnkfStateType
+from ert.enkf.enums import EnkfStateType, EnkfObservationImplementationType
 
 from ert.enkf.observations import ObsVector
 from ert.util import StringList, IntVector
@@ -29,6 +29,8 @@ class EnkfObs(BaseCClass):
     def __len__(self):
         return EnkfObs.cNamespace().get_size(self)
 
+    def __contains__(self , key):
+        return EnkfObs.cNamespace().has_key(self, key)
 
     def __iter__(self):
         """ @rtype: ObsVector """
@@ -70,18 +72,33 @@ class EnkfObs(BaseCClass):
         """
         return EnkfObs.cNamespace().alloc_typed_keylist(self, observation_implementation_type)
 
-    def getMatchingKeys(self , pattern):
+    def obsType(self , key):
+        if key in self:
+            return EnkfObs.cNamespace().obs_type( self , key)
+        else:
+            raise KeyError("Unknown observation key:%s" % key)
+            
+
+    def getMatchingKeys(self , pattern , obs_type = None):
         """
         Will return a list of all the observation keys matching the input
         pattern. The matching is based on fnmatch().
         """
-        return EnkfObs.cNamespace().alloc_matching_keylist(self, pattern)
-
+        key_list = EnkfObs.cNamespace().alloc_matching_keylist(self, pattern)
+        if obs_type:
+            new_key_list = []
+            for key in key_list:
+                if self.obsType( key ) == obs_type:
+                    new_key_list.append( key )
+            return new_key_list
+        else:
+            return key_list
+        
 
     def hasKey(self, key):
 
         """ @rtype: bool """
-        return EnkfObs.cNamespace().has_key(self, key)
+        return key in self
 
 
     def getObservationTime(self, index):
@@ -121,6 +138,7 @@ EnkfObs.cNamespace().get_config_file = cwrapper.prototype("char* enkf_obs_get_co
 EnkfObs.cNamespace().alloc_typed_keylist = cwrapper.prototype("stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)")
 EnkfObs.cNamespace().alloc_matching_keylist = cwrapper.prototype("stringlist_obj enkf_obs_alloc_matching_keylist(enkf_obs, char*)")
 EnkfObs.cNamespace().has_key = cwrapper.prototype("bool enkf_obs_has_key(enkf_obs, char*)")
+EnkfObs.cNamespace().obs_type = cwrapper.prototype("enkf_obs_impl_type enkf_obs_get_type(enkf_obs, char*)")
 EnkfObs.cNamespace().get_vector = cwrapper.prototype("obs_vector_ref enkf_obs_get_vector(enkf_obs, char*)")
 EnkfObs.cNamespace().iget_vector = cwrapper.prototype("obs_vector_ref enkf_obs_iget_vector(enkf_obs, int)")
 EnkfObs.cNamespace().iget_obs_time = cwrapper.prototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
