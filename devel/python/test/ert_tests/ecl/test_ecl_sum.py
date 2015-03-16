@@ -101,3 +101,28 @@ class EclSumTest(ExtendedTestCase):
             
             with self.assertRaises(IOError):
                 EclSum( "ECLIPSE" )
+
+    def test_missing_unsmry_keyword(self):
+        with TestAreaContext("EclSum/truncated_data") as ta:
+            ta.copy_file( self.test_file )
+            ta.copy_file( self.createTestPath( "Statoil/ECLIPSE/Gurbat/ECLIPSE.UNSMRY" ))
+        
+            with openEclFile("ECLIPSE.UNSMRY") as f:
+                kw_list = []
+                for kw in f:
+                    kw_list.append(EclKW.copy( kw ) )
+
+            
+            with openFortIO("ECLIPSE.UNSMRY" , mode = FortIO.WRITE_MODE) as f:
+                c = 0
+                for kw in kw_list:
+                    if kw.getName() == "PARAMS":
+                        if c % 5 == 0:
+                            continue
+                    c += 1
+                    kw.fwrite(f)
+            
+            with self.assertRaises(IOError):
+                EclSum( "ECLIPSE" )
+
+    
