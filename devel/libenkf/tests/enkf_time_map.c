@@ -26,6 +26,7 @@
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/vector.h>
+#include <ert/util/test_work_area.h>
 
 #include <ert/ecl/ecl_sum.h>
 
@@ -135,6 +136,27 @@ void test_refcase( const char * refcase_name , const char * case1, const char * 
     time_map_type * ecl_map = time_map_alloc(  );
     test_assert_true( time_map_summary_update( ecl_map , ecl_sum2 ) );
     test_assert_false( time_map_attach_refcase( ecl_map , refcase ));
+  }
+
+
+  {
+    test_work_area_type * work_area = test_work_area_alloc( "time_map/attach_short_refcase");
+    {
+      time_map_type * ecl_map = time_map_alloc(  );
+      test_assert_true( time_map_summary_update( ecl_map , refcase ) );
+      test_assert_true( time_map_update( ecl_map ,  ecl_sum_get_last_report_step( refcase ) + 1 , ecl_sum_get_end_time( refcase ) + 100 ));
+      test_assert_true( time_map_update( ecl_map ,  ecl_sum_get_last_report_step( refcase ) + 2 , ecl_sum_get_end_time( refcase ) + 200 ));
+      test_assert_true( time_map_update( ecl_map ,  ecl_sum_get_last_report_step( refcase ) + 3 , ecl_sum_get_end_time( refcase ) + 300 ));
+      time_map_fwrite( ecl_map , "time_map");
+      time_map_free( ecl_map );
+    }
+    {
+      time_map_type * ecl_map = time_map_alloc(  );
+      time_map_fread(ecl_map , "time_map");
+      test_assert_true( time_map_attach_refcase( ecl_map , refcase ) );
+      time_map_free( ecl_map );
+    }
+    test_work_area_free( work_area );
   }
 
 
