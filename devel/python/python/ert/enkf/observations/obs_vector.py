@@ -66,6 +66,17 @@ class ObsVector(BaseCClass):
         """
         return ObsVector.cNamespace().get_step_list(self)
 
+    def activeStep(self):
+        """Assuming the observation is only active for one report step, this
+        method will return that report step - if it is active for more
+        than one report step the method will raise an exception.
+        """
+        step_list = self.getStepList()
+        if len(step_list):
+            return step_list[0]
+        else:
+            raise ValueError("The activeStep() method can *ONLY* be called for obervations with one active step")
+            
 
     def getActiveCount(self):
         """ @rtype: int """
