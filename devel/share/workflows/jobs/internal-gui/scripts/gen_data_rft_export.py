@@ -8,6 +8,7 @@ from ert.ecl.rft import WellTrajectory
 
 from ert.enkf import ErtPlugin, CancelPluginException
 from ert.enkf import RealizationStateEnum
+from ert.enkf.enums import EnkfObservationImplementationType
 from ert.enkf.export import GenDataCollector, SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader,ArgLoader
 
 from ert_gui.models.mixins.connectorless import  DefaultPathModel , DefaultBooleanModel, StringModel
@@ -72,18 +73,29 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         return 0
 
 
-    def run(self, output_file, key , report_step , trajectory_file , case_list=None, infer_iteration=True):
-        well_name = "Well"
+    def run(self, output_file, trajectory_path , case_list=None, infer_iteration=True):
+        """The run method will export the RFT's for all wells and all cases.
+
+        The successfull operation of this method hinges on two naming
+        conventions:
+        
+          1. All the GEN_DATA RFT observations have key RFT_$WELL
+          2. The trajectory files are in $trajectory_path/$WELL.txt
+        
+        """
+
+
+        wells = set()
+        obs_pattern = "RFT_*"
+        enkf_obs = self.ert().getObservations()
+        obs_keys = enkf_obs.getMatchingKeys(obs_pattern , obs_type = EnkfObservationImplementationType.GEN_OBS)
+        
         cases = []
         if case_list is not None:
             cases = case_list.split(",")
 
         if case_list is None or len(cases) == 0:
             cases = [self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()]
-
-        trajectory = WellTrajectory( trajectory_file )
-        arg = ArgLoader.load( trajectory_file , column_names = ["utm_x" , "utm_y" , "md" , "tvd"])
-        tvd_arg = arg["tvd"]
 
         data_frame = pandas.DataFrame()
         for index, case in enumerate(cases):
@@ -101,26 +113,54 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             else:
                 iteration_number = index
                 
-            rft_data = GenDataCollector.loadGenData( self.ert(), case , key , report_step )
-            fs = self.ert().getEnkfFsManager().getFileSystem( case )
-            realizations = fs.realizationList( RealizationStateEnum.STATE_HAS_DATA )
-            data_size = len(tvd_arg)
-            
-            real_data = pandas.DataFrame( index = ["Realization","Well"])
-            for iens in realizations:
-                realization_frame = pandas.DataFrame( data = {"TVD" : tvd_arg , "Pressure" : rft_data[iens]} , columns = ["TVD" , "Pressure"])
-                realization_frame["Realization"] = iens
-                realization_frame["Well"] = well_name
-                realization_frame["Case"] = case
-                realization_frame["Iteration"] = iteration_number
-
-                case_frame = pandas.concat( [case_frame , realization_frame] )
+            for obs_key in obs_keys:
+                well = obs_key.replace("RFT_","")
+                wells.add( well )
+                obs_vector = enkf_obs[obs_key]
+                data_key = obs_vector.getDataKey()
+                report_step = obs_vector.activeStep()
+                obs_node = obs_vector.getNode( report_step )
                 
-            data_frame = pandas.concat([data_frame, case_frame])
+                rft_data = GenDataCollector.loadGenData( self.ert() , case , data_key , report_step )
+                fs = self.ert().getEnkfFsManager().getFileSystem( case )
+                realizations = fs.realizationList( RealizationStateEnum.STATE_HAS_DATA )
+                
+                # Trajectory
+                trajectory_file = os.path.join( trajectory_path , "%s.txt" % well)
+                trajectory = WellTrajectory( trajectory_file )
+                arg = ArgLoader.load( trajectory_file , column_names = ["utm_x" , "utm_y" , "md" , "tvd"])
+                tvd_arg = arg["tvd"]
+                data_size = len(tvd_arg)
+
+                
+                # Observations
+                obs = numpy.empty(shape = (data_size , 2 ) , dtype=numpy.float64)
+                obs.fill( numpy.nan )
+                for (value,std,data_index) in obs_node:
+                    obs[data_index,0] = value
+                    obs[data_index,1] = std
+                    
+
+                real_data = pandas.DataFrame( index = ["Realization","Well"])
+                for iens in realizations:
+                    realization_frame = pandas.DataFrame( data = {"TVD" : tvd_arg , 
+                                                                  "Pressure" : rft_data[iens],
+                                                                  "ObsValue" : obs[:,0],
+                                                                  "ObsStd"   : obs[:,1]},
+                                                          columns = ["TVD" , "Pressure" , "ObsValue" , "ObsStd"])
+                    
+                    realization_frame["Realization"] = iens
+                    realization_frame["Well"] = well
+                    realization_frame["Case"] = case
+                    realization_frame["Iteration"] = iteration_number
+
+                    case_frame = pandas.concat( [case_frame , realization_frame] )
+                    
+                data_frame = pandas.concat([data_frame, case_frame])
 
         data_frame.set_index(["Realization" , "Well" , "Case" , "Iteration"] , inplace = True)
         data_frame.to_csv(output_file)
-        export_info = "Exported %d rows and %d columns to %s." % (len(data_frame.index), len(data_frame.columns), output_file)
+        export_info = "Exported RFT information for wells: %s to: %s " % (", ".join(list(wells)) , output_file)
         return export_info
 
 
@@ -128,16 +168,10 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         description = "The GEN_DATA RFT CSV export requires some information before it starts:"
         dialog = CustomDialog("Robust CSV Export", description, parent)
         
-        key_model = StringModel()
-        key_input = StringBox(key_model, path_label="GEN_DATA key")
-
-        report_step_model = StringModel()
-        report_input = StringBox(report_step_model, path_label="Report step")
-
         output_path_model = DefaultPathModel("output.csv")
         output_path_chooser = PathChooser(output_path_model, path_label="Output file path")
 
-        trajectory_model = DefaultPathModel("well")
+        trajectory_model = DefaultPathModel("wellpath" , must_be_a_directory=True , must_be_a_file = False , must_exist = True)
         trajectory_chooser = PathChooser(trajectory_model, path_label="Trajectory file")
 
         fs_manager = self.ert().getEnkfFsManager()
@@ -145,16 +179,12 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         all_case_list = [case for case in all_case_list if fs_manager.caseHasData(case)]
         list_edit = ListEditBox(all_case_list, "List of cases to export")
 
-        
-
 
         infer_iteration_model = DefaultBooleanModel()
         infer_iteration_checkbox = CheckBox(infer_iteration_model, label="Infer iteration number", show_label=False)
         infer_iteration_checkbox.setToolTip(GenDataRFTCSVExportJob.INFER_HELP)
 
         dialog.addOption(output_path_chooser)
-        dialog.addOption(key_input)
-        dialog.addOption(report_input)
         dialog.addOption(trajectory_chooser)
         dialog.addOption(list_edit)
         dialog.addOption(infer_iteration_checkbox)
@@ -165,10 +195,8 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
         if success:
             case_list = ",".join(list_edit.getItems())
-            key = key_model.getValue()
             try:
-                report_step = int( report_step_model.getValue() )
-                return [output_path_model.getPath(), key , report_step , trajectory_model.getPath() , case_list, infer_iteration_model.isTrue()]
+                return [output_path_model.getPath(), trajectory_model.getPath() , case_list, infer_iteration_model.isTrue()]
             except ValueError:
                 pass
 
