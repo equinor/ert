@@ -58,6 +58,7 @@ void test_create() {
 
 
 int main(int argc , char ** argv) {
+  util_install_signals();
   test_create();
   test_case_initialized();
   exit(0);
