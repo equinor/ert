@@ -71,7 +71,8 @@ bool time_map_is_strict( const time_map_type * time_map ){
 
 /**
    The refcase will only be attached if it is consistent with the
-   current time map.
+   current time map; we will accept attaching a refcase which is
+   shorter than the current case.
 */
 bool time_map_attach_refcase( time_map_type * time_map , const ecl_sum_type * refcase) {
   bool attach_ok = true;
@@ -79,7 +80,9 @@ bool time_map_attach_refcase( time_map_type * time_map , const ecl_sum_type * re
 
   {
     int step;
-    for (step = 0; step < time_map_get_size(time_map); step++) {
+    int max_step = util_int_min( time_map_get_size(time_map) ,  ecl_sum_get_last_report_step( refcase ) + 1);
+
+    for (step = 0; step < max_step; step++) {
       time_t current_time = time_map_iget__( time_map , step );
       time_t sim_time = ecl_sum_get_report_time( refcase , step );
 

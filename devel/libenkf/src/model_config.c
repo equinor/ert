@@ -360,6 +360,7 @@ model_config_type * model_config_alloc() {
   model_config->history_source            = HISTORY_SOURCE_INVALID;
   model_config->runpath_map               = hash_alloc();
   model_config->gen_kw_export_file_name   = NULL;
+  model_config->refcase                   = NULL;
 
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
   model_config_set_rftpath( model_config        , DEFAULT_RFTPATH );
