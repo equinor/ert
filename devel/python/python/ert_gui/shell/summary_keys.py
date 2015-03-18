@@ -2,6 +2,7 @@ from ert.enkf import ErtImplType
 from ert.enkf.export.summary_collector import SummaryCollector
 from ert.enkf.export.summary_observation_collector import SummaryObservationCollector
 from ert_gui.shell import ShellFunction, assertConfigLoaded, extractFullArgument, autoCompleteListWithSeparator, ShellPlot
+from ert_gui.shell.shell_tools import matchItems
 
 
 class SummaryKeys(ShellFunction):
@@ -64,7 +65,8 @@ class SummaryKeys(ShellFunction):
 
     @assertConfigLoaded
     def do_plot(self, line):
-        keys = self.splitArguments(line)
+        keys = matchItems(line, self.summaryKeys())
+
         if len(keys) == 0:
             print("Error: Must have at least one Summary key")
             return False
@@ -72,19 +74,16 @@ class SummaryKeys(ShellFunction):
         case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
 
         for key in keys:
-            if key in self.summaryKeys():
-                plot = ShellPlot(key)
-                for case_name in case_list:
-                    data = SummaryCollector.loadAllSummaryData(self.ert(), case_name, [key])
-                    plot.plot(data, value_column=key, legend_label=case_name)
+            plot = ShellPlot(key)
+            for case_name in case_list:
+                data = SummaryCollector.loadAllSummaryData(self.ert(), case_name, [key])
+                plot.plot(data, value_column=key, legend_label=case_name)
 
-                if len(case_list) > 0 and SummaryObservationCollector.summaryKeyHasObservations(self.ert(), key):
-                    observation_data = SummaryObservationCollector.loadObservationData(self.ert(), case_list[0], [key])
-                    plot.plotObservations(observation_data, value_column=key)
+            if len(case_list) > 0 and SummaryObservationCollector.summaryKeyHasObservations(self.ert(), key):
+                observation_data = SummaryObservationCollector.loadObservationData(self.ert(), case_list[0], [key])
+                plot.plotObservations(observation_data, value_column=key)
 
-                plot.showLegend()
-            else:
-                print("Error: Unknown Summary key '%s'" % key)
+            plot.showLegend()
 
     @assertConfigLoaded
     def complete_plot(self, text, line, begidx, endidx):
@@ -93,7 +92,8 @@ class SummaryKeys(ShellFunction):
 
     @assertConfigLoaded
     def do_plot_area(self, line):
-        keys = self.splitArguments(line)
+        keys = matchItems(line, self.summaryKeys())
+
         if len(keys) == 0:
             print("Error: Must have at least one Summary key")
             return False
@@ -101,19 +101,16 @@ class SummaryKeys(ShellFunction):
         case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
 
         for key in keys:
-            if key in self.summaryKeys():
-                plot = ShellPlot(key)
-                for case_name in case_list:
-                    data = SummaryCollector.loadAllSummaryData(self.ert(), case_name, [key])
-                    plot.plotArea(data, value_column=key, legend_label=case_name)
+            plot = ShellPlot(key)
+            for case_name in case_list:
+                data = SummaryCollector.loadAllSummaryData(self.ert(), case_name, [key])
+                plot.plotArea(data, value_column=key, legend_label=case_name)
 
-                if len(case_list) > 0 and SummaryObservationCollector.summaryKeyHasObservations(self.ert(), key):
-                    observation_data = SummaryObservationCollector.loadObservationData(self.ert(), case_list[0], [key])
-                    plot.plotObservations(observation_data, value_column=key)
+            if len(case_list) > 0 and SummaryObservationCollector.summaryKeyHasObservations(self.ert(), key):
+                observation_data = SummaryObservationCollector.loadObservationData(self.ert(), case_list[0], [key])
+                plot.plotObservations(observation_data, value_column=key)
 
-                plot.showLegend()
-            else:
-                print("Error: Unknown Summary key '%s'" % key)
+            plot.showLegend()
 
     @assertConfigLoaded
     def complete_plot_area(self, text, line, begidx, endidx):
@@ -122,7 +119,8 @@ class SummaryKeys(ShellFunction):
 
     @assertConfigLoaded
     def do_plot_quantile(self, line):
-        keys = self.splitArguments(line)
+        keys = matchItems(line, self.summaryKeys())
+
         if len(keys) == 0:
             print("Error: Must have at least one Summary key")
             return False
@@ -130,19 +128,16 @@ class SummaryKeys(ShellFunction):
         case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
 
         for key in keys:
-            if key in self.summaryKeys():
-                plot = ShellPlot(key)
-                for case_name in case_list:
-                    data = SummaryCollector.loadAllSummaryData(self.ert(), case_name, [key])
-                    plot.plotQuantiles(data, value_column=key, legend_label=case_name)
+            plot = ShellPlot(key)
+            for case_name in case_list:
+                data = SummaryCollector.loadAllSummaryData(self.ert(), case_name, [key])
+                plot.plotQuantiles(data, value_column=key, legend_label=case_name)
 
-                if len(case_list) > 0 and SummaryObservationCollector.summaryKeyHasObservations(self.ert(), key):
-                    observation_data = SummaryObservationCollector.loadObservationData(self.ert(), case_list[0], [key])
-                    plot.plotObservations(observation_data, value_column=key)
+            if len(case_list) > 0 and SummaryObservationCollector.summaryKeyHasObservations(self.ert(), key):
+                observation_data = SummaryObservationCollector.loadObservationData(self.ert(), case_list[0], [key])
+                plot.plotObservations(observation_data, value_column=key)
 
-                plot.showLegend()
-            else:
-                print("Error: Unknown Summary key '%s'" % key)
+            plot.showLegend()
 
     @assertConfigLoaded
     def complete_plot_quantile(self, text, line, begidx, endidx):
