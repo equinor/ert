@@ -15,10 +15,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 import datetime
-try:
-    from unittest2 import skipIf
-except ImportError:
-    from unittest import skipIf
+import os.path
+from unittest import skipIf
 
 from ert.ecl import EclFile, FortIO, EclKW , openFortIO , openEclFile
 from ert.ecl import EclFileFlagEnum, EclTypeEnum
@@ -143,5 +141,20 @@ class EclFileTest(ExtendedTestCase):
             # Random failure ....
             self.assertFilesAreEqual("ECLIPSE.FUNRST", self.test_fmt_file)
 
+
+    def test_truncated(self):
+        with TestAreaContext("python/ecl_file/truncated") as work_area:
+            work_area.copy_file(self.test_file)
+            size = os.path.getsize("ECLIPSE.UNRST")
+            with open("ECLIPSE.UNRST" , "r+") as f:
+                f.truncate( size / 2 )
             
+            with self.assertRaises(IOError):
+                rst_file = EclFile("ECLIPSE.UNRST")
+
+            with self.assertRaises(IOError):
+                rst_file = EclFile("ECLIPSE.UNRST", flags=EclFileFlagEnum.ECL_FILE_WRITABLE)
+                
+                
+        
             
