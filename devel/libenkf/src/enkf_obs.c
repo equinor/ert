@@ -998,6 +998,11 @@ stringlist_type * enkf_obs_alloc_typed_keylist(enkf_obs_type * enkf_obs , obs_im
 }
 
 
+obs_impl_type enkf_obs_get_type(const enkf_obs_type * enkf_obs , const char * key) {
+  obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , key);
+  return obs_vector_get_impl_type(obs_vector);
+}
+
 /**
  */
 
