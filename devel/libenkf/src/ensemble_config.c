@@ -67,6 +67,7 @@
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/summary_key_matcher.h>
+#include <ert/enkf/custom_kw_config_set.h>
 
 
 #define ENSEMBLE_CONFIG_TYPE_ID 8825306
@@ -202,13 +203,9 @@ enkf_var_type ensemble_config_var_type(const ensemble_config_type *ensemble_conf
 
 
 
-
-
-
-
 bool ensemble_config_has_key(const ensemble_config_type * ensemble_config , const char * key) {
   return hash_has_key( ensemble_config->config_nodes , key);
-}
+} 
 
 
 
@@ -222,7 +219,7 @@ enkf_config_node_type * ensemble_config_get_node(const ensemble_config_type * en
   }
 }
 
-enkf_config_node_type * ensemble_config_get_or_create_summary_node(const ensemble_config_type * ensemble_config, const char * key) {
+enkf_config_node_type * ensemble_config_get_or_create_summary_node(ensemble_config_type * ensemble_config, const char * key) {
     if (!hash_has_key(ensemble_config->config_nodes , key)) {
         ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
     }
@@ -349,15 +346,17 @@ void ensemble_config_add_config_items(config_parser_type * config) {
 
   enkf_config_node_add_GEN_PARAM_config_schema( config );
   enkf_config_node_add_GEN_DATA_config_schema( config );
+  enkf_config_node_add_CUSTOM_KW_config_schema( config );
 
   item = config_add_schema_item(config , SUMMARY_KEY , false  );   /* can have several summary keys on each line. */
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item(config , CONTAINER_KEY , false  );   /* can have several summary keys on each line. */
   config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX);
-
+  
   item = config_add_schema_item( config , SURFACE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 4 , 5 );
+  
   /*
      the way config info is entered for fields is unfortunate because
      it is difficult/impossible to let the config system handle run
@@ -391,7 +390,6 @@ void ensemble_config_add_config_items(config_parser_type * config) {
                   enkf_infile_fmt  != NULL
 
 */
-
 
 void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_content_type * config) {
   if (config_content_has_item(config , GEN_DATA_KEY)) {
@@ -460,7 +458,27 @@ void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const
   }
 }
 
+void ensemble_config_init_CUSTOM_KW(ensemble_config_type * ensemble_config, const config_content_type * config) {
+    if (config_content_has_item(config, CUSTOM_KW_KEY)) {
+        const config_content_item_type * custom_kw_item = config_content_get_item(config, CUSTOM_KW_KEY);
 
+        for (int i = 0; i < config_content_item_get_size(custom_kw_item); i++) {
+            config_content_node_type * node = config_content_item_iget_node(custom_kw_item, i);
+
+            const char * key         = config_content_node_iget(node, 0);
+            const char * result_file = config_content_node_iget_as_path(node, 1);
+            const char * output_file = NULL;
+
+            if(config_content_node_get_size(node) > 2) {
+                output_file = config_content_node_iget_as_path(node, 2);
+            }
+
+            enkf_config_node_type * config_node = ensemble_config_add_custom_kw(ensemble_config, key, result_file, output_file);
+            enkf_config_node_update_custom_kw(config_node, result_file, output_file);
+            enkf_config_node_set_internalize(config_node, 0);
+        }
+    }
+}
 
 void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , const config_content_type * config ) {
   if (config_content_has_item(config , SURFACE_KEY)) {
@@ -642,11 +660,13 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   int i;
   ensemble_config_set_refcase( ensemble_config , refcase );
 
-  if (config_content_has_item( config , GEN_KW_TAG_FORMAT_KEY))
+  if (config_content_has_item( config , GEN_KW_TAG_FORMAT_KEY)) {
     ensemble_config_set_gen_kw_format( ensemble_config , config_content_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
+  }
 
   ensemble_config_init_GEN_PARAM( ensemble_config , config );
   ensemble_config_init_GEN_DATA( ensemble_config , config );
+  ensemble_config_init_CUSTOM_KW(ensemble_config, config);
   ensemble_config_init_GEN_KW(ensemble_config , config );
   ensemble_config_init_SURFACE( ensemble_config , config );
 
@@ -685,7 +705,6 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
    "1,4,7". if the full full_key is used to find an object index_key
    will be NULL, that also applies if no object is found.
 */
-
 
 
 const enkf_config_node_type * ensemble_config_user_get_node(const ensemble_config_type * config , const char  * full_key, char ** index_key ) {
@@ -825,7 +844,30 @@ enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * confi
   return config_node;
 }
 
+enkf_config_node_type * ensemble_config_add_custom_kw(ensemble_config_type * config, const char * key, const char * result_file, const char * output_file) {
+  enkf_config_node_type * config_node = enkf_config_node_new_custom_kw(key, result_file, output_file);
+  ensemble_config_add_node(config, config_node);
+  return config_node;
+}
 
+void ensemble_config_update_custom_kw_config(ensemble_config_type * config, custom_kw_config_set_type * config_set) {
+    stringlist_type * keys = custom_kw_config_set_get_keys_alloc(config_set);
+
+    for(int i = 0; i < stringlist_get_size(keys); i++) {
+        const char * key = stringlist_iget(keys, i);
+        if(!ensemble_config_has_key(config, key)) {
+            ensemble_config_add_custom_kw(config, key, NULL, NULL);
+            printf("[%s] CustomKW key: '%s' not in ensemble! Adding from storage.\n", __func__, key);
+        }
+
+        enkf_config_node_type * config_node = ensemble_config_get_node(config, key);
+        custom_kw_config_type * custom_kw_config = (custom_kw_config_type*) enkf_config_node_get_ref(config_node);
+
+        custom_kw_config_set_update_config(config_set, custom_kw_config);
+    }
+
+    stringlist_free(keys);
+}
 
 
 /**

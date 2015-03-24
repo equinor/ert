@@ -47,6 +47,7 @@
 #include <ert/enkf/summary_key_set.h>
 #include <ert/enkf/misfit_ensemble.h>
 #include <ert/enkf/cases_config.h>
+#include <ert/enkf/custom_kw_config_set.h>
 
 /**
 
@@ -204,13 +205,14 @@
 */
 
 
-#define ENKF_FS_TYPE_ID       1089763
-#define ENKF_MOUNT_MAP        "enkf_mount_info"
-#define SUMMARY_KEY_SET_FILE  "summary-key-set"
-#define TIME_MAP_FILE         "time-map"
-#define STATE_MAP_FILE        "state-map"
-#define MISFIT_ENSEMBLE_FILE  "misfit-ensemble"
-#define CASE_CONFIG_FILE      "case_config"
+#define ENKF_FS_TYPE_ID           1089763
+#define ENKF_MOUNT_MAP            "enkf_mount_info"
+#define SUMMARY_KEY_SET_FILE      "summary-key-set"
+#define TIME_MAP_FILE             "time-map"
+#define STATE_MAP_FILE            "state-map"
+#define MISFIT_ENSEMBLE_FILE      "misfit-ensemble"
+#define CASE_CONFIG_FILE          "case_config"
+#define CUSTOM_KW_CONFIG_SET_FILE "custom_kw_config_set"
 
 struct enkf_fs_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -227,12 +229,13 @@ struct enkf_fs_struct {
   fs_driver_type         * eclipse_static;
   fs_driver_type         * index ;
 
-  bool                     read_only;             /* Whether this filesystem has been mounted read-only. */
-  time_map_type          * time_map;
-  cases_config_type      * cases_config;
-  state_map_type         * state_map;
-  summary_key_set_type   * summary_key_set;
-  misfit_ensemble_type   * misfit_ensemble;
+  bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
+  time_map_type             * time_map;
+  cases_config_type         * cases_config;
+  state_map_type            * state_map;
+  summary_key_set_type      * summary_key_set;
+  misfit_ensemble_type      * misfit_ensemble;
+  custom_kw_config_set_type * custom_kw_config_set;
   /*
      The variables below here are for storing arbitrary files within
      the enkf_fs storage directory, but not as serialized enkf_nodes.
@@ -294,6 +297,7 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point ) {
   fs->cases_config           = cases_config_alloc();
   fs->state_map              = state_map_alloc();
   fs->summary_key_set        = summary_key_set_alloc();
+  fs->custom_kw_config_set   = custom_kw_config_set_alloc();
   fs->misfit_ensemble        = misfit_ensemble_alloc();
   fs->index                  = NULL;
   fs->eclipse_static         = NULL;
@@ -527,7 +531,11 @@ static void enkf_fs_fsync_summary_key_set( enkf_fs_type * fs ) {
   free( filename );
 }
 
-
+static void enkf_fs_fsync_custom_kw_config_set( enkf_fs_type * fs ) {
+  char * filename = enkf_fs_alloc_case_filename(fs, CUSTOM_KW_CONFIG_SET_FILE);
+  custom_kw_config_set_fwrite(fs->custom_kw_config_set, filename );
+  free( filename );
+}
 
 static void enkf_fs_fread_cases_config( enkf_fs_type * fs ) {
   char * filename = enkf_fs_alloc_case_filename( fs , CASE_CONFIG_FILE );
@@ -548,6 +556,11 @@ static void enkf_fs_fread_summary_key_set( enkf_fs_type * fs ) {
   free( filename );
 }
 
+static void enkf_fs_fread_custom_kw_config_set(enkf_fs_type * fs) {
+  char * filename = enkf_fs_alloc_case_filename(fs, CUSTOM_KW_CONFIG_SET_FILE);
+  custom_kw_config_set_fread(fs->custom_kw_config_set, filename);
+  free( filename );
+}
 
 state_map_type * enkf_fs_alloc_readonly_state_map( const char * mount_point ) {
   path_fmt_type * path_fmt = path_fmt_alloc_directory_fmt( DEFAULT_CASE_PATH );
@@ -634,6 +647,7 @@ enkf_fs_type * enkf_fs_mount( const char * mount_point ) {
     enkf_fs_fread_cases_config( fs );
     enkf_fs_fread_state_map( fs );
     enkf_fs_fread_summary_key_set( fs );
+    enkf_fs_fread_custom_kw_config_set( fs );
     enkf_fs_fread_misfit( fs );
 
     enkf_fs_get_ref( fs );
@@ -768,6 +782,7 @@ void enkf_fs_fsync( enkf_fs_type * fs ) {
   enkf_fs_fsync_cases_config( fs) ;
   enkf_fs_fsync_state_map( fs );
   enkf_fs_fsync_summary_key_set( fs );
+  enkf_fs_fsync_custom_kw_config_set(fs);
 }
 
 
@@ -1066,6 +1081,10 @@ state_map_type * enkf_fs_get_state_map( const enkf_fs_type * fs ) {
 
 summary_key_set_type * enkf_fs_get_summary_key_set( const enkf_fs_type * fs ) {
   return fs->summary_key_set;
+}
+
+custom_kw_config_set_type * enkf_fs_get_custom_kw_config_set(const enkf_fs_type * fs) {
+  return fs->custom_kw_config_set;
 }
 
 misfit_ensemble_type * enkf_fs_get_misfit_ensemble( const enkf_fs_type * fs ) {

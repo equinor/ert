@@ -93,10 +93,11 @@ keep_runpath_type;
 
 
 typedef enum {INVALID          = 0   ,
-              IMPL_TYPE_OFFSET = 100,
+              IMPL_TYPE_OFFSET = 100 ,
               STATIC           = 100 ,       /* MULTZ has been removed & MULTFLT */
               FIELD            = 104 ,       /* WELL has been removed  */
               GEN_KW           = 107 ,       /* RELPERM has been removed & HAVANA_FAULT */
+              CUSTOM_KW        = 108 ,
               SUMMARY          = 110 ,       /* TPGZONE has been removed */
               GEN_DATA         = 113 ,       /* PILOT_POINT has been removed */
               SURFACE          = 114 ,

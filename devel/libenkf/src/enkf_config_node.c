@@ -35,6 +35,7 @@
 #include <ert/enkf/field_config.h>
 #include <ert/enkf/gen_data_config.h>
 #include <ert/enkf/gen_kw_config.h>
+#include <ert/enkf/custom_kw_config.h>
 #include <ert/enkf/summary_config.h>
 #include <ert/enkf/surface_config.h>
 #include <ert/enkf/container_config.h>
@@ -111,65 +112,64 @@ bool enkf_config_node_has_vector( const enkf_config_node_type * node , enkf_fs_t
 
 
 
-static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_type,
-                                                         ert_impl_type  impl_type,
-                                                         const char * key,
-                                                         bool forward_init) {
+static enkf_config_node_type * enkf_config_node_alloc__(enkf_var_type  var_type, ert_impl_type  impl_type, const char * key, bool forward_init) {
+    enkf_config_node_type * node = util_malloc( sizeof *node );
+    UTIL_TYPE_ID_INIT( node , ENKF_CONFIG_NODE_TYPE_ID );
+    node->forward_init    = forward_init;
+    node->var_type        = var_type;
+    node->impl_type       = impl_type;
+    node->key             = util_alloc_string_copy( key );
+    node->container_nodes = vector_alloc_new();
+    node->vector_storage  = false;
 
-  enkf_config_node_type * node = util_malloc( sizeof *node );
-  UTIL_TYPE_ID_INIT( node , ENKF_CONFIG_NODE_TYPE_ID );
-  node->forward_init    = forward_init;
-  node->var_type        = var_type;
-  node->impl_type       = impl_type;
-  node->key             = util_alloc_string_copy( key );
-  node->container_nodes = vector_alloc_new();
-  node->vector_storage  = false;
+    node->init_file_fmt    = NULL;
+    node->enkf_infile_fmt  = NULL;
+    node->enkf_outfile_fmt = NULL;
+    node->internalize      = NULL;
+    node->data             = NULL;
+    node->obs_keys         = stringlist_alloc_new();
+    node->min_std          = NULL;
+    node->min_std_file     = NULL;
 
-  node->init_file_fmt    = NULL;
-  node->enkf_infile_fmt  = NULL;
-  node->enkf_outfile_fmt = NULL;
-  node->internalize      = NULL;
-  node->data             = NULL;
-  node->obs_keys         = stringlist_alloc_new();
-  node->min_std          = NULL;
-  node->min_std_file     = NULL;
+    node->get_data_size = NULL;
+    node->freef         = NULL;
 
-  node->get_data_size = NULL;
-  node->freef         = NULL;
-  {
     switch(impl_type) {
-    case(FIELD):
-      node->freef             = field_config_free__;
-      node->get_data_size     = field_config_get_data_size__;
-      break;
-    case(STATIC):
-      break;
-    case(GEN_KW):
-      node->freef             = gen_kw_config_free__;
-      node->get_data_size     = gen_kw_config_get_data_size__;
-      break;
-    case(SUMMARY):
-      node->vector_storage    = true;
-      node->freef             = summary_config_free__;
-      node->get_data_size     = summary_config_get_data_size__;
-      break;
-    case(GEN_DATA):
-      node->freef             = gen_data_config_free__;
-      node->get_data_size     = NULL;
-      break;
-    case(SURFACE):
-      node->freef             = surface_config_free__;
-      node->get_data_size     = surface_config_get_data_size__;
-      break;
-    case(CONTAINER):
-      node->freef             = container_config_free__;
-      node->get_data_size     = container_config_get_data_size__;
-      break;
-    default:
-      util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
+        case(FIELD):
+            node->freef             = field_config_free__;
+            node->get_data_size     = field_config_get_data_size__;
+            break;
+        case(STATIC):
+            break;
+        case(GEN_KW):
+            node->freef             = gen_kw_config_free__;
+            node->get_data_size     = gen_kw_config_get_data_size__;
+            break;
+        case(CUSTOM_KW):
+            node->freef             = custom_kw_config_free__;
+            node->get_data_size     = NULL;
+            break;
+        case(SUMMARY):
+            node->vector_storage    = true;
+            node->freef             = summary_config_free__;
+            node->get_data_size     = summary_config_get_data_size__;
+            break;
+        case(GEN_DATA):
+            node->freef             = gen_data_config_free__;
+            node->get_data_size     = NULL;
+            break;
+        case(SURFACE):
+            node->freef             = surface_config_free__;
+            node->get_data_size     = surface_config_get_data_size__;
+            break;
+        case(CONTAINER):
+            node->freef             = container_config_free__;
+            node->get_data_size     = container_config_get_data_size__;
+            break;
+        default:
+            util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
     }
-  }
-  return node;
+    return node;
 }
 
 
@@ -302,6 +302,10 @@ void enkf_config_node_update_gen_kw( enkf_config_node_type * config_node ,
 }
 
 
+void enkf_config_node_update_custom_kw(enkf_config_node_type * config_node, const char * result_file, const char * output_file) {
+    enkf_config_node_update(config_node, NULL, output_file, result_file, NULL);
+}
+
 /**
    This will create a new gen_kw_config instance which is NOT yet
    valid.
@@ -312,6 +316,11 @@ enkf_config_node_type * enkf_config_node_new_gen_kw( const char * key , const ch
   return config_node;
 }
 
+enkf_config_node_type * enkf_config_node_new_custom_kw(const char * key, const char * result_file, const char * output_file) {
+    enkf_config_node_type * config_node = enkf_config_node_alloc__(DYNAMIC_RESULT, CUSTOM_KW, key, false);
+    config_node->data = custom_kw_config_alloc_empty(key, result_file, output_file);
+    return config_node;
+}
 
 enkf_config_node_type * enkf_config_node_new_surface( const char * key , bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , SURFACE , key , forward_init);
@@ -855,7 +864,13 @@ void enkf_config_node_add_GEN_DATA_config_schema( config_parser_type * config ) 
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
 }
 
-
+void enkf_config_node_add_CUSTOM_KW_config_schema(config_parser_type * config){
+    config_schema_item_type * item = config_add_schema_item(config, CUSTOM_KW_KEY, false);
+    config_schema_item_set_argc_minmax(item, 2, 3);
+    config_schema_item_iset_type(item, 0, CONFIG_STRING);
+    config_schema_item_iset_type(item, 1, CONFIG_PATH);
+    config_schema_item_iset_type(item, 2, CONFIG_PATH);
+}
 
 enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const config_content_node_type * node ) {
   enkf_config_node_type * config_node   = NULL;
