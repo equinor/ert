@@ -114,6 +114,7 @@ class ExtendedTestCase(TestCase):
         if testdata_root is None and self.__testdata_root is None:
             file_path = os.path.realpath(__file__)
             build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../devel/test-data/"))
+            site_packages_build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../../../devel/test-data/"))
             src_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../test-data/"))
             env_root = os.getenv("ERT_TEST_ROOT_PATH")
 
@@ -121,6 +122,8 @@ class ExtendedTestCase(TestCase):
                 root = os.path.realpath(env_root)
             elif os.path.exists(build_root):
                 root = os.path.realpath(build_root)
+            elif os.path.exists(site_packages_build_root):
+                root = os.path.realpath(site_packages_build_root)
             elif os.path.exists(src_root):
                 root = os.path.realpath(src_root)
             else:
