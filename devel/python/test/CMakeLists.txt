@@ -43,6 +43,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_indexed_read.py
 
     ert_tests/enkf/__init__.py
+    ert_tests/enkf/test_custom_kw_config_set.py
     ert_tests/enkf/test_ert_context.py
     ert_tests/enkf/test_enkf.py
     ert_tests/enkf/test_enkf_fs.py
@@ -63,12 +64,15 @@ set(TEST_SOURCES
     ert_tests/enkf/test_obs_block.py
     ert_tests/enkf/test_run_arg.py
     ert_tests/enkf/test_runpath_list.py
+    ert_tests/enkf/test_update.py
+
     ert_tests/enkf/plot/test_plot_data.py
 
+    ert_tests/enkf/data/test_custom_kw.py
+    ert_tests/enkf/data/test_custom_kw_config.py
     ert_tests/enkf/data/test_gen_data.py
     ert_tests/enkf/data/test_gen_data_config.py
     ert_tests/enkf/data/test_gen_kw.py
-    ert_tests/enkf/test_update.py
     ert_tests/enkf/data/test_gen_kw_config.py
 
     ert_tests/enkf/export/test_numpy_and_pandas.py
@@ -313,6 +317,10 @@ add_test( NAME python.tests.ert.enkf.summary_key_set
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_summary_key_set.SummaryKeySetTest)
 
+add_test( NAME python.tests.ert.enkf.custom_kw_config_set
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_custom_kw_config_set.CustomKWConfigSetTest)
+
 add_test( NAME python.tests.ert.enkf.summary_key_matcher
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_summary_key_matcher.SummaryKeyMatcherTest)
@@ -343,6 +351,15 @@ add_test( NAME python.tests.ert.enkf.runpath_list
 
 
 #enkf.data
+add_test( NAME python.tests.ert.enkf.data.custom_kw
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_custom_kw.CustomKWTest)
+
+add_test( NAME python.tests.ert.enkf.data.custom_kw_config
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_custom_kw_config.CustomKWConfigTest)
+
+
 add_test( NAME python.tests.ert.enkf.data.gen_data
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.data.test_gen_data.GenDataTest)
