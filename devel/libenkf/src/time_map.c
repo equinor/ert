@@ -165,7 +165,7 @@ bool time_map_fscanf(time_map_type * map , const char * filename) {
     }
     time_t_vector_free( time_vector );
   } else
-    return fscanf_ok = false;
+    fscanf_ok = false;
 
   return fscanf_ok;
 }
