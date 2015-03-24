@@ -17,7 +17,7 @@
 import datetime
 import os.path
 from ert.cwrap import CFILE
-from ert.ecl import EclSum, EclSumKeyWordVector
+from ert.ecl import EclSum, EclSumKeyWordVector, EclFile,FortIO, openFortIO,openEclFile,EclKW
 from ert.test import ExtendedTestCase , TestAreaContext
 
 
@@ -54,3 +54,75 @@ class EclSumTest(ExtendedTestCase):
             outputH = open(test_file_name , "w")
             self.ecl_sum.dumpCSVLine( dtime, ecl_sum_vector, outputH)
             assert os.path.isfile(test_file_name)
+
+
+    def test_truncated_smspec(self):
+        with TestAreaContext("EclSum/truncated_smspec") as ta:
+            ta.copy_file( self.test_file )
+            ta.copy_file( self.createTestPath( "Statoil/ECLIPSE/Gurbat/ECLIPSE.UNSMRY" ))
+            
+            file_size = os.path.getsize( "ECLIPSE.SMSPEC")
+            with open("ECLIPSE.SMSPEC","r+") as f:
+                f.truncate( file_size / 2 )
+                
+            with self.assertRaises(IOError):
+                EclSum( "ECLIPSE" )
+
+
+    def test_truncated_data(self):
+        with TestAreaContext("EclSum/truncated_data") as ta:
+            ta.copy_file( self.test_file )
+            ta.copy_file( self.createTestPath( "Statoil/ECLIPSE/Gurbat/ECLIPSE.UNSMRY" ))
+
+            
+            file_size = os.path.getsize( "ECLIPSE.UNSMRY")
+            with open("ECLIPSE.UNSMRY","r+") as f:
+                f.truncate( file_size / 2 )
+                
+            with self.assertRaises(IOError):
+                EclSum( "ECLIPSE" )
+
+
+    def test_missing_smspec_keyword(self):
+        with TestAreaContext("EclSum/truncated_data") as ta:
+            ta.copy_file( self.test_file )
+            ta.copy_file( self.createTestPath( "Statoil/ECLIPSE/Gurbat/ECLIPSE.UNSMRY" ))
+        
+            with openEclFile("ECLIPSE.SMSPEC") as f:
+                kw_list = []
+                for kw in f:
+                    kw_list.append(EclKW.copy( kw ) )
+            
+            with openFortIO("ECLIPSE.SMSPEC" , mode = FortIO.WRITE_MODE) as f:
+                for kw in kw_list:
+                    if kw.getName() == "KEYWORDS":
+                        continue
+                    kw.fwrite(f)
+            
+            with self.assertRaises(IOError):
+                EclSum( "ECLIPSE" )
+
+    def test_missing_unsmry_keyword(self):
+        with TestAreaContext("EclSum/truncated_data") as ta:
+            ta.copy_file( self.test_file )
+            ta.copy_file( self.createTestPath( "Statoil/ECLIPSE/Gurbat/ECLIPSE.UNSMRY" ))
+        
+            with openEclFile("ECLIPSE.UNSMRY") as f:
+                kw_list = []
+                for kw in f:
+                    kw_list.append(EclKW.copy( kw ) )
+
+            
+            with openFortIO("ECLIPSE.UNSMRY" , mode = FortIO.WRITE_MODE) as f:
+                c = 0
+                for kw in kw_list:
+                    if kw.getName() == "PARAMS":
+                        if c % 5 == 0:
+                            continue
+                    c += 1
+                    kw.fwrite(f)
+            
+            with self.assertRaises(IOError):
+                EclSum( "ECLIPSE" )
+
+    
