@@ -1,3 +1,4 @@
+import os
 from ert.enkf.data import CustomKW, CustomKWConfig
 from ert.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from ert.enkf.export import custom_kw_collector
@@ -99,15 +100,3 @@ class CustomKWTest(ExtendedTestCase):
 
             self.assertEqual(len(config.getKeys()), 4)
             self.assertItemsEqual(config.getKeys(), ["PERLIN_1", "PERLIN_2", "PERLIN_3", "STATE"])
-
-
-            data = CustomKWCollector.loadAllCustomKWData(ert, "default")
-
-            self.assertFloatEqual(data["AGGREGATED:PERLIN_1"][0], -0.167794)
-            self.assertFloatEqual(data["AGGREGATED:PERLIN_1"][8], -1.276058)
-            self.assertFloatEqual(data["AGGREGATED:PERLIN_1"][9], -0.137903)
-
-            self.assertEqual(data["AGGREGATED:STATE"][0], "Positive")
-            self.assertEqual(data["AGGREGATED:STATE"][8], "Negative")
-            self.assertEqual(data["AGGREGATED:STATE"][9], "Positive")
-
