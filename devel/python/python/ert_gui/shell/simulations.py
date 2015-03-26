@@ -1,5 +1,6 @@
-from ert.enkf.enkf_simulation_runner import EnkfSimulationRunner
-from ert.util import BoolVector
+import time
+from datetime import datetime
+from ert.enkf import EnkfSimulationRunner
 from ert_gui.shell import ShellFunction, assertConfigLoaded
 
 
@@ -26,7 +27,9 @@ class Simulations(ShellFunction):
     def do_ensemble_experiment(self, line):
         simulation_runner = EnkfSimulationRunner(self.ert())
 
-        print("Ensemble Experiment started!")
+        now = time.time()
+
+        print("Ensemble Experiment started at: %s" % datetime.now().isoformat(sep=" "))
         success = simulation_runner.runEnsembleExperiment()
 
         if not success:
@@ -36,7 +39,10 @@ class Simulations(ShellFunction):
         print("Ensemble Experiment post processing!")
         simulation_runner.runPostWorkflow()
 
-        print("Ensemble Experiment completed!")
+        print("Ensemble Experiment completed at: %s" % datetime.now().isoformat(sep=" "))
+
+        diff = time.time() - now
+        print("Running time: %d seconds" % int(diff))
 
 
 
