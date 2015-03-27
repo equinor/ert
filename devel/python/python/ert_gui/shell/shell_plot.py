@@ -53,6 +53,20 @@ class ShellPlot(object):
             self.__legend_labels.append(legend_label)
 
 
+    def plotGenData(self, data, color=None, legend_label=''):
+        if color is None:
+            color = self.nextColor()
+
+        plt.ylabel("Value")
+        plt.xlabel("Index")
+        plt.xticks(rotation=30)
+        lines = plt.plot(data.index.values, data, color=color, alpha=0.8, marker=None, linestyle="-")
+
+        if len(lines) > 0:
+            self.__legend_items.append(lines[0])
+            self.__legend_labels.append(legend_label)
+
+
     def showLegend(self):
         plt.legend(self.__legend_items, self.__legend_labels)
 
