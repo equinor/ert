@@ -196,3 +196,58 @@ class LayerTest(ExtendedTestCase):
         layer.addIJBarrier( [(0,5) , (nx , 5)] )
         self.assertFalse(layer.cellContact( p1 , p2 ))
 
+
+
+    def test_update_connected(self):
+        nx = 10
+        ny = 10
+        layer = Layer(nx,ny)
+
+        layer[0,0] = 100
+        self.assertEqual( layer[0,0], 100 )
+        layer.clearCells()
+        self.assertEqual( layer[0,0], 0 )
+        self.assertEqual( layer.cellSum( ) , 0 )
+        
+        with self.assertRaises(ValueError):
+            layer.updateConnected( (10,10) , 10 )
+
+        layer[0,0] = 77
+        with self.assertRaises(ValueError):
+            layer.updateConnected( (0,0) , 10 , org_value = 0)
+
+        layer.updateConnected( (0,0) , 10 )
+        self.assertEqual( 10 , layer.cellSum() )
+
+        layer[0,0] = 0
+        layer.updateConnected( (0,0) , 3 )
+        self.assertEqual( nx*ny*3 , layer.cellSum() )
+
+        layer.addIJBarrier( [(5,0), (5,10)] )
+        layer.clearCells( )
+        self.assertEqual( 0 , layer.cellSum( ) )
+        layer.updateConnected( (0,0) , 1 )
+                
+        self.assertEqual( 50 , layer.cellSum( ) )
+        self.assertEqual( layer[4,0] , 1 )
+        self.assertEqual( layer[5,0] , 0 )
+
+        layer = Layer(nx,ny)
+        layer.addIJBarrier( [(5,0), (5,5)] )
+        layer.updateConnected( (0,0) , 1 )
+        self.assertEqual( 100 , layer.cellSum( ) )
+        
+        
+    def test_matching(self):
+        d = 10
+        layer = Layer(d,d)
+        
+        for i in range(d):
+            layer[i,i] = 10
+
+        cell_list = layer.cellsEqual( 1 )
+        self.assertEqual( cell_list , [] )
+        
+        cell_list = layer.cellsEqual( 10 )
+        self.assertEqual( cell_list , [ (i,i) for i in range(d)] )
+            
