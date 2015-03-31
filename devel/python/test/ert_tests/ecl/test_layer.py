@@ -21,6 +21,7 @@ except ImportError:
 
 import time
 from ert.ecl import EclGrid
+from ert.geo import CPolyline
 from ert.ecl.faults import Layer , FaultCollection
 from ert.test import ExtendedTestCase , TestAreaContext
 
@@ -250,4 +251,16 @@ class LayerTest(ExtendedTestCase):
         
         cell_list = layer.cellsEqual( 10 )
         self.assertEqual( cell_list , [ (i,i) for i in range(d)] )
-            
+        
+    
+    def test_add_polyline_barrier(self):
+        d = 10
+        layer = Layer(d,d)
+        grid = EclGrid.createRectangular( (d,d,1) , (1,1,1) )
+        pl = CPolyline( init_points = [(0 , 0) , (d/2 , d/2) , (d,d)])
+        layer.addPolylineBarrier( pl , grid , 0)
+        for i in range(d):
+            print i
+            self.assertTrue( layer.bottomBarrier(i,i) )
+            if i < (d - 1):
+                self.assertTrue( layer.leftBarrier(i+1,i) )
