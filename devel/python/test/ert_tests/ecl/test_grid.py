@@ -30,6 +30,29 @@ from ert.test import ExtendedTestCase , TestAreaContext
 
 class GridTest(ExtendedTestCase):
     
+
+    def test_posXYEdge(self):
+        nx = 10
+        ny = 11
+        grid = EclGrid.createRectangular( (nx,ny,1) , (1,1,1) )
+        self.assertEqual( grid.findCellCornerXY(0,0,0)  , 0 )
+        self.assertEqual( grid.findCellCornerXY(nx,0,0) , nx)
+        self.assertEqual( grid.findCellCornerXY(0 , ny , 0) , (nx + 1 ) * ny )
+        self.assertEqual( grid.findCellCornerXY(nx,ny,0) , (nx + 1 ) * (ny + 1) - 1)
+        
+        self.assertEqual( grid.findCellCornerXY(0.25,0,0)  , 0 )
+        self.assertEqual( grid.findCellCornerXY(0,0.25,0)  , 0 )
+
+        self.assertEqual( grid.findCellCornerXY(nx - 0.25,0,0)  , nx )
+        self.assertEqual( grid.findCellCornerXY(nx , 0.25,0)  , nx )
+
+        self.assertEqual( grid.findCellCornerXY(0 , ny - 0.25, 0) , (nx + 1 ) * ny )
+        self.assertEqual( grid.findCellCornerXY(0.25 , ny , 0) , (nx + 1 ) * ny )
+
+        self.assertEqual( grid.findCellCornerXY(nx -0.25 ,ny,0) , (nx + 1 ) * (ny + 1) - 1)
+        self.assertEqual( grid.findCellCornerXY(nx , ny - 0.25,0) , (nx + 1 ) * (ny + 1) - 1)
+
+
     def test_dims(self):
         grid = EclGrid.createRectangular( (10,20,30) , (1,1,1) )
         self.assertEqual( grid.getNX() , 10 )
@@ -140,4 +163,5 @@ class GridTest(ExtendedTestCase):
 
         c = grid.findCellCornerXY( 0.90 , 0.10 , 0 )
         self.assertEqual( c , 1 )
+        
         
