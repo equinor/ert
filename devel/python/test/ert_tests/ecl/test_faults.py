@@ -93,13 +93,8 @@ class FaultTest(ExtendedTestCase):
         f = Fault(self.grid , "NAME")
         self.assertEqual("NAME" , f.getName())
         
-        with self.assertRaises(KeyError):
+        with self.assertRaises(Exception):
             g = f["Key"]
-
-        with self.assertRaises(KeyError):
-            g = f[0]
-
-        self.assertEqual( len(f) , 0 )
 
 
     def test_empty_faultLine(self):
