@@ -106,9 +106,21 @@ endif()
 # underscore to avoid conflict with plplot which defines the
 # HAVE_USLEEP symbol.
 check_function_exists( usleep HAVE__USLEEP )
-if (HAVE_OPENDIR)
+if (HAVE__USLEEP)
   add_definitions( -DHAVE__USLEEP )
 endif()
+
+
+check_function_exists(pthread_yield_np HAVE_YIELD_NP)
+if (HAVE_YIELD_NP)
+  add_definitions(-DHAVE_YIELD_NP)
+endif()
+
+check_function_exists(pthread_yield HAVE_YIELD)
+if (HAVE_YIELD)
+  add_definitions(-DHAVE_YIELD)
+endif()
+
 
 # Checking based on compiling. Some of the code generates warnings, so we just cut down to bare-bone compiler flags.
 
