@@ -32,9 +32,6 @@ class CustomKW(BaseCClass):
         """
         return CustomKW.cNamespace().fload(self, filename)
 
-    def getData(self):
-        """ @rtype: StringList """
-        return CustomKW.cNamespace().get_data(self).setParent(self)
 
     def __getitem__(self, key):
         """ @rtype: str or float """
@@ -66,7 +63,6 @@ cwrapper.registerObjectType("custom_kw", CustomKW)
 CustomKW.cNamespace().free = cwrapper.prototype("void custom_kw_free(custom_kw)")
 CustomKW.cNamespace().alloc = cwrapper.prototype("c_void_p custom_kw_alloc(custom_kw_config)")
 CustomKW.cNamespace().fload = cwrapper.prototype("bool custom_kw_fload(custom_kw, char*)")
-CustomKW.cNamespace().get_data = cwrapper.prototype("stringlist_ref custom_kw_get_data(custom_kw)")
 CustomKW.cNamespace().get_config = cwrapper.prototype("custom_kw_config_ref custom_kw_get_config(custom_kw)")
 CustomKW.cNamespace().key_is_null = cwrapper.prototype("bool custom_kw_key_is_null(custom_kw, char*)")
 CustomKW.cNamespace().iget_as_double = cwrapper.prototype("double custom_kw_iget_as_double(custom_kw, int)")
