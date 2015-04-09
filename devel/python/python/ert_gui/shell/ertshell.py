@@ -4,12 +4,14 @@ import readline
 import os
 
 from ert.enkf import EnKFMain
+from ert_gui.shell.custom_kw_keys import CustomKWKeys
 from ert_gui.shell.debug import Debug
 from ert_gui.shell.cases import Cases
 from ert_gui.shell.gen_data_keys import GenDataKeys
 from ert_gui.shell.gen_kw_keys import GenKWKeys
 from ert_gui.shell.results import Results
 from ert_gui.shell.plugins import Plugins
+from ert_gui.shell.simulations import Simulations
 from ert_gui.shell.summary_keys import SummaryKeys
 from ert_gui.shell.workflows import Workflows
 from ert_gui.shell import extractFullArgument, getPossibleFilenameCompletions, PlotSettings, ShellContext
@@ -70,6 +72,8 @@ class ErtShell(Cmd):
         GenDataKeys(shell_context)
         GenKWKeys(shell_context)
         Results(shell_context)
+        Simulations(shell_context)
+        CustomKWKeys(shell_context)
 
     def __init_history(self):
         try:

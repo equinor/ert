@@ -56,7 +56,7 @@ from .analysis_config import AnalysisConfig
 from .ecl_config import EclConfig
 
 from .data import *
-
+from .custom_kw_config_set import CustomKWConfigSet
 from .enkf_obs import EnkfObs
 from .enkf_state import EnKFState
 from .ensemble_config import EnsembleConfig

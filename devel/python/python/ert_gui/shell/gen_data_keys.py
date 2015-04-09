@@ -16,7 +16,7 @@ class GenDataKeys(ShellFunction):
             enkf_config_node = self.ert().ensembleConfig().getNode(key)
             gen_data_config = enkf_config_node.getDataModelConfig()
 
-            for report_step in range(self.ert().getHistoryLength()):
+            for report_step in range(self.ert().getHistoryLength() + 1):
                 if gen_data_config.hasReportStep(report_step):
                     gen_data_list.append("%s@%d" % (key, report_step))
 

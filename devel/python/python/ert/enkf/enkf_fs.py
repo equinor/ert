@@ -108,12 +108,14 @@ class EnkfFs(BaseCClass):
         """ @rtype: SummaryKeySet """
         return EnkfFs.cNamespace().summary_key_set(self).setParent(self)
 
-    def realizationList(self , state):
+    def realizationList(self, state):
         """
-        Will return list of realizations with state == @state.
+        Will return list of realizations with state == the specified state.
+        @type state: ert.enkf.enums.RealizationStateEnum
+        @rtype: ert.util.IntVector
         """
         state_map = self.getStateMap()
-        return state_map.realizationList( state )
+        return state_map.realizationList(state)
 
 
 cwrapper = CWrapper(ENKF_LIB)

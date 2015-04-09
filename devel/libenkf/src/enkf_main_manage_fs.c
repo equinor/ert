@@ -17,6 +17,7 @@
 */
 
 #include <ert/enkf/summary_key_set.h>
+#include <ert/enkf/custom_kw_config_set.h>
 
 bool enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path) {
   char * mount_point               = enkf_main_alloc_mount_point( enkf_main , case_path );
@@ -517,15 +518,23 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
 }
 
 
-static void __enkf_main_update_summary_config_from_fs(enkf_main_type * enkf_main, enkf_fs_type * fs) {
+static void enkf_main_update_summary_config_from_fs__(enkf_main_type * enkf_main, enkf_fs_type * fs) {
     ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
     summary_key_set_type * summary_key_set = enkf_fs_get_summary_key_set(fs);
     stringlist_type * keys = summary_key_set_get_keys(summary_key_set);
 
     for(int i = 0; i < stringlist_get_size(keys); i++) {
-        char * key = stringlist_iget(keys, i);
+        const char * key = stringlist_iget(keys, i);
         ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
     }
+}
+
+
+static void enkf_main_update_custom_kw_config_from_fs__(enkf_main_type * enkf_main, enkf_fs_type * fs) {
+    ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+    custom_kw_config_set_type * custom_kw_config_set = enkf_fs_get_custom_kw_config_set(fs);
+
+    ensemble_config_update_custom_kw_config(ensemble_config, custom_kw_config_set);
 }
 
 
@@ -561,18 +570,20 @@ static void __enkf_main_update_summary_config_from_fs(enkf_main_type * enkf_main
 */
 
 void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path /* Can be NULL */) {
-  if (enkf_main->dbase != fs) {
-    enkf_fs_incref( fs );
+    if (enkf_main->dbase != fs) {
+        enkf_fs_incref( fs );
 
-    if (enkf_main->dbase)
-      enkf_fs_decref( enkf_main->dbase );
+        if (enkf_main->dbase) {
+            enkf_fs_decref(enkf_main->dbase);
+        }
 
-    enkf_main->dbase = fs;
-    enkf_main_invalidate_cache(enkf_main);
-    enkf_main_update_current_case(enkf_main, case_path);
+        enkf_main->dbase = fs;
+        enkf_main_invalidate_cache(enkf_main);
+        enkf_main_update_current_case(enkf_main, case_path);
 
-    __enkf_main_update_summary_config_from_fs(enkf_main, fs);
-  }
+        enkf_main_update_summary_config_from_fs__(enkf_main, fs);
+        enkf_main_update_custom_kw_config_from_fs__(enkf_main, fs);
+    }
 }
 
 
