@@ -145,7 +145,7 @@ class UtilTest(TestCase):
 
 
     def test_activeMask(self):
-        active_list = BoolVector.active_mask("1 , 4 - 7 , 10")
+        active_list = BoolVector.createActiveMask("1 , 4 - 7 , 10")
         self.assertTrue(len(active_list) == 11)
         self.assertTrue(active_list[1])
         self.assertTrue(active_list[4])
@@ -155,7 +155,7 @@ class UtilTest(TestCase):
 
         self.assertEqual(6, active_list.count(True))
 
-        active_list = BoolVector.active_mask("1,4-7,10X")
+        active_list = BoolVector.createActiveMask("1,4-7,10X")
         self.assertFalse(active_list)
 
 
