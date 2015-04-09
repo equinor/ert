@@ -35,11 +35,8 @@ class CustomKWTest(ExtendedTestCase):
             custom_kw.fload("result_file")
             self.assertEqual(len(custom_kw_config), 4)
 
-            custom_kw_data = custom_kw.getData()
-
             for key in data:
                 index = custom_kw_config.indexOfKey(key)
-                self.assertEqual(str(data[key]), custom_kw_data[index])
                 self.assertEqual(data[key], custom_kw[key])
 
             with self.assertRaises(KeyError):
@@ -63,22 +60,19 @@ class CustomKWTest(ExtendedTestCase):
 
                 custom_kw_1 = CustomKW(custom_kw_config)
                 custom_kw_1.fload("result_file_1")
-                custom_kw_1_data = custom_kw_1.getData()
 
                 custom_kw_2 = CustomKW(custom_kw_config)
                 custom_kw_2.fload("result_file_2")
-                custom_kw_2_data = custom_kw_2.getData()
 
                 index_1 = custom_kw_config.indexOfKey("VALUE_1")
                 index_2 = custom_kw_config.indexOfKey("VALUE_2")
 
-                self.assertEqual(custom_kw_1_data[index_1], str(data_1["VALUE_1"]))
-                self.assertEqual(custom_kw_2_data[index_1], str(data_2["VALUE_1"]))
-
-                self.assertEqual(custom_kw_1_data[index_2], str(data_1["VALUE_2"]))
-                self.assertEqual(custom_kw_2_data[index_2], None)
+                self.assertEqual(custom_kw_1["VALUE_1"], data_1["VALUE_1"])
+                self.assertEqual(custom_kw_2["VALUE_1"], data_2["VALUE_1"])
 
                 self.assertIsNone(custom_kw_2["VALUE_2"])
+                self.assertFalse( "VALUE_3" in custom_kw_config )
+
 
 
     def test_simulated_custom_kw(self):
