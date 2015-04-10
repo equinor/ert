@@ -103,9 +103,8 @@ add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysi
 
 add_executable( enkf_analysis_config_analysis_load enkf_analysis_config_analysis_load.c )
 target_link_libraries( enkf_analysis_config_analysis_load enkf test_util)
-add_test( enkf_analysis_config_analysis_load ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_analysis_load
-          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_config
-          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_site_config)
+add_test( enkf_analysis_config_analysis_load ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_analysis_load ${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_config)
+set_property( TEST enkf_analysis_config_analysis_load PROPERTY ENVIRONMENT "ERT_SITE_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_site_config" )
 
 add_executable( enkf_state_map enkf_state_map.c )
 target_link_libraries( enkf_state_map enkf test_util )

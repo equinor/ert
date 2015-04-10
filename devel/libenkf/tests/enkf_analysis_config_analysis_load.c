@@ -32,9 +32,8 @@ int main(int argc , const char ** argv)  {
   util_install_signals();
   {
     const char * config_file = argv[1];
-    const char * site_config_file = argv[2];
 
-    ert_test_context_type * test_context = ert_test_context_alloc("AnalysisLoadFromSiteConfig" , config_file,  site_config_file);
+    ert_test_context_type * test_context = ert_test_context_alloc("AnalysisLoadFromSiteConfig" , config_file);
     enkf_main_type * enkf_main = ert_test_context_get_main(test_context);
 
     test_assert_true(analysis_config_has_module(enkf_main_get_analysis_config(enkf_main), "RML_ENKF_SITE_CONFIG1"));

@@ -1118,3 +1118,23 @@ void site_config_add_config_items(config_parser_type * config, bool site_mode) {
   item = config_add_schema_item( config , ANALYSIS_LOAD_KEY , false  );
   config_schema_item_set_argc_minmax( item , 2 , 2);
 }
+
+const char * site_config_get_location() {
+    const char * site_config = NULL;
+
+    #ifdef SITE_CONFIG_FILE
+        site_config = SITE_CONFIG_FILE;
+    #endif
+
+    const char * env_site_config  = getenv("ERT_SITE_CONFIG");
+
+    if(env_site_config != NULL) {
+        site_config = env_site_config;
+    }
+
+    if (site_config == NULL) {
+        fprintf(stderr, "**WARNING** main enkf_config file is not set. Use environment variable \"ERT_SITE_CONFIG\" - or recompile.\n");
+    }
+
+    return site_config;
+}

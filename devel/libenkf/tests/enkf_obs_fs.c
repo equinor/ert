@@ -113,8 +113,7 @@ int main(int argc , char ** argv) {
   util_install_signals();
   {
     const char * config_file = argv[1];
-    const char * site_config = NULL;
-    ert_test_context_type * test_context = ert_test_context_alloc( "ENKF_OBS_FS" , config_file , site_config );
+    ert_test_context_type * test_context = ert_test_context_alloc( "ENKF_OBS_FS" , config_file );
     {
       testS( test_context );
       test_iget( test_context );

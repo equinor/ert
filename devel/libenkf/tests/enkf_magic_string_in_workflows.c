@@ -59,8 +59,7 @@ void test_has_job(ert_test_context_type * test_context ) {
 
 int main( int argc , char ** argv) {
   const char * model_config = argv[1];
-  const char * site_config = NULL;
-  ert_test_context_type * test_context = ert_test_context_alloc( "MAGIC-STRINGS" , model_config , site_config);
+  ert_test_context_type * test_context = ert_test_context_alloc( "MAGIC-STRINGS" , model_config);
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
 
   {

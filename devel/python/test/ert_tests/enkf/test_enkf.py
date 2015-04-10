@@ -33,13 +33,12 @@ from ert.test import ExtendedTestCase , TestAreaContext
 class EnKFTest(ExtendedTestCase):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
-        self.site_config_file = os.getenv("ERT_SITE_CONFIG")
 
 
     def test_bootstrap( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
-            main = EnKFMain("simple_config/minimum_config", self.site_config_file)
+            main = EnKFMain("simple_config/minimum_config")
             self.assertTrue(main, "Load failed")
             main.free()
 
@@ -63,7 +62,7 @@ class EnKFTest(ExtendedTestCase):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
-            main = EnKFMain("simple_config/minimum_config", self.site_config_file)
+            main = EnKFMain("simple_config/minimum_config")
 
             count = 10
             summary_key = "test_key"
@@ -109,7 +108,7 @@ class EnKFTest(ExtendedTestCase):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
-            main = EnKFMain("simple_config/minimum_config", self.site_config_file)
+            main = EnKFMain("simple_config/minimum_config")
 
             self.assertIsInstance(main.ensembleConfig(), EnsembleConfig)
             self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
@@ -138,14 +137,14 @@ class EnKFTest(ExtendedTestCase):
         
         with TestAreaContext("python/ens_condif/create_config" , store_area = True) as ta:
             EnKFMain.createNewConfig(config_file, "storage" , firste_case_name, dbase_type, num_realizations)
-            main = EnKFMain(config_file, self.site_config_file)
+            main = EnKFMain(config_file)
             self.assertEqual(main.getEnsembleSize(), num_realizations)
 
 
     def test_run_context(self):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
-            main = EnKFMain("simple_config/minimum_config", self.site_config_file)
+            main = EnKFMain("simple_config/minimum_config")
             fs_manager = main.getEnkfFsManager()
             fs = fs_manager.getCurrentFileSystem( )
             iactive = BoolVector(initial_size = 10 , default_value = True)

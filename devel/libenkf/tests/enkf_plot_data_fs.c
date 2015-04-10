@@ -113,8 +113,7 @@ int main(int argc, char ** argv) {
     test_work_area_set_store( work_area , true );
     test_work_area_copy_parent_content( work_area , config_file );
     {
-      const char * site_config = "/project/res/etc/ERT/site-config";
-      enkf_main_type * enkf_main = enkf_main_bootstrap( site_config , model_config , false , false );
+      enkf_main_type * enkf_main = enkf_main_bootstrap( model_config , false , false );
 
       test_load_summary(enkf_main , "WWCT:OP_3");
       test_load_GEN_KW( enkf_main , "MULTFLT" , "F3");

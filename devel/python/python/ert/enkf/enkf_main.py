@@ -21,8 +21,8 @@ from ert.util import SubstitutionList, Log
 
 
 class EnKFMain(BaseCClass):
-    def __init__(self, model_config, site_config, strict=True):
-        c_ptr = EnKFMain.cNamespace().bootstrap(site_config, model_config, strict, False)
+    def __init__(self, model_config, strict=True):
+        c_ptr = EnKFMain.cNamespace().bootstrap(model_config, strict, False)
         super(EnKFMain, self).__init__(c_ptr)
 
         self.__simulation_runner = EnkfSimulationRunner(self)
@@ -228,7 +228,7 @@ cwrapper.registerType("enkf_main", EnKFMain)
 cwrapper.registerType("enkf_main_ref", EnKFMain.createCReference)
 
 
-EnKFMain.cNamespace().bootstrap = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool, bool)")
+EnKFMain.cNamespace().bootstrap = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, bool, bool)")
 EnKFMain.cNamespace().free = cwrapper.prototype("void enkf_main_free(enkf_main)")
 
 EnKFMain.cNamespace().get_ensemble_size = cwrapper.prototype("int enkf_main_get_ensemble_size( enkf_main )")

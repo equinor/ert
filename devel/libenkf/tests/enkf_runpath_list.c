@@ -127,7 +127,7 @@ void test_runpath_list() {
 
 
 void test_config( const char * config_file ) {
-  ert_test_context_type * test_context = ert_test_context_alloc( "RUNPATH_FILE" , config_file , NULL );
+  ert_test_context_type * test_context = ert_test_context_alloc( "RUNPATH_FILE" , config_file );
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
   qc_module_type * qc_module = enkf_main_get_qc_module( enkf_main );
 

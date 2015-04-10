@@ -103,7 +103,7 @@ void test_measure( ert_test_context_type * test_context ) {
 
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
-  ert_test_context_type * context = ert_test_context_alloc( "OBS_VECTOR_FS" , config_file , NULL);
+  ert_test_context_type * context = ert_test_context_alloc( "OBS_VECTOR_FS" , config_file);
   enkf_main_type * enkf_main = ert_test_context_get_main( context );
 
   {

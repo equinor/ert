@@ -82,7 +82,7 @@ class SummaryKeySetTest(ExtendedTestCase):
             summary_key_set.addSummaryKey("WOPR")
             fs.umount()
 
-            ert = EnKFMain("config", site_config=None)
+            ert = EnKFMain("config")
             fs = ert.getEnkfFsManager().getCurrentFileSystem()
             summary_key_set = fs.getSummaryKeySet()
             self.assertTrue("FOPT" in summary_key_set)
