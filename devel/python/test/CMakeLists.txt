@@ -215,8 +215,6 @@ if (ERT_BUILD_GUI)
     add_test( NAME python.tests.ert_gui.import
              WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}
              COMMAND python test/ctest_import.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} "ert_gui")
-
-    set_property(TEST python.tests.ert_gui.import PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
 endif()
 
 #TESTCASE
@@ -269,7 +267,7 @@ addPythonTest(ert.enkf.update ert_tests.enkf.test_update.UpdateTest LABELS Stato
 addPythonTest(ert.enkf.plot.plot_block_data ert_tests.enkf.plot.test_plot_data.PlotDataTest LABELS StatoilData)
 
 #enkf.data
-addPythonTest(ert.enkf.data.custom_kw ert_tests.enkf.data.test_custom_kw.CustomKWTest ENVIRONMENT "ERT_SITE_CONFIG=${SITE_CONFIG_FILE}")
+addPythonTest(ert.enkf.data.custom_kw ert_tests.enkf.data.test_custom_kw.CustomKWTest)
 addPythonTest(ert.enkf.data.custom_kw_config ert_tests.enkf.data.test_custom_kw_config.CustomKWConfigTest)
 addPythonTest(ert.enkf.data.gen_data ert_tests.enkf.data.test_gen_data.GenDataTest LABELS StatoilData)
 addPythonTest(ert.enkf.data.gen_data_config ert_tests.enkf.data.test_gen_data_config.GenDataConfigTest LABELS StatoilData)
@@ -279,7 +277,7 @@ addPythonTest(ert.enkf.data.gen_kw_config ert_tests.enkf.data.test_gen_kw_config
 
 #enkf.export
 addPythonTest(ert.enkf.export.arg_loader ert_tests.enkf.export.test_arg_loader.ArgLoaderTest LABELS StatoilData)
-addPythonTest(ert.enkf.export.custom_kw_collector ert_tests.enkf.export.test_custom_kw_collector.CustomKwCollectorTest ENVIRONMENT "ERT_SITE_CONFIG=${SITE_CONFIG_FILE}")
+addPythonTest(ert.enkf.export.custom_kw_collector ert_tests.enkf.export.test_custom_kw_collector.CustomKwCollectorTest)
 addPythonTest(ert.enkf.export.design_matrix ert_tests.enkf.export.test_design_matrix.DesignMatrixTest LABELS StatoilData)
 addPythonTest(ert.enkf.export.export_join ert_tests.enkf.export.test_export_join.ExportJoinTest LABELS StatoilData)
 addPythonTest(ert.enkf.export.gen_data_collector ert_tests.enkf.export.test_gen_data_collector.GenDataCollectorTest LABELS StatoilData)
