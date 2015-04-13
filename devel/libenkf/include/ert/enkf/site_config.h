@@ -36,6 +36,8 @@ extern "C" {
 
 typedef struct site_config_struct site_config_type;
 
+  const char *             site_config_get_location();
+
   bool                     site_config_has_job_script( const site_config_type * site_config );
   const char *             site_config_get_manual_url( const site_config_type * site_config );
   void                     site_config_set_manual_url( site_config_type * site_config , const char * manual_url );

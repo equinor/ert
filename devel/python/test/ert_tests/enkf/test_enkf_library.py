@@ -12,8 +12,6 @@ from ert.test import ExtendedTestCase , TestAreaContext
 class EnKFLibraryTest(ExtendedTestCase):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
-        self.site_config = os.getenv("ERT_SITE_CONFIG")
-
 
     def test_failed_class_creation(self):
         classes = [FieldConfig, GenDataConfig,
@@ -29,7 +27,7 @@ class EnKFLibraryTest(ExtendedTestCase):
         with TestAreaContext("enkf_library_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
-            main = EnKFMain("simple_config/minimum_config", self.site_config)
+            main = EnKFMain("simple_config/minimum_config")
 
             self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
             self.assertIsInstance(main.eclConfig(), EclConfig)
@@ -49,7 +47,7 @@ class EnKFLibraryTest(ExtendedTestCase):
         with TestAreaContext("enkf_library_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
-            main = EnKFMain("simple_config/minimum_config", self.site_config)
+            main = EnKFMain("simple_config/minimum_config")
             state = main.getRealisation( 0 )
             
             with self.assertRaises(TypeError):

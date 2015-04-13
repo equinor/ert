@@ -18,20 +18,11 @@ if __name__ == '__main__':
     help_center = HelpCenter("ERT")
     help_center.setHelpLinkPrefix(os.getenv("ERT_SHARE_PATH") + "/gui/help/")
 
-    try:
-        import site_config
-
-        site_config_file = site_config.config_file
-    except ImportError:
-        site_config_file = None
-
-    if os.getenv("ERT_SITE_CONFIG"):
-        site_config_file = os.getenv("ERT_SITE_CONFIG")
 
     app = QApplication(sys.argv)
     app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
 
-    ert_shell = ErtShell(site_config=site_config_file)
+    ert_shell = ErtShell()
     if len(sys.argv) > 1:
         ert_shell.onecmd('load_config %s' % sys.argv[1])
 

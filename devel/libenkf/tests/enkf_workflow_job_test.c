@@ -31,7 +31,7 @@
 
 
 ert_test_context_type * create_context( const char * config_file, const char * name ) {
-  ert_test_context_type * test_context = ert_test_context_alloc(name , config_file , NULL);
+  ert_test_context_type * test_context = ert_test_context_alloc(name , config_file);
   test_assert_not_NULL(test_context);
   return test_context;
 }

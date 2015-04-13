@@ -40,8 +40,7 @@ int main(int argc, char ** argv) {
   util_alloc_file_components( config_file , NULL , &model_config , NULL);
   test_work_area_copy_parent_content( work_area , config_file );
   {
-    const char * site_config = "/project/res/etc/ERT/site-config";
-    enkf_main_type * enkf_main = enkf_main_bootstrap( site_config , model_config , false , false );
+    enkf_main_type * enkf_main = enkf_main_bootstrap( model_config , false , false );
 
     enkf_main_select_fs( enkf_main , "enkf");
     test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));

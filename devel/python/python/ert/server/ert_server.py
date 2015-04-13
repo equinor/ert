@@ -47,7 +47,6 @@ def ERROR(msg , exception = None):
 
 
 class ErtServer(object):
-    site_config = None
 
     def __init__(self , config_file , logger):
         installAbortSignals()
@@ -86,7 +85,7 @@ class ErtServer(object):
 
     def open(self , config_file):
         self.config_file = config_file
-        self.ert_handle = EnKFMain( config_file , ErtServer.site_config )
+        self.ert_handle = EnKFMain( config_file )
         self.logger.info("Have connect ert handle to:%s" , config_file)
 
 
