@@ -22,7 +22,7 @@ def findRightMostSeparator(text, separators):
 
     return max_pos
 
-def autoCompleteListWithSeparator(text, items, separators=":,"):
+def autoCompleteListWithSeparator(text, items, separators=":,@"):
     if containsAny(text, separators):
         auto_complete_list = autoCompleteList(text, items)
         separator_pos = findRightMostSeparator(text, separators)

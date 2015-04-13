@@ -4,6 +4,7 @@ set(PYTHON_SOURCES
     custom_kw_collector.py
     design_matrix_reader.py
     gen_data_collector.py
+    gen_data_observation_collector.py
     gen_kw_collector.py
     misfit_collector.py
     summary_collector.py
