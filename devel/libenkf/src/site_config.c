@@ -1129,7 +1129,11 @@ const char * site_config_get_location() {
     const char * env_site_config  = getenv("ERT_SITE_CONFIG");
 
     if(env_site_config != NULL) {
-        site_config = env_site_config;
+        if (util_file_exists(env_site_config)) {
+            site_config = env_site_config;
+        } else {
+            fprintf(stderr, "The environment variable ERT_SITE_CONFIG points to non-existing file: %s - ignored\n", env_site_config);
+        }
     }
 
     if (site_config == NULL) {
