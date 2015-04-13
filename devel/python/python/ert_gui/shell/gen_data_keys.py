@@ -1,12 +1,16 @@
-from ert.enkf import ErtImplType
+from ert.enkf import ErtImplType, EnkfObservationImplementationType
+from ert.enkf.export import GenDataCollector
+from ert.enkf.export.gen_data_observation_collector import GenDataObservationCollector
 from ert_gui.shell import ShellFunction, extractFullArgument, autoCompleteListWithSeparator, ShellPlot, \
     assertConfigLoaded
+from ert_gui.shell.shell_tools import matchItems
 
 
 class GenDataKeys(ShellFunction):
     def __init__(self, shell_context):
         super(GenDataKeys, self).__init__("gen_data", shell_context)
         self.addHelpFunction("list", None, "Shows a list of all available gen_data keys.")
+        self.addHelpFunction("plot", "<key_1> [key_2..key_n]", "Plot the specified key(s).")
 
 
     def fetchSupportedKeys(self):
@@ -22,9 +26,42 @@ class GenDataKeys(ShellFunction):
 
         return gen_data_list
 
+
     @assertConfigLoaded
     def do_list(self, line):
         keys = sorted(self.fetchSupportedKeys())
 
         self.columnize(keys)
 
+
+    @assertConfigLoaded
+    def do_plot(self, line):
+        keys = matchItems(line, self.fetchSupportedKeys())
+
+        if len(keys) == 0:
+            print("Error: Must have at least one GenData key")
+            return False
+
+        case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
+
+        for key in keys:
+            key, report_step = key.split("@", 1)
+            report_step = int(report_step)
+            plot = ShellPlot("%s at report step: %d" %(key, report_step))
+            for case_name in case_list:
+                data = GenDataCollector.loadGenData(self.ert(), case_name, key, report_step)
+                plot.plotGenData(data, legend_label=case_name)
+
+                obs_key = GenDataObservationCollector.getObservationKeyForDataKey(self.ert(), key, report_step)
+
+                if obs_key is not None:
+                    obs_data = GenDataObservationCollector.loadGenDataObservations(self.ert(), case_name, [obs_key])
+                    plot.plotObservations(obs_data, obs_key)
+
+            plot.showLegend()
+
+
+    @assertConfigLoaded
+    def complete_plot(self, text, line, begidx, endidx):
+        key = extractFullArgument(line, endidx)
+        return autoCompleteListWithSeparator(key, self.fetchSupportedKeys())
