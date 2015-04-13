@@ -118,12 +118,10 @@ class CSVExportJob(ErtPlugin):
 
             summary_data = SummaryCollector.loadAllSummaryData(self.ert(), case)
             if not summary_data.empty:
-                case_data = case_data.join(summary_data, on="Realization", how='outer')
+                case_data = case_data.join(summary_data, how='outer')
             else:
                 case_data["Date"] = None
                 case_data.set_index(["Date"], append=True, inplace=True)
-
-            print(case_data)
 
             case_data["Iteration"] = iteration_number
             case_data["Case"] = case
