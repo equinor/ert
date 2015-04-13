@@ -41,9 +41,8 @@ class ErtShell(Cmd):
             "-- Arrow up/down for history.\n"
 
 
-    def __init__(self, site_config=None):
+    def __init__(self):
         Cmd.__init__(self)
-        self.__site_config = site_config
 
         shell_context = ShellContext(self)
         self.__shell_context = shell_context
@@ -93,7 +92,7 @@ class ErtShell(Cmd):
 
     def do_load_config(self, config_file):
         if os.path.exists(config_file) and os.path.isfile(config_file):
-            self.shellContext().setErt(EnKFMain(config_file, site_config=self.__site_config))
+            self.shellContext().setErt(EnKFMain(config_file))
         else:
             print("Error: Config file '%s' not found!\n" % config_file)
 
