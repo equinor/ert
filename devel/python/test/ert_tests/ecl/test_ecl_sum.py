@@ -125,13 +125,4 @@ class EclSumTest(ExtendedTestCase):
             with self.assertRaises(IOError):
                 EclSum( "ECLIPSE" )
 
-
     
-                
-    def test_labscale(self):
-        case = self.createTestPath("Statoil/ECLIPSE/LabScale/HDMODEL")
-        sum = EclSum( case )
-        self.assertEqual( sum.getStartTime( ) , datetime.datetime(2013,1,1,0,0,0))
-        self.assertEqual( sum.getEndTime( )   , datetime.datetime(2013,1,1,19,30,0))
-        self.assertFloatEqual( sum.getSimulationLength() , 0.8125 )
-        
