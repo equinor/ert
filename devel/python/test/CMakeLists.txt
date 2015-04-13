@@ -282,7 +282,7 @@ addPythonTest(ert.enkf.export.custom_kw_collector ert_tests.enkf.export.test_cus
 addPythonTest(ert.enkf.export.design_matrix ert_tests.enkf.export.test_design_matrix.DesignMatrixTest LABELS StatoilData)
 addPythonTest(ert.enkf.export.export_join ert_tests.enkf.export.test_export_join.ExportJoinTest LABELS StatoilData)
 addPythonTest(ert.enkf.export.gen_data_collector ert_tests.enkf.export.test_gen_data_collector.GenDataCollectorTest LABELS StatoilData)
-addPythonTest(ert.enkf.export.gen_data_observation_collector ert_tests.enkf.export.test_gen_data_observation_collector.GenDataObservationCollectorTest ENVIRONMENT "ERT_SITE_CONFIG=${SITE_CONFIG_FILE}")
+addPythonTest(ert.enkf.export.gen_data_observation_collector ert_tests.enkf.export.test_gen_data_observation_collector.GenDataObservationCollectorTest)
 addPythonTest(ert.enkf.export.gen_kw_collector ert_tests.enkf.export.test_gen_kw_collector.GenKwCollectorTest LABELS StatoilData)
 addPythonTest(ert.enkf.export.numpy_and_pandas ert_tests.enkf.export.test_numpy_and_pandas.NumpyAndPandasTest)
 addPythonTest(ert.enkf.export.misfit_collector ert_tests.enkf.export.test_misfit_collector.MisfitCollectorTest LABELS StatoilData)
