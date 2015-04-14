@@ -19,6 +19,7 @@ import time
 
 from ert.test import ExtendedTestCase
 from ert.ecl import EclGrid,EclKW,EclTypeEnum,EclGrid,EclRegion
+from ert.util import BoolVector
 
 
 class DeprecationTest(ExtendedTestCase):
@@ -60,3 +61,10 @@ class DeprecationTest(ExtendedTestCase):
 
         with warnings.catch_warnings():
             region.active_list
+
+
+
+    # Deprecated method from 1.8.4
+    def test_BoolVector_active_mask(self):
+        with warnings.catch_warnings():
+            active_vector = BoolVector.active_mask("1,1,1,1,1,1")
