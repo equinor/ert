@@ -53,6 +53,23 @@ class Ecl3DKWTest(ExtendedTestCase):
         self.assertEqual( kw[0,0,0] , 45 )
 
 
+    def test_fix_uninitialized(self):
+        nx = 10
+        ny = 11
+        nz = 12
+        grid = EclGrid.createRectangular( (nx,ny,nz) , (1,1,1) )
+        kw = Ecl3DKW.create("REGIONS" , grid , EclTypeEnum.ECL_INT_TYPE , global_active = True)
+        kw.assign(3)
+        self.assertEqual( 3 * nx*ny*nz , sum(kw))
+
+        kw[1,1,1] = 0
+        kw[3,3,3] = 0
+        kw[6,6,6] = 0
+
+        self.assertEqual( 3 * nx*ny*nz - 9 , sum(kw))
+        kw.fixUninitialized( grid.getDims() )
+        self.assertEqual( 3 * nx*ny*nz , sum(kw))
+
 
 
     def test_getitem( self ):
