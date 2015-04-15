@@ -59,3 +59,13 @@ class GeometryToolsTest(ExtendedTestCase):
             
         self.assertEqual( GeometryTools.extendPolylineOnto( l1 , l2 ) , [(1,1) , (2,1)])
 
+    def test_ray_line_intersection(self):
+        p = GeometryTools.rayLineIntersection((0,0) , (1,0) , (5,-1),(5,1))
+        self.assertEqual( p , (5,0))
+        
+        self.assertIsNone( GeometryTools.rayLineIntersection((0,0) , (-1,0) , (5,-1),(5,1)) )
+        self.assertIsNone( GeometryTools.rayLineIntersection((0,0) , (0,1) , (5,-1),(5,1)) )
+        self.assertIsNone( GeometryTools.rayLineIntersection((0,0) , (0,-1) , (5,-1),(5,1)) )
+        
+        p = GeometryTools.rayLineIntersection((0,0) , (1,1) , (5,-6),(5,6))
+        self.assertEqual( p , (5,5))
