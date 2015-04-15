@@ -69,3 +69,12 @@ class GeometryToolsTest(ExtendedTestCase):
         
         p = GeometryTools.rayLineIntersection((0,0) , (1,1) , (5,-6),(5,6))
         self.assertEqual( p , (5,5))
+
+
+    def test_nearest_point(self):
+        l1 = Polyline( init_points = [(0,0) , (10,0)])
+
+        p = GeometryTools.nearestPointOnPolyline( (5 , 5) , l1 )
+        self.assertEqual( p , (5 , 0) )
+        
+
