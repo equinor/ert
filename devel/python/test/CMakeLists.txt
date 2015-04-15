@@ -339,7 +339,7 @@ addPythonTest(ert.ecl.ecl_sum_vector ert_tests.ecl.test_ecl_sum_vector.EclSumVec
 addPythonTest(ert.ecl.ecl_sum_time_range ert_tests.ecl.test_ecl_sum.EclSumTest LABELS StatoilData)
 addPythonTest(ert.ecl.layer ert_tests.ecl.test_layer.LayerTest )
 addPythonTest(ert.ecl.faults ert_tests.ecl.test_faults.FaultTest )
-addPythonTest(ert.ecl.statoil_faults ert_tests.ecl.test_faults.StatoilFaultTest LABELS StatoilData)
+addPythonTest(ert.ecl.statoil_faults ert_tests.ecl.test_statoil_faults.StatoilFaultTest LABELS StatoilData)
 addPythonTest(ert.ecl.fault_blocks ert_tests.ecl.test_fault_blocks.FaultBlockTest )
 addPythonTest(ert.ecl.region_definition_statoil ert_tests.ecl.test_region_definition_statoil.RegionDefinitionTest LABELS StatoilData)
 addPythonTest(ert.ecl.region_definition ert_tests.ecl.test_region_definition.RegionDefinitionTest )
