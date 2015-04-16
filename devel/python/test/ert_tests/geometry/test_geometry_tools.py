@@ -49,15 +49,15 @@ class GeometryToolsTest(ExtendedTestCase):
         l4 = Polyline( init_points = [(0,5) , (1,5)])
         l5 = Polyline( init_points = [(0,5)])
         
-        self.assertIsNone( GeometryTools.extendPolylineOnto( l1 , l3 ))
+        self.assertIsNone( GeometryTools.connectPolylines( l1 , l3 ))
         
         with self.assertRaises( ValueError ):
-            GeometryTools.extendPolylineOnto( l1 , l5 )            
+            GeometryTools.connectPolylines( l1 , l5 )            
 
         with self.assertRaises( ValueError ):
-            GeometryTools.extendPolylineOnto( l1 , l4 )            
+            GeometryTools.connectPolylines( l1 , l4 )            
             
-        self.assertEqual( GeometryTools.extendPolylineOnto( l1 , l2 ) , [(1,1) , (2,1)])
+        self.assertEqual( GeometryTools.connectPolylines( l1 , l2 ) , [(1,1) , (2,1)])
 
     def test_ray_line_intersection(self):
         p = GeometryTools.rayLineIntersection((0,0) , (1,0) , (5,-1),(5,1))

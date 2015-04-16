@@ -352,7 +352,7 @@ class FaultTest(ExtendedTestCase):
         join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
         self.assertEqual(join , [p1 , p2])
 
-
+        
     def test_join_faults(self):
         grid = EclGrid.create_rectangular( (100,100,10) , (1,1,1))
 
@@ -761,4 +761,39 @@ class FaultTest(ExtendedTestCase):
         self.assertTrue( layer3.cellContact((0,0) , (1,0)))
         self.assertFalse( layer3.cellContact((1,0) , (2,0)))
 
+
+
+    def test_connectWithPolyline(self):
+        grid = EclGrid.create_rectangular( (4,4,1) , (1 , 1 , 1))
+
+        
+        #  o   o   o   o   o 
+        #                   
+        #  o   o   o   o   o
+        #                   
+        #  o---o---o---o---o
+        #                   
+        #  o   o   o   o   o
+        #          |        
+        #  o   o   o   o   o
+
+        fault1 = Fault(grid , "Fault1")
+        fault1.addRecord(0 , 3 , 1 , 1 , 0 , 0 , "Y")
+
+        fault2 = Fault(grid , "Fault2")
+        fault2.addRecord(1 , 1 , 0 , 0 , 0 , 0 , "X")
+
+        fault3 = Fault(grid , "Fault3")
+        fault3.addRecord(1 , 1 , 0 , 2 , 0 , 0 , "X")
+        
+        self.assertIsNone( fault3.connect( fault1 , 0 ))
+        
+        
+        intersect = fault2.connect( fault1 , 0 )
+        self.assertEqual( len(intersect) , 2 )
+        p1 = intersect[0]
+        p2 = intersect[1]
+        
+        self.assertEqual( p1 , (2,1))
+        self.assertEqual( p2 , (2,2))
         
