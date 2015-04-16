@@ -263,9 +263,12 @@ addPythonTest(ert.enkf.ert_test_context ert_tests.enkf.test_ert_context.ErtTestC
 addPythonTest(ert.enkf.run_arg ert_tests.enkf.test_run_arg.RunArg)
 addPythonTest(ert.enkf.runpath_list ert_tests.enkf.test_runpath_list.RunpathListTest)
 addPythonTest(ert.enkf.update ert_tests.enkf.test_update.UpdateTest LABELS StatoilData)
+addPythonTest(ert.enkf.labscale ert_tests.enkf.test_labscale.LabScaleTest LABELS StatoilData)
+
 
 #enkf.plot
 addPythonTest(ert.enkf.plot.plot_block_data ert_tests.enkf.plot.test_plot_data.PlotDataTest LABELS StatoilData)
+
 
 #enkf.data
 addPythonTest(ert.enkf.data.custom_kw ert_tests.enkf.data.test_custom_kw.CustomKWTest)
@@ -394,7 +397,6 @@ addPythonTest(ert.geometry.polygon_slicing ert_tests.geometry.test_polygon_slici
 addPythonTest(ert.server.socket ert_tests.server.test_socket.SocketTest)
 addPythonTest(ert.server.server ert_tests.server.test_server.ServerTest)
 
-# ECL_WELL
 addPythonTest(ert.well.ecl_well ert_tests.well.test_ecl_well.EclWellTest LABELS StatoilData)
 addPythonTest(ert.well.ecl_well2 ert_tests.well.test_ecl_well2.EclWellTest2 LABELS StatoilData)
 
