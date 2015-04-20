@@ -80,7 +80,8 @@ class ErtServer(object):
         self.cmd_table = {"STATUS" : self.handleSTATUS ,
                           "INIT_SIMULATIONS" : self.handleINIT_SIMULATIONS ,
                           "ADD_SIMULATION" : self.handleADD_SIMULATION ,
-                          "GET_RESULT" : self.handleGET_RESULT }
+                          "GET_RESULT" : self.handleGET_RESULT ,
+                          "TIME_STEP": self.handleTIMESTEP }
 
 
     def open(self , config_file):
@@ -246,3 +247,13 @@ class ErtServer(object):
         
         self.run_context.startSimulation( iens )
         return self.handleSTATUS([])
+
+    def handleTIMESTEP(self, args):
+        enkf_fs_manager = self.ert_handle.getEnkfFsManager()
+        enkf_fs = enkf_fs_manager.getCurrentFileSystem()
+        time_map = enkf_fs.getTimeMap()
+        time_steps = []
+        for ts in time_map:
+            time_steps.append(ts)
+
+        return self.SUCCESS(time_steps)
