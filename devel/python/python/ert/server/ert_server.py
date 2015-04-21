@@ -254,6 +254,6 @@ class ErtServer(object):
         time_map = enkf_fs.getTimeMap()
         time_steps = []
         for ts in time_map:
-            time_steps.append(ts)
+            time_steps.append(str(ts))
 
         return self.SUCCESS(time_steps)
