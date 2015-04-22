@@ -90,26 +90,35 @@ static void obs_vector_prefer_RESTART_warning() {
 
 
 
-static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instance, const char * obs_key , time_map_type * obs_time , bool prefer_restart) {
+static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instance, const char * obs_key , time_map_type * time_map , bool prefer_restart) {
   int obs_restart_nr = -1;  /* To shut up compiler warning. */
 
   if(conf_instance_has_item(conf_instance, "RESTART")) {
     obs_restart_nr = conf_instance_get_item_value_int(conf_instance, "RESTART");
-    if (obs_restart_nr > time_map_get_last_step( obs_time))
-      util_abort("%s: Observation %s occurs at restart %i, but history file has only %i restarts.\n", __func__, obs_key, obs_restart_nr, time_map_get_last_step( obs_time));
-  } else if(conf_instance_has_item(conf_instance, "DATE")) {
-    time_t obs_date = conf_instance_get_item_value_time_t(conf_instance, "DATE"  );
-    obs_restart_nr  = time_map_lookup_time( obs_time , obs_date );
-    if (prefer_restart)
-      obs_vector_prefer_RESTART_warning();
-  } else if (conf_instance_has_item(conf_instance, "DAYS")) {
-    double days = conf_instance_get_item_value_double(conf_instance, "DAYS");
-    obs_restart_nr  = time_map_lookup_days( obs_time , days );
-    if (prefer_restart)
-      obs_vector_prefer_RESTART_warning();
-  }  else
-    util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
+    if (obs_restart_nr > time_map_get_last_step( time_map))
+      util_abort("%s: Observation %s occurs at restart %i, but history file has only %i restarts.\n", __func__, obs_key, obs_restart_nr, time_map_get_last_step( time_map ));
+  } else {
+    time_t obs_time = time_map_get_start_time( time_map );
 
+    if(conf_instance_has_item(conf_instance, "DATE")) {
+      obs_time = conf_instance_get_item_value_time_t(conf_instance, "DATE"  );
+      if (prefer_restart)
+        obs_vector_prefer_RESTART_warning();
+    } else if (conf_instance_has_item(conf_instance, "DAYS")) {
+      double days = conf_instance_get_item_value_double(conf_instance, "DAYS");
+      util_inplace_forward_days( &obs_time , days );
+      if (prefer_restart)
+        obs_vector_prefer_RESTART_warning();
+    } else if (conf_instance_has_item(conf_instance, "HOURS")) {
+      double hours = conf_instance_get_item_value_double(conf_instance, "HOURS");
+      util_inplace_forward_seconds( &obs_time , hours * 3600 );
+      if (prefer_restart)
+        obs_vector_prefer_RESTART_warning();
+    } else
+      util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
+
+    obs_restart_nr = time_map_lookup_time_with_tolerance( time_map , obs_time , 30 , 30 );
+  }
   if (obs_restart_nr < 0)
     util_abort("%s: Failed to look up restart nr correctly \n",__func__);
 
