@@ -781,6 +781,9 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
     const char * help_item_spec_days = "The DAYS item gives the observation time as days after simulation start.";
     conf_item_spec_type * item_spec_days = conf_item_spec_alloc("DAYS", false, DT_POSFLOAT , help_item_spec_days);
 
+    const char * help_item_spec_hours = "The HOURS item gives the observation time as hours after simulation start.";
+    conf_item_spec_type * item_spec_hours = conf_item_spec_alloc("HOURS", false, DT_POSFLOAT , help_item_spec_hours);
+
     const char * help_item_spec_restart = "The RESTART item gives the observation time as the ECLIPSE restart nr.";
     conf_item_spec_type * item_spec_restart = conf_item_spec_alloc("RESTART", false, DT_POSINT , help_item_spec_restart);
 
@@ -801,6 +804,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_error);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_date);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_days);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_hours);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_restart);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_sumkey);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_error_mode);
@@ -809,9 +813,11 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
     /** Create a mutex on DATE, DAYS and RESTART. */
     conf_item_mutex_type * time_mutex = conf_class_new_item_mutex(summary_observation_class , true , false);
 
-    conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
-    conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
-    conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
+    conf_item_mutex_add_item_spec(time_mutex , item_spec_date);
+    conf_item_mutex_add_item_spec(time_mutex , item_spec_days);
+    conf_item_mutex_add_item_spec(time_mutex , item_spec_hours);
+    conf_item_mutex_add_item_spec(time_mutex , item_spec_restart);
+    conf_item_mutex_add_item_spec(time_mutex , item_spec_days );
 
     conf_class_insert_owned_sub_class(enkf_conf_class, summary_observation_class);
   }
@@ -832,6 +838,9 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
     const char * help_item_spec_days = "The DAYS item gives the observation time as days after simulation start.";
     conf_item_spec_type * item_spec_days = conf_item_spec_alloc("DAYS", false, DT_POSFLOAT , help_item_spec_days);
 
+    const char * help_item_spec_hours = "The HOURS item gives the observation time as hours after simulation start.";
+    conf_item_spec_type * item_spec_hours = conf_item_spec_alloc("HOURS", false, DT_POSFLOAT , help_item_spec_hours);
+
     const char * help_item_spec_restart = "The RESTART item gives the observation time as the ECLIPSE restart nr.";
     conf_item_spec_type * item_spec_restart = conf_item_spec_alloc("RESTART", false, DT_POSINT , help_item_spec_restart);
 
@@ -847,13 +856,14 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
     conf_class_insert_owned_item_spec(block_observation_class, item_spec_date);
     conf_class_insert_owned_item_spec(block_observation_class, item_spec_days);
     conf_class_insert_owned_item_spec(block_observation_class, item_spec_restart);
-
+    conf_class_insert_owned_item_spec(block_observation_class, item_spec_hours);
     /** Create a mutex on DATE, DAYS and RESTART. */
     {
       conf_item_mutex_type * time_mutex = conf_class_new_item_mutex(block_observation_class , true , false);
       conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
       conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
       conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
+      conf_item_mutex_add_item_spec(time_mutex, item_spec_hours);
     }
 
     /** Create and insert the sub class OBS. */
@@ -907,12 +917,14 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
     const char * help_item_spec_field = "The item DATA gives the observed GEN_DATA instance.";
     const char * help_item_spec_date = "The DATE item gives the observation time as the date date it occured. Format is dd/mm/yyyy.";
     const char * help_item_spec_days = "The DAYS item gives the observation time as days after simulation start.";
+    const char * help_item_spec_hours = "The HOURS item gives the observation time as hours after simulation start.";
 
     conf_class_type * gen_obs_class = conf_class_alloc_empty("GENERAL_OBSERVATION" , false , false, "The class general_observation is used for general observations");
 
     conf_item_spec_type * item_spec_field       = conf_item_spec_alloc("DATA", true,  DT_STR , help_item_spec_field);
     conf_item_spec_type * item_spec_date        = conf_item_spec_alloc("DATE", false,  DT_DATE , help_item_spec_date);
     conf_item_spec_type * item_spec_days        = conf_item_spec_alloc("DAYS", false, DT_POSFLOAT , help_item_spec_days);
+    conf_item_spec_type * item_spec_hours       = conf_item_spec_alloc("HOURS", false, DT_POSFLOAT , help_item_spec_hours);
     conf_item_spec_type * item_spec_restart     = conf_item_spec_alloc("RESTART", false, DT_POSINT , help_item_spec_restart);
     conf_item_spec_type * item_spec_error_covar = conf_item_spec_alloc("ERROR_COVAR", false, DT_FILE , "Name of file containing error-covariance as formatted matrix - no header");
 
@@ -920,6 +932,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
     conf_class_insert_owned_item_spec(gen_obs_class, item_spec_field);
     conf_class_insert_owned_item_spec(gen_obs_class, item_spec_date);
     conf_class_insert_owned_item_spec(gen_obs_class, item_spec_days);
+    conf_class_insert_owned_item_spec(gen_obs_class, item_spec_hours);
     conf_class_insert_owned_item_spec(gen_obs_class, item_spec_restart);
     /** Create a mutex on DATE, DAYS and RESTART. */
     {
@@ -927,6 +940,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
 
       conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
       conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
+      conf_item_mutex_add_item_spec(time_mutex, item_spec_hours);
       conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
     }
 

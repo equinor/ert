@@ -22,12 +22,11 @@ from ert.test import ExtendedTestCase , ErtTestContext
 
 
 class LabScaleTest(ExtendedTestCase):
-    def setUp(self):
-        self.config_file = self.createTestPath("Statoil/config/labscale/config")
 
 
     def testObs(self):
-        with ErtTestContext("labscale", self.config_file) as test_context:
+        config_file = self.createTestPath("Statoil/config/labscale/config")
+        with ErtTestContext("labscale", config_file) as test_context:
             ert = test_context.getErt()
             obs = ert.getObservations()
 
@@ -56,3 +55,22 @@ class LabScaleTest(ExtendedTestCase):
             node = bpr.getNode( 31 )
             self.assertFloatEqual( node.getValue(0) , 10.284)
 
+            
+
+    def testObs_beijing(self):
+        config_file = self.createTestPath("Statoil/config/lab-beijing/labunits/config")
+        with ErtTestContext("labscale-beijing", config_file) as test_context:
+            ert = test_context.getErt()
+            obs = ert.getObservations()
+
+
+            v0 = obs["WCT0"]
+            self.assertEqual( v0.activeStep() , 18 )
+            node = v0.getNode( 18 )
+            self.assertEqual( node.getValue() , 0.12345 )
+
+
+            v1 = obs["WCT1"]
+            self.assertEqual( v1.activeStep() , 18 )
+            node = v1.getNode( 18 )
+            self.assertEqual( node.getValue() , 0.12345 )
