@@ -394,8 +394,8 @@ addPythonTest(ert.geometry.point_in_polygon ert_tests.geometry.test_point_in_pol
 addPythonTest(ert.geometry.polygon_slicing ert_tests.geometry.test_polygon_slicing.PolygonSlicingTest)
 
 #SERVER
-addPythonTest(ert.server.socket ert_tests.server.test_socket.SocketTest)
-addPythonTest(ert.server.server ert_tests.server.test_server.ServerTest)
+addPythonTest(ert.server.socket ert_tests.server.test_socket.SocketTest LABELS StatoilData)
+addPythonTest(ert.server.server ert_tests.server.test_server.ServerTest LABELS StatoilData)
 
 addPythonTest(ert.well.ecl_well ert_tests.well.test_ecl_well.EclWellTest LABELS StatoilData)
 addPythonTest(ert.well.ecl_well2 ert_tests.well.test_ecl_well2.EclWellTest2 LABELS StatoilData)
