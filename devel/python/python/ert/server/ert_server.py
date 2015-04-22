@@ -20,6 +20,7 @@ import json
 import os
 import traceback
 import datetime
+from time import strftime
 
 from ert.enkf import EnKFMain,RunArg,EnkfFsManager
 from ert.enkf.enums import EnkfRunType, EnkfStateType, ErtImplType , EnkfVarType , RealizationStateEnum
@@ -47,6 +48,8 @@ def ERROR(msg , exception = None):
 
 
 class ErtServer(object):
+    DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+    site_config = None
 
     def __init__(self , config_file , logger):
         installAbortSignals()
@@ -252,8 +255,6 @@ class ErtServer(object):
         enkf_fs_manager = self.ert_handle.getEnkfFsManager()
         enkf_fs = enkf_fs_manager.getCurrentFileSystem()
         time_map = enkf_fs.getTimeMap()
-        time_steps = []
-        for ts in time_map:
-            time_steps.append(str(ts))
+        time_steps = [ ts.datetime().strftime(ErtServer.DATE_FORMAT) for ts in time_map ]
 
         return self.SUCCESS(time_steps)

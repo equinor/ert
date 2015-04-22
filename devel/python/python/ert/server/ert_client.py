@@ -18,6 +18,7 @@ import sys
 import socket
 import json
 import datetime
+from ert.server import ErtServer
 
 
 class ErtClient(object):
@@ -33,11 +34,10 @@ class ErtClient(object):
 
     @staticmethod
     def convert_to_datetime(data):
-        DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
         result = []
         for d in data:
             try:
-                result.append(datetime.datetime.strptime(d, DATE_FORMAT))
+                result.append(datetime.datetime.strptime(d, ErtServer.DATE_FORMAT))
             except:
                 pass
         return result
