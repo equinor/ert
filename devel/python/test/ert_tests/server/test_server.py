@@ -92,9 +92,9 @@ class ServerTest(ExtendedTestCase):
              cmd = ["TIME_STEP"]
 
              res = ert_server.evalCmd(cmd)
-             self.assertTrue(str(res).find("OK"))
-             data = json.dumps(res)
-             self.assertTrue(str(res).find("OK"))
-             result = json.loads(data)
 
+             data = json.dumps(res)
+
+             result = json.loads(data)
+             self.assertEqual( res[0] , "OK")
 
