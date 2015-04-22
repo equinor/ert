@@ -20,6 +20,7 @@ def connect_callback( sleep_time , host , port):
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--port"      , type=int , default = default_port , dest="port")
+parser.add_argument("--host"      , default = socket.gethostname() , dest="host")
 parser.add_argument("--localhost" , default = False , action = "store_true" , dest="localhost")
 parser.add_argument("--log-file"  , default = "ert-server.log" , dest="log_file")
 parser.add_argument("--log-level" , type=int , default= 1 , dest="log_level")
@@ -44,11 +45,20 @@ else:
 # By default the server will bind with the publicly available hostname
 # socket.gethostname() - meaning that clients can connect from
 # anywhere, but by using the --localhost switch the server can be
-# instructed to only accept connections from localhost.
+# instructed to only accept connections from localhost. 
+#
+# On some computers the socket.gethostname() will not include the
+# domain name; that will not work and we exit the server and ask the
+# user to supply the full hostname using --host.
+
 if args.localhost:
     host = "localhost"
 else:
-    host = socket.gethostname()
+    host = args.host
+    if host.count(".") == 0:
+        sys.exit("Sorry - could not determine FQDN for server - use the --host option to supply.")
+    
+
 
 # Create a logger object.
 logger = logging.Logger("ert-server")
