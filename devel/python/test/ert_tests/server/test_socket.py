@@ -45,6 +45,7 @@ class SocketTest(ExtendedTestCase):
          self.config_file = "config"
          self.port = 9125
          self.host = "localhost"
+         self.pid = 0
          
          self.logger = logging.Logger("ert-server-test")
          self.logger.addHandler( logging.NullHandler() )
@@ -56,13 +57,15 @@ class SocketTest(ExtendedTestCase):
         #self.assertEqual( result , expect )
         return result
 
-
+    def tearDown(self):
+        if self.pid != 0:
+            os.kill(self.pid, signal.SIGKILL)
          
     def test_connect(self):
         with TestAreaContext("server/socket") as work_area:
             work_area.copy_directory_content(self.config_path)
-            pid = os.fork()
-            if pid == 0:
+            self.pid = os.fork()
+            if self.pid == 0:
                 s = ErtSocket.connect(self.config_file , self.port , self.host , self.logger)
                 s.listen( )
             else:
@@ -83,17 +86,13 @@ class SocketTest(ExtendedTestCase):
         config_path = self.createTestPath("Statoil/config/with_data")
         with TestAreaContext("server/socket") as work_area:
             work_area.copy_directory_content(config_path)
-            pid = os.fork()
-            if pid == 0:
+            self.pid = os.fork()
+            if self.pid  == 0:
                 s = ErtSocket.connect(self.config_file , self.port , self.host , self.logger)
                 s.listen( )
             else:
                 time.sleep(0.50)
-
-
                 data = self.runCommand(["TIME_STEP"], ["OPEN"])
-
-
 
                 self.assertTrue(str(data).find("2000"))
 
