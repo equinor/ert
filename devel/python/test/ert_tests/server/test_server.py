@@ -83,4 +83,18 @@ class ServerTest(ExtendedTestCase):
                 res = ert_server.evalCmd( cmd )
                 
 
-                        
+    def testTIMESTEP(self):
+         config_path = self.createTestPath("Statoil/config/with_data")
+         with TestAreaContext("server/server") as work_area:
+             work_area.copy_directory_content(config_path)
+
+             ert_server = ErtServer(self.config_file, self.logger)
+             cmd = ["TIME_STEP"]
+
+             res = ert_server.evalCmd(cmd)
+
+             data = json.dumps(res)
+
+             result = json.loads(data)
+             self.assertEqual( res[0] , "OK")
+
