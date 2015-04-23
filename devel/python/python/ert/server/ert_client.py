@@ -50,7 +50,7 @@ class ErtClient(object):
         result0 = result[0]
         if result0 == "OK":
             result = result[1:]
-            if str(data).find("[TIME_STEP]"):
+            if data == ["TIME_STEP"]:
                 result = ErtClient.convert_to_datetime(result)
 
             return result
