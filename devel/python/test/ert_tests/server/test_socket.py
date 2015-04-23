@@ -23,6 +23,7 @@ import signal
 import json
 import sys 
 import logging
+import datetime
 
 try:
     from unittest2 import skipIf, skipUnless, skipIf
@@ -94,7 +95,7 @@ class SocketTest(ExtendedTestCase):
                 time.sleep(0.50)
                 data = self.runCommand(["TIME_STEP"], ["OPEN"])
 
-                self.assertTrue(str(data).find("2000"))
+                self.assertTrue( isinstance( data[0] , datetime.datetime ))
 
 
 
