@@ -37,7 +37,6 @@
 
 
 
-
 /**
    Documentation/examples of programming towards the lsf libraries can
    be found in /prog/LSF/7.0/misc/examples
@@ -126,6 +125,7 @@ struct lsf_driver_struct {
   pthread_mutex_t     submit_lock;
 
   lsf_submit_method_enum submit_method;
+  int                    submit_sleep;
   
   /*-----------------------------------------------------------------*/
   /* Fields used by the lsf library functions */
@@ -691,6 +691,8 @@ void * lsf_driver_submit_job(void * __driver ,
   lsf_driver_assert_submit_method( driver );
   {
     lsf_job_type * job      = lsf_job_alloc();
+    usleep( driver->submit_sleep );
+    
     {
       char * lsf_stdout                    = util_alloc_filename(run_path , job_name , "LSF-stdout");
       lsf_submit_method_enum submit_method = driver->submit_method;
@@ -836,6 +838,16 @@ static bool lsf_driver_set_debug_output( lsf_driver_type * driver , const char *
 }
 
 
+static bool lsf_driver_set_submit_sleep( lsf_driver_type * driver , const char * arg) {
+  double submit_sleep;
+  bool OK = util_sscanf_double( arg , &submit_sleep);
+  if (OK)
+    driver->submit_sleep = (int) (1000000 * submit_sleep);
+  
+  return OK;
+}
+
+
 
 /*****************************************************************/
 /* Generic functions for runtime manipulation of options.        
@@ -867,7 +879,9 @@ bool lsf_driver_set_option( void * __driver , const char * option_key , const vo
       lsf_driver_set_bkill_cmd( driver , value );
     else if (strcmp( LSF_DEBUG_OUTPUT , option_key) == 0)
       lsf_driver_set_debug_output( driver , value );
-    else 
+    else if (strcmp( LSF_SUBMIT_SLEEP , option_key) == 0)
+      lsf_driver_set_submit_sleep( driver , value );
+    else
       has_option = false;
   }
   return has_option;
@@ -1002,6 +1016,7 @@ void * lsf_driver_alloc( ) {
   lsf_driver_set_option( lsf_driver , LSF_BJOBS_CMD , DEFAULT_BJOBS_CMD );
   lsf_driver_set_option( lsf_driver , LSF_BKILL_CMD , DEFAULT_BKILL_CMD );
   lsf_driver_set_option( lsf_driver , LSF_DEBUG_OUTPUT , "FALSE");
+  lsf_driver_set_option( lsf_driver , LSF_SUBMIT_SLEEP , DEFAULT_SUBMIT_SLEEP);
   return lsf_driver;
 }
 
