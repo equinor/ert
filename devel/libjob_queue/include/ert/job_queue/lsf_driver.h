@@ -38,10 +38,11 @@ extern "C" {
 #define LSF_BJOBS_CMD    "BJOBS_CMD"
 #define LSF_BKILL_CMD    "BKILL_CMD"
 #define LSF_DEBUG_OUTPUT "DEBUG_OUTPUT"
+#define LSF_SUBMIT_SLEEP "SUBMIT_SLEEP"
 
 #define LOCAL_LSF_SERVER "LOCAL"
 #define NULL_LSF_SERVER  "NULL"
-
+#define DEFAULT_SUBMIT_SLEEP "0"
 
   typedef enum {
     LSF_SUBMIT_INVALID = 0,
