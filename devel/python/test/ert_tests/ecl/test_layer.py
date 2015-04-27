@@ -14,12 +14,11 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-try:
-    from unittest2 import skipIf
-except ImportError:
-    from unittest import skipIf
 
+from unittest import skipIf
 import time
+
+from ert.util import IntVector
 from ert.ecl import EclGrid
 from ert.geo import CPolyline
 from ert.ecl.faults import Layer , FaultCollection
@@ -264,3 +263,27 @@ class LayerTest(ExtendedTestCase):
             self.assertTrue( layer.bottomBarrier(i,i) )
             if i < (d - 1):
                 self.assertTrue( layer.leftBarrier(i+1,i) )
+                
+
+    def test_active(self):
+        d = 10
+        layer = Layer(d,d)
+        with self.assertRaises( ValueError ):
+            layer.activeCell(d+1,d+2)
+            
+        self.assertTrue( layer.activeCell(1,2) )
+
+        grid = EclGrid.createRectangular( (d,d+1,1) , (1,1,1) )
+        with self.assertRaises( ValueError ):
+            layer.updateActive( grid , 0 )
+
+        grid = EclGrid.createRectangular( (d,d,1) , (1,1,1) )
+        with self.assertRaises( ValueError ):
+             layer.updateActive( grid , 10 )
+            
+        actnum = IntVector( initial_size = d*d*1 , default_value = 1)
+        actnum[0] = 0
+        grid = EclGrid.createRectangular( (d,d,1) , (1,1,1) , actnum = actnum)
+        layer.updateActive( grid , 0 )
+        self.assertTrue( layer.activeCell(1,2) )
+        self.assertFalse( layer.activeCell(0,0) )
