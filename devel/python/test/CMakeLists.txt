@@ -25,6 +25,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_grdecl.py
     ert_tests/ecl/test_grid_statoil.py
     ert_tests/ecl/test_kw.py
+    ert_tests/ecl/test_kw_function.py
     ert_tests/ecl/test_ecl_3dkw.py
     ert_tests/ecl/test_ecl_init_file.py
     ert_tests/ecl/test_legacy_ecl.py
@@ -326,6 +327,7 @@ addPythonTest(ert.ecl.ecl_grdecl ert_tests.ecl.test_grdecl.GRDECLTest LABELS Sta
 addPythonTest(ert.ecl.ecl_grid_statoil ert_tests.ecl.test_grid_statoil.GridTest LABELS StatoilData:Slow)
 addPythonTest(ert.ecl.ecl_grid ert_tests.ecl.test_grid.GridTest )
 addPythonTest(ert.ecl.ecl_kw ert_tests.ecl.test_kw.KWTest LABELS StatoilData)
+addPythonTest(ert.ecl.ecl_kw_function ert_tests.ecl.test_kw_function.KWFunctionTest)
 addPythonTest(ert.ecl.ecl_3dkw ert_tests.ecl.test_ecl_3dkw.Ecl3DKWTest )
 addPythonTest(ert.ecl.ecl_init_file ert_tests.ecl.test_ecl_init_file.InitFileTest LABELS StatoilData)
 addPythonTest(ert.ecl.ecl_restart_file ert_tests.ecl.test_ecl_restart_file.RestartFileTest LABELS StatoilData)
