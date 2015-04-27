@@ -97,13 +97,15 @@
 
 
 
-#define LSF_DRIVER_TYPE_ID 10078365
-#define LSF_JOB_TYPE_ID    9963900
-#define BJOBS_REFRESH_TIME 10
-#define DEFAULT_RSH_CMD    "/usr/bin/ssh"
-#define DEFAULT_BSUB_CMD   "bsub"
-#define DEFAULT_BJOBS_CMD  "bjobs"
-#define DEFAULT_BKILL_CMD  "bkill"
+#define LSF_DRIVER_TYPE_ID  10078365
+#define LSF_JOB_TYPE_ID     9963900
+#define BJOBS_REFRESH_TIME  10
+#define MAX_ERROR_COUNT     100
+#define SUBMIT_ERROR_SLEEP  2
+#define DEFAULT_RSH_CMD     "/usr/bin/ssh"
+#define DEFAULT_BSUB_CMD    "bsub"
+#define DEFAULT_BJOBS_CMD   "bjobs"
+#define DEFAULT_BKILL_CMD   "bkill"
 
 
 
@@ -126,6 +128,10 @@ struct lsf_driver_struct {
 
   lsf_submit_method_enum submit_method;
   int                    submit_sleep;
+
+  int                    error_count;
+  int                    max_error_count;
+  int                    submit_error_sleep;
 
   /*-----------------------------------------------------------------*/
   /* Fields used by the lsf library functions */
@@ -167,6 +173,7 @@ lsf_job_type * lsf_job_alloc() {
   job->num_exec_host = 0;
   job->exec_host     = NULL;
 
+  job->lsf_jobnr      = 0;
   job->lsf_jobnr_char = NULL;
   UTIL_TYPE_ID_INIT( job , LSF_JOB_TYPE_ID);
   return job;
@@ -721,6 +728,15 @@ void * lsf_driver_submit_job(void * __driver ,
         The submit failed - the queue system shall handle
         NULL return values.
       */
+      driver->error_count++;
+
+      if (driver->error_count >= driver->max_error_count)
+        util_exit("Maximum number of submit errors exceeded - giving up\n");
+      else {
+        fprintf(stderr,"** ERROR ** Failed when submitting to LSF - will try again.\n");
+        usleep( driver->submit_error_sleep );
+      }
+
       lsf_job_free(job);
       return NULL;
     }
@@ -1005,6 +1021,9 @@ void * lsf_driver_alloc( ) {
   lsf_driver->remote_lsf_server    = NULL;
   lsf_driver->rsh_cmd              = NULL;
   lsf_driver->resource_request     = NULL;
+  lsf_driver->error_count          = 0;
+  lsf_driver->max_error_count      = MAX_ERROR_COUNT;
+  lsf_driver->submit_error_sleep   = SUBMIT_ERROR_SLEEP * 1000000;
   lsf_driver_set_bjobs_refresh_interval( lsf_driver , BJOBS_REFRESH_TIME );
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
 
