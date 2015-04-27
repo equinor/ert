@@ -121,6 +121,18 @@ class GridTest(ExtendedTestCase):
         self.assertEqual(j , 0)
 
 
+    def test_init_ACTNUM(self):
+        nx = 10
+        ny = 23
+        nz = 7
+        grid = EclGrid.createRectangular( (nx,ny,nz) , (1,1,1) )
+        actnum = grid.exportACTNUM()
+        
+        self.assertEqual( len(actnum) , nx*ny*nz )
+        self.assertEqual( actnum[0] , 1 )
+        self.assertEqual( actnum[nx*ny*nz - 1] , 1 )
+        
+
 
 
     def test_posXY(self):
