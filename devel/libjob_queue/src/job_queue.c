@@ -764,6 +764,11 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
         }
         pthread_rwlock_unlock( &node->job_lock );
       } else
+        /*
+          In this case the status of the job itself will be
+          unmodified; i.e. it will still be WAITING, and a new attempt
+          to submit it will be performed in the next round.
+        */
         submit_status = SUBMIT_DRIVER_FAIL;
     }
   }
