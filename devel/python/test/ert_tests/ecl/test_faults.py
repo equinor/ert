@@ -380,12 +380,6 @@ class FaultTest(ExtendedTestCase):
         rays = fault1.getEndRays(0)
         self.assertEqual( rays[0] , [(2,10) , (0,-1)])
         self.assertEqual( rays[1] , [(2,100) , (0,1)])
-
-        with self.assertRaises(ValueError):
-            Fault.joinFaults( fault1 , fault4 , 0 )
-
-        with self.assertRaises(ValueError):
-            Fault.joinFaults( fault2 , fault3 ,0 )
         
         extra = Fault.joinFaults( fault1 , fault3 , 0)
         self.assertEqual( extra , [(2,10) , (2,6) , (5,6)] )
