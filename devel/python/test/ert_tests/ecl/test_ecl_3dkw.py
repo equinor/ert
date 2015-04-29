@@ -67,7 +67,7 @@ class Ecl3DKWTest(ExtendedTestCase):
         kw[6,6,6] = 0
 
         self.assertEqual( 3 * nx*ny*nz - 9 , sum(kw))
-        kw.fixUninitialized( grid.getDims() )
+        kw.fixUninitialized( grid )
         self.assertEqual( 3 * nx*ny*nz , sum(kw))
 
 
