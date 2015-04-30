@@ -578,7 +578,7 @@ void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_type * ar
   int num_iterations                      = analysis_iter_config_get_num_iterations(iter_config);
   const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
   int_vector_type * realizations          = int_vector_alloc(1, 0);
-  int_vector_init_range(realizations, 0, ensemble_size-1, 1);
+  int_vector_init_range(realizations, 0, ensemble_size, 1);
   int_vector_type * iterations            = int_vector_alloc(1, 0);
 
 
@@ -600,7 +600,7 @@ void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_type * ar
 
     if ((offset < stringlist_get_size(args)) && model_config_runpath_requires_iter(model_config)) {
       if (0 == strcmp("*", stringlist_iget(args, (offset+1))))
-        int_vector_init_range(iterations, 0, num_iterations-1, 1);
+        int_vector_init_range(iterations, 0, num_iterations, 1);
       else {
         char * range_str = stringlist_alloc_joined_substring( args, offset+1, stringlist_get_size(args), "");
         string_util_init_value_list(range_str, iterations);
