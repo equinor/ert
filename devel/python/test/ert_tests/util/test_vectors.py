@@ -477,3 +477,25 @@ class UtilTest(TestCase):
         v[10] = 1
         v[20] = 1
         self.assertEqual( v.countEqual(1) , 3 )
+
+
+    def range_test(self,v,a,b,d):
+        v.initRange(a,b,d)
+        r = range(a,b,d)
+        
+        self.assertEqual(len(v) , len(r))
+        for a,b in zip(v,r):
+            self.assertEqual(a,b)
+
+
+
+    def test_range(self):
+        v = IntVector( )
+        v[10] = 99
+
+        with self.assertRaises(ValueError):
+            v.initRange(1,2,0)
+
+        self.range_test(v , 0 , 5 , 1)
+        self.range_test(v , 0,100,3)
+        self.range_test(v,0,100,-3)
