@@ -94,6 +94,7 @@ set(TEST_SOURCES
     ert_tests/analysis/test_options_enum.py
     ert_tests/analysis/test_analysis_module.py
     ert_tests/analysis/test_rml.py
+    ert_tests/analysis/test_linalg.py
 
     ert_tests/job_queue/__init__.py
     ert_tests/job_queue/test_ert_plugin.py
@@ -401,6 +402,7 @@ addPythonTest(ert.test_run ert_tests.run.test_run.RunTest )
 addPythonTest(ert.analysis.enums ert_tests.analysis.test_options_enum.AnalysisOptionsEnumTest)
 addPythonTest(ert.analysis.analysis_module ert_tests.analysis.test_analysis_module.AnalysisModuleTest)
 addPythonTest(ert.analysis.rml ert_tests.analysis.test_rml.RMLTest)
+addPythonTest(ert.analysis.linalg ert_tests.analysis.test_linalg.LinalgTest)
 
 #GEOMETRY
 addPythonTest(ert.geometry.polyline ert_tests.geometry.test_polyline.PolylineTest)
