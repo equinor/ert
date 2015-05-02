@@ -60,6 +60,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_meas_block.py
     ert_tests/enkf/test_meas_data.py
     ert_tests/enkf/test_obs_data.py
+    ert_tests/enkf/test_gen_obs.py
     ert_tests/enkf/test_obs_block.py
     ert_tests/enkf/test_run_arg.py
     ert_tests/enkf/test_runpath_list.py
@@ -253,6 +254,7 @@ addPythonTest(ert.enkf.enkf_obs ert_tests.enkf.test_enkf_obs.EnKFObsTest LABELS 
 addPythonTest(ert.enkf.meas_block ert_tests.enkf.test_meas_block.MeasBlockTest)
 addPythonTest(ert.enkf.meas_data ert_tests.enkf.test_meas_data.MeasDataTest)
 addPythonTest(ert.enkf.obs_data ert_tests.enkf.test_obs_data.ObsDataTest)
+addPythonTest(ert.enkf.gen_obs ert_tests.enkf.test_gen_obs.GenObsTest)
 addPythonTest(ert.enkf.obs_block ert_tests.enkf.test_obs_block.ObsBlockTest)
 addPythonTest(ert.enkf.enkf_load_results_manually ert_tests.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest LABELS StatoilData)
 addPythonTest(ert.enkf.enkf_fs ert_tests.enkf.test_enkf_fs.EnKFFSTest LABELS StatoilData)
