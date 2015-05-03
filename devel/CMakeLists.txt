@@ -8,11 +8,11 @@ endif()
 #-----------------------------------------------------------------
 
 set( ERT_VERSION_MAJOR 1 )
-set( ERT_VERSION_MINOR 8 )
+set( ERT_VERSION_MINOR 9 )
 set( ERT_VERSION_MICRO X )
 
 # If the micro version is not integer, that should be interpreted as a
-# development version heading towards version MAJOR.MINOR.0
+# development version leading towards version MAJOR.MINOR.0
 
 #-----------------------------------------------------------------
 
