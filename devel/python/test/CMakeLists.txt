@@ -232,6 +232,7 @@ addPythonTest(ert.util.stringlist ert_tests.util.test_string_list.StringListTest
 addPythonTest(ert.util.tvector ert_tests.util.test_vectors.UtilTest)
 addPythonTest(ert.util.ui_return ert_tests.util.test_ui_return.UIReturnTest)
 addPythonTest(ert.util.work_area ert_tests.util.test_work_area.WorkAreaTest)
+addPythonTest(ert.util.version ert_tests.util.test_version.VersionTest)
 
 #add_test( NAME python.tests.ert.util.latex
 #          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
