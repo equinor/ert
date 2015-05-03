@@ -43,8 +43,12 @@ class EnKFTest(ExtendedTestCase):
             main.free()
 
 
-    def test_enum(self):
+    def test_site_bootstrap( self ):
+        with TestAreaContext("enkf_test", store_area=True) as work_area:
+            EnKFMain.loadSiteConfig()
 
+
+    def test_enum(self):
         self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(EnkfStateType, "state_enum", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(ErtImplType, "ert_impl_type", "libenkf/include/ert/enkf/enkf_types.h")
