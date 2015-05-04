@@ -148,6 +148,7 @@ Keyword name                                                        	Required by
 :ref:`SUMMARY  <summary>` 						NO 									Add summary variables for internalization. 
 :ref:`SURFACE <surface>`  						NO 									Surface parameter read from RMS IRAP file. 
 :ref:`TORQUE_QUEUE  <torque_queue>` 					NO 									... 
+:ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping.
 :ref:`UMASK <umask>`  							NO 									... 
 :ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the EnKF update steps are stored in this directory. 
 :ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH. 
@@ -314,14 +315,29 @@ These keywords are optional. However, they serve many useful purposes, and it is
 .. _enfk_sched_file:
 .. topic:: ENKF_SCHED_FILE
 
-	When the enkf application runs the EnKF algorithm, it will use ECLIPSE to simulate one report step at a time, and do an update after each step. However, in some cases it will be beneficial to turn off the EnKF update for some report steps or to skip some steps completely. The keyword ENKF_SCHED_FILE can point to a file with a more advanced schedule for when to perform the updates. The format of the file pointed to by ENKF_SCHED_FILE should be plain text, with one entry per line. Each line should have the following form:
+	When the enkf application runs the EnKF algorithm, it will use
+	ECLIPSE to simulate one report step at a time, and do an
+	update after each step. However, in some cases it will be
+	beneficial to turn off the EnKF update for some report steps
+	or to skip some steps completely. The keyword ENKF_SCHED_FILE
+	can point to a file with a more advanced schedule for when to
+	perform the updates. The format of the file pointed to by
+	ENKF_SCHED_FILE should be plain text, with one entry per
+	line. Each line should have the following form:
 
 	::
 
 		REPORT_STEP1   REPORT_STEP2   ON|OFF    STRIDE  
 		...
 
-	Here REPORT_STEP1 and REPORT_STEP2 are the first and last report steps respectively and ON|OFF determines whether the EnKF analysis should be ON or OFF, the STRIDE argument is optional. If the analysis is ON the stride will default to REPORT_STEP2 minus REPORT_STEP1, thus if you want to perform analysis at each report step set stride equal to 1. Observe that whatever value of stride is used, the integration will always start on REPORT_STEP1 and end on REPORT_STEP2. Example:
+	Here REPORT_STEP1 and REPORT_STEP2 are the first and last
+	report steps respectively and ON|OFF determines whether the
+	EnKF analysis should be ON or OFF, the STRIDE argument is
+	optional. If the analysis is ON the stride will default to
+	REPORT_STEP2 minus REPORT_STEP1, thus if you want to perform
+	analysis at each report step set stride equal to 1. Observe
+	that whatever value of stride is used, the integration will
+	always start on REPORT_STEP1 and end on REPORT_STEP2. Example:
 
 	::
 
@@ -340,22 +356,36 @@ These keywords are optional. However, they serve many useful purposes, and it is
 .. _end_date:
 .. topic:: END_DATE
 
-	When running a set of models from beginning to end ERT does not now in advance how long the simulation is supposed to be, it is therefor impossible beforehand to determine which restart file number should be used as target file, and the procedure used for EnKF runs can not be used to verify that an ECLIPSE simulation has run to the end.
+	When running a set of models from beginning to end ERT does
+	not now in advance how long the simulation is supposed to be,
+	it is therefor impossible beforehand to determine which
+	restart file number should be used as target file, and the
+	procedure used for EnKF runs can not be used to verify that an
+	ECLIPSE simulation has run to the end.
 
-	By using the END_DATE keyword you can tell ERT that the simulation should go at least up to the date given by END_DATE, otherwise they will be regarded as failed. The END_DATE does not need to correspond exactly to the end date of the simulation, it must just be set so that all simulations which go to or beyond END_DATE are regarded as successfull.
+	By using the END_DATE keyword you can tell ERT that the
+	simulation should go at least up to the date given by
+	END_DATE, otherwise they will be regarded as failed. The
+	END_DATE does not need to correspond exactly to the end date
+	of the simulation, it must just be set so that all simulations
+	which go to or beyond END_DATE are regarded as successfull.
 
 	*Example:*
 
 	::
 		END_DATE  10/10/2010
 
-	With this END_DATE setting all simulations which have gone to at least 10.th of October 2010 are OK.
+	With this END_DATE setting all simulations which have gone to
+	at least 10.th of October 2010 are OK.
 
 
 .. _enspath:
 .. topic:: ENSPATH
 
-	The ENSPATH should give the name of a folder that will be used for storage by the enkf application. Note that the contents of this folder is not intended for human inspection. By default, ENSPATH is set to "storage".
+	The ENSPATH should give the name of a folder that will be used
+	for storage by the enkf application. Note that the contents of
+	this folder is not intended for human inspection. By default,
+	ENSPATH is set to "storage".
 
 	*Example:*
 
@@ -369,16 +399,33 @@ These keywords are optional. However, they serve many useful purposes, and it is
 .. _select_case:
 .. topic:: SELECT_CASE
 
-	By default ert will remember the selected case from the previous run, or select the case "default" if this is the first time you start a project. By using the SELECT_CASE keyword you can tell ert to start up with a particular case. If the requested case does not exist ert will ignore the SELECT_CASE command, the case will not be created automagically.
+	By default ert will remember the selected case from the
+	previous run, or select the case "default" if this is the
+	first time you start a project. By using the SELECT_CASE
+	keyword you can tell ert to start up with a particular
+	case. If the requested case does not exist ert will ignore the
+	SELECT_CASE command, the case will not be created
+	automagically.
 
 .. _history_source:
 .. topic:: HISTORY_SOURCE
 
-	In the observation configuration file you can enter observations with the keyword HISTORY_OBSERVATION; this means that ERT will the observed 'true' values from the model history. Practically the historical values can be fetched either from the SCHEDULE file or from a reference case. What source to use for the historical values can be controlled with the HISTORY_SOURCE keyword. The different possible values for the HISTORY_SOURCE keyword are:
+	In the observation configuration file you can enter
+	observations with the keyword HISTORY_OBSERVATION; this means
+	that ERT will the observed 'true' values from the model
+	history. Practically the historical values can be fetched
+	either from the SCHEDULE file or from a reference case. What
+	source to use for the historical values can be controlled with
+	the HISTORY_SOURCE keyword. The different possible values for
+	the HISTORY_SOURCE keyword are:
 
 	
-	REFCASE_HISTORY
-		This is the default value for HISTORY_SOURCE, ERT will fetch the historical values from the *xxxH* keywords in the refcase summary, e.g. observations of WGOR:OP_1 is based the WGORH:OP_1 vector from the refcase summary. 
+	REFCASE_HISTORY 
+	        This is the default value for HISTORY_SOURCE,
+		ERT will fetch the historical values from the *xxxH*
+		keywords in the refcase summary, e.g. observations of
+		WGOR:OP_1 is based the WGORH:OP_1 vector from the
+		refcase summary.
 
 	REFCASE_SIMULATED
 		In this case the historical values are based on the simulated values from the refcase, this is mostly relevant when a you want compare with another case which serves as 'the truth'. 
@@ -1214,6 +1261,33 @@ The keywords in this section, controls advanced features of the enkf application
 	Observe that when you refer to the keys later in the config file they must be enclosed in '<' and '>'. Furthermore, a key-value pair must be defined in the config file before it can be used. The final key define above KEY, will be replaced with VALUE1 VALUE2 VALUE3 VALUE4 - i.e. the extra spaces will be discarded.
 
 
+.. _time_map:
+.. topic:: TIME_MAP
+
+        Normally the mapping between report steps and true dates is
+        inferred by ERT indirectly by loading the ECLIPSE summary
+        files. In cases where you do not have any ECLIPSE summary
+        files you can use the TIME_MAP keyword to specify a file with
+        dates which are used to establish this mapping:
+
+	*Example:*
+
+	::
+
+		-- Load a list of dates from external file: "time_map.txt"
+		TIME_MAP time_map.txt
+
+	The format of the TIME_MAP file should just be a list of dates
+	formatted as dd/mm/yyyy. The example file below has four dates:
+
+	::
+
+		01/01/2000
+		01/07/2000
+		01/01/2001
+		01/07/2001
+
+	
 
 .. _schedule_prediction_file:
 .. topic:: SCHEDULE_PREDICTION_FILE
