@@ -25,8 +25,25 @@ class EnKFMain(BaseCClass):
         c_ptr = EnKFMain.cNamespace().bootstrap(model_config, strict, False)
         super(EnKFMain, self).__init__(c_ptr)
 
-        self.__simulation_runner = EnkfSimulationRunner(self)
-        self.__fs_manager = EnkfFsManager(self)
+        # The model_config argument can be None; the only reason to
+        # allow that possibility is to be able to test that the
+        # site-config loads correctly.
+        if model_config is None:
+            self.__simulation_runner = None
+            self.__fs_manager = None
+        else:
+            self.__simulation_runner = EnkfSimulationRunner(self)
+            self.__fs_manager = EnkfFsManager(self)
+            
+
+
+    @staticmethod
+    def loadSiteConfig():
+        """
+        This method will load the site config file; the sole purpose
+        of this method is testing.
+        """
+        EnKFMain( None )
 
 
     @classmethod
@@ -53,7 +70,8 @@ class EnKFMain(BaseCClass):
         EnKFMain.cNamespace().set_eclbase(self, eclbase)
 
     def umount(self):
-        self.__fs_manager.umount()
+        if not self.__fs_manager is None:
+            self.__fs_manager.umount()
 
     def free(self):
         self.umount()
