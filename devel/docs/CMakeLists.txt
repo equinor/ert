@@ -15,6 +15,7 @@ endif()
 
 configure_file(index.rst.in ${PROJECT_BINARY_DIR}/tmp_doc/index.rst )
 
+set( ENV{PYTHONPATH}  ${PROJECT_BINARY_DIR}/python:${PYTHONPATH} )
 add_custom_target(doc_out ALL 
                           COMMAND ${CMAKE_COMMAND}  -Dccsd=${CMAKE_CURRENT_SOURCE_DIR} -Dpbd=${PROJECT_BINARY_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/build_doc.cmake 
                           DEPENDS enkf )                                  
