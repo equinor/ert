@@ -1,4 +1,4 @@
-#set( ENV{PYTHONPATH}  ${pbd}/python)
+set( ENV{PYTHONPATH}  ${pbd}/python)
 execute_process(COMMAND cmake -E copy ${ccsd}/conf.py ${pbd}/tmp_doc/conf.py )
 
 
