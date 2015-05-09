@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'local_ministep.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'local_ministep.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 
@@ -24,7 +24,7 @@
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_macros.h>
-#include <ert/enkf/local_config.h>  
+#include <ert/enkf/local_config.h>
 #include <ert/enkf/local_ministep.h>
 #include <ert/enkf/local_dataset.h>
 #include <ert/enkf/local_obsset.h>
@@ -72,7 +72,7 @@ local_ministep_type * local_ministep_alloc(const char * name , local_obsset_type
   ministep->observations = observations;
   ministep->datasets     = hash_alloc();
   UTIL_TYPE_ID_INIT( ministep , LOCAL_MINISTEP_TYPE_ID);
-  
+
   return ministep;
 }
 
@@ -127,7 +127,7 @@ void local_ministep_free__(void * arg) {
 
    2. The newly added elements will be assigned an active_list
    instance with mode ALL_ACTIVE.
-*/   
+*/
 
 
 
