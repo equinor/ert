@@ -74,6 +74,9 @@ class GenObservation(BaseCClass):
         """ @rtype: float """
         return GenObservation.cNamespace().get_std_scaling(self, obs_index)
 
+    def updateStdScaling(self , factor , active_list):
+        GenObservation.cNamespace().update_std_scaling(self, factor , active_list)
+
 
     def getSize(self):
         """ @rtype: float """
@@ -107,4 +110,4 @@ GenObservation.cNamespace().get_size = cwrapper.prototype("int gen_obs_get_size(
 GenObservation.cNamespace().get_data_index = cwrapper.prototype("int gen_obs_get_obs_index(gen_obs, int)")
 GenObservation.cNamespace().load_data_index = cwrapper.prototype("void gen_obs_load_data_index(gen_obs , char*)")
 GenObservation.cNamespace().add_data_index = cwrapper.prototype("void gen_obs_attach_data_index(gen_obs , int_vector)")
-
+GenObservation.cNamespace().update_std_scaling = cwrapper.prototype("void gen_obs_update_std_scale(gen_obs , double , active_list)")

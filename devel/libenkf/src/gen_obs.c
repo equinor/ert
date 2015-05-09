@@ -49,7 +49,17 @@
    be generalized.
 */
 
+/*
+  The std_scaling field of the xxx_obs structure can be used to scale
+  the standard deviation used for the observations, either to support
+  workflows with multiple data assimilation or to reduce the effect of
+  observation correlations.
 
+  When querying for the observation standard deviation using
+  gen_obs_iget_std() the user input value of standard deviation will
+  be returned, whereas when the function gen_obs_measure() is used the
+  std_scaling will be incorporated in the result.
+*/
 
 #define GEN_OBS_TYPE_ID 77619
 
@@ -263,7 +273,7 @@ double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_dat
     double sum_chi2 = 0;
     for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
       double d = gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs]);
-      double x = (d - gen_obs->obs_data[iobs]) / IGET_SCALED_STD( gen_obs , iobs);
+      double x = (d - gen_obs->obs_data[iobs]) / gen_obs->obs_std[iobs];
       sum_chi2 += x*x;
     }
     return sum_chi2;
@@ -410,10 +420,6 @@ void gen_obs_user_get(const gen_obs_type * gen_obs , const char * index_key , do
   }
 }
 
-/*int gen_obs_translate_data_index( const gen_obs_type * gen_obs , int data_index) {
-  
-}
-*/
 
 
 void gen_obs_user_get_with_data_index(const gen_obs_type * gen_obs , const char * index_key , double * value , double * std , bool * valid) {
@@ -441,16 +447,21 @@ void gen_obs_user_get_with_data_index(const gen_obs_type * gen_obs , const char 
   }
 }
 
-void gen_obs_scale_std(gen_obs_type * gen_obs, double std_multiplier) {
-  for (int i = 0; i < gen_obs->obs_size; i++) 
-    gen_obs->std_scaling[i] *= std_multiplier;
+void gen_obs_update_std_scale(gen_obs_type * gen_obs, double std_multiplier, const active_list_type * active_list) {
+  if (active_list_get_mode( active_list ) == ALL_ACTIVE) {
+    for (int i = 0; i < gen_obs->obs_size; i++)
+      gen_obs->std_scaling[i] = std_multiplier;
+  } else {
+    const int * active_index = active_list_get_active( active_list );
+    int size = active_list_get_active_size( active_list , gen_obs->obs_size );
+    for (int i=0; i < size; i++) {
+      int obs_index = active_index[i];
+      gen_obs->std_scaling[ obs_index ] = std_multiplier;
+    }
+  }
 }
 
 
-void gen_obs_scale_std__(void * gen_obs, double std_multiplier) {
-  gen_obs_type * observation = gen_obs_safe_cast(gen_obs);
-  gen_obs_scale_std(observation, std_multiplier);
-}
 
 int gen_obs_get_size(const gen_obs_type * gen_obs){
     return gen_obs->obs_size;
@@ -470,14 +481,15 @@ double gen_obs_iget_value(const gen_obs_type * gen_obs, int index){
 }
 
 int gen_obs_get_obs_index(const gen_obs_type * gen_obs, int index){
-    if(index < 0 || index >= gen_obs->obs_size){
-        util_abort("[Gen_Obs] Index out of bounds %d [0, %d]", index, gen_obs->obs_size - 1);
-    }
-    if (gen_obs->observe_all_data){
-        return index;
-    } else {
-        return gen_obs->data_index_list[index];
-    }
+  if(index < 0 || index >= gen_obs->obs_size){
+    util_abort("[Gen_Obs] Index out of bounds %d [0, %d]", index, gen_obs->obs_size - 1);
+  }
+
+  if (gen_obs->observe_all_data){
+    return index;
+  } else {
+    return gen_obs->data_index_list[index];
+  }
 }
 
 
@@ -489,3 +501,4 @@ VOID_GET_OBS(gen_obs)
 VOID_MEASURE(gen_obs , gen_data)
 VOID_USER_GET_OBS(gen_obs)
 VOID_CHI2(gen_obs , gen_data)
+VOID_UPDATE_STD_SCALE(gen_obs)

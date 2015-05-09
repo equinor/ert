@@ -2,7 +2,7 @@ import os.path
 
 from ert.test import ExtendedTestCase, TestAreaContext
 
-from ert.enkf import GenObservation
+from ert.enkf import GenObservation,GenDataConfig,ActiveList
 
 
 
@@ -13,7 +13,7 @@ class GenObsTest(ExtendedTestCase):
 
 
     def test_create(self):
-        data_config = None
+        data_config = GenDataConfig("KEY")
         with self.assertRaises(ValueError):
             gen_obs = GenObservation("KEY" , data_config )
 
@@ -39,3 +39,14 @@ class GenObsTest(ExtendedTestCase):
             self.assertEqual( gen_obs.getDataIndex(1) , 20 )
             self.assertEqual( gen_obs.getStdScaling(0) , 1 )
             self.assertEqual( gen_obs.getStdScaling(1) , 1 )
+
+            active_list = ActiveList( )
+            gen_obs.updateStdScaling( 0.25 , active_list )
+            self.assertEqual( gen_obs.getStdScaling(0) , 0.25 )
+            self.assertEqual( gen_obs.getStdScaling(1) , 0.25 )
+            
+            active_list.addActiveIndex( 1 )
+            gen_obs.updateStdScaling( 2.00 , active_list )
+            self.assertEqual( gen_obs.getStdScaling(0) , 0.25 )
+            self.assertEqual( gen_obs.getStdScaling(1) , 2.00 )
+            

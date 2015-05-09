@@ -50,7 +50,8 @@ extern "C" {
 
   obs_vector_type * enkf_obs_iget_vector(const enkf_obs_type * obs, int index);
   obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
-  void enkf_obs_add_obs_vector(enkf_obs_type * enkf_obs, const char * key, const obs_vector_type * vector);
+  void enkf_obs_add_obs_vector(enkf_obs_type * enkf_obs,
+                               const obs_vector_type * vector);
 
   void              enkf_obs_load(enkf_obs_type * enkf_obs,
                                   const history_type * history ,
@@ -112,9 +113,11 @@ extern "C" {
   time_t            enkf_obs_iget_obs_time(const enkf_obs_type * enkf_obs , int report_step);
   void              enkf_obs_fprintf_config( const enkf_obs_type * enkf_obs , FILE * stream);
   void              enkf_obs_scale_std(enkf_obs_type * enkf_obs, double scale_factor);
-  local_obsdata_type * enkf_obs_alloc_all_active_local_obs( const enkf_obs_type * enkf_obs , const char * key , bool add_active_steps);
+  void enkf_obs_local_scale_std( const enkf_obs_type * enkf_obs , const local_obsdata_type * local_obsdata, double scale_factor);
   void              enkf_obs_add_local_nodes_with_data(const enkf_obs_type * enkf_obs , local_obsdata_type * local_obs , enkf_fs_type *fs , const bool_vector_type * ens_mask);
-
+  double            enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs , enkf_fs_type * fs , const int_vector_type * ens_active_list , const local_obsdata_type * local_obsdata);
+  local_obsdata_type * enkf_obs_alloc_all_active_local_obs( const enkf_obs_type * enkf_obs , const char * key);
+  
 #ifdef __cplusplus
 }
 #endif

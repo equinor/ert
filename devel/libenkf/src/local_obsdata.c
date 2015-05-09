@@ -95,6 +95,11 @@ const local_obsdata_node_type * local_obsdata_iget( const local_obsdata_type * d
 }
 
 
+const local_obsdata_node_type * local_obsdata_get( const local_obsdata_type * data , const char * key) {
+  return hash_get( data->nodes_map , key );
+}
+
+
 bool local_obsdata_has_node( const local_obsdata_type * data , const char * key) {
   return hash_has_key( data->nodes_map , key );
 }
