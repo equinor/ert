@@ -75,6 +75,7 @@ set(TEST_SOURCES
     ert_tests/enkf/data/test_gen_data_config.py
     ert_tests/enkf/data/test_gen_kw.py
     ert_tests/enkf/data/test_gen_kw_config.py
+    ert_tests/enkf/data/test_field_config.py
 
     ert_tests/enkf/export/test_numpy_and_pandas.py
     ert_tests/enkf/export/test_design_matrix.py
@@ -290,6 +291,7 @@ addPythonTest(ert.enkf.data.gen_data ert_tests.enkf.data.test_gen_data.GenDataTe
 addPythonTest(ert.enkf.data.gen_data_config ert_tests.enkf.data.test_gen_data_config.GenDataConfigTest LABELS StatoilData)
 addPythonTest(ert.enkf.data.gen_kw ert_tests.enkf.data.test_gen_kw.GenKwTest)
 addPythonTest(ert.enkf.data.gen_kw_config ert_tests.enkf.data.test_gen_kw_config.GenKwConfigTest LABELS StatoilData)
+addPythonTest(ert.enkf.data.field_config ert_tests.enkf.data.test_field_config.FieldConfigTest)
 
 
 #enkf.export
