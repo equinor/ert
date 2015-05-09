@@ -60,7 +60,8 @@ class EnKFTest(ExtendedTestCase):
         self.assertEnumIsFullyDefined(EnkfObservationImplementationType, "obs_impl_type", "libenkf/include/ert/enkf/obs_vector.h")
         self.assertEnumIsFullyDefined(LoadFailTypeEnum, "load_fail_type", "libenkf/include/ert/enkf/summary_config.h")
         self.assertEnumIsFullyDefined(EnkfFieldFileFormatEnum, "field_file_format_type", "libenkf/include/ert/enkf/field_config.h" )
-
+        self.assertEnumIsFullyDefined(ActiveModeEnum , "active_mode_type" , "libenkf/include/ert/enkf/enkf_types.h")
+        
 
     def test_observations(self):
         with TestAreaContext("enkf_test") as work_area:

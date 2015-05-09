@@ -65,6 +65,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_run_arg.py
     ert_tests/enkf/test_runpath_list.py
     ert_tests/enkf/test_update.py
+    ert_tests/enkf/test_active_list.py
 
     ert_tests/enkf/plot/test_plot_data.py
 
@@ -275,6 +276,7 @@ addPythonTest(ert.enkf.run_arg ert_tests.enkf.test_run_arg.RunArg)
 addPythonTest(ert.enkf.runpath_list ert_tests.enkf.test_runpath_list.RunpathListTest)
 addPythonTest(ert.enkf.update ert_tests.enkf.test_update.UpdateTest LABELS StatoilData)
 addPythonTest(ert.enkf.labscale ert_tests.enkf.test_labscale.LabScaleTest LABELS StatoilData)
+addPythonTest(ert.enkf.active_list ert_tests.enkf.test_active_list.ActiveListTest)
 
 
 #enkf.plot
