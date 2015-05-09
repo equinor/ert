@@ -71,7 +71,6 @@ set(TEST_SOURCES
 
     ert_tests/enkf/data/test_custom_kw.py
     ert_tests/enkf/data/test_custom_kw_config.py
-    ert_tests/enkf/data/test_gen_data.py
     ert_tests/enkf/data/test_gen_data_config.py
     ert_tests/enkf/data/test_gen_kw.py
     ert_tests/enkf/data/test_gen_kw_config.py
@@ -287,7 +286,6 @@ addPythonTest(ert.enkf.plot.plot_block_data ert_tests.enkf.plot.test_plot_data.P
 #enkf.data
 addPythonTest(ert.enkf.data.custom_kw ert_tests.enkf.data.test_custom_kw.CustomKWTest)
 addPythonTest(ert.enkf.data.custom_kw_config ert_tests.enkf.data.test_custom_kw_config.CustomKWConfigTest)
-addPythonTest(ert.enkf.data.gen_data ert_tests.enkf.data.test_gen_data.GenDataTest LABELS StatoilData)
 addPythonTest(ert.enkf.data.gen_data_config ert_tests.enkf.data.test_gen_data_config.GenDataConfigTest LABELS StatoilData)
 addPythonTest(ert.enkf.data.gen_kw ert_tests.enkf.data.test_gen_kw.GenKwTest)
 addPythonTest(ert.enkf.data.gen_kw_config ert_tests.enkf.data.test_gen_kw_config.GenKwConfigTest LABELS StatoilData)
