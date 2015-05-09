@@ -76,7 +76,6 @@ set( source_files
      ecl_refcase_list.c 
      local_obsdata_node.c 
      local_obsdata.c 
-     obs_tstep_list.c 
      pca_plot_data.c 
      pca_plot_vector.c 
      state_map.c 
@@ -179,7 +178,6 @@ set( header_files
      ecl_refcase_list.h 
      local_obsdata_node.h 
      local_obsdata.h 
-     obs_tstep_list.h 
      pca_plot_data.h 
      pca_plot_vector.h 
      state_map.h

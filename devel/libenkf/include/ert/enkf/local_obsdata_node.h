@@ -23,10 +23,9 @@ extern "C" {
 #endif
 
 #include <ert/util/type_macros.h>
+#include <ert/util/int_vector.h>
 
-#include <ert/enkf/obs_tstep_list.h>
 #include <ert/enkf/active_list.h>
-#include <ert/enkf/obs_vector.h>
 
 
   typedef struct local_obsdata_node_struct local_obsdata_node_type;
@@ -36,13 +35,12 @@ extern "C" {
   void                        local_obsdata_node_free( local_obsdata_node_type * node );
   void                        local_obsdata_node_free__( void * arg );
   active_list_type          * local_obsdata_node_get_active_list( const local_obsdata_node_type * node );
-  const obs_tstep_list_type * local_obsdata_node_get_tstep_list( const local_obsdata_node_type * node);
   void                        local_obsdata_node_copy_active_list( local_obsdata_node_type * node , const active_list_type * active_list);
   void                        local_obsdata_node_add_tstep( local_obsdata_node_type * node, int tstep);
   void                        local_obsdata_node_add_range( local_obsdata_node_type * node, int step1, int step2);
-  void                        local_obsdata_node_add_active_tstep( local_obsdata_node_type * node, const obs_vector_type * obs_vector);
-
-UTIL_IS_INSTANCE_HEADER( local_obsdata_node );
+  bool                        local_obsdata_node_has_tstep( const local_obsdata_node_type * node , int tstep);
+  const int_vector_type     * local_obsdata_node_get_tstep_list( const local_obsdata_node_type * node);
+  UTIL_IS_INSTANCE_HEADER( local_obsdata_node );
 
 #ifdef __cplusplus
 }

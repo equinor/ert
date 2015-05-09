@@ -21,9 +21,7 @@
 #include <ert/util/util.h>
 #include <ert/util/int_vector.h>
 
-#include <ert/enkf/obs_tstep_list.h>
 #include <ert/enkf/local_obsdata_node.h>
-#include <ert/enkf/obs_vector.h>
 
 #define LOCAL_OBSDATA_NODE_TYPE_ID 84441309
 
@@ -31,7 +29,7 @@ struct local_obsdata_node_struct {
   UTIL_TYPE_ID_DECLARATION;
   char                * obs_key;
   active_list_type    * active_list;
-  obs_tstep_list_type * tstep_list;
+  int_vector_type     * tstep_list;
 };
 
 
@@ -45,7 +43,7 @@ local_obsdata_node_type * local_obsdata_node_alloc( const char * obs_key ) {
   UTIL_TYPE_ID_INIT( node , LOCAL_OBSDATA_NODE_TYPE_ID );
   node->obs_key = util_alloc_string_copy( obs_key );
   node->active_list = active_list_alloc( );
-  node->tstep_list = obs_tstep_list_alloc( );
+  node->tstep_list = int_vector_alloc(0,0);
   return node;
 }
 
@@ -63,7 +61,7 @@ const char * local_obsdata_node_get_key( const local_obsdata_node_type * node ) 
 
 void local_obsdata_node_free( local_obsdata_node_type * node ) {
   active_list_free( node->active_list );
-  obs_tstep_list_free( node->tstep_list );
+  int_vector_free( node->tstep_list );
   free( node->obs_key );
   free( node );
 }
@@ -81,25 +79,35 @@ active_list_type * local_obsdata_node_get_active_list( const local_obsdata_node_
 }
 
 
-const obs_tstep_list_type * local_obsdata_node_get_tstep_list( const local_obsdata_node_type * node) {
+const int_vector_type * local_obsdata_node_get_tstep_list( const local_obsdata_node_type * node) {
   return node->tstep_list;
+}
+
+bool local_obsdata_node_has_tstep( const local_obsdata_node_type * node , int tstep) {
+  if (int_vector_index_sorted( node->tstep_list , tstep) == -1) 
+    return false;
+  else
+    return true;
 }
 
 
 void local_obsdata_node_add_tstep( local_obsdata_node_type * node, int tstep) {
-  obs_tstep_list_add_tstep( node->tstep_list , tstep );
+  if (!local_obsdata_node_has_tstep( node , tstep)) {
+    if (int_vector_size( node->tstep_list )) {
+      int last = int_vector_get_last( node->tstep_list );
+      int_vector_append( node->tstep_list , tstep ); 
+      if (tstep < last)
+        int_vector_sort( node->tstep_list); 
+    } else
+      int_vector_append( node->tstep_list , tstep ); 
+  }  
 }
 
 
-void local_obsdata_node_add_active_tstep( local_obsdata_node_type * node, const obs_vector_type * obs_vector) {
-  const int_vector_type * active_tstep = obs_vector_get_step_list( obs_vector );
-  for (int i=0; i < int_vector_size( active_tstep ); i++) {
-    int tstep = int_vector_iget( active_tstep , i );
-    local_obsdata_node_add_tstep( node , tstep );
-  }
-}
 
 
 void local_obsdata_node_add_range( local_obsdata_node_type * node, int step1 , int step2) {
-  obs_tstep_list_add_range( node->tstep_list , step1 , step2);
+  int tstep;
+  for (tstep = step1; tstep <= step2; tstep++)
+    local_obsdata_node_add_tstep( node , tstep );
 }
