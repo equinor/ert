@@ -177,6 +177,7 @@ extern "C" {
 #define  STOP_LONG_RUNNING_KEY             "STOP_LONG_RUNNING"
 #define  MAX_RUNTIME_KEY                   "MAX_RUNTIME"
 #define  TIME_MAP_KEY                      "TIME_MAP"
+#define  EXT_JOB_SEARCH_PATH_KEY           "EXT_JOB_SEARCH_PATH"
 
 
 #define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"
