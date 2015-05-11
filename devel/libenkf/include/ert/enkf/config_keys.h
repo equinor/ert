@@ -178,7 +178,7 @@ extern "C" {
 #define  MAX_RUNTIME_KEY                   "MAX_RUNTIME"
 #define  TIME_MAP_KEY                      "TIME_MAP"
 #define  EXT_JOB_SEARCH_PATH_KEY           "EXT_JOB_SEARCH_PATH"
-
+#define  STD_SCALE_CORRELATED_OBS_KEY      "STD_SCALE_CORRELATED_OBS"
 
 #define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"
 
