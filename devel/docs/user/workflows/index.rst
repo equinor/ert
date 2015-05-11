@@ -322,3 +322,27 @@ Calculating the misfit for all observations and all timesteps can potentially be
 	INIT_MISFIT_TABLE
 
 
+**STD_SCALE_CORRELATED_OBS**
+
+The workflow job :code:`STD_SCALE_CORRELATED_OBS` is used to scale the
+observation standard deviation in an attempt to reduce the effect of
+correlations in the observed data. The job expects the observation
+keys you want to consider as arguments:
+
+::
+
+        STD_SCALE_CORRELATED_OBS  WWCT:OP_1  WWCT:OP_2
+
+In this example the observation uncertainty corresponding to
+:code:`WWCT:OP_1` and :code:`WWCT:OP_2` will be scaled. Observe that
+the :code:`STD_SCALE_CORRELATED_OBS` keyword will "flatten" in both
+time and spatial direction. Wildcards are allow, i.e.
+
+::
+        STD_SCALE_CORRELATED_OBS  W*:OP_1
+
+Will scale based on all the observations of well 'OP_1'. For more
+advanced selections of observations, where you only want to scale
+based on parts of the observation - spatially or temporaly you must
+write your own plugin.
+        

@@ -16,13 +16,17 @@
    for more details.
 */
 
+#include <unistd.h>
+
 #include <ert/util/stringlist.h>
 #include <ert/util/string_util.h>
 #include <ert/util/int_vector.h>
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/field_config.h>
-#include <unistd.h>
+#include <ert/enkf/local_obsdata.h>
+#include <ert/enkf/local_obsdata_node.h>
+
 
 
 static bool_vector_type * alloc_iactive_vector_from_range(const stringlist_type * range, int startindex, int endindex, int ens_size) {
@@ -616,3 +620,41 @@ void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_type * ar
 
   return NULL;
 }
+
+
+
+void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type * args)  {
+
+  if (stringlist_get_size(args) > 0) {
+    enkf_main_type * enkf_main              = enkf_main_safe_cast( self );
+    int ensemble_size                       = enkf_main_get_ensemble_size(enkf_main);
+    enkf_fs_type * fs                       = enkf_main_get_fs( enkf_main );
+    enkf_obs_type * obs                     = enkf_main_get_obs( enkf_main );
+    int_vector_type * realizations          = int_vector_alloc(1, 0);
+    local_obsdata_type * obsdata = local_obsdata_alloc( "OBS-JOB" );
+
+    int_vector_init_range(realizations, 0, ensemble_size, 1);
+
+    for (int iarg = 0; iarg < stringlist_get_size(args); iarg++) {
+      const char * arg_key = stringlist_iget( args , iarg );
+      stringlist_type * key_list = enkf_obs_alloc_matching_keylist(obs, arg_key);
+      for (int iobs=0; iobs < stringlist_get_size( key_list ); iobs++) {
+        const char * obs_key = stringlist_iget( key_list , iobs);
+        const obs_vector_type * obs_vector = enkf_obs_get_vector(obs, obs_key);
+        local_obsdata_add_node( obsdata , obs_vector_alloc_local_node(obs_vector) );
+      }
+      stringlist_free( key_list );
+    }
+
+    if (local_obsdata_get_size(obsdata) > 0)
+      enkf_obs_scale_correlated_std(obs, fs, realizations, obsdata );
+
+    local_obsdata_free( obsdata );
+  }
+
+  return NULL;
+}
+
+
+
+
