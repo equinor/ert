@@ -346,7 +346,7 @@ void ext_job_set_max_time( ext_job_type * ext_job , int max_time ) {
 
 */
 
-void ext_job_set_executable(ext_job_type * ext_job, const char * executable, const char * executable_raw) {
+void ext_job_set_executable(ext_job_type * ext_job, const char * executable, const char * executable_raw,bool search_path) {
 
   if (util_file_exists(executable)) {
     /*
@@ -392,7 +392,7 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable, con
     fprintf(stderr,"| job description file and the executable can be relocated.\n");
     fprintf(stderr,"\\----------------------------------------------------------------\n\n");
 
-    ext_job_set_executable(ext_job, full_path, NULL);
+    ext_job_set_executable(ext_job, full_path, NULL, search_path);
 
     free(new_relative_path_to_exe);
     free(path_to_job_descr_file);
@@ -409,22 +409,26 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable, con
                      "   job:%s will not be available.\n" , executable , ext_job->name );
     ext_job->__valid = false;
   } else {
-    /* Go through the PATH variable to try to locate the executable. */
-    char * path_executable = util_alloc_PATH_executable( executable_raw );
+      if (search_path){
+        /* Go through the PATH variable to try to locate the executable. */
+        char * path_executable = util_alloc_PATH_executable( executable_raw );
 
-    if (path_executable != NULL) {
-      ext_job_set_executable( ext_job , path_executable, NULL );
-      free( path_executable );
-    } else {
-      /* We take the chance that user will supply a valid subst key for this later;
-         if the final executable is not an actually executable file when exporting the
-         job from ext_job_python_fprintf() a big warning will be written on stderr.
-      */
-      fprintf(stderr , "** Warning: Unable to locate the executable %s for job %s.\n"
-                       "   Path to executable must be relative to the job description file, or an absolute path.\n"
-                       "   Please update job EXECUTABLE for job %s. \n" , executable , ext_job->name, ext_job->name);
-      ext_job->__valid = false;
-    }
+        if (path_executable != NULL) {
+          ext_job_set_executable( ext_job , path_executable, NULL, search_path );
+          free( path_executable );
+        } else {
+          /* We take the chance that user will supply a valid subst key for this later;
+             if the final executable is not an actually executable file when exporting the
+             job from ext_job_python_fprintf() a big warning will be written on stderr.
+          */
+          fprintf(stderr , "** Warning: Unable to locate the executable %s for job %s.\n"
+                           "   Path to executable must be relative to the job description file, or an absolute path.\n"
+                           "   Please update job EXECUTABLE for job %s. \n" , executable , ext_job->name, ext_job->name);
+          ext_job->__valid = false;
+        }
+      } else {
+          ext_job->executable = util_realloc_string_copy(ext_job->executable , executable);
+      }
   }
 
   /*
@@ -792,7 +796,7 @@ void ext_job_fprintf_config(const ext_job_type * ext_job , const char * fmt , FI
 
 
 
-ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_root_path , bool private_job , const char * config_file) {
+ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_root_path , bool private_job , const char * config_file, bool search_path) {
   {
     mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;  /* u+rw  g+rw  o+r */
     __update_mode( config_file , target_mode );
@@ -836,7 +840,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
         {
           const char * executable     = config_content_get_value_as_abspath(content  , "EXECUTABLE");
           const char * executable_raw = config_content_iget(content  , "EXECUTABLE" , 0,0);
-          ext_job_set_executable(ext_job , executable, executable_raw);
+          ext_job_set_executable(ext_job , executable, executable_raw, search_path);
         }
 
 
