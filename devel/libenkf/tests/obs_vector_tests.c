@@ -230,7 +230,7 @@ bool scale_std_gen_withdata_no_errors() {
 int main(int argc, char ** argv) {
   test_assert_bool_equal(alloc_strippedparameters_noerrors(), true);
   test_assert_bool_equal(scale_std_summary_nodata_no_errors(), true);
-  test_assert_bool_equal(scale_std_summarysingleobservation_no_errors, true);
+  test_assert_bool_equal(scale_std_summarysingleobservation_no_errors(), true);
   test_assert_bool_equal(scale_std_summarymanyobservations_no_errors(), true);
 
   test_assert_bool_equal(scale_std_block_nodata_no_errors(), true);

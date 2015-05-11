@@ -35,7 +35,7 @@
 #include <ert/enkf/local_updatestep.h>
 #include <ert/enkf/local_config.h>
 #include <ert/enkf/local_dataset.h>
-#include <ert/enkf/local_obsset.h>
+#include <ert/enkf/local_obsdata.h>
 #include <ert/enkf/local_context.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/enkf_obs.h>
@@ -527,7 +527,7 @@ struct local_config_struct {
   hash_type             * updatestep_storage;    /* These three hash tables are the 'holding area' for the local_updatestep, */
   hash_type             * ministep_storage;      /* local_ministep instances. */
   hash_type             * dataset_storage;
-  hash_type             * obsset_storage;
+  hash_type             * obsdata_storage;
   stringlist_type       * config_files;
 };
 
@@ -537,7 +537,7 @@ static void local_config_clear( local_config_type * local_config ) {
   hash_clear( local_config->updatestep_storage );
   hash_clear( local_config->ministep_storage );
   hash_clear( local_config->dataset_storage );
-  hash_clear( local_config->obsset_storage );
+  hash_clear( local_config->obsdata_storage );
   vector_clear( local_config->updatestep );
 }
 
@@ -551,7 +551,7 @@ local_config_type * local_config_alloc( ) {
   local_config->updatestep_storage  = hash_alloc();
   local_config->ministep_storage    = hash_alloc();
   local_config->dataset_storage     = hash_alloc();
-  local_config->obsset_storage      = hash_alloc();
+  local_config->obsdata_storage      = hash_alloc();
   local_config->updatestep          = vector_alloc_new();
   local_config->config_files = stringlist_alloc_new();
 
@@ -595,15 +595,15 @@ local_updatestep_type * local_config_alloc_updatestep( local_config_type * local
 
 
 local_ministep_type * local_config_alloc_ministep( local_config_type * local_config , const char * key , const char * obsset_name) {
-  local_obsset_type * obsset = hash_get( local_config->obsset_storage , obsset_name );
-  local_ministep_type * ministep = local_ministep_alloc( key , obsset);
+  local_obsdata_type * obsdata = hash_get( local_config->obsdata_storage , obsset_name );
+  local_ministep_type * ministep = local_ministep_alloc( key , obsdata );
   hash_insert_hash_owned_ref( local_config->ministep_storage , key , ministep , local_ministep_free__);
   return ministep;
 }
 
-local_obsset_type * local_config_alloc_obsset( local_config_type * local_config , const char * obsset_name ) {
-  local_obsset_type * obsset = local_obsset_alloc( obsset_name );
-  hash_insert_hash_owned_ref( local_config->obsset_storage , obsset_name , obsset , local_obsset_free__);
+local_obsdata_type * local_config_alloc_obsset( local_config_type * local_config , const char * obsset_name ) {
+  local_obsdata_type * obsset = local_obsdata_alloc( obsset_name );
+  hash_insert_hash_owned_ref( local_config->obsdata_storage , obsset_name , obsset , local_obsdata_free__);
   return obsset;
 }
 
@@ -625,12 +625,12 @@ local_dataset_type * local_config_alloc_dataset_copy( local_config_type * local_
 }
 
 
-local_obsset_type * local_config_alloc_obsset_copy( local_config_type * local_config , const char * src_key , const char * target_key) {
-  local_obsset_type * src_obsset = hash_get( local_config->obsset_storage , src_key );
-  local_obsset_type * copy_obsset = local_obsset_alloc_copy( src_obsset , target_key );
+local_obsdata_type * local_config_alloc_obsdata_copy( local_config_type * local_config , const char * src_key , const char * target_key) {
+  local_obsdata_type * src_obsdata  = hash_get( local_config->obsdata_storage , src_key );
+  local_obsdata_type * copy_obsdata = local_obsdata_alloc_copy( src_obsdata , target_key );
 
-  hash_insert_hash_owned_ref( local_config->obsset_storage , target_key , copy_obsset , local_obsset_free__);
-  return copy_obsset;
+  hash_insert_hash_owned_ref( local_config->obsdata_storage , target_key , copy_obsdata , local_obsdata_free__);
+  return copy_obsdata;
 }
 
 
@@ -640,10 +640,12 @@ local_ministep_type * local_config_get_ministep( const local_config_type * local
 }
 
 
-local_obsset_type * local_config_get_obsset( const local_config_type * local_config , const char * key) {
-  local_obsset_type * obsset = hash_get( local_config->obsset_storage , key );
-  return obsset;
+local_obsdata_type * local_config_get_obsdata( const local_config_type * local_config , const char * key) {
+  local_obsdata_type * obsdata = hash_get( local_config->obsdata_storage , key );
+  return obsdata;
 }
+
+
 
 
 local_dataset_type * local_config_get_dataset( const local_config_type * local_config , const char * key) {
@@ -1034,7 +1036,7 @@ static void local_config_COPY_DATASET( local_config_type * config , local_contex
 static void local_config_COPY_OBSSET( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
   char * src_name     = read_alloc_string( stream , binary );
   char * target_name = read_alloc_string( stream , binary );
-  local_config_alloc_obsset_copy( config , src_name , target_name );
+  local_config_alloc_obsdata_copy( config , src_name , target_name );
   free( target_name );
   free( src_name );
 }
@@ -1067,8 +1069,25 @@ static void local_config_ADD_OBS( local_config_type * config , local_context_typ
   char * obs_name = read_alloc_string( stream , binary );
   char * obs_key  = read_alloc_string( stream , binary );
   {
-    local_obsset_type * obsset = local_config_get_obsset( config , obs_name );
-    local_obsset_add_obs( obsset , obs_key );
+    local_obsdata_type * obsdata = local_config_get_obsdata( config , obs_name );
+    local_obsdata_node_type * obsdata_node = local_obsdata_node_alloc( obs_key );
+
+    /*
+      The local_obsdata_node should hold it's own active time-step
+      information. The problem is that currenty the active timesteps
+      for observations is configured/maintained/used in two different
+      locations:
+
+       1: The local_obsdata_node type contains a list of active time
+          steps for this particular node.
+
+       2: The time steps to use are arguments to the various update
+          algorithms; this is very much EnKF heritage.
+
+          The second alternative should be eradicted.
+    */
+
+    local_obsdata_add_node( obsdata , obsdata_node);
   }
   free( obs_name );
   free( obs_key );
@@ -1079,8 +1098,9 @@ static void local_config_ACTIVE_LIST_ADD_OBS_INDEX( local_config_type * config ,
   char * obs_key  = read_alloc_string( stream , binary );
   int index = read_int( stream , binary );
   {
-    local_obsset_type * obsset  = local_config_get_obsset( config , obs_name );
-    active_list_type  * active_list = local_obsset_get_obs_active_list( obsset , obs_key );
+    local_obsdata_type * obsdata  = local_config_get_obsdata( config , obs_name );
+    local_obsdata_node_type * obsdata_node = local_obsdata_get( obsdata , obs_key );
+    active_list_type  * active_list = local_obsdata_node_get_active_list( obsdata_node );
     active_list_add_index( active_list , index );
   }
   free( obs_name );
@@ -1109,8 +1129,9 @@ static void local_config_ACTIVE_LIST_ADD_MANY_OBS_INDEX( local_config_type * con
 
   read_int_vector( stream , binary , int_vector);
   {
-    local_obsset_type * obsset  = local_config_get_obsset( config , obs_name );
-    active_list_type  * active_list = local_obsset_get_obs_active_list( obsset , obs_key );
+    local_obsdata_type * obsdata  = local_config_get_obsdata( config , obs_name );
+    local_obsdata_node_type * obsdata_node = local_obsdata_get( obsdata , obs_key );
+    active_list_type  * active_list = local_obsdata_node_get_active_list( obsdata_node );
     for (int i = 0; i < int_vector_size( int_vector ); i++)
       active_list_add_index( active_list , int_vector_iget(int_vector , i));
   }
@@ -1171,8 +1192,8 @@ static void local_config_DEL_OBS( local_config_type * config , local_context_typ
   char * obs_name = read_alloc_string( stream , binary );
   char * obs_key  = read_alloc_string( stream , binary );
   {
-    local_obsset_type * obsset = local_config_get_obsset( config , obs_name );
-    local_obsset_del_obs( obsset , obs_key );
+    local_obsdata_type * obsdata = local_config_get_obsdata( config , obs_name );
+    local_obsdata_del_node( obsdata , obs_key );
   }
   free( obs_name );
   free( obs_key );
@@ -1190,8 +1211,8 @@ static void local_config_DATASET_DEL_ALL_DATA( local_config_type * config , loca
 static void local_config_OBSSET_DEL_ALL_OBS( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
   char * obs_name = read_alloc_string( stream , binary );
   {
-    local_obsset_type   * obsset = local_config_get_obsset( config , obs_name );
-    local_obsset_clear( obsset );
+    local_obsdata_type   * obsdata = local_config_get_obsdata( config , obs_name );
+    local_obsdata_clear( obsdata );
   }
   free( obs_name );
 }

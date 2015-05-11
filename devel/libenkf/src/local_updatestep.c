@@ -92,8 +92,8 @@ local_ministep_type * local_updatestep_iget_ministep( const local_updatestep_typ
 }
 
 
-local_obsset_type * local_updatestep_iget_obsset( const local_updatestep_type * updatestep , int index) {
-  return local_ministep_get_obsset( vector_iget( updatestep->ministep , index ) );
+local_obsdata_type * local_updatestep_iget_obsdata( const local_updatestep_type * updatestep , int index) {
+  return local_ministep_get_obsdata( vector_iget( updatestep->ministep , index ) );
 }
 
 

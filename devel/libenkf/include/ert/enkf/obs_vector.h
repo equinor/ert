@@ -45,7 +45,7 @@ extern "C" {
 #include <ert/enkf/time_map.h>
 #include <ert/enkf/local_obsdata_node.h>
 
-  
+
   typedef void   (obs_free_ftype)                (void *);
   typedef void   (obs_get_ftype)                 (const void * , obs_data_type * , enkf_fs_type *, int , const active_list_type * );
   typedef void   (obs_meas_ftype)                (const void * , const void *, node_id_type , meas_data_type * , const active_list_type * );
@@ -82,7 +82,7 @@ extern "C" {
   obs_vector_type    * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type *    , const ecl_grid_type * grid , time_map_type * obs_time , const ecl_sum_type * refcase , ensemble_config_type * );
   void                 obs_vector_set_config_node(obs_vector_type *  , const enkf_config_node_type * );
   obs_vector_type    * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , enkf_config_node_type * config_node, int num_reports);
-  void                 obs_vector_scale_std(obs_vector_type * obs_vector, local_obsdata_node_type * local_node , double std_multiplier);
+  void                 obs_vector_scale_std(obs_vector_type * obs_vector, const local_obsdata_node_type * local_node , double std_multiplier);
   void                 obs_vector_install_node(obs_vector_type * obs_vector , int obs_index , void * node );
 
   double                  obs_vector_chi2(const obs_vector_type *  , enkf_fs_type *  , node_id_type node_id);

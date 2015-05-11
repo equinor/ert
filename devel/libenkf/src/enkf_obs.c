@@ -465,32 +465,6 @@ void enkf_obs_get_obs_and_measure_data(const enkf_obs_type      * enkf_obs,
 }
 
 
-void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
-                                  enkf_fs_type           * fs,
-                                  const int_vector_type  * step_list ,
-                                  state_enum               state,
-                                  const int_vector_type    * ens_active_list ,
-                                  meas_data_type           * meas_data,
-                                  obs_data_type            * obs_data,
-                                  const local_obsset_type  * obsset) {
-
-  local_obsdata_type * local_obsdata = local_obsdata_alloc( "OBS-SET" );
-  {
-    hash_iter_type * iter = local_obsset_alloc_obs_iter( obsset );
-    while ( !hash_iter_is_complete(iter) ) {
-      const char * obs_key = hash_iter_get_next_key( iter );
-      const active_list_type * active_list = local_obsset_get_obs_active_list( obsset , obs_key);
-      obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-      local_obsdata_node_type * obs_node = obs_vector_alloc_local_node( obs_vector );
-      
-      local_obsdata_node_copy_active_list( obs_node , active_list );
-      local_obsdata_add_node( local_obsdata , obs_node );
-    }
-    hash_iter_free( iter );
-  }
-  enkf_obs_get_obs_and_measure_data(enkf_obs , fs , local_obsdata , state , ens_active_list , meas_data , obs_data );
-  local_obsdata_free( local_obsdata );
-}
 
 
 
@@ -1188,7 +1162,7 @@ void enkf_obs_local_scale_std( const enkf_obs_type * enkf_obs , const local_obsd
   int num_nodes = local_obsdata_get_size( local_obsdata );
   int node_nr;
   for (node_nr = 0; node_nr < num_nodes; node_nr++) {
-    local_obsdata_node_type * node = local_obsdata_iget( local_obsdata , node_nr );
+    const local_obsdata_node_type * node = local_obsdata_iget( local_obsdata , node_nr );
     obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , local_obsdata_node_get_key( node ));
     obs_vector_scale_std( obs_vector , node , scale_factor );
   }
@@ -1211,11 +1185,11 @@ double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs , enkf_fs_ty
     obs_data_scale( obs_data , S , NULL , NULL , NULL , NULL );
     num_PC = enkf_linalg_num_PC( S , truncation );
     scale_factor = sqrt( obs_data_get_active_size( obs_data ) / num_PC );
-  
+
     matrix_free( S );
   }
   enkf_obs_local_scale_std( enkf_obs , local_obsdata , scale_factor );
-  
+
   meas_data_free( meas_data );
   obs_data_free( obs_data );
   bool_vector_free( ens_mask );

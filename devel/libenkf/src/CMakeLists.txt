@@ -58,7 +58,6 @@ set( source_files
      enkf_analysis.c 
      enkf_main.c 
      local_dataset.c 
-     local_obsset.c 
      surface.c 
      surface_config.c 
      enkf_plot_data.c
@@ -160,7 +159,6 @@ set( header_files
      enkf_defaults.h 
      container_config.h 
      local_dataset.h 
-     local_obsset.h 
      surface.h 
      surface_config.h 
      local_context.h 

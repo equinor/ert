@@ -37,7 +37,6 @@ extern "C" {
 #include <ert/enkf/obs_data.h>
 #include <ert/enkf/time_map.h>
 #include <ert/enkf/obs_vector.h>
-#include <ert/enkf/local_obsset.h>
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/local_obsdata_node.h>
 #include <ert/enkf/local_obsdata.h>
@@ -69,16 +68,6 @@ extern "C" {
                                    const ecl_sum_type * refcase ,
                                    double std_cutoff ,
                                    ensemble_config_type * ensemble_config );
-
-  void enkf_obs_get_obs_and_measure(
-                                    const enkf_obs_type    * enkf_obs,
-                                    enkf_fs_type           * fs,
-                                    const int_vector_type  * step_list ,
-                                    state_enum               state,
-                                    const int_vector_type  * ens_active_list,
-                                    meas_data_type         * meas_data,
-                                    obs_data_type          * obs_data,
-                                    const local_obsset_type * obsset);
 
 
   void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
