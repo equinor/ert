@@ -14,26 +14,26 @@ class GenKwCollectorTest(ExtendedTestCase):
 
             data = GenKwCollector.loadAllGenKwData(ert, "default")
 
-            self.assertFloatEqual(data["FLUID_PARAMS:SGCR"][0], 0.295136)
-            self.assertFloatEqual(data["FLUID_PARAMS:SGCR"][24], 0.177833)
+            self.assertFloatEqual(data["FLUID_PARAMS:SGCR"][0], 0.018466)
+            self.assertFloatEqual(data["FLUID_PARAMS:SGCR"][24], 0.221049)
 
-            self.assertFloatEqual(data["GRID_PARAMS:MULTPV3"][0], 0.423297)
-            self.assertFloatEqual(data["GRID_PARAMS:MULTPV3"][12], 2.278845)
+            self.assertFloatEqual(data["GRID_PARAMS:MULTPV3"][0], 2.227307)
+            self.assertFloatEqual(data["GRID_PARAMS:MULTPV3"][12], 5.899703)
 
-            self.assertFloatEqual(data["LOG10_MULTFLT:F3"][0], -2.742916)
-            self.assertFloatEqual(data["LOG10_MULTFLT:F3"][24], -3.459867)
+            self.assertFloatEqual(data["LOG10_MULTFLT:F3"][0], -3.008949)
+            self.assertFloatEqual(data["LOG10_MULTFLT:F3"][24], -1.051446)
 
             realization_20 = data.loc[20]
 
             with self.assertRaises(KeyError):
-                realization_21 = data.loc[21]
+                realization_60 = data.loc[60]
 
 
 
             data = GenKwCollector.loadAllGenKwData(ert, "default", ["FLUID_PARAMS:SGCR", "LOG10_MULTFLT:F3"])
 
-            self.assertFloatEqual(data["FLUID_PARAMS:SGCR"][0], 0.295136)
-            self.assertFloatEqual(data["LOG10_MULTFLT:F3"][0], -2.742916)
+            self.assertFloatEqual(data["FLUID_PARAMS:SGCR"][0], 0.018466)
+            self.assertFloatEqual(data["LOG10_MULTFLT:F3"][0], -3.008949)
 
             with self.assertRaises(KeyError):
                 data["GRID_PARAMS:MULTPV3"]

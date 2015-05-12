@@ -52,9 +52,9 @@ class ExportJoinTest(ExtendedTestCase):
             result = result.join(misfit, how='inner')
             result = result.join(dm, how='inner')
 
-            self.assertFloatEqual(result["FLUID_PARAMS:SGCR"][0]["2000-02-01"], 0.295136)
-            self.assertFloatEqual(result["FLUID_PARAMS:SGCR"][24]["2000-02-01"], 0.177833)
-            self.assertFloatEqual(result["FLUID_PARAMS:SGCR"][24]["2004-12-01"], 0.177833)
+            self.assertFloatEqual(result["FLUID_PARAMS:SGCR"][0]["2000-02-01"], 0.018466)
+            self.assertFloatEqual(result["FLUID_PARAMS:SGCR"][24]["2000-02-01"], 0.221049 )
+            self.assertFloatEqual(result["FLUID_PARAMS:SGCR"][24]["2004-12-01"], 0.221049)
 
             self.assertFloatEqual(result["EXTRA_FLOAT_COLUMN"][0]["2000-02-01"], 0.08)
             self.assertEqual(result["EXTRA_INT_COLUMN"][0]["2000-02-01"], 125)
@@ -68,16 +68,16 @@ class ExportJoinTest(ExtendedTestCase):
             self.assertEqual(result["EXTRA_INT_COLUMN"][1]["2004-12-01"], 225)
             self.assertEqual(result["EXTRA_STRING_COLUMN"][1]["2004-12-01"], "OFF")
 
-            self.assertFloatEqual(result["MISFIT:WWCT:OP_2"][0]["2004-12-01"], 3.552157351038322)
-            self.assertFloatEqual(result["MISFIT:WWCT:OP_2"][24]["2004-12-01"], 25.318572860839158)
+            self.assertFloatEqual(result["MISFIT:WWCT:OP_2"][0]["2004-12-01"], 0.617793)
+            self.assertFloatEqual(result["MISFIT:WWCT:OP_2"][24]["2004-12-01"], 0.256436)
 
-            self.assertFloatEqual(result["MISFIT:TOTAL"][0]["2000-02-01"], 1621.755076130249)
-            self.assertFloatEqual(result["MISFIT:TOTAL"][0]["2004-12-01"], 1621.755076130249)
-            self.assertFloatEqual(result["MISFIT:TOTAL"][24]["2004-12-01"], 2783.7582107191383)
+            self.assertFloatEqual(result["MISFIT:TOTAL"][0]["2000-02-01"], 7236.322836)
+            self.assertFloatEqual(result["MISFIT:TOTAL"][0]["2004-12-01"], 7236.322836)
+            self.assertFloatEqual(result["MISFIT:TOTAL"][24]["2004-12-01"], 2261.726621)
 
 
             with self.assertRaises(KeyError):
-                realization_13 = result.loc[13]
+                realization_13 = result.loc[60]
 
             column_count = len(result.columns)
             self.assertEqual(result.dtypes[0], numpy.float64)
