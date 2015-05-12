@@ -677,24 +677,8 @@ static void ext_job_fprintf_python_argList( const ext_job_type * ext_job , FILE 
 }
 
 
-static bool ext_job_check_executable( const ext_job_type * ext_job , const subst_list_type * global_args) {
-  bool OK = true;
-  char * executable;
-  executable = subst_list_alloc_filtered_string( ext_job->private_args , ext_job->executable );
-  if (global_args != NULL)
-    subst_list_update_string( global_args , &executable );
-
-  if (!util_is_executable( executable ))
-    OK = false;
-  free( executable );
-  return OK;
-}
-
 
 void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
-  if (!ext_job_check_executable( ext_job , global_args ))
-    fprintf(stderr," ** WARNING: The executable:%s could not be located on host computer - job will most probably fail.\n", ext_job->executable);
-
   fprintf(stream," {");
   {
     __indent(stream, 0); __fprintf_python_string(stream , "name"                , ext_job->name                , ext_job->private_args , NULL);        __end_line(stream);
