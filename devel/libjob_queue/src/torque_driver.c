@@ -115,7 +115,7 @@ static bool torque_driver_set_keep_qsub_output(torque_driver_type * driver, cons
 }
 
 static void torque_driver_set_job_prefix(torque_driver_type * driver, const char * job_prefix){
-    driver->job_prefix = job_prefix;
+  driver->job_prefix = util_realloc_string_copy( driver->job_prefix , job_prefix);
 }
 
 static void torque_driver_set_cluster_label(torque_driver_type * driver, const char* cluster_label) {
@@ -346,7 +346,7 @@ void * torque_driver_submit_job(void * __driver,
     local_job_name = util_alloc_sprintf("%s%s",driver->job_prefix, job_name);
   }
   else{
-     local_job_name = job_name;
+    local_job_name = util_alloc_string_copy( job_name );
   }
   torque_job_type * job = torque_job_alloc();
   {
@@ -354,9 +354,8 @@ void * torque_driver_submit_job(void * __driver,
     job->torque_jobnr_char = util_alloc_sprintf("%ld", job->torque_jobnr);
   }
 
-  if(driver->job_prefix != NULL){
-      free(local_job_name);
-  }
+  free(local_job_name);
+
   if (job->torque_jobnr > 0)
     return job;
   else {
@@ -446,6 +445,8 @@ void torque_driver_free(torque_driver_type * driver) {
   free(driver->qsub_cmd);
   free(driver->num_cpus_per_node_char);
   free(driver->num_nodes_char);
+  if (driver->job_prefix)
+    free(driver->job_prefix);
 
   free(driver);
   driver = NULL;

@@ -54,7 +54,8 @@ void test_file_does_not_exist() {
 
 
 
-void parse_invalid( const char * filename) {
+void parse_invalid( void * arg ) {
+  const char * filename = (const char*) arg;
   lsf_job_parse_bsub_stdout("bsub" , filename);
 }
 
@@ -66,7 +67,7 @@ void test_parse_fail_abort() {
     fprintf(stream , "Job 12345 is submitted to default queue <normal>.\n");
     fclose( stream );
   }
-  test_assert_util_abort( "lsf_job_parse_bsub_stdout" , parse_invalid , stdout_file );
+  test_assert_util_abort( "lsf_job_parse_bsub_stdout" , parse_invalid , (void *) stdout_file );
 }
 
 
