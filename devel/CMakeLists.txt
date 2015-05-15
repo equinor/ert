@@ -89,6 +89,24 @@ include(cmake/Modules/UseMultiArch.cmake)
 include(cmake/ert_link.cmake)
 
 
+#-----------------------------------------------------------------
+# Should we build the block_fs filesystem; this is used extensively
+# by the ert application; but if you are only building the support
+# eclipse related support libraries you can safely leave this at the
+# default OFF value.
+
+if (BUILD_ERT)
+   set( ERT_BUILD_BLOCK_FS ON)
+else()
+   if (WITH_PTHREAD)
+      set( ERT_BUILD_BLOCK_FS OFF CACHE BOOL "Build the block_fs filesystem. Used by ERT application")
+   else()
+      set( ERT_BUILD_BLOCK_FS ON)
+   endif()
+endif()
+
+#-----------------------------------------------------------------
+
 set(INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
