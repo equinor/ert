@@ -101,7 +101,7 @@ else()
    if (WITH_PTHREAD)
       set( ERT_BUILD_BLOCK_FS OFF CACHE BOOL "Build the block_fs filesystem. Used by ERT application")
    else()
-      set( ERT_BUILD_BLOCK_FS ON)
+      set( ERT_BUILD_BLOCK_FS OFF)
    endif()
 endif()
 
