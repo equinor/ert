@@ -15,25 +15,19 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-
-from ert.config import ContentTypeEnum, UnrecognizedEnum, SchemaItem, ContentItem, ContentNode, ConfigParser, ConfigContent, CONFIG_LIB
+from ert.config import ContentTypeEnum, UnrecognizedEnum, SchemaItem, ContentItem, ContentNode, ConfigParser, ConfigContent
 from ert.test import ExtendedTestCase, TestAreaContext
-from ert.cwrap import CWrapper
 
+from ert.config.config_content import cwrapper 
 
 # Adding extra functions to the ConfigContent object for the ability
 # to test low level C functions which are not exposed in Python.
-
-test_wrapper = CWrapper(CONFIG_LIB)
-
-safe_iget = test_wrapper.prototype("char* config_content_safe_iget( config_content , char* , int , int)")
-iget        = test_wrapper.prototype("char* config_content_iget( config_content , char* , int , int)")
-iget_as_int = test_wrapper.prototype("int config_content_iget_as_int( config_content , char* , int , int)")
-iget_as_bool = test_wrapper.prototype("bool config_content_iget_as_bool( config_content , char* , int , int)")
-iget_as_double = test_wrapper.prototype("double config_content_iget_as_double( config_content , char* , int , int)")
-get_occurences = test_wrapper.prototype("int config_content_get_occurences( config_content , char* )")
-
-
+ConfigContent.cNamespace().safe_iget        = cwrapper.prototype("char* config_content_safe_iget( config_content , char* , int , int)")
+ConfigContent.cNamespace().iget        = cwrapper.prototype("char* config_content_iget( config_content , char* , int , int)")
+ConfigContent.cNamespace().iget_as_int = cwrapper.prototype("int config_content_iget_as_int( config_content , char* , int , int)")
+ConfigContent.cNamespace().iget_as_bool = cwrapper.prototype("bool config_content_iget_as_bool( config_content , char* , int , int)")
+ConfigContent.cNamespace().iget_as_double = cwrapper.prototype("double config_content_iget_as_double( config_content , char* , int , int)")
+ConfigContent.cNamespace().get_occurences = cwrapper.prototype("int config_content_get_occurences( config_content , char* )")
 
 
 class ConfigTest(ExtendedTestCase):
@@ -111,7 +105,6 @@ class ConfigTest(ExtendedTestCase):
         content_node = content_item[0]
         self.assertIsInstance(content_node, ContentNode)
         self.assertEqual(len(content_node), 2)
-
         self.assertEqual(content_node[1], "be-lx633214:2")
         self.assertEqual(content_node.content(sep=","), "be-lx655082:2,be-lx633214:2")
         self.assertEqual(content_node.content(), "be-lx655082:2 be-lx633214:2")
@@ -161,22 +154,22 @@ class ConfigTest(ExtendedTestCase):
             self.assertEqual( node[4] , 3.14)
             
             self.assertEqual( content.getValue( "KEY" , 0 , 1 ) , "VALUE2" )
-            self.assertEqual( iget( content , "KEY" , 0 , 1) , "VALUE2")
+            self.assertEqual( content.cNamespace().iget( content , "KEY" , 0 , 1) , "VALUE2")
 
             self.assertEqual( content.getValue( "KEY" , 0 , 2 ) , 100 )
-            self.assertEqual( iget_as_int( content , "KEY" , 0 , 2) , 100)
+            self.assertEqual( content.cNamespace().iget_as_int( content , "KEY" , 0 , 2) , 100)
 
             self.assertEqual( content.getValue( "KEY" , 0 , 3 ) , True )
-            self.assertEqual( iget_as_bool( content , "KEY" , 0 , 3) , True)
+            self.assertEqual( content.cNamespace().iget_as_bool( content , "KEY" , 0 , 3) , True)
 
             self.assertEqual( content.getValue( "KEY" , 0 , 4 ) , 3.14 )
-            self.assertEqual( iget_as_double( content , "KEY" , 0 , 4) , 3.14)
+            self.assertEqual( content.cNamespace().iget_as_double( content , "KEY" , 0 , 4) , 3.14)
 
-            self.assertIsNone( safe_iget( content , "KEY2" , 0 , 0))
+            self.assertIsNone( content.cNamespace().safe_iget( content , "KEY2" , 0 , 0))
 
-            self.assertEqual(  get_occurences( content , "KEY2" ) , 0)
-            self.assertEqual(  get_occurences( content , "KEY" ) , 1)
-            self.assertEqual(  get_occurences( content , "MISSING-KEY" ) , 0)
+            self.assertEqual(  content.cNamespace().get_occurences( content , "KEY2" ) , 0)
+            self.assertEqual(  content.cNamespace().get_occurences( content , "KEY" ) , 1)
+            self.assertEqual(  content.cNamespace().get_occurences( content , "MISSING-KEY" ) , 0)
             
 
 

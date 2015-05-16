@@ -16,7 +16,7 @@
 #  for more details. 
 
 import os
-from ert.ecl import EclKW
+from ert.ecl import EclKW,EclGrid,Ecl3DKW
 from ert.test import ExtendedTestCase
 
 
@@ -40,6 +40,11 @@ class GRDECLTest(ExtendedTestCase):
     def test_Load( self ):
         kw = EclKW.read_grdecl(open(self.src_file, "r"), "PERMX")
         self.assertTrue(kw)
+
+        grid = EclGrid( self.createTestPath("Statoil/ECLIPSE/Gurbat/ECLIPSE" ))
+        kw = Ecl3DKW.read_grdecl(grid , open(self.src_file, "r"), "PERMX")
+        self.assertTrue( isinstance( kw , Ecl3DKW ))
+
 
 
     def test_reload( self ):

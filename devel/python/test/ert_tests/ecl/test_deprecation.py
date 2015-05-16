@@ -34,6 +34,15 @@ class DeprecationTest(ExtendedTestCase):
             import ert.ecl.ecl as ecl
 
     # Added in 1.8.x development
+    def test_EclGrid_dims_property(self):
+        grid = EclGrid.create_rectangular( (10,20,30) , (1,1,1) )
+        with warnings.catch_warnings():
+            d = grid.dims
+
+
+
+
+    # Added in 1.8.x development
     def test_EclKW_min_max(self):
         kw = EclKW.new("TEST", 3, EclTypeEnum.ECL_INT_TYPE)
         with warnings.catch_warnings():
