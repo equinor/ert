@@ -15,7 +15,7 @@ class PolylineTest(ExtendedTestCase):
         with self.assertRaises(IndexError):
             polyline.isClosed()
 
-        self.assertEqual(polyline.name(), "test line")
+        self.assertEqual(polyline.getName(), "test line")
 
         self.assertEqual(len(polyline), 0)
 
@@ -75,7 +75,7 @@ class PolylineTest(ExtendedTestCase):
 
         polyline = XYZIo.readXYZFile(self.polyline)
 
-        self.assertEqual(polyline.name(), "pol11.xyz")
+        self.assertEqual(polyline.getName(), "pol11.xyz")
         self.assertEqual(len(polyline), 13)
         self.assertFalse(polyline.isClosed())
         self.assertEqual(polyline[0], (390271.843750, 6606121.334396, 1441.942627))  # first point
@@ -83,7 +83,7 @@ class PolylineTest(ExtendedTestCase):
 
         polyline = XYZIo.readXYZFile(self.closed_polyline)
 
-        self.assertEqual(polyline.name(), "pol8.xyz")
+        self.assertEqual(polyline.getName(), "pol8.xyz")
         self.assertEqual(len(polyline), 21)
         self.assertTrue(polyline.isClosed())
         self.assertEqual(polyline[0], (396202.413086, 6606091.935028, 1542.620972))  # first point
@@ -152,3 +152,42 @@ class PolylineTest(ExtendedTestCase):
         self.assertTrue( not p3.intersects(p1) )
 
         
+    def test_add(self):
+        l1 = Polyline( init_points = [(-1,0.5) , (0.5, 0.5)])
+        l2 = Polyline( init_points = [(-1,0.5) , (0.5, 0.5)])
+
+        l3 = l1 + l2
+        self.assertEqual( len(l3) , 4 )
+        self.assertEqual( l1[0] , l3[0] )
+        self.assertEqual( l1[1] , l3[1] )
+        self.assertEqual( l1[0] , l3[2] )
+        self.assertEqual( l1[1] , l3[3] )
+
+        l4 = l1
+        l4 += l2
+        self.assertEqual(l3 , l4)
+
+        
+        
+    def test_extend_to_edge(self):
+        bound = Polyline( init_points = [(0,0) , (1,0) , (1,1) , (0,1)] )
+        l1 = Polyline( init_points = [(-1,0.5) , (0.5, 0.5)])
+        l2 = Polyline( init_points = [(0.25,0.25) , (0.75, 0.75)])
+        
+        # Bound is not closed
+        with self.assertRaises(AssertionError):
+            GeometryTools.extendToEdge( bound , l1 )
+            
+        bound.assertClosed()
+        # l1 is not fully contained in bound
+        with self.assertRaises(ValueError):
+            GeometryTools.extendToEdge( bound , l1 )
+
+        l3 = GeometryTools.extendToEdge( bound , l2 )
+        self.assertEqual( l3[0] , (0.00,0.00))
+        self.assertEqual( l3[1] , (0.25,0.25))
+        self.assertEqual( l3[2] , (0.75,0.75))
+        self.assertEqual( l3[3] , (1.00,1.00))
+        self.assertEqual( len(l3) , 4)
+        
+

@@ -14,14 +14,12 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-try:
-    from unittest2 import skipIf
-except ImportError:
-    from unittest import skipIf
+from unittest import skipIf
 
 from ert.ecl import EclGrid, EclTypeEnum , EclKW , EclRegion
+from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCell,FaultCollection
+from ert.geo import Polyline , CPolylineCollection
 from ert.test import ExtendedTestCase , TestAreaContext
-from ert.ecl.faults import FaultBlock, FaultBlockLayer, FaultBlockCell
 
 
 class FaultBlockTest(ExtendedTestCase):
@@ -57,6 +55,37 @@ class FaultBlockTest(ExtendedTestCase):
         self.assertEqual( len(block) , 9)
         self.assertEqual( layer , block.getParentLayer() )
 
+
+    def test_get_ijk(self):
+        with TestAreaContext("python/fault_block_layer/neighbour") as work_area:
+            with open("kw.grdecl","w") as fileH:
+                fileH.write("FAULTBLK \n")
+                fileH.write("1 1 1 0 0\n")
+                fileH.write("1 2 2 0 3\n")
+                fileH.write("4 2 2 3 3\n")
+                fileH.write("4 4 4 0 0\n")
+                fileH.write("4 4 4 0 5\n")
+                fileH.write("/\n")
+
+            kw = EclKW.read_grdecl(open("kw.grdecl") , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE)
+        
+        grid = EclGrid.create_rectangular( (5,5,1) , (1,1,1) )
+        layer = FaultBlockLayer( grid , 0 )
+        layer.loadKeyword( kw )
+
+        block = layer[0,0]
+        self.assertEqual( block.getBlockID() , 1 )
+
+        block = layer[2,2]
+        self.assertEqual( block.getBlockID() , 2 )
+
+        with self.assertRaises(ValueError):
+            layer[3,3]
+
+        with self.assertRaises(IndexError):
+            layer[5,5]
+
+                
         
     def test_neighbours(self):
 
@@ -108,6 +137,116 @@ class FaultBlockTest(ExtendedTestCase):
         neighbours = block5.getNeighbours()
         self.assertEqual( len(neighbours) , 0)
 
+        
+
+
+    def test_neighbours2(self):
+        nx = 8
+        ny = 8
+        nz = 1
+        grid = EclGrid.createRectangular( (nx , ny , nz) , (1,1,1) )
+        layer = FaultBlockLayer( grid , 0 )
+        with TestAreaContext("python/FaultBlocks/neighbours"):
+            with open("faultblock.grdecl","w") as fileH:
+                fileH.write("FAULTBLK \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("3 3 3 3 2 2 2 2 \n")
+                fileH.write("3 3 3 3 2 2 2 2 \n")
+                fileH.write("3 3 3 3 2 2 2 2 \n")
+                fileH.write("3 3 3 3 2 2 2 2 \n")
+                fileH.write("/\n")
+                
+            kw = EclKW.read_grdecl(open("faultblock.grdecl") , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE)
+            with open("faults.grdecl" , "w") as f:
+                f.write("FAULTS\n")
+                f.write("\'FY\'   1   4   4   4   1   1  'Y'  /\n")
+                f.write("\'FX\'   4   4   1   8   1   1  'X'  /\n")
+                f.write("/")
+            
+            faults = FaultCollection( grid , "faults.grdecl")
+        layer.loadKeyword( kw )
+        b1 = layer.getBlock( 1 )
+        b2 = layer.getBlock( 2 )
+        b3 = layer.getBlock( 3 )
+
+        nb = b1.getNeighbours()
+        self.assertTrue( b2 in nb )
+        self.assertTrue( b3 in nb )
+        
+        polylines1 = CPolylineCollection()
+        p1 = polylines1.createPolyline(name="P1")
+        p1.addPoint(4,0)
+        p1.addPoint(4,4)
+        p1.addPoint(4,8)
+        nb = b1.getNeighbours( polylines = polylines1 )
+        self.assertFalse( b2 in nb )
+        self.assertTrue( b3 in nb )
+
+
+        polylines2 = CPolylineCollection()
+        p1 = polylines2.createPolyline(name="P2")
+        p1.addPoint(0,4)
+        p1.addPoint(4,4)
+        nb = b1.getNeighbours( polylines = polylines2 )
+        self.assertTrue( b2 in nb )
+        self.assertFalse( b3 in nb )
+
+        
+
+        layer.addFaultBarrier( faults["FY"] )
+        nb = b1.getNeighbours()
+        self.assertTrue( b2 in nb )
+        self.assertFalse( b3 in nb )
+        
+        layer.addFaultBarrier( faults["FX"] )
+        nb = b1.getNeighbours()
+        self.assertEqual( len(nb) , 0 )
+
+
+    def test_neighbours3(self):
+        nx = 8
+        ny = 8
+        nz = 1
+        grid = EclGrid.createRectangular( (nx , ny , nz) , (1,1,1) )
+        layer = FaultBlockLayer( grid , 0 )
+        with TestAreaContext("python/FaultBlocks/neighbours"):
+            with open("faultblock.grdecl","w") as fileH:
+                fileH.write("FAULTBLK \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("/\n")
+                
+            kw = EclKW.read_grdecl(open("faultblock.grdecl") , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE)
+            with open("faults.grdecl" , "w") as f:
+                f.write("FAULTS\n")
+                f.write("\'FX\'   4   4   1   4   1   1  'X'  /\n")
+                f.write("\'FX\'   5   5   5   8   1   1  'X'  /\n")
+                f.write("/")
+            
+            faults = FaultCollection( grid , "faults.grdecl")
+        layer.loadKeyword( kw )
+        b1 = layer.getBlock( 1 )
+        b2 = layer.getBlock( 2 )
+
+        nb = b1.getNeighbours()
+        self.assertTrue( b2 in nb )
+        
+        layer.addFaultBarrier( faults["FX"] , link_segments = False)
+        nb = b1.getNeighbours()
+        self.assertTrue( b2 in nb )
+
+
+
+        
 
 
 
@@ -217,6 +356,53 @@ class FaultBlockTest(ExtendedTestCase):
         self.assertEqual( [1,2,3] , list(fault_block.getRegionList()))
 
 
+    def test_add_polyline_barrier1(self):
+        grid = EclGrid.create_rectangular( (4,1,1) , (1,1,1) )
+        layer = FaultBlockLayer( self.grid , 0 )
+        polyline = Polyline( init_points = [ (1.99 , 0.001) , (2.01 , 0.99)])
+        
+        points = [((1,0) , (2,0))]
+        
+        geo_layer = layer.getGeoLayer()
+        for p1,p2 in points:
+            self.assertTrue(geo_layer.cellContact( p1 , p2 ))
+            
+        layer.addPolylineBarrier( polyline )
+        for p1,p2 in points:
+            print p1,p2
+            self.assertFalse(geo_layer.cellContact( p1 , p2 ))
+
+
+
+    def test_add_polyline_barrier2(self):
+        grid = EclGrid.create_rectangular( (10,10,1) , (1,1,1) )
+        layer = FaultBlockLayer( self.grid , 0 )
+        polyline = Polyline( init_points = [ (0.1 , 0.9) , (8.9,0.9) , (8.9,8.9) ])
+        
+        points = [((0,0) , (0,1)),
+                  ((2,0) , (2,1)),
+                  ((4,0) , (4,1)),
+                  ((6,0) , (6,1)),
+                  ((8,0) , (8,1)),
+                  #
+                  ((8,1) , (9,1)),
+                  ((8,3) , (9,3)),
+                  ((8,5) , (9,5)),
+                  ((8,7) , (9,7))]
+        
+        geo_layer = layer.getGeoLayer()
+        for p1,p2 in points:
+            self.assertTrue(geo_layer.cellContact( p1 , p2 ))
+            
+        layer.addPolylineBarrier( polyline )
+        for p1,p2 in points:
+            print p1,p2
+            self.assertFalse(geo_layer.cellContact( p1 , p2 ))
+
+
+        
+
+
 
     def test_fault_block_layer_export(self):
         layer = FaultBlockLayer( self.grid , 1 )
@@ -227,6 +413,61 @@ class FaultBlockTest(ExtendedTestCase):
         kw2 = EclKW.create( "FAULTBLK" , self.grid.size , EclTypeEnum.ECL_FLOAT_TYPE )
         with self.assertRaises(TypeError):
             layer.exportKeyword(kw2)
+
+            
+    def test_internal_blocks(self):
+        nx = 8
+        ny = 8
+        nz = 1
+        grid = EclGrid.createRectangular( (nx , ny , nz) , (1,1,1) )
+        layer = FaultBlockLayer( grid , 0 )
+        with TestAreaContext("python/FaultBlocks/internal_blocks"):
+            with open("faultblock.grdecl","w") as fileH:
+                fileH.write("FAULTBLK \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 4 4 1 2 5 5 2 \n")
+                fileH.write("1 4 4 1 2 5 5 2 \n")
+                fileH.write("1 1 1 1 2 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("1 1 3 1 1 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("1 1 1 1 1 2 2 2 \n")
+                fileH.write("/\n")
+
+
+            kw = EclKW.read_grdecl(open("faultblock.grdecl") , "FAULTBLK" , ecl_type = EclTypeEnum.ECL_INT_TYPE)
+            with open("faults.grdecl" , "w") as f:
+                f.write("FAULTS\n")
+                f.write("\'FX\'   4   4   1   4   1   1  'X'  /\n")
+                f.write("\'FX\'   5   5   4   4   1   1  'Y'  /\n")
+                f.write("\'FX\'   5   5   5   8   1   1  'X'  /\n")
+                f.write("/")
+            
+            faults = FaultCollection( grid , "faults.grdecl")
+
+        layer.loadKeyword( kw )
+        layer.addFaultBarrier( faults["FX"] )
+        b1 = layer.getBlock( 1 )
+        b2 = layer.getBlock( 2 )
+        b3 = layer.getBlock( 3 )
+        b4 = layer.getBlock( 4 )
+        b5 = layer.getBlock( 5 )
+
+
+        nb = b1.getNeighbours()
+        for b in nb:
+            print "Block:%d" % b.getBlockID()
+            
+        self.assertTrue( len(nb) == 2 )
+        self.assertTrue( b3 in nb )
+        self.assertTrue( b4 in nb )
+
+        nb = b2.getNeighbours()
+        self.assertTrue( len(nb) == 1 )
+        self.assertTrue( b5 in nb )
+
+
+    
 
             
 

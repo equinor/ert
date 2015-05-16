@@ -24,8 +24,8 @@ class IntersectionTest(ExtendedTestCase):
         p1 = (0.0, 0.0)
         p2 = (10.0, 10.0)
 
-        self.assertEqual(GeometryTools.lineIntersection(p1, p2, p1, p2), (5.0, 5.0))
-
+        self.assertIsNone( GeometryTools.lineIntersection(p1, p2, p1, p2) )
+        
 
     def test_parallel(self):
         p1 = (0.0, 0.0)

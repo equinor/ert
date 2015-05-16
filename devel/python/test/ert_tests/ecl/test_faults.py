@@ -14,16 +14,14 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-try:
-    from unittest2 import skipIf
-except ImportError:
-    from unittest import skipIf
 
+from unittest import skipIf
 import time
-from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment
-from ert.ecl import EclGrid
-from ert.test import ExtendedTestCase
-from ert.geo import Polyline
+
+from ert.ecl.faults import FaultCollection, Fault, FaultLine, FaultSegment,FaultBlockLayer
+from ert.ecl import EclGrid, EclKW, EclTypeEnum
+from ert.test import ExtendedTestCase, TestAreaContext
+from ert.geo import Polyline , CPolyline
 
 class FaultTest(ExtendedTestCase):
     def setUp(self):
@@ -32,8 +30,22 @@ class FaultTest(ExtendedTestCase):
         self.grid = EclGrid.create_rectangular( (151,100,50) , (1,1,1))
         
         
+    def test_PolylineIJ(self):
+        nx = 10
+        ny = 10
+        nz = 10
+        grid = EclGrid.create_rectangular( (nx,ny,nz) , (0.1,0.1,0.1))
+        f = Fault(grid , "F")
+        f.addRecord(0 , 1 , 0 , 0 , 0,0 , "Y-")
+        f.addRecord(2 , 2 , 0 , 1 , 0,0 , "X-")
+        f.addRecord(2 , 2 , 1 , 1 , 0,0 , "Y")
+        
+        pl = f.getIJPolyline( 0 )
+        self.assertEqual(pl , [(0,0) , (2,0) , (2,2) , (3,2)])
+        
+
     def test_empty_collection(self):
-        faults = FaultCollection(self.grid)
+        faults = FaultCollection()
         self.assertEqual(0 , len(faults))
 
         self.assertFalse( faults.hasFault("FX") )
@@ -47,7 +59,17 @@ class FaultTest(ExtendedTestCase):
         with self.assertRaises(IndexError):
             f = faults[0]
 
+        self.assertFalse( "NAME" in faults )
 
+    def test_collection_invalid_arg(self):
+        with self.assertRaises(ValueError):
+            faults = FaultCollection(self.faults1)
+
+        with self.assertRaises(ValueError):
+            faults = FaultCollection(self.faults1 , self.faults2)
+
+        
+        
     def test_splitLine(self):
         faults = FaultCollection(self.grid)
         with self.assertRaises(ValueError):
@@ -71,13 +93,8 @@ class FaultTest(ExtendedTestCase):
         f = Fault(self.grid , "NAME")
         self.assertEqual("NAME" , f.getName())
         
-        with self.assertRaises(KeyError):
+        with self.assertRaises(Exception):
             g = f["Key"]
-
-        with self.assertRaises(KeyError):
-            g = f[0]
-
-        self.assertEqual( len(f) , 0 )
 
 
     def test_empty_faultLine(self):
@@ -90,6 +107,28 @@ class FaultTest(ExtendedTestCase):
 
         with self.assertRaises(IndexError):
             f = fl[0]
+
+
+
+    def test_faultLine_center(self):
+        nx = 10
+        ny = 10
+        nz = 2
+        grid = EclGrid.create_rectangular( (nx,ny,nz) , (0.1,0.1,0.1))
+        fl = FaultLine(grid , 0)
+        C1 = (nx + 1) * 5 + 3
+        C2 = C1  +  2
+        C3 = C2  +  2
+
+        s1 = FaultSegment( C1 , C2 )
+        s2 = FaultSegment( C2 , C3 )
+
+        fl.tryAppend( s1 )
+        fl.tryAppend( s2 )
+        
+        self.assertEqual( len(fl) , 2 )
+        self.assertEqual( fl.center() , (0.50 , 0.50) )
+        
 
 
     def test_faultLine(self):
@@ -134,13 +173,13 @@ class FaultTest(ExtendedTestCase):
         self.assertEqual( len(fl) , 2 )
             
         pl = fl.getPolyline( )
-        self.assertIsInstance( pl , Polyline )
+        self.assertIsInstance( pl , CPolyline )
         self.assertEqual( len(pl) , len(fl) + 1 )
 
         S3 = FaultSegment(20 , 30)
         fl.tryAppend( S3 )
         pl = fl.getPolyline( )
-        self.assertIsInstance( pl , Polyline )
+        self.assertIsInstance( pl , CPolyline )
         self.assertEqual( len(pl) , len(fl) + 1 )
 
 
@@ -149,13 +188,238 @@ class FaultTest(ExtendedTestCase):
     def test_load(self):
         faults = FaultCollection(self.grid , self.faults1)
         self.assertEqual( 3 , len(faults))
-        faults.load( self.faults2 )
+        faults.load( self.grid , self.faults2 )
         self.assertEqual( 7 , len(faults))
         fault1 = faults["F1"]
         layer8 = fault1[8]
         self.assertEqual( len(layer8) , 1 ) 
     
+        with self.assertRaises(IOError):
+            faults.load(self.grid , "No/this/does/not/exist")
+
+
+    def test_connect_faults(self):
+        grid = EclGrid.create_rectangular( (100,100,10) , (1,1,1))
+
+        #    Fault1                    Fault4
+        #      |                         |
+        #      |                         |
+        #      |                         |
+        #      |   -------  Fault2       |
+        #      |                         |
+        #      |                         |
+        #
+        #          -------- Fault3
+        #
+
+        fault1 = Fault(grid , "Fault1")
+        fault2 = Fault(grid , "Fault2")
+        fault3 = Fault(grid , "Fault3")
+        fault4 = Fault(grid , "Fault4")
+
+        fault1.addRecord(1 , 1 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+        fault2.addRecord(5 , 10 , 15 , 15 , 0 , 0 , "Y")
+        fault3.addRecord(5 , 10 , 5 , 5 , 0 , 0 , "Y")
+        fault4.addRecord(20 , 20 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+
+        
+        for other_fault in [fault2 , fault3,fault4]:
+            with self.assertRaises(ValueError):
+                fault1.extendToFault( other_fault ,0)
+
+        with self.assertRaises(ValueError):
+            fault2.extendToFault( fault3 , 0)
+
+        for other_fault in [fault1 , fault2,fault4]:
+            with self.assertRaises(ValueError):
+                fault3.extendToFault( other_fault ,0 )
+
+        for other_fault in [fault1 , fault2,fault3]:
+            with self.assertRaises(ValueError):
+                fault4.extendToFault( other_fault , 0)
+
+        ext21 = fault2.extendToFault( fault1 , 0)
+        self.assertEqual(len(ext21) , 2)
+        p0 = ext21[0]
+        p1 = ext21[1]
+        self.assertEqual(p0 , (5 , 16))
+        self.assertEqual(p1 , (2 , 16))
+        
     
+        ext24 = fault2.extendToFault( fault4,0 )
+        self.assertEqual(len(ext24) , 2)
+        p0 = ext24[0]
+        p1 = ext24[1]
+        self.assertEqual(p0 , (11 , 16))
+        self.assertEqual(p1 , (21 , 16))
+                
+        
+    def test_intersect_intRays(self):
+        p1 = (0,0)
+        dir1 = (1,0)
+        p2 = (0,0)
+        dir2 = (0,1)
+
+        line = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual( line , [] )
+        
+        # Opposite direction
+        p3 = (-1,0)
+        dir3 = (-1,0)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p3,dir3))
+
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p3,dir3),(p1,dir1))
+
+        # Parallell with offset
+        p4 = (0,1)
+        dir4 = (1,0)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p4,dir4))
+
+        p5 = (0,1)
+        dir5 = (-1,0)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p5,dir5))
+
+        p6 = (1,1)
+        dir6 = (1,0)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p6,dir6))
+
+        p2 = (-1,0)
+        dir2 = (-1,0)
+        join = Fault.intersectFaultRays(( p2,dir1),(p1,dir2))
+        self.assertEqual( join , [p2 , p1])
+
+        join = Fault.intersectFaultRays(( p1,dir3),(p3,dir1))
+        self.assertEqual( join , [p1 , p3])
+        
+        p2 = (1,0)
+        dir2 = (1,0)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2))
+        self.assertEqual( join , [p1 , p2])
+
+        # Orthogonal
+        p2 = (1,1)
+        dir2 = (0,1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+            
+        p2 = (0,1)
+        dir2 = (0,1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (-1,0)
+        dir2 = (0,1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (-1,1)
+        dir2 = (0,1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (-1,1)
+        dir2 = (0,-1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (3,-1)
+        dir2 = (0,-1)
+        with self.assertRaises(ValueError):
+            Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+
+        p2 = (1,-1)
+        dir2 = (0,1)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual(join , [p1 , (1,0) , p2])
+
+        p2 = (1,1)
+        dir2 = (0,-1)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual(join , [p1 , (1,0) , p2])
+
+        p2 = (0,3)
+        dir2 = (0,-1)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual(join , [p1 , p2])
+
+        p2 = (3,0)
+        dir2 = (0,-1)
+        join = Fault.intersectFaultRays(( p1,dir1),(p2,dir2 ))
+        self.assertEqual(join , [p1 , p2])
+
+        
+    def test_join_faults(self):
+        grid = EclGrid.create_rectangular( (100,100,10) , (1,1,1))
+
+        #    Fault1                    Fault4
+        #      |                         |
+        #      |                         |
+        #      |                         |
+        #      |   -------  Fault2       |
+        #      |                         |
+        #      |                         |
+        #
+        #          -------- Fault3
+        #
+
+        fault1 = Fault(grid , "Fault1")
+        fault2 = Fault(grid , "Fault2")
+        fault3 = Fault(grid , "Fault3")
+        fault4 = Fault(grid , "Fault4")
+
+        fault1.addRecord(1 , 1 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+        fault2.addRecord(5 , 10 , 15 , 15 , 0 , 0 , "Y")
+        fault3.addRecord(5 , 10 , 5 , 5 , 0 , 0 , "Y")
+        fault4.addRecord(20 , 20 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+
+        rays = fault1.getEndRays(0)
+        self.assertEqual( rays[0] , [(2,10) , (0,-1)])
+        self.assertEqual( rays[1] , [(2,100) , (0,1)])
+        
+        extra = Fault.joinFaults( fault1 , fault3 , 0)
+        self.assertEqual( extra , [(2,10) , (2,6) , (5,6)] )
+        
+    
+    def test_contact(self):
+        grid = EclGrid.create_rectangular( (100,100,10) , (1,1,1))
+
+        #    Fault1                    Fault4
+        #      |                         |
+        #      |                         |
+        #      |                         |
+        #      |   ----------------------+--  Fault2       
+        #      |                         |
+        #      |                         |
+        #
+        #          -------- Fault3
+        #
+
+        fault1 = Fault(grid , "Fault1")
+        fault2 = Fault(grid , "Fault2")
+        fault3 = Fault(grid , "Fault3")
+        fault4 = Fault(grid , "Fault4")
+
+        fault1.addRecord(1 , 1 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+        fault2.addRecord(5 , 30 , 15 , 15 , 0 , 0 , "Y")
+        fault3.addRecord(2 , 10 , 9 , 9 , 0 , 0 , "Y")
+        fault4.addRecord(20 , 20 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+
+        #self.assertFalse( fault1.intersectsFault(fault2 , 0) )
+        #self.assertFalse( fault2.intersectsFault(fault1 , 0) )
+        
+        #self.assertTrue( fault2.intersectsFault(fault4 , 0) )        
+        #self.assertTrue( fault4.intersectsFault(fault2 , 0) )
+
+        self.assertTrue( fault1.intersectsFault(fault1 , 0) )        
+        #self.assertTrue( fault3.intersectsFault(fault3 , 0) )
+        
+
+        
     def test_iter(self):
         faults = FaultCollection(self.grid , self.faults1 , self.faults2)
         self.assertEqual( 7 , len(faults))
@@ -163,8 +427,13 @@ class FaultTest(ExtendedTestCase):
         for f in faults:
             c += 1
         self.assertEqual( c , len(faults))
-    
-    
+        
+        for f in ["F1","F2","F3" ,"F4"]:
+            self.assertTrue( f in faults )
+        
+        self.assertFalse("FX" in faults )
+
+            
     
     def test_fault(self):
         f = Fault(self.grid , "NAME")
@@ -211,7 +480,8 @@ class FaultTest(ExtendedTestCase):
         self.assertEqual(s0.getC1() , 10 )
         self.assertEqual(s0.getC2() , 0 )
         
-    
+        
+
     
     def test_fault_line(self ):
         faults = FaultCollection(self.grid , self.faults1 , self.faults2)
@@ -221,8 +491,46 @@ class FaultTest(ExtendedTestCase):
                     fl.verify()
 
 
+    def test_fault_line_order(self):
+        nx = 120
+        ny = 60
+        nz = 43
+        grid = EclGrid.create_rectangular( (nx , ny , nz) , (1,1,1) )
+        with TestAreaContext("python/faults/line_order"):
+            with open("faults.grdecl" , "w") as f:
+                f.write("""FAULTS
+\'F\'              105  107     50   50      1   43    \'Y\'    /
+\'F\'              108  108     50   50      1   43    \'X\'    /
+\'F\'              108  108     50   50     22   43    \'Y\'    /
+\'F\'              109  109     49   49      1   43    \'Y\'    /
+\'F\'              110  110     49   49      1   43    \'X\'    /
+\'F\'              111  111     48   48      1   43    \'Y\'    /
+/
+""")                
+            with open("faults.grdecl") as f:
+                faults = FaultCollection( grid , "faults.grdecl" )
+                
+        fault = faults["F"]
+        layer = fault[29]
+        self.assertEqual(len(layer) , 2)
 
-                    
+        line1 = layer[0]
+        line2 = layer[1]
+        self.assertEqual(len(line1) , 4)
+        self.assertEqual(len(line2) , 2)
+        
+        seg0 = line1[0]
+        seg1 = line1[1]
+        seg2 = line1[2]
+        seg3 = line1[3]
+        self.assertEqual( seg0.getCorners() , (50 * (nx + 1) + 104 , 50 * (nx + 1) + 107))
+        self.assertEqual( seg1.getCorners() , (50 * (nx + 1) + 107 , 50 * (nx + 1) + 108))
+        self.assertEqual( seg2.getCorners() , (50 * (nx + 1) + 108 , 49 * (nx + 1) + 108))
+        self.assertEqual( seg3.getCorners() , (49 * (nx + 1) + 108 , 49 * (nx + 1) + 109))
+        
+        
+
+
 
     def test_neighbour_cells(self):
         nx = 10
@@ -287,3 +595,199 @@ class FaultTest(ExtendedTestCase):
         true_nb_cells1 = [(nx -1 , -1) , (2*nx -1 , -1) , (3*nx - 1 , -1)]
         self.assertListEqual( nb_cells1 , true_nb_cells1 )
 
+
+    def test_polyline_intersection(self):
+        grid = EclGrid.create_rectangular( (100,100,10) , (0.25 , 0.25 , 1))
+
+        #    Fault1                    Fault4
+        #      |                         |
+        #      |                         |
+        #      |                         |
+        #      |   -------  Fault2       |
+        #      |                         |
+        #      |                         |
+        #                              (5 , 2.50) 
+        #          -------- Fault3
+        #
+
+        fault1 = Fault(grid , "Fault1")
+        fault2 = Fault(grid , "Fault2")
+        fault3 = Fault(grid , "Fault3")
+        fault4 = Fault(grid , "Fault4")
+
+        fault1.addRecord(1 , 1 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+        fault2.addRecord(5 , 10 , 15 , 15 , 0 , 0 , "Y")
+        fault3.addRecord(5 , 10 , 5 , 5 , 0 , 0 , "Y")
+        fault4.addRecord(20 , 20 , 10 , grid.getNY() - 1 , 0 , 0 , "X")
+
+        
+        polyline = Polyline( init_points = [(4 , 4) , (8,4)])
+        self.assertTrue( fault4.intersectsPolyline( polyline , 0))
+
+        cpolyline = CPolyline( init_points = [(4 , 4) , (8,4)])
+        self.assertTrue( fault4.intersectsPolyline( cpolyline , 0))
+        
+        polyline = Polyline( init_points = [(8 , 4) , (16,4)])
+        self.assertFalse( fault4.intersectsPolyline( polyline , 0))
+
+        cpolyline = CPolyline( init_points = [(8 , 4) , (16,4)])
+        self.assertFalse( fault4.intersectsPolyline( cpolyline , 0))
+        
+        
+    def test_num_linesegment(self):
+        nx = 10
+        ny = 10
+        nz = 1
+        grid = EclGrid.create_rectangular( (nx , ny , nz) , (1,1,1) )
+        with TestAreaContext("python/faults/line_order"):
+            with open("faults.grdecl" , "w") as f:
+                f.write("""FAULTS
+\'F1\'              1    4       2    2       1    1    \'Y\'    /
+\'F1\'              6    8       2    2       1    1    \'Y\'    /
+\'F2\'              1    8       2    2       1    1    \'Y\'    /
+/
+""")                
+            with open("faults.grdecl") as f:
+                faults = FaultCollection( grid , "faults.grdecl" )
+                
+            f1 = faults["F1"]
+            f2 = faults["F2"]
+            self.assertEqual( 2 , f1.numLines(0))
+            self.assertEqual( 1 , f2.numLines(0))
+
+
+    def test_extend_to_polyline(self):
+        grid = EclGrid.create_rectangular( (3,3,1) , (1 , 1 , 1))
+
+        #  o   o   o   o
+        #               
+        #  o---o---o---o
+        #  
+        #  o===+   o   o
+        #  |   
+        #  o   o   o   o
+
+        fault1 = Fault(grid , "Fault")
+
+        fault1.addRecord(0 , 0 , 0 , 0 , 0 , 0 , "X-")
+        fault1.addRecord(0 , 0 , 0 , 0 , 0 , 0 , "Y")
+
+        polyline = CPolyline( init_points = [(0,2) , (3,2)])
+        points = fault1.extendToPolyline( polyline , 0 )
+        self.assertEqual( points , [(1,1) , (2,2)])
+
+        end_join = fault1.endJoin( polyline , 0 )
+        self.assertEqual( end_join, [(1,1) , (0,2)] )
+        
+        polyline2 = CPolyline( init_points = [(0.8,2) , (0.8,0.8)])
+        end_join = fault1.endJoin( polyline2 , 0 )
+        self.assertIsNone( end_join )
+
+
+    def test_extend_polyline_on(self):
+        grid = EclGrid.create_rectangular( (3,3,1) , (1 , 1 , 1))
+
+        #  o   o   o   o
+        #               
+        #  o---o---o---o
+        #  
+        #  o===o===o===o
+        #  
+        #  o   o   o   o
+
+        fault1 = Fault(grid , "Fault")
+        fault1.addRecord(0 , 2 , 0 , 0 , 0 , 0 , "Y")
+
+        polyline0 = CPolyline( init_points = [(0,2)])
+        polyline1 = CPolyline( init_points = [(0,2) , (3,2)])
+        polyline2 = CPolyline( init_points = [(1,3) , (1,2)])
+        polyline3 = CPolyline( init_points = [(1,3) , (1,0)])
+
+        with self.assertRaises(ValueError):
+            fault1.extendPolylineOnto( polyline0 , 0 )
+            
+        points = fault1.extendPolylineOnto( polyline1 , 0 )
+        self.assertIsNone( points )
+
+        points = fault1.extendPolylineOnto( polyline2 , 0)
+        self.assertEqual( points , [(1,2) , (1,1)])
+
+        points = fault1.extendPolylineOnto( polyline3 , 0)
+        self.assertIsNone( points )
+
+        
+    def test_stepped(self):
+        grid = EclGrid.create_rectangular( (6,1,4) , (1,1,1))
+        f = Fault(grid , "F")
+        f.addRecord(4,4,0,0,0,1,"X")
+        f.addRecord(2,2,0,0,1,1,"Z")
+        f.addRecord(1,1,0,0,2,3,"X")
+        
+        block_kw = EclKW.create("FAULTBLK" , grid.getGlobalSize() , EclTypeEnum.ECL_INT_TYPE)
+        block_kw.assign(1)
+        block_kw[5] = 2
+        block_kw[11] = 2
+        block_kw[14:18] = 2
+        block_kw[14:18] = 2
+        block_kw[20:23] = 2
+        
+        layer0 = FaultBlockLayer( grid , 0 )
+        layer0.scanKeyword( block_kw )
+        layer0.addFaultBarrier( f )
+        self.assertTrue( layer0.cellContact((0,0) , (1,0)))
+        self.assertFalse( layer0.cellContact((4,0) , (5,0)))
+
+        layer1 = FaultBlockLayer( grid , 1 )
+        layer1.scanKeyword( block_kw )
+        layer1.addFaultBarrier( f )
+        self.assertTrue( layer1.cellContact((0,0) , (1,0)))
+        self.assertFalse( layer1.cellContact((4,0) , (5,0)))
+
+        layer2 = FaultBlockLayer( grid , 2 )
+        layer2.scanKeyword( block_kw )
+        layer2.addFaultBarrier( f )
+        self.assertTrue( layer2.cellContact((0,0) , (1,0)))
+        self.assertFalse( layer2.cellContact((1,0) , (2,0)))
+
+        layer3 = FaultBlockLayer( grid , 3 )
+        layer3.scanKeyword( block_kw )
+        layer3.addFaultBarrier( f )
+        self.assertTrue( layer3.cellContact((0,0) , (1,0)))
+        self.assertFalse( layer3.cellContact((1,0) , (2,0)))
+
+
+
+    def test_connectWithPolyline(self):
+        grid = EclGrid.create_rectangular( (4,4,1) , (1 , 1 , 1))
+
+        
+        #  o   o   o   o   o 
+        #                   
+        #  o   o   o   o   o
+        #                   
+        #  o---o---o---o---o
+        #                   
+        #  o   o   o   o   o
+        #          |        
+        #  o   o   o   o   o
+
+        fault1 = Fault(grid , "Fault1")
+        fault1.addRecord(0 , 3 , 1 , 1 , 0 , 0 , "Y")
+
+        fault2 = Fault(grid , "Fault2")
+        fault2.addRecord(1 , 1 , 0 , 0 , 0 , 0 , "X")
+
+        fault3 = Fault(grid , "Fault3")
+        fault3.addRecord(1 , 1 , 0 , 2 , 0 , 0 , "X")
+        
+        self.assertIsNone( fault3.connect( fault1 , 0 ))
+        
+        
+        intersect = fault2.connect( fault1 , 0 )
+        self.assertEqual( len(intersect) , 2 )
+        p1 = intersect[0]
+        p2 = intersect[1]
+        
+        self.assertEqual( p1 , (2,1))
+        self.assertEqual( p2 , (2,2))
+        

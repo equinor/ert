@@ -25,6 +25,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_grdecl.py
     ert_tests/ecl/test_grid_statoil.py
     ert_tests/ecl/test_kw.py
+    ert_tests/ecl/test_kw_function.py
     ert_tests/ecl/test_ecl_3dkw.py
     ert_tests/ecl/test_ecl_init_file.py
     ert_tests/ecl/test_legacy_ecl.py
@@ -37,8 +38,6 @@ set(TEST_SOURCES
     ert_tests/ecl/test_faults.py
     ert_tests/ecl/test_statoil_faults.py
     ert_tests/ecl/test_fault_blocks.py
-    ert_tests/ecl/test_region_definition_statoil.py
-    ert_tests/ecl/test_region_definition.py
     ert_tests/ecl/test_npv.py
     ert_tests/ecl/test_indexed_read.py
 
@@ -146,7 +145,10 @@ set(TEST_SOURCES
     ert_tests/gui/ide/wizards/test_tree_structure.py
 
     ert_tests/geometry/__init__.py
+    ert_tests/geometry/test_geometry_tools.py
     ert_tests/geometry/test_polyline.py
+    ert_tests/geometry/test_cpolyline.py
+    ert_tests/geometry/test_cpolyline_collection.py
     ert_tests/geometry/test_intersection.py
     ert_tests/geometry/test_convex_hull.py
     ert_tests/geometry/test_point_in_polygon.py
@@ -325,6 +327,7 @@ addPythonTest(ert.ecl.ecl_grdecl ert_tests.ecl.test_grdecl.GRDECLTest LABELS Sta
 addPythonTest(ert.ecl.ecl_grid_statoil ert_tests.ecl.test_grid_statoil.GridTest LABELS StatoilData:Slow)
 addPythonTest(ert.ecl.ecl_grid ert_tests.ecl.test_grid.GridTest )
 addPythonTest(ert.ecl.ecl_kw ert_tests.ecl.test_kw.KWTest LABELS StatoilData)
+addPythonTest(ert.ecl.ecl_kw_function ert_tests.ecl.test_kw_function.KWFunctionTest)
 addPythonTest(ert.ecl.ecl_3dkw ert_tests.ecl.test_ecl_3dkw.Ecl3DKWTest )
 addPythonTest(ert.ecl.ecl_init_file ert_tests.ecl.test_ecl_init_file.InitFileTest LABELS StatoilData)
 addPythonTest(ert.ecl.ecl_restart_file ert_tests.ecl.test_ecl_restart_file.RestartFileTest LABELS StatoilData)
@@ -338,24 +341,26 @@ addPythonTest(ert.ecl.ecl_sum_vector ert_tests.ecl.test_ecl_sum_vector.EclSumVec
 addPythonTest(ert.ecl.ecl_sum_time_range ert_tests.ecl.test_ecl_sum.EclSumTest LABELS StatoilData)
 addPythonTest(ert.ecl.layer ert_tests.ecl.test_layer.LayerTest )
 addPythonTest(ert.ecl.faults ert_tests.ecl.test_faults.FaultTest )
+addPythonTest(ert.ecl.statoil_faults ert_tests.ecl.test_statoil_faults.StatoilFaultTest LABELS StatoilData)
 addPythonTest(ert.ecl.fault_blocks ert_tests.ecl.test_fault_blocks.FaultBlockTest )
-addPythonTest(ert.ecl.region_definition_statoil ert_tests.ecl.test_region_definition_statoil.RegionDefinitionTest LABELS StatoilData)
-addPythonTest(ert.ecl.region_definition ert_tests.ecl.test_region_definition.RegionDefinitionTest )
 addPythonTest(ert.ecl.fault_blocks_statoil ert_tests.ecl.test_fault_blocks_statoil.FaultBlockTest LABELS StatoilData)
 addPythonTest(ert.ecl.ecl_npv ert_tests.ecl.test_npv.NPVTest LABELS StatoilData)
-addPythonTest(ert.ecl.statoil_faults ert_tests.ecl.test_statoil_faults.StatoilFaultTest LABELS StatoilData)
 addPythonTest(ert.ecl.ecl_deprecation ert_tests.ecl.test_deprecation.DeprecationTest )
 addPythonTest(ert.ecl.indexed_read ert_tests.ecl.test_indexed_read.EclIndexedReadTest LABELS StatoilData)
+
+
 
 if (NOT ${NFS_RUNPATH} STREQUAL "")
     if (ERT_LSF_SUBMIT_TEST)
         addPythonTest(ert.ecl.ecl_queue_LSF ert_tests.ecl.test_ecl_submit.LSFSubmitTest ARGUMENTS ${NFS_RUNPATH} LABELS StatoilData:Slow)
     endif()
 
+
     if (NOT ${RSH_SERVERS} STREQUAL "")
         addPythonTest(ert.ecl.ecl_queue_RSH ert_tests.ecl.test_ecl_submit.RSHSubmitTest ARGUMENTS ${NFS_RUNPATH} ${RSH_SERVERS} LABELS StatoilData:Slow)
     endif()
 endif()
+
 
 #SCHED
 addPythonTest(ert.sched.sched ert_tests.sched.test_sched.SchedFileTest LABELS StatoilData)
@@ -393,11 +398,14 @@ addPythonTest(ert.geometry.intersection ert_tests.geometry.test_intersection.Int
 addPythonTest(ert.geometry.convex_hull ert_tests.geometry.test_convex_hull.ConvexHullTest)
 addPythonTest(ert.geometry.point_in_polygon ert_tests.geometry.test_point_in_polygon.PointInPolygonTest)
 addPythonTest(ert.geometry.polygon_slicing ert_tests.geometry.test_polygon_slicing.PolygonSlicingTest)
+addPythonTest(ert.geometry.cpolyline ert_tests.geometry.test_cpolyline.CPolylineTest)
+addPythonTest(ert.geometry.cpolyline_collection ert_tests.geometry.test_cpolyline_collection.CPolylineCollectionTest)
+addPythonTest(ert.geometry.geometry_tools ert_tests.geometry.test_geometry_tools.GeometryToolsTest )
 
 #SERVER
 addPythonTest(ert.server.socket ert_tests.server.test_socket.SocketTest LABELS StatoilData)
 addPythonTest(ert.server.server ert_tests.server.test_server.ServerTest LABELS StatoilData)
 
+#ECL_WELL
 addPythonTest(ert.well.ecl_well ert_tests.well.test_ecl_well.EclWellTest LABELS StatoilData)
 addPythonTest(ert.well.ecl_well2 ert_tests.well.test_ecl_well2.EclWellTest2 LABELS StatoilData)
-
