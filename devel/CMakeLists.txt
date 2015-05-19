@@ -8,8 +8,8 @@ endif()
 #-----------------------------------------------------------------
 
 set( ERT_VERSION_MAJOR 1 )
-set( ERT_VERSION_MINOR 9 )
-set( ERT_VERSION_MICRO X )
+set( ERT_VERSION_MINOR 10 )
+set( ERT_VERSION_MICRO git )
 
 # If the micro version is not integer, that should be interpreted as a
 # development version leading towards version MAJOR.MINOR.0
@@ -163,8 +163,12 @@ include_directories( ${PROJECT_SOURCE_DIR}/libecl/include )
 add_subdirectory( libecl )
 
 if (ERT_BUILD_CXX)
-   include_directories( ${PROJECT_SOURCE_DIR}/libeclxx/include )
-   add_subdirectory( libeclxx )
+   if (HAVE_CXX_SHARED_PTR)
+      include_directories( ${PROJECT_SOURCE_DIR}/libeclxx/include )
+      add_subdirectory( libeclxx )
+   else()
+      message(STATUS "Skipping CXX support - missing Cxx11 features.")
+   endif()
 endif()
 
 include_directories( ${PROJECT_SOURCE_DIR}/libecl_well/include )
