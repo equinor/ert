@@ -163,6 +163,10 @@ if (HAVE_SIGBUS)
   add_definitions( -DHAVE_SIGBUS )
 endif()
 
+try_compile( SHARED_PTR ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_shared_ptr.cpp )
+if (SHARED_PTR)
+   add_definitions( -DHAVE_CXX_SHARED_PTR)
+endif()
 
 check_type_size(time_t SIZE_OF_TIME_T)
 if (${SIZE_OF_TIME_T} EQUAL 8)
