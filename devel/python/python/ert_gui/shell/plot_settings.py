@@ -58,7 +58,7 @@ class PlotSettings(ShellFunction):
     def getAllCaseList(self):
         fs_manager = self.ert().getEnkfFsManager()
         all_case_list = fs_manager.getCaseList()
-        all_case_list = [case for case in all_case_list if fs_manager.caseHasData(case)]
+        all_case_list = [case for case in all_case_list]
         return all_case_list
 
 
