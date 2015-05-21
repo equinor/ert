@@ -85,6 +85,10 @@ set(TEST_SOURCES
     ert_tests/enkf/export/test_summary_collector.py
     ert_tests/enkf/export/test_summary_observation_collector.py
 
+    ert_tests/ertshell/ert_shell_test_context.py
+    ert_tests/ertshell/test_ertshell_analysis.py
+    ert_tests/ertshell/test_ertshell_context.py
+
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
     ert_tests/analysis/test_analysis_module.py
@@ -294,6 +298,10 @@ addPythonTest(ert.enkf.export.numpy_and_pandas ert_tests.enkf.export.test_numpy_
 addPythonTest(ert.enkf.export.misfit_collector ert_tests.enkf.export.test_misfit_collector.MisfitCollectorTest LABELS StatoilData)
 addPythonTest(ert.enkf.export.summary_collector ert_tests.enkf.export.test_summary_collector.SummaryCollectorTest LABELS StatoilData)
 addPythonTest(ert.enkf.export.summary_observation_collector ert_tests.enkf.export.test_summary_observation_collector.SummaryObservationCollectorTest LABELS StatoilData)
+
+#ertshell
+addPythonTest(ert.ertshell.ertshell_analysis ert_tests.ertshell.test_ertshell_analysis.ErtShellAnalysisModuleTest)
+addPythonTest(ert.ertshell.ertshell_context ert_tests.ertshell.test_ertshell_context.ErtShellContextTest)
 
 
 #GUI
