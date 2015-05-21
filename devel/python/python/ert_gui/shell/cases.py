@@ -50,13 +50,18 @@ class Cases(ShellFunction):
 
 
     @assertConfigLoaded
-    def do_create(self, case_name):
-        case_name = case_name.strip()
-        if not case_name in self.getFileSystemNames():
-            fs = self.ert().getEnkfFsManager().getFileSystem(case_name)
-            self.ert().getEnkfFsManager().switchFileSystem(fs)
+    def do_create(self, line):
+        arguments = self.splitArguments(line)
+
+        if len(arguments) == 1:
+            case_name = arguments[0]
+            if case_name not in self.getFileSystemNames():
+                fs = self.ert().getEnkfFsManager().getFileSystem(case_name)
+                self.ert().getEnkfFsManager().switchFileSystem(fs)
+            else:
+                print("Error: Case '%s' already exists!" % case_name)
         else:
-            print("Error: Case '%s' already exists!" % case_name)
+            print("Error: Expected one argument: <case_name> received: '%s'" % line)
 
     @assertConfigLoaded
     def do_summary_key_set(self, line):
