@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    analysis_module.py
     cases.py
     custom_kw_keys.py
     debug.py

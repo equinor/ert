@@ -4,6 +4,7 @@ import readline
 import os
 
 from ert.enkf import EnKFMain
+from ert_gui.shell.analysis_module import AnalysisModule
 from ert_gui.shell.custom_kw_keys import CustomKWKeys
 from ert_gui.shell.debug import Debug
 from ert_gui.shell.cases import Cases
@@ -73,6 +74,10 @@ class ErtShell(Cmd):
         Results(shell_context)
         Simulations(shell_context)
         CustomKWKeys(shell_context)
+        AnalysisModule(shell_context)
+
+        self.__last_command_failed = False
+
 
     def __init_history(self):
         try:
@@ -129,3 +134,20 @@ class ErtShell(Cmd):
 
     def shellContext(self):
         return self.__shell_context
+
+    def default(self, line):
+        Cmd.default(self, line)
+        self.__last_command_failed = True
+
+    def precmd(self, line):
+        self.__last_command_failed = False
+        return Cmd.precmd(self, line)
+
+    def invokeCommand(self, line):
+        self.onecmd(line)
+        return not self.__last_command_failed
+
+
+
+
+

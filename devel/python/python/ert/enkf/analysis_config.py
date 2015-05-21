@@ -17,6 +17,7 @@ from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf import AnalysisIterConfig
 from ert.analysis import AnalysisModule
+from ert.util import StringList
 
 
 class AnalysisConfig(BaseCClass):
@@ -84,9 +85,11 @@ class AnalysisConfig(BaseCClass):
         AnalysisConfig.cNamespace().free(self)
         
     def activeModuleName(self):
+        """ :rtype: str """
         return AnalysisConfig.cNamespace().get_active_module_name(self)
 
     def getModuleList(self):
+        """ :rtype: StringList """
         return AnalysisConfig.cNamespace().get_module_list(self)
 
     def getModule(self, module_name):
@@ -97,9 +100,10 @@ class AnalysisConfig(BaseCClass):
         """ @rtype: bool """
         return AnalysisConfig.cNamespace().select_module(self, module_name)
 
+    def getActiveModule(self):
+        """ :rtype: AnalysisModule """
+        return self.getModule(self.activeModuleName())
 
-
-    ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("analysis_config", AnalysisConfig)
