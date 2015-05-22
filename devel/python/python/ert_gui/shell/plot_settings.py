@@ -22,7 +22,7 @@ class PlotSettings(ShellFunction):
 
         if self.__cases is None:
             case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
-            self.__cases = [case_name]
+            return [case_name]
 
         return self.__cases
 
