@@ -88,6 +88,7 @@ set(TEST_SOURCES
     ert_tests/ertshell/ert_shell_test_context.py
     ert_tests/ertshell/test_ertshell_analysis.py
     ert_tests/ertshell/test_ertshell_context.py
+    ert_tests/ertshell/test_ertshell_smoother.py
 
     ert_tests/analysis/__init__.py
     ert_tests/analysis/test_options_enum.py
@@ -302,6 +303,7 @@ addPythonTest(ert.enkf.export.summary_observation_collector ert_tests.enkf.expor
 #ertshell
 addPythonTest(ert.ertshell.ertshell_analysis ert_tests.ertshell.test_ertshell_analysis.ErtShellAnalysisModuleTest)
 addPythonTest(ert.ertshell.ertshell_context ert_tests.ertshell.test_ertshell_context.ErtShellContextTest)
+addPythonTest(ert.ertshell.ertshell_smoother ert_tests.ertshell.test_ertshell_smoother.ErtShellSmootherTest)
 
 
 #GUI

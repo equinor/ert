@@ -15,6 +15,7 @@ set(PYTHON_SOURCES
     shell_plot.py
     shell_tools.py
     simulations.py
+    smoother.py
     summary_keys.py
     workflows.py
 )
