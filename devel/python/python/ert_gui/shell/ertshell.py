@@ -13,6 +13,7 @@ from ert_gui.shell.gen_kw_keys import GenKWKeys
 from ert_gui.shell.results import Results
 from ert_gui.shell.plugins import Plugins
 from ert_gui.shell.simulations import Simulations
+from ert_gui.shell.smoother import Smoother
 from ert_gui.shell.summary_keys import SummaryKeys
 from ert_gui.shell.workflows import Workflows
 from ert_gui.shell import extractFullArgument, getPossibleFilenameCompletions, PlotSettings, ShellContext
@@ -75,6 +76,7 @@ class ErtShell(Cmd):
         Simulations(shell_context)
         CustomKWKeys(shell_context)
         AnalysisModule(shell_context)
+        Smoother(shell_context)
 
         self.__last_command_failed = False
 
