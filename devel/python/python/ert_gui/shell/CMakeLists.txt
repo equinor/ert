@@ -20,5 +20,5 @@ set(PYTHON_SOURCES
     workflows.py
 )
 
-add_python_package("python.ert_gui.shell"  ${PYTHON_INSTALL_PREFIX}/ert_gui/shell "${PYTHON_SOURCES}" True)
+add_python_package("python.ert_gui.shell" ${PYTHON_INSTALL_PREFIX}/ert_gui/shell "${PYTHON_SOURCES}" False)
 
