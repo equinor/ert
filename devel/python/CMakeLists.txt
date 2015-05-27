@@ -10,6 +10,6 @@ endif()
 set(PYTHON_INSTALL_PREFIX  "lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages"  CACHE STRING "Subdirectory to install Python modules in")
 
 if (BUILD_TESTS)
-   add_subdirectory( test )
+   add_subdirectory( tests )
 endif()
 add_subdirectory( python )
