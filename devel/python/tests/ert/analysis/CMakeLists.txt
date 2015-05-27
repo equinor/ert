@@ -1,0 +1,12 @@
+set(TEST_SOURCES
+    __init__.py
+    test_analysis_module.py
+    test_options_enum.py
+    test_rml.py
+)
+
+add_python_package("python.tests.ert.analysis" ${PYTHON_INSTALL_PREFIX}/tests/ert/analysis "${TEST_SOURCES}" False)
+
+addPythonTest(ert.analysis.enums tests.ert.analysis.test_options_enum.AnalysisOptionsEnumTest)
+addPythonTest(ert.analysis.analysis_module tests.ert.analysis.test_analysis_module.AnalysisModuleTest)
+addPythonTest(ert.analysis.rml tests.ert.analysis.test_rml.RMLTest)
