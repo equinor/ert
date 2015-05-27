@@ -127,6 +127,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 
                 # Trajectory
                 trajectory_file = os.path.join( trajectory_path , "%s.txt" % well)
+                if not os.path.isfile(trajectory_file):
+                    trajectory_file = os.path.join( trajectory_path , "%s_R.txt" % well)
+                    
                 trajectory = WellTrajectory( trajectory_file )
                 arg = ArgLoader.load( trajectory_file , column_names = ["utm_x" , "utm_y" , "md" , "tvd"])
                 tvd_arg = arg["tvd"]
