@@ -1,7 +1,9 @@
 set(TEST_SOURCES
     __init__.py
+    test_active_list.py
     test_analysis_config.py
     test_analysis_iter_config.py
+    test_block_obs.py
     test_custom_kw_config_set.py
     test_ecl_config.py
     test_enkf.py
@@ -13,7 +15,10 @@ set(TEST_SOURCES
     test_enkf_obs.py
     test_ert_context.py
     test_ert_log.py
+    test_gen_obs.py
     test_labscale.py
+    test_linalg.py
+    test_local_obsdata_node.py
     test_meas_block.py
     test_meas_data.py
     test_obs_block.py
@@ -23,6 +28,7 @@ set(TEST_SOURCES
     test_state_map.py
     test_summary_key_matcher.py
     test_summary_key_set.py
+    test_summary_obs.py
     test_time_map.py
     test_update.py
 )
@@ -34,6 +40,9 @@ addPythonTest(ert.enkf.enkf_obs tests.ert.enkf.test_enkf_obs.EnKFObsTest LABELS 
 addPythonTest(ert.enkf.meas_block tests.ert.enkf.test_meas_block.MeasBlockTest)
 addPythonTest(ert.enkf.meas_data tests.ert.enkf.test_meas_data.MeasDataTest)
 addPythonTest(ert.enkf.obs_data tests.ert.enkf.test_obs_data.ObsDataTest)
+addPythonTest(ert.enkf.gen_obs tests.ert.enkf.test_gen_obs.GenObsTest)
+addPythonTest(ert.enkf.summary_obs tests.ert.enkf.test_summary_obs.SummaryObsTest)
+addPythonTest(ert.enkf.block_obs tests.ert.enkf.test_block_obs.BlockObsTest)
 addPythonTest(ert.enkf.obs_block tests.ert.enkf.test_obs_block.ObsBlockTest)
 addPythonTest(ert.enkf.enkf_load_results_manually tests.ert.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest LABELS StatoilData)
 addPythonTest(ert.enkf.enkf_fs tests.ert.enkf.test_enkf_fs.EnKFFSTest LABELS StatoilData)
@@ -54,6 +63,8 @@ addPythonTest(ert.enkf.run_arg tests.ert.enkf.test_run_arg.RunArg)
 addPythonTest(ert.enkf.runpath_list tests.ert.enkf.test_runpath_list.RunpathListTest)
 addPythonTest(ert.enkf.update tests.ert.enkf.test_update.UpdateTest LABELS StatoilData)
 addPythonTest(ert.enkf.labscale tests.ert.enkf.test_labscale.LabScaleTest LABELS StatoilData)
+addPythonTest(ert.enkf.active_list tests.ert.enkf.test_active_list.ActiveListTest)
+addPythonTest(ert.enkf.local_obsdata_node tests.ert.enkf.test_local_obsdata_node.LocalObsdataNodeTest)
 
 add_subdirectory(data)
 add_subdirectory(export)

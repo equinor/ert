@@ -242,8 +242,8 @@ class EnKFMain(BaseCClass):
 ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("enkf_main", EnKFMain)
-cwrapper.registerType("enkf_main_ref", EnKFMain.createCReference)
+cwrapper.registerObjectType("enkf_main", EnKFMain)
+
 
 
 EnKFMain.cNamespace().bootstrap = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, bool, bool)")

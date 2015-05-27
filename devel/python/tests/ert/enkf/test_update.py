@@ -60,7 +60,7 @@ class UpdateTest(ExtendedTestCase):
             analysis = self.createAnalysisModule()
             ert = tc.getErt()
             obs = ert.getObservations()
-            local_obsdata = obs.createLocalObsdata("OBS")
+            local_obsdata = obs.getAllActiveLocalObsdata( )
             
             fs = ert.getEnkfFsManager().getCurrentFileSystem()
             state = EnkfStateType.FORECAST

@@ -2,6 +2,7 @@ set(TEST_SOURCES
     __init__.py
     test_custom_kw.py
     test_custom_kw_config.py
+    test_field_config.py
     test_gen_data.py
     test_gen_data_config.py
     test_gen_kw.py
@@ -16,3 +17,4 @@ addPythonTest(ert.enkf.data.gen_data tests.ert.enkf.data.test_gen_data.GenDataTe
 addPythonTest(ert.enkf.data.gen_data_config tests.ert.enkf.data.test_gen_data_config.GenDataConfigTest LABELS StatoilData)
 addPythonTest(ert.enkf.data.gen_kw tests.ert.enkf.data.test_gen_kw.GenKwTest)
 addPythonTest(ert.enkf.data.gen_kw_config tests.ert.enkf.data.test_gen_kw_config.GenKwConfigTest LABELS StatoilData)
+addPythonTest(ert.enkf.data.field_config tests.ert.enkf.data.test_field_config.FieldConfigTest)
