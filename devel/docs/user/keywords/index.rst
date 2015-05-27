@@ -137,7 +137,8 @@ Keyword name                                                        	Required by
 :ref:`RSH_COMMAND  <rsh_command>` 					NO 									Command used for remote shell operations. 
 :ref:`RSH_HOST <rsh_host>`  						NO 									Remote host used to run forward model. 
 :ref:`RUNPATH <runoath>`  						NO 					simulations/realization%d 	Directory to run simulations
-:ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory. 
+:ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory.
+:ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std.     
 :ref:`SCHEDULE_FILE <schedule_file>`  					YES 									Provide an ECLIPSE schedule file for the problem. 
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file. 
 :ref:`SELECT_CASE <select_case>`  					NO 									The current case / default 	You can tell ert to select a particular case on bootup. 
@@ -1137,7 +1138,30 @@ Keywords controlling the ES algorithm
 
 	The default value of ENKF_TRUNCATION is 0.99. If ensemble collapse is a big problem, a smaller value should be used (e.g 0.90 or smaller). However, this does not guarantee that the problem of ensemble collapse will disappear. Note that setting the truncation factor to 1.00, will recover the Standard-EnKF algorithm if and only if the covariance matrix for the observation errors is proportional to the identity matrix.
 
+        
+.. _std_scale_correlated_obs:
+.. topic:: STD_SCALE_CORRELATED_OBS
 
+        With this kewyord you can instruct ERT to use the simulated
+        data to estimate the correlations in the observations, and
+        then inflate the observation standard deviation as a way to
+        estimate the real information content in the observations. The
+        method is based on PCA, the scaling factor is calculated as:
+
+        ::
+
+              \sqrt{\frac{N_{\sigma}}{N_{\mathrm{obs}}}
+
+        where $N_{\sigma}$ is the number of singular components, at
+        (fixed) truncation 0.95 and $N_{\mathrm{obs}}$ is the number
+        of observations. The STD_SCALE_CORRELATED_OBS keyword will
+        flatten all your observations, including temporal and spatial
+        correlations. For more fine grained control you can use the
+        STD_CALE_CORRELATED_OBS workflow job, or even write your own
+        plugins.
+
+
+        
 .. _update_log_path:
 .. topic:: UPDATE_LOG_PATH
 
