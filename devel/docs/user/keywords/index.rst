@@ -548,16 +548,17 @@ These keywords are optional. However, they serve many useful purposes, and it is
 .. _runpath_file:
 .. topic:: RUNPATH_FILE
 
-	When running workflows based on external scripts it is necessary to 'tell' the external script in some way or another were all the realisations are located in the filesystem. Since the number of realisations can be quite high this will easily overflow the commandline buffer; the solution which is used is therefor to let ert write a reagular file which looks like this:
+When running workflows based on external scripts it is necessary to 'tell' the external script in some way or another were all the realisations are located in the filesystem. Since the number of realisations can be quite high this will easily overflow the commandline buffer; the solution which is used is therefor to let ert write a reagular file which looks like this::
 
-	::
+  0   /path/to/realisation0   CASE0   iter
+  1   /path/to/realisation1   CASE1   iter
+  ...
+  N   /path/to/realisationN   CASEN   iter
 
-		0   /path/to/realisation0   CASE0
-		1   /path/to/realisation1   CASE1
-		...
-		N   /path/to/realisationN   CASEN
-
-	The path to this file can then be passed to the scripts using the magic string <RUNPATH_FILE>. The RUNPATH_FILE will by default be stored as .ert_runpath_list in the same directory as the configuration file, but you can set it to something else with the RUNPATH_FILE key. 
+The path to this file can then be passed to the scripts using the
+magic string <RUNPATH_FILE>. The RUNPATH_FILE will by default be
+stored as .ert_runpath_list in the same directory as the configuration
+file, but you can set it to something else with the RUNPATH_FILE key.
 
 Keywords controlling the simulations
 ------------------------------------
