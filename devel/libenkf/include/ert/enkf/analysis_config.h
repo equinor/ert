@@ -110,6 +110,8 @@ bool                   analysis_config_get_stop_long_running( const analysis_con
 void                   analysis_config_set_max_runtime( analysis_config_type * config, int max_runtime  );
 int                    analysis_config_get_max_runtime( const analysis_config_type * config );
 const char           * analysis_config_get_active_module_name( const analysis_config_type * config );
+bool                   analysis_config_get_std_scale_correlated_obs( const analysis_config_type * config);
+void                   analysis_config_set_std_scale_correlated_obs( analysis_config_type * config, bool std_scale_correlated_obs);
 
   UTIL_IS_INSTANCE_HEADER( analysis_config );
 

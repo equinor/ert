@@ -60,19 +60,24 @@ set(TEST_SOURCES
     ert_tests/enkf/test_meas_block.py
     ert_tests/enkf/test_meas_data.py
     ert_tests/enkf/test_obs_data.py
+    ert_tests/enkf/test_gen_obs.py
+    ert_tests/enkf/test_summary_obs.py
     ert_tests/enkf/test_obs_block.py
+    ert_tests/enkf/test_block_obs.py
     ert_tests/enkf/test_run_arg.py
     ert_tests/enkf/test_runpath_list.py
     ert_tests/enkf/test_update.py
+    ert_tests/enkf/test_active_list.py
+    ert_tests/enkf/test_local_obsdata_node.py
 
     ert_tests/enkf/plot/test_plot_data.py
 
     ert_tests/enkf/data/test_custom_kw.py
     ert_tests/enkf/data/test_custom_kw_config.py
-    ert_tests/enkf/data/test_gen_data.py
     ert_tests/enkf/data/test_gen_data_config.py
     ert_tests/enkf/data/test_gen_kw.py
     ert_tests/enkf/data/test_gen_kw_config.py
+    ert_tests/enkf/data/test_field_config.py
 
     ert_tests/enkf/export/test_numpy_and_pandas.py
     ert_tests/enkf/export/test_design_matrix.py
@@ -94,6 +99,7 @@ set(TEST_SOURCES
     ert_tests/analysis/test_options_enum.py
     ert_tests/analysis/test_analysis_module.py
     ert_tests/analysis/test_rml.py
+    ert_tests/analysis/test_linalg.py
 
     ert_tests/job_queue/__init__.py
     ert_tests/job_queue/test_ert_plugin.py
@@ -252,6 +258,9 @@ addPythonTest(ert.enkf.enkf_obs ert_tests.enkf.test_enkf_obs.EnKFObsTest LABELS 
 addPythonTest(ert.enkf.meas_block ert_tests.enkf.test_meas_block.MeasBlockTest)
 addPythonTest(ert.enkf.meas_data ert_tests.enkf.test_meas_data.MeasDataTest)
 addPythonTest(ert.enkf.obs_data ert_tests.enkf.test_obs_data.ObsDataTest)
+addPythonTest(ert.enkf.gen_obs ert_tests.enkf.test_gen_obs.GenObsTest)
+addPythonTest(ert.enkf.summary_obs ert_tests.enkf.test_summary_obs.SummaryObsTest)
+addPythonTest(ert.enkf.block_obs ert_tests.enkf.test_block_obs.BlockObsTest)
 addPythonTest(ert.enkf.obs_block ert_tests.enkf.test_obs_block.ObsBlockTest)
 addPythonTest(ert.enkf.enkf_load_results_manually ert_tests.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest LABELS StatoilData)
 addPythonTest(ert.enkf.enkf_fs ert_tests.enkf.test_enkf_fs.EnKFFSTest LABELS StatoilData)
@@ -272,6 +281,8 @@ addPythonTest(ert.enkf.run_arg ert_tests.enkf.test_run_arg.RunArg)
 addPythonTest(ert.enkf.runpath_list ert_tests.enkf.test_runpath_list.RunpathListTest)
 addPythonTest(ert.enkf.update ert_tests.enkf.test_update.UpdateTest LABELS StatoilData)
 addPythonTest(ert.enkf.labscale ert_tests.enkf.test_labscale.LabScaleTest LABELS StatoilData)
+addPythonTest(ert.enkf.active_list ert_tests.enkf.test_active_list.ActiveListTest)
+addPythonTest(ert.enkf.local_obsdata_node ert_tests.enkf.test_local_obsdata_node.LocalObsdataNodeTest)
 
 
 #enkf.plot
@@ -281,10 +292,10 @@ addPythonTest(ert.enkf.plot.plot_block_data ert_tests.enkf.plot.test_plot_data.P
 #enkf.data
 addPythonTest(ert.enkf.data.custom_kw ert_tests.enkf.data.test_custom_kw.CustomKWTest)
 addPythonTest(ert.enkf.data.custom_kw_config ert_tests.enkf.data.test_custom_kw_config.CustomKWConfigTest)
-addPythonTest(ert.enkf.data.gen_data ert_tests.enkf.data.test_gen_data.GenDataTest LABELS StatoilData)
 addPythonTest(ert.enkf.data.gen_data_config ert_tests.enkf.data.test_gen_data_config.GenDataConfigTest LABELS StatoilData)
 addPythonTest(ert.enkf.data.gen_kw ert_tests.enkf.data.test_gen_kw.GenKwTest)
 addPythonTest(ert.enkf.data.gen_kw_config ert_tests.enkf.data.test_gen_kw_config.GenKwConfigTest LABELS StatoilData)
+addPythonTest(ert.enkf.data.field_config ert_tests.enkf.data.test_field_config.FieldConfigTest)
 
 
 #enkf.export
@@ -401,6 +412,7 @@ addPythonTest(ert.test_run ert_tests.run.test_run.RunTest )
 addPythonTest(ert.analysis.enums ert_tests.analysis.test_options_enum.AnalysisOptionsEnumTest)
 addPythonTest(ert.analysis.analysis_module ert_tests.analysis.test_analysis_module.AnalysisModuleTest)
 addPythonTest(ert.analysis.rml ert_tests.analysis.test_rml.RMLTest)
+addPythonTest(ert.analysis.linalg ert_tests.analysis.test_linalg.LinalgTest)
 
 #GEOMETRY
 addPythonTest(ert.geometry.polyline ert_tests.geometry.test_polyline.PolylineTest)

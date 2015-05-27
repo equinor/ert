@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #  Copyright (C) 2012  Statoil ASA, Norway.
 #
 #  The file 'test_enkf.py' is part of ERT - Ensemble based Reservoir Tool.
@@ -60,7 +59,8 @@ class EnKFTest(ExtendedTestCase):
         self.assertEnumIsFullyDefined(EnkfObservationImplementationType, "obs_impl_type", "libenkf/include/ert/enkf/obs_vector.h")
         self.assertEnumIsFullyDefined(LoadFailTypeEnum, "load_fail_type", "libenkf/include/ert/enkf/summary_config.h")
         self.assertEnumIsFullyDefined(EnkfFieldFileFormatEnum, "field_file_format_type", "libenkf/include/ert/enkf/field_config.h" )
-
+        self.assertEnumIsFullyDefined(ActiveModeEnum , "active_mode_type" , "libenkf/include/ert/enkf/enkf_types.h")
+        
 
     def test_observations(self):
         with TestAreaContext("enkf_test") as work_area:
@@ -74,7 +74,7 @@ class EnKFTest(ExtendedTestCase):
             summary_observation_node = EnkfConfigNode.createSummaryConfigNode(summary_key, LoadFailTypeEnum.LOAD_FAIL_EXIT)
             observation_vector = ObsVector(EnkfObservationImplementationType.SUMMARY_OBS, observation_key, summary_observation_node, count)
 
-            main.getObservations().addObservationVector(observation_key, observation_vector)
+            main.getObservations().addObservationVector(observation_vector)
 
             values = []
             for index in range(0, count):
@@ -85,13 +85,18 @@ class EnKFTest(ExtendedTestCase):
                 self.assertEqual(observation_vector.getNode(index), summary_observation_node)
                 self.assertEqual(value, summary_observation_node.getValue())
                 values.append((index, value, std))
+            
 
 
             observations = main.getObservations()
             test_vector = observations[observation_key]
+            index = 0
+            for node in test_vector:
+                self.assertTrue( isinstance( node , SummaryObservation ))
+                self.assertEqual( node.getValue( ) , index * 10.5 )
+                index += 1
 
-            self.assertListEqual(range(10), [report_step for report_step in test_vector])
-
+                
             self.assertEqual(observation_vector, test_vector)
             for index, value, std in values:
                 self.assertTrue(test_vector.isActive(index))

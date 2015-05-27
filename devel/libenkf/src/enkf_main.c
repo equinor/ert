@@ -1188,13 +1188,13 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       int ncomp            = active_ens_size - 1;
       matrix_type * PC     = matrix_alloc(1,1);
       matrix_type * PC_obs = matrix_alloc(1,1);
-      double_vector_type * singular_values = double_vector_alloc(0,0);
-      local_obsset_type   * obsset = local_ministep_get_obsset( ministep );
-      const char * obsset_name = local_obsset_get_name( obsset );
+      double_vector_type   * singular_values = double_vector_alloc(0,0);
+      local_obsdata_type   * obsdata = local_ministep_get_obsdata( ministep );
+      const char * obsdata_name = local_obsdata_get_name( obsdata );
 
       enkf_main_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
       {
-        char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , obsset_name);
+        char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , obsdata_name);
         char * full_path = util_alloc_filename( analysis_config_get_PC_path( enkf_main->analysis_config) , filename , NULL );
 
         enkf_main_fprintf_PC( full_path , PC , PC_obs);
@@ -1330,19 +1330,31 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 
       for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
         local_ministep_type * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
-        local_obsset_type   * obsset   = local_ministep_get_obsset( ministep );
+        local_obsdata_type   * obsdata = local_ministep_get_obsdata( ministep );
 
         obs_data_reset( obs_data );
         meas_data_reset( meas_forecast );
 
-        enkf_obs_get_obs_and_measure( enkf_main->obs,
-                                      source_fs ,
-                                      step_list ,
-                                      FORECAST,
-                                      ens_active_list ,
-                                      meas_forecast,
-                                      obs_data ,
-                                      obsset );
+        /*
+           Temporarily we will just force the timestep from the input
+           argument onto the obsdata instance; in the future the
+           obsdata should hold it's own here.
+        */
+        local_obsdata_reset_tstep_list(obsdata, step_list);
+
+        if (analysis_config_get_std_scale_correlated_obs(enkf_main->analysis_config)) {
+          double scale_factor = enkf_obs_scale_correlated_std(enkf_main->obs, source_fs, ens_active_list, obsdata);
+          ert_log_add_fmt_message(1, NULL, "Scaling standard deviation in obdsata set:%s with %g", local_obsdata_get_name(obsdata) , scale_factor);
+        }
+
+        enkf_obs_get_obs_and_measure_data( enkf_main->obs,
+                                           source_fs ,
+                                           obsdata,
+                                           FORECAST,
+                                           ens_active_list ,
+                                           meas_forecast,
+                                           obs_data);
+
 
 
         enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
