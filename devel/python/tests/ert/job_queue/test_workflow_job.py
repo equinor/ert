@@ -55,7 +55,7 @@ class WorkflowJobTest(ExtendedTestCase):
             self.assertEqual(job.maximumArgumentCount(), 5)
             self.assertEqual(job.argumentTypes(), [str, int, float, bool, str])
 
-            self.assertTrue(job.run(None, ["x %d %f %d %s", 1, 2.5, True]))
+            self.assertTrue(job.run(None, ["x %d %f %d", 1, 2.5, True]))
             self.assertTrue(job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y"]))
 
             with self.assertRaises(UserWarning): # Too few arguments
