@@ -32,7 +32,6 @@ endfunction(addPythonTest)
 
 
 add_subdirectory(core)
-add_subdirectory(ecl)
 
 if(BUILD_ERT)
     add_subdirectory(ert)
