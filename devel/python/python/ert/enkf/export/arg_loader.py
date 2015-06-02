@@ -12,11 +12,14 @@ class ArgLoader(object):
     @staticmethod
     def load(filename , column_names = None):
         rows = 0
-        columns = 0
-        with open(filename,"r") as fileH:
-            for line in fileH.readlines():
-                rows += 1
-                columns = max(columns , len( line.split()) )
+        if column_names is None:
+            columns = 0
+            with open(filename,"r") as fileH:
+                for line in fileH.readlines():
+                    rows += 1
+                    columns = max(columns , len( line.split()) )
+        else:
+            columns = len(column_names)
 
         data = numpy.empty(shape=(rows , columns) , dtype=numpy.float64)
         data.fill( numpy.nan )
@@ -25,7 +28,7 @@ class ArgLoader(object):
         with open(filename) as fileH:
             for line in fileH.readlines():
                 tmp = [ float(x) for x in line.split( ) ]
-                for column in range(len(tmp)):
+                for column in range(columns):
                     data[row][column] = tmp[column]
                 row += 1
 
