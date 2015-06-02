@@ -146,8 +146,13 @@ class ErtShell(Cmd):
         return Cmd.precmd(self, line)
 
     def invokeCommand(self, line):
+        self.__last_command_failed = False
         self.onecmd(line)
         return not self.__last_command_failed
+
+    def lastCommandFailed(self, message):
+        print("Error: %s" % message)
+        self.__last_command_failed = True
 
 
 
