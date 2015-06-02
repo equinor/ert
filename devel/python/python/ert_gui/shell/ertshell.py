@@ -101,7 +101,7 @@ class ErtShell(Cmd):
         if os.path.exists(config_file) and os.path.isfile(config_file):
             self.shellContext().setErt(EnKFMain(config_file))
         else:
-            print("Error: Config file '%s' not found!\n" % config_file)
+            self.lastCommandFailed("Config file '%s' not found!\n" % config_file)
 
     def complete_load_config(self, text, line, begidx, endidx):
         argument = extractFullArgument(line, endidx)
