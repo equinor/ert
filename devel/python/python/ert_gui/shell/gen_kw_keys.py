@@ -27,7 +27,7 @@ class GenKWKeys(ShellFunction):
         keys = matchItems(line, self.fetchSupportedKeys())
 
         if len(keys) == 0:
-            print("Error: Must have at least one GenKW key")
+            self.lastCommandFailed("Must have at least one GenKW key")
             return False
 
         case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
@@ -50,7 +50,7 @@ class GenKWKeys(ShellFunction):
         keys = matchItems(line, self.fetchSupportedKeys())
 
         if len(keys) == 0:
-            print("Error: Must have at least one GenKW key")
+            self.lastCommandFailed("Must have at least one GenKW key")
             return False
 
         case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
@@ -74,7 +74,7 @@ class GenKWKeys(ShellFunction):
         keys = matchItems(line, self.fetchSupportedKeys())
 
         if len(keys) == 0:
-            print("Error: Must have at least one GenKW key")
+            self.lastCommandFailed("Must have at least one GenKW key")
             return False
 
         case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
