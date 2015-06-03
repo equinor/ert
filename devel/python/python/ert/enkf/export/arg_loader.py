@@ -27,9 +27,9 @@ class ArgLoader(object):
         row = 0
         with open(filename) as fileH:
             for line in fileH.readlines():
-                tmp = [ float(x) for x in line.split( ) ]
+                tmp = line.split( )
                 for column in range(columns):
-                    data[row][column] = tmp[column]
+                    data[row][column] = float(tmp[column])
                 row += 1
 
 
