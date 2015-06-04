@@ -140,9 +140,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 obs = numpy.empty(shape = (data_size , 2 ) , dtype=numpy.float64)
                 obs.fill( numpy.nan )
                 for obs_index in range(len(obs_node)):
-                    data_index = obs.getDataIndex( obs_index )
-                    value = obs.getValue( obs_index )
-                    std = obs.getStandardDeviation( obs_index )
+                    data_index = obs_node.getDataIndex( obs_index )
+                    value = obs_node.getValue( obs_index )
+                    std = obs_node.getStandardDeviation( obs_index )
                     obs[data_index,0] = value
                     obs[data_index,1] = std
                     
