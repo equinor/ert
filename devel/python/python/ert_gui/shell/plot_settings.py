@@ -42,7 +42,7 @@ class PlotSettings(ShellFunction):
             if case_name in possible_cases:
                 cases.append(case_name)
             else:
-                print("Error: Unknown case '%s'" % case_name)
+                self.lastCommandFailed("Unknown case '%s'" % case_name)
 
         if len(cases) > 0:
             self.__cases = cases
@@ -75,9 +75,9 @@ class PlotSettings(ShellFunction):
             path = arguments[0]
             self.ert().plotConfig().setPath(path)
         elif len(arguments) > 1:
-            print("Error: Can only set one path. If you require spaces in your path, surround it with quotes: \"path with space\".")
+            self.lastCommandFailed("Can only set one path. If you require spaces in your path, surround it with quotes: \"path with space\".")
         else:
-            print("Error: A path is required!")
+            self.lastCommandFailed("A path is required!")
 
 
     @assertConfigLoaded

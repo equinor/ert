@@ -32,8 +32,8 @@ class AnalysisModule(ShellFunction):
         keys = matchItems(line, self.getAnalysisModules())
 
         if len(keys) == 0 or len(keys) > 1:
-            print("Error: Must enter a single valid Analysis Module")
-            return False
+            self.lastCommandFailed("Must enter a single valid Analysis Module")
+
         analysis_module_name = list(keys)[0]
         self.ert().analysisConfig().selectModule(analysis_module_name)
 
@@ -67,17 +67,17 @@ class AnalysisModule(ShellFunction):
             variable, argument = line.split(" ", 1)
 
             if not variable in variables:
-                print("Error: Variable with name: %s, not available in analysis module!" % variable)
+                self.lastCommandFailed("Variable with name: %s, not available in analysis module!" % variable)
             else:
                 variable_type = active_module.getVariableType(variable)
                 try:
                     value = variable_type(argument)
                     active_module.setVar(variable, argument)
                 except ValueError:
-                    print("Error: Unable to convert '%s' into to a: %s" % (argument, variable_type.__name__))
+                    self.lastCommandFailed("Unable to convert '%s' into to a: %s" % (argument, variable_type.__name__))
 
         else:
-            print("Error: This keyword requires a variable name and a value.")
+            self.lastCommandFailed("This keyword requires a variable name and a value.")
 
 
 

@@ -101,7 +101,7 @@ class ErtShell(Cmd):
         if os.path.exists(config_file) and os.path.isfile(config_file):
             self.shellContext().setErt(EnKFMain(config_file))
         else:
-            print("Error: Config file '%s' not found!\n" % config_file)
+            self.lastCommandFailed("Config file '%s' not found!\n" % config_file)
 
     def complete_load_config(self, text, line, begidx, endidx):
         argument = extractFullArgument(line, endidx)
@@ -146,8 +146,13 @@ class ErtShell(Cmd):
         return Cmd.precmd(self, line)
 
     def invokeCommand(self, line):
+        self.__last_command_failed = False
         self.onecmd(line)
         return not self.__last_command_failed
+
+    def lastCommandFailed(self, message):
+        print("Error: %s" % message)
+        self.__last_command_failed = True
 
 
 

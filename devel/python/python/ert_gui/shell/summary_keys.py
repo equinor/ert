@@ -51,7 +51,7 @@ class SummaryKeys(ShellFunction):
         args = self.splitArguments(line)
 
         if len(args) < 1:
-            print("Error: A summary key is required.")
+            self.lastCommandFailed("A summary key is required.")
             return False
 
 
@@ -68,7 +68,7 @@ class SummaryKeys(ShellFunction):
         keys = matchItems(line, self.summaryKeys())
 
         if len(keys) == 0:
-            print("Error: Must have at least one Summary key")
+            self.lastCommandFailed("Must have at least one Summary key")
             return False
 
         case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
@@ -98,7 +98,7 @@ class SummaryKeys(ShellFunction):
         keys = matchItems(line, self.summaryKeys())
 
         if len(keys) == 0:
-            print("Error: Must have at least one Summary key")
+            self.lastCommandFailed("Must have at least one Summary key")
             return False
 
         case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
@@ -127,7 +127,7 @@ class SummaryKeys(ShellFunction):
         keys = matchItems(line, self.summaryKeys())
 
         if len(keys) == 0:
-            print("Error: Must have at least one Summary key")
+            self.lastCommandFailed("Must have at least one Summary key")
             return False
 
         case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
