@@ -13,19 +13,23 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+
 from ert.cwrap import BaseCClass, CWrapper
+from ert.util import StringList, IntVector
+from ert.sched import History
+from ert.ecl import EclSum , EclGrid
 from ert.enkf import ENKF_LIB, EnkfFs, LocalObsdataNode , LocalObsdata, MeasData, ObsData
 from ert.enkf.enums import EnkfStateType, EnkfObservationImplementationType
 
 from ert.enkf.observations import ObsVector
-from ert.util import StringList, IntVector
 
 
 class EnkfObs(BaseCClass):
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self , ensemble_config , history = None , external_time_map = None , grid = None , refcase = None ):
+        c_ptr = EnkfObs.cNamespace().alloc( history , external_time_map , grid , refcase , ensemble_config )
+        super(EnkfObs, self).__init__(c_ptr)
 
-
+        
     def __len__(self):
         return EnkfObs.cNamespace().get_size(self)
 
@@ -138,6 +142,7 @@ class EnkfObs(BaseCClass):
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("enkf_obs", EnkfObs)
 
+EnkfObs.cNamespace().alloc = cwrapper.prototype("c_void_p enkf_obs_alloc( history , time_map , ecl_grid , ecl_sum , ens_config )")
 EnkfObs.cNamespace().free = cwrapper.prototype("void enkf_obs_free( enkf_obs )")
 EnkfObs.cNamespace().get_size = cwrapper.prototype("int enkf_obs_get_size( enkf_obs )")
 EnkfObs.cNamespace().alloc_typed_keylist = cwrapper.prototype("stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)")

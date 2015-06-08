@@ -2,8 +2,8 @@ from ert.test import ErtTestContext
 from ert.test import ExtendedTestCase
 
 from ert.util import BoolVector,IntVector
-from ert.enkf import ActiveMode
-from ert.enkf import ObsVector , LocalObsdata
+from ert.enkf import ActiveMode, EnsembleConfig
+from ert.enkf import ObsVector , LocalObsdata, EnkfObs
 
 
 class EnKFObsTest(ExtendedTestCase):
@@ -81,3 +81,8 @@ class EnKFObsTest(ExtendedTestCase):
                 self.assertEqual( active_list.getMode() , ActiveMode.ALL_ACTIVE )
                     
                 
+
+    def test_create(self):
+        ensemble_config = EnsembleConfig()
+        obs = EnkfObs(ensemble_config)
+        self.assertEqual( len(obs) , 0 )
