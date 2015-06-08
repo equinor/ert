@@ -330,41 +330,19 @@ qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main ) {
 }
 
 
-/**
-   Will do a forced reload of the observtaions; if the user has edited
-   the content of the observation file while the ERT instance is
-   running.
-*/
 
-void enkf_main_reload_obs( enkf_main_type * enkf_main) {
-  enkf_obs_reload(enkf_main->obs ,
-                  model_config_get_history(enkf_main->model_config),
-                  model_config_get_external_time_map(enkf_main->model_config),
-                  ecl_config_get_grid( enkf_main->ecl_config ),
-                  ecl_config_get_refcase( enkf_main->ecl_config ) ,
-                  analysis_config_get_std_cutoff(enkf_main->analysis_config),
-                  enkf_main->ensemble_config );
-}
-
-
-/**
-   Will not reload the observations if the input config file
-   @obs_config_file is equal to the currently set config_file. If you
-   want to force a reload of the observations use the function
-   enkf_main_reload_obs().
-*/
 
 void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
-  if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs ))) {
-    enkf_obs_load(enkf_main->obs ,
-                  model_config_get_history(enkf_main->model_config),
-                  model_config_get_external_time_map(enkf_main->model_config),
-                  obs_config_file ,
-                  ecl_config_get_grid( enkf_main->ecl_config ),
-                  ecl_config_get_refcase( enkf_main->ecl_config ) ,
-                  analysis_config_get_std_cutoff(enkf_main->analysis_config),
-                  enkf_main->ensemble_config );
-  }
+  if (!enkf_main->obs)
+    enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config),
+                                     model_config_get_external_time_map(enkf_main->model_config),
+                                     ecl_config_get_grid( enkf_main->ecl_config ),
+                                     ecl_config_get_refcase( enkf_main->ecl_config ) ,
+                                     enkf_main->ensemble_config );
+
+  enkf_obs_load(enkf_main->obs ,
+                obs_config_file ,
+                analysis_config_get_std_cutoff(enkf_main->analysis_config));
 }
 
 
@@ -414,7 +392,9 @@ void enkf_main_free(enkf_main_type * enkf_main){
     rng_free( enkf_main->rng );
   rng_config_free( enkf_main->rng_config );
 
-  enkf_obs_free(enkf_main->obs);
+  if (enkf_main->obs)
+    enkf_obs_free(enkf_main->obs);
+
   ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL)
@@ -2496,7 +2476,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->plot_config        = plot_config_alloc_default();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
-  enkf_main->obs                = enkf_obs_alloc( );
+  enkf_main->obs                = NULL;
   enkf_main->model_config       = model_config_alloc( );
 
   enkf_main_rng_init( enkf_main );

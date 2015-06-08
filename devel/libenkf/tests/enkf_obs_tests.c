@@ -17,12 +17,24 @@
  */
 
 #include <ert/util/test_util.h>
+
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_grid.h>
+
 #include <ert/enkf/enkf_obs.h>
 #include <ert/enkf/obs_vector.h>
 #include <ert/enkf/summary_obs.h>
+#include <ert/enkf/ensemble_config.h>
+
 
 int main(int argc, char ** argv) {
-  enkf_obs_type * enkf_obs = enkf_obs_alloc();
+  history_type * history = NULL;
+  time_map_type * external_time_map = NULL;
+  ecl_grid_type * grid = NULL;
+  ensemble_config_type * ensemble_config = NULL;
+  ecl_sum_type * refcase = NULL;
+
+  enkf_obs_type * enkf_obs = enkf_obs_alloc(history , external_time_map , grid , refcase , ensemble_config);
 
   obs_vector_type * obs_vector = obs_vector_alloc(SUMMARY_OBS, "WWCT", NULL, 2);
   summary_obs_type * summary_obs1 = summary_obs_alloc( "SummaryKey" , "ObservationKey" , 43.2, 2.0 , AUTO_CORRF_EXP, 42);

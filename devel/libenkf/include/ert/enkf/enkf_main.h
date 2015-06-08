@@ -155,7 +155,6 @@ extern "C" {
   local_config_type           * enkf_main_get_local_config( const enkf_main_type * enkf_main );
   plot_config_type            * enkf_main_get_plot_config( const enkf_main_type * enkf_main );
   void                          enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file );
-  void                          enkf_main_reload_obs( enkf_main_type * enkf_main);
   enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
   bool                          enkf_main_have_obs( const enkf_main_type * enkf_main );
   analysis_config_type        * enkf_main_get_analysis_config(const enkf_main_type * );

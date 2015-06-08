@@ -189,14 +189,20 @@ static conf_class_type * enkf_obs_get_obs_conf_class();
 
 struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
-  bool                  have_obs;
   char                * config_file;  /* The name of the config file which has been loaded. */
   vector_type         * obs_vector;
   hash_type           * obs_hash;
   time_map_type       * obs_time;     /* For fast lookup of report_step -> obs_time */
+
+  /* Several shared resources - can generally be NULL*/
   const history_type  * history;      /* A shared (not owned by enkf_obs) reference to the history object - used when
                                          adding HISTORY observations. */
+  const ecl_sum_type   * refcase;
+  const ecl_grid_type  * grid;
+  time_map_type        * external_time_map;
+  ensemble_config_type * ensemble_config;
 };
+
 
 
 
@@ -204,23 +210,58 @@ struct enkf_obs_struct {
 
 
 
-enkf_obs_type * enkf_obs_alloc(  )
+enkf_obs_type * enkf_obs_alloc( const history_type * history ,
+                                time_map_type * external_time_map ,
+                                const ecl_grid_type * grid ,
+                                const ecl_sum_type * refcase,
+                                ensemble_config_type * ensemble_config )
 {
-  enkf_obs_type * enkf_obs = util_malloc(sizeof * enkf_obs);
-  enkf_obs->have_obs       = false;
-  enkf_obs->obs_hash       = hash_alloc();
-  enkf_obs->obs_vector     = vector_alloc_new();
-  enkf_obs->obs_time       = time_map_alloc();
+  enkf_obs_type * enkf_obs  = util_malloc(sizeof * enkf_obs);
+  enkf_obs->obs_hash        = hash_alloc();
+  enkf_obs->obs_vector      = vector_alloc_new();
+  enkf_obs->obs_time        = time_map_alloc();
 
-  enkf_obs->history        = NULL;
-  enkf_obs->config_file    = NULL;
+  enkf_obs->history         = history;
+  enkf_obs->refcase         = refcase;
+  enkf_obs->grid            = grid;
+  enkf_obs->ensemble_config = ensemble_config;
+  enkf_obs->external_time_map = external_time_map;
+
+  /* Initialize obs time: */
+  {
+    if (enkf_obs->history) {
+      int last_report = history_get_last_restart( enkf_obs->history );
+      int step;
+      for (step =0; step <= last_report; step++) {
+        time_t obs_time = history_get_time_t_from_restart_nr( enkf_obs->history , step );
+        enkf_obs_iset_obs_time( enkf_obs , step , obs_time );
+      }
+    } else {
+      if (enkf_obs->external_time_map) {
+        int last_report = time_map_get_size( enkf_obs->external_time_map ) - 1;
+        int step;
+        for (step =0; step <= last_report; step++) {
+          time_t obs_time = time_map_iget( enkf_obs->external_time_map , step );
+          enkf_obs_iset_obs_time( enkf_obs , step , obs_time );
+        }
+      } else {
+        fprintf(stderr,"** To create observations you must have a REFCASE / SCHEDULE_FILE / TIME_MAP");
+        enkf_obs_free( enkf_obs );
+        enkf_obs = NULL;
+      }
+    }
+  }
+
   return enkf_obs;
 }
 
 
 
 bool enkf_obs_have_obs( const enkf_obs_type * enkf_obs ) {
-  return enkf_obs->have_obs;
+  if (vector_get_size( enkf_obs->obs_vector ) > 0)
+    return true;
+  else
+    return false;
 }
 
 
@@ -261,7 +302,7 @@ void enkf_obs_add_obs_vector(enkf_obs_type       * enkf_obs,
     const char * obs_key = obs_vector_get_key( vector );
     if (hash_has_key(enkf_obs->obs_hash , obs_key))
       util_abort("%s: Observation with key:%s already added.\n",__func__ , obs_key);
-    
+
     hash_insert_ref(enkf_obs->obs_hash , obs_key , vector );
     vector_append_owned_ref( enkf_obs->obs_vector , vector , obs_vector_free__);
   }
@@ -467,26 +508,12 @@ void enkf_obs_get_obs_and_measure_data(const enkf_obs_type      * enkf_obs,
 
 
 
-
-
-
-void enkf_obs_reload( enkf_obs_type * enkf_obs ,
-                      const history_type * history ,
-                      time_map_type * external_time_map ,
-                      const ecl_grid_type * grid ,
-                      const ecl_sum_type * refcase ,
-                      double std_cutoff ,
-                      ensemble_config_type * ensemble_config ) {
-
-  enkf_obs_load( enkf_obs ,
-                 history ,
-                 external_time_map ,
-                 enkf_obs->config_file ,
-                 grid ,
-                 refcase ,
-                 std_cutoff ,
-                 ensemble_config );
+void enkf_obs_clear( enkf_obs_type * enkf_obs ) {
+  hash_clear( enkf_obs->obs_hash );
+  vector_clear( enkf_obs->obs_vector );
+  ensemble_config_clear_obs_keys(enkf_obs->ensemble_config);
 }
+
 
 
 
@@ -501,19 +528,12 @@ void enkf_obs_reload( enkf_obs_type * enkf_obs ,
 
 
 void enkf_obs_load(enkf_obs_type * enkf_obs ,
-                   const history_type * history ,
-                   time_map_type * external_time_map ,
                    const char * config_file,
-                   const ecl_grid_type * grid ,
-                   const ecl_sum_type * refcase ,
-                   double std_cutoff , ensemble_config_type * ensemble_config) {
+                   double std_cutoff) {
 
-  if (config_file == NULL) {
+  if (config_file == NULL)
     hash_clear( enkf_obs->obs_hash );
-    enkf_obs->have_obs = false;
-  }  else {
-    enkf_obs->history = history;
-
+  else {
     /* Initializing obs_time */
     {
       if (enkf_obs->history) {
@@ -524,11 +544,11 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
           enkf_obs_iset_obs_time( enkf_obs , step , obs_time );
         }
       } else {
-        if (external_time_map) {
-          int last_report = time_map_get_size( external_time_map ) - 1;
+        if (enkf_obs->external_time_map) {
+          int last_report = time_map_get_size( enkf_obs->external_time_map ) - 1;
           int step;
           for (step =0; step <= last_report; step++) {
-            time_t obs_time = time_map_iget( external_time_map , step );
+            time_t obs_time = time_map_iget( enkf_obs->external_time_map , step );
             enkf_obs_iset_obs_time( enkf_obs , step , obs_time );
           }
         } else {
@@ -563,15 +583,15 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
             const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
             obs_vector_type * obs_vector;
             enkf_config_node_type * config_node;
-            config_node = ensemble_config_add_summary_observation( ensemble_config , obs_key , LOAD_FAIL_WARN );
+            config_node = ensemble_config_add_summary_observation( enkf_obs->ensemble_config , obs_key , LOAD_FAIL_WARN );
             if (config_node != NULL) {
-              obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ), last_report);
+              obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( enkf_obs->ensemble_config , obs_key ), last_report);
               if (obs_vector != NULL) {
                 if (obs_vector_load_from_HISTORY_OBSERVATION(obs_vector ,
                                                              hist_obs_conf ,
                                                              enkf_obs->obs_time ,
                                                              enkf_obs->history ,
-                                                             ensemble_config,
+                                                             enkf_obs->ensemble_config,
                                                              std_cutoff )) {
                   enkf_obs_add_obs_vector(enkf_obs, obs_vector);
                  } else {
@@ -603,11 +623,11 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
           obs_vector_type * obs_vector;
           enkf_config_node_type * config_node;
 
-          config_node = ensemble_config_add_summary_observation( ensemble_config , sum_key , LOAD_FAIL_WARN );
+          config_node = ensemble_config_add_summary_observation( enkf_obs->ensemble_config , sum_key , LOAD_FAIL_WARN );
           if (config_node != NULL) {
-            obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , sum_key ), last_report);
+            obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( enkf_obs->ensemble_config , sum_key ), last_report);
             if (obs_vector != NULL) {
-              obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector , sum_obs_conf , enkf_obs->obs_time , ensemble_config);
+              obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector , sum_obs_conf , enkf_obs->obs_time , enkf_obs->ensemble_config);
               enkf_obs_add_obs_vector(enkf_obs, obs_vector);
             }
           } else
@@ -626,7 +646,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
           {
             const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
             const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-            obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , grid , enkf_obs->obs_time , refcase , ensemble_config);
+            obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , enkf_obs->grid , enkf_obs->obs_time , enkf_obs->refcase , enkf_obs->ensemble_config);
             if (obs_vector != NULL)
               enkf_obs_add_obs_vector(enkf_obs, obs_vector);
           }
@@ -644,7 +664,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
             const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
             const conf_instance_type * gen_obs_conf   = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
 
-            obs_vector_type * obs_vector = obs_vector_alloc_from_GENERAL_OBSERVATION(gen_obs_conf , enkf_obs->obs_time ,  ensemble_config);
+            obs_vector_type * obs_vector = obs_vector_alloc_from_GENERAL_OBSERVATION(gen_obs_conf , enkf_obs->obs_time ,  enkf_obs->ensemble_config);
             if (obs_vector != NULL)
               enkf_obs_add_obs_vector(enkf_obs, obs_vector);
           }
@@ -656,8 +676,6 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
       conf_class_free(   enkf_conf_class);
       enkf_obs->config_file = util_realloc_string_copy( enkf_obs->config_file , config_file );
 
-      if (enkf_obs_get_size( enkf_obs) > 0)
-        enkf_obs->have_obs = true;
     }
   }
 }
