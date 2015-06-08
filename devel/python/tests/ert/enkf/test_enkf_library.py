@@ -14,7 +14,7 @@ class EnKFLibraryTest(ExtendedTestCase):
         self.case_directory = self.createTestPath("local/simple_config/")
 
     def test_failed_class_creation(self):
-        classes = [EnkfConfigNode, EnkfObs, EnKFState, EnsembleConfig,
+        classes = [EnkfConfigNode, EnkfObs, EnKFState,
                    ErtTemplate, ErtTemplates, LocalConfig, ModelConfig, PlotConfig, SiteConfig]
 
         for cls in classes:
