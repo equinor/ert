@@ -171,3 +171,9 @@ class TimeMapTest(ExtendedTestCase):
 
         with self.assertRaises(ValueError):
             tm.lookupTime(datetime.date( 2001 , 10 , 1) , tolerance_seconds_before = 10 , tolerance_seconds_after = 10)
+
+
+    def test_empty(self):
+        tm = TimeMap()
+        last_step = tm.getLastStep( )
+        self.assertEqual( last_step , -1 )
