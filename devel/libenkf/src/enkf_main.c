@@ -182,7 +182,7 @@ struct enkf_main_struct {
 /*****************************************************************/
 
 void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
-
+void enkf_main_update_local_updates( enkf_main_type * enkf_main);
 
 
 
@@ -330,19 +330,50 @@ qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main ) {
 }
 
 
+/*
+   Adding inverse observation keys to the enkf_nodes; can be called
+   several times.
+*/
 
 
-void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
-  if (!enkf_main->obs)
-    enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config),
-                                     model_config_get_external_time_map(enkf_main->model_config),
-                                     ecl_config_get_grid( enkf_main->ecl_config ),
-                                     ecl_config_get_refcase( enkf_main->ecl_config ) ,
-                                     enkf_main->ensemble_config );
+void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
+  /* First clear all existing observation keys. */
+  ensemble_config_clear_obs_keys( enkf_main->ensemble_config );
 
-  enkf_obs_load(enkf_main->obs ,
-                obs_config_file ,
-                analysis_config_get_std_cutoff(enkf_main->analysis_config));
+  /* Add new observation keys. */
+  {
+    hash_type      * map  = enkf_obs_alloc_data_map(enkf_main->obs);
+    hash_iter_type * iter = hash_iter_alloc(map);
+    const char * obs_key  = hash_iter_get_next_key(iter);
+    while (obs_key  != NULL) {
+      const char * state_kw = hash_get(map , obs_key);
+      ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
+      obs_key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter);
+    hash_free(map);
+  }
+}
+
+void enkf_main_alloc_obs( enkf_main_type * enkf_main ) {
+  enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config),
+                                   model_config_get_external_time_map(enkf_main->model_config),
+                                   ecl_config_get_grid( enkf_main->ecl_config ),
+                                   ecl_config_get_refcase( enkf_main->ecl_config ) ,
+                                   enkf_main->ensemble_config );
+}
+
+void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file , bool clear_existing) {
+  if (clear_existing)
+    enkf_obs_clear( enkf_main->obs );
+
+  if (enkf_obs_load(enkf_main->obs ,
+                    obs_config_file ,
+                    analysis_config_get_std_cutoff(enkf_main->analysis_config))) {
+    enkf_main_update_obs_keys(enkf_main);
+    enkf_main_update_local_updates(enkf_main );
+  } else
+      fprintf(stderr,"** Warning: failed to load observation data from: %s \n",obs_config_file);
 }
 
 
@@ -411,8 +442,7 @@ void enkf_main_free(enkf_main_type * enkf_main){
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
 
-  if (enkf_main->local_config != NULL)
-    local_config_free( enkf_main->local_config );
+  local_config_free( enkf_main->local_config );
 
   ert_report_list_free( enkf_main->report_list );
   ert_workflow_list_free( enkf_main->workflow_list );
@@ -2478,6 +2508,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = NULL;
   enkf_main->model_config       = model_config_alloc( );
+  enkf_main->local_config       = local_config_alloc( );
 
   enkf_main_rng_init( enkf_main );
   enkf_main->subst_func_pool    = subst_func_pool_alloc(  );
@@ -2698,30 +2729,6 @@ const char * enkf_main_get_schedule_prediction_file( const enkf_main_type * enkf
 }
 
 
-/*
-   Adding inverse observation keys to the enkf_nodes; can be called
-   several times.
-*/
-
-
-void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
-  /* First clear all existing observation keys. */
-  ensemble_config_clear_obs_keys( enkf_main->ensemble_config );
-
-  /* Add new observation keys. */
-  {
-    hash_type      * map  = enkf_obs_alloc_data_map(enkf_main->obs);
-    hash_iter_type * iter = hash_iter_alloc(map);
-    const char * obs_key  = hash_iter_get_next_key(iter);
-    while (obs_key  != NULL) {
-      const char * state_kw = hash_get(map , obs_key);
-      ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
-      obs_key = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free(iter);
-    hash_free(map);
-  }
-}
 
 /*****************************************************************/
 
@@ -2765,26 +2772,14 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
 }
 
 
-void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_content_type * config ) {
+void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
   const enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
   if (enkf_obs_have_obs( enkf_obs )) {
-    enkf_main->local_config  = local_config_alloc( );
-
     /* First create the default ALL_ACTIVE configuration. */
     {
       char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
       enkf_main_create_all_active_config( enkf_main ,
                                           all_active_config_file );
-
-      /* Install custom local_config - if present.*/
-      {
-        int i;
-        for (i = 0; i < config_content_get_occurences( config , LOCAL_CONFIG_KEY); i++) {
-          const stringlist_type * files = config_content_iget_stringlist_ref(config , LOCAL_CONFIG_KEY , i);
-          for (int j=0; j < stringlist_get_size( files ); j++)
-            local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
-        }
-      }
 
       /**
          This is where the local configuration files are actually parsed.
@@ -2798,9 +2793,7 @@ void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_con
       unlink( all_active_config_file );
       free(all_active_config_file);
     }
-  } else
-    if (config_content_get_occurences( config , LOCAL_CONFIG_KEY) > 0)
-      fprintf(stderr,"** Warning: Not possible to configure local analysis without SCHEDULE or REFCASE - %s keyword(s) ignored\n", LOCAL_CONFIG_KEY);
+  }
 }
 
 
@@ -3078,17 +3071,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	  enkf_main_user_select_fs( enkf_main , select_case );
 	}
 
-	{
-	  const char * obs_config_file;
-	  if (config_content_has_item(content , OBS_CONFIG_KEY))
-	    obs_config_file = config_content_iget(content  , OBS_CONFIG_KEY , 0,0);
-	  else
-	    obs_config_file = NULL;
-
-	  enkf_main_load_obs( enkf_main , obs_config_file );
-	}
-
-	enkf_main_update_obs_keys(enkf_main);
 
 	{
 	  const char * rft_config_file = NULL;
@@ -3118,7 +3100,22 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	  if you have created a personal local config that will be
 	  loaded on top.
 	*/
-	enkf_main_init_local_updates(enkf_main , content );
+        /* Install custom local_config - if present.*/
+        {
+          int i;
+          for (i = 0; i < config_content_get_occurences( content , LOCAL_CONFIG_KEY); i++) {
+            const stringlist_type * files = config_content_iget_stringlist_ref(content , LOCAL_CONFIG_KEY , i);
+            for (int j=0; j < stringlist_get_size( files ); j++)
+              local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
+          }
+        }
+
+        /* Loading observations */
+        enkf_main_alloc_obs(enkf_main);
+        if (config_content_has_item(content , OBS_CONFIG_KEY)) {
+          const char * obs_config_file = config_content_iget(content  , OBS_CONFIG_KEY , 0,0);
+          enkf_main_load_obs( enkf_main , obs_config_file , true );
+        }
 
       }
       config_content_free( content );

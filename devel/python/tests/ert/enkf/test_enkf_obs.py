@@ -92,9 +92,12 @@ class EnKFObsTest(ExtendedTestCase):
 
     def test_create(self):
         ensemble_config = EnsembleConfig()
-        with self.assertRaises(ValueError):
-            obs = EnkfObs(ensemble_config)
+        obs = EnkfObs(ensemble_config)
+        self.assertEqual( len(obs) , 0 )
+        self.assertFalse( obs.load(self.obs_config) )
+        self.assertEqual( len(obs) , 0 )
 
+        
         time_map = TimeMap()
         obs = EnkfObs(ensemble_config , external_time_map = time_map)
         self.assertEqual( len(obs) , 0 )
@@ -107,7 +110,7 @@ class EnKFObsTest(ExtendedTestCase):
         with self.assertRaises(IOError):
             obs.load("/does/not/exist")
 
-        obs.load(self.obs_config)
+        self.assertTrue( obs.load(self.obs_config) )
         self.assertEqual( len(obs) , 32 )
         obs.clear()
         self.assertEqual( len(obs) , 0 )
@@ -118,3 +121,17 @@ class EnKFObsTest(ExtendedTestCase):
         obs.load(self.obs_config2)
         self.assertEqual( len(obs) , 33 )
         self.assertTrue( "RFT2" in obs )
+
+
+        
+    def test_ert_obs_reload(self):
+        with ErtTestContext("obs_test_reload", self.config_file) as test_context:
+            ert = test_context.getErt()
+            obs = ert.getObservations()
+            self.assertEqual( len(obs) , 31 )
+            ert.loadObservations("observations2")
+            self.assertEqual( len(obs) , 1 )
+
+            ert.loadObservations("observations" , clear = False)
+            self.assertEqual( len(obs) , 32 )
+            
