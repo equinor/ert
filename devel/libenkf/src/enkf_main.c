@@ -2898,11 +2898,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	free( realpath );
       } else
 	util_alloc_file_components(_model_config , &path , &base , &ext);
-      
+
       if (path != NULL) {
 	if (util_chdir(path) != 0)
 	  util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
-	
+
 	if (verbose)
 	  printf("Changing to directory ...................: %s \n",path);
 
@@ -2935,22 +2935,22 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
       enkf_main_init_user_config( enkf_main , config );
       site_config_add_config_items( config , false );
       site_config_init_user_mode( enkf_main->site_config );
-      
+
       content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true);
       if (!config_content_is_valid( content )) {
 	config_error_type * errors = config_content_get_errors( content );
 	config_error_fprintf( errors , true , stderr );
 	exit(1);
       }
-      
+
       site_config_init( enkf_main->site_config , content );                                   /*  <---- model_config : second pass. */
-      
+
       /*****************************************************************/
       /*
 	OK - now we have parsed everything - and we are ready to start
 	populating the enkf_main object.
       */
-      
+
 
       enkf_main_set_site_config_file( enkf_main , site_config );
       enkf_main_set_user_config_file( enkf_main , model_config );
@@ -2960,33 +2960,33 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	int log_level = DEFAULT_LOG_LEVEL;
 	if(config_content_has_item( content , LOG_LEVEL_KEY))
 	  log_level = config_content_get_value_as_int(content , LOG_LEVEL_KEY);
-	
+
 	if (config_content_has_item( content , LOG_FILE_KEY))
 	  log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
 	else
 	  log_file = util_alloc_filename( NULL , enkf_main->user_config_file , "log");
-	
+
 	ert_log_init_log(log_level, log_file ,  enkf_main->verbose);
-	
+
 	free( log_file );
       }
-      
+
       /*
 	Initializing the various 'large' sub config objects.
       */
       rng_config_init( enkf_main->rng_config , content );
       enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
-      
+
       enkf_main_init_subst_list( enkf_main );
       ert_workflow_list_init( enkf_main->workflow_list , content );
-      
+
       analysis_config_load_internal_modules( enkf_main->analysis_config );
       analysis_config_init( enkf_main->analysis_config , content );
       ecl_config_init( enkf_main->ecl_config , content );
       plot_config_init( enkf_main->plot_config , content );
 
       ensemble_config_init( enkf_main->ensemble_config , content , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
-      
+
       model_config_init( enkf_main->model_config ,
 			 content ,
 			 enkf_main_get_ensemble_size( enkf_main ),
@@ -2994,7 +2994,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 			 ecl_config_get_last_history_restart( enkf_main->ecl_config ),
 			 ecl_config_get_sched_file(enkf_main->ecl_config) ,
 			 ecl_config_get_refcase( enkf_main->ecl_config ));
-      
+
       enkf_main_init_qc( enkf_main , content );
       enkf_main_init_data_kw( enkf_main , content );
       enkf_main_update_num_cpu( enkf_main );
@@ -3006,33 +3006,33 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	  {
 	    hash_type * opt_hash = hash_alloc();
 	    config_content_node_init_opt_hash( pred_node , opt_hash , 1 );
-	    
+
 	    const char * parameters = hash_safe_get( opt_hash , "PARAMETERS" );
 	    const char * min_std    = hash_safe_get( opt_hash , "MIN_STD"    );
 	    const char * init_files = hash_safe_get( opt_hash , "INIT_FILES" );
-	    
+
 	    enkf_main_set_schedule_prediction_file__( enkf_main , template_file , parameters , min_std , init_files );
 	    hash_free( opt_hash );
 	  }
 	}
       }
-      
+
 
       /*****************************************************************/
       /**
 	 To keep or not to keep the runpath directories? The problem is
 	 that the default behavior is different depending on the run_mode:
-	 
+
 	 enkf_mode: In this case the default behaviour is to delete the
 	 runpath directories. You can explicitly say that you want to
 	 keep runpath directories with the KEEP_RUNPATH
 	 directive.
-	 
+
 	 experiments: In this case the default is to keep the runpath
 	 directories around, but you can explicitly say that you
 	 want to remove the directories by using the DELETE_RUNPATH
 	 option.
-	 
+
 	 The final decision is performed in enkf_state().
       */
       {
@@ -3040,65 +3040,65 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	  char * keep_runpath_string   = NULL;
 	  char * delete_runpath_string = NULL;
 	  int    ens_size              = config_content_get_value_as_int(content , NUM_REALIZATIONS_KEY);
-	  
+
 	  if (config_content_has_item(content , KEEP_RUNPATH_KEY))
 	    keep_runpath_string = config_content_alloc_joined_string(content , KEEP_RUNPATH_KEY , "");
-	  
+
 	  if (config_content_has_item(content , DELETE_RUNPATH_KEY))
 	    delete_runpath_string = config_content_alloc_joined_string(content , DELETE_RUNPATH_KEY , "");
-	  
+
 	  enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string , ens_size );
-	  
+
 	  util_safe_free( keep_runpath_string   );
 	  util_safe_free( delete_runpath_string );
 	}
-	
+
 	/* This is really in the wrong place ... */
 	{
 	  enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
 	  if (config_content_has_item(content , PRE_CLEAR_RUNPATH_KEY))
 	    enkf_main->pre_clear_runpath = config_content_get_value_as_bool( content , PRE_CLEAR_RUNPATH_KEY);
 	}
-	
+
 	ecl_config_static_kw_init( enkf_main->ecl_config , content );
-	
+
 	/* Installing templates */
 	ert_templates_init( enkf_main->templates , content );
-	
+
 	/*****************************************************************/
 	ert_report_list_init( enkf_main->report_list , content , ecl_config_get_refcase( enkf_main->ecl_config ));
-	
-	
+
+
 	/*****************************************************************/
 	{
 	  const char * select_case = NULL;
 	  if (config_content_has_item( content , SELECT_CASE_KEY))
 	    select_case = config_content_get_value( content , SELECT_CASE_KEY );
-	  
+
 	  enkf_main_user_select_fs( enkf_main , select_case );
 	}
-	
+
 	{
 	  const char * obs_config_file;
 	  if (config_content_has_item(content , OBS_CONFIG_KEY))
 	    obs_config_file = config_content_iget(content  , OBS_CONFIG_KEY , 0,0);
 	  else
 	    obs_config_file = NULL;
-	  
+
 	  enkf_main_load_obs( enkf_main , obs_config_file );
 	}
-	
+
 	enkf_main_update_obs_keys(enkf_main);
-	
+
 	{
 	  const char * rft_config_file = NULL;
 	  if (config_content_has_item(content , RFT_CONFIG_KEY))
 	    rft_config_file = config_content_iget(content , RFT_CONFIG_KEY , 0,0);
-	  
+
 	  enkf_main_set_rft_config_file( enkf_main , rft_config_file );
 	}
-	
-	
+
+
 	/*****************************************************************/
 	{
 	  const char * select_case = NULL;
