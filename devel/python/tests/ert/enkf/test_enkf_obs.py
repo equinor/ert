@@ -1,15 +1,23 @@
 from ert.test import ErtTestContext
 from ert.test import ExtendedTestCase
 
+from ert.ecl import EclGrid, EclSum
+from ert.sched import History
+
 from ert.util import BoolVector,IntVector
 from ert.enkf import ActiveMode, EnsembleConfig
-from ert.enkf import ObsVector , LocalObsdata, EnkfObs
+from ert.enkf import ObsVector , LocalObsdata, EnkfObs, TimeMap
 
 
 class EnKFObsTest(ExtendedTestCase):
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/obs_testing/config")
+        self.obs_config = self.createTestPath("Statoil/config/obs_testing/observations")
+        self.obs_config2 = self.createTestPath("Statoil/config/obs_testing/observations2")
+        self.refcase = self.createTestPath("Statoil/config/obs_testing/EXAMPLE_01_BASE")
+        self.grid = self.createTestPath("Statoil/config/obs_testing/EXAMPLE_01_BASE.EGRID")
 
+        
     def testObs(self):
         with ErtTestContext("obs_test", self.config_file) as test_context:
             ert = test_context.getErt()
@@ -84,5 +92,29 @@ class EnKFObsTest(ExtendedTestCase):
 
     def test_create(self):
         ensemble_config = EnsembleConfig()
-        obs = EnkfObs(ensemble_config)
+        with self.assertRaises(ValueError):
+            obs = EnkfObs(ensemble_config)
+
+        time_map = TimeMap()
+        obs = EnkfObs(ensemble_config , external_time_map = time_map)
         self.assertEqual( len(obs) , 0 )
+
+        grid = EclGrid(self.grid)
+        refcase = EclSum(self.refcase)
+
+        history = History.alloc_from_refcase( refcase , False )
+        obs = EnkfObs( ensemble_config , grid = grid , history = history )
+        with self.assertRaises(IOError):
+            obs.load("/does/not/exist")
+
+        obs.load(self.obs_config)
+        self.assertEqual( len(obs) , 32 )
+        obs.clear()
+        self.assertEqual( len(obs) , 0 )
+        
+        obs.load(self.obs_config)
+        self.assertEqual( len(obs) , 32 )
+        self.assertFalse( "RFT2" in obs )
+        obs.load(self.obs_config2)
+        self.assertEqual( len(obs) , 33 )
+        self.assertTrue( "RFT2" in obs )

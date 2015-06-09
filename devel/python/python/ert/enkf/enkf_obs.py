@@ -13,6 +13,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import os.path
 
 from ert.cwrap import BaseCClass, CWrapper
 from ert.util import StringList, IntVector
@@ -135,6 +136,16 @@ class EnkfObs(BaseCClass):
         return EnkfObs.cNamespace().scale_correlated_std( self , fs , active_list , local_obsdata )
     
 
+    def load(self , config_file):
+        if not os.path.isfile( config_file ):
+            raise IOError("The observation config file:%s does not exist" % config_file)
+        EnkfObs.cNamespace().load( self , config_file )
+
+
+    def clear(self):
+        EnkfObs.cNamespace().clear( self )
+
+
     def free(self):
         EnkfObs.cNamespace().free(self)
 
@@ -145,6 +156,8 @@ cwrapper.registerObjectType("enkf_obs", EnkfObs)
 EnkfObs.cNamespace().alloc = cwrapper.prototype("c_void_p enkf_obs_alloc( history , time_map , ecl_grid , ecl_sum , ens_config )")
 EnkfObs.cNamespace().free = cwrapper.prototype("void enkf_obs_free( enkf_obs )")
 EnkfObs.cNamespace().get_size = cwrapper.prototype("int enkf_obs_get_size( enkf_obs )")
+EnkfObs.cNamespace().load = cwrapper.prototype("void enkf_obs_load( enkf_obs , char*)")
+EnkfObs.cNamespace().clear = cwrapper.prototype("void enkf_obs_clear( enkf_obs )")
 EnkfObs.cNamespace().alloc_typed_keylist = cwrapper.prototype("stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)")
 EnkfObs.cNamespace().alloc_matching_keylist = cwrapper.prototype("stringlist_obj enkf_obs_alloc_matching_keylist(enkf_obs, char*)")
 EnkfObs.cNamespace().has_key = cwrapper.prototype("bool enkf_obs_has_key(enkf_obs, char*)")
