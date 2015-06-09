@@ -42,7 +42,6 @@ extern "C" {
 #include <ert/enkf/local_obsdata.h>
 
   bool            enkf_obs_have_obs( const enkf_obs_type * enkf_obs );
-  const char    * enkf_obs_get_config_file( const enkf_obs_type * enkf_obs);
   enkf_obs_type * enkf_obs_alloc( const history_type * history ,
                                   time_map_type * external_time_map ,
                                   const ecl_grid_type * grid ,
@@ -59,7 +58,7 @@ extern "C" {
   void              enkf_obs_load(enkf_obs_type * enkf_obs,
                                   const char           * config_file,
                                   double std_cutoff);
-
+  void enkf_obs_clear( enkf_obs_type * enkf_obs );
 
   void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
                                           enkf_fs_type             * fs,
@@ -91,7 +90,6 @@ extern "C" {
   stringlist_type * enkf_obs_alloc_keylist(enkf_obs_type * enkf_obs );
   stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string);
   time_t            enkf_obs_iget_obs_time(const enkf_obs_type * enkf_obs , int report_step);
-  void              enkf_obs_fprintf_config( const enkf_obs_type * enkf_obs , FILE * stream);
   void              enkf_obs_scale_std(enkf_obs_type * enkf_obs, double scale_factor);
   void enkf_obs_local_scale_std( const enkf_obs_type * enkf_obs , const local_obsdata_type * local_obsdata, double scale_factor);
   void              enkf_obs_add_local_nodes_with_data(const enkf_obs_type * enkf_obs , local_obsdata_type * local_obs , enkf_fs_type *fs , const bool_vector_type * ens_mask);

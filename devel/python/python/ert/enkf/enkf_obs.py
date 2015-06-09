@@ -67,9 +67,6 @@ class EnkfObs(BaseCClass):
         return EnkfObs.cNamespace().create_all_active_obs( self , key )
         
 
-    def get_config_file(self):
-        """ @rtype: Str """
-        return EnkfObs.cNamespace().get_config_file(self)
 
     def getTypedKeylist(self, observation_implementation_type):
         """
@@ -143,7 +140,6 @@ cwrapper.registerObjectType("enkf_obs", EnkfObs)
 
 EnkfObs.cNamespace().free = cwrapper.prototype("void enkf_obs_free( enkf_obs )")
 EnkfObs.cNamespace().get_size = cwrapper.prototype("int enkf_obs_get_size( enkf_obs )")
-EnkfObs.cNamespace().get_config_file = cwrapper.prototype("char* enkf_obs_get_config_file( enkf_obs )")
 EnkfObs.cNamespace().alloc_typed_keylist = cwrapper.prototype("stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)")
 EnkfObs.cNamespace().alloc_matching_keylist = cwrapper.prototype("stringlist_obj enkf_obs_alloc_matching_keylist(enkf_obs, char*)")
 EnkfObs.cNamespace().has_key = cwrapper.prototype("bool enkf_obs_has_key(enkf_obs, char*)")

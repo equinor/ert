@@ -3467,7 +3467,6 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
     ecl_config_fprintf_config( enkf_main->ecl_config , stream );
     model_config_fprintf_config( enkf_main->model_config , enkf_main->ens_size , stream );
 
-    enkf_obs_fprintf_config( enkf_main->obs , stream );
     analysis_config_fprintf_config( enkf_main->analysis_config , stream );
     ensemble_config_fprintf_config( enkf_main->ensemble_config , stream );
     local_config_fprintf_config( enkf_main->local_config , stream );
