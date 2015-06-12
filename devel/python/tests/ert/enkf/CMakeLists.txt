@@ -31,6 +31,7 @@ set(TEST_SOURCES
     test_summary_obs.py
     test_time_map.py
     test_update.py
+    test_ensemble_config.py
 )
 
 add_python_package("python.tests.ert.enkf" ${PYTHON_INSTALL_PREFIX}/tests/ert/enkf "${TEST_SOURCES}" False)
@@ -65,6 +66,7 @@ addPythonTest(ert.enkf.update tests.ert.enkf.test_update.UpdateTest LABELS Stato
 addPythonTest(ert.enkf.labscale tests.ert.enkf.test_labscale.LabScaleTest LABELS StatoilData)
 addPythonTest(ert.enkf.active_list tests.ert.enkf.test_active_list.ActiveListTest)
 addPythonTest(ert.enkf.local_obsdata_node tests.ert.enkf.test_local_obsdata_node.LocalObsdataNodeTest)
+addPythonTest(ert.enkf.ensemble_config tests.ert.enkf.test_ensemble_config.EnsembleConfigTest)
 
 add_subdirectory(data)
 add_subdirectory(export)

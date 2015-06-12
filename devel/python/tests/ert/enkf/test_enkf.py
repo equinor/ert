@@ -109,7 +109,7 @@ class EnKFTest(ExtendedTestCase):
 
             main.free()
 
-
+            
 
     def test_config( self ):
         with TestAreaContext("enkf_test") as work_area:

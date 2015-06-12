@@ -148,12 +148,9 @@ class EnKFMain(BaseCClass):
         """ @rtype: EnkfObs """
         return EnKFMain.cNamespace().get_obs(self).setParent(self)
 
-    def load_obs(self, obs_config_file):
-        EnKFMain.cNamespace().load_obs(self, obs_config_file)
-
-    def reload_obs(self):
-        EnKFMain.cNamespace().reload_obs(self)
-
+    def loadObservations(self , obs_config_file , clear = True):
+        EnKFMain.cNamespace().load_obs(self, obs_config_file , clear)
+        
 
     def get_pre_clear_runpath(self):
         pre_clear = EnKFMain.cNamespace().get_pre_clear_runpath(self)
@@ -269,8 +266,7 @@ EnKFMain.cNamespace().add_data_kw = cwrapper.prototype("void enkf_main_add_data_
 EnKFMain.cNamespace().resize_ensemble = cwrapper.prototype("void enkf_main_resize_ensemble(enkf_main, int)")
 EnKFMain.cNamespace().del_node = cwrapper.prototype("void enkf_main_del_node(enkf_main, char*)")
 EnKFMain.cNamespace().get_obs = cwrapper.prototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
-EnKFMain.cNamespace().load_obs = cwrapper.prototype("void enkf_main_load_obs(enkf_main, char*)")
-EnKFMain.cNamespace().reload_obs = cwrapper.prototype("void enkf_main_reload_obs(enkf_main)")
+EnKFMain.cNamespace().load_obs = cwrapper.prototype("void enkf_main_load_obs(enkf_main, char* , bool)")
 
 EnKFMain.cNamespace().get_pre_clear_runpath = cwrapper.prototype("bool enkf_main_get_pre_clear_runpath(enkf_main)")
 EnKFMain.cNamespace().set_pre_clear_runpath = cwrapper.prototype("void enkf_main_set_pre_clear_runpath(enkf_main, bool)")

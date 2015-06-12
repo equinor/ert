@@ -58,9 +58,9 @@ from .analysis_config import AnalysisConfig
 from .ecl_config import EclConfig
 
 from .custom_kw_config_set import CustomKWConfigSet
+from .ensemble_config import EnsembleConfig
 from .enkf_obs import EnkfObs
 from .enkf_state import EnKFState
-from .ensemble_config import EnsembleConfig
 from .ert_template import ErtTemplate
 from .ert_templates import ErtTemplates
 from .local_config import LocalConfig

@@ -182,7 +182,7 @@ struct enkf_main_struct {
 /*****************************************************************/
 
 void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
-
+void enkf_main_update_local_updates( enkf_main_type * enkf_main);
 
 
 
@@ -330,41 +330,50 @@ qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main ) {
 }
 
 
-/**
-   Will do a forced reload of the observtaions; if the user has edited
-   the content of the observation file while the ERT instance is
-   running.
+/*
+   Adding inverse observation keys to the enkf_nodes; can be called
+   several times.
 */
 
-void enkf_main_reload_obs( enkf_main_type * enkf_main) {
-  enkf_obs_reload(enkf_main->obs ,
-                  model_config_get_history(enkf_main->model_config),
-                  model_config_get_external_time_map(enkf_main->model_config),
-                  ecl_config_get_grid( enkf_main->ecl_config ),
-                  ecl_config_get_refcase( enkf_main->ecl_config ) ,
-                  analysis_config_get_std_cutoff(enkf_main->analysis_config),
-                  enkf_main->ensemble_config );
+
+void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
+  /* First clear all existing observation keys. */
+  ensemble_config_clear_obs_keys( enkf_main->ensemble_config );
+
+  /* Add new observation keys. */
+  {
+    hash_type      * map  = enkf_obs_alloc_data_map(enkf_main->obs);
+    hash_iter_type * iter = hash_iter_alloc(map);
+    const char * obs_key  = hash_iter_get_next_key(iter);
+    while (obs_key  != NULL) {
+      const char * state_kw = hash_get(map , obs_key);
+      ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
+      obs_key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter);
+    hash_free(map);
+  }
 }
 
+void enkf_main_alloc_obs( enkf_main_type * enkf_main ) {
+  enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config),
+                                   model_config_get_external_time_map(enkf_main->model_config),
+                                   ecl_config_get_grid( enkf_main->ecl_config ),
+                                   ecl_config_get_refcase( enkf_main->ecl_config ) ,
+                                   enkf_main->ensemble_config );
+}
 
-/**
-   Will not reload the observations if the input config file
-   @obs_config_file is equal to the currently set config_file. If you
-   want to force a reload of the observations use the function
-   enkf_main_reload_obs().
-*/
+void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file , bool clear_existing) {
+  if (clear_existing)
+    enkf_obs_clear( enkf_main->obs );
 
-void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
-  if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs ))) {
-    enkf_obs_load(enkf_main->obs ,
-                  model_config_get_history(enkf_main->model_config),
-                  model_config_get_external_time_map(enkf_main->model_config),
-                  obs_config_file ,
-                  ecl_config_get_grid( enkf_main->ecl_config ),
-                  ecl_config_get_refcase( enkf_main->ecl_config ) ,
-                  analysis_config_get_std_cutoff(enkf_main->analysis_config),
-                  enkf_main->ensemble_config );
-  }
+  if (enkf_obs_load(enkf_main->obs ,
+                    obs_config_file ,
+                    analysis_config_get_std_cutoff(enkf_main->analysis_config))) {
+    enkf_main_update_obs_keys(enkf_main);
+    enkf_main_update_local_updates(enkf_main );
+  } else
+      fprintf(stderr,"** Warning: failed to load observation data from: %s \n",obs_config_file);
 }
 
 
@@ -414,7 +423,9 @@ void enkf_main_free(enkf_main_type * enkf_main){
     rng_free( enkf_main->rng );
   rng_config_free( enkf_main->rng_config );
 
-  enkf_obs_free(enkf_main->obs);
+  if (enkf_main->obs)
+    enkf_obs_free(enkf_main->obs);
+
   ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL)
@@ -431,8 +442,7 @@ void enkf_main_free(enkf_main_type * enkf_main){
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
 
-  if (enkf_main->local_config != NULL)
-    local_config_free( enkf_main->local_config );
+  local_config_free( enkf_main->local_config );
 
   ert_report_list_free( enkf_main->report_list );
   ert_workflow_list_free( enkf_main->workflow_list );
@@ -2496,8 +2506,9 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->plot_config        = plot_config_alloc_default();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
-  enkf_main->obs                = enkf_obs_alloc( );
+  enkf_main->obs                = NULL;
   enkf_main->model_config       = model_config_alloc( );
+  enkf_main->local_config       = local_config_alloc( );
 
   enkf_main_rng_init( enkf_main );
   enkf_main->subst_func_pool    = subst_func_pool_alloc(  );
@@ -2718,30 +2729,6 @@ const char * enkf_main_get_schedule_prediction_file( const enkf_main_type * enkf
 }
 
 
-/*
-   Adding inverse observation keys to the enkf_nodes; can be called
-   several times.
-*/
-
-
-void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
-  /* First clear all existing observation keys. */
-  ensemble_config_clear_obs_keys( enkf_main->ensemble_config );
-
-  /* Add new observation keys. */
-  {
-    hash_type      * map  = enkf_obs_alloc_data_map(enkf_main->obs);
-    hash_iter_type * iter = hash_iter_alloc(map);
-    const char * obs_key  = hash_iter_get_next_key(iter);
-    while (obs_key  != NULL) {
-      const char * state_kw = hash_get(map , obs_key);
-      ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
-      obs_key = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free(iter);
-    hash_free(map);
-  }
-}
 
 /*****************************************************************/
 
@@ -2785,26 +2772,14 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
 }
 
 
-void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_content_type * config ) {
+void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
   const enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
   if (enkf_obs_have_obs( enkf_obs )) {
-    enkf_main->local_config  = local_config_alloc( );
-
     /* First create the default ALL_ACTIVE configuration. */
     {
       char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
       enkf_main_create_all_active_config( enkf_main ,
                                           all_active_config_file );
-
-      /* Install custom local_config - if present.*/
-      {
-        int i;
-        for (i = 0; i < config_content_get_occurences( config , LOCAL_CONFIG_KEY); i++) {
-          const stringlist_type * files = config_content_iget_stringlist_ref(config , LOCAL_CONFIG_KEY , i);
-          for (int j=0; j < stringlist_get_size( files ); j++)
-            local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
-        }
-      }
 
       /**
          This is where the local configuration files are actually parsed.
@@ -2818,9 +2793,7 @@ void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_con
       unlink( all_active_config_file );
       free(all_active_config_file);
     }
-  } else
-    if (config_content_get_occurences( config , LOCAL_CONFIG_KEY) > 0)
-      fprintf(stderr,"** Warning: Not possible to configure local analysis without SCHEDULE or REFCASE - %s keyword(s) ignored\n", LOCAL_CONFIG_KEY);
+  }
 }
 
 
@@ -2918,11 +2891,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	free( realpath );
       } else
 	util_alloc_file_components(_model_config , &path , &base , &ext);
-      
+
       if (path != NULL) {
 	if (util_chdir(path) != 0)
 	  util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
-	
+
 	if (verbose)
 	  printf("Changing to directory ...................: %s \n",path);
 
@@ -2955,22 +2928,22 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
       enkf_main_init_user_config( enkf_main , config );
       site_config_add_config_items( config , false );
       site_config_init_user_mode( enkf_main->site_config );
-      
+
       content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true);
       if (!config_content_is_valid( content )) {
 	config_error_type * errors = config_content_get_errors( content );
 	config_error_fprintf( errors , true , stderr );
 	exit(1);
       }
-      
+
       site_config_init( enkf_main->site_config , content );                                   /*  <---- model_config : second pass. */
-      
+
       /*****************************************************************/
       /*
 	OK - now we have parsed everything - and we are ready to start
 	populating the enkf_main object.
       */
-      
+
 
       enkf_main_set_site_config_file( enkf_main , site_config );
       enkf_main_set_user_config_file( enkf_main , model_config );
@@ -2980,33 +2953,33 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	int log_level = DEFAULT_LOG_LEVEL;
 	if(config_content_has_item( content , LOG_LEVEL_KEY))
 	  log_level = config_content_get_value_as_int(content , LOG_LEVEL_KEY);
-	
+
 	if (config_content_has_item( content , LOG_FILE_KEY))
 	  log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
 	else
 	  log_file = util_alloc_filename( NULL , enkf_main->user_config_file , "log");
-	
+
 	ert_log_init_log(log_level, log_file ,  enkf_main->verbose);
-	
+
 	free( log_file );
       }
-      
+
       /*
 	Initializing the various 'large' sub config objects.
       */
       rng_config_init( enkf_main->rng_config , content );
       enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
-      
+
       enkf_main_init_subst_list( enkf_main );
       ert_workflow_list_init( enkf_main->workflow_list , content );
-      
+
       analysis_config_load_internal_modules( enkf_main->analysis_config );
       analysis_config_init( enkf_main->analysis_config , content );
       ecl_config_init( enkf_main->ecl_config , content );
       plot_config_init( enkf_main->plot_config , content );
 
       ensemble_config_init( enkf_main->ensemble_config , content , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
-      
+
       model_config_init( enkf_main->model_config ,
 			 content ,
 			 enkf_main_get_ensemble_size( enkf_main ),
@@ -3014,7 +2987,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 			 ecl_config_get_last_history_restart( enkf_main->ecl_config ),
 			 ecl_config_get_sched_file(enkf_main->ecl_config) ,
 			 ecl_config_get_refcase( enkf_main->ecl_config ));
-      
+
       enkf_main_init_qc( enkf_main , content );
       enkf_main_init_data_kw( enkf_main , content );
       enkf_main_update_num_cpu( enkf_main );
@@ -3026,33 +2999,33 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	  {
 	    hash_type * opt_hash = hash_alloc();
 	    config_content_node_init_opt_hash( pred_node , opt_hash , 1 );
-	    
+
 	    const char * parameters = hash_safe_get( opt_hash , "PARAMETERS" );
 	    const char * min_std    = hash_safe_get( opt_hash , "MIN_STD"    );
 	    const char * init_files = hash_safe_get( opt_hash , "INIT_FILES" );
-	    
+
 	    enkf_main_set_schedule_prediction_file__( enkf_main , template_file , parameters , min_std , init_files );
 	    hash_free( opt_hash );
 	  }
 	}
       }
-      
+
 
       /*****************************************************************/
       /**
 	 To keep or not to keep the runpath directories? The problem is
 	 that the default behavior is different depending on the run_mode:
-	 
+
 	 enkf_mode: In this case the default behaviour is to delete the
 	 runpath directories. You can explicitly say that you want to
 	 keep runpath directories with the KEEP_RUNPATH
 	 directive.
-	 
+
 	 experiments: In this case the default is to keep the runpath
 	 directories around, but you can explicitly say that you
 	 want to remove the directories by using the DELETE_RUNPATH
 	 option.
-	 
+
 	 The final decision is performed in enkf_state().
       */
       {
@@ -3060,65 +3033,54 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	  char * keep_runpath_string   = NULL;
 	  char * delete_runpath_string = NULL;
 	  int    ens_size              = config_content_get_value_as_int(content , NUM_REALIZATIONS_KEY);
-	  
+
 	  if (config_content_has_item(content , KEEP_RUNPATH_KEY))
 	    keep_runpath_string = config_content_alloc_joined_string(content , KEEP_RUNPATH_KEY , "");
-	  
+
 	  if (config_content_has_item(content , DELETE_RUNPATH_KEY))
 	    delete_runpath_string = config_content_alloc_joined_string(content , DELETE_RUNPATH_KEY , "");
-	  
+
 	  enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string , ens_size );
-	  
+
 	  util_safe_free( keep_runpath_string   );
 	  util_safe_free( delete_runpath_string );
 	}
-	
+
 	/* This is really in the wrong place ... */
 	{
 	  enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
 	  if (config_content_has_item(content , PRE_CLEAR_RUNPATH_KEY))
 	    enkf_main->pre_clear_runpath = config_content_get_value_as_bool( content , PRE_CLEAR_RUNPATH_KEY);
 	}
-	
+
 	ecl_config_static_kw_init( enkf_main->ecl_config , content );
-	
+
 	/* Installing templates */
 	ert_templates_init( enkf_main->templates , content );
-	
+
 	/*****************************************************************/
 	ert_report_list_init( enkf_main->report_list , content , ecl_config_get_refcase( enkf_main->ecl_config ));
-	
-	
+
+
 	/*****************************************************************/
 	{
 	  const char * select_case = NULL;
 	  if (config_content_has_item( content , SELECT_CASE_KEY))
 	    select_case = config_content_get_value( content , SELECT_CASE_KEY );
-	  
+
 	  enkf_main_user_select_fs( enkf_main , select_case );
 	}
-	
-	{
-	  const char * obs_config_file;
-	  if (config_content_has_item(content , OBS_CONFIG_KEY))
-	    obs_config_file = config_content_iget(content  , OBS_CONFIG_KEY , 0,0);
-	  else
-	    obs_config_file = NULL;
-	  
-	  enkf_main_load_obs( enkf_main , obs_config_file );
-	}
-	
-	enkf_main_update_obs_keys(enkf_main);
-	
+
+
 	{
 	  const char * rft_config_file = NULL;
 	  if (config_content_has_item(content , RFT_CONFIG_KEY))
 	    rft_config_file = config_content_iget(content , RFT_CONFIG_KEY , 0,0);
-	  
+
 	  enkf_main_set_rft_config_file( enkf_main , rft_config_file );
 	}
-	
-	
+
+
 	/*****************************************************************/
 	{
 	  const char * select_case = NULL;
@@ -3138,7 +3100,22 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	  if you have created a personal local config that will be
 	  loaded on top.
 	*/
-	enkf_main_init_local_updates(enkf_main , content );
+        /* Install custom local_config - if present.*/
+        {
+          int i;
+          for (i = 0; i < config_content_get_occurences( content , LOCAL_CONFIG_KEY); i++) {
+            const stringlist_type * files = config_content_iget_stringlist_ref(content , LOCAL_CONFIG_KEY , i);
+            for (int j=0; j < stringlist_get_size( files ); j++)
+              local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
+          }
+        }
+
+        /* Loading observations */
+        enkf_main_alloc_obs(enkf_main);
+        if (config_content_has_item(content , OBS_CONFIG_KEY)) {
+          const char * obs_config_file = config_content_iget(content  , OBS_CONFIG_KEY , 0,0);
+          enkf_main_load_obs( enkf_main , obs_config_file , true );
+        }
 
       }
       config_content_free( content );
@@ -3487,7 +3464,6 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
     ecl_config_fprintf_config( enkf_main->ecl_config , stream );
     model_config_fprintf_config( enkf_main->model_config , enkf_main->ens_size , stream );
 
-    enkf_obs_fprintf_config( enkf_main->obs , stream );
     analysis_config_fprintf_config( enkf_main->analysis_config , stream );
     ensemble_config_fprintf_config( enkf_main->ensemble_config , stream );
     local_config_fprintf_config( enkf_main->local_config , stream );
