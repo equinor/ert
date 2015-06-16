@@ -63,6 +63,7 @@ struct analysis_config_struct {
   bool                            stop_long_running;
   bool                            std_scale_correlated_obs;
   int                             max_runtime;
+  double                          global_std_scaling;
 };
 
 
@@ -157,7 +158,13 @@ void analysis_config_set_std_scale_correlated_obs( analysis_config_type * config
   config->std_scale_correlated_obs = std_scale_correlated_obs;
 }
 
+double analysis_config_get_global_std_scaling(const analysis_config_type * config) {
+  return config->global_std_scaling;
+}
 
+void analysis_config_set_global_std_scaling(analysis_config_type * config, double global_std_scaling) {
+  config->global_std_scaling = global_std_scaling;
+}
 
 int analysis_config_get_max_runtime( const analysis_config_type * config ) {
   return config->max_runtime;
@@ -609,6 +616,7 @@ analysis_config_type * analysis_config_alloc( rng_type * rng ) {
   config->rng                  = rng;
   config->iter_config          = analysis_iter_config_alloc();
   config->std_scale_correlated_obs = false;
+  config->global_std_scaling   = 1.0;
   return config;
 }
 

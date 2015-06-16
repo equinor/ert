@@ -113,6 +113,9 @@ const char           * analysis_config_get_active_module_name( const analysis_co
 bool                   analysis_config_get_std_scale_correlated_obs( const analysis_config_type * config);
 void                   analysis_config_set_std_scale_correlated_obs( analysis_config_type * config, bool std_scale_correlated_obs);
 
+double                 analysis_config_get_global_std_scaling(const analysis_config_type * config);
+void                   analysis_config_set_global_std_scaling(analysis_config_type * config, double global_std_scaling);
+
   UTIL_IS_INSTANCE_HEADER( analysis_config );
 
 #ifdef __cplusplus

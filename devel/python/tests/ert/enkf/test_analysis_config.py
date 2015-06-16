@@ -38,3 +38,9 @@ class AnalysisConfigTest(ExtendedTestCase):
         ac = AnalysisConfig()
         self.assertIsNone( ac.activeModuleName() )
         self.assertIsNotNone( ac.getModuleList() )
+
+    def test_analysis_config_global_std_scaling(self):
+        ac = AnalysisConfig()
+        self.assertFloatEqual(ac.getGlobalStdScaling(), 1.0)
+        ac.setGlobalStdScaling(0.77)
+        self.assertFloatEqual(ac.getGlobalStdScaling(), 0.77)

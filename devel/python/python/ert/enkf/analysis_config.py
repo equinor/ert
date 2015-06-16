@@ -112,6 +112,12 @@ class AnalysisConfig(BaseCClass):
         """ :rtype: AnalysisModule """
         return self.getModule(self.activeModuleName())
 
+    def setGlobalStdScaling(self, std_scaling):
+        AnalysisConfig.cNamespace().set_global_std_scaling(self, std_scaling)
+
+    def getGlobalStdScaling(self):
+        return AnalysisConfig.cNamespace().get_global_std_scaling(self)
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("analysis_config", AnalysisConfig)
@@ -146,3 +152,6 @@ AnalysisConfig.cNamespace().get_alpha              = cwrapper.prototype("double 
 AnalysisConfig.cNamespace().set_alpha              = cwrapper.prototype("void analysis_config_set_alpha(analysis_config, double)")
 AnalysisConfig.cNamespace().get_std_cutoff         = cwrapper.prototype("double analysis_config_get_std_cutoff(analysis_config)")
 AnalysisConfig.cNamespace().set_std_cutoff         = cwrapper.prototype("void analysis_config_set_std_cutoff(analysis_config, double)")
+
+AnalysisConfig.cNamespace().set_global_std_scaling = cwrapper.prototype("void analysis_config_set_global_std_scaling(analysis_config, double)")
+AnalysisConfig.cNamespace().get_global_std_scaling = cwrapper.prototype("double analysis_config_get_global_std_scaling(analysis_config)")
