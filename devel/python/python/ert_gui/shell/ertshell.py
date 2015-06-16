@@ -43,14 +43,17 @@ class ErtShell(Cmd):
             "-- Arrow up/down for history.\n"
 
 
-    def __init__(self):
+    def __init__(self, forget_history=False):
         Cmd.__init__(self)
 
         shell_context = ShellContext(self)
         self.__shell_context = shell_context
 
-        self.__history_file = os.path.join(os.path.expanduser("~/.ertshell/ertshell.history"))
-        self.__init_history()
+        if not forget_history:
+            self.__history_file = os.path.join(os.path.expanduser("~/.ertshell/ertshell.history"))
+            self.__init_history()
+        else:
+            self.__history_file = None
 
         matplotlib.rcParams["backend"] = "Qt4Agg"
         matplotlib.rcParams["interactive"] = True
@@ -83,16 +86,18 @@ class ErtShell(Cmd):
 
     def __init_history(self):
         try:
+            readline.set_history_length(100)
             readline.read_history_file(self.__history_file)
         except IOError:
             pass
         atexit.register(self.__save_history)
 
     def __save_history(self):
-        if not os.path.exists(os.path.dirname(self.__history_file)):
-            os.makedirs(os.path.dirname(self.__history_file))
+        if self.__history_file is not None:
+            if not os.path.exists(os.path.dirname(self.__history_file)):
+                os.makedirs(os.path.dirname(self.__history_file))
 
-        readline.write_history_file(self.__history_file)
+            readline.write_history_file(self.__history_file)
 
     def emptyline(self):
         pass
