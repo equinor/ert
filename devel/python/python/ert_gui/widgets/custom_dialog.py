@@ -23,7 +23,7 @@ class CustomDialog(QDialog):
     INVALID_COLOR = QColor(255, 235, 235)
 
     def __init__(self, title = "Title", description = "Description", parent=None):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.WindowStaysOnTopHint)
 
         self.__option_list = []
         """ :type: list of HelpedWidget """
@@ -34,6 +34,7 @@ class CustomDialog(QDialog):
         # self.setMinimumHeight(150)
 
         self.layout = QFormLayout()
+        self.layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         self.layout.setSizeConstraint(QLayout.SetFixedSize)
 
         label = QLabel(description)
