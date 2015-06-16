@@ -34,7 +34,7 @@ class ErtShellTestContext(object):
         """ :rtype: ErtShell """
         test_area = self.test_area_context.__enter__()
         test_area.copy_parent_content(self.config_file)
-        self.shell = ErtShell()
+        self.shell = ErtShell(forget_history=True)
 
         config_file = os.path.basename(self.config_file)
 
