@@ -4,70 +4,65 @@ from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
 
 
 class MDAEnsembleSmootherPluginTest(ExtendedTestCase):
+    def getPlugin(self, ert, job_name):
+        mda_es = self.createSharePath("workflows/jobs/internal-gui/config/%s" % job_name)
 
-    def getWorkflowJob(self, ert, plugin_name):
-        """ @rtype: WorkflowJob """
-        plugin_name = plugin_name.strip()
-        plugin_jobs = ert.getWorkflowList().getPluginJobs()
-        plugin_job = next((job for job in plugin_jobs if job.name() == plugin_name), None)
-        return plugin_job
+        ert.getWorkflowList().addJob("TEST_MDA_ES", mda_es)
+        plugin_job = ert.getWorkflowList().getJob("TEST_MDA_ES")
 
-    def getScript(self, ert, plugin_job):
+        self.assertIsNotNone(plugin_job)
+
         script_obj = ErtScript.loadScriptFromFile(plugin_job.getInternalScriptPath())
         script = script_obj(ert)
         return script
 
+
     def test_weights(self):
         test_config = self.createTestPath("local/custom_kw/mini_config")
 
-        with ErtShellTestContext("python/workflow_jobs/mda_es", test_config) as shell:
+        with ErtShellTestContext("python/workflow_jobs/mda_es_weights", test_config) as shell:
             ert = shell.shellContext().ert()
-            plugin_job = self.getWorkflowJob(ert, "MDA_ES")
-            self.assertIsNotNone(plugin_job)
-            script = self.getScript(ert, plugin_job)
+            plugin = self.getPlugin(ert, "MDA_ES")
 
-            weights = script.parseWeights("iteration_weights/constant_4")
+            weights = plugin.parseWeights("iteration_weights/constant_4")
             self.assertAlmostEqualList([2, 2, 2, 2], weights)
 
-            weights = script.parseWeights("iteration_weights/constant_2")
+            weights = plugin.parseWeights("iteration_weights/constant_2")
             self.assertAlmostEqualList([1.414213562373095, 1.414213562373095], weights)
 
             with self.assertRaises(ValueError):
-                script.parseWeights("iteration_weights/error_in_weights")
+                plugin.parseWeights("iteration_weights/error_in_weights")
 
             with self.assertRaises(ValueError):
-                script.parseWeights("")
+                plugin.parseWeights("")
 
-            weights = script.parseWeights("2, 2, 2, 2")
+            weights = plugin.parseWeights("2, 2, 2, 2")
             self.assertAlmostEqualList([2, 2, 2, 2], weights)
 
-            weights = script.parseWeights("1.414213562373095, 1.414213562373095")
+            weights = plugin.parseWeights("1.414213562373095, 1.414213562373095")
             self.assertAlmostEqualList([1.414213562373095, 1.414213562373095], weights)
 
             with self.assertRaises(ValueError):
-                script.parseWeights("2, error, 2, 2")
+                plugin.parseWeights("2, error, 2, 2")
 
 
     def test_normalized_weights(self):
         test_config = self.createTestPath("local/custom_kw/mini_config")
 
-        with ErtShellTestContext("python/workflow_jobs/mda_es", test_config) as shell:
+        with ErtShellTestContext("python/workflow_jobs/mda_es_weights_normalized", test_config) as shell:
             ert = shell.shellContext().ert()
-            plugin_job = self.getWorkflowJob(ert, "MDA_ES")
-            self.assertIsNotNone(plugin_job)
-            script = self.getScript(ert, plugin_job)
-
-            weights = script.normalizeWeights([1])
+            plugin = self.getPlugin(ert, "MDA_ES")
+            weights = plugin.normalizeWeights([1])
             self.assertAlmostEqualList([1.0], weights)
 
-            weights = script.normalizeWeights([1, 1])
+            weights = plugin.normalizeWeights([1, 1])
             self.assertAlmostEqualList([1.414214, 1.414214], weights)
 
-            weights = script.normalizeWeights([1, 1, 1])
+            weights = plugin.normalizeWeights([1, 1, 1])
             self.assertAlmostEqualList([1.732051, 1.732051, 1.732051], weights)
 
-            weights = script.normalizeWeights([8, 4, 2, 1])
+            weights = plugin.normalizeWeights([8, 4, 2, 1])
             self.assertAlmostEqualList([9.219544457292887, 4.6097722286464435, 2.3048861143232218, 1.1524430571616109], weights)
 
-            weights = script.normalizeWeights([9.219544457292887, 4.6097722286464435, 2.3048861143232218, 1.1524430571616109])
+            weights = plugin.normalizeWeights([9.219544457292887, 4.6097722286464435, 2.3048861143232218, 1.1524430571616109])
             self.assertAlmostEqualList([9.219544457292887, 4.6097722286464435, 2.3048861143232218, 1.1524430571616109], weights)
