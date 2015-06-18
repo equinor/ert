@@ -1,10 +1,12 @@
+----------------------
 Built in workflow jobs
 ----------------------
 .. _built_in_workflow_jobs:
 
 ERT comes with a list of default workflow jobs which invoke internal ERT functionality. The internal workflows include:
 
-**Jobs related to case management**
+Jobs related to case management
+-------------------------------
 
 **SELECT_CASE**
 
@@ -41,7 +43,9 @@ By default the job will initialize the 'current case', but optionally you can gi
 
 When giving the name of a second case as target for the initialization job the 'current' case will not be affected.
 
-**Jobs related to export**
+
+Jobs related to export
+----------------------
 
 **EXPORT_FIELD**
 
@@ -136,7 +140,9 @@ With no arguments, entries for all realizations are written to the runpath file.
 
 A range of realizations and a range of iterations can be given. "|" is used as a delimiter to separate realizations and iterations. "*" can be used to select all realizations or iterations. In the example above, entries for realizations 0-5 for all iterations are written to the runpath file. 
 
-**Jobs related to analysis update**
+
+Jobs related to analysis update
+-------------------------------
 
 **ANALYSIS_UPDATE**
 
@@ -184,7 +190,8 @@ by default the ENKF_UPDATE will use the observed data at the updatestep, but you
 The ANALYSIS_ENKF_UPDATE job is a special case of the ANALYSIS_UPDATE job, in principle the same can be achieved with the ENKF_UPDATE job.
 
 
-**Jobs related to running simulations - including updates**
+Jobs related to running simulations - including updates
+-------------------------------------------------------
 
 **RUN_SMOOTHER**
 
@@ -266,7 +273,32 @@ The LOAD_RESULTS_ITER job is similar to the LOAD_RESULTS job, but it takes an ad
 Will load the realisations 1,2,3 and 8,9,10 from the fourth iteration (counting starts at zero).
 
 
-**Jobs for ranking realizations**
+**MDA_ES**
+
+This workflow job (plugin) is used to run the *Multiple Data Assimilation Ensemble Smoother* :code:`MDA ES`.
+Only two arguments are required to start the MDA ES process; target case format and iteration weights.
+The weights implicitly indicate the number of iterations and the normalized global standard deviation scaling applied to the update step.
+
+::
+
+	MDA_ES target_case_%d observations/obs.txt
+
+This command will use the weights specified in the obs.txt file. This file should have a single floating point number per line.
+Alternatively the weights can be given as arguments as shown here.
+
+::
+
+	MDA_ES target_case_%d 8,4,2,1
+
+This command will use the normalized version of the weights 8,4,2,1 and run for four iterations.
+The prior will be in *target_case_0* and the results from the last iteration will be in *target_case_4*.
+**Note: the weights must be listed with no spaces and separated with commas.**
+
+If this is run as a plugin from Ertshell or the GUI a convenient user interface can be shown.
+
+
+Jobs for ranking realizations
+-----------------------------
 
 **OBSERVATION_RANKING**
 
@@ -331,7 +363,7 @@ keys you want to consider as arguments:
 
 ::
 
-        STD_SCALE_CORRELATED_OBS  WWCT:OP_1  WWCT:OP_2
+	STD_SCALE_CORRELATED_OBS  WWCT:OP_1  WWCT:OP_2
 
 In this example the observation uncertainty corresponding to
 :code:`WWCT:OP_1` and :code:`WWCT:OP_2` will be scaled. Observe that
@@ -339,10 +371,11 @@ the :code:`STD_SCALE_CORRELATED_OBS` keyword will "flatten" in both
 time and spatial direction. Wildcards are allow, i.e.
 
 ::
-        STD_SCALE_CORRELATED_OBS  W*:OP_1
+
+	STD_SCALE_CORRELATED_OBS  W*:OP_1
 
 Will scale based on all the observations of well 'OP_1'. For more
 advanced selections of observations, where you only want to scale
 based on parts of the observation - spatially or temporaly you must
 write your own plugin.
-        
+

@@ -43,6 +43,7 @@ endif()
 
 if (ERT_BUILD_GUI)
     add_subdirectory(gui)
+    add_subdirectory(plugins)
 
     add_test( NAME python.tests.ert_gui.import
               WORKING_DIRECTORY ${INSTALL_DIRECTORY}

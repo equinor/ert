@@ -1044,7 +1044,7 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
   state_map_type * state_map             = enkf_fs_get_state_map( fs );
   const int total_ens_size               = enkf_main_get_ensemble_size(enkf_main);
   bool_vector_type * ens_mask            = bool_vector_alloc(total_ens_size , false );
-  obs_data_type  *  obs_data             = obs_data_alloc();
+  obs_data_type  *  obs_data             = obs_data_alloc(1.0);
   int_vector_type * ens_active_list;
   meas_data_type *  meas_data;
 
@@ -1311,7 +1311,8 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
         deactivating observations which should not be used in the update
         process.
       */
-      obs_data_type               * obs_data      = obs_data_alloc();
+      double global_std_scaling = analysis_config_get_global_std_scaling(analysis_config);
+      obs_data_type               * obs_data      = obs_data_alloc(global_std_scaling);
       meas_data_type              * meas_forecast = meas_data_alloc( ens_mask );
       meas_data_type              * meas_analyzed = meas_data_alloc( ens_mask );
       local_config_type           * local_config  = enkf_main->local_config;
