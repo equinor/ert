@@ -1,6 +1,5 @@
 from ert.job_queue import ErtScript
-from ert.test.extended_testcase import ExtendedTestCase
-from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
+from ert.test import ErtTestContext, ExtendedTestCase
 
 
 class MDAEnsembleSmootherPluginTest(ExtendedTestCase):
@@ -20,8 +19,8 @@ class MDAEnsembleSmootherPluginTest(ExtendedTestCase):
     def test_weights(self):
         test_config = self.createTestPath("local/custom_kw/mini_config")
 
-        with ErtShellTestContext("python/workflow_jobs/mda_es_weights", test_config) as shell:
-            ert = shell.shellContext().ert()
+        with ErtTestContext("python/workflow_jobs/mda_es_weights", test_config) as test_context:
+            ert = test_context.getErt()
             plugin = self.getPlugin(ert, "MDA_ES")
 
             weights = plugin.parseWeights("iteration_weights/constant_4")
@@ -49,8 +48,8 @@ class MDAEnsembleSmootherPluginTest(ExtendedTestCase):
     def test_normalized_weights(self):
         test_config = self.createTestPath("local/custom_kw/mini_config")
 
-        with ErtShellTestContext("python/workflow_jobs/mda_es_weights_normalized", test_config) as shell:
-            ert = shell.shellContext().ert()
+        with ErtTestContext("python/workflow_jobs/mda_es_weights_normalized", test_config) as test_context:
+            ert = test_context.getErt()
             plugin = self.getPlugin(ert, "MDA_ES")
             weights = plugin.normalizeWeights([1])
             self.assertAlmostEqualList([1.0], weights)
