@@ -16,7 +16,7 @@
 
 import os.path
 
-from ert.config import UnrecognizedEnum, CONFIG_LIB, ContentTypeEnum
+from ert.config import UnrecognizedEnum, CONFIG_LIB, ContentTypeEnum,ConfigError
 from ert.cwrap import BaseCClass, CWrapper
 
 class ContentNode(BaseCClass):
@@ -126,6 +126,8 @@ class ConfigContent(BaseCClass):
         ConfigContent.cNamespace().free(self)
 
 
+    def getErrors(self):
+        return ConfigContent.cNamespace().get_errors(self)
 
 
 cwrapper = CWrapper(CONFIG_LIB)
@@ -137,6 +139,7 @@ ConfigContent.cNamespace().free     = cwrapper.prototype("void config_content_fr
 ConfigContent.cNamespace().is_valid = cwrapper.prototype("bool config_content_is_valid( config_content )")
 ConfigContent.cNamespace().has_key = cwrapper.prototype("bool config_content_has_item( config_content , char*)")
 ConfigContent.cNamespace().get_item = cwrapper.prototype("content_item_ref config_content_get_item( config_content , char*)")
+ConfigContent.cNamespace().get_errors = cwrapper.prototype("config_error_ref config_content_get_errors( content_node )")
 
 ContentItem.cNamespace().size = cwrapper.prototype("int config_content_item_get_size( content_item )")
 ContentItem.cNamespace().iget_content_node = cwrapper.prototype("content_node_ref config_content_item_iget_node( content_item , int)")

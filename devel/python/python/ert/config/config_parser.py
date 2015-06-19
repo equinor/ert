@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+import sys
 import os.path
 
 from ert.config import UnrecognizedEnum, CONFIG_LIB, ContentTypeEnum , ConfigContent
@@ -80,6 +81,10 @@ class ConfigParser(BaseCClass):
             if config_content.isValid():
                 return config_content
             else:
+                sys.stderr.write("Errors parsing:%s \n" % config_file)
+                for count,error in enumerate(config_content.getErrors()):
+                    sys.stderr.write("  %02d:%s\n" % (count , error))
+                    
                 raise Exception("Parsing:%s failed" % config_file)
         else:
             raise IOError("File: %s does not exists" % config_file)
