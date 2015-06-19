@@ -78,14 +78,54 @@ int job_queue_manager_get_num_running( const job_queue_manager_type * manager) {
 }
 
 
-int job_queue_manager_get_num_complete( const job_queue_manager_type * manager) {
+int job_queue_manager_get_num_success( const job_queue_manager_type * manager) {
   return job_queue_get_num_complete( manager->job_queue );
 }
+
+int job_queue_manager_get_num_failed( const job_queue_manager_type * manager) {
+  return job_queue_get_num_failed( manager->job_queue );
+}
+
 
 
 bool job_queue_manager_job_complete( const job_queue_manager_type * manager , int job_index) {
   job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
   if (status & JOB_QUEUE_COMPLETE_STATUS)
+    return true;
+  else
+    return false;
+}
+
+
+bool job_queue_manager_job_waiting( const job_queue_manager_type * manager , int job_index) {
+  job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
+  if (status & JOB_QUEUE_WAITING_STATUS)
+    return true;
+  else
+    return false;
+}
+
+bool job_queue_manager_job_running( const job_queue_manager_type * manager , int job_index) {
+  job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
+  if (status == JOB_QUEUE_RUNNING)
+    return true;
+  else
+    return false;
+}
+
+
+bool job_queue_manager_job_failed( const job_queue_manager_type * manager , int job_index) {
+    job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
+    if (status == JOB_QUEUE_FAILED)
+      return true;
+    else
+      return false;
+}
+
+
+bool job_queue_manager_job_success( const job_queue_manager_type * manager , int job_index) {
+  job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
+  if (status == JOB_QUEUE_SUCCESS)
     return true;
   else
     return false;
