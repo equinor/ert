@@ -39,9 +39,12 @@ class JobQueueManager(BaseCClass):
     def getNumRunning(self):
         return JobQueueManager.cNamespace().get_num_running( self )
 
-    def getNumComplete(self):
-        return JobQueueManager.cNamespace().get_num_complete( self )
+    def getNumSuccess(self):
+        return JobQueueManager.cNamespace().get_num_success( self )
 
+    def getNumFailed(self):
+        return JobQueueManager.cNamespace().get_num_failed( self )
+    
     def isRunning(self):
         return JobQueueManager.cNamespace().is_running( self )
 
@@ -50,8 +53,18 @@ class JobQueueManager(BaseCClass):
 
     def jobComplete(self , job_index):
         return JobQueueManager.cNamespace().job_complete( self , job_index )
-        
-    
+
+    def jobRunning(self , job_index):
+        return JobQueueManager.cNamespace().job_running( self , job_index )
+
+    def jobWaiting(self , job_index):
+        return JobQueueManager.cNamespace().job_waiting( self , job_index )
+
+    def jobFailed(self , job_index):
+        return JobQueueManager.cNamespace().job_failed( self , job_index )
+
+    def jobSuccess(self , job_index):
+        return JobQueueManager.cNamespace().job_success( self , job_index )
         
 
 #################################################################
@@ -64,5 +77,10 @@ JobQueueManager.cNamespace().free              = cwrapper.prototype("void job_qu
 JobQueueManager.cNamespace().start_queue       = cwrapper.prototype("void job_queue_manager_start_queue( job_queue_manager , int , bool)")
 JobQueueManager.cNamespace().get_num_running   = cwrapper.prototype("int job_queue_manager_get_num_running( job_queue_manager )")
 JobQueueManager.cNamespace().get_num_complete  = cwrapper.prototype("int job_queue_manager_get_num_complete( job_queue_manager )")
+JobQueueManager.cNamespace().get_num_failed    = cwrapper.prototype("int job_queue_manager_get_num_failed( job_queue_manager )")
 JobQueueManager.cNamespace().is_running        = cwrapper.prototype("bool job_queue_manager_is_running( job_queue_manager )")
-JobQueueManager.cNamespace().job_complete      = cwrapper.prototype("bool job_queue_manager_job_complete( job_queue_manager , int)")
+JobQueueManager.cNamespace().job_complete      = cwrapper.prototype("bool job_queue_manager_job_success( job_queue_manager , int)")
+JobQueueManager.cNamespace().job_running       = cwrapper.prototype("bool job_queue_manager_job_running( job_queue_manager , int)")
+JobQueueManager.cNamespace().job_failed        = cwrapper.prototype("bool job_queue_manager_job_failed( job_queue_manager , int)")
+JobQueueManager.cNamespace().job_waiting       = cwrapper.prototype("bool job_queue_manager_job_waiting( job_queue_manager , int)")
+JobQueueManager.cNamespace().job_success       = cwrapper.prototype("bool job_queue_manager_job_success( job_queue_manager , int)")
