@@ -123,22 +123,33 @@ class ErtServer(object):
             raise KeyError("The command:%s was not recognized" % cmd)
 
 
+
+    # The STATUS action can either report results for the complete
+    # simulation set, or it can report the status of one particular
+    # realisation. If the function is called with zero arguments it
+    # will return the global status, if called with one argument it
+    # will return the status for that realisation.
+        
     def handleSTATUS(self , args):
         if self.isConnected():
             if self.run_context is None:
                 return self.SUCCESS(["READY"])
             else:
-                if self.run_context.isRunning():
-                    if len(args) == 0:
-                        return self.SUCCESS(["RUNNING" , self.run_context.getNumRunning() , self.run_context.getNumComplete()])
+                if len(args) == 0:
+                    if self.run_context.isRunning():
+                        return self.SUCCESS(["RUNNING" , self.run_context.getNumRunning() , self.run_context.getNumSuccess() , self.run_context.getNumFailed()])
                     else:
-                        iens = args[0]
-                        if self.run_context.realisationComplete(iens):
-                            return self.SUCCESS(["COMPLETE"])
-                        else:
-                            return self.SUCCESS(["RUNNING"])
+                        return self.SUCCESS(["COMPLETE" , self.run_context.getNumRunning() , self.run_context.getNumSuccess() , self.run_context.getNumFailed()])
                 else:
-                    return self.SUCCESS(["COMPLETE"])
+                    iens = args[0]
+
+                    if self.run_context.realisationRunning(iens):
+                        return self.SUCCESS(["RUNNING"])
+                    elif self.run_context.realisationFailed(iens):
+                        return self.SUCCESS(["FAILED"])
+                    elif self.run_context.realisationSuccess(iens):
+                        return self.SUCCESS(["SUCCESS"])
+
         else:
             return self.SUCCESS(["CLOSED"])
 
