@@ -38,3 +38,9 @@ class ErtShellSmootherTest(ExtendedTestCase):
             self.assertAlmostEqual(0.1, analysis_config.getStdCutoff())
             self.assertFalse(shell.invokeCommand("smoother std_cutoff zeropointthreefourteen"))
 
+
+            self.assertTrue(shell.invokeCommand("smoother global_std_scaling"))
+            self.assertTrue(shell.invokeCommand("smoother global_std_scaling 0.5"))
+            self.assertAlmostEqual(0.5, analysis_config.getGlobalStdScaling())
+            self.assertFalse(shell.invokeCommand("smoother global_std_scaling zeropointfour"))
+

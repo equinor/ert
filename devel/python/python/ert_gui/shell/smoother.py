@@ -8,6 +8,7 @@ class Smoother(ShellFunction):
         self.addHelpFunction("update", "<target_case>", "Run smoother update on the current case, placing the results in the target case.")
         self.addHelpFunction("overlap_alpha", "[alpha_value]", "Show or set the overlap alpha.")
         self.addHelpFunction("std_cutoff", "[cutoff_value]", "Show or set the standard deviation cutoff value (>0).")
+        self.addHelpFunction("global_std_scaling", "[std_scaling]", "Show or set the global standard deviation scaling value (>0) applied to updates.")
 
 
     @assertConfigLoaded
@@ -60,3 +61,17 @@ class Smoother(ShellFunction):
 
 
 
+    @assertConfigLoaded
+    def do_global_std_scaling(self, line):
+        value = line.strip()
+        if value == "":
+            analysis_config = self.shellContext().ert().analysisConfig()
+            print("Global Standard Deviation Scaling = %f" % analysis_config.getGlobalStdScaling())
+        else:
+            try:
+                value = float(value)
+                analysis_config = self.shellContext().ert().analysisConfig()
+                analysis_config.setGlobalStdScaling(value)
+                print("Global Standard Deviation Scaling set to: %f" % analysis_config.getGlobalStdScaling())
+            except ValueError:
+                self.lastCommandFailed("Expected a number")
