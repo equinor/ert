@@ -16,6 +16,7 @@ from ert_gui.shell.simulations import Simulations
 from ert_gui.shell.smoother import Smoother
 from ert_gui.shell.summary_keys import SummaryKeys
 from ert_gui.shell.workflows import Workflows
+from ert_gui.shell.observations import Observations
 from ert_gui.shell import extractFullArgument, getPossibleFilenameCompletions, PlotSettings, ShellContext
 
 import matplotlib
@@ -80,6 +81,7 @@ class ErtShell(Cmd):
         CustomKWKeys(shell_context)
         AnalysisModule(shell_context)
         Smoother(shell_context)
+        Observations(shell_context)
 
         self.__last_command_failed = False
 
