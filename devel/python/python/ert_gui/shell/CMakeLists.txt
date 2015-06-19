@@ -7,6 +7,7 @@ set(PYTHON_SOURCES
     ertshell.py
     gen_data_keys.py
     gen_kw_keys.py
+    observations.py
     plot_settings.py
     plugins.py
     results.py
@@ -20,5 +21,5 @@ set(PYTHON_SOURCES
     workflows.py
 )
 
-add_python_package("python.ert_gui.shell" ${PYTHON_INSTALL_PREFIX}/ert_gui/shell "${PYTHON_SOURCES}" False)
+add_python_package("python.ert_gui.shell" ${PYTHON_INSTALL_PREFIX}/ert_gui/shell "${PYTHON_SOURCES}" True)
 
