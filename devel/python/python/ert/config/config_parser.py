@@ -58,9 +58,13 @@ class ConfigParser(BaseCClass):
         return ConfigParser.cNamespace().has_schema_item( self , keyword )
 
 
-    def add(self, keyword, required=False):
-        return ConfigParser.cNamespace().add(self, keyword, required).setParent( self )
+    def add(self, keyword, required=False , value_type = None):
+        item = ConfigParser.cNamespace().add(self, keyword, required).setParent( self )
+        if value_type:
+            item.iset_type( 0 , value_type )
 
+        return item
+        
 
     def getSchemaItem(self , keyword):
         if keyword in self:
