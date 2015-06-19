@@ -23,7 +23,7 @@ class CustomDialog(QDialog):
     INVALID_COLOR = QColor(255, 235, 235)
 
     def __init__(self, title = "Title", description = "Description", parent=None):
-        QDialog.__init__(self, parent, Qt.WindowStaysOnTopHint)
+        QDialog.__init__(self, parent)
 
         self.__option_list = []
         """ :type: list of HelpedWidget """
