@@ -10,6 +10,35 @@ except ImportError:
 
 from .source_enumerator import SourceEnumerator
 from ert.util import installAbortSignals
+from ert.util import Version
+
+
+# The requireVersion decorator can be used to limit test methods to
+# run only on ert versions newer than some version. To limit the test
+# method test_xxx() to only run based on ERT versions newer than 1.9:
+#
+#    @requireVersion(1,9)
+#    def test_xxxx(self):
+#        ....
+#
+# The tests which are skipped due to version requirements will be
+# "green", but a warning will be printed on stdout.
+def requireVersion(major,minor,micro="git"):
+
+    def testMethodWrapper(test_method):
+
+        def inner(self):
+            current_version = Version.currentVersion()
+            required_version = Version(major, minor , micro)
+
+            if required_version >= current_version:
+                return test_method(self)
+            else:
+                print("** WARNING: Skipping test:%s - requires ert version: %s - current is: %s " % (test_method.__name__ , required_version , current_version))
+
+        return inner
+    return testMethodWrapper
+
 
 """
 This class provides some extra functionality for testing values that are almost equal.
@@ -176,6 +205,7 @@ class ExtendedTestCase(TestCase):
             self.fail()
 
 
+            
     @staticmethod
     def slowTestShouldNotRun():
         """
