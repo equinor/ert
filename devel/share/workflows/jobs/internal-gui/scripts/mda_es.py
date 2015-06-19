@@ -59,6 +59,8 @@ class MDAEnsembleSmootherJob(ErtPlugin):
         return "MDA ES completed successfully!"
 
     def update(self, target_case_format, iteration, weight):
+        self.checkIfCancelled()
+
         next_iteration = (iteration + 1)
         next_target_case_name = target_case_format % next_iteration
         target_fs = self.ert().getEnkfFsManager().getFileSystem(next_target_case_name)
@@ -72,6 +74,8 @@ class MDAEnsembleSmootherJob(ErtPlugin):
 
 
     def simulateAndPostProcess(self, target_case_format, active_realization_mask, iteration):
+        self.checkIfCancelled()
+
         target_case_name = target_case_format % iteration
 
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
@@ -82,6 +86,8 @@ class MDAEnsembleSmootherJob(ErtPlugin):
 
         if not success:
             self.checkSuccessCount(active_realization_mask)
+
+        self.checkIfCancelled()
 
         print("[%s] Post processing for iteration: %d" % (target_case_name, iteration))
         self.ert().getEnkfSimulationRunner().runPostWorkflow()

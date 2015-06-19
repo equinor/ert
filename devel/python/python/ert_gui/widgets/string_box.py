@@ -59,7 +59,6 @@ class StringBox(HelpedWidget):
                 self.setValidationMessage("")
                 palette.setColor(self.box_string.backgroundRole(), self.valid_color)
                 self.box_string.setPalette(palette)
-                self.stringBoxChanged()
 
 
     def stringBoxChanged(self):
