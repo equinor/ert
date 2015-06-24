@@ -32,6 +32,7 @@ void test_option(torque_driver_type * driver, const char * option, const char * 
 
 void setoption_setalloptions_optionsset() {
   torque_driver_type * driver = torque_driver_alloc();
+
   test_option(driver, TORQUE_QSUB_CMD, "XYZaaa");
   test_option(driver, TORQUE_QSTAT_CMD, "xyZfff");
   test_option(driver, TORQUE_QDEL_CMD, "ZZyfff");
@@ -42,6 +43,15 @@ void setoption_setalloptions_optionsset() {
   test_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "0");
   test_option(driver, TORQUE_CLUSTER_LABEL, "thecluster");
   test_option(driver, TORQUE_JOB_PREFIX_KEY, "coolJob");
+
+  test_assert_int_equal( 0 , torque_driver_get_submit_sleep(driver));
+  test_assert_NULL( torque_driver_get_debug_stream(driver) );
+
+  test_assert_true( torque_driver_set_option( driver , TORQUE_SUBMIT_SLEEP , "0.25"));
+  test_assert_int_equal( 250000 , torque_driver_get_submit_sleep(driver));
+
+  test_assert_true( torque_driver_set_option( driver , TORQUE_DEBUG_OUTPUT , "/tmp/torqueue_debug.txt"));
+  test_assert_not_NULL( torque_driver_get_debug_stream(driver) );
 
   printf("Options OK\n");
   torque_driver_free(driver);
@@ -58,6 +68,7 @@ void setoption_set_typed_options_wrong_format_returns_false() {
   test_assert_false(torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "ja"));
   test_assert_false(torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "22"));
   test_assert_false(torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "1.1"));
+  test_assert_false(torque_driver_set_option(driver, TORQUE_SUBMIT_SLEEP, "X45"));
 }
 
 void getoption_nooptionsset_defaultoptionsreturned() {

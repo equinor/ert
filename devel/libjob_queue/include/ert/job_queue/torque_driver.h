@@ -21,6 +21,7 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
+#include <stdio.h>
 
 #include <ert/util/type_macros.h>
 #include <ert/job_queue/queue_driver.h>
@@ -37,10 +38,13 @@ extern "C" {
 #define TORQUE_KEEP_QSUB_OUTPUT  "KEEP_QSUB_OUTPUT"
 #define TORQUE_CLUSTER_LABEL     "CLUSTER_LABEL"
 #define TORQUE_JOB_PREFIX_KEY    "JOB_PREFIX"
+#define TORQUE_SUBMIT_SLEEP      "SUBMIT_SLEEP"
+#define TORQUE_DEBUG_OUTPUT      "DEBUG_OUTPUT"
 
-#define TORQUE_DEFAULT_QSUB_CMD   "qsub"
-#define TORQUE_DEFAULT_QSTAT_CMD  "qstat"
-#define TORQUE_DEFAULT_QDEL_CMD  "qdel"
+#define TORQUE_DEFAULT_QSUB_CMD      "qsub"
+#define TORQUE_DEFAULT_QSTAT_CMD     "qstat"
+#define TORQUE_DEFAULT_QDEL_CMD      "qdel"
+#define TORQUE_DEFAULT_SUBMIT_SLEEP  "0"
 
 
   typedef struct torque_driver_struct torque_driver_type;
@@ -70,6 +74,9 @@ extern "C" {
   void torque_driver_init_option_list(stringlist_type * option_list);
 
   void torque_job_create_submit_script(const char * run_path, const char * submit_cmd, int argc, const char ** job_argv);
+  int torque_driver_get_submit_sleep( const torque_driver_type * driver );
+  FILE * torque_driver_get_debug_stream( const torque_driver_type * driver );
+
 
   UTIL_SAFE_CAST_HEADER(torque_driver);
 
