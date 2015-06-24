@@ -1377,13 +1377,21 @@ Keywords related to running the forward model
 .. _queue_system:
 .. topic:: QUEUE_SYSTEM
 
-	The keyword QUEUE_SYSTEM can be used to control where the simulation jobs are executed. It can take the values LSF, TORQUE, RSH and LOCAL.
+	The keyword QUEUE_SYSTEM can be used to control where the
+	simulation jobs are executed. It can take the values LSF,
+	TORQUE, RSH and LOCAL.
 
-	The LSF option will submit jobs to the LSF cluster at your location, and is recommended whenever LSF is available.
+	The LSF option will submit jobs to the LSF cluster at your
+	location, and is recommended whenever LSF is available.
 
-	The TORQUE option will submit jobs to the TORQUE a torque based system, using the commands qsub, qstat etc., if available.
+	The TORQUE option will submit jobs to the TORQUE a torque
+	based system, using the commands qsub, qstat etc., if
+	available.
 
-	If you do not have access to LSF or TORQUE you can submit to your local workstation using the LOCAL option and to homemade cluster of workstations using the RSH option. All of the queue systems can be further configured, see separate sections.
+	If you do not have access to LSF or TORQUE you can submit to
+	your local workstation using the LOCAL option and to homemade
+	cluster of workstations using the RSH option. All of the queue
+	systems can be further configured, see separate sections.
 
 	*Example:*
 
@@ -1392,25 +1400,37 @@ Keywords related to running the forward model
 		-- Tell ert to use the LSF cluster.
 		QUEUE_SYSTEM LSF
 
-	The QUEUE_SYSTEM keyword is optional, and usually defaults to LSF (this is site dependent). 
+	The QUEUE_SYSTEM keyword is optional, and usually defaults to
+	LSF (this is site dependent).
 
 Configuring LSF access
 ----------------------
 .. _configuring_lsf_access:
 
-The LSF system is the most useful of the queue alternatives, and also the alternative with most options. The most important options are related to how ert should submit jobs to the LSF system. Essentially there are two methods ert can use when submitting jobs to the LSF system:
+The LSF system is the most useful of the queue alternatives, and also
+the alternative with most options. The most important options are
+related to how ert should submit jobs to the LSF system. Essentially
+there are two methods ert can use when submitting jobs to the LSF
+system:
 
-#. For workstations which have direct access to LSF ert can submit directly with no further configuration. This is preferred solution, but unfortunately not very common.
-#. Alternatively ert can issue shell commands to bsub/bjobs/bkill to submit jobs. These shell commands can be issued on the current workstation, or alternatively on a remote workstation using ssh.
+#. For workstations which have direct access to LSF ert can submit
+   directly with no further configuration. This is preferred solution,
+   but unfortunately not very common.
+#. Alternatively ert can issue shell commands to bsub/bjobs/bkill to
+   submit jobs. These shell commands can be issued on the current
+   workstation, or alternatively on a remote workstation using ssh.
 
-The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
+The main switch between alternatives 1 and 2 above is the LSF_SERVER
+option.
 
 .. _lsf_server:
 .. topic:: LSF_SERVER
 
-	By using the LSF_SERVER option you essentially tell ert two things about how jobs should be submitted to LSF:
+	By using the LSF_SERVER option you essentially tell ert two
+	things about how jobs should be submitted to LSF:
 
-	#. You tell ert that jobs should be submitted using shell commands.
+	#. You tell ert that jobs should be submitted using shell
+           commands.
 	#. You tell ert which server should be used when submitting
 
 	So when your configuration file has the setting:
@@ -1419,11 +1439,19 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 
 		LSF_SERVER   be-grid01
 
-	ert will use ssh to submit your jobs using shell commands on the server be-grid01. For this to work you must have passwordless ssh to the server be-grid01. If you give the special server name LOCAL ert will submit using shell commands on the current workstation.
+	ert will use ssh to submit your jobs using shell commands on
+	the server be-grid01. For this to work you must have
+	passwordless ssh to the server be-grid01. If you give the
+	special server name LOCAL ert will submit using shell commands
+	on the current workstation.
 
 	**bsub/bjobs/bkill options**
 
-	By default ert will use the shell commands bsub,bjobs and bkill to interact with the queue system, i.e. whatever binaries are first in your PATH will be used. For fine grained control of the shell based submission you can tell ert which programs to use:
+	By default ert will use the shell commands bsub,bjobs and
+	bkill to interact with the queue system, i.e. whatever
+	binaries are first in your PATH will be used. For fine grained
+	control of the shell based submission you can tell ert which
+	programs to use:
 
 	::
 
@@ -1438,7 +1466,9 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 		QUEUE_OPTION  LSF     BJOBS_CMD   /path/to/my/bjobs
 		QUEUE_OPTION  LSF     BSUB_CMD    /path/to/my/bsub
 
-	In this example we tell ert to submit jobs from the workstation be-grid01 using custom binaries for bsub and bjobs.
+	In this example we tell ert to submit jobs from the
+	workstation be-grid01 using custom binaries for bsub and
+	bjobs.
 
 	*Example 2*
 
@@ -1446,7 +1476,10 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 
 		LSF_SERVER   LOCAL
 
-	In this example we will submit on the current workstation, without using ssh first, and we will use the default bsub and bjobs executables. The remaining LSF options apply irrespective of which method has been used to submit the jobs.
+	In this example we will submit on the current workstation,
+	without using ssh first, and we will use the default bsub and
+	bjobs executables. The remaining LSF options apply
+	irrespective of which method has been used to submit the jobs.
 
 
 .. _lsf_queue:
@@ -1458,7 +1491,9 @@ The main switch between alternatives 1 and 2 above is the LSF_SERVER option.
 .. _max_running_lsf:
 .. topic:: MAX_RUNNING_LSF
 
-	The keyword MAX_RUNNING_LSF controls the maximum number of simultaneous jobs submitted to the LSF (Load Sharing Facility) queue when using the LSF option in QUEUE_SYSTEM.
+	The keyword MAX_RUNNING_LSF controls the maximum number of
+	simultaneous jobs submitted to the LSF (Load Sharing Facility)
+	queue when using the LSF option in QUEUE_SYSTEM.
 
 	*Example:*
 
@@ -1475,9 +1510,13 @@ Configuring TORQUE access
 -------------------------
 .. _configuring_torque_access:
 
-The TORQUE system is the only available system on some clusters. The most important options are related to how ert should submit jobs to the TORQUE system.
+The TORQUE system is the only available system on some clusters. The
+most important options are related to how ert should submit jobs to
+the TORQUE system.
 
-* Currently, the TORQUE option only works when the machine you are logged into have direct access to the queue system. ert then submit directly with no further configuration.
+* Currently, the TORQUE option only works when the machine you are
+  logged into have direct access to the queue system. ert then submit
+  directly with no further configuration.
 
 The most basic invocation is in other words:
 
@@ -1487,7 +1526,10 @@ The most basic invocation is in other words:
 
 **qsub/qstat/qdel options**
 
-By default ert will use the shell commands qsub,qstat and qdel to interact with the queue system, i.e. whatever binaries are first in your PATH will be used. For fine grained control of the shell based submission you can tell ert which programs to use:
+By default ert will use the shell commands qsub,qstat and qdel to
+interact with the queue system, i.e. whatever binaries are first in
+your PATH will be used. For fine grained control of the shell based
+submission you can tell ert which programs to use:
 
 ::
 
@@ -1496,7 +1538,8 @@ By default ert will use the shell commands qsub,qstat and qdel to interact with 
 	QUEUE_OPTION TORQUE QSTAT_CMD /path/to/my/qstat 
 	QUEUE_OPTION TORQUE QDEL_CMD /path/to/my/qdel 
 
-In this example we tell ert to submit jobs using custom binaries for bsub and bjobs.
+In this example we tell ert to submit jobs using custom binaries for
+bsub and bjobs.
 
 **Name of queue**
 
@@ -1508,7 +1551,9 @@ The name of the TORQUE queue you are running ECLIPSE simulations in.
 
 **Name of cluster (label)**
 
-The name of the TORQUE cluster you are running ECLIPSE simulations in. This might be a label (serveral clusters), or a single one, as in this example baloo.
+The name of the TORQUE cluster you are running ECLIPSE simulations
+in. This might be a label (serveral clusters), or a single one, as in
+this example baloo.
 
 ::
 
@@ -1516,7 +1561,9 @@ The name of the TORQUE cluster you are running ECLIPSE simulations in. This migh
 
 **Max running jobs**
 
-The queue option MAX_RUNNING controls the maximum number of simultaneous jobs submitted to the queue when using (in this case) the TORQUE option in QUEUE_SYSTEM.
+The queue option MAX_RUNNING controls the maximum number of
+simultaneous jobs submitted to the queue when using (in this case) the
+TORQUE option in QUEUE_SYSTEM.
 
 ::
   
@@ -1527,11 +1574,18 @@ The queue option MAX_RUNNING controls the maximum number of simultaneous jobs su
 
 **Queue options controlling number of nodes and CPUs**
 
-When using TORQUE, you must specify how many nodes a single job is should to use, and how many CPUs per node. The default setup in ert will use one node and one CPU. These options are called NUM_NODES and NUM_CPUS_PER_NODE.
+When using TORQUE, you must specify how many nodes a single job is
+should to use, and how many CPUs per node. The default setup in ert
+will use one node and one CPU. These options are called NUM_NODES and
+NUM_CPUS_PER_NODE.
 
-If the numbers specified is higher than supported by the cluster (i.e. use 32 CPUs, but no node has more than 16), the job will not start.
+If the numbers specified is higher than supported by the cluster
+(i.e. use 32 CPUs, but no node has more than 16), the job will not
+start.
 
-If you wish to increase these number, the program running (typically ECLIPSE) will usually also have to be told to correspondingly use more processing units (keyword PARALLEL)
+If you wish to increase these number, the program running (typically
+ECLIPSE) will usually also have to be told to correspondingly use more
+processing units (keyword PARALLEL)
 
 ::
 	
@@ -1545,11 +1599,36 @@ If you wish to increase these number, the program running (typically ECLIPSE) wi
 
 **Keep output from qsub**
 
-Sometimes the error messages from qsub can be useful, if something is seriously wrong with the environment or setup. To keep this output (stored in your home folder), use this:
+Sometimes the error messages from qsub can be useful, if something is
+seriously wrong with the environment or setup. To keep this output
+(stored in your home folder), use this:
 
 ::
 
 	QUEUE_OPTION TORQUE KEEP_QSUB_OUTPUT 1
+
+
+** Slow submit to torque **
+
+To be more gentle with the torqueue system you can instruct the driver
+to sleep for every submit request. The argument to the SUBMIT_SLEEP is
+the number of seconds to sleep for every submit, can be a fraction
+like 0.5.
+
+::
+
+   QUEUE_OPTION TORQUE SUBMIT_SLEEP 0.25
+
+
+** Torque debug log **
+
+You can ask the torqueu driver to store a debug log of the jobs
+submitted, and the resulting job id. This is done with the queue
+option DEBUG_OUTPUT:
+
+::
+   
+   QUEUE_OPTION TORQUE DEBUG_OUTPUT torque_log.txt
 
 
 
