@@ -84,7 +84,7 @@ void * torque_driver_alloc() {
   return torque_driver;
 }
 
-static torque_driver_set_debug_output(torque_driver_type * driver, const char * debug_file) {
+static void torque_driver_set_debug_output(torque_driver_type * driver, const char * debug_file) {
   if (driver->debug_stream)
     fclose( driver->debug_stream );
 
@@ -185,7 +185,7 @@ bool torque_driver_set_option(void * __driver, const char * option_key, const vo
     else if (strcmp(TORQUE_JOB_PREFIX_KEY, option_key) == 0)
       torque_driver_set_job_prefix(driver, value);
     else if (strcmp(TORQUE_DEBUG_OUTPUT, option_key) == 0)
-      option_set = torque_driver_set_debug_output(driver, value);
+      torque_driver_set_debug_output(driver, value);
     else if (strcmp(TORQUE_SUBMIT_SLEEP, option_key) == 0)
       option_set = torque_driver_set_submit_sleep(driver, value);
     else
@@ -292,7 +292,7 @@ static void torque_debug(torque_driver_type * driver , const char * fmt , ...) {
       va_end(ap);
     }
     fprintf(driver->debug_stream , "\n");
-    fsync( driver->debug_stream );
+    fsync( fileno(driver->debug_stream) );
   }
 }
 
