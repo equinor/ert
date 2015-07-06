@@ -39,7 +39,7 @@ typedef enum {
   CREATE_MINISTEP                 = 2,  /* MINISTEP_NAME  OBSSET_NAME        ->     local_config_alloc_ministep();   */
   ATTACH_MINISTEP                 = 3,  /* UPDATESTEP_NAME , MINISTEP_NAME   ->     local_updatestep_add_ministep(); */
   CREATE_DATASET                  = 4,  /* NAME */
-  ATTACH_DATASET                  = 5,  /* DATASET_NAME MINISETP_NAME */
+  ATTACH_DATASET                  = 5,  /* DATASET_NAME MINISTEP_NAME */
   CREATE_OBSSET                   = 6,  /* NAME */
   ADD_DATA                        = 7,  /* DATA_KEY                          ->     local_ministep_add_node();       */
   ADD_OBS                         = 8,  /* OBS_KEY                           ->     local_ministep_add_obs();        */
@@ -56,6 +56,7 @@ typedef enum {
   ADD_FIELD                       = 20, /* MINISTEP  FIELD_NAME  REGION_NAME */
   COPY_DATASET                    = 21, /* SRC_NAME  TARGET_NAME */
   COPY_OBSSET                     = 22, /* SRC_NAME  TARGET_NAME */
+  ATTACH_OBSSET                   = 23, /* OBSSET_NAME MINISTEP_NAME */
   /*****************************************************************/
   CREATE_ECLREGION                = 100, /* Name of region  TRUE|FALSE*/
   LOAD_FILE                       = 101, /* Key, filename      */
@@ -87,6 +88,7 @@ typedef enum {
 #define CREATE_DATASET_STRING                   "CREATE_DATASET"
 #define ATTACH_DATASET_STRING                   "ATTACH_DATASET"
 #define CREATE_OBSSET_STRING                    "CREATE_OBSSET"
+#define ATTACH_OBSSET_STRING                    "ATTACH_OBSSET"
 #define ADD_DATA_STRING                         "ADD_DATA"
 #define ADD_OBS_STRING                          "ADD_OBS"
 #define ACTIVE_LIST_ADD_OBS_INDEX_STRING        "ACTIVE_LIST_ADD_OBS_INDEX"
@@ -126,7 +128,7 @@ typedef struct local_config_struct local_config_type;
 local_config_type           * local_config_alloc( );
 void                          local_config_free( local_config_type * local_config );
 local_updatestep_type       * local_config_alloc_updatestep( local_config_type * local_config , const char * key );
-local_ministep_type         * local_config_alloc_ministep( local_config_type * local_config , const char * key , const char * obsset_name);
+local_ministep_type         * local_config_alloc_ministep( local_config_type * local_config , const char * key );
 local_ministep_type         * local_config_alloc_ministep_copy( local_config_type * local_config , const char * src_key , const char * new_key);
 void                          local_config_set_default_updatestep( local_config_type * local_config , const char * default_key);
 const local_updatestep_type * local_config_iget_updatestep( const local_config_type * local_config , int index);

@@ -110,7 +110,7 @@ const char * local_updatestep_get_name( const local_updatestep_type * updatestep
 
 
 void local_updatestep_fprintf( const local_updatestep_type * updatestep , FILE * stream) {
-  fprintf(stream , "%s %s\n" , local_config_get_cmd_string( CREATE_UPDATESTEP ) , updatestep->name );
+  fprintf(stream , "\n%s %s\n" , local_config_get_cmd_string( CREATE_UPDATESTEP ) , updatestep->name );
   {
     int i;
     for (i=0; i < vector_get_size( updatestep->ministep ); i++) {

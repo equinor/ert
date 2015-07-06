@@ -19,6 +19,7 @@ set(TEST_SOURCES
     test_labscale.py
     test_linalg.py
     test_local_obsdata_node.py
+    test_local_config.py
     test_meas_block.py
     test_meas_data.py
     test_obs_block.py
@@ -66,6 +67,7 @@ addPythonTest(ert.enkf.update tests.ert.enkf.test_update.UpdateTest LABELS Stato
 addPythonTest(ert.enkf.labscale tests.ert.enkf.test_labscale.LabScaleTest LABELS StatoilData)
 addPythonTest(ert.enkf.active_list tests.ert.enkf.test_active_list.ActiveListTest)
 addPythonTest(ert.enkf.local_obsdata_node tests.ert.enkf.test_local_obsdata_node.LocalObsdataNodeTest)
+addPythonTest(ert.enkf.local_config tests.ert.enkf.test_local_config.LocalConfigTest)
 addPythonTest(ert.enkf.ensemble_config tests.ert.enkf.test_ensemble_config.EnsembleConfigTest)
 
 add_subdirectory(data)
