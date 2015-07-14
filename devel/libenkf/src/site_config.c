@@ -128,6 +128,7 @@ struct site_config_struct {
 
   job_queue_type * job_queue; /* The queue instance which will run the external jobs. */
   bool user_mode;
+  bool search_path;
 };
 
 void site_config_set_umask(site_config_type * site_config, mode_t new_mask) {
@@ -207,6 +208,7 @@ site_config_type * site_config_alloc_empty() {
   site_config_set_manual_url(site_config, DEFAULT_MANUAL_URL);
   site_config_set_default_browser(site_config, DEFAULT_BROWSER);
   site_config_set_max_submit(site_config, DEFAULT_MAX_SUBMIT);
+  site_config->search_path = false;
   return site_config;
 }
 
@@ -253,7 +255,7 @@ void site_config_init_user_mode(site_config_type * site_config) {
  */
 
 int site_config_install_job(site_config_type * site_config, const char * job_name, const char * install_file) {
-  ext_job_type * new_job = ext_job_fscanf_alloc(job_name, site_config->__license_root_path, site_config->user_mode, install_file);
+  ext_job_type * new_job = ext_job_fscanf_alloc(job_name, site_config->__license_root_path, site_config->user_mode, install_file, site_config->search_path);
   if (new_job != NULL) {
     ext_joblist_add_job(site_config->joblist, job_name, new_job);
     return 0;
@@ -288,7 +290,7 @@ static void site_config_add_jobs(site_config_type * site_config, const config_co
       config_content_node_type * node = config_content_item_iget_node(content_item, dir_nr);
       const char * directory = config_content_node_iget_as_abspath(node, 0);
 
-      ext_joblist_add_jobs_in_directory(site_config->joblist  , directory, site_config->__license_root_path, site_config->user_mode );
+      ext_joblist_add_jobs_in_directory(site_config->joblist  , directory, site_config->__license_root_path, site_config->user_mode, site_config->search_path );
     }
   }
 
@@ -800,6 +802,11 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
 
   site_config_install_job_queue(site_config);
 
+  if (config_content_has_item(config, EXT_JOB_SEARCH_PATH_KEY)){
+      site_config_set_ext_job_search_path(site_config, config_content_get_value_as_bool(config, EXT_JOB_SEARCH_PATH_KEY));
+  }
+
+
   /* Setting QUEUE_OPTIONS */
   {
     int i;
@@ -818,6 +825,11 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
   }
   return true;
 }
+
+void site_config_set_ext_job_search_path(site_config_type * site_config, bool search_path){
+    site_config->search_path = search_path;
+}
+
 
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free(site_config->joblist);
@@ -1117,4 +1129,28 @@ void site_config_add_config_items(config_parser_type * config, bool site_mode) {
 
   item = config_add_schema_item( config , ANALYSIS_LOAD_KEY , false  );
   config_schema_item_set_argc_minmax( item , 2 , 2);
+}
+
+const char * site_config_get_location() {
+    const char * site_config = NULL;
+
+    #ifdef SITE_CONFIG_FILE
+        site_config = SITE_CONFIG_FILE;
+    #endif
+
+    const char * env_site_config  = getenv("ERT_SITE_CONFIG");
+
+    if(env_site_config != NULL) {
+        if (util_file_exists(env_site_config)) {
+            site_config = env_site_config;
+        } else {
+            fprintf(stderr, "The environment variable ERT_SITE_CONFIG points to non-existing file: %s - ignored\n", env_site_config);
+        }
+    }
+
+    if (site_config == NULL) {
+        fprintf(stderr, "**WARNING** main enkf_config file is not set. Use environment variable \"ERT_SITE_CONFIG\" - or recompile.\n");
+    }
+
+    return site_config;
 }

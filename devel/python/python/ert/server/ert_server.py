@@ -20,6 +20,7 @@ import json
 import os
 import traceback
 import datetime
+from time import strftime
 
 from ert.enkf import EnKFMain,RunArg,EnkfFsManager
 from ert.enkf.enums import EnkfRunType, EnkfStateType, ErtImplType , EnkfVarType , RealizationStateEnum
@@ -47,6 +48,7 @@ def ERROR(msg , exception = None):
 
 
 class ErtServer(object):
+    DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
     site_config = None
 
     def __init__(self , config_file , logger):
@@ -81,12 +83,13 @@ class ErtServer(object):
         self.cmd_table = {"STATUS" : self.handleSTATUS ,
                           "INIT_SIMULATIONS" : self.handleINIT_SIMULATIONS ,
                           "ADD_SIMULATION" : self.handleADD_SIMULATION ,
-                          "GET_RESULT" : self.handleGET_RESULT }
+                          "GET_RESULT" : self.handleGET_RESULT ,
+                          "TIME_STEP": self.handleTIMESTEP }
 
 
     def open(self , config_file):
         self.config_file = config_file
-        self.ert_handle = EnKFMain( config_file , ErtServer.site_config )
+        self.ert_handle = EnKFMain( config_file )
         self.logger.info("Have connect ert handle to:%s" , config_file)
 
 
@@ -120,22 +123,33 @@ class ErtServer(object):
             raise KeyError("The command:%s was not recognized" % cmd)
 
 
+
+    # The STATUS action can either report results for the complete
+    # simulation set, or it can report the status of one particular
+    # realisation. If the function is called with zero arguments it
+    # will return the global status, if called with one argument it
+    # will return the status for that realisation.
+        
     def handleSTATUS(self , args):
         if self.isConnected():
             if self.run_context is None:
                 return self.SUCCESS(["READY"])
             else:
-                if self.run_context.isRunning():
-                    if len(args) == 0:
-                        return self.SUCCESS(["RUNNING" , self.run_context.getNumRunning() , self.run_context.getNumComplete()])
+                if len(args) == 0:
+                    if self.run_context.isRunning():
+                        return self.SUCCESS(["RUNNING" , self.run_context.getNumRunning() , self.run_context.getNumSuccess() , self.run_context.getNumFailed()])
                     else:
-                        iens = args[0]
-                        if self.run_context.realisationComplete(iens):
-                            return self.SUCCESS(["COMPLETE"])
-                        else:
-                            return self.SUCCESS(["RUNNING"])
+                        return self.SUCCESS(["COMPLETE" , self.run_context.getNumRunning() , self.run_context.getNumSuccess() , self.run_context.getNumFailed()])
                 else:
-                    return self.SUCCESS(["COMPLETE"])
+                    iens = args[0]
+
+                    if self.run_context.realisationRunning(iens):
+                        return self.SUCCESS(["RUNNING"])
+                    elif self.run_context.realisationFailed(iens):
+                        return self.SUCCESS(["FAILED"])
+                    elif self.run_context.realisationSuccess(iens):
+                        return self.SUCCESS(["SUCCESS"])
+
         else:
             return self.SUCCESS(["CLOSED"])
 
@@ -247,3 +261,11 @@ class ErtServer(object):
         
         self.run_context.startSimulation( iens )
         return self.handleSTATUS([])
+
+    def handleTIMESTEP(self, args):
+        enkf_fs_manager = self.ert_handle.getEnkfFsManager()
+        enkf_fs = enkf_fs_manager.getCurrentFileSystem()
+        time_map = enkf_fs.getTimeMap()
+        time_steps = [ ts.datetime().strftime(ErtServer.DATE_FORMAT) for ts in time_map ]
+
+        return self.SUCCESS(time_steps)

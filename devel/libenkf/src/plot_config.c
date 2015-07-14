@@ -185,7 +185,11 @@ plot_config_type * plot_config_alloc_default() {
   plot_config_set_plot_refcase( info     , DEFAULT_PLOT_REFCASE);
   plot_config_set_path(info              , DEFAULT_PLOT_PATH );
   plot_config_set_image_type(info        , DEFAULT_IMAGE_TYPE );
-  plot_config_set_viewer(info            , DEFAULT_IMAGE_VIEWER );
+
+  if(util_is_executable(DEFAULT_IMAGE_VIEWER)) {
+    plot_config_set_viewer(info          , DEFAULT_IMAGE_VIEWER );
+  }
+
   plot_config_set_driver(info            , DEFAULT_PLOT_DRIVER );
   plot_config_set_width(info             , DEFAULT_PLOT_WIDTH );
   plot_config_set_height(info            , DEFAULT_PLOT_HEIGHT );

@@ -31,7 +31,7 @@
 
 
 ert_test_context_type * create_context( const char * config_file, const char * name ) {
-  ert_test_context_type * test_context = ert_test_context_alloc(name , config_file , NULL);
+  ert_test_context_type * test_context = ert_test_context_alloc(name , config_file);
   test_assert_not_NULL(test_context);
   return test_context;
 }
@@ -405,7 +405,7 @@ void test_export_runpath_files(const char * config_file,
 
   {
     int_vector_type * iens_values = int_vector_alloc(1,0);
-    int_vector_init_range(iens_values, 0, 24, 1);
+    int_vector_init_range(iens_values, 0, 25, 1);
     int_vector_type * iter_values = int_vector_alloc(1,0);
 
     test_export_runpath_file(test_context, job_name, job_file_export_runpath, args, iens_values, iter_values);

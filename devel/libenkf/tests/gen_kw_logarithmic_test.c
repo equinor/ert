@@ -97,7 +97,7 @@ void test_write_gen_kw_export_file(enkf_main_type * enkf_main)
 
 int main(int argc , char ** argv) {
   const char * config_file             =  argv[1];
-  ert_test_context_type * test_context = ert_test_context_alloc("gen_kw_logarithmic_test" , config_file , NULL);
+  ert_test_context_type * test_context = ert_test_context_alloc("gen_kw_logarithmic_test" , config_file );
   enkf_main_type * enkf_main           = ert_test_context_get_main(test_context);
 
   test_assert_not_NULL(enkf_main);

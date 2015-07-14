@@ -1,7 +1,9 @@
 set(PYTHON_SOURCES
     __init__.py
+    active_list.py
     analysis_config.py
     analysis_iter_config.py
+    custom_kw_config_set.py
     ecl_config.py
     enkf_fs.py
     enkf_fs_manager.py

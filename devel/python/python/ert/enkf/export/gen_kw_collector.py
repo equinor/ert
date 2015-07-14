@@ -12,7 +12,7 @@ class GenKwCollector(object):
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()
         ens_mask = BoolVector(False, ert.getEnsembleSize())
-        state_map.selectMatching(ens_mask, RealizationStateEnum.STATE_HAS_DATA)
+        state_map.selectMatching(ens_mask, RealizationStateEnum.STATE_INITIALIZED | RealizationStateEnum.STATE_HAS_DATA)
         active_list = BoolVector.createActiveList(ens_mask)
 
         return [iens for iens in active_list]
@@ -21,7 +21,7 @@ class GenKwCollector(object):
     def getAllGenKwKeys(ert):
         """ @rtype: list of str """
         gen_kw_keys = ert.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
-        gen_kw_keys = sorted([key for key in gen_kw_keys], key=lambda k : k.lower())
+        gen_kw_keys = [key for key in gen_kw_keys]
 
         gen_kw_list = []
         for key in gen_kw_keys:
@@ -38,16 +38,21 @@ class GenKwCollector(object):
         return gen_kw_list
 
     @staticmethod
-    def loadAllGenKwData(ert, case_name):
+    def loadAllGenKwData(ert, case_name, keys=None):
         """
         @type ert: EnKFMain
         @type case_name: str
+        @type keys: list of str
         @rtype: DataFrame
         """
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
 
         realizations = GenKwCollector.createActiveList(ert, fs)
+
         gen_kw_keys = GenKwCollector.getAllGenKwKeys(ert)
+
+        if keys is not None:
+            gen_kw_keys = [key for key in keys if key in gen_kw_keys] # ignore keys that doesn't exist
 
         gen_kw_array = numpy.empty(shape=(len(gen_kw_keys), len(realizations)), dtype=numpy.float64)
         gen_kw_array.fill(numpy.nan)

@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2014  Statoil ASA, Norway. 
-    
-   The file 'job_queue_manager.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2014  Statoil ASA, Norway.
+
+   The file 'job_queue_manager.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
@@ -64,7 +64,7 @@ void job_queue_manager_start_queue( job_queue_manager_type * manager , int num_t
 
 
 void job_queue_manager_wait( job_queue_manager_type * manager) {
-  pthread_join( manager->queue_thread , NULL );   
+  pthread_join( manager->queue_thread , NULL );
 }
 
 
@@ -78,14 +78,54 @@ int job_queue_manager_get_num_running( const job_queue_manager_type * manager) {
 }
 
 
-int job_queue_manager_get_num_complete( const job_queue_manager_type * manager) {
+int job_queue_manager_get_num_success( const job_queue_manager_type * manager) {
   return job_queue_get_num_complete( manager->job_queue );
 }
+
+int job_queue_manager_get_num_failed( const job_queue_manager_type * manager) {
+  return job_queue_get_num_failed( manager->job_queue );
+}
+
 
 
 bool job_queue_manager_job_complete( const job_queue_manager_type * manager , int job_index) {
   job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
   if (status & JOB_QUEUE_COMPLETE_STATUS)
+    return true;
+  else
+    return false;
+}
+
+
+bool job_queue_manager_job_waiting( const job_queue_manager_type * manager , int job_index) {
+  job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
+  if (status & JOB_QUEUE_WAITING_STATUS)
+    return true;
+  else
+    return false;
+}
+
+bool job_queue_manager_job_running( const job_queue_manager_type * manager , int job_index) {
+  job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
+  if (status == JOB_QUEUE_RUNNING)
+    return true;
+  else
+    return false;
+}
+
+
+bool job_queue_manager_job_failed( const job_queue_manager_type * manager , int job_index) {
+    job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
+    if (status == JOB_QUEUE_FAILED)
+      return true;
+    else
+      return false;
+}
+
+
+bool job_queue_manager_job_success( const job_queue_manager_type * manager , int job_index) {
+  job_status_type status = job_queue_iget_job_status( manager->job_queue , job_index );
+  if (status == JOB_QUEUE_SUCCESS)
     return true;
   else
     return false;
