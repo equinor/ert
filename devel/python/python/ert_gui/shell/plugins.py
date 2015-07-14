@@ -4,8 +4,8 @@ from ert_gui.shell import ShellFunction, assertConfigLoaded, autoCompleteList
 
 
 class Plugins(ShellFunction):
-    def __init__(self, cmd):
-        super(Plugins, self).__init__("plugins", cmd)
+    def __init__(self, shell_context):
+        super(Plugins, self).__init__("plugins", shell_context)
 
         self.addHelpFunction("list", None, "Shows a list of all available plugins.")
         self.addHelpFunction("run", "<plugin_name> [args]", "Run a named plugin with either arguments or default input GUI.")
@@ -40,11 +40,13 @@ class Plugins(ShellFunction):
                         arguments = script.getArguments(None)
                     result = plugin_job.run(self.ert(), arguments)
 
+                    self.shellContext()["debug"].setLastPluginResult(result)
+
                     print(result)
                 except CancelPluginException:
                     print("Plugin cancelled before execution!")
             else:
-                print("Error: Unknown plugin: '%s'" % plugin_name)
+                self.lastCommandFailed("Unknown plugin: '%s'" % plugin_name)
 
 
     @assertConfigLoaded
@@ -79,7 +81,7 @@ class Plugins(ShellFunction):
             else:
                 print("Plugin has no arguments.")
         else:
-            print("Error: Unknown plugin: '%s'" % plugin_name)
+            self.lastCommandFailed("Unknown plugin: '%s'" % plugin_name)
 
     @assertConfigLoaded
     def complete_arguments(self, text, line, begidx, endidx):
@@ -95,7 +97,7 @@ class Plugins(ShellFunction):
         arguments = self.splitArguments(line)
 
         if len(arguments) < 1:
-            print("Error: This keyword requires a name of a plugin to run.")
+            self.lastCommandFailed("This keyword requires a name of a plugin to run.")
         else:
             plugin_name = arguments[0]
             plugin_job = self.getWorkflowJob(plugin_name)
@@ -105,7 +107,7 @@ class Plugins(ShellFunction):
 
                 print(script.__doc__)
             else:
-                print("Error: Unknown plugin: '%s'" % plugin_name)
+                self.lastCommandFailed("Unknown plugin: '%s'" % plugin_name)
 
 
     @assertConfigLoaded

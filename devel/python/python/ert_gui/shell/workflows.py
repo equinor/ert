@@ -3,8 +3,8 @@ from ert_gui.shell import ShellFunction, assertConfigLoaded, autoCompleteList
 
 
 class Workflows(ShellFunction):
-    def __init__(self, cmd):
-        super(Workflows, self).__init__("workflows", cmd)
+    def __init__(self, shell_context):
+        super(Workflows, self).__init__("workflows", shell_context)
 
         self.addHelpFunction("list", None, "Shows a list of all available workflows.")
         self.addHelpFunction("run", "<workflow_name>", "Run a named workflow.")
@@ -32,7 +32,7 @@ class Workflows(ShellFunction):
             runner.run()
             runner.wait()
         else:
-            print("Error: Unknown workflow: '%s'" % workflow)
+            self.lastCommandFailed("Unknown workflow: '%s'" % workflow)
 
     @assertConfigLoaded
     def complete_run(self, text, line, begidx, endidx):

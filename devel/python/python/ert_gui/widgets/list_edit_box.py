@@ -75,8 +75,8 @@ class AutoCompleteLineEdit(QLineEdit):
 
 class ListEditBox(HelpedWidget):
     ITEM_DOES_NOT_EXIST_MSG = "The item: '%s' is not a possible choice."
-    NO_ITEMS_SPECIFIED_MSG = "The list must contain at least one item."
-    DEFAULT_MSG = "A list of comma separated case names."
+    NO_ITEMS_SPECIFIED_MSG = "The list must contain at least one item or * (for all)."
+    DEFAULT_MSG = "A list of comma separated case names or * for all."
 
     def __init__(self, possible_items, label="ListEdit", help_link=""):
         HelpedWidget.__init__(self, label, help_link)
@@ -116,6 +116,10 @@ class ListEditBox(HelpedWidget):
     def getItems(self):
         text = self.getListText()
         items = text.split(",")
+
+        if len(items) == 1 and items[0] == "*":
+            items = self.__possible_items
+
         return [item for item in items if len(item) > 0]
 
 
