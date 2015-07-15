@@ -87,3 +87,6 @@ class ErtClient(object):
             except ConnectionErrorException:
                 print("Connection dropped unexpectedly on command %s, the command will be resent." % cmd)
                 time.sleep(3)
+            except:
+                print("Unhandled exception on command %s - this will be raised to a higher place." % cmd)
+                raise
