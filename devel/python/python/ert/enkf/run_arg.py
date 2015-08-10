@@ -23,7 +23,7 @@ from ert.enkf.enums import EnkfRunType, EnkfStateType
 
 class RunArg(BaseCClass):
     def __init__(self , c_ptr , parent = None , is_reference = False ):
-        super(RunArg , self).__init__( c_ptr , parent = None , is_reference = is_reference )
+        super(RunArg , self).__init__( c_ptr , parent = parent , is_reference = is_reference )
         
     
     @classmethod

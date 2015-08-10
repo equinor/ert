@@ -15,8 +15,8 @@
 #  for more details. 
 
 from ert.job_queue import JobQueueManager
-from ert.enkf import RunArg
-from ert.util import BoolVector
+from ert.enkf import RunArg, ENKF_LIB
+from ert.util import BoolVector, ArgPack, CThreadPool
 
 class RunContext(object):
     def __init__(self , ert_handle , size , run_fs , run_count):
@@ -33,8 +33,10 @@ class RunContext(object):
         
         self.ert_handle.addDataKW("<ELCO_RUN_COUNT>" , "%s" % run_count)
         self.ert_run_context = self.ert_handle.getRunContextENSEMPLE_EXPERIMENT( run_fs , mask )
-        
+        self.thread_pool = CThreadPool( 8 )
+        self.submit_func = CThreadPool.lookupCFunction( ENKF_LIB , "enkf_main_isubmit_job__" )
 
+        
     def isRunning(self):
         return self.queue_manager.isRunning()
 
@@ -52,8 +54,10 @@ class RunContext(object):
 
     
     def startSimulation(self , iens):
-        self.ert_handle.submitSimulation( self.ert_run_context.iensGet( iens ))
-
+        member_context = self.ert_run_context.iensGet( iens )
+        arg = ArgPack( self.ert_handle , member_context )
+        self.thread_pool.addTask( self.submit_func , arg )
+        
 
     def realisationSuccess(self, iens):
         run_arg = self.ert_run_context.iensGet( iens )

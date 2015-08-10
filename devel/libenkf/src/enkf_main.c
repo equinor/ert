@@ -1574,13 +1574,12 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
 
 
 
-static void * enkf_main_isubmit_job__( void * arg ) {
+void * enkf_main_isubmit_job__( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ));
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1));
 
   enkf_main_isubmit_job( enkf_main , run_arg );
-  arg_pack_free( arg_pack );
   return NULL;
 }
 
@@ -1590,7 +1589,8 @@ static void * enkf_main_isubmit_job__( void * arg ) {
 
 void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
                               const ert_run_context_type * run_context ,
-                              thread_pool_type * submit_threads) {
+                              thread_pool_type * submit_threads,
+                              arg_pack_type ** arg_pack_list) {
   runpath_list_type * runpath_list = qc_module_get_runpath_list( enkf_main->qc_module );
   runpath_list_clear( runpath_list );
   {
@@ -1601,7 +1601,7 @@ void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
     for (iens = 0; iens < active_ens_size; iens++) {
       if (bool_vector_iget(iactive , iens)) {
         run_arg_type * run_arg = ert_run_context_iens_get_arg( run_context , iens);
-        arg_pack_type * arg_pack = arg_pack_alloc( );   // This is discarded by the enkf_main_isubmit_job__()
+        arg_pack_type * arg_pack = arg_pack_list[iens];
 
         arg_pack_append_ptr( arg_pack , enkf_main );
         arg_pack_append_ptr( arg_pack , run_arg);
@@ -1617,8 +1617,14 @@ void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
 void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
                             const ert_run_context_type * run_context) {
 
+  int ens_size = enkf_main_get_ensemble_size( enkf_main );
+  arg_pack_type ** arg_pack_list = util_malloc( ens_size * sizeof * arg_pack_list );
   thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
-  enkf_main_submit_jobs__(enkf_main , run_context , submit_threads );
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    arg_pack_list[iens] = arg_pack_alloc( );
+
+  enkf_main_submit_jobs__(enkf_main , run_context , submit_threads , arg_pack_list);
 
   /*
     After this join all directories/files for the simulations
@@ -1628,6 +1634,10 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
 
   thread_pool_join(submit_threads);
   thread_pool_free(submit_threads);
+
+  for (iens = 0; iens < ens_size; iens++)
+    arg_pack_free( arg_pack_list[iens] );
+  free( arg_pack_list );
 }
 
 
