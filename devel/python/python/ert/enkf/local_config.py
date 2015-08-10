@@ -45,24 +45,44 @@ class LocalConfig(BaseCClass):
         """ @rtype: UpdateStep """
         assert isinstance(update_step_key, str)
         LocalConfig.cNamespace().create_updatestep(self, update_step_key)  
-        return LocalConfig.cNamespace().get_updatestep(self, update_step_key)  
+        return self.getUpdatestep(update_step_key)  
                  
     def createMinistep(self, mini_step_key):
         """ @rtype: Ministep """
         assert isinstance(mini_step_key, str)
         LocalConfig.cNamespace().create_ministep(self, mini_step_key)         
-        return LocalConfig.cNamespace().get_ministep(self, mini_step_key)  
+        return self.getMinistep(mini_step_key)  
     
     def createObsdata(self, obsset_key):
         """ @rtype: Obsdata """
         assert isinstance(obsset_key, str)
         LocalConfig.cNamespace().create_obsdata(self, obsset_key)  
-        return LocalConfig.cNamespace().get_obsdata(self, obsset_key)    
+        return self.getObsdata(obsset_key)    
     
     def createDataset(self, dataset_key):
         """ @rtype: Dataset """
         assert isinstance(dataset_key, str)
         LocalConfig.cNamespace().create_dataset(self, dataset_key)  
+        return self.getDataset(dataset_key)
+    
+    def getUpdatestep(self, update_step_key):
+        """ @rtype: UpdateStep """
+        assert isinstance(update_step_key, str)        
+        return LocalConfig.cNamespace().get_updatestep(self, update_step_key)  
+                 
+    def getMinistep(self, mini_step_key):
+        """ @rtype: Ministep """
+        assert isinstance(mini_step_key, str)                
+        return LocalConfig.cNamespace().get_ministep(self, mini_step_key)  
+    
+    def getObsdata(self, obsset_key):
+        """ @rtype: Obsdata """
+        assert isinstance(obsset_key, str)          
+        return LocalConfig.cNamespace().get_obsdata(self, obsset_key)    
+    
+    def getDataset(self, dataset_key):
+        """ @rtype: Dataset """
+        assert isinstance(dataset_key, str)
         return LocalConfig.cNamespace().get_dataset(self, dataset_key)
     
     def installUpdatestep(self, update_step, step1, step2):
@@ -74,7 +94,9 @@ class LocalConfig(BaseCClass):
     def attachMinistep(self, update_step, mini_step):
         assert isinstance(mini_step, LocalMinistep)
         assert isinstance(update_step, LocalUpdateStep)
-        LocalConfig.cNamespace().attach_ministep(update_step, mini_step)           
+        LocalConfig.cNamespace().attach_ministep(update_step, mini_step)
+        
+                   
         
 
 cwrapper = CWrapper(ENKF_LIB)

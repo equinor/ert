@@ -18,9 +18,7 @@ class LocalUpdateStep(BaseCClass):
         LocalUpdateStep.cNamespace().free(self) 
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("local_updatestep", LocalUpdateStep)
-cwrapper.registerType("local_updatestep_obj", LocalUpdateStep.createPythonObject)
-cwrapper.registerType("local_updatestep_ref", LocalUpdateStep.createCReference)
+cwrapper.registerObjectType("local_updatestep", LocalUpdateStep)
 
 LocalUpdateStep.cNamespace().alloc               = cwrapper.prototype("c_void_p local_updatestep_alloc(char*)")
 LocalUpdateStep.cNamespace().free                = cwrapper.prototype("void local_updatestep_free(local_updatestep)")

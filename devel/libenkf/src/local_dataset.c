@@ -93,6 +93,10 @@ void local_dataset_add_node(local_dataset_type * dataset, const char *node_key) 
   hash_insert_hash_owned_ref( dataset->nodes , node_key , active_list_alloc( ALL_ACTIVE ) , active_list_free__);
 }
 
+bool local_dataset_has_key(const local_dataset_type * dataset, const char * key) {
+  return hash_has_key( dataset->nodes , key );
+}
+
 
 void local_dataset_del_node( local_dataset_type * dataset , const char * node_key) {
   hash_del( dataset->nodes , node_key );
