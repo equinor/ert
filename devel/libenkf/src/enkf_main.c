@@ -1588,16 +1588,15 @@ static void * enkf_main_isubmit_job__( void * arg ) {
 
 
 
-void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
-                            const ert_run_context_type * run_context ) {
+void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
+                              const ert_run_context_type * run_context ,
+                              thread_pool_type * submit_threads) {
   runpath_list_type * runpath_list = qc_module_get_runpath_list( enkf_main->qc_module );
-
   runpath_list_clear( runpath_list );
   {
     int iens;
     const bool_vector_type * iactive = ert_run_context_get_iactive( run_context );
     const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
-    thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
 
     for (iens = 0; iens < active_ens_size; iens++) {
       if (bool_vector_iget(iactive , iens)) {
@@ -1610,17 +1609,25 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
         thread_pool_add_job(submit_threads , enkf_main_isubmit_job__ , arg_pack);
       }
     }
-
-    /*
-      After this join all directories/files for the simulations
-      have been set up correctly, and all the jobs have been added
-      to the job_queue manager.
-    */
-
-    thread_pool_join(submit_threads);
-    thread_pool_free(submit_threads);
   }
   runpath_list_fprintf( runpath_list );
+}
+
+
+void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
+                            const ert_run_context_type * run_context) {
+
+  thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
+  enkf_main_submit_jobs__(enkf_main , run_context , submit_threads );
+
+  /*
+    After this join all directories/files for the simulations
+    have been set up correctly, and all the jobs have been added
+    to the job_queue manager.
+  */
+
+  thread_pool_join(submit_threads);
+  thread_pool_free(submit_threads);
 }
 
 
