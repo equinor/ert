@@ -28,6 +28,7 @@
 #include <ert/enkf/local_ministep.h>
 #include <ert/enkf/local_dataset.h>
 #include <ert/enkf/local_obsdata.h>
+#include <ert/enkf/local_obsdata_node.h>
 
 /**
    This file implements a 'ministep' configuration for active /
@@ -65,11 +66,18 @@ struct local_ministep_struct {
 UTIL_SAFE_CAST_FUNCTION(local_ministep , LOCAL_MINISTEP_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(local_ministep , LOCAL_MINISTEP_TYPE_ID)
 
-local_ministep_type * local_ministep_alloc(const char * name , local_obsdata_type * observations) {
+local_ministep_type * local_ministep_alloc(const char * name) {
   local_ministep_type * ministep = util_malloc( sizeof * ministep );
 
   ministep->name         = util_alloc_string_copy( name );
-  ministep->observations = observations;
+
+  char* obsdata_name = "OBSDATA_";
+  char* result = malloc(strlen(obsdata_name)+strlen(name)+1);
+  strcpy(result, obsdata_name);
+  strcat(result, name);
+  ministep->observations = local_obsdata_alloc(result);
+
+
   ministep->datasets     = hash_alloc();
   UTIL_TYPE_ID_INIT( ministep , LOCAL_MINISTEP_TYPE_ID);
 
@@ -106,6 +114,7 @@ local_ministep_type * local_ministep_alloc_copy( const local_ministep_type * src
 void local_ministep_free(local_ministep_type * ministep) {
   free(ministep->name);
   hash_free( ministep->datasets );
+  local_obsdata_free(ministep->observations);
   free( ministep );
 }
 
@@ -135,6 +144,23 @@ void local_ministep_add_dataset( local_ministep_type * ministep , const local_da
   hash_insert_ref( ministep->datasets , local_dataset_get_name( dataset ) , dataset );
 }
 
+void local_ministep_add_obsdata( local_ministep_type * ministep , local_obsdata_type * obsdata) {
+  if (ministep->observations == NULL)
+    ministep->observations = obsdata;
+  else { // Add nodes from input observations to existing observations
+    int iobs;
+    for (iobs = 0; iobs < local_obsdata_get_size( obsdata ); iobs++) {
+      local_obsdata_node_type * obs_node = local_obsdata_iget( obsdata , iobs );
+      local_obsdata_node_type * new_node = local_obsdata_node_alloc_copy(obs_node);
+      local_ministep_add_obsdata_node(ministep, new_node);
+    }
+  }
+}
+
+void local_ministep_add_obsdata_node( local_ministep_type * ministep , local_obsdata_node_type * obsdatanode) {
+  local_obsdata_type * obsdata = local_ministep_get_obsdata(ministep);
+  local_obsdata_add_node(obsdata, obsdatanode);
+}
 
 
 local_dataset_type * local_ministep_get_dataset( const local_ministep_type * ministep, const char * dataset_name) {
@@ -145,12 +171,9 @@ local_obsdata_type * local_ministep_get_obsdata( const local_ministep_type * min
   return ministep->observations;
 }
 
-
-
 const char * local_ministep_get_name( const local_ministep_type * ministep ) {
   return ministep->name;
 }
-
 
 /*****************************************************************/
 
@@ -160,14 +183,21 @@ hash_iter_type * local_ministep_alloc_dataset_iter( const local_ministep_type * 
 
 
 void local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream ) {
-  fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( CREATE_MINISTEP ), ministep->name , local_obsdata_get_name( ministep->observations) );
+  fprintf(stream , "\n%s %s\n", local_config_get_cmd_string( CREATE_MINISTEP ), ministep->name);
   {
-    hash_iter_type * dataset_iter = hash_iter_alloc( ministep->datasets );
-    while (!hash_iter_is_complete( dataset_iter )) {
-      const char * dataset_key          = hash_iter_get_next_key( dataset_iter );
-
-      fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_DATASET ) , ministep->name , dataset_key );
+    /* Dumping all the DATASET instances. */
+    {
+     hash_iter_type * dataset_iter = hash_iter_alloc( ministep->datasets );
+     while (!hash_iter_is_complete( dataset_iter )) {
+       const local_dataset_type * dataset = hash_iter_get_next_value( dataset_iter );
+       fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_DATASET ) , ministep->name , local_dataset_get_name( dataset ) );
+     }
+     hash_iter_free( dataset_iter );
     }
-    hash_iter_free( dataset_iter );
+
+    /* Only one OBSDATA */
+   local_obsdata_type * obsdata = local_ministep_get_obsdata(ministep);
+   local_obsdata_fprintf( obsdata , stream );
+   fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_OBSSET ) , ministep->name, local_obsdata_get_name(obsdata));
   }
 }

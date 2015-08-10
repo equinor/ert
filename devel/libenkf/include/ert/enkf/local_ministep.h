@@ -29,10 +29,11 @@ extern "C" {
 #include <ert/enkf/active_list.h>
 #include <ert/enkf/local_dataset.h>
 #include <ert/enkf/local_obsdata.h>
+#include <ert/enkf/local_obsdata_node.h>
 
 typedef struct local_ministep_struct local_ministep_type;
 
-local_ministep_type * local_ministep_alloc(const char * name , local_obsdata_type * observations);
+local_ministep_type * local_ministep_alloc(const char * name);
 void                  local_ministep_free(local_ministep_type * ministep);
 void                  local_ministep_free__(void * arg);
 void                  local_ministep_add_obs(local_ministep_type * ministep, const char * obs_key);
@@ -46,6 +47,8 @@ void                  local_ministep_clear_nodes( local_ministep_type * ministep
 void                  local_ministep_clear_observations( local_ministep_type * ministep);
 void                  local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream );
 void                  local_ministep_add_dataset( local_ministep_type * ministep , const local_dataset_type * dataset);
+void                  local_ministep_add_obsdata( local_ministep_type * ministep , local_obsdata_type * obsdata);
+void                  local_ministep_add_obsdata_node( local_ministep_type * ministep , local_obsdata_node_type * obsdatanode);
 local_obsdata_type  * local_ministep_get_obsdata(const local_ministep_type * ministep);
 local_dataset_type  * local_ministep_get_dataset( const local_ministep_type * ministep, const char * dataset_name);
 
