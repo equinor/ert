@@ -51,7 +51,12 @@ class LocalObsdata(BaseCClass):
         node.convertToCReference(self)
         already_exists_node_for_key = LocalObsdata.cNamespace().add_node(self, node)
         return already_exists_node_for_key
+
     
+    def addObsVector(self , obs_vector):
+        self.addNode( obs_vector.createLocalObs() )
+
+        
     def addNodeAndRange(self, key, step_1, step_2):
         """ @rtype: bool """
         assert isinstance(key, str)
