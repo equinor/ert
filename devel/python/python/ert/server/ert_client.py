@@ -36,7 +36,8 @@ class ErtClient(object):
         try:
             self.socket.connect((self.host , self.port))
         except socket.error:
-            sys.exit("Failed to connect to port:%d at %s." % (port , host))
+            raise Exception("Failed to connect to port:%d at %s." % (port , host))
+
 
     @staticmethod
     def convert_to_datetime(data):
