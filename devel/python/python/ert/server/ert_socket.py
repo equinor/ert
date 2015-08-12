@@ -52,7 +52,8 @@ class ErtHandler(SocketServer.StreamRequestHandler):
         try:
             result = self.ert_server.evalCmd( data )
         except Exception,e:
-            result = ERROR( "Exception raised" , exception = e)
+            tb = traceback.format_exc()
+            result = ERROR( "Exception raised:" , exception = tb)
 
         self.returnToClient( result )
 
