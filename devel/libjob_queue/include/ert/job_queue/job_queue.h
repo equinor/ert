@@ -72,7 +72,7 @@ extern "C" {
   void *              job_queue_run_jobs__(void * );
   void                job_queue_start_manager_thread( job_queue_type * job_queue , pthread_t * queue_thread , int job_size , bool verbose);
 
-  job_status_type     job_queue_iget_job_status(const job_queue_type * , int );
+  job_status_type     job_queue_iget_job_status(job_queue_type * , int );
   const char        * job_queue_status_name( job_status_type status );
 
   int                 job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status);
@@ -104,15 +104,15 @@ extern "C" {
   int                 job_queue_get_num_complete( const job_queue_type * queue);
   int                 job_queue_get_num_failed( const job_queue_type * queue);
   int                 job_queue_get_num_killed( const job_queue_type * queue);
-  const char        * job_queue_iget_failed_job( const job_queue_type * queue , int job_index);
-  const char        * job_queue_iget_error_reason( const job_queue_type * queue , int job_index);
-  const char        * job_queue_iget_stderr_capture( const job_queue_type * queue , int job_index);
-  const char        * job_queue_iget_stderr_file( const job_queue_type * queue , int job_index);
-  const char        * job_queue_iget_run_path( const job_queue_type * queue , int job_index);
+  const char        * job_queue_iget_failed_job(  job_queue_type * queue , int job_index);
+  const char        * job_queue_iget_error_reason(  job_queue_type * queue , int job_index);
+  const char        * job_queue_iget_stderr_capture(  job_queue_type * queue , int job_index);
+  const char        * job_queue_iget_stderr_file(  job_queue_type * queue , int job_index);
+  const char        * job_queue_iget_run_path(  job_queue_type * queue , int job_index);
   void                job_queue_iset_external_restart(job_queue_type * queue , int job_index);
   job_queue_node_type * job_queue_iget_job( job_queue_type * job_queue , int job_nr );
   bool                job_queue_has_driver(const job_queue_type * queue );
-  job_queue_node_type * job_queue_iget_node(const job_queue_type * queue , int job_index);
+  job_queue_node_type * job_queue_iget_node(job_queue_type * queue , int job_index);
 
 #ifdef __cplusplus
 }
