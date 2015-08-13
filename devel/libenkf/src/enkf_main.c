@@ -1545,13 +1545,13 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   if (run_arg_get_run_mode(run_arg) != INIT_ONLY) {
     // The job_queue_node will take ownership of this arg_pack; and destroy it when
     // the job_queue_node is discarded.
-    arg_pack_type             * load_arg      = arg_pack_alloc();
+    arg_pack_type             * callback_arg      = arg_pack_alloc();
 
       /*
         Prepare the job and submit it to the queue
       */
-    arg_pack_append_ptr( load_arg , enkf_state );
-    arg_pack_append_ptr( load_arg , run_arg );
+    arg_pack_append_ptr( callback_arg , enkf_state );
+    arg_pack_append_ptr( callback_arg , run_arg );
 
     {
       int queue_index = job_queue_add_job_mt( job_queue ,
@@ -1559,7 +1559,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
                                               enkf_state_complete_forward_modelOK__ ,
                                               enkf_state_complete_forward_modelRETRY__ ,
                                               enkf_state_complete_forward_modelEXIT__,
-                                              load_arg ,
+                                              callback_arg ,
                                               ecl_config_get_num_cpu( ecl_config ),
                                               run_path ,
                                               member_config_get_jobname( member_config ) ,
