@@ -33,7 +33,6 @@
 struct run_arg_struct {
   UTIL_TYPE_ID_DECLARATION;
   int                     iens;
-  bool                    active;               /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
   int                     init_step_parameters; /* The report step we initialize parameters from - will often be equal to step1, but can be different. */
   state_enum              init_state_parameter; /* Whether we should init from a forecast or an analyzed state - parameters. */
   state_enum              init_state_dynamic;   /* Whether we should init from a forecast or an analyzed state - dynamic state variables. */
@@ -220,11 +219,6 @@ int run_arg_get_parameter_init_step( const run_arg_type * run_arg ) {
   return run_arg->init_step_parameters;
 }
 
-
-
-void run_arg_set_inactive( run_arg_type * run_arg ) {
-  run_arg->active = false;
-}
 
 
 int run_arg_get_queue_index( const run_arg_type * run_arg ) {

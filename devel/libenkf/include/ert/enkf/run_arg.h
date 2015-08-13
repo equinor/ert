@@ -68,7 +68,6 @@ UTIL_IS_INSTANCE_HEADER( run_arg );
   void run_arg_complete_run(run_arg_type * run_arg);
   run_status_type run_arg_get_run_status( const run_arg_type * run_arg );
 
-  void run_arg_set_inactive( run_arg_type * run_arg );
   int  run_arg_get_queue_index( const run_arg_type * run_arg );
 
   bool run_arg_can_retry( const run_arg_type * run_arg );
