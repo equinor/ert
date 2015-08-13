@@ -344,7 +344,8 @@ struct job_queue_struct {
   unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
   pthread_mutex_t            status_mutex;                      /* This mutex ensure that the status-change code is only run by one thread. */
   pthread_mutex_t            run_mutex;                         /* This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
-  pthread_mutex_t            submit_mutex;                       /* This mutex ensures that ONLY one theread is adding jobs to the queue. */
+  pthread_mutex_t            submit_mutex;                      /* This mutex ensures that ONLY one theread is adding jobs to the queue. */
+  pthread_rwlock_t           queue_lock;                        /* This a rwlock around the jobs datastructure. */
   thread_pool_type         * work_pool;
 };
 
@@ -352,14 +353,19 @@ struct job_queue_struct {
 
 static void job_queue_grow( job_queue_type * queue );
 
-job_queue_node_type * job_queue_iget_node(const job_queue_type * queue , int job_index) {
-  if ((job_index >= 0) && (job_index < queue->active_size)) {
-    job_queue_node_type * node = queue->jobs[job_index];
-    return node;
-  } else {
-    util_abort("%s: fatal internal error: asked for job:%d  valid range: [0,%d) \n",__func__ , job_index , queue->active_size);
-    return NULL;
+job_queue_node_type * job_queue_iget_node(job_queue_type * queue , int job_index) {
+  job_queue_node_type * node = NULL;
+
+  pthread_rwlock_rdlock( &queue->queue_lock );
+  {
+    if ((job_index >= 0) && (job_index < queue->active_size))
+       node = queue->jobs[job_index];
+    else
+      util_abort("%s: fatal internal error: asked for job:%d  valid range: [0,%d) \n",__func__ , job_index , queue->active_size);
   }
+  pthread_rwlock_unlock( &queue->queue_lock );
+
+  return node;
 }
 
 
@@ -788,31 +794,31 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
 
 
 
-const char * job_queue_iget_run_path( const job_queue_type * queue , int job_index) {
+const char * job_queue_iget_run_path( job_queue_type * queue , int job_index) {
   job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->run_path;
 }
 
 
-const char * job_queue_iget_failed_job( const job_queue_type * queue , int job_index) {
+const char * job_queue_iget_failed_job( job_queue_type * queue , int job_index) {
   job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->failed_job;
 }
 
 
-const char * job_queue_iget_error_reason( const job_queue_type * queue , int job_index) {
+const char * job_queue_iget_error_reason( job_queue_type * queue , int job_index) {
   job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->error_reason;
 }
 
 
-const char * job_queue_iget_stderr_capture( const job_queue_type * queue , int job_index) {
+const char * job_queue_iget_stderr_capture(  job_queue_type * queue , int job_index) {
   job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->stderr_capture;
 }
 
 
-const char * job_queue_iget_stderr_file( const job_queue_type * queue , int job_index) {
+const char * job_queue_iget_stderr_file( job_queue_type * queue , int job_index) {
   job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->stderr_file;
 }
@@ -820,7 +826,7 @@ const char * job_queue_iget_stderr_file( const job_queue_type * queue , int job_
 
 
 
-job_status_type job_queue_iget_job_status(const job_queue_type * queue , int job_index) {
+job_status_type job_queue_iget_job_status( job_queue_type * queue , int job_index) {
   job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->job_status;
 }
@@ -1331,6 +1337,18 @@ void job_queue_check_open(job_queue_type* queue) {
    If the total number of jobs is not known in advance the job_queue_run_jobs
    function can be called with @num_total_run == 0. In that case it is paramount
    to call the function job_queue_submit_complete() whan all jobs have been submitted.
+
+   Observe that this function is assumed to have ~exclusive access to
+   the jobs array; meaning that:
+
+     1. The jobs array is read without taking a reader lock.
+
+     2. Other functions accessing the jobs array concurrently must
+        take a read lock.
+
+     3. This function should be the *only* function modifying
+        the jobs array, and that is done *with* the write lock.
+
 */
 
 void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
@@ -1776,32 +1794,35 @@ int job_queue_get_max_submit(const job_queue_type * job_queue ) {
 
 
 static void job_queue_grow( job_queue_type * queue ) {
-  int alloc_size                  = util_int_max( 2 * queue->alloc_size , JOB_QUEUE_START_SIZE );
-  job_queue_node_type ** new_jobs = util_calloc(alloc_size , sizeof * queue->jobs );
-  job_queue_node_type ** old_jobs = queue->jobs;
-  if (old_jobs != NULL)
-    memcpy( new_jobs , queue->jobs , queue->alloc_size * sizeof * queue->jobs );
-
-
+  pthread_rwlock_wrlock( &queue->queue_lock );
   {
-    int i;
-    /* Creating the new nodes. */
-    for (i = queue->alloc_size; i < alloc_size; i++)
-      new_jobs[i] = job_queue_node_alloc();
+    int alloc_size                  = util_int_max( 2 * queue->alloc_size , JOB_QUEUE_START_SIZE );
+    job_queue_node_type ** new_jobs = util_calloc(alloc_size , sizeof * queue->jobs );
+    job_queue_node_type ** old_jobs = queue->jobs;
+    if (old_jobs != NULL)
+      memcpy( new_jobs , queue->jobs , queue->alloc_size * sizeof * queue->jobs );
 
-    /* Assigning the job pointer to the new array. */
-    queue->jobs       = new_jobs;
+    {
+      int i;
+      /* Creating the new nodes. */
+      for (i = queue->alloc_size; i < alloc_size; i++)
+        new_jobs[i] = job_queue_node_alloc();
 
-    /* Free the old array - only the pointers, not the actual nodes! */
-    util_safe_free( old_jobs );
+      /* Assigning the job pointer to the new array. */
+      queue->jobs       = new_jobs;
 
-    /* Update the status with the new nodes. */
-    for (i=queue->alloc_size; i < alloc_size; i++)
-      queue->status_list[ STATUS_INDEX(job_queue_node_get_status(queue->jobs[i])) ]++;
+      /* Free the old array - only the pointers, not the actual nodes! */
+      util_safe_free( old_jobs );
 
-    queue->alloc_size = alloc_size;
+      /* Update the status with the new nodes. */
+      for (i=queue->alloc_size; i < alloc_size; i++)
+        queue->status_list[ STATUS_INDEX(job_queue_node_get_status(queue->jobs[i])) ]++;
+
+      queue->alloc_size = alloc_size;
+    }
+    queue->grow = false;
   }
-  queue->grow = false;
+  pthread_rwlock_unlock( &queue->queue_lock );
 }
 
 
@@ -1837,13 +1858,15 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   queue->alloc_size       = 0;
   queue->jobs             = NULL;
   queue->work_pool        = NULL;
-  job_queue_grow( queue );
 
-  job_queue_clear_status( queue );
+
   pthread_mutex_init( &queue->status_mutex , NULL);
   pthread_mutex_init( &queue->submit_mutex  , NULL);
   pthread_mutex_init( &queue->run_mutex    , NULL );
+  pthread_rwlock_init( &queue->queue_lock , NULL);
 
+  job_queue_clear_status( queue );
+  job_queue_grow( queue );
   return queue;
 }
 
