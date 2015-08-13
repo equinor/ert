@@ -344,7 +344,7 @@ struct job_queue_struct {
   unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
   pthread_mutex_t            status_mutex;                      /* This mutex ensure that the status-change code is only run by one thread. */
   pthread_mutex_t            run_mutex;                         /* This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
-  pthread_mutex_t            queue_mutex;
+  pthread_mutex_t            submit_mutex;                       /* This mutex ensures that ONLY one theread is adding jobs to the queue. */
   thread_pool_type         * work_pool;
 };
 
@@ -1642,7 +1642,7 @@ static int job_queue_add_job__(job_queue_type * queue ,
   if (!queue->user_exit) {/* We do not accept new jobs if a user-shutdown has been iniated. */
     int job_index;        // This should be better protected lockwise
 
-    pthread_mutex_lock( &queue->queue_mutex );
+    pthread_mutex_lock( &queue->submit_mutex );
     {
       if (queue->active_size == queue->alloc_size) {
         if (mt) {
@@ -1664,7 +1664,7 @@ static int job_queue_add_job__(job_queue_type * queue ,
       job_index = queue->active_size;
       queue->active_size++;
     }
-    pthread_mutex_unlock( &queue->queue_mutex );
+    pthread_mutex_unlock( &queue->submit_mutex );
 
     job_queue_initialize_node(queue , run_cmd , done_callback , retry_callback , exit_callback, callback_arg , num_cpu , run_path , job_name , job_index , argc , argv);
     return job_index;   /* Handle used by the calling scope. */
@@ -1841,7 +1841,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
 
   job_queue_clear_status( queue );
   pthread_mutex_init( &queue->status_mutex , NULL);
-  pthread_mutex_init( &queue->queue_mutex  , NULL);
+  pthread_mutex_init( &queue->submit_mutex  , NULL);
   pthread_mutex_init( &queue->run_mutex    , NULL );
 
   return queue;
