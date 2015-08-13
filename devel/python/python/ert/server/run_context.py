@@ -70,11 +70,20 @@ class RunContext(object):
         queue_index = run_arg.getQueueIndex()
         return self.queue_manager.jobFailed( queue_index )
 
+
+    # Running is slightly misleading; we have three catogories:
+    # Complete, Failed, and "Running". Running in this context is
+    # actually the 'the rest', and includes jobs in all sorts of
+    # waiting.
     
     def realisationRunning(self, iens):
         run_arg = self.ert_run_context.iensGet( iens )
-        queue_index = run_arg.getQueueIndex()
-        if self.queue_manager.jobRunning( queue_index ) or self.queue_manager.jobWaiting( queue_index ):
-            return True
+        if run_arg.isSubmitted():
+            queue_index = run_arg.getQueueIndex()
+            if self.queue_manager.jobRunning( queue_index ) or self.queue_manager.jobWaiting( queue_index ):
+                return True
+            else:
+                return False
         else:
-            return False
+            return True
+        
