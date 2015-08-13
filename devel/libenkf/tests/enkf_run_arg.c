@@ -32,6 +32,11 @@ void call_get_queue_index( void * arg ) {
   run_arg_get_queue_index( run_arg );
 }
 
+void call_set_queue_index( void * arg ) {
+  run_arg_type * run_arg = run_arg_safe_cast( arg );
+  run_arg_set_queue_index( run_arg , 88 );
+}
+
 
 void test_queue_index() {
   test_work_area_type * test_area = test_work_area_alloc("run_arg/ENS");
@@ -46,6 +51,7 @@ void test_queue_index() {
     test_assert_true( run_arg_is_submitted( run_arg ) );
     test_assert_int_equal( 78 , run_arg_get_queue_index( run_arg ));
 
+    test_assert_util_abort("run_arg_set_queue_index" , call_set_queue_index , run_arg );
     run_arg_free( run_arg );
     enkf_fs_decref( fs );
   }

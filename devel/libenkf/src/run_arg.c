@@ -157,7 +157,10 @@ void run_arg_increase_submit_count( run_arg_type * run_arg ) {
 
 
 void run_arg_set_queue_index( run_arg_type * run_arg , int queue_index) {
-  run_arg->queue_index = queue_index;
+  if (run_arg->queue_index == INVALID_QUEUE_INDEX)
+    run_arg->queue_index = queue_index;
+  else
+    util_abort("%s: attempt to reset run_arg->queue_index. These objects should not be recycled\n",__func__);
 }
 
 
