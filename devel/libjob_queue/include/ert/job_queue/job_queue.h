@@ -112,6 +112,7 @@ extern "C" {
   void                job_queue_iset_external_restart(job_queue_type * queue , int job_index);
   job_queue_node_type * job_queue_iget_job( job_queue_type * job_queue , int job_nr );
   bool                job_queue_has_driver(const job_queue_type * queue );
+  job_queue_node_type * job_queue_iget_node(const job_queue_type * queue , int job_index);
 
 #ifdef __cplusplus
 }

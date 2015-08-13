@@ -352,7 +352,15 @@ struct job_queue_struct {
 
 static void job_queue_grow( job_queue_type * queue );
 
-
+job_queue_node_type * job_queue_iget_node(const job_queue_type * queue , int job_index) {
+  if ((job_index >= 0) && (job_index < queue->active_size)) {
+    job_queue_node_type * node = queue->jobs[job_index];
+    return node;
+  } else {
+    util_abort("%s: fatal internal error: asked for job:%d  valid range: [0,%d) \n",__func__ , job_index , queue->active_size);
+    return NULL;
+  }
+}
 
 
 
@@ -574,7 +582,7 @@ static void job_queue_initialize_node(job_queue_type * queue ,
                                       int argc ,
                                       const char ** argv) {
 
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   node->submit_attempt = 0;
   node->num_cpu        = num_cpu;
   node->job_name       = util_alloc_string_copy( job_name );
@@ -781,31 +789,31 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
 
 
 const char * job_queue_iget_run_path( const job_queue_type * queue , int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->run_path;
 }
 
 
 const char * job_queue_iget_failed_job( const job_queue_type * queue , int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->failed_job;
 }
 
 
 const char * job_queue_iget_error_reason( const job_queue_type * queue , int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->error_reason;
 }
 
 
 const char * job_queue_iget_stderr_capture( const job_queue_type * queue , int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->stderr_capture;
 }
 
 
 const char * job_queue_iget_stderr_file( const job_queue_type * queue , int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->stderr_file;
 }
 
@@ -813,7 +821,7 @@ const char * job_queue_iget_stderr_file( const job_queue_type * queue , int job_
 
 
 job_status_type job_queue_iget_job_status(const job_queue_type * queue , int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->job_status;
 }
 
@@ -945,7 +953,7 @@ bool job_queue_kill_job_node( job_queue_type * queue , job_queue_node_type * nod
 }
 
 bool job_queue_kill_job( job_queue_type * queue , int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return job_queue_kill_job_node(queue, node);
 }
 
@@ -958,7 +966,7 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
 */
 
 void job_queue_iset_external_restart(job_queue_type * queue , int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   node->submit_attempt       = 0;
   job_queue_change_node_status( queue , node , JOB_QUEUE_WAITING );
 }
@@ -987,17 +995,17 @@ void job_queue_iset_external_fail(job_queue_type * queue , int job_index) {
 
 
 time_t job_queue_iget_sim_start( job_queue_type * queue, int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->sim_start;
 }
 
 time_t job_queue_iget_sim_end( job_queue_type * queue, int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->sim_end;
 }
 
 time_t job_queue_iget_submit_time( job_queue_type * queue, int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
   return node->submit_time;
 }
 
@@ -1062,7 +1070,7 @@ void job_queue_reset(job_queue_type * queue) {
   int i;
 
   for (i=0; i < queue->active_size; i++)
-    job_queue_node_finalize(queue->jobs[i]);
+    job_queue_node_finalize( queue->jobs[i] );
 
   job_queue_clear_status( queue );
 
@@ -1087,7 +1095,8 @@ bool job_queue_is_running( const job_queue_type * queue ) {
 static void job_queue_user_exit__( job_queue_type * queue ) {
   int queue_index;
   for (queue_index = 0; queue_index < queue->active_size; queue_index++) {
-    job_queue_change_node_status( queue , queue->jobs[queue_index] , JOB_QUEUE_USER_EXIT);
+    job_queue_node_type * node = queue->jobs[queue_index];
+    job_queue_change_node_status( queue , node , JOB_QUEUE_USER_EXIT);
   }
 }
 
@@ -1860,14 +1869,8 @@ void job_queue_set_pause_off( job_queue_type * job_queue) {
 
 
 void * job_queue_iget_job_data( job_queue_type * job_queue , int job_nr ) {
-  job_queue_node_type * job = job_queue->jobs[ job_nr ];
+  job_queue_node_type * job = job_queue_iget_node( job_queue, job_nr );
   return job->job_data;
-}
-
-
-job_queue_node_type * job_queue_iget_job( job_queue_type * job_queue , int job_nr ) {
-  job_queue_node_type * job = job_queue->jobs[ job_nr ];
-  return job;
 }
 
 
