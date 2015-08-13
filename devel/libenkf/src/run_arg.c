@@ -27,7 +27,7 @@
 
 
 #define RUN_ARG_TYPE_ID 66143287
-
+#define INVALID_QUEUE_INDEX -99
 
 
 struct run_arg_struct {
@@ -90,6 +90,7 @@ static run_arg_type * run_arg_alloc(enkf_fs_type * init_fs ,
   run_arg->iter = iter;
   run_arg->run_path = util_alloc_abs_path( runpath );
   run_arg->num_internal_submit = 0;
+  run_arg->queue_index = INVALID_QUEUE_INDEX;
 
   if (step1 == 0)
     run_arg->load_start = 1;
@@ -222,7 +223,17 @@ int run_arg_get_parameter_init_step( const run_arg_type * run_arg ) {
 
 
 int run_arg_get_queue_index( const run_arg_type * run_arg ) {
+  if (run_arg->queue_index == INVALID_QUEUE_INDEX)
+    util_abort("%s: sorry internal error - asking for the queue_index in a not-initialized run_arg object.\n" , __func__);
+
   return run_arg->queue_index;
+}
+
+bool run_arg_is_submitted( const run_arg_type * run_arg ) {
+  if (run_arg->queue_index == INVALID_QUEUE_INDEX)
+    return false;
+  else
+    return true;
 }
 
 

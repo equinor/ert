@@ -26,6 +26,32 @@
 #include <ert/enkf/run_arg.h>
 #include <ert/enkf/enkf_fs.h>
 
+
+void call_get_queue_index( void * arg ) {
+  run_arg_type * run_arg = run_arg_safe_cast( arg );
+  run_arg_get_queue_index( run_arg );
+}
+
+
+void test_queue_index() {
+  test_work_area_type * test_area = test_work_area_alloc("run_arg/ENS");
+  {
+    enkf_fs_type * fs   = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
+    run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(fs , 0 , 6 , "path");
+
+    test_assert_false( run_arg_is_submitted( run_arg ) );
+    test_assert_util_abort("run_arg_get_queue_index" , call_get_queue_index , run_arg );
+
+    run_arg_set_queue_index(run_arg, 78);
+    test_assert_true( run_arg_is_submitted( run_arg ) );
+    test_assert_int_equal( 78 , run_arg_get_queue_index( run_arg ));
+
+    run_arg_free( run_arg );
+    enkf_fs_decref( fs );
+  }
+  test_work_area_free( test_area );
+}
+
 void call_get_result_fs( void * arg ) {
   run_arg_type * run_arg = run_arg_safe_cast( arg );
   run_arg_get_result_fs( run_arg );
@@ -102,6 +128,7 @@ void test_ENKF_ASSIMILATION( ) {
 }
 
 int main(int argc , char ** argv) {
+  test_queue_index();
   test_SMOOTHER_RUN();
   test_INIT_ONLY();
   test_ENSEMBLE_EXPERIMENT();
