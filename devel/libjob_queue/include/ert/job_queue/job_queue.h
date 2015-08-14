@@ -27,11 +27,11 @@ extern "C" {
 #include <ert/util/path_fmt.h>
 
 #include <ert/job_queue/queue_driver.h>
+#include <ert/job_queue/job_node.h>
 
-  typedef bool (job_callback_ftype)   (void *);
 
   typedef struct job_queue_struct      job_queue_type;
-  typedef struct job_queue_node_struct job_queue_node_type;
+
 
   void                job_queue_submit_complete( job_queue_type * queue );
   job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
