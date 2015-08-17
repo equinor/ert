@@ -1,3 +1,4 @@
+add_executable( job_status_test job_status_test.c )
 add_executable( job_loadOK job_loadOK.c )
 add_executable( job_loadFail job_loadFail.c )
 add_executable( job_node_test job_node_test.c )
@@ -8,6 +9,7 @@ add_executable( job_lsf_parse_bsub_stdout job_lsf_parse_bsub_stdout.c )
 add_executable( ext_joblist_test ext_joblist_test.c )
 
 
+target_link_libraries( job_status_test job_queue test_util )
 target_link_libraries( job_workflow_test job_queue test_util )
 target_link_libraries( create_file job_queue  test_util )
 target_link_libraries( job_loadOK job_queue  test_util )
@@ -17,6 +19,7 @@ target_link_libraries( job_lsf_parse_bsub_stdout job_queue test_util)
 target_link_libraries( job_node_test job_queue test_util)
 target_link_libraries( job_list_test job_queue test_util)
 
+add_test( job_status_test ${EXECUTABLE_OUTPUT_PATH}/job_status_test)
 add_test( job_lsf_parse_bsub_stdout ${EXECUTABLE_OUTPUT_PATH}/job_lsf_parse_bsub_stdout )
 
 add_test( job_workflow_test ${EXECUTABLE_OUTPUT_PATH}/job_workflow_test ${EXECUTABLE_OUTPUT_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/data/internal_job)
