@@ -1,4 +1,3 @@
-
 /*
    Copyright (C) 2011  Statoil ASA, Norway.
 
@@ -32,6 +31,7 @@
 
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/job_node.h>
+#include <ert/job_queue/job_list.h>
 #include <ert/job_queue/queue_driver.h>
 
 
@@ -298,12 +298,13 @@ static const char* status_name[] = { "JOB_QUEUE_NOT_ACTIVE" ,
 */
 
 struct job_queue_struct {
-  int                        active_size;                       /* The current number of job slots in the queue. */
-  int                        alloc_size;                        /* The current allocated size of jobs array. */
+  //int                        active_size;                       /* The current number of job slots in the queue. */
+  //int                        alloc_size;                        /* The current allocated size of jobs array. */
+  //job_queue_node_type     ** jobs;                              /* A vector of job nodes .*/
+  job_list_type            * job_list;
   int                        max_submit;                        /* The maximum number of submit attempts for one job. */
   char                     * exit_file;                         /* The queue will look for the occurence of this file to detect a failure. */
   char                     * ok_file;                           /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
-  job_queue_node_type     ** jobs;                              /* A vector of job nodes .*/
   queue_driver_type       * driver;                             /* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
   int                        status_list[JOB_QUEUE_MAX_STATE];  /* The number of jobs in the different states. */
   int                        old_status_list[JOB_QUEUE_MAX_STATE]; /* Should the display be updated ?? */
@@ -326,18 +327,11 @@ struct job_queue_struct {
 
 /*****************************************************************/
 
-static void job_queue_grow( job_queue_type * queue );
-
 job_queue_node_type * job_queue_iget_node(job_queue_type * queue , int job_index) {
   job_queue_node_type * node = NULL;
 
   pthread_rwlock_rdlock( &queue->queue_lock );
-  {
-    if ((job_index >= 0) && (job_index < queue->active_size))
-       node = queue->jobs[job_index];
-    else
-      util_abort("%s: fatal internal error: asked for job:%d  valid range: [0,%d) \n",__func__ , job_index , queue->active_size);
-  }
+  node = job_list_iget_job( queue->job_list , job_index );
   pthread_rwlock_unlock( &queue->queue_lock );
 
   return node;
@@ -384,38 +378,8 @@ static int STATUS_INDEX( job_status_type status ) {
 static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type *  , job_status_type );
 
 
-static void job_queue_initialize_node(job_queue_type * queue ,
-                                      const char * run_cmd ,
-                                      job_callback_ftype * done_callback,
-                                      job_callback_ftype * retry_callback,
-                                      job_callback_ftype * exit_callback,
-                                      void * callback_arg ,
-                                      int num_cpu ,
-                                      const char * run_path ,
-                                      const char * job_name ,
-                                      int job_index ,
-                                      int argc ,
-                                      const char ** argv) {
-
-  job_queue_node_type * node = job_queue_iget_node( queue, job_index );
-  job_queue_node_initialize( node , run_path , num_cpu , job_name , argc , argv );
-
-  job_queue_node_set_exit_file( node , queue->exit_file );
-  job_queue_node_set_ok_file( node , queue->ok_file );
-  job_queue_node_set_cmd( node , run_cmd );
-  job_queue_node_init_callbacks( node , exit_callback , retry_callback , done_callback , callback_arg );
-
-  /* Now the job is ready to be picked by the queue manager. */
-  job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
-}
 
 
-
-
-static void job_queue_assert_queue_index(const job_queue_type * queue , int queue_index) {
-  if (queue_index < 0 || queue_index >= queue->active_size)
-    util_abort("%s: invalid queue_index - internal error - aborting \n",__func__);
-}
 
 
 
@@ -491,8 +455,8 @@ static bool job_queue_update_status(job_queue_type * queue ) {
   int ijob;
 
 
-  for (ijob = 0; ijob < queue->active_size; ijob++) {
-    job_queue_node_type * node = queue->jobs[ijob];
+  for (ijob = 0; ijob < job_list_get_size( queue->job_list ); ijob++) {
+    job_queue_node_type * node = job_list_iget_job( queue->job_list , ijob );
 
     job_queue_node_get_rdlock( node );
     {
@@ -528,9 +492,8 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
   if (queue->user_exit || queue->pause_on)
     submit_status = SUBMIT_QUEUE_CLOSED;   /* The queue is currently not accepting more jobs. */
   else {
-    job_queue_assert_queue_index(queue , queue_index);
     {
-      job_queue_node_type * node = queue->jobs[queue_index];
+      job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
       void * job_data = queue_driver_submit_job( queue->driver  ,
                                                  job_queue_node_get_cmd( node ),
                                                  job_queue_node_get_num_cpu( node ),
@@ -660,7 +623,7 @@ int job_queue_get_num_killed( const job_queue_type * queue) {
 }
 
 int job_queue_get_active_size( const job_queue_type * queue ) {
-  return queue->active_size;
+  return job_list_get_size( queue->job_list );
 }
 
 void job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_seconds) {
@@ -682,7 +645,8 @@ time_t job_queue_get_job_stop_time(const job_queue_type * queue) {
 void job_queue_set_auto_job_stop_time(job_queue_type * queue) {
   time_t sum_run_time_succeded_jobs = 0;
   int num_succeded_jobs = 0;
-  for (int i = 0; i < queue->active_size; ++i) {
+
+  for (int i = 0; i < job_list_get_size( queue->job_list ); i++) {
     if (JOB_QUEUE_SUCCESS == job_queue_iget_job_status(queue,i)) {
       sum_run_time_succeded_jobs += difftime(job_queue_iget_sim_end(queue, i), job_queue_iget_sim_start(queue, i));
       ++num_succeded_jobs;
@@ -775,7 +739,7 @@ void job_queue_iset_external_restart(job_queue_type * queue , int job_index) {
 */
 
 void job_queue_iset_external_fail(job_queue_type * queue , int job_index) {
-  job_queue_node_type * node = queue->jobs[job_index];
+  job_queue_node_type * node = job_list_iget_job( queue->job_list , job_index );
   job_queue_change_node_status( queue , node , JOB_QUEUE_EXIT);
 }
 
@@ -848,7 +812,7 @@ static void job_queue_clear_status( job_queue_type * queue ) {
 
 /**
     This function goes through all the nodes and call finalize on
-    them. hat about jobs which were NOT in a CAN_KILL state when the
+    them. What about jobs which were NOT in a CAN_KILL state when the
     killing was done, i.e. jobs which are in one of the intermediate
     load like states?? They
 */
@@ -856,9 +820,13 @@ static void job_queue_clear_status( job_queue_type * queue ) {
 void job_queue_reset(job_queue_type * queue) {
   int i;
 
-  for (i=0; i < queue->active_size; i++)
-    job_queue_node_finalize( queue->jobs[i] );
-
+  /*
+    for (i=0; i < job_list_get_size( queue->job_list ); i++) {
+    job_queue_node_type * node = job_list_iget_job( queue->job_list , i );
+    job_queue_node_finalize( node );
+    }
+  */
+  job_list_reset( queue->job_list );
   job_queue_clear_status( queue );
 
   /*
@@ -869,7 +837,6 @@ void job_queue_reset(job_queue_type * queue) {
   queue->pause_on        = false;
   queue->user_exit       = false;
   queue->open            = true;
-  queue->active_size     = 0;
   queue->stop_time       = 0;
 }
 
@@ -881,8 +848,8 @@ bool job_queue_is_running( const job_queue_type * queue ) {
 
 static void job_queue_user_exit__( job_queue_type * queue ) {
   int queue_index;
-  for (queue_index = 0; queue_index < queue->active_size; queue_index++) {
-    job_queue_node_type * node = queue->jobs[queue_index];
+  for (queue_index = 0; queue_index < job_list_get_size( queue->job_list ); queue_index++) {
+    job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
     job_queue_change_node_status( queue , node , JOB_QUEUE_USER_EXIT);
   }
 }
@@ -1080,21 +1047,19 @@ static void job_queue_check_expired(job_queue_type * queue) {
   if ((job_queue_get_max_job_duration(queue) <= 0) && (job_queue_get_job_stop_time(queue) <= 0))
     return;
 
-  for (int i = 0; i < queue->active_size; i++) {
-    job_queue_node_type * node = queue->jobs[i];
+  for (int i = 0; i < job_list_get_size( queue->job_list ); i++) {
+    job_queue_node_type * node = job_list_iget_job( queue->job_list , i );
 
     if (job_queue_node_get_status(node) == JOB_QUEUE_RUNNING) {
       time_t now = time(NULL);
       if ( job_queue_get_max_job_duration(queue) > 0) {
         double elapsed = difftime(now, job_queue_node_get_sim_start( node ));
-        if (elapsed > job_queue_get_max_job_duration(queue)) {
+        if (elapsed > job_queue_get_max_job_duration(queue))
           job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
-        }
       }
       if (job_queue_get_job_stop_time(queue) > 0) {
-        if (now >= job_queue_get_job_stop_time(queue)) {
+        if (now >= job_queue_get_job_stop_time(queue))
           job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
-        }
       }
     }
   }
@@ -1189,7 +1154,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                      2. The user has used job_queue_complete_submit()
                         to signal that no more jobs will be forthcoming.
                 */
-                if ((num_complete == queue->active_size) && queue->submit_complete)
+                if ((num_complete == job_list_get_size( queue->job_list )) && queue->submit_complete)
                   cont = false;
               }
             }
@@ -1223,8 +1188,8 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
               int submit_count = 0;
               int queue_index  = 0;
 
-              while ((queue_index < queue->active_size) && (num_submit_new > 0)) {
-                job_queue_node_type * node = queue->jobs[queue_index];
+              while ((queue_index < job_list_get_size( queue->job_list )) && (num_submit_new > 0)) {
+                job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
                 if (job_queue_node_get_status(node) == JOB_QUEUE_WAITING) {
                   {
                     submit_status_type submit_status = job_queue_submit_job(queue , queue_index);
@@ -1246,8 +1211,8 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                 Checking for complete / exited / overtime jobs
                */
               int queue_index;
-              for (queue_index = 0; queue_index < queue->active_size; queue_index++) {
-                job_queue_node_type * node = queue->jobs[queue_index];
+              for (queue_index = 0; queue_index < job_list_get_size( queue->job_list ); queue_index++) {
+                job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
 
                 switch (job_queue_node_get_status(node)) {
                   case(JOB_QUEUE_DONE):
@@ -1269,13 +1234,6 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
 
             if (local_user_exit)
               cont = false;    /* This is how we signal that we want to get out . */
-
-            if (queue->grow)
-              /*
-                 The add_job function has signaled that it needs more
-                 job slots. We must grow the jobs array.
-              */
-              job_queue_grow( queue );
             else
               if (!new_jobs && cont)
                 util_usleep(queue->usleep_time);
@@ -1292,15 +1250,13 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
   }
 
   /*
-  Set the queue's "open" flag to false to signal that the queue is not ready to be used in a
-  new job_queue_run_jobs or job_queue_add_job method call as it has not been reset yet. Not
-  resetting the queue here implies that the queue object is still available for queries after
-  this method has finished
-   */
-
+    Set the queue's "open" flag to false to signal that the queue is
+    not ready to be used in a new job_queue_run_jobs or
+    job_queue_add_job method call as it has not been reset yet. Not
+    resetting the queue here implies that the queue object is still
+    available for queries after this method has finished
+  */
   queue->open = false;
-
-
   pthread_mutex_unlock( &queue->run_mutex );
 }
 
@@ -1387,123 +1343,51 @@ void job_queue_run_jobs_threaded(job_queue_type * queue , int num_total_run, boo
    submitted proper to one of the drivers (when a slot is ready).
    When submitted the job will get (driver specific) job_data != NULL
    and status SUBMITTED.
-
-   The internal data structure jobs will grow as needed when new jobs
-   are added. Exactly how this growth takes place is regulated by the
-   @mt parameter, and is very important to get right:
-
-     mt == true: This means that we are running in multi threaded
-        mode, and in particular another thread is already running the
-        job_queue_run_jobs() function. In this case the
-        job_queue_add_job__() function will only signal that it needs
-        to grow the jobs array with the grow flag, and then block
-        until the job_queue_run_jobs() function actually expands the
-        array.
-
-     mt == false: There is no other thread running the
-        job_queue_run_jobs() function and it is safe for the
-        job_queue_add_job__() function to manipulate the jobs array
-        itself.
-
-   Other thread running job_queue_run_jobs()      |   mt == true     |  Result
-   ---------------------------------------------------------------------------
-              Yes                                 |   Yes            | OK
-              Yes                                 |   No             | Crash and burn
-              No                                  |   Yes            | Deadlock
-              No                                  |   No             | OK
-     ---------------------------------------------------------------------------
 */
 
 
 
 
-static int job_queue_add_job__(job_queue_type * queue ,
-                               const char * run_cmd ,
-                               job_callback_ftype * done_callback,
-                               job_callback_ftype * retry_callback,
-                               job_callback_ftype * exit_callback,
-                               void * callback_arg ,
-                               int num_cpu ,
-                               const char * run_path ,
-                               const char * job_name ,
-                               int argc ,
-                               const char ** argv,
-                               bool mt) {
+int job_queue_add_job(job_queue_type * queue ,
+                      const char * run_cmd ,
+                      job_callback_ftype * done_callback,
+                      job_callback_ftype * retry_callback,
+                      job_callback_ftype * exit_callback,
+                      void * callback_arg ,
+                      int num_cpu ,
+                      const char * run_path ,
+                      const char * job_name ,
+                      int argc ,
+                      const char ** argv) {
 
   //Fail hard if queue is not open
   job_queue_check_open(queue);
 
   if (!queue->user_exit) {/* We do not accept new jobs if a user-shutdown has been iniated. */
-    int job_index;        // This should be better protected lockwise
-
-    pthread_mutex_lock( &queue->submit_mutex );
+    int queue_index;
     {
-      if (queue->active_size == queue->alloc_size) {
-        if (mt) {
-          queue->grow = true;  /* Signal to the thread running the queue that we need more job slots.
-                                  Wait for the queue_size to increase; this will off course deadlock hard
-                                  unless another thread is ready to pick up the signal to grow. */
-          while (queue->active_size == queue->alloc_size) {
-            sleep( 1 );
-          }
-        } else
-          /*
-             The function is called in single threaded mode, and we
-             are certain that is safe for this thread to manipulate
-             the jobs array directly.
-          */
-          job_queue_grow( queue );
+      job_queue_node_type * node = job_queue_node_alloc( );
+      job_queue_node_initialize( node , run_path , num_cpu , job_name , argc , argv );
+      job_queue_node_set_exit_file( node , queue->exit_file );
+      job_queue_node_set_ok_file( node , queue->ok_file );
+      job_queue_node_set_cmd( node , run_cmd );
+      job_queue_node_init_callbacks( node , exit_callback , retry_callback , done_callback , callback_arg );
+
+      job_list_get_wrlock( queue->job_list );
+      {
+        job_list_add_job( queue->job_list , node );
+        queue_index = job_queue_node_get_queue_index(node);
+        queue->status_list[ STATUS_INDEX( job_queue_node_get_status(node)) ]++;
       }
+      job_list_unlock( queue->job_list );
 
-      job_index = queue->active_size;
-      queue->active_size++;
+      job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
     }
-    pthread_mutex_unlock( &queue->submit_mutex );
-
-    job_queue_initialize_node(queue , run_cmd , done_callback , retry_callback , exit_callback, callback_arg , num_cpu , run_path , job_name , job_index , argc , argv);
-    return job_index;   /* Handle used by the calling scope. */
+    return queue_index;   /* Handle used by the calling scope. */
   } else
     return -1;
 }
 
-
-/**
-   Adding a new job in multi-threaded mode, i.e. another thread is
-   running the job_queue_run_jobs() function.
-*/
-int job_queue_add_job_mt(job_queue_type * queue ,
-                         const char * run_cmd ,
-                         job_callback_ftype * done_callback,
-                         job_callback_ftype * retry_callback,
-                         job_callback_ftype * exit_callback,
-                         void * callback_arg ,
-                         int num_cpu ,
-                         const char * run_path ,
-                         const char * job_name ,
-                         int argc ,
-                         const char ** argv) {
-  return job_queue_add_job__(queue , run_cmd , done_callback, retry_callback, exit_callback , callback_arg , num_cpu , run_path , job_name , argc , argv , true);
-}
-
-
-/**
-   Adding a new job in single-threaded mode, i.e. no another thread is
-   accessing the queue.
-*/
-
-int job_queue_add_job_st(job_queue_type * queue ,
-                         const char * run_cmd ,
-                         job_callback_ftype * done_callback,
-                         job_callback_ftype * retry_callback,
-                         job_callback_ftype * exit_callback,
-                         void * callback_arg ,
-                         int num_cpu ,
-                         const char * run_path ,
-                         const char * job_name ,
-                         int argc ,
-                         const char ** argv) {
-  return job_queue_add_job__(queue , run_cmd , done_callback , retry_callback, exit_callback , callback_arg , num_cpu , run_path , job_name , argc , argv , false);
-}
 
 
 
@@ -1569,38 +1453,6 @@ int job_queue_get_max_submit(const job_queue_type * job_queue ) {
 
 
 
-static void job_queue_grow( job_queue_type * queue ) {
-  pthread_rwlock_wrlock( &queue->queue_lock );
-  {
-    int alloc_size                  = util_int_max( 2 * queue->alloc_size , JOB_QUEUE_START_SIZE );
-    job_queue_node_type ** new_jobs = util_calloc(alloc_size , sizeof * queue->jobs );
-    job_queue_node_type ** old_jobs = queue->jobs;
-    if (old_jobs != NULL)
-      memcpy( new_jobs , queue->jobs , queue->alloc_size * sizeof * queue->jobs );
-
-    {
-      int i;
-      /* Creating the new nodes. */
-      for (i = queue->alloc_size; i < alloc_size; i++)
-        new_jobs[i] = job_queue_node_alloc();
-
-      /* Assigning the job pointer to the new array. */
-      queue->jobs       = new_jobs;
-
-      /* Free the old array - only the pointers, not the actual nodes! */
-      util_safe_free( old_jobs );
-
-      /* Update the status with the new nodes. */
-      for (i=queue->alloc_size; i < alloc_size; i++)
-        queue->status_list[ STATUS_INDEX(job_queue_node_get_status(queue->jobs[i])) ]++;
-
-      queue->alloc_size = alloc_size;
-    }
-    queue->grow = false;
-  }
-  pthread_rwlock_unlock( &queue->queue_lock );
-}
-
 
 /**
    Observe that the job_queue returned by this function is NOT ready
@@ -1615,7 +1467,6 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
 
 
   job_queue_type * queue  = util_malloc(sizeof * queue );
-  queue->jobs             = NULL;
   queue->usleep_time      = 250000; /* 1000000 : 1 second */
   queue->max_ok_wait_time = 60;
   queue->max_duration     = 0;
@@ -1630,11 +1481,8 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   queue->running          = false;
   queue->grow             = false;
   queue->submit_complete  = false;
-  queue->active_size      = 0;
-  queue->alloc_size       = 0;
-  queue->jobs             = NULL;
   queue->work_pool        = NULL;
-
+  queue->job_list         = job_list_alloc(  );
 
   pthread_mutex_init( &queue->status_mutex , NULL);
   pthread_mutex_init( &queue->submit_mutex  , NULL);
@@ -1642,7 +1490,6 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   pthread_rwlock_init( &queue->queue_lock , NULL);
 
   job_queue_clear_status( queue );
-  job_queue_grow( queue );
   return queue;
 }
 
@@ -1677,15 +1524,8 @@ void * job_queue_iget_job_data( job_queue_type * job_queue , int job_nr ) {
 void job_queue_free(job_queue_type * queue) {
   util_safe_free( queue->ok_file );
   util_safe_free( queue->exit_file );
-  {
-    int i;
-    for (i=0; i < queue->alloc_size; i++)
-      job_queue_node_free(queue->jobs[i]);
-
-    free(queue->jobs);
-  }
+  job_list_free( queue->job_list );
   free(queue);
-  queue = NULL;
 }
 
 

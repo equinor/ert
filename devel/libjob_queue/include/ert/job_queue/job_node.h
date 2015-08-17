@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include <ert/util/type_macros.h>
 #include <ert/job_queue/queue_driver.h>
 
 /**
@@ -101,6 +102,11 @@ typedef struct job_queue_node_struct job_queue_node_type;
   bool job_queue_node_run_DONE_callback( job_queue_node_type * node );
   bool job_queue_node_run_RETRY_callback( job_queue_node_type * node );
   void job_queue_node_run_EXIT_callback( job_queue_node_type * node );
+  int job_queue_node_get_queue_index( const job_queue_node_type * node );
+  void job_queue_node_set_queue_index( job_queue_node_type * node , int queue_index);
+
+  UTIL_IS_INSTANCE_HEADER( job_queue_node );
+  UTIL_SAFE_CAST_HEADER( job_queue_node );
 
 #ifdef __cplusplus
 }
