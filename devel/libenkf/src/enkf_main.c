@@ -1554,17 +1554,17 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
     arg_pack_append_ptr( callback_arg , run_arg );
 
     {
-      int queue_index = job_queue_add_job_mt( job_queue ,
-                                              job_script ,
-                                              enkf_state_complete_forward_modelOK__ ,
-                                              enkf_state_complete_forward_modelRETRY__ ,
-                                              enkf_state_complete_forward_modelEXIT__,
-                                              callback_arg ,
-                                              ecl_config_get_num_cpu( ecl_config ),
-                                              run_path ,
-                                              member_config_get_jobname( member_config ) ,
-                                              1,
-                                              (const char *[1]) { run_path } );
+      int queue_index = job_queue_add_job( job_queue ,
+                                           job_script ,
+                                           enkf_state_complete_forward_modelOK__ ,
+                                           enkf_state_complete_forward_modelRETRY__ ,
+                                           enkf_state_complete_forward_modelEXIT__,
+                                           callback_arg ,
+                                           ecl_config_get_num_cpu( ecl_config ),
+                                           run_path ,
+                                           member_config_get_jobname( member_config ) ,
+                                           1,
+                                           (const char *[1]) { run_path } );
 
       run_arg_set_queue_index( run_arg , queue_index );
       run_arg_increase_submit_count( run_arg );

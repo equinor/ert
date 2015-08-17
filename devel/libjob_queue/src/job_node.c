@@ -28,14 +28,19 @@
 #include <ert/util/util.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/job_queue/job_node.h>
 
+#define JOB_QUEUE_NODE_TYPE_ID 3315299
+#define INVALID_QUEUE_INDEX    -999
 
 struct job_queue_node_struct {
+  UTIL_TYPE_ID_DECLARATION;
   job_status_type        job_status;      /* The current status of the job. */
   int                    submit_attempt;  /* Which attempt is this ... */
   int                    num_cpu;         /* How many cpu's will this job need - the driver is free to ignore if not relevant. */
+  int                    queue_index;
   char                  *run_cmd;         /* The path to the actual executable. */
   char                  *exit_file;       /* The queue will look for the occurence of this file to detect a failure. */
   char                  *ok_file;         /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
@@ -178,12 +183,18 @@ void job_queue_node_clear(job_queue_node_type * node) {
   node->callback_arg        = NULL;
   node->sim_start           = 0;
   node->sim_end             = 0;
+  node->queue_index         = INVALID_QUEUE_INDEX;
 }
+
+
+UTIL_IS_INSTANCE_FUNCTION( job_queue_node , JOB_QUEUE_NODE_TYPE_ID )
+UTIL_SAFE_CAST_FUNCTION( job_queue_node , JOB_QUEUE_NODE_TYPE_ID )
 
 
 job_queue_node_type * job_queue_node_alloc( ) {
   job_queue_node_type * node = util_malloc(sizeof * node );
 
+  UTIL_TYPE_ID_INIT( node , JOB_QUEUE_NODE_TYPE_ID );
   job_queue_node_clear(node);
   job_queue_node_clear_error_info(node);
   pthread_rwlock_init( &node->job_lock , NULL);
@@ -191,6 +202,41 @@ job_queue_node_type * job_queue_node_alloc( ) {
   return node;
 }
 
+
+int job_queue_node_get_queue_index( const job_queue_node_type * node ) {
+  if (node->queue_index == INVALID_QUEUE_INDEX)
+    util_abort("%s: internal error: asked for not-yet-initialized node->queue_index\n",__func__);
+  return node->queue_index;
+}
+
+void job_queue_node_set_queue_index( job_queue_node_type * node , int queue_index) {
+  if (node->queue_index == INVALID_QUEUE_INDEX)
+    node->queue_index = queue_index;
+  else
+    util_abort("%s: internal error: atteeempt to reset queue_index \n",__func__);
+}
+
+
+/*
+Create a small datatype with just the info needed for the callback.
+job_queue_node_type * job_queue_node_alloc_callback_copy( const job_queue_node_type * src) {
+  job_queue_node_type * target = job_queue_node_alloc();
+  target->job_status = src->job_status;
+  target->submit_attempt = src->submit_attempt;
+  target->num_cpu = src->num_cpu;
+  target->run_cmd = util_alloc_string_copy( src->run_cmd );
+  target->ok_file = util_alloc_string_copy( src->ok_file );
+  target->job_name = util_alloc_string_copy( src->job_name );
+  target->run_path = util_alloc_string_copy( src->run_path );
+  target->failed_job = util_alloc_string_copy( src->failed_job );
+  target->error_reason = util_alloc_string_copy( src->error_reason );
+  target->stderr_capture = util_alloc_string_copy( src->stderr_capture );
+  target->stderr_file = util_alloc_string_copy( src->stderr_file );
+  target->argc = src->argc;
+  target->sim_start = src->sim_start;
+  target->sim_end = src->sim_end;
+}
+*/
 
 /*
  The error information is retained even after the job has completed

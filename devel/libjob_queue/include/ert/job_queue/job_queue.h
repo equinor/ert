@@ -42,29 +42,17 @@ extern "C" {
   job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * exit_file);
   void                job_queue_free(job_queue_type *);
 
-  int                 job_queue_add_job_mt(job_queue_type * ,
-                                           const char * run_cmd ,
-                                           job_callback_ftype * done_callback,
-                                           job_callback_ftype * retry_callback,
-                                           job_callback_ftype * exit_callback,
-                                           void * callback_arg ,
-                                           int num_cpu ,
-                                           const char * ,
-                                           const char * ,
-                                           int argc ,
-                                           const char ** argv );
-
-  int                 job_queue_add_job_st(job_queue_type * ,
-                                           const char * run_cmd ,
-                                           job_callback_ftype * done_callback,
-                                           job_callback_ftype * retry_callback,
-                                           job_callback_ftype * exit_callback,
-                                           void * callback_arg ,
-                                           int num_cpu ,
-                                           const char * ,
-                                           const char * ,
-                                           int argc ,
-                                           const char ** argv );
+  int                 job_queue_add_job(job_queue_type * ,
+                                        const char * run_cmd ,
+                                        job_callback_ftype * done_callback,
+                                        job_callback_ftype * retry_callback,
+                                        job_callback_ftype * exit_callback,
+                                        void * callback_arg ,
+                                        int num_cpu ,
+                                        const char * ,
+                                        const char * ,
+                                        int argc ,
+                                        const char ** argv );
 
   void                job_queue_reset(job_queue_type * queue);
   void                job_queue_run_jobs(job_queue_type * queue, int num_total_run, bool verbose);
