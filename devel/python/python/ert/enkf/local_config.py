@@ -100,9 +100,7 @@ class LocalConfig(BaseCClass):
         
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("local_config", LocalConfig)
-cwrapper.registerType("local_config_obj", LocalConfig.createPythonObject)
-cwrapper.registerType("local_config_ref", LocalConfig.createCReference)
+cwrapper.registerObjectType("local_config", LocalConfig)
 
 LocalConfig.cNamespace().free                    = cwrapper.prototype("void local_config_free( local_config )")
 LocalConfig.cNamespace().get_config_files        = cwrapper.prototype("stringlist_ref local_config_get_config_files( local_config )")

@@ -14,13 +14,17 @@ class LocalDataset(BaseCClass):
         """ @rtype: str """
         return LocalDataset.cNamespace().name(self)
     
+    def addNode(self, key):
+        assert isinstance(key, str)
+        LocalDataset.cNamespace().add_node(self, key)
+        
     def getActiveList(self, key):
         """ @rtype: ActiveList """
         if key in self:
             return LocalDataset.cNamespace().active_list(self , key)
         else:
-            raise KeyError("Local key:%s not recognized" % key)
-
+            raise KeyError("Local key:%s not recognized" % key)        
+                
     def addNodeWithIndex(self, key, index):
         assert isinstance(key, str)
         assert isinstance(index, int)
