@@ -52,15 +52,14 @@ struct job_queue_node_struct {
   char                  *stderr_capture;
   char                  *stderr_file;     /* Name of the file containing stderr information. */
   /*-----------------------------------------------------------------*/
+  pthread_mutex_t        data_mutex;      /* Protecting the access to the job_data pointer. */
   void                  *job_data;        /* Driver specific data about this job - fully handled by the driver. */
   int                    argc;            /* The number of commandline arguments to pass when starting the job. */
   char                 **argv;            /* The commandline arguments. */
   time_t                 submit_time;     /* When was the job added to job_queue - the FIRST TIME. */
   time_t                 sim_start;       /* When did the job change status -> RUNNING - the LAST TIME. */
   time_t                 sim_end ;        /* When did the job finish successfully */
-  pthread_rwlock_t       job_lock;        /* This lock provides read/write locking of the job_data field. This lock should be
-                                             managed by external scope; i.e. the functions in this file should not do locking
-                                             themselves - but assume that the job_queue parent layer has locked correctly.*/
+
   job_callback_ftype    *done_callback;
   job_callback_ftype    *retry_callback;  /* To determine if job can be retried */
   job_callback_ftype    *exit_callback;   /* Callback to perform any cleanup */
@@ -157,50 +156,12 @@ void job_queue_node_fscanf_EXIT( job_queue_node_type * node ) {
 
 
 
-void job_queue_node_clear_error_info(job_queue_node_type * node) {
-  node->failed_job     = NULL;
-  node->error_reason   = NULL;
-  node->stderr_capture = NULL;
-  node->stderr_file    = NULL;
-  node->run_path       = NULL;
-}
 
-
-
-void job_queue_node_clear(job_queue_node_type * node) {
-  node->job_status          = JOB_QUEUE_NOT_ACTIVE;
-  node->submit_attempt      = 0;
-  node->job_name            = NULL;
-  node->job_data            = NULL;
-  node->exit_file           = NULL;
-  node->ok_file             = NULL;
-  node->run_cmd             = NULL;
-  node->argc                = 0;
-  node->argv                = NULL;
-  node->exit_callback       = NULL;
-  node->retry_callback      = NULL;
-  node->done_callback       = NULL;
-  node->callback_arg        = NULL;
-  node->sim_start           = 0;
-  node->sim_end             = 0;
-  node->queue_index         = INVALID_QUEUE_INDEX;
-}
 
 
 UTIL_IS_INSTANCE_FUNCTION( job_queue_node , JOB_QUEUE_NODE_TYPE_ID )
 UTIL_SAFE_CAST_FUNCTION( job_queue_node , JOB_QUEUE_NODE_TYPE_ID )
 
-
-job_queue_node_type * job_queue_node_alloc( ) {
-  job_queue_node_type * node = util_malloc(sizeof * node );
-
-  UTIL_TYPE_ID_INIT( node , JOB_QUEUE_NODE_TYPE_ID );
-  job_queue_node_clear(node);
-  job_queue_node_clear_error_info(node);
-  pthread_rwlock_init( &node->job_lock , NULL);
-
-  return node;
-}
 
 
 int job_queue_node_get_queue_index( const job_queue_node_type * node ) {
@@ -216,27 +177,6 @@ void job_queue_node_set_queue_index( job_queue_node_type * node , int queue_inde
     util_abort("%s: internal error: atteeempt to reset queue_index \n",__func__);
 }
 
-
-/*
-Create a small datatype with just the info needed for the callback.
-job_queue_node_type * job_queue_node_alloc_callback_copy( const job_queue_node_type * src) {
-  job_queue_node_type * target = job_queue_node_alloc();
-  target->job_status = src->job_status;
-  target->submit_attempt = src->submit_attempt;
-  target->num_cpu = src->num_cpu;
-  target->run_cmd = util_alloc_string_copy( src->run_cmd );
-  target->ok_file = util_alloc_string_copy( src->ok_file );
-  target->job_name = util_alloc_string_copy( src->job_name );
-  target->run_path = util_alloc_string_copy( src->run_path );
-  target->failed_job = util_alloc_string_copy( src->failed_job );
-  target->error_reason = util_alloc_string_copy( src->error_reason );
-  target->stderr_capture = util_alloc_string_copy( src->stderr_capture );
-  target->stderr_file = util_alloc_string_copy( src->stderr_file );
-  target->argc = src->argc;
-  target->sim_start = src->sim_start;
-  target->sim_end = src->sim_end;
-}
-*/
 
 /*
  The error information is retained even after the job has completed
@@ -276,6 +216,15 @@ void job_queue_node_update_status(job_queue_node_type * node , job_status_type n
   if (new_status != node->job_status) {
     node->job_status = new_status;
 
+    /*
+       We record sim start when the node is in state JOB_QUEUE_WAITING
+       to be sure that we do not miss the start time completely for
+       very fast jobs which are registered in the state
+       JOB_QUEUE_RUNNING.
+    */
+    if (new_status == JOB_QUEUE_WAITING)
+      node->sim_start = time( NULL );
+
     if (new_status == JOB_QUEUE_RUNNING)
       node->sim_start = time( NULL );
 
@@ -288,7 +237,11 @@ void job_queue_node_update_status(job_queue_node_type * node , job_status_type n
   }
 }
 
-
+/******************************************************************/
+/*
+   These four functions all require that the caller has aquired the
+   data lock before entering.
+*/
 
 void * job_queue_node_get_data(const job_queue_node_type * node) {
   return node->job_data;
@@ -309,6 +262,9 @@ void job_queue_node_update_data( job_queue_node_type * node , void * data) {
   node->job_data = data;
 }
 
+/******************************************************************/
+
+
 void job_queue_node_inc_submit_attempt( job_queue_node_type * node) {
   node->submit_attempt++;
 }
@@ -324,53 +280,20 @@ int job_queue_node_get_submit_attempt( const job_queue_node_type * node) {
 
 
 
-void job_queue_node_finalize(job_queue_node_type * node) {
-  job_queue_node_free_data(node);
-  job_queue_node_clear(node);
-}
-
-
-void job_queue_node_initialize( job_queue_node_type * node , const char * run_path , int num_cpu , const char * job_name , int argc , const char ** argv) {
-
-  node->submit_attempt = 0;
+void job_queue_node_set_num_cpu( job_queue_node_type * node , int num_cpu ) {
   node->num_cpu        = num_cpu;
-  node->job_name       = util_alloc_string_copy( job_name );
-  node->job_data       = NULL;                                    /* The allocation is run in single thread mode - we assume. */
-  node->argc           = argc;
-  node->argv           = util_alloc_stringlist_copy( argv , argc );
-  node->sim_start      = 0;
-  node->sim_end        = 0;
-  node->submit_time    = time( NULL );
-
-  util_safe_free(node->run_path);
-  if (util_is_abs_path(run_path))
-    node->run_path = util_alloc_string_copy( run_path );
-  else
-    node->run_path = util_alloc_realpath( run_path );
-
-  if ( !util_is_directory(node->run_path) )
-    util_abort("%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
-
 }
 
 
-void job_queue_node_set_exit_file( job_queue_node_type * node , const char * exit_file ) {
-  util_safe_free( node->exit_file );
-  if (exit_file)
-    node->exit_file = util_alloc_filename(node->run_path , exit_file , NULL);
-}
 
-
-void job_queue_node_set_ok_file( job_queue_node_type * node , const char * ok_file ) {
-  util_safe_free( node->ok_file );
+void job_queue_node_init_status_files( job_queue_node_type * node , const char * ok_file , const char * exit_file) {
   if (ok_file)
     node->ok_file = util_alloc_filename(node->run_path , ok_file , NULL);
-}
 
-void job_queue_node_set_cmd( job_queue_node_type * node , const char * run_cmd) {
-  node->run_cmd = util_alloc_string_copy( run_cmd );
-}
+  if (exit_file)
+    node->exit_file = util_alloc_filename(node->run_path , exit_file , NULL);
 
+}
 
 
 void job_queue_node_init_callbacks( job_queue_node_type * node ,
@@ -383,6 +306,56 @@ void job_queue_node_init_callbacks( job_queue_node_type * node ,
   node->done_callback  = done_callback;
   node->callback_arg   = callback_arg;
 }
+
+
+job_queue_node_type * job_queue_node_alloc( const char * job_name , const char * run_path , const char * run_cmd , int argc , const char ** argv) {
+  if (util_is_directory( run_path )) {
+    job_queue_node_type * node = util_malloc(sizeof * node );
+
+    UTIL_TYPE_ID_INIT( node , JOB_QUEUE_NODE_TYPE_ID );
+
+    node->job_name       = util_alloc_string_copy( job_name );
+    {
+    if (util_is_abs_path(run_path))
+      node->run_path = util_alloc_string_copy( run_path );
+    else
+      node->run_path = util_alloc_realpath( run_path );
+
+    if ( !util_is_directory(node->run_path) )
+      util_abort("%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
+    }
+    node->run_cmd        = util_alloc_string_copy( run_cmd );
+    node->argc           = argc;
+    node->argv           = util_alloc_stringlist_copy( argv , argc );
+
+    node->job_status     = JOB_QUEUE_NOT_ACTIVE;
+    node->num_cpu        = 1;
+    node->queue_index    = INVALID_QUEUE_INDEX;
+    node->submit_attempt = 0;
+    node->job_data       = NULL;                                    /* The allocation is run in single thread mode - we assume. */
+    node->sim_start      = 0;
+    node->sim_end        = 0;
+    node->submit_time    = time( NULL );
+
+    node->exit_callback  = NULL;
+    node->retry_callback = NULL;
+    node->done_callback  = NULL;
+    node->callback_arg   = NULL;
+
+    node->exit_file      = NULL;
+    node->ok_file        = NULL;
+
+    node->error_reason   = NULL;
+    node->stderr_capture = NULL;
+    node->stderr_file    = NULL;
+    node->failed_job     = NULL;
+
+    pthread_mutex_init( &node->data_mutex , NULL );
+    return node;
+  } else
+    return NULL;
+}
+
 
 
 const char * job_queue_node_get_cmd( const job_queue_node_type * node) {
@@ -452,17 +425,13 @@ time_t job_queue_node_get_submit_time( const job_queue_node_type * node ) {
 }
 
 
-void job_queue_node_get_wrlock( job_queue_node_type * node) {
-  pthread_rwlock_wrlock( &node->job_lock );
-}
-
-void job_queue_node_get_rdlock( job_queue_node_type * node) {
-  pthread_rwlock_rdlock( &node->job_lock );
+void job_queue_node_get_data_lock( job_queue_node_type * node) {
+  pthread_mutex_lock( &node->data_mutex );
 }
 
 
 void job_queue_node_unlock( job_queue_node_type * node) {
-  pthread_rwlock_unlock( &node->job_lock );
+  pthread_mutex_unlock( &node->data_mutex );
 }
 
 

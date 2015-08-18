@@ -54,28 +54,24 @@ typedef struct job_queue_node_struct job_queue_node_type;
   void job_queue_node_clear_error_info(job_queue_node_type * node);
   void job_queue_node_clear(job_queue_node_type * node);
   void job_queue_node_free_data(job_queue_node_type * node);
-  job_queue_node_type * job_queue_node_alloc( );
+  job_queue_node_type * job_queue_node_alloc( const char * job_name , const char * run_path , const char * run_cmd , int argc , const char ** argv );
   void job_queue_node_free(job_queue_node_type * node);
   job_status_type job_queue_node_get_status(const job_queue_node_type * node);
-  void job_queue_node_finalize(job_queue_node_type * node);
   void * job_queue_node_get_data(const job_queue_node_type * node);
   void job_queue_node_free_driver_data( job_queue_node_type * node , queue_driver_type * driver);
   void job_queue_node_driver_kill( job_queue_node_type * node , queue_driver_type * driver);
 
   void job_queue_node_update_status(job_queue_node_type * node , job_status_type status);
 
-  void job_queue_node_initialize( job_queue_node_type * node , const char * run_path , int num_cpu , const char * job_name , int argc , const char ** argv);
-  void job_queue_node_set_ok_file( job_queue_node_type * node , const char * ok_file );
-  void job_queue_node_set_exit_file( job_queue_node_type * node , const char * exit_file );
-  void job_queue_node_set_cmd( job_queue_node_type * node , const char * run_cmd);
+  void job_queue_node_set_num_cpu( job_queue_node_type * node , int num_cpu );
+  void job_queue_node_init_status_files( job_queue_node_type * node , const char * ok_file , const char * exit_file);
   void job_queue_node_init_callbacks( job_queue_node_type * node ,
                                 job_callback_ftype * done_callback,
                                 job_callback_ftype * retry_callback,
                                 job_callback_ftype * exit_callback,
                                 void * callback_arg);
 
-  void job_queue_node_get_wrlock( job_queue_node_type * node);
-  void job_queue_node_get_rdlock( job_queue_node_type * node);
+  void job_queue_node_get_data_lock( job_queue_node_type * node);
   void job_queue_node_unlock( job_queue_node_type * node);
   const char * job_queue_node_get_cmd( const job_queue_node_type * node);
   const char * job_queue_node_get_run_path( const job_queue_node_type * node);

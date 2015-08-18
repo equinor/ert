@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2015  Statoil ASA, Norway. 
-    
-   The file 'job_status_test.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2015  Statoil ASA, Norway.
+
+   The file 'job_status_test.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #include <pthread.h>
 
@@ -27,7 +27,7 @@
 
 struct job_queue_status_struct {
   UTIL_TYPE_ID_DECLARATION;
-  int status_list[JOB_QUEUE_MAX_STATE]; 
+  int status_list[JOB_QUEUE_MAX_STATE];
   pthread_mutex_t update_mutex;
 };
 
@@ -91,7 +91,7 @@ void job_queue_status_free( job_queue_status_type * status ) {
 
 void job_queue_status_clear( job_queue_status_type * status ) {
   int index;
-  for (index = 0; index < JOB_QUEUE_MAX_STATE; index++) 
+  for (index = 0; index < JOB_QUEUE_MAX_STATE; index++)
     status->status_list[ index ] = 0;
 }
 
@@ -99,16 +99,16 @@ void job_queue_status_clear( job_queue_status_type * status ) {
 int job_queue_status_get_count( job_queue_status_type * status_count , job_status_type status_type) {
   int index = STATUS_INDEX( status_type );
   int count;
-  
+
   count = status_count->status_list[index];
-  
+
   return count;
 }
 
 
 void job_queue_status_inc( job_queue_status_type * status_count , job_status_type status_type) {
   int index = STATUS_INDEX( status_type );
-  
+
   pthread_mutex_lock( &status_count->update_mutex );
   {
     int count = status_count->status_list[index];
@@ -120,7 +120,7 @@ void job_queue_status_inc( job_queue_status_type * status_count , job_status_typ
 
 static void job_queue_status_dec( job_queue_status_type * status_count , job_status_type status_type) {
   int index = STATUS_INDEX( status_type );
-  
+
   pthread_mutex_lock( &status_count->update_mutex );
   {
     int count = status_count->status_list[index];
@@ -133,7 +133,7 @@ static void job_queue_status_dec( job_queue_status_type * status_count , job_sta
 /*
   The important point is that each individual ++ and -- operation is
   atomic, if the different status counts do not add upp perfectly at
-  all times that is ok. 
+  all times that is ok.
 */
 
 

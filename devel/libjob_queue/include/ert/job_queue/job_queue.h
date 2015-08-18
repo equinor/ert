@@ -67,7 +67,6 @@ extern "C" {
   time_t              job_queue_iget_sim_start( job_queue_type * queue, int job_index);
   time_t              job_queue_iget_sim_end( job_queue_type * queue, int job_index);
   time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);
-  job_driver_type     job_queue_lookup_driver_name( const char * driver_name );
 
   void                job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_seconds);
   int                 job_queue_get_max_job_duration(const job_queue_type * queue);
@@ -101,6 +100,7 @@ extern "C" {
   job_queue_node_type * job_queue_iget_job( job_queue_type * job_queue , int job_nr );
   bool                job_queue_has_driver(const job_queue_type * queue );
   job_queue_node_type * job_queue_iget_node(job_queue_type * queue , int job_index);
+  int job_queue_get_max_running( const job_queue_type * queue );
 
 #ifdef __cplusplus
 }
