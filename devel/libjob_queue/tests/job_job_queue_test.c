@@ -408,7 +408,7 @@ void JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest(char ** arg
 
   test_assert_int_equal(0, job_queue_get_num_complete(queue));
 
-  thread_pool_free(pool); 
+  thread_pool_free(pool);
   job_queue_free(queue);
   queue_driver_free(driver);
   test_work_area_free(work_area);
@@ -463,9 +463,11 @@ void JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing(char ** argv
 }
 
 int main(int argc, char ** argv) {
+  JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest(argv);
+
   JobQueueRunJobs_ReuseQueue_AllOk(argv);
   JobQueueRunJobs_ReuseQueueWithStopTime_AllOk(argv);
-  
+
   JobQueueSetMaxDuration_DurationZero_AllRealisationsAreRun(argv);
   JobQueueSetMaxDuration_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);
   JobQueueSetMaxDurationRunJobsLoopInThread_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);
