@@ -242,13 +242,7 @@ struct job_queue_struct {
 
 */
 static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node_type * node , job_status_type new_status) {
-  job_status_type old_status = job_queue_node_get_status( node );
-  bool status_change = job_queue_status_transition(queue->status , old_status, new_status);
-
-  if (status_change)
-    job_queue_node_update_status( node , new_status );
-
-  return status_change;
+  return job_queue_node_status_transition( node , queue->status , new_status );
 }
 
 
@@ -259,22 +253,6 @@ static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node
 
 
 
-
-/*
-   This frees the storage allocated by the driver - the storage
-   allocated by the queue layer is retained.
-
-   In the case of jobs which are first marked as successfull by the
-   queue layer, and then subsequently set to status EXIT by the
-   DONE_callback this function will be called twice; i.e. we must
-   protect against a double free.
-*/
-
-static void job_queue_free_job_driver_data(job_queue_type * queue , job_queue_node_type * node) {
-  job_queue_node_get_data_lock(node);
-  job_queue_node_free_driver_data( node , queue->driver );
-  job_queue_node_unlock(node);
-}
 
 
 
@@ -295,24 +273,13 @@ static void job_queue_free_job_driver_data(job_queue_type * queue , job_queue_no
 
 static bool job_queue_update_status(job_queue_type * queue ) {
   bool update = false;
-  queue_driver_type *driver  = queue->driver;
   int ijob;
 
   for (ijob = 0; ijob < job_list_get_size( queue->job_list ); ijob++) {
     job_queue_node_type * node = job_list_iget_job( queue->job_list , ijob );
-    job_queue_node_get_data_lock( node );
-    {
-      void * node_data = job_queue_node_get_data( node );
-      if (node_data) {
-        job_status_type current_status = job_queue_node_get_status(node);
-        if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
-          job_status_type new_status = queue_driver_get_status( driver , node_data);
-          if (job_queue_change_node_status(queue , node , new_status))
-            update = true;
-        }
-      }
-    }
-    job_queue_node_unlock( node );
+    bool node_update = job_queue_node_update_status( node , queue->status , queue->driver );
+    if (node_update)
+      update = true;
   }
   return update;
 }
@@ -328,13 +295,7 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
   else {
     {
       job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
-      job_queue_node_get_data_lock( node );
-      {
-        submit_status = job_queue_node_submit( node , queue->driver );
-        if (submit_status == SUBMIT_OK)
-          job_queue_change_node_status(queue , node , JOB_QUEUE_SUBMITTED );
-      }
-      job_queue_node_unlock( node );
+      submit_status = job_queue_node_submit( node , queue->status , queue->driver );
     }
   }
   return submit_status;
@@ -453,27 +414,7 @@ void job_queue_set_auto_job_stop_time(job_queue_type * queue) {
 */
 
 static bool job_queue_kill_job_node( job_queue_type * queue , job_queue_node_type * node) {
-  bool result = false;
-
-  job_queue_node_get_data_lock( node );
-  {
-    job_status_type status = job_queue_node_get_status( node );
-    if (status & JOB_QUEUE_CAN_KILL) {
-      queue_driver_type * driver = queue->driver;
-      /*
-         Jobs with status JOB_QUEUE_WAITING are killable - in the
-         sense that status should be set to JOB_QUEUE_USER_KILLED; but
-         they do not have any driver specific job_data, and the
-         driver->kill_job() function can NOT be called.
-      */
-      if (status != JOB_QUEUE_WAITING)
-        job_queue_node_driver_kill( node , driver );
-
-      job_queue_change_node_status( queue , node , JOB_QUEUE_USER_KILLED );
-      result = true;
-    }
-  }
-  job_queue_node_unlock( node );
+  bool result = job_queue_node_kill( node , queue->status , queue->driver );
   return result;
 }
 
@@ -559,19 +500,6 @@ job_status_type job_queue_iget_job_status( job_queue_type * queue , int job_inde
 
 
 
-static void job_queue_iset_external_status(job_queue_type * queue , int job_index , job_status_type new_status) {
-  job_list_get_rdlock( queue->job_list );
-  {
-    job_queue_node_type * node = job_list_iget_job( queue->job_list , job_index );
-    job_queue_node_get_data_lock( node );
-    {
-      job_queue_node_inc_submit_attempt(node);
-      job_queue_change_node_status( queue , node , new_status );
-    }
-    job_queue_node_unlock( node );
-  }
-  job_list_unlock( queue->job_list );
-}
 
 
 
@@ -583,7 +511,12 @@ static void job_queue_iset_external_status(job_queue_type * queue , int job_inde
 */
 
 void job_queue_iset_external_restart(job_queue_type * queue , int job_index) {
-  job_queue_iset_external_status( queue , job_index , JOB_QUEUE_WAITING );
+  job_list_get_rdlock( queue->job_list );
+  {
+    job_queue_node_type * node = job_list_iget_job( queue->job_list , job_index );
+    job_queue_node_restart(node,queue->status);
+  }
+  job_list_unlock( queue->job_list );
 }
 
 
@@ -603,7 +536,12 @@ void job_queue_iset_external_restart(job_queue_type * queue , int job_index) {
 */
 
 void job_queue_iset_external_fail(job_queue_type * queue , int job_index) {
-  job_queue_iset_external_status( queue , job_index , JOB_QUEUE_EXIT );
+  job_list_get_rdlock( queue->job_list );
+  {
+    job_queue_node_type * node = job_list_iget_job( queue->job_list , job_index );
+    job_queue_node_status_transition(node,queue->status,JOB_QUEUE_EXIT);
+  }
+  job_list_unlock( queue->job_list );
 }
 
 
@@ -686,9 +624,7 @@ static void job_queue_user_exit__( job_queue_type * queue ) {
   int queue_index;
   for (queue_index = 0; queue_index < job_list_get_size( queue->job_list ); queue_index++) {
     job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
-    job_queue_node_get_data_lock(node);
-    job_queue_change_node_status( queue , node , JOB_QUEUE_USER_EXIT);
-    job_queue_node_unlock(node);
+    job_queue_node_status_transition(node,queue->status,JOB_QUEUE_USER_EXIT);
   }
 }
 
@@ -742,7 +678,7 @@ static void * job_queue_run_DONE_callback( void * arg ) {
     else
       job_queue_change_node_status( job_queue , node , JOB_QUEUE_EXIT );
 
-    job_queue_free_job_driver_data( job_queue , node );
+    job_queue_node_free_driver_data( node , job_queue->driver );
   }
   job_list_unlock(job_queue->job_list );
   arg_pack_free( arg_pack );
@@ -787,7 +723,7 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
         job_queue_change_node_status(job_queue , node , JOB_QUEUE_FAILED);
       }
     }
-    job_queue_free_job_driver_data( job_queue , node );
+    job_queue_node_free_driver_data( node , job_queue->driver );
   }
   job_list_unlock(job_queue->job_list );
   arg_pack_free( arg_pack );
@@ -804,7 +740,7 @@ static void * job_queue_run_USER_EXIT_callback( void * arg ) {
   job_list_get_rdlock( job_queue->job_list );
   {
     job_queue_node_type * node = job_list_iget_job( job_queue->job_list , queue_index );
-    job_queue_free_job_driver_data( job_queue , node );
+    job_queue_node_free_driver_data( node , job_queue->driver );
 
     // It's time to call it a day
     job_queue_node_run_EXIT_callback( node );
@@ -1042,7 +978,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
           cont = false;    /* This is how we signal that we want to get out . */
         else {
           pthread_yield();
-          util_usleep(queue->usleep_time);
+          job_list_reader_wait( queue->job_list , queue->usleep_time , 8 * queue->usleep_time);
         }
       } while ( cont );
       queue->running = false;
@@ -1180,7 +1116,6 @@ int job_queue_add_job(job_queue_type * queue ,
         job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
       }
       job_list_unlock( queue->job_list );
-
       return queue_index;   /* Handle used by the calling scope. */
     } else {
       util_abort("%s: failed to create job %s in path: %s \n",__func__ , job_name , run_path );
