@@ -366,11 +366,6 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
 }
 
 
-
-const char * job_queue_node_get_cmd( const job_queue_node_type * node) {
-  return node->run_cmd;
-}
-
 const char * job_queue_node_get_error_reason( const job_queue_node_type * node) {
   return node->error_reason;
 }
@@ -408,17 +403,6 @@ const char * job_queue_node_get_failed_job( const job_queue_node_type * node) {
   return node->failed_job;
 }
 
-int job_queue_node_get_argc( const job_queue_node_type * node) {
-  return node->argc;
-}
-
-const char ** job_queue_node_get_argv( const job_queue_node_type * node) {
-  return (const char **) node->argv;
-}
-
-int job_queue_node_get_num_cpu( const job_queue_node_type * node) {
-  return node->num_cpu;
-}
 
 time_t job_queue_node_get_sim_start( const job_queue_node_type * node ) {
   return node->sim_start;
@@ -467,3 +451,38 @@ void job_queue_node_run_EXIT_callback( job_queue_node_type * node ) {
     node->exit_callback( node->callback_arg );
 }
 
+
+
+submit_status_type job_queue_node_submit( job_queue_node_type * node , queue_driver_type * driver) {
+  submit_status_type submit_status;
+  void * job_data = queue_driver_submit_job( driver,
+                                             node->run_cmd,
+                                             node->num_cpu,
+                                             node->run_path,
+                                             node->job_name,
+                                             node->argc,
+                                             node->argv);
+
+  if (job_data != NULL) {
+    job_queue_node_update_data( node , job_data );
+    job_queue_node_inc_submit_attempt( node );
+
+    /*
+      The status JOB_QUEUE_SUBMITTED is internal, and not
+      exported anywhere. The job_queue_update_status() will
+      update this to PENDING or RUNNING at the next call. The
+      important difference between SUBMITTED and WAITING is
+      that SUBMITTED have job_data != NULL and the
+      job_queue_node free function must be called on it.
+    */
+    submit_status = SUBMIT_OK;
+  } else
+    /*
+      In this case the status of the job itself will be
+      unmodified; i.e. it will still be WAITING, and a new attempt
+      to submit it will be performed in the next round.
+    */
+    submit_status = SUBMIT_DRIVER_FAIL;
+
+  return submit_status;
+}
