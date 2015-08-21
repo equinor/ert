@@ -191,10 +191,6 @@ void job_queue_node_free_data(job_queue_node_type * node) {
   util_safe_free( node->ok_file );
   util_safe_free( node->run_cmd );
   util_free_stringlist( node->argv , node->argc );
-  if (node->callback_arg) {
-    arg_pack_free( node->callback_arg );
-    node->callback_arg = NULL;
-  }
 
   if (node->job_data != NULL)
     util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
@@ -290,9 +286,13 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
 
       if (ok_file)
         node->ok_file = util_alloc_filename(node->run_path , ok_file , NULL);
+      else
+        node->ok_file = NULL;
 
       if (exit_file)
         node->exit_file = util_alloc_filename(node->run_path , exit_file , NULL);
+      else
+        node->exit_file = NULL;
 
       node->exit_callback  = exit_callback;
       node->retry_callback = retry_callback;
