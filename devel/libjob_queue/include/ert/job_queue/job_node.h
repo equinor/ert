@@ -49,6 +49,8 @@ typedef bool (job_callback_ftype)   (void *);
 typedef struct job_queue_node_struct job_queue_node_type;
 
 
+
+  submit_status_type job_queue_node_submit( job_queue_node_type * node , queue_driver_type * driver);
   void job_queue_node_free_error_info( job_queue_node_type * node );
   void job_queue_node_fscanf_EXIT( job_queue_node_type * node );
   void job_queue_node_clear_error_info(job_queue_node_type * node);
@@ -85,12 +87,8 @@ typedef struct job_queue_node_struct job_queue_node_type;
 
   void job_queue_node_get_data_lock( job_queue_node_type * node);
   void job_queue_node_unlock( job_queue_node_type * node);
-  const char * job_queue_node_get_cmd( const job_queue_node_type * node);
   const char * job_queue_node_get_run_path( const job_queue_node_type * node);
   const char * job_queue_node_get_name( const job_queue_node_type * node);
-  const char ** job_queue_node_get_argv( const job_queue_node_type * node);
-  int  job_queue_node_get_argc( const job_queue_node_type * node);
-  int  job_queue_node_get_num_cpu( const job_queue_node_type * node);
   void job_queue_node_update_data( job_queue_node_type * node , void * data);
   void job_queue_node_inc_submit_attempt( job_queue_node_type * node);
   int  job_queue_node_get_submit_attempt( const job_queue_node_type * node);

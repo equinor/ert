@@ -185,12 +185,6 @@
 
 
 
-typedef enum {SUBMIT_OK           = 0 ,
-              SUBMIT_JOB_FAIL     = 1 , /* Typically no more attempts. */
-              SUBMIT_DRIVER_FAIL  = 2 , /* The driver would not take the job - for whatever reason?? */
-              SUBMIT_QUEUE_CLOSED = 3 } /* The queue is currently not accepting more jobs - either (temporarilty)
-                                           because of pause or it is going down. */   submit_status_type;
-
 
 
 /**
@@ -336,35 +330,9 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
       job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
       job_queue_node_get_data_lock( node );
       {
-        void * job_data = queue_driver_submit_job( queue->driver  ,
-                                                   job_queue_node_get_cmd( node ),
-                                                   job_queue_node_get_num_cpu( node ),
-                                                   job_queue_node_get_run_path( node ),
-                                                   job_queue_node_get_name( node ),
-                                                   job_queue_node_get_argc( node ),
-                                                   job_queue_node_get_argv( node ) );
-        if (job_data != NULL) {
-          job_queue_node_update_data( node , job_data );
-          job_queue_node_inc_submit_attempt( node );
+        submit_status = job_queue_node_submit( node , queue->driver );
+        if (submit_status == SUBMIT_OK)
           job_queue_change_node_status(queue , node , JOB_QUEUE_SUBMITTED );
-
-          /*
-             The status JOB_QUEUE_SUBMITTED is internal, and not
-             exported anywhere. The job_queue_update_status() will
-             update this to PENDING or RUNNING at the next call. The
-             important difference between SUBMITTED and WAITING is
-             that SUBMITTED have job_data != NULL and the
-             job_queue_node free function must be called on it.
-          */
-
-          submit_status = SUBMIT_OK;
-        } else
-          /*
-            In this case the status of the job itself will be
-            unmodified; i.e. it will still be WAITING, and a new attempt
-            to submit it will be performed in the next round.
-          */
-          submit_status = SUBMIT_DRIVER_FAIL;
       }
       job_queue_node_unlock( node );
     }
