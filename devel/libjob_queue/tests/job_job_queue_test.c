@@ -340,7 +340,7 @@ void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationSemiLong_MoreThanMinR
   int max_duration_time = 7;
   int interval_between_jobs = 2;
   time_t currenttime = 0;
-  //run_and_monitor_jobs(argv[1], max_duration_time, currenttime, min_realizations, num_expected_completed, interval_between_jobs);
+  run_and_monitor_jobs(argv[1], max_duration_time, currenttime, min_realizations, num_expected_completed, interval_between_jobs);
 }
 
 void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShortButMinRealizationsIsAll_AllRealizationsAreRun(char ** argv) {
