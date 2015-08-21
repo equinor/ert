@@ -51,6 +51,7 @@ void test_path_does_not_exist() {
 
 
 int main( int argc , char ** argv) {
+  util_install_signals();
   test_create();
   test_queue_index();
   test_path_does_not_exist();
