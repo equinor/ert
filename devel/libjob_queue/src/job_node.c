@@ -37,8 +37,6 @@
 
 struct job_queue_node_struct {
   UTIL_TYPE_ID_DECLARATION;
-  job_status_type        job_status;      /* The current status of the job. */
-  int                    submit_attempt;  /* Which attempt is this ... */
   int                    num_cpu;         /* How many cpu's will this job need - the driver is free to ignore if not relevant. */
   int                    queue_index;
   char                  *run_cmd;         /* The path to the actual executable. */
@@ -46,12 +44,19 @@ struct job_queue_node_struct {
   char                  *ok_file;         /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
   char                  *job_name;        /* The name of the job. */
   char                  *run_path;        /* Where the job is run - absolute path. */
+  job_callback_ftype    *done_callback;
+  job_callback_ftype    *retry_callback;  /* To determine if job can be retried */
+  job_callback_ftype    *exit_callback;   /* Callback to perform any cleanup */
+  void                  *callback_arg;
+
   /*-----------------------------------------------------------------*/
   char                  *failed_job;      /* Name of the job (in the chain) which has failed. */
   char                  *error_reason;    /* The error message from the failed job. */
   char                  *stderr_capture;
   char                  *stderr_file;     /* Name of the file containing stderr information. */
   /*-----------------------------------------------------------------*/
+  int                    submit_attempt;  /* Which attempt is this ... */
+  job_status_type        job_status;      /* The current status of the job. */
   pthread_mutex_t        data_mutex;      /* Protecting the access to the job_data pointer. */
   void                  *job_data;        /* Driver specific data about this job - fully handled by the driver. */
   int                    argc;            /* The number of commandline arguments to pass when starting the job. */
@@ -59,11 +64,6 @@ struct job_queue_node_struct {
   time_t                 submit_time;     /* When was the job added to job_queue - the FIRST TIME. */
   time_t                 sim_start;       /* When did the job change status -> RUNNING - the LAST TIME. */
   time_t                 sim_end ;        /* When did the job finish successfully */
-
-  job_callback_ftype    *done_callback;
-  job_callback_ftype    *retry_callback;  /* To determine if job can be retried */
-  job_callback_ftype    *exit_callback;   /* Callback to perform any cleanup */
-  void                  *callback_arg;
 };
 
 
@@ -280,35 +280,34 @@ int job_queue_node_get_submit_attempt( const job_queue_node_type * node) {
 
 
 
-void job_queue_node_set_num_cpu( job_queue_node_type * node , int num_cpu ) {
-  node->num_cpu        = num_cpu;
+
+
+
+
+
+
+job_queue_node_type * job_queue_node_alloc_simple( const char * job_name ,
+                                                   const char * run_path ,
+                                                   const char * run_cmd ,
+                                                   int argc ,
+                                                   const char ** argv) {
+  return job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, NULL , NULL, NULL, NULL, NULL, NULL);
 }
 
 
+job_queue_node_type * job_queue_node_alloc( const char * job_name ,
+                                            const char * run_path ,
+                                            const char * run_cmd ,
+                                            int argc ,
+                                            const char ** argv,
+                                            int num_cpu,
+                                            const char * ok_file,
+                                            const char * exit_file,
+                                            job_callback_ftype * done_callback,
+                                            job_callback_ftype * retry_callback,
+                                            job_callback_ftype * exit_callback,
+                                            void * callback_arg) {
 
-void job_queue_node_init_status_files( job_queue_node_type * node , const char * ok_file , const char * exit_file) {
-  if (ok_file)
-    node->ok_file = util_alloc_filename(node->run_path , ok_file , NULL);
-
-  if (exit_file)
-    node->exit_file = util_alloc_filename(node->run_path , exit_file , NULL);
-
-}
-
-
-void job_queue_node_init_callbacks( job_queue_node_type * node ,
-                                    job_callback_ftype * done_callback,
-                                    job_callback_ftype * retry_callback,
-                                    job_callback_ftype * exit_callback,
-                                    void * callback_arg) {
-  node->exit_callback  = exit_callback;
-  node->retry_callback = retry_callback;
-  node->done_callback  = done_callback;
-  node->callback_arg   = callback_arg;
-}
-
-
-job_queue_node_type * job_queue_node_alloc( const char * job_name , const char * run_path , const char * run_cmd , int argc , const char ** argv) {
   if (util_is_directory( run_path )) {
     job_queue_node_type * node = util_malloc(sizeof * node );
 
@@ -327,9 +326,13 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name , const char *
     node->run_cmd        = util_alloc_string_copy( run_cmd );
     node->argc           = argc;
     node->argv           = util_alloc_stringlist_copy( argv , argc );
+    node->exit_callback  = exit_callback;
+    node->retry_callback = retry_callback;
+    node->done_callback  = done_callback;
+    node->callback_arg   = callback_arg;
 
     node->job_status     = JOB_QUEUE_NOT_ACTIVE;
-    node->num_cpu        = 1;
+    node->num_cpu        = num_cpu;
     node->queue_index    = INVALID_QUEUE_INDEX;
     node->submit_attempt = 0;
     node->job_data       = NULL;                                    /* The allocation is run in single thread mode - we assume. */
@@ -349,6 +352,12 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name , const char *
     node->stderr_capture = NULL;
     node->stderr_file    = NULL;
     node->failed_job     = NULL;
+
+    if (ok_file)
+      node->ok_file = util_alloc_filename(node->run_path , ok_file , NULL);
+
+    if (exit_file)
+      node->exit_file = util_alloc_filename(node->run_path , exit_file , NULL);
 
     pthread_mutex_init( &node->data_mutex , NULL );
     return node;

@@ -23,7 +23,7 @@
 
 
 void test_create() {
-  job_queue_node_type * node = job_queue_node_alloc("name" , "/tmp" , "/bin/ls" , 0 , NULL );
+  job_queue_node_type * node = job_queue_node_alloc_simple("name" , "/tmp" , "/bin/ls" , 0 , NULL);
   test_assert_true( job_queue_node_is_instance( node ));
   job_queue_node_free( node );
 }
@@ -39,13 +39,13 @@ void call_get_queue_index( void * arg ) {
 
 
 void test_queue_index() {
-  job_queue_node_type * node = job_queue_node_alloc( "name" , "/tmp" , "/bin/ls" , 0 , NULL );
+  job_queue_node_type * node = job_queue_node_alloc_simple( "name" , "/tmp" , "/bin/ls" , 0 , NULL );
   test_assert_util_abort("job_queue_node_get_queue_index" , call_get_queue_index , node );
 }
 
 
 void test_path_does_not_exist() {
-  job_queue_node_type * node = job_queue_node_alloc( "name" , "does-not-exist" , "/bin/ls" , 0 , NULL );
+  job_queue_node_type * node = job_queue_node_alloc_simple( "name" , "does-not-exist" , "/bin/ls" , 0 , NULL);
   test_assert_NULL( node );
 }
 

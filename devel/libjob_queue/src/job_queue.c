@@ -718,7 +718,9 @@ static void job_queue_user_exit__( job_queue_type * queue ) {
   int queue_index;
   for (queue_index = 0; queue_index < job_list_get_size( queue->job_list ); queue_index++) {
     job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
+    job_queue_node_get_data_lock(node);
     job_queue_change_node_status( queue , node , JOB_QUEUE_USER_EXIT);
+    job_queue_node_unlock(node);
   }
 }
 
@@ -1189,12 +1191,19 @@ int job_queue_add_job(job_queue_type * queue ,
   job_queue_check_open(queue);
   if (!queue->user_exit) {/* We do not accept new jobs if a user-shutdown has been iniated. */
     int queue_index;
-    job_queue_node_type * node = job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv );
+    job_queue_node_type * node = job_queue_node_alloc( job_name ,
+                                                       run_path ,
+                                                       run_cmd ,
+                                                       argc ,
+                                                       argv ,
+                                                       num_cpu ,
+                                                       queue->ok_file ,
+                                                       queue->exit_file,
+                                                       done_callback ,
+                                                       retry_callback ,
+                                                       exit_callback ,
+                                                       callback_arg );
     if (node) {
-      job_queue_node_set_num_cpu( node ,  num_cpu );
-      job_queue_node_init_status_files( node , queue->ok_file , queue->exit_file );
-      job_queue_node_init_callbacks( node , done_callback , retry_callback , exit_callback , callback_arg );
-
       job_list_get_wrlock( queue->job_list );
       {
         job_list_add_job( queue->job_list , node );
