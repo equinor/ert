@@ -1,3 +1,5 @@
+from .plot_widget import PlotWidget
+
 from .plot_bridge import PlotBridge
 from .export_plot import ExportPlot
 from .filter_popup import FilterPopup
@@ -23,5 +25,6 @@ from .plot_metrics_tracker import PlotMetricsTracker
 from .plot_panel import PlotPanel
 from .plot_window import PlotWindow
 from .plot_tool import PlotTool
+
 
 

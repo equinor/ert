@@ -16,10 +16,11 @@ set(PYTHON_SOURCES
     plot_scale_widget.py
     plot_tool.py
     plot_tool_bar.py
+    plot_widget.py
     plot_window.py
     report_step_widget.py
 )
 
-add_python_package("python.ert_gui.tools.plot"  ${PYTHON_INSTALL_PREFIX}/ert_gui/tools/plot "${PYTHON_SOURCES}" True)
+add_python_package("python.ert_gui.tools.plot" ${PYTHON_INSTALL_PREFIX}/ert_gui/tools/plot "${PYTHON_SOURCES}" True)
 
 add_subdirectory(data)

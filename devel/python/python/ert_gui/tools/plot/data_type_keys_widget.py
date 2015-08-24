@@ -9,7 +9,7 @@ from ert_gui.widgets.search_box import SearchBox
 class DataTypeKeysWidget(QWidget):
     dataTypeKeySelected = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self, model):
         QWidget.__init__(self)
 
         self.__filter_popup = FilterPopup(self)
@@ -17,7 +17,7 @@ class DataTypeKeysWidget(QWidget):
 
         layout = QVBoxLayout()
 
-        self.model = DataTypeKeysListModel()
+        self.model = model
         self.filter_model = DataTypeProxyModel(self.model)
 
         filter_layout = QHBoxLayout()
