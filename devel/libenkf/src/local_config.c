@@ -146,7 +146,7 @@ This function will delete the obs 'OBS_KEY' from the obsset
 DATASET_DEL_ALL_DATA [NAME_OF_DATASET]
 --------------------------------------
 This function will delete all the data keys from the dataset
-'NAME_OF_MINISTEP'.
+'NAME_OF_DATASET'.
 
 
 OBSSET_DEL_ALL_OBS [NAME_OF_OBSSET]
@@ -170,13 +170,13 @@ with name 'DATASTEP_NAME' should have the index 'INDEX' active.
 
 ACTIVE_LIST_ADD_MANY_OBS_INDEX[OBSSET_NAME  OBS_KEY  N INDEX1 INDEX2 INDEX3 .. INDEXN]
 ----------------------------------------------------------------------------------------
-This function is simular to ACTIVE_LIST_ADD_OBS_INDEX, but it will add many indices.
+This function is similar to ACTIVE_LIST_ADD_OBS_INDEX, but it will add many indices.
 
 
 
 ACTIVE_LIST_ADD_MANY_DATA_INDEX[DATA_NAME  DATA_KEY  N INDEX1 INDEX2 INDEX3 .. INDEXN]
 ------------------------------------------------------------------------------------------
-This function is simular to ACTIVE_LIST_ADD_DATA_INDEX, but it will add many indices.
+This function is similar to ACTIVE_LIST_ADD_DATA_INDEX, but it will add many indices.
 
 
 INSTALL_UPDATESTEP [NAME_OF_UPDATESTEP  STEP1   STEP2]
@@ -188,7 +188,7 @@ report steps [STEP1,..,STEP2].
 INSTALL_DEFAULT_UPDATESTEP [NAME_OF_UPDATESTEP]
 -----------------------------------------------
 This function will install 'NAME_OF_UPDATESTEP' as the default
-updatestep which applies to all report streps where you have not
+updatestep which applies to all report steps where you have not
 explicitly set another updatestep with the INSTALL_UPDATESTEP function.
 
 
