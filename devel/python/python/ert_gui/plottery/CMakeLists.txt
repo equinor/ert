@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     ensemble_plot.py
+    observation_plot.py
     plot_config.py
     plot_context.py
     summary_plot.py

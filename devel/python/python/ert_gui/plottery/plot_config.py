@@ -20,6 +20,16 @@ class PlotConfig(object):
         self.__line_alpha = 0.8
         self.__line_marker = None
 
+        self.__observations_enabled = True
+        self.__observations_color = "#000000"
+        self.__observations_alpha = 1.0
+
+        self.__refcase_enabled = True
+        self.__refcase_color = "#000000"
+        self.__refcase_alpha = 0.8
+        self.__refcase_style = "-"
+        self.__refcase_marker = "x"
+        self.__refcase_width = 2.0
 
     def lineColor(self):
         if self.__line_color is None:
@@ -68,3 +78,39 @@ class PlotConfig(object):
 
     def setYLabel(self, label):
         self.__y_label = label
+
+
+    def setObservationsEnabled(self, enabled):
+        self.__observations_enabled = enabled
+
+    def isObservationsEnabled(self):
+        return self.__observations_enabled
+
+    def observationsColor(self):
+        return self.__observations_color
+
+    def observationsAlpha(self):
+        return self.__observations_alpha
+
+
+    def setRefcaseEnabled(self, enabled):
+        self.__refcase_enabled = enabled
+
+    def isRefcaseEnabled(self):
+        return self.__refcase_enabled
+
+    def refcaseColor(self):
+        return self.__refcase_color
+
+    def refcaseAlpha(self):
+        return self.__refcase_alpha
+
+    def refcaseStyle(self):
+        return self.__refcase_style
+
+    def refcaseMarker(self):
+        return self.__refcase_marker
+
+    def refcaseWidth(self):
+        return self.__refcase_width
+
