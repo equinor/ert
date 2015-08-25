@@ -10,3 +10,4 @@ Contents:
    keywords/index
    workflows/index
    observations/index
+   localization/index
