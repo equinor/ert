@@ -81,7 +81,7 @@ class PlotWindow(QMainWindow):
         plot_case_dock = self.addDock("Plot case", self.__case_selection_widget)
 
         self.__customize_plot_widget = CustomizePlotWidget()
-        # self.__customize_plot_widget.customPlotSettingsChanged.connect(self.plotSettingsChanged)
+        self.__customize_plot_widget.customPlotSettingsChanged.connect(self.keySelected)
         customize_plot_dock = self.addDock("Customize", self.__customize_plot_widget)
 
         # self.__toolbar.exportClicked.connect(self.exportActivePlot)
@@ -181,6 +181,7 @@ class PlotWindow(QMainWindow):
 
 
     # def plotSettingsChanged(self):
+
     #     x_min, x_max = self.__toolbar.getXScales()
     #     y_min, y_max = self.__toolbar.getYScales()
     #
@@ -246,6 +247,12 @@ class PlotWindow(QMainWindow):
         return plot_widget.getFigure()
 
 
+    def applyCustomization(self, plot_config):
+        custom = self.__customize_plot_widget.getCustomSettings()
+
+        plot_config.setObservationsEnabled(custom["show_observations"])
+        plot_config.setRefcaseEnabled(custom["show_refcase"])
+
 
     @may_take_a_long_time
     def keySelected(self, key=None):
@@ -257,10 +264,13 @@ class PlotWindow(QMainWindow):
 
         cases = self.__case_selection_widget.getPlotCaseNames()
 
+        plot_config = PlotConfig(key)
+        self.applyCustomization(plot_config)
+
         if self.__data_types_key_model.isSummaryKey(key):
             plot_widget = self.__plot_widgets[0]
             figure = self.__newFigure()
-            plot_config = PlotConfig(key)
+
             plot_ctx = PlotContext(self.__ert, figure, plot_config, cases, key)
             SummaryPlot.summaryEnsemblePlot(plot_ctx)
             plot_widget.updatePlot()
