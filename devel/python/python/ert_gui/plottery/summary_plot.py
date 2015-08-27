@@ -183,7 +183,7 @@ class SummaryPlot(object):
         for index in range(1, len(vector)):
             node = vector[index]
             row = {
-                "Date": EclSum.cNamespace().get_report_time(refcase, node.report_step).datetime(),
+                "Date": node.date,
                 key: node.value
             }
             rows.append(row)
