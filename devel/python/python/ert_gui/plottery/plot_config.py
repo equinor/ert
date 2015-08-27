@@ -7,6 +7,8 @@ class PlotConfig(object):
         super(PlotConfig, self).__init__()
         self.__title = title
 
+        self.__line_color_cycle = itertools.cycle(["#000000"]) #Black
+        # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown
         self.setLineColorCycle(["#386CB0", "#7FC97F", "#FDC086", "#F0027F", "#BF5B17"])
 
         self.__legend_items = []
@@ -15,21 +17,26 @@ class PlotConfig(object):
         self.__x_label = x_label
         self.__y_label = y_label
 
+
         self.__line_color = None
         self.__line_style = "-"
         self.__line_alpha = 0.8
         self.__line_marker = None
 
         self.__observations_enabled = True
-        self.__observations_color = "#000000"
+        self.__observations_color = "#000000" #Black
         self.__observations_alpha = 1.0
 
         self.__refcase_enabled = True
-        self.__refcase_color = "#000000"
+        self.__refcase_color = "#000000" #Black
         self.__refcase_alpha = 0.8
         self.__refcase_style = "-"
         self.__refcase_marker = "x"
         self.__refcase_width = 2.0
+
+        self.__legend_enabled = True
+        self.__grid_enabled = True
+
 
     def lineColor(self):
         if self.__line_color is None:
@@ -39,7 +46,7 @@ class PlotConfig(object):
 
     def nextColor(self):
         self.__line_color = self.__line_color_cycle.next()
-        return self.lineColor()
+        return self.__line_color
 
     def setLineColorCycle(self, color_list):
         self.__line_color_cycle = itertools.cycle(color_list)
@@ -113,4 +120,18 @@ class PlotConfig(object):
 
     def refcaseWidth(self):
         return self.__refcase_width
+
+
+    def isLegendEnabled(self):
+        return self.__legend_enabled
+
+    def setLegendEnabled(self, enabled):
+        self.__legend_enabled = enabled
+
+
+    def isGridEnabled(self):
+        return self.__grid_enabled
+
+    def setGridEnabled(self, enabled):
+        self.__grid_enabled = enabled
 
