@@ -1,6 +1,5 @@
 from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 from PyQt4.QtGui import QColor
-from ert.enkf import ErtImplType
 from ert_gui.widgets import util
 
 
@@ -15,23 +14,10 @@ class DataTypeKeysListModel(QAbstractItemModel):
         """
         QAbstractItemModel.__init__(self)
         self.__ert = ert
-        self.__keys = self.getAllKeys()
         self.__icon = util.resourceIcon("ide/small/bullet_star")
 
-
-    def getAllKeys(self):
-        """ :rtype: dict of (Str, list) """
-        ensemble_config = self.__ert.ensembleConfig()
-        keys = {
-            "summary": sorted([key for key in ensemble_config.getKeylistFromImplType(ErtImplType.SUMMARY)])
-        }
-
-        keys["summary_observation"] = [key for key in keys["summary"] if len(ensemble_config.getNode(key).getObservationKeys()) > 0]
-
-        keys["observation"] = keys["summary_observation"]
-        keys["all"] = keys["summary"]
-
-        return keys
+    def keyManager(self):
+        return self.__ert.getKeyManager()
 
     def index(self, row, column, parent=None, *args, **kwargs):
         return self.createIndex(row, column, parent)
@@ -40,7 +26,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
         return QModelIndex()
 
     def rowCount(self, parent=None, *args, **kwargs):
-        return len(self.__keys["all"])
+        return len(self.keyManager().allDataTypeKeys())
 
     def columnCount(self, QModelIndex_parent=None, *args, **kwargs):
         return 1
@@ -49,14 +35,14 @@ class DataTypeKeysListModel(QAbstractItemModel):
         assert isinstance(index, QModelIndex)
 
         if index.isValid():
-            items = self.__keys["all"]
+            items = self.keyManager().allDataTypeKeys()
             row = index.row()
             item = items[row]
 
             if role == Qt.DisplayRole:
                 return item
             elif role == Qt.BackgroundRole:
-                if self.isObservationKey(item):
+                if self.keyManager().isKeyWithObservations(item):
                     return self.HAS_OBSERVATIONS
 
         return QVariant()
@@ -66,15 +52,13 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
         if index.isValid():
             row = index.row()
-            return self.__keys["all"][row]
+            return self.keyManager().allDataTypeKeys()[row]
 
         return None
 
-    def isObservationKey(self, key):
-        return key in self.__keys["observation"]
 
     def isSummaryKey(self, key):
-        return key in self.__keys["summary"]
+        return self.keyManager().isSummaryKey(key)
 
     def isBlockKey(self, key):
         return False
