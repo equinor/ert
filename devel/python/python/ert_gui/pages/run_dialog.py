@@ -57,11 +57,18 @@ class RunDialog(QDialog):
 
         self.running_time = QLabel("")
 
-        self.plot_tool = PlotTool()
+        # Since ERT-906 the plot_tool requires a reference to an ERT object.
+        # As a temporarary fixup we have:
+        #
+        #  1. Added a dummy ert variable - just set to None.
+        #  2. Disabled the plot_button.
+        ert = None
+        self.plot_tool = PlotTool( ert )
         self.plot_tool.setParent(self)
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
-
+        self.plot_button.setEnabled(False)
+        
         self.kill_button = QPushButton("Kill simulations")
         self.done_button = QPushButton("Done")
         self.done_button.setHidden(True)
