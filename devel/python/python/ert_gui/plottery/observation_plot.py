@@ -1,4 +1,5 @@
 from .plot_config import PlotConfig
+
 class ObservationPlot(object):
 
     @staticmethod
