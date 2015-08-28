@@ -145,6 +145,13 @@ extern "C" {
   const char * queue_driver_type_enum_iget(int index, int * value);
   const char * queue_driver_status_enum_iget(int index, int * value);
 
+  typedef enum {SUBMIT_OK           = 0 ,
+                SUBMIT_JOB_FAIL     = 1 , /* Typically no more attempts. */
+                SUBMIT_DRIVER_FAIL  = 2 , /* The driver would not take the job - for whatever reason?? */
+                SUBMIT_QUEUE_CLOSED = 3 } /* The queue is currently not accepting more jobs - either (temporarilty)
+                                             because of pause or it is going down. */   submit_status_type;
+
+
 #ifdef __cplusplus
 }
 #endif
