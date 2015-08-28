@@ -42,12 +42,12 @@ void submit_jobs_to_queue(job_queue_type * queue, test_work_area_type * work_are
 
     if (multithreaded) {
 
-      job_queue_add_job_mt(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {
+      job_queue_add_job(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {
         runpath, sleeptime
       });
     } else {
 
-      job_queue_add_job_st(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {
+      job_queue_add_job(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {
         runpath, sleeptime
       });
     }
@@ -123,13 +123,10 @@ void run_and_monitor_jobs(char * executable_to_run, int max_job_duration, time_t
 
   for (int i = 0; i < number_of_jobs; i++) {
     char * runpath = util_alloc_sprintf("%s/%s_%d", test_work_area_get_cwd(work_area), "job", i);
-    util_make_path(runpath);
-
     char * sleeptime = util_alloc_sprintf("%d", job_run_time);
 
-    job_queue_add_job_mt(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {
-      runpath, sleeptime
-    });
+    util_make_path(runpath);
+    job_queue_add_job(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {runpath, sleeptime});
     job_run_time += interval_between_jobs;
 
     free(sleeptime);
@@ -411,7 +408,7 @@ void JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest(char ** arg
 
   test_assert_int_equal(0, job_queue_get_num_complete(queue));
 
-  thread_pool_free(pool); 
+  thread_pool_free(pool);
   job_queue_free(queue);
   queue_driver_free(driver);
   test_work_area_free(work_area);
@@ -466,9 +463,11 @@ void JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing(char ** argv
 }
 
 int main(int argc, char ** argv) {
+  JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest(argv);
+
   JobQueueRunJobs_ReuseQueue_AllOk(argv);
   JobQueueRunJobs_ReuseQueueWithStopTime_AllOk(argv);
-  
+
   JobQueueSetMaxDuration_DurationZero_AllRealisationsAreRun(argv);
   JobQueueSetMaxDuration_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);
   JobQueueSetMaxDurationRunJobsLoopInThread_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);

@@ -29,7 +29,9 @@ class SiteConfig(BaseCClass):
         return SiteConfig.cNamespace().get_queue_name( self )
 
     def setJobQueue(self, queue):
-        SiteConfig.cNamespace().set_job_queue( self , queue)
+        raise Exception("The function setJobQueue() is not properly implemented")
+
+
 
     def getLsfQueue(self):
         """ @rtype: str """
@@ -152,7 +154,6 @@ cwrapper.registerType( "site_config_ref" , SiteConfig.createCReference)
 
 SiteConfig.cNamespace().free                  = cwrapper.prototype("void site_config_free( site_config )")
 SiteConfig.cNamespace().get_queue_name        = cwrapper.prototype("char* site_config_get_queue_name(site_config)")
-SiteConfig.cNamespace().set_job_queue         = cwrapper.prototype("void site_config_set_job_queue(site_config, char*)")
 SiteConfig.cNamespace().get_lsf_queue         = cwrapper.prototype("char* site_config_get_lsf_queue(site_config)")
 SiteConfig.cNamespace().set_lsf_queue         = cwrapper.prototype("void site_config_set_lsf_queue(site_config, char*)")
 SiteConfig.cNamespace().get_max_running_lsf   = cwrapper.prototype("int site_config_get_max_running_lsf(site_config)")

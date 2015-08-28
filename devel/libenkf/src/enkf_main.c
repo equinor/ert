@@ -1545,26 +1545,26 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   if (run_arg_get_run_mode(run_arg) != INIT_ONLY) {
     // The job_queue_node will take ownership of this arg_pack; and destroy it when
     // the job_queue_node is discarded.
-    arg_pack_type             * load_arg      = arg_pack_alloc();
+    arg_pack_type             * callback_arg      = arg_pack_alloc();
 
       /*
         Prepare the job and submit it to the queue
       */
-    arg_pack_append_ptr( load_arg , enkf_state );
-    arg_pack_append_ptr( load_arg , run_arg );
+    arg_pack_append_ptr( callback_arg , enkf_state );
+    arg_pack_append_ptr( callback_arg , run_arg );
 
     {
-      int queue_index = job_queue_add_job_mt( job_queue ,
-                                              job_script ,
-                                              enkf_state_complete_forward_modelOK__ ,
-                                              enkf_state_complete_forward_modelRETRY__ ,
-                                              enkf_state_complete_forward_modelEXIT__,
-                                              load_arg ,
-                                              ecl_config_get_num_cpu( ecl_config ),
-                                              run_path ,
-                                              member_config_get_jobname( member_config ) ,
-                                              1,
-                                              (const char *[1]) { run_path } );
+      int queue_index = job_queue_add_job( job_queue ,
+                                           job_script ,
+                                           enkf_state_complete_forward_modelOK__ ,
+                                           enkf_state_complete_forward_modelRETRY__ ,
+                                           enkf_state_complete_forward_modelEXIT__,
+                                           callback_arg ,
+                                           ecl_config_get_num_cpu( ecl_config ),
+                                           run_path ,
+                                           member_config_get_jobname( member_config ) ,
+                                           1,
+                                           (const char *[1]) { run_path } );
 
       run_arg_set_queue_index( run_arg , queue_index );
       run_arg_increase_submit_count( run_arg );
@@ -1574,13 +1574,12 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
 
 
 
-static void * enkf_main_isubmit_job__( void * arg ) {
+void * enkf_main_isubmit_job__( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ));
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1));
 
   enkf_main_isubmit_job( enkf_main , run_arg );
-  arg_pack_free( arg_pack );
   return NULL;
 }
 
@@ -1588,21 +1587,21 @@ static void * enkf_main_isubmit_job__( void * arg ) {
 
 
 
-void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
-                            const ert_run_context_type * run_context ) {
+void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
+                              const ert_run_context_type * run_context ,
+                              thread_pool_type * submit_threads,
+                              arg_pack_type ** arg_pack_list) {
   runpath_list_type * runpath_list = qc_module_get_runpath_list( enkf_main->qc_module );
-
   runpath_list_clear( runpath_list );
   {
     int iens;
     const bool_vector_type * iactive = ert_run_context_get_iactive( run_context );
     const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
-    thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
 
     for (iens = 0; iens < active_ens_size; iens++) {
       if (bool_vector_iget(iactive , iens)) {
         run_arg_type * run_arg = ert_run_context_iens_get_arg( run_context , iens);
-        arg_pack_type * arg_pack = arg_pack_alloc( );   // This is discarded by the enkf_main_isubmit_job__()
+        arg_pack_type * arg_pack = arg_pack_list[iens];
 
         arg_pack_append_ptr( arg_pack , enkf_main );
         arg_pack_append_ptr( arg_pack , run_arg);
@@ -1610,17 +1609,35 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
         thread_pool_add_job(submit_threads , enkf_main_isubmit_job__ , arg_pack);
       }
     }
-
-    /*
-      After this join all directories/files for the simulations
-      have been set up correctly, and all the jobs have been added
-      to the job_queue manager.
-    */
-
-    thread_pool_join(submit_threads);
-    thread_pool_free(submit_threads);
   }
   runpath_list_fprintf( runpath_list );
+}
+
+
+void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
+                            const ert_run_context_type * run_context) {
+
+  int ens_size = enkf_main_get_ensemble_size( enkf_main );
+  arg_pack_type ** arg_pack_list = util_malloc( ens_size * sizeof * arg_pack_list );
+  thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    arg_pack_list[iens] = arg_pack_alloc( );
+
+  enkf_main_submit_jobs__(enkf_main , run_context , submit_threads , arg_pack_list);
+
+  /*
+    After this join all directories/files for the simulations
+    have been set up correctly, and all the jobs have been added
+    to the job_queue manager.
+  */
+
+  thread_pool_join(submit_threads);
+  thread_pool_free(submit_threads);
+
+  for (iens = 0; iens < ens_size; iens++)
+    arg_pack_free( arg_pack_list[iens] );
+  free( arg_pack_list );
 }
 
 
