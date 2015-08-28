@@ -7,7 +7,7 @@ from ert_gui.widgets.search_box import SearchBox
 
 
 class DataTypeKeysWidget(QWidget):
-    dataTypeKeySelected = pyqtSignal(str)
+    dataTypeKeySelected = pyqtSignal()
 
     def __init__(self, model):
         QWidget.__init__(self)
@@ -56,7 +56,7 @@ class DataTypeKeysWidget(QWidget):
     def itemSelected(self):
         selected_item = self.getSelectedItem()
         if selected_item is not None:
-            self.dataTypeKeySelected.emit(selected_item)
+            self.dataTypeKeySelected.emit()
 
 
     def getSelectedItem(self):

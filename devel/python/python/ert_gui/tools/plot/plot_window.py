@@ -23,26 +23,8 @@ class PlotWindow(QMainWindow):
         self.setWindowTitle("Plotting")
         self.activateWindow()
 
-        # self.__plot_data = None
-        #
-        # self.__plot_metrics_tracker = PlotMetricsTracker()
-        # self.__plot_metrics_tracker.addScaleType("value", float)
-        # self.__plot_metrics_tracker.addScaleType("depth", float)
-        # self.__plot_metrics_tracker.addScaleType("pca", float)
-        # self.__plot_metrics_tracker.addScaleType("index", int)
-        # self.__plot_metrics_tracker.addScaleType("count", int)
-        # self.__plot_metrics_tracker.addScaleType("time", CTime)
-
         self.__central_tab = QTabWidget()
-        # self.__central_tab.currentChanged.connect(self.currentPlotChanged)
-
-        # self.__plot_panel_tracker = PlotPanelTracker(self.__central_tab)
-        # self.__plot_panel_tracker.addKeyTypeTester("summary", PlotDataFetcher.isSummaryKey)
-        # self.__plot_panel_tracker.addKeyTypeTester("block", PlotDataFetcher.isBlockObservationKey)
-        # self.__plot_panel_tracker.addKeyTypeTester("gen_kw", PlotDataFetcher.isGenKWKey)
-        # self.__plot_panel_tracker.addKeyTypeTester("gen_data", PlotDataFetcher.isGenDataKey)
-        # self.__plot_panel_tracker.addKeyTypeTester("custom_pca", PlotDataFetcher.isCustomPcaDataKey)
-
+        self.__central_tab.currentChanged.connect(self.currentPlotChanged)
 
         central_widget = QWidget()
         central_layout = QVBoxLayout()
@@ -53,13 +35,17 @@ class PlotWindow(QMainWindow):
 
         self.setCentralWidget(central_widget)
 
+        key_manager = ert.getKeyManager()
+        """:type: ert.enkf.key_manager.KeyManager """
 
-        self.__plot_widgets = {}
-        """:type: dict of (int, PlotWidget)"""
+        self.__plot_widgets = []
+        """:type: list of PlotWidget"""
 
-        self.addPlotWidget("Ensemble plot", short_name="EP")
-        self.addPlotWidget("Ensemble overview plot", short_name="EOP", enabled=False)
-        # self.addPlotPanel("Ensemble statistics", "gui/plots/ensemble_statistics_plot.html", short_name="ES")
+        self.addPlotWidget("Ensemble", SummaryPlot.summaryEnsemblePlot, key_manager.isSummaryKey)
+        self.addPlotWidget("Ensemble overview", SummaryPlot.summaryOverviewPlot, key_manager.isKeyWithObservations)
+        self.addPlotWidget("Ensemble statistics", SummaryPlot.summaryStatisticsPlot, key_manager.isSummaryKey)
+
+
         # self.addPlotPanel("Histogram", "gui/plots/histogram.html", short_name="Histogram")
         # self.addPlotPanel("Distribution", "gui/plots/gen_kw.html", short_name="Distribution")
         # self.addPlotPanel("RFT plot", "gui/plots/rft.html", short_name="RFT")
@@ -84,149 +70,42 @@ class PlotWindow(QMainWindow):
         self.__customize_plot_widget.customPlotSettingsChanged.connect(self.keySelected)
         customize_plot_dock = self.addDock("Customize", self.__customize_plot_widget)
 
-        # self.__toolbar.exportClicked.connect(self.exportActivePlot)
-        # self.__toolbar.plotScalesChanged.connect(self.plotSettingsChanged)
-        # self.__toolbar.reportStepChanged.connect(self.plotSettingsChanged)
 
-        # self.__exporter = None
         self.tabifyDockWidget(plot_case_dock, customize_plot_dock)
 
         plot_case_dock.show()
         plot_case_dock.raise_()
 
+        self.__plot_widgets[self.__central_tab.currentIndex()].setActive()
         self.__data_type_keys_widget.selectDefault()
 
-        # self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
 
 
-    # def fetchDefaultXScales(self):
-    #     if self.__plot_data is not None:
-    #         active_plot = self.getActivePlot()
-    #         x_axis_type_name = active_plot.xAxisType()
-    #
-    #         x_axis_type = self.__plot_metrics_tracker.getType(x_axis_type_name)
-    #
-    #         if x_axis_type is not None:
-    #             x_min, x_max = active_plot.getXScales(self.__plot_data)
-    #
-    #             if x_axis_type is CTime and x_min is not None and x_max is not None:
-    #                 x_min = int(x_min)
-    #                 x_max = int(x_max)
-    #
-    #             self.__plot_metrics_tracker.setScalesForType(x_axis_type_name, x_min, x_max)
-    #
+    def currentPlotChanged(self):
+        for plot_widget in self.__plot_widgets:
+            plot_widget.setActive(False)
+            index = self.__central_tab.indexOf(plot_widget)
 
+            if index == self.__central_tab.currentIndex():
+                plot_widget.setActive()
+                plot_widget.updatePlot()
 
-    # def fetchDefaultYScales(self):
-    #         if self.__plot_data is not None:
-    #             active_plot = self.getActivePlot()
-    #             y_axis_type_name = active_plot.yAxisType()
-    #
-    #             y_axis_type = self.__plot_metrics_tracker.getType(y_axis_type_name)
-    #
-    #             if y_axis_type is not None:
-    #                 y_min, y_max = active_plot.getYScales(self.__plot_data)
-    #
-    #                 if y_axis_type is CTime and y_min is not None and y_max is not None:
-    #                     y_min = int(y_min)
-    #                     y_max = int(y_max)
-    #
-    #                 self.__plot_metrics_tracker.setScalesForType(y_axis_type_name, y_min, y_max)
-    #
-    #
-    # def resetCurrentScales(self):
-    #     active_plot = self.getActivePlot()
-    #     x_axis_type_name = active_plot.xAxisType()
-    #     y_axis_type_name = active_plot.yAxisType()
-    #
-    #     self.__plot_metrics_tracker.resetScaleType(x_axis_type_name)
-    #     self.__plot_metrics_tracker.resetScaleType(y_axis_type_name)
-    #
-    #     self.currentPlotChanged()
-    #     self.plotSettingsChanged()
-    #
-    #
-    # def getActivePlot(self):
-    #     """ @rtype: PlotPanel """
-    #     if not self.__central_tab.currentIndex() > -1:
-    #         raise AssertionError("No plot selected!")
-    #
-    #     active_plot =  self.__central_tab.currentWidget()
-    #     assert isinstance(active_plot, PlotPanel)
-    #
-    #     return active_plot
-    #
-    #
-    # def currentPlotChanged(self):
-    #     active_plot = self.getActivePlot()
-    #
-    #     if active_plot.isReady():
-    #         x_axis_type_name = active_plot.xAxisType()
-    #         x_axis_type = self.__plot_metrics_tracker.getType(x_axis_type_name)
-    #
-    #         y_axis_type_name = active_plot.yAxisType()
-    #         y_axis_type = self.__plot_metrics_tracker.getType(y_axis_type_name)
-    #
-    #         if not self.__plot_metrics_tracker.hasScale(x_axis_type_name):
-    #             self.fetchDefaultXScales()
-    #
-    #         if not self.__plot_metrics_tracker.hasScale(y_axis_type_name):
-    #             self.fetchDefaultYScales()
-    #
-    #         x_min, x_max = self.__plot_metrics_tracker.getScalesForType(x_axis_type_name)
-    #         y_min, y_max = self.__plot_metrics_tracker.getScalesForType(y_axis_type_name)
-    #
-    #         self.__toolbar.setToolBarOptions(x_axis_type, y_axis_type, active_plot.isReportStepCapable() and self.__plot_metrics_tracker.dataTypeSupportsReportStep())
-    #         self.__toolbar.setScales(x_min, x_max, y_min, y_max)
+    def createPlotContext(self, figure):
+        key = self.getSelectedKey()
+        cases = self.__case_selection_widget.getPlotCaseNames()
+        plot_config = PlotConfig(key)
+        self.applyCustomization(plot_config)
+        return PlotContext(self.__ert, figure, plot_config, cases, key)
 
+    def getSelectedKey(self):
+        key = str(self.__data_type_keys_widget.getSelectedItem())
+        return key
 
-    # def plotSettingsChanged(self):
-
-    #     x_min, x_max = self.__toolbar.getXScales()
-    #     y_min, y_max = self.__toolbar.getYScales()
-    #
-    #     active_plot = self.getActivePlot()
-    #
-    #     x_axis_type_name = active_plot.xAxisType()
-    #     y_axis_type_name = active_plot.yAxisType()
-    #
-    #     self.__plot_metrics_tracker.setScalesForType(x_axis_type_name, x_min, x_max)
-    #     self.__plot_metrics_tracker.setScalesForType(y_axis_type_name, y_min, y_max)
-    #
-    #     self.updatePlots()
-    #
-    #
-    # def updatePlots(self):
-    #     report_step = self.__toolbar.getReportStep()
-    #
-    #     for plot_panel in self.__plot_panels:
-    #         if plot_panel.isPlotVisible():
-    #             model = plot_panel.getPlotBridge()
-    #             model.setPlotData(self.__plot_data)
-    #             model.setCustomSettings(self.__customize_plot_widget.getCustomSettings())
-    #             model.setReportStepTime(report_step)
-    #
-    #             x_axis_type_name = plot_panel.xAxisType()
-    #             y_axis_type_name = plot_panel.yAxisType()
-    #
-    #             x_min, x_max = self.__plot_metrics_tracker.getScalesForType(x_axis_type_name)
-    #             y_min, y_max = self.__plot_metrics_tracker.getScalesForType(y_axis_type_name)
-    #
-    #             model.setScales(x_min, x_max, y_min, y_max)
-    #
-    #             plot_panel.renderNow()
-    #
-
-
-
-    def addPlotWidget(self, name, short_name=None, enabled=True):
-        if short_name is None:
-            short_name = name
-
-        plot_widget = PlotWidget(name, short_name)
+    def addPlotWidget(self, name, plotFunction, plotCondition, enabled=True):
+        plot_widget = PlotWidget(name, plotFunction, plotCondition, self.createPlotContext)
 
         index = self.__central_tab.addTab(plot_widget, name)
-        self.__plot_widgets[index] = plot_widget
+        self.__plot_widgets.append(plot_widget)
         self.__central_tab.setTabEnabled(index, enabled)
 
 
@@ -240,40 +119,28 @@ class PlotWindow(QMainWindow):
         self.addDockWidget(area, dock_widget)
         return dock_widget
 
-    def __newFigure(self):
-        """ :rtype: matplotlib.figure.Figure"""
-        plot_widget = self.__plot_widgets[0]
-        plot_widget.resetPlot()
-        return plot_widget.getFigure()
-
 
     def applyCustomization(self, plot_config):
         custom = self.__customize_plot_widget.getCustomSettings()
 
         plot_config.setObservationsEnabled(custom["show_observations"])
         plot_config.setRefcaseEnabled(custom["show_refcase"])
+        plot_config.setLegendEnabled(custom["show_legend"])
+        plot_config.setGridEnabled(custom["show_grid"])
 
 
     @may_take_a_long_time
-    def keySelected(self, key=None):
-        if key is None:
-            key = self.__data_type_keys_widget.getSelectedItem()
-        key = str(key)
+    def keySelected(self):
+        key = self.getSelectedKey()
 
-        print("Plotting key: %s" % key)
+        for plot_widget in self.__plot_widgets:
+            plot_widget.setDirty()
+            index = self.__central_tab.indexOf(plot_widget)
+            self.__central_tab.setTabEnabled(index, plot_widget.canPlotKey(key))
 
-        cases = self.__case_selection_widget.getPlotCaseNames()
-
-        plot_config = PlotConfig(key)
-        self.applyCustomization(plot_config)
-
-        if self.__data_types_key_model.isSummaryKey(key):
-            plot_widget = self.__plot_widgets[0]
-            figure = self.__newFigure()
-
-            plot_ctx = PlotContext(self.__ert, figure, plot_config, cases, key)
-            SummaryPlot.summaryEnsemblePlot(plot_ctx)
-            plot_widget.updatePlot()
+        for plot_widget in self.__plot_widgets:
+            if plot_widget.canPlotKey(key):
+                plot_widget.updatePlot()
 
 
         # old_data_type_key = self.__plot_metrics_tracker.getDataTypeKey()
