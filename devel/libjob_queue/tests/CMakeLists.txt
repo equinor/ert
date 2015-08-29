@@ -43,6 +43,14 @@ add_executable( job_queue_test job_job_queue_test.c )
 target_link_libraries( job_queue_test job_queue test_util )
 add_test( job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_program_output )
 
+add_executable( job_queue_stress_task job_queue_stress_task.c )
+target_link_libraries( job_queue_stress_task  ert_util )
+
+add_executable( job_queue_stress_test job_queue_stress_test.c )
+target_link_libraries( job_queue_stress_test job_queue test_util )
+add_test( job_queue_stress_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_stress_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_stress_task )
+
+
 add_executable( job_queue_driver_test job_queue_driver_test.c )
 target_link_libraries( job_queue_driver_test job_queue test_util )
 add_test( job_queue_driver_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_driver_test )
