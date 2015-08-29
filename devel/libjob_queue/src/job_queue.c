@@ -1118,7 +1118,8 @@ int job_queue_add_job(job_queue_type * queue ,
       job_list_unlock( queue->job_list );
       return queue_index;   /* Handle used by the calling scope. */
     } else {
-      util_abort("%s: failed to create job %s in path: %s \n",__func__ , job_name , run_path );
+      char * cwd = util_alloc_cwd();
+      util_abort("%s: failed to create job %s in path: %s cwd:%s \n",__func__ , job_name , run_path , cwd);
       return -1;
     }
   } else
