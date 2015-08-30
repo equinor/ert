@@ -1111,7 +1111,6 @@ int job_queue_add_job(job_queue_type * queue ,
       {
         job_list_add_job( queue->job_list , node );
         queue_index = job_queue_node_get_queue_index(node);
-        job_queue_status_inc( queue->status , job_queue_node_get_status(node));
         job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
       }
       job_list_unlock( queue->job_list );
