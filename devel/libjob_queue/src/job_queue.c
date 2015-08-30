@@ -1022,7 +1022,6 @@ void job_queue_start_manager_thread( job_queue_type * job_queue , pthread_t * qu
   arg_pack_append_ptr(queue_args  , job_queue);
   arg_pack_append_int(queue_args  , job_size);
   arg_pack_append_bool(queue_args , verbose);
-  job_queue_reset(job_queue);
 
   /*
     The running status of the job is set to true here; this is to
