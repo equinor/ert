@@ -208,7 +208,7 @@ int main(int argc , char ** argv) {
   thread_pool_type * submit_pool = thread_pool_alloc( submit_threads , true );
 
   job_queue_set_driver(queue, driver);
-  job_queue_manager_start_queue(queue_manager, 0, false);
+  job_queue_manager_start_queue(queue_manager, 0, false , true);
 
   submit_jobs( queue , number_of_jobs , jobs , submit_pool );
   status_jobs( queue , number_of_jobs , jobs , status_pool );

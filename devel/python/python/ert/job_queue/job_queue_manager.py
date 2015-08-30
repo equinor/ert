@@ -33,8 +33,8 @@ class JobQueueManager(BaseCClass):
         super(JobQueueManager, self).__init__(c_ptr)
 
 
-    def startQueue(self , total_size , verbose = False):
-        JobQueueManager.cNamespace().start_queue( self , total_size , verbose )
+    def startQueue(self , total_size , verbose = False , reset_queue = True):
+        JobQueueManager.cNamespace().start_queue( self , total_size , verbose , reset_queue)
 
     def getNumRunning(self):
         return JobQueueManager.cNamespace().get_num_running( self )
@@ -74,7 +74,7 @@ cwrapper.registerObjectType("job_queue_manager", JobQueueManager)
 
 JobQueueManager.cNamespace().alloc             = cwrapper.prototype("c_void_p job_queue_manager_alloc( job_queue) ")
 JobQueueManager.cNamespace().free              = cwrapper.prototype("void job_queue_manager_free( job_queue_manager )")
-JobQueueManager.cNamespace().start_queue       = cwrapper.prototype("void job_queue_manager_start_queue( job_queue_manager , int , bool)")
+JobQueueManager.cNamespace().start_queue       = cwrapper.prototype("void job_queue_manager_start_queue( job_queue_manager , int , bool, bool)")
 JobQueueManager.cNamespace().get_num_running   = cwrapper.prototype("int job_queue_manager_get_num_running( job_queue_manager )")
 JobQueueManager.cNamespace().get_num_success   = cwrapper.prototype("int job_queue_manager_get_num_success( job_queue_manager )")
 JobQueueManager.cNamespace().get_num_failed    = cwrapper.prototype("int job_queue_manager_get_num_failed( job_queue_manager )")
