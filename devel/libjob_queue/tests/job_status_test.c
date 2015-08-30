@@ -68,6 +68,7 @@ void test_update() {
   pthread_t * thread_list = util_malloc( 2*N*sizeof * thread_list);
 
   job_queue_status_type * status = job_queue_status_alloc();
+  test_assert_int_equal( 0 , job_queue_status_get_total_count( status ));
   for (int i=0; i < 2*N; i++)
      pthread_create( &thread_list[i] , NULL , add_sim , status );
 
@@ -88,6 +89,7 @@ void test_update() {
   test_assert_int_equal( N , job_queue_status_get_count( status , JOB_QUEUE_USER_EXIT ));
   test_assert_int_equal( N , job_queue_status_get_count( status , JOB_QUEUE_DONE ));
 
+  test_assert_int_equal( 2*N , job_queue_status_get_total_count( status ));
   job_queue_status_free( status );
 }
 
