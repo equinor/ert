@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-    
-   The file 'job_queue_test.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+
+   The file 'job_queue_test.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
  */
 #include <stdlib.h>
 #include <stdbool.h>
@@ -234,8 +234,8 @@ void JobQueueRunJobs_ReuseQueueWithStopTime_AllOk(char ** argv) {
     submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, number_of_slow_jobs, "1", "5", false);
 
     job_queue_run_jobs(queue, number_of_jobs, true);
-    time_t current_time = time(NULL); 
-    job_queue_set_job_stop_time(queue, current_time); 
+    time_t current_time = time(NULL);
+    job_queue_set_job_stop_time(queue, current_time);
 
     test_assert_int_equal(number_of_jobs, job_queue_get_num_complete(queue));
     test_assert_bool_equal(false, job_queue_get_open(queue));
