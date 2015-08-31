@@ -41,7 +41,7 @@ void submit_jobs_to_queue(job_queue_type * queue, test_work_area_type * work_are
       submitted_slowjobs++;
     }
 
-    int queue_index = job_queue_add_job(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {runpath, sleeptime});
+    job_queue_add_job(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {runpath, sleeptime});
     free(runpath);
   }
   test_assert_int_equal( number_of_jobs , job_queue_get_active_size(queue) );
@@ -79,7 +79,7 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
 
   submit_jobs_to_queue(queue, work_area, executable_to_run, number_of_jobs, number_of_slowjobs, sleep_short, sleep_long);
 
-  job_queue_run_jobs(queue, number_of_jobs, true);
+  job_queue_run_jobs(queue, number_of_jobs, false);
 
   test_assert_int_equal(number_of_jobs - number_of_slowjobs, job_queue_get_num_complete(queue));
   test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
@@ -106,7 +106,7 @@ void run_and_monitor_jobs(char * executable_to_run, int max_job_duration, time_t
   arg_pack_type * arg_pack = arg_pack_alloc();
   arg_pack_append_ptr(arg_pack, queue);
   arg_pack_append_int(arg_pack, 0);
-  arg_pack_append_bool(arg_pack, true);
+  arg_pack_append_bool(arg_pack, false);
 
   thread_pool_type * pool = thread_pool_alloc(1, true);
   thread_pool_add_job(pool, job_queue_run_jobs__, arg_pack);
@@ -157,7 +157,7 @@ void run_jobs_time_limit_multithreaded(char * executable_to_run, int number_of_j
   arg_pack_type * arg_pack = arg_pack_alloc();
   arg_pack_append_ptr(arg_pack, queue);
   arg_pack_append_int(arg_pack, 0);
-  arg_pack_append_bool(arg_pack, true);
+  arg_pack_append_bool(arg_pack, false);
 
   thread_pool_type * pool = thread_pool_alloc(1, true);
   thread_pool_add_job(pool, job_queue_run_jobs__, arg_pack);
@@ -195,7 +195,7 @@ void JobQueueRunJobs_ReuseQueue_AllOk(char ** argv) {
   for (int j = 0; j < number_of_queue_reuse; j++) {
     submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, 0, "0", "0");
 
-    job_queue_run_jobs(queue, number_of_jobs, true);
+    job_queue_run_jobs(queue, number_of_jobs, false);
 
     test_assert_int_equal(number_of_jobs, job_queue_get_num_complete(queue));
     test_assert_bool_equal(false, job_queue_get_open(queue));
@@ -225,7 +225,7 @@ void JobQueueRunJobs_ReuseQueueWithStopTime_AllOk(char ** argv) {
   for (int j = 0; j < number_of_queue_reuse; j++) {
     submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, number_of_slow_jobs, "1", "5");
 
-    job_queue_run_jobs(queue, number_of_jobs, true);
+    job_queue_run_jobs(queue, number_of_jobs, false);
     time_t current_time = time(NULL);
     job_queue_set_job_stop_time(queue, current_time);
 
@@ -381,7 +381,7 @@ void JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest(char ** arg
   char * sleep_long = "100";
   submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, number_of_slowjobs, sleep_short, sleep_long);
   job_queue_submit_complete(queue);
-  job_queue_manager_start_queue( queue_manager , 10 , true , false);
+  job_queue_manager_start_queue( queue_manager , 10 , false , false);
 
   /*
     The jobs are distributed with some very fast, and some quite
@@ -452,7 +452,7 @@ void JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing(char ** argv
 
   submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, 0, "0", "0");
 
-  job_queue_run_jobs(queue, number_of_jobs, true);
+  job_queue_run_jobs(queue, number_of_jobs, false);
 
   test_assert_int_equal(number_of_jobs, job_queue_get_num_complete(queue));
   test_assert_bool_equal(false, job_queue_get_open(queue));
