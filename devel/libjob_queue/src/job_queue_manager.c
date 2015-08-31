@@ -71,6 +71,25 @@ void job_queue_manager_wait( job_queue_manager_type * manager) {
 }
 
 
+bool job_queue_manager_try_wait( job_queue_manager_type * manager , int timeout_seconds) {
+  struct timespec ts;
+  time_t timeout_time = time( NULL );
+
+  util_inplace_forward_seconds(&timeout_time , timeout_seconds );
+  ts.tv_sec = timeout_time;
+  ts.tv_nsec = 0;
+
+  {
+    int join_return = pthread_timedjoin_np( manager->queue_thread , NULL , &ts);  /* Wait for the main thread to complete. */
+    if (join_return == 0)
+      return true;
+    else
+      return false;
+  }
+
+}
+
+
 
 bool job_queue_manager_is_running( const job_queue_manager_type * manager) {
   return job_queue_is_running( manager->job_queue );
