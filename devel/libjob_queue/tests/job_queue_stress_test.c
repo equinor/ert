@@ -110,7 +110,6 @@ void * submit_job__( void * arg ) {
   job_queue_type * queue = arg_pack_iget_ptr( arg_pack , 1 );
   job->queue_index = job_queue_add_job( queue  , job->cmd , callback , NULL , NULL , job , 1 , job->run_path , job->run_path , job->argc , (const char **) job->argv );
   usleep( job->submit_usleep );
-  printf("Job: %s submitted \n",job->run_path );
   return NULL;
 }
 
@@ -136,6 +135,28 @@ void check_jobs( int num_jobs , job_type ** jobs ) {
 }
 
 
+void * global_status( void * arg ) {
+  job_queue_type * job_queue = job_queue_safe_cast( arg );
+  int counter = 0;
+  while (true) {
+    util_usleep(100000);
+
+    if (job_queue_get_num_complete(job_queue) == job_queue_get_active_size(job_queue))
+      break;
+
+    if ((counter % 10) == 0)
+      printf("Waiting:%03d   Running:%03d   Callback:%03d  Complete:%03d \n",
+             job_queue_get_num_waiting(job_queue) ,
+             job_queue_get_num_running(job_queue),
+             job_queue_get_num_callback( job_queue ) ,
+             job_queue_get_num_complete(job_queue));
+
+    counter++;
+  }
+  return NULL;
+}
+
+
 void * status_job__( void * arg ) {
   const int usleep_time = 10000;
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
@@ -152,10 +173,8 @@ void * status_job__( void * arg ) {
           test_assert_true( (status == JOB_QUEUE_RUNNING) || (status == JOB_QUEUE_SUBMITTED) );
       }
       status = job_queue_iget_job_status(queue, job->queue_index);
-      if (status == JOB_QUEUE_SUCCESS) {
-        printf("Job: %s complete \n",job->run_path );
+      if (status == JOB_QUEUE_SUCCESS)
         break;
-      }
     }
     usleep( usleep_time );
   }
@@ -174,6 +193,7 @@ void status_jobs( job_queue_type * queue , int num_jobs , job_type ** jobs , thr
     arg_pack_append_ptr( arg , queue );
     thread_pool_add_job(tp , status_job__ , arg );
   }
+  thread_pool_add_job( tp , global_status , queue );
 }
 
 
@@ -193,9 +213,12 @@ void status_jobs( job_queue_type * queue , int num_jobs , job_type ** jobs , thr
 
 
 int main(int argc , char ** argv) {
+  const int queue_timeout =  180;
+  const int submit_timeout = 180;
+  const int status_timeout = 180;
   const int number_of_jobs = 250;
   const int submit_threads = number_of_jobs / 10 ;
-  const int status_threads = number_of_jobs;
+  const int status_threads = number_of_jobs + 1;
   const char * job = util_alloc_abs_path(argv[1]);
   rng_type * rng = rng_alloc( MZRAN , INIT_CLOCK );
   test_work_area_type * work_area = test_work_area_alloc("job_queue");
@@ -204,24 +227,31 @@ int main(int argc , char ** argv) {
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK", "ERROR");
   queue_driver_type * driver = queue_driver_alloc_local();
   job_queue_manager_type * queue_manager = job_queue_manager_alloc( queue );
-  thread_pool_type * status_pool = thread_pool_alloc( status_threads , true );
-  thread_pool_type * submit_pool = thread_pool_alloc( submit_threads , true );
 
   job_queue_set_driver(queue, driver);
   job_queue_manager_start_queue(queue_manager, 0, false , true);
 
-  submit_jobs( queue , number_of_jobs , jobs , submit_pool );
-  status_jobs( queue , number_of_jobs , jobs , status_pool );
+  {
+    thread_pool_type * status_pool = thread_pool_alloc( status_threads , true );
+    thread_pool_type * submit_pool = thread_pool_alloc( submit_threads , true );
 
+    submit_jobs( queue , number_of_jobs , jobs , submit_pool );
+    status_jobs( queue , number_of_jobs , jobs , status_pool );
 
-  thread_pool_join( submit_pool );
-  thread_pool_free( submit_pool );
+    if (!thread_pool_try_join( submit_pool , submit_timeout ))
+      util_exit("Joining submit pool failed \n");
+    thread_pool_free( submit_pool );
 
-  job_queue_submit_complete(queue);
+    job_queue_submit_complete(queue);
 
-  thread_pool_join( status_pool );
-  thread_pool_free( status_pool );
-  job_queue_manager_wait(queue_manager);
+    if (!thread_pool_try_join( status_pool , status_timeout))
+      util_exit("Joining status pool failed \n");
+    thread_pool_free( status_pool );
+  }
+
+  if (!job_queue_manager_try_wait(queue_manager , queue_timeout))
+    util_exit("job_queue never completed \n");
+
   job_queue_manager_free(queue_manager);
   job_queue_free(queue);
   queue_driver_free(driver);
