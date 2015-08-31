@@ -145,3 +145,11 @@ bool job_queue_status_transition( job_queue_status_type * status_count , job_sta
   } else
     return false;
 }
+
+
+int job_queue_status_get_total_count( const job_queue_status_type * status ) {
+  int total_count = 0;
+  for (int index = 0; index < JOB_QUEUE_MAX_STATE; index++)
+    total_count += status->status_list[ index ];
+  return total_count;
+}
