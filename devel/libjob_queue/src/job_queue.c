@@ -207,7 +207,10 @@
 
 /*****************************************************************/
 
+#define JOB_QUEUE_TYPE_ID 665210
+
 struct job_queue_struct {
+  UTIL_TYPE_ID_DECLARATION;
   job_list_type            * job_list;
   job_queue_status_type    * status;
   char                     * exit_file;                         /* The queue will look for the occurence of this file to detect a failure. */
@@ -1128,7 +1131,7 @@ int job_queue_add_job(job_queue_type * queue ,
 }
 
 
-
+UTIL_SAFE_CAST_FUNCTION( job_queue , JOB_QUEUE_TYPE_ID)
 
 
 /**
@@ -1144,6 +1147,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
 
 
   job_queue_type * queue  = util_malloc(sizeof * queue );
+  UTIL_TYPE_ID_INIT( queue , JOB_QUEUE_TYPE_ID);
   queue->usleep_time      = 250000; /* 1000000 : 1 second */
   queue->max_ok_wait_time = 60;
   queue->max_duration     = 0;
