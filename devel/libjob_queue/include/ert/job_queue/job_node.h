@@ -80,7 +80,6 @@ typedef struct job_queue_node_struct job_queue_node_type;
   bool job_queue_node_kill( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
   void job_queue_node_free(job_queue_node_type * node);
   job_status_type job_queue_node_get_status(const job_queue_node_type * node);
-  void * job_queue_node_get_data(const job_queue_node_type * node);
   void job_queue_node_free_driver_data( job_queue_node_type * node , queue_driver_type * driver);
   void job_queue_node_restart( job_queue_node_type * node , job_queue_status_type * status);
   bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);

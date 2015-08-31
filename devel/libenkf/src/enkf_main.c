@@ -1710,11 +1710,12 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
     {
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
       job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
+      bool restart_queue = true;
 
       /* Start the queue */
       if (ert_run_context_get_mode( run_context ) != INIT_ONLY) {
         if (site_config_has_job_script( enkf_main->site_config ))
-          job_queue_manager_start_queue( queue_manager , job_size , verbose_queue );
+          job_queue_manager_start_queue( queue_manager , job_size , verbose_queue , restart_queue);
         else
           util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
       }

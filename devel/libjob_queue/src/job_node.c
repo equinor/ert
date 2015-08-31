@@ -220,10 +220,6 @@ job_status_type job_queue_node_get_status(const job_queue_node_type * node) {
    data lock before entering.
 */
 
-void * job_queue_node_get_data(const job_queue_node_type * node) {
-  return node->job_data;
-}
-
 
 
 
@@ -469,11 +465,10 @@ bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status
   bool status_change = false;
   pthread_mutex_lock( &node->data_mutex );
   {
-    void * node_data = job_queue_node_get_data( node );
-    if (node_data) {
+    if (node->job_data) {
       job_status_type current_status = job_queue_node_get_status(node);
       if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
-        job_status_type new_status = queue_driver_get_status( driver , node_data);
+        job_status_type new_status = queue_driver_get_status( driver , node->job_data);
         status_change = job_queue_status_transition(status , current_status , new_status);
         job_queue_node_set_status(node,new_status);
       }

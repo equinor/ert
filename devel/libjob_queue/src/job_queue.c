@@ -207,7 +207,10 @@
 
 /*****************************************************************/
 
+#define JOB_QUEUE_TYPE_ID 665210
+
 struct job_queue_struct {
+  UTIL_TYPE_ID_DECLARATION;
   job_list_type            * job_list;
   job_queue_status_type    * status;
   char                     * exit_file;                         /* The queue will look for the occurence of this file to detect a failure. */
@@ -329,6 +332,9 @@ int job_queue_iget_status_summary( const job_queue_type * queue , job_status_typ
   return job_queue_status_get_count(queue->status, status);
 }
 
+int job_queue_get_num_callback( const job_queue_type * queue) {
+  return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_CALLBACK );
+}
 
 int job_queue_get_num_running( const job_queue_type * queue) {
   return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING );
@@ -1022,7 +1028,6 @@ void job_queue_start_manager_thread( job_queue_type * job_queue , pthread_t * qu
   arg_pack_append_ptr(queue_args  , job_queue);
   arg_pack_append_int(queue_args  , job_size);
   arg_pack_append_bool(queue_args , verbose);
-  job_queue_reset(job_queue);
 
   /*
     The running status of the job is set to true here; this is to
@@ -1112,13 +1117,13 @@ int job_queue_add_job(job_queue_type * queue ,
       {
         job_list_add_job( queue->job_list , node );
         queue_index = job_queue_node_get_queue_index(node);
-        job_queue_status_inc( queue->status , job_queue_node_get_status(node));
         job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
       }
       job_list_unlock( queue->job_list );
       return queue_index;   /* Handle used by the calling scope. */
     } else {
-      util_abort("%s: failed to create job %s in path: %s \n",__func__ , job_name , run_path );
+      char * cwd = util_alloc_cwd();
+      util_abort("%s: failed to create job %s in path: %s cwd:%s \n",__func__ , job_name , run_path , cwd);
       return -1;
     }
   } else
@@ -1126,7 +1131,7 @@ int job_queue_add_job(job_queue_type * queue ,
 }
 
 
-
+UTIL_SAFE_CAST_FUNCTION( job_queue , JOB_QUEUE_TYPE_ID)
 
 
 /**
@@ -1142,6 +1147,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
 
 
   job_queue_type * queue  = util_malloc(sizeof * queue );
+  UTIL_TYPE_ID_INIT( queue , JOB_QUEUE_TYPE_ID);
   queue->usleep_time      = 250000; /* 1000000 : 1 second */
   queue->max_ok_wait_time = 60;
   queue->max_duration     = 0;

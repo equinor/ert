@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2015  Statoil ASA, Norway. 
-    
-   The file 'job_status_test.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2015  Statoil ASA, Norway.
+
+   The file 'job_status_test.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -66,14 +66,15 @@ void * user_done( void * arg ) {
 void test_update() {
   int N = 15000;
   pthread_t * thread_list = util_malloc( 2*N*sizeof * thread_list);
-  
+
   job_queue_status_type * status = job_queue_status_alloc();
-  for (int i=0; i < 2*N; i++) 
+  test_assert_int_equal( 0 , job_queue_status_get_total_count( status ));
+  for (int i=0; i < 2*N; i++)
      pthread_create( &thread_list[i] , NULL , add_sim , status );
 
-  for (int i=0; i < 2*N; i++) 
+  for (int i=0; i < 2*N; i++)
     pthread_join( thread_list[i] , NULL );
-   
+
   test_assert_int_equal( 2*N , job_queue_status_get_count( status , JOB_QUEUE_WAITING ));
   for (int i=0; i < 2*N; i++) {
     if ((i % 2) == 0)
@@ -81,13 +82,14 @@ void test_update() {
     else
       pthread_create( &thread_list[i] , NULL , user_done , status );
   }
-  for (int i=0; i < 2*N; i++) 
+  for (int i=0; i < 2*N; i++)
     pthread_join( thread_list[i] , NULL );
 
   test_assert_int_equal( 0 , job_queue_status_get_count( status , JOB_QUEUE_WAITING ));
   test_assert_int_equal( N , job_queue_status_get_count( status , JOB_QUEUE_USER_EXIT ));
   test_assert_int_equal( N , job_queue_status_get_count( status , JOB_QUEUE_DONE ));
 
+  test_assert_int_equal( 2*N , job_queue_status_get_total_count( status ));
   job_queue_status_free( status );
 }
 
