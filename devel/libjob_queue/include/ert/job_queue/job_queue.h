@@ -85,6 +85,7 @@ extern "C" {
   void              * job_queue_iget_job_data( job_queue_type * job_queue , int job_nr );
 
   int                 job_queue_get_active_size( const job_queue_type * queue );
+  int                 job_queue_get_num_callback( const job_queue_type * queue);
   int                 job_queue_get_num_running( const job_queue_type * queue);
   int                 job_queue_get_num_pending( const job_queue_type * queue);
   int                 job_queue_get_num_waiting( const job_queue_type * queue);

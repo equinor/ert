@@ -329,6 +329,9 @@ int job_queue_iget_status_summary( const job_queue_type * queue , job_status_typ
   return job_queue_status_get_count(queue->status, status);
 }
 
+int job_queue_get_num_callback( const job_queue_type * queue) {
+  return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_CALLBACK );
+}
 
 int job_queue_get_num_running( const job_queue_type * queue) {
   return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING );
