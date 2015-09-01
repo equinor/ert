@@ -122,6 +122,11 @@ if (HAVE_YIELD)
 endif()
 
 
+check_function_exists(pthread_timedjoin_np HAVE_TIMEDJOIN)
+if (HAVE_TIMEDJOIN)
+  add_definitions(-DHAVE_TIMEDJOIN)
+endif()
+
 # Checking based on compiling. Some of the code generates warnings, so we just cut down to bare-bone compiler flags.
 
 set( CMAKE_C_FLAGS_main ${CMAKE_C_FLAGS} )
