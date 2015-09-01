@@ -52,6 +52,12 @@ class LocalObsdata(BaseCClass):
         already_exists_node_for_key = LocalObsdata.cNamespace().add_node(self, node)
         return already_exists_node_for_key
 
+    def delNode(self, key):
+        assert isinstance(key, str)
+        LocalObsdata.cNamespace().del_node(self, key)     
+        
+    def clear(self):        
+        LocalObsdata.cNamespace().clear(self)        
     
     def addObsVector(self , obs_vector):
         self.addNode( obs_vector.createLocalObs() )
@@ -88,6 +94,8 @@ LocalObsdata.cNamespace().free      = cwrapper.prototype("void local_obsdata_fre
 LocalObsdata.cNamespace().size      = cwrapper.prototype("int local_obsdata_get_size(local_obsdata)")
 LocalObsdata.cNamespace().has_node  = cwrapper.prototype("bool local_obsdata_has_node(local_obsdata, char*)")
 LocalObsdata.cNamespace().add_node  = cwrapper.prototype("bool local_obsdata_add_node(local_obsdata, local_obsdata_node)")
+LocalObsdata.cNamespace().del_node  = cwrapper.prototype("void local_obsdata_del_node(local_obsdata, char*)")
+LocalObsdata.cNamespace().clear     = cwrapper.prototype("void local_dataset_clear(local_obsdata)")
 LocalObsdata.cNamespace().iget_node = cwrapper.prototype("local_obsdata_node_ref local_obsdata_iget(local_obsdata, int)")
 LocalObsdata.cNamespace().get_node  = cwrapper.prototype("local_obsdata_node_ref local_obsdata_get(local_obsdata, char*)")
 LocalObsdata.cNamespace().name      = cwrapper.prototype("char* local_obsdata_get_name(local_obsdata)")

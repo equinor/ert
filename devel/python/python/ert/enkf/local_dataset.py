@@ -7,6 +7,10 @@ class LocalDataset(BaseCClass):
     def __init__(self, name):
         raise NotImplementedError("Class can not be instantiated directly!")
     
+    def __len__(self):
+        """ @rtype: int """
+        return LocalDataset.cNamespace().size(self)
+    
     def __contains__(self , key):
         return LocalDataset.cNamespace().has_key(self, key)
                  
@@ -18,6 +22,10 @@ class LocalDataset(BaseCClass):
         assert isinstance(key, str)
         LocalDataset.cNamespace().add_node(self, key)
         
+    def delNode(self, key):
+        assert isinstance(key, str)
+        LocalDataset.cNamespace().del_node(self, key)
+                
     def getActiveList(self, key):
         """ @rtype: ActiveList """
         if key in self:
@@ -54,12 +62,13 @@ cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("local_dataset", LocalDataset)
 
 LocalDataset.cNamespace().alloc          = cwrapper.prototype("c_void_p local_dataset_alloc(char*)")
+LocalDataset.cNamespace().size           = cwrapper.prototype("c_void_p local_dataset_get_size(char*)")
 LocalDataset.cNamespace().has_key        = cwrapper.prototype("bool local_dataset_has_key(local_dataset, char*)")
 LocalDataset.cNamespace().free           = cwrapper.prototype("void local_dataset_free(local_dataset)")
 LocalDataset.cNamespace().name           = cwrapper.prototype("char* local_dataset_get_name(local_dataset)")
 LocalDataset.cNamespace().active_list    = cwrapper.prototype("active_list_ref local_dataset_get_node_active_list(local_dataset, char*)")
 LocalDataset.cNamespace().add_node       = cwrapper.prototype("void local_dataset_add_node(local_dataset, char*)")
-
+LocalDataset.cNamespace().del_node       = cwrapper.prototype("void local_dataset_del_node(local_dataset, char*)")
 
                                                                                  
                                                                                  
