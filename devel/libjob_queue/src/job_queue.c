@@ -983,7 +983,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
         if (local_user_exit)
           cont = false;    /* This is how we signal that we want to get out . */
         else {
-          pthread_yield();
+          util_yield();
           job_list_reader_wait( queue->job_list , queue->usleep_time , 8 * queue->usleep_time);
         }
       } while ( cont );
