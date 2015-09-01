@@ -2,7 +2,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.plottery import PlotContext, SummaryPlot, PlotConfig
+from ert_gui.plottery import PlotContext, SummaryPlot, PlotConfig, GenKwPlot
 
 from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, CustomizePlotWidget, PlotWidget
 from ert_gui.tools.plot import DataTypeKeysListModel
@@ -42,8 +42,10 @@ class PlotWindow(QMainWindow):
         """:type: list of PlotWidget"""
 
         self.addPlotWidget("Ensemble", SummaryPlot.summaryEnsemblePlot, key_manager.isSummaryKey)
-        self.addPlotWidget("Ensemble overview", SummaryPlot.summaryOverviewPlot, key_manager.isKeyWithObservations)
-        self.addPlotWidget("Ensemble statistics", SummaryPlot.summaryStatisticsPlot, key_manager.isSummaryKey)
+        self.addPlotWidget("Overview", SummaryPlot.summaryOverviewPlot, key_manager.isSummaryKey)
+        self.addPlotWidget("Statistics", SummaryPlot.summaryStatisticsPlot, key_manager.isSummaryKey)
+        self.addPlotWidget("Histogram", GenKwPlot.histogram, key_manager.isGenKwKey)
+        self.addPlotWidget("Gaussian KDE", GenKwPlot.gaussianKDE, key_manager.isGenKwKey)
 
 
         # self.addPlotPanel("Histogram", "gui/plots/histogram.html", short_name="Histogram")
@@ -86,9 +88,10 @@ class PlotWindow(QMainWindow):
             plot_widget.setActive(False)
             index = self.__central_tab.indexOf(plot_widget)
 
-            if index == self.__central_tab.currentIndex():
+            if index == self.__central_tab.currentIndex() and plot_widget.canPlotKey(self.getSelectedKey()):
                 plot_widget.setActive()
                 plot_widget.updatePlot()
+
 
     def createPlotContext(self, figure):
         key = self.getSelectedKey()
