@@ -79,6 +79,7 @@ bool job_queue_manager_try_wait( job_queue_manager_type * manager , int timeout_
   ts.tv_sec = timeout_time;
   ts.tv_nsec = 0;
 
+#ifdef HAVE_TIMEDJOIN
   {
     int join_return = pthread_timedjoin_np( manager->queue_thread , NULL , &ts);  /* Wait for the main thread to complete. */
     if (join_return == 0)
@@ -86,7 +87,22 @@ bool job_queue_manager_try_wait( job_queue_manager_type * manager , int timeout_
     else
       return false;
   }
+#else
+    while(true) {
+        if (pthread_kill(manager->queue_thread, 0) == 0){
+            util_yield();
+        } else {
+            return true;
+        }
 
+        time_t now = time(NULL);
+
+        if(util_difftime_seconds(now, timeout_time) <= 0) {
+            return false;
+        }
+    }
+
+#endif
 }
 
 
