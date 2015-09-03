@@ -10,14 +10,7 @@ class LocalDataset(BaseCClass):
     def __len__(self):
         """ @rtype: int """
         return LocalDataset.cNamespace().size(self)
-    
-    def __getitem__(self, key):
-        """ @rtype: LocalDataset """
-        if key in self:
-            return LocalDataset.cNamespace().get_node(self, key).setParent(self)
-        else:
-            raise KeyError("Unknown key:%s" % key)    
-    
+        
     def __contains__(self , key):
         """ @rtype: bool """
         return LocalDataset.cNamespace().has_key(self, key)
