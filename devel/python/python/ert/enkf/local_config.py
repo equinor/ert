@@ -59,12 +59,24 @@ class LocalConfig(BaseCClass):
         LocalConfig.cNamespace().create_obsdata(self, obsset_key)  
         return self.getObsdata(obsset_key)    
     
+    def copyObsdata(self, src_key, target_key):
+        """ @rtype: Obsdata """
+        assert isinstance(src_key, str)
+        assert isinstance(target_key, str)
+        return LocalConfig.cNamespace().copy_obsdata(self, src_key, target_key)         
+    
     def createDataset(self, dataset_key):
         """ @rtype: Dataset """
         assert isinstance(dataset_key, str)
         LocalConfig.cNamespace().create_dataset(self, dataset_key)  
         return self.getDataset(dataset_key)
     
+    def copyDataset(self, src_key, target_key):
+        """ @rtype: Dataset """
+        assert isinstance(src_key, str)
+        assert isinstance(target_key, str)
+        return LocalConfig.cNamespace().copy_dataset(self, src_key, target_key)  
+       
     def getUpdatestep(self, update_step_key):
         """ @rtype: UpdateStep """
         assert isinstance(update_step_key, str)        
@@ -118,11 +130,9 @@ LocalConfig.cNamespace().attach_ministep         = cwrapper.prototype("void loca
 
 LocalConfig.cNamespace().get_obsdata             = cwrapper.prototype("local_obsdata_ref local_config_get_obsdata( local_config, char*)")
 LocalConfig.cNamespace().create_obsdata          = cwrapper.prototype("void local_config_alloc_obsset( local_config, char*)")
+LocalConfig.cNamespace().copy_obsdata            = cwrapper.prototype("local_obsdata_ref local_config_alloc_obsdata_copy( local_config, char*, char*)")
 
 LocalConfig.cNamespace().get_dataset             = cwrapper.prototype("local_dataset_ref local_config_get_dataset( local_config, char*)")
 LocalConfig.cNamespace().create_dataset          = cwrapper.prototype("void local_config_alloc_dataset( local_config, char*)")
-
-
-
-
+LocalConfig.cNamespace().copy_dataset            = cwrapper.prototype("local_dataset_ref local_config_alloc_dataset_copy( local_config, char*, char*)")
 

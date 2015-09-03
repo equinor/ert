@@ -48,20 +48,21 @@ Keyword name                                                                    
 :ref:`CREATE_MINISTEP                  <create_ministep>`                                    createMinistep                                                Creates ministep
 :ref:`CREATE_UPDATESTEP                <create_updatestep>`                                  createUpdatestep                                              Creates updatestep
 :ref:`CREATE_DATASET                   <create_dataset>`                                     createDataset                                                 Creates dataset
-:ref:`COPY_DATASET                     <copy_dataset>`                                                                                                     Deep copy of dataset
-:ref:`CREATE_OBSSET                    <create_obsset>`                                      createObsset                                                  Creates observation set
-:ref:`COPY_OBSSET                      <copy_obsset>`                                                                                                      Deep copy of observation set
+:ref:`COPY_DATASET                     <copy_dataset>`                                       copyDataset                                                   Deep copy of dataset
+:ref:`CREATE_OBSSET                    <create_obsset>`                                      createObsdata                                                 Creates observation set
+:ref:`COPY_OBSSET                      <copy_obsset>`                                        copyObsdata                                                   Deep copy of observation set
 :ref:`ATTACH_MINISTEP                  <attach_ministep>`                                    attachMinistep                                                Attaches ministep to update step 
 :ref:`ATTACH_DATASET                   <attach_dataset>`                                     attachDataset                                                 Attaches dataset to mini step
 :ref:`ATTACH_OBSSET                    <attach_obsset>`                                      attachObsset                                                  Attaches observation set to mini step
 :ref:`ADD_DATA                         <add_data>`                                           addNode                                                       Adds data node to dataset
+:ref:`DEL_DATA                         <del_data>`                                           del                                                           Deletes observation node from dataset
 :ref:`ADD_OBS                          <add_obs>`                                            addNodeAndRange                                               Adds observation node to observation set
-:ref:`DEL_OBS                          <del_obs>`                                                                                                          Deletes observation node from observation set
-:ref:`DATASET_DEL_ALL_DATA             <dataset_del_all_data>`                                                                                             Delete all the data keys from a dataset
+:ref:`DEL_OBS                          <del_obs>`                                            del                                                           Deletes observation node from observation set
+:ref:`DATASET_DEL_ALL_DATA             <dataset_del_all_data>`                               clear                                                         Delete all the data keys from a dataset
 :ref:`ACTIVE_LIST_ADD_DATA_INDEX       <active_list_add_data_index>`                         addActiveIndex                                                Adds data index to the list of active indices
 :ref:`ACTIVE_LIST_ADD_OBS_INDEX        <active_list_add_obs_index>`                          addActiveIndex                                                Adds observation index to the list of active indices  
-:ref:`ACTIVE_LIST_ADD_MANY_DATA_INDEX  <active_list_add_many_data_index>`                                                                                  Adds several data indices to the list of active indices
-:ref:`ACTIVE_LIST_ADD_MANY_OBS_INDEX   <active_list_add_many_obs_index>`                                                                                   Adds several observation indinces to the list of active indices
+:ref:`ACTIVE_LIST_ADD_MANY_DATA_INDEX  <active_list_add_many_data_index>`                    addActiveIndex                                                Adds several data indices to the list of active indices
+:ref:`ACTIVE_LIST_ADD_MANY_OBS_INDEX   <active_list_add_many_obs_index>`                     addActiveIndex                                                Adds several observation indinces to the list of active indices
 :ref:`INSTALL_UPDATESTEP               <install_updatestep>`                                 installUpdatestep                                             Installs update step
 :ref:`INSTALL_DEFAULT_UPDATESTEP       <install_default_updatestep>`                                                                                       Installs default update step
 :ref:`ADD_FIELD                        <add_field>`                                          addField                                                      Adds field node to dataset
@@ -75,8 +76,8 @@ Keyword name                                                                    
 :ref:`ECLREGION_SELECT_SLICE           <eclregion_select_slice>`                             select_islice, select_jslice, select_kslice                   Selects or deselects cells in a slice
 :ref:`ECLREGION_SELECT_PLANE           <eclregion_select_plane>`                             select_below_plane                                            Selects or deselects cells in a half space defined by a plane
 :ref:`ECLREGION_SELECT_IN_POLYGON      <eclregion_select_in_polygon>`                        select_inside_polygon                                         Selects or deselects cells in region inside polygon
-:ref:`CREATE_POLYGON                   <create_polygon>`                                                                                                   Creates a geo-polygon based on coordinate list
-:ref:`LOAD_POLYGON                     <load_polygon>`                                                                                                     Loads polygon in Irap RMS format from file
+:ref:`CREATE_POLYGON                   <create_polygon>`                                     :ref:`Example <create_polygon>`                               Creates a geo-polygon based on coordinate list
+:ref:`LOAD_POLYGON                     <load_polygon>`                                       :ref:`Example <load_polygon>`                                 Loads polygon in Irap RMS format from file
 :ref:`LOAD_SURFACE                     <load_surface>`                                                                                                     Loads surface in Irap RMS format from file
 :ref:`CREATE_SURFACE_REGION            <create_surface_region>`                                                                                            Creates region to select or deselect parts of a surface
 :ref:`SURFACE_REGION_SELECT_IN_POLYGON <surface_region_select_in_polygon>`                                                                                 Creates region to select or deselect parts of a surface
@@ -288,6 +289,28 @@ Keyword name                                                                    
 
 .. ###########################################################################################################
 
+.. _del_data:
+.. topic:: DEL_DATA 
+
+  | This function will delete the data 'KEY' from the dataset 'NAME_OF_DATASET'.
+  
+  
+  *Example:*
+
+  ::
+
+    -- Delete data node from data set
+    DEL_DATA DATASET_MULTFLT MULTFLT
+
+  *Example:*
+
+  ::
+
+    del dataset_multflt["MULTFLT"]
+
+
+.. ###########################################################################################################
+
 .. _add_obs:
 .. topic:: ADD_OBS 
 
@@ -324,6 +347,13 @@ Keyword name                                                                    
     -- Delete data node from observation set
     DEL_OBS OBS_WELL WOPR:OBS_WELL
 
+  *Example:*
+
+  ::
+
+    del obsset_obs_well["WOPR:OBS_WELL"]
+
+
 .. ###########################################################################################################
 
 .. _dataset_del_all_data:
@@ -339,7 +369,12 @@ Keyword name                                                                    
     -- Delete all data nodes from DATASET_MULTFLT
     DATASET_DEL_ALL_DATA DATASET_MULTFLT
 
+  *Example:*
 
+  ::
+
+    dataset_multflt.clear()
+    
 .. ###########################################################################################################
 
 .. _active_list_add_data_index:
@@ -733,15 +768,15 @@ Keyword name                                                                    
 
   ::
 
-    -- Select region inside triangle in xy plane      
-    ECLREGION_SELECT_IN_POLYGON  TRIANGLE TRUE
+    -- Select region inside polygon in xy plane      
+    ECLREGION_SELECT_IN_POLYGON  POLYGON TRUE
 
   *Example:*
 
   ::
   
-    triangle = [(0,0) , (0,1) , (1,0)]
-    eclreg_poro.select_inside_polygon(triangle)
+    polygon = [(0,0) , (0,1) , (1,0)]
+    eclreg_poro.select_inside_polygon(polygon)
     
 .. ###########################################################################################################
 
@@ -756,14 +791,14 @@ Keyword name                                                                    
 
   ::
 
-    -- Create triangle in xy plane      
-    CREATE_POLYGON  TRIANGLE 0 0 0 1 1 0 TRUE
+    -- Create polygon in xy plane      
+    CREATE_POLYGON  POLYGON 0 0 0 1 1 0 TRUE
     
   *Example:*
 
   ::
   
-    triangle = [(0,0) , (0,1) , (1,0)]    
+    polygon = [(0,0) , (0,1) , (1,0)]    
 
 .. ###########################################################################################################
 
@@ -781,7 +816,17 @@ Keyword name                                                                    
   ::
 
     -- Load polygon from RMS file      
-    LOAD_POLYGON  path/to/triangle.irap
+    LOAD_POLYGON  path/to/polygon.irap
+    
+  *Example:*
+
+  ::
+      
+    polygon = []
+    with open("polygon.ply","r") as fileH:
+     for line in fileH.readlines():
+       tmp = line.split()
+       polygon.append( (float(tmp[0]) , float(tmp[1])))
 
 .. ###########################################################################################################
 
@@ -809,17 +854,13 @@ Keyword name                                                                    
 
   | Will create a new surface region object which can be used to select and deselect parts of a surface. The region will be called 'REGION_NAME' and it will be based on the surface given by 'BASE_SURFACE'. 'PRESELECT' is a boolean 'TRUE' or 'FALSE' which determines whether the region is created with all points selected, or no points selected.
   
-  
-
     
-  
-  
   
   *Example:*
 
   ::
 
-    -- Create triangle in xy plane      
+    -- Create surface region in xy plane      
     CREATE_SURFACE_REGION  SURF_REGION BASE_SURFACE TRUE
 
 .. ###########################################################################################################
