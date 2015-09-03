@@ -55,9 +55,9 @@ Keyword name                                                                    
 :ref:`ATTACH_DATASET                   <attach_dataset>`                                     attachDataset                                                 Attaches dataset to mini step
 :ref:`ATTACH_OBSSET                    <attach_obsset>`                                      attachObsset                                                  Attaches observation set to mini step
 :ref:`ADD_DATA                         <add_data>`                                           addNode                                                       Adds data node to dataset
-:ref:`DEL_DATA                         <del_data>`                                           delNode                                                       Deletes observation node from dataset
+:ref:`DEL_DATA                         <del_data>`                                           del                                                           Deletes observation node from dataset
 :ref:`ADD_OBS                          <add_obs>`                                            addNodeAndRange                                               Adds observation node to observation set
-:ref:`DEL_OBS                          <del_obs>`                                            delNode                                                       Deletes observation node from observation set
+:ref:`DEL_OBS                          <del_obs>`                                            del                                                           Deletes observation node from observation set
 :ref:`DATASET_DEL_ALL_DATA             <dataset_del_all_data>`                               clear                                                         Delete all the data keys from a dataset
 :ref:`ACTIVE_LIST_ADD_DATA_INDEX       <active_list_add_data_index>`                         addActiveIndex                                                Adds data index to the list of active indices
 :ref:`ACTIVE_LIST_ADD_OBS_INDEX        <active_list_add_obs_index>`                          addActiveIndex                                                Adds observation index to the list of active indices  
@@ -306,7 +306,7 @@ Keyword name                                                                    
 
   ::
 
-    dataset_multflt.delNode("MULTFLT")
+    del dataset_multflt["MULTFLT"]
 
 
 .. ###########################################################################################################
@@ -351,7 +351,7 @@ Keyword name                                                                    
 
   ::
 
-    obsset_obs_well.delNode("WOPR:OBS_WELL")
+    del obsset_obs_well["WOPR:OBS_WELL"]
 
 
 .. ###########################################################################################################

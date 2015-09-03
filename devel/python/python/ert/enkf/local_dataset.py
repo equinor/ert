@@ -11,9 +11,24 @@ class LocalDataset(BaseCClass):
         """ @rtype: int """
         return LocalDataset.cNamespace().size(self)
     
+    def __getitem__(self, key):
+        """ @rtype: LocalDataset """
+        if key in self:
+            return LocalDataset.cNamespace().get_node(self, key).setParent(self)
+        else:
+            raise KeyError("Unknown key:%s" % key)    
+    
     def __contains__(self , key):
+        """ @rtype: bool """
         return LocalDataset.cNamespace().has_key(self, key)
-                 
+                                 
+    def __delitem__(self, key):
+        assert isinstance(key, str)
+        if key in self:
+            LocalDataset.cNamespace().del_node(self, key)  
+        else:
+            raise KeyError("Unknown key:%s" % key)  
+                
     def getName(self):
         """ @rtype: str """
         return LocalDataset.cNamespace().name(self)
@@ -21,11 +36,7 @@ class LocalDataset(BaseCClass):
     def addNode(self, key):
         assert isinstance(key, str)
         LocalDataset.cNamespace().add_node(self, key)
-        
-    def delNode(self, key):
-        assert isinstance(key, str)
-        LocalDataset.cNamespace().del_node(self, key)
-                
+                       
     def getActiveList(self, key):
         """ @rtype: ActiveList """
         if key in self:
