@@ -1,30 +1,17 @@
 from pandas import DataFrame
 from ert.ecl import EclSum
 from ert.enkf.export import SummaryCollector, SummaryObservationCollector
-from ert_gui.plottery import PlotConfig, PlotContext, EnsemblePlot, ObservationPlot
+from ert_gui.plottery import PlotConfig, PlotContext, EnsemblePlot, ObservationPlot, PlotTools
 
 
 class SummaryPlot(object):
-    @staticmethod
-    def showGrid(axes, plot_context):
-        config = plot_context.plotConfig()
-        if config.isGridEnabled():
-            axes.grid()
-
-
-    @staticmethod
-    def showLegend(axes, plot_context):
-        config = plot_context.plotConfig()
-        if config.isLegendEnabled():
-            axes.legend(config.legendItems(), config.legendLabels())
-
 
     @staticmethod
     def finalizePlot(plot_context, axes):
         SummaryPlot.plotObservations(axes, plot_context)
         SummaryPlot.plotRefcase(axes, plot_context)
-        SummaryPlot.showLegend(axes, plot_context)
-        SummaryPlot.showGrid(axes, plot_context)
+        PlotTools.showLegend(axes, plot_context)
+        PlotTools.showGrid(axes, plot_context)
         plot_context.figure().autofmt_xdate()
 
 

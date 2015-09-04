@@ -2,6 +2,7 @@ from threading import Thread
 from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QSize
 from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
 from ert_gui.models.connectors.run import SimulationsTracker
+from ert_gui.models.ert_connector import ErtConnector
 from ert_gui.models.mixins.run_model import RunModelMixin
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_gui.widgets import util
@@ -57,17 +58,15 @@ class RunDialog(QDialog):
 
         self.running_time = QLabel("")
 
-        # Since ERT-906 the plot_tool requires a reference to an ERT object.
-        # As a temporarary fixup we have:
-        #
-        #  1. Added a dummy ert variable - just set to None.
-        #  2. Disabled the plot_button.
         ert = None
-        self.plot_tool = PlotTool( ert )
+        if isinstance(run_model, ErtConnector):
+            ert = run_model.ert()
+
+        self.plot_tool = PlotTool(ert)
         self.plot_tool.setParent(self)
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
-        self.plot_button.setEnabled(False)
+        self.plot_button.setEnabled(ert is not None)
         
         self.kill_button = QPushButton("Kill simulations")
         self.done_button = QPushButton("Done")

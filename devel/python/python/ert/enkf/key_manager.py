@@ -1,4 +1,4 @@
-from ert.enkf import ErtImplType
+from ert.enkf import ErtImplType, GenKwConfig
 
 
 class KeyManager(object):
@@ -14,6 +14,7 @@ class KeyManager(object):
         self.__all_keys_with_observations = None
         self.__summary_keys = None
         self.__summary_keys_with_observations = None
+        self.__gen_kw_keys = None
 
 
     def ert(self):
@@ -38,10 +39,33 @@ class KeyManager(object):
 
         return self.__summary_keys_with_observations
 
+    def genKwKeys(self):
+        """ :rtype: list of Str """
+        if self.__gen_kw_keys is None:
+            gen_kw_keys = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+            gen_kw_keys = [key for key in gen_kw_keys]
+
+            gen_kw_list = []
+            for key in gen_kw_keys:
+                enkf_config_node = self.ert().ensembleConfig().getNode(key)
+                gen_kw_config = enkf_config_node.getModelConfig()
+                assert isinstance(gen_kw_config, GenKwConfig)
+
+                for keyword_index, keyword in enumerate(gen_kw_config):
+                    gen_kw_list.append("%s:%s" % (key, keyword))
+
+                    if gen_kw_config.shouldUseLogScale(keyword_index):
+                        gen_kw_list.append("LOG10_%s:%s" % (key, keyword))
+
+            self.__gen_kw_keys = sorted(gen_kw_list, key=lambda k : k.lower())
+
+        return self.__gen_kw_keys
+
+
     def allDataTypeKeys(self):
         """ :rtype: list of Str """
         if self.__all_keys is None:
-            self.__all_keys = self.summaryKeys()
+            self.__all_keys = self.summaryKeys() + self.genKwKeys()
 
         return self.__all_keys
 
@@ -59,3 +83,7 @@ class KeyManager(object):
     def isSummaryKey(self, key):
         """ :rtype: bool """
         return key in self.summaryKeys()
+
+    def isGenKwKey(self, key):
+        """ :rtype: bool """
+        return key in self.genKwKeys()
