@@ -2,12 +2,12 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.plottery import PlotContext, SummaryPlot, PlotConfig, GenKwPlot
+from ert_gui.plottery import PlotContext, PlotDataGatherer, PlotConfig, plots
+
 
 from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, CustomizePlotWidget, PlotWidget
 from ert_gui.tools.plot import DataTypeKeysListModel
 from ert_gui.widgets.util import may_take_a_long_time
-
 
 
 class PlotWindow(QMainWindow):
@@ -41,21 +41,23 @@ class PlotWindow(QMainWindow):
         self.__plot_widgets = []
         """:type: list of PlotWidget"""
 
-        self.addPlotWidget("Ensemble", SummaryPlot.summaryEnsemblePlot, key_manager.isSummaryKey)
-        self.addPlotWidget("Overview", SummaryPlot.summaryOverviewPlot, key_manager.isSummaryKey)
-        self.addPlotWidget("Statistics", SummaryPlot.summaryStatisticsPlot, key_manager.isSummaryKey)
-        self.addPlotWidget("Histogram", GenKwPlot.histogram, key_manager.isGenKwKey)
-        self.addPlotWidget("Gaussian KDE", GenKwPlot.gaussianKDE, key_manager.isGenKwKey)
+        self.__data_gatherers = []
+        """:type: list of PlotDataGatherer """
+
+        PDG = PlotDataGatherer
+        summary_gatherer = self.createDataGatherer(PDG.gatherSummaryData, key_manager.isSummaryKey, refcaseGatherFunc=PDG.gatherSummaryRefcaseData, observationGatherFunc=PDG.gatherSummaryObservationData)
+        gen_data_gatherer = self.createDataGatherer(PDG.gatherGenDataData, key_manager.isGenDataKey, observationGatherFunc=PDG.gatherGenDataObservationData)
+        gen_kw_gatherer = self.createDataGatherer(PDG.gatherGenKwData, key_manager.isGenKwKey)
+        custom_kw_gatherer = self.createDataGatherer(PDG.gatherCustomKwData, key_manager.isCustomKwKey)
+        misfit_gatherer = self.createDataGatherer(PDG.gatherMisfitData, key_manager.isMisfitKey)
 
 
-        # self.addPlotPanel("Histogram", "gui/plots/histogram.html", short_name="Histogram")
-        # self.addPlotPanel("Distribution", "gui/plots/gen_kw.html", short_name="Distribution")
-        # self.addPlotPanel("RFT plot", "gui/plots/rft.html", short_name="RFT")
-        # self.addPlotPanel("RFT overview plot", "gui/plots/rft_overview.html", short_name="oRFT")
-        # self.addPlotPanel("Ensemble plot", "gui/plots/gen_data.html", short_name="epGenData")
-        # self.addPlotPanel("Ensemble overview plot", "gui/plots/gen_data_overview.html", short_name="eopGenData")
-        # self.addPlotPanel("Ensemble statistics", "gui/plots/gen_data_statistics_plot.html", short_name="esGenData")
-        # self.addPlotPanel("PCA plot", "gui/plots/pca.html", short_name="PCA")
+        self.addPlotWidget("Ensemble", plots.plotEnsemble, [summary_gatherer, gen_data_gatherer])
+        self.addPlotWidget("Overview", plots.plotOverview, [summary_gatherer, gen_data_gatherer])
+        self.addPlotWidget("Statistics", plots.plotStatistics, [summary_gatherer, gen_data_gatherer])
+        self.addPlotWidget("Histogram", plots.plotHistogram, [gen_kw_gatherer, custom_kw_gatherer, misfit_gatherer])
+        self.addPlotWidget("Gaussian KDE", plots.plotGaussianKDE, [gen_kw_gatherer, custom_kw_gatherer, misfit_gatherer])
+
 
         self.__data_types_key_model = DataTypeKeysListModel(ert)
 
@@ -82,6 +84,11 @@ class PlotWindow(QMainWindow):
         self.__data_type_keys_widget.selectDefault()
 
 
+    def createDataGatherer(self, dataGatherFunc, gatherConditionFunc, refcaseGatherFunc=None, observationGatherFunc=None):
+        data_gatherer = PlotDataGatherer(dataGatherFunc, gatherConditionFunc, refcaseGatherFunc=refcaseGatherFunc, observationGatherFunc=observationGatherFunc)
+        self.__data_gatherers.append(data_gatherer)
+        return data_gatherer
+
 
     def currentPlotChanged(self):
         for plot_widget in self.__plot_widgets:
@@ -96,16 +103,18 @@ class PlotWindow(QMainWindow):
     def createPlotContext(self, figure):
         key = self.getSelectedKey()
         cases = self.__case_selection_widget.getPlotCaseNames()
+        data_gatherer = next((data_gatherer for data_gatherer in self.__data_gatherers if data_gatherer.canGatherDataForKey(key)), None)
         plot_config = PlotConfig(key)
         self.applyCustomization(plot_config)
-        return PlotContext(self.__ert, figure, plot_config, cases, key)
+        return PlotContext(self.__ert, figure, plot_config, cases, key, data_gatherer)
 
     def getSelectedKey(self):
         key = str(self.__data_type_keys_widget.getSelectedItem())
         return key
 
-    def addPlotWidget(self, name, plotFunction, plotCondition, enabled=True):
-        plot_widget = PlotWidget(name, plotFunction, plotCondition, self.createPlotContext)
+    def addPlotWidget(self, name, plotFunction, data_gatherers, enabled=True):
+        plot_condition_function_list = [data_gatherer.canGatherDataForKey for data_gatherer in data_gatherers]
+        plot_widget = PlotWidget(name, plotFunction, plot_condition_function_list, self.createPlotContext)
 
         index = self.__central_tab.addTab(plot_widget, name)
         self.__plot_widgets.append(plot_widget)
@@ -144,54 +153,3 @@ class PlotWindow(QMainWindow):
         for plot_widget in self.__plot_widgets:
             if plot_widget.canPlotKey(key):
                 plot_widget.updatePlot()
-
-
-        # old_data_type_key = self.__plot_metrics_tracker.getDataTypeKey()
-        # self.__plot_metrics_tracker.setDataTypeKey(key)
-        #
-        # plot_data_fetcher = PlotDataFetcher()
-        # self.__plot_data = plot_data_fetcher.getPlotDataForKeyAndCases(key, self.__plot_cases)
-        # self.__plot_data.setParent(self)
-        #
-        # self.__central_tab.blockSignals(True)
-        #
-        # self.__plot_panel_tracker.storePlotType(plot_data_fetcher, old_data_type_key)
-        #
-        # for plot_panel in self.__plot_panels:
-        #     self.showOrHidePlotTab(plot_panel, False, True)
-        #
-        # self.__plot_metrics_tracker.setDataTypeKeySupportsReportSteps(plot_data_fetcher.dataTypeKeySupportsReportSteps(key))
-        # show_pca = plot_data_fetcher.isPcaDataKey(key)
-        # for plot_panel in self.__plot_panels:
-        #     visible = self.__central_tab.indexOf(plot_panel) > -1
-        #
-        #     if plot_data_fetcher.isSummaryKey(key):
-        #         show_plot = plot_panel.supportsPlotProperties(time=True, value=True, histogram=True, pca=show_pca)
-        #         self.showOrHidePlotTab(plot_panel, visible, show_plot)
-        #
-        #     elif plot_data_fetcher.isBlockObservationKey(key):
-        #         show_plot = plot_panel.supportsPlotProperties(depth=True, value=True, pca=show_pca)
-        #         self.showOrHidePlotTab(plot_panel, visible, show_plot)
-        #
-        #     elif plot_data_fetcher.isGenKWKey(key):
-        #         show_plot = plot_panel.supportsPlotProperties(value=True, histogram=True, pca=show_pca)
-        #         self.showOrHidePlotTab(plot_panel, visible, show_plot)
-        #
-        #     elif plot_data_fetcher.isGenDataKey(key):
-        #         show_plot = plot_panel.supportsPlotProperties(index=True, pca=show_pca)
-        #         self.showOrHidePlotTab(plot_panel, visible, show_plot)
-        #
-        #     elif plot_data_fetcher.isPcaDataKey(key):
-        #         show_plot = plot_panel.supportsPlotProperties(pca=show_pca)
-        #         self.showOrHidePlotTab(plot_panel, visible, show_plot)
-        #
-        #     else:
-        #         raise NotImplementedError("Key %s not supported." % key)
-        #
-        # self.__plot_panel_tracker.restorePlotType(plot_data_fetcher, key)
-        #
-        # self.__central_tab.blockSignals(False)
-        # self.currentPlotChanged()
-        #
-        # if self.checkPlotStatus():
-        #     self.plotSettingsChanged()

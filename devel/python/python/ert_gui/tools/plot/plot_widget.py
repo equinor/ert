@@ -6,13 +6,14 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 
 class PlotWidget(QWidget):
-    def __init__(self, name, plotFunction, plotCondition, plotContextFunction, parent=None):
+    def __init__(self, name, plotFunction, plot_condition_function_list, plotContextFunction, parent=None):
         QWidget.__init__(self, parent)
 
         self.__name = name
         self.__plotFunction = plotFunction
         self.__plotContextFunction = plotContextFunction
-        self.__plotCondition = plotCondition
+        self.__plot_conditions = plot_condition_function_list
+        """:type: list of functions """
         self.__figure = Figure()
         self.__figure.set_tight_layout(True)
         self.__canvas = FigureCanvas(self.__figure)
@@ -64,6 +65,5 @@ class PlotWidget(QWidget):
     def isActive(self):
         return self.__active
 
-
     def canPlotKey(self, key):
-        return self.__plotCondition(key)
+        return any([plotConditionFunction(key) for plotConditionFunction in self.__plot_conditions])
