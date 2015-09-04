@@ -74,11 +74,3 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
     def isCustomPcaKey(self, key):
         return False
-
-    def isMisfitKey(self, key):
-        return self.keyManager().isMisfitKey(key)
-
-
-
-
-

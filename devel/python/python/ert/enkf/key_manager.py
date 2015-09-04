@@ -118,7 +118,7 @@ class KeyManager(object):
     def allDataTypeKeys(self):
         """ :rtype: list of str """
         if self.__all_keys is None:
-            self.__all_keys = self.summaryKeys() + self.genKwKeys() + self.customKwKeys() + self.genDataKeys() + self.misfitKeys()
+            self.__all_keys = self.summaryKeys() + self.genKwKeys() + self.customKwKeys() + self.genDataKeys()
 
         return self.__all_keys
 
