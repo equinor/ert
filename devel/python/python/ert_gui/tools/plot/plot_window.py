@@ -49,14 +49,13 @@ class PlotWindow(QMainWindow):
         gen_data_gatherer = self.createDataGatherer(PDG.gatherGenDataData, key_manager.isGenDataKey, observationGatherFunc=PDG.gatherGenDataObservationData)
         gen_kw_gatherer = self.createDataGatherer(PDG.gatherGenKwData, key_manager.isGenKwKey)
         custom_kw_gatherer = self.createDataGatherer(PDG.gatherCustomKwData, key_manager.isCustomKwKey)
-        misfit_gatherer = self.createDataGatherer(PDG.gatherMisfitData, key_manager.isMisfitKey)
 
 
         self.addPlotWidget("Ensemble", plots.plotEnsemble, [summary_gatherer, gen_data_gatherer])
         self.addPlotWidget("Overview", plots.plotOverview, [summary_gatherer, gen_data_gatherer])
         self.addPlotWidget("Statistics", plots.plotStatistics, [summary_gatherer, gen_data_gatherer])
-        self.addPlotWidget("Histogram", plots.plotHistogram, [gen_kw_gatherer, custom_kw_gatherer, misfit_gatherer])
-        self.addPlotWidget("Gaussian KDE", plots.plotGaussianKDE, [gen_kw_gatherer, custom_kw_gatherer, misfit_gatherer])
+        self.addPlotWidget("Histogram", plots.plotHistogram, [gen_kw_gatherer, custom_kw_gatherer])
+        self.addPlotWidget("Gaussian KDE", plots.plotGaussianKDE, [gen_kw_gatherer, custom_kw_gatherer])
 
 
         self.__data_types_key_model = DataTypeKeysListModel(ert)

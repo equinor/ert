@@ -1,7 +1,6 @@
 from pandas import DataFrame
 from ert.enkf.export import GenKwCollector, SummaryCollector, GenDataCollector, SummaryObservationCollector, \
     GenDataObservationCollector, CustomKWCollector
-from ert.enkf.export.misfit_collector import MisfitCollector
 
 
 class PlotDataGatherer(object):
@@ -131,9 +130,3 @@ class PlotDataGatherer(object):
         data = CustomKWCollector.loadAllCustomKWData(ert, case, [key])
 
         return data
-
-    @staticmethod
-    def gatherMisfitData(ert, case, key):
-        """ :rtype: pandas.DataFrame """
-        data = MisfitCollector.loadAllMisfitData(ert, case)
-        return data[key]
