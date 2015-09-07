@@ -518,6 +518,34 @@ void enkf_obs_clear( enkf_obs_type * enkf_obs ) {
 
 
 
+
+/*
+   Adding inverse observation keys to the enkf_nodes; can be called
+   several times.
+*/
+
+
+static void enkf_obs_update_keys( enkf_obs_type * enkf_obs ) {
+  /* First clear all existing observation keys. */
+  ensemble_config_clear_obs_keys( enkf_obs->ensemble_config );
+
+  /* Add new observation keys. */
+  {
+    hash_type      * map  = enkf_obs_alloc_data_map(enkf_obs);
+    hash_iter_type * iter = hash_iter_alloc(map);
+    const char * obs_key  = hash_iter_get_next_key(iter);
+    while (obs_key  != NULL) {
+      const char * state_kw = hash_get(map , obs_key);
+      ensemble_config_add_obs_key(enkf_obs->ensemble_config , state_kw , obs_key);
+      obs_key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter);
+    hash_free(map);
+  }
+}
+
+
+
 /**
    This function will load an observation configuration from the
    observation file @config_file.
@@ -531,7 +559,7 @@ void enkf_obs_clear( enkf_obs_type * enkf_obs ) {
 bool enkf_obs_load(enkf_obs_type * enkf_obs ,
                    const char * config_file,
                    double std_cutoff) {
-  
+
   if (enkf_obs->valid) {
     int last_report                      = enkf_obs_get_last_restart( enkf_obs );
     conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
@@ -643,6 +671,7 @@ bool enkf_obs_load(enkf_obs_type * enkf_obs ,
     conf_instance_free(enkf_conf      );
     conf_class_free(   enkf_conf_class);
 
+    enkf_obs_update_keys( enkf_obs );
     return true;
   } else
     return false;
