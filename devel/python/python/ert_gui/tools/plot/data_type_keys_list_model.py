@@ -67,13 +67,10 @@ class DataTypeKeysListModel(QAbstractItemModel):
         return self.keyManager().isGenKwKey(key)
 
     def isGenDataKey(self, key):
-        return False
+        return self.keyManager().isGenDataKey(key)
+
+    def isCustomKwKey(self, key):
+        return self.keyManager().isCustomKwKey(key)
 
     def isCustomPcaKey(self, key):
         return False
-
-
-
-
-
-
