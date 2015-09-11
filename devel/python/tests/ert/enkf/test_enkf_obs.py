@@ -119,7 +119,7 @@ class EnKFObsTest(ExtendedTestCase):
         self.assertEqual( len(obs) , 32 )
         self.assertFalse( "RFT2" in obs )
         obs.load(self.obs_config2)
-        self.assertEqual( len(obs) , 33 )
+        self.assertEqual( len(obs) , 34 )
         self.assertTrue( "RFT2" in obs )
 
 
@@ -127,11 +127,21 @@ class EnKFObsTest(ExtendedTestCase):
     def test_ert_obs_reload(self):
         with ErtTestContext("obs_test_reload", self.config_file) as test_context:
             ert = test_context.getErt()
+            ens_config = ert.ensembleConfig( )
+            wwct_op1 = ens_config["WWCT:OP_1"]
+            wopr_op5 = ens_config["WOPR:OP_5"]
+            
             obs = ert.getObservations()
             self.assertEqual( len(obs) , 31 )
-            ert.loadObservations("observations2")
-            self.assertEqual( len(obs) , 1 )
-
-            ert.loadObservations("observations" , clear = False)
-            self.assertEqual( len(obs) , 32 )
+            self.assertEqual( wwct_op1.getObservationKeys() , ["WWCT:OP_1"] )
+            self.assertEqual( wopr_op5.getObservationKeys() , [] )
             
+            ert.loadObservations("observations2")
+            self.assertEqual( len(obs) , 2 )
+            self.assertEqual( wwct_op1.getObservationKeys() , [] )
+            self.assertEqual( wopr_op5.getObservationKeys() , ["WOPR:OP_5"] )
+            
+            ert.loadObservations("observations" , clear = False)
+            self.assertEqual( len(obs) , 33 )
+            self.assertEqual( wwct_op1.getObservationKeys() , ["WWCT:OP_1"] )
+            self.assertEqual( wopr_op5.getObservationKeys() , ["WOPR:OP_5"] )
