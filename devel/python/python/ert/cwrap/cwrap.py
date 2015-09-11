@@ -73,6 +73,8 @@ class CWrapper:
         """Registers the default available types for prototyping."""
         cls.registerType("void", None)
         cls.registerType("void*", ctypes.c_void_p)
+        cls.registerType("uint", ctypes.c_uint)
+        cls.registerType("uint*", ctypes.POINTER(ctypes.c_uint))
         cls.registerType("int", ctypes.c_int)
         cls.registerType("int*", ctypes.POINTER(ctypes.c_int))
         cls.registerType("size_t", ctypes.c_size_t)
