@@ -314,7 +314,7 @@ void test8(char ** argv) {
   int interval_between_jobs = 2;
   time_t currenttime = 0;
 
-  run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, currenttime, min_realizations, num_expected_completed, num_expected_completed , interval_between_jobs);
+  run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, currenttime, min_realizations, num_expected_completed, 3 , interval_between_jobs);
 }
 
 void test9(char ** argv) {
