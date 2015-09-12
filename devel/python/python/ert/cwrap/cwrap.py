@@ -77,6 +77,8 @@ class CWrapper:
         cls.registerType("uint*", ctypes.POINTER(ctypes.c_uint))
         cls.registerType("int", ctypes.c_int)
         cls.registerType("int*", ctypes.POINTER(ctypes.c_int))
+        cls.registerType("int64", ctypes.c_int64)
+        cls.registerType("int64*", ctypes.POINTER(ctypes.c_int64))
         cls.registerType("size_t", ctypes.c_size_t)
         cls.registerType("size_t*", ctypes.POINTER(ctypes.c_size_t))
         cls.registerType("bool", ctypes.c_bool)
