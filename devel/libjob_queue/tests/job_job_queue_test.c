@@ -285,7 +285,7 @@ void test6(char ** argv) {
   time_t currenttime;
   time(&currenttime);
   time_t stoptime = currenttime + 10;
-  run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, stoptime, min_realizations, num_expected_completed, num_expected_completed , interval_between_jobs);
+  run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, stoptime, min_realizations, num_expected_completed, number_of_jobs , interval_between_jobs);
 
 }
 
