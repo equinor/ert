@@ -48,26 +48,21 @@ void submit_jobs_to_queue(job_queue_type * queue, test_work_area_type * work_are
 }
 
 void monitor_job_queue(job_queue_type * queue, int max_job_duration, time_t stop_time, int min_realizations) {
-  bool cont = true;
-
-  if (0 >= min_realizations)
-    cont = false;
-
-  while (cont) {
-    //Check if minimum number of realizations have run, and if so, kill the rest after a certain time
-    if ((job_queue_get_num_complete(queue) >= min_realizations)) {
-      job_queue_set_max_job_duration(queue, max_job_duration);
-
-      job_queue_set_job_stop_time(queue, stop_time);
-
-      cont = false;
-    }
-
-    if (cont) {
+  if (min_realizations > 0) {
+    while (true) {
       util_usleep(100);
+
+      //Check if minimum number of realizations have run, and if so, kill the rest after a certain time
+      if ((job_queue_get_num_complete(queue) >= min_realizations)) {
+        job_queue_set_max_job_duration(queue, max_job_duration);
+        job_queue_set_job_stop_time(queue, stop_time);
+        break;
+      }
     }
   }
 }
+
+
 
 void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs, int number_of_slowjobs, char * sleep_short, char * sleep_long, int max_sleep) {
   test_work_area_type * work_area = test_work_area_alloc("job_queue");
@@ -96,19 +91,22 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
 }
 
 
-void run_and_monitor_jobs(char * executable_to_run, int number_of_jobs , int max_job_duration, time_t stop_time, int min_realizations, int min_completed, int max_completed , int interval_between_jobs) {
+void run_and_monitor_jobs(char * executable_to_run,
+                          int number_of_jobs ,
+                          int max_job_duration,
+                          time_t stop_time,
+                          int min_realizations,
+                          int min_completed,
+                          int max_completed ,
+                          int interval_between_jobs) {
+
   test_work_area_type * work_area = test_work_area_alloc("job_queue");
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "ERROR");
+  job_queue_manager_type * queue_manager = job_queue_manager_alloc( queue );
   queue_driver_type * driver = queue_driver_alloc_local();
+
   job_queue_set_driver(queue, driver);
 
-  arg_pack_type * arg_pack = arg_pack_alloc();
-  arg_pack_append_ptr(arg_pack, queue);
-  arg_pack_append_int(arg_pack, 0);
-  arg_pack_append_bool(arg_pack, false);
-
-  thread_pool_type * pool = thread_pool_alloc(1, true);
-  thread_pool_add_job(pool, job_queue_run_jobs__, arg_pack);
 
   int job_run_time = 0;
 
@@ -123,15 +121,12 @@ void run_and_monitor_jobs(char * executable_to_run, int number_of_jobs , int max
     free(sleeptime);
     free(runpath);
   }
-
   job_queue_submit_complete(queue);
+  job_queue_manager_start_queue(queue_manager,0,false,false);
+  monitor_job_queue( queue , max_job_duration , stop_time , min_realizations );
+  job_queue_manager_wait(queue_manager);
 
-  monitor_job_queue(queue, max_job_duration, stop_time, min_realizations);
-
-  thread_pool_join(pool);
-  thread_pool_free(pool);
-
-
+  printf("Completed: %d <= %d <= %d ?\n",min_completed , job_queue_get_num_complete(queue) , max_completed);
   test_assert_true(job_queue_get_num_complete(queue) >= min_completed);
   test_assert_true(job_queue_get_num_complete(queue) <= max_completed);
 
@@ -143,6 +138,7 @@ void run_and_monitor_jobs(char * executable_to_run, int number_of_jobs , int max
 
   job_queue_free(queue);
   queue_driver_free(driver);
+  job_queue_manager_free( queue_manager );
   test_work_area_free(work_area);
 }
 
@@ -181,8 +177,8 @@ void run_jobs_time_limit_multithreaded(char * executable_to_run, int number_of_j
   test_work_area_free(work_area);
 }
 
-void JobQueueRunJobs_ReuseQueue_AllOk(char ** argv) {
-  printf("Running JobQueueRunJobs_ReuseQueue_AllOk\n");
+void test1(char ** argv) {
+  printf("001: Running JobQueueRunJobs_ReuseQueue_AllOk\n");
 
   int number_of_jobs = 20;
   int number_of_queue_reuse = 10;
@@ -210,8 +206,8 @@ void JobQueueRunJobs_ReuseQueue_AllOk(char ** argv) {
 
 }
 
-void JobQueueRunJobs_ReuseQueueWithStopTime_AllOk(char ** argv) {
-  printf("Running JobQueueRunJobs_ReuseQueueWithStopTime_AllOk\n");
+void test2(char ** argv) {
+  printf("002: Running JobQueueRunJobs_ReuseQueueWithStopTime_AllOk\n");
 
   int number_of_jobs = 3;
   int number_of_slow_jobs = 2;
@@ -243,8 +239,8 @@ void JobQueueRunJobs_ReuseQueueWithStopTime_AllOk(char ** argv) {
 }
 
 
-void JobQueueSetStopTime_StopTimeEarly_MinRealisationsAreRun(char ** argv) {
-  printf("Running JobQueueSetStopTime_StopTimeEarly_MinRealisationsAreRun\n");
+void test3(char ** argv) {
+  printf("003: Running JobQueueSetStopTime_StopTimeEarly_MinRealisationsAreRun\n");
 
   //Use stop_time to to stop jobs after min_realizations are finished
   int number_of_jobs = 10;
@@ -252,15 +248,19 @@ void JobQueueSetStopTime_StopTimeEarly_MinRealisationsAreRun(char ** argv) {
   int num_expected_completed = 5;
   int max_duration_time = 0;
   int interval_between_jobs = 2;
-  time_t currenttime;
-  time(&currenttime);
-  time_t stoptime = currenttime;
-  run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, stoptime, min_realizations, num_expected_completed, num_expected_completed , interval_between_jobs);
+  time_t stoptime = time( NULL );
 
+  run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, stoptime, min_realizations, num_expected_completed, num_expected_completed , interval_between_jobs);
 }
 
-void JobQueueSetStopTime_StopTimeLate_AllRealisationsAreRun(char ** argv) {
-  printf("Running JobQueueSetStopTime_StopTimeLate_AllRealisationsAreRun\n");
+void test4(char ** argv) {
+  printf("004: Running JobQueueSetMaxDuration_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds\n");
+  run_jobs_with_time_limit_test(argv[1], 100, 23, "1", "100", 5);
+}
+
+
+void test5(char ** argv) {
+  printf("005: Running JobQueueSetStopTime_StopTimeLate_AllRealisationsAreRun\n");
 
   //Use stop_time to to stop jobs after min_realizations are finished
   int number_of_jobs = 10;
@@ -274,8 +274,8 @@ void JobQueueSetStopTime_StopTimeLate_AllRealisationsAreRun(char ** argv) {
   run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, stoptime, min_realizations, num_expected_completed, num_expected_completed , interval_between_jobs);
 }
 
-void JobQueueSetStopTimeAndMaxDuration_MaxDurationShort_StopTimeLate_MinRealisationsAreRun(char ** argv) {
-  printf("Running JobQueueSetStopTimeAndMaxDuration_MaxDurationShort_StopTimeLong_MinRealisationsAreRun\n");
+void test6(char ** argv) {
+  printf("006: Running JobQueueSetStopTimeAndMaxDuration_MaxDurationShort_StopTimeLong_MinRealisationsAreRun\n");
 
   int number_of_jobs = 10;
   int min_realizations = 1;
@@ -289,8 +289,8 @@ void JobQueueSetStopTimeAndMaxDuration_MaxDurationShort_StopTimeLate_MinRealisat
 
 }
 
-void JobQueueSetStopTimeAndMaxDuration_MaxDurationLong_StopTimeEarly_MinRealisationsAreRun(char ** argv) {
-  printf("Running JobQueueSetStopTimeAndMaxDuration_MaxDurationLong_StopTimeEarly_MinRealisationsAreRun\n");
+void test7(char ** argv) {
+  printf("007: Running JobQueueSetStopTimeAndMaxDuration_MaxDurationLong_StopTimeEarly_MinRealisationsAreRun\n");
 
   int number_of_jobs = 10;
   int min_realizations = 1;
@@ -303,8 +303,8 @@ void JobQueueSetStopTimeAndMaxDuration_MaxDurationLong_StopTimeEarly_MinRealisat
   run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, stoptime, min_realizations, num_expected_completed, num_expected_completed , interval_between_jobs);
 }
 
-void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShort_OnlyMinRealizationsAreRun(char ** argv) {
-  printf("Running JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShort_OnlyMinRealizationsAreRun\n");
+void test8(char ** argv) {
+  printf("008: Running JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShort_OnlyMinRealizationsAreRun\n");
 
   // Must have one job completed, the rest are then killed due to the max_duration_time gets exceeded.
   int number_of_jobs = 10;
@@ -314,11 +314,11 @@ void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShort_OnlyMinRealizat
   int interval_between_jobs = 2;
   time_t currenttime = 0;
 
-  run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, currenttime, min_realizations, num_expected_completed, num_expected_completed , interval_between_jobs);
+  run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, currenttime, min_realizations, num_expected_completed, 3 , interval_between_jobs);
 }
 
-void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationLooong_AllRealizationsAreRun(char ** argv) {
-  printf("Running JobQueueSetMaxDurationAfterMinRealizations_MaxDurationLooong_AllRealizationsAreRun\n");
+void test9(char ** argv) {
+  printf("009: Running JobQueueSetMaxDurationAfterMinRealizations_MaxDurationLooong_AllRealizationsAreRun\n");
 
   // Min realizations is 1, but the max running time exceeds the time used by any of the jobs, so all run to completion
   int number_of_jobs = 10;
@@ -330,9 +330,9 @@ void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationLooong_AllRealization
   run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, currenttime, min_realizations, num_expected_completed, num_expected_completed , interval_between_jobs);
 }
 
-//HER
-void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationSemiLong_MoreThanMinRealizationsAreRun(char ** argv) {
-  printf("Running JobQueueSetMaxDurationAfterMinRealizations_MaxDurationSemiLong_MoreThanMinRealizationsAreRun\n");
+
+void test10(char ** argv) {
+  printf("010: Running JobQueueSetMaxDurationAfterMinRealizations_MaxDurationSemiLong_MoreThanMinRealizationsAreRun\n");
 
   int number_of_jobs = 10;
   int min_realizations = 3;
@@ -342,8 +342,8 @@ void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationSemiLong_MoreThanMinR
   run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, currenttime, min_realizations, min_realizations , number_of_jobs , interval_between_jobs);
 }
 
-void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShortButMinRealizationsIsAll_AllRealizationsAreRun(char ** argv) {
-  printf("Running JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShortButMinRealizationsIsAll_AllRealizationsAreRun\n");
+void test11(char ** argv) {
+  printf("011: Running JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShortButMinRealizationsIsAll_AllRealizationsAreRun\n");
 
   // Min is 10, so all run to completion
   int number_of_jobs = 10;
@@ -355,24 +355,18 @@ void JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShortButMinRealizatio
   run_and_monitor_jobs(argv[1], number_of_jobs , max_duration_time, currenttime, min_realizations, num_expected_completed, num_expected_completed , interval_between_jobs);
 }
 
-void JobQueueSetMaxDuration_DurationZero_AllRealisationsAreRun(char ** argv) {
-  printf("Running JobQueueSetMaxDuration_DurationZero_AllRealisationsAreRun\n");
+void test12(char ** argv) {
+  printf("012: Running JobQueueSetMaxDuration_DurationZero_AllRealisationsAreRun\n");
   run_jobs_with_time_limit_test(argv[1], 10, 0, "1", "100", 0); // 0 as limit means no limit*/
 }
 
-void JobQueueSetMaxDuration_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(char ** argv) {
-  printf("Running JobQueueSetMaxDuration_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds\n");
-  run_jobs_with_time_limit_test(argv[1], 100, 23, "1", "100", 5);
-}
-
-void JobQueueSetMaxDurationRunJobsLoopInThread_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(char ** argv) {
-  printf("Running JobQueueSetMaxDurationRunJobsLoopInThread_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds\n");
+void test13(char ** argv) {
+  printf("013: Running JobQueueSetMaxDurationRunJobsLoopInThread_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds\n");
   run_jobs_time_limit_multithreaded(argv[1], 100, 23, "1", "100", 5);
 }
 
-//HER
-void JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest(char ** argv) {
-  printf("Running JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest\n");
+void test14(char ** argv) {
+  printf("014: Running JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest\n");
 
   int number_of_jobs = 10;
 
@@ -424,8 +418,8 @@ void JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest(char ** arg
   test_work_area_free(work_area);
 }
 
-void JobQueueSetAutoStopTime_NoJobsAreFinished_AutoStopDoesNothing(char ** argv) {
-  printf("Running JobQueueSetAutoStopTime_NoJobsAreFinished_AutoStopDoesNothing\n");
+void test15(char ** argv) {
+  printf("015: Running JobQueueSetAutoStopTime_NoJobsAreFinished_AutoStopDoesNothing\n");
 
   int number_of_jobs = 10;
 
@@ -448,8 +442,8 @@ void JobQueueSetAutoStopTime_NoJobsAreFinished_AutoStopDoesNothing(char ** argv)
   test_work_area_free(work_area);
 }
 
-void JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing(char ** argv) {
-  printf("Running JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing\n");
+void test16(char ** argv) {
+  printf("016: Running JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing\n");
 
   int number_of_jobs = 10;
   test_work_area_type * work_area = test_work_area_alloc("job_queue");
@@ -475,29 +469,23 @@ void JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing(char ** argv
 
 int main(int argc, char ** argv) {
   util_install_signals();
-  JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest(argv);
 
-  JobQueueRunJobs_ReuseQueue_AllOk(argv);
-  JobQueueRunJobs_ReuseQueueWithStopTime_AllOk(argv);
-
-  JobQueueSetMaxDuration_DurationZero_AllRealisationsAreRun(argv);
-  JobQueueSetMaxDuration_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);
-  JobQueueSetMaxDurationRunJobsLoopInThread_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);
-
-  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShort_OnlyMinRealizationsAreRun(argv);
-  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationLooong_AllRealizationsAreRun(argv);
-  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationSemiLong_MoreThanMinRealizationsAreRun(argv);
-  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShortButMinRealizationsIsAll_AllRealizationsAreRun(argv);
-
-  JobQueueSetStopTime_StopTimeEarly_MinRealisationsAreRun(argv);
-  JobQueueSetStopTime_StopTimeLate_AllRealisationsAreRun(argv);
-
-  JobQueueSetStopTimeAndMaxDuration_MaxDurationShort_StopTimeLate_MinRealisationsAreRun(argv);
-  JobQueueSetStopTimeAndMaxDuration_MaxDurationLong_StopTimeEarly_MinRealisationsAreRun(argv);
-
-  JobQueueSetAutoStopTime_ThreeQuickJobs_AutoStopTimeKillsTheRest(argv);
-  JobQueueSetAutoStopTime_NoJobsAreFinished_AutoStopDoesNothing(argv);
-  JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing(argv);
+  test1(argv);
+  test2(argv);
+  test3(argv);
+  test4(argv);
+  test5(argv);
+  test6(argv);
+  test7(argv);
+  test8(argv);
+  test9(argv);
+  test10(argv);
+  test11(argv);
+  test12(argv);
+  test13(argv);
+  test14(argv);
+  test15(argv);
+  test16(argv);
 
   exit(0);
 }
