@@ -46,11 +46,12 @@ class DataTypeKeysWidget(QWidget):
         self.setLayout(layout)
 
     def onItemChanged(self, item):
-        self.filter_model.setShowBlockKeys(item["block"])
+        # self.filter_model.setShowBlockKeys(item["block"])
         self.filter_model.setShowSummaryKeys(item["summary"])
         self.filter_model.setShowGenKWKeys(item["gen_kw"])
         self.filter_model.setShowGenDataKeys(item["gen_data"])
-        self.filter_model.setShowCustomPcaKeys(item["custom_pca"])
+        self.filter_model.setShowCustomKwKeys(item["custom_kw"])
+        # self.filter_model.setShowCustomPcaKeys(item["custom_pca"])
 
 
     def itemSelected(self):

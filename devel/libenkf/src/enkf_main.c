@@ -330,30 +330,6 @@ qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main ) {
 }
 
 
-/*
-   Adding inverse observation keys to the enkf_nodes; can be called
-   several times.
-*/
-
-
-void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
-  /* First clear all existing observation keys. */
-  ensemble_config_clear_obs_keys( enkf_main->ensemble_config );
-
-  /* Add new observation keys. */
-  {
-    hash_type      * map  = enkf_obs_alloc_data_map(enkf_main->obs);
-    hash_iter_type * iter = hash_iter_alloc(map);
-    const char * obs_key  = hash_iter_get_next_key(iter);
-    while (obs_key  != NULL) {
-      const char * state_kw = hash_get(map , obs_key);
-      ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
-      obs_key = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free(iter);
-    hash_free(map);
-  }
-}
 
 void enkf_main_alloc_obs( enkf_main_type * enkf_main ) {
   enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config),
@@ -370,8 +346,7 @@ void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_fi
   if (enkf_obs_load(enkf_main->obs ,
                     obs_config_file ,
                     analysis_config_get_std_cutoff(enkf_main->analysis_config))) {
-    enkf_main_update_obs_keys(enkf_main);
-    enkf_main_update_local_updates(enkf_main );
+    enkf_main_update_local_updates( enkf_main );
   } else
       fprintf(stderr,"** Warning: failed to load observation data from: %s \n",obs_config_file);
 }

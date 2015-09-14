@@ -36,6 +36,7 @@ class PlotConfig(object):
 
         self.__legend_enabled = True
         self.__grid_enabled = True
+        self.__date_support_active = True
 
 
     def lineColor(self):
@@ -135,3 +136,8 @@ class PlotConfig(object):
     def setGridEnabled(self, enabled):
         self.__grid_enabled = enabled
 
+    def deactiveDateSupport(self):
+        self.__date_support_active = False
+
+    def isDateSupportActive(self):
+        return self.__date_support_active
