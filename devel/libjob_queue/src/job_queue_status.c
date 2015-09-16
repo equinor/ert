@@ -44,6 +44,18 @@ static const int status_index[] = {  JOB_QUEUE_NOT_ACTIVE ,  // Initial, allocat
                                      JOB_QUEUE_RUNNING_CALLBACK, // Temporary state, while running requested callbacks after an ended job  - controlled by job_queue
                                      JOB_QUEUE_FAILED };     // Job has failed, no more retries, FINAL STATE
 
+static const char* status_name[] = { "JOB_QUEUE_NOT_ACTIVE" ,
+                                     "JOB_QUEUE_WAITING"    ,
+                                     "JOB_QUEUE_SUBMITTED"  ,
+                                     "JOB_QUEUE_PENDING"    ,
+                                     "JOB_QUEUE_RUNNING"    ,
+                                     "JOB_QUEUE_DONE"       ,
+                                     "JOB_QUEUE_EXIT"       ,
+                                     "JOB_QUEUE_USER_KILLED" ,
+                                     "JOB_QUEUE_USER_EXIT"   ,
+                                     "JOB_QUEUE_SUCCESS"    ,
+                                     "JOB_QUEUE_RUNNING_CALLBACK",
+                                     "JOB_QUEUE_FAILED" };
 
 static int STATUS_INDEX( job_status_type status ) {
   int index = 0;
