@@ -12,7 +12,8 @@
 #  FITNESS FOR A PARTICULAR PURPOSE.   
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+#  for more details.
+import logging
 
 import sys
 import threading
@@ -51,16 +52,18 @@ class ErtServer(object):
     DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
     site_config = None
 
-    def __init__(self , config_file , logger):
+    def __init__(self , config , logger=None):
         installAbortSignals()
 
         self.queue_lock = threading.Lock()
         self.ert_handle = None
+
+        if logger is None:
+            logger = logging
+
         self.logger = logger
-        if os.path.exists(config_file):
-            self.open( config_file )
-        else:
-            raise IOError("The config file:%s does not exist" % config_file)
+
+        self.open(config)
 
         self.initCmdTable()
         self.run_context = None
@@ -87,9 +90,18 @@ class ErtServer(object):
                           "TIME_STEP": self.handleTIMESTEP }
 
 
-    def open(self , config_file):
+    def open(self , config):
+        if isinstance(config, EnKFMain):
+            config_file = config.getUserConfigFile()
+        else:
+            if os.path.exists(config):
+                config_file = config
+                config = EnKFMain( config )
+            else:
+                raise IOError("The config file:%s does not exist" % config)
+
         self.config_file = config_file
-        self.ert_handle = EnKFMain( config_file )
+        self.ert_handle = config
         self.logger.info("Have connect ert handle to:%s" , config_file)
 
 
