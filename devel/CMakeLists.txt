@@ -84,8 +84,8 @@ if (ERT_USE_OPENMP)
 endif()
 
 
-include(cmake/ert_check.cmake)
 include(cmake/ert_find.cmake)
+include(cmake/ert_check.cmake)
 include(cmake/Modules/UseMultiArch.cmake)
 include(cmake/ert_link.cmake)
 
