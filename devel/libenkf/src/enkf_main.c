@@ -1243,6 +1243,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_free( R );
   matrix_free( dObs );
   matrix_free( X );
+  matrix_free( A );
 }
 
 
