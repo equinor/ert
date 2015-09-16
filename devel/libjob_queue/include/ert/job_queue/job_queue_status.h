@@ -24,7 +24,6 @@ extern "C" {
 #endif
 
 #include <ert/util/type_macros.h>
-#include <ert/job_queue/job_queue_status.h>
 #include <ert/job_queue/queue_driver.h>
 
   typedef struct job_queue_status_struct job_queue_status_type;
@@ -36,6 +35,7 @@ extern "C" {
   void job_queue_status_inc( job_queue_status_type * status_count , job_status_type status_type);
   bool job_queue_status_transition( job_queue_status_type * status_count , job_status_type src_status , job_status_type target_status);
   int job_queue_status_get_total_count( const job_queue_status_type * status );
+  const char * job_queue_status_name( job_status_type status );
 
   UTIL_IS_INSTANCE_HEADER( job_queue_status );
   UTIL_SAFE_CAST_HEADER( job_queue_status );
