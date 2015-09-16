@@ -93,6 +93,11 @@ class CustomDialog(QDialog):
         option_widget.validationChanged.connect(self.optionValidationChanged)
         self.layout.addRow(option_widget.getLabel(), option_widget)
 
+    def addWidget(self, widget, label=""):
+        if not label.endswith(":"):
+            label = "%s:" % label
+        self.layout.addRow(label, widget)
+
 
     def addButtons(self):
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
