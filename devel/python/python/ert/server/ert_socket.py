@@ -26,8 +26,6 @@ from ert.server import ErtServer, SUCCESS , ERROR
 
 class ErtHandler(SocketServer.StreamRequestHandler):
     ert_server = None
-    config_file = None
-    logger = None
     
     def handle(self):
         string_data = self.rfile.readline().strip()
@@ -58,7 +56,6 @@ class ErtHandler(SocketServer.StreamRequestHandler):
         self.returnToClient( result )
 
 
-
     def handleQuit(self):
         shutdown_thread = threading.Thread( target = self.server.shutdown )
         shutdown_thread.start()
@@ -72,18 +69,20 @@ class ErtSocketServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 
 class ErtSocket(object):
 
-    def __init__(self , config_file , port , host , logger):
+    def __init__(self , config , port , host , logger):
+        self.host = host
+        self.port = port
         self.server = ErtSocketServer((host , port) , ErtHandler)
-        self.open(config_file , logger)
+        self.open(config , logger)
 
 
     @staticmethod
-    def connect(config_file , port , host , logger , info_callback = None , timeout = 60 , sleep_time = 5):
+    def connect(config , port , host , logger = None, info_callback = None , timeout = 60 , sleep_time = 5):
         start_time = time.time()
         ert_socket = None
         while True:
             try:
-                ert_socket = ErtSocket(config_file , port, host , logger)
+                ert_socket = ErtSocket(config , port, host , logger)
                 break
             except socket.error:
                 if info_callback:
@@ -96,17 +95,14 @@ class ErtSocket(object):
         return ert_socket
 
 
-
-    def open(self , config_file , logger):
-        ErtHandler.ert_server = ErtServer( config_file , logger )
-
-
+    def open(self , config , logger):
+        ErtHandler.ert_server = ErtServer( config , logger )
 
     def evalCmd(self , cmd):
         return ErtHandler.ert_server.evalCmd( cmd )
 
-
     def listen(self):
         self.server.serve_forever( )
-        
-        
+
+    def shutdown(self):
+        self.server.shutdown()
