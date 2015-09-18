@@ -21,6 +21,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <dlfcn.h>
+#include <unistd.h>
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>

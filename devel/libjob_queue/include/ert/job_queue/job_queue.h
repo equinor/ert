@@ -61,7 +61,6 @@ extern "C" {
   void                job_queue_start_manager_thread( job_queue_type * job_queue , pthread_t * queue_thread , int job_size , bool verbose);
 
   job_status_type     job_queue_iget_job_status(job_queue_type * , int );
-  const char        * job_queue_status_name( job_status_type status );
 
   int                 job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status);
   time_t              job_queue_iget_sim_start( job_queue_type * queue, int job_index);
