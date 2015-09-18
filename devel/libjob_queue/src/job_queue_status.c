@@ -153,3 +153,9 @@ int job_queue_status_get_total_count( const job_queue_status_type * status ) {
     total_count += status->status_list[ index ];
   return total_count;
 }
+
+
+const char * job_queue_status_name( job_status_type status ) {
+  int index = STATUS_INDEX( status );
+  return status_name[index];
+}
