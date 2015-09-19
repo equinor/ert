@@ -104,8 +104,11 @@ class EnKFMain(BaseCClass):
 
     def local_config(self):
         """ @rtype: LocalConfig """
-        return EnKFMain.cNamespace().get_local_config(self).setParent(self)
-
+        config = EnKFMain.cNamespace().get_local_config(self).setParent(self)
+        config.initAttributes( self.ensembleConfig() , self.getObservations() , self.eclConfig().get_grid() )
+        return config
+    
+    
     def siteConfig(self):
         """ @rtype: SiteConfig """
         return EnKFMain.cNamespace().get_site_config(self).setParent(self)
