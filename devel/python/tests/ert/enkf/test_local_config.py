@@ -21,7 +21,7 @@ class LocalConfigTest(ExtendedTestCase):
             main = test_context.getErt()
             self.assertTrue(main, "Load failed")
             
-            local_config = main.local_config()  
+            local_config = main.getLocalConfig()  
             
             
             self.UpdateStep(local_config)
