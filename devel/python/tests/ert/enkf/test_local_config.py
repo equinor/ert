@@ -21,7 +21,7 @@ class LocalConfigTest(ExtendedTestCase):
             main = test_context.getErt()
             self.assertTrue(main, "Load failed")
             
-            local_config = main.local_config()  
+            local_config = main.getLocalConfig()  
             
             
             self.UpdateStep(local_config)
@@ -67,37 +67,40 @@ class LocalConfigTest(ExtendedTestCase):
         
         self.assertEqual( len(updatestep) , 1 )            
 
+
     def LocalDataset( self, local_config ):                        
-                  
         # Data
         data_scale = local_config.createDataset("DATA_SCALE")
-        data_scale.addNode("SCALE")
-        active_list = data_scale.getActiveList("SCALE")
-        self.assertTrue(isinstance(active_list, ActiveList))
-        
-        active_list.addActiveIndex(0)            
-                    
-        data_offset = local_config.createDataset("DATA_OFFSET")
-        data_offset.addNodeWithIndex("OFFSET", 1)
+        with self.assertRaises(KeyError):
+            data_scale.addNode("MISSING")
 
+        data_scale.addNode("PERLIN_PARAM")
+        active_list = data_scale.getActiveList("PERLIN_PARAM")
+        self.assertTrue(isinstance(active_list, ActiveList))
+        active_list.addActiveIndex(0)            
+
+        
     def LocalObsdata( self, local_config ):              
         
           
         # Creating
         local_obs_data_1 = local_config.createObsdata("OBSSET_1") 
         self.assertTrue(isinstance(local_obs_data_1, LocalObsdata))
-                                                   
-        local_obs_data_1.addNodeAndRange("GENPERLIN_1", 0, 1)
-        local_obs_data_1.addNodeAndRange("GENPERLIN_2", 0, 1)            
+
+        with self.assertRaises(KeyError):
+            local_obs_data_1.addNodeAndRange("MISSING_KEY" , 0 , 1 )
+            
+        local_obs_data_1.addNodeAndRange("GEN_PERLIN_1", 0, 1)
+        local_obs_data_1.addNodeAndRange("GEN_PERLIN_2", 0, 1)            
         
         self.assertEqual( len(local_obs_data_1) , 2 )
                 
         # Delete node        
-        del local_obs_data_1["GENPERLIN_1"]
+        del local_obs_data_1["GEN_PERLIN_1"]
         self.assertEqual( len(local_obs_data_1) , 1 )  
 
         # Get node
-        node = local_obs_data_1["GENPERLIN_2"]
+        node = local_obs_data_1["GEN_PERLIN_2"]
         self.assertTrue(isinstance(node, LocalObsdataNode))
 
 
@@ -108,8 +111,8 @@ class LocalConfigTest(ExtendedTestCase):
         self.assertTrue(isinstance(local_obs_data_1, LocalObsdata))
         
         # Obsdata                                           
-        local_obs_data_1.addNodeAndRange("GENPERLIN_1", 0, 1)
-        local_obs_data_1.addNodeAndRange("GENPERLIN_2", 0, 1)  
+        local_obs_data_1.addNodeAndRange("GEN_PERLIN_1", 0, 1)
+        local_obs_data_1.addNodeAndRange("GEN_PERLIN_2", 0, 1)  
         
         # Ministep                                      
         ministep = local_config.createMinistep("MINISTEP")

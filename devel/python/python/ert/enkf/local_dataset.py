@@ -6,6 +6,11 @@ class LocalDataset(BaseCClass):
 
     def __init__(self, name):
         raise NotImplementedError("Class can not be instantiated directly!")
+
+
+    def initEnsembleConfig(self , config):
+        self.ensemble_config = config
+
     
     def __len__(self):
         """ @rtype: int """
@@ -28,35 +33,40 @@ class LocalDataset(BaseCClass):
     
     def addNode(self, key):
         assert isinstance(key, str)
-        LocalDataset.cNamespace().add_node(self, key)
+        if key in self.ensemble_config:
+            LocalDataset.cNamespace().add_node(self, key)
+        else:
+            raise KeyError("Tried to add data key:%s - not in ensemble")
                        
+                
+    def addNodeWithIndex(self, key, index):
+        assert isinstance(key, str)
+        assert isinstance(index, int)
+        
+        self.addNode( key )
+        active_list = self.getActiveList(key)
+        active_list.addActiveIndex(index)
+
+        
+    def addField(self, key, ecl_region):
+        assert isinstance(key, str)
+        assert isinstance(ecl_region, EclRegion)
+        
+        self.addNode( key )
+        active_list = self.getActiveList(key)
+        active_region = ecl_region.getActiveList()
+        for i in active_region:
+            active_list.addActiveIndex(i)
+
+            
     def getActiveList(self, key):
         """ @rtype: ActiveList """
         if key in self:
             return LocalDataset.cNamespace().active_list(self , key)
         else:
             raise KeyError("Local key:%s not recognized" % key)        
-                
-    def addNodeWithIndex(self, key, index):
-        assert isinstance(key, str)
-        assert isinstance(index, int)
-        
-        LocalDataset.cNamespace().add_node(self, key)              
-        active_list = self.getActiveList(key)
-        active_list.addActiveIndex(index)
-                
-    def addField(self, key, ecl_region):
-        assert isinstance(key, str)
-        assert isinstance(ecl_region, EclRegion)
-        
-        LocalDataset.cNamespace().add_node(self, key)
-        active_list = self.getActiveList(key)
-        
-        active_region = ecl_region.getActiveList()
-        
-        for i in active_region:
-            active_list.addActiveIndex(i)
-                            
+    
+
     def free(self):
         LocalDataset.cNamespace().free(self)
 

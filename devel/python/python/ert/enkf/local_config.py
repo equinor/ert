@@ -19,10 +19,39 @@ from ert.enkf.local_ministep import LocalMinistep
 
 
 class LocalConfig(BaseCClass):
-    
+
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
-        
+    
+
+    # The LocalConfig class is created as a reference to an existing
+    # underlying C structure by the method
+    # EnkFMain.local_config(). When the pointer to the C
+    # local_config_type object has been properly wrapped we 'decorate'
+    # the Python object with references to the ensemble_config ,
+    # observations and grid. 
+    #
+    # This implies that the Python object LocalConfig is richer than
+    # the underlying C object local_config_type; the extra attributes
+    # are only used for validation.
+    
+    def initAttributes(self , ensemble_config , obs , grid):
+        self.ensemble_config = ensemble_config
+        self.obs = obs
+        self.grid = grid
+
+
+    def __getObservations(self):
+        return self.obs
+
+    def __getEnsembleConfig(self):
+        return self.ensemble_config
+
+    def __getGrid(self):
+        # The grid can be None
+        return self.grid
+
+    
     def free(self):
         LocalConfig.cNamespace().free(self)
 
@@ -57,7 +86,10 @@ class LocalConfig(BaseCClass):
         """ @rtype: Obsdata """
         assert isinstance(obsset_key, str)
         LocalConfig.cNamespace().create_obsdata(self, obsset_key)  
-        return self.getObsdata(obsset_key)    
+        obsdata = self.getObsdata(obsset_key)
+        obsdata.initObservations( self.__getObservations() )
+        return obsdata
+
     
     def copyObsdata(self, src_key, target_key):
         """ @rtype: Obsdata """
@@ -69,8 +101,11 @@ class LocalConfig(BaseCClass):
         """ @rtype: Dataset """
         assert isinstance(dataset_key, str)
         LocalConfig.cNamespace().create_dataset(self, dataset_key)  
-        return self.getDataset(dataset_key)
+        data = self.getDataset(dataset_key)
+        data.initEnsembleConfig( self.__getEnsembleConfig() )
+        return data
     
+                                 
     def copyDataset(self, src_key, target_key):
         """ @rtype: Dataset """
         assert isinstance(src_key, str)

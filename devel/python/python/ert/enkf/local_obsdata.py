@@ -10,6 +10,9 @@ class LocalObsdata(BaseCClass):
         c_pointer = LocalObsdata.cNamespace().alloc(name)
         super(LocalObsdata, self).__init__(c_pointer)
 
+    def initObservations(self , obs):
+        self.obs = obs
+        
     def __len__(self):
         """ @rtype: int """
         return LocalObsdata.cNamespace().size(self)
@@ -53,16 +56,22 @@ class LocalObsdata(BaseCClass):
     def addNode(self, node):
         """ @rtype: bool """
         assert isinstance(node, LocalObsdataNode)
-        node.convertToCReference(self)
-        already_exists_node_for_key = LocalObsdata.cNamespace().add_node(self, node)
-        return already_exists_node_for_key
-          
+        if node.getKey() in self.obs:
+            node.convertToCReference(self)
+            already_exists_node_for_key = LocalObsdata.cNamespace().add_node(self, node)
+            return already_exists_node_for_key
+        else:
+            raise KeyError("The observation node: %s is not recognized observation key" % node.getKey())
+        
+    
     def clear(self):        
         LocalObsdata.cNamespace().clear(self)        
-    
+
+        
     def addObsVector(self , obs_vector):
         self.addNode( obs_vector.createLocalObs() )
-    
+
+        
     def addNodeAndRange(self, key, step_1, step_2):
         """ @rtype: bool """
         assert isinstance(key, str)
@@ -71,10 +80,10 @@ class LocalObsdata(BaseCClass):
         
         node = LocalObsdataNode(key)  
         node.addRange(step_1, step_2)      
-        node.convertToCReference(self)
-        already_exists_node_for_key = LocalObsdata.cNamespace().add_node(self, node)
-        return already_exists_node_for_key
+        return self.addNode( node )
 
+
+        
     def getName(self):
         """ @rtype: str """
         return LocalObsdata.cNamespace().name(self)
