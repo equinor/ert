@@ -47,7 +47,7 @@ class LocalConfig(BaseCClass):
     def __getEnsembleConfig(self):
         return self.ensemble_config
 
-    def __getGrid(self):
+    def getGrid(self):
         # The grid can be None
         return self.grid
 
