@@ -29,7 +29,7 @@ Not all the commands available from the local config programming are supported f
       def run(self):
   
           ert = self.ert()
-          local_config = ert.local_config()
+          local_config = ert.getLocalConfig()
           
           # Add your local config commands here
           dataset_multflt = local_config.createDataset("DATASET_MULTFLT")  
@@ -627,11 +627,14 @@ Keyword name                                                                    
     ecl_grid = EclGrid("path/to/LOCAL.GRDECL")
     
     with open("path/to/LOCAL.GRDECL","r") as fileH:
-        local_kw = Ecl3DKW.read_grdecl(ecl_grid, fileH, "LOCAL")
+        local_kw = Ecl3DKW.read_grdecl(ecl_grid, fileH, "LOCAL", ecl_type= EclTypeEnum.ECL_INT_TYPE)
         
     # Define Eclipse region    
     eclreg_poro = EclRegion(ecl_grid, False)
-    eclreg_poro.select_equal(local_kw, 1)  
+    eclreg_poro.select_equal(local_kw, 1)
+    print 'GRID LOADED%s' % ecl_grid 
+    print ecl_grid.getDims()
+    print local_kw.header   
     
         
 
