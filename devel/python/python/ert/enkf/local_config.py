@@ -95,8 +95,11 @@ class LocalConfig(BaseCClass):
         """ @rtype: Obsdata """
         assert isinstance(src_key, str)
         assert isinstance(target_key, str)
-        return LocalConfig.cNamespace().copy_obsdata(self, src_key, target_key)         
-    
+        obsdata = LocalConfig.cNamespace().copy_obsdata(self, src_key, target_key)
+        obsdata.initObservations( self.__getObservations() )
+        return obsdata
+
+        
     def createDataset(self, dataset_key):
         """ @rtype: Dataset """
         assert isinstance(dataset_key, str)
@@ -110,8 +113,11 @@ class LocalConfig(BaseCClass):
         """ @rtype: Dataset """
         assert isinstance(src_key, str)
         assert isinstance(target_key, str)
-        return LocalConfig.cNamespace().copy_dataset(self, src_key, target_key)  
-       
+        data = LocalConfig.cNamespace().copy_dataset(self, src_key, target_key)  
+        data.initEnsembleConfig( self.__getEnsembleConfig() )
+        return data
+
+    
     def getUpdatestep(self, update_step_key):
         """ @rtype: UpdateStep """
         assert isinstance(update_step_key, str)        

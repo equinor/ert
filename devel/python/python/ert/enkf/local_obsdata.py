@@ -1,15 +1,36 @@
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, LocalObsdataNode
+from ert.enkf import ENKF_LIB, LocalObsdataNode 
 
 
 class LocalObsdata(BaseCClass):
 
-    def __init__(self, name):
-        assert isinstance(name, str)
+    
+    def __init__(self, name , obs = None):
+        # The obs instance should be a EnkFObs instance; some circular dependency problems
+        # by importing it right away. It is not really optional, but it is made optional
+        # here to be able to give a decent error message for old call sites which did not
+        # supply the obs argument.
+        if obs is None:
+            msg = """
 
+The LocalObsdata constructor has recently changed, as a second
+argument you should pass the EnkFObs instance with all the
+observations. You can typically get this instance from the ert main
+object as:
+
+    obs = ert.getObservations()
+    local_obs = LocalObsData("YOUR-KEY" , obs)
+
+"""
+            raise Exception( msg )
+
+        assert isinstance(name, str)
+        
         c_pointer = LocalObsdata.cNamespace().alloc(name)
         super(LocalObsdata, self).__init__(c_pointer)
+        self.initObservations( obs )
 
+        
     def initObservations(self , obs):
         self.obs = obs
         
