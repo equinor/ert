@@ -59,7 +59,7 @@ class EnKFObsTest(ExtendedTestCase):
             active_list.initRange(0 , ert.getEnsembleSize() , 1 )
 
             obs = ert.getObservations()
-            obs_data = LocalObsdata( "OBSxx" )
+            obs_data = LocalObsdata( "OBSxx" , obs )
             obs_vector = obs["WWCT:OP_1"]
             obs_data.addObsVector( obs_vector )
             scale_factor = obs.scaleCorrelatedStd( fs , obs_data , active_list )
