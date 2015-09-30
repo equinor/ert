@@ -139,12 +139,12 @@ static void obs_block_free__( void * arg ) {
 }
 
 
-void obs_block_deactivate( obs_block_type * obs_block , int iobs , const char * msg) {
+void obs_block_deactivate( obs_block_type * obs_block , int iobs , bool verbose , const char * msg) {
   if (obs_block->active_mode[ iobs ] == ACTIVE) {
-    printf("Deactivating: %s(%d) : %s \n",obs_block->obs_key , iobs , msg);
+    if (verbose)
+      printf("Deactivating: %s(%d) : %s \n",obs_block->obs_key , iobs , msg);
     obs_block->active_mode[ iobs ] = DEACTIVATED;
     obs_block->active_size--;
-
   }
 }
 

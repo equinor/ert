@@ -42,10 +42,12 @@ void          enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data ,
 void          enkf_analysis_deactivate_outliers(obs_data_type * obs_data ,
                                                 meas_data_type * meas_data ,
                                                 double std_cutoff ,
-                                                double alpha);
+                                                double alpha,
+                                                bool verbose);
 
 void          enkf_analysis_deactivate_std_zero(obs_data_type * obs_data ,
-                                                meas_data_type * meas_data);
+                                                meas_data_type * meas_data,
+                                                bool verbose);
 
 
 #ifdef __cplusplus

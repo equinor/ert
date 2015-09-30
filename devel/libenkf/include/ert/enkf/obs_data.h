@@ -39,7 +39,7 @@ const char * obs_data_iget_keyword( const obs_data_type * obs_data , int index )
 double       obs_data_iget_value( const obs_data_type * obs_data , int index );
 double       obs_data_iget_std( const obs_data_type * obs_data , int index );
 active_type  obs_data_iget_active_mode( const obs_data_type * obs_data , int index );
-void         obs_block_deactivate( obs_block_type * obs_block , int iobs , const char * msg);
+void         obs_block_deactivate( obs_block_type * obs_block , int iobs , bool verbose , const char * msg);
 int          obs_block_get_size( const obs_block_type * obs_block );
 void         obs_block_iset( obs_block_type * obs_block , int iobs , double value , double std);
 void         obs_block_iset_missing( obs_block_type * obs_block , int iobs );
