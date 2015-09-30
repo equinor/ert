@@ -37,14 +37,19 @@ class LocalConfigTest(ExtendedTestCase):
             sfile = "local_config.txt"
             local_config.writeLocalConfigFile( sfile )
             self.assertTrue( os.path.isfile( sfile ))
+
+            
             
  
     def UpdateStep( self, local_config ):                        
-            
         # Update step
         updatestep = local_config.createUpdatestep("UPDATESTEP")
         self.assertTrue(isinstance(updatestep, LocalUpdateStep))        
- 
+        local_config.installUpdatestep( updatestep )
+        self.assertEqual( local_config.igetUpdatestep( 0 ) , updatestep )
+        self.assertEqual( local_config.igetUpdatestep( 4 ) , updatestep )
+
+            
     def MiniStep( self, local_config ):                        
             
         # Ministep                                      
