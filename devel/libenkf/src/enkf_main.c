@@ -1042,7 +1042,7 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
         double std_cutoff = analysis_config_get_std_cutoff( analysis_config );
         double alpha      = analysis_config_get_alpha( analysis_config );
 
-        enkf_analysis_deactivate_outliers( obs_data , meas_data  , std_cutoff , alpha);
+        enkf_analysis_deactivate_outliers( obs_data , meas_data  , std_cutoff , alpha, enkf_main->verbose);
       }
 
     {
@@ -1344,7 +1344,7 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 
 
 
-        enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
+        enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha , enkf_main->verbose);
 
         if (enkf_main->verbose)
           enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , stdout );
