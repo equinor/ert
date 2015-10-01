@@ -40,7 +40,7 @@ stringlist_type    * local_dataset_alloc_keys( const local_dataset_type * datase
 int                  local_dataset_get_size( const local_dataset_type * dataset );
 void local_dataset_del_node( local_dataset_type * dataset , const char * node_key);
 void local_dataset_clear( local_dataset_type * dataset);
-
+bool local_dataset_has_key(const local_dataset_type * dataset, const char * key);
 
 #ifdef __cplusplus
 }

@@ -23,7 +23,6 @@ class LocalConfigTest(ExtendedTestCase):
             
             local_config = main.getLocalConfig()  
             
-            
             self.UpdateStep(local_config)
             
             self.MiniStep(local_config)
@@ -54,7 +53,12 @@ class LocalConfigTest(ExtendedTestCase):
             
         # Ministep                                      
         ministep = local_config.createMinistep("MINISTEP")
-        self.assertTrue(isinstance(ministep, LocalMinistep))                        
+        self.assertTrue(isinstance(ministep, LocalMinistep))
+
+        self.assertFalse( "DATA" in ministep )
+        with self.assertRaises(KeyError):
+            ministep["DATA"]
+
                  
     def AttachMinistep( self, local_config):                        
             
@@ -83,6 +87,17 @@ class LocalConfigTest(ExtendedTestCase):
         active_list = data_scale.getActiveList("PERLIN_PARAM")
         self.assertTrue(isinstance(active_list, ActiveList))
         active_list.addActiveIndex(0)            
+
+        self.assertTrue("PERLIN_PARAM" in data_scale)
+        self.assertFalse("MISSING" in data_scale)
+
+        ministep = local_config.createMinistep("MINISTEP")
+        ministep.attachDataset( data_scale )
+        self.assertTrue( "DATA_SCALE" in ministep )
+        data_scale_get = ministep["DATA_SCALE"]
+        self.assertTrue( "PERLIN_PARAM" in data_scale_get )
+
+        
 
         
     def LocalObsdata( self, local_config ):              
