@@ -179,18 +179,10 @@ ACTIVE_LIST_ADD_MANY_DATA_INDEX[DATA_NAME  DATA_KEY  N INDEX1 INDEX2 INDEX3 .. I
 This function is similar to ACTIVE_LIST_ADD_DATA_INDEX, but it will add many indices.
 
 
-INSTALL_UPDATESTEP [NAME_OF_UPDATESTEP  STEP1   STEP2]
-----------------------------------------------------
-This function will install the updatestep 'NAME_OF_UPDATESTEP' for the
-report steps [STEP1,..,STEP2].
-
-
 INSTALL_DEFAULT_UPDATESTEP [NAME_OF_UPDATESTEP]
 -----------------------------------------------
 This function will install 'NAME_OF_UPDATESTEP' as the default
-updatestep which applies to all report steps where you have not
-explicitly set another updatestep with the INSTALL_UPDATESTEP function.
-
+updatestep.
 
 
 ADD_FIELD   [DATASET_NAME    FIELD_NAME    ECLREGION_NAME]
@@ -521,7 +513,6 @@ core EnKF updating:
 
 
 struct local_config_struct {
-  vector_type           * updatestep;            /* This is an indexed vector with (pointers to) local_reportsstep instances. */
   local_updatestep_type * default_updatestep;    /* A default report step returned if no particular report step has been installed for this time index. */
   hash_type             * updatestep_storage;    /* These three hash tables are the 'holding area' for the local_updatestep, */
   hash_type             * ministep_storage;      /* local_ministep instances. */
@@ -537,7 +528,6 @@ static void local_config_clear( local_config_type * local_config ) {
   hash_clear( local_config->ministep_storage );
   hash_clear( local_config->dataset_storage );
   hash_clear( local_config->obsdata_storage );
-  vector_clear( local_config->updatestep );
 }
 
 
@@ -551,7 +541,6 @@ local_config_type * local_config_alloc( ) {
   local_config->ministep_storage    = hash_alloc();
   local_config->dataset_storage     = hash_alloc();
   local_config->obsdata_storage      = hash_alloc();
-  local_config->updatestep          = vector_alloc_new();
   local_config->config_files = stringlist_alloc_new();
 
   local_config_clear( local_config );
@@ -560,7 +549,6 @@ local_config_type * local_config_alloc( ) {
 
 
 void local_config_free(local_config_type * local_config) {
-  vector_free( local_config->updatestep );
   hash_free( local_config->updatestep_storage );
   hash_free( local_config->ministep_storage);
   hash_free( local_config->dataset_storage);
@@ -575,9 +563,8 @@ void local_config_free(local_config_type * local_config) {
    updatestep_storage with local_config_alloc_updatestep() first.
 */
 
-void local_config_set_default_updatestep( local_config_type * local_config , const char * default_key) {
-  local_updatestep_type * default_updatestep = local_config_get_updatestep( local_config , default_key );
-  local_config->default_updatestep = default_updatestep;
+void local_config_set_default_updatestep( local_config_type * local_config , local_updatestep_type * updatestep) {
+  local_config->default_updatestep = updatestep;
 }
 
 
@@ -661,14 +648,8 @@ local_ministep_type * local_config_alloc_ministep_copy( local_config_type * loca
 
 
 
-const local_updatestep_type * local_config_iget_updatestep( const local_config_type * local_config , int index) {
-  const local_updatestep_type * updatestep = vector_safe_iget_const( local_config->updatestep , index );
-  if (updatestep == NULL)
-    /*
-      No particular report step has been installed for this
-      time-index, revert to the default.
-    */
-    updatestep = local_config->default_updatestep;
+local_updatestep_type * local_config_get_updatestep( const local_config_type * local_config) {
+  const local_updatestep_type * updatestep = local_config->default_updatestep;
 
   if (updatestep == NULL)
     util_exit("%s: fatal error. No report step information for step:%d - and no default \n",__func__ , index);
@@ -676,27 +657,6 @@ const local_updatestep_type * local_config_iget_updatestep( const local_config_t
   return updatestep;
 }
 
-
-local_updatestep_type * local_config_get_updatestep( const local_config_type * local_config , const char * key) {
-  return hash_get( local_config->updatestep_storage , key );
-}
-
-
-/**
-   This will 'install' the updatestep instance identified with 'key'
-   for report steps [step1,step2]. Observe that the report step must
-   have been allocated with 'local_config_alloc_updatestep()' first.
-*/
-
-
-void local_config_set_updatestep(local_config_type * local_config, int step1 , int step2 , const char * key) {
-  local_updatestep_type * updatestep = hash_get( local_config->updatestep_storage , key );
-  int step;
-
-  for ( step = step1; step < step2 + 1; step++)
-    vector_safe_iset_ref(local_config->updatestep , step , updatestep );
-
-}
 
 
 /*******************************************************************/
@@ -756,9 +716,6 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
     break;
   case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
     return ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING;
-    break;
-  case(INSTALL_UPDATESTEP):
-    return INSTALL_UPDATESTEP_STRING;
     break;
   case(INSTALL_DEFAULT_UPDATESTEP):
     return INSTALL_DEFAULT_UPDATESTEP_STRING;
@@ -952,7 +909,6 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_DATA_INDEX_STRING      , ACTIVE_LIST_ADD_DATA_INDEX);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_MANY_OBS_INDEX_STRING  , ACTIVE_LIST_ADD_MANY_OBS_INDEX);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING , ACTIVE_LIST_ADD_MANY_DATA_INDEX);
-  hash_insert_int(cmd_table , INSTALL_UPDATESTEP_STRING              , INSTALL_UPDATESTEP);
   hash_insert_int(cmd_table , INSTALL_DEFAULT_UPDATESTEP_STRING      , INSTALL_DEFAULT_UPDATESTEP);
   hash_insert_int(cmd_table , DEL_DATA_STRING                        , DEL_DATA);
   hash_insert_int(cmd_table , DEL_OBS_STRING                         , DEL_OBS);
@@ -1008,7 +964,7 @@ static void local_config_ATTACH_MINISTEP( local_config_type * config , local_con
   char * update_name = read_alloc_string( stream , binary );
   char * mini_name   = read_alloc_string( stream , binary );
   {
-    local_updatestep_type * update   = local_config_get_updatestep( config , update_name );
+    local_updatestep_type * update   = local_config_get_updatestep( config );
     local_ministep_type   * ministep = local_config_get_ministep( config , mini_name );
     local_updatestep_add_ministep( update , ministep );
   }
@@ -1169,17 +1125,6 @@ static void local_config_ACTIVE_LIST_ADD_MANY_DATA_INDEX( local_config_type * co
   int_vector_free( int_vector );
 }
 
-static void local_config_INSTALL_UPDATESTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
-  char * update_name = read_alloc_string( stream , binary );
-  {
-    int step1,step2;
-
-    step1 = read_int( stream , binary );
-    step2 = read_int( stream , binary );
-    local_config_set_updatestep( config , step1 , step2 , update_name );
-  }
-  free( update_name );
-}
 
 static void local_config_INSTALL_DEFAULT_UPDATESTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
   char * update_name = read_alloc_string( stream , binary );
@@ -1638,9 +1583,6 @@ static void local_config_load_file( local_config_type * local_config ,
     case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
       local_config_ACTIVE_LIST_ADD_MANY_DATA_INDEX( local_config , context , stream , binary );
       break;
-    case(INSTALL_UPDATESTEP):
-      local_config_INSTALL_UPDATESTEP( local_config , context , stream , binary );
-      break;
     case(INSTALL_DEFAULT_UPDATESTEP):
       local_config_INSTALL_DEFAULT_UPDATESTEP( local_config , context , stream , binary );
       break;
@@ -1792,14 +1734,6 @@ void local_config_fprintf( const local_config_type * local_config , const char *
     }
 
     hash_iter_free( hash_iter );
-  }
-  {
-    int i;
-    for (i=0; i < vector_get_size( local_config->updatestep ); i++) {
-      const local_updatestep_type * updatestep = vector_iget_const( local_config->updatestep , i );
-      if (updatestep != NULL)
-        fprintf(stream , "\n%s %s %d %d \n", local_config_get_cmd_string( INSTALL_UPDATESTEP ) , local_updatestep_get_name( updatestep ) , i , i );
-    }
   }
 
   /* Write INSTALL_DEFAULT_UPDATESTEP */

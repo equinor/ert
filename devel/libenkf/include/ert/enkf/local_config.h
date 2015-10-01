@@ -47,7 +47,6 @@ typedef enum {
   ACTIVE_LIST_ADD_DATA_INDEX      = 10, /* DATA_KEY , ACTIVE_INDEX           */
   ACTIVE_LIST_ADD_MANY_OBS_INDEX  = 11,  /* OBS_KEY , NUM_INDEX , INDEX1, INDEX2, INDEX3,... */
   ACTIVE_LIST_ADD_MANY_DATA_INDEX = 12, /* DATA_KEY , NUM_INDEX , INDEX1 , INDEX2 , INDEX3 ,... */
-  INSTALL_UPDATESTEP              = 13, /* UPDATESTEP_NAME , STEP1 , STEP2          local_config_set_updatestep() */
   INSTALL_DEFAULT_UPDATESTEP      = 14, /* UPDATETSTEP_NAME                         local_config_set_default_updatestep() */
   DEL_DATA                        = 16, /* DATASET KEY*/
   DEL_OBS                         = 17, /* MINISTEP OBS_KEY */
@@ -95,7 +94,6 @@ typedef enum {
 #define ACTIVE_LIST_ADD_DATA_INDEX_STRING       "ACTIVE_LIST_ADD_DATA_INDEX"
 #define ACTIVE_LIST_ADD_MANY_OBS_INDEX_STRING   "ACTIVE_LIST_ADD_MANY_OBS_INDEX"
 #define ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING  "ACTIVE_LIST_ADD_MANY_DATA_INDEX"
-#define INSTALL_UPDATESTEP_STRING               "INSTALL_UPDATESTEP"
 #define INSTALL_DEFAULT_UPDATESTEP_STRING       "INSTALL_DEFAULT_UPDATESTEP"
 #define DEL_DATA_STRING                         "DEL_DATA"
 #define DEL_OBS_STRING                          "DEL_OBS"
@@ -130,9 +128,8 @@ void                          local_config_free( local_config_type * local_confi
 local_updatestep_type       * local_config_alloc_updatestep( local_config_type * local_config , const char * key );
 local_ministep_type         * local_config_alloc_ministep( local_config_type * local_config , const char * key );
 local_ministep_type         * local_config_alloc_ministep_copy( local_config_type * local_config , const char * src_key , const char * new_key);
-void                          local_config_set_default_updatestep( local_config_type * local_config , const char * default_key);
-const local_updatestep_type * local_config_iget_updatestep( const local_config_type * local_config , int index);
-local_updatestep_type       * local_config_get_updatestep( const local_config_type * local_config , const char * key);
+void                          local_config_set_default_updatestep( local_config_type * local_config , local_updatestep_type * update_step );
+local_updatestep_type       * local_config_get_updatestep( const local_config_type * local_config );
 local_ministep_type         * local_config_get_ministep( const local_config_type * local_config , const char * key);
 void                          local_config_set_updatestep(local_config_type * local_config, int step1 , int step2 , const char * key);
 void                          local_config_reload( local_config_type * local_config , const ecl_grid_type * ecl_grid , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs ,

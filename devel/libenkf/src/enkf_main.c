@@ -1292,7 +1292,7 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       meas_data_type              * meas_forecast = meas_data_alloc( ens_mask );
       meas_data_type              * meas_analyzed = meas_data_alloc( ens_mask );
       local_config_type           * local_config  = enkf_main->local_config;
-      const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , current_step );  /* Only last step considered when forming local update */
+      const local_updatestep_type * updatestep    = local_config_get_updatestep( local_config ); 
       hash_type                   * use_count     = hash_alloc();
       const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
       FILE                        * log_stream;

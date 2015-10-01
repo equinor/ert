@@ -118,17 +118,11 @@ class LocalConfig(BaseCClass):
         return data
 
     
-    def getUpdatestep(self, update_step_key):
+    def getUpdatestep(self):
         """ @rtype: UpdateStep """
-        assert isinstance(update_step_key, str)        
-        return LocalConfig.cNamespace().get_updatestep(self, update_step_key)  
+        return LocalConfig.cNamespace().get_updatestep(self)  
 
 
-    def igetUpdatestep(self, tstep):
-        """ @rtype: UpdateStep """
-        return LocalConfig.cNamespace().iget_updatestep(self, tstep)  
-
-    
     def getMinistep(self, mini_step_key):
         """ @rtype: Ministep """
         assert isinstance(mini_step_key, str)                
@@ -145,19 +139,10 @@ class LocalConfig(BaseCClass):
         return LocalConfig.cNamespace().get_dataset(self, dataset_key)
     
 
-    # The time direction is a quite broken reminiscence of the EnKF
-    # era; we should are moving towards a situation where the time
-    # dimension is completely removed from the configuration of local
-    # updates.
-    def installUpdatestep(self, update_step, steps = None):
+    def installUpdatestep(self, update_step):
         assert isinstance(update_step, LocalUpdateStep)
-        if steps is None:
-            # This should be the "normal" path - in the future it will be the only supported path.
-            LocalConfig.cNamespace().set_default_updatestep(self, update_step.getName())
-        else:
-            step1 , step2 = steps
-            LocalConfig.cNamespace().set_updatestep(self, step1, step2, update_step.getName())       
-
+        LocalConfig.cNamespace().set_default_updatestep(self, update_step)
+        
         
     def attachMinistep(self, update_step, mini_step):
         assert isinstance(mini_step, LocalMinistep)
@@ -176,11 +161,9 @@ LocalConfig.cNamespace().clear_config_files      = cwrapper.prototype("void loca
 LocalConfig.cNamespace().add_config_file         = cwrapper.prototype("void local_config_add_config_file( local_config , char*)")
 LocalConfig.cNamespace().write_local_config_file = cwrapper.prototype("void local_config_fprintf( local_config, char*)")
 
-LocalConfig.cNamespace().iget_updatestep         = cwrapper.prototype("local_updatestep_ref local_config_iget_updatestep( local_config, int)")
-LocalConfig.cNamespace().get_updatestep          = cwrapper.prototype("local_updatestep_ref local_config_get_updatestep( local_config, char*)")
+LocalConfig.cNamespace().get_updatestep          = cwrapper.prototype("local_updatestep_ref local_config_get_updatestep( local_config )")
 LocalConfig.cNamespace().create_updatestep       = cwrapper.prototype("void local_config_alloc_updatestep( local_config, char*)")
-LocalConfig.cNamespace().set_updatestep          = cwrapper.prototype("void local_config_set_updatestep( local_config, int, int, char*)")
-LocalConfig.cNamespace().set_default_updatestep  = cwrapper.prototype("void local_config_set_default_updatestep( local_config, char*)")
+LocalConfig.cNamespace().set_default_updatestep  = cwrapper.prototype("void local_config_set_default_updatestep( local_config, local_updatestep)")
 
 LocalConfig.cNamespace().get_ministep            = cwrapper.prototype("local_ministep_ref local_config_get_ministep( local_config, char*)")
 LocalConfig.cNamespace().create_ministep         = cwrapper.prototype("void local_config_alloc_ministep( local_config, char*)")
