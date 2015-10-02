@@ -23,8 +23,6 @@ class LocalConfigTest(ExtendedTestCase):
             
             local_config = main.getLocalConfig()  
             
-            self.UpdateStep(local_config)
-            
             self.MiniStep(local_config)
             
             self.AttachMinistep(local_config)
@@ -40,15 +38,6 @@ class LocalConfigTest(ExtendedTestCase):
             
             
  
-    def UpdateStep( self, local_config ):                        
-        # Update step
-        updatestep = local_config.createUpdatestep("UPDATESTEP")
-        self.assertTrue(isinstance(updatestep, LocalUpdateStep))        
-        local_config.installUpdatestep( updatestep )
-        self.assertEqual( local_config.igetUpdatestep( 0 ) , updatestep )
-        self.assertEqual( local_config.igetUpdatestep( 4 ) , updatestep )
-
-            
     def MiniStep( self, local_config ):                        
             
         # Ministep                                      
@@ -63,9 +52,10 @@ class LocalConfigTest(ExtendedTestCase):
     def AttachMinistep( self, local_config):                        
             
         # Update step
-        updatestep = local_config.createUpdatestep("UPDATESTEP")
+        updatestep = local_config.getUpdatestep( )
         self.assertTrue(isinstance(updatestep, LocalUpdateStep))
-        
+        n1 = len(updatestep)
+
         # Ministep                                      
         ministep = local_config.createMinistep("MINISTEP")
         self.assertTrue(isinstance(ministep, LocalMinistep))   
@@ -74,7 +64,7 @@ class LocalConfigTest(ExtendedTestCase):
         updatestep.attachMinistep(ministep)
         self.assertTrue(isinstance(updatestep[0], LocalMinistep))
         
-        self.assertEqual( len(updatestep) , 1 )            
+        self.assertEqual( len(updatestep) , n1 + 1 )            
 
 
     def LocalDataset( self, local_config ):                        

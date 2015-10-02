@@ -70,10 +70,6 @@ class LocalConfig(BaseCClass):
         assert isinstance(filename, str)
         LocalConfig.cNamespace().write_local_config_file(self, filename)
            
-    def createUpdatestep(self, update_step_key):
-        """ @rtype: UpdateStep """
-        LocalConfig.cNamespace().create_updatestep(self, update_step_key)  
-        return self.getUpdatestep( )  
                  
     def createMinistep(self, mini_step_key):
         """ @rtype: Ministep """
@@ -161,7 +157,6 @@ LocalConfig.cNamespace().add_config_file         = cwrapper.prototype("void loca
 LocalConfig.cNamespace().write_local_config_file = cwrapper.prototype("void local_config_fprintf( local_config, char*)")
 
 LocalConfig.cNamespace().get_updatestep          = cwrapper.prototype("local_updatestep_ref local_config_get_updatestep( local_config )")
-LocalConfig.cNamespace().create_updatestep       = cwrapper.prototype("void local_config_alloc_updatestep( local_config, char*)")
 LocalConfig.cNamespace().set_default_updatestep  = cwrapper.prototype("void local_config_set_default_updatestep( local_config, local_updatestep)")
 
 LocalConfig.cNamespace().get_ministep            = cwrapper.prototype("local_ministep_ref local_config_get_ministep( local_config, char*)")
