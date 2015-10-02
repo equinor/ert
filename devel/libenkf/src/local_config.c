@@ -179,11 +179,6 @@ ACTIVE_LIST_ADD_MANY_DATA_INDEX[DATA_NAME  DATA_KEY  N INDEX1 INDEX2 INDEX3 .. I
 This function is similar to ACTIVE_LIST_ADD_DATA_INDEX, but it will add many indices.
 
 
-INSTALL_DEFAULT_UPDATESTEP [NAME_OF_UPDATESTEP]
------------------------------------------------
-This function will install 'NAME_OF_UPDATESTEP' as the default
-updatestep.
-
 
 ADD_FIELD   [DATASET_NAME    FIELD_NAME    ECLREGION_NAME]
 --------------------------------------------------------
@@ -522,7 +517,7 @@ struct local_config_struct {
 };
 
 
-static void local_config_clear( local_config_type * local_config ) {
+void local_config_clear( local_config_type * local_config ) {
   local_config->default_updatestep  = NULL;
   hash_clear( local_config->updatestep_storage );
   hash_clear( local_config->ministep_storage );
@@ -649,7 +644,7 @@ local_ministep_type * local_config_alloc_ministep_copy( local_config_type * loca
 
 
 local_updatestep_type * local_config_get_updatestep( const local_config_type * local_config) {
-  const local_updatestep_type * updatestep = local_config->default_updatestep;
+  local_updatestep_type * updatestep = local_config->default_updatestep;
 
   if (updatestep == NULL)
     util_exit("%s: fatal error. No report step information for step:%d - and no default \n",__func__ , index);
@@ -716,9 +711,6 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
     break;
   case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
     return ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING;
-    break;
-  case(INSTALL_DEFAULT_UPDATESTEP):
-    return INSTALL_DEFAULT_UPDATESTEP_STRING;
     break;
   case(DEL_DATA):
     return DEL_DATA_STRING;
@@ -909,7 +901,6 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_DATA_INDEX_STRING      , ACTIVE_LIST_ADD_DATA_INDEX);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_MANY_OBS_INDEX_STRING  , ACTIVE_LIST_ADD_MANY_OBS_INDEX);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING , ACTIVE_LIST_ADD_MANY_DATA_INDEX);
-  hash_insert_int(cmd_table , INSTALL_DEFAULT_UPDATESTEP_STRING      , INSTALL_DEFAULT_UPDATESTEP);
   hash_insert_int(cmd_table , DEL_DATA_STRING                        , DEL_DATA);
   hash_insert_int(cmd_table , DEL_OBS_STRING                         , DEL_OBS);
   hash_insert_int(cmd_table , COPY_DATASET_STRING                    , COPY_DATASET);
@@ -1126,11 +1117,6 @@ static void local_config_ACTIVE_LIST_ADD_MANY_DATA_INDEX( local_config_type * co
 }
 
 
-static void local_config_INSTALL_DEFAULT_UPDATESTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
-  char * update_name = read_alloc_string( stream , binary );
-  local_config_set_default_updatestep( config , update_name );
-  free( update_name );
-}
 
 static void local_config_DEL_DATA( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
   char * dataset_name = read_alloc_string( stream , binary );
@@ -1583,9 +1569,6 @@ static void local_config_load_file( local_config_type * local_config ,
     case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
       local_config_ACTIVE_LIST_ADD_MANY_DATA_INDEX( local_config , context , stream , binary );
       break;
-    case(INSTALL_DEFAULT_UPDATESTEP):
-      local_config_INSTALL_DEFAULT_UPDATESTEP( local_config , context , stream , binary );
-      break;
     case(DEL_DATA):
       local_config_DEL_DATA( local_config , context , stream , binary );
       break;
@@ -1735,10 +1718,6 @@ void local_config_fprintf( const local_config_type * local_config , const char *
 
     hash_iter_free( hash_iter );
   }
-
-  /* Write INSTALL_DEFAULT_UPDATESTEP */
-  if (local_config->default_updatestep != NULL)
-    fprintf(stream , "\n%s %s\n", local_config_get_cmd_string( INSTALL_DEFAULT_UPDATESTEP ) , local_updatestep_get_name( local_config->default_updatestep ));
 
   fclose( stream );
 }
