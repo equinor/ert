@@ -72,9 +72,8 @@ class LocalConfig(BaseCClass):
            
     def createUpdatestep(self, update_step_key):
         """ @rtype: UpdateStep """
-        assert isinstance(update_step_key, str)
         LocalConfig.cNamespace().create_updatestep(self, update_step_key)  
-        return self.getUpdatestep(update_step_key)  
+        return self.getUpdatestep( )  
                  
     def createMinistep(self, mini_step_key):
         """ @rtype: Ministep """
