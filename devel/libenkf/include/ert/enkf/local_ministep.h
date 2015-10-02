@@ -54,6 +54,7 @@ void                  local_ministep_add_obsdata_node( local_ministep_type * min
 local_obsdata_type  * local_ministep_get_obsdata(const local_ministep_type * ministep);
 local_dataset_type  * local_ministep_get_dataset( const local_ministep_type * ministep, const char * dataset_name);
 bool                  local_ministep_has_dataset( const local_ministep_type * ministep, const char * dataset_name);
+int                   local_ministep_get_num_dataset( const local_ministep_type * ministep );
 
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);

@@ -166,6 +166,10 @@ bool local_ministep_has_dataset( const local_ministep_type * ministep, const cha
   return hash_has_key( ministep->datasets, dataset_name );
 }
 
+int local_ministep_get_num_dataset( const local_ministep_type * ministep ) {
+  return hash_get_size( ministep->datasets );
+}
+
 local_dataset_type * local_ministep_get_dataset( const local_ministep_type * ministep, const char * dataset_name) {
   return hash_get( ministep->datasets, dataset_name );
 }

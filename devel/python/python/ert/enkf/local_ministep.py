@@ -14,6 +14,9 @@ class LocalMinistep(BaseCClass):
         else:
             raise KeyError("No such data key: %s" % data_key)
 
+    def __len__(self):
+        return LocalMinistep.cNamespace().data_size( self )
+    
     def __contains__(self , data_key):
         return LocalMinistep.cNamespace().has_local_data(self , data_key)
 
@@ -53,4 +56,5 @@ LocalMinistep.cNamespace().free                = cwrapper.prototype("void local_
 LocalMinistep.cNamespace().attach_obsset       = cwrapper.prototype("void local_ministep_add_obsdata(local_ministep,local_obsdata)")
 LocalMinistep.cNamespace().attach_dataset      = cwrapper.prototype("void local_ministep_add_dataset(local_ministep,local_dataset)")
 LocalMinistep.cNamespace().name                = cwrapper.prototype("char* local_ministep_get_name(local_ministep)")
+LocalMinistep.cNamespace().data_size           = cwrapper.prototype("int local_ministep_get_num_dataset(local_ministep)")
 

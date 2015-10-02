@@ -2242,6 +2242,9 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
       }
       stringlist_free( keylist);
     }
+    if (!single_node_update)
+      local_ministep_add_dataset(ministep, all_active_dataset);
+
     local_config_set_default_updatestep(local_config, default_step);
   }
 }

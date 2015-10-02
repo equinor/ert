@@ -22,7 +22,8 @@ class LocalConfigTest(ExtendedTestCase):
             self.assertTrue(main, "Load failed")
             
             local_config = main.getLocalConfig()  
-            
+            self.AllActive(local_config)
+
             self.MiniStep(local_config)
             
             self.AttachMinistep(local_config)
@@ -34,9 +35,22 @@ class LocalConfigTest(ExtendedTestCase):
             sfile = "local_config.txt"
             local_config.writeLocalConfigFile( sfile )
             self.assertTrue( os.path.isfile( sfile ))
+            
+            
 
-            
-            
+
+    def AllActive(self , local_config):
+        updateStep = local_config.getUpdatestep( )
+        ministep = updateStep[0]
+        self.assertEqual( 1 , len(ministep) )
+        dataset = ministep["ALL_DATA"]
+        
+        self.assertTrue( "PERLIN_PARAM" in dataset )
+        self.assertTrue( "PERLIN" in dataset )
+
+        obsdata = ministep.getLocalObsData()
+        self.assertEqual( len(obsdata) , 3 )
+        
  
     def MiniStep( self, local_config ):                        
             
