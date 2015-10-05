@@ -124,7 +124,6 @@ typedef struct local_config_struct local_config_type;
 local_config_type           * local_config_alloc( );
 void local_config_clear( local_config_type * local_config );
 void                          local_config_free( local_config_type * local_config );
-local_updatestep_type       * local_config_alloc_updatestep( local_config_type * local_config , const char * key );
 local_ministep_type         * local_config_alloc_ministep( local_config_type * local_config , const char * key );
 local_ministep_type         * local_config_alloc_ministep_copy( local_config_type * local_config , const char * src_key , const char * new_key);
 void                          local_config_set_default_updatestep( local_config_type * local_config , local_updatestep_type * update_step );
@@ -138,6 +137,7 @@ const char                  * local_config_get_cmd_string( local_config_instruct
 stringlist_type             * local_config_get_config_files( const local_config_type * local_config );
 void                          local_config_clear_config_files( local_config_type * local_config );
 void                          local_config_add_config_file( local_config_type * local_config , const char * config_file );
+
 void                          local_config_fprintf( const local_config_type * local_config , const char * config_file);
 void                          local_config_fprintf_config( const local_config_type * local_config , FILE * stream);
 local_obsdata_type          * local_config_alloc_obsset( local_config_type * local_config , const char * obsset_name );

@@ -2189,14 +2189,12 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
   local_config_type * local_config = enkf_main->local_config;
   local_config_clear( local_config );
   {
-    local_updatestep_type * default_step = local_config_alloc_updatestep(local_config, "DEFAULT");
+    local_updatestep_type * default_step = local_config_get_updatestep(local_config);
     local_ministep_type * ministep = local_config_alloc_ministep( local_config , "ALL_ACTIVE");
     local_obsdata_type * obsdata = local_config_alloc_obsset(local_config, "ALL_OBS");
     local_dataset_type * all_active_dataset = local_config_alloc_dataset(local_config, "ALL_DATA");
 
-
-    if (!single_node_update)
-      local_updatestep_add_ministep( default_step , ministep );
+    local_updatestep_add_ministep( default_step , ministep );
 
     /* Adding all observation keys */
     {
@@ -2245,7 +2243,6 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
     if (!single_node_update)
       local_ministep_add_dataset(ministep, all_active_dataset);
 
-    local_config_set_default_updatestep(local_config, default_step);
   }
 }
 

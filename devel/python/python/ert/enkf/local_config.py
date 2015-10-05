@@ -55,6 +55,10 @@ class LocalConfig(BaseCClass):
     def free(self):
         LocalConfig.cNamespace().free(self)
 
+    def clear(self):
+        LocalConfig.cNamespace().clear(self)
+
+        
     def getConfigFiles(self):
         """ @rtype: StringList """
         return LocalConfig.cNamespace().get_config_files(self).setParent(self)
@@ -133,11 +137,6 @@ class LocalConfig(BaseCClass):
         assert isinstance(dataset_key, str)
         return LocalConfig.cNamespace().get_dataset(self, dataset_key)
     
-
-    def installUpdatestep(self, update_step):
-        assert isinstance(update_step, LocalUpdateStep)
-        LocalConfig.cNamespace().set_default_updatestep(self, update_step)
-        
         
     def attachMinistep(self, update_step, mini_step):
         assert isinstance(mini_step, LocalMinistep)
@@ -151,13 +150,13 @@ cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("local_config", LocalConfig)
 
 LocalConfig.cNamespace().free                    = cwrapper.prototype("void local_config_free( local_config )")
+LocalConfig.cNamespace().clear                   = cwrapper.prototype("void local_config_clear( local_config )")
 LocalConfig.cNamespace().get_config_files        = cwrapper.prototype("stringlist_ref local_config_get_config_files( local_config )")
 LocalConfig.cNamespace().clear_config_files      = cwrapper.prototype("void local_config_clear_config_files( local_config )")
 LocalConfig.cNamespace().add_config_file         = cwrapper.prototype("void local_config_add_config_file( local_config , char*)")
 LocalConfig.cNamespace().write_local_config_file = cwrapper.prototype("void local_config_fprintf( local_config, char*)")
 
 LocalConfig.cNamespace().get_updatestep          = cwrapper.prototype("local_updatestep_ref local_config_get_updatestep( local_config )")
-LocalConfig.cNamespace().set_default_updatestep  = cwrapper.prototype("void local_config_set_default_updatestep( local_config, local_updatestep)")
 
 LocalConfig.cNamespace().get_ministep            = cwrapper.prototype("local_ministep_ref local_config_get_ministep( local_config, char*)")
 LocalConfig.cNamespace().create_ministep         = cwrapper.prototype("void local_config_alloc_ministep( local_config, char*)")

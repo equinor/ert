@@ -2,9 +2,9 @@ import os.path
 from ert.test import ExtendedTestCase
 from ert.test import ErtTestContext
 from ert.enkf.local_ministep import LocalMinistep
-from ert.enkf.local_updatestep import LocalUpdateStep
 from ert.enkf.active_list import ActiveList
 from ert.enkf.local_obsdata import LocalObsdata
+from ert.enkf.local_updatestep import LocalUpdateStep
 from ert.enkf.local_obsdata_node import LocalObsdataNode
 from ert.enkf import local_config
 
@@ -35,9 +35,16 @@ class LocalConfigTest(ExtendedTestCase):
             sfile = "local_config.txt"
             local_config.writeLocalConfigFile( sfile )
             self.assertTrue( os.path.isfile( sfile ))
-            
-            
 
+            self.clear(local_config)
+
+
+    def clear(self, local_config):
+        local_config.clear()
+        updateStep = local_config.getUpdatestep( )
+        self.assertEqual( len(updateStep) , 0 )
+        
+        
 
     def AllActive(self , local_config):
         updateStep = local_config.getUpdatestep( )

@@ -517,12 +517,26 @@ struct local_config_struct {
 };
 
 
+/**
+   Instances of local_updatestep and local_ministep are allocated from
+   the local_config object, and then subsequently manipulated from the calling scope.
+*/
+
+static local_updatestep_type * local_config_alloc_updatestep( local_config_type * local_config , const char * key ) {
+  local_updatestep_type * updatestep = local_updatestep_alloc( key );
+  hash_insert_hash_owned_ref( local_config->updatestep_storage , key , updatestep , local_updatestep_free__);
+  return updatestep;
+}
+
+
+
 void local_config_clear( local_config_type * local_config ) {
   local_config->default_updatestep  = NULL;
   hash_clear( local_config->updatestep_storage );
   hash_clear( local_config->ministep_storage );
   hash_clear( local_config->dataset_storage );
   hash_clear( local_config->obsdata_storage );
+  local_config->default_updatestep = local_config_alloc_updatestep(local_config, "DEFAULT");
 }
 
 
@@ -553,26 +567,8 @@ void local_config_free(local_config_type * local_config) {
 
 
 
-/**
-   Actual report step must have been installed in the
-   updatestep_storage with local_config_alloc_updatestep() first.
-*/
-
-void local_config_set_default_updatestep( local_config_type * local_config , local_updatestep_type * updatestep) {
-  local_config->default_updatestep = updatestep;
-}
 
 
-/**
-   Instances of local_updatestep and local_ministep are allocated from
-   the local_config object, and then subsequently manipulated from the calling scope.
-*/
-
-local_updatestep_type * local_config_alloc_updatestep( local_config_type * local_config , const char * key ) {
-  local_updatestep_type * updatestep = local_updatestep_alloc( key );
-  hash_insert_hash_owned_ref( local_config->updatestep_storage , key , updatestep , local_updatestep_free__);
-  return updatestep;
-}
 
 
 local_ministep_type * local_config_alloc_ministep( local_config_type * local_config , const char * key) {
