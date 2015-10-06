@@ -143,6 +143,11 @@ class SiteConfig(BaseCClass):
     def addRshHost(self, host, max_running):
         SiteConfig.cNamespace().add_rsh_host(self, host, max_running)
 
+    def getLocation(self):
+        """ @rtype: str """
+        return SiteConfig.cNamespace().get_location(self)
+
+
     def free(self):
         SiteConfig.cNamespace().free(self)
 
@@ -187,3 +192,4 @@ SiteConfig.cNamespace().clear_pathvar         = cwrapper.prototype("void site_co
 SiteConfig.cNamespace().update_pathvar        = cwrapper.prototype("void site_config_update_pathvar(site_config, char*, char*)")
 SiteConfig.cNamespace().get_job_queue         = cwrapper.prototype("job_queue_ref site_config_get_job_queue(site_config)")
 SiteConfig.cNamespace().queue_is_running      = cwrapper.prototype("bool site_config_queue_is_running(site_config)")
+SiteConfig.cNamespace().get_location          = cwrapper.prototype("char* site_config_get_location(site_config)")
