@@ -1157,7 +1157,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     enkf_fs_type * src_fs = enkf_main_get_fs( enkf_main );
-    serialize_info_type * serialize_info = serialize_info_alloc( src_fs ,
+    serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
                                                                  target_fs ,
                                                                  iens_active_index,
                                                                  target_step ,
@@ -1298,6 +1298,29 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       FILE                        * log_stream;
 
 
+      
+      /* Copy all the parameter nodes. */
+      if (target_fs != source_fs) {
+	stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER );
+	for (int i=0; i < stringlist_get_size( param_keys ); i++) {
+	  const char * key = stringlist_iget( param_keys , i );
+	  if (local_updatestep_has_data_key(updatestep, key)) {
+	    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+	    enkf_node_type * data_node = enkf_node_alloc( config_node );
+	    for (int j=0; j < int_vector_size( ens_active_list ); j++) {
+	      node_id_type node_id = {.iens = int_vector_iget( ens_active_list , j ),
+				      .state = FORECAST ,
+				      .report_step = 0 };
+	      enkf_node_load( data_node , source_fs , node_id );
+	      enkf_node_store( data_node , target_fs , false , node_id );
+	    }
+	    enkf_node_free( data_node );
+	  }
+	}
+	stringlist_free( param_keys );
+      }
+      
+    
       if ((local_updatestep_get_num_ministep( updatestep ) > 1) &&
           (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE))) {
             util_exit("** ERROR: Can not combine iterable modules with multi step updates - sorry\n");
