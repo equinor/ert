@@ -186,8 +186,9 @@ static conf_class_type * enkf_obs_get_obs_conf_class();
 //////////////////////////////////////////////////////////////////////////////////////
 
 
-
+#define ENKF_OBS_TYPE_ID 637297
 struct enkf_obs_struct {
+  UTIL_TYPE_ID_DECLARATION;
   /** A hash of obs_vector_types indexed by user provided keys. */
   vector_type         * obs_vector;
   hash_type           * obs_hash;
@@ -218,7 +219,7 @@ static int enkf_obs_get_last_restart( const enkf_obs_type * enkf_obs ) {
   return time_map_get_size( enkf_obs->obs_time ) - 1;
 }
 
-
+UTIL_IS_INSTANCE_FUNCTION( enkf_obs , ENKF_OBS_TYPE_ID )
 
 enkf_obs_type * enkf_obs_alloc( const history_type * history ,
                                 time_map_type * external_time_map ,
@@ -227,6 +228,7 @@ enkf_obs_type * enkf_obs_alloc( const history_type * history ,
                                 ensemble_config_type * ensemble_config )
 {
   enkf_obs_type * enkf_obs  = util_malloc(sizeof * enkf_obs);
+  UTIL_TYPE_ID_INIT( enkf_obs , ENKF_OBS_TYPE_ID );
   enkf_obs->obs_hash        = hash_alloc();
   enkf_obs->obs_vector      = vector_alloc_new();
   enkf_obs->obs_time        = time_map_alloc();
