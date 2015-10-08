@@ -6,9 +6,6 @@ python:
 compiler:
   - gcc
 
-env:
-  - TZ=CET
-
 addons:
   apt:
     packages:
