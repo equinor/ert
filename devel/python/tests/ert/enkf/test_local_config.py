@@ -1,4 +1,6 @@
 import os.path
+from ert.ecl import EclGrid
+
 from ert.test import ExtendedTestCase
 from ert.test import ErtTestContext
 from ert.enkf.local_ministep import LocalMinistep
@@ -38,6 +40,9 @@ class LocalConfigTest(ExtendedTestCase):
 
             self.clear(local_config)
 
+            grid = local_config.getGrid()
+            self.assertTrue( isinstance( grid , EclGrid ))
+            
 
     def clear(self, local_config):
         local_config.clear()
