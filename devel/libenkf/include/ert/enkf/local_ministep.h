@@ -40,7 +40,7 @@ void                  local_ministep_add_obs(local_ministep_type * ministep, con
 active_list_type    * local_ministep_get_node_active_list(const local_ministep_type * ministep , const char * node_key );
 hash_iter_type      * local_ministep_alloc_dataset_iter( const local_ministep_type * ministep );
 stringlist_type     * local_ministep_alloc_data_keys( const local_ministep_type * ministep );
-  bool                  local_ministep_has_data_key(const local_ministep_type * ministep , const char * key);
+bool                  local_ministep_has_data_key(const local_ministep_type * ministep , const char * key);
 local_ministep_type * local_ministep_alloc_copy( const local_ministep_type * src , const char * name);
 void                  local_ministep_del_obs( local_ministep_type * ministep , const char * obs_key);
 void                  local_ministep_del_node( local_ministep_type * ministep , const char * node_key);
@@ -48,6 +48,7 @@ const char          * local_ministep_get_name( const local_ministep_type * minis
 void                  local_ministep_clear_nodes( local_ministep_type * ministep);
 void                  local_ministep_clear_observations( local_ministep_type * ministep);
 void                  local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream );
+void                  local_ministep_summary_fprintf( const local_ministep_type * ministep , FILE * stream);
 void                  local_ministep_add_dataset( local_ministep_type * ministep , const local_dataset_type * dataset);
 void                  local_ministep_add_obsdata( local_ministep_type * ministep , local_obsdata_type * obsdata);
 void                  local_ministep_add_obsdata_node( local_ministep_type * ministep , local_obsdata_node_type * obsdatanode);

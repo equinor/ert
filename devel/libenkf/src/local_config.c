@@ -1718,7 +1718,28 @@ void local_config_fprintf( const local_config_type * local_config , const char *
   fclose( stream );
 }
 
+void local_config_summary_fprintf( const local_config_type * local_config , const char * config_file) {
 
+  FILE * stream = util_mkdir_fopen( config_file , "w");
+
+  const local_updatestep_type * updatestep = local_config_get_updatestep( local_config ); // There is only one update step, the default
+  {
+    hash_iter_type * hash_iter = hash_iter_alloc( local_config->ministep_storage );
+
+    while (!hash_iter_is_complete( hash_iter )) {
+      const local_ministep_type * ministep = hash_iter_get_next_value( hash_iter );
+
+      fprintf(stream , "UPDATE_STEP:%s,", local_updatestep_get_name(updatestep));
+
+      local_ministep_summary_fprintf( ministep , stream);
+
+    }
+
+    hash_iter_free( hash_iter );
+  }
+
+  fclose( stream );
+}
 
 void local_config_fprintf_config( const local_config_type * local_config , FILE * stream) {
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );

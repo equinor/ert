@@ -36,7 +36,7 @@ class LocalDataset(BaseCClass):
         if key in self.ensemble_config:
             LocalDataset.cNamespace().add_node(self, key)
         else:
-            raise KeyError("Tried to add data key:%s - not in ensemble")
+            raise KeyError("Tried to add data key:%s - not in ensemble" % key)
                        
                 
     def addNodeWithIndex(self, key, index):
