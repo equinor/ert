@@ -10,14 +10,14 @@ class LocalUpdateStep(BaseCClass):
         """ @rtype: int """
         return LocalUpdateStep.cNamespace().size(self)
     
-    def __getitem__(self, key):
+    def __getitem__(self, index):
         """ @rtype: LocalMinistep """
-        assert isinstance(key, int)
-        if key < len:
-            return LocalUpdateStep.cNamespace().iget_ministep(self, key)
+        assert isinstance(index, int)
+        if index < len(self):
+            return LocalUpdateStep.cNamespace().iget_ministep(self, index)
         else:
             raise IndexError("Invalid index")
-          
+        
     def attachMinistep(self, ministep):
         assert isinstance(ministep, LocalMinistep)
         LocalUpdateStep.cNamespace().attach_ministep(self,ministep)

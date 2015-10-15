@@ -1,10 +1,12 @@
 import os.path
+from ert.ecl import EclGrid
+
 from ert.test import ExtendedTestCase
 from ert.test import ErtTestContext
 from ert.enkf.local_ministep import LocalMinistep
-from ert.enkf.local_updatestep import LocalUpdateStep
 from ert.enkf.active_list import ActiveList
 from ert.enkf.local_obsdata import LocalObsdata
+from ert.enkf.local_updatestep import LocalUpdateStep
 from ert.enkf.local_obsdata_node import LocalObsdataNode
 from ert.enkf import local_config
 
@@ -22,10 +24,8 @@ class LocalConfigTest(ExtendedTestCase):
             self.assertTrue(main, "Load failed")
             
             local_config = main.getLocalConfig()  
-            
-            
-            self.UpdateStep(local_config)
-            
+            self.AllActive(local_config)
+
             self.MiniStep(local_config)
             
             self.AttachMinistep(local_config)
@@ -38,30 +38,50 @@ class LocalConfigTest(ExtendedTestCase):
             local_config.writeLocalConfigFile( sfile )
             self.assertTrue( os.path.isfile( sfile ))
 
-            
-            
- 
-    def UpdateStep( self, local_config ):                        
-        # Update step
-        updatestep = local_config.createUpdatestep("UPDATESTEP")
-        self.assertTrue(isinstance(updatestep, LocalUpdateStep))        
-        local_config.installUpdatestep( updatestep )
-        self.assertEqual( local_config.igetUpdatestep( 0 ) , updatestep )
-        self.assertEqual( local_config.igetUpdatestep( 4 ) , updatestep )
+            self.clear(local_config)
 
+            grid = local_config.getGrid()
+            self.assertTrue( isinstance( grid , EclGrid ))
             
+
+    def clear(self, local_config):
+        local_config.clear()
+        updateStep = local_config.getUpdatestep( )
+        self.assertEqual( len(updateStep) , 0 )
+        
+        
+
+    def AllActive(self , local_config):
+        updateStep = local_config.getUpdatestep( )
+        ministep = updateStep[0]
+        self.assertEqual( 1 , len(ministep) )
+        dataset = ministep["ALL_DATA"]
+        
+        self.assertTrue( "PERLIN_PARAM" in dataset )
+        self.assertTrue( "PERLIN" in dataset )
+
+        obsdata = ministep.getLocalObsData()
+        self.assertEqual( len(obsdata) , 3 )
+        
+ 
     def MiniStep( self, local_config ):                        
             
         # Ministep                                      
         ministep = local_config.createMinistep("MINISTEP")
-        self.assertTrue(isinstance(ministep, LocalMinistep))                        
+        self.assertTrue(isinstance(ministep, LocalMinistep))
+
+        self.assertFalse( "DATA" in ministep )
+        with self.assertRaises(KeyError):
+            ministep["DATA"]
+
                  
     def AttachMinistep( self, local_config):                        
             
         # Update step
-        updatestep = local_config.createUpdatestep("UPDATESTEP")
+        updatestep = local_config.getUpdatestep( )
         self.assertTrue(isinstance(updatestep, LocalUpdateStep))
-        
+        n1 = len(updatestep)
+
         # Ministep                                      
         ministep = local_config.createMinistep("MINISTEP")
         self.assertTrue(isinstance(ministep, LocalMinistep))   
@@ -70,7 +90,7 @@ class LocalConfigTest(ExtendedTestCase):
         updatestep.attachMinistep(ministep)
         self.assertTrue(isinstance(updatestep[0], LocalMinistep))
         
-        self.assertEqual( len(updatestep) , 1 )            
+        self.assertEqual( len(updatestep) , n1 + 1 )            
 
 
     def LocalDataset( self, local_config ):                        
@@ -83,6 +103,17 @@ class LocalConfigTest(ExtendedTestCase):
         active_list = data_scale.getActiveList("PERLIN_PARAM")
         self.assertTrue(isinstance(active_list, ActiveList))
         active_list.addActiveIndex(0)            
+
+        self.assertTrue("PERLIN_PARAM" in data_scale)
+        self.assertFalse("MISSING" in data_scale)
+
+        ministep = local_config.createMinistep("MINISTEP")
+        ministep.attachDataset( data_scale )
+        self.assertTrue( "DATA_SCALE" in ministep )
+        data_scale_get = ministep["DATA_SCALE"]
+        self.assertTrue( "PERLIN_PARAM" in data_scale_get )
+
+        
 
         
     def LocalObsdata( self, local_config ):              

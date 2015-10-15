@@ -1157,7 +1157,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     enkf_fs_type * src_fs = enkf_main_get_fs( enkf_main );
-    serialize_info_type * serialize_info = serialize_info_alloc( src_fs ,
+    serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
                                                                  target_fs ,
                                                                  iens_active_index,
                                                                  target_step ,
@@ -1292,12 +1292,35 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       meas_data_type              * meas_forecast = meas_data_alloc( ens_mask );
       meas_data_type              * meas_analyzed = meas_data_alloc( ens_mask );
       local_config_type           * local_config  = enkf_main->local_config;
-      const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , current_step );  /* Only last step considered when forming local update */
+      const local_updatestep_type * updatestep    = local_config_get_updatestep( local_config ); 
       hash_type                   * use_count     = hash_alloc();
       const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
       FILE                        * log_stream;
 
 
+      
+      /* Copy all the parameter nodes. */
+      if (target_fs != source_fs) {
+	stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER );
+	for (int i=0; i < stringlist_get_size( param_keys ); i++) {
+	  const char * key = stringlist_iget( param_keys , i );
+	  if (local_updatestep_has_data_key(updatestep, key)) {
+	    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+	    enkf_node_type * data_node = enkf_node_alloc( config_node );
+	    for (int j=0; j < int_vector_size( ens_active_list ); j++) {
+	      node_id_type node_id = {.iens = int_vector_iget( ens_active_list , j ),
+				      .state = FORECAST ,
+				      .report_step = 0 };
+	      enkf_node_load( data_node , source_fs , node_id );
+	      enkf_node_store( data_node , target_fs , false , node_id );
+	    }
+	    enkf_node_free( data_node );
+	  }
+	}
+	stringlist_free( param_keys );
+      }
+      
+    
       if ((local_updatestep_get_num_ministep( updatestep ) > 1) &&
           (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE))) {
             util_exit("** ERROR: Can not combine iterable modules with multi step updates - sorry\n");
@@ -1383,8 +1406,30 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       if (target_state_map != source_state_map) {
         state_map_set_from_inverted_mask( target_state_map , ens_mask , STATE_PARENT_FAILURE);
         state_map_set_from_mask( target_state_map , ens_mask , STATE_INITIALIZED );
-      enkf_fs_fsync( target_fs );
-    }
+        enkf_fs_fsync( target_fs );
+      }
+
+      /* Copy all the nodes which have been updates */
+      if (target_fs != source_fs) {
+        stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER );
+        for (int i=0; i < stringlist_get_size( param_keys ); i++) {
+          const char * key = stringlist_iget( param_keys , i );
+          if (!local_updatestep_has_data_key(updatestep, key)) {
+            enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+            enkf_node_type * data_node = enkf_node_alloc( config_node );
+            for (int j=0; j < int_vector_size( ens_active_list ); j++) {
+              node_id_type node_id = {.iens = int_vector_iget( ens_active_list , j ),
+                                      .state = FORECAST ,
+                                      .report_step = 0 };
+              enkf_node_load( data_node , source_fs , node_id );
+              enkf_node_store( data_node , target_fs , false , node_id );
+            }
+            enkf_node_free( data_node );
+          }
+        }
+        stringlist_free( param_keys );
+      }
+
     }
     bool_vector_free( ens_mask );
     int_vector_free( ens_active_list );
@@ -2159,77 +2204,69 @@ ert_run_context_type * enkf_main_alloc_ert_run_context_ENKF_ASSIMILATION( const 
    here...
 */
 
-void enkf_main_create_all_active_config( const enkf_main_type * enkf_main ,
-                                         const char * local_config_file ) {
+void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 
 
   bool single_node_update = analysis_config_get_single_node_update( enkf_main->analysis_config );
   bool update_results     = analysis_config_get_update_results( enkf_main->analysis_config );
-
-  const char * update_step_name = "ALL_ACTIVE";
-  const char * ministep_name    = "ALL_ACTIVE";
-  const char * obsset_name      = "ALL_OBS";
-  const char * dataset_name     = "ALL_DATA";   // <- This is is created for possible further use, even if
-                                                //    single_node_update is true.
-
-  FILE * stream = util_fopen( local_config_file , "w");
-
-  fprintf(stream , "%-32s %s\n", local_config_get_cmd_string( CREATE_UPDATESTEP ) , update_step_name);
-  fprintf(stream , "%-32s %s \n", local_config_get_cmd_string( CREATE_OBSSET ) , obsset_name);
-  fprintf(stream , "%-32s %s \n", local_config_get_cmd_string( CREATE_MINISTEP ) , ministep_name);
-  fprintf(stream , "%-32s %s %s \n" , local_config_get_cmd_string( ATTACH_MINISTEP ), update_step_name , ministep_name);
-
-  fprintf(stream , "%-32s %s \n", local_config_get_cmd_string( CREATE_DATASET ) , dataset_name);
-  if (!single_node_update)
-    fprintf(stream , "%-32s %s %s \n", local_config_get_cmd_string( ATTACH_DATASET ) , ministep_name , dataset_name);
-
-  /* Adding all observation keys */
+  local_config_type * local_config = enkf_main->local_config;
+  local_config_clear( local_config );
   {
-    hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_main->obs );
-    while ( !hash_iter_is_complete(obs_iter) ) {
-      const char * obs_key = hash_iter_get_next_key( obs_iter );
-      fprintf(stream , "%-32s %s %s\n",local_config_get_cmd_string( ADD_OBS ) , obsset_name , obs_key);
-    }
-    fprintf(stream , "%-32s %s %s \n", local_config_get_cmd_string( ATTACH_OBSSET ) , ministep_name , obsset_name);
-    hash_iter_free( obs_iter );
-  }
+    local_updatestep_type * default_step = local_config_get_updatestep(local_config);
+    local_ministep_type * ministep = local_config_alloc_ministep( local_config , "ALL_ACTIVE");
+    local_obsdata_type * obsdata = local_config_alloc_obsset(local_config, "ALL_OBS");
+    local_dataset_type * all_active_dataset = local_config_alloc_dataset(local_config, "ALL_DATA");
 
-  /* Adding all node which can be updated. */
-  {
-    stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE + DYNAMIC_RESULT);
-    int i;
-    for (i = 0; i < stringlist_get_size( keylist ); i++) {
-      const char * key = stringlist_iget( keylist , i);
-      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
-      enkf_var_type var_type = enkf_config_node_get_var_type( config_node );
-      bool add_node = true;
+    local_updatestep_add_ministep( default_step , ministep );
 
-      if ((var_type == DYNAMIC_RESULT) && (!update_results))
-        add_node = false;
-
-      /*
-        Make sure the funny GEN_KW instance masquerading as
-        SCHEDULE_PREDICTION_FILE is not added to the soup.
-      */
-      if (util_string_equal(key , "PRED"))
-        add_node = false;
-
-
-      if (add_node) {
-        if (single_node_update) {
-          fprintf(stream , "%-32s %s \n"    , local_config_get_cmd_string( CREATE_DATASET ) , key);
-          fprintf(stream , "%-32s %s %s \n" , local_config_get_cmd_string( ATTACH_DATASET ) , ministep_name , key);
-          fprintf(stream , "%-32s %s %s\n"  , local_config_get_cmd_string( ADD_DATA ) , key , key);
-        }
-        fprintf(stream , "%-32s %s %s\n",local_config_get_cmd_string( ADD_DATA ) , dataset_name , key);
+    /* Adding all observation keys */
+    {
+      hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_main->obs );
+      while ( !hash_iter_is_complete(obs_iter) ) {
+        const char * obs_key = hash_iter_get_next_key( obs_iter );
+        local_obsdata_node_type * obsdata_node = local_obsdata_node_alloc( obs_key );
+        local_obsdata_add_node(obsdata, obsdata_node );
       }
+      local_ministep_add_obsdata(ministep, obsdata);
+      hash_iter_free( obs_iter );
     }
-    stringlist_free( keylist);
-  }
 
-  /* Install the ALL_ACTIVE step as the default. */
-  fprintf(stream , "%-32s ALL_ACTIVE" , local_config_get_cmd_string( INSTALL_DEFAULT_UPDATESTEP ));
-  fclose( stream );
+    /* Adding all node which can be updated. */
+    {
+      stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE + DYNAMIC_RESULT);
+      int i;
+      for (i = 0; i < stringlist_get_size( keylist ); i++) {
+        const char * key = stringlist_iget( keylist , i);
+        const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+        enkf_var_type var_type = enkf_config_node_get_var_type( config_node );
+        bool add_node = true;
+
+        if ((var_type == DYNAMIC_RESULT) && (!update_results))
+          add_node = false;
+
+        /*
+          Make sure the funny GEN_KW instance masquerading as
+          SCHEDULE_PREDICTION_FILE is not added to the soup.
+        */
+        if (util_string_equal(key , "PRED"))
+          add_node = false;
+
+
+        if (add_node) {
+          if (single_node_update) {
+            local_dataset_type * this_dataset = local_config_alloc_dataset(local_config, key);
+            local_dataset_add_node(this_dataset, key);
+            local_ministep_add_dataset(ministep, this_dataset);
+          }
+          local_dataset_add_node(all_active_dataset, key);
+        }
+      }
+      stringlist_free( keylist);
+    }
+    if (!single_node_update)
+      local_ministep_add_dataset(ministep, all_active_dataset);
+
+  }
 }
 
 
@@ -2772,23 +2809,7 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
   const enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
   if (enkf_obs_have_obs( enkf_obs )) {
     /* First create the default ALL_ACTIVE configuration. */
-    {
-      char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
-      enkf_main_create_all_active_config( enkf_main ,
-                                          all_active_config_file );
-
-      /**
-         This is where the local configuration files are actually parsed.
-      */
-      local_config_reload( enkf_main->local_config ,
-                           ecl_config_get_grid( enkf_main->ecl_config ),
-                           enkf_main->ensemble_config ,
-                           enkf_main->obs ,
-                           all_active_config_file );
-
-      unlink( all_active_config_file );
-      free(all_active_config_file);
-    }
+    enkf_main_create_all_active_config( enkf_main );
   }
 }
 

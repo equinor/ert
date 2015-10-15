@@ -63,7 +63,6 @@ Keyword name                                                                    
 :ref:`ACTIVE_LIST_ADD_OBS_INDEX        <active_list_add_obs_index>`                          addActiveIndex                                                Adds observation index to the list of active indices  
 :ref:`ACTIVE_LIST_ADD_MANY_DATA_INDEX  <active_list_add_many_data_index>`                    addActiveIndex                                                Adds several data indices to the list of active indices
 :ref:`ACTIVE_LIST_ADD_MANY_OBS_INDEX   <active_list_add_many_obs_index>`                     addActiveIndex                                                Adds several observation indinces to the list of active indices
-:ref:`INSTALL_UPDATESTEP               <install_updatestep>`                                 installUpdatestep                                             Installs update step
 :ref:`INSTALL_DEFAULT_UPDATESTEP       <install_default_updatestep>`                                                                                       Installs default update step
 :ref:`ADD_FIELD                        <add_field>`                                          addField                                                      Adds field node to dataset
 :ref:`LOAD_FILE                        <load_file>`                                          EclGrid, EclInitFile,                                         Loads eclipse file in restart format
@@ -452,26 +451,6 @@ Keyword name                                                                    
 
 .. ###########################################################################################################
 
-.. _install_updatestep:
-.. topic:: INSTALL_UPDATESTEP 
-
-  | This function will install the updatestep 'NAME_OF_UPDATESTEP' for the report steps [STEP1,..,STEP2].
-  
-  
-  *Example:*
-
-  ::
-
-    -- Install update step for the time interval 0->1
-    INSTALL_UPDATESTEP UPDATESTEP_0_1 0 1
-
-  *Example:*
-
-  ::
-
-    local_config.installUpdatestep(updatestep_0_1, 0, 1)    
-
-.. ###########################################################################################################
 
 .. _install_default_updatestep:
 .. topic:: INSTALL_DEFAULT_UPDATESTEP 
