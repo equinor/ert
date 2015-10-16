@@ -211,7 +211,7 @@ endif()
 
 add_custom_target(ert_share_symlinking ALL
 	COMMENT "Symlinking to the development share directory."
-    COMMAND ln -sf ${PROJECT_SOURCE_DIR}/share ${PROJECT_BINARY_DIR}/share
+    COMMAND ln -sf -t ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/share
 )
 
 #-----------------------------------------------------------------
