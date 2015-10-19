@@ -132,6 +132,19 @@ void local_dataset_fprintf( const local_dataset_type * dataset , FILE * stream) 
  }
 }
 
+void local_dataset_summary_fprintf( const local_dataset_type * dataset , FILE * stream) {
+{
+  hash_iter_type * data_iter = hash_iter_alloc( dataset->nodes );
+  while (!hash_iter_is_complete( data_iter )) {
+    const char * data_key          = hash_iter_get_next_key( data_iter );
+    fprintf(stream , "NAME OF DATA:%s,", data_key );
+
+    active_list_type * active_list = hash_get( dataset->nodes , data_key );
+    active_list_summary_fprintf( active_list , local_dataset_get_name(dataset) , data_key , stream);
+  }
+  hash_iter_free( data_iter );
+ }
+}
 
 
 int local_dataset_get_size( const local_dataset_type * dataset ) {

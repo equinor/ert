@@ -139,6 +139,7 @@ void                          local_config_clear_config_files( local_config_type
 void                          local_config_add_config_file( local_config_type * local_config , const char * config_file );
 
 void                          local_config_fprintf( const local_config_type * local_config , const char * config_file);
+void                          local_config_summary_fprintf( const local_config_type * local_config , const char * config_file);
 void                          local_config_fprintf_config( const local_config_type * local_config , FILE * stream);
 local_obsdata_type          * local_config_alloc_obsset( local_config_type * local_config , const char * obsset_name );
 local_dataset_type          * local_config_alloc_dataset( local_config_type * local_config , const char * key );

@@ -259,3 +259,27 @@ void local_ministep_fprintf( const local_ministep_type * ministep , FILE * strea
    fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_OBSSET ) , ministep->name, local_obsdata_get_name(obsdata));
   }
 }
+
+void local_ministep_summary_fprintf( const local_ministep_type * ministep , FILE * stream) {
+
+  fprintf(stream , "MINISTEP:%s,", ministep->name);
+
+  {
+    /* Dumping all the DATASET instances. */
+    {
+     hash_iter_type * dataset_iter = hash_iter_alloc( ministep->datasets );
+     while (!hash_iter_is_complete( dataset_iter )) {
+       const local_dataset_type * dataset = hash_iter_get_next_value( dataset_iter );
+       local_dataset_summary_fprintf(dataset, stream);
+     }
+     hash_iter_free( dataset_iter );
+    }
+
+    /* Only one OBSDATA */
+   local_obsdata_type * obsdata = local_ministep_get_obsdata(ministep);
+   local_obsdata_summary_fprintf( obsdata , stream);
+   fprintf(stream, "\n");
+  }
+}
+
+

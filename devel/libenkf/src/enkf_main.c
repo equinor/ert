@@ -1156,7 +1156,6 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   analysis_module_init_update( module , ens_mask , S , R , dObs , E , D );
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
-    enkf_fs_type * src_fs = enkf_main_get_fs( enkf_main );
     serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
                                                                  target_fs ,
                                                                  iens_active_index,
@@ -1292,13 +1291,13 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       meas_data_type              * meas_forecast = meas_data_alloc( ens_mask );
       meas_data_type              * meas_analyzed = meas_data_alloc( ens_mask );
       local_config_type           * local_config  = enkf_main->local_config;
-      const local_updatestep_type * updatestep    = local_config_get_updatestep( local_config ); 
+      const local_updatestep_type * updatestep    = local_config_get_updatestep( local_config );
       hash_type                   * use_count     = hash_alloc();
       const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
       FILE                        * log_stream;
 
 
-      
+
       /* Copy all the parameter nodes. */
       if (target_fs != source_fs) {
 	stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER );
@@ -1319,8 +1318,8 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 	}
 	stringlist_free( param_keys );
       }
-      
-    
+
+
       if ((local_updatestep_get_num_ministep( updatestep ) > 1) &&
           (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE))) {
             util_exit("** ERROR: Can not combine iterable modules with multi step updates - sorry\n");
