@@ -21,6 +21,7 @@ import threading
 import json
 import traceback
 import socket
+import fcntl
 
 from ert.server import ErtServer, SUCCESS , ERROR
 
@@ -73,8 +74,13 @@ class ErtSocket(object):
         self.host = host
         self.port = port
         self.server = ErtSocketServer((host , port) , ErtHandler)
+        self._setupSocketCloseOnExec()
         self.open(config , logger)
 
+    def _setupSocketCloseOnExec(self):
+        fd = self.server.fileno()
+        old_flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+        fcntl.fcntl(fd, fcntl.F_SETFD, old_flags | fcntl.FD_CLOEXEC)
 
     @staticmethod
     def connect(config , port , host , logger = None, info_callback = None , timeout = 60 , sleep_time = 5):
@@ -105,4 +111,4 @@ class ErtSocket(object):
         self.server.serve_forever( )
 
     def shutdown(self):
-        self.server.shutdown()
+        ErtHandler.ert_server.handleQuit()
