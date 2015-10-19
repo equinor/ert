@@ -1704,16 +1704,8 @@ void local_config_fprintf( const local_config_type * local_config , const char *
 
 
   /* Write UPDATESTEP */
-  {
-    hash_iter_type * hash_iter = hash_iter_alloc( local_config->updatestep_storage );
-
-    while (!hash_iter_is_complete( hash_iter )) {
-      const local_updatestep_type * updatestep = hash_iter_get_next_value( hash_iter );
-      local_updatestep_fprintf( updatestep , stream );
-    }
-
-    hash_iter_free( hash_iter );
-  }
+  if (local_config->default_updatestep)
+    local_updatestep_fprintf( local_config->default_updatestep , stream );
 
   fclose( stream );
 }
