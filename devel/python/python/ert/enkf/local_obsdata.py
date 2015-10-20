@@ -74,16 +74,26 @@ object as:
         else:
             raise KeyError("Unknown key:%s" % key)                
     
-    def addNode(self, node):
-        """ @rtype: bool """
+    def addNode(self, node):        
         assert isinstance(node, LocalObsdataNode)
         if node.getKey() in self.obs:
-            node.convertToCReference(self)
-            already_exists_node_for_key = LocalObsdata.cNamespace().add_node(self, node)
-            return already_exists_node_for_key
+            if node not in self:
+                node.convertToCReference(self)
+                LocalObsdata.cNamespace().add_node(self, node)
+            else:
+                raise KeyError("Tried to add existing observation key:%s " % node.getKey())
+            
         else:
             raise KeyError("The observation node: %s is not recognized observation key" % node.getKey())
-        
+
+    def addNodeAndRange(self, key, step_1, step_2):
+        assert isinstance(key, str)
+        assert isinstance(step_1, int)
+        assert isinstance(step_2, int)        
+        node = LocalObsdataNode(key)                
+        self.addNode( node )
+        node.addRange(step_1, step_2)
+
     
     def clear(self):        
         LocalObsdata.cNamespace().clear(self)        
@@ -91,18 +101,6 @@ object as:
         
     def addObsVector(self , obs_vector):
         self.addNode( obs_vector.createLocalObs() )
-
-        
-    def addNodeAndRange(self, key, step_1, step_2):
-        """ @rtype: bool """
-        assert isinstance(key, str)
-        assert isinstance(step_1, int)
-        assert isinstance(step_2, int)
-        
-        node = LocalObsdataNode(key)  
-        node.addRange(step_1, step_2)      
-        return self.addNode( node )
-
 
         
     def getName(self):

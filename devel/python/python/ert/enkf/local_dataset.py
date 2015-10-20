@@ -34,7 +34,10 @@ class LocalDataset(BaseCClass):
     def addNode(self, key):
         assert isinstance(key, str)
         if key in self.ensemble_config:
-            LocalDataset.cNamespace().add_node(self, key)
+            if not LocalDataset.cNamespace().has_key(self, key):
+                LocalDataset.cNamespace().add_node(self, key)
+            else:
+                raise KeyError("Tried to add existing data key:%s " % key)
         else:
             raise KeyError("Tried to add data key:%s - not in ensemble" % key)
                        
