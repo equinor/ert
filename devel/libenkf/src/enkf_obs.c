@@ -358,7 +358,7 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
     if (obs_vector_iget_active( obs_vector , step ) && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
       {
         const summary_obs_type * summary_obs = obs_vector_iget_node( obs_vector , step );
-        double_vector_iset( obs_std   , active_count , summary_obs_get_std( summary_obs ));
+        double_vector_iset( obs_std   , active_count , summary_obs_get_std( summary_obs ) * summary_obs_get_std_scaling( summary_obs ));
         double_vector_iset( obs_value , active_count , summary_obs_get_value( summary_obs ));
         last_step = step;
       }
