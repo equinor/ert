@@ -2812,6 +2812,37 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
   }
 }
 
+static char * __enkf_main_alloc_user_config_file(const enkf_main_type * enkf_main, bool base_only) {
+    char * base_name;
+    char * extension;
+    util_alloc_file_components(enkf_main_get_user_config_file(enkf_main), NULL, &base_name, &extension);
+
+    char * config_file;
+    if (base_only) {
+        config_file = util_alloc_filename(NULL, base_name, NULL);;
+    } else {
+        config_file = util_alloc_filename(NULL, base_name, extension);
+    }
+
+    printf("--> %s\n", config_file);
+
+    free(base_name);
+    free(extension);
+    return config_file;
+}
+
+static hash_type *__enkf_main_alloc_predefined_kw_map(const enkf_main_type *enkf_main) {
+    char * config_file_base       = __enkf_main_alloc_user_config_file(enkf_main, true);
+    char * config_file            = __enkf_main_alloc_user_config_file(enkf_main, false);
+    hash_type * pre_defined_kw_map = hash_alloc();
+
+    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE>", config_file);
+    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE_BASE>", config_file_base);
+
+    free( config_file ) ;
+    free( config_file_base );
+    return pre_defined_kw_map;
+}
 
 
 /**
@@ -2828,7 +2859,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
     config_parser_type * config = config_alloc();
     site_config_add_config_items( config , true );
     {
-      config_content_type * content = config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
+      config_content_type * content = config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , NULL, CONFIG_UNRECOGNIZED_WARN , false);
       if (config_content_is_valid( content )) {
         site_config_init( enkf_main->site_config , content );
         analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
@@ -2940,12 +2971,20 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
     enkf_main_bootstrap_site( enkf_main , site_config);
 
     if (model_config) {
+      enkf_main_set_site_config_file( enkf_main , site_config );
+      enkf_main_set_user_config_file( enkf_main , model_config );
+
       config = config_alloc();
       enkf_main_init_user_config( enkf_main , config );
       site_config_add_config_items( config , false );
       site_config_init_user_mode( enkf_main->site_config );
 
-      content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true);
+      hash_type *pre_defined_kw_map = __enkf_main_alloc_predefined_kw_map(enkf_main);
+
+      content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , pre_defined_kw_map, CONFIG_UNRECOGNIZED_WARN , true);
+
+      hash_free(pre_defined_kw_map);
+
       if (!config_content_is_valid( content )) {
 	config_error_type * errors = config_content_get_errors( content );
 	config_error_fprintf( errors , true , stderr );
@@ -2961,8 +3000,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
       */
 
 
-      enkf_main_set_site_config_file( enkf_main , site_config );
-      enkf_main_set_user_config_file( enkf_main , model_config );
+
 
       {
 	char * log_file;

@@ -300,7 +300,7 @@ static void workflow_job_validate( workflow_job_type * workflow_job ) {
 
 workflow_job_type * workflow_job_config_alloc( const char * name , config_parser_type * config , const char * config_file) {
   workflow_job_type * workflow_job = NULL;
-  config_content_type * content = config_parse( config , config_file , "--", NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
+  config_content_type * content = config_parse( config , config_file , "--", NULL , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
   if (config_content_is_valid( content )) {
     bool internal = DEFAULT_INTERNAL;
     if (config_content_has_item( content , INTERNAL_KEY))

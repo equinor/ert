@@ -34,7 +34,7 @@ int main(int argc , char ** argv) {
   test_assert_not_NULL( report_list );
   ert_report_list_add_config_items( config );
   {
-    config_content_type * content = config_parse( config , argv[1] , "--" , NULL, NULL , CONFIG_UNRECOGNIZED_IGNORE , true );
+    config_content_type * content = config_parse( config , argv[1] , "--" , NULL, NULL , NULL , CONFIG_UNRECOGNIZED_IGNORE , true );
     test_assert_true( config_content_is_valid(content) );
     ert_report_list_init( report_list , content , NULL);
     config_content_free( content );
