@@ -425,9 +425,9 @@ target_link_libraries( enkf_ecl_config_config enkf test_util )
 add_test( enkf_ecl_config_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_ecl_config_config ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_config )
 set_property( TEST enkf_ecl_config_config PROPERTY LABELS StatoilData )
 
-add_executable( enkf_qc_module_test enkf_qc_module_test.c )
-target_link_libraries( enkf_qc_module_test enkf test_util )
-add_test( enkf_qc_module_test ${EXECUTABLE_OUTPUT_PATH}/enkf_qc_module_test )
+add_executable( enkf_hook_manager_test enkf_hook_manager_test.c )
+target_link_libraries( enkf_hook_manager_test enkf test_util )
+add_test( enkf_hook_manager_test ${EXECUTABLE_OUTPUT_PATH}/enkf_hook_manager_test )
  
 add_executable(enkf_obs_tests enkf_obs_tests.c)
 target_link_libraries(enkf_obs_tests enkf test_util )

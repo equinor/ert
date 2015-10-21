@@ -129,7 +129,7 @@ void test_runpath_list() {
 void test_config( const char * config_file ) {
   ert_test_context_type * test_context = ert_test_context_alloc( "RUNPATH_FILE" , config_file );
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
-  qc_module_type * qc_module = enkf_main_get_qc_module( enkf_main );
+  hook_manager_type * hook_manager = enkf_main_get_hook_manager( enkf_main );
 
   ert_test_context_run_worklow( test_context , "ARGECHO_WF");
   {
@@ -137,7 +137,7 @@ void test_config( const char * config_file ) {
     char runpath_file[256];
     fscanf(stream , "%s" , runpath_file );
     fclose( stream );
-    test_assert_string_equal( runpath_file , qc_module_get_runpath_list_file( qc_module ));
+    test_assert_string_equal( runpath_file , hook_manager_get_runpath_list_file( hook_manager ));
   }
 
   ert_test_context_free( test_context );
