@@ -29,6 +29,7 @@ def plotHistogram(plot_context):
     data = {}
     minimum = None
     maximum = None
+    max_element_count = 0
     for case in case_list:
         data[case] = plot_context.dataGatherer().gatherData(ert, case, key)
 
@@ -42,7 +43,9 @@ def plotHistogram(plot_context):
         else:
             maximum = max(maximum, data[case].max())
 
-        #todo: bin count must also be determined across all cases...
+        max_element_count = max(max_element_count, len(data[case].index))
+
+    bin_count = int(ceil(sqrt(max_element_count)))
 
     axes = {}
     """:type: dict of (str, matplotlib.axes.Axes) """
@@ -55,7 +58,7 @@ def plotHistogram(plot_context):
             axes[case].set_xscale("log")
 
         if not data[case].empty:
-            _plotHistogram(axes[case], config, data[case], case, use_log_scale, minimum, maximum)
+            _plotHistogram(axes[case], config, data[case], case, bin_count, use_log_scale, minimum, maximum)
 
             config.nextColor()
             PlotTools.showGrid(axes[case], plot_context)
@@ -66,7 +69,7 @@ def plotHistogram(plot_context):
         subplot.set_ylim(0, max_count)
 
 
-def _plotHistogram(axes, plot_config, data, label, use_log_scale=False, minimum=None, maximum=None):
+def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=False, minimum=None, maximum=None):
     """
     @type axes: matplotlib.axes.Axes
     @type plot_config: PlotConfig
@@ -96,32 +99,28 @@ def _plotHistogram(axes, plot_config, data, label, use_log_scale=False, minimum=
         axes.set_xticklabels(x)
         axes.bar(pos, freq, alpha=line_alpha, color=line_color, width=width)
     else:
-        bins = int(ceil(sqrt(len(data.index))))
 
-        if use_log_scale:
-            bins = _histogramLogBins(data, bins, minimum, maximum)
-        elif minimum is not None and maximum is not None:
-            bins = numpy.linspace(minimum, maximum, bins)
+        if minimum is not None and maximum is not None:
+            if use_log_scale:
+                bins = _histogramLogBins(bin_count, minimum, maximum)
+            else:
+                bins = numpy.linspace(minimum, maximum, bin_count)
+        else:
+            bins = bin_count
 
         axes.hist(data.values, alpha=line_alpha, bins=bins, color=line_color)
+        axes.set_xlim(minimum, maximum)
 
     rectangle = Rectangle((0, 0), 1, 1, color=line_color) # creates rectangle patch for legend use.'
     plot_config.addLegendItem(label, rectangle)
 
 
 
-def _histogramLogBins(data, bin_count, minimum=None, maximum=None):
+def _histogramLogBins(bin_count, minimum=None, maximum=None):
     """
     @type data: pandas.DataFrame
     @rtype: int
     """
-
-    if minimum is None:
-        minimum = data.min()
-
-    if maximum is None:
-        maximum = data.max()
-
     minimum = log10(float(minimum))
     maximum = log10(float(maximum))
 
