@@ -76,6 +76,7 @@ class ErtSocket(object):
         self.server = ErtSocketServer((host , port) , ErtHandler)
         self._setupSocketCloseOnExec()
         self.open(config , logger)
+        self.__is_listening = False
 
     def _setupSocketCloseOnExec(self):
         fd = self.server.fileno()
@@ -108,7 +109,9 @@ class ErtSocket(object):
         return ErtHandler.ert_server.evalCmd( cmd )
 
     def listen(self):
+        self.__is_listening = True
         self.server.serve_forever( )
 
     def shutdown(self):
-        ErtHandler.ert_server.handleQuit()
+        if self.__is_listening:
+            self.server.shutdown()
