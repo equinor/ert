@@ -8,6 +8,7 @@ class Observations(ShellFunction):
         self.addHelpFunction("list", None, "List all observation keys.")
         self.addHelpFunction("clear", None, "Remove all observations.")
         self.addHelpFunction("load", "<observations_file>", "Add observations from the specified file.")
+        self.addHelpFunction("reload", "<observations_file>", "Perform a clear before adding observations from the specified file.")
 
     @assertConfigLoaded
     def do_list(self, line):
@@ -28,6 +29,19 @@ class Observations(ShellFunction):
             self.lastCommandFailed("Observations file '%s' not found!\n" % config_file)
 
     @assertConfigLoaded
+    def do_reload(self, config_file):
+        if os.path.exists(config_file) and os.path.isfile(config_file):
+            self.shellContext().ert().getObservations().clear()
+            self.shellContext().ert().getObservations().load(config_file)
+        else:
+            self.lastCommandFailed("Observations file '%s' not found!\n" % config_file)
+
+    @assertConfigLoaded
     def complete_load(self, text, line, begidx, endidx):
+        argument = extractFullArgument(line, endidx)
+        return getPossibleFilenameCompletions(argument)
+
+    @assertConfigLoaded
+    def complete_reload(self, text, line, begidx, endidx):
         argument = extractFullArgument(line, endidx)
         return getPossibleFilenameCompletions(argument)
