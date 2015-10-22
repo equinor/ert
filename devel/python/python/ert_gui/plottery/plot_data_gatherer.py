@@ -67,7 +67,7 @@ class PlotDataGatherer(object):
     def gatherSummaryRefcaseData(ert, key):
         refcase = ert.eclConfig().getRefcase()
 
-        if not key in refcase:
+        if refcase is None or not key in refcase:
             return DataFrame()
 
         vector = refcase.get_vector(key, report_only=False)
@@ -116,7 +116,7 @@ class PlotDataGatherer(object):
         obs_key = GenDataObservationCollector.getObservationKeyForDataKey(ert, key, report_step)
 
         if obs_key is not None:
-            obs_data = GenDataObservationCollector.loadGenDataObservations(ert, case, [obs_key])
+            obs_data = GenDataObservationCollector.loadGenDataObservations(ert, case, obs_key)
             columns = {obs_key: key_with_report_step, "STD_%s" % obs_key: "STD_%s" % key_with_report_step}
             obs_data = obs_data.rename(columns=columns)
         else:
@@ -127,6 +127,6 @@ class PlotDataGatherer(object):
     @staticmethod
     def gatherCustomKwData(ert, case, key):
         """ :rtype: pandas.DataFrame """
-        data = CustomKWCollector.loadAllCustomKWData(ert, case, [key])
+        data = CustomKWCollector.loadAllCustomKWData(ert, case, [key])[key]
 
         return data
