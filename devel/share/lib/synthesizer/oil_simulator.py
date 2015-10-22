@@ -31,13 +31,13 @@ class OilSimulator(object):
         self.__wells = {}
         self.__bpr = {}
 
-    def addWell(self, name, seed, persistence=0.2, octaves=8, divergence_scale=1.0):
+    def addWell(self, name, seed, persistence=0.2, octaves=8, divergence_scale=1.0, offset=0.0):
         oil_div = OilSimulator.O_DIVERGENCE.scaledCopy(divergence_scale)
         gas_div = OilSimulator.G_DIVERGENCE.scaledCopy(divergence_scale)
         water_div = OilSimulator.W_DIVERGENCE.scaledCopy(divergence_scale)
-        self.__oprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.OPR_SHAPE, oil_div, seed, persistence=persistence, octaves=octaves, cutoff=0.0)
-        self.__gprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.GPR_SHAPE, gas_div, seed * 7, persistence=persistence * 3.5, octaves=octaves / 2, cutoff=0.0)
-        self.__wprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.WPR_SHAPE, water_div, seed * 11, persistence=persistence, octaves=octaves, cutoff=0.0)
+        self.__oprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.OPR_SHAPE, oil_div, seed, persistence=persistence, octaves=octaves, cutoff=0.0, offset=offset)
+        self.__gprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.GPR_SHAPE, gas_div, seed * 7, persistence=persistence * 3.5, octaves=octaves / 2, cutoff=0.0, offset=offset)
+        self.__wprFunc[name] = ShapeCreator.createNoiseFunction(OilSimulator.WPR_SHAPE, water_div, seed * 11, persistence=persistence, octaves=octaves, cutoff=0.0, offset=offset)
 
         self.__wells[name] = {"opr": 0.0, "opt": 0.0, "gpr": 0.0, "gpt": 0.0, "wpr": 0.0, "wpt": 0.0}
 
