@@ -2824,8 +2824,6 @@ static char * __enkf_main_alloc_user_config_file(const enkf_main_type * enkf_mai
         config_file = util_alloc_filename(NULL, base_name, extension);
     }
 
-    printf("--> %s\n", config_file);
-
     free(base_name);
     free(extension);
     return config_file;
