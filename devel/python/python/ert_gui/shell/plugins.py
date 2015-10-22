@@ -1,4 +1,5 @@
 import inspect
+import time
 from ert.job_queue import ErtScript, CancelPluginException
 from ert_gui.shell import ShellFunction, assertConfigLoaded, autoCompleteList
 
@@ -38,9 +39,14 @@ class Plugins(ShellFunction):
                         arguments = arguments[1:]
                     else:
                         arguments = script.getArguments(None)
+
+                    now = time.time()
                     result = plugin_job.run(self.ert(), arguments)
 
                     self.shellContext()["debug"].setLastPluginResult(result)
+
+                    diff = time.time() - now
+                    print("Plugin running time: %d seconds" % int(diff))
 
                     print(result)
                 except CancelPluginException:
