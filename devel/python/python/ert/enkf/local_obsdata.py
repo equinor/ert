@@ -74,25 +74,31 @@ object as:
         else:
             raise KeyError("Unknown key:%s" % key)                
     
-    def addNode(self, node):        
-        assert isinstance(node, LocalObsdataNode)
-        if node.getKey() in self.obs:
+    def addNode(self, key):           
+        assert isinstance(key, str)
+        if key in self.obs:
+            node = LocalObsdataNode(key) 
             if node not in self:
                 node.convertToCReference(self)
                 LocalObsdata.cNamespace().add_node(self, node)
             else:
-                raise KeyError("Tried to add existing observation key:%s " % node.getKey())
-            
+                raise KeyError("Tried to add existing observation key:%s " % key)
+                return False
         else:
-            raise KeyError("The observation node: %s is not recognized observation key" % node.getKey())
+            raise KeyError("The observation node: %s is not recognized observation key" % key)
+            return False
+        
+        # No time step list defined
+        self[key].setAllTimeStepActive(False)
+        return True
 
-    def addNodeAndRange(self, key, step_1, step_2):
+    def addNodeAndRange(self, key, step_1, step_2):        
+        """ The time range will be removed in the future... """
         assert isinstance(key, str)
         assert isinstance(step_1, int)
-        assert isinstance(step_2, int)        
-        node = LocalObsdataNode(key)                
-        self.addNode( node )
-        node.addRange(step_1, step_2)
+        assert isinstance(step_2, int)                     
+        if self.addNode( key ):
+            self[key].addRange(step_1, step_2)
 
     
     def clear(self):        

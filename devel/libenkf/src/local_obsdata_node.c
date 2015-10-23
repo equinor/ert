@@ -164,3 +164,7 @@ void local_obsdata_node_add_range( local_obsdata_node_type * node, int step1 , i
   for (tstep = step1; tstep <= step2; tstep++)
     local_obsdata_node_add_tstep( node , tstep );
 }
+
+void local_obsdata_node_set_all_timestep_active( local_obsdata_node_type * node, bool flag) {
+ node->all_timestep_active = flag;
+}
