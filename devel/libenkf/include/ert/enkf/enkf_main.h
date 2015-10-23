@@ -57,7 +57,7 @@ extern "C" {
 #include <ert/enkf/enkf_plot_data.h>
 #include <ert/enkf/ert_report_list.h>
 #include <ert/enkf/ranking_table.h>
-#include <ert/enkf/qc_module.h>
+#include <ert/enkf/hook_manager.h>
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/pca_plot_data.h>
 #include <ert/enkf/field_config.h>
@@ -195,7 +195,7 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   void                        enkf_main_fprintf_config( const enkf_main_type * enkf_main );
   int_vector_type           * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride);
 
-  qc_module_type       * enkf_main_get_qc_module( const enkf_main_type * enkf_main );
+  hook_manager_type         * enkf_main_get_hook_manager( const enkf_main_type * enkf_main );
   bool                   enkf_main_has_QC_workflow( const enkf_main_type * enkf_main );
 
   void enkf_main_get_PC( const matrix_type * S,

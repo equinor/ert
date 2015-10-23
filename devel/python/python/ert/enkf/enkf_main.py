@@ -215,7 +215,7 @@ class EnKFMain(BaseCClass):
 
     def getPostSimulationHook(self):
         """ @rtype: PostSimulationHook """
-        return EnKFMain.cNamespace().get_qc_module(self)
+        return EnKFMain.cNamespace().get_hook_manager(self)
 
 
     def exportField(self, keyword, path, iactive, file_type, report_step, state, enkfFs):
@@ -290,7 +290,7 @@ EnKFMain.cNamespace().get_observation_count = cwrapper.prototype("int enkf_main_
 EnKFMain.cNamespace().iget_state = cwrapper.prototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
 
 EnKFMain.cNamespace().get_workflow_list = cwrapper.prototype("ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)")
-EnKFMain.cNamespace().get_qc_module = cwrapper.prototype("qc_module_ref enkf_main_get_qc_module(enkf_main)")
+EnKFMain.cNamespace().get_hook_manager = cwrapper.prototype("hook_manager_ref enkf_main_get_hook_manager(enkf_main)")
 
 
 EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprintf_config(enkf_main)")

@@ -84,7 +84,7 @@
 #include <ert/enkf/plot_config.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/model_config.h>
-#include <ert/enkf/qc_module.h>
+#include <ert/enkf/hook_manager.h>
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/active_config.h>
 #include <ert/enkf/enkf_analysis.h>
@@ -145,7 +145,7 @@ struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
   enkf_fs_type         * dbase;              /* The internalized information. */
   ensemble_config_type * ensemble_config;    /* The config objects for the various enkf nodes.*/
-  qc_module_type       * qc_module;
+  hook_manager_type       * hook_manager;
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
@@ -322,11 +322,11 @@ bool enkf_main_have_obs( const enkf_main_type * enkf_main ) {
 
 
 bool enkf_main_has_QC_workflow( const enkf_main_type * enkf_main ) {
-  return qc_module_has_workflow( enkf_main->qc_module );
+  return hook_manager_has_workflow( enkf_main->hook_manager );
 }
 
-qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main ) {
-  return enkf_main->qc_module;
+hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enkf_main ) {
+  return enkf_main->hook_manager;
 }
 
 
@@ -413,7 +413,7 @@ void enkf_main_free(enkf_main_type * enkf_main){
   model_config_free( enkf_main->model_config);
 
 
-  qc_module_free( enkf_main->qc_module );
+  hook_manager_free( enkf_main->hook_manager );
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
 
@@ -1538,7 +1538,7 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
 }
 
 void enkf_main_run_post_workflow( enkf_main_type * enkf_main ) {
-  qc_module_run_workflow( enkf_main->qc_module , enkf_main );
+  hook_manager_run_workflow( enkf_main->hook_manager , enkf_main );
 }
 
 
@@ -1553,7 +1553,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   const char * run_path                     = run_arg_get_runpath( run_arg );
 
   {
-    runpath_list_type * runpath_list = qc_module_get_runpath_list( enkf_main->qc_module );
+    runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
     runpath_list_add( runpath_list ,
                       run_arg_get_iens( run_arg ),
                       run_arg_get_iter( run_arg ),
@@ -1611,7 +1611,7 @@ void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
                               const ert_run_context_type * run_context ,
                               thread_pool_type * submit_threads,
                               arg_pack_type ** arg_pack_list) {
-  runpath_list_type * runpath_list = qc_module_get_runpath_list( enkf_main->qc_module );
+  runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
   runpath_list_clear( runpath_list );
   {
     int iens;
@@ -2381,7 +2381,7 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   }
 
   ert_report_list_add_config_items( config);
-  qc_module_add_config_items( config );
+  hook_manager_add_config_items( config );
 }
 
 
@@ -2475,8 +2475,8 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 
 
 static void enkf_main_init_qc( enkf_main_type * enkf_main , config_content_type * config ) {
-  qc_module_init( enkf_main->qc_module , config );
-  enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
+  hook_manager_init( enkf_main->hook_manager , config );
+  enkf_main_add_subst_kw( enkf_main , "QC_PATH" , hook_manager_get_path( enkf_main->hook_manager ) , "QC Root path" , true);
 }
 
 
@@ -2547,7 +2547,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->subst_list         = subst_list_alloc( enkf_main->subst_func_pool );
   enkf_main->templates          = ert_templates_alloc( enkf_main->subst_list );
   enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main->subst_list );
-  enkf_main->qc_module          = qc_module_alloc( enkf_main->workflow_list , DEFAULT_QC_PATH );
+  enkf_main->hook_manager       = hook_manager_alloc( enkf_main->workflow_list , DEFAULT_QC_PATH );
   enkf_main->analysis_config    = analysis_config_alloc( enkf_main->rng );
   enkf_main->report_list        = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ) );
 
@@ -2591,7 +2591,7 @@ static void enkf_main_install_common_data_kw( enkf_main_type * enkf_main ) {
   enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , true);
   enkf_main_add_subst_kw( enkf_main , "DATE"         , date_string , "The current date." , true);
   enkf_main_add_subst_kw( enkf_main , "NUM_CPU"      , num_cpu_string , "The number of CPU used for one forward model." , true );
-  enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , qc_module_get_runpath_list_file( enkf_main->qc_module ) , "The name of a file with a list of run directories." , true);
+  enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , hook_manager_get_runpath_list_file( enkf_main->hook_manager ) , "The name of a file with a list of run directories." , true);
 
   free( cwd );
   free( date_string );
