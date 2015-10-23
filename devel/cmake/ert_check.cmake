@@ -124,6 +124,8 @@ else()
    endif()
 endif()
 
+check_function_exists( GetTempPath HAVE_WINDOWS_GET_TEMP_PATH )
+
 check_function_exists(pthread_yield_np HAVE_YIELD_NP)
 if (HAVE_YIELD_NP)
   add_definitions(-DHAVE_YIELD_NP)
