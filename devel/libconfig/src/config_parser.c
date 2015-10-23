@@ -637,10 +637,24 @@ config_content_type * config_parse(config_parser_type * config ,
                                    const char * comment_string ,
                                    const char * include_kw ,
                                    const char * define_kw ,
+                                   const hash_type * pre_defined_kw_map,
                                    config_schema_unrecognized_enum unrecognized_behaviour,
                                    bool validate) {
 
   config_content_type * content = config_content_alloc( );
+
+    if(pre_defined_kw_map != NULL) {
+        hash_iter_type * keys = hash_iter_alloc(pre_defined_kw_map);
+
+        while(!hash_iter_is_complete(keys)) {
+            const char * key = hash_iter_get_next_key(keys);
+            const char * value = hash_get(pre_defined_kw_map, key);
+            config_content_add_define( content , key , value );
+        }
+
+        hash_iter_free(keys);
+    }
+//
 
   if (util_file_readable( filename )) {
     path_stack_type * path_stack = path_stack_alloc();
