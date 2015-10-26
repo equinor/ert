@@ -34,7 +34,7 @@ class GenDataObservationCollector(object):
 
 
     @staticmethod
-    def loadGenDataObservations(ert, case_name, key=None):
+    def loadGenDataObservations(ert, case_name, key):
         """
         @type ert: EnKFMain
         @type case_name: str
@@ -44,7 +44,7 @@ class GenDataObservationCollector(object):
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
 
         available_observation_keys = GenDataObservationCollector.getAllObservationKeys(ert)
-        if key is None or not key in available_observation_keys:
+        if not key in available_observation_keys:
             raise KeyError("Key '%s' is not a valid observation key")
 
         columns = [key]
@@ -55,8 +55,10 @@ class GenDataObservationCollector(object):
         index_set = set()
         obs_vector = enkf_obs[key]
         report_step = obs_vector.activeStep()
+
         obs_node = obs_vector.getNode(report_step)
-        """ :type: ert.enkf.observations.GenObservation """
+        # """ :type: ert.enkf.observations.GenObservation """
+
         for obs_index in range(len(obs_node)):
             index_set.add(obs_node.getIndex(obs_index))
 
