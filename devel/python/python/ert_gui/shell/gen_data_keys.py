@@ -58,7 +58,7 @@ class GenDataKeys(ShellFunction):
                 obs_key = GenDataObservationCollector.getObservationKeyForDataKey(self.ert(), key, report_step)
 
                 if obs_key is not None:
-                    obs_data = GenDataObservationCollector.loadGenDataObservations(self.ert(), case_name, [obs_key])
+                    obs_data = GenDataObservationCollector.loadGenDataObservations(self.ert(), case_name, obs_key)
 
                     if not obs_data.empty:
                         plot.plotObservations(obs_data, obs_key)

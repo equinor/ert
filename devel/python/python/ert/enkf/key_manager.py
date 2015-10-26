@@ -15,6 +15,7 @@ class KeyManager(object):
         self.__summary_keys = None
         self.__summary_keys_with_observations = None
         self.__gen_data_keys = None
+        self.__gen_data_keys_with_observations = None
         self.__gen_kw_keys = None
         self.__custom_kw_keys = None
         self.__misfit_keys = None
@@ -100,6 +101,23 @@ class KeyManager(object):
 
         return self.__gen_data_keys
 
+    def genDataKeysWithObservations(self):
+        """ :rtype: list of str """
+        if self.__gen_data_keys_with_observations is None:
+            enkf_obs = self.ert().getObservations()
+            gen_data_obs_keys = []
+            for obs_vector in enkf_obs:
+                report_step = obs_vector.activeStep()
+                key = obs_vector.getDataKey()
+
+                gen_data_key = "%s@%d" % (key, report_step)
+                if gen_data_key in self.genDataKeys():
+                    gen_data_obs_keys.append(gen_data_key)
+
+            self.__gen_data_keys_with_observations = gen_data_obs_keys
+
+        return self.__gen_data_keys_with_observations
+
     def misfitKeys(self, sort_keys=True):
         """ @rtype: list of str """
         if self.__misfit_keys is None:
@@ -125,7 +143,7 @@ class KeyManager(object):
     def allDataTypeKeysWithObservations(self):
         """ :rtype: list of str """
         if self.__all_keys_with_observations is None:
-            self.__all_keys_with_observations = self.summaryKeysWithObservations()
+            self.__all_keys_with_observations = self.summaryKeysWithObservations() + self.genDataKeysWithObservations()
 
         return self.__all_keys_with_observations
 
