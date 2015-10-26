@@ -34,7 +34,7 @@ class ShellPlot(object):
     def plotObservations(self, data, value_column, color='k'):
         data = data.dropna()
         plt.errorbar(x=data.index.values, y=data[value_column], yerr=data["STD_%s" % value_column],
-                         fmt='none', ecolor=color, alpha=0.8)
+                         fmt=' ', ecolor=color, alpha=0.8)
 
 
     def plot(self, data, value_column, color=None, legend_label=''):
