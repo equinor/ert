@@ -107,7 +107,7 @@ object as:
 
         
     def addObsVector(self , obs_vector):
-        self.addNode( obs_vector.createLocalObs() )
+        self.addNode( obs_vector.createLocalObs().getKey() )
 
         
     def getName(self):
