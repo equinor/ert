@@ -113,6 +113,9 @@ class LocalConfigTest(ExtendedTestCase):
         data_scale_get = ministep["DATA_SCALE"]
         self.assertTrue( "PERLIN_PARAM" in data_scale_get )
 
+        # Error when adding existing data node
+        with self.assertRaises(KeyError):
+            data_scale.addNode("PERLIN_PARAM")
         
 
         
@@ -123,6 +126,7 @@ class LocalConfigTest(ExtendedTestCase):
         local_obs_data_1 = local_config.createObsdata("OBSSET_1") 
         self.assertTrue(isinstance(local_obs_data_1, LocalObsdata))
 
+        # Add node with range
         with self.assertRaises(KeyError):
             local_obs_data_1.addNodeAndRange("MISSING_KEY" , 0 , 1 )
             
@@ -139,6 +143,13 @@ class LocalConfigTest(ExtendedTestCase):
         node = local_obs_data_1["GEN_PERLIN_2"]
         self.assertTrue(isinstance(node, LocalObsdataNode))
 
+        # Add node again with no range and check return type
+        node_again = local_obs_data_1.addNode("GEN_PERLIN_1")
+        self.assertTrue(isinstance(node_again, LocalObsdataNode))
+        
+        # Error when adding existing obs node
+        with self.assertRaises(KeyError):
+            local_obs_data_1.addNode("GEN_PERLIN_1")
 
             
     def AttachObsData( self , local_config):          
