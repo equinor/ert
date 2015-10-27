@@ -14,13 +14,23 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB
 
+from ert.enkf import ENKF_LIB
+from ert.enkf.enums import EnkfFieldFileFormatEnum
 
 class FieldConfig(BaseCClass):
     def __init__(self , kw , grid):
         c_ptr = FieldConfig.cNamespace().alloc( kw , grid , None , False )
         super(FieldConfig, self).__init__(c_ptr)
+
+    @classmethod
+    def exportFormat(cls , filename):
+        export_format = FieldConfig.cNamespace().export_format( filename )
+        if export_format in [ EnkfFieldFileFormatEnum.ECL_GRDECL_FILE , EnkfFieldFileFormatEnum.RMS_ROFF_FILE ]:
+            return export_format
+        else:
+            raise ValueError("Couuld not determine grdecl / roff format from:%s" % filename)
+
         
     def get_type(self):
         return FieldConfig.cNamespace().get_type(self)
@@ -55,7 +65,9 @@ class FieldConfig(BaseCClass):
     def free(self):
         FieldConfig.cNamespace().free(self)
 
+    
 
+        
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("field_config", FieldConfig)
 
@@ -72,4 +84,6 @@ FieldConfig.cNamespace().get_nx = cwrapper.prototype("int field_config_get_nx(fi
 FieldConfig.cNamespace().get_ny = cwrapper.prototype("int field_config_get_ny(field_config)")
 FieldConfig.cNamespace().get_nz = cwrapper.prototype("int field_config_get_nz(field_config)")
 FieldConfig.cNamespace().get_grid = cwrapper.prototype("c_void_p field_config_get_grid(field_config)")  #todo: fix return type
+
+FieldConfig.cNamespace().export_format = cwrapper.prototype("enkf_field_file_format_enum field_config_default_export_format(char*)")  
 
