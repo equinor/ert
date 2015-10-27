@@ -20,7 +20,7 @@ def plotStatistics(plot_context):
         data = plot_context.dataGatherer().gatherData(ert, case, key)
         if not data.empty:
             if not data.index.is_all_dates:
-                config.deactiveDateSupport()
+                config.deactivateDateSupport()
 
             statistics_data = DataFrame()
 
@@ -46,26 +46,41 @@ def plotStatistics(plot_context):
 def _plotPercentiles(axes, plot_config, data, ensemble_label):
     """
     @type axes: matplotlib.axes.Axes
-    @type plot_config: PlotConfig
+    @type plot_config: ert_gui.plottery.PlotConfig
     @type data: DataFrame
     @type ensemble_label: Str
     """
+    style = plot_config.getStatisticsStyle("mean")
+    if style.line_style != "":
+        line = axes.plot(data.index.values, data["Mean"].values, alpha=style.alpha, linestyle=style.line_style, color=style.color, marker=style.marker)
+        plot_config.addLegendItem(style.name, line[0])
 
-    line_color = plot_config.lineColor()
-    line_alpha = plot_config.lineAlpha()
+    style = plot_config.getStatisticsStyle("p50")
+    if style.line_style != "":
+        line = axes.plot(data.index.values, data["p50"].values, alpha=style.alpha, linestyle=style.line_style, color=style.color, marker=style.marker)
+        plot_config.addLegendItem(style.name, line[0])
 
-    minimum_line = axes.plot(data.index.values, data["Minimum"].values, alpha=line_alpha, linestyle="--", color=line_color)
-    maximum_line = axes.plot(data.index.values, data["Maximum"].values, alpha=line_alpha, linestyle="--", color=line_color)
-    p50_line = axes.plot(data.index.values, data["p50"].values, alpha=line_alpha, linestyle="--", color=line_color, marker="x")
-    mean_line = axes.plot(data.index.values, data["Mean"].values, alpha=line_alpha, linestyle="-", color=line_color, marker="")
-    axes.fill_between(data.index.values, data["p10"].values, data["p90"].values, alpha=line_alpha * 0.3, color=line_color)
-    axes.fill_between(data.index.values, data["p33"].values, data["p67"].values, alpha=line_alpha * 0.5, color=line_color)
+    style = plot_config.getStatisticsStyle("min-max")
+    _plotPercentile(axes, plot_config, style, data.index.values, data["Maximum"].values, data["Minimum"].values, 0.2)
 
-    rectangle_p10_p90 = Rectangle((0, 0), 1, 1, color=line_color, alpha=line_alpha * 0.3) # creates rectangle patch for legend use.
-    rectangle_p33_p67 = Rectangle((0, 0), 1, 1, color=line_color, alpha=line_alpha * 0.5) # creates rectangle patch for legend use.
+    style = plot_config.getStatisticsStyle("p10-p90")
+    _plotPercentile(axes, plot_config, style, data.index.values, data["p90"].values, data["p10"].values, 0.3)
 
-    plot_config.addLegendItem("Minimum/Maximum", minimum_line[0])
-    plot_config.addLegendItem("P50", p50_line[0])
-    plot_config.addLegendItem("Mean", mean_line[0])
-    plot_config.addLegendItem("P10-P90", rectangle_p10_p90)
-    plot_config.addLegendItem("P33-P67", rectangle_p33_p67)
+    style = plot_config.getStatisticsStyle("p33-p67")
+    _plotPercentile(axes, plot_config, style, data.index.values, data["p67"].values, data["p33"].values, 0.4)
+
+
+def _plotPercentile(axes, plot_config, style, index_values, top_line_data, bottom_line_data, alpha_multiplier):
+    alpha = style.alpha
+    line_style = style.line_style
+    color = style.color
+    marker = style.marker
+
+    if line_style == "#":
+        axes.fill_between(index_values, bottom_line_data, top_line_data, alpha=alpha * alpha_multiplier, color=color)
+        rectangle = Rectangle((0, 0), 1, 1, color=color, alpha=alpha * alpha_multiplier) # creates rectangle patch for legend use.
+        plot_config.addLegendItem(style.name, rectangle)
+    elif line_style != "":
+        bottom_line = axes.plot(index_values, bottom_line_data, alpha=alpha, linestyle=line_style, color=color, marker=marker)
+        top_line = axes.plot(index_values, top_line_data, alpha=alpha, linestyle=line_style, color=color, marker=marker)
+        plot_config.addLegendItem(style.name, bottom_line[0])

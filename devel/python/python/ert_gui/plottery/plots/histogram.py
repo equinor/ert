@@ -80,11 +80,7 @@ def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=Fals
     axes.set_xlabel(plot_config.xLabel())
     axes.set_ylabel(plot_config.yLabel())
 
-    line_color = plot_config.lineColor()
-    line_alpha = plot_config.lineAlpha()
-    line_marker = plot_config.lineMarker()
-    line_style = plot_config.lineStyle()
-    line_width = 2
+    style = plot_config.histogramStyle()
 
     if data.dtype == "object":
         data = data.convert_objects(convert_numeric=True)
@@ -97,7 +93,7 @@ def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=Fals
         width = 1.0
         axes.set_xticks(pos + (width / 2.0))
         axes.set_xticklabels(x)
-        axes.bar(pos, freq, alpha=line_alpha, color=line_color, width=width)
+        axes.bar(pos, freq, alpha=style.alpha, color=style.color, width=style.width)
     else:
 
         if minimum is not None and maximum is not None:
@@ -108,10 +104,10 @@ def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=Fals
         else:
             bins = bin_count
 
-        axes.hist(data.values, alpha=line_alpha, bins=bins, color=line_color)
+        axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
         axes.set_xlim(minimum, maximum)
 
-    rectangle = Rectangle((0, 0), 1, 1, color=line_color) # creates rectangle patch for legend use.'
+    rectangle = Rectangle((0, 0), 1, 1, color=style.color) # creates rectangle patch for legend use.'
     plot_config.addLegendItem(label, rectangle)
 
 
