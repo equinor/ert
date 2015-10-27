@@ -14,6 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+
+import os.path
 from ert.enkf import EnkfConfigNode, GenKw, EnkfNode, NodeId, EnkfFieldFileFormatEnum, ErtImplType, GenData, \
     GenDataFileType
 from ert_gui.models import ErtConnector
@@ -41,6 +43,15 @@ class ExportModel(ErtConnector):
         fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
         return self.ert().exportField(keyword, file_name, iactive, file_type, report_step, state, fs)
 
+        iens_list = iactive.createActiveList( ) 
+        path_fmt = os.path.join( path , keyword + "_%d" + extension)
+        config_node = self.ert().ensembleConfig()[keyword]
+        init_file = self.ert().fieldInitFile( config_node )
+        if init_file:
+            print "Using init file:%s" % init_file
+        EnkfNode.exportMany( config_node , path_fmt , fs , iens_list , file_type = file_type , arg = init_file)
+        return True
+    
 
     def exportGenKw(self, keyword, path, iactive, file_type, report_step, state, selected_case):
         """

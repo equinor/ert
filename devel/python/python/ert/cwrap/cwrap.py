@@ -167,7 +167,7 @@ class CWrapper:
                         return return_type(result)
 
                     func.errcheck = returnFunction
-
+                    
                 elif issubclass(return_type, BaseCValue):
                     func.restype = return_type.type()
 

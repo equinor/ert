@@ -13,6 +13,8 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import sys
+
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, EnkfFs, NodeId
 from ert.enkf.data import EnkfConfigNode, GenKw, GenData, CustomKW
