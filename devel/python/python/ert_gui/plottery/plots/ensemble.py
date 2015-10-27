@@ -18,7 +18,7 @@ def plotEnsemble(plot_context):
         data = plot_context.dataGatherer().gatherData(ert, case, key)
         if not data.empty:
             if not data.index.is_all_dates:
-                config.deactiveDateSupport()
+                config.deactivateDateSupport()
 
             _plotLines(axes, config, data, case)
             config.nextColor()
@@ -38,15 +38,12 @@ def _plotLines(axes, plot_config, data, ensemble_label):
     @type ensemble_label: Str
     """
 
-    line_color = plot_config.lineColor()
-    line_alpha = plot_config.lineAlpha()
-    line_marker = plot_config.lineMarker()
-    line_style = plot_config.lineStyle()
+    style = plot_config.defaultStyle()
 
     if plot_config.isDateSupportActive():
-        lines = axes.plot_date(x=data.index.values, y=data, color=line_color, alpha=line_alpha, marker=line_marker, linestyle=line_style)
+        lines = axes.plot_date(x=data.index.values, y=data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style)
     else:
-        lines = axes.plot(data.index.values, data, color=line_color, alpha=line_alpha, marker=line_marker, linestyle=line_style)
+        lines = axes.plot(data.index.values, data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style)
 
     if len(lines) > 0:
         plot_config.addLegendItem(ensemble_label, lines[0])

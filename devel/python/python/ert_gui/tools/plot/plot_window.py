@@ -52,7 +52,6 @@ class PlotWindow(QMainWindow):
 
 
         self.addPlotWidget("Ensemble", plots.plotEnsemble, [summary_gatherer, gen_data_gatherer])
-        self.addPlotWidget("Overview", plots.plotOverview, [summary_gatherer, gen_data_gatherer])
         self.addPlotWidget("Statistics", plots.plotStatistics, [summary_gatherer, gen_data_gatherer])
         self.addPlotWidget("Histogram", plots.plotHistogram, [gen_kw_gatherer, custom_kw_gatherer])
         self.addPlotWidget("Gaussian KDE", plots.plotGaussianKDE, [gen_kw_gatherer, custom_kw_gatherer])
@@ -135,9 +134,18 @@ class PlotWindow(QMainWindow):
         custom = self.__customize_plot_widget.getCustomSettings()
 
         plot_config.setObservationsEnabled(custom["show_observations"])
-        plot_config.setRefcaseEnabled(custom["show_refcase"])
+        # plot_config.setRefcaseEnabled(custom["show_refcase"])
         plot_config.setLegendEnabled(custom["show_legend"])
         plot_config.setGridEnabled(custom["show_grid"])
+
+        plot_config.setDefaultStyle(*custom["default_style"])
+        plot_config.setRefcaseStyle(*custom["refcase_style"])
+
+        plot_config.setStatisticsStyle("mean", *custom["mean_style"])
+        plot_config.setStatisticsStyle("p50", *custom["p50_style"])
+        plot_config.setStatisticsStyle("min-max", *custom["min-max_style"])
+        plot_config.setStatisticsStyle("p10-p90", *custom["p10-p90_style"])
+        plot_config.setStatisticsStyle("p33-p67", *custom["p33-p67_style"])
 
 
     @may_take_a_long_time
