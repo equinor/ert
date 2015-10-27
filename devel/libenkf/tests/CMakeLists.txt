@@ -308,7 +308,7 @@ target_link_libraries( enkf_select_case_job  enkf test_util )
 
 add_test( enkf_select_case_job
           ${EXECUTABLE_OUTPUT_PATH}/enkf_select_case_job 
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields/config 
+          ${PROJECT_SOURCE_DIR}/test-data/local/snake_oil/snake_oil.ert
           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal-tui/config/SELECT_CASE)
 
 
@@ -461,7 +461,6 @@ set_property( TEST enkf_state_summary_vars_present PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_no_summary_vars_present PROPERTY LABELS StatoilData )
 set_property( TEST enkf_export_field_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_workflow_job_test PROPERTY LABELS StatoilData )
-set_property( TEST enkf_select_case_job   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_main_fs_current_file_test  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_manual_load_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_analysis_update_job PROPERTY LABELS StatoilData )
