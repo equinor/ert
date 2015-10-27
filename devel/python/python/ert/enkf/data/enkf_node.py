@@ -17,13 +17,11 @@ import sys
 
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, EnkfFs, NodeId
-from ert.enkf.data import EnkfConfigNode, GenKw, GenData, CustomKW
-from ert.enkf.enums import ErtImplType
+from ert.enkf.data import GenKw, GenData, CustomKW, Field
+from ert.enkf.enums import ErtImplType,EnkfStateType
 
 class EnkfNode(BaseCClass):
     def __init__(self, config_node, private=False):
-        assert isinstance(config_node, EnkfConfigNode)
-
         if private:
             c_pointer = EnkfNode.cNamespace().alloc_private(config_node)
         else:
@@ -31,30 +29,67 @@ class EnkfNode(BaseCClass):
 
         super(EnkfNode, self).__init__(c_pointer, config_node, True)
 
+    @classmethod
+    def exportMany(cls , config_node , file_format , fs , iens_list  , state = EnkfStateType.ANALYZED , report_step = 0 , file_type = None , arg = None):
+        node = EnkfNode( config_node )
+        for iens in iens_list:
+            filename = file_format % iens
+            node_id = NodeId( report_step , iens , state )
+            if node.tryLoad(fs , node_id):
+                if node.export( filename , file_type = file_type , arg = arg):
+                    print("%s[%03d] -> %s" % (config_node.getKey() , iens , filename))
+            else:
+                sys.stderr.write("** ERROR: Could not load realisation:%d - export failed" % iens)
+
+
+    def export(self , filename , file_type = None , arg = None):
+        impl_type = self.getImplType()
+        if impl_type == ErtImplType.FIELD:
+            field_node = self.asField( )
+            return field_node.export( filename , file_type = file_type , init_file = arg)
+        else:
+            raise NotImplementedError("The export method is only implemented for field")
+
+
+
     def valuePointer(self):
         return EnkfNode.cNamespace().value_ptr(self)
 
+    def getImplType(self):
+        return EnkfNode.cNamespace().get_impl_type(self)
+
+    
     def asGenData(self):
         """ @rtype: GenData """
-        impl_type = EnkfNode.cNamespace().get_impl_type(self)
+        impl_type = self.getImplType( )
         assert impl_type == ErtImplType.GEN_DATA
 
         return GenData.createCReference(self.valuePointer(), self)
 
     def asGenKw(self):
         """ @rtype: GenKw """
-        impl_type = EnkfNode.cNamespace().get_impl_type(self)
+        impl_type = self.getImplType( )
         assert impl_type == ErtImplType.GEN_KW
 
         return GenKw.createCReference(self.valuePointer(), self)
 
     def asCustomKW(self):
         """ @rtype: CustomKW """
-        impl_type = EnkfNode.cNamespace().get_impl_type(self)
+        impl_type = self.getImplType( )
         assert impl_type == ErtImplType.CUSTOM_KW
 
         return CustomKW.createCReference(self.valuePointer(), self)
 
+    
+    def asField(self):
+        """ @rtype: CustomKW """
+        impl_type = self.getImplType( )
+        assert impl_type == ErtImplType.FIELD
+
+        return Field.createCReference(self.valuePointer(), self)
+
+
+    
     def tryLoad(self, fs, node_id):
         """
         @type fs: EnkfFS
@@ -87,8 +122,8 @@ cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("enkf_node", EnkfNode)
 
 EnkfNode.cNamespace().free = cwrapper.prototype("void enkf_node_free(enkf_node)")
-EnkfNode.cNamespace().alloc = cwrapper.prototype("c_void_p enkf_node_alloc(enkf_node)")
-EnkfNode.cNamespace().alloc_private = cwrapper.prototype("c_void_p enkf_node_alloc_private_container(enkf_node)")
+EnkfNode.cNamespace().alloc = cwrapper.prototype("c_void_p enkf_node_alloc(enkf_config_node)")
+EnkfNode.cNamespace().alloc_private = cwrapper.prototype("c_void_p enkf_node_alloc_private_container(enkf_config_node)")
 EnkfNode.cNamespace().get_name = cwrapper.prototype("char* enkf_node_get_key(enkf_node)")
 
 EnkfNode.cNamespace().value_ptr = cwrapper.prototype("c_void_p enkf_node_value_ptr(enkf_node)")
