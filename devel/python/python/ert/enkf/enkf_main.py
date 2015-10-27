@@ -249,11 +249,15 @@ class EnKFMain(BaseCClass):
         #    ert.util.cmem.free( init_file )
         #
         
+<<<<<<< HEAD
         init_file = EnKFMain.cNamespace().alloc_field_init_file( self , config_node )
         if not init_file is None:
             return str(init_file)
         else:
             return None
+=======
+        return EnKFMain.cNamespace().alloc_field_init_file( self , config_node )
+>>>>>>> 537cc7b... ERT-944: Allocate  filename - use cmem.free()
     
     
     def exportField(self, keyword, path, iactive, file_type, report_step, state, enkfFs):
