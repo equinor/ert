@@ -111,9 +111,8 @@ class EnKFObsTest(ExtendedTestCase):
             self.assertFalse(v2.hasData(mask, current_fs))
             
             local_node = v1.createLocalObs( )
-            self.assertEqual( len(local_node.getStepList()) , len(v1.getStepList()))
-            for t1,t2 in zip( local_node.getStepList() , v1.getStepList()):
-                self.assertEqual( t1 , t2 )
+            for t in v1.getStepList():
+                self.assertTrue( local_node.tstepActive( t ))
                 
             
 
@@ -149,8 +148,9 @@ class EnKFObsTest(ExtendedTestCase):
 
                 tstep_list1 = obs_vector.getStepList()
                 local_node = obs_data[ obs_vector.getObservationKey() ]
+                for t in tstep_list1:
+                    self.assertTrue( local_node.tstepActive( t ))
 
-                self.assertTrue( tstep_list1 , local_node.getStepList())
                 active_list = local_node.getActiveList()
                 self.assertEqual( active_list.getMode() , ActiveMode.ALL_ACTIVE )
                     

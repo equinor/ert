@@ -105,12 +105,14 @@ active_list_type * local_obsdata_node_get_active_list( const local_obsdata_node_
 }
 
 
-const int_vector_type * local_obsdata_node_get_tstep_list( const local_obsdata_node_type * node) {
+bool local_obsdata_node_tstep_active( const local_obsdata_node_type * node , int tstep ) {
   if (node->all_timestep_active)
-    util_abort("%s: internal error: When the all_timestep_active() switch is set to true you can not ASK for timestep\n",__func__);
-
-  return node->tstep_list;
+    return true;
+  else
+    return local_obsdata_node_has_tstep( node , tstep );
 }
+
+
 
 /*
   This a temporarary function to support the change local_obsset ->
