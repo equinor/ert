@@ -14,7 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-
 import os.path
 from ert.enkf import EnkfConfigNode, GenKw, EnkfNode, NodeId, EnkfFieldFileFormatEnum, ErtImplType, GenData, \
     GenDataFileType
@@ -35,13 +34,12 @@ class ExportModel(ErtConnector):
         @type state: EnkfStateType
         @type selected_case: str
         """
-        file_name  =  str(path + "/" + keyword + "_%d")
-        if file_type == EnkfFieldFileFormatEnum.ECL_GRDECL_FILE:
-            file_name += ".grdecl"
-        elif file_type == EnkfFieldFileFormatEnum.RMS_ROFF_FILE:
-            file_name += ".roff"
+
         fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
-        return self.ert().exportField(keyword, file_name, iactive, file_type, report_step, state, fs)
+        if file_type == EnkfFieldFileFormatEnum.ECL_GRDECL_FILE:
+            extension = ".grdecl"
+        elif file_type == EnkfFieldFileFormatEnum.RMS_ROFF_FILE:
+            extension = ".roff"
 
         iens_list = iactive.createActiveList( ) 
         path_fmt = os.path.join( path , keyword + "_%d" + extension)
@@ -52,7 +50,7 @@ class ExportModel(ErtConnector):
         EnkfNode.exportMany( config_node , path_fmt , fs , iens_list , file_type = file_type , arg = init_file)
         return True
     
-
+    
     def exportGenKw(self, keyword, path, iactive, file_type, report_step, state, selected_case):
         """
         @type keyword: str
