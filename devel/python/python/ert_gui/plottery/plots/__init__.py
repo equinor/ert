@@ -6,3 +6,4 @@ from .observations import plotObservations
 
 from .ensemble import plotEnsemble
 from .statistics import plotStatistics
+from .distribution import plotDistribution
