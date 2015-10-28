@@ -34,6 +34,7 @@ set(TEST_SOURCES
     test_update.py
     test_ensemble_config.py
     test_deprecation.py
+    test_field_export.py
 )
 
 add_python_package("python.tests.ert.enkf" ${PYTHON_INSTALL_PREFIX}/tests/ert/enkf "${TEST_SOURCES}" False)
@@ -71,6 +72,7 @@ addPythonTest(ert.enkf.active_list tests.ert.enkf.test_active_list.ActiveListTes
 addPythonTest(ert.enkf.local_obsdata_node tests.ert.enkf.test_local_obsdata_node.LocalObsdataNodeTest)
 addPythonTest(ert.enkf.local_config tests.ert.enkf.test_local_config.LocalConfigTest)
 addPythonTest(ert.enkf.ensemble_config tests.ert.enkf.test_ensemble_config.EnsembleConfigTest)
+addPythonTest(ert.enkf.field_export tests.ert.enkf.test_field_export.FieldExportTest LABELS StatoilData)
 
 add_subdirectory(data)
 add_subdirectory(export)

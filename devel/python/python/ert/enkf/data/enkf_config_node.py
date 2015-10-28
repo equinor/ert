@@ -114,6 +114,8 @@ class EnkfConfigNode(BaseCClass):
             print("[EnkfConfigNode::getModelConfig()] Unhandled implementation model type: %i" % implementation_type)
             # raise NotImplementedError("Unknown model type: %i" % type)
 
+    def getKey(self):
+        return EnkfConfigNode.cNamespace().get_key( self )
 
 
 cwrapper = CWrapper(ENKF_LIB)
@@ -128,6 +130,7 @@ EnkfConfigNode.cNamespace().get_min_std_file = cwrapper.prototype("char* enkf_co
 EnkfConfigNode.cNamespace().get_enkf_infile = cwrapper.prototype("char* enkf_config_node_get_enkf_infile(enkf_config_node)")
 EnkfConfigNode.cNamespace().get_init_file_fmt = cwrapper.prototype("char* enkf_config_node_get_init_file_fmt(enkf_config_node)")
 EnkfConfigNode.cNamespace().get_var_type = cwrapper.prototype("enkf_var_type_enum enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
+EnkfConfigNode.cNamespace().get_key = cwrapper.prototype("char* enkf_config_node_get_key(enkf_config_node)") 
 EnkfConfigNode.cNamespace().get_obs_keys = cwrapper.prototype("stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)")
 EnkfConfigNode.cNamespace().alloc_summary_node = cwrapper.prototype("enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)")
 EnkfConfigNode.cNamespace().alloc_field_node = cwrapper.prototype("enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, c_void_p, bool)")

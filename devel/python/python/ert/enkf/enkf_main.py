@@ -13,6 +13,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import ctypes
 from ert.cwrap import BaseCClass, CWrapper
 
 from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsembleConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, PostSimulationHook
@@ -20,6 +21,25 @@ from ert.enkf.enums import EnkfInitModeEnum
 from ert.enkf.key_manager import KeyManager
 from ert.util import SubstitutionList, Log
 
+
+# The method EnKFMain.fieldInitFile() allocates C storage for a char*;
+# the sole purpose of the StringCopy class is to manage this memory.
+
+class StringCopy(BaseCClass):
+    def __init__(self):
+        raise NotImplementedError("")
+
+    
+    def __str__(self):
+        c_ptr = StringCopy.from_param( self )
+        char_ptr = ctypes.c_char_p( c_ptr.value )
+        return char_ptr.value
+
+    
+    def free(self):
+        ENKF_LIB.free( StringCopy.from_param( self ) )
+
+        
 
 class EnKFMain(BaseCClass):
     def __init__(self, model_config, strict=True):
@@ -218,6 +238,14 @@ class EnKFMain(BaseCClass):
         return EnKFMain.cNamespace().get_hook_manager(self)
 
 
+    def fieldInitFile(self , config_node):
+        init_file = EnKFMain.cNamespace().alloc_field_init_file( self , config_node )
+        if not init_file is None:
+            return str(init_file)
+        else:
+            return None
+    
+    
     def exportField(self, keyword, path, iactive, file_type, report_step, state, enkfFs):
         """
         @type keyword: str
@@ -249,8 +277,7 @@ class EnKFMain(BaseCClass):
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("enkf_main", EnKFMain)
-
-
+CWrapper.registerType("string_obj" , StringCopy.createPythonObject )
 
 EnKFMain.cNamespace().bootstrap = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, bool, bool)")
 EnKFMain.cNamespace().free = cwrapper.prototype("void enkf_main_free(enkf_main)")
@@ -306,3 +333,4 @@ EnKFMain.cNamespace().load_from_forward_model = cwrapper.prototype("void enkf_ma
 
 EnKFMain.cNamespace().submit_simulation = cwrapper.prototype("void enkf_main_isubmit_job(enkf_main , run_arg)")
 EnKFMain.cNamespace().alloc_run_context_ENSEMBLE_EXPERIMENT= cwrapper.prototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , enkf_init_mode_enum , int)")
+EnKFMain.cNamespace().alloc_field_init_file = cwrapper.prototype("string_obj enkf_main_alloc_abs_path_to_init_file(enkf_main, enkf_config_node)")
