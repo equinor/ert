@@ -3,8 +3,6 @@ from matplotlib.patches import Rectangle
 import numpy
 from .plot_tools import PlotTools
 
-
-
 def plotHistogram(plot_context):
     """
     @type plot_context: ert_gui.plottery.PlotContext
@@ -29,22 +27,34 @@ def plotHistogram(plot_context):
     data = {}
     minimum = None
     maximum = None
+    categories = set()
     max_element_count = 0
+    categorical = False
     for case in case_list:
         data[case] = plot_context.dataGatherer().gatherData(ert, case, key)
 
-        if minimum is None:
-            minimum = data[case].min()
+        if data[case].dtype == "object":
+            data[case] = data[case].convert_objects(convert_numeric=True)
+
+        if data[case].dtype == "object":
+            categorical = True
+
+        if categorical:
+            categories = categories.union(set(data[case].unique()))
         else:
-            minimum = min(minimum, data[case].min())
+            if minimum is None:
+                minimum = data[case].min()
+            else:
+                minimum = min(minimum, data[case].min())
 
-        if maximum is None:
-            maximum = data[case].max()
-        else:
-            maximum = max(maximum, data[case].max())
+            if maximum is None:
+                maximum = data[case].max()
+            else:
+                maximum = max(maximum, data[case].max())
 
-        max_element_count = max(max_element_count, len(data[case].index))
+            max_element_count = max(max_element_count, len(data[case].index))
 
+    categories = sorted(categories)
     bin_count = int(ceil(sqrt(max_element_count)))
 
     axes = {}
@@ -58,7 +68,10 @@ def plotHistogram(plot_context):
             axes[case].set_xscale("log")
 
         if not data[case].empty:
-            _plotHistogram(axes[case], config, data[case], case, bin_count, use_log_scale, minimum, maximum)
+            if categorical:
+                _plotCategoricalHistogram(axes[case], config, data[case], case, categories)
+            else:
+                _plotHistogram(axes[case], config, data[case], case, bin_count, use_log_scale, minimum, maximum)
 
             config.nextColor()
             PlotTools.showGrid(axes[case], plot_context)
@@ -69,12 +82,13 @@ def plotHistogram(plot_context):
         subplot.set_ylim(0, max_count)
 
 
-def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=False, minimum=None, maximum=None):
+def _plotCategoricalHistogram(axes, plot_config, data, label, categories):
     """
     @type axes: matplotlib.axes.Axes
     @type plot_config: PlotConfig
     @type data: DataFrame
-    @type label: Str
+    @type label: str
+    @type categories: list of str
     """
 
     axes.set_xlabel(plot_config.xLabel())
@@ -82,30 +96,42 @@ def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=Fals
 
     style = plot_config.histogramStyle()
 
-    if data.dtype == "object":
-        data = data.convert_objects(convert_numeric=True)
+    counts = data.value_counts()
+    freq = [counts[category] if category in counts else 0 for category in categories]
+    pos = numpy.arange(len(categories))
+    width = 1.0
+    axes.set_xticks(pos + (width / 2.0))
+    axes.set_xticklabels(categories)
 
-    if data.dtype == "object":
-        counts = data.value_counts()
-        x = counts.index.values
-        freq = counts.values
-        pos = numpy.arange(len(x))
-        width = 1.0
-        axes.set_xticks(pos + (width / 2.0))
-        axes.set_xticklabels(x)
-        axes.bar(pos, freq, alpha=style.alpha, color=style.color, width=style.width)
-    else:
+    axes.bar(pos, freq, alpha=style.alpha, color=style.color, width=width)
 
-        if minimum is not None and maximum is not None:
-            if use_log_scale:
-                bins = _histogramLogBins(bin_count, minimum, maximum)
-            else:
-                bins = numpy.linspace(minimum, maximum, bin_count)
+    rectangle = Rectangle((0, 0), 1, 1, color=style.color) # creates rectangle patch for legend use.
+    plot_config.addLegendItem(label, rectangle)
+
+
+def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=False, minimum=None, maximum=None):
+    """
+    @type axes: matplotlib.axes.Axes
+    @type plot_config: PlotConfig
+    @type data: DataFrame
+    @type label: str
+    """
+
+    axes.set_xlabel(plot_config.xLabel())
+    axes.set_ylabel(plot_config.yLabel())
+
+    style = plot_config.histogramStyle()
+
+    if minimum is not None and maximum is not None:
+        if use_log_scale:
+            bins = _histogramLogBins(bin_count, minimum, maximum)
         else:
-            bins = bin_count
+            bins = numpy.linspace(minimum, maximum, bin_count)
+    else:
+        bins = bin_count
 
-        axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
-        axes.set_xlim(minimum, maximum)
+    axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
+    axes.set_xlim(minimum, maximum)
 
     rectangle = Rectangle((0, 0), 1, 1, color=style.color) # creates rectangle patch for legend use.'
     plot_config.addLegendItem(label, rectangle)
