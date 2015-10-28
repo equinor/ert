@@ -35,7 +35,8 @@ class LocalObsdataNode(BaseCClass):
     def allTimeStepActive(self):
         return LocalObsdataNode.cNamespace().all_timestep_active( self )
 
-    
+    def setAllTimeStepActive(self, flag):
+        return LocalObsdataNode.cNamespace().set_all_timestep_active( self, flag )
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("local_obsdata_node", LocalObsdataNode)
@@ -48,5 +49,6 @@ LocalObsdataNode.cNamespace().add_step         = cwrapper.prototype("void local_
 LocalObsdataNode.cNamespace().tstep_active     = cwrapper.prototype("bool local_obsdata_node_tstep_active(local_obsdata_node, int)")
 LocalObsdataNode.cNamespace().get_active_list  = cwrapper.prototype("active_list_ref local_obsdata_node_get_active_list(local_obsdata_node)")
 LocalObsdataNode.cNamespace().all_timestep_active  = cwrapper.prototype("bool local_obsdata_node_all_timestep_active(local_obsdata_node)")
+LocalObsdataNode.cNamespace().set_all_timestep_active  = cwrapper.prototype("void local_obsdata_node_set_all_timestep_active(local_obsdata_node, bool)")
 
 

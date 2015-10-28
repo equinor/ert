@@ -35,8 +35,8 @@ class EnKFObsTest(ExtendedTestCase):
             node1.addRange( 50 , 50 )
             node2 = LocalObsdataNode( "WWCT:OP_1_50" )
             node2.addRange( 50 , 50 )
-            local_obsdata.addNode( node1 )
-            local_obsdata.addNode( node2 )
+            local_obsdata.addNode( node1.getKey() )
+            local_obsdata.addNode( node2.getKey() )
 
             mask = BoolVector( default_value = True )
             mask[2] = True

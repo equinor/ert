@@ -44,6 +44,7 @@ extern "C" {
   bool                        local_obsdata_node_all_timestep_active( const local_obsdata_node_type * node);
   bool                        local_obsdata_node_has_tstep( const local_obsdata_node_type * node , int tstep);
   void                        local_obsdata_node_reset_tstep_list( local_obsdata_node_type * node , const int_vector_type * step_list);
+  void                        local_obsdata_node_set_all_timestep_active( local_obsdata_node_type * node, bool flag);
 
   UTIL_IS_INSTANCE_HEADER( local_obsdata_node );
   UTIL_SAFE_CAST_HEADER( local_obsdata_node );

@@ -1,5 +1,6 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, LocalObsdataNode 
+from sphinx.util import nodes
 
 
 class LocalObsdata(BaseCClass):
@@ -74,25 +75,31 @@ object as:
         else:
             raise KeyError("Unknown key:%s" % key)                
     
-    def addNode(self, node):        
-        assert isinstance(node, LocalObsdataNode)
-        if node.getKey() in self.obs:
+    def addNode(self, key, add_all_timesteps = False):
+        """ @rtype: LocalObsdataNode """           
+        assert isinstance(key, str)
+        if key in self.obs:
+            node = LocalObsdataNode(key) 
             if node not in self:
                 node.convertToCReference(self)
+                node.setAllTimeStepActive( add_all_timesteps )
                 LocalObsdata.cNamespace().add_node(self, node)
+                return node
             else:
-                raise KeyError("Tried to add existing observation key:%s " % node.getKey())
-            
+                raise KeyError("Tried to add existing observation key:%s " % key)
         else:
-            raise KeyError("The observation node: %s is not recognized observation key" % node.getKey())
+            raise KeyError("The observation node: %s is not recognized observation key" % key)
+
 
     def addNodeAndRange(self, key, step_1, step_2):
+        """ @rtype: LocalObsdataNode """        
+        """ The time range will be removed in the future... """
         assert isinstance(key, str)
         assert isinstance(step_1, int)
-        assert isinstance(step_2, int)        
-        node = LocalObsdataNode(key)                
-        self.addNode( node )
+        assert isinstance(step_2, int)                     
+        node = self.addNode( key )
         node.addRange(step_1, step_2)
+        return node
 
     
     def clear(self):        
@@ -100,7 +107,7 @@ object as:
 
         
     def addObsVector(self , obs_vector):
-        self.addNode( obs_vector.createLocalObs() )
+        self.addNode( obs_vector.createLocalObs().getKey() )
 
         
     def getName(self):
