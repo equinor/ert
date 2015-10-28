@@ -10,7 +10,7 @@ class PlotTools(object):
     def showLegend(axes, plot_context):
         config = plot_context.plotConfig()
         if config.isLegendEnabled() and len(config.legendItems()) > 0:
-            axes.legend(config.legendItems(), config.legendLabels())
+            axes.legend(config.legendItems(), config.legendLabels(), numpoints=1)
 
 
     @staticmethod
