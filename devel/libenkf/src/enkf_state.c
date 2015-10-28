@@ -589,7 +589,11 @@ static int_vector_type * __enkf_state_get_time_index(enkf_fs_type * result_fs, e
 
 static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state , run_arg_type * run_arg , const model_config_type * model_config , int * result, bool interactive , stringlist_type * msg_list) {
   bool load_summary = ensemble_config_has_impl_type(enkf_state->ensemble_config, SUMMARY);
-  if (load_summary) {
+
+  const summary_key_matcher_type * matcher = ensemble_config_get_summary_key_matcher(enkf_state->ensemble_config);
+  int mathcer_size = summary_key_matcher_get_size(matcher);
+
+  if (load_summary || mathcer_size > 0) {
     int load_start = run_arg_get_load_start( run_arg );
 
     if (load_start == 0) { /* Do not attempt to load the "S0000" summary results. */
@@ -624,7 +628,6 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
         int_vector_iset_block( time_index , 0 , load_start , -1 );
         int_vector_resize( time_index , step2 + 1);
 
-        const summary_key_matcher_type * matcher = ensemble_config_get_summary_key_matcher(enkf_state->ensemble_config);
         const ecl_smspec_type * smspec = ecl_sum_get_smspec(summary);
 
         for(int i = 0; i < ecl_smspec_num_nodes(smspec); i++) {
