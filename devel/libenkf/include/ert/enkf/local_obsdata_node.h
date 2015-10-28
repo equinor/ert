@@ -39,7 +39,8 @@ extern "C" {
   void                        local_obsdata_node_copy_active_list( local_obsdata_node_type * node , const active_list_type * active_list);
   void                        local_obsdata_node_add_tstep( local_obsdata_node_type * node, int tstep);
   void                        local_obsdata_node_add_range( local_obsdata_node_type * node, int step1, int step2);
-  const int_vector_type     * local_obsdata_node_get_tstep_list( const local_obsdata_node_type * node);
+
+  bool                        local_obsdata_node_tstep_active( const local_obsdata_node_type * node , int tstep );
   bool                        local_obsdata_node_all_timestep_active( const local_obsdata_node_type * node);
   bool                        local_obsdata_node_has_tstep( const local_obsdata_node_type * node , int tstep);
   void                        local_obsdata_node_reset_tstep_list( local_obsdata_node_type * node , const int_vector_type * step_list);
