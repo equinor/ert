@@ -10,9 +10,9 @@ class ExtJobTest(TestCase):
     def test_load_forward_model(self):
         with TestAreaContext("python/job_queue/workflow_job",store_area=True) as work_area:
             WorkflowCommon.createExternalDumpJob()
-            test = work_area.get_cwd()
+            
             try:
-                ExtJob("dump_job",test,False,"dump_job")
+                ExtJob("dump_job",work_area.get_cwd(),False,"dump_job")
             except :
                 self.fail("ExtJob() raised Exception unexpectedly!")
 
