@@ -1,10 +1,7 @@
-import os
 from ert.util import IntVector
 from ert.enkf.enums import ErtImplType, EnkfStateType, EnkfFieldFileFormatEnum
 from ert.enkf.data import EnkfNode
-from ert_gui.shell import ShellFunction, autoCompleteListWithSeparator, assertConfigLoaded, extractFullArgument, getPossibleFilenameCompletions
-
-
+from ert_gui.shell import ShellFunction, assertConfigLoaded, autoCompleteList
 
 
 class Export(ShellFunction):
@@ -14,7 +11,6 @@ class Export(ShellFunction):
         super(Export , self).__init__("export" , shell_context)
         default_path = Export.DEFAULT_EXPORT_PATH % ("{KEY}" , "{KEY}")
         self.addHelpFunction("FIELD" , "<keyword>   [%s]  [1,4,7-10]" % default_path , "Export parameters; path and realisations in [...] are optional.")
-        
 
 
     def supportedFIELDKeys(self):
@@ -29,9 +25,9 @@ class Export(ShellFunction):
 
         if len(arguments) > 2 or len(arguments) == 2 and not text:
             return []
-        return autoCompleteList(text, self.getPluginNames())
 
-        
+        return autoCompleteList(text, self.supportedFIELDKeys())
+
         
     @assertConfigLoaded
     def do_FIELD(self , line):
@@ -56,7 +52,8 @@ class Export(ShellFunction):
             fs = fs_manager.getCurrentFileSystem()
             init_file = self.ert().fieldInitFile( config_node )
             if init_file:
-                print "Using init file:%s" % init_file
+                print "Using init file: %s" % init_file
+
             EnkfNode.exportMany( config_node , path_fmt , fs , iens_list , arg = init_file)
         else:
             self.lastCommandFailed("No such FIELD node: %s" % key)
