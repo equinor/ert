@@ -9,6 +9,7 @@ from ert.enkf.local_obsdata import LocalObsdata
 from ert.enkf.local_updatestep import LocalUpdateStep
 from ert.enkf.local_obsdata_node import LocalObsdataNode
 from ert.enkf import local_config
+from ert.enkf.local_dataset import LocalDataset
 
 class LocalConfigTest(ExtendedTestCase):
     
@@ -93,9 +94,16 @@ class LocalConfigTest(ExtendedTestCase):
         self.assertEqual( len(updatestep) , n1 + 1 )            
 
 
-    def LocalDataset( self, local_config ):                        
-        # Data
+    def LocalDataset( self, local_config ):   
+                             
+        # Creating dataset
         data_scale = local_config.createDataset("DATA_SCALE")
+        self.assertTrue(isinstance(data_scale, LocalDataset))
+        
+        # Try to add existing dataset
+        with self.assertRaises(KeyError):
+            local_config.createDataset("DATA_SCALE")
+        
         with self.assertRaises(KeyError):
             data_scale.addNode("MISSING")
 
@@ -120,11 +128,14 @@ class LocalConfigTest(ExtendedTestCase):
 
         
     def LocalObsdata( self, local_config ):              
-        
           
-        # Creating
+        # Creating obsdata
         local_obs_data_1 = local_config.createObsdata("OBSSET_1") 
         self.assertTrue(isinstance(local_obs_data_1, LocalObsdata))
+        
+        # Try to add existing obsdata
+        with self.assertRaises(KeyError):
+            local_config.createObsdata("OBSSET_1")
 
         # Add node with range
         with self.assertRaises(KeyError):
@@ -154,19 +165,19 @@ class LocalConfigTest(ExtendedTestCase):
             
     def AttachObsData( self , local_config):          
                   
-        local_obs_data_1 = local_config.createObsdata("OBSSET_1") 
-        self.assertTrue(isinstance(local_obs_data_1, LocalObsdata))
+        local_obs_data_2 = local_config.createObsdata("OBSSET_2") 
+        self.assertTrue(isinstance(local_obs_data_2, LocalObsdata))
         
         # Obsdata                                           
-        local_obs_data_1.addNodeAndRange("GEN_PERLIN_1", 0, 1)
-        local_obs_data_1.addNodeAndRange("GEN_PERLIN_2", 0, 1)  
+        local_obs_data_2.addNodeAndRange("GEN_PERLIN_1", 0, 1)
+        local_obs_data_2.addNodeAndRange("GEN_PERLIN_2", 0, 1)  
         
         # Ministep                                      
         ministep = local_config.createMinistep("MINISTEP")
         self.assertTrue(isinstance(ministep, LocalMinistep))   
 
         # Attach obsset                                
-        ministep.attachObsset(local_obs_data_1)                     
+        ministep.attachObsset(local_obs_data_2)                     
                     
         # Retrieve attached obsset            
         local_obs_data_new = ministep.getLocalObsData()                   
