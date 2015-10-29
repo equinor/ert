@@ -38,19 +38,19 @@ struct local_obsdata_node_struct {
 UTIL_IS_INSTANCE_FUNCTION( local_obsdata_node , LOCAL_OBSDATA_NODE_TYPE_ID )
 UTIL_SAFE_CAST_FUNCTION( local_obsdata_node , LOCAL_OBSDATA_NODE_TYPE_ID )
 
-static local_obsdata_node_type * local_obsdata_node_alloc__( const char * obs_key ) {
+static local_obsdata_node_type * local_obsdata_node_alloc__( const char * obs_key , bool all_timestep_active) {
   local_obsdata_node_type * node = util_malloc( sizeof * node );
   UTIL_TYPE_ID_INIT( node , LOCAL_OBSDATA_NODE_TYPE_ID );
   node->obs_key = util_alloc_string_copy( obs_key );
   node->active_list = NULL;
   node->tstep_list = NULL;
-  node->all_timestep_active = true;
+  node->all_timestep_active = all_timestep_active;
   return node;
 }
 
 
-local_obsdata_node_type * local_obsdata_node_alloc( const char * obs_key ) {
-  local_obsdata_node_type * node = local_obsdata_node_alloc__(obs_key);
+local_obsdata_node_type * local_obsdata_node_alloc( const char * obs_key , bool all_timestep_active ) {
+  local_obsdata_node_type * node = local_obsdata_node_alloc__(obs_key , all_timestep_active);
 
   node->active_list = active_list_alloc( );
   node->tstep_list = int_vector_alloc(0,0);
@@ -60,7 +60,7 @@ local_obsdata_node_type * local_obsdata_node_alloc( const char * obs_key ) {
 
 
 local_obsdata_node_type * local_obsdata_node_alloc_copy( const local_obsdata_node_type * src) {
-  local_obsdata_node_type * target = local_obsdata_node_alloc__( src->obs_key );
+  local_obsdata_node_type * target = local_obsdata_node_alloc__( src->obs_key , src->all_timestep_active );
 
   target->active_list = active_list_alloc_copy( src->active_list );
   target->tstep_list = int_vector_alloc_copy( src->tstep_list );
@@ -147,6 +147,7 @@ bool local_obsdata_node_has_tstep( const local_obsdata_node_type * node , int ts
 
 void local_obsdata_node_add_tstep( local_obsdata_node_type * node, int tstep) {
   if (!local_obsdata_node_has_tstep( node , tstep)) {
+
     if (int_vector_size( node->tstep_list )) {
       int last = int_vector_get_last( node->tstep_list );
       int_vector_append( node->tstep_list , tstep );
@@ -154,8 +155,9 @@ void local_obsdata_node_add_tstep( local_obsdata_node_type * node, int tstep) {
         int_vector_sort( node->tstep_list);
     } else
       int_vector_append( node->tstep_list , tstep );
+
+    node->all_timestep_active = false;
   }
-  node->all_timestep_active = false;
 }
 
 

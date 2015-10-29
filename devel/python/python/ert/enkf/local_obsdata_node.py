@@ -3,10 +3,10 @@ from ert.enkf import ENKF_LIB
 
 class LocalObsdataNode(BaseCClass):
 
-    def __init__(self, obs_key):
+    def __init__(self, obs_key , all_timestep_active = True):
         assert isinstance(obs_key, str)
 
-        c_pointer = LocalObsdataNode.cNamespace().alloc(obs_key)
+        c_pointer = LocalObsdataNode.cNamespace().alloc(obs_key , all_timestep_active)
         super(LocalObsdataNode, self).__init__(c_pointer)
 
     def getKey(self):
@@ -41,7 +41,7 @@ class LocalObsdataNode(BaseCClass):
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("local_obsdata_node", LocalObsdataNode)
 
-LocalObsdataNode.cNamespace().alloc            = cwrapper.prototype("c_void_p local_obsdata_node_alloc(char*)")
+LocalObsdataNode.cNamespace().alloc            = cwrapper.prototype("c_void_p local_obsdata_node_alloc(char* , bool)")
 LocalObsdataNode.cNamespace().free             = cwrapper.prototype("void local_obsdata_node_free(local_obsdata_node)")
 LocalObsdataNode.cNamespace().get_key          = cwrapper.prototype("char* local_obsdata_node_get_key(local_obsdata_node)")
 LocalObsdataNode.cNamespace().add_range        = cwrapper.prototype("void local_obsdata_node_add_range(local_obsdata_node, int, int)")

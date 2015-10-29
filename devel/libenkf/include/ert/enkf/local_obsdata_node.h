@@ -30,7 +30,7 @@ extern "C" {
 
   typedef struct local_obsdata_node_struct local_obsdata_node_type;
 
-  local_obsdata_node_type   * local_obsdata_node_alloc( const char * obs_key );
+  local_obsdata_node_type   * local_obsdata_node_alloc( const char * obs_key , bool all_timestep_active );
   local_obsdata_node_type   * local_obsdata_node_alloc_copy( const local_obsdata_node_type * src);
   const char                * local_obsdata_node_get_key( const local_obsdata_node_type * node );
   void                        local_obsdata_node_free( local_obsdata_node_type * node );

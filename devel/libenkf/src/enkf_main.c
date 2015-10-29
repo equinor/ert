@@ -1047,20 +1047,22 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
 
     {
       matrix_type * S      = meas_data_allocS( meas_data );
-      matrix_type * dObs   = obs_data_allocdObs( obs_data );
-      double truncation    = -1;
-      int ncomp            = -1;
+      if (S) {
+        matrix_type * dObs   = obs_data_allocdObs( obs_data );
+        double truncation    = -1;
+        int ncomp            = -1;
 
-      if (truncation_or_ncomp < 1)
-        truncation = truncation_or_ncomp;
-      else
-        ncomp = (int) truncation_or_ncomp;
+        if (truncation_or_ncomp < 1)
+          truncation = truncation_or_ncomp;
+        else
+          ncomp = (int) truncation_or_ncomp;
 
-      obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
-      enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
+        obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
+        enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
 
-      matrix_free( S );
-      matrix_free( dObs );
+        matrix_free( S );
+        matrix_free( dObs );
+      }
     }
 
     bool_vector_free( ens_mask );
@@ -2223,7 +2225,7 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
       hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_main->obs );
       while ( !hash_iter_is_complete(obs_iter) ) {
         const char * obs_key = hash_iter_get_next_key( obs_iter );
-        local_obsdata_node_type * obsdata_node = local_obsdata_node_alloc( obs_key );
+        local_obsdata_node_type * obsdata_node = local_obsdata_node_alloc( obs_key , true );
         local_obsdata_add_node(obsdata, obsdata_node );
       }
       local_ministep_add_obsdata(ministep, obsdata);
