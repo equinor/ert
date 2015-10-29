@@ -92,7 +92,7 @@ void enkf_tui_QC_plot_PC_list( void * arg ) {
 
     for (int iobs = 0; iobs < stringlist_get_size(obs_keys); iobs++)
     {
-      local_obsdata_node_type * obsnode = local_obsdata_node_alloc(stringlist_iget(obs_keys, iobs));
+      local_obsdata_node_type * obsnode = local_obsdata_node_alloc(stringlist_iget(obs_keys, iobs), true);
       local_obsdata_type * obsdata = local_obsdata_alloc_wrapper(obsnode);
       local_obsdata_node_add_range(obsnode, 0, last_report);
       {
@@ -165,7 +165,7 @@ void enkf_tui_QC_plot_PC( void * arg ) {
       for (iobs = 0; iobs < stringlist_get_size( obs_keys); iobs++) {
         const char * obs_key = stringlist_iget( obs_keys , iobs );
         if (!local_obsdata_has_node( obsdata , obs_key )) {
-          local_obsdata_node_type * obs_node = local_obsdata_node_alloc( obs_key );
+          local_obsdata_node_type * obs_node = local_obsdata_node_alloc( obs_key , true);
 
           local_obsdata_node_add_range( obs_node , step1 , step2 );
           local_obsdata_add_node( obsdata , obs_node );
