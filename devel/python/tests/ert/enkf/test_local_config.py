@@ -101,7 +101,7 @@ class LocalConfigTest(ExtendedTestCase):
         self.assertTrue(isinstance(data_scale, LocalDataset))
         
         # Try to add existing dataset
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             local_config.createDataset("DATA_SCALE")
         
         with self.assertRaises(KeyError):
@@ -134,7 +134,7 @@ class LocalConfigTest(ExtendedTestCase):
         self.assertTrue(isinstance(local_obs_data_1, LocalObsdata))
         
         # Try to add existing obsdata
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             local_config.createObsdata("OBSSET_1")
 
         # Add node with range

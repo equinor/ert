@@ -80,7 +80,7 @@ class LocalConfig(BaseCClass):
         """ @rtype: Obsdata """
         assert isinstance(obsdata_key, str)
         if LocalConfig.cNamespace().has_obsdata(self, obsdata_key):
-            raise KeyError("Tried to add existing observation key:%s " % obsdata_key)
+            raise ValueError("Tried to add existing observation key:%s " % obsdata_key)
         
         LocalConfig.cNamespace().create_obsdata(self, obsdata_key)  
         obsdata = self.getObsdata(obsdata_key)
@@ -101,7 +101,7 @@ class LocalConfig(BaseCClass):
         """ @rtype: Dataset """
         assert isinstance(dataset_key, str)
         if LocalConfig.cNamespace().has_dataset(self, dataset_key):
-            raise KeyError("Tried to add existing data key:%s " % dataset_key)
+            raise ValueError("Tried to add existing data key:%s " % dataset_key)
         
         LocalConfig.cNamespace().create_dataset(self, dataset_key)  
         data = self.getDataset(dataset_key)
