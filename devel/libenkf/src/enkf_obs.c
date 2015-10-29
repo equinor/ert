@@ -1193,22 +1193,23 @@ double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs , enkf_fs_ty
   bool_vector_type * ens_mask = int_vector_alloc_mask( ens_active_list );
   meas_data_type * meas_data = meas_data_alloc( ens_mask );
   obs_data_type * obs_data = obs_data_alloc( 1.0 );
-  double scale_factor;
+  double scale_factor = 1.0;
 
   enkf_obs_get_obs_and_measure_data( enkf_obs , fs , local_obsdata , state , ens_active_list , meas_data , obs_data );
   {
     matrix_type * S      = meas_data_allocS( meas_data );
-    double truncation    = 0.95;
-    int num_PC;
+    if (S) {
+      double truncation    = 0.95;
+      int num_PC;
 
-    obs_data_scale( obs_data , S , NULL , NULL , NULL , NULL );
-    num_PC = enkf_linalg_num_PC( S , truncation );
-    scale_factor = sqrt( obs_data_get_active_size( obs_data ) / num_PC );
+      obs_data_scale( obs_data , S , NULL , NULL , NULL , NULL );
+      num_PC = enkf_linalg_num_PC( S , truncation );
+      scale_factor = sqrt( obs_data_get_active_size( obs_data ) / num_PC );
 
-    matrix_free( S );
+      matrix_free( S );
+      enkf_obs_local_scale_std( enkf_obs , local_obsdata , scale_factor );
+    }
   }
-  enkf_obs_local_scale_std( enkf_obs , local_obsdata , scale_factor );
-
   meas_data_free( meas_data );
   obs_data_free( obs_data );
   bool_vector_free( ens_mask );
