@@ -75,14 +75,13 @@ object as:
         else:
             raise KeyError("Unknown key:%s" % key)                
     
-    def addNode(self, key, add_all_timesteps = False):
+    def addNode(self, key, add_all_timesteps = True):
         """ @rtype: LocalObsdataNode """           
         assert isinstance(key, str)
         if key in self.obs:
-            node = LocalObsdataNode(key) 
+            node = LocalObsdataNode(key , add_all_timesteps) 
             if node not in self:
                 node.convertToCReference(self)
-                node.setAllTimeStepActive( add_all_timesteps )
                 LocalObsdata.cNamespace().add_node(self, node)
                 return node
             else:
@@ -107,7 +106,7 @@ object as:
 
         
     def addObsVector(self , obs_vector):
-        self.addNode( obs_vector.createLocalObs().getKey() )
+        self.addNode( obs_vector.getObservationKey() )
 
         
     def getName(self):

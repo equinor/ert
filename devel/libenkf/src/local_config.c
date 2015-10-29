@@ -1024,7 +1024,7 @@ static void local_config_ADD_OBS( local_config_type * config , local_context_typ
   char * obs_key  = read_alloc_string( stream , binary );
   {
     local_obsdata_type * obsdata = local_config_get_obsdata( config , obs_name );
-    local_obsdata_node_type * obsdata_node = local_obsdata_node_alloc( obs_key );
+    local_obsdata_node_type * obsdata_node = local_obsdata_node_alloc( obs_key , false );
 
     /*
       The local_obsdata_node should hold it's own active time-step
