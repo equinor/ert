@@ -1297,23 +1297,26 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 
 
 
-      /* Copy all the parameter nodes. */
+      /* Copy all the parameter nodes from source case to target case;
+         nodes which are updated will be fetched from the new target
+         case, and nodes which are not updated will be manually copied
+         over there.
+      */
+
       if (target_fs != source_fs) {
 	stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER );
 	for (int i=0; i < stringlist_get_size( param_keys ); i++) {
 	  const char * key = stringlist_iget( param_keys , i );
-	  if (local_updatestep_has_data_key(updatestep, key)) {
-	    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
-	    enkf_node_type * data_node = enkf_node_alloc( config_node );
-	    for (int j=0; j < int_vector_size( ens_active_list ); j++) {
-	      node_id_type node_id = {.iens = int_vector_iget( ens_active_list , j ),
-				      .state = FORECAST ,
-				      .report_step = 0 };
-	      enkf_node_load( data_node , source_fs , node_id );
-	      enkf_node_store( data_node , target_fs , false , node_id );
-	    }
-	    enkf_node_free( data_node );
-	  }
+          enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+          enkf_node_type * data_node = enkf_node_alloc( config_node );
+          for (int j=0; j < int_vector_size(ens_active_list); j++) {
+            node_id_type node_id = {.iens = int_vector_iget( ens_active_list , j ),
+                                    .state = FORECAST ,
+                                    .report_step = 0 };
+            enkf_node_load( data_node , source_fs , node_id );
+            enkf_node_store( data_node , target_fs , false , node_id );
+          }
+          enkf_node_free( data_node );
 	}
 	stringlist_free( param_keys );
       }
@@ -1406,28 +1409,6 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
         state_map_set_from_mask( target_state_map , ens_mask , STATE_INITIALIZED );
         enkf_fs_fsync( target_fs );
       }
-
-      /* Copy all the nodes which have been updates */
-      if (target_fs != source_fs) {
-        stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER );
-        for (int i=0; i < stringlist_get_size( param_keys ); i++) {
-          const char * key = stringlist_iget( param_keys , i );
-          if (!local_updatestep_has_data_key(updatestep, key)) {
-            enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
-            enkf_node_type * data_node = enkf_node_alloc( config_node );
-            for (int j=0; j < int_vector_size( ens_active_list ); j++) {
-              node_id_type node_id = {.iens = int_vector_iget( ens_active_list , j ),
-                                      .state = FORECAST ,
-                                      .report_step = 0 };
-              enkf_node_load( data_node , source_fs , node_id );
-              enkf_node_store( data_node , target_fs , false , node_id );
-            }
-            enkf_node_free( data_node );
-          }
-        }
-        stringlist_free( param_keys );
-      }
-
     }
     bool_vector_free( ens_mask );
     int_vector_free( ens_active_list );
