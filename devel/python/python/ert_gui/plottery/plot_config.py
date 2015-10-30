@@ -22,6 +22,7 @@ class PlotConfig(object):
         self.__refcase_style = PlotStyle(name="Refcase", alpha=0.8, marker="x", width=2.0)
         self.__observation_style = PlotStyle(name="Observations")
         self.__histogram_style = PlotStyle(name="Histogram", width=2.0)
+        self.__distribution_style = PlotStyle(name="Distribution", line_style="", marker="o", alpha=0.8, width=10.0)
         self.__current_color = None
 
         self.__legend_enabled = True
@@ -79,6 +80,13 @@ class PlotConfig(object):
         """ @rtype: PlotStyle """
         style = PlotStyle("Histogram Style")
         style.copyStyleFrom(self.__histogram_style)
+        style.color = self.currentColor()
+        return style
+
+    def distributionStyle(self):
+        """ @rtype: PlotStyle """
+        style = PlotStyle("Distribution Style")
+        style.copyStyleFrom(self.__distribution_style)
         style.color = self.currentColor()
         return style
 

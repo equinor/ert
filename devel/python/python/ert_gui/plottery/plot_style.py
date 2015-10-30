@@ -6,7 +6,7 @@ class PlotStyle(object):
         self.alpha = alpha
         self.line_style = line_style
         self.marker = marker
-        self.width = width
+        self.width = width    # todo: differentiate between line_width and marker_size?
         self.__enabled = True
         self.__is_copy = False
 
