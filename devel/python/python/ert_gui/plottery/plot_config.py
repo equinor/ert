@@ -1,4 +1,5 @@
 import itertools
+from ert_gui.plottery import PlotStyle
 
 
 class PlotConfig(object):
@@ -17,37 +18,33 @@ class PlotConfig(object):
         self.__x_label = x_label
         self.__y_label = y_label
 
-
-        self.__line_color = None
-        self.__line_style = "-"
-        self.__line_alpha = 0.8
-        self.__line_marker = None
-
-        self.__observations_enabled = True
-        self.__observations_color = "#000000" #Black
-        self.__observations_alpha = 1.0
-
-        self.__refcase_enabled = True
-        self.__refcase_color = "#000000" #Black
-        self.__refcase_alpha = 0.8
-        self.__refcase_style = "-"
-        self.__refcase_marker = "x"
-        self.__refcase_width = 2.0
+        self.__default_style = PlotStyle(name="Default", color=None, alpha=0.8)
+        self.__refcase_style = PlotStyle(name="Refcase", alpha=0.8, marker="x", width=2.0)
+        self.__observation_style = PlotStyle(name="Observations")
+        self.__histogram_style = PlotStyle(name="Histogram", width=2.0)
+        self.__current_color = None
 
         self.__legend_enabled = True
         self.__grid_enabled = True
         self.__date_support_active = True
 
+        self.__statistics_style = {
+            "mean": PlotStyle("Mean", line_style="", alpha=0.8),
+            "p50": PlotStyle("P50", line_style="", alpha=0.8),
+            "min-max": PlotStyle("Min/Max", line_style="", alpha=0.8),
+            "p10-p90": PlotStyle("P10-P90", line_style="", alpha=0.8),
+            "p33-p67": PlotStyle("P33-P67", line_style="", alpha=0.8)
+        }
 
-    def lineColor(self):
-        if self.__line_color is None:
+    def currentColor(self):
+        if self.__current_color is None:
             self.nextColor()
 
-        return self.__line_color
+        return self.__current_color
 
     def nextColor(self):
-        self.__line_color = self.__line_color_cycle.next()
-        return self.__line_color
+        self.__current_color = self.__line_color_cycle.next()
+        return self.__current_color
 
     def setLineColorCycle(self, color_list):
         self.__line_color_cycle = itertools.cycle(color_list)
@@ -60,14 +57,30 @@ class PlotConfig(object):
         """ :rtype: str """
         return self.__title
 
-    def lineStyle(self):
-        return self.__line_style
+    def defaultStyle(self):
+        style = PlotStyle("Default Style")
+        style.copyStyleFrom(self.__default_style)
+        style.color = self.currentColor()
+        return style
 
-    def lineAlpha(self):
-        return self.__line_alpha
+    def observationsStyle(self):
+        """ @rtype: PlotStyle """
+        style = PlotStyle("Observations Style")
+        style.copyStyleFrom(self.__observation_style)
+        return style
 
-    def lineMarker(self):
-        return self.__line_marker
+    def refcaseStyle(self):
+        """ @rtype: PlotStyle """
+        style = PlotStyle("Refcase Style")
+        style.copyStyleFrom(self.__refcase_style)
+        return style
+
+    def histogramStyle(self):
+        """ @rtype: PlotStyle """
+        style = PlotStyle("Histogram Style")
+        style.copyStyleFrom(self.__histogram_style)
+        style.color = self.currentColor()
+        return style
 
     def xLabel(self):
         return self.__x_label
@@ -87,41 +100,17 @@ class PlotConfig(object):
     def setYLabel(self, label):
         self.__y_label = label
 
-
     def setObservationsEnabled(self, enabled):
-        self.__observations_enabled = enabled
+        self.__observation_style.setEnabled(enabled)
 
     def isObservationsEnabled(self):
-        return self.__observations_enabled
-
-    def observationsColor(self):
-        return self.__observations_color
-
-    def observationsAlpha(self):
-        return self.__observations_alpha
-
+        return self.__observation_style.isEnabled()
 
     def setRefcaseEnabled(self, enabled):
-        self.__refcase_enabled = enabled
+        self.__refcase_style.setEnabled(enabled)
 
     def isRefcaseEnabled(self):
-        return self.__refcase_enabled
-
-    def refcaseColor(self):
-        return self.__refcase_color
-
-    def refcaseAlpha(self):
-        return self.__refcase_alpha
-
-    def refcaseStyle(self):
-        return self.__refcase_style
-
-    def refcaseMarker(self):
-        return self.__refcase_marker
-
-    def refcaseWidth(self):
-        return self.__refcase_width
-
+        return self.__refcase_style.isEnabled()
 
     def isLegendEnabled(self):
         return self.__legend_enabled
@@ -129,15 +118,34 @@ class PlotConfig(object):
     def setLegendEnabled(self, enabled):
         self.__legend_enabled = enabled
 
-
     def isGridEnabled(self):
         return self.__grid_enabled
 
     def setGridEnabled(self, enabled):
         self.__grid_enabled = enabled
 
-    def deactiveDateSupport(self):
+    def deactivateDateSupport(self):
         self.__date_support_active = False
 
     def isDateSupportActive(self):
         return self.__date_support_active
+
+    def setStatisticsStyle(self, statistic, line_style, marker):
+        style = self.__statistics_style[statistic]
+        style.line_style = line_style
+        style.marker = marker
+
+    def getStatisticsStyle(self, statistic):
+        style = self.__statistics_style[statistic]
+        copy_style = PlotStyle(style.name)
+        copy_style.copyStyleFrom(style)
+        copy_style.color = self.currentColor()
+        return copy_style
+
+    def setRefcaseStyle(self, line_style, marker):
+        self.__refcase_style.line_style = line_style
+        self.__refcase_style.marker = marker
+
+    def setDefaultStyle(self, line_style, marker):
+        self.__default_style.line_style = line_style
+        self.__default_style.marker = marker

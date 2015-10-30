@@ -10,6 +10,7 @@ from .plot_case_model import PlotCaseModel
 from .plot_case_selection_widget import CaseSelectionWidget
 
 from .color_chooser import ColorChooser
+from .style_chooser import StyleChooser
 from .customize_plot_widget import CustomizePlotWidget
 
 from .plot_window import PlotWindow

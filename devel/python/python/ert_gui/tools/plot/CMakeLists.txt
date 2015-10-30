@@ -11,6 +11,7 @@ set(PYTHON_SOURCES
     plot_tool.py
     plot_widget.py
     plot_window.py
+    style_chooser.py
 )
 
 add_python_package("python.ert_gui.tools.plot" ${PYTHON_INSTALL_PREFIX}/ert_gui/tools/plot "${PYTHON_SOURCES}" True)

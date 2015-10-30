@@ -1,7 +1,9 @@
 from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QCheckBox, QColor
+from PyQt4.QtGui import QWidget, QVBoxLayout, QCheckBox
 
 from ert_gui.tools.plot import ColorChooser
+from ert_gui.tools.plot.style_chooser import StyleChooser
+
 
 class CustomizePlotWidget(QWidget):
 
@@ -14,10 +16,20 @@ class CustomizePlotWidget(QWidget):
         self.__layout = QVBoxLayout()
 
         self.addCheckBox("show_observations", "Show observations", True)
-        self.addCheckBox("show_refcase", "Show refcase", True)
+        # self.addCheckBox("show_refcase", "Show refcase", True)
         self.addCheckBox("show_legend", "Show legend", True)
         self.addCheckBox("show_grid", "Show grid", True)
-        self.__layout.addSpacing(20)
+
+        self.__layout.addSpacing(10)
+        self.addStyleChooser("default_style", "Default", StyleChooser.STYLE_SOLID, StyleChooser.MARKER_OFF, labeled=True)
+        self.addStyleChooser("refcase_style", "Refcase", StyleChooser.STYLE_SOLID, StyleChooser.MARKER_OFF)
+
+        self.__layout.addSpacing(10)
+        self.addStyleChooser("mean_style", "Mean", StyleChooser.STYLE_SOLID, StyleChooser.MARKER_OFF)
+        self.addStyleChooser("p50_style", "P50", StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF)
+        self.addStyleChooser("min-max_style", "Min/Max", StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF, True)
+        self.addStyleChooser("p10-p90_style", "P10-P90", StyleChooser.STYLE_DASHED, StyleChooser.MARKER_OFF, True)
+        self.addStyleChooser("p33-p67_style", "P33-P67", StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF, True)
 
         # self.addColorChooser("observation", "Observation", QColor(0, 0, 0, 255))
         # self.addColorChooser("observation_area", "Observation Error", QColor(0, 0, 0, 38))
@@ -64,7 +76,16 @@ class CustomizePlotWidget(QWidget):
             self.emitChange()
 
         color_chooser.colorChanged.connect(colorChanged)
-
         self.__layout.addWidget(color_chooser)
 
 
+    def addStyleChooser(self, name, description, line_style=StyleChooser.STYLE_OFF, marker_style=StyleChooser.MARKER_OFF, area_supported=False, labeled=False):
+        style_chooser = StyleChooser(description, line_style, marker_style, area_supported, labeled)
+        self.__custom[name] = (line_style[1], marker_style[1]) # not pretty
+
+        def styleChanged(line, marker):
+            self.__custom[name] = (str(line), str(marker))
+            self.emitChange()
+
+        style_chooser.styleChanged.connect(styleChanged)
+        self.__layout.addWidget(style_chooser)
