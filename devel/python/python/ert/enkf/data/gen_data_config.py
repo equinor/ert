@@ -62,11 +62,21 @@ class GenDataConfig(BaseCClass):
         """ @rtype: bool """
         return GenDataConfig.cNamespace().has_report_step(self, report_step)
 
+    def getNumReportStep(self):
+        """ @rtype: int """
+        return GenDataConfig.cNamespace().get_num_report_step(self)
+
+    def getReportStep(self, index):
+        """ @rtype: int """
+        return GenDataConfig.cNamespace().iget_report_step(self, index)
+
+    def getReportSteps(self):
+        """ @rtype: list of int """
+        return [self.getReportStep(index) for index in range(self.getNumReportStep())]
+
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("gen_data_config", GenDataConfig)
-cwrapper.registerType("gen_data_config_obj", GenDataConfig.createPythonObject)
-cwrapper.registerType("gen_data_config_ref", GenDataConfig.createCReference)
+cwrapper.registerObjectType("gen_data_config", GenDataConfig)
 
 
 GenDataConfig.cNamespace().alloc = cwrapper.prototype("c_void_p gen_data_config_alloc_GEN_DATA_result( char* , gen_data_file_format_type)")
@@ -80,4 +90,7 @@ GenDataConfig.cNamespace().has_report_step = cwrapper.prototype("bool gen_data_c
 GenDataConfig.cNamespace().get_data_size    = cwrapper.prototype("int gen_data_config_get_data_size__(gen_data_config , int)")
 GenDataConfig.cNamespace().get_key          = cwrapper.prototype("char* gen_data_config_get_key(gen_data_config)")
 GenDataConfig.cNamespace().get_active_mask  = cwrapper.prototype("bool_vector_ref gen_data_config_get_active_mask(gen_data_config)")
+
+GenDataConfig.cNamespace().get_num_report_step = cwrapper.prototype("int gen_data_config_num_report_step(gen_data_config)")
+GenDataConfig.cNamespace().iget_report_step    = cwrapper.prototype("int gen_data_config_iget_report_step(gen_data_config, int)")
 

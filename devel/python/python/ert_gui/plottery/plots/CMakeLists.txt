@@ -4,7 +4,6 @@ set(PYTHON_SOURCES
     gaussian_kde.py
     histogram.py
     observations.py
-    overview.py
     plot_tools.py
     refcase.py
     statistics.py

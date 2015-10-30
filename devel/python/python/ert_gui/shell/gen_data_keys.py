@@ -1,6 +1,7 @@
 from ert.enkf import ErtImplType, EnkfObservationImplementationType
 from ert.enkf.export import GenDataCollector
 from ert.enkf.export.gen_data_observation_collector import GenDataObservationCollector
+from ert.enkf.key_manager import KeyManager
 from ert_gui.shell import ShellFunction, extractFullArgument, autoCompleteListWithSeparator, ShellPlot, \
     assertConfigLoaded
 from ert_gui.shell.shell_tools import matchItems
@@ -15,18 +16,8 @@ class GenDataKeys(ShellFunction):
 
 
     def fetchSupportedKeys(self):
-        gen_data_keys = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA)
-        gen_data_list = []
-        for key in gen_data_keys:
-            enkf_config_node = self.ert().ensembleConfig().getNode(key)
-            gen_data_config = enkf_config_node.getDataModelConfig()
-
-            for report_step in range(self.ert().getHistoryLength() + 1):
-                if gen_data_config.hasReportStep(report_step):
-                    gen_data_list.append("%s@%d" % (key, report_step))
-
-        return gen_data_list
-
+        key_manager = KeyManager(self.ert())
+        return key_manager.genDataKeys()
 
     @assertConfigLoaded
     def do_list(self, line):
