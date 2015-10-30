@@ -55,6 +55,7 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget("Statistics", plots.plotStatistics, [summary_gatherer, gen_data_gatherer])
         self.addPlotWidget("Histogram", plots.plotHistogram, [gen_kw_gatherer, custom_kw_gatherer])
         self.addPlotWidget("Gaussian KDE", plots.plotGaussianKDE, [gen_kw_gatherer, custom_kw_gatherer])
+        self.addPlotWidget("Distribution", plots.plotDistribution, [gen_kw_gatherer, custom_kw_gatherer])
 
 
         self.__data_types_key_model = DataTypeKeysListModel(ert)
