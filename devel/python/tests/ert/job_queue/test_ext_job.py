@@ -1,16 +1,15 @@
 from workflow_common import WorkflowCommon
-from ert.test import TestAreaContext
-from ert_statoil.testcase import TestCase
+from ert.test import TestAreaContext, ExtendedTestCase
+
 
 from ert.job_queue.ext_job import ExtJob
 
 
 
-class ExtJobTest(TestCase):
+class ExtJobTest(ExtendedTestCase):
     def test_load_forward_model(self):
         with TestAreaContext("python/job_queue/workflow_job") as work_area:
             WorkflowCommon.createExternalDumpJob()
-
             try:
                 ExtJob("dump_job",work_area.get_cwd(),False,"dump_job")
             except :
