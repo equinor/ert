@@ -28,7 +28,7 @@ class StyleChooser(QWidget):
     def __init__(self, label, line_style=STYLE_OFF, marker_style=MARKER_OFF, area_supported=False, labeled=False):
         QWidget.__init__(self)
 
-        styles = StyleChooser.STYLES if area_supported else StyleChooser.STYLES_LINE_ONLY
+        self.__styles = StyleChooser.STYLES if area_supported else StyleChooser.STYLES_LINE_ONLY
 
         self.setMinimumWidth(140)
         if labeled:
@@ -42,7 +42,7 @@ class StyleChooser(QWidget):
 
         self.line_chooser = QComboBox()
         self.line_chooser.setToolTip("Select line style.")
-        for style in styles:
+        for style in self.__styles:
             self.line_chooser.addItem(*style)
 
         self.marker_chooser = QComboBox()
@@ -69,7 +69,7 @@ class StyleChooser(QWidget):
         self.line_chooser.currentIndexChanged.connect(self.updateStyle)
         self.marker_chooser.currentIndexChanged.connect(self.updateStyle)
 
-        self.line_chooser.setCurrentIndex(styles.index(line_style))
+        self.line_chooser.setCurrentIndex(self.__styles.index(line_style))
         self.marker_chooser.setCurrentIndex(StyleChooser.MARKERS.index(marker_style))
 
     def _createLabeledChooser(self, label, chooser):
@@ -81,9 +81,10 @@ class StyleChooser(QWidget):
         labeled_line_chooser.setLayout(llc_layout)
         return labeled_line_chooser
 
-    def setStyle(self, style):
-        self.line_chooser.style = style
-        self.line_chooser.update()
+    def updateLineStyleAndMarker(self, line_style, marker):
+        self.line_chooser.setCurrentIndex(self.__styles.index(line_style))
+        self.marker_chooser.setCurrentIndex(StyleChooser.MARKERS.index(marker))
+
 
     def updateStyle(self):
         self.marker_chooser.setEnabled(self.line_chooser.currentText() != "Area")
