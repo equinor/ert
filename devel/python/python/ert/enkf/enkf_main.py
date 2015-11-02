@@ -32,8 +32,8 @@ def stringObj(c_ptr):
     return python_string
 
 class EnKFMain(BaseCClass):
-    def __init__(self, model_config, strict=True):
-        c_ptr = EnKFMain.cNamespace().bootstrap(model_config, strict, False)
+    def __init__(self, model_config, strict = True, verbose = True):
+        c_ptr = EnKFMain.cNamespace().bootstrap(model_config, strict, verbose)
         super(EnKFMain, self).__init__(c_ptr)
 
         # The model_config argument can be None; the only reason to
