@@ -30,11 +30,11 @@ class PlotConfig(object):
         self.__date_support_active = True
 
         self.__statistics_style = {
-            "mean": PlotStyle("Mean", line_style="", alpha=0.8),
-            "p50": PlotStyle("P50", line_style="", alpha=0.8),
-            "min-max": PlotStyle("Min/Max", line_style="", alpha=0.8),
-            "p10-p90": PlotStyle("P10-P90", line_style="", alpha=0.8),
-            "p33-p67": PlotStyle("P33-P67", line_style="", alpha=0.8)
+            "mean": PlotStyle("Mean", line_style=""),
+            "p50": PlotStyle("P50", line_style=""),
+            "min-max": PlotStyle("Min/Max", line_style=""),
+            "p10-p90": PlotStyle("P10-P90", line_style=""),
+            "p33-p67": PlotStyle("P33-P67", line_style="")
         }
 
     def currentColor(self):

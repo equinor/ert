@@ -1,85 +1,32 @@
-from ert.enkf import ErtImplType, EnkfObservationImplementationType
-from ert.enkf.export import GenDataCollector
-from ert.enkf.export.gen_data_observation_collector import GenDataObservationCollector
-from ert.enkf.key_manager import KeyManager
-from ert_gui.shell import ShellFunction, extractFullArgument, autoCompleteListWithSeparator, ShellPlot, \
-    assertConfigLoaded
-from ert_gui.shell.shell_tools import matchItems
+from ert_gui.plottery import PlotDataGatherer as PDG
+from ert_gui.shell import ShellFunction, ShellPlot, assertConfigLoaded
 
 
 class GenDataKeys(ShellFunction):
     def __init__(self, shell_context):
         super(GenDataKeys, self).__init__("gen_data", shell_context)
-        self.addHelpFunction("list", None, "Shows a list of all available gen_data keys.")
-        self.addHelpFunction("plot", "<key_1> [key_2..key_n]", "Plot the specified key(s).")
-        self.addHelpFunction("print", "<key_1> [key_2..key_n]", "Print the values for the specified key(s).")
+        self.addHelpFunction("list", None, "Shows a list of all available GenData keys.")
+
+        self.__plot_data_gatherer = None
+
+        ShellPlot.addPrintSupport(self, "GenData")
+        ShellPlot.addEnsemblePlotSupport(self, "GenData")
+        ShellPlot.addQuantilesPlotSupport(self, "GenData")
 
 
     def fetchSupportedKeys(self):
-        key_manager = KeyManager(self.ert())
-        return key_manager.genDataKeys()
+        return self.ert().getKeyManager().genDataKeys()
+
+    def plotDataGatherer(self):
+        if self.__plot_data_gatherer is None:
+            gen_data_pdg = PDG.gatherGenDataData
+            gen_data_key_manager = self.ert().getKeyManager().isGenDataKey
+            gen_data_observation_pdg = PDG.gatherGenDataObservationData
+            pdg = PDG(gen_data_pdg, gen_data_key_manager, observationGatherFunc=gen_data_observation_pdg)
+            self.__plot_data_gatherer = pdg
+
+        return self.__plot_data_gatherer
 
     @assertConfigLoaded
     def do_list(self, line):
-        keys = sorted(self.fetchSupportedKeys())
-
-        self.columnize(keys)
-
-
-    @assertConfigLoaded
-    def do_plot(self, line):
-        keys = matchItems(line, self.fetchSupportedKeys())
-
-        if len(keys) == 0:
-            self.lastCommandFailed("Must have at least one GenData key")
-            return False
-
-        case_list = self.shellContext()["plot_settings"].getCurrentPlotCases()
-
-        for key in keys:
-            key, report_step = key.split("@", 1)
-            report_step = int(report_step)
-            plot = ShellPlot("%s at report step: %d" %(key, report_step))
-            for case_name in case_list:
-                data = GenDataCollector.loadGenData(self.ert(), case_name, key, report_step)
-
-                if not data.empty:
-                    plot.plotGenData(data, legend_label=case_name)
-
-                obs_key = GenDataObservationCollector.getObservationKeyForDataKey(self.ert(), key, report_step)
-
-                if obs_key is not None:
-                    obs_data = GenDataObservationCollector.loadGenDataObservations(self.ert(), case_name, obs_key)
-
-                    if not obs_data.empty:
-                        plot.plotObservations(obs_data, obs_key)
-
-            plot.showLegend()
-
-
-    @assertConfigLoaded
-    def complete_plot(self, text, line, begidx, endidx):
-        key = extractFullArgument(line, endidx)
-        return autoCompleteListWithSeparator(key, self.fetchSupportedKeys())
-
-    @assertConfigLoaded
-    def do_print(self, line):
-        keys = matchItems(line, self.fetchSupportedKeys())
-
-        if len(keys) == 0:
-            self.lastCommandFailed("Must have at least one GenData key")
-            return False
-
-        case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
-
-        for key in keys:
-            key, report_step = key.split("@", 1)
-            report_step = int(report_step)
-            data = GenDataCollector.loadGenData(self.ert(), case_name, key, report_step)
-            print(data)
-
-
-    @assertConfigLoaded
-    def complete_print(self, text, line, begidx, endidx):
-        key = extractFullArgument(line, endidx)
-        return autoCompleteListWithSeparator(key, self.fetchSupportedKeys())
+        self.columnize(self.fetchSupportedKeys())
