@@ -1,0 +1,1 @@
+[Feature]  Set the the verbose flag from the environment variable ERT_VERBOSE.
