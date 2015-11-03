@@ -203,7 +203,9 @@ def main(argv):
     strict = True
         
     verbose = False
-    if os.getenv("ERT_VERBOSE"):
+    verbose_var = os.getenv("ERT_VERBOSE")
+    lower_verbose_var = verbose_var.lower() 
+    if lower_verbose_var == "true": 
         verbose = True
 
 
