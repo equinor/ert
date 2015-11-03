@@ -201,6 +201,7 @@ def main(argv):
     help_center.setHelpMessageLink("welcome_to_ert")
 
     strict = True
+    verbose = True
 
     if not os.path.exists(config_file):
         print("Trying to start new config")
@@ -235,7 +236,7 @@ def main(argv):
     now = time.time()
 
 
-    ert = Ert(EnKFMain(config_file, strict=strict))
+    ert = Ert(EnKFMain(config_file, strict=strict, verbose=verbose))
     ErtConnector.setErt(ert.ert())
 
     window = GertMainWindow()
