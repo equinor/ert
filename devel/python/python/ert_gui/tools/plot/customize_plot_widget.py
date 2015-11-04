@@ -1,8 +1,11 @@
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import QWidget, QVBoxLayout, QCheckBox
+from ert_gui.models.mixins.connectorless.default_choice_list_model import DefaultChoiceListModel
 
 from ert_gui.tools.plot import ColorChooser
 from ert_gui.tools.plot.style_chooser import StyleChooser
+from ert_gui.widgets import combo_choice
+from ert_gui.widgets.combo_choice import ComboChoice
 
 
 class CustomizePlotWidget(QWidget):
@@ -12,6 +15,7 @@ class CustomizePlotWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.__custom = { }
+        self.__style_choosers = {}
 
         self.__layout = QVBoxLayout()
 
@@ -24,12 +28,16 @@ class CustomizePlotWidget(QWidget):
         self.addStyleChooser("default_style", "Default", StyleChooser.STYLE_SOLID, StyleChooser.MARKER_OFF, labeled=True)
         self.addStyleChooser("refcase_style", "Refcase", StyleChooser.STYLE_SOLID, StyleChooser.MARKER_OFF)
 
-        self.__layout.addSpacing(10)
+        self.__layout.addSpacing(20)
+        self.addPresets("Presets", ["Default", "Overview", "All statistics"], self.applyPreset)
+
+        self.__layout.addSpacing(5)
         self.addStyleChooser("mean_style", "Mean", StyleChooser.STYLE_SOLID, StyleChooser.MARKER_OFF)
         self.addStyleChooser("p50_style", "P50", StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF)
         self.addStyleChooser("min-max_style", "Min/Max", StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF, True)
         self.addStyleChooser("p10-p90_style", "P10-P90", StyleChooser.STYLE_DASHED, StyleChooser.MARKER_OFF, True)
         self.addStyleChooser("p33-p67_style", "P33-P67", StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF, True)
+
 
         # self.addColorChooser("observation", "Observation", QColor(0, 0, 0, 255))
         # self.addColorChooser("observation_area", "Observation Error", QColor(0, 0, 0, 38))
@@ -81,6 +89,7 @@ class CustomizePlotWidget(QWidget):
 
     def addStyleChooser(self, name, description, line_style=StyleChooser.STYLE_OFF, marker_style=StyleChooser.MARKER_OFF, area_supported=False, labeled=False):
         style_chooser = StyleChooser(description, line_style, marker_style, area_supported, labeled)
+        self.__style_choosers[name] = style_chooser
         self.__custom[name] = (line_style[1], marker_style[1]) # not pretty
 
         def styleChanged(line, marker):
@@ -89,3 +98,47 @@ class CustomizePlotWidget(QWidget):
 
         style_chooser.styleChanged.connect(styleChanged)
         self.__layout.addWidget(style_chooser)
+
+    def addPresets(self, name, presets, presetFunction):
+        model = DefaultChoiceListModel(presets)
+        combo_choice = ComboChoice(model, name)
+        combo_choice.includeLabel()
+
+        def selectionChanged():
+            current = model.getCurrentChoice()
+            presetFunction(current)
+
+        model.observable().attach(model.CURRENT_CHOICE_CHANGED_EVENT, selectionChanged)
+
+        self.__layout.addWidget(combo_choice)
+
+    def applyPreset(self, preset_name):
+        blocked = self.signalsBlocked()
+        self.blockSignals(True)
+        print("Applying preset for %s" % preset_name)
+
+        if preset_name == "Default":
+            self.__style_choosers["mean_style"].updateLineStyleAndMarker(StyleChooser.STYLE_SOLID, StyleChooser.MARKER_OFF)
+            self.__style_choosers["p50_style"].updateLineStyleAndMarker(StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF)
+            self.__style_choosers["min-max_style"].updateLineStyleAndMarker(StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF)
+            self.__style_choosers["p10-p90_style"].updateLineStyleAndMarker(StyleChooser.STYLE_DASHED, StyleChooser.MARKER_OFF)
+            self.__style_choosers["p33-p67_style"].updateLineStyleAndMarker(StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF)
+
+        elif preset_name ==  "Overview":
+            self.__style_choosers["mean_style"].updateLineStyleAndMarker(StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF)
+            self.__style_choosers["p50_style"].updateLineStyleAndMarker(StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF)
+            self.__style_choosers["min-max_style"].updateLineStyleAndMarker(StyleChooser.STYLE_AREA, StyleChooser.MARKER_OFF)
+            self.__style_choosers["p10-p90_style"].updateLineStyleAndMarker(StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF)
+            self.__style_choosers["p33-p67_style"].updateLineStyleAndMarker(StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF)
+
+        elif preset_name == "All statistics":
+            self.__style_choosers["mean_style"].updateLineStyleAndMarker(StyleChooser.STYLE_SOLID, StyleChooser.MARKER_OFF)
+            self.__style_choosers["p50_style"].updateLineStyleAndMarker(StyleChooser.STYLE_DASHED, StyleChooser.MARKER_X)
+            self.__style_choosers["min-max_style"].updateLineStyleAndMarker(StyleChooser.STYLE_DASHED, StyleChooser.MARKER_OFF)
+            self.__style_choosers["p10-p90_style"].updateLineStyleAndMarker(StyleChooser.STYLE_AREA, StyleChooser.MARKER_OFF)
+            self.__style_choosers["p33-p67_style"].updateLineStyleAndMarker(StyleChooser.STYLE_AREA, StyleChooser.MARKER_OFF)
+
+
+        self.blockSignals(blocked)
+        self.emitChange()
+

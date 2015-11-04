@@ -1,5 +1,4 @@
-from ert_gui.shell import ShellFunction, assertConfigLoaded, autoCompleteList, extractFullArgument, \
-    getPossibleFilenameCompletions
+from ert_gui.shell import ShellFunction, assertConfigLoaded, autoCompleteList, extractFullArgument, getPossibleFilenameCompletions
 
 
 class PlotSettings(ShellFunction):
