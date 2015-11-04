@@ -2,7 +2,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.plottery import PlotContext, PlotDataGatherer, PlotConfig, plots
+from ert_gui.plottery import PlotContext, PlotDataGatherer as PDG, PlotConfig, plots
 
 
 from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, CustomizePlotWidget, PlotWidget
@@ -44,7 +44,6 @@ class PlotWindow(QMainWindow):
         self.__data_gatherers = []
         """:type: list of PlotDataGatherer """
 
-        PDG = PlotDataGatherer
         summary_gatherer = self.createDataGatherer(PDG.gatherSummaryData, key_manager.isSummaryKey, refcaseGatherFunc=PDG.gatherSummaryRefcaseData, observationGatherFunc=PDG.gatherSummaryObservationData)
         gen_data_gatherer = self.createDataGatherer(PDG.gatherGenDataData, key_manager.isGenDataKey, observationGatherFunc=PDG.gatherGenDataObservationData)
         gen_kw_gatherer = self.createDataGatherer(PDG.gatherGenKwData, key_manager.isGenKwKey)
@@ -84,7 +83,7 @@ class PlotWindow(QMainWindow):
 
 
     def createDataGatherer(self, dataGatherFunc, gatherConditionFunc, refcaseGatherFunc=None, observationGatherFunc=None):
-        data_gatherer = PlotDataGatherer(dataGatherFunc, gatherConditionFunc, refcaseGatherFunc=refcaseGatherFunc, observationGatherFunc=observationGatherFunc)
+        data_gatherer = PDG(dataGatherFunc, gatherConditionFunc, refcaseGatherFunc=refcaseGatherFunc, observationGatherFunc=observationGatherFunc)
         self.__data_gatherers.append(data_gatherer)
         return data_gatherer
 

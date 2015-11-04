@@ -24,6 +24,9 @@ class PlotStyle(object):
     def setEnabled(self, enabled):
         self.__enabled = enabled
 
+    def isVisible(self):
+        return self.line_style != "" or self.marker != ""
+
     @property
     def name(self):
         return self.__name
