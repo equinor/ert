@@ -201,7 +201,13 @@ def main(argv):
     help_center.setHelpMessageLink("welcome_to_ert")
 
     strict = True
-    verbose = True
+        
+    verbose = False
+    verbose_var = os.getenv("ERT_VERBOSE", "False")
+    lower_verbose_var = verbose_var.lower() 
+    if lower_verbose_var == "true": 
+        verbose = True
+
 
     if not os.path.exists(config_file):
         print("Trying to start new config")
