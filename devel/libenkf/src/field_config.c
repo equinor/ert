@@ -455,6 +455,8 @@ static void field_config_set_init_transform( field_config_type * config , const 
   const char * init_transform_name = NULL;
   if (field_trans_table_has_key( config->trans_table , __init_transform_name))
     init_transform_name = __init_transform_name;
+  else
+    util_abort("%s: transform:%s not recognized \n",__func__ , __init_transform_name);
 
 
   config->init_transform_name = util_realloc_string_copy( config->init_transform_name , init_transform_name );
@@ -469,7 +471,8 @@ static void field_config_set_output_transform( field_config_type * config , cons
   const char * output_transform_name = NULL;
   if (field_trans_table_has_key( config->trans_table , __output_transform_name))
     output_transform_name = __output_transform_name;
-
+  else
+    util_abort("%s: transform:%s not recognized \n",__func__ , __output_transform_name);
 
   config->output_transform_name = util_realloc_string_copy( config->output_transform_name , output_transform_name );
   if (output_transform_name != NULL)
@@ -483,7 +486,8 @@ static void field_config_set_input_transform( field_config_type * config , const
   const char * input_transform_name = NULL;
   if (field_trans_table_has_key( config->trans_table , __input_transform_name))
     input_transform_name = __input_transform_name;
-
+  else
+    util_abort("%s: transform:%s not recognized \n",__func__ , __input_transform_name);
 
   config->input_transform_name = util_realloc_string_copy( config->input_transform_name , input_transform_name );
   if (input_transform_name != NULL)
