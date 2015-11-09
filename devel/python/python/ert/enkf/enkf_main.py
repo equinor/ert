@@ -75,7 +75,7 @@ class EnKFMain(BaseCClass):
         if 0 <= iens < self.getEnsembleSize():
             return EnKFMain.cNamespace().iget_state(self, iens).setParent(self)
         else:
-            raise IndexError("iens value:%d invalid Valid range: [0,%d)" % (iens , len(self)))
+            raise IndexError("iens value:%d invalid Valid range: [0,%d)" % (iens , self.getEnsembleSize()))
 
 
     def set_eclbase(self, eclbase):
