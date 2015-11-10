@@ -4,3 +4,6 @@
 supported transformations.
 
 [Bugfix] Removed reference to undefined EnkFMain.__len__() method.
+
+[Feature] Added small class EclCmp for comparing Eclipse simulation cases.
+
