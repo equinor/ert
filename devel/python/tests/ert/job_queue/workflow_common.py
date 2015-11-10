@@ -5,8 +5,8 @@ class WorkflowCommon(object):
 
     @staticmethod
     def createExternalDumpJobWithError():
-        with open("dump_job1", "w") as f:
-            f.write("EXECUTABLE dump1.py\n")
+        with open("dump_job_error", "w") as f:
+            f.write("EXECUTABLE dump_error.py\n")
 
     @staticmethod
     def createExternalDumpJob():

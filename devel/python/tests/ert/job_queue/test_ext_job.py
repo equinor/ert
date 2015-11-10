@@ -8,7 +8,7 @@ from ert.job_queue.ext_job import ExtJob
 
 class ExtJobTest(ExtendedTestCase):
     def test_load_forward_model(self):
-        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+        with TestAreaContext("python/job_queue/forward_model") as work_area:
             WorkflowCommon.createExternalDumpJob()
             try:
                 ExtJob("dump_job",work_area.get_cwd(),False,"dump_job")
@@ -17,11 +17,11 @@ class ExtJobTest(ExtendedTestCase):
 
 
     def test_load_forward_model_with_error1(self):
-        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+        with TestAreaContext("python/job_queue/forward_model") as work_area:
             self.assertRaises(ValueError, ExtJob,"dump_job",work_area.get_cwd(),False,"test")
 
 
     def test_load_forward_model_with_error2(self):
-        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+        with TestAreaContext("python/job_queue/forward_model") as work_area:
             WorkflowCommon.createExternalDumpJobWithError()
-            self.assertRaises(ValueError, ExtJob,"dump_job",work_area.get_cwd(),False,"dump_job1")
+            self.assertRaises(ValueError, ExtJob,"dump_job",work_area.get_cwd(),False,"dump_job_error")
