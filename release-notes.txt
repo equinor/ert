@@ -1,1 +1,3 @@
 [Feature]  Set the the verbose flag from the environment variable ERT_VERBOSE.
+[Feature]  Abort if field transformation does not exist among the
+supported transformations.
