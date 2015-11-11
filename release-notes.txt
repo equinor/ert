@@ -1,5 +1,10 @@
-[Feature]  Abort if field transformation does not exist among the
-supported transformations.
+[1.10.0] -----------------------------------------------------------------
+
+[Feature] Set the the verbose flag from the environment variable ERT_VERBOSE.
+
+[Bugfix] Removed reference to undefined EnkFMain.__len__() method.
+
+[Feature] Abort if field transformation does not exist among the supported transformations.
 
 [Bugfix] Removed reference to undefined EnkFMain.__len__() method.
 
