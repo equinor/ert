@@ -72,8 +72,17 @@ class ErtSocket(object):
 
     def __init__(self , config , port , host , logger):
         self.host = host
-        self.port = port
         self.server = ErtSocketServer((host , port) , ErtHandler)
+
+        if port == 0:
+            socket_name = self.server.socket.getsockname()
+            # We most likely do not want to change the host:
+            # localhost would end up as 127.0.0.1
+            # self.host = socket_name[0]
+            self.port = socket_name[1]
+        else:
+            self.port = port
+
         self._setupSocketCloseOnExec()
         self.open(config , logger)
         self.__is_listening = False
