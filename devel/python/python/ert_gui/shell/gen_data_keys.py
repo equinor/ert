@@ -1,11 +1,11 @@
 from ert_gui.plottery import PlotDataGatherer as PDG
-from ert_gui.shell import ShellFunction, ShellPlot, assertConfigLoaded
+from ert_gui.shell import ShellPlot, assertConfigLoaded, ErtShellCollection
 
 
-class GenDataKeys(ShellFunction):
-    def __init__(self, shell_context):
-        super(GenDataKeys, self).__init__("gen_data", shell_context)
-        self.addHelpFunction("list", None, "Shows a list of all available GenData keys.")
+class GenDataKeys(ErtShellCollection):
+    def __init__(self, parent):
+        super(GenDataKeys, self).__init__("gen_data", parent)
+        self.addShellFunction(name="list", function=GenDataKeys.list, help_message="Shows a list of all available GenData keys.")
 
         self.__plot_data_gatherer = None
 
@@ -28,5 +28,5 @@ class GenDataKeys(ShellFunction):
         return self.__plot_data_gatherer
 
     @assertConfigLoaded
-    def do_list(self, line):
+    def list(self, line):
         self.columnize(self.fetchSupportedKeys())
