@@ -1,22 +1,16 @@
+[Feature] Ertshell refactored. Implementing shell functionality has been simplified.
+
 [1.10.0] -----------------------------------------------------------------
 
 [Feature] Set the the verbose flag from the environment variable ERT_VERBOSE.
 
-[Bugfix] Removed reference to undefined EnkFMain.__len__() method.
-
 [Feature] Abort if field transformation does not exist among the supported transformations.
 
-[Bugfix] Removed reference to undefined EnkFMain.__len__() method.
-
 [Feature] Added small class EclCmp for comparing Eclipse simulation cases.
-
-[Feature] Set the the verbose flag from the environment variable ERT_VERBOSE.
 
 [Feature] Added function ecl_grid_cell_invalid / EclGrid.validCellGeometry( ). Typically interesting for GRID files where not necessarily all cells are entered.
 
 [Feature] Added function util_update_signalse() which will install util_abort_signal() signal handler for all fatal signals in default state; using new function from python ert/__init__py.
 
 [Bugfix] Removed reference to undefined EnkFMain.__len__() method.
-
-[Feature]  Set the the verbose flag from the environment variable ERT_VERBOSE.
 
