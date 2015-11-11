@@ -7,3 +7,6 @@ supported transformations.
 
 [Feature] Added small class EclCmp for comparing Eclipse simulation cases.
 
+[Feature] Set the the verbose flag from the environment variable ERT_VERBOSE.
+
+[Feature] Added function ecl_grid_cell_invalid / EclGrid.validCellGeometry( ). Typically interesting for GRID files where not necessarily all cells are entered.
