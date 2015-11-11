@@ -56,7 +56,10 @@ class PlotConfig(object):
 
     def title(self):
         """ :rtype: str """
-        return self.__title
+        return self.__title if self.__title is not None else "Unnamed"
+
+    def setTitle(self, title):
+        self.__title = title
 
     def defaultStyle(self):
         style = PlotStyle("Default Style")
