@@ -7,9 +7,9 @@ endif()
 
 #-----------------------------------------------------------------
 
-set( ERT_VERSION_MAJOR 1 )
-set( ERT_VERSION_MINOR 10 )
-set( ERT_VERSION_MICRO 0 )
+set( ERT_VERSION_MAJOR 2 )
+set( ERT_VERSION_MINOR 0 )
+set( ERT_VERSION_MICRO git )
 
 # If the micro version is not integer, that should be interpreted as a
 # development version leading towards version MAJOR.MINOR.0
