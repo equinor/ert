@@ -1,15 +1,29 @@
 from ert_gui.plottery import PlotDataGatherer as PDG
-from ert_gui.shell import ShellFunction, assertConfigLoaded, ShellPlot
+from ert_gui.shell import assertConfigLoaded, ShellPlot, ErtShellCollection
+from ert_gui.shell.libshell import splitArguments
 
-class SummaryKeys(ShellFunction):
-    def __init__(self, shell_context):
-        super(SummaryKeys, self).__init__("summary", shell_context)
 
-        self.addHelpFunction("list", None, "Shows a list of all available Summary keys. (* = with observations)")
-        self.addHelpFunction("observations", None, "Shows a list of all available Summary key observations.")
-        self.addHelpFunction("matchers", None, "Shows a list of all Summary keys that the ensemble will match "
-                                               "against during simulations and manual load.")
-        self.addHelpFunction("add_matcher", "<summary_key>", "Add a matcher to the Summary key matcher set.")
+class SummaryKeys(ErtShellCollection):
+    def __init__(self, parent):
+        super(SummaryKeys, self).__init__("summary", parent)
+
+        self.addShellFunction(name="list",
+                              function=SummaryKeys.list,
+                              help_message="Shows a list of all available Summary keys. (* = with observations)")
+
+        self.addShellFunction(name="observations",
+                              function=SummaryKeys.observations,
+                              help_message= "Shows a list of all available Summary key observations.")
+
+        self.addShellFunction(name="matchers",
+                              function=SummaryKeys.matchers,
+                              help_message="Shows a list of all Summary keys that the ensemble will match "
+                                           "against during simulations and manual load.")
+
+        self.addShellFunction(name="add_matcher",
+                              function=SummaryKeys.add_matcher,
+                              help_arguments="<summary_key>",
+                              help_message="Add a matcher to the Summary key matcher set.")
 
         self.__plot_data_gatherer = None
 
@@ -19,7 +33,7 @@ class SummaryKeys(ShellFunction):
 
 
     @assertConfigLoaded
-    def do_list(self, line):
+    def list(self, line):
         keys = self.summaryKeys()
         observation_keys = self.summaryObservationKeys()
 
@@ -28,7 +42,7 @@ class SummaryKeys(ShellFunction):
         self.columnize(result)
 
     @assertConfigLoaded
-    def do_observations(self, line):
+    def observations(self, line):
         keys = self.summaryKeys()
 
         observation_keys = []
@@ -39,16 +53,16 @@ class SummaryKeys(ShellFunction):
         self.columnize(observation_keys)
 
     @assertConfigLoaded
-    def do_matchers(self, line):
+    def matchers(self, line):
         ensemble_config = self.ert().ensembleConfig()
         summary_key_matcher = ensemble_config.getSummaryKeyMatcher()
-        keys = sorted(["*%s" % key if summary_key_matcher.isRequired(key) else " %s" % key for key in summary_key_matcher.keys()])
+        keys = sorted(["!%s" % key if summary_key_matcher.isRequired(key) else " %s" % key for key in summary_key_matcher.keys()])
 
         self.columnize(keys)
 
     @assertConfigLoaded
-    def do_add_matcher(self, line):
-        args = self.splitArguments(line)
+    def add_matcher(self, line):
+        args = splitArguments(line)
 
         if len(args) < 1:
             self.lastCommandFailed("A Summary key is required.")
