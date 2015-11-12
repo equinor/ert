@@ -1,5 +1,4 @@
 set( source_files
-     ert_report.c
      time_map.c
      rng_config.c
      trans_func.c
@@ -67,7 +66,6 @@ set( source_files
      enkf_plot_gen_kw.c
      enkf_plot_gen_kw_vector.c
      hook_manager.c
-     ert_report_list.c
      runpath_list.c
      ert_workflow_list.c
      analysis_iter_config.c
@@ -92,7 +90,6 @@ set( source_files
      )
 
 set( header_files
-     ert_report.h
      time_map.h
      rng_config.h
      enkf_analysis.h
@@ -169,7 +166,6 @@ set( header_files
      enkf_plot_gen_kw.h
      enkf_plot_gen_kw_vector.h
      hook_manager.h
-     ert_report_list.h
      runpath_list.h
      ert_workflow_list.h
      analysis_iter_config.h

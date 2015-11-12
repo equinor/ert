@@ -96,7 +96,6 @@
 #include <ert/enkf/ert_template.h>
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/enkf_plot_data.h>
-#include <ert/enkf/ert_report_list.h>
 #include <ert/enkf/ranking_table.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
@@ -155,7 +154,6 @@ struct enkf_main_struct {
   plot_config_type     * plot_config;        /* Information about plotting. */
   rng_config_type      * rng_config;
   rng_type             * rng;
-  ert_report_list_type * report_list;
   ert_workflow_list_type * workflow_list;
   ranking_table_type   * ranking_table;
 
@@ -419,7 +417,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
 
   local_config_free( enkf_main->local_config );
 
-  ert_report_list_free( enkf_main->report_list );
   ert_workflow_list_free( enkf_main->workflow_list );
 
 
@@ -2382,7 +2379,6 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
     stringlist_free(refcase_dep);
   }
 
-  ert_report_list_add_config_items( config);
   hook_manager_add_config_items( config );
 }
 
@@ -2551,7 +2547,6 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main->subst_list );
   enkf_main->hook_manager       = hook_manager_alloc( enkf_main->workflow_list , DEFAULT_QC_PATH );
   enkf_main->analysis_config    = analysis_config_alloc( enkf_main->rng );
-  enkf_main->report_list        = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ) );
 
   enkf_main_init_subst_list( enkf_main );
   enkf_main_set_verbose( enkf_main , true );
@@ -2863,7 +2858,6 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
       if (config_content_is_valid( content )) {
         site_config_init( enkf_main->site_config , content );
         analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
-        ert_report_list_site_init( enkf_main->report_list , content );
         ert_workflow_list_init( enkf_main->workflow_list , content );
       } else {
         config_error_type * errors = config_content_get_errors( content );
@@ -3111,9 +3105,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 
 	/* Installing templates */
 	ert_templates_init( enkf_main->templates , content );
-
-	/*****************************************************************/
-	ert_report_list_init( enkf_main->report_list , content , ecl_config_get_refcase( enkf_main->ecl_config ));
 
 
 	/*****************************************************************/
@@ -3415,11 +3406,6 @@ ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
   return enkf_main->templates;
 }
 
-
-
-ert_report_list_type * enkf_main_get_report_list( const enkf_main_type * enkf_main ) {
-  return enkf_main->report_list;
-}
 
 
 /*****************************************************************/
