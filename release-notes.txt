@@ -18,3 +18,5 @@
 
 [Bugfix] Removed reference to undefined EnkFMain.__len__() method.
 
+[Feature]  Set the the verbose flag from the environment variable ERT_VERBOSE.
+
