@@ -14,6 +14,7 @@ class Export(ErtShellCollection):
 
         self.addShellFunction(name="FIELD",
                               function=Export.exportFIELD,
+                              completer=Export.completeFIELD,
                               help_arguments="<keyword> [%s] [1,4,7-10]" % default_path,
                               help_message="Export parameters; path and realisations in [...] are optional.")
 
