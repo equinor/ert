@@ -91,6 +91,7 @@ static run_arg_type * run_arg_alloc(enkf_fs_type * init_fs ,
   run_arg->run_path = util_alloc_abs_path( runpath );
   run_arg->num_internal_submit = 0;
   run_arg->queue_index = INVALID_QUEUE_INDEX;
+  run_arg->run_status = JOB_NOT_STARTED;
 
   if (step1 == 0)
     run_arg->load_start = 1;

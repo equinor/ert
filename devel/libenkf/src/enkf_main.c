@@ -1773,6 +1773,10 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
             enkf_main_report_run_failure( enkf_main , run_arg );
             bool_vector_iset(ert_run_context_get_iactive( run_context ), iens, false);
             break;
+          case JOB_NOT_STARTED:
+            enkf_main_report_run_failure( enkf_main , run_arg );
+            bool_vector_iset(ert_run_context_get_iactive( run_context ), iens, false);
+            break;
           case JOB_LOAD_FAILURE:
             enkf_main_report_load_failure( enkf_main , run_arg );
             bool_vector_iset(ert_run_context_get_iactive( run_context ), iens, false);
