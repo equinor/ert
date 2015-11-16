@@ -55,17 +55,6 @@ else()
    message("LAPACK library not found - LAPACK support will not be included")
 endif()
 #-----------------------------------------------------------------
-find_program(LATEX_PATH NAMES pdflatex)
-if (LATEX_PATH)
-   option( WITH_LATEX "Build small class for compiling LaTeX files" ON)
-   if (WITH_LATEX)
-      set( WITH_LATEX ON)
-      add_definitions( -DWITH_LATEX )
-   endif()
-else()
-   set( WITH_LATEX OFF )
-endif()
-#-----------------------------------------------------------------f
 find_program(PING_PATH NAMES ping)
 #-----------------------------------------------------------------
 find_path( EXECINFO_HEADER execinfo.h /usr/include )
