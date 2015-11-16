@@ -4,7 +4,6 @@ from ert_gui.models.mixins.connectorless.default_choice_list_model import Defaul
 
 from ert_gui.tools.plot import ColorChooser
 from ert_gui.tools.plot.style_chooser import StyleChooser
-from ert_gui.widgets import combo_choice
 from ert_gui.widgets.combo_choice import ComboChoice
 
 
