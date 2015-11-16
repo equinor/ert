@@ -3,7 +3,6 @@ set(PYTHON_SOURCES
     about_dialog.py
     ert_splash.py
     gert_main.py
-    ide_test.py
     main_window.py
     newconfig.py
 )
@@ -17,5 +16,4 @@ add_subdirectory(plottery)
 add_subdirectory(shell)
 add_subdirectory(simulation)
 add_subdirectory(tools)
-add_subdirectory(viewer)
 add_subdirectory(widgets)
