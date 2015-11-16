@@ -1,11 +1,14 @@
-from ert_gui.shell import ShellFunction, assertConfigLoaded, ShellPlot
+from ert_gui.shell import assertConfigLoaded, ShellPlot, ErtShellCollection
 from ert_gui.plottery import PlotDataGatherer as PDG
 
 
-class CustomKWKeys(ShellFunction):
-    def __init__(self, shell_context):
-        super(CustomKWKeys, self).__init__("custom_kw", shell_context)
-        self.addHelpFunction("list", None, "List all CustomKW keys.")
+class CustomKWKeys(ErtShellCollection):
+    def __init__(self, parent):
+        super(CustomKWKeys, self).__init__("custom_kw", parent)
+
+        self.addShellFunction(**{"name": "list",
+                                 "function": CustomKWKeys.list,
+                                 "help_message": "List all CustomKW keys."})
 
         self.__plot_data_gatherer = None
 
@@ -29,5 +32,5 @@ class CustomKWKeys(ShellFunction):
 
 
     @assertConfigLoaded
-    def do_list(self, line):
+    def list(self, line):
         self.columnize(self.fetchSupportedKeys())
