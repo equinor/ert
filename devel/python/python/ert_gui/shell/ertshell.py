@@ -17,6 +17,7 @@ from ert_gui.shell.results import Results
 from ert_gui.shell.plugins import Plugins
 from ert_gui.shell.simulations import Simulations
 from ert_gui.shell.smoother import Smoother
+from ert_gui.shell.storage import Storage
 from ert_gui.shell.summary_keys import SummaryKeys
 from ert_gui.shell.workflows import Workflows
 from ert_gui.shell.observations import Observations
@@ -87,6 +88,7 @@ class ErtShell(Cmd):
         Smoother(self)
         Observations(self)
         Export(self)
+        Storage(self)
 
         self.__last_command_failed = False
 
