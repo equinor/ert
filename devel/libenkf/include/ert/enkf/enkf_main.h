@@ -55,7 +55,6 @@ extern "C" {
 #include <ert/enkf/local_config.h>
 #include <ert/enkf/ert_template.h>
 #include <ert/enkf/enkf_plot_data.h>
-#include <ert/enkf/ert_report_list.h>
 #include <ert/enkf/ranking_table.h>
 #include <ert/enkf/hook_manager.h>
 #include <ert/enkf/rng_config.h>
@@ -77,7 +76,6 @@ extern "C" {
   bool                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
   ui_return_type              * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path);
 
-  ert_report_list_type        * enkf_main_get_report_list( const enkf_main_type * enkf_main );
   ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
   void                          enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file );
   const char                  * enkf_main_get_log_file( const enkf_main_type * enkf_main );

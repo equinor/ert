@@ -2,6 +2,8 @@
 
 [Feature] Ertshell. Added dumping of entries in block mount files.
 
+[Improvement] Removed LaTeX reporting
+
 [1.10.0] -----------------------------------------------------------------
 
 [Feature] Set the the verbose flag from the environment variable ERT_VERBOSE.

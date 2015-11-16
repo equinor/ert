@@ -61,15 +61,7 @@ void enkf_tui_simple_menu(void * arg) {
   }
   menu_add_separator( menu );
   menu_add_item(menu , "Plot results"                          , "pP" , enkf_tui_plot_simple_menu   , enkf_main , NULL);
-  {
-      menu_item_type * menu_item = menu_add_item( menu , "Create pdf reports" , "rR" , enkf_tui_plot_reports , enkf_main , NULL );
-      ert_report_list_type * report_list = enkf_main_get_report_list( enkf_main );
-      
-      if (ert_report_list_get_num( report_list ) == 0)
-        menu_item_disable( menu_item );
-      
-  }
-  menu_add_separator(menu); 
+  menu_add_separator(menu);
   menu_add_item(menu , "Help"                                  , "hH" , enkf_tui_help_menu_simple   , enkf_main , NULL);
   menu_add_item(menu , "Advanced menu"                         , "dD" , enkf_tui_main_menu        , enkf_main , NULL);  
   menu_run(menu);
