@@ -83,13 +83,7 @@ job_status_type local_driver_get_job_status(void * __driver, void * __job) {
     return JOB_QUEUE_NOT_ACTIVE;
   else {
     local_job_type * job = local_job_safe_cast( __job );
-    {
-      if (job->active == false) {
-        util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
-        return JOB_QUEUE_NOT_ACTIVE; /* Dummy */
-      } else 
-        return job->status;
-    }
+    return job->status;
   }
 }
 
