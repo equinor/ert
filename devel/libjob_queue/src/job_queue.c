@@ -816,6 +816,14 @@ void job_queue_check_open(job_queue_type* queue) {
     util_abort("%s: queue not open and not ready for use; method job_queue_reset must be called before using the queue - aborting\n", __func__ );
 }
 
+bool job_queue_accept_jobs(const job_queue_type * queue) {
+  if (queue->user_exit)
+    return false;
+
+  return queue->open;
+}
+
+
 /**
    If the total number of jobs is not known in advance the job_queue_run_jobs
    function can be called with @num_total_run == 0. In that case it is paramount
@@ -1096,9 +1104,8 @@ int job_queue_add_job(job_queue_type * queue ,
                       int argc ,
                       const char ** argv) {
 
-  //Fail hard if queue is not open
-  job_queue_check_open(queue);
-  if (!queue->user_exit) {/* We do not accept new jobs if a user-shutdown has been iniated. */
+
+  if (job_queue_accept_jobs(queue)) {
     int queue_index;
     job_queue_node_type * node = job_queue_node_alloc( job_name ,
                                                        run_path ,
