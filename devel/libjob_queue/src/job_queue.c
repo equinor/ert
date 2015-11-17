@@ -630,7 +630,9 @@ static void job_queue_user_exit__( job_queue_type * queue ) {
   int queue_index;
   for (queue_index = 0; queue_index < job_list_get_size( queue->job_list ); queue_index++) {
     job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
-    job_queue_node_status_transition(node,queue->status,JOB_QUEUE_USER_EXIT);
+
+    if (JOB_QUEUE_CAN_KILL & job_queue_node_get_status(node))
+      job_queue_node_status_transition(node,queue->status,JOB_QUEUE_USER_EXIT);
   }
 }
 
