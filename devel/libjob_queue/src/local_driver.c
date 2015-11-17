@@ -130,6 +130,7 @@ void * submit_job_thread__(void * __arg) {
   util_free_stringlist( argv , argc );
   waitpid(job->child_process , NULL , 0);
   job->status = JOB_QUEUE_DONE;
+  job->active = false;
   pthread_exit(NULL);
   return NULL;
 }
