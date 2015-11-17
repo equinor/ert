@@ -997,7 +997,6 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
           job_list_reader_wait( queue->job_list , queue->usleep_time , 8 * queue->usleep_time);
         }
       } while ( cont );
-      queue->running = false;
     }
     if (verbose)
       printf("\n");
@@ -1013,6 +1012,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
     available for queries after this method has finished
   */
   queue->open = false;
+  queue->running = false;
   pthread_mutex_unlock( &queue->run_mutex );
 }
 
