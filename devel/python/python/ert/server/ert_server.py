@@ -28,6 +28,7 @@ from ert.enkf.enums import EnkfRunType, EnkfStateType, ErtImplType , EnkfVarType
 from ert.enkf import NodeId
 from ert.util import installAbortSignals
 
+from .ert_client import ErtClient
 from .run_context import RunContext
 
 # The server will always return SUCCESS(), or alternatively raise an
@@ -49,7 +50,6 @@ def ERROR(msg , exception = None):
 
 
 class ErtServer(object):
-    DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
     site_config = None
 
     def __init__(self , config , logger=None):
@@ -278,6 +278,6 @@ class ErtServer(object):
         enkf_fs_manager = self.ert_handle.getEnkfFsManager()
         enkf_fs = enkf_fs_manager.getCurrentFileSystem()
         time_map = enkf_fs.getTimeMap()
-        time_steps = [ ts.datetime().strftime(ErtServer.DATE_FORMAT) for ts in time_map ]
+        time_steps = [ ts.datetime().strftime(ErtClient.DATE_FORMAT) for ts in time_map ]
 
         return self.SUCCESS(time_steps)
