@@ -1,3 +1,5 @@
+[Bug] Fixed crash when stopping running simulations from gui.
+
 [Feature] Ertshell refactored. Implementing shell functionality has been simplified.
 
 [Feature] Ertshell. Added dumping of entries in block mount files.

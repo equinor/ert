@@ -296,7 +296,7 @@ JobQueue.cNamespace().num_complete    = cwrapper.prototype("int  job_queue_get_n
 JobQueue.cNamespace().num_waiting     = cwrapper.prototype("int  job_queue_get_num_waiting( job_queue )")
 JobQueue.cNamespace().num_pending     = cwrapper.prototype("int  job_queue_get_num_pending( job_queue )")
 
-JobQueue.cNamespace().is_running      = cwrapper.prototype("int  job_queue_is_running( job_queue )")
+JobQueue.cNamespace().is_running      = cwrapper.prototype("bool job_queue_is_running( job_queue )")
 JobQueue.cNamespace().submit_complete = cwrapper.prototype("void job_queue_submit_complete( job_queue )")
 JobQueue.cNamespace().iget_sim_start  = cwrapper.prototype("time_t job_queue_iget_sim_start( job_queue , int)")
 JobQueue.cNamespace().get_active_size = cwrapper.prototype("int job_queue_get_active_size( job_queue )")
