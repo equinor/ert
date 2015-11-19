@@ -256,7 +256,11 @@ class JobQueue(BaseCClass):
         self.driver.set_max_running(max_running)
 
     def killAllJobs(self):
-        JobQueue.cNamespace().user_exit(self)
+        if self.isRunning():
+            JobQueue.cNamespace().user_exit(self)
+
+            while self.isRunning():
+                time.sleep(0.1)
 
     def set_pause_on(self):
         JobQueue.cNamespace().set_pause_on(self)
@@ -277,9 +281,7 @@ class JobQueue(BaseCClass):
 #################################################################
 
 cwrapper = CWrapper(JOB_QUEUE_LIB)
-cwrapper.registerType("job_queue", JobQueue)
-cwrapper.registerType("job_queue_obj", JobQueue.createPythonObject)
-cwrapper.registerType("job_queue_ref", JobQueue.createCReference)
+cwrapper.registerObjectType("job_queue", JobQueue)
 
 JobQueue.cNamespace().alloc           = cwrapper.prototype("c_void_p job_queue_alloc( int , char* , char* )")
 JobQueue.cNamespace().user_exit       = cwrapper.prototype("void job_queue_user_exit( job_queue )")
