@@ -73,7 +73,11 @@ class Storage(ErtShellCollection):
         last_argument = extractFullArgument(line, endidx)
 
         if len(arguments) == 1 and len(text) == 0:
-            return getPossibleFilenameCompletions("")
+            ert = self.ert()
+            if ert is not None:
+                return [ert.getModelConfig().getEnspath() + os.path.sep]
+            else:
+                return getPossibleFilenameCompletions("")
         elif len(arguments) == 2 and len(last_argument) > 0:
             return getPossibleFilenameCompletions(last_argument)
         elif len(arguments) == 3 and len(text) > 0:
