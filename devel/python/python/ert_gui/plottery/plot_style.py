@@ -10,13 +10,16 @@ class PlotStyle(object):
         self.__enabled = True
         self.__is_copy = False
 
-    def copyStyleFrom(self, other):
+    def copyStyleFrom(self, other, copy_enabled_state=False):
         self.color = other.color
         self.alpha = other.alpha
         self.line_style = other.line_style
         self.marker = other.__marker
         self.width = other.width
         self.__is_copy = True
+
+        if copy_enabled_state:
+            self.setEnabled(other.isEnabled())
 
     def isEnabled(self):
         return self.__enabled
@@ -83,3 +86,13 @@ class PlotStyle(object):
 
     def __str__(self):
         return "%s c:%s a:%f ls:%s m:%s w:%f enabled:%s copy:%s" % (self.name, self.color, self.alpha, self.line_style, self.marker, self.width, self.isEnabled(), self.__is_copy)
+
+    def __eq__(self, other):
+        equalness = self.alpha == other.alpha
+        equalness = equalness and self.marker == other.marker
+        equalness = equalness and self.line_style == other.line_style
+        equalness = equalness and self.width == other.width
+        equalness = equalness and self.color == other.color
+        equalness = equalness and self.isEnabled() == other.isEnabled()
+
+        return equalness
