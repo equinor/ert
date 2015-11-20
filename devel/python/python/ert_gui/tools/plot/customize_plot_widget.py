@@ -22,6 +22,7 @@ class CustomizePlotWidget(QWidget):
         # self.addCheckBox("show_refcase", "Show refcase", True)
         self.addCheckBox("show_legend", "Show legend", True)
         self.addCheckBox("show_grid", "Show grid", True)
+        self.addCheckBox("show_distribution_lines", "Show distribution lines", False)
 
         self.__layout.addSpacing(10)
         self.addStyleChooser("default_style", "Default", StyleChooser.STYLE_SOLID, StyleChooser.MARKER_OFF, labeled=True)
@@ -36,7 +37,6 @@ class CustomizePlotWidget(QWidget):
         self.addStyleChooser("min-max_style", "Min/Max", StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF, True)
         self.addStyleChooser("p10-p90_style", "P10-P90", StyleChooser.STYLE_DASHED, StyleChooser.MARKER_OFF, True)
         self.addStyleChooser("p33-p67_style", "P33-P67", StyleChooser.STYLE_OFF, StyleChooser.MARKER_OFF, True)
-
 
         # self.addColorChooser("observation", "Observation", QColor(0, 0, 0, 255))
         # self.addColorChooser("observation_area", "Observation Error", QColor(0, 0, 0, 38))
