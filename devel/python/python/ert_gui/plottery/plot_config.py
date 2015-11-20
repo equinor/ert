@@ -8,7 +8,8 @@ class PlotConfig(object):
         super(PlotConfig, self).__init__()
         self.__title = title
 
-        self.__line_color_cycle = itertools.cycle(["#000000"]) #Black
+        self.__line_color_cycle_colors = ["#000000"]
+        self.__line_color_cycle = itertools.cycle(self.__line_color_cycle_colors) #Black
         # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown
         self.setLineColorCycle(["#386CB0", "#7FC97F", "#FDC086", "#F0027F", "#BF5B17"])
 
@@ -22,7 +23,9 @@ class PlotConfig(object):
         self.__refcase_style = PlotStyle(name="Refcase", alpha=0.8, marker="x", width=2.0)
         self.__observation_style = PlotStyle(name="Observations")
         self.__histogram_style = PlotStyle(name="Histogram", width=2.0)
-        self.__distribution_style = PlotStyle(name="Distribution", line_style="", marker="o", alpha=0.8, width=10.0)
+        self.__distribution_style = PlotStyle(name="Distribution", line_style="", marker="o", alpha=0.5, width=10.0)
+        self.__distribution_line_style = PlotStyle(name="Distribution Lines", line_style="-", alpha=0.25, width=1.0)
+        self.__distribution_line_style.setEnabled(False)
         self.__current_color = None
 
         self.__legend_enabled = True
@@ -48,6 +51,7 @@ class PlotConfig(object):
         return self.__current_color
 
     def setLineColorCycle(self, color_list):
+        self.__line_color_cycle_colors = color_list
         self.__line_color_cycle = itertools.cycle(color_list)
 
     def addLegendItem(self, label, item):
@@ -60,6 +64,9 @@ class PlotConfig(object):
 
     def setTitle(self, title):
         self.__title = title
+
+    def isUnnamed(self):
+        return self.__title is None
 
     def defaultStyle(self):
         style = PlotStyle("Default Style")
@@ -91,6 +98,12 @@ class PlotConfig(object):
         style = PlotStyle("Distribution Style")
         style.copyStyleFrom(self.__distribution_style)
         style.color = self.currentColor()
+        return style
+
+    def distributionLineStyle(self):
+        """ @rtype: ert_gui.plottery.PlotStyle """
+        style = PlotStyle("Distribution Line Style")
+        style.copyStyleFrom(self.__distribution_line_style)
         return style
 
     def xLabel(self):
@@ -126,6 +139,12 @@ class PlotConfig(object):
     def isLegendEnabled(self):
         return self.__legend_enabled
 
+    def isDistributionLineEnabled(self):
+        return self.__distribution_line_style.isEnabled()
+
+    def setDistributionLineEnabled(self, enabled):
+        self.__distribution_line_style.setEnabled(enabled)
+
     def setLegendEnabled(self, enabled):
         self.__legend_enabled = enabled
 
@@ -160,3 +179,35 @@ class PlotConfig(object):
     def setDefaultStyle(self, line_style, marker):
         self.__default_style.line_style = line_style
         self.__default_style.marker = marker
+
+
+    def copyConfigFrom(self, other):
+        """
+        :type other: PlotConfig
+        """
+        self.__default_style.copyStyleFrom(other.__default_style, copy_enabled_state=True)
+        self.__refcase_style.copyStyleFrom(other.__refcase_style, copy_enabled_state=True)
+        self.__histogram_style.copyStyleFrom(other.__histogram_style, copy_enabled_state=True)
+        self.__observation_style.copyStyleFrom(other.__observation_style, copy_enabled_state=True)
+        self.__distribution_style.copyStyleFrom(other.__distribution_style, copy_enabled_state=True)
+        self.__distribution_line_style.copyStyleFrom(other.__distribution_line_style, copy_enabled_state=True)
+
+        self.__statistics_style["mean"].copyStyleFrom(other.__statistics_style["mean"], copy_enabled_state=True)
+        self.__statistics_style["p50"].copyStyleFrom(other.__statistics_style["p50"], copy_enabled_state=True)
+        self.__statistics_style["min-max"].copyStyleFrom(other.__statistics_style["min-max"], copy_enabled_state=True)
+        self.__statistics_style["p10-p90"].copyStyleFrom(other.__statistics_style["p10-p90"], copy_enabled_state=True)
+        self.__statistics_style["p33-p67"].copyStyleFrom(other.__statistics_style["p33-p67"], copy_enabled_state=True)
+
+        self.__legend_enabled = other.__legend_enabled
+        self.__grid_enabled = other.__grid_enabled
+        self.__date_support_active = other.__date_support_active
+
+        self.__line_color_cycle_colors = other.__line_color_cycle_colors[:]
+
+        self.__legend_items = other.__legend_items[:]
+        self.__legend_labels = other.__legend_labels[:]
+
+        self.__x_label = other.__x_label
+        self.__y_label = other.__y_label
+
+        self.__title = other.__title
