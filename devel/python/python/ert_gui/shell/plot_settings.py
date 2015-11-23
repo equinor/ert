@@ -28,8 +28,7 @@ class PlotSettings(ErtShellCollection):
 
         self.addShellFunction(name="reset_title",
                               function=PlotSettings.resetTitle,
-                              help_message="Reset plot title back to default."
-                              )
+                              help_message="Reset plot title back to default.")
 
         self.addShellFunction(name="select",
                               function=PlotSettings.select,
@@ -96,7 +95,7 @@ class PlotSettings(ErtShellCollection):
                               validator=boolValidator,
                               completer=["true", "false"],
                               help_arguments="[true|false]",
-                              help_message="Show or set the distributionlines visibility",
+                              help_message="Show or set the distribution lines visibility",
                               pretty_attribute="Distribution Line visibility",
                               model=self.__plot_config)
 
@@ -145,6 +144,8 @@ class PlotSettings(ErtShellCollection):
         if len(matched_cases) > 0:
             self.__cases = sorted(list(matched_cases))
         else:
+            if len(line) > 0:
+                self.lastCommandFailed("No valid case names provided: %s" % line)
             print("Case reset to default: %s" % self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName())
             self.__cases = None
 
