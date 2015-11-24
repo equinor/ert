@@ -201,6 +201,13 @@ def main(argv):
     help_center.setHelpMessageLink("welcome_to_ert")
 
     strict = True
+        
+    verbose = False
+    verbose_var = os.getenv("ERT_VERBOSE", "False")
+    lower_verbose_var = verbose_var.lower() 
+    if lower_verbose_var == "true": 
+        verbose = True
+
 
     if not os.path.exists(config_file):
         print("Trying to start new config")
@@ -235,7 +242,7 @@ def main(argv):
     now = time.time()
 
 
-    ert = Ert(EnKFMain(config_file, strict=strict))
+    ert = Ert(EnKFMain(config_file, strict=strict, verbose=verbose))
     ErtConnector.setErt(ert.ert())
 
     window = GertMainWindow()
@@ -247,7 +254,7 @@ def main(argv):
 
     window.addDock("Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
     window.addTool(IdeTool(os.path.basename(config_file), ert.reloadERT, help_tool))
-    window.addTool(PlotTool())
+    window.addTool(PlotTool(ert.ert()))
     window.addTool(ExportTool())
     window.addTool(WorkflowsTool())
     window.addTool(ManageCasesTool())

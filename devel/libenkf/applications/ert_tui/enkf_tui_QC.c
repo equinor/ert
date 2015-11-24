@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2012  Statoil ASA, Norway. 
-    
-   The file 'enkf_tui_QC.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2012  Statoil ASA, Norway.
+
+   The file 'enkf_tui_QC.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #include <stdlib.h>
 #include <stdbool.h>
@@ -36,7 +36,7 @@
 #include <ert/util/type_vector_functions.h>
 
 #include <ert/plot/plot.h>
-#include <ert/plot/plot_dataset.h> 
+#include <ert/plot/plot_dataset.h>
 
 #include <ert/ecl/ecl_rft_file.h>
 
@@ -64,7 +64,7 @@
 
 
 void enkf_tui_QC_plot_PC_list( void * arg ) {
-  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   stringlist_type * all_obs_keys   = enkf_obs_alloc_keylist( enkf_main_get_obs( enkf_main ));
   stringlist_type * obs_keys = stringlist_alloc_new();
 
@@ -92,7 +92,7 @@ void enkf_tui_QC_plot_PC_list( void * arg ) {
 
     for (int iobs = 0; iobs < stringlist_get_size(obs_keys); iobs++)
     {
-      local_obsdata_node_type * obsnode = local_obsdata_node_alloc(stringlist_iget(obs_keys, iobs));
+      local_obsdata_node_type * obsnode = local_obsdata_node_alloc(stringlist_iget(obs_keys, iobs), true);
       local_obsdata_type * obsdata = local_obsdata_alloc_wrapper(obsnode);
       local_obsdata_node_add_range(obsnode, 0, last_report);
       {
@@ -113,14 +113,14 @@ void enkf_tui_QC_plot_PC_list( void * arg ) {
 
 
 void enkf_tui_QC_plot_PC( void * arg ) {
-  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   const int last_report                  = enkf_main_get_history_length( enkf_main );
   int step1,step2;
   double truncation_or_ncomp;
   local_obsdata_type * obsdata = local_obsdata_alloc("PCA Observations");
   char * keys_input;
-  
-  
+
+
   enkf_tui_util_scanf_report_steps(last_report , PROMPT_LEN , &step1 , &step2);
   util_printf_prompt("Observation keys (wildcards allowed) - [default: all]" , PROMPT_LEN , '=' , "=> ");
   keys_input = util_alloc_stdin_line();
@@ -139,10 +139,10 @@ void enkf_tui_QC_plot_PC( void * arg ) {
         return;
       }
     }
-        
+
     free( input );
   }
-  
+
   {
     stringlist_type * all_keys = enkf_obs_alloc_keylist( enkf_main_get_obs( enkf_main ));
     stringlist_type * obs_keys = stringlist_alloc_new();
@@ -153,7 +153,7 @@ void enkf_tui_QC_plot_PC( void * arg ) {
       for (i=0; i < stringlist_get_size( input_keys ); i++)
         stringlist_append_matching_elements( obs_keys , all_keys , stringlist_iget( input_keys , i ));
       stringlist_free( input_keys );
-    } else 
+    } else
       stringlist_deep_copy( obs_keys , all_keys );
 
 
@@ -161,33 +161,33 @@ void enkf_tui_QC_plot_PC( void * arg ) {
 
     {
       int iobs;
-      
+
       for (iobs = 0; iobs < stringlist_get_size( obs_keys); iobs++) {
         const char * obs_key = stringlist_iget( obs_keys , iobs );
         if (!local_obsdata_has_node( obsdata , obs_key )) {
-          local_obsdata_node_type * obs_node = local_obsdata_node_alloc( obs_key );
+          local_obsdata_node_type * obs_node = local_obsdata_node_alloc( obs_key , true);
 
           local_obsdata_node_add_range( obs_node , step1 , step2 );
           local_obsdata_add_node( obsdata , obs_node );
         }
       }
-      
+
       stringlist_free( all_keys );
       stringlist_free( obs_keys );
-    } 
-  }  
-  
+    }
+  }
+
   if (local_obsdata_get_size( obsdata )) {
     matrix_type * PC     = matrix_alloc(1,1);
     matrix_type * PC_obs = matrix_alloc(1,1);
     analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
-    char * plot_name = util_alloc_sprintf(analysis_config_get_PC_filename( analysis_config ) , 
+    char * plot_name = util_alloc_sprintf(analysis_config_get_PC_filename( analysis_config ) ,
                                           step1 , step2 , "obs");
 
     pca_plot_data_type * plot_data = enkf_main_alloc_pca_plot_data( enkf_main , obsdata , truncation_or_ncomp);
-    
+
     enkf_tui_plot_PC( enkf_main , plot_name , plot_data );
-    
+
     free( plot_name );
     matrix_free( PC );
     matrix_free( PC_obs );
@@ -198,41 +198,41 @@ void enkf_tui_QC_plot_PC( void * arg ) {
 
 
 void enkf_tui_QC_run_workflow( void * arg ) {
-  enkf_main_type  * enkf_main        = enkf_main_safe_cast( arg );  
-  const qc_module_type  * qc_module  = enkf_main_get_qc_module( enkf_main );
-  
-  qc_module_run_workflow( qc_module , enkf_main );
+  enkf_main_type  * enkf_main        = enkf_main_safe_cast( arg );
+  const hook_manager_type  * hook_manager  = enkf_main_get_hook_manager( enkf_main );
+
+  hook_manager_run_workflow( hook_manager , enkf_main );
 }
 
 
 
 void enkf_tui_QC_menu(void * arg) {
-  
-  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   plot_config_type * plot_config = enkf_main_get_plot_config( enkf_main );
   {
     const char * plot_path  =  plot_config_get_path( plot_config );
     util_make_path( plot_path );
   }
-  
+
   {
     menu_type * menu = menu_alloc("Quality check of prior" , "Back" , "bB");
-    menu_item_type * plot_PC_item         = menu_add_item( menu , "Plot of prior principal components"    , "pP"  , 
+    menu_item_type * plot_PC_item         = menu_add_item( menu , "Plot of prior principal components"    , "pP"  ,
                                                            enkf_tui_QC_plot_PC , enkf_main , NULL);
 
-    menu_item_type * plot_PC_list_item    = menu_add_item( menu , "Plot first principal component for all observations" , "aA" , 
+    menu_item_type * plot_PC_list_item    = menu_add_item( menu , "Plot first principal component for all observations" , "aA" ,
                                                             enkf_tui_QC_plot_PC_list, enkf_main , NULL);
 
     menu_item_type * run_QC_workflow_item = menu_add_item( menu , "Run QC workflow"    , "rR"  , enkf_tui_QC_run_workflow , enkf_main , NULL);
-    
+
     if (!enkf_main_have_obs( enkf_main )) {
       menu_item_disable( plot_PC_item );
       menu_item_disable( plot_PC_list_item );
     }
-    
+
     if (!enkf_main_has_QC_workflow( enkf_main ))
       menu_item_disable( run_QC_workflow_item );
-    
+
     menu_run(menu);
     menu_free(menu);
   }

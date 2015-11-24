@@ -82,6 +82,10 @@ class HelpedWidget(QWidget):
     def isValid(self):
         return self.validation_message is None
 
+    def includeLabel(self):
+        label_widget = QLabel(self.label)
+        self.widget_layout.insertWidget(0, label_widget)
+
 
     def enterEvent(self, event):
         QWidget.enterEvent(self, event)

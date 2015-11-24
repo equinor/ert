@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include <pthread.h>
 #include <unistd.h>
 
@@ -57,7 +58,10 @@ void job_queue_manager_free( job_queue_manager_type * manager) {
 }
 
 
-void job_queue_manager_start_queue( job_queue_manager_type * manager , int num_total_run , bool verbose) {
+void job_queue_manager_start_queue( job_queue_manager_type * manager , int num_total_run , bool verbose , bool reset_queue) {
+  if (reset_queue)
+    job_queue_reset( manager->job_queue );
+
   job_queue_start_manager_thread( manager->job_queue , &manager->queue_thread , num_total_run , verbose );
 }
 
@@ -65,6 +69,41 @@ void job_queue_manager_start_queue( job_queue_manager_type * manager , int num_t
 
 void job_queue_manager_wait( job_queue_manager_type * manager) {
   pthread_join( manager->queue_thread , NULL );
+}
+
+
+bool job_queue_manager_try_wait( job_queue_manager_type * manager , int timeout_seconds) {
+  struct timespec ts;
+  time_t timeout_time = time( NULL );
+
+  util_inplace_forward_seconds(&timeout_time , timeout_seconds );
+  ts.tv_sec = timeout_time;
+  ts.tv_nsec = 0;
+
+#ifdef HAVE_TIMEDJOIN
+  {
+    int join_return = pthread_timedjoin_np( manager->queue_thread , NULL , &ts);  /* Wait for the main thread to complete. */
+    if (join_return == 0)
+      return true;
+    else
+      return false;
+  }
+#else
+    while(true) {
+        if (pthread_kill(manager->queue_thread, 0) == 0){
+            util_yield();
+        } else {
+            return true;
+        }
+
+        time_t now = time(NULL);
+
+        if(util_difftime_seconds(now, timeout_time) <= 0) {
+            return false;
+        }
+    }
+
+#endif
 }
 
 
