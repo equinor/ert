@@ -48,6 +48,10 @@ class RunpathList(BaseCClass):
         RunpathList.cNamespace().free(self)
 
 
+    def export(self):
+        RunpathList.cNamespace().export(self)
+
+
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("runpath_list", RunpathList)
 
@@ -61,5 +65,6 @@ RunpathList.cNamespace().iens = cwrapper.prototype("int runpath_list_iget_iens(r
 RunpathList.cNamespace().iteration = cwrapper.prototype("int runpath_list_iget_iter(runpath_list, int)")
 RunpathList.cNamespace().runpath = cwrapper.prototype("char* runpath_list_iget_runpath(runpath_list, int)")
 RunpathList.cNamespace().basename = cwrapper.prototype("char* runpath_list_iget_basename(runpath_list, int)")
+RunpathList.cNamespace().export = cwrapper.prototype("void runpath_list_fprintf(runpath_list)")
 
 
