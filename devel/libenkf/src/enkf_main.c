@@ -2576,6 +2576,11 @@ static void enkf_main_install_common_data_kw( enkf_main_type * enkf_main ) {
 
 
 
+runpath_list_type * enkf_main_get_runpath_list( const enkf_main_type * enkf_main ) {
+  return hook_manager_get_runpath_list( enkf_main->hook_manager );
+}
+
+
 /**
    This function will resize the enkf_main->ensemble vector,
    allocating or freeing enkf_state instances as needed.
