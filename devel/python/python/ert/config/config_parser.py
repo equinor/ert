@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+import sys
 import os.path
 
 from ert.config import UnrecognizedEnum, CONFIG_LIB, ContentTypeEnum , ConfigContent
@@ -57,9 +58,13 @@ class ConfigParser(BaseCClass):
         return ConfigParser.cNamespace().has_schema_item( self , keyword )
 
 
-    def add(self, keyword, required=False):
-        return ConfigParser.cNamespace().add(self, keyword, required).setParent( self )
+    def add(self, keyword, required=False , value_type = None):
+        item = ConfigParser.cNamespace().add(self, keyword, required).setParent( self )
+        if value_type:
+            item.iset_type( 0 , value_type )
 
+        return item
+        
 
     def getSchemaItem(self , keyword):
         if keyword in self:
@@ -70,16 +75,20 @@ class ConfigParser(BaseCClass):
 
 
     def parse(self, config_file, comment_string="--", include_kw="INCLUDE", define_kw="DEFINE",
-               unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN, validate=True):
+              pre_defined_kw_map=None, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN, validate=True):
 
         assert isinstance(unrecognized, UnrecognizedEnum)
         
         
         if os.path.exists(config_file):
-            config_content = ConfigParser.cNamespace().parse(self, config_file, comment_string, include_kw, define_kw, unrecognized, validate)
+            config_content = ConfigParser.cNamespace().parse(self, config_file, comment_string, include_kw, define_kw, pre_defined_kw_map, unrecognized, validate)
             if config_content.isValid():
                 return config_content
             else:
+                sys.stderr.write("Errors parsing:%s \n" % config_file)
+                for count,error in enumerate(config_content.getErrors()):
+                    sys.stderr.write("  %02d:%s\n" % (count , error))
+                    
                 raise Exception("Parsing:%s failed" % config_file)
         else:
             raise IOError("File: %s does not exists" % config_file)
@@ -97,7 +106,7 @@ cwrapper.registerObjectType("schema_item", SchemaItem)
 ConfigParser.cNamespace().alloc = cwrapper.prototype("c_void_p config_alloc( )")
 ConfigParser.cNamespace().add = cwrapper.prototype("schema_item_ref config_add_schema_item( config_parser , char* , bool)")
 ConfigParser.cNamespace().free = cwrapper.prototype("void config_free( config_parser )")
-ConfigParser.cNamespace().parse = cwrapper.prototype("config_content_obj config_parse( config_parser , char* , char* , char* , char* , config_unrecognized_enum , bool )")
+ConfigParser.cNamespace().parse = cwrapper.prototype("config_content_obj config_parse( config_parser , char* , char* , char* , char* , hash , config_unrecognized_enum , bool )")
 ConfigParser.cNamespace().get_schema_item = cwrapper.prototype("schema_item_ref config_get_schema_item( config_parser , char*)")
 ConfigParser.cNamespace().has_schema_item = cwrapper.prototype("bool config_has_schema_item( config_parser , char*)")
 

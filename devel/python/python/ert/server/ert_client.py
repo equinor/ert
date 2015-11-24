@@ -19,7 +19,6 @@ import socket
 import json
 import datetime
 import time
-from ert.server import ErtServer
 
 class ServerReturnedNoneException(Exception):
     pass
@@ -28,6 +27,8 @@ class ConnectionErrorException(Exception):
     pass
 
 class ErtClient(object):
+    DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+
     def __init__(self , port , host):
         self.socket = socket.socket( socket.AF_INET , socket.SOCK_STREAM)
         self.port = port
@@ -36,14 +37,15 @@ class ErtClient(object):
         try:
             self.socket.connect((self.host , self.port))
         except socket.error:
-            sys.exit("Failed to connect to port:%d at %s." % (port , host))
+            raise Exception("Failed to connect to port:%d at %s." % (port , host))
+
 
     @staticmethod
     def convert_to_datetime(data):
         result = []
         for d in data:
             try:
-                result.append(datetime.datetime.strptime(d, ErtServer.DATE_FORMAT))
+                result.append(datetime.datetime.strptime(d, ErtClient.DATE_FORMAT))
             except:
                 pass
         return result

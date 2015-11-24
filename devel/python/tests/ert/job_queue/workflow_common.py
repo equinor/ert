@@ -4,6 +4,11 @@ import stat
 class WorkflowCommon(object):
 
     @staticmethod
+    def createExternalDumpJobWithError():
+        with open("dump_job_error", "w") as f:
+            f.write("EXECUTABLE dump_error.py\n")
+
+    @staticmethod
     def createExternalDumpJob():
         with open("dump_job", "w") as f:
             f.write("INTERNAL FALSE\n")

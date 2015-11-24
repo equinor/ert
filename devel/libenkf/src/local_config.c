@@ -60,11 +60,10 @@ ministep to the updatestep, otherwise it will not be able to do
 anything.
 
 
-CREATE_MINISTEP [NAME_OF_MINISTEP  OBSSET_NAME]
+CREATE_MINISTEP [NAME_OF_MINISTEP]
 -----------------------------------------------
 This function will create a new ministep with the name
-'NAME_OF_MINISTEP'. The ministep will be based on the observation
-set given by OBSSET_NAME (which must be created first).The ministep
+'NAME_OF_MINISTEP'. A given OBSSET can be attached to a given ministep.The ministep
 is then ready for adding data. Before the ministep can be used you
 must attach it to an updatestep with the ATTACH_MINISTEP command
 
@@ -147,7 +146,7 @@ This function will delete the obs 'OBS_KEY' from the obsset
 DATASET_DEL_ALL_DATA [NAME_OF_DATASET]
 --------------------------------------
 This function will delete all the data keys from the dataset
-'NAME_OF_MINISTEP'.
+'NAME_OF_DATASET'.
 
 
 OBSSET_DEL_ALL_OBS [NAME_OF_OBSSET]
@@ -171,26 +170,13 @@ with name 'DATASTEP_NAME' should have the index 'INDEX' active.
 
 ACTIVE_LIST_ADD_MANY_OBS_INDEX[OBSSET_NAME  OBS_KEY  N INDEX1 INDEX2 INDEX3 .. INDEXN]
 ----------------------------------------------------------------------------------------
-This function is simular to ACTIVE_LIST_ADD_OBS_INDEX, but it will add many indices.
+This function is similar to ACTIVE_LIST_ADD_OBS_INDEX, but it will add many indices.
 
 
 
 ACTIVE_LIST_ADD_MANY_DATA_INDEX[DATA_NAME  DATA_KEY  N INDEX1 INDEX2 INDEX3 .. INDEXN]
 ------------------------------------------------------------------------------------------
-This function is simular to ACTIVE_LIST_ADD_DATA_INDEX, but it will add many indices.
-
-
-INSTALL_UPDATESTEP [NAME_OF_UPDATESTEP  STEP1   STEP2]
-----------------------------------------------------
-This function will install the updatestep 'NAME_OF_UPDATESTEP' for the
-report steps [STEP1,..,STEP2].
-
-
-INSTALL_DEFAULT_UPDATESTEP [NAME_OF_UPDATESTEP]
------------------------------------------------
-This function will install 'NAME_OF_UPDATESTEP' as the default
-updatestep which applies to all report streps where you have not
-explicitly set another updatestep with the INSTALL_UPDATESTEP function.
+This function is similar to ACTIVE_LIST_ADD_DATA_INDEX, but it will add many indices.
 
 
 
@@ -522,7 +508,6 @@ core EnKF updating:
 
 
 struct local_config_struct {
-  vector_type           * updatestep;            /* This is an indexed vector with (pointers to) local_reportsstep instances. */
   local_updatestep_type * default_updatestep;    /* A default report step returned if no particular report step has been installed for this time index. */
   hash_type             * updatestep_storage;    /* These three hash tables are the 'holding area' for the local_updatestep, */
   hash_type             * ministep_storage;      /* local_ministep instances. */
@@ -532,13 +517,26 @@ struct local_config_struct {
 };
 
 
-static void local_config_clear( local_config_type * local_config ) {
+/**
+   Instances of local_updatestep and local_ministep are allocated from
+   the local_config object, and then subsequently manipulated from the calling scope.
+*/
+
+static local_updatestep_type * local_config_alloc_updatestep( local_config_type * local_config , const char * key ) {
+  local_updatestep_type * updatestep = local_updatestep_alloc( key );
+  hash_insert_hash_owned_ref( local_config->updatestep_storage , key , updatestep , local_updatestep_free__);
+  return updatestep;
+}
+
+
+
+void local_config_clear( local_config_type * local_config ) {
   local_config->default_updatestep  = NULL;
   hash_clear( local_config->updatestep_storage );
   hash_clear( local_config->ministep_storage );
   hash_clear( local_config->dataset_storage );
   hash_clear( local_config->obsdata_storage );
-  vector_clear( local_config->updatestep );
+  local_config->default_updatestep = local_config_alloc_updatestep(local_config, "DEFAULT");
 }
 
 
@@ -552,7 +550,6 @@ local_config_type * local_config_alloc( ) {
   local_config->ministep_storage    = hash_alloc();
   local_config->dataset_storage     = hash_alloc();
   local_config->obsdata_storage      = hash_alloc();
-  local_config->updatestep          = vector_alloc_new();
   local_config->config_files = stringlist_alloc_new();
 
   local_config_clear( local_config );
@@ -561,7 +558,6 @@ local_config_type * local_config_alloc( ) {
 
 
 void local_config_free(local_config_type * local_config) {
-  vector_free( local_config->updatestep );
   hash_free( local_config->updatestep_storage );
   hash_free( local_config->ministep_storage);
   hash_free( local_config->dataset_storage);
@@ -571,48 +567,41 @@ void local_config_free(local_config_type * local_config) {
 
 
 
-/**
-   Actual report step must have been installed in the
-   updatestep_storage with local_config_alloc_updatestep() first.
-*/
-
-void local_config_set_default_updatestep( local_config_type * local_config , const char * default_key) {
-  local_updatestep_type * default_updatestep = local_config_get_updatestep( local_config , default_key );
-  local_config->default_updatestep = default_updatestep;
-}
 
 
-/**
-   Instances of local_updatestep and local_ministep are allocated from
-   the local_config object, and then subsequently manipulated from the calling scope.
-*/
-
-local_updatestep_type * local_config_alloc_updatestep( local_config_type * local_config , const char * key ) {
-  local_updatestep_type * updatestep = local_updatestep_alloc( key );
-  hash_insert_hash_owned_ref( local_config->updatestep_storage , key , updatestep , local_updatestep_free__);
-  return updatestep;
-}
 
 
-local_ministep_type * local_config_alloc_ministep( local_config_type * local_config , const char * key , const char * obsset_name) {
-  local_obsdata_type * obsdata = hash_get( local_config->obsdata_storage , obsset_name );
-  local_ministep_type * ministep = local_ministep_alloc( key , obsdata );
+local_ministep_type * local_config_alloc_ministep( local_config_type * local_config , const char * key) {
+  local_ministep_type * ministep = local_ministep_alloc( key );
   hash_insert_hash_owned_ref( local_config->ministep_storage , key , ministep , local_ministep_free__);
   return ministep;
 }
 
-local_obsdata_type * local_config_alloc_obsset( local_config_type * local_config , const char * obsset_name ) {
-  local_obsdata_type * obsset = local_obsdata_alloc( obsset_name );
-  hash_insert_hash_owned_ref( local_config->obsdata_storage , obsset_name , obsset , local_obsdata_free__);
-  return obsset;
+local_obsdata_type * local_config_alloc_obsdata( local_config_type * local_config , const char * obsdata_name ) {
+  if (local_config_has_obsdata(local_config, obsdata_name))
+    util_abort("%s: tried to add existing obsdata node key:%s \n",__func__ , obsdata_name);
+
+  local_obsdata_type * obsdata = local_obsdata_alloc( obsdata_name );
+  hash_insert_hash_owned_ref( local_config->obsdata_storage , obsdata_name , obsdata , local_obsdata_free__);
+  return obsdata;
+}
+
+bool local_config_has_obsdata( const local_config_type * local_config , const char * key) {
+  return hash_has_key( local_config->obsdata_storage , key );
 }
 
 
-
 local_dataset_type * local_config_alloc_dataset( local_config_type * local_config , const char * key ) {
+  if (local_config_has_dataset(local_config, key))
+    util_abort("%s: tried to add existing dataset node key:%s \n",__func__ , key);
+
   local_dataset_type * dataset = local_dataset_alloc( key );
   hash_insert_hash_owned_ref( local_config->dataset_storage , key , dataset , local_dataset_free__);
   return dataset;
+}
+
+bool local_config_has_dataset( const local_config_type * local_config , const char * key) {
+  return hash_has_key( local_config->dataset_storage , key );
 }
 
 
@@ -664,14 +653,8 @@ local_ministep_type * local_config_alloc_ministep_copy( local_config_type * loca
 
 
 
-const local_updatestep_type * local_config_iget_updatestep( const local_config_type * local_config , int index) {
-  const local_updatestep_type * updatestep = vector_safe_iget_const( local_config->updatestep , index );
-  if (updatestep == NULL)
-    /*
-      No particular report step has been installed for this
-      time-index, revert to the default.
-    */
-    updatestep = local_config->default_updatestep;
+local_updatestep_type * local_config_get_updatestep( const local_config_type * local_config) {
+  local_updatestep_type * updatestep = local_config->default_updatestep;
 
   if (updatestep == NULL)
     util_exit("%s: fatal error. No report step information for step:%d - and no default \n",__func__ , index);
@@ -679,27 +662,6 @@ const local_updatestep_type * local_config_iget_updatestep( const local_config_t
   return updatestep;
 }
 
-
-local_updatestep_type * local_config_get_updatestep( const local_config_type * local_config , const char * key) {
-  return hash_get( local_config->updatestep_storage , key );
-}
-
-
-/**
-   This will 'install' the updatestep instance identified with 'key'
-   for report steps [step1,step2]. Observe that the report step must
-   have been allocated with 'local_config_alloc_updatestep()' first.
-*/
-
-
-void local_config_set_updatestep(local_config_type * local_config, int step1 , int step2 , const char * key) {
-  local_updatestep_type * updatestep = hash_get( local_config->updatestep_storage , key );
-  int step;
-
-  for ( step = step1; step < step2 + 1; step++)
-    vector_safe_iset_ref(local_config->updatestep , step , updatestep );
-
-}
 
 
 /*******************************************************************/
@@ -739,6 +701,9 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
   case(CREATE_OBSSET):
     return CREATE_OBSSET_STRING;
     break;
+  case(ATTACH_OBSSET):
+    return ATTACH_OBSSET_STRING;
+    break;
   case(ADD_DATA):
     return ADD_DATA_STRING;
     break;
@@ -756,12 +721,6 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
     break;
   case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
     return ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING;
-    break;
-  case(INSTALL_UPDATESTEP):
-    return INSTALL_UPDATESTEP_STRING;
-    break;
-  case(INSTALL_DEFAULT_UPDATESTEP):
-    return INSTALL_DEFAULT_UPDATESTEP_STRING;
     break;
   case(DEL_DATA):
     return DEL_DATA_STRING;
@@ -947,12 +906,11 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
   hash_insert_int(cmd_table , CREATE_OBSSET_STRING                   , CREATE_OBSSET);
   hash_insert_int(cmd_table , ADD_DATA_STRING                        , ADD_DATA);
   hash_insert_int(cmd_table , ADD_OBS_STRING                         , ADD_OBS );
+  hash_insert_int(cmd_table , ATTACH_OBSSET_STRING                   , ATTACH_OBSSET);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_OBS_INDEX_STRING       , ACTIVE_LIST_ADD_OBS_INDEX);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_DATA_INDEX_STRING      , ACTIVE_LIST_ADD_DATA_INDEX);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_MANY_OBS_INDEX_STRING  , ACTIVE_LIST_ADD_MANY_OBS_INDEX);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING , ACTIVE_LIST_ADD_MANY_DATA_INDEX);
-  hash_insert_int(cmd_table , INSTALL_UPDATESTEP_STRING              , INSTALL_UPDATESTEP);
-  hash_insert_int(cmd_table , INSTALL_DEFAULT_UPDATESTEP_STRING      , INSTALL_DEFAULT_UPDATESTEP);
   hash_insert_int(cmd_table , DEL_DATA_STRING                        , DEL_DATA);
   hash_insert_int(cmd_table , DEL_OBS_STRING                         , DEL_OBS);
   hash_insert_int(cmd_table , COPY_DATASET_STRING                    , COPY_DATASET);
@@ -990,16 +948,14 @@ static void local_config_CREATE_UPDATESTEP( local_config_type * config , local_c
 
 static void local_config_CREATE_MINISTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
   char * mini_name = read_alloc_string( stream , binary );
-  char * obs_name  = read_alloc_string( stream , binary );
-  local_config_alloc_ministep( config , mini_name , obs_name );
+  local_config_alloc_ministep( config , mini_name );
   free( mini_name );
-  free( obs_name );
 }
 
 
 static void local_config_CREATE_OBSSET( local_config_type * config , local_context_type * context , FILE * stream , bool binary)  {
   char * obs_name = read_alloc_string( stream , binary );
-  local_config_alloc_obsset( config , obs_name);
+  local_config_alloc_obsdata( config , obs_name);
   free( obs_name );
 }
 
@@ -1009,7 +965,7 @@ static void local_config_ATTACH_MINISTEP( local_config_type * config , local_con
   char * update_name = read_alloc_string( stream , binary );
   char * mini_name   = read_alloc_string( stream , binary );
   {
-    local_updatestep_type * update   = local_config_get_updatestep( config , update_name );
+    local_updatestep_type * update   = local_config_get_updatestep( config );
     local_ministep_type   * ministep = local_config_get_ministep( config , mini_name );
     local_updatestep_add_ministep( update , ministep );
   }
@@ -1054,6 +1010,18 @@ static void local_config_ATTACH_DATASET( local_config_type * config , local_cont
   free( dataset_name );
 }
 
+static void local_config_ATTACH_OBSSET( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * mini_name = read_alloc_string( stream , binary );
+  char * obsdata_name = read_alloc_string( stream , binary );
+  {
+    local_ministep_type * ministep = local_config_get_ministep( config , mini_name );
+    local_obsdata_type * obsdata = hash_get( config->obsdata_storage , obsdata_name );
+    local_ministep_add_obsdata(ministep, obsdata);
+  }
+  free( mini_name );
+  free( obsdata_name );
+}
+
 static void local_config_ADD_DATA( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
   char * dataset_name = read_alloc_string( stream , binary );
   char * data_key = read_alloc_string( stream , binary );
@@ -1070,7 +1038,7 @@ static void local_config_ADD_OBS( local_config_type * config , local_context_typ
   char * obs_key  = read_alloc_string( stream , binary );
   {
     local_obsdata_type * obsdata = local_config_get_obsdata( config , obs_name );
-    local_obsdata_node_type * obsdata_node = local_obsdata_node_alloc( obs_key );
+    local_obsdata_node_type * obsdata_node = local_obsdata_node_alloc( obs_key , false );
 
     /*
       The local_obsdata_node should hold it's own active time-step
@@ -1158,23 +1126,7 @@ static void local_config_ACTIVE_LIST_ADD_MANY_DATA_INDEX( local_config_type * co
   int_vector_free( int_vector );
 }
 
-static void local_config_INSTALL_UPDATESTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
-  char * update_name = read_alloc_string( stream , binary );
-  {
-    int step1,step2;
 
-    step1 = read_int( stream , binary );
-    step2 = read_int( stream , binary );
-    local_config_set_updatestep( config , step1 , step2 , update_name );
-  }
-  free( update_name );
-}
-
-static void local_config_INSTALL_DEFAULT_UPDATESTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
-  char * update_name = read_alloc_string( stream , binary );
-  local_config_set_default_updatestep( config , update_name );
-  free( update_name );
-}
 
 static void local_config_DEL_DATA( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
   char * dataset_name = read_alloc_string( stream , binary );
@@ -1606,6 +1558,9 @@ static void local_config_load_file( local_config_type * local_config ,
     case(ATTACH_DATASET):
       local_config_ATTACH_DATASET( local_config , context , stream , binary );
       break;
+    case(ATTACH_OBSSET):
+      local_config_ATTACH_OBSSET( local_config , context , stream , binary );
+      break;
     case(ADD_DATA):
       local_config_ADD_DATA( local_config , context , stream , binary );
       break;
@@ -1623,12 +1578,6 @@ static void local_config_load_file( local_config_type * local_config ,
       break;
     case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
       local_config_ACTIVE_LIST_ADD_MANY_DATA_INDEX( local_config , context , stream , binary );
-      break;
-    case(INSTALL_UPDATESTEP):
-      local_config_INSTALL_UPDATESTEP( local_config , context , stream , binary );
-      break;
-    case(INSTALL_DEFAULT_UPDATESTEP):
-      local_config_INSTALL_DEFAULT_UPDATESTEP( local_config , context , stream , binary );
       break;
     case(DEL_DATA):
       local_config_DEL_DATA( local_config , context , stream , binary );
@@ -1729,7 +1678,33 @@ void local_config_reload( local_config_type * local_config ,
 void local_config_fprintf( const local_config_type * local_config , const char * config_file) {
   FILE * stream = util_mkdir_fopen( config_file , "w");
 
-  /* Start with dumping all the ministep instances. */
+
+  /* Write DATASET. */
+  {
+    hash_iter_type * hash_iter = hash_iter_alloc( local_config->dataset_storage );
+
+    while (!hash_iter_is_complete( hash_iter )) {
+      const local_dataset_type * dataset = hash_iter_get_next_value( hash_iter );
+      local_dataset_fprintf( dataset , stream );
+    }
+
+    hash_iter_free( hash_iter );
+  }
+
+  /* Write OBSDATA. */
+  {
+    hash_iter_type * hash_iter = hash_iter_alloc( local_config->obsdata_storage );
+
+    while (!hash_iter_is_complete( hash_iter )) {
+      const local_obsdata_type * obsdata = hash_iter_get_next_value( hash_iter );
+      local_obsdata_fprintf( obsdata , stream );
+    }
+
+    hash_iter_free( hash_iter );
+  }
+
+
+  /* Write MINISTEP. */
   {
     hash_iter_type * hash_iter = hash_iter_alloc( local_config->ministep_storage );
 
@@ -1742,36 +1717,35 @@ void local_config_fprintf( const local_config_type * local_config , const char *
   }
 
 
-  /* Dumping all the reportstep instances as ATTACH_MINISTEP commands. */
+  /* Write UPDATESTEP */
+  if (local_config->default_updatestep)
+    local_updatestep_fprintf( local_config->default_updatestep , stream );
+
+  fclose( stream );
+}
+
+void local_config_summary_fprintf( const local_config_type * local_config , const char * config_file) {
+
+  FILE * stream = util_mkdir_fopen( config_file , "w");
+
+  const local_updatestep_type * updatestep = local_config_get_updatestep( local_config ); // There is only one update step, the default
   {
-    hash_iter_type * hash_iter = hash_iter_alloc( local_config->updatestep_storage );
+    hash_iter_type * hash_iter = hash_iter_alloc( local_config->ministep_storage );
 
     while (!hash_iter_is_complete( hash_iter )) {
-      const local_updatestep_type * updatestep = hash_iter_get_next_value( hash_iter );
-      local_updatestep_fprintf( updatestep , stream );
+      const local_ministep_type * ministep = hash_iter_get_next_value( hash_iter );
+
+      fprintf(stream , "UPDATE_STEP:%s,", local_updatestep_get_name(updatestep));
+
+      local_ministep_summary_fprintf( ministep , stream);
+
     }
 
     hash_iter_free( hash_iter );
   }
 
-  /* Writing out the updatestep / time */
-  {
-    int i;
-    for (i=0; i < vector_get_size( local_config->updatestep ); i++) {
-      const local_updatestep_type * updatestep = vector_iget_const( local_config->updatestep , i );
-      if (updatestep != NULL)
-        fprintf(stream , "%s %s %d %d \n", local_config_get_cmd_string( INSTALL_UPDATESTEP ) , local_updatestep_get_name( updatestep ) , i , i );
-    }
-  }
-
-  /* Installing the default updatestep */
-  if (local_config->default_updatestep != NULL)
-    fprintf(stream , "%s %s\n", local_config_get_cmd_string( INSTALL_DEFAULT_UPDATESTEP ) , local_updatestep_get_name( local_config->default_updatestep ));
-
   fclose( stream );
 }
-
-
 
 void local_config_fprintf_config( const local_config_type * local_config , FILE * stream) {
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );

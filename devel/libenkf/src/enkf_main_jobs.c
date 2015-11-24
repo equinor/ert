@@ -243,24 +243,13 @@ void * enkf_main_select_module_JOB( void * self , const stringlist_type * args )
 }
 
 
-
-void * enkf_main_create_reports_JOB(void * self , const stringlist_type * args ) {
-  enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
-  ert_report_list_type * report_list = enkf_main_get_report_list( enkf_main );
-
-  ert_report_list_create( report_list , enkf_main_get_current_fs( enkf_main ) , true );
-  return NULL;
-}
-
 void * enkf_main_scale_obs_std_JOB(void * self, const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
 
   double scale_factor;
-  util_sscanf_double(stringlist_iget(args, 0), &scale_factor);
-
-  if (enkf_main_have_obs(enkf_main)) {
-    enkf_obs_type * observations = enkf_main_get_obs(enkf_main);
-    enkf_obs_scale_std(observations, scale_factor);
+  if (util_sscanf_double(stringlist_iget(args, 0), &scale_factor)) {
+    analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+    analysis_config_set_global_std_scaling( analysis_config , scale_factor );
   }
   return NULL;
 }
@@ -540,9 +529,9 @@ static void enkf_main_export_runpath_file(enkf_main_type * enkf_main,
   const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
   const char * basename_fmt               = ecl_config_get_eclbase(ecl_config);
   const char * runpath_fmt                = model_config_get_runpath_as_char(model_config);
-  const qc_module_type * qc_module        = enkf_main_get_qc_module( enkf_main );
+  const hook_manager_type * hook_manager        = enkf_main_get_hook_manager( enkf_main );
 
-  runpath_list_type * runpath_list = runpath_list_alloc( qc_module_get_runpath_list_file( qc_module ));
+  runpath_list_type * runpath_list = runpath_list_alloc( hook_manager_get_runpath_list_file( hook_manager ));
 
   for (int iter = 0; iter < int_vector_size(iterations); ++iter) {
     for (int iens = 0; iens < int_vector_size(realizations); ++iens) {

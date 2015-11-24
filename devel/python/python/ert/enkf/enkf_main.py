@@ -13,16 +13,27 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import ctypes
 from ert.cwrap import BaseCClass, CWrapper
 
 from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsembleConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, PostSimulationHook
 from ert.enkf.enums import EnkfInitModeEnum
+from ert.enkf.key_manager import KeyManager
 from ert.util import SubstitutionList, Log
 
 
+# The method EnKFMain.fieldInitFile() allocates C storage for a char*;
+# the sole purpose of the stringObj method is to manage this memory.
+
+def stringObj(c_ptr):
+    char_ptr = ctypes.c_char_p( c_ptr )
+    python_string = char_ptr.value
+    ENKF_LIB.free(c_ptr)
+    return python_string
+
 class EnKFMain(BaseCClass):
-    def __init__(self, model_config, strict=True):
-        c_ptr = EnKFMain.cNamespace().bootstrap(model_config, strict, False)
+    def __init__(self, model_config, strict = True, verbose = True):
+        c_ptr = EnKFMain.cNamespace().bootstrap(model_config, strict, verbose)
         super(EnKFMain, self).__init__(c_ptr)
 
         # The model_config argument can be None; the only reason to
@@ -36,6 +47,7 @@ class EnKFMain(BaseCClass):
             self.__fs_manager = EnkfFsManager(self)
             
 
+        self.__key_manager = KeyManager(self)
 
     @staticmethod
     def loadSiteConfig():
@@ -63,7 +75,7 @@ class EnKFMain(BaseCClass):
         if 0 <= iens < self.getEnsembleSize():
             return EnKFMain.cNamespace().iget_state(self, iens).setParent(self)
         else:
-            raise IndexError("iens value:%d invalid Valid range: [0,%d)" % (iens , len(self)))
+            raise IndexError("iens value:%d invalid Valid range: [0,%d)" % (iens , self.getEnsembleSize()))
 
 
     def set_eclbase(self, eclbase):
@@ -100,10 +112,13 @@ class EnKFMain(BaseCClass):
         """ @rtype: Log """
         return EnKFMain.cNamespace().get_logh(self).setParent(self)
 
-    def local_config(self):
+    def getLocalConfig(self):
         """ @rtype: LocalConfig """
-        return EnKFMain.cNamespace().get_local_config(self).setParent(self)
-
+        config = EnKFMain.cNamespace().get_local_config(self).setParent(self)
+        config.initAttributes( self.ensembleConfig() , self.getObservations() , self.eclConfig().get_grid() )
+        return config
+    
+    
     def siteConfig(self):
         """ @rtype: SiteConfig """
         return EnKFMain.cNamespace().get_site_config(self).setParent(self)
@@ -200,15 +215,23 @@ class EnKFMain(BaseCClass):
         """ @rtype: EnkfFsManager """
         return self.__fs_manager
 
+    def getKeyManager(self):
+        """ :rtype: KeyManager """
+        return self.__key_manager
+
     def getWorkflowList(self):
         """ @rtype: ErtWorkflowList """
         return EnKFMain.cNamespace().get_workflow_list(self).setParent(self)
 
     def getPostSimulationHook(self):
         """ @rtype: PostSimulationHook """
-        return EnKFMain.cNamespace().get_qc_module(self)
+        return EnKFMain.cNamespace().get_hook_manager(self)
 
 
+    def fieldInitFile(self , config_node):
+        return EnKFMain.cNamespace().alloc_field_init_file( self , config_node )
+
+    
     def exportField(self, keyword, path, iactive, file_type, report_step, state, enkfFs):
         """
         @type keyword: str
@@ -240,8 +263,7 @@ class EnKFMain(BaseCClass):
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("enkf_main", EnKFMain)
-
-
+CWrapper.registerType("string_obj" , stringObj)
 
 EnKFMain.cNamespace().bootstrap = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, bool, bool)")
 EnKFMain.cNamespace().free = cwrapper.prototype("void enkf_main_free(enkf_main)")
@@ -281,7 +303,7 @@ EnKFMain.cNamespace().get_observation_count = cwrapper.prototype("int enkf_main_
 EnKFMain.cNamespace().iget_state = cwrapper.prototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
 
 EnKFMain.cNamespace().get_workflow_list = cwrapper.prototype("ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)")
-EnKFMain.cNamespace().get_qc_module = cwrapper.prototype("qc_module_ref enkf_main_get_qc_module(enkf_main)")
+EnKFMain.cNamespace().get_hook_manager = cwrapper.prototype("hook_manager_ref enkf_main_get_hook_manager(enkf_main)")
 
 
 EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprintf_config(enkf_main)")
@@ -297,3 +319,4 @@ EnKFMain.cNamespace().load_from_forward_model = cwrapper.prototype("void enkf_ma
 
 EnKFMain.cNamespace().submit_simulation = cwrapper.prototype("void enkf_main_isubmit_job(enkf_main , run_arg)")
 EnKFMain.cNamespace().alloc_run_context_ENSEMBLE_EXPERIMENT= cwrapper.prototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , enkf_init_mode_enum , int)")
+EnKFMain.cNamespace().alloc_field_init_file = cwrapper.prototype("string_obj enkf_main_alloc_abs_path_to_init_file(enkf_main, enkf_config_node)")

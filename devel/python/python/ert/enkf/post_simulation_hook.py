@@ -30,10 +30,10 @@ class PostSimulationHook(BaseCClass):
 
 cwrapper = CWrapper(ENKF_LIB)
 
-cwrapper.registerObjectType("qc_module", PostSimulationHook)
+cwrapper.registerObjectType("hook_manager", PostSimulationHook)
 
-PostSimulationHook.cNamespace().has_workflow = cwrapper.prototype("bool qc_module_has_workflow(qc_module)")
-PostSimulationHook.cNamespace().get_workflow = cwrapper.prototype("workflow_ref qc_module_get_workflow(qc_module)")
-PostSimulationHook.cNamespace().get_runpath_list_file = cwrapper.prototype("char* qc_module_get_runpath_list_file(qc_module)")
-PostSimulationHook.cNamespace().get_runpath_list = cwrapper.prototype("runpath_list_ref qc_module_get_runpath_list(qc_module)")
+PostSimulationHook.cNamespace().has_workflow = cwrapper.prototype("bool hook_manager_has_workflow(hook_manager)")
+PostSimulationHook.cNamespace().get_workflow = cwrapper.prototype("workflow_ref hook_manager_get_workflow(hook_manager)")
+PostSimulationHook.cNamespace().get_runpath_list_file = cwrapper.prototype("char* hook_manager_get_runpath_list_file(hook_manager)")
+PostSimulationHook.cNamespace().get_runpath_list = cwrapper.prototype("runpath_list_ref hook_manager_get_runpath_list(hook_manager)")
 

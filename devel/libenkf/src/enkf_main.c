@@ -84,7 +84,7 @@
 #include <ert/enkf/plot_config.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/model_config.h>
-#include <ert/enkf/qc_module.h>
+#include <ert/enkf/hook_manager.h>
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/active_config.h>
 #include <ert/enkf/enkf_analysis.h>
@@ -96,7 +96,6 @@
 #include <ert/enkf/ert_template.h>
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/enkf_plot_data.h>
-#include <ert/enkf/ert_report_list.h>
 #include <ert/enkf/ranking_table.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
@@ -145,7 +144,7 @@ struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
   enkf_fs_type         * dbase;              /* The internalized information. */
   ensemble_config_type * ensemble_config;    /* The config objects for the various enkf nodes.*/
-  qc_module_type       * qc_module;
+  hook_manager_type       * hook_manager;
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
@@ -155,7 +154,6 @@ struct enkf_main_struct {
   plot_config_type     * plot_config;        /* Information about plotting. */
   rng_config_type      * rng_config;
   rng_type             * rng;
-  ert_report_list_type * report_list;
   ert_workflow_list_type * workflow_list;
   ranking_table_type   * ranking_table;
 
@@ -322,38 +320,14 @@ bool enkf_main_have_obs( const enkf_main_type * enkf_main ) {
 
 
 bool enkf_main_has_QC_workflow( const enkf_main_type * enkf_main ) {
-  return qc_module_has_workflow( enkf_main->qc_module );
+  return hook_manager_has_workflow( enkf_main->hook_manager );
 }
 
-qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main ) {
-  return enkf_main->qc_module;
+hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enkf_main ) {
+  return enkf_main->hook_manager;
 }
 
 
-/*
-   Adding inverse observation keys to the enkf_nodes; can be called
-   several times.
-*/
-
-
-void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
-  /* First clear all existing observation keys. */
-  ensemble_config_clear_obs_keys( enkf_main->ensemble_config );
-
-  /* Add new observation keys. */
-  {
-    hash_type      * map  = enkf_obs_alloc_data_map(enkf_main->obs);
-    hash_iter_type * iter = hash_iter_alloc(map);
-    const char * obs_key  = hash_iter_get_next_key(iter);
-    while (obs_key  != NULL) {
-      const char * state_kw = hash_get(map , obs_key);
-      ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
-      obs_key = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free(iter);
-    hash_free(map);
-  }
-}
 
 void enkf_main_alloc_obs( enkf_main_type * enkf_main ) {
   enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config),
@@ -370,8 +344,7 @@ void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_fi
   if (enkf_obs_load(enkf_main->obs ,
                     obs_config_file ,
                     analysis_config_get_std_cutoff(enkf_main->analysis_config))) {
-    enkf_main_update_obs_keys(enkf_main);
-    enkf_main_update_local_updates(enkf_main );
+    enkf_main_update_local_updates( enkf_main );
   } else
       fprintf(stderr,"** Warning: failed to load observation data from: %s \n",obs_config_file);
 }
@@ -438,13 +411,12 @@ void enkf_main_free(enkf_main_type * enkf_main){
   model_config_free( enkf_main->model_config);
 
 
-  qc_module_free( enkf_main->qc_module );
+  hook_manager_free( enkf_main->hook_manager );
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
 
   local_config_free( enkf_main->local_config );
 
-  ert_report_list_free( enkf_main->report_list );
   ert_workflow_list_free( enkf_main->workflow_list );
 
 
@@ -1067,25 +1039,27 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
         double std_cutoff = analysis_config_get_std_cutoff( analysis_config );
         double alpha      = analysis_config_get_alpha( analysis_config );
 
-        enkf_analysis_deactivate_outliers( obs_data , meas_data  , std_cutoff , alpha);
+        enkf_analysis_deactivate_outliers( obs_data , meas_data  , std_cutoff , alpha, enkf_main->verbose);
       }
 
     {
       matrix_type * S      = meas_data_allocS( meas_data );
-      matrix_type * dObs   = obs_data_allocdObs( obs_data );
-      double truncation    = -1;
-      int ncomp            = -1;
+      if (S) {
+        matrix_type * dObs   = obs_data_allocdObs( obs_data );
+        double truncation    = -1;
+        int ncomp            = -1;
 
-      if (truncation_or_ncomp < 1)
-        truncation = truncation_or_ncomp;
-      else
-        ncomp = (int) truncation_or_ncomp;
+        if (truncation_or_ncomp < 1)
+          truncation = truncation_or_ncomp;
+        else
+          ncomp = (int) truncation_or_ncomp;
 
-      obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
-      enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
+        obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
+        enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
 
-      matrix_free( S );
-      matrix_free( dObs );
+        matrix_free( S );
+        matrix_free( dObs );
+      }
     }
 
     bool_vector_free( ens_mask );
@@ -1181,8 +1155,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   analysis_module_init_update( module , ens_mask , S , R , dObs , E , D );
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
-    enkf_fs_type * src_fs = enkf_main_get_fs( enkf_main );
-    serialize_info_type * serialize_info = serialize_info_alloc( src_fs ,
+    serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
                                                                  target_fs ,
                                                                  iens_active_index,
                                                                  target_step ,
@@ -1268,6 +1241,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_free( R );
   matrix_free( dObs );
   matrix_free( X );
+  matrix_free( A );
 }
 
 
@@ -1316,10 +1290,36 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       meas_data_type              * meas_forecast = meas_data_alloc( ens_mask );
       meas_data_type              * meas_analyzed = meas_data_alloc( ens_mask );
       local_config_type           * local_config  = enkf_main->local_config;
-      const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , current_step );  /* Only last step considered when forming local update */
+      const local_updatestep_type * updatestep    = local_config_get_updatestep( local_config );
       hash_type                   * use_count     = hash_alloc();
       const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
       FILE                        * log_stream;
+
+
+
+      /* Copy all the parameter nodes from source case to target case;
+         nodes which are updated will be fetched from the new target
+         case, and nodes which are not updated will be manually copied
+         over there.
+      */
+
+      if (target_fs != source_fs) {
+	stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER );
+	for (int i=0; i < stringlist_get_size( param_keys ); i++) {
+	  const char * key = stringlist_iget( param_keys , i );
+          enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+          enkf_node_type * data_node = enkf_node_alloc( config_node );
+          for (int j=0; j < int_vector_size(ens_active_list); j++) {
+            node_id_type node_id = {.iens = int_vector_iget( ens_active_list , j ),
+                                    .state = FORECAST ,
+                                    .report_step = 0 };
+            enkf_node_load( data_node , source_fs , node_id );
+            enkf_node_store( data_node , target_fs , false , node_id );
+          }
+          enkf_node_free( data_node );
+	}
+	stringlist_free( param_keys );
+      }
 
 
       if ((local_updatestep_get_num_ministep( updatestep ) > 1) &&
@@ -1368,7 +1368,7 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 
 
 
-        enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
+        enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha , enkf_main->verbose);
 
         if (enkf_main->verbose)
           enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , stdout );
@@ -1387,12 +1387,7 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
                                      meas_forecast ,
                                      obs_data );
         else if (target_fs != source_fs) {
-          ert_log_add_fmt_message( 1 , stderr , "No active observations. Parameters copied directly: %s -> %s" , enkf_fs_get_case_name( enkf_main_get_fs( enkf_main )) , enkf_fs_get_case_name( target_fs));
-          enkf_main_init_case_from_existing( enkf_main ,
-                                             enkf_main_get_fs( enkf_main ) ,
-                                             0 ,
-                                             ANALYZED ,
-                                             target_fs );
+          ert_log_add_fmt_message( 1 , stderr , "No active observations for MINISTEP: %s." , local_ministep_get_name(ministep));
         }
       }
       fclose( log_stream );
@@ -1407,8 +1402,8 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       if (target_state_map != source_state_map) {
         state_map_set_from_inverted_mask( target_state_map , ens_mask , STATE_PARENT_FAILURE);
         state_map_set_from_mask( target_state_map , ens_mask , STATE_INITIALIZED );
-      enkf_fs_fsync( target_fs );
-    }
+        enkf_fs_fsync( target_fs );
+      }
     }
     bool_vector_free( ens_mask );
     int_vector_free( ens_active_list );
@@ -1518,7 +1513,7 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
 }
 
 void enkf_main_run_post_workflow( enkf_main_type * enkf_main ) {
-  qc_module_run_workflow( enkf_main->qc_module , enkf_main );
+  hook_manager_run_workflow( enkf_main->hook_manager , enkf_main );
 }
 
 
@@ -1533,7 +1528,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   const char * run_path                     = run_arg_get_runpath( run_arg );
 
   {
-    runpath_list_type * runpath_list = qc_module_get_runpath_list( enkf_main->qc_module );
+    runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
     runpath_list_add( runpath_list ,
                       run_arg_get_iens( run_arg ),
                       run_arg_get_iter( run_arg ),
@@ -1545,26 +1540,26 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   if (run_arg_get_run_mode(run_arg) != INIT_ONLY) {
     // The job_queue_node will take ownership of this arg_pack; and destroy it when
     // the job_queue_node is discarded.
-    arg_pack_type             * load_arg      = arg_pack_alloc();
+    arg_pack_type             * callback_arg      = arg_pack_alloc();
 
       /*
         Prepare the job and submit it to the queue
       */
-    arg_pack_append_ptr( load_arg , enkf_state );
-    arg_pack_append_ptr( load_arg , run_arg );
+    arg_pack_append_ptr( callback_arg , enkf_state );
+    arg_pack_append_ptr( callback_arg , run_arg );
 
     {
-      int queue_index = job_queue_add_job_mt( job_queue ,
-                                              job_script ,
-                                              enkf_state_complete_forward_modelOK__ ,
-                                              enkf_state_complete_forward_modelRETRY__ ,
-                                              enkf_state_complete_forward_modelEXIT__,
-                                              load_arg ,
-                                              ecl_config_get_num_cpu( ecl_config ),
-                                              run_path ,
-                                              member_config_get_jobname( member_config ) ,
-                                              1,
-                                              (const char *[1]) { run_path } );
+      int queue_index = job_queue_add_job( job_queue ,
+                                           job_script ,
+                                           enkf_state_complete_forward_modelOK__ ,
+                                           enkf_state_complete_forward_modelRETRY__ ,
+                                           enkf_state_complete_forward_modelEXIT__,
+                                           callback_arg ,
+                                           ecl_config_get_num_cpu( ecl_config ),
+                                           run_path ,
+                                           member_config_get_jobname( member_config ) ,
+                                           1,
+                                           (const char *[1]) { run_path } );
 
       run_arg_set_queue_index( run_arg , queue_index );
       run_arg_increase_submit_count( run_arg );
@@ -1574,13 +1569,12 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
 
 
 
-static void * enkf_main_isubmit_job__( void * arg ) {
+void * enkf_main_isubmit_job__( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ));
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1));
 
   enkf_main_isubmit_job( enkf_main , run_arg );
-  arg_pack_free( arg_pack );
   return NULL;
 }
 
@@ -1588,21 +1582,21 @@ static void * enkf_main_isubmit_job__( void * arg ) {
 
 
 
-void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
-                            const ert_run_context_type * run_context ) {
-  runpath_list_type * runpath_list = qc_module_get_runpath_list( enkf_main->qc_module );
-
+void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
+                              const ert_run_context_type * run_context ,
+                              thread_pool_type * submit_threads,
+                              arg_pack_type ** arg_pack_list) {
+  runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
   runpath_list_clear( runpath_list );
   {
     int iens;
     const bool_vector_type * iactive = ert_run_context_get_iactive( run_context );
     const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
-    thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
 
     for (iens = 0; iens < active_ens_size; iens++) {
       if (bool_vector_iget(iactive , iens)) {
         run_arg_type * run_arg = ert_run_context_iens_get_arg( run_context , iens);
-        arg_pack_type * arg_pack = arg_pack_alloc( );   // This is discarded by the enkf_main_isubmit_job__()
+        arg_pack_type * arg_pack = arg_pack_list[iens];
 
         arg_pack_append_ptr( arg_pack , enkf_main );
         arg_pack_append_ptr( arg_pack , run_arg);
@@ -1610,17 +1604,35 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
         thread_pool_add_job(submit_threads , enkf_main_isubmit_job__ , arg_pack);
       }
     }
-
-    /*
-      After this join all directories/files for the simulations
-      have been set up correctly, and all the jobs have been added
-      to the job_queue manager.
-    */
-
-    thread_pool_join(submit_threads);
-    thread_pool_free(submit_threads);
   }
   runpath_list_fprintf( runpath_list );
+}
+
+
+void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
+                            const ert_run_context_type * run_context) {
+
+  int ens_size = enkf_main_get_ensemble_size( enkf_main );
+  arg_pack_type ** arg_pack_list = util_malloc( ens_size * sizeof * arg_pack_list );
+  thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    arg_pack_list[iens] = arg_pack_alloc( );
+
+  enkf_main_submit_jobs__(enkf_main , run_context , submit_threads , arg_pack_list);
+
+  /*
+    After this join all directories/files for the simulations
+    have been set up correctly, and all the jobs have been added
+    to the job_queue manager.
+  */
+
+  thread_pool_join(submit_threads);
+  thread_pool_free(submit_threads);
+
+  for (iens = 0; iens < ens_size; iens++)
+    arg_pack_free( arg_pack_list[iens] );
+  free( arg_pack_list );
 }
 
 
@@ -1693,11 +1705,12 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
     {
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
       job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
+      bool restart_queue = true;
 
       /* Start the queue */
       if (ert_run_context_get_mode( run_context ) != INIT_ONLY) {
         if (site_config_has_job_script( enkf_main->site_config ))
-          job_queue_manager_start_queue( queue_manager , job_size , verbose_queue );
+          job_queue_manager_start_queue( queue_manager , job_size , verbose_queue , restart_queue);
         else
           util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
       }
@@ -1730,6 +1743,10 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
 
           switch (run_status) {
           case JOB_RUN_FAILURE:
+            enkf_main_report_run_failure( enkf_main , run_arg );
+            bool_vector_iset(ert_run_context_get_iactive( run_context ), iens, false);
+            break;
+          case JOB_NOT_STARTED:
             enkf_main_report_run_failure( enkf_main , run_arg );
             bool_vector_iset(ert_run_context_get_iactive( run_context ), iens, false);
             break;
@@ -2165,76 +2182,69 @@ ert_run_context_type * enkf_main_alloc_ert_run_context_ENKF_ASSIMILATION( const 
    here...
 */
 
-void enkf_main_create_all_active_config( const enkf_main_type * enkf_main ,
-                                         const char * local_config_file ) {
+void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 
 
   bool single_node_update = analysis_config_get_single_node_update( enkf_main->analysis_config );
   bool update_results     = analysis_config_get_update_results( enkf_main->analysis_config );
-
-  const char * update_step_name = "ALL_ACTIVE";
-  const char * ministep_name    = "ALL_ACTIVE";
-  const char * obsset_name      = "ALL_OBS";
-  const char * dataset_name     = "ALL_DATA";   // <- This is is created for possible further use, even if
-                                                //    single_node_update is true.
-
-  FILE * stream = util_fopen( local_config_file , "w");
-
-  fprintf(stream , "%-32s %s\n", local_config_get_cmd_string( CREATE_UPDATESTEP ) , update_step_name);
-  fprintf(stream , "%-32s %s \n", local_config_get_cmd_string( CREATE_OBSSET ) , obsset_name);
-  fprintf(stream , "%-32s %s %s \n", local_config_get_cmd_string( CREATE_MINISTEP ) , ministep_name , obsset_name);
-  fprintf(stream , "%-32s %s %s \n" , local_config_get_cmd_string( ATTACH_MINISTEP ), update_step_name , ministep_name);
-
-  fprintf(stream , "%-32s %s \n", local_config_get_cmd_string( CREATE_DATASET ) , dataset_name);
-  if (!single_node_update)
-    fprintf(stream , "%-32s %s %s \n", local_config_get_cmd_string( ATTACH_DATASET ) , ministep_name , dataset_name);
-
-  /* Adding all observation keys */
+  local_config_type * local_config = enkf_main->local_config;
+  local_config_clear( local_config );
   {
-    hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_main->obs );
-    while ( !hash_iter_is_complete(obs_iter) ) {
-      const char * obs_key = hash_iter_get_next_key( obs_iter );
-      fprintf(stream , "%-32s %s %s\n",local_config_get_cmd_string( ADD_OBS ) , obsset_name , obs_key);
-    }
-    hash_iter_free( obs_iter );
-  }
+    local_updatestep_type * default_step = local_config_get_updatestep(local_config);
+    local_ministep_type * ministep = local_config_alloc_ministep( local_config , "ALL_ACTIVE");
+    local_obsdata_type * obsdata = local_config_alloc_obsdata(local_config, "ALL_OBS");
+    local_dataset_type * all_active_dataset = local_config_alloc_dataset(local_config, "ALL_DATA");
 
-  /* Adding all node which can be updated. */
-  {
-    stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE + DYNAMIC_RESULT);
-    int i;
-    for (i = 0; i < stringlist_get_size( keylist ); i++) {
-      const char * key = stringlist_iget( keylist , i);
-      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
-      enkf_var_type var_type = enkf_config_node_get_var_type( config_node );
-      bool add_node = true;
+    local_updatestep_add_ministep( default_step , ministep );
 
-      if ((var_type == DYNAMIC_RESULT) && (!update_results))
-        add_node = false;
-
-      /*
-        Make sure the funny GEN_KW instance masquerading as
-        SCHEDULE_PREDICTION_FILE is not added to the soup.
-      */
-      if (util_string_equal(key , "PRED"))
-        add_node = false;
-
-
-      if (add_node) {
-        if (single_node_update) {
-          fprintf(stream , "%-32s %s \n"    , local_config_get_cmd_string( CREATE_DATASET ) , key);
-          fprintf(stream , "%-32s %s %s \n" , local_config_get_cmd_string( ATTACH_DATASET ) , ministep_name , key);
-          fprintf(stream , "%-32s %s %s\n"  , local_config_get_cmd_string( ADD_DATA ) , key , key);
-        }
-        fprintf(stream , "%-32s %s %s\n",local_config_get_cmd_string( ADD_DATA ) , dataset_name , key);
+    /* Adding all observation keys */
+    {
+      hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_main->obs );
+      while ( !hash_iter_is_complete(obs_iter) ) {
+        const char * obs_key = hash_iter_get_next_key( obs_iter );
+        local_obsdata_node_type * obsdata_node = local_obsdata_node_alloc( obs_key , true );
+        local_obsdata_add_node(obsdata, obsdata_node );
       }
+      local_ministep_add_obsdata(ministep, obsdata);
+      hash_iter_free( obs_iter );
     }
-    stringlist_free( keylist);
-  }
 
-  /* Install the ALL_ACTIVE step as the default. */
-  fprintf(stream , "%-32s ALL_ACTIVE" , local_config_get_cmd_string( INSTALL_DEFAULT_UPDATESTEP ));
-  fclose( stream );
+    /* Adding all node which can be updated. */
+    {
+      stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE + DYNAMIC_RESULT);
+      int i;
+      for (i = 0; i < stringlist_get_size( keylist ); i++) {
+        const char * key = stringlist_iget( keylist , i);
+        const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+        enkf_var_type var_type = enkf_config_node_get_var_type( config_node );
+        bool add_node = true;
+
+        if ((var_type == DYNAMIC_RESULT) && (!update_results))
+          add_node = false;
+
+        /*
+          Make sure the funny GEN_KW instance masquerading as
+          SCHEDULE_PREDICTION_FILE is not added to the soup.
+        */
+        if (util_string_equal(key , "PRED"))
+          add_node = false;
+
+
+        if (add_node) {
+          if (single_node_update) {
+            local_dataset_type * this_dataset = local_config_alloc_dataset(local_config, key);
+            local_dataset_add_node(this_dataset, key);
+            local_ministep_add_dataset(ministep, this_dataset);
+          }
+          local_dataset_add_node(all_active_dataset, key);
+        }
+      }
+      stringlist_free( keylist);
+    }
+    if (!single_node_update)
+      local_ministep_add_dataset(ministep, all_active_dataset);
+
+  }
 }
 
 
@@ -2349,8 +2359,7 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
     stringlist_free(refcase_dep);
   }
 
-  ert_report_list_add_config_items( config);
-  qc_module_add_config_items( config );
+  hook_manager_add_config_items( config );
 }
 
 
@@ -2444,8 +2453,8 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 
 
 static void enkf_main_init_qc( enkf_main_type * enkf_main , config_content_type * config ) {
-  qc_module_init( enkf_main->qc_module , config );
-  enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
+  hook_manager_init( enkf_main->hook_manager , config );
+  enkf_main_add_subst_kw( enkf_main , "QC_PATH" , hook_manager_get_path( enkf_main->hook_manager ) , "QC Root path" , true);
 }
 
 
@@ -2516,9 +2525,8 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->subst_list         = subst_list_alloc( enkf_main->subst_func_pool );
   enkf_main->templates          = ert_templates_alloc( enkf_main->subst_list );
   enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main->subst_list );
-  enkf_main->qc_module          = qc_module_alloc( enkf_main->workflow_list , DEFAULT_QC_PATH );
+  enkf_main->hook_manager       = hook_manager_alloc( enkf_main->workflow_list , DEFAULT_QC_PATH );
   enkf_main->analysis_config    = analysis_config_alloc( enkf_main->rng );
-  enkf_main->report_list        = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ) );
 
   enkf_main_init_subst_list( enkf_main );
   enkf_main_set_verbose( enkf_main , true );
@@ -2560,7 +2568,7 @@ static void enkf_main_install_common_data_kw( enkf_main_type * enkf_main ) {
   enkf_main_add_subst_kw( enkf_main , "CONFIG_PATH"  , cwd , "The current working directory we are running from - the location of the config file." , true);
   enkf_main_add_subst_kw( enkf_main , "DATE"         , date_string , "The current date." , true);
   enkf_main_add_subst_kw( enkf_main , "NUM_CPU"      , num_cpu_string , "The number of CPU used for one forward model." , true );
-  enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , qc_module_get_runpath_list_file( enkf_main->qc_module ) , "The name of a file with a list of run directories." , true);
+  enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , hook_manager_get_runpath_list_file( enkf_main->hook_manager ) , "The name of a file with a list of run directories." , true);
 
   free( cwd );
   free( date_string );
@@ -2777,26 +2785,39 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
   const enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
   if (enkf_obs_have_obs( enkf_obs )) {
     /* First create the default ALL_ACTIVE configuration. */
-    {
-      char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
-      enkf_main_create_all_active_config( enkf_main ,
-                                          all_active_config_file );
-
-      /**
-         This is where the local configuration files are actually parsed.
-      */
-      local_config_reload( enkf_main->local_config ,
-                           ecl_config_get_grid( enkf_main->ecl_config ),
-                           enkf_main->ensemble_config ,
-                           enkf_main->obs ,
-                           all_active_config_file );
-
-      unlink( all_active_config_file );
-      free(all_active_config_file);
-    }
+    enkf_main_create_all_active_config( enkf_main );
   }
 }
 
+static char * __enkf_main_alloc_user_config_file(const enkf_main_type * enkf_main, bool base_only) {
+    char * base_name;
+    char * extension;
+    util_alloc_file_components(enkf_main_get_user_config_file(enkf_main), NULL, &base_name, &extension);
+
+    char * config_file;
+    if (base_only) {
+        config_file = util_alloc_filename(NULL, base_name, NULL);;
+    } else {
+        config_file = util_alloc_filename(NULL, base_name, extension);
+    }
+
+    free(base_name);
+    free(extension);
+    return config_file;
+}
+
+static hash_type *__enkf_main_alloc_predefined_kw_map(const enkf_main_type *enkf_main) {
+    char * config_file_base       = __enkf_main_alloc_user_config_file(enkf_main, true);
+    char * config_file            = __enkf_main_alloc_user_config_file(enkf_main, false);
+    hash_type * pre_defined_kw_map = hash_alloc();
+
+    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE>", config_file);
+    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE_BASE>", config_file_base);
+
+    free( config_file ) ;
+    free( config_file_base );
+    return pre_defined_kw_map;
+}
 
 
 /**
@@ -2813,11 +2834,10 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
     config_parser_type * config = config_alloc();
     site_config_add_config_items( config , true );
     {
-      config_content_type * content = config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
+      config_content_type * content = config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , NULL, CONFIG_UNRECOGNIZED_WARN , false);
       if (config_content_is_valid( content )) {
         site_config_init( enkf_main->site_config , content );
         analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
-        ert_report_list_site_init( enkf_main->report_list , content );
         ert_workflow_list_init( enkf_main->workflow_list , content );
       } else {
         config_error_type * errors = config_content_get_errors( content );
@@ -2925,12 +2945,20 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
     enkf_main_bootstrap_site( enkf_main , site_config);
 
     if (model_config) {
+      enkf_main_set_site_config_file( enkf_main , site_config );
+      enkf_main_set_user_config_file( enkf_main , model_config );
+
       config = config_alloc();
       enkf_main_init_user_config( enkf_main , config );
       site_config_add_config_items( config , false );
       site_config_init_user_mode( enkf_main->site_config );
 
-      content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true);
+      hash_type *pre_defined_kw_map = __enkf_main_alloc_predefined_kw_map(enkf_main);
+
+      content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , pre_defined_kw_map, CONFIG_UNRECOGNIZED_WARN , true);
+
+      hash_free(pre_defined_kw_map);
+
       if (!config_content_is_valid( content )) {
 	config_error_type * errors = config_content_get_errors( content );
 	config_error_fprintf( errors , true , stderr );
@@ -2946,8 +2974,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
       */
 
 
-      enkf_main_set_site_config_file( enkf_main , site_config );
-      enkf_main_set_user_config_file( enkf_main , model_config );
+
 
       {
 	char * log_file;
@@ -3058,9 +3085,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 
 	/* Installing templates */
 	ert_templates_init( enkf_main->templates , content );
-
-	/*****************************************************************/
-	ert_report_list_init( enkf_main->report_list , content , ecl_config_get_refcase( enkf_main->ecl_config ));
 
 
 	/*****************************************************************/
@@ -3362,11 +3386,6 @@ ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
   return enkf_main->templates;
 }
 
-
-
-ert_report_list_type * enkf_main_get_report_list( const enkf_main_type * enkf_main ) {
-  return enkf_main->report_list;
-}
 
 
 /*****************************************************************/

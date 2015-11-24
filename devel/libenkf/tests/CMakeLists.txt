@@ -308,7 +308,7 @@ target_link_libraries( enkf_select_case_job  enkf test_util )
 
 add_test( enkf_select_case_job
           ${EXECUTABLE_OUTPUT_PATH}/enkf_select_case_job 
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields/config 
+          ${PROJECT_SOURCE_DIR}/test-data/local/snake_oil/snake_oil.ert
           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal-tui/config/SELECT_CASE)
 
 
@@ -403,10 +403,6 @@ add_executable( enkf_rng enkf_rng.c )
 target_link_libraries( enkf_rng enkf test_util )
 add_test( enkf_rng  ${EXECUTABLE_OUTPUT_PATH}/enkf_rng ${CMAKE_CURRENT_SOURCE_DIR}/data/config rng)
 
-add_executable( enkf_report_list enkf_report_list.c )
-target_link_libraries( enkf_report_list enkf test_util )
-add_test( enkf_report_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_report_list ${CMAKE_CURRENT_SOURCE_DIR}/data/config/ert_report_list)
-
 add_executable( enkf_refcase_list enkf_refcase_list.c )
 target_link_libraries( enkf_refcase_list enkf test_util )
 add_test( enkf_refcase_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_refcase_list ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE) 
@@ -425,9 +421,9 @@ target_link_libraries( enkf_ecl_config_config enkf test_util )
 add_test( enkf_ecl_config_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_ecl_config_config ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_config )
 set_property( TEST enkf_ecl_config_config PROPERTY LABELS StatoilData )
 
-add_executable( enkf_qc_module_test enkf_qc_module_test.c )
-target_link_libraries( enkf_qc_module_test enkf test_util )
-add_test( enkf_qc_module_test ${EXECUTABLE_OUTPUT_PATH}/enkf_qc_module_test )
+add_executable( enkf_hook_manager_test enkf_hook_manager_test.c )
+target_link_libraries( enkf_hook_manager_test enkf test_util )
+add_test( enkf_hook_manager_test ${EXECUTABLE_OUTPUT_PATH}/enkf_hook_manager_test )
  
 add_executable(enkf_obs_tests enkf_obs_tests.c)
 target_link_libraries(enkf_obs_tests enkf test_util )
@@ -461,7 +457,6 @@ set_property( TEST enkf_state_summary_vars_present PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_no_summary_vars_present PROPERTY LABELS StatoilData )
 set_property( TEST enkf_export_field_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_workflow_job_test PROPERTY LABELS StatoilData )
-set_property( TEST enkf_select_case_job   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_main_fs_current_file_test  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_manual_load_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_analysis_update_job PROPERTY LABELS StatoilData )
