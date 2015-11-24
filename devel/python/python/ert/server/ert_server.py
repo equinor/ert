@@ -272,6 +272,14 @@ class ErtServer(object):
         state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
         
         self.run_context.startSimulation( iens )
+
+        # The call to exportRunpathList() should ideally only be
+        # called when all the simulations have been added to the
+        # simulation batch, however since the server does not
+        # currently know when all simulations have been added we call
+        # the export method for every ADD_SIMULATION call - not very
+        # elegant.
+        self.run_context.exportRunpathList( )
         return self.handleSTATUS([])
 
     def handleTIMESTEP(self, args):
