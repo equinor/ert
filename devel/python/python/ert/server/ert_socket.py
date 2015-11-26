@@ -50,7 +50,7 @@ class ErtHandler(SocketServer.StreamRequestHandler):
     def evalCmd(self , data):
         try:
             result = self.ert_server.evalCmd( data )
-        except Exception,e:
+        except Exception, e:
             tb = traceback.format_exc()
             result = ERROR( "Exception raised:" , exception = tb)
 
@@ -124,3 +124,6 @@ class ErtSocket(object):
     def shutdown(self):
         if self.__is_listening:
             self.server.shutdown()
+
+            if ErtHandler.ert_server is not None:
+                ErtHandler.ert_server.close()
