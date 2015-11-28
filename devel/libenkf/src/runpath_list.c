@@ -127,15 +127,6 @@ int runpath_list_size( const runpath_list_type * list ) {
 }
 
 
-void runpath_list_sort( runpath_list_type * list ) {
-  pthread_rwlock_wrlock( &list->lock );
-  {
-    vector_sort( list->list , runpath_node_cmp );
-  }
-  pthread_rwlock_unlock( &list->lock );
-}
-
-
 void runpath_list_add( runpath_list_type * list , int iens , int iter, const char * runpath , const char * basename) {
   runpath_node_type * node = runpath_node_alloc( iens , iter, runpath , basename );
 
