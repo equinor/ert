@@ -78,20 +78,28 @@ static void runpath_node_free__( void * arg ) {
   runpath_node_free( node );
 }
 
+
+/*
+  The comparison is first based on iteration number and then on iens.
+*/
+
 static int runpath_node_cmp( const void * arg1 , const void * arg2) {
   const runpath_node_type * node1 = runpath_node_safe_cast_const( arg1 );
   const runpath_node_type * node2 = runpath_node_safe_cast_const( arg2 );
   {
-    if (node1->iens > node2->iens)
-      return 1;
-    else if (node1->iens < node2->iens)
-      return -1;
-    else if (node1->iter > node2->iter)
+    if (node1->iter > node2->iter)
       return 1;
     else if (node1->iter < node2->iter)
-      return 1;
-    else
-      return 0;
+      return -1;
+    else {
+      /* Iteration number is the same */
+      if (node1->iens > node2->iens)
+        return 1;
+      else if (node1->iens < node2->iens)
+        return -1;
+      else
+        return 0;
+    }
   }
 }
 
