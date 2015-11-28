@@ -215,6 +215,7 @@ void runpath_list_fprintf(runpath_list_type * list ) {
     FILE * stream = util_fopen( list->export_file , "w");
     const char * line_fmt = runpath_list_get_line_fmt( list );
     int index;
+    vector_sort( list->list , runpath_node_cmp );
     for (index =0; index < vector_get_size( list->list ); index++) {
       const runpath_node_type * node = runpath_list_iget_node__( list , index );
       runpath_node_fprintf( node , line_fmt , stream );

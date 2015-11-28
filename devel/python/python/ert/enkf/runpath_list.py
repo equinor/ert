@@ -6,8 +6,9 @@ RunpathNode = namedtuple("RunpathNode", ["realization", "iteration", "runpath", 
 
 class RunpathList(BaseCClass):
 
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self, export_file):
+        c_ptr = RunpathList.cNamespace().alloc( export_file )
+        super(RunpathList , self).__init__(c_ptr)
 
     def __len__(self):
         return RunpathList.cNamespace().size(self)
@@ -66,5 +67,5 @@ RunpathList.cNamespace().iteration = cwrapper.prototype("int runpath_list_iget_i
 RunpathList.cNamespace().runpath = cwrapper.prototype("char* runpath_list_iget_runpath(runpath_list, int)")
 RunpathList.cNamespace().basename = cwrapper.prototype("char* runpath_list_iget_basename(runpath_list, int)")
 RunpathList.cNamespace().export = cwrapper.prototype("void runpath_list_fprintf(runpath_list)")
-
+RunpathList.cNamespace().alloc = cwrapper.prototype("c_void_p runpath_list_alloc(char*)")
 
