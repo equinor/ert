@@ -87,3 +87,8 @@ class RunContext(object):
         else:
             return True
         
+
+    def exportRunpathList(self):
+        runpath_list = self.ert_handle.getRunpathList( )
+        runpath_list.export( )
+        

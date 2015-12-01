@@ -258,6 +258,9 @@ class EnKFMain(BaseCClass):
         return EnKFMain.cNamespace().alloc_run_context_ENSEMBLE_EXPERIMENT( self , fs , iactive , init_mode , iteration )
     
 
+    def getRunpathList(self):
+        return EnKFMain.cNamespace().get_runpath_list( self )
+    
 
 ##################################################################
 
@@ -320,3 +323,4 @@ EnKFMain.cNamespace().load_from_forward_model = cwrapper.prototype("void enkf_ma
 EnKFMain.cNamespace().submit_simulation = cwrapper.prototype("void enkf_main_isubmit_job(enkf_main , run_arg)")
 EnKFMain.cNamespace().alloc_run_context_ENSEMBLE_EXPERIMENT= cwrapper.prototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , enkf_init_mode_enum , int)")
 EnKFMain.cNamespace().alloc_field_init_file = cwrapper.prototype("string_obj enkf_main_alloc_abs_path_to_init_file(enkf_main, enkf_config_node)")
+EnKFMain.cNamespace().get_runpath_list = cwrapper.prototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
