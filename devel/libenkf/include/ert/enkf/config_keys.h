@@ -123,6 +123,7 @@ extern "C" {
 #define  QUEUE_OPTION_KEY                  "QUEUE_OPTION"
 #define  QC_PATH_KEY                       "QC_PATH"
 #define  QC_WORKFLOW_KEY                   "QC_WORKFLOW"
+#define  HOOK_WORKFLOW_KEY                 "HOOK_WORKFLOW"
 #define  REFCASE_KEY                       "REFCASE"
 #define  REFCASE_LIST_KEY                  "REFCASE_LIST"
 #define  RERUN_START_KEY                   "RERUN_START"

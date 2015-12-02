@@ -64,7 +64,7 @@ void enkf_tui_QC_run_workflow( void * arg ) {
   enkf_main_type  * enkf_main        = enkf_main_safe_cast( arg );
   const hook_manager_type  * hook_manager  = enkf_main_get_hook_manager( enkf_main );
 
-  hook_manager_run_workflow( hook_manager , enkf_main );
+  hook_manager_run_post_hook_workflow( hook_manager , enkf_main );
 }
 
 
