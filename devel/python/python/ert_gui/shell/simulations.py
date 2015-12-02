@@ -35,14 +35,21 @@ class Simulations(ErtShellCollection):
         now = time.time()
 
         print("Ensemble Experiment started at: %s" % datetime.now().isoformat(sep=" "))
+
+        if self.ert().getEnkfSimulationRunner().isHookPreSimulation():
+            self.ert().getEnkfSimulationRunner().runHookWorkflow()
+
         success = simulation_runner.runEnsembleExperiment()
 
         if not success:
             print("Error: Simulations failed!")
             return
 
+        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
+            self.ert().getEnkfSimulationRunner().runHookWorkflow()
+
         print("Ensemble Experiment post processing!")
-        simulation_runner.runPostWorkflow()
+        simulation_runner.runPostHookWorkflow()
 
         print("Ensemble Experiment completed at: %s" % datetime.now().isoformat(sep=" "))
 

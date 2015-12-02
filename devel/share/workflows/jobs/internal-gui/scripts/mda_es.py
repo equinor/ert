@@ -82,6 +82,10 @@ class MDAEnsembleSmootherJob(ErtPlugin):
         self.ert().getEnkfFsManager().switchFileSystem(target_fs)
 
         print("[%s] Running simulation for iteration: %d" % (target_case_name, iteration))
+
+        if self.ert().getEnkfSimulationRunner().isHookPreSimulation():
+            self.ert().getEnkfSimulationRunner().runHookWorkflow()
+
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iteration)
 
         if not success:
@@ -89,8 +93,11 @@ class MDAEnsembleSmootherJob(ErtPlugin):
 
         self.checkIfCancelled()
 
+        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
+            self.ert().getEnkfSimulationRunner().runHookWorkflow()
+
         print("[%s] Post processing for iteration: %d" % (target_case_name, iteration))
-        self.ert().getEnkfSimulationRunner().runPostWorkflow()
+        self.ert().getEnkfSimulationRunner().runPostHookWorkflow()
 
 
     def checkSuccessCount(self, active_realization_mask):
