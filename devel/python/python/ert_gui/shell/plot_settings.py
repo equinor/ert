@@ -1,6 +1,7 @@
 from ert_gui.plottery.plot_config import PlotConfig
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import autoCompleteList, boolValidator, pathCompleter, splitArguments
+from ert_gui.shell.libshell.shell_tools import matchItems
 
 
 def plotPathValidator(model, line):
@@ -24,6 +25,10 @@ class PlotSettings(ErtShellCollection):
         self.addShellFunction(name="current",
                               function=PlotSettings.current,
                               help_message="Shows the selected plot source case(s).")
+
+        self.addShellFunction(name="reset_title",
+                              function=PlotSettings.resetTitle,
+                              help_message="Reset plot title back to default.")
 
         self.addShellFunction(name="select",
                               function=PlotSettings.select,
@@ -84,6 +89,16 @@ class PlotSettings(ErtShellCollection):
                               pretty_attribute="Legend visibility",
                               model=self.__plot_config)
 
+        self.addShellProperty(name="distribution_lines",
+                              getter=PlotConfig.isDistributionLineEnabled,
+                              setter=PlotConfig.setDistributionLineEnabled,
+                              validator=boolValidator,
+                              completer=["true", "false"],
+                              help_arguments="[true|false]",
+                              help_message="Show or set the distribution lines visibility",
+                              pretty_attribute="Distribution Line visibility",
+                              model=self.__plot_config)
+
         self.addShellProperty(name="refcase",
                               getter=PlotConfig.isRefcaseEnabled,
                               setter=PlotConfig.setRefcaseEnabled,
@@ -104,6 +119,7 @@ class PlotSettings(ErtShellCollection):
                               pretty_attribute="Observations visibility",
                               model=self.__plot_config)
 
+
     def getCurrentPlotCases(self):
         """ @rtype: list of str """
 
@@ -123,19 +139,14 @@ class PlotSettings(ErtShellCollection):
 
     @assertConfigLoaded
     def select(self, line):
-        case_names = splitArguments(line)
+        matched_cases = matchItems(line, self.getAllCaseList())
 
-        possible_cases = self.getAllCaseList()
-        cases = []
-        for case_name in case_names:
-            if case_name in possible_cases:
-                cases.append(case_name)
-            else:
-                self.lastCommandFailed("Unknown case '%s'" % case_name)
-
-        if len(cases) > 0:
-            self.__cases = cases
+        if len(matched_cases) > 0:
+            self.__cases = sorted(list(matched_cases))
         else:
+            if len(line) > 0:
+                self.lastCommandFailed("No valid case names provided: %s" % line)
+            print("Case reset to default: %s" % self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName())
             self.__cases = None
 
     @assertConfigLoaded
@@ -155,3 +166,6 @@ class PlotSettings(ErtShellCollection):
     @assertConfigLoaded
     def setPath(self, path):
         self.ert().plotConfig().setPath(path)
+
+    def resetTitle(self, line):
+        self.plotConfig().setTitle(None)
