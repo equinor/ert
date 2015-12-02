@@ -137,6 +137,7 @@ class PlotWindow(QMainWindow):
         # plot_config.setRefcaseEnabled(custom["show_refcase"])
         plot_config.setLegendEnabled(custom["show_legend"])
         plot_config.setGridEnabled(custom["show_grid"])
+        plot_config.setDistributionLineEnabled(custom["show_distribution_lines"])
 
         plot_config.setDefaultStyle(*custom["default_style"])
         plot_config.setRefcaseStyle(*custom["refcase_style"])

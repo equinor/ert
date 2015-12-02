@@ -1,9 +1,8 @@
 from .plot_tools import PlotTools
 
-
 def plotDistribution(plot_context):
     """
-    @type plot_context: PlotContext
+    @type plot_context: ert_gui.plottery.PlotContext
     """
     ert = plot_context.ert()
     key = plot_context.key()
@@ -19,21 +18,31 @@ def plotDistribution(plot_context):
 
     case_list = plot_context.cases()
     case_indexes = []
+    previous_data = None
     for case_index, case in enumerate(case_list):
         case_indexes.append(case_index)
         data = plot_context.dataGatherer().gatherData(ert, case, key)
 
         if not data.empty and data.nunique() > 1:
-            _plotDistribution(axes, config, data, case, case_index)
+            _plotDistribution(axes, config, data, case, case_index, previous_data)
             config.nextColor()
 
+        previous_data = data
+
     axes.set_xticks([-1] + case_indexes + [len(case_indexes)])
-    axes.set_xticklabels([""] + case_list + [""])
+
+    rotation = 0
+    if len(case_list) > 3:
+        rotation = 30
+
+    axes.set_xticklabels([""] + case_list + [""], rotation=rotation)
+
+    config.setLegendEnabled(False)
 
     PlotTools.finalizePlot(plot_context, axes, default_x_label="Case", default_y_label="Value")
 
 
-def _plotDistribution(axes, plot_config, data, label, index):
+def _plotDistribution(axes, plot_config, data, label, index, previous_data):
     """
     @type axes: matplotlib.axes.Axes
     @type plot_config: PlotConfig
@@ -50,9 +59,15 @@ def _plotDistribution(axes, plot_config, data, label, index):
         data = data.convert_objects(convert_numeric=True)
 
     if data.dtype == "object":
-        lines = []
+        dots = []
     else:
-        lines = axes.plot([index] * len(data), data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, markersize=style.width)
+        dots = axes.plot([index] * len(data), data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, markersize=style.width)
 
-    if len(lines) > 0:
-        plot_config.addLegendItem(label, lines[0])
+        if plot_config.isDistributionLineEnabled() and previous_data is not None:
+            line_style = plot_config.distributionLineStyle()
+            x = [index - 1, index]
+            y = [previous_data, data]
+            lines = axes.plot(x, y, color=line_style.color, alpha=line_style.alpha, marker=line_style.marker, linestyle=line_style.line_style, linewidth=line_style.width)
+
+    if len(dots) > 0:
+        plot_config.addLegendItem(label, dots[0])

@@ -17,8 +17,12 @@ class ShellPlot(object):
         figure = plt.figure()
         figure.set_tight_layout(True)
         cases = shell_context["plot_settings"].getCurrentPlotCases()
+
         plot_config = PlotConfig(key)
-        # todo: apply plot settings
+        plot_config.copyConfigFrom(shell_context["plot_settings"].plotConfig())
+        if plot_config.isUnnamed():
+            plot_config.setTitle(key)
+
         plot_context = PlotContext(shell_context.ert(), figure, plot_config, cases, key, data_gatherer)
         return plot_context
 
@@ -97,12 +101,12 @@ class ShellPlot(object):
 
     @classmethod
     def __createCompleteFunction(cls):
-        def complete_histogram(self, text, line, begidx, endidx):
+        def complete_function(self, text, line, begidx, endidx):
             key = extractFullArgument(line, endidx)
             return autoCompleteListWithSeparator(key, self.fetchSupportedKeys())
 
-        complete_histogram = assertConfigLoaded(complete_histogram)
-        return complete_histogram
+        complete_function = assertConfigLoaded(complete_function)
+        return complete_function
 
     @classmethod
     def addHistogramPlotSupport(cls, instance, name):

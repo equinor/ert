@@ -95,6 +95,10 @@ class ModelConfig(BaseCClass):
         """ @rtype: str """
         return ModelConfig.cNamespace().get_jobname_fmt(self)
 
+    def getEnspath(self):
+        """ @rtype: str """
+        return ModelConfig.cNamespace().get_enspath(self)
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("model_config", ModelConfig)
@@ -118,3 +122,5 @@ ModelConfig.cNamespace().has_history = cwrapper.prototype("bool model_config_has
 ModelConfig.cNamespace().gen_kw_export_file = cwrapper.prototype("char* model_config_get_gen_kw_export_file(model_config)")
 ModelConfig.cNamespace().runpath_requires_iterations = cwrapper.prototype("bool model_config_runpath_requires_iter(model_config)")
 ModelConfig.cNamespace().get_jobname_fmt = cwrapper.prototype("char* model_config_get_jobname_fmt(model_config)")
+
+ModelConfig.cNamespace().get_enspath = cwrapper.prototype("char* model_config_get_enspath(model_config)")
