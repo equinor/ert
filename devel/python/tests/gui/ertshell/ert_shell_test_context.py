@@ -46,5 +46,6 @@ class ErtShellTestContext(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.shell.do_exit("")
+        self.shell._cleanup()
         self.test_area_context.__exit__(exc_type, exc_val, exc_tb)
         return False
