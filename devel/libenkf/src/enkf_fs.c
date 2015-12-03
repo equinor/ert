@@ -749,9 +749,6 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, 
   case(DYNAMIC_STATE):
     driver = select_dynamic_driver( fs , state );
     break;
-  case(STATIC_STATE):
-    driver = fs->eclipse_static;
-    break;
   default:
     util_abort("%s: fatal internal error - could not determine enkf_fs driver for object:%s[integer type:%d] - aborting.\n",__func__, key , var_type);
   }

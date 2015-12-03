@@ -1190,7 +1190,6 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
 static void enkf_state_write_restart_file(enkf_state_type * enkf_state , const run_arg_type * run_arg , enkf_fs_type * fs) {
   const member_config_type * my_config = enkf_state->my_config;
   const bool fmt_file                  = ecl_config_get_formatted(enkf_state->shared_info->ecl_config);
-  const int iens                       = member_config_get_iens( my_config );
   char * restart_file                  = ecl_util_alloc_filename(run_arg_get_runpath( run_arg ) , member_config_get_eclbase( enkf_state->my_config ) , ECL_RESTART_FILE , fmt_file , run_arg_get_step1(run_arg));
   fortio_type * fortio                 = fortio_open_writer(restart_file , fmt_file , ECL_ENDIAN_FLIP);
   const char * kw;
@@ -1221,21 +1220,12 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state , const r
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
       enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
-      if (var_type == STATIC_STATE) {
-        node_id_type node_id = {.report_step = run_arg_get_step1(run_arg) ,
-                                .iens = iens ,
-                                .state = run_arg_get_dynamic_init_state(run_arg) };
-        enkf_node_load( enkf_node , fs , node_id);
-      }
       if (var_type == DYNAMIC_STATE) {
         /* Pressure and saturations */
         if (enkf_node_get_impl_type(enkf_node) == FIELD)
           enkf_node_ecl_write(enkf_node , NULL , fortio , run_arg_get_step1(run_arg));
         else
           util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key(enkf_node));
-      } else if (var_type == STATIC_STATE) {
-        enkf_node_ecl_write(enkf_node , NULL , fortio , run_arg_get_step1(run_arg));
-        enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
       } else {
         fprintf(stderr,"var_type: %d \n",var_type);
         fprintf(stderr,"node    : %s \n",enkf_node_get_key(enkf_node));
@@ -1286,20 +1276,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
     for (ikey = 0; ikey < num_keys; ikey++) {
       if (true) {
         enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-        if (enkf_node_get_var_type( enkf_node ) != STATIC_STATE) {                        /* Ensure that no-longer-active static keywords do not create problems. */
-          bool forward_init = enkf_node_use_forward_init( enkf_node );
-
-          if ((run_arg_get_step1(run_arg) == 0) && (forward_init)) {
-            node_id_type node_id = {.report_step = 0,
-                                    .iens = iens ,
-                                    .state = ANALYZED };
-
-            if (enkf_node_has_data( enkf_node , fs , node_id))
-              enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export_file , run_arg_get_step1(run_arg));
-          } else
-            enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export_file , run_arg_get_step1(run_arg));
-
-        }
+        enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export_file , run_arg_get_step1(run_arg));
       }
     }
     util_free_stringlist(key_list , num_keys);

@@ -36,9 +36,6 @@ const char * enkf_types_get_var_name(enkf_var_type var_type) {
   case PARAMETER:
     return "PARAMETER";
     break;
-  case STATIC_STATE:
-    return "STATIC_STATE";
-    break;
   case DYNAMIC_STATE:
     return "DYNAMIC_STATE";
     break;
