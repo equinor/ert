@@ -935,31 +935,7 @@ void enkf_fs_debug_fprintf( const enkf_fs_type * fs) {
 }
 
 
-/*****************************************************************/
-/* Index related functions  . */
 
-
-void enkf_fs_fwrite_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, const stringlist_type * kw_list) {
-  buffer_type * buffer = buffer_alloc(1024);
-  stringlist_buffer_fwrite( kw_list , buffer );
-  {
-    fs_driver_type * driver = enkf_fs->index;
-    driver->save_node(driver , "kw_list" , report_step , iens , buffer);
-  }
-  buffer_free( buffer );
-}
-
-
-
-void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, stringlist_type * kw_list) {
-  buffer_type * buffer = buffer_alloc(1024);
-  {
-    fs_driver_type * driver = enkf_fs->index;
-    driver->load_node(driver , "kw_list" , report_step , iens , buffer);
-  }
-  stringlist_buffer_fread( kw_list , buffer );
-  buffer_free( buffer );
-}
 
 /*****************************************************************/
 /* write_dir / read_dir confusion. */

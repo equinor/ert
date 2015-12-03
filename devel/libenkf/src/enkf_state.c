@@ -112,7 +112,6 @@ typedef struct shared_info_struct {
 
 struct enkf_state_struct {
   UTIL_TYPE_ID_DECLARATION;
-  stringlist_type       * restart_kw_list;
   hash_type             * node_hash;
   subst_list_type       * subst_list;              /* This a list of key - value pairs which are used in a search-replace
                                                       operation on the ECLIPSE data file. Will at least contain the key INIT"
@@ -335,7 +334,6 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->shared_info       = shared_info_alloc(site_config , model_config , ecl_config , templates);
 
   enkf_state->node_hash         = hash_alloc();
-  enkf_state->restart_kw_list   = stringlist_alloc_new();
   enkf_state->subst_list        = subst_list_alloc( subst_parent );
   enkf_state->rng               = rng_alloc( rng_get_type( main_rng ) , INIT_DEFAULT );
   rng_rng_init( enkf_state->rng , main_rng );  /* <- Not thread safe */
@@ -875,12 +873,10 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
     /**
        Iterating through the restart file:
 
-       1. Build up enkf_state->restart_kw_list.
        2. Send static keywords straight out.
     */
 
     if (restart_file) {
-      stringlist_clear( enkf_state->restart_kw_list );
       {
         int ikw;
 
@@ -919,9 +915,10 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
             impl_type = STATIC;
 
 
-          if (impl_type == FIELD)
+          /*if (impl_type == FIELD)
             stringlist_append_copy(enkf_state->restart_kw_list , kw);
-          else if (impl_type == STATIC) {
+            else */
+          if (impl_type == STATIC) {
             if (ecl_config_include_static_kw(ecl_config , kw)) {
               /* It is a static kw like INTEHEAD or SCON */
               /*
@@ -934,8 +931,6 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
               kw = __realloc_static_kw(kw , occurence);
 
               if (internalize_state) {
-                stringlist_append_copy( enkf_state->restart_kw_list , kw);
-
                 ensemble_config_ensure_static_key(enkf_state->ensemble_config , kw );
 
                 if (!enkf_state_has_node(enkf_state , kw)) {
@@ -978,7 +973,6 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
             util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
           free(kw);
         }
-        enkf_fs_fwrite_restart_kw_list( result_fs , report_step , iens , enkf_state->restart_kw_list );
       }
     }
 
@@ -1201,13 +1195,8 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state , const r
   char * restart_file                  = ecl_util_alloc_filename(run_arg_get_runpath( run_arg ) , member_config_get_eclbase( enkf_state->my_config ) , ECL_RESTART_FILE , fmt_file , run_arg_get_step1(run_arg));
   fortio_type * fortio                 = fortio_open_writer(restart_file , fmt_file , ECL_ENDIAN_FLIP);
   const char * kw;
-  int          ikw;
 
-  if (stringlist_get_size(enkf_state->restart_kw_list) == 0)
-    enkf_fs_fread_restart_kw_list(fs , run_arg_get_step1(run_arg) , iens , enkf_state->restart_kw_list);
-
-  for (ikw = 0; ikw < stringlist_get_size(enkf_state->restart_kw_list); ikw++) {
-    kw = stringlist_iget( enkf_state->restart_kw_list , ikw);
+  if (false) {
     /*
        Observe that here we are *ONLY* iterating over the
        restart_kw_list instance, and *NOT* the enkf_state
@@ -1273,18 +1262,6 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state , const r
 void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run_arg , enkf_fs_type * fs) {
   if (run_arg_get_step1(run_arg) > 0)
     enkf_state_write_restart_file(enkf_state , run_arg , fs);
-  else {
-    /*
-      These keywords are added here becasue otherwise the main loop
-      below will try to write them with ecl_write - and that will fail
-      (for report_step 0).
-    */
-    stringlist_append_copy(enkf_state->restart_kw_list , "SWAT");
-    stringlist_append_copy(enkf_state->restart_kw_list , "SGAS");
-    stringlist_append_copy(enkf_state->restart_kw_list , "PRESSURE");
-    stringlist_append_copy(enkf_state->restart_kw_list , "RV");
-    stringlist_append_copy(enkf_state->restart_kw_list , "RS");
-  }
 
   {
     /**
@@ -1308,7 +1285,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
     int ikey;
 
     for (ikey = 0; ikey < num_keys; ikey++) {
-      if (!stringlist_contains(enkf_state->restart_kw_list , key_list[ikey])) {          /* Make sure that the elements in the restart file are not written (again). */
+      if (true) {
         enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
         if (enkf_node_get_var_type( enkf_node ) != STATIC_STATE) {                        /* Ensure that no-longer-active static keywords do not create problems. */
           bool forward_init = enkf_node_use_forward_init( enkf_node );
@@ -1392,8 +1369,6 @@ void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mas
 static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , enkf_fs_type * fs , int report_step , state_enum load_state) {
   const member_config_type * my_config = enkf_state->my_config;
   const int iens                       = member_config_get_iens( my_config );
-  int ikey;
-
 
   /*
      First pass - load all the STATIC nodes. It is essential to use
@@ -1403,54 +1378,6 @@ static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , enkf_fs_
      were seen at step == 0, but have not been seen subesquently and
      the loading fails.)
   */
-
-  enkf_fs_fread_restart_kw_list( fs , report_step , iens , enkf_state->restart_kw_list);
-  for (ikey = 0; ikey < stringlist_get_size( enkf_state->restart_kw_list) ; ikey++) {
-    const char * key = stringlist_iget( enkf_state->restart_kw_list, ikey);
-    enkf_node_type * enkf_node;
-    enkf_var_type    var_type;
-
-    /*
-      The restart_kw_list mentions a keyword which is (not yet) part
-      of the enkf_state object. This is assumed to be a static keyword
-      and added as such.
-
-      This will break hard for the following situation:
-
-        1. Someone has simulated with a dynamic keyword (i.e. field
-           FIELD1).
-
-        2. the fellow decides to remove field1 from the configuraton
-           and restart a simulation.
-
-      In this case the code will find FIELD1 in the restart_kw_list,
-      it will then be automatically added as a static keyword; and
-      then final fread_node() function will fail with a type mismatch
-      (or node not found); hopefully this scenario is not very
-      probable.
-    */
-
-    /* add the config node. */
-    if (!ensemble_config_has_key( enkf_state->ensemble_config , key))
-      ensemble_config_ensure_static_key( enkf_state->ensemble_config , key);
-
-    /* Add the state node */
-    if (!enkf_state_has_node( enkf_state , key )) {
-      const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , key);
-      enkf_state_add_node(enkf_state , key , config_node);
-    }
-
-    enkf_node = hash_get(enkf_state->node_hash , key);
-    var_type  = enkf_node_get_var_type( enkf_node );
-
-    if (var_type == STATIC_STATE) {
-      node_id_type node_id = { .report_step = report_step ,
-                               .iens = iens ,
-                               .state = load_state };
-      enkf_node_load( enkf_node , fs , node_id);
-    }
-  }
-
 
   /* Second pass - DYNAMIC state nodes. */
   {
@@ -1538,7 +1465,6 @@ void enkf_state_free(enkf_state_type *enkf_state) {
   rng_free( enkf_state->rng );
   hash_free(enkf_state->node_hash);
   subst_list_free(enkf_state->subst_list);
-  stringlist_free(enkf_state->restart_kw_list);
   member_config_free(enkf_state->my_config);
   shared_info_free(enkf_state->shared_info);
   free(enkf_state);
