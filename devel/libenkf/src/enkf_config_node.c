@@ -139,8 +139,6 @@ static enkf_config_node_type * enkf_config_node_alloc__(enkf_var_type  var_type,
             node->freef             = field_config_free__;
             node->get_data_size     = field_config_get_data_size__;
             break;
-        case(STATIC):
-            break;
         case(GEN_KW):
             node->freef             = gen_kw_config_free__;
             node->get_data_size     = gen_kw_config_get_data_size__;

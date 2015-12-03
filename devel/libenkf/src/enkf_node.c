@@ -1078,8 +1078,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->isqrt              = field_isqrt__;
     node->fload              = field_fload__;
     break;
-  case(STATIC):
-    break;
   case(GEN_DATA):
     node->alloc              = gen_data_alloc__;
     node->initialize         = gen_data_initialize__;

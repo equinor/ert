@@ -55,9 +55,6 @@ const char * enkf_types_get_impl_name(ert_impl_type impl_type) {
   case(INVALID):
     return "INVALID";
     break;
-  case STATIC:
-    return "STATIC";
-    break;
   case FIELD:
     return "FIELD";
     break;
@@ -93,8 +90,7 @@ static state_enum enkf_types_get_state_enum__(const char * state_enum_string) {
 #define if_strcmp(s) if (strcmp(impl_type_string , #s) == 0) impl_type = s
 static ert_impl_type enkf_types_get_impl_type__(const char * impl_type_string) {
   ert_impl_type impl_type;
-  if_strcmp(STATIC);
-  else if_strcmp(SUMMARY);
+  if_strcmp(SUMMARY);
   else if_strcmp(FIELD);
   else if_strcmp(GEN_KW);
   else if_strcmp(GEN_DATA);
