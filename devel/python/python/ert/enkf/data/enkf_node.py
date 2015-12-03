@@ -56,6 +56,7 @@ class EnkfNode(BaseCClass):
         return EnkfNode.cNamespace().value_ptr(self)
 
     def getImplType(self):
+        """ @rtype: ert.enkf.enums.ert_impl_type_enum.ErtImplType """
         return EnkfNode.cNamespace().get_impl_type(self)
 
     
@@ -80,7 +81,6 @@ class EnkfNode(BaseCClass):
 
         return CustomKW.createCReference(self.valuePointer(), self)
 
-    
     def asField(self):
         """ @rtype: CustomKW """
         impl_type = self.getImplType( )
@@ -88,8 +88,6 @@ class EnkfNode(BaseCClass):
 
         return Field.createCReference(self.valuePointer(), self)
 
-
-    
     def tryLoad(self, fs, node_id):
         """
         @type fs: EnkfFS
@@ -102,6 +100,7 @@ class EnkfNode(BaseCClass):
         return EnkfNode.cNamespace().try_load(self, fs, node_id)
 
     def name(self):
+        """ @rtype: str """
         return EnkfNode.cNamespace().get_name(self)
 
     def load(self, fs, node_id):
