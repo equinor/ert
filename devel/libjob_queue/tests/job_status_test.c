@@ -99,6 +99,11 @@ void test_update() {
         break;
     }
   }
+  if ((num_done_threads + num_exit_threads) == 0) {
+    fprintf(stderr, "Hmmm - not a single thread created - very suspicious \n");
+    exit(1);
+  }
+
   for (int i=0; i < num_done_threads + num_exit_threads; i++)
     pthread_join( thread_list[i] , NULL );
 
