@@ -18,6 +18,7 @@ from ert.ecl import EclSum
 from ert.enkf import ENKF_LIB
 from ert.sched import HistorySourceEnum, SchedFile
 from ert.job_queue import ForwardModel
+from ert.util import PathFormat
 
 
 class ModelConfig(BaseCClass):
@@ -99,6 +100,10 @@ class ModelConfig(BaseCClass):
         """ @rtype: str """
         return ModelConfig.cNamespace().get_enspath(self)
 
+    def getRunpathFormat(self):
+        """ @rtype: PathFormat """
+        return ModelConfig.cNamespace().get_runpath_fmt(self)
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("model_config", ModelConfig)
@@ -122,5 +127,6 @@ ModelConfig.cNamespace().has_history = cwrapper.prototype("bool model_config_has
 ModelConfig.cNamespace().gen_kw_export_file = cwrapper.prototype("char* model_config_get_gen_kw_export_file(model_config)")
 ModelConfig.cNamespace().runpath_requires_iterations = cwrapper.prototype("bool model_config_runpath_requires_iter(model_config)")
 ModelConfig.cNamespace().get_jobname_fmt = cwrapper.prototype("char* model_config_get_jobname_fmt(model_config)")
+ModelConfig.cNamespace().get_runpath_fmt = cwrapper.prototype("path_fmt_ref model_config_get_runpath_fmt(model_config)")
 
 ModelConfig.cNamespace().get_enspath = cwrapper.prototype("char* model_config_get_enspath(model_config)")
