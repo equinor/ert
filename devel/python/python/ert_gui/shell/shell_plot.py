@@ -1,9 +1,10 @@
+import ert_gui.plottery.plots as plots
+
 import matplotlib.pyplot as plt
 
 from ert_gui.shell import assertConfigLoaded
 from ert_gui.plottery import PlotConfig, PlotContext
 from ert_gui.shell.libshell import matchItems, extractFullArgument, autoCompleteListWithSeparator
-import ert_gui.plottery.plots as plots
 
 
 class ShellPlot(object):
