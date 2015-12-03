@@ -169,3 +169,8 @@ bool job_queue_manager_job_success( const job_queue_manager_type * manager , int
   else
     return false;
 }
+
+job_status_type job_queue_manager_iget_job_status(const job_queue_manager_type * manager,  int job_index) {
+    return job_queue_iget_job_status(manager->job_queue, job_index);
+}
+
