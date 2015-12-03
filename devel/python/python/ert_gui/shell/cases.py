@@ -1,3 +1,5 @@
+from ert.enkf import EnkfVarType
+
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import autoCompleteList, splitArguments
 
@@ -27,17 +29,24 @@ class Cases(ErtShellCollection):
 
         self.addShellFunction(name="state",
                               function=Cases.state,
-                              completer=Cases.completeState,
+                              completer=Cases.completeFilesystem,
                               help_arguments="[case_name]",
                               help_message="Shows a list of the states of the individual realizations. "
                                            "Uses the current case if no case name is provided.")
 
         self.addShellFunction(name="time_map",
                               function=Cases.timemap,
-                              completer=Cases.completeTimemap,
+                              completer=Cases.completeFilesystem,
                               help_arguments="[case_name]",
                               help_message="Shows a list of the time/report steps of the case. "
                                            "Uses the current case if no case name is provided.")
+
+        self.addShellFunction(name="initialize",
+                              function=Cases.initialize,
+                              completer=Cases.completeFilesystem,
+                              help_arguments="[case_name]",
+                              help_message="Initialize the selected case from scratch. "
+                                           "Uses the current if no case name is provided")
 
     @assertConfigLoaded
     def list(self, line):
@@ -107,7 +116,7 @@ class Cases(ErtShellCollection):
         self.columnize(states)
 
     @assertConfigLoaded
-    def completeState(self, text, line, begidx, endidx):
+    def completeFilesystem(self, text, line, begidx, endidx):
         return autoCompleteList(text, self.getFileSystemNames())
 
     @assertConfigLoaded
@@ -124,6 +133,25 @@ class Cases(ErtShellCollection):
 
         self.columnize(report_steps)
 
+
     @assertConfigLoaded
-    def completeTimemap(self, text, line, begidx, endidx):
-        return autoCompleteList(text, self.getFileSystemNames())
+    def initialize(self, case_name):
+        case_name = case_name.strip()
+        if not case_name:
+            case_name = self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()
+        elif not case_name in self.getFileSystemNames():
+            self.lastCommandFailed("Unknown case name '%s'" % case_name)
+            return False
+
+        ert = self.ert()
+        current_fs = ert.getEnkfFsManager().getCurrentFileSystem()
+        fs = ert.getEnkfFsManager().getFileSystem(case_name)
+        ert.getEnkfFsManager().switchFileSystem(fs)
+
+        size = self.ert().getEnsembleSize()
+        parameters = ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
+        ert.getEnkfFsManager().initializeFromScratch(parameters, 0, size - 1)
+
+        ert.getEnkfFsManager().switchFileSystem(current_fs)
+
+        print("Case: '%s' initialized")
