@@ -285,7 +285,6 @@ static void site_config_add_jobs(site_config_type * site_config, const config_co
   if (config_content_has_item(config, INSTALL_JOB_DIRECTORY_KEY)) {
     const config_content_item_type * content_item = config_content_get_item(config, INSTALL_JOB_DIRECTORY_KEY);
     int num_dirs = config_content_item_get_size(content_item);
-    printf("num_dirs = %d \n",num_dirs);
     for (int dir_nr = 0; dir_nr < num_dirs; dir_nr++) {
       config_content_node_type * node = config_content_item_iget_node(content_item, dir_nr);
       const char * directory = config_content_node_iget_as_abspath(node, 0);
