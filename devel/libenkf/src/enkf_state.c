@@ -56,7 +56,6 @@
 #include <ert/enkf/enkf_node.h>
 #include <ert/enkf/enkf_state.h>
 #include <ert/enkf/enkf_types.h>
-#include <ert/enkf/ecl_static_kw.h>
 #include <ert/enkf/field.h>
 #include <ert/enkf/field_config.h>
 #include <ert/enkf/gen_kw.h>

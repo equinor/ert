@@ -39,7 +39,6 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/fs_driver.h>
 #include <ert/enkf/fs_types.h>
-#include <ert/enkf/ecl_static_kw.h>
 #include <ert/enkf/plain_driver.h>
 #include <ert/enkf/gen_data.h>
 #include <ert/enkf/time_map.h>
