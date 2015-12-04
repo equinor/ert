@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'enkf_tui_run.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'enkf_tui_run.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -69,7 +69,7 @@ void enkf_tui_run_start(void * enkf_main) {
   bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
 
   enkf_main_run_assimilation(enkf_main , iactive , 0 , 0 , ANALYZED);
-  
+
   bool_vector_free(iactive);
 }
 
@@ -84,23 +84,23 @@ void enkf_tui_run_restart__(void * enkf_main) {
   state_enum state;
   bool_vector_type * iactive = bool_vector_alloc(0,true);
   bool_vector_iset( iactive , ens_size - 1 , true );
-  
+
   start_report_as_char = util_scanf_int_with_limits_return_char("Report step",PROMPT_LEN , 0 , last_report);
   if(strlen(start_report_as_char) != 0){
     util_sscanf_int(start_report_as_char , &start_report);
   }
   else
     wronginput = true;
-  
+
   if(!wronginput){
     state        = enkf_tui_util_scanf_state("Analyzed/forecast" , PROMPT_LEN , false);
     if(state == UNDEFINED)
       wronginput = true;
   }
-  
+
   if(!wronginput)
     enkf_main_run_assimilation(enkf_main ,  iactive , start_report , start_report  , state);
-  
+
   bool_vector_free(iactive);
   free(start_report_as_char);
 }
@@ -126,7 +126,7 @@ void enkf_tui_run_iterated_ES(void * arg) {
 }
 
 
-/** 
+/**
     Experiments will always start with the parameters at time == 0; if
     you want to simulate with updated (posterior) parameters, you
     ensure that by initializing from a report_step > 0 from an
@@ -143,7 +143,7 @@ void enkf_tui_run_exp(void * enkf_main) {
 
     char * prompt = util_alloc_sprintf("Which realizations to simulate (Ex: 1,3-5) <Enter for all> [M to return to menu] : " , ens_size);
     char * select_string;
-      
+
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
     enkf_tui_util_sscanf_active_list( iactive , select_string , ens_size);
@@ -153,7 +153,7 @@ void enkf_tui_run_exp(void * enkf_main) {
   }
   if (bool_vector_count_equal(iactive , true))
     enkf_main_run_exp(enkf_main , iactive , true );
-  
+
   bool_vector_free(iactive);
 }
 
@@ -171,7 +171,7 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
     enkf_tui_util_sscanf_active_list( iactive , select_string , ens_size );
-    
+
     util_safe_free( select_string );
     free( prompt );
   }
@@ -192,7 +192,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = bool_vector_alloc( 0 , false );
   int iter = 0;
-  
+
   {
     char * prompt = util_alloc_sprintf("Which realizations to load  (Ex: 1,3-5) <Enter for all> [M to return to menu] : [ensemble size:%d] : " , ens_size);
     char * select_string;
@@ -201,7 +201,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
 
     enkf_tui_util_sscanf_active_list( iactive , select_string , ens_size );
     util_safe_free( select_string );
-    
+
     free( prompt );
   }
 
@@ -214,17 +214,17 @@ void enkf_tui_run_manual_load__( void * arg ) {
       util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
 
       input = util_alloc_stdin_line();
-      if (input == NULL) 
+      if (input == NULL)
         return;
 
-      OK = util_sscanf_int( input , &iter ); 
+      OK = util_sscanf_int( input , &iter );
 
       free( input );
       if (!OK)
         return;
     }
   }
-  
+
 
   if (bool_vector_count_equal( iactive , true )) {
     stringlist_type ** realizations_msg_list = util_calloc( ens_size , sizeof * realizations_msg_list );
@@ -234,7 +234,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
     }
 
     enkf_main_load_from_forward_model(enkf_main, iter , iactive, realizations_msg_list);
-    
+
     for (iens = 0; iens < ens_size; ++iens) {
       stringlist_type * msg_list = realizations_msg_list[iens];
       if (bool_vector_iget(iactive, iens)) {
@@ -275,18 +275,18 @@ void enkf_tui_run_menu(void * arg) {
     const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
     const enkf_obs_type * enkf_obs = enkf_main_get_obs( enkf_main );
 
-    
+
     menu_item_type * enkf_item         = menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start         , enkf_main , NULL);
     menu_item_type * restart_enkf_item = menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__       , enkf_main , NULL);
     menu_item_type * ES_item           = menu_add_item(menu , "Integrated smoother update"             , "iI" , enkf_tui_run_smoother      , enkf_main , NULL);
     menu_item_type * it_ES_item        = menu_add_item(menu , "Iterated smoother [RML-EnKF]"           , "tT" , enkf_tui_run_iterated_ES   , enkf_main , NULL);
-              
+
     if (!ecl_config_has_schedule( ecl_config )) {
       menu_item_disable( enkf_item );
       menu_item_disable( restart_enkf_item );
     }
-    
-    if (!ecl_config_has_init_section( ecl_config )) 
+
+    if (!ecl_config_has_init_section( ecl_config ))
       menu_item_disable( enkf_item );
 
     if (!analysis_config_get_module_option(analysis_config , ANALYSIS_ITERABLE)) {
@@ -296,7 +296,7 @@ void enkf_tui_run_menu(void * arg) {
       menu_item_disable( restart_enkf_item );
       menu_item_disable( ES_item );
     }
-      
+
     if (!enkf_obs_have_obs( enkf_obs )) {
       menu_item_disable( it_ES_item );
       menu_item_disable( ES_item );
@@ -308,27 +308,27 @@ void enkf_tui_run_menu(void * arg) {
   menu_add_separator(menu);
   {
     menu_item_type * analysis_item = menu_add_item(menu , "Analysis menu"             , "aA" , enkf_tui_analysis_menu , enkf_main , NULL);
-    
-    if (!enkf_main_have_obs( enkf_main )) 
+
+    if (!enkf_main_have_obs( enkf_main ))
       menu_item_disable( analysis_item );
   }
   /*
     Option to set runpath runtime - currently dismantled.
-    
+
     menu_add_separator(menu);
     {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );
     path_fmt_type     * runpath_fmt  = model_config_get_runpath_fmt( model_config );
-    arg_pack_type * arg_pack = arg_pack_alloc();  
+    arg_pack_type * arg_pack = arg_pack_alloc();
     char * runpath_label = util_alloc_sprintf("Set new value for RUNPATH:%s" , path_fmt_get_fmt ( runpath_fmt ));
-    
+
     arg_pack_append_ptr(arg_pack , model_config);
     arg_pack_append_ptr(arg_pack , menu_add_item(menu , runpath_label , "dD" , enkf_tui_run_set_runpath , arg_pack , arg_pack_free__));
-    
+
     free(runpath_label);
     }
   */
-  menu_add_item(menu , "Help"                                  , "hH" , enkf_tui_help_menu_run   , enkf_main , NULL); 
+  menu_add_item(menu , "Help"                                  , "hH" , enkf_tui_help_menu_run   , enkf_main , NULL);
   menu_run(menu);
   menu_free(menu);
 }
