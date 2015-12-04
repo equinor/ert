@@ -59,10 +59,7 @@ void test_runpath_list() {
   test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 3 );
   test_assert_int_equal( runpath_list_iget_iens( list , 2 ) , 1 );
   test_assert_int_equal( runpath_list_iget_iter( list , 3 ) , 1 );
-  runpath_list_sort( list );
 
-  test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 1 );
-  test_assert_int_equal( runpath_list_iget_iens( list , 4 ) , 3 );
   runpath_list_clear( list );
   test_assert_int_equal( runpath_list_size( list ) , 0 );
 
@@ -93,13 +90,7 @@ void test_runpath_list() {
     }
     thread_pool_join( tp );
     test_assert_int_equal( runpath_list_size( list ) , block_size * threads );
-    runpath_list_sort( list );
-    {
-      int iens;
-      for (iens = 0; iens < block_size * threads; iens++)
-        test_assert_int_equal( runpath_list_iget_iens( list , iens ) , iens );
-    }
-
+    
     {
       test_work_area_type * work_area = test_work_area_alloc("enkf_runpath_list" );
       runpath_list_fprintf( list );

@@ -1582,12 +1582,10 @@ void * enkf_main_isubmit_job__( void * arg ) {
 
 
 
-void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
-                              const ert_run_context_type * run_context ,
-                              thread_pool_type * submit_threads,
-                              arg_pack_type ** arg_pack_list) {
-  runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
-  runpath_list_clear( runpath_list );
+static void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
+                                     const ert_run_context_type * run_context ,
+                                     thread_pool_type * submit_threads,
+                                     arg_pack_type ** arg_pack_list) {
   {
     int iens;
     const bool_vector_type * iactive = ert_run_context_get_iactive( run_context );
@@ -1605,7 +1603,6 @@ void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
       }
     }
   }
-  runpath_list_fprintf( runpath_list );
 }
 
 
@@ -1615,10 +1612,12 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   arg_pack_type ** arg_pack_list = util_malloc( ens_size * sizeof * arg_pack_list );
   thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
+  runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
   int iens;
   for (iens = 0; iens < ens_size; iens++)
     arg_pack_list[iens] = arg_pack_alloc( );
 
+  runpath_list_clear( runpath_list );
   enkf_main_submit_jobs__(enkf_main , run_context , submit_threads , arg_pack_list);
 
   /*
@@ -1629,6 +1628,7 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
 
   thread_pool_join(submit_threads);
   thread_pool_free(submit_threads);
+  runpath_list_fprintf( runpath_list );
 
   for (iens = 0; iens < ens_size; iens++)
     arg_pack_free( arg_pack_list[iens] );
@@ -2574,6 +2574,11 @@ static void enkf_main_install_common_data_kw( enkf_main_type * enkf_main ) {
   free( date_string );
 }
 
+
+
+runpath_list_type * enkf_main_get_runpath_list( const enkf_main_type * enkf_main ) {
+  return hook_manager_get_runpath_list( enkf_main->hook_manager );
+}
 
 
 /**
