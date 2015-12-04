@@ -13,7 +13,7 @@ class ErtShellContext(ShellContext):
 
     def setErt(self, ert):
         """ @type ert: ert.enkf.enkf_main.EnKFMain """
-        if self.__ert is not None:
+        if self.__ert is not None and self.__ert != ert:
             self.__ert.free()
             self.__ert = None
 

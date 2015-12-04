@@ -124,7 +124,7 @@ struct ert_run_context_struct {
 //}
 
 
-static stringlist_type * ert_run_context_alloc_runpath_list(const bool_vector_type * iactive , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter) {
+stringlist_type * ert_run_context_alloc_runpath_list(const bool_vector_type * iactive , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter) {
   stringlist_type * runpath_list = stringlist_alloc_new();
   for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
     if (bool_vector_iget( iactive , iens )) {

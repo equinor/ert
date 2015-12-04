@@ -198,8 +198,8 @@ class EnkfFsManager(BaseCClass):
                                                                  target_fs)
 
 
-    def initializeFromScratch(self, parameter_list, iens1, iens2, force_init=True):
-        EnkfFsManager.cNamespace().initialize_from_scratch(self, parameter_list, iens1, iens2, force_init)
+    def initializeFromScratch(self, parameter_list, from_iens, to_iens, force_init=True):
+        EnkfFsManager.cNamespace().initialize_from_scratch(self, parameter_list, from_iens, to_iens, force_init)
 
 
     def isCaseMounted(self, case_name, mount_root=None):

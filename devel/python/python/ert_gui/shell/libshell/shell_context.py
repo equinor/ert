@@ -18,3 +18,6 @@ class ShellContext(object):
 
     def __getitem__(self, key):
         return self.__settings[key]
+
+    def __contains__(self, key):
+        return key in self.__settings

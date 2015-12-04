@@ -24,6 +24,7 @@ class EnKFState(BaseCClass):
         
     
     def __getitem__(self , kw):
+        """ @rtype: ert.enkf.data.enkf_node.EnkfNode """
         if isinstance(kw , str):
             if kw in self:
                 node = EnKFState.cNamespace().get_node( self , kw )
@@ -40,10 +41,12 @@ class EnKFState(BaseCClass):
 
 
     def hasKey(self , kw):
+        """ @rtype: bool """
         return kw in self
 
 
     def getNode(self , kw):
+        """ @rtype: ert.enkf.data.enkf_node.EnkfNode """
         return self[kw]
 
 

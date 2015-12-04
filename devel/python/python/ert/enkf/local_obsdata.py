@@ -1,11 +1,9 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, LocalObsdataNode 
-from sphinx.util import nodes
 
 
 class LocalObsdata(BaseCClass):
 
-    
     def __init__(self, name , obs = None):
         # The obs instance should be a EnkFObs instance; some circular dependency problems
         # by importing it right away. It is not really optional, but it is made optional

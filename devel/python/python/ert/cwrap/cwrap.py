@@ -169,7 +169,7 @@ class CWrapper:
                     self.setReturnBehavior(func, return_type)
                 else:
                     pass # Use default behavior for BaseCEnum and ctypes classes
-            elif hasattr(return_type, "__call__"):
+            elif callable(return_type):
                 if isBoundMethod(return_type, BaseCClass) or not isBoundMethod(return_type):
                     self.setReturnBehavior(func, return_type)
                 else:

@@ -41,7 +41,7 @@ class ShellFunction(object):
 
     def completeFunction(self, text, line, begidx, endidx):
         if self.__completer is not None:
-            if hasattr(self.__completer, "__call__"):
+            if callable(self.__completer):
                 model = self.getModelForFunction()
                 return self.__completer(model, text, line, begidx, endidx)
             else:

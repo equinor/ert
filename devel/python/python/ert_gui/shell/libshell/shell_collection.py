@@ -14,9 +14,11 @@ class ShellCollection(object):
 
         if parent is not None:
             self.setParent(parent)
+            parent.addChild(self)
 
         self.__collection = {}
         self.__model_tracker = {}
+        self.__children = []
 
     def setParent(self, parent):
         if not hasattr(parent, "shellContext"):
@@ -30,6 +32,13 @@ class ShellCollection(object):
         setattr(parent, "help_%s" % self.name, self.helpKeywords)
         self.__parent = parent
 
+
+    def addChild(self, child):
+        self.__children.append(child)
+
+    def cleanup(self):
+        for child in self.__children:
+            child.cleanup()
 
     def addCollection(self, collection):
         """
