@@ -39,10 +39,10 @@ else:
     if host.count(".") == 0:
         sys.exit("Sorry - could not determine FQDN for server - use the --host option to supply.")
 
-server = ErtRPCServer(config_file, host, port, log_requests=log_level > 1)
+server = ErtRPCServer(config_file, host, port, log_requests=log_level > 1, verbose_queue=True)
 
 try:
-    print("ERT Server starting on port: %d at host: %s" % (server.port, host))
+    print("ERT Server running on port: %d at host: %s" % (server.port, host))
     server.start()
 except KeyboardInterrupt:
     try:
