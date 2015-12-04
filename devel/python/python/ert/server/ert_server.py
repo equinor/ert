@@ -14,14 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 import logging
-
-import sys
 import threading
-import json
 import os
-import traceback
+import time
 import datetime
-from time import strftime
 
 from ert.enkf import EnKFMain,RunArg,EnkfFsManager
 from ert.enkf.enums import EnkfRunType, EnkfStateType, ErtImplType , EnkfVarType , RealizationStateEnum
@@ -107,6 +103,10 @@ class ErtServer(object):
 
     def close(self):
         # More cleanup first ...
+        if self.ert_handle is not None:
+            job_queue = self.ert_handle.siteConfig().getJobQueue()
+            job_queue.killAllJobs()
+
         self.logger.info("Shutting down ert handle")
         self.ert_handle = None
 
