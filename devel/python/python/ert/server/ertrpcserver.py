@@ -38,9 +38,10 @@ def createFault(error, message):
 
 
 class ErtRPCServer(SimpleXMLRPCServer):
-    def __init__(self, config, host="localhost", port=0, log_requests=False):
+    def __init__(self, config, host="localhost", port=0, log_requests=False, verbose_queue=False):
         SimpleXMLRPCServer.__init__(self, (host, port), allow_none=True, logRequests=log_requests)
         self._host = host
+        self._verbose_queue = verbose_queue
         # https: server.socket = ssl.wrap_socket(srv.socket, ...)
 
         if isinstance(config, EnKFMain):
@@ -138,7 +139,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 self.ert.addDataKW("<WPRO_RUN_COUNT>", str(self._session.batch_number))
                 self.ert.addDataKW("<ELCO_RUN_COUNT>", str(self._session.batch_number))
                 self._session.batch_number += 1
-                self._session.simulation_context = SimulationContext(self.ert, simulation_count)
+                self._session.simulation_context = SimulationContext(self.ert, simulation_count, verbose=self._verbose_queue)
             # else:
             #     raise createFault(UserWarning, "Unable to start a simulation batch because the server is already running a batch.")
 

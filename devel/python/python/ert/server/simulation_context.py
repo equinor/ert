@@ -6,13 +6,13 @@ from ert.util import BoolVector, ArgPack, CThreadPool
 
 
 class SimulationContext(object):
-    def __init__(self, ert, size):
+    def __init__(self, ert, size, verbose=False):
         self._ert = ert
         """ :type: ert.enkf.EnKFMain """
         self._size = size
 
         self._queue_manager = JobQueueManager(ert.siteConfig().getJobQueue())
-        self._queue_manager.startQueue(size, verbose=True)
+        self._queue_manager.startQueue(size, verbose=verbose)
 
         mask = BoolVector(default_value=True, initial_size=size)
         runpath_fmt = self._ert.getModelConfig().getRunpathFormat()
