@@ -1,7 +1,7 @@
 language: python
 
 python:
-  - 2.7_with_system_site_packages
+  - 2.7
 
 compiler:
   - gcc
@@ -10,29 +10,33 @@ addons:
   apt:
     packages:
       - liblapack-dev
-      - texlive-latex-base
       - valgrind
-      - python-qt4
-      - python-qt4-gl
-
-before_install:
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH="$HOME/miniconda2/bin:$HOME/miniconda/bin:$PATH"
-  - conda update --yes conda
 
 install:
-  - conda install --yes numpy scipy matplotlib pandas pyopengl sphinx
+    # We do this conditionally because it saves us some downloading if the version is the same.
+    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+      else
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      fi
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    # Useful for debugging any issues with conda
+    - conda info -a
+
+    - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pyqt scipy numpy pandas matplotlib
+    - source activate test-environment
 
 before_script:
-  - sudo apt-get install libplplot-dev
-  - sudo apt-get install python-tk
+  - sudo apt-get -qq -y install libplplot-dev
   - mkdir build
   - cd build
   - echo "WORKFLOW_JOB_DIRECTORY ../devel/share/workflows/jobs/internal/config" > DEFAULT_SITE_CONFIG_FILE
   - echo "WORKFLOW_JOB_DIRECTORY ../devel/share/workflows/jobs/internal-gui/config" >> DEFAULT_SITE_CONFIG_FILE
   - echo "JOB_SCRIPT ../devel/share/bin/job_dispatch.py" >> DEFAULT_SITE_CONFIG_FILE
-  - cmake -DPYTHON_INSTALL_PREFIX=python -DBUILD_ERT=ON -DERT_BUILD_GUI=ON -DBUILD_ENS_PLOT=ON -DBUILD_TESTS=ON -DBUILD_APPLICATIONS=ON -DUSE_RUNPATH=ON -DBUILD_PYTHON=ON -DERT_USE_OPENMP=ON -DERT_DOC=ON -DSITE_CONFIG_FILE=DEFAULT_SITE_CONFIG_FILE ../devel
+  - cmake -DPYTHON_INSTALL_PREFIX=python -DBUILD_ERT=ON -DERT_BUILD_GUI=ON -DBUILD_ENS_PLOT=ON -DBUILD_TESTS=ON -DBUILD_APPLICATIONS=ON -DUSE_RUNPATH=ON -DBUILD_PYTHON=ON -DERT_USE_OPENMP=ON -DERT_DOC=OFF -DSITE_CONFIG_FILE=DEFAULT_SITE_CONFIG_FILE ../devel
 
 script: make && ctest --output-on-failure -LE StatoilData

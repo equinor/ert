@@ -1,3 +1,14 @@
+import os
+import matplotlib
+
+def headless():
+    return "DISPLAY" not in os.environ
+
+if headless():
+    matplotlib.use("Agg")
+else:
+    matplotlib.use("Qt4Agg")
+
 from .histogram import plotHistogram
 from .gaussian_kde import plotGaussianKDE
 
