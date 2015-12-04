@@ -50,10 +50,11 @@ class ErtShellPlotSettingsTest(ExtendedTestCase):
             self.assertTrue(shell.invokeCommand("plot_settings select test_run default"))
 
             plot_cases = shell.shellContext()["plot_settings"].getCurrentPlotCases()
-            self.assertListEqual(plot_cases, ["test_run", "default"])
+            self.assertSetEqual(set(plot_cases), {"test_run", "default"})
 
             self.assertTrue(shell.invokeCommand("plot_settings select"))
             plot_cases = shell.shellContext()["plot_settings"].getCurrentPlotCases()
             self.assertListEqual(plot_cases, default_plot_cases)
 
             self.assertFalse(shell.invokeCommand("plot_settings select unknown"))
+            self.assertFalse(shell.invokeCommand("plot_settings select unknown1 unknown2"))
