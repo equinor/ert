@@ -29,15 +29,21 @@ class ConnectionErrorException(Exception):
 class ErtClient(object):
     DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-    def __init__(self , port , host):
+    def __init__(self , port , host, timeout = 60 , sleep_time = 5):
         self.socket = socket.socket( socket.AF_INET , socket.SOCK_STREAM)
         self.port = port
         self.host = host
         self.socket.setblocking(1)
-        try:
-            self.socket.connect((self.host , self.port))
-        except socket.error:
-            raise Exception("Failed to connect to port:%d at %s." % (port , host))
+        start_time = time.time()
+        while True:
+            try:
+                self.socket.connect((self.host , self.port))
+                break
+            except socket.error:
+                if time.time() - start_time > timeout:
+                     raise Exception("Failed to connect to port:%d at %s." % (port , host))
+
+            time.sleep( sleep_time )	
 
 
     @staticmethod
