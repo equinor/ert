@@ -69,12 +69,12 @@ ert_so_version = ""           #
 # the current runnning process, i.e. like dlopen( NULL ). We must
 # special case this to avoid creating the bogus argument 'None.so'.
 
-def lib_name(lib , path = None):
+def lib_name(lib , path = None , so_version = ""):
     if lib is None:
         return None
     else:
         platform_key = platform.system().lower()
-        so_name = "%s.%s%s" % (lib , so_extension[ platform_key ], ert_so_version)
+        so_name = "%s.%s%s" % (lib , so_extension[ platform_key ], so_version)
         if path:
             return os.path.join( path , so_name )
         else:
@@ -103,9 +103,9 @@ def __load( lib_list, ert_prefix):
     dll = None
     for lib in lib_list:
         if ert_prefix:
-            lib_file = lib_name( lib , path = ert_lib_path )
+            lib_file = lib_name( lib , path = ert_lib_path , so_version = ert_so_version)
         else:
-            lib_file = lib_name( lib )
+            lib_file = lib_name( lib , so_version = ert_so_version)
 
         try:
             dll = ctypes.CDLL(lib_file , ctypes.RTLD_GLOBAL)
