@@ -808,13 +808,14 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
       const stringlist_type * tokens = config_content_iget_stringlist_ref(config, QUEUE_OPTION_KEY, i);
       const char * driver_name = stringlist_iget(tokens, 0);
       const char * option_key = stringlist_iget(tokens, 1);
-      const char * option_value = stringlist_alloc_joined_substring(tokens, 2, stringlist_get_size(tokens), " ");
+      char * option_value = stringlist_alloc_joined_substring(tokens, 2, stringlist_get_size(tokens), " ");
       /*
          If it is desirable to keep the exact number of spaces in the
          option_value it should be quoted with "" in the configuration
          file.
        */
       site_config_set_queue_option(site_config, driver_name, option_key, option_value);
+      free( option_value );
     }
   }
   return true;

@@ -534,6 +534,7 @@ void model_config_free(model_config_type * model_config) {
   util_safe_free( model_config->select_case );
   util_safe_free( model_config->case_table_file );
   util_safe_free( model_config->current_path_key);
+  util_safe_free( model_config->gen_kw_export_file_name);
 
   if (model_config->history)
     history_free(model_config->history);
