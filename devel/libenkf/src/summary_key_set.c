@@ -134,7 +134,7 @@ void summary_key_set_fwrite(summary_key_set_type * set, const char * filename) {
         if (stream) {
             stringlist_type * keys = hash_alloc_stringlist(set->key_set);
             stringlist_fwrite(keys, stream);
-            free(keys);
+            stringlist_free(keys);
             fclose( stream );
         } else {
             util_abort("%s: failed to open: %s for writing \n", __func__, filename);
