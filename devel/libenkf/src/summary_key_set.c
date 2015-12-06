@@ -110,7 +110,7 @@ bool summary_key_set_has_summary_key(summary_key_set_type * set, const char * su
     return has_key;
 }
 
-stringlist_type * summary_key_set_get_keys(summary_key_set_type * set) {
+stringlist_type * summary_key_set_alloc_keys(summary_key_set_type * set) {
     stringlist_type * keys;
 
     pthread_rwlock_rdlock( &set->rw_lock );

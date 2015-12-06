@@ -521,12 +521,13 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
 static void enkf_main_update_summary_config_from_fs__(enkf_main_type * enkf_main, enkf_fs_type * fs) {
     ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
     summary_key_set_type * summary_key_set = enkf_fs_get_summary_key_set(fs);
-    stringlist_type * keys = summary_key_set_get_keys(summary_key_set);
+    stringlist_type * keys = summary_key_set_alloc_keys(summary_key_set);
 
     for(int i = 0; i < stringlist_get_size(keys); i++) {
         const char * key = stringlist_iget(keys, i);
         ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
     }
+    stringlist_free( keys );
 }
 
 
