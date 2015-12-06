@@ -710,6 +710,7 @@ static void enkf_fs_umount( enkf_fs_type * fs ) {
       path_fmt_free( fs->case_tstep_fmt );
       path_fmt_free( fs->case_tstep_member_fmt );
 
+      custom_kw_config_set_free( fs->custom_kw_config_set );
       state_map_free( fs->state_map );
       summary_key_set_free(fs->summary_key_set);
       time_map_free( fs->time_map );
