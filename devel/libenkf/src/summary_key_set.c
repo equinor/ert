@@ -155,7 +155,7 @@ bool summary_key_set_fread(summary_key_set_type * set, const char * filename) {
                 stringlist_type * key_set = stringlist_fread_alloc(stream);
 
                 for (int i = 0; i < stringlist_get_size(key_set); i++) {
-                    hash_insert_int(set->key_set, stringlist_iget_copy(key_set, i), 1);
+                    hash_insert_int(set->key_set, stringlist_iget(key_set, i), 1);
                 }
                 stringlist_free(key_set);
                 fclose( stream );
