@@ -28,6 +28,7 @@
 struct job_queue_status_struct {
   UTIL_TYPE_ID_DECLARATION;
   int status_list[JOB_QUEUE_MAX_STATE];
+  bool status_redisplay_required;
   pthread_mutex_t update_mutex;
 };
 
@@ -93,6 +94,7 @@ void job_queue_status_clear( job_queue_status_type * status ) {
   int index;
   for (index = 0; index < JOB_QUEUE_MAX_STATE; index++)
     status->status_list[ index ] = 0;
+  status->status_redisplay_required = false;
 }
 
 
@@ -141,6 +143,7 @@ bool job_queue_status_transition( job_queue_status_type * status_count , job_sta
   if (src_status != target_status) {
     job_queue_status_dec( status_count , src_status );
     job_queue_status_inc( status_count , target_status );
+    status_count->status_redisplay_required = true;
     return true;
   } else
     return false;
@@ -158,4 +161,12 @@ int job_queue_status_get_total_count( const job_queue_status_type * status ) {
 const char * job_queue_status_name( job_status_type status ) {
   int index = STATUS_INDEX( status );
   return status_name[index];
+}
+
+
+
+bool job_queue_status_get_and_clear_redisplay_status( job_queue_status_type * status ) {
+  bool redisplay = status->status_redisplay_required;
+  status->status_redisplay_required = false;
+  return redisplay;
 }
