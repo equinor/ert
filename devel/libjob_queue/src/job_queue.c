@@ -854,7 +854,12 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
     //Check if queue is open. Fails hard if not open
     job_queue_check_open(queue);
 
-    const int NUM_WORKER_THREADS = 16;
+    /*
+      The number of threads in the thread pool running callbacks. Memory consumption can
+      potentially be quite high while running the DONE callback - should therefor not use
+      too many threads.
+    */
+    const int NUM_WORKER_THREADS = 4;
     queue->running = true;
     queue->work_pool = thread_pool_alloc( NUM_WORKER_THREADS , true );
     {
