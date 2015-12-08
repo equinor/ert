@@ -62,13 +62,13 @@ class RunContext(object):
     def realisationSuccess(self, iens):
         run_arg = self.ert_run_context.iensGet( iens )
         queue_index = run_arg.getQueueIndex()
-        return self.queue_manager.jobSuccess( queue_index )
+        return self.queue_manager.didJobSucceed( queue_index )
 
     
     def realisationFailed(self, iens):
         run_arg = self.ert_run_context.iensGet( iens )
         queue_index = run_arg.getQueueIndex()
-        return self.queue_manager.jobFailed( queue_index )
+        return self.queue_manager.didJobFail( queue_index )
 
 
     # Running is slightly misleading; we have three catogories:
@@ -80,7 +80,7 @@ class RunContext(object):
         run_arg = self.ert_run_context.iensGet( iens )
         if run_arg.isSubmitted():
             queue_index = run_arg.getQueueIndex()
-            if self.queue_manager.jobRunning( queue_index ) or self.queue_manager.jobWaiting( queue_index ):
+            if self.queue_manager.isJobRunning( queue_index ) or self.queue_manager.isJobWaiting( queue_index ):
                 return True
             else:
                 return False
