@@ -2,6 +2,7 @@ from math import sqrt, ceil, floor, log10
 from matplotlib.patches import Rectangle
 import numpy
 from .plot_tools import PlotTools
+import pandas as pd
 
 def plotHistogram(plot_context):
     """
@@ -34,7 +35,7 @@ def plotHistogram(plot_context):
         data[case] = plot_context.dataGatherer().gatherData(ert, case, key)
 
         if data[case].dtype == "object":
-            data[case] = data[case].convert_objects(convert_numeric=True)
+            data[case] = pd.to_numeric(data[case], errors='coerce')
 
         if data[case].dtype == "object":
             categorical = True
