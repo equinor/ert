@@ -63,6 +63,7 @@ class Server(ErtShellCollection):
             print("Running: %d" % self._server.getRunningCount())
             print("Failed: %d" % self._server.getFailedCount())
             print("Succeeded: %d" % self._server.getSuccessCount())
+            print("Batch#: %d" % self._server.getBatchNumber())
         else:
             print("No server to inspect")
 

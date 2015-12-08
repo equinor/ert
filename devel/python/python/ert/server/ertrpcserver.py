@@ -266,3 +266,6 @@ class ErtRPCServer(SimpleXMLRPCServer):
             return self._session.simulation_context.getNumSuccess()
         else:
             return 0
+
+    def getBatchNumber(self):
+        return self._session.batch_number
