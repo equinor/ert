@@ -821,6 +821,7 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
         }
       }
     }
+    stringlist_free( keylist_GEN_DATA );
   }
 }
 

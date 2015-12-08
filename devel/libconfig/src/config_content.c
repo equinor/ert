@@ -110,6 +110,8 @@ config_error_type * config_content_get_errors( const config_content_type * conte
 
 void config_content_free( config_content_type * content ) {
   vector_free( content->nodes );
+  vector_free( content->path_elm_stack );
+  vector_free( content->path_elm_storage );
   hash_free( content->items );
   config_error_free( content->parse_errors );
   subst_list_free( content->define_list );

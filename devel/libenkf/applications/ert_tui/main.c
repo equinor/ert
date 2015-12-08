@@ -155,6 +155,7 @@ int main (int argc , char ** argv) {
     {
       char * abs_config = util_alloc_realpath( model_config_file );
       printf("model config  : %s \n\n", abs_config);
+      free(abs_config);
     }
     enkf_welcome( model_config_file );
     {

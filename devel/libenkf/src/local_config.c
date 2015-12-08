@@ -549,7 +549,7 @@ local_config_type * local_config_alloc( ) {
   local_config->updatestep_storage  = hash_alloc();
   local_config->ministep_storage    = hash_alloc();
   local_config->dataset_storage     = hash_alloc();
-  local_config->obsdata_storage      = hash_alloc();
+  local_config->obsdata_storage     = hash_alloc();
   local_config->config_files = stringlist_alloc_new();
 
   local_config_clear( local_config );
@@ -561,6 +561,7 @@ void local_config_free(local_config_type * local_config) {
   hash_free( local_config->updatestep_storage );
   hash_free( local_config->ministep_storage);
   hash_free( local_config->dataset_storage);
+  hash_free( local_config->obsdata_storage);
   stringlist_free( local_config->config_files );
   free( local_config );
 }
