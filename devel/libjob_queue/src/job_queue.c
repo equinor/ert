@@ -882,14 +882,13 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
 
         /*****************************************************************/
         {
-          job_queue_update_status( queue );
+          bool update_status = job_queue_update_status( queue );
           if (verbose) {
-	    bool update_summary = job_queue_status_get_and_clear_redisplay_status( queue->status );
-            if (update_summary || new_jobs)
-              job_queue_print_summary(queue , update_summary );
+            if (update_status || new_jobs)
+              job_queue_print_summary(queue , update_status );
             job_queue_update_spinner( &phase );
           }
-	  
+
 
           {
             int num_complete = job_queue_status_get_count(queue->status, JOB_QUEUE_SUCCESS) +
