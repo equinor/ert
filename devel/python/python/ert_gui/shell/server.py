@@ -1,3 +1,4 @@
+import socket
 from threading import Thread
 
 from ert.server import ErtRPCServer
@@ -32,12 +33,16 @@ class Server(ErtShellCollection):
             port = 0
 
         if self._server is None:
-            self._server = ErtRPCServer(self.ert(), port=port)
-            thread = Thread(name="Shell Server Thread")
-            thread.daemon = True
-            thread.run = self._server.start
-            thread.start()
-            print("Server running on host: '%s' and port: %d" % (self._server.host, self._server.port))
+            try:
+                self._server = ErtRPCServer(self.ert(), port=port)
+            except socket.error as e:
+                print("Unable to start the server on port: %d" % port)
+            else:
+                thread = Thread(name="Shell Server Thread")
+                thread.daemon = True
+                thread.run = self._server.start
+                thread.start()
+                print("Server running on host: '%s' and port: %d" % (self._server.host, self._server.port))
         else:
             print("A server is already running at host: '%s' and port: %d" % (self._server.host, self._server.port))
 
