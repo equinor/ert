@@ -225,7 +225,6 @@ struct enkf_fs_struct {
   fs_driver_type         * dynamic_forecast;
   fs_driver_type         * dynamic_analyzed;
   fs_driver_type         * parameter;
-  fs_driver_type         * eclipse_static;
   fs_driver_type         * index ;
 
   bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
@@ -299,7 +298,6 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point ) {
   fs->custom_kw_config_set   = custom_kw_config_set_alloc();
   fs->misfit_ensemble        = misfit_ensemble_alloc();
   fs->index                  = NULL;
-  fs->eclipse_static         = NULL;
   fs->parameter              = NULL;
   fs->dynamic_forecast       = NULL;
   fs->dynamic_analyzed       = NULL;
@@ -397,7 +395,6 @@ static void enkf_fs_init_path_fmt( enkf_fs_type * fs) {
 static void enkf_fs_create_plain_fs( FILE * stream , void * arg) {
 
   plain_driver_create_fs( stream , DRIVER_PARAMETER        , DEFAULT_PLAIN_NODE_PARAMETER_PATH        , DEFAULT_PLAIN_VECTOR_PARAMETER_PATH);
-  plain_driver_create_fs( stream , DRIVER_STATIC           , DEFAULT_PLAIN_NODE_STATIC_PATH           , DEFAULT_PLAIN_VECTOR_STATIC_PATH);
   plain_driver_create_fs( stream , DRIVER_DYNAMIC_FORECAST , DEFAULT_PLAIN_NODE_DYNAMIC_FORECAST_PATH , DEFAULT_PLAIN_VECTOR_DYNAMIC_FORECAST_PATH);
   plain_driver_create_fs( stream , DRIVER_DYNAMIC_ANALYZED , DEFAULT_PLAIN_NODE_DYNAMIC_ANALYZED_PATH , DEFAULT_PLAIN_VECTOR_DYNAMIC_ANALYZED_PATH);
   plain_driver_create_fs( stream , DRIVER_INDEX            , DEFAULT_PLAIN_NODE_INDEX_PATH            , DEFAULT_PLAIN_VECTOR_INDEX_PATH );
@@ -409,7 +406,6 @@ static void enkf_fs_create_plain_fs( FILE * stream , void * arg) {
 static void enkf_fs_create_block_fs( FILE * stream , int num_drivers , const char * mount_point , void * arg) {
 
   block_fs_driver_create_fs( stream , mount_point , DRIVER_PARAMETER        , num_drivers , "Ensemble/mod_%d" , "PARAMETER");
-  block_fs_driver_create_fs( stream , mount_point , DRIVER_STATIC           , num_drivers , "Ensemble/mod_%d" , "STATIC");
   block_fs_driver_create_fs( stream , mount_point , DRIVER_DYNAMIC_FORECAST , num_drivers , "Ensemble/mod_%d" , "FORECAST");
   block_fs_driver_create_fs( stream , mount_point , DRIVER_DYNAMIC_ANALYZED , num_drivers , "Ensemble/mod_%d" , "ANALYZED");
   block_fs_driver_create_fs( stream , mount_point , DRIVER_INDEX            , 1           , "Index"           , "INDEX");
@@ -422,9 +418,6 @@ static void enkf_fs_assign_driver( enkf_fs_type * fs , fs_driver_type * driver ,
   case(DRIVER_PARAMETER):
     fs->parameter = driver;
     break;
-  case(DRIVER_STATIC):
-    fs->eclipse_static = driver;
-    break;
   case(DRIVER_DYNAMIC_FORECAST):
     fs->dynamic_forecast = driver;
     break;
@@ -434,6 +427,9 @@ static void enkf_fs_assign_driver( enkf_fs_type * fs , fs_driver_type * driver ,
   case(DRIVER_INDEX):
     fs->index = driver;
     break;
+  case(DRIVER_STATIC):
+    util_abort("%s: internal error - should not assign a STATIC driver \n",__func__);
+    break;
   }
 }
 
@@ -442,28 +438,39 @@ static enkf_fs_type *  enkf_fs_mount_block_fs( FILE * fstab_stream , const char 
   enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point );
 
   {
-    int driver_nr;
-    for (driver_nr = 0; driver_nr < 5; driver_nr++) {
-      fs_driver_enum driver_type = util_fread_int( fstab_stream );
-
-      fs_driver_type * driver = block_fs_driver_open( fstab_stream , mount_point , driver_type , fs->read_only);
-
-      enkf_fs_assign_driver( fs , driver , driver_type );
+    while (true) {
+      fs_driver_enum driver_type;
+      if (fread( &driver_type , sizeof driver_type , 1 , fstab_stream) == 1) {
+        if (fs_types_valid( driver_type )) {
+          fs_driver_type * driver = block_fs_driver_open( fstab_stream , mount_point , driver_type , fs->read_only);
+          enkf_fs_assign_driver( fs , driver , driver_type );
+        } else
+          block_fs_driver_fskip( fstab_stream );
+      } else
+        break;
     }
   }
+
   return fs;
 }
+
+
 
 
 static enkf_fs_type *  enkf_fs_mount_plain( FILE * fstab_stream , const char * mount_point ) {
   enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point );
   {
-    int driver_nr;
-    for (driver_nr = 0; driver_nr < 5; driver_nr++) {
-      fs_driver_enum driver_type = util_fread_int( fstab_stream );
-      fs_driver_type * driver = plain_driver_open( fstab_stream , mount_point );
-
-      enkf_fs_assign_driver( fs , driver , driver_type );
+    while (true) {
+      fs_driver_enum driver_type;
+      if (fread( &driver_type , sizeof driver_type , 1 , fstab_stream) == 1) {
+        if (fs_types_valid( driver_type )) {
+          fs_driver_type * driver = plain_driver_open( fstab_stream , mount_point );
+          enkf_fs_assign_driver( fs , driver , driver_type );
+        } else
+          plain_driver_fskip( fstab_stream );
+        
+      } else
+        break;
     }
   }
   return fs;
@@ -692,7 +699,6 @@ static void enkf_fs_umount( enkf_fs_type * fs ) {
       enkf_fs_free_driver( fs->dynamic_forecast );
       enkf_fs_free_driver( fs->dynamic_analyzed );
       enkf_fs_free_driver( fs->parameter );
-      enkf_fs_free_driver( fs->eclipse_static );
       enkf_fs_free_driver( fs->index );
 
       if (fs->lock_fd > 0) {
@@ -770,7 +776,6 @@ static void enkf_fs_fsync_driver( fs_driver_type * driver ) {
 
 void enkf_fs_fsync( enkf_fs_type * fs ) {
   enkf_fs_fsync_driver( fs->parameter );
-  enkf_fs_fsync_driver( fs->eclipse_static );
   enkf_fs_fsync_driver( fs->dynamic_forecast );
   enkf_fs_fsync_driver( fs->dynamic_analyzed );
   enkf_fs_fsync_driver( fs->index );
@@ -926,7 +931,6 @@ void enkf_fs_debug_fprintf( const enkf_fs_type * fs) {
   printf("Dynamic analyzed.....: %p \n",fs->dynamic_analyzed );
   printf("Parameter............: %p \n",fs->parameter );
   printf("Index................: %p \n",fs->index );
-  printf("Static...............: %p \n",fs->eclipse_static );
   printf("-----------------------------------------------------------------\n");
 }
 
