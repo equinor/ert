@@ -53,6 +53,9 @@ class SimulationContext(object):
     def getNumFailed(self):
         return self._queue_manager.getNumFailed()
 
+    def getNumWaiting(self):
+        return self._queue_manager.getNumWaiting()
+
 
     def didRealizationSucceed(self, iens):
         queue_index = self._run_args[iens].getQueueIndex()
@@ -76,3 +79,4 @@ class SimulationContext(object):
             return self._queue_manager.isJobComplete(queue_index)
         else:
             return False
+
