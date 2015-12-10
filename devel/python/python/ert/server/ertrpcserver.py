@@ -3,12 +3,10 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 from threading import Lock
 from xmlrpclib import Fault
 
-from ert.enkf.enums.ert_impl_type_enum import ErtImplType
-
 from ert import Version
 from ert.enkf import EnKFMain, NodeId
-from ert.enkf.data.enkf_node import EnkfNode
-from ert.enkf.enums import RealizationStateEnum, EnkfVarType, EnkfStateType
+from ert.enkf.data import EnkfNode
+from ert.enkf.enums import RealizationStateEnum, EnkfVarType, EnkfStateType, ErtImplType
 from ert.server import SimulationContext
 from ert.server.ertrpcclient import FAULT_CODES
 
@@ -19,8 +17,8 @@ def checkRealizationState(state):
 
 class Session:
     def __init__(self):
-        self.init_case = None
-        """ :type: EnkfFs """
+        self.init_case_name = None
+        """ :type: str """
 
         self.simulation_context = None
         """ :type: SimulationContext """
@@ -67,6 +65,8 @@ class ErtRPCServer(SimpleXMLRPCServer):
         self.register_function(self.didRealizationFail)
         self.register_function(self.getGenDataResult)
         self.register_function(self.getCustomKWResult)
+        self.register_function(self.isCustomKWKey)
+        self.register_function(self.isGenDataKey)
 
     @property
     def port(self):
@@ -123,37 +123,23 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
 
     def isInitializationCaseAvailable(self):
-        return self._session.init_case is not None
+        return self._session.init_case_name is not None
 
 
     def startSimulationBatch(self, initialization_case_name, simulation_count):
         with self._session.lock:
             if not self.isRunning():
                 self._session.simulation_context = None
-                self._session.init_case = None
-
-                if not self._checkAndSetInitializationCase(initialization_case_name):
-                    raise createFault(UserWarning, "Unable to start a simulation batch because of missing/uninitialized initialization case. "
-                                                   "The case: '%s' is not initialized" % initialization_case_name)
+                self._session.init_case_name = initialization_case_name
 
                 self.ert.addDataKW("<WPRO_RUN_COUNT>", str(self._session.batch_number))
                 self.ert.addDataKW("<ELCO_RUN_COUNT>", str(self._session.batch_number))
                 self._session.batch_number += 1
                 self._session.simulation_context = SimulationContext(self.ert, simulation_count, verbose=self._verbose_queue)
-            # else:
-            #     raise createFault(UserWarning, "Unable to start a simulation batch because the server is already running a batch.")
 
 
-    def _checkAndSetInitializationCase(self, initialization_case_name):
-        enkf_fs_manager = self.ert.getEnkfFsManager()
-        init_case = enkf_fs_manager.getFileSystem(initialization_case_name)
-        state_map = init_case.getStateMap()
-        initialized = any(checkRealizationState(state) for state in state_map)
-
-        if initialized:
-            self._session.init_case = init_case
-
-        return initialized
+    def _getInitializationCase(self):
+        return self.ert.getEnkfFsManager().getFileSystem(self._session.init_case_name)
 
 
     def addSimulation(self, target_case_name, geo_id, pert_id, iens, keywords):
@@ -179,7 +165,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 node = state[kw]
                 init_id = NodeId(0, geo_id, EnkfStateType.ANALYZED)
                 run_id = NodeId(0, iens, EnkfStateType.ANALYZED)
-                node.load(self._session.init_case, init_id)
+                node.load(self._getInitializationCase(), init_id)
                 node.save(target_fs, run_id)
 
         for key, value in keywords.iteritems():
@@ -267,5 +253,23 @@ class ErtRPCServer(SimpleXMLRPCServer):
         else:
             return 0
 
+    def getWaitingCount(self):
+        if self._session.simulation_context is not None:
+            return self._session.simulation_context.getNumWaiting()
+        else:
+            return 0
+
     def getBatchNumber(self):
         return self._session.batch_number
+
+    def isCustomKWKey(self, key):
+        ensemble_config = self.ert.ensembleConfig()
+        return key in ensemble_config.getKeylistFromImplType(ErtImplType.CUSTOM_KW)
+
+    def isGenDataKey(self, key):
+        ensemble_config = self.ert.ensembleConfig()
+        return key in ensemble_config.getKeylistFromImplType(ErtImplType.GEN_DATA)
+
+
+
+

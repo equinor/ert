@@ -57,7 +57,6 @@ class ErtRPCClient(object):
         @param initialization_case_name: The case containing geo realizations
         @type initialization_case_name: str
         @type simulation_count: int
-        @raise UserWarning if the server was unable to start a new batch or a batch is already running.
         """
         try:
             self._server_proxy.startSimulationBatch(initialization_case_name, simulation_count)
@@ -140,3 +139,21 @@ class ErtRPCClient(object):
             return self._server_proxy.getCustomKWResult(target_case_name, sim_id, keyword)
         except Fault as f:
             raise convertFault(f)
+
+    def isCustomKWKey(self, key):
+        """
+        Check if a key is of CustomKW type
+        @param key: The key to check
+        @type key: str
+        @rtype: bool
+        """
+        return self._server_proxy.isCustomKWKey(key)
+
+    def isGenDataKey(self, key):
+        """
+        Check if a key is of CustomKW type
+        @param key: The key to check
+        @type key: str
+        @rtype: bool
+        """
+        return self._server_proxy.isGenDataKey(key)

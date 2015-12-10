@@ -8,7 +8,6 @@ from ert.enkf import EnKFMain
 from ert.enkf.enums import RealizationStateEnum
 from ert.server import ErtRPCServer, ErtRPCClient
 from ert.test import ErtTestContext, ExtendedTestCase, ErtTest
-from tests.ert.server import initializeCase
 
 
 class RPCServiceContext(object):
@@ -95,10 +94,10 @@ class RPCServiceTest(ExtendedTestCase):
             self.assertEqual(Version.currentVersion().versionTuple(), client.ertVersion())
             realization_count = len(target_case_names)
 
-            with self.assertRaises(UserWarning):
-                client.startSimulationBatch("default", realization_count)
-
-            initializeCase(server.ert, "default", 1)
+            # with self.assertRaises(UserWarning):
+            #     client.startSimulationBatch("default", realization_count)
+            #
+            # initializeCase(server.ert, "default", 1)
 
             client.startSimulationBatch("default", realization_count)
 
@@ -133,6 +132,10 @@ class RPCServiceTest(ExtendedTestCase):
                 self.assertTrue(client.didRealizationSucceed(iens))
                 self.assertFalse(client.didRealizationFail(iens))
 
+                self.assertTrue(client.isCustomKWKey("SNAKE_OIL_NPV"))
+                self.assertFalse(client.isGenDataKey("SNAKE_OIL_NPV"))
+                self.assertTrue(client.isGenDataKey("SNAKE_OIL_OPR_DIFF"))
+
                 result = client.getGenDataResult(case, iens, 199, "SNAKE_OIL_OPR_DIFF")
                 self.assertEqual(len(result), 2000)
 
@@ -160,7 +163,7 @@ class RPCServiceTest(ExtendedTestCase):
         with RPCServiceContext("ert/server/rpc/multi_client", self.config, store_area=True) as server:
             client_count = len(expected_ckw)
 
-            initializeCase(server.ert, "default", 1)
+            # initializeCase(server.ert, "default", 1)
             thread_success_state = {}
 
             def createClientInteractor(target_case_name, iens):
