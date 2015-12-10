@@ -59,12 +59,15 @@ class Server(ErtShellCollection):
 
     def inspect(self, line):
         if self._server is not None:
-            print("Queue is running: %s" % self._server.isRunning())
-            print("Running: %d" % self._server.getRunningCount())
-            print("Failed: %d" % self._server.getFailedCount())
-            print("Succeeded: %d" % self._server.getSuccessCount())
-            print("Batch#: %d" % self._server.getBatchNumber())
+            if self._server.isRunning():
+                print("Waiting..: %d" % self._server.getWaitingCount())
+                print("Running..: %d" % self._server.getRunningCount())
+                print("Failed...: %d" % self._server.getFailedCount())
+                print("Succeeded: %d" % self._server.getSuccessCount())
+                print("Batch#...: %d" % self._server.getBatchNumber())
+            else:
+                print("Server is not running any simulations")
         else:
-            print("No server to inspect")
+            print("No server is not available")
 
 
