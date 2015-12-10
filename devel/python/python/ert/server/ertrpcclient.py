@@ -1,3 +1,4 @@
+import socket
 from xmlrpclib import ServerProxy, Fault
 
 FAULT_CODES = {1: UserWarning,
@@ -17,6 +18,7 @@ def convertFault(fault):
 class ErtRPCClient(object):
     def __init__(self, host, port, verbose=False):
         self._server_proxy = ServerProxy("http://%s:%s" % (host, port), allow_none=True, verbose=verbose)
+        socket.setdefaulttimeout(180) # 3 minutes
 
     def ertVersion(self):
         """

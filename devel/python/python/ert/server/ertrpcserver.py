@@ -88,6 +88,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
             if self._session.simulation_context.isRunning():
                 self.ert.siteConfig().getJobQueue().killAllJobs()
         self.shutdown()
+        self.server_close()
 
     def ertVersion(self):
         return Version.currentVersion().versionTuple()
