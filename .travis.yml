@@ -30,6 +30,10 @@ install:
     - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pyqt scipy numpy pandas matplotlib
     - source activate test-environment
 
+env:
+  global:
+     - ERT_SHOW_BACKTRACE=1 
+
 before_script:
   - sudo apt-get -qq -y install libplplot-dev
   - mkdir build

@@ -35,7 +35,6 @@
 #include <ert/enkf/field.h>
 #include <ert/enkf/surface.h>
 #include <ert/enkf/summary.h>
-#include <ert/enkf/ecl_static_kw.h>
 #include <ert/enkf/custom_kw.h>
 #include <ert/enkf/gen_kw.h>
 #include <ert/enkf/gen_data.h>
@@ -456,7 +455,6 @@ bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_
 
 
 void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step, int iens) {
-  ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
   enkf_node->__node_id.report_step = report_step;
   enkf_node->__node_id.state       = FORECAST;
   enkf_node->__node_id.iens        = iens;
@@ -1079,15 +1077,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->imul               = field_imul__;
     node->isqrt              = field_isqrt__;
     node->fload              = field_fload__;
-    break;
-  case(STATIC):
-    node->ecl_write          = ecl_static_kw_ecl_write__;
-    node->alloc              = ecl_static_kw_alloc__;
-    node->copy               = ecl_static_kw_copy__;
-    node->freef              = ecl_static_kw_free__;
-    node->free_data          = ecl_static_kw_free_data__;
-    node->read_from_buffer   = ecl_static_kw_read_from_buffer__;
-    node->write_to_buffer    = ecl_static_kw_write_to_buffer__;
     break;
   case(GEN_DATA):
     node->alloc              = gen_data_alloc__;

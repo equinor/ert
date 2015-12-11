@@ -9,7 +9,6 @@ set( source_files
      enkf_config_node.c
      field_config.c
      field.c
-     ecl_static_kw.c
      enkf_state.c
      enkf_util.c
      enkf_node.c
@@ -102,7 +101,6 @@ set( header_files
      field_config.h
      field.h
      enkf_macros.h
-     ecl_static_kw.h
      enkf_state.h
      enkf_util.h
      enkf_main.h
