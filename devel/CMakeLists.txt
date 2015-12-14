@@ -67,9 +67,7 @@ endif()
 
 if (MSVC)
     add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4996" )
-    add_definitions( -DCOMPILER_MSVC )
-elseif (CMAKE_COMPILER_IS_GNUCC) 
-    add_definitions( -DCOMPILER_GCC )
+else()
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x" )
 endif()
 

@@ -15,12 +15,9 @@ find_library( ZLIB_LIBRARY NAMES z )
 find_path( ZLIB_HEADER zlib.h /usr/include )
 
 if (ZLIB_LIBRARY AND ZLIB_HEADER)
-   option(WITH_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
-   if (WITH_ZLIB)
-      add_definitions( -DWITH_ZLIB )
-   endif()
+   set( HAVE_ZLIB ON )
+   add_definitions( -DHAVE_ZLIB)
 else()
-   set( WITH_ZLIB FALSE )
    message("ZLib not found - zlib support will not be included." )       
 endif()
 #-----------------------------------------------------------------
@@ -71,6 +68,12 @@ find_path( UNISTD_HEADER unistd.h /usr/include )
 if (UNISTD_HEADER)
    add_definitions( -DHAVE_UNISTD )
 endif()
+
+find_path( SETJMP_HEADER setjmp.h )
+if (SETJMP_HEADER)
+   add_definitions( -DHAVE_SETJMP )
+endif()
+
 
 if (ERT_WINDOWS)
    find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
