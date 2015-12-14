@@ -1,7 +1,6 @@
 if (BUILD_ERT)
    set(application_list
         ert_tcp_server
-        ert_tcp_test_client
         ertshell
    )
    foreach(prog ${application_list} )

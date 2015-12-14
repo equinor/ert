@@ -14,6 +14,7 @@ set(PYTHON_SOURCES
     plugins.py
     results.py
     ert_shell_context.py
+    server.py
     shell_plot.py
     simulations.py
     smoother.py

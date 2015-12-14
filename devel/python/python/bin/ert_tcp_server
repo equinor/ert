@@ -1,45 +1,26 @@
 #!/usr/bin/env python
-import sys
-import time
-import socket
-import os.path
 import argparse
-import logging
-import functools
+import socket
+import sys
 
-from ert.server import ErtSocket
+from ert.server.ertrpcserver import ErtRPCServer
 
-default_port = 2000
-
-def connect_callback( sleep_time , host , port):
-    print "\nFAILED to start ErtServer on %s:%d - will retry in %d seconds ... " % (host , port , sleep_time) ,
-    sys.stdout.flush()
-                
-
+default_port = 0
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--port"      , type=int , default = default_port , dest="port")
-parser.add_argument("--host"      , default = socket.gethostname() , dest="host")
-parser.add_argument("--localhost" , default = False , action = "store_true" , dest="localhost")
-parser.add_argument("--log-file"  , default = "ert-server.log" , dest="log_file")
-parser.add_argument("--log-level" , type=int , default= 1 , dest="log_level")
-parser.add_argument("config_file" )
+parser.add_argument("--port", type=int, default=default_port, dest="port")
+parser.add_argument("--host", default=socket.gethostname(), dest="host")
+parser.add_argument("--localhost", default=False, action="store_true", dest="localhost")
+parser.add_argument("--log-file", default="ert-server.log", dest="log_file")
+parser.add_argument("--log-level", type=int, default=1, dest="log_level")
+parser.add_argument("config_file")
 
 args = parser.parse_args()
 
 config_file = args.config_file
 port = args.port
 log_level = args.log_level
-
-
-# If the log-file is given as a relative path (the default) the log
-# file will be located in the same directory as the ert configuration file.
-if os.path.isabs( args.log_file ):
-    log_file = args.log_file
-else:
-    config_path = os.path.dirname( os.path.abspath( config_file ))
-    log_file = os.path.join( config_path , args.log_file )
 
 
 # By default the server will bind with the publicly available hostname
@@ -57,38 +38,16 @@ else:
     host = args.host
     if host.count(".") == 0:
         sys.exit("Sorry - could not determine FQDN for server - use the --host option to supply.")
-    
 
+server = ErtRPCServer(config_file, host, port, log_requests=log_level > 1, verbose_queue=True)
 
-# Create a logger object.
-logger = logging.Logger("ert-server")
-formatter = logging.Formatter("%(levelname)s:%(message)s")
-if args.log_level == 0:
-    handler = logging.NullHandler()
-else:
-    handler = logging.FileHandler(log_file , mode = "w")
-handler.setFormatter( formatter )
-logger.addHandler( handler )
-
-
-if log_level == 0:
-    # In this case the NullHandler is used - makes no difference what the level is set to.
-    pass
-elif log_level == 1: 
-    logger.setLevel( logging.INFO )
-elif log_level == 2:
-    logger.setLevel( logging.DEBUG )
-
-
-ert_socket = ErtSocket.connect(config_file , port , host , logger , info_callback = connect_callback )
-if ert_socket is None:
-    sys.exit("Failed to open ERT handle to:%s " % config_file)
-else:
-    status = ert_socket.evalCmd(["STATUS"])
-    if status == ["OK" , "READY"]:
-        print "\nERT Server is accepting connections on %s:%d => " % (host , port),
-        sys.stdout.flush()
-        ert_socket.listen()
-    else:
-        sys.exit("Failed to open ERT handle to:%s " % config_file)
-
+try:
+    print("ERT Server running on port: %d at host: %s" % (server.port, host))
+    server.start()
+except KeyboardInterrupt:
+    try:
+        server.stop()
+        print("ERT Server 'smoothly' killed the running jobs")
+    except Exception as e:
+        print("Unable to stop server 'gracefully'!")
+        raise e

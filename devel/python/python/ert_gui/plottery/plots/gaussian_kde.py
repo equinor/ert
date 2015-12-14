@@ -1,6 +1,7 @@
 import numpy
 from scipy.stats import gaussian_kde
 from .plot_tools import PlotTools
+import pandas as pd
 
 
 def plotGaussianKDE(plot_context):
@@ -41,7 +42,7 @@ def _plotGaussianKDE(axes, plot_config, data, label):
     style = plot_config.histogramStyle()
 
     if data.dtype == "object":
-        data = data.convert_objects(convert_numeric=True)
+        data = pd.to_numeric(data, errors='coerce')
 
     if data.dtype == "object":
         pass

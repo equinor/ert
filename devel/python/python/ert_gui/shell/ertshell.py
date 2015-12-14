@@ -21,6 +21,7 @@ from ert_gui.shell.storage import Storage
 from ert_gui.shell.summary_keys import SummaryKeys
 from ert_gui.shell.workflows import Workflows
 from ert_gui.shell.observations import Observations
+from ert_gui.shell.server import Server
 from ert_gui.shell.libshell import extractFullArgument, getPossibleFilenameCompletions
 from ert_gui.shell import ErtShellContext
 
@@ -88,6 +89,7 @@ class ErtShell(Cmd):
         Observations(self)
         Export(self)
         Storage(self)
+        Server(self)
 
         self.__last_command_failed = False
 
