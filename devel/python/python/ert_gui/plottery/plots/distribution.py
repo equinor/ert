@@ -1,4 +1,5 @@
 from .plot_tools import PlotTools
+import pandas as pd
 
 def plotDistribution(plot_context):
     """
@@ -56,7 +57,7 @@ def _plotDistribution(axes, plot_config, data, label, index, previous_data):
     style = plot_config.distributionStyle()
 
     if data.dtype == "object":
-        data = data.convert_objects(convert_numeric=True)
+        data = pd.to_numeric(data, errors='coerce')
 
     if data.dtype == "object":
         dots = []
