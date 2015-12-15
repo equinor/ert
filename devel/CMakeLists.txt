@@ -28,7 +28,6 @@ option( INSTALL_ERT         "Should anything be installed when issuing make inst
 option( ERT_BUILD_GUI       "Should the pyQt based gui be compiled and installed" OFF )
 option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" OFF)
 option( ERT_DOC             "Build ERT documantation" OFF)
-option( ERT_BUILD_CXX       "Build (some) CXX wrappers" ON) 
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
@@ -46,8 +45,6 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    set(ERT_WINDOWS TRUE)
    add_definitions( -DERT_WINDOWS )
-#  This symbol must be defined to support large (> 2GB) files on windows.
-   add_definitions( -DWINDOWS_LFS )
 endif()    
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -84,27 +81,28 @@ if (ERT_USE_OPENMP)
 endif()
 
 
-include(cmake/ert_find.cmake)
-include(cmake/ert_check.cmake)
+#-----------------------------------------------------------------
+
+# Checking based on compiling. Some of the code generates warnings, so we just cut down to bare-bone compiler flags.
+
+set( CMAKE_C_FLAGS_main ${CMAKE_C_FLAGS} )
+set( CMAKE_CXX_FLAGS_main ${CMAKE_CXX_FLAGS} )
+
+if (NOT ERT_WINDOWS)
+  set( CMAKE_C_FLAGS "-std=gnu99" )
+  set( CMAKE_CXX_FLAGS "-std=c++0x")
+endif()
+
+set( ERT_EXTERNAL_UTIL_LIBS "" )
+include(cmake/ert_build_check.cmake)
+include(cmake/ert_api_check.cmake)
+include(cmake/ert_lib_check.cmake)
+
+set( CMAKE_C_FLAGS ${CMAKE_C_FLAGS_main} )
+set( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_main} )
+
 include(cmake/Modules/UseMultiArch.cmake)
 include(cmake/ert_link.cmake)
-
-
-#-----------------------------------------------------------------
-# Should we build the block_fs filesystem; this is used extensively
-# by the ert application; but if you are only building the support
-# eclipse related support libraries you can safely leave this at the
-# default OFF value.
-
-if (BUILD_ERT)
-   set( ERT_BUILD_BLOCK_FS ON)
-else()
-   if (WITH_PTHREAD)
-      set( ERT_BUILD_BLOCK_FS OFF CACHE BOOL "Build the block_fs filesystem. Used by ERT application")
-   else()
-      set( ERT_BUILD_BLOCK_FS OFF)
-   endif()
-endif()
 
 #-----------------------------------------------------------------
 
@@ -162,13 +160,9 @@ endif()
 include_directories( ${PROJECT_SOURCE_DIR}/libecl/include )
 add_subdirectory( libecl )
 
-if (ERT_BUILD_CXX)
-   if (HAVE_CXX_SHARED_PTR)
-      include_directories( ${PROJECT_SOURCE_DIR}/libeclxx/include )
-      add_subdirectory( libeclxx )
-   else()
-      message(STATUS "Skipping CXX support - missing Cxx11 features.")
-   endif()
+if (BUILD_CXX)
+   include_directories( ${PROJECT_SOURCE_DIR}/libeclxx/include )
+   add_subdirectory( libeclxx )
 endif()
 
 include_directories( ${PROJECT_SOURCE_DIR}/libecl_well/include )

@@ -8,7 +8,7 @@ set( header_files
 
 
 add_library( eclxx ${LIBRARY_TYPE} ${source_files} )
-set_target_properties( eclxx PROPERTIES VERSION 1.0 SOVERSION 1.0 )
+set_target_properties( eclxx PROPERTIES VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} SOVERSION ${ERT_VERSION_MAJOR})
 if (USE_RUNPATH)
    add_runpath( eclxx )
 endif()
