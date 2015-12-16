@@ -7,11 +7,20 @@
 # Check which affect the final api are implemented in the
 # ert_api_check.cmake file.
 
+find_library( PTHREAD_LIBRARY NAMES pthread )
+if (PTHREAD_LIBRARY)
+   set( HAVE_PTHREAD ON )
+   set (CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} pthread)
+endif()
+
+if (UNIX)
+   set( CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} m )
+   set( ERT_EXTERNAL_UTIL_LIBS ${ERT_EXTERNAL_UTIL_LIBS} m )
+endif(UNIX)
+
+
 check_function_exists( localtime_r HAVE_LOCALTIME_R )
 check_function_exists( realpath HAVE_REALPATH )
-check_function_exists( pthread_timedjoin_np HAVE_TIMEDJOIN)
-check_function_exists( pthread_yield_np HAVE_YIELD_NP)
-check_function_exists( pthread_yield HAVE_YIELD)
 check_function_exists( usleep HAVE__USLEEP )
 check_function_exists( fnmatch HAVE_FNMATCH )
 check_function_exists( ftruncate HAVE_FTRUNCATE )
@@ -24,6 +33,10 @@ check_function_exists( getpwuid HAVE_GETPWUID )
 check_function_exists( fsync HAVE_FSYNC )
 check_function_exists( setenv HAVE_POSIX_SETENV )
 check_function_exists( chmod HAVE_CHMOD )
+check_function_exists( pthread_timedjoin_np HAVE_TIMEDJOIN)
+check_function_exists( pthread_yield_np HAVE_YIELD_NP)
+check_function_exists( pthread_yield HAVE_YIELD)
+
 
 include(CheckSymbolExists)
 check_symbol_exists(_tzname time.h HAVE_WINDOWS_TZNAME)
@@ -37,11 +50,6 @@ try_compile( HAVE_PID_T ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/te
 try_compile( HAVE_MODE_T ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_mode_t.c )
 try_compile( HAVE_MKDIR_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_mkdir.c )
 
-find_library( PTHREAD_LIBRARY NAMES pthread )
-if (PTHREAD_LIBRARY)
-   set( HAVE_PTHREAD ON )
-   set (CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} pthread)
-endif()
 
 set( BUILD_CXX ON )
 try_compile( HAVE_CXX_SHARED_PTR ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_shared_ptr.cpp )
