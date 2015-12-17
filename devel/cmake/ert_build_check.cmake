@@ -46,6 +46,11 @@ if (NOT HAVE_WINDOWS_CHDIR)
    check_function_exists( chdir HAVE_POSIX_CHDIR)
 endif()
 
+check_function_exists( _getcwd HAVE_WINDOWS_GETCWD)
+if (NOT HAVE_WINDOWS_GETCWD)
+   check_function_exists( getcwd HAVE_POSIX_GETCWD)
+endif()
+
 
 include(CheckSymbolExists)
 check_symbol_exists(_tzname time.h HAVE_WINDOWS_TZNAME)
