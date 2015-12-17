@@ -137,10 +137,6 @@ else()
    set( LINK_STATIC TRUE )
 endif()
 
-
-configure_file( ${PROJECT_SOURCE_DIR}/cmake/config/ert_build_config.h.in
-                ${PROJECT_BINARY_DIR}/ert_build_config.h )
-
 include_directories( ${PROJECT_SOURCE_DIR}/libert_util/include )
 include_directories( ${PROJECT_BINARY_DIR}/libert_util/include )
 if (MSVC)
