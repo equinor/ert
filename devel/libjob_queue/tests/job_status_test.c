@@ -20,9 +20,12 @@
 #include <stdbool.h>
 #include <pthread.h>
 
+#include "ert/util/build_config.h"
+
 #include <ert/job_queue/job_queue_status.h>
 #include <ert/job_queue/queue_driver.h>
 #include <ert/util/test_util.h>
+#include <ert/util/test_util_abort.h>
 
 
 void call_get_status( void * arg ) {
