@@ -22,14 +22,6 @@ from ert.enkf.key_manager import KeyManager
 from ert.util import SubstitutionList, Log
 
 
-# The method EnKFMain.fieldInitFile() allocates C storage for a char*;
-# the sole purpose of the stringObj method is to manage this memory.
-
-def stringObj(c_ptr):
-    char_ptr = ctypes.c_char_p( c_ptr )
-    python_string = char_ptr.value
-    ENKF_LIB.free(c_ptr)
-    return python_string
 
 class EnKFMain(BaseCClass):
     def __init__(self, model_config, strict = True, verbose = True):
@@ -266,7 +258,6 @@ class EnKFMain(BaseCClass):
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("enkf_main", EnKFMain)
-CWrapper.registerType("string_obj" , stringObj)
 
 EnKFMain.cNamespace().bootstrap = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, bool, bool)")
 EnKFMain.cNamespace().free = cwrapper.prototype("void enkf_main_free(enkf_main)")
@@ -322,5 +313,5 @@ EnKFMain.cNamespace().load_from_forward_model = cwrapper.prototype("void enkf_ma
 
 EnKFMain.cNamespace().submit_simulation = cwrapper.prototype("void enkf_main_isubmit_job(enkf_main , run_arg)")
 EnKFMain.cNamespace().alloc_run_context_ENSEMBLE_EXPERIMENT= cwrapper.prototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , enkf_init_mode_enum , int)")
-EnKFMain.cNamespace().alloc_field_init_file = cwrapper.prototype("string_obj enkf_main_alloc_abs_path_to_init_file(enkf_main, enkf_config_node)")
+EnKFMain.cNamespace().alloc_field_init_file = cwrapper.prototype("cstring_obj enkf_main_alloc_abs_path_to_init_file(enkf_main, enkf_config_node)")
 EnKFMain.cNamespace().get_runpath_list = cwrapper.prototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
