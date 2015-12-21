@@ -37,7 +37,6 @@
 
 #include <enkf_tui_util.h>
 #include <enkf_tui_help.h>
-#include <enkf_tui_plot.h>
 #include <enkf_tui_fs.h>
 
 
