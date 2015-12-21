@@ -38,7 +38,6 @@
 #include <enkf_tui_util.h>
 #include <enkf_tui_init.h>
 #include <enkf_tui_run.h>
-#include <enkf_tui_plot.h>
 #include <enkf_tui_help.h>
 #include <enkf_tui_main.h>
 
@@ -56,8 +55,6 @@ void enkf_tui_simple_menu(void * arg) {
     menu_item_disable( ES_item );
   }
   menu_add_separator( menu );
-  menu_add_item(menu , "Plot results"                          , "pP" , enkf_tui_plot_simple_menu   , enkf_main , NULL);
-  menu_add_separator(menu);
   menu_add_item(menu , "Help"                                  , "hH" , enkf_tui_help_menu_simple   , enkf_main , NULL);
   menu_add_item(menu , "Advanced menu"                         , "dD" , enkf_tui_main_menu        , enkf_main , NULL);
   menu_run(menu);

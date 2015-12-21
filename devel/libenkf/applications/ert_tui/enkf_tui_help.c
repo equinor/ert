@@ -29,7 +29,6 @@
 
 #include <enkf_tui_run.h>
 #include <enkf_tui_export.h>
-#include <enkf_tui_plot.h>
 #include <enkf_tui_table.h>
 #include <enkf_tui_fs.h>
 #include <enkf_tui_ranking.h>
