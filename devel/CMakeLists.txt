@@ -18,7 +18,6 @@ set( ERT_VERSION_MICRO git )
 
 
 option( BUILD_ERT           "Build the full ERT application - Linux only" OFF)
-option( BUILD_ENS_PLOT      "Build small Eclipse plotting program - no" OFF)
 option( BUILD_TESTS         "Should the tests be built" OFF)
 option( BUILD_APPLICATIONS  "Should we build small utility applications" OFF)
 option( BUILD_ECL_SUMMARY   "Build the commandline application ecl_summary" OFF)
@@ -147,11 +146,6 @@ add_subdirectory( libert_util )
 
 include_directories( ${PROJECT_SOURCE_DIR}/libgeometry/include )
 add_subdirectory( libgeometry )
-
-if (BUILD_ERT OR BUILD_ENS_PLOT)
-   include_directories( ${PROJECT_SOURCE_DIR}/libplot/include )
-   add_subdirectory( libplot )
-endif()
 
 include_directories( ${PROJECT_SOURCE_DIR}/libecl/include )
 add_subdirectory( libecl )

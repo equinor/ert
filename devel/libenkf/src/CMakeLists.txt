@@ -193,11 +193,7 @@ set_target_properties( enkf PROPERTIES VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSIO
 set( SITE_CONFIG_FILE /project/res/etc/ERT/site-config CACHE FILEPATH "Path to global ERT Configuration file")
 set_source_files_properties( site_config.c PROPERTIES COMPILE_DEFINITIONS "SITE_CONFIG_FILE=\"${SITE_CONFIG_FILE}\"")
 
-#configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/CMake/config/ert_build_info.h.in
-#                ${CMAKE_CURRENT_BINARY_DIR}/ert_build_info.h )
-#list( APPEND src_files ${CMAKE_CURRENT_BINARY_DIR}/ert_build_info.h )
-
-target_link_libraries( enkf ecl sched analysis rms plot config job_queue )
+target_link_libraries( enkf ecl sched analysis rms config job_queue )
 
 if (USE_RUNPATH)
    add_runpath( enkf )
