@@ -48,7 +48,6 @@
 #include <ert/enkf/enkf_state.h>
 #include <ert/enkf/gen_kw_config.h>
 #include <ert/enkf/enkf_defaults.h>
-#include <ert/enkf/plot_config.h>
 #include <ert/enkf/member_config.h>
 #include <ert/enkf/enkf_analysis.h>
 #include <ert/enkf/pca_plot_data.h>
@@ -73,16 +72,11 @@ void enkf_tui_QC_run_workflow( void * arg ) {
 void enkf_tui_QC_menu(void * arg) {
 
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
-  plot_config_type * plot_config = enkf_main_get_plot_config( enkf_main );
-  {
-    const char * plot_path  =  plot_config_get_path( plot_config );
-    util_make_path( plot_path );
-  }
 
   {
     menu_type * menu = menu_alloc("Quality check of prior" , "Back" , "bB");
     menu_item_type * run_QC_workflow_item = menu_add_item( menu , "Run QC workflow"    , "rR"  , enkf_tui_QC_run_workflow , enkf_main , NULL);
-    
+
     if (!enkf_main_has_QC_workflow( enkf_main ))
       menu_item_disable( run_QC_workflow_item );
 
