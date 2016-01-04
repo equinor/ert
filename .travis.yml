@@ -35,7 +35,6 @@ env:
      - ERT_SHOW_BACKTRACE=1 
 
 before_script:
-  - sudo apt-get -qq -y install libplplot-dev
   - mkdir build
   - cd build
   - echo "WORKFLOW_JOB_DIRECTORY ../devel/share/workflows/jobs/internal/config" > DEFAULT_SITE_CONFIG_FILE
