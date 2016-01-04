@@ -71,4 +71,3 @@ if (NOT HAVE_CXX_SHARED_PTR)
 endif()
 
 
-find_program(PING_PATH NAMES ping)
