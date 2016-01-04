@@ -61,3 +61,10 @@ endif()
 if (HAVE_PTHREAD)
    set( ERT_HAVE_THREAD_POOL ON )
 endif()
+
+
+find_program(PING_PATH NAMES ping)
+if (PING_PATH)
+   set( ERT_HAVE_PING ON )
+   add_definitions( -DPING_CMD="${PING_PATH}" )
+endif()

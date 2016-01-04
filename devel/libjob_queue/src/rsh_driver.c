@@ -25,6 +25,8 @@
 #include <pthread.h>
 #include <errno.h>
 
+
+#include <ert/util/ert_api_config.h>
 #include <ert/util/util.h>
 #include <ert/util/arg_pack.h>
 
@@ -122,7 +124,11 @@ static bool rsh_host_available(rsh_host_type * rsh_host) {
   {
     available = false;
     if ((rsh_host->max_running - rsh_host->running) > 0) {  // The host has free slots()
-      if (util_ping( rsh_host->host_name )) {                // The host answers to ping()
+      bool ping_ok = true;
+#ifdef ERT_HAVE_PING
+      ping_ok = util_ping( rsh_host->host_name );
+#endif
+      if (ping_ok) {                // The host answers to ping()
         available = true;
         rsh_host->running++;
       }
