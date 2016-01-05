@@ -25,7 +25,10 @@ class LocalConfigTest(ExtendedTestCase):
             self.assertTrue(main, "Load failed")
             
             local_config = main.getLocalConfig()  
+
             self.AllActive(local_config)
+
+            local_config.clear()
 
             self.MiniStep(local_config)
             
@@ -35,16 +38,19 @@ class LocalConfigTest(ExtendedTestCase):
             
             self.LocalObsdata(local_config)
            
-            sfile = "local_config.txt"
-            local_config.writeLocalConfigFile( sfile )
-            self.assertTrue( os.path.isfile( sfile ))
+            local_config_file_summary = "local_config_summary.txt"
+            local_config.writeSummaryFile( local_config_file_summary )
+            self.assertTrue( os.path.isfile( local_config_file_summary ))
+
+            local_config_file = "local_config.txt"
+            local_config.writeLocalConfigFile( local_config_file )
+            self.assertTrue( os.path.isfile( local_config_file ))
 
             self.clear(local_config)
 
             grid = local_config.getGrid()
             self.assertTrue( isinstance( grid , EclGrid ))
             
-
     def clear(self, local_config):
         local_config.clear()
         updateStep = local_config.getUpdatestep( )
