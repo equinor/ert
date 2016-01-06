@@ -40,7 +40,7 @@ class GenDataConfigTest(ExtendedTestCase):
             self.assertEqual(first_active_mask_length, second_active_mask_len)
 
             # Setting one element to False, load different case, check, reload, and check.
-            self.assertTrue(BoolVector.cNamespace().iget(active_mask, 10))
+            self.assertTrue(BoolVector._iget(active_mask, 10))
             active_mask_modified = active_mask.copy()
             active_mask_modified[10] = False
 
