@@ -1,13 +1,16 @@
 from ert_gui.shell import ErtShellCollection
 from ert_gui.shell.libshell import splitArguments, getPossibleFilenameCompletions, extractFullArgument
 
-from ert.util import UTIL_LIB
+
 import ctypes
 import os
 
 NO_SORT = 0
 STRING_SORT = 1
 OFFSET_SORT = 2
+
+import ert.cwrap.clib as clib
+UTIL_LIB = clib.ert_load("libert_util")
 
 UTIL_LIB.block_fs_is_mount.restype = ctypes.c_bool
 UTIL_LIB.block_fs_mount.restype = ctypes.c_void_p
