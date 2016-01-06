@@ -17,12 +17,17 @@
 Utility function to map Python filehandle <-> FILE *
 """
 
-import ctypes  
-from   cwrap   import *
-from   cclass  import CClass
+import ctypes
 
-class CFILE(CClass):
-    def __init__( self , py_file ):
+from ert.cwrap import BaseCClass, Prototype
+
+
+class CFILE(BaseCClass):
+    TYPE_NAME = "FILE"
+
+    _as_file = Prototype(ctypes.pythonapi, "void* PyFile_AsFile(py_object)")
+
+    def __init__(self, py_file):
         """
         Takes a python filehandle and looks up the underlying FILE * 
         
@@ -53,19 +58,11 @@ class CFILE(CClass):
 
         Examples: ert.ecl.ecl_kw.EclKW.fprintf_grdecl()
         """
-        self.c_ptr   = cfunc.as_file( py_file ) 
+        self.c_ptr = self._as_file(py_file)
         self.py_file = py_file
 
         if self.c_ptr is None:
             raise TypeError("Sorry - the supplied argument is not a valid Python filehandle")
 
-
     def __del__(self):
         pass
-
-
-
-cwrapper = CWrapper( ctypes.pythonapi ) 
-cwrapper.registerType( "FILE" , CFILE )
-cfunc         = CWrapperNameSpace("FILE")
-cfunc.as_file = cwrapper.prototype("c_void_p PyFile_AsFile( py_object )")
