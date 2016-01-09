@@ -49,8 +49,8 @@ class Observations(ErtShellCollection):
     @assertConfigLoaded
     def reload(self, config_file):
         if os.path.exists(config_file) and os.path.isfile(config_file):
-            self.ert().getObservations().clear()
-            self.ert().getObservations().load(config_file)
+            # If clear is False the new observations will be added to the existing.
+            self.ert().loadObservations( config_file , clear = True )
         else:
             self.lastCommandFailed("Observations file '%s' not found!\n" % config_file)
 
