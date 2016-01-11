@@ -23,7 +23,7 @@ correct restype and argtypes attributes of the function objects.
 import ctypes
 import re
 import sys
-from ert.cwrap import BaseCClass, BaseCValue
+from ert.cwrap import BaseCClass, BaseCValue, REGISTERED_TYPES
 import inspect
 
 
@@ -106,6 +106,8 @@ class CWrapper:
 
         if type_name in CWrapper.registered_types:
             return CWrapper.registered_types[type_name]
+        elif type_name in REGISTERED_TYPES:
+            return REGISTERED_TYPES[type_name].type_class_or_function
         else:
             return getattr(ctypes, type_name)
 

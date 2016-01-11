@@ -1,8 +1,11 @@
 import ctypes
 from ert.cwrap import CNamespace
+from ert.cwrap.metacwrap import MetaCWrap
 
 
 class BaseCClass(object):
+    __metaclass__ = MetaCWrap
+
     namespaces = {}
 
     def __init__(self, c_pointer, parent=None, is_reference=False):
@@ -60,6 +63,9 @@ class BaseCClass(object):
         else:
             return None
 
+    @classmethod
+    def storageType(cls):
+        return ctypes.c_void_p
 
     def convertToCReference(self, parent):
         self.__is_reference = True
