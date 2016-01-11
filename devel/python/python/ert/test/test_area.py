@@ -20,18 +20,18 @@ from ert.util import UtilPrototype
 
 
 class TestArea(BaseCClass):
-    _test_area_alloc   = UtilPrototype("void* test_work_area_alloc( char* )")
-    _test_area_alloc__ = UtilPrototype("void* test_work_area_alloc__( char* , char* )")
-    _free = UtilPrototype("void test_work_area_free( test_area )")
-    _install_file = UtilPrototype("void test_work_area_install_file( test_area , char* )")
-    _copy_directory = UtilPrototype("void test_work_area_copy_directory( test_area , char* )")
-    _copy_file = UtilPrototype("void test_work_area_copy_file( test_area , char* )")
+    _test_area_alloc        = UtilPrototype("void* test_work_area_alloc( char* )")
+    _test_area_alloc__      = UtilPrototype("void* test_work_area_alloc__( char* , char* )")
+    _free                   = UtilPrototype("void test_work_area_free( test_area )")
+    _install_file           = UtilPrototype("void test_work_area_install_file( test_area , char* )")
+    _copy_directory         = UtilPrototype("void test_work_area_copy_directory( test_area , char* )")
+    _copy_file              = UtilPrototype("void test_work_area_copy_file( test_area , char* )")
     _copy_directory_content = UtilPrototype("void test_work_area_copy_directory_content( test_area , char* )")
-    _copy_parent_directory = UtilPrototype("void test_work_area_copy_parent_directory( test_area , char* )")
-    _copy_parent_content = UtilPrototype("void test_work_area_copy_parent_content( test_area , char* )")
-    _get_cwd = UtilPrototype("char* test_work_area_get_cwd( test_area )")
-    _get_original_cwd = UtilPrototype("char* test_work_area_get_original_cwd( test_area )")
-    _set_store = UtilPrototype("void test_work_area_set_store( test_area , bool)")
+    _copy_parent_directory  = UtilPrototype("void test_work_area_copy_parent_directory( test_area , char* )")
+    _copy_parent_content    = UtilPrototype("void test_work_area_copy_parent_content( test_area , char* )")
+    _get_cwd                = UtilPrototype("char* test_work_area_get_cwd( test_area )")
+    _get_original_cwd       = UtilPrototype("char* test_work_area_get_original_cwd( test_area )")
+    _set_store              = UtilPrototype("void test_work_area_set_store( test_area , bool)")
 
     def __init__(self, test_name, prefix = None , store_area=False):
         if prefix:

@@ -115,21 +115,6 @@ class Prototype(object):
 
                 func.errcheck = returnFunction
 
-
-            # if inspect.isclass(return_type):
-            #     if issubclass(return_type, BaseCValue):
-            #         self.setReturnBehavior(func, return_type)
-            #     else:
-            #         pass # Use default behavior for BaseCEnum and ctypes classes
-            # elif callable(return_type):
-            #     if isBoundMethod(return_type, BaseCClass) or not isBoundMethod(return_type):
-            #         self.setReturnBehavior(func, return_type)
-            #     else:
-            #         pass #Methods bound to anything else than BaseCClass
-            # else:
-            #     if return_type is not None:
-            #         raise CWrapError("Unknown return type: %s" % return_type)
-
             if len(arguments) == 1 and arguments[0].strip() == "":
                 func.argtypes = []
             else:
