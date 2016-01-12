@@ -57,7 +57,10 @@ def _plotDistribution(axes, plot_config, data, label, index, previous_data):
     style = plot_config.distributionStyle()
 
     if data.dtype == "object":
-        data = pd.to_numeric(data, errors='coerce')
+        try:
+            data = pd.to_numeric(data, errors='coerce')
+        except AttributeError:
+            data = data.convert_objects(convert_numeric=True)
 
     if data.dtype == "object":
         dots = []
