@@ -2,11 +2,13 @@ from ert.enkf import EnkfVarType
 
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import autoCompleteList, splitArguments
+from ert_gui.shell.libshell.shell_tools import boolValidator
 
 
 class Cases(ErtShellCollection):
     def __init__(self, parent):
         super(Cases, self).__init__("case", parent)
+        self._show_hidden = False
 
         self.addShellFunction(name="list",
                               function=Cases.list,
@@ -48,6 +50,22 @@ class Cases(ErtShellCollection):
                               help_message="Initialize the selected case from scratch. "
                                            "Uses the current if no case name is provided")
 
+        self.addShellProperty(name="show_hidden",
+                              getter=Cases.showHidden,
+                              setter=Cases.setShowHidden,
+                              validator=boolValidator,
+                              completer=["true", "false"],
+                              help_arguments="[true|false]",
+                              help_message="Show or set the visibility of hidden cases",
+                              pretty_attribute="Hidden case visibility")
+
+
+    def showHidden(self):
+        return self._show_hidden
+
+    def setShowHidden(self, show_hidden):
+        self._show_hidden = show_hidden
+
     @assertConfigLoaded
     def list(self, line):
         fs_list = self.getFileSystemNames()
@@ -66,7 +84,11 @@ class Cases(ErtShellCollection):
             print(case_format % (current, fs, state))
 
     def getFileSystemNames(self):
-        return sorted([fs for fs in self.ert().getEnkfFsManager().getCaseList()])
+        fsm = self.ert().getEnkfFsManager()
+        if self._show_hidden:
+            return [case for case in fsm.getCaseList()]
+        else:
+            return [case for case in fsm.getCaseList() if not fsm.isCaseHidden(case)]
 
     @assertConfigLoaded
     def select(self, case_name):
