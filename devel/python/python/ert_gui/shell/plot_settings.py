@@ -142,7 +142,7 @@ class PlotSettings(ErtShellCollection):
         matched_cases = matchItems(line, self.getAllCaseList())
 
         if len(matched_cases) > 0:
-            self.__cases = sorted(list(matched_cases))
+            self.__cases = list(matched_cases)
         else:
             if len(line) > 0:
                 self.lastCommandFailed("No valid case names provided: %s" % line)
