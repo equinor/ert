@@ -191,6 +191,14 @@ class EnKFObsTest(ExtendedTestCase):
     def test_ert_obs_reload(self):
         with ErtTestContext("obs_test_reload", self.config_file) as test_context:
             ert = test_context.getErt()
+            local_config = ert.getLocalConfig( )
+            update_step = local_config.getUpdatestep( )
+            mini_step = update_step[0]
+            local_obs = mini_step.getLocalObsData( )
+            self.assertTrue( "WGOR:OP_5" in local_obs )
+            self.assertTrue( "RPR2_1" in local_obs )
+
+
             ens_config = ert.ensembleConfig( )
             wwct_op1 = ens_config["WWCT:OP_1"]
             wopr_op5 = ens_config["WOPR:OP_5"]
@@ -209,6 +217,16 @@ class EnKFObsTest(ExtendedTestCase):
             self.assertEqual( len(obs) , 2 )
             self.assertEqual( wwct_op1.getObservationKeys() , [] )
             self.assertEqual( wopr_op5.getObservationKeys() , ["WOPR:OP_5"] )
+
+            local_config = ert.getLocalConfig( )
+            update_step = local_config.getUpdatestep( )
+            mini_step = update_step[0]
+            local_obs = mini_step.getLocalObsData( )
+            self.assertTrue( "WOPR:OP_5" in local_obs )
+            self.assertTrue( "RFT2" in local_obs )
+            self.assertFalse( "WGOR:OP_5" in local_obs )
+            self.assertFalse( "RPR2_1" in local_obs )
+
             
             ert.loadObservations("observations" , clear = False)
             self.assertEqual( len(obs) , 34 )
