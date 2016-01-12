@@ -35,7 +35,10 @@ def plotHistogram(plot_context):
         data[case] = plot_context.dataGatherer().gatherData(ert, case, key)
 
         if data[case].dtype == "object":
-            data[case] = pd.to_numeric(data[case], errors='coerce')
+            try:
+                data[case] = pd.to_numeric(data[case], errors='coerce')
+            except AttributeError:
+                data[case] = data[case].convert_objects(convert_numeric=True)
 
         if data[case].dtype == "object":
             categorical = True
@@ -132,6 +135,11 @@ def _plotHistogram(axes, plot_config, data, label, bin_count, use_log_scale=Fals
         bins = bin_count
 
     axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
+
+    if minimum == maximum:
+        minimum -= 0.5
+        maximum += 0.5
+
     axes.set_xlim(minimum, maximum)
 
     rectangle = Rectangle((0, 0), 1, 1, color=style.color) # creates rectangle patch for legend use.'

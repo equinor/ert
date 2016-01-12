@@ -42,7 +42,10 @@ def _plotGaussianKDE(axes, plot_config, data, label):
     style = plot_config.histogramStyle()
 
     if data.dtype == "object":
-        data = pd.to_numeric(data, errors='coerce')
+        try:
+            data = pd.to_numeric(data, errors='coerce')
+        except AttributeError:
+            data = data.convert_objects(convert_numeric=True)
 
     if data.dtype == "object":
         pass
