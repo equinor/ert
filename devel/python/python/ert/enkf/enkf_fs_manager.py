@@ -3,6 +3,10 @@ from ert.cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap, TimeMap, RealizationStateEnum
 from ert.util import StringList
 
+import re
+
+def naturalSortKey(s, _nsre=re.compile('([0-9]+)')):
+    return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
 
 class FileSystemRotator(object):
     def __init__(self, capacity):
@@ -173,8 +177,9 @@ class EnkfFsManager(BaseCClass):
 
 
     def getCaseList(self):
-        """ @rtype: StringList """
-        return EnkfFsManager.cNamespace().alloc_caselist(self)
+        """ @rtype: list[str] """
+        caselist = [case for case in EnkfFsManager.cNamespace().alloc_caselist(self)]
+        return sorted(caselist, key=naturalSortKey)
 
 
     def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, source_state, member_mask,
@@ -225,6 +230,9 @@ class EnkfFsManager(BaseCClass):
         """ @rtype: TimeMap """
         assert isinstance(case, str)
         return EnkfFsManager.cNamespace().alloc_readonly_time_map(self, case)
+
+    def isCaseHidden(self, case_name):
+        return case_name.startswith(".")
 
 
 cwrapper = CWrapper(ENKF_LIB)
