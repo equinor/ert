@@ -8,6 +8,11 @@
 # have a ERT_ prefix. The generated header is part of the api and can be
 # included by other header files in the ert source.
 
+find_library( BLAS_LIBRARY NAMES blas)
+if (BLAS_LIBRARY)
+   set(ERT_HAVE_BLAS ON)
+endif()
+
 find_library( LAPACK_LIBRARY NAMES lapack)
 if (LAPACK_LIBRARY)
    set(ERT_HAVE_LAPACK ON)
