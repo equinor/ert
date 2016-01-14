@@ -34,6 +34,7 @@ extern "C" {
 typedef struct ert_run_context_struct ert_run_context_type;
 
   stringlist_type      * ert_run_context_alloc_runpath_list(const bool_vector_type * iactive , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter);
+  char                 * ert_run_context_alloc_runpath( int iens , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter);
   ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs , 
                                                                    const bool_vector_type * iactive , 
                                                                    path_fmt_type * runpath_fmt , 

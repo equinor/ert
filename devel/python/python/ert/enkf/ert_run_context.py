@@ -53,6 +53,12 @@ class ErtRunContext(BaseCClass):
         return ErtRunContext.cNamespace().alloc_runpath_list(mask, runpath_fmt, subst_list, iter)
 
 
+    @classmethod
+    def createRunpath(cls, iens , runpath_fmt, subst_list, iter=0):
+        """ @rtype: ert.util.stringlist.StringList """
+        return ErtRunContext.cNamespace().alloc_runpath(iens, runpath_fmt, subst_list, iter)
+
+
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("ert_run_context", ErtRunContext)
 
@@ -61,5 +67,6 @@ ErtRunContext.cNamespace().free     = cwrapper.prototype("void ert_run_context_f
 ErtRunContext.cNamespace().iget     = cwrapper.prototype("run_arg_ref ert_run_context_iget_arg( ert_run_context , int)")
 ErtRunContext.cNamespace().iens_get = cwrapper.prototype("run_arg_ref ert_run_context_iens_get_arg( ert_run_context , int)")
 ErtRunContext.cNamespace().alloc_runpath_list = cwrapper.prototype("stringlist_obj ert_run_context_alloc_runpath_list(bool_vector, path_fmt, subst_list, int)")
+ErtRunContext.cNamespace().alloc_runpath      = cwrapper.prototype("cstring_obj ert_run_context_alloc_runpath(int, path_fmt, subst_list, int)")
 
         
