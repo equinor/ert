@@ -649,23 +649,19 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * target_f
 
 void enkf_main_inflate(enkf_main_type * enkf_main , enkf_fs_type * target_fs , int report_step , hash_type * use_count) {
   stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE);
-  msg_type * msg = msg_alloc("Inflating:" , false);
 
-  msg_show( msg );
   for (int ikey = 0; ikey < stringlist_get_size( keys ); ikey++) {
     const char * key = stringlist_iget( keys  , ikey );
     if (hash_get_counter(use_count , key) > 0) {
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
       const enkf_node_type * min_std            = enkf_config_node_get_min_std( config_node );
 
-      if (min_std != NULL) {
-        msg_update( msg , key );
+      if (min_std != NULL)
         enkf_main_inflate_node(enkf_main , target_fs , report_step , key , min_std );
-      }
+
     }
   }
   stringlist_free( keys );
-  msg_free( msg , true );
 }
 
 
