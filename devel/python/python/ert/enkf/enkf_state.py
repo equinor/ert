@@ -66,6 +66,14 @@ class EnKFState(BaseCClass):
         else:
             raise TypeError("The value argument must be a string")
 
+    def getDataKW(self):
+        """
+        Will return the substitution map for this realisation.
+        """
+        return EnKFState.cNamespace().get_subst_list( self )
+
+
+        
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("enkf_state", EnKFState)
@@ -77,3 +85,4 @@ EnKFState.cNamespace().free     = cwrapper.prototype("void enkf_state_free( enkf
 EnKFState.cNamespace().has_key  = cwrapper.prototype("bool enkf_state_has_node( enkf_state , char* )")
 EnKFState.cNamespace().get_node = cwrapper.prototype("enkf_node_ref enkf_state_get_node( enkf_state , char* )")
 EnKFState.cNamespace().add_subst_kw = cwrapper.prototype("void enkf_state_add_subst_kw( enkf_state , char* , char* , char*)")
+EnKFState.cNamespace().get_subst_list  = cwrapper.prototype("subst_list_ref enkf_state_get_subst_list( enkf_state )")

@@ -13,12 +13,6 @@ class SimulationContext(object):
 
         self._queue_manager = JobQueueManager(ert.siteConfig().getJobQueue())
         self._queue_manager.startQueue(size, verbose=verbose)
-
-        mask = BoolVector(default_value=True, initial_size=size)
-        runpath_fmt = self._ert.getModelConfig().getRunpathFormat()
-        subst_list = self._ert.getDataKW()
-        self._runpath_list = ErtRunContext.createRunpathList(mask, runpath_fmt, subst_list)
-
         self._run_args = {}
         """ :type: dict[int, RunArg] """
 
@@ -33,7 +27,10 @@ class SimulationContext(object):
         if iens in self._run_args:
             raise UserWarning("Realization number: '%d' already queued" % iens)
 
-        run_arg = RunArg.createEnsembleExperimentRunArg(target_fs, iens, self._runpath_list[iens])
+        runpath_fmt = self._ert.getModelConfig().getRunpathFormat()
+        member = self._ert.getRealisation(iens)
+        runpath = ErtRunContext.createRunpath(iens , runpath_fmt, member.getDataKW( ))
+        run_arg = RunArg.createEnsembleExperimentRunArg(target_fs, iens, runpath)
         self._run_args[iens] = run_arg
         self._thread_pool.submitJob(ArgPack(self._ert, run_arg))
 

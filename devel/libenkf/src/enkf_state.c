@@ -205,6 +205,9 @@ member_config_type * enkf_state_get_member_config(const enkf_state_type * enkf_s
 
 
 
+subst_list_type * enkf_state_get_subst_list( enkf_state_type * enkf_state ) {
+  return enkf_state->subst_list;
+}
 
 void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value , const char * doc_string) {
   char * tagged_key = util_alloc_sprintf( INTERNAL_DATA_KW_TAG_FORMAT , kw );
