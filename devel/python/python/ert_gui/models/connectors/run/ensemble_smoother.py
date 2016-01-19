@@ -23,6 +23,9 @@ class EnsembleSmoother(BaseRunModel):
 
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
 
+        if self.ert().getEnkfSimulationRunner().isHookPreSimulation():
+            self.ert().getEnkfSimulationRunner().runHookWorkflow()
+
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL , 0)
 
         if not success:
@@ -35,8 +38,12 @@ class EnsembleSmoother(BaseRunModel):
                 raise ErtRunError("Simulation failed! All realizations failed!")
             #else ignore and continue
 
+
+        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
+            self.ert().getEnkfSimulationRunner().runHookWorkflow()
+
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runPostWorkflow()
+        self.ert().getEnkfSimulationRunner().runPostHookWorkflow()
 
         self.setPhaseName("Analyzing...", indeterminate=True)
 
@@ -57,7 +64,12 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Simulation failed!")
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runPostWorkflow()
+
+        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
+            self.ert().getEnkfSimulationRunner().runHookWorkflow()
+
+        # Special QC workflow for backward compatibility
+        self.ert().getEnkfSimulationRunner().runPostHookWorkflow()
 
         self.setPhase(2, "Simulations completed.")
 

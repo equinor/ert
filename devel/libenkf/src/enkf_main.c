@@ -320,7 +320,7 @@ bool enkf_main_have_obs( const enkf_main_type * enkf_main ) {
 
 
 bool enkf_main_has_QC_workflow( const enkf_main_type * enkf_main ) {
-  return hook_manager_has_workflow( enkf_main->hook_manager );
+  return hook_manager_has_post_hook_workflow( enkf_main->hook_manager );
 }
 
 hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enkf_main ) {
@@ -1509,9 +1509,12 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
 }
 
 void enkf_main_run_post_workflow( enkf_main_type * enkf_main ) {
-  hook_manager_run_workflow( enkf_main->hook_manager , enkf_main );
+  hook_manager_run_post_hook_workflow( enkf_main->hook_manager , enkf_main );
 }
 
+void enkf_main_run_hook_workflow( enkf_main_type * enkf_main ) {
+  hook_manager_run_hook_workflow( enkf_main->hook_manager , enkf_main );
+}
 
 
 void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg ) {
@@ -2448,11 +2451,13 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 }
 
 
-static void enkf_main_init_qc( enkf_main_type * enkf_main , config_content_type * config ) {
+static void enkf_main_init_hook_manager( enkf_main_type * enkf_main , config_content_type * config ) {
   hook_manager_init( enkf_main->hook_manager , config );
+
+  hook_manager_init_hook( enkf_main->hook_manager , config );
+  hook_manager_init_post_hook( enkf_main->hook_manager , config );
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , hook_manager_get_path( enkf_main->hook_manager ) , "QC Root path" , true);
 }
-
 
 static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
   /* Here we add the functions which should be available for string substitution operations. */
@@ -3017,7 +3022,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 			 ecl_config_get_sched_file(enkf_main->ecl_config) ,
 			 ecl_config_get_refcase( enkf_main->ecl_config ));
 
-      enkf_main_init_qc( enkf_main , content );
+      enkf_main_init_hook_manager( enkf_main , content );
       enkf_main_init_data_kw( enkf_main , content );
       enkf_main_update_num_cpu( enkf_main );
       {

@@ -32,7 +32,8 @@ set(PYTHON_SOURCES
     obs_block.py
     obs_data.py
     plot_config.py
-    post_simulation_hook.py
+    hook_manager.py
+    hook_workflow.py
     run_arg.py
     runpath_list.py
     site_config.py

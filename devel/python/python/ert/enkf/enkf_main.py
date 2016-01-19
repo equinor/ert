@@ -1,22 +1,22 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'ecl_kw.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
+#  The file 'ecl_kw.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import ctypes
 from ert.cwrap import BaseCClass, CWrapper
 
-from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsembleConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, PostSimulationHook
+from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsembleConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, HookManager, HookWorkflow
 from ert.enkf.enums import EnkfInitModeEnum
 from ert.enkf.key_manager import KeyManager
 from ert.util import SubstitutionList, Log
@@ -37,7 +37,7 @@ class EnKFMain(BaseCClass):
         else:
             self.__simulation_runner = EnkfSimulationRunner(self)
             self.__fs_manager = EnkfFsManager(self)
-            
+
 
         self.__key_manager = KeyManager(self)
 
@@ -109,8 +109,8 @@ class EnKFMain(BaseCClass):
         config = EnKFMain.cNamespace().get_local_config(self).setParent(self)
         config.initAttributes( self.ensembleConfig() , self.getObservations() , self.eclConfig().get_grid() )
         return config
-    
-    
+
+
     def siteConfig(self):
         """ @rtype: SiteConfig """
         return EnKFMain.cNamespace().get_site_config(self).setParent(self)
@@ -157,7 +157,7 @@ class EnKFMain(BaseCClass):
 
     def loadObservations(self , obs_config_file , clear = True):
         EnKFMain.cNamespace().load_obs(self, obs_config_file , clear)
-        
+
 
     def get_pre_clear_runpath(self):
         pre_clear = EnKFMain.cNamespace().get_pre_clear_runpath(self)
@@ -215,15 +215,15 @@ class EnKFMain(BaseCClass):
         """ @rtype: ErtWorkflowList """
         return EnKFMain.cNamespace().get_workflow_list(self).setParent(self)
 
-    def getPostSimulationHook(self):
-        """ @rtype: PostSimulationHook """
+    def getHookManager(self):
+        """ @rtype: HookManager """
         return EnKFMain.cNamespace().get_hook_manager(self)
 
 
     def fieldInitFile(self , config_node):
         return EnKFMain.cNamespace().alloc_field_init_file( self , config_node )
 
-    
+
     def exportField(self, keyword, path, iactive, file_type, report_step, state, enkfFs):
         """
         @type keyword: str
@@ -241,14 +241,14 @@ class EnKFMain(BaseCClass):
     def loadFromForwardModel(self, realization, iteration, fs):
         EnKFMain.cNamespace().load_from_forward_model(self, iteration, realization, fs)
 
-        
+
     def submitSimulation(self , run_arg):
         EnKFMain.cNamespace().submit_simulation( self , run_arg)
 
 
     def getRunContextENSEMPLE_EXPERIMENT(self , fs , iactive , init_mode = EnkfInitModeEnum.INIT_CONDITIONAL , iteration = 0):
         return EnKFMain.cNamespace().alloc_run_context_ENSEMBLE_EXPERIMENT( self , fs , iactive , init_mode , iteration )
-    
+
 
     def getRunpathList(self):
         return EnKFMain.cNamespace().get_runpath_list( self )

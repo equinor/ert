@@ -90,7 +90,7 @@ void test_runpath_list() {
     }
     thread_pool_join( tp );
     test_assert_int_equal( runpath_list_size( list ) , block_size * threads );
-    
+
     {
       test_work_area_type * work_area = test_work_area_alloc("enkf_runpath_list" );
       runpath_list_fprintf( list );

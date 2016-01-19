@@ -65,6 +65,7 @@ set( source_files
      enkf_plot_gen_kw.c
      enkf_plot_gen_kw_vector.c
      hook_manager.c
+     hook_workflow.c
      runpath_list.c
      ert_workflow_list.c
      analysis_iter_config.c

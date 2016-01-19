@@ -29,13 +29,37 @@ class EnkfSimulationRunner(BaseCClass):
         return self.runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iter_nr)
 
 
-    def runPostWorkflow(self):
-        post_simulation_hook = self.ert.getPostSimulationHook()
-        if post_simulation_hook.hasWorkflow():
-            post_simulation_hook.checkRunpathListFile()
-            workflow = post_simulation_hook.getWorkflow()
+    def runPostHookWorkflow(self):
+        hook_manager = self.ert.getHookManager()
+        if hook_manager.hasPostHookWorkflow():
+            hook_manager.checkRunpathListFile()
+            hook_workflow = hook_manager.getPostHookWorkflow()
+            workflow = hook_workflow.getWorkflow()
             workflow_list = self.ert.getWorkflowList()
-            workflow.run(self.ert, context=workflow_list.getContext())
+            workflow.run(self.ert, context=workflow_list.getContext())     
+            
+    def runHookWorkflow(self):
+        hook_manager = self.ert.getHookManager()
+        if hook_manager.hasHookWorkflow():
+            hook_manager.checkRunpathListFile()
+            hook_workflow = hook_manager.getHookWorkflow()
+            workflow = hook_workflow.getWorkflow()
+            workflow_list = self.ert.getWorkflowList()
+            workflow.run(self.ert, context=workflow_list.getContext())     
+            
+    def isHookPreSimulation(self):
+        """ @rtype: bool """
+        hook_manager = self.ert.getHookManager()
+        if hook_manager.hasHookWorkflow():
+            hook_workflow = hook_manager.getHookWorkflow()
+            return hook_workflow.isPreSimulation()    
+                             
+    def isHookPostSimulation(self):
+        """ @rtype: bool """
+        hook_manager = self.ert.getHookManager()
+        if hook_manager.hasHookWorkflow():
+            hook_workflow = hook_manager.getHookWorkflow()
+            return hook_workflow.isPostSimulation()    
 
 
     def smootherUpdate(self, target_fs):
