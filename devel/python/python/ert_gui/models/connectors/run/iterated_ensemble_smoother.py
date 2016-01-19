@@ -22,6 +22,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def runAndPostProcess(self, active_realization_mask, phase, phase_count, mode):
         self.setPhase(phase, "Running iteration %d of %d simulation iterations..." % (phase, phase_count - 1), indeterminate=False)
 
+        if self.ert().getEnkfSimulationRunner().isHookPreSimulation():
+            self.ert().getEnkfSimulationRunner().runHookWorkflow()
+            
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
 
         if not success:
@@ -34,8 +37,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 raise ErtRunError("Simulation failed! All realizations failed!")
             #ignore and continue
 
+
+        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
+            self.ert().getEnkfSimulationRunner().runHookWorkflow()
+            
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runPostWorkflow()
+        self.ert().getEnkfSimulationRunner().runPostHookWorkflow()
 
 
     def createTargetCaseFileSystem(self, phase):

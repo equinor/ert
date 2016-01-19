@@ -16,7 +16,7 @@ class UpdateRunpathListJob(ErtScript):
         model_config = ert.getModelConfig()
         basename_fmt = ecl_config.getEclBase()
         runpath_fmt = model_config.getRunpathAsString()
-        hook_manager = ert.getPostSimulationHook()
+        hook_manager = ert.getHookManager()
 
         runpath_list = hook_manager.getRunpathList()
 
