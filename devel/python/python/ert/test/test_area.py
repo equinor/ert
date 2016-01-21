@@ -20,30 +20,34 @@ from ert.util import UtilPrototype
 
 
 class TestArea(BaseCClass):
-    _test_area_alloc        = UtilPrototype("void* test_work_area_alloc( char* )")
-    _test_area_alloc__      = UtilPrototype("void* test_work_area_alloc__( char* , char* )")
-    _free                   = UtilPrototype("void test_work_area_free( test_area )")
-    _install_file           = UtilPrototype("void test_work_area_install_file( test_area , char* )")
-    _copy_directory         = UtilPrototype("void test_work_area_copy_directory( test_area , char* )")
-    _copy_file              = UtilPrototype("void test_work_area_copy_file( test_area , char* )")
-    _copy_directory_content = UtilPrototype("void test_work_area_copy_directory_content( test_area , char* )")
-    _copy_parent_directory  = UtilPrototype("void test_work_area_copy_parent_directory( test_area , char* )")
-    _copy_parent_content    = UtilPrototype("void test_work_area_copy_parent_content( test_area , char* )")
-    _get_cwd                = UtilPrototype("char* test_work_area_get_cwd( test_area )")
-    _get_original_cwd       = UtilPrototype("char* test_work_area_get_original_cwd( test_area )")
-    _set_store              = UtilPrototype("void test_work_area_set_store( test_area , bool)")
+    _test_area_alloc           = UtilPrototype("void* test_work_area_alloc( char* )")
+    _test_area_alloc_relative  = UtilPrototype("void* test_work_area_alloc_relative( char* , char* )")
+    _free                      = UtilPrototype("void test_work_area_free( test_area )")
+    _install_file              = UtilPrototype("void test_work_area_install_file( test_area , char* )")
+    _copy_directory            = UtilPrototype("void test_work_area_copy_directory( test_area , char* )")
+    _copy_file                 = UtilPrototype("void test_work_area_copy_file( test_area , char* )")
+    _copy_directory_content    = UtilPrototype("void test_work_area_copy_directory_content( test_area , char* )")
+    _copy_parent_directory     = UtilPrototype("void test_work_area_copy_parent_directory( test_area , char* )")
+    _copy_parent_content       = UtilPrototype("void test_work_area_copy_parent_content( test_area , char* )")
+    _get_cwd                   = UtilPrototype("char* test_work_area_get_cwd( test_area )")
+    _get_original_cwd          = UtilPrototype("char* test_work_area_get_original_cwd( test_area )")
+    _set_store                 = UtilPrototype("void test_work_area_set_store( test_area , bool)")
 
-    def __init__(self, test_name, prefix = None , store_area=False):
-        if prefix:
-            if os.path.exists( prefix ):
-                c_ptr = self._test_area_alloc__(prefix , test_name)
+    def __init__(self, test_name, prefix = None , store_area=False , c_ptr = None):
+
+        if c_ptr is None:
+            if prefix:
+                if os.path.exists( prefix ):
+                    c_ptr = self._test_area_alloc_relative(prefix , test_name)
+                else:
+                    raise IOError("The prefix path:%s must exist" % prefix)
             else:
-                raise IOError("The prefix path:%s must exist" % prefix)
-        else:
-            c_ptr = self._test_area_alloc(test_name)
+                c_ptr = self._test_area_alloc(test_name)
+
         super(TestArea, self).__init__(c_ptr)
         self.set_store( store_area )
 
+        
     def get_original_cwd(self):
         return self._get_original_cwd(self)
 
@@ -86,6 +90,7 @@ class TestArea(BaseCClass):
         return os.path.join( self.get_cwd() , path )
 
 
+    
 
 class TestAreaContext(object):
     def __init__(self, test_name, prefix = None , store_area=False):
