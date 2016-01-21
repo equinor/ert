@@ -1,3 +1,4 @@
+from ert.enkf.enkf_fs_manager import naturalSortKey
 from ert_gui.plottery.plot_config import PlotConfig
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import autoCompleteList, boolValidator, pathCompleter, splitArguments
@@ -134,7 +135,7 @@ class PlotSettings(ErtShellCollection):
 
     @assertConfigLoaded
     def current(self, line):
-        keys = sorted(self.getCurrentPlotCases())
+        keys = self.getCurrentPlotCases()
         self.columnize(keys)
 
     @assertConfigLoaded
@@ -142,7 +143,7 @@ class PlotSettings(ErtShellCollection):
         matched_cases = matchItems(line, self.getAllCaseList())
 
         if len(matched_cases) > 0:
-            self.__cases = list(matched_cases)
+            self.__cases = sorted(list(matched_cases), key=naturalSortKey)
         else:
             if len(line) > 0:
                 self.lastCommandFailed("No valid case names provided: %s" % line)
@@ -156,7 +157,7 @@ class PlotSettings(ErtShellCollection):
     def getAllCaseList(self):
         fs_manager = self.ert().getEnkfFsManager()
         all_case_list = fs_manager.getCaseList()
-        all_case_list = [case for case in all_case_list]
+        all_case_list = [case for case in all_case_list if not case.startswith(".")]
         return all_case_list
 
     @assertConfigLoaded
