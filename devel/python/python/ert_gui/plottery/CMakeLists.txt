@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     plot_config.py
+    plot_config_history.py
     plot_context.py
     plot_data_gatherer.py
     plot_style.py
