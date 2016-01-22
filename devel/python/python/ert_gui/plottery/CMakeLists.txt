@@ -4,6 +4,7 @@ set(PYTHON_SOURCES
     plot_config_history.py
     plot_context.py
     plot_data_gatherer.py
+    plot_limits.py
     plot_style.py
 )
 
