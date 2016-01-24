@@ -34,7 +34,7 @@ try_compile( ERT_HAVE_ISFINITE ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/T
 find_path( ERT_HAVE_GETOPT getopt.h /usr/include )
 find_path( ERT_HAVE_UNISTD unistd.h /usr/include )
 
-check_function_exists( fork ERT_HAVE_FORK )
+check_function_exists( posix_spawn ERT_HAVE_SPAWN )
 check_function_exists( opendir ERT_HAVE_OPENDIR )
 check_function_exists( symlink ERT_HAVE_SYMLINK )
 check_function_exists( readlinkat ERT_HAVE_READLINKAT )
