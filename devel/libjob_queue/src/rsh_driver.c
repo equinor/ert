@@ -159,7 +159,7 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
       argv[iarg + 2] = job_argv[iarg];
   }
   
-  util_fork_exec(rsh_cmd , argc , argv , true , NULL , NULL , NULL , NULL , NULL);   /* This call is blocking. */
+  util_spawn_blocking(rsh_cmd, argc, argv, NULL, NULL);   /* This call is blocking. */
   job->status = JOB_QUEUE_DONE;
 
   pthread_mutex_lock( &rsh_host->host_mutex );

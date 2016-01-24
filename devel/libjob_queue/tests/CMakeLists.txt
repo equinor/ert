@@ -71,9 +71,10 @@ add_executable( job_queue_manager job_queue_manager.c )
 target_link_libraries( job_queue_manager job_queue ert_util test_util )
 add_test( job_queue_manager ${EXECUTABLE_OUTPUT_PATH}/job_queue_manager )
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/qsub_emulators/ DESTINATION ${EXECUTABLE_OUTPUT_PATH})
+
 add_executable( job_torque_submit_test job_torque_submit_test.c )
 target_link_libraries( job_torque_submit_test job_queue ert_util test_util )
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/qsub_emulators/ DESTINATION ${EXECUTABLE_OUTPUT_PATH})
 add_test(NAME job_torque_submit_test WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH} COMMAND ${EXECUTABLE_OUTPUT_PATH}/job_torque_submit_test dummyparam)
 set_property(TEST job_torque_submit_test PROPERTY ENVIRONMENT “setenv PATH ${EXECUTABLE_OUTPUT_PATH}:$PATH”)
 set_property(TEST ext_joblist_test PROPERTY LABELS StatoilData )
