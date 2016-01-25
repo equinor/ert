@@ -199,7 +199,7 @@ void * status_job__( void * arg ) {
       if (util_is_file(run_file)) {
         status = job_queue_iget_job_status(queue, job->queue_index);
         if (util_is_file(run_file)) {
-          bool status_true = (status == JOB_QUEUE_RUNNING) || (status == JOB_QUEUE_SUBMITTED);
+          bool status_true = (status == JOB_QUEUE_RUNNING) || (status == JOB_QUEUE_SUBMITTED || (status == JOB_QUEUE_RUNNING_CALLBACK) || (status == JOB_QUEUE_DONE));
           if (!status_true) {
             if (user_exit)
               status_true = (status == JOB_QUEUE_USER_EXIT) || (status == JOB_QUEUE_USER_KILLED || (status == JOB_QUEUE_RUNNING_CALLBACK));
@@ -265,7 +265,7 @@ int main(int argc , char ** argv) {
   const int queue_timeout =  180;
   const int submit_timeout = 180;
   const int status_timeout = 180;
-  const int number_of_jobs = 250;
+  const int number_of_jobs = 50;
   const int submit_threads = number_of_jobs / 10 ;
   const int status_threads = number_of_jobs + 1;
   const char * job = util_alloc_abs_path(argv[1]);
