@@ -6,6 +6,7 @@ set(PYTHON_SOURCES
     test_run.py
     source_enumerator.py
     test_area.py
+    temp_area.py
     path_context.py
 )
 
