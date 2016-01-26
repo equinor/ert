@@ -2,16 +2,16 @@ from .plot_tools import PlotTools
 import pandas as pd
 
 def plotDistribution(plot_context):
-    """
-    @type plot_context: ert_gui.plottery.PlotContext
-    """
+    """ @type plot_context: ert_gui.plottery.PlotContext """
     ert = plot_context.ert()
     key = plot_context.key()
     config = plot_context.plotConfig()
     axes = plot_context.figure().add_subplot(111)
     """:type: matplotlib.axes.Axes """
 
-    config.deactivateDateSupport()
+    plot_context.deactivateDateSupport()
+
+    plot_context.y_axis = plot_context.VALUE_AXIS
 
     if key.startswith("LOG10_"):
         key = key[6:]
