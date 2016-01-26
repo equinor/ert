@@ -6,7 +6,7 @@ import pandas as pd
 
 def plotGaussianKDE(plot_context):
     """
-    @type plot_context: PlotContext
+    @type plot_context: ert_gui.plottery.PlotContext
     """
     ert = plot_context.ert()
     key = plot_context.key()
@@ -14,7 +14,9 @@ def plotGaussianKDE(plot_context):
     axes = plot_context.figure().add_subplot(111)
     """:type: matplotlib.axes.Axes """
 
-    config.deactivateDateSupport()
+    plot_context.deactivateDateSupport()
+    plot_context.x_axis = plot_context.VALUE_AXIS
+    plot_context.y_axis = plot_context.DENSITY_AXIS
 
     if key.startswith("LOG10_"):
         key = key[6:]
