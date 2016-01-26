@@ -2,6 +2,7 @@ set(PYTHON_SOURCES
     __init__.py
     about_dialog.py
     ert_splash.py
+    ertplot.py
     gert_main.py
     main_window.py
     newconfig.py
