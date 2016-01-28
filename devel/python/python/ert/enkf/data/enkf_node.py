@@ -111,7 +111,7 @@ class EnkfNode(BaseCClass):
         assert isinstance(fs, EnkfFs)
         assert isinstance(node_id, NodeId)
         
-        EnkfNode.cNamespace().store(self, fs, True, node_id)
+        return EnkfNode.cNamespace().store(self, fs, False, node_id)
 
     def free(self):
         EnkfNode.cNamespace().free(self)
@@ -121,12 +121,12 @@ cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("enkf_node", EnkfNode)
 
 EnkfNode.cNamespace().free = cwrapper.prototype("void enkf_node_free(enkf_node)")
-EnkfNode.cNamespace().alloc = cwrapper.prototype("c_void_p enkf_node_alloc(enkf_config_node)")
-EnkfNode.cNamespace().alloc_private = cwrapper.prototype("c_void_p enkf_node_alloc_private_container(enkf_config_node)")
+EnkfNode.cNamespace().alloc = cwrapper.prototype("void* enkf_node_alloc(enkf_config_node)")
+EnkfNode.cNamespace().alloc_private = cwrapper.prototype("void* enkf_node_alloc_private_container(enkf_config_node)")
 EnkfNode.cNamespace().get_name = cwrapper.prototype("char* enkf_node_get_key(enkf_node)")
 
-EnkfNode.cNamespace().value_ptr = cwrapper.prototype("c_void_p enkf_node_value_ptr(enkf_node)")
+EnkfNode.cNamespace().value_ptr = cwrapper.prototype("void* enkf_node_value_ptr(enkf_node)")
 
 EnkfNode.cNamespace().try_load = cwrapper.prototype("bool enkf_node_try_load(enkf_node, enkf_fs, node_id)")
 EnkfNode.cNamespace().get_impl_type = cwrapper.prototype("ert_impl_type_enum enkf_node_get_impl_type(enkf_node)")
-EnkfNode.cNamespace().store = cwrapper.prototype("void enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
+EnkfNode.cNamespace().store = cwrapper.prototype("bool enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
