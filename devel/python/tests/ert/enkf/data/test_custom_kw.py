@@ -28,11 +28,13 @@ class CustomKWTest(ExtendedTestCase):
 
             custom_kw_config = CustomKWConfig("CUSTOM_KW", "result_file")
 
+            self.assertFalse(custom_kw_config.addKey("VALUE_0"))
             self.assertEqual(len(custom_kw_config), 0)
 
             custom_kw = CustomKW(custom_kw_config)
 
             custom_kw.fload("result_file")
+
             self.assertEqual(len(custom_kw_config), 4)
 
             for key in data:
@@ -94,3 +96,34 @@ class CustomKWTest(ExtendedTestCase):
 
             self.assertEqual(len(config.getKeys()), 4)
             self.assertItemsEqual(config.getKeys(), ["PERLIN_1", "PERLIN_2", "PERLIN_3", "STATE"])
+
+    def test_custom_kw_construction(self):
+        custom_kw_config = CustomKWConfig("TEST", None)
+        self.assertEqual(len(custom_kw_config.getKeys()), 0)
+
+        self.assertTrue(custom_kw_config.addKey("VALUE_1"))
+        self.assertTrue(custom_kw_config.keyIsDouble("VALUE_1"))
+        self.assertIn("VALUE_1", custom_kw_config)
+        self.assertNotIn("VALUE_2", custom_kw_config)
+
+
+    def test_custom_kw_set_values(self):
+        ckwc = CustomKWConfig("Test", None)
+        ckwc.addKey("STRING", str)
+        ckwc.addKey("FLOAT", float)
+        ckwc.addKey("INT", float)
+
+        ckw = CustomKW(ckwc)
+        with self.assertRaises(KeyError):
+            ckw["ANOTHER_STRING"] = "another string"
+
+        ckw["STRING"] = "string"
+        ckw["FLOAT"] = 3.1415
+        ckw["INT"] = 1
+
+        self.assertEqual(ckw["STRING"], "string")
+        self.assertEqual(ckw["FLOAT"], 3.1415)
+        self.assertEqual(ckw["INT"], 1)
+
+
+

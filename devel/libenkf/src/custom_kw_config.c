@@ -162,13 +162,42 @@ stringlist_type * custom_kw_config_get_keys(const custom_kw_config_type * config
     return hash_alloc_stringlist(config->custom_keys);
 }
 
+static bool custom_kw_config_add_key__(custom_kw_config_type * config, const char * key, int value_type) {
+    if (custom_kw_config_has_key(config, key)) {
+        printf("[%s] Warning: Key: '%s:%s' already defined!\n", __func__, config->name, key);
+        return false;
+    } else {
+        int index = hash_get_size(config->custom_keys);
+        hash_insert_int(config->custom_keys, key, index);
+        hash_insert_int(config->custom_key_types, key, value_type);
+        return true;
+    }
+}
+
+bool custom_kw_config_add_key(custom_kw_config_type * config, const char * key, int value_type) {
+    if(config->result_file == NULL && config->undefined == true) {
+        return custom_kw_config_add_key__(config, key, value_type);
+    } else {
+        printf("[%s] Warning: Can only add keys to a config without a result file!\n", __func__);
+        return false;
+    }
+}
+
+//void custom_kw_config_finalize_config(custom_kw_config_type * config) {
+//    if(config->key_definition_file == NULL) {
+//        config->undefined = false;
+//    } else {
+//        printf("[%s] Warning: Can only finalize a config without a result file!\n", __func__);
+//    }
+//}
+
+
 static bool custom_kw_config_setup__(custom_kw_config_type * config, const char * result_file) {
     FILE * stream = util_fopen__(result_file, "r");
     if (stream != NULL) {
         bool read_ok = true;
         config->key_definition_file = util_alloc_string_copy(result_file);
 
-        int counter = 0;
         char key[128];
         char value[128];
         int read_count;
@@ -179,12 +208,7 @@ static bool custom_kw_config_setup__(custom_kw_config_type * config, const char 
                 break;
             }
 
-            if (custom_kw_config_has_key(config, key)) {
-                printf("[%s] Warning: Key: '%s:%s' already defined!\n", __func__, config->name, key);
-            } else {
-                hash_insert_int(config->custom_keys, key, counter++);
-                hash_insert_int(config->custom_key_types, key, util_sscanf_double(value, NULL));
-            }
+            custom_kw_config_add_key__(config, key, util_sscanf_double(value, NULL));
         }
 
         fclose(stream);

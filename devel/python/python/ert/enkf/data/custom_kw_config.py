@@ -74,6 +74,15 @@ class CustomKWConfig(BaseCClass):
         """ @rtype: StringList """
         return CustomKWConfig.cNamespace().keys(self)
 
+    def addKey(self, key, value_type=float):
+        """ @rtype: bool """
+        if value_type == float:
+            value_type = 1
+        else:
+            value_type = 0 #str
+
+        return CustomKWConfig.cNamespace().add_key(self, key, value_type)
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("custom_kw_config", CustomKWConfig)
@@ -85,6 +94,7 @@ CustomKWConfig.cNamespace().get_result_file = cwrapper.prototype("char* custom_k
 CustomKWConfig.cNamespace().get_output_file = cwrapper.prototype("char* custom_kw_config_get_output_file(custom_kw_config)")
 CustomKWConfig.cNamespace().parse_result_file = cwrapper.prototype("bool custom_kw_config_parse_result_file(custom_kw_config, char*, stringlist)")
 CustomKWConfig.cNamespace().has_key = cwrapper.prototype("bool custom_kw_config_has_key(custom_kw_config, char*)")
+CustomKWConfig.cNamespace().add_key = cwrapper.prototype("bool custom_kw_config_add_key(custom_kw_config, char*, int)")
 CustomKWConfig.cNamespace().key_is_double = cwrapper.prototype("bool custom_kw_config_key_is_double(custom_kw_config, char*)")
 CustomKWConfig.cNamespace().index_of_key = cwrapper.prototype("int custom_kw_config_index_of_key(custom_kw_config, char*)")
 CustomKWConfig.cNamespace().size = cwrapper.prototype("int custom_kw_config_size(custom_kw_config)")

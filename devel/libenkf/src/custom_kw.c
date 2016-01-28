@@ -36,6 +36,17 @@ custom_kw_type * custom_kw_alloc(const custom_kw_config_type * config) {
     custom_kw_type * custom_kw = util_malloc(sizeof * custom_kw);
     custom_kw->config = (custom_kw_config_type *) config;
     custom_kw->data = stringlist_alloc_new();
+
+    stringlist_type * keys = custom_kw_config_get_keys(custom_kw->config);
+    for(int index = 0; index < stringlist_get_size(keys); index++) {
+        const char * key = stringlist_iget(keys, index);
+        if(custom_kw_config_key_is_double(custom_kw->config, key)) {
+            custom_kw_set_double(custom_kw, key, 0.0);
+        } else {
+            custom_kw_set_string(custom_kw, key, "");
+        }
+    }
+    
     custom_kw->__type_id = CUSTOM_KW;
     return custom_kw;
 }
@@ -53,6 +64,20 @@ bool custom_kw_key_is_null(const custom_kw_type * custom_kw, char * key) {
     int index = custom_kw_config_index_of_key(custom_kw->config, key);
     return stringlist_iget(custom_kw->data, index) == NULL;
 }
+
+
+void custom_kw_set_double(custom_kw_type * custom_kw, const char * key, double value) {
+    char value_as_string[128];
+    sprintf(value_as_string, "%.20f", value);
+    custom_kw_set_string(custom_kw, key, value_as_string);
+}
+
+
+void custom_kw_set_string(custom_kw_type * custom_kw, const char * key, const char * value) {
+    int index = custom_kw_config_index_of_key(custom_kw->config, key);
+    stringlist_iset_copy(custom_kw->data, index, value);
+}
+
 
 double custom_kw_iget_as_double(const custom_kw_type * custom_kw, int index) {
     double value;

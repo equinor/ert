@@ -28,6 +28,7 @@ extern "C" {
     int                     custom_kw_config_index_of_key(const custom_kw_config_type * config, const char * key);
     int                     custom_kw_config_size(const custom_kw_config_type * config);
     stringlist_type *       custom_kw_config_get_keys(const custom_kw_config_type * config);
+    bool                    custom_kw_config_add_key(custom_kw_config_type * config, const char * key, int value_type);
 
 
     UTIL_IS_INSTANCE_HEADER(custom_kw_config);
