@@ -159,3 +159,71 @@ class ErtRPCClient(object):
         @rtype: bool
         """
         return self._server_proxy.isGenDataKey(key)
+
+
+    def prototypeStorage(self, group_name, storage_definition):
+        """
+        Define the CustomKW with group name and fields with types.
+        @param group_name: The group name for the CustomKW
+        @type group_name: str
+        @param storage_definition: A dictionary with field names (keywords) and types (str or float)
+        @type storage_definition: dict[str, type]
+        @raise UserWarning if the group name already exists
+        @raise TypeError if the type of a keyword/field is unsupported
+        """
+
+        converted = {}
+        for key, value in storage_definition.iteritems():
+            if value == float:
+                is_double = True
+            elif value == str:
+                is_double = False
+            else:
+                raise TypeError("Unsupported data type for key: '%s', not one of (float, str): '%s'" % (key, value))
+            converted[key] = is_double
+
+        try:
+            self._server_proxy.prototypeStorage(group_name, converted)
+        except Fault as f:
+            raise convertFault(f)
+
+
+    def storeGlobalData(self, target_case_name, group_name, keyword, value):
+        """
+        Store a value as a CustomKW with group name and keyword. The value will
+        be stored in all simulations that at least has been initialized.
+        @param target_case_name: Name of target case
+        @type target_case_name: str
+        @param group_name: The name of the CustomKW group
+        @type group_name: str
+        @param keyword: The name of the CustomKW keyword
+        @type keyword: str
+        @param value: The value to store
+        @type value: float|int|str
+        @raise UserWarning if there were issues with the storing
+        """
+        try:
+            self._server_proxy.storeGlobalData(target_case_name, group_name, keyword, value)
+        except Fault as f:
+            raise convertFault(f)
+
+
+    def storeSimulationData(self, target_case_name, group_name, keyword, value, sim_id):
+        """
+        Store a single value in a single simulation as a CustomKW with groupname and keyword.
+        @param target_case_name: Name of target case
+        @type target_case_name: str
+        @param group_name: The name of the CustomKW group
+        @type group_name: str
+        @param keyword: The name of the CustomKW keyword
+        @type keyword: str
+        @param value: The value to store
+        @type value: float|int|str
+        @param sim_id: The simulation id (index)
+        @type sim_id: int
+        """
+        try:
+            self._server_proxy.storeSimulationData(target_case_name, group_name, keyword, value, sim_id)
+        except Fault as f:
+            raise convertFault(f)
+
