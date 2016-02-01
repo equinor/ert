@@ -112,3 +112,19 @@ class CustomKWConfigTest(ExtendedTestCase):
                 self.assertIsNone(custom_kw_config.getOutputFile())
 
                 self.assertFalse(custom_kw_config.parseResultFile("result_file", StringList()))
+
+
+    def test_custom_kw_config_construction_with_definition(self):
+        definition = {
+            "VALUE_1": float,
+            "VALUE_2": str
+        }
+        custom_kw_config = CustomKWConfig("TEST", None, definition=definition)
+        self.assertEqual(len(custom_kw_config.getKeys()), 2)
+
+        self.assertTrue(custom_kw_config.keyIsDouble("VALUE_1"))
+        self.assertFalse(custom_kw_config.keyIsDouble("VALUE_2"))
+
+        self.assertIn("VALUE_1", custom_kw_config)
+        self.assertIn("VALUE_2", custom_kw_config)
+        self.assertNotIn("VALUE_3", custom_kw_config)

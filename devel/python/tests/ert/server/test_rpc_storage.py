@@ -43,7 +43,7 @@ class RPCStorageTest(ExtendedTestCase):
             self.assertFalse(custom_kw_config.keyIsDouble("DakotaVersion"))
 
             self.assertIn("Gradient", custom_kw_config)
-            self.assertTrue(custom_kw_config.keyIsDouble("PI"))
+            self.assertTrue(custom_kw_config.keyIsDouble("Gradient"))
 
             self.assertIn("GradientDirection", custom_kw_config)
             self.assertFalse(custom_kw_config.keyIsDouble("GradientDirection"))

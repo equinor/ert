@@ -52,11 +52,38 @@ custom_kw_config_type * custom_kw_config_alloc_empty(const char * key, const cha
     custom_kw_config->key_definition_file = NULL;
 
     custom_kw_config->custom_keys = hash_alloc();
-    custom_kw_config->custom_key_types = hash_alloc(); //types: 0 if string 1 if double
+    custom_kw_config->custom_key_types = hash_alloc(); //types: 0 if string, 1 if double
     pthread_rwlock_init(& custom_kw_config->rw_lock, NULL);
 
     return custom_kw_config;
 }
+
+
+custom_kw_config_type * custom_kw_config_alloc_with_definition(const char * key, const hash_type * definition) {
+    custom_kw_config_type * custom_kw_config = custom_kw_config_alloc_empty(key, NULL, NULL);
+
+    stringlist_type * keys = hash_alloc_stringlist((hash_type *) definition);
+
+    for(int index = 0; index < stringlist_get_size(keys); index++) {
+        const char * definition_key = stringlist_iget_copy(keys, index);
+        int type_value = hash_get_int(definition, definition_key);
+
+        if(type_value < 0 || type_value > 1) {
+            fprintf(stderr ,"[%s] Warning: Value type not 0 or 1 for key: '%s', defaulting to string!\n", __func__, key);
+            type_value = 0;
+        }
+        hash_insert_int(custom_kw_config->custom_keys, definition_key, index);
+        hash_insert_int(custom_kw_config->custom_key_types, definition_key, type_value);
+    }
+
+    custom_kw_config->undefined = false;
+    custom_kw_config->key_definition_file = util_alloc_string_copy("custom definition");
+
+    stringlist_free(keys);
+
+    return custom_kw_config;
+}
+
 
 void custom_kw_config_free(custom_kw_config_type * config) {
     util_safe_free(config->name);
@@ -162,33 +189,13 @@ stringlist_type * custom_kw_config_get_keys(const custom_kw_config_type * config
     return hash_alloc_stringlist(config->custom_keys);
 }
 
-static bool custom_kw_config_add_key__(custom_kw_config_type * config, const char * key, int value_type) {
-    if (custom_kw_config_has_key(config, key)) {
-        fprintf(stderr ,"[%s] Warning: Key: '%s:%s' already defined!\n", __func__, config->name, key);
-        return false;
-    } else {
-        int index = hash_get_size(config->custom_keys);
-        hash_insert_int(config->custom_keys, key, index);
-        hash_insert_int(config->custom_key_types, key, value_type);
-        return true;
-    }
-}
-
-bool custom_kw_config_add_key(custom_kw_config_type * config, const char * key, int value_type) {
-    if(config->result_file == NULL && config->undefined == true) {
-        return custom_kw_config_add_key__(config, key, value_type);
-    } else {
-        fprintf(stderr ,"[%s] Warning: Can only add keys to a config without a result file!\n", __func__);
-        return false;
-    }
-}
-
 static bool custom_kw_config_setup__(custom_kw_config_type * config, const char * result_file) {
     FILE * stream = util_fopen__(result_file, "r");
     if (stream != NULL) {
         bool read_ok = true;
         config->key_definition_file = util_alloc_string_copy(result_file);
 
+        int counter = 0;
         char key[128];
         char value[128];
         int read_count;
@@ -199,7 +206,12 @@ static bool custom_kw_config_setup__(custom_kw_config_type * config, const char 
                 break;
             }
 
-            custom_kw_config_add_key__(config, key, util_sscanf_double(value, NULL));
+            if (custom_kw_config_has_key(config, key)) {
+                fprintf(stderr ,"[%s] Warning: Key: '%s:%s' already defined!\n", __func__, config->name, key);
+            } else {
+                hash_insert_int(config->custom_keys, key, counter++);
+                hash_insert_int(config->custom_key_types, key, util_sscanf_double(value, NULL));
+            }
         }
 
         fclose(stream);

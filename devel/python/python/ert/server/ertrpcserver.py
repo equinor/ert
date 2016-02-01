@@ -9,6 +9,7 @@ from ert.enkf.data import EnkfNode, CustomKWConfig, CustomKW
 from ert.enkf.enums import RealizationStateEnum, EnkfVarType, EnkfStateType, ErtImplType
 from ert.server import SimulationContext
 from ert.server.ertrpcclient import FAULT_CODES
+from ert.util import IntegerHash
 from ert_gui.gert_main import Ert
 
 
@@ -280,13 +281,19 @@ class ErtRPCServer(SimpleXMLRPCServer):
         ensemble_config = self.ert.ensembleConfig()
 
         if group_name in ensemble_config.getKeylistFromImplType(ErtImplType.CUSTOM_KW):
-            raise UserWarning("The CustomKW with group name: '%s' already exist!" % group_name)
+            raise createFault(UserWarning, "The CustomKW with group name: '%s' already exist!" % group_name)
 
-        custom_kw_config = ensemble_config.addCustomKW(group_name).getCustomKeywordModelConfig()
+        converted_definition = {}
+        for key, value in storage_definition.iteritems():
+            if value == "str":
+                converted_definition[key] = str
+            elif value == "float":
+                converted_definition[key] = float
+            else:
+                raise createFault(TypeError, "Unknown type: '%s' for key '%s'" % (value, key))
 
-        for key, is_double in storage_definition.iteritems():
-            value_type = float if is_double else str
-            custom_kw_config.addKey(key, value_type)
+        ensemble_config.addDefinedCustomKW(group_name, converted_definition)
+
 
 
     def storeGlobalData(self, target_case_name, group_name, keyword, value):
@@ -313,7 +320,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
         custom_kw[keyword] = value
 
         if not enkf_node.save(fs, node_id):
-            raise UserWarning("Unable to store data for group: '%s' and key: '%s' into realization: '%d'" % (group_name, keyword, realization_number))
+            raise createFault(UserWarning, "Unable to store data for group: '%s' and key: '%s' into realization: '%d'" % (group_name, keyword, realization_number))
 
 
 

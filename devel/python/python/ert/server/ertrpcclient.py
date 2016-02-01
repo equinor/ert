@@ -4,7 +4,9 @@ from xmlrpclib import ServerProxy, Fault
 FAULT_CODES = {1: UserWarning,
                2: KeyError,
                3: IndexError,
-               4: LookupError}
+               4: LookupError,
+               5: TypeError
+               }
 
 
 def convertFault(fault):
@@ -174,14 +176,11 @@ class ErtRPCClient(object):
 
         converted = {}
         for key, value in storage_definition.iteritems():
-            if value == float:
-                is_double = True
-            elif value == str:
-                is_double = False
+            if value in (float, str):
+                value_name = value.__name__
             else:
                 raise TypeError("Unsupported data type for key: '%s', not one of (float, str): '%s'" % (key, value))
-            converted[key] = is_double
-
+            converted[key] = value_name
         try:
             self._server_proxy.prototypeStorage(group_name, converted)
         except Fault as f:

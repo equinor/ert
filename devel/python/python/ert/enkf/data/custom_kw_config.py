@@ -13,19 +13,30 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import sys
+
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
-from ert.util import StringList
+from ert.util import StringList, IntegerHash
 
 
 class CustomKWConfig(BaseCClass):
-    def __init__(self, key, result_file, output_file=None):
+    def __init__(self, key, result_file, output_file=None, definition=None):
         """
         @type key: str
         @type result_file: str
         @type output_file: str
+        @type definition: dict
         """
-        c_ptr = CustomKWConfig.cNamespace().alloc_empty(key, result_file, output_file)
+
+        if definition is not None:
+            if result_file is not None and output_file is not None:
+                sys.stderr.write("[%s] Will ignore result file and output file when constructing with a definition." % self.__class__.__name__)
+
+            type_hash = CustomKWConfig.convertDefinition(definition)
+            c_ptr = CustomKWConfig.cNamespace().alloc_with_definition(key, type_hash)
+        else:
+            c_ptr = CustomKWConfig.cNamespace().alloc_empty(key, result_file, output_file)
         super(CustomKWConfig, self).__init__(c_ptr)
 
     def getName(self):
@@ -74,27 +85,32 @@ class CustomKWConfig(BaseCClass):
         """ @rtype: StringList """
         return CustomKWConfig.cNamespace().keys(self)
 
-    def addKey(self, key, value_type=float):
-        """ @rtype: bool """
-        if value_type == float:
-            value_type = 1
-        else:
-            value_type = 0 #str
+    @classmethod
+    def convertDefinition(cls, definition):
+        """ @rtype: IntegerHash """
+        type_hash = IntegerHash()
 
-        return CustomKWConfig.cNamespace().add_key(self, key, value_type)
+        for key, value_type in definition.iteritems():
+            if value_type == float:
+                value_type = 1
+            else:
+                value_type = 0 #str
+            type_hash[key] = value_type
+        return type_hash
+
 
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("custom_kw_config", CustomKWConfig)
 
 CustomKWConfig.cNamespace().free = cwrapper.prototype("void custom_kw_config_free(custom_kw_config)")
-CustomKWConfig.cNamespace().alloc_empty = cwrapper.prototype("c_void_p custom_kw_config_alloc_empty(char*, char*, char*)")
+CustomKWConfig.cNamespace().alloc_empty = cwrapper.prototype("void* custom_kw_config_alloc_empty(char*, char*, char*)")
+CustomKWConfig.cNamespace().alloc_with_definition = cwrapper.prototype("void* custom_kw_config_alloc_with_definition(char*, integer_hash)")
 CustomKWConfig.cNamespace().get_name = cwrapper.prototype("char* custom_kw_config_get_name(custom_kw_config)")
 CustomKWConfig.cNamespace().get_result_file = cwrapper.prototype("char* custom_kw_config_get_result_file(custom_kw_config)")
 CustomKWConfig.cNamespace().get_output_file = cwrapper.prototype("char* custom_kw_config_get_output_file(custom_kw_config)")
 CustomKWConfig.cNamespace().parse_result_file = cwrapper.prototype("bool custom_kw_config_parse_result_file(custom_kw_config, char*, stringlist)")
 CustomKWConfig.cNamespace().has_key = cwrapper.prototype("bool custom_kw_config_has_key(custom_kw_config, char*)")
-CustomKWConfig.cNamespace().add_key = cwrapper.prototype("bool custom_kw_config_add_key(custom_kw_config, char*, int)")
 CustomKWConfig.cNamespace().key_is_double = cwrapper.prototype("bool custom_kw_config_key_is_double(custom_kw_config, char*)")
 CustomKWConfig.cNamespace().index_of_key = cwrapper.prototype("int custom_kw_config_index_of_key(custom_kw_config, char*)")
 CustomKWConfig.cNamespace().size = cwrapper.prototype("int custom_kw_config_size(custom_kw_config)")
