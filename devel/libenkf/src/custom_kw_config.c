@@ -164,7 +164,7 @@ stringlist_type * custom_kw_config_get_keys(const custom_kw_config_type * config
 
 static bool custom_kw_config_add_key__(custom_kw_config_type * config, const char * key, int value_type) {
     if (custom_kw_config_has_key(config, key)) {
-        printf("[%s] Warning: Key: '%s:%s' already defined!\n", __func__, config->name, key);
+        fprintf(stderr ,"[%s] Warning: Key: '%s:%s' already defined!\n", __func__, config->name, key);
         return false;
     } else {
         int index = hash_get_size(config->custom_keys);
@@ -178,19 +178,10 @@ bool custom_kw_config_add_key(custom_kw_config_type * config, const char * key, 
     if(config->result_file == NULL && config->undefined == true) {
         return custom_kw_config_add_key__(config, key, value_type);
     } else {
-        printf("[%s] Warning: Can only add keys to a config without a result file!\n", __func__);
+        fprintf(stderr ,"[%s] Warning: Can only add keys to a config without a result file!\n", __func__);
         return false;
     }
 }
-
-//void custom_kw_config_finalize_config(custom_kw_config_type * config) {
-//    if(config->key_definition_file == NULL) {
-//        config->undefined = false;
-//    } else {
-//        printf("[%s] Warning: Can only finalize a config without a result file!\n", __func__);
-//    }
-//}
-
 
 static bool custom_kw_config_setup__(custom_kw_config_type * config, const char * result_file) {
     FILE * stream = util_fopen__(result_file, "r");
@@ -203,7 +194,7 @@ static bool custom_kw_config_setup__(custom_kw_config_type * config, const char 
         int read_count;
         while ((read_count = fscanf(stream, "%s %s", key, value)) != EOF) {
             if (read_count == 1) {
-                printf("[%s] Warning: Key: '%s:%s' is missing value in file: '%s'\n", __func__, config->name, key, result_file);
+                fprintf(stderr ,"[%s] Warning: Key: '%s:%s' is missing value in file: '%s'\n", __func__, config->name, key, result_file);
                 read_ok = false;
                 break;
             }
@@ -231,14 +222,14 @@ static bool custom_kw_config_read_data__(const custom_kw_config_type * config, c
         int read_count;
         while ((read_count = fscanf(stream, "%s %s", key, value)) != EOF) {
             if (read_count == 1) {
-                printf("[%s] Warning: Key: '%s:%s' missing value in file: %s!\n", __func__, config->name, key, result_file);
+                fprintf(stderr ,"[%s] Warning: Key: '%s:%s' missing value in file: %s!\n", __func__, config->name, key, result_file);
                 read_ok = false;
                 break;
             }
 
             if (custom_kw_config_has_key(config, key)) {
                 if (hash_has_key(read_keys, key)) {
-                    printf("[%s] Warning:  Key: '%s:%s' has appeared multiple times. Only the last occurrence will be used!\n", __func__, config->name, key);
+                    fprintf(stderr ,"[%s] Warning:  Key: '%s:%s' has appeared multiple times. Only the last occurrence will be used!\n", __func__, config->name, key);
                 }
 
                 hash_insert_int(read_keys, key, 1);
@@ -246,7 +237,7 @@ static bool custom_kw_config_read_data__(const custom_kw_config_type * config, c
                 stringlist_iset_copy(result, index, value);
 
             } else {
-                printf("[%s] Warning: Key: '%s:%s' not in the available set. Ignored!\n", __func__, config->name, key);
+                fprintf(stderr ,"[%s] Warning: Key: '%s:%s' not in the available set. Ignored!\n", __func__, config->name, key);
             }
         }
 
