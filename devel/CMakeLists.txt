@@ -27,7 +27,7 @@ option( INSTALL_ERT         "Should anything be installed when issuing make inst
 option( ERT_BUILD_GUI       "Should the pyQt based gui be compiled and installed" OFF )
 option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" OFF)
 option( ERT_DOC             "Build ERT documantation" OFF)
-option( ERT_BUILD_CXX       "Build some CXX wrappers" OFF)
+option( ERT_BUILD_CXX       "Build some CXX wrappers" ON)
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
