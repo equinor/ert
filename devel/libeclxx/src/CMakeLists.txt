@@ -1,10 +1,14 @@
 set( source_files
      EclKW.cpp
-     FortIO.cpp )
+     FortIO.cpp
+     Smspec.cpp
+     )
 
 set( header_files
      EclKW.hpp
-     FortIO.hpp )
+     FortIO.hpp
+     Smspec.hpp
+     )
 
 
 add_library( eclxx ${LIBRARY_TYPE} ${source_files} )
