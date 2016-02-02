@@ -5,7 +5,8 @@ from xmlrpclib import Fault
 
 from ert import Version
 from ert.enkf import EnKFMain, NodeId
-from ert.enkf.data import EnkfNode, CustomKWConfig, CustomKW
+from ert.enkf.config import CustomKWConfig
+from ert.enkf.data import EnkfNode, CustomKW
 from ert.enkf.enums import RealizationStateEnum, EnkfVarType, EnkfStateType, ErtImplType
 from ert.server import SimulationContext
 from ert.server.ertrpcclient import FAULT_CODES
@@ -94,6 +95,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 self.ert.siteConfig().getJobQueue().killAllJobs()
         self.shutdown()
         self.server_close()
+        self._config = None
 
     def ertVersion(self):
         return Version.currentVersion().versionTuple()
@@ -194,8 +196,8 @@ class ErtRPCServer(SimpleXMLRPCServer):
             raise createFault(UserWarning, "The simulation with id: %d is still running." % iens)
 
         if keyword in ensemble_config:
-            state = self.ert.getRealisation(iens)
-            node = state[keyword]
+            enkf_config_node = self.ert.ensembleConfig().getNode(keyword)
+            node = EnkfNode(enkf_config_node)
 
             if not node.getImplType() == ErtImplType.GEN_DATA:
                 raise createFault(UserWarning, "The keyword is not a GenData keyword.")
@@ -220,8 +222,8 @@ class ErtRPCServer(SimpleXMLRPCServer):
             raise createFault(UserWarning, "The simulation with id: %d is still running." % iens)
 
         if keyword in ensemble_config:
-            state = self.ert.getRealisation(iens)
-            node = state[keyword]
+            enkf_config_node = self.ert.ensembleConfig().getNode(keyword)
+            node = EnkfNode(enkf_config_node)
 
             if not node.getImplType() == ErtImplType.CUSTOM_KW:
                 raise createFault(UserWarning, "The keyword is not a CustomKW keyword.")
@@ -292,14 +294,14 @@ class ErtRPCServer(SimpleXMLRPCServer):
             else:
                 raise createFault(TypeError, "Unknown type: '%s' for key '%s'" % (value, key))
 
-        ensemble_config.addDefinedCustomKW(group_name, converted_definition)
-
-
+        enkf_config_node = ensemble_config.addDefinedCustomKW(group_name, converted_definition)
+        self.ert.addNode(enkf_config_node)
 
     def storeGlobalData(self, target_case_name, group_name, keyword, value):
         fs = self.ert.getEnkfFsManager().getFileSystem(target_case_name)
-        ensemble_config_node = self.ert.ensembleConfig().getNode(group_name)
-        enkf_node = EnkfNode(ensemble_config_node)
+        enkf_config_node = self.ert.ensembleConfig().getNode(group_name)
+        enkf_node = EnkfNode(enkf_config_node)
+        self._updateCustomKWConfigSet(fs, enkf_config_node)
 
         realizations = fs.realizationList(RealizationStateEnum.STATE_INITIALIZED | RealizationStateEnum.STATE_HAS_DATA)
 
@@ -308,10 +310,16 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
     def storeSimulationData(self, target_case_name, group_name, keyword, value, sim_id):
         fs = self.ert.getEnkfFsManager().getFileSystem(target_case_name)
-        ensemble_config_node = self.ert.ensembleConfig().getNode(group_name)
-        enkf_node = EnkfNode(ensemble_config_node)
+        enkf_config_node = self.ert.ensembleConfig().getNode(group_name)
+        enkf_node = EnkfNode(enkf_config_node)
+        self._updateCustomKWConfigSet(fs, enkf_config_node)
 
         self._storeData(enkf_node, fs, group_name, keyword, value, sim_id)
+
+    def _updateCustomKWConfigSet(self, fs, enkf_config_node):
+        ckwcs = fs.getCustomKWConfigSet()
+        ckwcs.addConfig(enkf_config_node.getCustomKeywordModelConfig())
+
 
     def _storeData(self, enkf_node, fs, group_name, keyword, value, realization_number):
         node_id = NodeId(0, realization_number, EnkfStateType.FORECAST)
