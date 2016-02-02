@@ -127,7 +127,6 @@ if (MSVC)
    add_definitions( -D__func__="\\"????\\"")
 endif()
 
-
 if (ERT_LINUX)
    set( NEED_LIBM TRUE )
    set( LINK_STATIC FALSE )
