@@ -2642,6 +2642,12 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
 }
 
 
+void enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf_config_node) {
+    for (int iens = 0; iens < enkf_main_get_ensemble_size(enkf_main); iens++) {
+
+      enkf_state_add_node(enkf_main->ensemble[iens], enkf_config_node_get_key(enkf_config_node), enkf_config_node);
+    }
+}
 
 
 
