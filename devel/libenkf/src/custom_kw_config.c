@@ -267,17 +267,21 @@ static bool custom_kw_config_read_data__(const custom_kw_config_type * config, c
 bool custom_kw_config_parse_result_file(custom_kw_config_type * config, const char * result_file, stringlist_type * result) {
     bool read_ok = true;
 
-    pthread_rwlock_wrlock(& config->rw_lock);
-    if (config->undefined) {
-        read_ok = custom_kw_config_setup__(config, result_file);
-        if (read_ok) {
-            config->undefined = false;
+    // if config->result_file is NULL then the CustomKWConfig was made dynamically
+    // for storing data manually and not as part of a forward model output.
+    if(config->result_file != NULL) {
+        pthread_rwlock_wrlock(&config->rw_lock);
+        if (config->undefined) {
+            read_ok = custom_kw_config_setup__(config, result_file);
+            if (read_ok) {
+                config->undefined = false;
+            }
         }
-    }
-    pthread_rwlock_unlock(& config->rw_lock);
+        pthread_rwlock_unlock(&config->rw_lock);
 
-    if (read_ok) {
-        read_ok = custom_kw_config_read_data__(config, result_file, result);
+        if (read_ok) {
+            read_ok = custom_kw_config_read_data__(config, result_file, result);
+        }
     }
 
     return read_ok;
