@@ -15,7 +15,7 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
-from ert.enkf.data import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig
+from ert.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig
 from ert.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
 from ert.ecl import EclGrid
 

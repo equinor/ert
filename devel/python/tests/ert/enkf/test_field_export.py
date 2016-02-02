@@ -4,7 +4,8 @@ from ert.util import IntVector
 
 from ert.ecl import EclGrid
 
-from ert.enkf.data import FieldConfig,EnkfNode
+from ert.enkf.config import FieldConfig
+from ert.enkf.data import EnkfNode
 from ert.enkf.enums import EnkfFieldFileFormatEnum, EnkfStateType
 from ert.enkf import NodeId
 

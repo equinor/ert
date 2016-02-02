@@ -1,5 +1,6 @@
 import os
-from ert.enkf.data import CustomKW, CustomKWConfig
+from ert.enkf.config import CustomKWConfig
+from ert.enkf.data import CustomKW
 from ert.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from ert.enkf.export import custom_kw_collector
 from ert.enkf.export.custom_kw_collector import CustomKWCollector

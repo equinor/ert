@@ -1,10 +1,9 @@
 from ert.cwrap import clib, CWrapper
-from ert.enkf.data.enkf_node import EnkfNode
-from ert.enkf.data import GenDataConfig
-from ert.enkf.enums.enkf_state_type_enum import EnkfStateType
-from ert.enkf.node_id import NodeId
-from ert.test import ErtTestContext
-from ert.test.extended_testcase import ExtendedTestCase
+from ert.enkf.data import EnkfNode
+from ert.enkf.config import GenDataConfig
+from ert.enkf.enums import EnkfStateType
+from ert.enkf import NodeId
+from ert.test import ErtTestContext, ExtendedTestCase
 from ert.util import BoolVector
 
 test_lib  = clib.ert_load("libenkf")

@@ -38,10 +38,12 @@ from .util import TimeMap
 from .state_map import StateMap
 from .summary_key_set import SummaryKeySet
 from .summary_key_matcher import SummaryKeyMatcher
+from .custom_kw_config_set import CustomKWConfigSet
 from .enkf_fs import EnkfFs
 
 from .ert_workflow_list import ErtWorkflowList
 from .active_list import ActiveList
+from .config import *
 from .data import *
 
 from .local_dataset import LocalDataset
@@ -61,7 +63,6 @@ from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
 from .ecl_config import EclConfig
 
-from .custom_kw_config_set import CustomKWConfigSet
 from .ensemble_config import EnsembleConfig
 from .enkf_obs import EnkfObs
 from .enkf_state import EnKFState

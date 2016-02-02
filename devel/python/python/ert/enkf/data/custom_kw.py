@@ -15,7 +15,7 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
-from ert.enkf.data import CustomKWConfig
+from ert.enkf.config import CustomKWConfig
 
 
 class CustomKW(BaseCClass):

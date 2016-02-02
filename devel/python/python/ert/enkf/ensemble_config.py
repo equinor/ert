@@ -16,7 +16,7 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.util import StringList
 from ert.enkf import ENKF_LIB, SummaryKeyMatcher
-from ert.enkf.data import EnkfConfigNode, CustomKWConfig
+from ert.enkf.config import EnkfConfigNode, CustomKWConfig
 from ert.enkf.enums import EnkfVarType, ErtImplType
 
 

@@ -19,7 +19,7 @@ import os
 from ert.util import BoolVector
 
 from ert.enkf import EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfVarType, ObsVector , RunArg
-from ert.enkf.data import EnkfConfigNode
+from ert.enkf.config import EnkfConfigNode
 from ert.enkf.enkf_main import EnKFMain
 from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum, EnkfInitModeEnum, ErtImplType, RealizationStateEnum , EnkfRunType, EnkfFieldFileFormatEnum, EnkfTruncationType, ActiveMode
 from ert.enkf.observations.summary_observation import SummaryObservation
