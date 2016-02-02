@@ -152,7 +152,10 @@ include_directories( ${PROJECT_SOURCE_DIR}/libecl/include )
 add_subdirectory( libecl )
 
 if (ERT_BUILD_CXX)
+   include_directories( ${PROJECT_SOURCE_DIR}/libert_utilxx/include )
    include_directories( ${PROJECT_SOURCE_DIR}/libeclxx/include )
+
+   add_subdirectory( libert_utilxx )
    add_subdirectory( libeclxx )
 endif()
 
