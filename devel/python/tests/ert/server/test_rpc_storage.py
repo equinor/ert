@@ -1,4 +1,7 @@
+from itertools import product
 from random import random
+
+import time
 
 from ert.enkf.enums import ErtImplType
 from ert.enkf.export.custom_kw_collector import CustomKWCollector
@@ -11,7 +14,7 @@ class RPCStorageTest(ExtendedTestCase):
     def test_rpc_storage(self):
         config = self.createTestPath("local/snake_oil_no_data/snake_oil.ert")
 
-        with RPCServiceContext("ert/server/rpc/client_storage", config) as server:
+        with RPCServiceContext("ert/server/rpc_storage/storage", config) as server:
             client = ErtRPCClient("localhost", server.port)
 
             group_name = "Test"
@@ -70,6 +73,50 @@ class RPCStorageTest(ExtendedTestCase):
                 self.assertEqual(data["Test:DakotaVersion"][sim_id], "DAKOTA 6.2.0")
                 self.assertEqual(data["Test:Gradient"][sim_id], gradients[sim_id])
                 self.assertEqual(data["Test:GradientDirection"][sim_id], gradient_directions[sim_id])
+
+
+    def test_rpc_storage_with_simulation(self):
+        config = self.createTestPath("local/snake_oil_no_data/snake_oil.ert")
+
+        with RPCServiceContext("ert/server/rpc_storage/simulation_and_storage", config, store_area=True) as server:
+            client = ErtRPCClient("localhost", server.port)
+            realization_count = 2
+
+            client.prototypeStorage("SNAKEX", {"SNAKE_ID": float, "SNAKE_RUN": str})
+
+            batch_names = ["test_run_0", "test_run_1"]
+
+            for batch_id, batch_name in enumerate(batch_names):
+                self.runSimulation(client, realization_count, batch_id, batch_name)
+
+            for (batch_id, batch_name), iens in product(enumerate(batch_names), range(realization_count)):
+                result = client.getCustomKWResult(batch_name, iens, "SNAKEX")
+                self.assertEqual(result["SNAKE_RUN"], "batch_%d" % batch_id)
+                snake_id = realization_count * batch_id + iens
+                self.assertEqual(result["SNAKE_ID"], snake_id)
+
+
+
+    def runSimulation(self, client, realization_count, batch_id, batch_name):
+        client.startSimulationBatch("default", 2)
+        kw = {"SNAKE_OIL_PARAM": [0.50, 6, 1.750, 0.250, 0.990, 2, 1.770, 0.330, 0.550, 0.770]} # identical runs
+
+        for iens in range(realization_count):
+            client.addSimulation(batch_name, geo_id=0, pert_id=0, sim_id=iens, keywords=kw)
+
+        while client.isRunning():
+            time.sleep(0.2)
+
+        for iens in range(realization_count):
+            self.assertTrue(client.didRealizationSucceed(iens))
+
+
+        client.storeGlobalData(batch_name, "SNAKEX", "SNAKE_RUN", "batch_%d" % batch_id)
+
+        for iens in range(realization_count):
+            client.storeSimulationData(batch_name, "SNAKEX", "SNAKE_ID", realization_count * batch_id + iens, iens)
+
+
 
 
 

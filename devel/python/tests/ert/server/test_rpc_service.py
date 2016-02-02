@@ -72,11 +72,6 @@ class RPCServiceTest(ExtendedTestCase):
             self.assertEqual(Version.currentVersion().versionTuple(), client.ertVersion())
             realization_count = len(target_case_names)
 
-            # with self.assertRaises(UserWarning):
-            #     client.startSimulationBatch("default", realization_count)
-            #
-            # initializeCase(server.ert, "default", 1)
-
             client.startSimulationBatch("default", realization_count)
 
             self.assertTrue(server.isInitializationCaseAvailable())
