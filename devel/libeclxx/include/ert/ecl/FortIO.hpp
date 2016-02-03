@@ -27,6 +27,7 @@
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_endian_flip.h>
 
+#include <ert/util/ert_unique_ptr.hpp>
 
 
 
@@ -40,7 +41,7 @@ namespace ERT {
         void reset() const;
 
     private:
-        std::shared_ptr<fortio_type> m_fortio;
+        ert_unique_ptr<fortio_type , fortio_fclose> m_fortio;
     };
 }
 
