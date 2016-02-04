@@ -17,14 +17,14 @@ namespace ERT {
                     const std::string& keyword
             );
 
-            smspec_node(
-                    ecl_smspec_var_type,
-                    const std::string& wgname,
-                    const std::string& keyword,
-                    const std::string& join
-            );
+            smspec_node( const std::string& keyword );
+
+            smspec_node( const std::string& keyword,
+                    int dims[ 3 ],
+                    int ijk[ 3 ] );
 
             const char* wgname() const;
+            const char* keyword() const;
 
         private:
             smspec_node(

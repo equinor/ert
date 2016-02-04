@@ -22,7 +22,7 @@
 
 #include <ert/ecl/Smspec.hpp>
 
-void test_smspec() {
+void test_smspec_wg() {
     std::string kw( "WWCT" );
     std::string wg( "OP1" );
     std::string gr( "WG1" );
@@ -34,6 +34,25 @@ void test_smspec() {
     test_assert_true(group.wgname() == gr);
 }
 
+void test_smspec_field() {
+    std::string kw( "FOPT" );
+    ERT::smspec_node field( kw );
+
+    test_assert_true( field.keyword() == kw );
+}
+
+void test_smspec_block() {
+    std::string kw( "BPR" );
+    int dims[ 3 ] = { 10, 10, 10 };
+    int ijk[ 3 ] = { 5, 5, 5 };
+
+    ERT::smspec_node field( kw, dims, ijk );
+
+    test_assert_true( field.keyword() == kw );
+}
+
 int main (int argc, char **argv) {
-    test_smspec();
+    test_smspec_wg();
+    test_smspec_field();
+    test_smspec_block();
 }
