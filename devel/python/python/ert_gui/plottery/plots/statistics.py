@@ -7,14 +7,16 @@ from .plot_tools import PlotTools
 
 
 def plotStatistics(plot_context):
-    """
-    @type plot_context: PlotContext
-    """
+    """ @type plot_context: ert_gui.plottery.PlotContext """
     ert = plot_context.ert()
     key = plot_context.key()
     config = plot_context.plotConfig()
+    """:type: ert_gui.plotter.PlotConfig """
     axes = plot_context.figure().add_subplot(111)
     """:type: matplotlib.axes.Axes """
+
+    plot_context.y_axis = plot_context.VALUE_AXIS
+    plot_context.x_axis = plot_context.DATE_AXIS
 
     case_list = plot_context.cases()
     for case in case_list:
@@ -22,7 +24,8 @@ def plotStatistics(plot_context):
 
         if not data.empty:
             if not data.index.is_all_dates:
-                config.deactivateDateSupport()
+                plot_context.deactivateDateSupport()
+                plot_context.x_axis = plot_context.INDEX_AXIS
 
             style = config.getStatisticsStyle("mean")
             rectangle = Rectangle((0, 0), 1, 1, color=style.color, alpha=0.8) # creates rectangle patch for legend use.
@@ -47,7 +50,7 @@ def plotStatistics(plot_context):
     plotRefcase(plot_context, axes)
     plotObservations(plot_context, axes)
 
-    default_x_label = "Date" if config.isDateSupportActive() else "Index"
+    default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
     PlotTools.finalizePlot(plot_context, axes, default_x_label=default_x_label, default_y_label="Value")
 
 def _addStatisticsLegends(plot_config):
@@ -77,11 +80,11 @@ def _plotPercentiles(axes, plot_config, data, ensemble_label):
     """
     style = plot_config.getStatisticsStyle("mean")
     if style.isVisible():
-        axes.plot(data.index.values, data["Mean"].values, alpha=style.alpha, linestyle=style.line_style, color=style.color, marker=style.marker)
+        axes.plot(data.index.values, data["Mean"].values, alpha=style.alpha, linestyle=style.line_style, color=style.color, marker=style.marker, linewidth=style.width)
 
     style = plot_config.getStatisticsStyle("p50")
     if style.isVisible():
-        axes.plot(data.index.values, data["p50"].values, alpha=style.alpha, linestyle=style.line_style, color=style.color, marker=style.marker)
+        axes.plot(data.index.values, data["p50"].values, alpha=style.alpha, linestyle=style.line_style, color=style.color, marker=style.marker, linewidth=style.width)
 
     style = plot_config.getStatisticsStyle("min-max")
     _plotPercentile(axes, style, data.index.values, data["Maximum"].values, data["Minimum"].values, 0.5)
@@ -102,5 +105,5 @@ def _plotPercentile(axes, style, index_values, top_line_data, bottom_line_data, 
     if line_style == "#":
         axes.fill_between(index_values, bottom_line_data, top_line_data, alpha=alpha * alpha_multiplier, color=color)
     elif style.isVisible():
-        axes.plot(index_values, bottom_line_data, alpha=alpha, linestyle=line_style, color=color, marker=marker)
-        axes.plot(index_values, top_line_data, alpha=alpha, linestyle=line_style, color=color, marker=marker)
+        axes.plot(index_values, bottom_line_data, alpha=alpha, linestyle=line_style, color=color, marker=marker, linewidth=style.width)
+        axes.plot(index_values, top_line_data, alpha=alpha, linestyle=line_style, color=color, marker=marker, linewidth=style.width)

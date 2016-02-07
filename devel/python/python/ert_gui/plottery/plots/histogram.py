@@ -5,14 +5,16 @@ from .plot_tools import PlotTools
 import pandas as pd
 
 def plotHistogram(plot_context):
-    """
-    @type plot_context: ert_gui.plottery.PlotContext
-    """
+    """ @type plot_context: ert_gui.plottery.PlotContext """
     ert = plot_context.ert()
     key = plot_context.key()
     config = plot_context.plotConfig()
+
     case_list = plot_context.cases()
     case_count = len(case_list)
+
+    plot_context.x_axis = plot_context.VALUE_AXIS
+    plot_context.Y_axis = plot_context.COUNT_AXIS
 
     if config.xLabel() is None:
         config.setXLabel("Value")
@@ -80,10 +82,20 @@ def plotHistogram(plot_context):
             config.nextColor()
             PlotTools.showGrid(axes[case], plot_context)
 
+    min_count = 0
     max_count = max([subplot.get_ylim()[1] for subplot in axes.values()])
 
+    custom_limits = plot_context.plotConfig().limits
+
+    if custom_limits.count_maximum is not None:
+        max_count = custom_limits.count_maximum
+
+    if custom_limits.count_minimum is not None:
+        min_count = custom_limits.count_minimum
+
     for subplot in axes.values():
-        subplot.set_ylim(0, max_count)
+        subplot.set_ylim(min_count, max_count)
+        subplot.set_xlim(custom_limits.value_minimum, custom_limits.value_maximum)
 
 
 def _plotCategoricalHistogram(axes, plot_config, data, label, categories):

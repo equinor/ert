@@ -1,5 +1,7 @@
+import datetime
+
 from ert.test import ExtendedTestCase
-from ert_gui.plottery import PlotStyle, PlotConfig
+from ert_gui.plottery import PlotStyle, PlotConfig, PlotLimits
 
 
 class PlotStyleTest(ExtendedTestCase):
@@ -68,12 +70,22 @@ class PlotStyleTest(ExtendedTestCase):
     def test_plot_config(self):
         plot_config = PlotConfig("Golden Sample", x_label="x", y_label="y")
 
+        limits = PlotLimits()
+        limits.count_limits = 1, 2
+        limits.depth_limits = 3, 4
+        limits.density_limits = 5, 6
+        limits.date_limits = datetime.date(2005, 2, 5), datetime.date(2006, 2, 6)
+        limits.index_limits = 7, 8
+        limits.value_limits = 9.0, 10.0
+
+        plot_config.limits = limits
+        self.assertEqual(plot_config.limits, limits)
+
         plot_config.setDistributionLineEnabled(True)
         plot_config.setLegendEnabled(False)
         plot_config.setGridEnabled(False)
         plot_config.setRefcaseEnabled(False)
         plot_config.setObservationsEnabled(False)
-        plot_config.deactivateDateSupport()
 
         plot_config.setDefaultStyle(".", "g")
         plot_config.setRefcaseStyle(".", "g")
@@ -90,7 +102,6 @@ class PlotStyleTest(ExtendedTestCase):
         self.assertEqual(plot_config.isGridEnabled(), copy_of_plot_config.isGridEnabled())
         self.assertEqual(plot_config.isObservationsEnabled(), copy_of_plot_config.isObservationsEnabled())
         self.assertEqual(plot_config.isDistributionLineEnabled(), copy_of_plot_config.isDistributionLineEnabled())
-        self.assertEqual(plot_config.isDateSupportActive(), copy_of_plot_config.isDateSupportActive())
 
         self.assertEqual(plot_config.refcaseStyle(), copy_of_plot_config.refcaseStyle())
         self.assertEqual(plot_config.observationsStyle(), copy_of_plot_config.observationsStyle())
@@ -106,6 +117,8 @@ class PlotStyleTest(ExtendedTestCase):
         self.assertEqual(plot_config.getStatisticsStyle("p33-p67"), copy_of_plot_config.getStatisticsStyle("p33-p67"))
 
         self.assertEqual(plot_config.title(), copy_of_plot_config.title())
+
+        self.assertEqual(plot_config.limits, copy_of_plot_config.limits)
 
 
         plot_config.currentColor()  # cycle state will not be copied
