@@ -200,10 +200,18 @@ if (USE_RUNPATH)
    add_runpath( enkf )
 endif()
 
-add_custom_target(ert_share_symlinking ALL
-	COMMENT "Symlinking to the development share directory."
-    COMMAND ln -sf -t ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/share
-)
+if(ERT_MAC)
+    add_custom_target(ert_share_symlinking ALL
+        COMMENT "Symlinking to the development share directory."
+        COMMAND ln -sfh ${PROJECT_SOURCE_DIR}/share ${PROJECT_BINARY_DIR}/share
+    )
+
+else()
+    add_custom_target(ert_share_symlinking ALL
+    	COMMENT "Symlinking to the development share directory."
+        COMMAND ln -sf -t ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/share
+    )
+endif()
 
 #-----------------------------------------------------------------
 if (INSTALL_ERT)
