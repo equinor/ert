@@ -320,7 +320,7 @@ bool enkf_main_have_obs( const enkf_main_type * enkf_main ) {
 
 
 bool enkf_main_has_QC_workflow( const enkf_main_type * enkf_main ) {
-  return hook_manager_has_post_hook_workflow( enkf_main->hook_manager );
+  util_abort("%s: \n",__func__);
 }
 
 hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enkf_main ) {
@@ -1509,11 +1509,11 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
 }
 
 void enkf_main_run_post_workflow( enkf_main_type * enkf_main ) {
-  hook_manager_run_post_hook_workflow( enkf_main->hook_manager , enkf_main );
+  util_abort("%s \n",__func__);
 }
 
 void enkf_main_run_hook_workflow( enkf_main_type * enkf_main ) {
-  hook_manager_run_hook_workflow( enkf_main->hook_manager , enkf_main );
+  util_abort("%s \n",__func__);
 }
 
 
@@ -2453,9 +2453,6 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 
 static void enkf_main_init_hook_manager( enkf_main_type * enkf_main , config_content_type * config ) {
   hook_manager_init( enkf_main->hook_manager , config );
-
-  hook_manager_init_hook( enkf_main->hook_manager , config );
-  hook_manager_init_post_hook( enkf_main->hook_manager , config );
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , hook_manager_get_path( enkf_main->hook_manager ) , "QC Root path" , true);
 }
 

@@ -37,6 +37,10 @@ class HookManager(BaseCClass):
         """ @rtype: HookWorkflow """
         return HookManager.cNamespace().get_post_hook_workflow(self)
     
+
+    def runWorkflows(self , run_time , context):
+        HookManager.cNamespace().run_workflows(self , run_time)
+        
     
 cwrapper = CWrapper(ENKF_LIB)
 
@@ -48,3 +52,4 @@ HookManager.cNamespace().get_hook_workflow = cwrapper.prototype("hook_workflow_r
 
 HookManager.cNamespace().has_post_hook_workflow = cwrapper.prototype("bool hook_manager_has_post_hook_workflow(hook_manager)")
 HookManager.cNamespace().get_post_hook_workflow = cwrapper.prototype("hook_workflow_ref hook_manager_get_post_hook_workflow(hook_manager)")
+HookManager.cNamespace().run_workflows = cwrapper.prototype("void hook_manager_run_workflows(hook_manager , hook_runtime_enum , void*)")
