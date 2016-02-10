@@ -90,14 +90,14 @@ class PlotSettings(ErtShellCollection):
                               pretty_attribute="Legend visibility",
                               model=self.__plot_config)
 
-        self.addShellProperty(name="distribution_lines",
+        self.addShellProperty(name="connection_lines",
                               getter=PlotConfig.isDistributionLineEnabled,
                               setter=PlotConfig.setDistributionLineEnabled,
                               validator=boolValidator,
                               completer=["true", "false"],
                               help_arguments="[true|false]",
-                              help_message="Show or set the distribution lines visibility",
-                              pretty_attribute="Distribution Line visibility",
+                              help_message="Show or set the connection lines visibility",
+                              pretty_attribute="Connection Line visibility",
                               model=self.__plot_config)
 
         self.addShellProperty(name="refcase",
