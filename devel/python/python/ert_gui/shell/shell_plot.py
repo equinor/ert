@@ -2,6 +2,7 @@ import ert_gui.plottery.plots as plots
 
 import matplotlib.pyplot as plt
 
+from ert_gui.plottery.plot_config_factory import PlotConfigFactory
 from ert_gui.shell import assertConfigLoaded
 from ert_gui.plottery import PlotConfig, PlotContext
 from ert_gui.shell.libshell import matchItems, extractFullArgument, autoCompleteListWithSeparator
@@ -9,7 +10,7 @@ from ert_gui.shell.libshell import matchItems, extractFullArgument, autoComplete
 
 class ShellPlot(object):
     @classmethod
-    def __createPlotContext(cls, shell_context, data_gatherer, key):
+    def _createPlotContext(cls, shell_context, data_gatherer, key):
         """
         :type shell_context: ShellContext
         :param data_gatherer: PlotDataGatherer
@@ -20,9 +21,14 @@ class ShellPlot(object):
         cases = shell_context["plot_settings"].getCurrentPlotCases()
 
         plot_config = PlotConfig(key)
+        #plot settings should keep of track of single attributes and only apply the changed ones...
         plot_config.copyConfigFrom(shell_context["plot_settings"].plotConfig())
+
         if plot_config.isUnnamed():
             plot_config.setTitle(key)
+
+        #Apply data type specific changes for statistics...
+        PlotConfigFactory.updatePlotConfigForKey(shell_context.ert(), key, plot_config)
 
         plot_context = PlotContext(shell_context.ert(), figure, plot_config, cases, key, data_gatherer)
         return plot_context
@@ -34,7 +40,7 @@ class ShellPlot(object):
         :param data_gatherer: PlotDataGatherer
         :param key: str
         """
-        plot_context = cls.__createPlotContext(shell_context, data_gatherer, key)
+        plot_context = cls._createPlotContext(shell_context, data_gatherer, key)
         plots.plotEnsemble(plot_context)
 
     @classmethod
@@ -44,7 +50,7 @@ class ShellPlot(object):
         :param data_gatherer: PlotDataGatherer
         :param key: str
         """
-        plot_context = cls.__createPlotContext(shell_context, data_gatherer, key)
+        plot_context = cls._createPlotContext(shell_context, data_gatherer, key)
         plots.plotStatistics(plot_context)
 
     @classmethod
@@ -54,7 +60,7 @@ class ShellPlot(object):
         :param data_gatherer: PlotDataGatherer
         :param key: str
         """
-        plot_context = cls.__createPlotContext(shell_context, data_gatherer, key)
+        plot_context = cls._createPlotContext(shell_context, data_gatherer, key)
         plots.plotHistogram(plot_context)
 
     @classmethod
@@ -64,7 +70,7 @@ class ShellPlot(object):
         :param data_gatherer: PlotDataGatherer
         :param key: str
         """
-        plot_context = cls.__createPlotContext(shell_context, data_gatherer, key)
+        plot_context = cls._createPlotContext(shell_context, data_gatherer, key)
         plots.plotDistribution(plot_context)
 
     @classmethod
@@ -74,11 +80,21 @@ class ShellPlot(object):
         :param data_gatherer: PlotDataGatherer
         :param key: str
         """
-        plot_context = cls.__createPlotContext(shell_context, data_gatherer, key)
+        plot_context = cls._createPlotContext(shell_context, data_gatherer, key)
         plots.plotGaussianKDE(plot_context)
 
     @classmethod
-    def __checkForRequiredMethods(cls, instance):
+    def plotCrossCaseStatistics(cls, shell_context, data_gatherer, key):
+        """
+        :type shell_context: ShellContext
+        :param data_gatherer: PlotDataGatherer
+        :param key: str
+        """
+        plot_context = cls._createPlotContext(shell_context, data_gatherer, key)
+        plots.plotCrossCaseStatistics(plot_context)
+
+    @classmethod
+    def _checkForRequiredMethods(cls, instance):
         if not hasattr(instance, "fetchSupportedKeys"):
             raise NotImplementedError("Class must implement: fetchSupportedKeys()")
 
@@ -86,7 +102,7 @@ class ShellPlot(object):
             raise NotImplementedError("Class must implement: plotDataGatherer()")
 
     @classmethod
-    def __createDoFunction(cls, plot_function, name):
+    def _createDoFunction(cls, plot_function, name):
         def do_function(self, line):
             keys = matchItems(line, self.fetchSupportedKeys())
 
@@ -101,7 +117,7 @@ class ShellPlot(object):
         return assertConfigLoaded(do_function)
 
     @classmethod
-    def __createCompleteFunction(cls):
+    def _createCompleteFunction(cls):
         def complete_function(self, text, line, begidx, endidx):
             key = extractFullArgument(line, endidx)
             return autoCompleteListWithSeparator(key, self.fetchSupportedKeys())
@@ -114,11 +130,11 @@ class ShellPlot(object):
         """
         :type instance: ert_gui.shell.libshell.ShellCollection
         """
-        cls.__checkForRequiredMethods(instance)
+        cls._checkForRequiredMethods(instance)
 
         instance.addShellFunction(name="histogram",
-                                  function=cls.__createDoFunction(ShellPlot.plotHistogram, name),
-                                  completer=cls.__createCompleteFunction(),
+                                  function=cls._createDoFunction(ShellPlot.plotHistogram, name),
+                                  completer=cls._createCompleteFunction(),
                                   help_arguments="<key_1> [key_2..key_n]",
                                   help_message="Plot a histogram for the specified %s key(s)." % name)
 
@@ -127,11 +143,11 @@ class ShellPlot(object):
         """
         :type instance: ert_gui.shell.ShellFunction
         """
-        cls.__checkForRequiredMethods(instance)
+        cls._checkForRequiredMethods(instance)
 
         instance.addShellFunction(name="density",
-                                  function=cls.__createDoFunction(ShellPlot.plotGaussianKDE, name),
-                                  completer=cls.__createCompleteFunction(),
+                                  function=cls._createDoFunction(ShellPlot.plotGaussianKDE, name),
+                                  completer=cls._createCompleteFunction(),
                                   help_arguments="<key_1> [key_2..key_n]",
                                   help_message="Plot a GaussianKDE plot for the specified %s key(s)." % name)
 
@@ -140,11 +156,11 @@ class ShellPlot(object):
         """
         :type instance: ert_gui.shell.ShellFunction
         """
-        cls.__checkForRequiredMethods(instance)
+        cls._checkForRequiredMethods(instance)
 
         instance.addShellFunction(name="plot",
-                                  function=cls.__createDoFunction(ShellPlot.plotEnsemble, name),
-                                  completer=cls.__createCompleteFunction(),
+                                  function=cls._createDoFunction(ShellPlot.plotEnsemble, name),
+                                  completer=cls._createCompleteFunction(),
                                   help_arguments="<key_1> [key_2..key_n]",
                                   help_message="Plot an ensemble plot for the specified %s key(s)." % name)
 
@@ -153,11 +169,11 @@ class ShellPlot(object):
         """
         :type instance: ert_gui.shell.ShellFunction
         """
-        cls.__checkForRequiredMethods(instance)
+        cls._checkForRequiredMethods(instance)
 
         instance.addShellFunction(name="plot_quantile",
-                                  function=cls.__createDoFunction(ShellPlot.plotQuantiles, name),
-                                  completer=cls.__createCompleteFunction(),
+                                  function=cls._createDoFunction(ShellPlot.plotQuantiles, name),
+                                  completer=cls._createCompleteFunction(),
                                   help_arguments="<key_1> [key_2..key_n]",
                                   help_message="Plot a different statistics for the specified %s key(s)." % name)
 
@@ -166,15 +182,27 @@ class ShellPlot(object):
         """
         :type instance: ert_gui.shell.ShellFunction
         """
-        cls.__checkForRequiredMethods(instance)
+        cls._checkForRequiredMethods(instance)
         instance.addShellFunction(name="distribution",
-                                  function=cls.__createDoFunction(ShellPlot.plotDistribution, name),
-                                  completer=cls.__createCompleteFunction(),
+                                  function=cls._createDoFunction(ShellPlot.plotDistribution, name),
+                                  completer=cls._createCompleteFunction(),
                                   help_arguments="<key_1> [key_2..key_n]",
                                   help_message="Plot the distribution plot for the specified %s key(s)." % name)
 
     @classmethod
-    def __createDoPrintFunction(cls, name):
+    def addCrossCaseStatisticsPlotSupport(cls, instance, name):
+        """
+        :type instance: ert_gui.shell.ShellFunction
+        """
+        cls._checkForRequiredMethods(instance)
+        instance.addShellFunction(name="cross_case_statistics",
+                                  function=cls._createDoFunction(ShellPlot.plotCrossCaseStatistics, name),
+                                  completer=cls._createCompleteFunction(),
+                                  help_arguments="<key_1> [key_2..key_n]",
+                                  help_message="Plot the cross case statistics plot for the specified %s key(s)." % name)
+
+    @classmethod
+    def _createDoPrintFunction(cls, name):
         def do_function(self, line):
             keys = matchItems(line, self.fetchSupportedKeys())
 
@@ -199,10 +227,10 @@ class ShellPlot(object):
         """
         :type instance: ert_gui.shell.ShellFunction
         """
-        cls.__checkForRequiredMethods(instance)
+        cls._checkForRequiredMethods(instance)
 
         instance.addShellFunction(name="print",
-                                  function=cls.__createDoPrintFunction(name),
-                                  completer=cls.__createCompleteFunction(),
+                                  function=cls._createDoPrintFunction(name),
+                                  completer=cls._createCompleteFunction(),
                                   help_arguments="<key_1> [key_2..key_n]",
                                   help_message="Print the values for the specified %s key(s)." % name)

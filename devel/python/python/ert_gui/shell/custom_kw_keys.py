@@ -16,6 +16,7 @@ class CustomKWKeys(ErtShellCollection):
         ShellPlot.addHistogramPlotSupport(self, "CustomKW")
         ShellPlot.addGaussianKDEPlotSupport(self, "CustomKW")
         ShellPlot.addDistributionPlotSupport(self, "CustomKW")
+        ShellPlot.addCrossCaseStatisticsPlotSupport(self, "CustomKW")
 
 
     def fetchSupportedKeys(self):
