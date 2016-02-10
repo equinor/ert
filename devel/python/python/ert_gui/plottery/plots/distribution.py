@@ -24,7 +24,7 @@ def plotDistribution(plot_context):
         case_indexes.append(case_index)
         data = plot_context.dataGatherer().gatherData(ert, case, key)
 
-        if not data.empty and data.nunique() > 1:
+        if not data.empty:
             _plotDistribution(axes, config, data, case, case_index, previous_data)
             config.nextColor()
 
@@ -65,13 +65,13 @@ def _plotDistribution(axes, plot_config, data, label, index, previous_data):
     if data.dtype == "object":
         dots = []
     else:
-        dots = axes.plot([index] * len(data), data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, markersize=style.width)
+        dots = axes.plot([index] * len(data), data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, markersize=style.size)
 
         if plot_config.isDistributionLineEnabled() and previous_data is not None:
             line_style = plot_config.distributionLineStyle()
             x = [index - 1, index]
             y = [previous_data, data]
-            lines = axes.plot(x, y, color=line_style.color, alpha=line_style.alpha, marker=line_style.marker, linestyle=line_style.line_style, linewidth=line_style.width)
+            lines = axes.plot(x, y, color=line_style.color, alpha=line_style.alpha, linestyle=line_style.line_style, linewidth=line_style.width)
 
     if len(dots) > 0:
         plot_config.addLegendItem(label, dots[0])
