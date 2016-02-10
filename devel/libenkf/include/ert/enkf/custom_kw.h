@@ -24,6 +24,8 @@ extern "C" {
     bool                     custom_kw_key_is_null(const custom_kw_type * custom_kw, char * key);
     double                   custom_kw_iget_as_double(const custom_kw_type * custom_kw, int index);
     const char             * custom_kw_iget_as_string(const custom_kw_type * custom_kw, int index);
+    void                     custom_kw_set_string(custom_kw_type * custom_kw, const char * key, const char * value);
+    void                     custom_kw_set_double(custom_kw_type * custom_kw, const char * key, double value);
 
     bool custom_kw_fload(custom_kw_type * custom_kw, const char * filename);
     bool custom_kw_forward_load(custom_kw_type * custom_kw, const char * ecl_file, const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step);

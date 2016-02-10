@@ -44,6 +44,7 @@ set(PYTHON_SOURCES
 
 add_python_package("python.ert.enkf" ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)
 
+add_subdirectory(config)
 add_subdirectory(data)
 add_subdirectory(enums)
 add_subdirectory(export)

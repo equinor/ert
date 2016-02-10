@@ -8,29 +8,7 @@ from ert.enkf import EnKFMain
 from ert.enkf.enums import RealizationStateEnum
 from ert.server import ErtRPCServer, ErtRPCClient
 from ert.test import ErtTestContext, ExtendedTestCase, ErtTest
-
-
-class RPCServiceContext(object):
-    def __init__(self, test_name, model_config, store_area=False):
-        self._test_name = test_name
-        self._model_config = model_config
-        self._store_area = store_area
-        self._test_context = ErtTest(self._test_name, self._model_config, store_area=self._store_area)
-        self._server = ErtRPCServer(self._test_context.getErt())
-
-    def __enter__(self):
-        """ @rtype: ErtRPCServer"""
-        thread = Thread(name="ErtRPCServerTest")
-        thread.run = self._server.start
-        thread.start()
-
-        return self._server
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._server.stop()
-        del self._server
-        del self._test_context
-        return False
+from tests.ert.server import RPCServiceContext
 
 
 def realizationIsInitialized(ert, case_name, realization_number):
@@ -93,11 +71,6 @@ class RPCServiceTest(ExtendedTestCase):
             client = ErtRPCClient("localhost", server.port)
             self.assertEqual(Version.currentVersion().versionTuple(), client.ertVersion())
             realization_count = len(target_case_names)
-
-            # with self.assertRaises(UserWarning):
-            #     client.startSimulationBatch("default", realization_count)
-            #
-            # initializeCase(server.ert, "default", 1)
 
             client.startSimulationBatch("default", realization_count)
 

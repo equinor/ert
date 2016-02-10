@@ -24,6 +24,7 @@ extern "C" {
 #include <stdbool.h>
 
 #include <ert/util/stringlist.h>
+#include <ert/util/hash.h>
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
@@ -53,6 +54,7 @@ typedef struct ensemble_config_struct ensemble_config_type;
   enkf_config_node_type  * ensemble_config_add_summary_observation(ensemble_config_type * ensemble_config , const char * key, load_fail_type load_fail);
   enkf_config_node_type  * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key , bool forward_init);
   enkf_config_node_type  * ensemble_config_add_custom_kw(ensemble_config_type * config, const char * key, const char * result_file, const char * output_file);
+  enkf_config_node_type  * ensemble_config_add_defined_custom_kw(ensemble_config_type * config, const char * key, const hash_type * definition);
   void                     ensemble_config_update_custom_kw_config(ensemble_config_type * config, custom_kw_config_set_type * config_set);
   enkf_config_node_type  * ensemble_config_add_field( ensemble_config_type * config , const char * key , ecl_grid_type * ecl_grid , bool forward_init);
   int                      ensemble_config_get_observations( const ensemble_config_type * config , enkf_obs_type * enkf_obs , const char * user_key , int obs_count ,

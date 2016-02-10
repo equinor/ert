@@ -320,6 +320,12 @@ enkf_config_node_type * enkf_config_node_new_custom_kw(const char * key, const c
     return config_node;
 }
 
+enkf_config_node_type * enkf_config_node_new_defined_custom_kw(const char * key, const hash_type * definition) {
+  enkf_config_node_type * config_node = enkf_config_node_alloc__(DYNAMIC_RESULT, CUSTOM_KW, key, false);
+  config_node->data = custom_kw_config_alloc_with_definition(key, definition);
+  return config_node;
+}
+
 enkf_config_node_type * enkf_config_node_new_surface( const char * key , bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , SURFACE , key , forward_init);
   config_node->data = surface_config_alloc_empty( );
