@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    ccsp.py
     distribution.py
     ensemble.py
     gaussian_kde.py
