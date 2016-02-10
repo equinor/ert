@@ -57,14 +57,9 @@ class StyleCustomizationView(CustomizationView):
         """
         @type plot_config: ert_gui.plottery.PlotConfig
         """
-        default_style = self.default_style
-        plot_config.setDefaultStyle(default_style.line_style, default_style.marker, default_style.width)
-
-        refcase_style = self.refcase_style
-        plot_config.setRefcaseStyle(refcase_style.line_style, refcase_style.marker, refcase_style.width)
-
+        plot_config.setDefaultStyle(self.default_style)
+        plot_config.setRefcaseStyle(self.refcase_style)
         plot_config.setLineColorCycle(self.color_cycle)
-
 
     def revertCustomization(self, plot_config):
         """

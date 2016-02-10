@@ -10,21 +10,27 @@ class DefaultCustomizationView(CustomizationView):
     grid = WidgetProperty()
     refcase = WidgetProperty()
     observations = WidgetProperty()
-    distribution_lines = WidgetProperty()
+
 
     def __init__(self):
         CustomizationView.__init__(self)
+        label_msg = "Set to empty to use the default %s.\n" \
+                    "It is also possible to use LaTeX. Enclose expression with $...$ for example: \n" \
+                    "$\\alpha > \\beta$\n" \
+                    "$r^3$\n" \
+                    "$\\frac{1}{x}$\n" \
+                    "$\\sqrt{2}$"
 
-        self.addLineEdit("title", "Title", "The title of the plot. Set to empty to use the default title.", placeholder="Title")
+        self.addLineEdit("title", "Title", "The title of the plot. %s" % (label_msg % "title"), placeholder="Title")
         self.addSpacing()
-        self.addLineEdit("x_label", "X Label", "The label of the X axis. Set to empty to use the default label.", placeholder="X Label")
-        self.addLineEdit("y_label", "Y Label", "The label of the Y axis. Set to empty to use the default label.", placeholder="Y Label")
+        self.addLineEdit("x_label", "X Label", "The label of the X axis. %s" % (label_msg % "label"), placeholder="X Label")
+        self.addLineEdit("y_label", "Y Label", "The label of the Y axis. %s" % (label_msg % "label"), placeholder="Y Label")
         self.addSpacing()
         self.addCheckBox("legend", "Legend", "Toggle Legend visibility.")
         self.addCheckBox("grid", "Grid", "Toggle Grid visibility.")
         self.addCheckBox("refcase", "Refcase", "Toggle Refcase visibility.")
         self.addCheckBox("observations", "Observations", "Toggle Observations visibility.")
-        self.addCheckBox("distribution_lines", "Connection Lines", "Toggle distribution connection lines visibility.")
+
 
     def applyCustomization(self, plot_config):
         """
@@ -39,7 +45,7 @@ class DefaultCustomizationView(CustomizationView):
         plot_config.setGridEnabled(self.grid)
         plot_config.setRefcaseEnabled(self.refcase)
         plot_config.setObservationsEnabled(self.observations)
-        plot_config.setDistributionLineEnabled(self.distribution_lines)
+
 
     def revertCustomization(self, plot_config):
         """
@@ -57,4 +63,3 @@ class DefaultCustomizationView(CustomizationView):
         self.grid = plot_config.isGridEnabled()
         self.refcase = plot_config.isRefcaseEnabled()
         self.observations = plot_config.isObservationsEnabled()
-        self.distribution_lines = plot_config.isDistributionLineEnabled()

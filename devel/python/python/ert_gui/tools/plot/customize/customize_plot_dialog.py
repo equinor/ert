@@ -17,6 +17,8 @@ class PlotCustomizer(QObject):
         self._previous_key = None
         self._plot_configs = {None: PlotConfigHistory("No_Key_Selected", PlotConfig(None))}
 
+        self._plotConfigCreator = self._defaultPlotConfigCreator
+
         self._customization_dialog = CustomizePlotDialog("Customize", parent)
 
         self._customization_dialog.addTab("general", "General", DefaultCustomizationView())
@@ -102,8 +104,11 @@ class PlotCustomizer(QObject):
         else:
             self._customization_dialog.show()
 
-    def _selectiveCopyOfCurrentPlotConfig(self, title):
+    def _defaultPlotConfigCreator(self, title):
         return PlotConfig(title)
+
+    def _selectiveCopyOfCurrentPlotConfig(self, title):
+        return self._plotConfigCreator(title)
 
     def switchPlotConfigHistory(self, key):
         if key != self._plot_config_key:
@@ -120,6 +125,9 @@ class PlotCustomizer(QObject):
 
     def setAxisTypes(self, x_axis_type, y_axis_type):
         self._customize_limits.setAxisTypes(x_axis_type, y_axis_type)
+
+    def setPlotConfigCreator(self, func):
+        self._plotConfigCreator = func
 
 
 class CustomizePlotDialog(QDialog):
