@@ -53,7 +53,7 @@ bool check_original_exported_data_equal(const enkf_node_type * field_node) {
   FILE * exported_stream = util_fopen( "tmp/PORO.grdecl" , "r");
   ecl_kw_type * kw_exported = ecl_kw_fscanf_alloc_grdecl_dynamic( exported_stream , "PORO" , ECL_DOUBLE_TYPE );
 
-  bool ret = ecl_kw_numeric_equal(kw_original, kw_exported, 1e-5);
+  bool ret = ecl_kw_numeric_equal(kw_original, kw_exported, 1e-5 , 1e-5);
 
   util_fclose(original_stream); 
   util_fclose(exported_stream); 
