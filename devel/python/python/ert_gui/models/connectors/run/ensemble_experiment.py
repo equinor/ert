@@ -1,5 +1,6 @@
 from ert_gui.models.connectors.run import ActiveRealizationsModel, BaseRunModel
 from ert_gui.models.mixins.run_model import ErtRunError
+from ert.enkf.enums import HookRunTime
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -11,20 +12,13 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(0, "Running simulations...", indeterminate=False)
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
         
-        if self.ert().getEnkfSimulationRunner().isHookPreSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-            
         success = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
 
         if not success:
             raise ErtRunError("Simulation failed!")
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        
-        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-        
-        self.ert().getEnkfSimulationRunner().runPostHookWorkflow()
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRunTime.POST_SIMULATION )
 
         self.setPhase(1, "Simulations completed.") # done...
 
