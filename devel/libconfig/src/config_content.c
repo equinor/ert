@@ -199,6 +199,12 @@ double config_content_iget_as_double( const config_content_type * content , cons
   return config_content_item_iget_as_double(item , occurence , index);
 }
 
+const char * config_content_iget_as_path( const config_content_type * content , const char * key , int occurence , int index) {
+  config_content_item_type * item = config_content_get_item(content , key);
+  config_content_node_type * node = config_content_item_iget_node( item , index );
+  return config_content_node_iget_as_path(node , index);
+}
+
 
 /**
    This function will return NULL is the item has not been set,
