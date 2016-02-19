@@ -10,14 +10,6 @@ class HookManager(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
 
-    def hasHookWorkflow(self):
-        """ @rtype: bool """
-        return HookManager.cNamespace().has_hook_workflow(self)
-
-    def getHookWorkflow(self):
-        """ @rtype: HookWorkflow """
-        return HookManager.cNamespace().get_hook_workflow(self)
-
     def checkRunpathListFile(self):
         """ @rtype: bool """
         runpath_list_file = HookManager.cNamespace().get_runpath_list_file(self)
@@ -29,17 +21,9 @@ class HookManager(BaseCClass):
         """ @rtype: RunpathList """
         return HookManager.cNamespace().get_runpath_list(self)
     
-    def hasPostHookWorkflow(self):
-        """ @rtype: bool """
-        return HookManager.cNamespace().has_post_hook_workflow(self)
-
-    def getPostHookWorkflow(self):
-        """ @rtype: HookWorkflow """
-        return HookManager.cNamespace().get_post_hook_workflow(self)
     
-
-    def runWorkflows(self , run_time , context):
-        HookManager.cNamespace().run_workflows(self , run_time)
+    def runWorkflows(self , run_time , ert_self):
+        HookManager.cNamespace().run_workflows(self , run_time , ert_self)
         
     
 cwrapper = CWrapper(ENKF_LIB)
@@ -47,9 +31,4 @@ cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("hook_manager", HookManager)
 
 HookManager.cNamespace().get_runpath_list_file = cwrapper.prototype("char* hook_manager_get_runpath_list_file(hook_manager)")
-HookManager.cNamespace().has_hook_workflow = cwrapper.prototype("bool hook_manager_has_hook_workflow(hook_manager)")
-HookManager.cNamespace().get_hook_workflow = cwrapper.prototype("hook_workflow_ref hook_manager_get_hook_workflow(hook_manager)")
-
-HookManager.cNamespace().has_post_hook_workflow = cwrapper.prototype("bool hook_manager_has_post_hook_workflow(hook_manager)")
-HookManager.cNamespace().get_post_hook_workflow = cwrapper.prototype("hook_workflow_ref hook_manager_get_post_hook_workflow(hook_manager)")
 HookManager.cNamespace().run_workflows = cwrapper.prototype("void hook_manager_run_workflows(hook_manager , hook_runtime_enum , void*)")

@@ -32,38 +32,9 @@ class EnkfSimulationRunner(BaseCClass):
     def runWorkFlows(self , runtime):
         """:type ert.enkf.enum.HookRuntimeEnum"""
         hook_manager = self.ert.getHookManager()
-        # workflow_list = self.ert.getWorkflowList()
-        # context = workflow_list.getContext()
         hook_manager.runWorkflows( runtime  , self.ert ) 
         
     
-#def runPostHookWorkflow(self):
-#    self.runWorkFlows( HookRuntime.POST_SIMULATION )
-#
-#    
-#def runHookWorkflow(self):
-#    hook_manager = self.ert.getHookManager()
-#    if hook_manager.hasHookWorkflow():
-#        hook_manager.checkRunpathListFile()
-#        hook_workflow = hook_manager.getHookWorkflow()
-#        workflow = hook_workflow.getWorkflow()
-#        workflow_list = self.ert.getWorkflowList()
-#        workflow.run(self.ert, context=workflow_list.getContext())     
-#        
-#def isHookPreSimulation(self):
-#    """ @rtype: bool """
-#    hook_manager = self.ert.getHookManager()
-#    if hook_manager.hasHookWorkflow():
-#        hook_workflow = hook_manager.getHookWorkflow()
-#        return hook_workflow.isPreSimulation()    
-                             
-    def isHookPostSimulation(self):
-        """ @rtype: bool """
-        hook_manager = self.ert.getHookManager()
-        if hook_manager.hasHookWorkflow():
-            hook_workflow = hook_manager.getHookWorkflow()
-            return hook_workflow.isPostSimulation()    
-
 
     def smootherUpdate(self, target_fs):
         """ @rtype: bool """

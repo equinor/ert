@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 from ert.enkf import EnkfSimulationRunner
+from ert.enkf.enums import HookRunTime
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 
 
@@ -36,20 +37,14 @@ class Simulations(ErtShellCollection):
 
         print("Ensemble Experiment started at: %s" % datetime.now().isoformat(sep=" "))
 
-        if self.ert().getEnkfSimulationRunner().isHookPreSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-
         success = simulation_runner.runEnsembleExperiment()
 
         if not success:
             print("Error: Simulations failed!")
             return
 
-        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-
         print("Ensemble Experiment post processing!")
-        simulation_runner.runPostHookWorkflow()
+        simulation_runner.runWorklows( HookRunTime.POST_SIMULATION )
 
         print("Ensemble Experiment completed at: %s" % datetime.now().isoformat(sep=" "))
 

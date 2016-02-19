@@ -1,4 +1,4 @@
-from ert.enkf.enums import EnkfInitModeEnum, EnkfStateType
+from ert.enkf.enums import EnkfInitModeEnum, EnkfStateType, HookRunTime
 from ert_gui.models.connectors.run import NumberOfIterationsModel, ActiveRealizationsModel, IteratedAnalysisModuleModel, BaseRunModel
 from ert_gui.models.connectors.run.target_case_format_model import TargetCaseFormatModel
 from ert_gui.models.mixins import ErtRunError
@@ -37,14 +37,10 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 raise ErtRunError("Simulation failed! All realizations failed!")
             #ignore and continue
 
-
-        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-            
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runPostHookWorkflow()
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRunTime.POST_SIMULATION )
 
-
+        
     def createTargetCaseFileSystem(self, phase):
         target_case_format = TargetCaseFormatModel().getValue()
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_format % phase)

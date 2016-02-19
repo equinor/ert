@@ -57,12 +57,13 @@ void hook_workflow_free( hook_workflow_type * hook_workflow ) {
 }
 
 void hook_workflow_free__( void * arg ) {
-
+  hook_workflow_type * hook_workflow = hook_workflow_safe_cast( arg );
+  hook_workflow_free( hook_workflow );
 }
 
 
 
-const workflow_type* hook_workflow_get_workflow( const hook_workflow_type * hook_workflow ) {
+workflow_type* hook_workflow_get_workflow( const hook_workflow_type * hook_workflow ) {
   return hook_workflow->workflow;
 }
 
