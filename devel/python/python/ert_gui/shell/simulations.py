@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from ert.enkf import EnkfSimulationRunner
-from ert.enkf.enums import HookRunTime
+from ert.enkf.enums import HookRuntime
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 
 
@@ -44,7 +44,7 @@ class Simulations(ErtShellCollection):
             return
 
         print("Ensemble Experiment post processing!")
-        simulation_runner.runWorklows( HookRunTime.POST_SIMULATION )
+        simulation_runner.runWorklows( HookRuntime.POST_SIMULATION )
 
         print("Ensemble Experiment completed at: %s" % datetime.now().isoformat(sep=" "))
 

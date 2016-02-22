@@ -1,6 +1,6 @@
 from ert_gui.models.connectors.run import ActiveRealizationsModel, BaseRunModel
 from ert_gui.models.mixins.run_model import ErtRunError
-from ert.enkf.enums import HookRunTime
+from ert.enkf.enums import HookRuntime
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -18,7 +18,7 @@ class EnsembleExperiment(BaseRunModel):
             raise ErtRunError("Simulation failed!")
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRunTime.POST_SIMULATION )
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
         self.setPhase(1, "Simulations completed.") # done...
 
