@@ -1,4 +1,4 @@
-from ert.enkf.enums import EnkfInitModeEnum, EnkfStateType, HookRunTime
+from ert.enkf.enums import EnkfInitModeEnum, EnkfStateType, HookRuntime
 from ert_gui.models.connectors.run import NumberOfIterationsModel, ActiveRealizationsModel, IteratedAnalysisModuleModel, BaseRunModel
 from ert_gui.models.connectors.run.target_case_format_model import TargetCaseFormatModel
 from ert_gui.models.mixins import ErtRunError
@@ -38,7 +38,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             #ignore and continue
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRunTime.POST_SIMULATION )
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
         
     def createTargetCaseFileSystem(self, phase):

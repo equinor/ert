@@ -1,7 +1,7 @@
 from ert.enkf.enums import EnkfInitModeEnum
 from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseModel, AnalysisModuleModel, BaseRunModel
 from ert_gui.models.mixins import ErtRunError
-from ert.enkf.enums import HookRunTime
+from ert.enkf.enums import HookRuntime
 
 
 class EnsembleSmoother(BaseRunModel):
@@ -39,7 +39,7 @@ class EnsembleSmoother(BaseRunModel):
 
         
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRunTime.POST_SIMULATION )
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
         
         self.setPhaseName("Analyzing...", indeterminate=True)
 
@@ -60,7 +60,7 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Simulation failed!")
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRunTime.POST_SIMULATION )
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
         self.setPhase(2, "Simulations completed.")
 
