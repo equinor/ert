@@ -25,7 +25,7 @@ class PlotConfig(object):
         self._refcase_style = PlotStyle(name="Refcase", alpha=0.8, marker="x", width=2.0)
         self._observation_style = PlotStyle(name="Observations")
         self._histogram_style = PlotStyle(name="Histogram", width=2.0)
-        self._distribution_style = PlotStyle(name="Distribution", line_style="", marker="o", alpha=0.5, width=10.0)
+        self._distribution_style = PlotStyle(name="Distribution", line_style="", marker="o", alpha=0.5, size=10.0)
         self._distribution_line_style = PlotStyle(name="Distribution Lines", line_style="-", alpha=0.25, width=1.0)
         self._distribution_line_style.setEnabled(False)
         self._current_color = None
@@ -35,11 +35,12 @@ class PlotConfig(object):
 
 
         self._statistics_style = {
-            "mean": PlotStyle("Mean", line_style="-"),
+            "mean": PlotStyle("Mean", line_style=""),
             "p50": PlotStyle("P50", line_style=""),
             "min-max": PlotStyle("Min/Max", line_style=""),
-            "p10-p90": PlotStyle("P10-P90", line_style="--"),
-            "p33-p67": PlotStyle("P33-P67", line_style="")
+            "p10-p90": PlotStyle("P10-P90", line_style=""),
+            "p33-p67": PlotStyle("P33-P67", line_style=""),
+            "std": PlotStyle("Std dev", line_style="")
         }
 
     def currentColor(self):
@@ -159,13 +160,17 @@ class PlotConfig(object):
     def setGridEnabled(self, enabled):
         self._grid_enabled = enabled
 
-    def setStatisticsStyle(self, statistic, line_style, marker, width=None):
-        style = self._statistics_style[statistic]
-        style.line_style = line_style
-        style.marker = marker
+    def setStatisticsStyle(self, statistic, style):
+        """
+        @type statistic: str
+        @type style: PlotStyle
+        """
 
-        if width is not None:
-            style.width = width
+        statistics_style = self._statistics_style[statistic]
+        statistics_style.line_style = style.line_style
+        statistics_style.marker = style.marker
+        statistics_style.width = style.width
+        statistics_style.size = style.size
 
     def getStatisticsStyle(self, statistic):
         style = self._statistics_style[statistic]
@@ -174,19 +179,21 @@ class PlotConfig(object):
         copy_style.color = self.currentColor()
         return copy_style
 
-    def setRefcaseStyle(self, line_style, marker, width=None):
-        self._refcase_style.line_style = line_style
-        self._refcase_style.marker = marker
+    def setRefcaseStyle(self, style):
+        """ @type style: PlotStyle """
+        self._refcase_style.line_style = style.line_style
+        self._refcase_style.marker = style.marker
+        self._refcase_style.width = style.width
+        self._refcase_style.size = style.size
 
-        if width is not None:
-            self._refcase_style.width = width
 
-    def setDefaultStyle(self, line_style, marker, width=None):
-        self._default_style.line_style = line_style
-        self._default_style.marker = marker
+    def setDefaultStyle(self, style):
+        """ @type style: PlotStyle """
+        self._default_style.line_style = style.line_style
+        self._default_style.marker = style.marker
+        self._default_style.width = style.width
+        self._default_style.size = style.size
 
-        if width is not None:
-            self._default_style.width = width
 
     @property
     def limits(self):
@@ -217,6 +224,7 @@ class PlotConfig(object):
         self._statistics_style["min-max"].copyStyleFrom(other._statistics_style["min-max"], copy_enabled_state=True)
         self._statistics_style["p10-p90"].copyStyleFrom(other._statistics_style["p10-p90"], copy_enabled_state=True)
         self._statistics_style["p33-p67"].copyStyleFrom(other._statistics_style["p33-p67"], copy_enabled_state=True)
+        self._statistics_style["std"].copyStyleFrom(other._statistics_style["std"], copy_enabled_state=True)
 
         self._legend_enabled = other._legend_enabled
         self._grid_enabled = other._grid_enabled
