@@ -1,54 +1,56 @@
 class PlotStyle(object):
-    def __init__(self, name, color="#000000", alpha=1.0, line_style="-", marker="", width=1.0):
+    def __init__(self, name, color="#000000", alpha=1.0, line_style="-", marker="", width=1.0, size=7.5):
         super(PlotStyle, self).__init__()
         self.name = name
         self.color = color
         self.alpha = alpha
         self.line_style = line_style
         self.marker = marker
-        self.width = width    # todo: differentiate between line_width and marker_size?
-        self.__enabled = True
-        self.__is_copy = False
+        self.width = width
+        self.size = size
+        self._enabled = True
+        self._is_copy = False
 
     def copyStyleFrom(self, other, copy_enabled_state=False):
         self.color = other.color
         self.alpha = other.alpha
-        self.line_style = other.line_style
-        self.marker = other.__marker
+        self.line_style = other._line_style
+        self.marker = other._marker
         self.width = other.width
-        self.__is_copy = True
+        self.size = other.size
+        self._is_copy = True
 
         if copy_enabled_state:
             self.setEnabled(other.isEnabled())
 
     def isEnabled(self):
-        return self.__enabled
+        return self._enabled
 
     def setEnabled(self, enabled):
-        self.__enabled = enabled
+        self._enabled = enabled
 
     def isVisible(self):
         return self.line_style != "" or self.marker != ""
 
     @property
     def name(self):
-        return self.__name
+        return self._name
 
     @name.setter
     def name(self, name):
-        self.__name = name
+        self._name = name
 
     @property
     def color(self):
-        return self.__color
+        return self._color
 
     @color.setter
     def color(self, color):
-        self.__color = color
+        self._color = color
 
     @property
     def alpha(self):
-        return self.__alpha
+        return self._alpha
 
     @alpha.setter
     def alpha(self, alpha):
@@ -56,36 +58,47 @@ class PlotStyle(object):
             alpha = 1.0
         if alpha < 0.0:
             alpha = 0.0
-        self.__alpha = alpha
+        self._alpha = alpha
 
     @property
     def marker(self):
-        return self.__marker if self.__marker is not None else ""
+        return self._marker if self._marker is not None else ""
 
     @marker.setter
     def marker(self, marker):
-        self.__marker = marker
+        self._marker = marker
 
     @property
     def line_style(self):
-        return self.__line_style if self.__line_style is not None else ""
+        return self._line_style if self._line_style is not None else ""
 
     @line_style.setter
     def line_style(self, line_style):
-        self.__line_style = line_style
+        self._line_style = line_style
 
     @property
     def width(self):
-        return self.__width if self.__width is not None else ""
+        return self._width
 
     @width.setter
     def width(self, width):
         if width < 0.0:
             width = 0.0
-        self.__width = width
+        self._width = width
+
+    @property
+    def size(self):
+        return self._size
+
+    @size.setter
+    def size(self, size):
+        if size < 0.0:
+            size = 0.0
+        self._size = size
+
 
     def __str__(self):
-        return "%s c:%s a:%f ls:%s m:%s w:%f enabled:%s copy:%s" % (self.name, self.color, self.alpha, self.line_style, self.marker, self.width, self.isEnabled(), self.__is_copy)
+        return "%s c:%s a:%f ls:%s m:%s w:%f s:%f enabled:%s copy:%s" % (self.name, self.color, self.alpha, self.line_style, self.marker, self.width, self.size, self.isEnabled(), self._is_copy)
 
     def __eq__(self, other):
         equalness = self.alpha == other.alpha
@@ -93,6 +106,7 @@ class PlotStyle(object):
         equalness = equalness and self.line_style == other.line_style
         equalness = equalness and self.width == other.width
         equalness = equalness and self.color == other.color
+        equalness = equalness and self.size == other.size
         equalness = equalness and self.isEnabled() == other.isEnabled()
 
         return equalness

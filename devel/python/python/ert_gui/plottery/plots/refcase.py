@@ -20,7 +20,7 @@ def _plotRefcase(axes, plot_config, data):
 
     style = plot_config.refcaseStyle()
 
-    lines = axes.plot_date(x=data.index.values, y=data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width)
+    lines = axes.plot_date(x=data.index.values, y=data, color=style.color, alpha=style.alpha, marker=style.marker, linestyle=style.line_style, linewidth=style.width, markersize=style.size)
 
     if len(lines) > 0 and style.isVisible():
         plot_config.addLegendItem("Refcase", lines[0])

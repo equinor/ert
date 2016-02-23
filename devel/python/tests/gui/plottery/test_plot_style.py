@@ -15,7 +15,14 @@ class PlotStyleTest(ExtendedTestCase):
         self.assertEqual(style.alpha, 1.0)
         self.assertEqual(style.marker, "")
         self.assertEqual(style.width, 1.0)
+        self.assertEqual(style.size, 7.5)
         self.assertTrue(style.isEnabled())
+
+        style.line_style = None
+        style.marker = None
+
+        self.assertEqual(style.line_style, "")
+        self.assertEqual(style.marker, "")
 
 
     def test_plot_style_builtin_checks(self):
@@ -35,6 +42,9 @@ class PlotStyleTest(ExtendedTestCase):
 
         style.width = -1
         self.assertEqual(style.width, 0.0)
+
+        style.size = -1
+        self.assertEqual(style.size, 0.0)
 
         style.alpha = 1.1
         self.assertEqual(style.alpha, 1.0)
@@ -60,6 +70,7 @@ class PlotStyleTest(ExtendedTestCase):
         self.assertEqual(style.line_style, copy_style.line_style)
         self.assertEqual(style.marker, copy_style.marker)
         self.assertEqual(style.width, copy_style.width)
+        self.assertEqual(style.size, copy_style.size)
         self.assertNotEqual(style.isEnabled(), copy_style.isEnabled())
 
         another_copy_style = PlotStyle("Another Copy")
@@ -87,13 +98,16 @@ class PlotStyleTest(ExtendedTestCase):
         plot_config.setRefcaseEnabled(False)
         plot_config.setObservationsEnabled(False)
 
-        plot_config.setDefaultStyle(".", "g")
-        plot_config.setRefcaseStyle(".", "g")
-        plot_config.setStatisticsStyle("mean", ".", "g")
-        plot_config.setStatisticsStyle("min-max", ".", "g")
-        plot_config.setStatisticsStyle("p50", ".", "g")
-        plot_config.setStatisticsStyle("p10-p90", ".", "g")
-        plot_config.setStatisticsStyle("p33-p67", ".", "g")
+        style = PlotStyle("test_style", line_style=".", marker="g", width=2.5, size=7.5)
+
+        plot_config.setDefaultStyle(style)
+        plot_config.setRefcaseStyle(style)
+        plot_config.setStatisticsStyle("mean", style)
+        plot_config.setStatisticsStyle("min-max", style)
+        plot_config.setStatisticsStyle("p50", style)
+        plot_config.setStatisticsStyle("p10-p90", style)
+        plot_config.setStatisticsStyle("p33-p67", style)
+        plot_config.setStatisticsStyle("std", style)
 
         copy_of_plot_config = PlotConfig("Copy of Golden Sample")
         copy_of_plot_config.copyConfigFrom(plot_config)
@@ -115,6 +129,7 @@ class PlotStyleTest(ExtendedTestCase):
         self.assertEqual(plot_config.getStatisticsStyle("p50"), copy_of_plot_config.getStatisticsStyle("p50"))
         self.assertEqual(plot_config.getStatisticsStyle("p10-p90"), copy_of_plot_config.getStatisticsStyle("p10-p90"))
         self.assertEqual(plot_config.getStatisticsStyle("p33-p67"), copy_of_plot_config.getStatisticsStyle("p33-p67"))
+        self.assertEqual(plot_config.getStatisticsStyle("std"), copy_of_plot_config.getStatisticsStyle("std"))
 
         self.assertEqual(plot_config.title(), copy_of_plot_config.title())
 
@@ -139,6 +154,7 @@ class PlotStyleTest(ExtendedTestCase):
         self.assertNotEqual(plot_config.getStatisticsStyle("p50"), copy_of_plot_config.getStatisticsStyle("p50"))
         self.assertNotEqual(plot_config.getStatisticsStyle("p10-p90"), copy_of_plot_config.getStatisticsStyle("p10-p90"))
         self.assertNotEqual(plot_config.getStatisticsStyle("p33-p67"), copy_of_plot_config.getStatisticsStyle("p33-p67"))
+        self.assertNotEqual(plot_config.getStatisticsStyle("std"), copy_of_plot_config.getStatisticsStyle("std"))
 
 
 

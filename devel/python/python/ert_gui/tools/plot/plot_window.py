@@ -3,12 +3,13 @@ from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayo
 
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.plottery import PlotContext, PlotDataGatherer as PDG, PlotConfig, plots
-
+from ert_gui.plottery.plot_config_factory import PlotConfigFactory
 
 from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget, DataTypeKeysListModel
 from ert_gui.tools.plot.customize import PlotCustomizer
 from ert_gui.widgets.util import may_take_a_long_time
 
+CROSS_CASE_STATISTICS = "Cross Case Statistics"
 DISTRIBUTION = "Distribution"
 GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"
@@ -24,15 +25,22 @@ class PlotWindow(QMainWindow):
         self._ert = ert
         """:type: ert.enkf.enkf_main.EnKFMain"""
 
-        self.setMinimumWidth(750)
-        self.setMinimumHeight(500)
+        key_manager = ert.getKeyManager()
+        """:type: ert.enkf.key_manager.KeyManager """
+
+        self.setMinimumWidth(850)
+        self.setMinimumHeight(650)
 
         self.setWindowTitle("Plotting")
         self.activateWindow()
 
         self._plot_customizer = PlotCustomizer(self)
-        self._plot_customizer.settingsChanged.connect(self.keySelected)
 
+        def plotConfigCreator(key):
+            return PlotConfigFactory.createPlotConfigForKey(ert, key)
+
+        self._plot_customizer.setPlotConfigCreator(plotConfigCreator)
+        self._plot_customizer.settingsChanged.connect(self.keySelected)
 
         self._central_tab = QTabWidget()
         self._central_tab.currentChanged.connect(self.currentPlotChanged)
@@ -45,9 +53,6 @@ class PlotWindow(QMainWindow):
         central_layout.addWidget(self._central_tab)
 
         self.setCentralWidget(central_widget)
-
-        key_manager = ert.getKeyManager()
-        """:type: ert.enkf.key_manager.KeyManager """
 
         self._plot_widgets = []
         """:type: list of PlotWidget"""
@@ -66,6 +71,7 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(HISTOGRAM, plots.plotHistogram, [gen_kw_gatherer, custom_kw_gatherer])
         self.addPlotWidget(GAUSSIAN_KDE, plots.plotGaussianKDE, [gen_kw_gatherer, custom_kw_gatherer])
         self.addPlotWidget(DISTRIBUTION, plots.plotDistribution, [gen_kw_gatherer, custom_kw_gatherer])
+        self.addPlotWidget(CROSS_CASE_STATISTICS, plots.plotCrossCaseStatistics, [gen_kw_gatherer, custom_kw_gatherer])
 
 
         data_types_key_model = DataTypeKeysListModel(ert)
@@ -83,6 +89,7 @@ class PlotWindow(QMainWindow):
         current_plot_widget.setActive()
         self._data_type_keys_widget.selectDefault()
         self._updateCustomizer(current_plot_widget)
+
 
 
 
@@ -124,6 +131,8 @@ class PlotWindow(QMainWindow):
             x_axis_type = index_type
             y_axis_type = PlotContext.VALUE_AXIS
         elif plot_widget.name == DISTRIBUTION:
+            y_axis_type = PlotContext.VALUE_AXIS
+        elif plot_widget.name == CROSS_CASE_STATISTICS:
             y_axis_type = PlotContext.VALUE_AXIS
         elif plot_widget.name == HISTOGRAM:
             x_axis_type = PlotContext.VALUE_AXIS

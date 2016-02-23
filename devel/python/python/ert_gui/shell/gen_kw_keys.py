@@ -13,6 +13,7 @@ class GenKWKeys(ErtShellCollection):
         ShellPlot.addHistogramPlotSupport(self, "GenKW")
         ShellPlot.addGaussianKDEPlotSupport(self, "GenKW")
         ShellPlot.addDistributionPlotSupport(self, "GenKW")
+        ShellPlot.addCrossCaseStatisticsPlotSupport(self, "GenKW")
 
     def fetchSupportedKeys(self):
         return self.ert().getKeyManager().genKwKeys()

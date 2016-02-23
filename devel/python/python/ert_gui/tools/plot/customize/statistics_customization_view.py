@@ -6,14 +6,16 @@ from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
 class StatisticsCustomizationView(CustomizationView):
     mean_style = WidgetProperty()
     p50_style = WidgetProperty()
+    std_style = WidgetProperty()
     min_max_style = WidgetProperty()
     p10_p90_style = WidgetProperty()
     p33_p67_style = WidgetProperty()
+    distribution_lines = WidgetProperty()
 
     def __init__(self):
         CustomizationView.__init__(self)
 
-        self._presets = ["Default", "Overview", "All statistics"]
+        self._presets = ["Statistics Default", "Cross Case Statistics Default", "Overview", "All statistics"]
 
         self.addRow("Presets", self.createPresets())
         self.addSpacing(10)
@@ -21,9 +23,12 @@ class StatisticsCustomizationView(CustomizationView):
         self.addRow("", layout)
         self.addStyleChooser("mean_style", "Mean", "Line and marker style for the mean line.")
         self.addStyleChooser("p50_style", "P50", "Line and marker style for the P50 line.")
+        self.addStyleChooser("std_style", "Std dev", "Line and marker style for the unbiased standard deviation lines.", True)
         self.addStyleChooser("min_max_style", "Min/Max", "Line and marker style for the min/max lines.", True)
         self.addStyleChooser("p10_p90_style", "P10-P90", "Line and marker style for the P10-P90 lines.", True)
         self.addStyleChooser("p33_p67_style", "P33-P67", "Line and marker style for the P33-P67 lines.", True)
+        self.addSpacing()
+        self.addCheckBox("distribution_lines", "Connection Lines", "Toggle distribution connection lines visibility.")
 
         self["mean_style"].createLabelLayout(layout)
 
@@ -42,18 +47,28 @@ class StatisticsCustomizationView(CustomizationView):
         if index == 0: # Default
             self.updateStyle("mean_style", "-", None)
             self.updateStyle("p50_style", None, None)
+            self.updateStyle("std_style", None, None)
             self.updateStyle("min_max_style", None, None)
             self.updateStyle("p10_p90_style", "--", None)
             self.updateStyle("p33_p67_style", None, None)
-        elif index == 1: # Overview
+        elif index == 1: # CCS Default
+            self.updateStyle("mean_style", "-", "o")
+            self.updateStyle("p50_style", None, None)
+            self.updateStyle("std_style", "--", "D")
+            self.updateStyle("min_max_style", None, None)
+            self.updateStyle("p10_p90_style", None, None)
+            self.updateStyle("p33_p67_style", None, None)
+        elif index == 2: # Overview
             self.updateStyle("mean_style", None, None)
             self.updateStyle("p50_style", None, None)
+            self.updateStyle("std_style", None, None)
             self.updateStyle("min_max_style", "#", None)
             self.updateStyle("p10_p90_style", None, None)
             self.updateStyle("p33_p67_style", None, None)
-        elif index == 2: # All statistics
+        elif index == 3: # All statistics
             self.updateStyle("mean_style", "-", None)
             self.updateStyle("p50_style", "--", "x")
+            self.updateStyle("std_style", ":", None)
             self.updateStyle("min_max_style", "--", None)
             self.updateStyle("p10_p90_style", "#", None)
             self.updateStyle("p33_p67_style", "#", None)
@@ -70,11 +85,14 @@ class StatisticsCustomizationView(CustomizationView):
         """
         @type plot_config: ert_gui.plottery.PlotConfig
         """
-        plot_config.setStatisticsStyle("mean", self.mean_style.line_style, self.mean_style.marker, self.mean_style.width)
-        plot_config.setStatisticsStyle("p50", self.p50_style.line_style, self.p50_style.marker, self.p50_style.width)
-        plot_config.setStatisticsStyle("min-max", self.min_max_style.line_style, self.min_max_style.marker, self.min_max_style.width)
-        plot_config.setStatisticsStyle("p10-p90", self.p10_p90_style.line_style, self.p10_p90_style.marker, self.p10_p90_style.width)
-        plot_config.setStatisticsStyle("p33-p67", self.p33_p67_style.line_style, self.p33_p67_style.marker, self.p33_p67_style.width)
+        plot_config.setStatisticsStyle("mean", self.mean_style)
+        plot_config.setStatisticsStyle("p50", self.p50_style)
+        plot_config.setStatisticsStyle("std", self.std_style)
+        plot_config.setStatisticsStyle("min-max", self.min_max_style)
+        plot_config.setStatisticsStyle("p10-p90", self.p10_p90_style)
+        plot_config.setStatisticsStyle("p33-p67", self.p33_p67_style)
+
+        plot_config.setDistributionLineEnabled(self.distribution_lines)
 
 
     def revertCustomization(self, plot_config):
@@ -83,6 +101,9 @@ class StatisticsCustomizationView(CustomizationView):
         """
         self.mean_style = plot_config.getStatisticsStyle("mean")
         self.p50_style = plot_config.getStatisticsStyle("p50")
+        self.std_style = plot_config.getStatisticsStyle("std")
         self.min_max_style = plot_config.getStatisticsStyle("min-max")
         self.p10_p90_style = plot_config.getStatisticsStyle("p10-p90")
         self.p33_p67_style = plot_config.getStatisticsStyle("p33-p67")
+
+        self.distribution_lines = plot_config.isDistributionLineEnabled()
