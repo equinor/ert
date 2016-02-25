@@ -21,6 +21,7 @@
 
 #include <ert/util/util.h>
 #include <ert/util/subst_list.h>
+#include <ert/util/vector.h>
 
 #include <ert/config/config_parser.h>
 
@@ -38,94 +39,121 @@
 #define RUN_MODE_POST_SIMULATION_NAME "POST_SIMULATION"
 
 struct hook_manager_struct {
-  hook_workflow_type     * hook_workflow;      /* Will be generalized to a vector list */
+  vector_type            * hook_workflow_list;  /* vector of hook_workflow_type instances */
   runpath_list_type      * runpath_list;
   ert_workflow_list_type * workflow_list;
+  hash_type              * input_context;
+
 
   /* Deprecated stuff */
   hook_workflow_type     * post_hook_workflow; /* This is the good old QC workflow, kept for backward compatibility, obsolete */
-  char                   * path;               /* The QC path, kept for backward compatibility */
 };
 
-hook_manager_type * hook_manager_alloc( ert_workflow_list_type * workflow_list , const char * path ) {
+hook_manager_type * hook_manager_alloc( ert_workflow_list_type * workflow_list ) {
   hook_manager_type * hook_manager = util_malloc( sizeof * hook_manager );
-  hook_manager->hook_workflow = hook_workflow_alloc(path);
+  hook_manager->hook_workflow_list = vector_alloc_new();
+
   hook_manager->runpath_list = runpath_list_alloc( NULL );
   hook_manager->workflow_list = workflow_list;
   hook_manager_set_runpath_list_file( hook_manager, NULL, RUNPATH_LIST_FILE );
+  hook_manager->input_context = hash_alloc();
 
-  /* Deprecated stuff */
-  hook_manager->post_hook_workflow = hook_workflow_alloc(path);
-  hook_manager->path = NULL;
-  hook_manager_set_path( hook_manager , path );
   return hook_manager;
 }
 
-void hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config) {
-  if (config_content_has_item( config, RUNPATH_FILE_KEY))
-      hook_manager_set_runpath_list_file(hook_manager, NULL, config_content_get_value(config, RUNPATH_FILE_KEY));
-}
 
 void hook_manager_free( hook_manager_type * hook_manager ) {
   runpath_list_free( hook_manager->runpath_list );
+  vector_free( hook_manager->hook_workflow_list );
+  hash_free( hook_manager->input_context );
   free( hook_manager );
 }
+
+
+
+void hook_manager_add_input_context( hook_manager_type * hook_manager, const char * key , const char * value) {
+  hash_insert_hash_owned_ref(hook_manager->input_context, key, util_alloc_string_copy(value), free);
+}
+
+
 
 runpath_list_type * hook_manager_get_runpath_list( hook_manager_type * hook_manager ) {
   return hook_manager->runpath_list;
 }
 
-bool hook_manager_run_hook_workflow( const hook_manager_type * hook_manager , void * self) {
-  const char * export_file = runpath_list_get_export_file( hook_manager->runpath_list );
-  if (!util_file_exists( export_file ))
-      fprintf(stderr,"** Warning: the file:%s with a list of runpath directories was not found - workflow will probably fail.\n" , export_file);
 
-  return hook_workflow_run_workflow(hook_manager->hook_workflow, hook_manager->workflow_list, self);
-}
-
-bool hook_manager_has_hook_workflow( const hook_manager_type * hook_manager ) {
-  return (hook_manager->hook_workflow != NULL);
-}
-
-const hook_workflow_type * hook_manager_get_hook_workflow( const hook_manager_type * hook_manager ) {
-    return hook_manager->hook_workflow;
-}
-
-void hook_manager_init_hook( hook_manager_type * hook_manager , const config_content_type * config) {
-  if (config_content_has_item( config , HOOK_WORKFLOW_KEY)) {
-    const char * file_name = config_content_iget( config , HOOK_WORKFLOW_KEY, 0, 0 );
-    char * workflow_name;
-    util_alloc_file_components( file_name , NULL , &workflow_name , NULL );
-    {
-      workflow_type * workflow = ert_workflow_list_add_workflow( hook_manager->workflow_list , file_name , workflow_name);
-      if (workflow != NULL) {
-        ert_workflow_list_add_alias( hook_manager->workflow_list , workflow_name , HOOK_WORKFLOW_KEY );
-        hook_workflow_set_workflow( hook_manager->hook_workflow , workflow);
-      }
-      hook_workflow_set_run_mode( hook_manager->hook_workflow , config_content_iget( config , HOOK_WORKFLOW_KEY, 0, 1 ));
+static void hook_manager_add_workflow( hook_manager_type * hook_manager , const char * filename , hook_run_mode_enum run_mode) {
+  char * workflow_name;
+  util_alloc_file_components( filename , NULL , &workflow_name , NULL );
+  {
+    workflow_type * workflow = ert_workflow_list_add_workflow( hook_manager->workflow_list , filename , workflow_name);
+    if (workflow != NULL) {
+      hook_workflow_type * hook = hook_workflow_alloc( workflow , run_mode );
+      vector_append_owned_ref(hook_manager->hook_workflow_list, hook , hook_workflow_free__);
     }
   }
 }
 
+
+
+void hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config_content) {
+
+  /* Old stuff explicitly prefixed with QC - the  */
+  {
+    if (config_content_has_item( config_content , QC_WORKFLOW_KEY)) {
+      const char * file_name = config_content_get_value_as_path(config_content , QC_WORKFLOW_KEY);
+      hook_manager_add_workflow( hook_manager , file_name , POST_SIMULATION );
+    }
+  }
+
+
+
+  if (config_content_has_item( config_content , HOOK_WORKFLOW_KEY)) {
+    for (int ihook = 0; ihook < config_content_get_occurences(config_content , HOOK_WORKFLOW_KEY); ihook++) {
+      const char * file_name = config_content_iget( config_content , HOOK_WORKFLOW_KEY, ihook , 0 );
+      hook_run_mode_enum run_mode = hook_workflow_run_mode_from_name(config_content_iget(config_content , HOOK_WORKFLOW_KEY , ihook , 1));
+      hook_manager_add_workflow( hook_manager , file_name , run_mode );
+    }
+  }
+}
+
+
+
 void hook_manager_add_config_items( config_parser_type * config ) {
   config_schema_item_type * item;
 
-  item = config_add_schema_item( config , QC_PATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  /* Old stuff - explicitly prefixed with QC. */
+  {
+    item = config_add_schema_item( config , QC_PATH_KEY , false  );
+    config_schema_item_set_argc_minmax(item , 1 , 1 );
+    config_install_message( config , QC_PATH_KEY , "The \'QC_PATH\' keyword is ignored.");
 
-  item = config_add_schema_item( config , QC_WORKFLOW_KEY , false );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
+
+    item = config_add_schema_item( config , QC_WORKFLOW_KEY , false );
+    config_schema_item_set_argc_minmax(item , 1 , 1 );
+    config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
+
+    config_install_message( config , QC_WORKFLOW_KEY , "The \'QC_WORKFLOW\' keyword is deprecated - use \'HOOK_WORKFLOW\' instead");
+  }
 
   item = config_add_schema_item( config , HOOK_WORKFLOW_KEY , false );
   config_schema_item_set_argc_minmax(item , 2 , 2 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
   config_schema_item_iset_type( item , 1 , CONFIG_STRING );
+  {
+    char ** argv = util_malloc( 2 * sizeof * argv );
+
+    argv[0] = RUN_MODE_PRE_SIMULATION_NAME;
+    argv[1] = RUN_MODE_POST_SIMULATION_NAME;
+    config_schema_item_set_indexed_selection_set(item, 1, 2, (const char **) argv);
+
+    free( argv );
+  }
 
   item = config_add_schema_item( config , RUNPATH_FILE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
-
 }
+
 
 void hook_manager_export_runpath_list( const hook_manager_type * hook_manager ) {
   runpath_list_fprintf( hook_manager->runpath_list );
@@ -166,46 +194,31 @@ void hook_manager_set_runpath_list_file( hook_manager_type * hook_manager , cons
   }
 }
 
-/*****************************************************************/
-/* Deprecated stuff                                              */
-/*****************************************************************/
 
-void hook_manager_init_post_hook( hook_manager_type * hook_manager , const config_content_type * config) {
- if (config_content_has_item( config , QC_PATH_KEY ))
-    hook_manager_set_path( hook_manager, config_content_get_value( config , QC_PATH_KEY ));
-
-  if (config_content_has_item( config , QC_WORKFLOW_KEY)) {
-    const char * file_name = config_content_get_value_as_path(config , QC_WORKFLOW_KEY);
-    char * workflow_name;
-    util_alloc_file_components( file_name , NULL , &workflow_name , NULL );
-    {
-      workflow_type * workflow = ert_workflow_list_add_workflow( hook_manager->workflow_list , file_name , workflow_name);
-      if (workflow != NULL) {
-        ert_workflow_list_add_alias( hook_manager->workflow_list , workflow_name , QC_WORKFLOW_NAME );
-        hook_workflow_set_workflow( hook_manager->post_hook_workflow, workflow );
-      }
-
-      hook_workflow_set_run_mode( hook_manager->post_hook_workflow, RUN_MODE_POST_SIMULATION_NAME);
+void hook_manager_run_workflows( const hook_manager_type * hook_manager , hook_run_mode_enum run_mode , void * self )
+{
+  bool verbose = false;
+  for (int i=0; i < vector_get_size( hook_manager->hook_workflow_list ); i++) {
+    hook_workflow_type * hook_workflow = vector_iget( hook_manager->hook_workflow_list , i );
+    if (hook_workflow_get_run_mode(hook_workflow) == run_mode) {
+      workflow_type * workflow = hook_workflow_get_workflow( hook_workflow );
+      workflow_run( workflow, self , verbose , ert_workflow_list_get_context( hook_manager->workflow_list ));
+      /*
+        The workflow_run function will return a bool to indicate
+        success/failure, and in the case of error the function
+        workflow_get_last_error() can be used to get a config_error
+        object.
+      */
     }
   }
 }
 
-void hook_manager_set_path( hook_manager_type * hook_manager , const char * path) {
-  hook_manager->path = util_realloc_string_copy( hook_manager->path , path );
-}
 
-const char * hook_manager_get_path( const hook_manager_type * hook_manager ) {
-  return hook_manager->path;
-}
+/*****************************************************************/
+/* Deprecated stuff                                              */
+/*****************************************************************/
 
 
-const hook_workflow_type * hook_manager_get_post_hook_workflow( const hook_manager_type * hook_manager ) {
-    return hook_manager->post_hook_workflow;
-}
-
-bool hook_manager_has_post_hook_workflow( const hook_manager_type * hook_manager ) {
-  return (hook_manager->post_hook_workflow != NULL);
-}
 
 bool hook_manager_run_post_hook_workflow( const hook_manager_type * hook_manager , void * self) {
   const char * export_file = runpath_list_get_export_file( hook_manager->runpath_list );
@@ -214,3 +227,6 @@ bool hook_manager_run_post_hook_workflow( const hook_manager_type * hook_manager
 
   return hook_workflow_run_workflow(hook_manager->post_hook_workflow, hook_manager->workflow_list, self);
 }
+
+
+

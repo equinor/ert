@@ -1,6 +1,7 @@
 from ert.enkf.enums import EnkfInitModeEnum
 from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseModel, AnalysisModuleModel, BaseRunModel
 from ert_gui.models.mixins import ErtRunError
+from ert.enkf.enums import HookRuntime
 
 
 class EnsembleSmoother(BaseRunModel):
@@ -23,9 +24,6 @@ class EnsembleSmoother(BaseRunModel):
 
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
 
-        if self.ert().getEnkfSimulationRunner().isHookPreSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL , 0)
 
         if not success:
@@ -39,12 +37,10 @@ class EnsembleSmoother(BaseRunModel):
             #else ignore and continue
 
 
-        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-
+        
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().runPostHookWorkflow()
-
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         target_case_name = TargetCaseModel().getValue()
@@ -64,12 +60,7 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Simulation failed!")
 
         self.setPhaseName("Post processing...", indeterminate=True)
-
-        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-
-        # Special QC workflow for backward compatibility
-        self.ert().getEnkfSimulationRunner().runPostHookWorkflow()
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
         self.setPhase(2, "Simulations completed.")
 

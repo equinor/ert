@@ -108,8 +108,6 @@ extern "C" {
   void                          enkf_main_assimilation_update(enkf_main_type * enkf_main , const int_vector_type * step_list);
   bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * target_fs);
 
-  void                          enkf_main_run_post_workflow( enkf_main_type * enkf_main );
-  void                          enkf_main_run_hook_workflow( enkf_main_type * enkf_main );
   bool                          enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_type init_mode, int iter);
 
   void                          enkf_main_run_exp(enkf_main_type * enkf_main ,
@@ -196,7 +194,6 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   int_vector_type           * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride);
 
   hook_manager_type         * enkf_main_get_hook_manager( const enkf_main_type * enkf_main );
-  bool                   enkf_main_has_QC_workflow( const enkf_main_type * enkf_main );
 
   void enkf_main_get_PC( const matrix_type * S,
                          const matrix_type * dObs,

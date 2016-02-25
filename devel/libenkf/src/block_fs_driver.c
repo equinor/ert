@@ -503,7 +503,9 @@ void * block_fs_driver_open(FILE * fstab_stream , const char * mount_point , fs_
 
 
 void block_fs_driver_fskip(FILE * fstab_stream) {
-  int num_fs                  = util_fread_int( fstab_stream );
-  char * tmp_fmt              = util_fread_alloc_string( fstab_stream );
-  free( tmp_fmt );
+  util_fskip_int( fstab_stream );
+  {
+    char * tmp_fmt = util_fread_alloc_string( fstab_stream );
+    free( tmp_fmt );
+  }
 }
