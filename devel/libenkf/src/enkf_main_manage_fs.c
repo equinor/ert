@@ -213,7 +213,6 @@ void enkf_main_init_current_case_from_existing(enkf_main_type * enkf_main,
                                     source_state,
                                     current_fs);
 
-  enkf_main_invalidate_cache(enkf_main);
 }
 
 
@@ -234,7 +233,6 @@ void enkf_main_init_current_case_from_existing_custom(enkf_main_type * enkf_main
                                            node_list,
                                            iactive);
 
-  enkf_main_invalidate_cache(enkf_main);
 }
 
 
@@ -579,7 +577,6 @@ void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const ch
         }
 
         enkf_main->dbase = fs;
-        enkf_main_invalidate_cache(enkf_main);
         enkf_main_update_current_case(enkf_main, case_path);
 
         enkf_main_update_summary_config_from_fs__(enkf_main, fs);

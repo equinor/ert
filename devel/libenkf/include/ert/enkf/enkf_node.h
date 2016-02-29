@@ -117,13 +117,13 @@ extern "C" {
   /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
     because the enkf_config_node needs to know how to free the min_std node.
-    
+
     void             enkf_node_free(enkf_node_type *enkf_node);
   */
 
   bool             enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path , int iens);
   bool             enkf_node_has_data( enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id);
-  void             enkf_node_free_data(enkf_node_type * );
+  //void             enkf_node_free_data(enkf_node_type * );
   void             enkf_node_free__(void *);
   void             enkf_initialize(enkf_node_type * , int);
   bool             enkf_node_include_type(const enkf_node_type * , int );
@@ -137,7 +137,6 @@ extern "C" {
   
   bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , const int_vector_type * time_index , int iens );
   bool             enkf_node_forward_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_file_type * , int, int );
-  void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int , int);
   void             enkf_node_ecl_write (const enkf_node_type *, const char * , void * , int);
   bool             enkf_node_initialize(enkf_node_type *enkf_node , int , rng_type * );
   void             enkf_node_printf(const enkf_node_type *);
@@ -184,7 +183,6 @@ void   enkf_node_scale(enkf_node_type *   , double );
 void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );
 void   enkf_node_iaddsqr(enkf_node_type * , const enkf_node_type * );
 void   enkf_node_imul(enkf_node_type *    , const enkf_node_type * );
-void   enkf_node_invalidate_cache( enkf_node_type * node );
 const  enkf_config_node_type * enkf_node_get_config(const enkf_node_type * );
 const char     *  enkf_config_node_get_infile(const enkf_config_node_type * );
 const char     *  enkf_node_get_key(const enkf_node_type * );
