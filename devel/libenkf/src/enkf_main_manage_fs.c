@@ -1,19 +1,19 @@
 /*
    Copyright (C) 2013  Statoil ASA, Norway.
-    
+
    The file 'enkf_main_manage_fs.c' is part of ERT - Ensemble based Reservoir Tool.
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <ert/enkf/summary_key_set.h>
@@ -110,7 +110,7 @@ void enkf_main_initialize_from_scratch_with_bool_vector(enkf_main_type * enkf_ma
   arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
   int i;
   int iens;
-  
+
   for (iens = 0; iens < ens_size; iens++) {
     arg_list[iens] = arg_pack_alloc();
     if (bool_vector_safe_iget(iens_mask , iens)) {
@@ -158,7 +158,7 @@ static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
                                      const stringlist_type * node_list) {
 
   const int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  state_map_type * target_state_map = enkf_fs_get_state_map(target_case_fs); 
+  state_map_type * target_state_map = enkf_fs_get_state_map(target_case_fs);
 
   {
     int * ranking_permutation;
@@ -186,9 +186,9 @@ static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
             enkf_node_copy( config_node ,
                             source_case_fs , target_case_fs ,
                             src_id , target_id );
-                            
+
           if (0 == target_report_step)
-            state_map_iset(target_state_map, target_iens, STATE_INITIALIZED); 
+            state_map_iset(target_state_map, target_iens, STATE_INITIALIZED);
         }
       }
     }
@@ -213,7 +213,6 @@ void enkf_main_init_current_case_from_existing(enkf_main_type * enkf_main,
                                     source_state,
                                     current_fs);
 
-  enkf_main_invalidate_cache(enkf_main);
 }
 
 
@@ -234,7 +233,6 @@ void enkf_main_init_current_case_from_existing_custom(enkf_main_type * enkf_main
                                            node_list,
                                            iactive);
 
-  enkf_main_invalidate_cache(enkf_main);
 }
 
 
@@ -408,7 +406,7 @@ static void enkf_main_write_current_case_file( const enkf_main_type * enkf_main,
 static void enkf_main_update_current_case( enkf_main_type * enkf_main , const char * case_path /* Can be NULL */) {
   if (!case_path)
     case_path = enkf_fs_get_case_name( enkf_main_get_fs(enkf_main) );
-  
+
   enkf_main_write_current_case_file(enkf_main, case_path);
   update_case_log(enkf_main , case_path);
 
@@ -424,7 +422,7 @@ static void enkf_main_create_fs( const enkf_main_type * enkf_main , const char *
 
   enkf_fs_create_fs( new_mount_point,
                      model_config_get_dbase_type( enkf_main->model_config ) ,
-                     model_config_get_dbase_args( enkf_main->model_config ) , 
+                     model_config_get_dbase_args( enkf_main->model_config ) ,
                      false );
 
   free( new_mount_point );
@@ -506,7 +504,7 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
           time_map_type * time_map = enkf_fs_get_time_map( new_fs );
           if (time_map_attach_refcase( time_map , refcase))
             time_map_set_strict( time_map , false );
-          else 
+          else
             ert_log_add_fmt_message(1 , stderr , "Warning mismatch between refcase:%s and existing case:%s" , ecl_sum_get_case( refcase ) , new_mount_point);
         }
       }
@@ -579,7 +577,6 @@ void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const ch
         }
 
         enkf_main->dbase = fs;
-        enkf_main_invalidate_cache(enkf_main);
         enkf_main_update_current_case(enkf_main, case_path);
 
         enkf_main_update_summary_config_from_fs__(enkf_main, fs);

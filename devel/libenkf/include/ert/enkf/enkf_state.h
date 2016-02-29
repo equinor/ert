@@ -104,7 +104,6 @@ typedef struct enkf_state_struct    enkf_state_type;
   void               enkf_state_update_node( enkf_state_type * enkf_state , const char * node_key );
   void               enkf_state_update_jobname( enkf_state_type * enkf_state );
   void               enkf_state_update_eclbase( enkf_state_type * enkf_state );
-  void               enkf_state_invalidate_cache( enkf_state_type * enkf_state );
   void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
   enkf_node_type *   enkf_state_get_or_create_node(enkf_state_type * enkf_state, const enkf_config_node_type * config_node);
   void               enkf_state_load_ecl_restart(enkf_state_type * , bool , int );
