@@ -29,7 +29,7 @@ class EnkfSimulationRunner(BaseCClass):
         return self.runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iter_nr)
 
 
-    def runWorkFlows(self , runtime):
+    def runWorkflows(self , runtime):
         """:type ert.enkf.enum.HookRuntimeEnum"""
         hook_manager = self.ert.getHookManager()
         hook_manager.runWorkflows( runtime  , self.ert ) 
