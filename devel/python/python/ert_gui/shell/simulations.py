@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+
 from ert.enkf import EnkfSimulationRunner
 from ert.enkf.enums import HookRuntime
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
@@ -16,7 +17,6 @@ class Simulations(ErtShellCollection):
                               function=Simulations.ensembleExperiment,
                               help_message="Run Ensemble Experiment.")
 
-
     @assertConfigLoaded
     def settings(self, line):
         runpath = self.ert().getModelConfig().getRunpathAsString()
@@ -27,7 +27,6 @@ class Simulations(ErtShellCollection):
         print("Runpath: %s" % runpath)
         print("Iteration count: %d" % iteration_count)
         print("Realization count: %d" % realizations)
-
 
     @assertConfigLoaded
     def ensembleExperiment(self, line):
@@ -44,12 +43,9 @@ class Simulations(ErtShellCollection):
             return
 
         print("Ensemble Experiment post processing!")
-        simulation_runner.runWorklows( HookRuntime.POST_SIMULATION )
+        simulation_runner.runWorkflows(HookRuntime.POST_SIMULATION)
 
         print("Ensemble Experiment completed at: %s" % datetime.now().isoformat(sep=" "))
 
         diff = time.time() - now
         print("Running time: %d seconds" % int(diff))
-
-
-
