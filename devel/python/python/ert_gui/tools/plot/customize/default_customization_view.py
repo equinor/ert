@@ -9,6 +9,7 @@ class DefaultCustomizationView(CustomizationView):
     legend = WidgetProperty()
     grid = WidgetProperty()
     refcase = WidgetProperty()
+    history = WidgetProperty()
     observations = WidgetProperty()
 
 
@@ -29,6 +30,7 @@ class DefaultCustomizationView(CustomizationView):
         self.addCheckBox("legend", "Legend", "Toggle Legend visibility.")
         self.addCheckBox("grid", "Grid", "Toggle Grid visibility.")
         self.addCheckBox("refcase", "Refcase", "Toggle Refcase visibility.")
+        self.addCheckBox("history", "History", "Toggle History visibility.")
         self.addCheckBox("observations", "Observations", "Toggle Observations visibility.")
 
 
@@ -44,6 +46,7 @@ class DefaultCustomizationView(CustomizationView):
         plot_config.setLegendEnabled(self.legend)
         plot_config.setGridEnabled(self.grid)
         plot_config.setRefcaseEnabled(self.refcase)
+        plot_config.setHistoryEnabled(self.history)
         plot_config.setObservationsEnabled(self.observations)
 
 
@@ -62,4 +65,5 @@ class DefaultCustomizationView(CustomizationView):
         self.legend = plot_config.isLegendEnabled()
         self.grid = plot_config.isGridEnabled()
         self.refcase = plot_config.isRefcaseEnabled()
+        self.history = plot_config.isHistoryEnabled()
         self.observations = plot_config.isObservationsEnabled()

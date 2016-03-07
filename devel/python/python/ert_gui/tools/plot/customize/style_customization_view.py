@@ -7,6 +7,7 @@ from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
 class StyleCustomizationView(CustomizationView):
     default_style = WidgetProperty()
     refcase_style = WidgetProperty()
+    history_style = WidgetProperty()
     color_cycle = WidgetProperty()
 
     def __init__(self):
@@ -17,6 +18,7 @@ class StyleCustomizationView(CustomizationView):
         self.addRow("", layout)
         self.addStyleChooser("default_style", "Default", "Line and marker style for default lines.")
         self.addStyleChooser("refcase_style", "Refcase", "Line and marker style for the refcase line.")
+        self.addStyleChooser("history_style", "History", "Line and marker style for the history line.")
 
         self["default_style"].createLabelLayout(layout)
 
@@ -59,6 +61,7 @@ class StyleCustomizationView(CustomizationView):
         """
         plot_config.setDefaultStyle(self.default_style)
         plot_config.setRefcaseStyle(self.refcase_style)
+        plot_config.setHistoryStyle(self.history_style)
         plot_config.setLineColorCycle(self.color_cycle)
 
     def revertCustomization(self, plot_config):
@@ -67,6 +70,7 @@ class StyleCustomizationView(CustomizationView):
         """
         self.default_style = plot_config.defaultStyle()
         self.refcase_style = plot_config.refcaseStyle()
+        self.history_style = plot_config.historyStyle()
         self.color_cycle = plot_config.lineColorCycle()
 
 

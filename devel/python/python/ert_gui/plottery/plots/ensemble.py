@@ -1,4 +1,5 @@
 from .refcase import plotRefcase
+from .history import plotHistory
 from .observations import plotObservations
 from .plot_tools import PlotTools
 
@@ -30,6 +31,7 @@ def plotEnsemble(plot_context):
 
     plotRefcase(plot_context, axes)
     plotObservations(plot_context, axes)
+    plotHistory(plot_context, axes)
 
     default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
     PlotTools.finalizePlot(plot_context, axes, default_x_label=default_x_label, default_y_label="Value")
