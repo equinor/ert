@@ -23,6 +23,8 @@ class PlotConfig(object):
 
         self._default_style = PlotStyle(name="Default", color=None, alpha=0.8)
         self._refcase_style = PlotStyle(name="Refcase", alpha=0.8, marker="x", width=2.0)
+        self._history_style = PlotStyle(name="History", alpha=0.8, marker="D", width=2.0)
+        self._history_style.setEnabled(False)
         self._observation_style = PlotStyle(name="Observations")
         self._histogram_style = PlotStyle(name="Histogram", width=2.0)
         self._distribution_style = PlotStyle(name="Distribution", line_style="", marker="o", alpha=0.5, size=10.0)
@@ -92,6 +94,12 @@ class PlotConfig(object):
         style.copyStyleFrom(self._refcase_style)
         return style
 
+    def historyStyle(self):
+        """ @rtype: PlotStyle """
+        style = PlotStyle("History Style")
+        style.copyStyleFrom(self._history_style)
+        return style
+
     def histogramStyle(self):
         """ @rtype: PlotStyle """
         style = PlotStyle("Histogram Style")
@@ -142,6 +150,12 @@ class PlotConfig(object):
     def isRefcaseEnabled(self):
         return self._refcase_style.isEnabled()
 
+    def setHistoryEnabled(self, enabled):
+        self._history_style.setEnabled(enabled)
+
+    def isHistoryEnabled(self):
+        return self._history_style.isEnabled()
+
     def isLegendEnabled(self):
         return self._legend_enabled
 
@@ -186,6 +200,13 @@ class PlotConfig(object):
         self._refcase_style.width = style.width
         self._refcase_style.size = style.size
 
+    def setHistoryStyle(self, style):
+        """ @type style: PlotStyle """
+        self._history_style.line_style = style.line_style
+        self._history_style.marker = style.marker
+        self._history_style.width = style.width
+        self._history_style.size = style.size
+
 
     def setDefaultStyle(self, style):
         """ @type style: PlotStyle """
@@ -214,6 +235,7 @@ class PlotConfig(object):
         """
         self._default_style.copyStyleFrom(other._default_style, copy_enabled_state=True)
         self._refcase_style.copyStyleFrom(other._refcase_style, copy_enabled_state=True)
+        self._history_style.copyStyleFrom(other._history_style, copy_enabled_state=True)
         self._histogram_style.copyStyleFrom(other._histogram_style, copy_enabled_state=True)
         self._observation_style.copyStyleFrom(other._observation_style, copy_enabled_state=True)
         self._distribution_style.copyStyleFrom(other._distribution_style, copy_enabled_state=True)
