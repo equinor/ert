@@ -22,9 +22,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def runAndPostProcess(self, active_realization_mask, phase, phase_count, mode):
         self.setPhase(phase, "Running iteration %d of %d simulation iterations..." % (phase, phase_count - 1), indeterminate=False)
 
-        if self.ert().getEnkfSimulationRunner().isHookPreSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-            
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
 
         if not success:
