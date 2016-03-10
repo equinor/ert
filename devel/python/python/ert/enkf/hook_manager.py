@@ -23,7 +23,8 @@ class HookManager(BaseCClass):
     
     
     def runWorkflows(self , run_time , ert_self):
-        HookManager.cNamespace().run_workflows(self , run_time , ert_self)
+        ert_self_ptr = ert_self.from_param(ert_self).value
+        HookManager.cNamespace().run_workflows(self , run_time , ert_self_ptr)
         
     
 cwrapper = CWrapper(ENKF_LIB)

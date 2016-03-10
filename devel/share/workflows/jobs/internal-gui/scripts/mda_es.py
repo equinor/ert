@@ -1,7 +1,10 @@
 from math import sqrt
 import os
 
-from ert.enkf import ErtPlugin, CancelPluginException, EnkfInitModeEnum, EnkfStateType
+from PyQt4.QtGui import QLabel
+
+from ert.enkf import ErtPlugin, CancelPluginException, EnkfInitModeEnum, EnkfStateType, HookRuntime
+from ert.enkf.hook_manager import HookManager
 from ert.util import BoolVector
 from ert_gui.ide.keywords.definitions import ProperNameFormatArgument, NumberListStringArgument
 from ert_gui.models.mixins.connectorless import DefaultPathModel, DefaultNameFormatModel, StringModel
@@ -83,8 +86,6 @@ class MDAEnsembleSmootherJob(ErtPlugin):
 
         print("[%s] Running simulation for iteration: %d" % (target_case_name, iteration))
 
-        if self.ert().getEnkfSimulationRunner().isHookPreSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
 
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iteration)
 
@@ -93,11 +94,8 @@ class MDAEnsembleSmootherJob(ErtPlugin):
 
         self.checkIfCancelled()
 
-        if self.ert().getEnkfSimulationRunner().isHookPostSimulation():
-            self.ert().getEnkfSimulationRunner().runHookWorkflow()
-
         print("[%s] Post processing for iteration: %d" % (target_case_name, iteration))
-        self.ert().getEnkfSimulationRunner().runPostHookWorkflow()
+        self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_SIMULATION)
 
 
     def checkSuccessCount(self, active_realization_mask):
@@ -125,12 +123,17 @@ class MDAEnsembleSmootherJob(ErtPlugin):
         custom_iteration_weights_box = StringBox(custom_iteration_weights_model, "Custom iteration weights", "config/simulation/iteration_weights")
         custom_iteration_weights_box.setValidator(NumberListStringArgument())
 
-        option_widget = OptionWidget("Iteration Weights")
+        option_widget = OptionWidget("Relative Weights")
         option_widget.addHelpedWidget("Custom", custom_iteration_weights_box)
         option_widget.addHelpedWidget("File", iteration_weights_path_chooser)
 
         dialog.addOption(iterated_target_case_format_box)
         dialog.addOption(option_widget)
+        dialog.addSpace()
+        dialog.addWidget(QLabel("Example Custom Relative Weights: '8,4,2,1'\n"
+                                "This means MDA-ES will half the weight\n"
+                                "applied to the Observation Errors from one\n"
+                                "iteration to the next across 4 iterations."), "Note")
 
         dialog.addButtons()
 
