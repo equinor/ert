@@ -5,6 +5,7 @@ set(PYTHON_SOURCES
     ensemble.py
     gaussian_kde.py
     histogram.py
+    history.py
     observations.py
     plot_tools.py
     refcase.py
