@@ -13,6 +13,7 @@ from .histogram import plotHistogram
 from .gaussian_kde import plotGaussianKDE
 
 from .refcase import plotRefcase
+from .history import plotHistory
 from .observations import plotObservations
 
 from .ensemble import plotEnsemble
