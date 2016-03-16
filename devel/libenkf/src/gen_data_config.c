@@ -54,7 +54,7 @@
 
 #define GEN_DATA_CONFIG_ID 90051
 struct gen_data_config_struct {
-  CONFIG_STD_FIELDS;
+  UTIL_TYPE_ID_DECLARATION;
   char                         * key;                   /* The key this gen_data instance is known under - needed for debugging. */
   ecl_type_enum                  internal_type;         /* The underlying type (float | double) of the data in the corresponding gen_data instances. */
   char                         * template_file;
@@ -160,7 +160,6 @@ static gen_data_config_type * gen_data_config_alloc( const char * key , bool dyn
   config->template_buffer      = NULL;
   gen_data_config_reset_template( config );
 
-  config->data_size          = 0;
   config->internal_type      = ECL_DOUBLE_TYPE;
   config->input_format       = GEN_DATA_UNDEFINED;
   config->output_format      = GEN_DATA_UNDEFINED;

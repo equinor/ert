@@ -40,26 +40,6 @@ extern "C" {
 #include <ert/enkf/enkf_fs_type.h>
 
 
-#define CONFIG_STD_FIELDS \
-int __type_id;            \
-int data_size;
-
-
-
-/*****************************************************************/
-
-#define IS_INSTANCE(prefix,ID) \
-bool prefix ## _is_instance__(const void * __arg) {                        \
-  prefix ## _type * arg = (prefix ## _type *) __arg;               \
-  if (arg->__type_id != ID)                                        \
-     return false;                                                 \
-  else                                                             \
-     return true;                                                  \
-}
-
-#define IS_INSTANCE_HEADER(prefix)  bool prefix ## _is_instance__(const void * );
-
-/******************************************************************/
 
 
 
