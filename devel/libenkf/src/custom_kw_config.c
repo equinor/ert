@@ -26,7 +26,7 @@
 #define CUSTOM_KW_CONFIG_ID 90051933
 
 struct custom_kw_config_struct {
-    CONFIG_STD_FIELDS;
+    UTIL_TYPE_ID_DECLARATION;
     char * name;
     char * result_file;
     char * output_file;
