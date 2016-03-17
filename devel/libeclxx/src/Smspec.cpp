@@ -3,6 +3,10 @@
 
 namespace ERT {
 
+    smspec_node::smspec_node( const smspec_node& rhs ) :
+        node( smspec_node_alloc_copy( rhs.node.get() ) )
+    {}
+
     static const int dummy_dims[ 3 ] = { -1, -1, -1 };
     const auto default_join = ":";
 
