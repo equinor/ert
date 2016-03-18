@@ -25,6 +25,10 @@ namespace ERT {
                     int dims[ 3 ],
                     int ijk[ 3 ] );
 
+            smspec_node( const std::string& keyword,
+                    int dims[ 3 ],
+                    int region );
+
             const char* wgname() const;
             const char* keyword() const;
 

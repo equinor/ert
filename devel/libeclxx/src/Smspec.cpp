@@ -37,6 +37,15 @@ namespace ERT {
     {}
 
     smspec_node::smspec_node(
+            const std::string& keyword,
+            int dims[ 3 ],
+            int region ) :
+        smspec_node(
+            ECL_SMSPEC_REGION_VAR, "", keyword.c_str(), "", default_join, dims, region
+        )
+    {}
+
+    smspec_node::smspec_node(
             ecl_smspec_var_type type,
             const char* wgname,
             const char* keyword,
