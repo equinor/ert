@@ -22,6 +22,13 @@
 
 #include <ert/ecl/Smspec.hpp>
 
+void test_smspec_copy() {
+    std::string kw( "FOPT" );
+    ERT::smspec_node field( kw );
+
+    ERT::smspec_node copy( field );
+}
+
 void test_smspec_wg() {
     std::string kw( "WWCT" );
     std::string wg( "OP1" );
