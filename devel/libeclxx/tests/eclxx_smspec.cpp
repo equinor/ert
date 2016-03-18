@@ -53,13 +53,23 @@ void test_smspec_block() {
     int dims[ 3 ] = { 10, 10, 10 };
     int ijk[ 3 ] = { 5, 5, 5 };
 
-    ERT::smspec_node field( kw, dims, ijk );
+    ERT::smspec_node block( kw, dims, ijk );
 
-    test_assert_true( field.keyword() == kw );
+    test_assert_true( block.keyword() == kw );
+}
+
+void test_smspec_region() {
+    std::string kw( "ROIP" );
+    int dims[ 3 ] = { 10, 10, 10 };
+    ERT::smspec_node region( kw, dims, 0 );
+
+    test_assert_true( region.keyword() == kw );
 }
 
 int main (int argc, char **argv) {
+    test_smspec_copy();
     test_smspec_wg();
     test_smspec_field();
     test_smspec_block();
+    test_smspec_region();
 }
