@@ -1,3 +1,4 @@
+import os
 import itertools
 from ert_gui.plottery import PlotStyle, PlotLimits
 
@@ -24,7 +25,13 @@ class PlotConfig(object):
         self._default_style = PlotStyle(name="Default", color=None, alpha=0.8)
         self._refcase_style = PlotStyle(name="Refcase", alpha=0.8, marker="x", width=2.0)
         self._history_style = PlotStyle(name="History", alpha=0.8, marker="D", width=2.0)
-        self._history_style.setEnabled(False)
+
+        # Insanely ugly implementation of user preferences.
+        if os.getenv("ERT_SHOW_HISTORY_VECTORS"):
+            self._history_style.setEnabled(True)
+        else:
+            self._history_style.setEnabled(False)
+
         self._observation_style = PlotStyle(name="Observations")
         self._histogram_style = PlotStyle(name="Histogram", width=2.0)
         self._distribution_style = PlotStyle(name="Distribution", line_style="", marker="o", alpha=0.5, size=10.0)
