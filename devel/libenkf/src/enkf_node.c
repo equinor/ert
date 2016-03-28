@@ -389,22 +389,22 @@ bool enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
 */
 
 
-bool enkf_node_forward_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step, int iens ) {
+bool enkf_node_forward_load(enkf_node_type *enkf_node , const forward_load_context_type * load_context) {
   bool loadOK;
   FUNC_ASSERT(enkf_node->forward_load);
   {
     if (enkf_node_get_impl_type(enkf_node) == SUMMARY)
       /* Fast path for loading summary data. */
-      loadOK = enkf_node->forward_load(enkf_node->data , NULL  , ecl_sum , restart_block , report_step);
+      loadOK = enkf_node->forward_load(enkf_node->data , NULL  , load_context);
     else {
-      char * input_file = enkf_config_node_alloc_infile(enkf_node->config , report_step);
+      char * input_file = enkf_config_node_alloc_infile(enkf_node->config , forward_load_context_get_load_step( load_context ));
 
       if (input_file != NULL) {
-        char * file = util_alloc_filename( run_path , input_file , NULL);
-        loadOK = enkf_node->forward_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
+        char * file = util_alloc_filename( forward_load_context_get_run_path( load_context ) , input_file , NULL);
+        loadOK = enkf_node->forward_load(enkf_node->data , file  , load_context);
         free(file);
       } else
-        loadOK = enkf_node->forward_load(enkf_node->data , run_path , ecl_sum , restart_block , report_step);
+        loadOK = enkf_node->forward_load(enkf_node->data , NULL , load_context);
 
       util_safe_free( input_file );
     }
@@ -422,10 +422,10 @@ bool enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path ,
 
 
 
-bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , const int_vector_type * time_index , int iens ) {
+bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const forward_load_context_type * load_context , const int_vector_type * time_index) {
   bool loadOK;
   FUNC_ASSERT(enkf_node->forward_load_vector);
-  loadOK = enkf_node->forward_load_vector(enkf_node->data , NULL  , ecl_sum , restart_block , time_index);
+  loadOK = enkf_node->forward_load_vector(enkf_node->data , NULL , load_context , time_index);
 
   return loadOK;
 }
@@ -433,10 +433,6 @@ bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_
 
 
 
-
-static void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step, int iens) {
-
-}
 
 
 /**

@@ -3350,13 +3350,11 @@ void enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int i
 
     if (bool_vector_iget(iactive, iens)) {
       enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
-      arg_pack_append_ptr( arg_pack , enkf_state);                                         /* 0: */
-      arg_pack_append_ptr( arg_pack , ert_run_context_iens_get_arg( run_context , iens )); /* 1: */
-      arg_pack_append_bool( arg_pack , true );                                             /* 2: Interactive */
-      arg_pack_append_ptr(arg_pack, realizations_msg_list[iens]);                          /* 3: List of interactive mode messages. */
-      arg_pack_append_bool( arg_pack, true );                                              /* 4: Manual load */
-      arg_pack_append_ptr(arg_pack, &result[iens]);                                        /* 5: Result */
-
+      arg_pack_append_ptr( arg_pack , enkf_state);                                         /* 0: enkf_state*/
+      arg_pack_append_ptr( arg_pack , ert_run_context_iens_get_arg( run_context , iens )); /* 1: run_arg */
+      arg_pack_append_ptr(arg_pack, realizations_msg_list[iens]);                          /* 2: List of interactive mode messages. */
+      arg_pack_append_bool( arg_pack, true );                                              /* 3: Manual load */
+      arg_pack_append_ptr(arg_pack, &result[iens]);                                        /* 4: Result */
       thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
     }
   }

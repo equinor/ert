@@ -27,14 +27,14 @@
 #include <ert/util/rng.h>
 #include <ert/util/subst_list.h>
 
+#include <ert/ecl/fortio.h>
+
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_util.h>
 #include <ert/enkf/enkf_macros.h>
 #include <ert/enkf/gen_kw_common.h>
 #include <ert/enkf/gen_kw_config.h>
 #include <ert/enkf/gen_kw.h>
-#include <ert/ecl/fortio.h>
-
 
 GET_DATA_SIZE_HEADER(gen_kw);
 

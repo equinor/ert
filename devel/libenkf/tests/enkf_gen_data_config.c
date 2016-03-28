@@ -31,6 +31,8 @@
 #include <ert/enkf/gen_data.h>
 #include <ert/enkf/gen_data_config.h>
 #include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/forward_load_context.h>
+#include <ert/enkf/run_arg.h>
 
 
 void test_report_steps_param() {
@@ -101,9 +103,11 @@ void test_gendata_fload(const char * filename) {
   gen_data_type * gen_data = gen_data_alloc(config);
 
   const char * cwd = test_work_area_get_cwd(work_area);
-  enkf_fs_type * write_fs =   enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL , true);
-  gen_data_config_set_write_fs(config, write_fs);
-  gen_data_fload(gen_data, filename);
+  enkf_fs_type * write_fs = enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL , true);
+  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(write_fs , 0,0,"path");
+  forward_load_context_type * load_context = forward_load_context_alloc( run_arg , false , NULL , NULL , NULL);
+  forward_load_context_select_step(load_context , 0 );
+  gen_data_fload_with_report_step(gen_data, filename , load_context);
   int data_size = gen_data_config_get_data_size(config, 0);
   test_assert_true(data_size > 0);
   enkf_fs_decref( write_fs );
@@ -111,6 +115,8 @@ void test_gendata_fload(const char * filename) {
   gen_data_free(gen_data);
   gen_data_config_free( config );
   test_work_area_free(work_area);
+  run_arg_free( run_arg );
+  forward_load_context_free( load_context );
 }
 
 
@@ -118,10 +124,11 @@ void test_gendata_fload_empty_file(const char * filename) {
   test_work_area_type * work_area = test_work_area_alloc( "test_gendata_fload_empty_file" );
   gen_data_config_type * config = gen_data_config_alloc_GEN_DATA_result("KEY" , ASCII);
   gen_data_type * gen_data = gen_data_alloc(config);
-
   const char * cwd = test_work_area_get_cwd(work_area);
   enkf_fs_type * write_fs = enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL , true);
-  gen_data_config_set_write_fs(config, write_fs);
+  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(write_fs , 0,0,"path");
+  forward_load_context_type * load_context = forward_load_context_alloc( run_arg , false , NULL , NULL , NULL);
+
   gen_data_fload(gen_data, filename);
   int data_size = gen_data_config_get_data_size(config, 0);
   test_assert_true(data_size == 0);
@@ -130,6 +137,8 @@ void test_gendata_fload_empty_file(const char * filename) {
   gen_data_free(gen_data);
   gen_data_config_free( config );
   test_work_area_free(work_area);
+  run_arg_free( run_arg );
+  forward_load_context_free( load_context );
 }
 
 

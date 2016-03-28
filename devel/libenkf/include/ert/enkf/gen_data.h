@@ -35,7 +35,7 @@ extern "C" {
 #include <ert/enkf/gen_data_config.h>
 
 void                      gen_data_assert_size( gen_data_type * gen_data , int size , int report_step);
-bool                      gen_data_forward_load(gen_data_type * , const char *  ,  const ecl_sum_type * , const ecl_file_type * , int );
+bool                      gen_data_forward_load(gen_data_type * gen_data , const char * ecl_file , const forward_load_context_type * load_context);
 void                      gen_data_free(gen_data_type * );
 double                    gen_data_iget_double(const gen_data_type * , int );
 gen_data_config_type   *  gen_data_get_config(const gen_data_type * );
