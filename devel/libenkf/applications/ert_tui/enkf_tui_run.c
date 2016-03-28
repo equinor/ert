@@ -51,7 +51,8 @@ void enkf_tui_run_smoother(void * arg) {
   enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = bool_vector_alloc( ens_size , true );
-  enkf_main_run_smoother(enkf_main , "AUTO-SMOOTHER" , iactive , 0 , true );
+  enkf_fs_type * source_fs = enkf_main_tui_get_fs( enkf_main );
+  enkf_main_run_smoother(enkf_main , source_fs , "AUTO-SMOOTHER" , iactive , 0 , true );
   bool_vector_free( iactive );
 }
 

@@ -202,9 +202,9 @@ void * enkf_main_init_case_from_existing_JOB( void * self , const stringlist_typ
       if (0 != strcmp(current_case, target_case)) {
         target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , true );
       } else
-        target_fs = enkf_fs_get_ref( enkf_main_get_fs(enkf_main) );  // Using get_ref so that we can unconditionally call decref() further down.
+        target_fs = enkf_fs_get_ref( enkf_main_job_get_fs(enkf_main) );  // Using get_ref so that we can unconditionally call decref() further down.
     } else
-      target_fs = enkf_fs_get_ref( enkf_main_get_fs(enkf_main) );    // Using get_ref so that we can unconditionally call decref() further down.
+      target_fs = enkf_fs_get_ref( enkf_main_job_get_fs(enkf_main) );    // Using get_ref so that we can unconditionally call decref() further down.
 
     enkf_main_init_case_from_existing(enkf_main, source_fs, 0, ANALYZED, target_fs);
     enkf_fs_decref(target_fs);
@@ -418,7 +418,7 @@ void * enkf_main_init_misfit_table_JOB(void * self, const stringlist_type * args
   int history_length           = enkf_main_get_history_length(enkf_main);
   enkf_obs_type * enkf_obs     = enkf_main_get_obs(enkf_main);
   int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
-  enkf_fs_type * fs            = enkf_main_get_fs(enkf_main);
+  enkf_fs_type * fs            = enkf_main_job_get_fs(enkf_main);
   bool force_update            = true;
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
 
@@ -528,7 +528,7 @@ void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type
   if (stringlist_get_size(args) > 0) {
     enkf_main_type * enkf_main              = enkf_main_safe_cast( self );
     int ensemble_size                       = enkf_main_get_ensemble_size(enkf_main);
-    enkf_fs_type * fs                       = enkf_main_get_fs( enkf_main );
+    enkf_fs_type * fs                       = enkf_main_job_get_fs( enkf_main );
     enkf_obs_type * obs                     = enkf_main_get_obs( enkf_main );
     int_vector_type * realizations          = int_vector_alloc(1, 0);
     local_obsdata_type * obsdata = local_obsdata_alloc( "OBS-JOB" );
