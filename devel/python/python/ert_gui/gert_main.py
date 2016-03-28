@@ -218,12 +218,11 @@ def main(argv):
             sys.exit(1)
         else:
             config_file = new_configuration_dialog.getConfigurationPath()
-            first_case_name = new_configuration_dialog.getCaseName()
             dbase_type = new_configuration_dialog.getDBaseType()
             num_realizations = new_configuration_dialog.getNumberOfRealizations()
             storage_path = new_configuration_dialog.getStoragePath()
 
-            EnKFMain.createNewConfig(config_file, storage_path, first_case_name, dbase_type, num_realizations)
+            EnKFMain.createNewConfig(config_file, storage_path, dbase_type, num_realizations)
             strict = False
 
 

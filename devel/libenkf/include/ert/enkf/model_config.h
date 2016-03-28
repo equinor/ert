@@ -48,7 +48,6 @@ extern "C" {
 
   const char *           model_config_get_jobname_fmt( const model_config_type * model_config );
   void                   model_config_set_jobname_fmt( model_config_type * model_config , const char * jobname_fmt);
-  void                   model_config_set_select_case( model_config_type * model_config , const char * select_case);
   const char *           model_config_get_case_table_file( const model_config_type * model_config );
   void                   model_config_set_case_table( model_config_type * model_config , int ens_size , const char * case_table_file );
   void                   model_config_set_enspath( model_config_type * model_config , const char * enspath);

@@ -19,7 +19,7 @@ class SimulationContextTest(ExtendedTestCase):
     def test_simulation_context(self):
         with ErtTestContext("ert/server/rpc/simulation_context", self.config1) as test_context:
             ert = test_context.getErt()
-
+            
             size = 4
             first_half = initializeCase(ert, "first_half", size)
             other_half = initializeCase(ert, "other_half", size)

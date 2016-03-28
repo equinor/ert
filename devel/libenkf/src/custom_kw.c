@@ -91,20 +91,20 @@ const char * custom_kw_iget_as_string(const custom_kw_type * custom_kw, int inde
 }
 
 custom_kw_config_type * custom_kw_get_config(const custom_kw_type * custom_kw) {
-    return custom_kw->config;
+  return custom_kw->config;
 }
 
 bool custom_kw_fload(custom_kw_type * custom_kw, const char * filename) {
-    return custom_kw_config_parse_result_file(custom_kw->config, filename, custom_kw->data);
+  return custom_kw_config_parse_result_file(custom_kw->config, filename, custom_kw->data);
 }
 
-bool custom_kw_forward_load(custom_kw_type * custom_kw, const char * ecl_file, const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step) {
-    return custom_kw_fload(custom_kw, ecl_file);
+bool custom_kw_forward_load(custom_kw_type * custom_kw, const char * ecl_file, const forward_load_context_type * load_context) {
+  return custom_kw_fload(custom_kw, ecl_file);
 }
 
 bool custom_kw_write_to_buffer(const custom_kw_type * custom_kw, buffer_type * buffer, int report_step, state_enum state) {
-    stringlist_buffer_fwrite(custom_kw->data, buffer);
-    return true;
+  stringlist_buffer_fwrite(custom_kw->data, buffer);
+  return true;
 }
 
 void custom_kw_read_from_buffer(const custom_kw_type * custom_kw, buffer_type * buffer, enkf_fs_type * fs, int report_step, state_enum state) {
