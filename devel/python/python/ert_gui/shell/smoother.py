@@ -70,8 +70,9 @@ class Smoother(ErtShellCollection):
         if len(arguments) == 1:
             case_name = arguments[0]
             target_fs = self.ert().getEnkfFsManager().getFileSystem(case_name)
+            source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem( )
             simulation_runner = EnkfSimulationRunner(self.ert())
-            success = simulation_runner.smootherUpdate(target_fs)
+            success = simulation_runner.smootherUpdate(source_fs , target_fs)
 
             if not success:
                 self.lastCommandFailed("Unable to perform update")
