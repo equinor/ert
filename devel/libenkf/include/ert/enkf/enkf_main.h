@@ -165,11 +165,6 @@ extern "C" {
 
 
 
-pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_main ,
-                                                    local_obsdata_type * obs_data,
-                                                    double truncation_or_ncomp);
-
-
   void                     enkf_main_list_users(  set_type * users , const char * executable );
   const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
 
@@ -202,14 +197,6 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                          matrix_type * PC ,
                          matrix_type * PC_obs,
                          double_vector_type * singular_values);
-
-
-  void enkf_main_init_PC( const enkf_main_type * enkf_main ,
-                          const local_obsdata_type * obsdata ,
-                          double truncation_or_ncomp ,
-                          matrix_type * PC ,
-                          matrix_type * PC_obs ,
-                          double_vector_type * singular_values);
 
 
   void enkf_main_fprintf_PC(const char * filename ,
