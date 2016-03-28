@@ -613,32 +613,29 @@ void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) 
 }
 
 
-void enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * input_case ) {
+static void enkf_main_user_select_initial_fs(enkf_main_type * enkf_main) {
   const char * ens_path = model_config_get_enspath( enkf_main->model_config);
   int root_version = enkf_fs_get_version104( ens_path );
   if (root_version == -1 || root_version == 105) {
-    if (input_case == NULL) {
-      char * current_mount_point = util_alloc_filename( ens_path , CURRENT_CASE , NULL);
+    char * current_mount_point = util_alloc_filename( ens_path , CURRENT_CASE , NULL);
 
-      if (enkf_main_current_case_file_exists(enkf_main)) {
-        char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
-        enkf_main_select_fs(enkf_main, current_case);
-        free (current_case);
-      } else if (enkf_fs_exists( current_mount_point ) && util_is_link( current_mount_point )) {
-        /*If the current_case file does not exists, but the 'current' symlink does we use readlink to
-          get hold of the actual target before calling the  enkf_main_select_fs() function. We then
-          write the current_case file and delete the symlink.*/
-        char * target_case = util_alloc_atlink_target( ens_path , CURRENT_CASE );
-        enkf_main_select_fs( enkf_main , target_case );
-        unlink(current_mount_point);
-        enkf_main_write_current_case_file(enkf_main, target_case);
-        free( target_case );
-      } else
-        enkf_main_select_fs( enkf_main , DEFAULT_CASE );  // Selecting (a new) default case
-
-      free( current_mount_point );
+    if (enkf_main_current_case_file_exists(enkf_main)) {
+      char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+      enkf_main_select_fs(enkf_main, current_case);
+      free (current_case);
+    } else if (enkf_fs_exists( current_mount_point ) && util_is_link( current_mount_point )) {
+      /*If the current_case file does not exists, but the 'current' symlink does we use readlink to
+        get hold of the actual target before calling the  enkf_main_select_fs() function. We then
+        write the current_case file and delete the symlink.*/
+      char * target_case = util_alloc_atlink_target( ens_path , CURRENT_CASE );
+      enkf_main_select_fs( enkf_main , target_case );
+      unlink(current_mount_point);
+      enkf_main_write_current_case_file(enkf_main, target_case);
+      free( target_case );
     } else
-      enkf_main_select_fs( enkf_main , input_case );
+      enkf_main_select_fs( enkf_main , DEFAULT_CASE );  // Selecting (a new) default case
+
+    free( current_mount_point );
   } else {
     fprintf(stderr,"Sorry: the filesystem located in %s must be upgraded before the current ERT version can read it.\n" , ens_path);
     exit(1);

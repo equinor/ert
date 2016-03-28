@@ -3045,16 +3045,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	ert_templates_init( enkf_main->templates , content );
 
 
-	/*****************************************************************/
-	{
-	  const char * select_case = NULL;
-	  if (config_content_has_item( content , SELECT_CASE_KEY))
-	    select_case = config_content_get_value( content , SELECT_CASE_KEY );
-
-	  enkf_main_user_select_fs( enkf_main , select_case );
-	}
-
-
 	{
 	  const char * rft_config_file = NULL;
 	  if (config_content_has_item(content , RFT_CONFIG_KEY))
@@ -3065,13 +3055,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 
 
 	/*****************************************************************/
-	{
-	  const char * select_case = NULL;
-	  if (config_content_has_item( content , SELECT_CASE_KEY))
-	    select_case = config_content_get_value( content , SELECT_CASE_KEY );
-
-	  enkf_main_user_select_fs( enkf_main , select_case );
-	}
+        enkf_main_user_select_initial_fs( enkf_main );
 
 	/* Adding ensemble members */
 	enkf_main_resize_ensemble( enkf_main  , config_content_iget_as_int(content , NUM_REALIZATIONS_KEY , 0 , 0) );
