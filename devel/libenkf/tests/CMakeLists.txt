@@ -391,6 +391,10 @@ add_executable( enkf_rng enkf_rng.c )
 target_link_libraries( enkf_rng enkf test_util )
 add_test( enkf_rng  ${EXECUTABLE_OUTPUT_PATH}/enkf_rng ${CMAKE_CURRENT_SOURCE_DIR}/data/config rng)
 
+add_executable( enkf_forward_load_context enkf_forward_load_context.c )
+target_link_libraries( enkf_forward_load_context enkf test_util )
+add_test( enkf_forward_load_context  ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_load_context ${CMAKE_CURRENT_SOURCE_DIR}/data/config forward_load_context)
+
 add_executable( enkf_refcase_list enkf_refcase_list.c )
 target_link_libraries( enkf_refcase_list enkf test_util )
 add_test( enkf_refcase_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_refcase_list ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE) 
