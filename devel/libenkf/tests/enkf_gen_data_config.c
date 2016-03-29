@@ -129,7 +129,8 @@ void test_gendata_fload_empty_file(const char * filename) {
   run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(write_fs , 0,0,"path");
   forward_load_context_type * load_context = forward_load_context_alloc( run_arg , false , NULL , NULL , NULL);
 
-  gen_data_fload(gen_data, filename);
+  forward_load_context_select_step(load_context , 0 );
+  gen_data_fload_with_report_step(gen_data, filename, load_context);
   int data_size = gen_data_config_get_data_size(config, 0);
   test_assert_true(data_size == 0);
   enkf_fs_decref( write_fs );
@@ -355,6 +356,7 @@ int main(int argc , char ** argv) {
 
   const char * gendata_file       = argv[1];
   const char * gendata_file_empty = argv[2];
+  util_install_signals();
 
   test_report_steps_param();
   test_report_steps_dynamic();

@@ -1007,7 +1007,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->iaddsqr            = gen_data_iaddsqr__;
     node->imul               = gen_data_imul__;
     node->isqrt              = gen_data_isqrt__;
-    node->fload              = gen_data_fload__;
+    //node->fload              = gen_data_fload__;
     break;
   default:
     util_abort("%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);

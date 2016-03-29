@@ -144,6 +144,7 @@ forward_load_context_type * forward_load_context_alloc( const run_arg_type * run
   load_context->ecl_sum = NULL;
   load_context->restart_file = NULL;
   load_context->run_arg = run_arg;
+  load_context->load_step = -1;  // Invalid - must call forward_load_context_select_step()
   load_context->load_result = 0;
   load_context->messages = messages;
   load_context->ecl_config = ecl_config;
@@ -260,6 +261,9 @@ void forward_load_context_select_step( forward_load_context_type * load_context 
 }
 
 int forward_load_context_get_load_step(const forward_load_context_type * load_context) {
+  if (load_context->load_step < 0)
+    util_abort("%s: this looks like an internal error - missing call to forward_load_context_select_step() \n",__func__);
+
   return load_context->load_step;
 }
 

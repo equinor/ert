@@ -320,11 +320,6 @@ bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * fi
 
 
 
-bool gen_data_fload( gen_data_type * gen_data , const char * filename) {
-  return gen_data_fload_with_report_step( gen_data , filename , 0);
-}
-
-
 
 bool gen_data_forward_load(gen_data_type * gen_data , const char * ecl_file , const forward_load_context_type * load_context) {
   return gen_data_fload_with_report_step( gen_data , ecl_file , load_context);
@@ -731,4 +726,3 @@ VOID_IMUL(gen_data)
 VOID_IADD(gen_data)
 VOID_IADDSQR(gen_data)
 VOID_ISQRT(gen_data)
-VOID_FLOAD(gen_data)
