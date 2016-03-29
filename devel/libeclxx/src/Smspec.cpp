@@ -38,6 +38,16 @@ namespace ERT {
 
     smspec_node::smspec_node(
             const std::string& keyword,
+            const std::string& wellname,
+            int dims[ 3 ],
+            int ijk[ 3 ] ) :
+        smspec_node(
+            ECL_SMSPEC_COMPLETION_VAR, wellname.c_str(), keyword.c_str(), "", default_join, dims, global_index( dims, ijk )
+        )
+    {}
+
+    smspec_node::smspec_node(
+            const std::string& keyword,
             int dims[ 3 ],
             int region ) :
         smspec_node(

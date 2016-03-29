@@ -26,6 +26,11 @@ namespace ERT {
                     int ijk[ 3 ] );
 
             smspec_node( const std::string& keyword,
+                    const std::string& wellname,
+                    int dims[ 3 ],
+                    int ijk[ 3 ] );
+
+            smspec_node( const std::string& keyword,
                     int dims[ 3 ],
                     int region );
 
