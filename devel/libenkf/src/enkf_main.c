@@ -3308,11 +3308,14 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 void enkf_main_load_from_forward_model_from_gui(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, enkf_fs_type * fs){
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   stringlist_type ** realizations_msg_list = util_calloc( ens_size , sizeof * realizations_msg_list );
-  int iens = 0;
-  for (; iens < ens_size; ++iens) {
+  for (int iens = 0; iens < ens_size; ++iens)
     realizations_msg_list[iens] = stringlist_alloc_new();
-  }
+
   enkf_main_load_from_forward_model_with_fs(enkf_main, iter , iactive, realizations_msg_list, fs);
+
+  for (int iens = 0; iens < ens_size; ++iens)
+    stringlist_free( realizations_msg_list[iens] );
+
   free(realizations_msg_list);
 }
 
