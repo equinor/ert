@@ -608,16 +608,6 @@ static void enkf_main_update_custom_kw_config_from_fs__(enkf_main_type * enkf_ma
 */
 
 void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path /* Can be NULL */) {
-  if (enkf_main->dbase)
-    printf("%s dbase: %s \n", __func__ , enkf_fs_get_case_name(enkf_main->dbase));
-  else
-    printf("%s: current: NULL \n",__func__);
-
-  if (fs)
-    printf("%s: setting fs: %s \n",__func__ , enkf_fs_get_case_name(fs));
-  else
-    printf("%s:  fs:%s \n",__func__ , fs);
-
   if (enkf_main->dbase != fs) {
     enkf_fs_incref( fs );
 
