@@ -66,10 +66,21 @@ void test_smspec_region() {
     test_assert_true( region.keyword() == kw );
 }
 
+void test_smspec_completion() {
+    std::string kw( "CWIT" );
+    std::string wg( "WELL1" );
+    int dims[ 3 ] = { 10, 10, 10 };
+    int ijk[ 3 ] = { 1, 1, 1 };
+    ERT::smspec_node completion( kw, wg, dims, ijk );
+
+    test_assert_true( completion.keyword() == kw );
+}
+
 int main (int argc, char **argv) {
     test_smspec_copy();
     test_smspec_wg();
     test_smspec_field();
     test_smspec_block();
     test_smspec_region();
+    test_smspec_completion();
 }
