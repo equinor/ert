@@ -90,7 +90,8 @@ void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_param
     }
 
     if (param_list != NULL) {
-      enkf_main_initialize_from_scratch(enkf_main , param_list , iens1 , iens2 , init_mode);
+      enkf_fs_type * init_fs = enkf_main_tui_get_fs( enkf_main );
+      enkf_main_initialize_from_scratch(enkf_main , init_fs , param_list , iens1 , iens2 , init_mode);
       stringlist_free( param_list );
     }
   }

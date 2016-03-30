@@ -166,14 +166,9 @@ class Cases(ErtShellCollection):
             return False
 
         ert = self.ert()
-        current_fs = ert.getEnkfFsManager().getCurrentFileSystem()
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
-        ert.getEnkfFsManager().switchFileSystem(fs)
-
         size = self.ert().getEnsembleSize()
         parameters = ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
-        ert.getEnkfFsManager().initializeFromScratch(parameters, 0, size - 1)
-
-        ert.getEnkfFsManager().switchFileSystem(current_fs)
-
+        ert.getEnkfFsManager().initializeCaseFromScratch(fs , parameters, 0, size - 1)
+        
         print("Case: '%s' initialized")
