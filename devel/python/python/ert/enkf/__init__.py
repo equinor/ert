@@ -29,13 +29,8 @@ import ert.job_queue
 class EnkfPrototype(Prototype):
     lib = clib.ert_load("libenkf")
 
-    def __init__(self, prototype, bind=False):
+    def __init__(self, prototype, bind=True):
         super(EnkfPrototype, self).__init__(EnkfPrototype.lib, prototype, bind=bind)
-
-        
-class BoundEnkfPrototype(Prototype):
-    def __init__(self, prototype):
-        super(EnkfPrototype, self).__init__(prototype, bind=True)
 
         
 
