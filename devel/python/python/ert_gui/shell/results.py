@@ -27,7 +27,7 @@ class Results(ErtShellCollection):
         realization_count = self.ert().getEnsembleSize()
 
         mask = BoolVector(False, realization_count)
-        mask_success = BoolVector.updateActiveMask(arguments[0], mask)
+        mask_success = mask.updateActiveMask(arguments[0])
 
         if not mask_success:
             self.lastCommandFailed("The realization mask: '%s' is not valid." % arguments[0])
