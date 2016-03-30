@@ -16,6 +16,7 @@
 
 
 import ert.cwrap.clib as clib
+from ert.cwrap.metacwrap import Prototype
 import ert.util
 import ert.geo
 import ert.ecl
@@ -25,7 +26,13 @@ import ert.sched
 import ert.config
 import ert.job_queue
 
+class EnkfPrototype(Prototype):
+    lib = clib.ert_load("libenkf")
 
+    def __init__(self, prototype, bind=True):
+        super(EnkfPrototype, self).__init__(EnkfPrototype.lib, prototype, bind=bind)
+
+        
 
 ENKF_LIB = clib.ert_load("libenkf")
 
@@ -76,13 +83,13 @@ from .runpath_list import RunpathList, RunpathNode
 from .hook_workflow import HookWorkflow
 from .hook_manager import HookManager
 
-
 from .enkf_simulation_runner import EnkfSimulationRunner
 from .enkf_fs_manager import EnkfFsManager
 from .run_arg import RunArg
 from .ert_run_context import ErtRunContext
 from .enkf_main import EnKFMain
 from .ert_log import ErtLog
+from .forward_load_context import ForwardLoadContext
 
 from ert.job_queue import ErtScript as ErtScript
 from ert.job_queue import ErtPlugin as ErtPlugin, CancelPluginException as CancelPluginException

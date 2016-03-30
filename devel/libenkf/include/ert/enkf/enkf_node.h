@@ -40,6 +40,7 @@
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/forward_load_context.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,8 +76,8 @@ extern "C" {
   typedef bool          (user_get_ftype)                  (void * , const char * , int , state_enum , double *);
   typedef void *        (alloc_ftype)                     (const void *);
   typedef bool          (initialize_ftype)                (      void *  , int , const char * , rng_type * );
-  typedef bool          (forward_load_ftype)              (void *  , const char * , const ecl_sum_type * , const ecl_file_type * , int);
-  typedef bool          (forward_load_vector_ftype)       (void *  , const char * , const ecl_sum_type * , const ecl_file_type * , const int_vector_type * );
+  typedef bool          (forward_load_ftype)              (void *  , const char * , const forward_load_context_type *);
+  typedef bool          (forward_load_vector_ftype)       (void *  , const char * , const forward_load_context_type *, const int_vector_type *);
   typedef void          (realloc_data_ftype)              (void * );
   typedef void          (free_data_ftype)                 (void * );
   typedef void          (node_free_ftype)                 (      void *);
@@ -135,8 +136,8 @@ extern "C" {
   void             enkf_node_serialize(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column);
   void             enkf_node_deserialize(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column);
 
-  bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , const int_vector_type * time_index , int iens );
-  bool             enkf_node_forward_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_file_type * , int, int );
+  bool             enkf_node_forward_load_vector(enkf_node_type *enkf_node , const forward_load_context_type * load_context , const int_vector_type * time_index);
+  bool             enkf_node_forward_load  (enkf_node_type *, const forward_load_context_type * load_context);
   void             enkf_node_ecl_write (const enkf_node_type *, const char * , void * , int);
   bool             enkf_node_initialize(enkf_node_type *enkf_node , int , rng_type * );
   void             enkf_node_printf(const enkf_node_type *);

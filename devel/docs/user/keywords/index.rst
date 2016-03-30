@@ -133,7 +133,6 @@ Keyword name                                                        	Required by
 :ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std.     
 :ref:`SCHEDULE_FILE <schedule_file>`  					YES 									Provide an ECLIPSE schedule file for the problem. 
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file. 
-:ref:`SELECT_CASE <select_case>`  					NO 									The current case / default 	You can tell ert to select a particular case on bootup. 
 :ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls. 
 :ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				... 
 :ref:`STD_CUTOFF <std_cutoff>`  					NO 					1e-6 				... 
@@ -390,16 +389,6 @@ These keywords are optional. However, they serve many useful purposes, and it is
 
 	The ENSPATH keyword is optional.
 
-.. _select_case:
-.. topic:: SELECT_CASE
-
-	By default ert will remember the selected case from the
-	previous run, or select the case "default" if this is the
-	first time you start a project. By using the SELECT_CASE
-	keyword you can tell ert to start up with a particular
-	case. If the requested case does not exist ert will ignore the
-	SELECT_CASE command, the case will not be created
-	automagically.
 
 .. _history_source:
 .. topic:: HISTORY_SOURCE

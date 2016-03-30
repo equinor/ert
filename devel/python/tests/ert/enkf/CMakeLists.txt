@@ -35,10 +35,12 @@ set(TEST_SOURCES
     test_deprecation.py
     test_field_export.py
     test_hook_workflow.py
+    test_forward_load_context.py
 )
 
 add_python_package("python.tests.ert.enkf" ${PYTHON_INSTALL_PREFIX}/tests/ert/enkf "${TEST_SOURCES}" False)
 
+addPythonTest(ert.enkf.forward_load_context tests.ert.enkf.test_forward_load_context.ForwardLoadContextTest)
 addPythonTest(ert.enkf.enkf tests.ert.enkf.test_enkf.EnKFTest LABELS StatoilData)
 addPythonTest(ert.enkf.enkf_obs tests.ert.enkf.test_enkf_obs.EnKFObsTest LABELS StatoilData)
 addPythonTest(ert.enkf.deprecation tests.ert.enkf.test_deprecation.DeprecationTest)

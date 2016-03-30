@@ -14,6 +14,7 @@ extern "C" {
 
 #include <ert/enkf/enkf_macros.h>
 #include <ert/enkf/custom_kw_config.h>
+#include <ert/enkf/forward_load_context.h>
 
     typedef struct custom_kw_struct custom_kw_type;
 
@@ -28,7 +29,7 @@ extern "C" {
     void                     custom_kw_set_double(custom_kw_type * custom_kw, const char * key, double value);
 
     bool custom_kw_fload(custom_kw_type * custom_kw, const char * filename);
-    bool custom_kw_forward_load(custom_kw_type * custom_kw, const char * ecl_file, const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step);
+    bool custom_kw_forward_load(custom_kw_type * custom_kw, const char * ecl_file, const forward_load_context_type * load_context);
 
     bool custom_kw_write_to_buffer(const custom_kw_type * custom_kw, buffer_type * buffer, int report_step, state_enum state);
     void custom_kw_read_from_buffer(const custom_kw_type * custom_kw, buffer_type * buffer, enkf_fs_type * fs, int report_step, state_enum state);

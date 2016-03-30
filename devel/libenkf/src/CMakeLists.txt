@@ -87,7 +87,8 @@ set( source_files
      custom_kw.c
      custom_kw_config.c
      custom_kw_config_set.c
-     )
+     forward_load_context.c
+)
 
 set( header_files
      time_map.h
@@ -181,11 +182,13 @@ set( header_files
      ert_test_context.h
      ert_log.h
      run_arg.h
+     run_arg_type.h
      ert_run_context.h
      custom_kw.h
      custom_kw_config.h
      custom_kw_config_set.h
-     )
+     forward_load_context.h
+)
 
 
 add_library( enkf  ${LIBRARY_TYPE} ${source_files} )

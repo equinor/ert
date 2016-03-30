@@ -203,8 +203,14 @@ class EnkfFsManager(BaseCClass):
                                                                  target_fs)
 
 
+    def initializeCaseFromScratch(self, case , parameter_list, from_iens, to_iens, force_init=True):
+        EnkfFsManager.cNamespace().initialize_from_scratch(self, case , parameter_list, from_iens, to_iens, force_init)
+
+        
     def initializeFromScratch(self, parameter_list, from_iens, to_iens, force_init=True):
-        EnkfFsManager.cNamespace().initialize_from_scratch(self, parameter_list, from_iens, to_iens, force_init)
+        case = self.getCurrentFileSystem( )
+        self.initializeCaseFromScratch( case , parameter_list , from_iens , to_iens , force_init )
+
 
 
     def isCaseMounted(self, case_name, mount_root=None):
@@ -244,7 +250,7 @@ EnkfFsManager.cNamespace().fs_exists = cwrapper.prototype("bool enkf_main_fs_exi
 EnkfFsManager.cNamespace().alloc_caselist = cwrapper.prototype("stringlist_obj enkf_main_alloc_caselist(enkf_fs_manager)")
 EnkfFsManager.cNamespace().set_case_table = cwrapper.prototype("void enkf_main_set_case_table(enkf_fs_manager, char*)")
 
-EnkfFsManager.cNamespace().initialize_from_scratch = cwrapper.prototype("void enkf_main_initialize_from_scratch(enkf_fs_manager, stringlist, int, int, bool)")
+EnkfFsManager.cNamespace().initialize_from_scratch = cwrapper.prototype("void enkf_main_initialize_from_scratch(enkf_fs_manager, enkf_fs , stringlist, int, int, bool)")
 EnkfFsManager.cNamespace().is_initialized = cwrapper.prototype("bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)")
 EnkfFsManager.cNamespace().is_case_initialized = cwrapper.prototype("bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)")
 EnkfFsManager.cNamespace().initialize_current_case_from_existing = cwrapper.prototype("void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_state_type_enum)")

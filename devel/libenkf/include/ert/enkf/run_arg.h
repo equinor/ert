@@ -28,9 +28,8 @@ extern "C" {
 
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/run_arg_type.h>
 
-
-typedef struct run_arg_struct run_arg_type;
 
 
 UTIL_SAFE_CAST_HEADER( run_arg );

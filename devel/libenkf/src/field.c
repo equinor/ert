@@ -39,6 +39,7 @@
 #include <ert/enkf/field_config.h>
 #include <ert/enkf/enkf_serialize.h>
 #include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/forward_load_context.h>
 
 
 GET_DATA_SIZE_HEADER(field);
@@ -1257,14 +1258,13 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
 
 static bool field_forward_load(field_type * field ,
                                const char * ecl_file_name ,
-                               const ecl_sum_type * ecl_sum,
-                               const ecl_file_type * restart_file ,
-                               int report_step) {
+                               const forward_load_context_type * load_context) {
   bool keep_inactive = false;
   bool loadOK = true;
   field_file_format_type import_format = field_config_get_import_format(field->config);
 
   if (import_format == ECL_FILE) {
+    const ecl_file_type * restart_file = forward_load_context_get_restart_file( load_context );
     if (restart_file != NULL) {
       ecl_kw_type * field_kw = ecl_file_iget_named_kw(restart_file , field_config_get_ecl_kw_name(field->config) , 0);
       field_copy_ecl_kw_data(field , field_kw);

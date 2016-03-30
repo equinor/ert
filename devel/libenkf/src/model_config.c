@@ -90,7 +90,6 @@ struct model_config_struct {
   char                 * enkf_sched_file;           /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
   char                 * enspath;
   char                 * rftpath;
-  char                 * select_case;
   fs_driver_impl         dbase_type;
   bool                   has_prediction;
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
@@ -350,7 +349,6 @@ model_config_type * model_config_alloc() {
   model_config->enkf_sched                = NULL;
   model_config->enkf_sched_file           = NULL;
   model_config->case_table_file           = NULL;
-  model_config->select_case               = NULL;
   model_config->history                   = NULL;
   model_config->jobname_fmt               = NULL;
   model_config->forward_model             = NULL;
@@ -531,7 +529,6 @@ void model_config_free(model_config_type * model_config) {
   free( model_config->rftpath );
   util_safe_free( model_config->jobname_fmt );
   util_safe_free( model_config->enkf_sched_file );
-  util_safe_free( model_config->select_case );
   util_safe_free( model_config->case_table_file );
   util_safe_free( model_config->current_path_key);
   util_safe_free( model_config->gen_kw_export_file_name);
@@ -556,9 +553,6 @@ void model_config_free(model_config_type * model_config) {
 }
 
 
-void model_config_set_select_case( model_config_type * model_config , const char * select_case) {
-  model_config->select_case = util_realloc_string_copy( model_config->select_case , select_case );
-}
 
 
 enkf_sched_type * model_config_get_enkf_sched(const model_config_type * config) {
@@ -677,11 +671,6 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
 
   fprintf( stream , CONFIG_KEY_FORMAT      , RFTPATH_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->rftpath );
-
-  if (model_config->select_case != NULL) {
-    fprintf( stream , CONFIG_KEY_FORMAT      , SELECT_CASE_KEY );
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->select_case );
-  }
 
   fprintf( stream , CONFIG_KEY_FORMAT      , MAX_RESAMPLE_KEY );
   {

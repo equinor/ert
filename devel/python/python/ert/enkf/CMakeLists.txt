@@ -40,6 +40,7 @@ set(PYTHON_SOURCES
     state_map.py
     summary_key_matcher.py
     summary_key_set.py
+    forward_load_context.py
 )
 
 add_python_package("python.ert.enkf" ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)

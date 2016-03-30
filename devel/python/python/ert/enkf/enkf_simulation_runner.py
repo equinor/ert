@@ -36,10 +36,10 @@ class EnkfSimulationRunner(BaseCClass):
         
     
 
-    def smootherUpdate(self, target_fs):
+    def smootherUpdate(self, source_fs , target_fs):
         """ @rtype: bool """
         assert isinstance(target_fs, EnkfFs)
-        return EnkfSimulationRunner.cNamespace().smoother_update(self, target_fs)
+        return EnkfSimulationRunner.cNamespace().smoother_update(self, source_fs , target_fs)
 
 
 
@@ -50,4 +50,4 @@ EnkfSimulationRunner.cNamespace().run_assimilation  = cwrapper.prototype("void e
 EnkfSimulationRunner.cNamespace().run_smoother      = cwrapper.prototype("void enkf_main_run_smoother(enkf_simulation_runner, char*, bool)")
 
 EnkfSimulationRunner.cNamespace().run_simple_step   = cwrapper.prototype("bool enkf_main_run_simple_step(enkf_simulation_runner, bool_vector, enkf_init_mode_enum, int)")
-EnkfSimulationRunner.cNamespace().smoother_update   = cwrapper.prototype("bool enkf_main_smoother_update(enkf_simulation_runner, enkf_fs)")
+EnkfSimulationRunner.cNamespace().smoother_update   = cwrapper.prototype("bool enkf_main_smoother_update(enkf_simulation_runner, enkf_fs , enkf_fs)")

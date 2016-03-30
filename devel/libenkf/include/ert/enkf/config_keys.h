@@ -138,7 +138,6 @@ extern "C" {
 #define  RFTPATH_KEY                       "RFTPATH"
 #define  SCHEDULE_FILE_KEY                 "SCHEDULE_FILE"
 #define  SCHEDULE_PREDICTION_FILE_KEY      "SCHEDULE_PREDICTION_FILE"
-#define  SELECT_CASE_KEY                   "SELECT_CASE"
 #define  SETENV_KEY                        "SETENV"
 #define  STATIC_KW_KEY                     "ADD_STATIC_KW"
 #define  STD_CUTOFF_KEY                    "STD_CUTOFF"
