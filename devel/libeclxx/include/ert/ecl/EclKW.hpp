@@ -54,7 +54,7 @@ namespace ERT {
 
 
         void fwrite(FortIO& fortio) const {
-            ecl_kw_fwrite( m_kw.get() , fortio.getPointer() );
+            ecl_kw_fwrite( m_kw.get() , fortio.get() );
         }
 
 
@@ -76,7 +76,7 @@ namespace ERT {
 
 
         static EclKW checkedLoad(FortIO& fortio, ecl_type_enum expectedType) {
-            ecl_kw_type * c_ptr = ecl_kw_fread_alloc( fortio.getPointer() );
+            ecl_kw_type * c_ptr = ecl_kw_fread_alloc( fortio.get() );
             if (c_ptr) {
                 if (ecl_kw_get_type( c_ptr ) == expectedType)
                     return EclKW( c_ptr );
