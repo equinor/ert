@@ -20,8 +20,8 @@ from ert.util import UtilPrototype
 
 
 class TestArea(BaseCClass):
-    _test_area_alloc           = UtilPrototype("void* test_work_area_alloc( char* )")
-    _test_area_alloc_relative  = UtilPrototype("void* test_work_area_alloc_relative( char* , char* )")
+    _test_area_alloc           = UtilPrototype("void* test_work_area_alloc( char* )" , bind = False)
+    _test_area_alloc_relative  = UtilPrototype("void* test_work_area_alloc_relative( char* , char* )" , bind = False)
     _free                      = UtilPrototype("void test_work_area_free( test_area )")
     _install_file              = UtilPrototype("void test_work_area_install_file( test_area , char* )")
     _copy_directory            = UtilPrototype("void test_work_area_copy_directory( test_area , char* )")
@@ -49,36 +49,36 @@ class TestArea(BaseCClass):
 
         
     def get_original_cwd(self):
-        return self._get_original_cwd(self)
+        return self._get_original_cwd()
 
     def get_cwd(self):
-        return self._get_cwd(self)
+        return self._get_cwd()
         
 
     def install_file( self, filename):
-        self._install_file(self, filename)
+        self._install_file(filename)
 
 
     def copy_directory( self, directory):
-        self._copy_directory(self, directory)
+        self._copy_directory(directory)
 
     def copy_parent_directory( self , path):
-        self._copy_parent_directory(self , path)
+        self._copy_parent_directory( path)
 
     def copy_parent_content( self , path):
-        self._copy_parent_content(self , path)
+        self._copy_parent_content(path)
 
     def copy_directory_content( self, directory):
-        self._copy_directory_content(self, directory)
+        self._copy_directory_content(directory)
 
     def copy_file( self, filename):
-        self._copy_file(self, filename)
+        self._copy_file(filename)
 
     def free(self):
-        self._free(self)
+        self._free()
 
     def set_store(self, store):
-        self._set_store(self , store)
+        self._set_store(store)
 
     def getFullPath(self , path):
         if not os.path.exists( path ):
