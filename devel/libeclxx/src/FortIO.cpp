@@ -47,7 +47,6 @@ namespace ERT {
             m_fortio.reset( c_ptr );
         } else {
             fortio_type * c_ptr = fortio_open_writer( filename.c_str() , fmt_file , endian_flip_header);
-            printf("Opening writer \n");
             m_fortio.reset( c_ptr );
         }
     }
