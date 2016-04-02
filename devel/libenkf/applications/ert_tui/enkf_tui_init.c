@@ -27,7 +27,6 @@
 #include <ert/util/msg.h>
 
 #include <ert/enkf/enkf_main.h>
-#include <ert/enkf/enkf_sched.h>
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_state.h>
 #include <ert/enkf/enkf_node.h>
