@@ -98,7 +98,6 @@ extern "C" {
 #define  INSTALL_JOB_DIRECTORY_KEY         "INSTALL_JOB_DIRECTORY"
 #define  JOB_SCRIPT_KEY                    "JOB_SCRIPT"
 #define  JOBNAME_KEY                       "JOBNAME"
-#define  KEEP_RUNPATH_KEY                  "KEEP_RUNPATH"
 #define  LICENSE_PATH_KEY                  "LICENSE_PATH"
 #define  LOAD_SEED_KEY                     "LOAD_SEED"
 #define  LOCAL_CONFIG_KEY                  "LOCAL_CONFIG"

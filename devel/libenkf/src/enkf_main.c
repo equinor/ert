@@ -1977,9 +1977,6 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   item = config_add_schema_item(config , DATA_KW_KEY , false  );
   config_schema_item_set_argc_minmax(item , 2 , 2);
 
-  item = config_add_schema_item(config , KEEP_RUNPATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
-
   config_add_key_value(config , PRE_CLEAR_RUNPATH_KEY , false , CONFIG_BOOL);
 
   item = config_add_schema_item(config , DELETE_RUNPATH_KEY , false  );
@@ -2047,22 +2044,11 @@ bool enkf_main_get_verbose( const enkf_main_type * enkf_main ) {
 */
 
 
-void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep_runpath_string , const char * delete_runpath_string , int ens_size ) {
+void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * delete_runpath_string , int ens_size ) {
 
   int i;
   for (i = 0; i < ens_size; i++)
     int_vector_iset( enkf_main->keep_runpath , i , DEFAULT_KEEP);
-
-
-  {
-    int_vector_type * active_list = string_util_alloc_active_list(keep_runpath_string);
-
-    for (i = 0; i < int_vector_size( active_list ); i++)
-      int_vector_iset( enkf_main->keep_runpath , int_vector_iget( active_list , i ) , EXPLICIT_KEEP);
-
-    int_vector_free( active_list );
-  }
-
 
   {
     int_vector_type * active_list = string_util_alloc_active_list(delete_runpath_string);
@@ -2682,36 +2668,21 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 
       /*****************************************************************/
       /**
-	 To keep or not to keep the runpath directories? The problem is
-	 that the default behavior is different depending on the run_mode:
-
-	 enkf_mode: In this case the default behaviour is to delete the
-	 runpath directories. You can explicitly say that you want to
-	 keep runpath directories with the KEEP_RUNPATH
-	 directive.
-
-	 experiments: In this case the default is to keep the runpath
-	 directories around, but you can explicitly say that you
-	 want to remove the directories by using the DELETE_RUNPATH
-	 option.
-
-	 The final decision is performed in enkf_state().
+         By default the simulation directories are left intact when
+         the simulations re complete, but using the keyword
+         DELETE_RUNPATH you can request (some of) the directories to
+         be wiped after the simulations are complete.
       */
       {
 	{
-	  char * keep_runpath_string   = NULL;
 	  char * delete_runpath_string = NULL;
 	  int    ens_size              = config_content_get_value_as_int(content , NUM_REALIZATIONS_KEY);
-
-	  if (config_content_has_item(content , KEEP_RUNPATH_KEY))
-	    keep_runpath_string = config_content_alloc_joined_string(content , KEEP_RUNPATH_KEY , "");
 
 	  if (config_content_has_item(content , DELETE_RUNPATH_KEY))
 	    delete_runpath_string = config_content_alloc_joined_string(content , DELETE_RUNPATH_KEY , "");
 
-	  enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string , ens_size );
+	  enkf_main_parse_keep_runpath( enkf_main , delete_runpath_string , ens_size );
 
-	  util_safe_free( keep_runpath_string   );
 	  util_safe_free( delete_runpath_string );
 	}
 
@@ -3006,22 +2977,7 @@ void enkf_main_fprintf_runpath_config( const enkf_main_type * enkf_main , FILE *
   fprintf(stream , CONFIG_ENDVALUE_FORMAT , CONFIG_BOOL_STRING( enkf_state_get_pre_clear_runpath( enkf_main->ensemble[0] )));
 
   {
-    bool keep_comma = false;
     bool del_comma  = false;
-
-
-    for (int iens = 0; iens < enkf_main->ens_size; iens++) {
-      keep_runpath_type keep_runpath = enkf_main_iget_keep_runpath( enkf_main , iens );
-      if (keep_runpath == EXPLICIT_KEEP) {
-        if (!keep_comma) {
-          fprintf(stream , CONFIG_KEY_FORMAT , KEEP_RUNPATH_KEY );
-          fprintf(stream , "%d" , iens);
-          keep_comma = true;
-        } else
-          fprintf(stream , ",%d" , iens);
-      }
-    }
-    fprintf(stream , "\n");
 
 
     for (int iens = 0; iens < enkf_main->ens_size; iens++) {
