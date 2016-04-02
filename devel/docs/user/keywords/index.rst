@@ -87,7 +87,6 @@ Keyword name                                                        	Required by
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                          	NO                    			4         	            	Number of retries for a iteration - iterated ensemble smoother 
 :ref:`JOBNAME <jobname>`                                            	NO                                          				Name used for simulation files. An alternative to ECLBASE. 
 :ref:`JOB_SCRIPT <job_script>`                                      	NO                                          				Python script managing the forward model. 
-:ref:`KEEP_RUNPATH <keep_runpath>`                                  	NO                                          				Specify realizations that simulations should be kept for. 
 :ref:`LOAD_SEED <load_seed>`                                        	NO                                          				Load random seed from given file.
 :ref:`LOAD_WORKFLOW <load_workflow>` 				    	NO                             						Load a workflow into ERT. 
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`  			    	NO 									Load a workflow job into ERT. 
@@ -286,7 +285,13 @@ These keywords are optional. However, they serve many useful purposes, and it is
 .. _delete_runpath:
 .. topic:: DELETE_RUNPATH
 
-	When the enkf application is running it creates directories for the ECLIPSE simulations, one for each realization. When the simulations are done, the enkf will load the results into it's internal database. If you are using the enkf application as a convenient way to start many simulations, e.g. using the screening experiment option, the default behavior is to not delete these simulation directories. This behavior can be overridden with the DELETE_RUNPATH keyword, which causes enkf to delete the specified simulation directories. When running the EnKF algorithm, the behavior is the opposite. The keyword KEEP_RUNPATH can then be used to override the default behavoir.
+	When the ert application is running it creates directories for
+	the forward model simulations, one for each realization. When
+	the simulations are done, ert will load the results into the
+	internal database. By default the realization folders will be
+	left intact after ert has loaded the results, but using the
+	keyword DELETE_RUNPATH you can request to have (some of) the
+	directories deleted after results have been loaded.
 
 	*Example A:*
 
@@ -420,20 +425,6 @@ These keywords are optional. However, they serve many useful purposes, and it is
 	The configuration file used to specify an external job is easy to use and very flexible. It is documented in Customizing the simulation workflow in enkf.
 
 	The INSTALL_JOB keyword is optional.
-
-.. _keep_runpath:
-.. topic:: KEEP_RUNPATH
-
-	When the enkf application is running it creates directories for the ECLIPSE simulations, one for each realization. If you are using the enkf application to run the EnKF algorithm, the default behavior is to delete these directories after the simulation results have been internalized. This behavior can be overridden with the KEEP_RUNPATH keyword, which causes enkf to keep the specified simulation directories. When running the enkf application as a convenient way to start many simulations, e.g. using the screening experiment option, the behavior is the opposite, and can be overridden with the DELETE_RUNPATH keyword.
-
-	*Example:*
-
-	::
-	
-		-- Keep simulation directories 0 to 15 and 18 and 20
-		KEEP_RUNPATH 0-15, 18, 20
-
-	The KEEP_RUNPATH keyword is optional.
 
 .. _obs_config:
 .. topic:: OBS_CONFIG
