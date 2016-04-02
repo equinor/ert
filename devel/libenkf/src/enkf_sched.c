@@ -341,25 +341,10 @@ static enkf_sched_type * enkf_sched_alloc_empty( ) {
 static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_history_restart , run_mode_type run_mode) {
   enkf_sched_node_type * node;
 
-  if (run_mode == ENKF_ASSIMILATION) {
-    /* Default enkf: stride one - active at all report steps. */
-    /* Have to explicitly add all these nodes. */
-    int report_step;
-    for (report_step = 0; report_step < last_history_restart; report_step++) {   
-      node = enkf_sched_node_alloc(report_step , report_step + 1, true );
-      enkf_sched_append_node(enkf_sched , node);
-    }
-    /* Okay we are doing assimilation and prediction in one go - fair enough. */
-  } else {
-    /* 
-       experiment: Do the whole thing in two steps, first the whole
-       history, and then subsequently the prediction part (if there is
-       any).
-    */
-    printf("Last: %d \n",last_history_restart);
-    node = enkf_sched_node_alloc(0 , last_history_restart , false ); 
-    enkf_sched_append_node(enkf_sched , node);
-  }
+  
+  printf("Last: %d \n",last_history_restart);
+  node = enkf_sched_node_alloc(0 , last_history_restart , false ); 
+  enkf_sched_append_node(enkf_sched , node);
 }
 
 

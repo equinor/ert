@@ -48,20 +48,8 @@ typedef struct ert_run_context_struct ert_run_context_type;
                                                          subst_list_type * subst_list ,
                                                          init_mode_type init_mode , 
                                                          int iter);
-    
-  ert_run_context_type * ert_run_context_alloc_ENKF_ASSIMILATION(enkf_fs_type * fs , 
-                                                                 const bool_vector_type * iactive , 
-                                                                 path_fmt_type * runpath_fmt , 
-                                                                 subst_list_type * subst_list ,
-                                                                 init_mode_type init_mode , 
-                                                                 state_enum init_state_parameter ,
-                                                                 state_enum init_state_dynamic   ,
-                                                                 int step1                       , 
-                                                                 int step2                       ,
-                                                                 int iter);
 
 
-  
   ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs , 
                                                             const bool_vector_type * iactive , 
                                                             path_fmt_type * runpath_fmt , 

@@ -228,12 +228,7 @@ const char * model_config_get_gen_kw_export_file( const model_config_type * mode
  void model_config_set_enkf_sched(model_config_type * model_config , const ext_joblist_type * joblist , run_mode_type run_mode ) {
    if (model_config->enkf_sched != NULL)
      enkf_sched_free( model_config->enkf_sched );
-
-   if (run_mode == ENKF_ASSIMILATION)
-     model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file                   ,
-                                                         model_config_get_last_history_restart(model_config) ,
-                                                         run_mode);
-
+   
  }
 
 
