@@ -77,7 +77,6 @@ extern "C" {
 #define  ENKF_MERGE_OBSERVATIONS_KEY       "ENKF_MERGE_OBSERVATIONS"
 #define  ENKF_MODE_KEY                     "ENKF_MODE"
 #define  ENKF_RERUN_KEY                    "ENKF_RERUN"
-#define  ENKF_SCHED_FILE_KEY               "ENKF_SCHED_FILE"
 #define  ENKF_TRUNCATION_KEY               "ENKF_TRUNCATION"
 #define  ENSPATH_KEY                       "ENSPATH"
 #define  ITER_CASE_KEY                     "ITER_CASE"

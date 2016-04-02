@@ -25,13 +25,7 @@ class ModelConfig(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def get_enkf_sched_file(self):
-        """ @rtype: str """
-        return ModelConfig.cNamespace().get_enkf_sched_file(self)
-
-    def set_enkf_sched_file(self, filename):
-        ModelConfig.cNamespace().get_enkf_sched_file(self, filename)
-
+        
     def hasHistory(self):
         return ModelConfig.cNamespace().has_history(self)
 
@@ -109,8 +103,6 @@ cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("model_config", ModelConfig)
 
 ModelConfig.cNamespace().free = cwrapper.prototype("void model_config_free( model_config )")
-ModelConfig.cNamespace().get_enkf_sched_file = cwrapper.prototype("char* model_config_get_enkf_sched_file( model_config )")
-ModelConfig.cNamespace().set_enkf_sched_file = cwrapper.prototype("void model_config_set_enkf_sched_file( model_config, char*)")
 ModelConfig.cNamespace().get_forward_model = cwrapper.prototype("forward_model_ref model_config_get_forward_model(model_config)")
 ModelConfig.cNamespace().get_max_internal_submit = cwrapper.prototype("int model_config_get_max_internal_submit(model_config)")
 ModelConfig.cNamespace().set_max_internal_submit = cwrapper.prototype("void model_config_set_max_internal_submit(model_config, int)")

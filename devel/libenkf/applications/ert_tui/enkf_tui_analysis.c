@@ -31,7 +31,6 @@
 #include <ert/analysis/analysis_module.h>
 
 #include <ert/enkf/enkf_main.h>
-#include <ert/enkf/enkf_sched.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/analysis_config.h>
 

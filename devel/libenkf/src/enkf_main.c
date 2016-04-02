@@ -73,7 +73,6 @@
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/enkf/ecl_config.h>
-#include <ert/enkf/enkf_sched.h>
 #include <ert/enkf/obs_data.h>
 #include <ert/enkf/meas_data.h>
 #include <ert/enkf/enkf_state.h>
@@ -1621,11 +1620,6 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 
 
 void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type * run_context) {
-  {
-    const ext_joblist_type * joblist = site_config_get_installed_jobs( enkf_main->site_config);
-    model_config_set_enkf_sched( enkf_main->model_config , joblist , ert_run_context_get_mode( run_context ));
-  }
-
   enkf_main_init_internalization(enkf_main , ert_run_context_get_mode( run_context ));
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
@@ -2008,10 +2002,6 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   config_schema_item_set_argc_minmax(item , 1 , 1 );
 
   item = config_add_schema_item(config , LOCAL_CONFIG_KEY  , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  item = config_add_schema_item(config , ENKF_SCHED_FILE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
 

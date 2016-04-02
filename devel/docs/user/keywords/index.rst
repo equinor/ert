@@ -63,7 +63,6 @@ Keyword name                                                        	Required by
 :ref:`ENKF_PEN_PRESS <enkf_pen_press>`                              	NO                    			FALSE                 		Should we want to use a penalised PRESS statistic in model selection? 
 :ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update. 
 :ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Do we want to normalize the data ensemble to have unit variance? 
-:ref:`ENKF_SCHED_FILE <enkf_sched_file>`                            	NO                                          				Allows fine-grained control of the time steps in the simulation. 
 :ref:`ENKF_TRUNCATION <enfk_truncation>`                            	NO                    			0.99        	          	Cutoff used on singular value spectrum. 
 :ref:`ENSPATH <enspath>`                                            	NO                    			storage     	          	Folder used for storage of simulation results. 
 :ref:`EQUIL_INIT_FILE <equil_init_file>`                            	NO                                          				Use INIT_SECTION instead 
@@ -305,46 +304,6 @@ These keywords are optional. However, they serve many useful purposes, and it is
 
 	The DELETE_RUNPATH keyword is optional.
 
-.. _enfk_sched_file:
-.. topic:: ENKF_SCHED_FILE
-
-	When the enkf application runs the EnKF algorithm, it will use
-	ECLIPSE to simulate one report step at a time, and do an
-	update after each step. However, in some cases it will be
-	beneficial to turn off the EnKF update for some report steps
-	or to skip some steps completely. The keyword ENKF_SCHED_FILE
-	can point to a file with a more advanced schedule for when to
-	perform the updates. The format of the file pointed to by
-	ENKF_SCHED_FILE should be plain text, with one entry per
-	line. Each line should have the following form:
-
-	::
-
-		REPORT_STEP1   REPORT_STEP2   ON|OFF    STRIDE  
-		...
-
-	Here REPORT_STEP1 and REPORT_STEP2 are the first and last
-	report steps respectively and ON|OFF determines whether the
-	EnKF analysis should be ON or OFF, the STRIDE argument is
-	optional. If the analysis is ON the stride will default to
-	REPORT_STEP2 minus REPORT_STEP1, thus if you want to perform
-	analysis at each report step set stride equal to 1. Observe
-	that whatever value of stride is used, the integration will
-	always start on REPORT_STEP1 and end on REPORT_STEP2. Example:
-
-	::
-
-		0     100   OFF        
-		100   125   ON     5
-		125   200   ON     1
-
-	In this example, the enkf application will do the following:
-
-	#. Simulate directly from report step 0 to report step 100. No EnKF update will be performed.
-	#. From report step 100 to report step 125 it will simulate five report steps at a time, doing EnKF update at report steps 105, 110, 115, 120 and 125.
-	#. From report step 125 to report step 200 it will simulate one report step at a time, doing EnKF update for every timestep.
-
-	The ENKF_SCHED_FILE keyword is optional.
 
 .. _end_date:
 .. topic:: END_DATE

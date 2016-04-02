@@ -24,7 +24,6 @@ set( source_files
      gen_data.c
      gen_common.c
      gen_obs.c
-     enkf_sched.c
      enkf_serialize.c
      ecl_config.c
      enkf_defaults.c
@@ -121,7 +120,6 @@ set( header_files
      gen_data.h
      gen_common.h
      gen_obs.h
-     enkf_sched.h
      fs_types.h
      enkf_serialize.h
      plain_driver.h
