@@ -34,7 +34,6 @@
 #include <enkf_tui_simple.h>
 #include <enkf_tui_workflow.h>
 #include <ert/enkf/enkf_main.h>
-#include <ert/enkf/enkf_sched.h>
 
 
 /**

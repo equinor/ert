@@ -30,7 +30,6 @@
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_types.h>
-#include <ert/enkf/enkf_sched.h>
 #include <enkf_tui_main.h>
 
 #define WORKFLOW_OPTION "-wf"
