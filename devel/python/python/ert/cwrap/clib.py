@@ -74,7 +74,12 @@ def lib_name(lib , path = None , so_version = ""):
         return None
     else:
         platform_key = platform.system().lower()
-        so_name = "%s.%s%s" % (lib , so_extension[ platform_key ], so_version)
+
+        if platform_key == "darwin":
+            so_name = "%s%s.%s" % (lib, so_version, so_extension[ platform_key ])
+        else:
+            so_name = "%s.%s%s" % (lib, so_extension[ platform_key ], so_version)
+
         if path:
             return os.path.join( path , so_name )
         else:
