@@ -105,7 +105,6 @@ extern "C" {
   void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
 
   bool                          enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * source_fs, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode);
-  void                          enkf_main_assimilation_update(enkf_main_type * enkf_main , const int_vector_type * step_list);
   bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * source_fs, enkf_fs_type * target_fs);
 
   bool                          enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_type init_mode, int iter);
@@ -114,12 +113,6 @@ extern "C" {
                                                   bool_vector_type * iactive ,
                                                   bool             simulate);
 
-
-  void                          enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
-                                                           bool_vector_type * iactive      ,
-                                                           int              init_step_parameters ,
-                                                           int              start_report         ,
-                                                           state_enum       start_state);
 
   void                          enkf_main_run_smoother(enkf_main_type * enkf_main , enkf_fs_type * source_fs, const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun);
   void                          enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations);
@@ -338,17 +331,6 @@ extern "C" {
   runpath_list_type    * enkf_main_get_runpath_list( const enkf_main_type * enkf_main );
   ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , const bool_vector_type * iactive , init_mode_type init_mode , int iter);
   ert_run_context_type * enkf_main_alloc_ert_run_context_INIT_ONLY(const enkf_main_type * enkf_main , enkf_fs_type * fs , const bool_vector_type * iactive , init_mode_type init_mode , int iter);
-  ert_run_context_type * enkf_main_alloc_ert_run_context_ENKF_ASSIMILATION( const enkf_main_type * enkf_main ,
-                                                                        enkf_fs_type * fs ,
-                                                                        const bool_vector_type * iactive ,
-                                                                        init_mode_type init_mode ,
-                                                                        state_enum init_state_parameter ,
-                                                                        state_enum init_state_dynamic   ,
-                                                                        int step1                       ,
-                                                                        int step2                       ,
-                                                                        int iter);
-
-
 
 
 UTIL_SAFE_CAST_HEADER(enkf_main);

@@ -240,31 +240,6 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulat
 }
 
 
-ert_run_context_type * ert_run_context_alloc_ENKF_ASSIMILATION(enkf_fs_type * fs , 
-                                                               const bool_vector_type * iactive , 
-                                                               path_fmt_type * runpath_fmt , 
-                                                               subst_list_type * subst_list ,
-                                                               init_mode_type init_mode , 
-                                                               state_enum init_state_parameter ,
-                                                               state_enum init_state_dynamic   ,
-                                                               int step1                       , 
-                                                               int step2                       ,
-                                                               int iter) {
-  
-  ert_run_context_type * context = ert_run_context_alloc( iactive , SMOOTHER_UPDATE , fs , fs , fs , init_mode , iter);
-  {
-    stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
-    for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
-      if (bool_vector_iget( iactive , iens )) {
-        run_arg_type * arg = run_arg_alloc_ENKF_ASSIMILATION( fs , iens , init_state_parameter , init_state_dynamic , step1 , step2 , stringlist_iget( runpath_list , iens));
-        vector_append_owned_ref( context->run_args , arg , run_arg_free__);
-      }
-    }
-    stringlist_free( runpath_list );
-  }
-  return context;
-}
-
 
 
 UTIL_IS_INSTANCE_FUNCTION( ert_run_context , ERT_RUN_CONTEXT_TYPE_ID );

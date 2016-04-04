@@ -846,13 +846,6 @@ static int enkf_state_internalize_results(enkf_state_type * enkf_state , run_arg
     if (last_report < 0)
       last_report = model_config_get_last_history_restart( enkf_state->shared_info->model_config);
 
-    /*2
-      If we are in true assimilation mode we use the step2 setting, otherwise we are
-      just in plain gready-load-mode.
-    */
-    if (run_arg_get_run_mode(run_arg) == ENKF_ASSIMILATION)
-      last_report = run_arg_get_step2( run_arg );
-
     /* Ensure that the last step is internalized? */
     model_config_set_internalize_state( model_config , last_report);
 
@@ -1374,10 +1367,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
         util_make_path(schedule_file_target_path);
         free(schedule_file_target_path);
 
-        if (run_arg_get_run_mode(run_arg) == ENKF_ASSIMILATION)
-          sched_file_fprintf_i( ecl_config_get_sched_file( ecl_config ) , run_arg_get_step2(run_arg) , schedule_file_target);
-        else
-          sched_file_fprintf( ecl_config_get_sched_file( ecl_config ) , schedule_file_target);
+        sched_file_fprintf( ecl_config_get_sched_file( ecl_config ) , schedule_file_target);
 
         free(schedule_file_target);
       }
@@ -1489,12 +1479,9 @@ static void enkf_state_clear_runpath( const enkf_state_type * enkf_state , run_a
   keep_runpath_type keep_runpath          = member_config_get_keep_runpath( my_config );
 
   bool unlink_runpath;
-  if (keep_runpath == DEFAULT_KEEP) {
-    if (run_arg_get_run_mode(run_arg) == ENKF_ASSIMILATION)
-      unlink_runpath = true;   /* For assimilation the default is to unlink. */
-    else
-      unlink_runpath = false;  /* For experiments the default is to keep the directories around. */
-  } else {
+  if (keep_runpath == DEFAULT_KEEP)
+    unlink_runpath = false;  /* For experiments the default is to keep the directories around. */
+  else {
     /* We have explcitly set a value for the keep_runpath variable - with either KEEP_RUNAPTH or DELETE_RUNPATH. */
     if (keep_runpath == EXPLICIT_KEEP)
       unlink_runpath = false;

@@ -86,9 +86,6 @@ static void forward_load_context_load_ecl_sum(forward_load_context_type * load_c
           */
           break;
 
-        if ((run_arg_get_run_mode( run_arg ) == ENKF_ASSIMILATION) && (run_arg_get_step2( run_arg ) == report_step))
-          break;
-
         report_step++;
       }
     }

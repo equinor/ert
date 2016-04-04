@@ -73,7 +73,6 @@
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/enkf/ecl_config.h>
-#include <ert/enkf/enkf_sched.h>
 #include <ert/enkf/obs_data.h>
 #include <ert/enkf/meas_data.h>
 #include <ert/enkf/enkf_state.h>
@@ -1264,16 +1263,6 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 }
 
 
-void enkf_main_assimilation_update(enkf_main_type * enkf_main , const int_vector_type * step_list) {
-  enkf_main_UPDATE( enkf_main , 
-		    step_list , 
-		    enkf_main_get_fs( enkf_main ) , 
-		    enkf_main_get_fs( enkf_main ) , 
-		    int_vector_get_last( step_list ) , 
-		    ENKF_ASSIMILATION );
-}
-
-
 static bool enkf_main_smoother_update__(enkf_main_type * enkf_main , const int_vector_type * step_list , enkf_fs_type * source_fs, enkf_fs_type * target_fs) {
   return enkf_main_UPDATE( enkf_main , step_list , source_fs , target_fs , 0 , SMOOTHER_UPDATE );
 }
@@ -1505,12 +1494,6 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
                                  ert_run_context_get_iactive( run_context ), STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
 
     ert_log_add_fmt_message( 1 , NULL , "===================================================================", false);
-    if (ert_run_context_get_mode( run_context ) == ENKF_ASSIMILATION) {
-      int step1 = ert_run_context_get_step1(run_context);
-      int step2 = ert_run_context_get_step2(run_context);
-      printf("Starting forward step: %d -> %d\n", step1 , step2 );
-      ert_log_add_fmt_message( 1 , NULL , "Forward model: %d -> %d ",step1,step2);
-    }
 
     job_size = bool_vector_count_equal( ert_run_context_get_iactive(run_context) , true );
     {
@@ -1637,11 +1620,6 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 
 
 void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type * run_context) {
-  {
-    const ext_joblist_type * joblist = site_config_get_installed_jobs( enkf_main->site_config);
-    model_config_set_enkf_sched( enkf_main->model_config , joblist , ert_run_context_get_mode( run_context ));
-  }
-
   enkf_main_init_internalization(enkf_main , ert_run_context_get_mode( run_context ));
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
@@ -1688,121 +1666,6 @@ void enkf_main_run_exp(enkf_main_type * enkf_main ,
 }
 
 
-
-void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
-                                bool_vector_type * iactive      ,
-                                int              init_step_parameters ,
-                                int              start_report         ,
-                                state_enum       start_state) {
-
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
-  if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
-    init_mode_type init_mode = INIT_CONDITIONAL;
-    bool rerun       = analysis_config_get_rerun( enkf_main->analysis_config );
-    int  rerun_start = analysis_config_get_rerun_start( enkf_main->analysis_config );
-    {
-      bool analyzed_start = false;
-      bool prev_enkf_on;
-      const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
-      const int num_nodes                = enkf_sched_get_num_nodes(enkf_sched);
-      const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
-      int inode;
-      ert_run_context_type * run_context;
-
-
-      if (start_state == ANALYZED)
-        analyzed_start = true;
-      else if (start_state == FORECAST)
-        analyzed_start = false;
-      else
-        util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
-
-      prev_enkf_on = analyzed_start;
-      for (inode = start_inode; inode < num_nodes; inode++) {
-        const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-        int iter = 0;
-        state_enum init_state_parameter;
-        state_enum init_state_dynamic;
-        int      init_step_parameter;
-        int      load_start;
-        int      report_step1;
-        int      report_step2;
-        bool     enkf_on;
-
-
-        enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on );
-        if (inode == start_inode)
-          report_step1 = start_report;  /* If we are restarting from somewhere. */
-
-        if (rerun) {
-          /* rerun ... */
-          load_start           = report_step1;    /* +1 below. Observe that report_step is set to rerun_start below. */
-          init_step_parameter  = report_step1;
-          init_state_dynamic   = FORECAST;
-          init_state_parameter = ANALYZED;
-          report_step1         = rerun_start;
-        } else {
-          if (prev_enkf_on)
-            init_state_dynamic = ANALYZED;
-          else
-            init_state_dynamic = FORECAST;
-          /*
-            This is not a rerun - and then parameters and dynamic
-            data should be initialized from the same report step.
-          */
-          init_step_parameter  = report_step1;
-          init_state_parameter = init_state_dynamic;
-          load_start = report_step1;
-        }
-
-        run_context = enkf_main_alloc_ert_run_context_ENKF_ASSIMILATION( enkf_main,
-                                                                         enkf_main_get_fs( enkf_main ) ,
-                                                                         iactive ,
-                                                                         init_mode ,
-                                                                         init_state_parameter,
-                                                                         init_state_dynamic ,
-                                                                         report_step1 ,  // init_step parameter
-                                                                         report_step2 ,
-                                                                         iter );
-
-        enkf_main_init_run( enkf_main , run_context );
-        enkf_main_run_step(enkf_main , run_context);
-        {
-          enkf_fs_type * result_fs = ert_run_context_get_result_fs( run_context );
-          state_map_type * state_map = enkf_fs_get_state_map(result_fs);
-          const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
-          int active_ens_size = state_map_count_matching(state_map , STATE_HAS_DATA);
-
-          if (analysis_config_have_enough_realisations(analysis_config , active_ens_size)) {
-            if (enkf_on) {
-              bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
-              int_vector_type * step_list;
-              int stride;
-
-              if (merge_observations)
-                stride = 1;
-              else
-                stride = 0;
-
-              step_list = enkf_main_update_alloc_step_list( enkf_main , ert_run_context_get_load_start(run_context) , report_step2 , stride );
-
-              enkf_main_assimilation_update(enkf_main , step_list);
-              int_vector_free( step_list );
-              enkf_fs_fsync( result_fs );
-            }
-          } else {
-            fprintf(stderr,"** ERROR ** There are %d active realisations left, which is less than the minimum specified (%d) - stopping assimilation.\n" ,
-                    active_ens_size ,
-                    analysis_config_get_min_realisations(analysis_config));
-            break;
-          }
-          prev_enkf_on = enkf_on;
-        }
-      }
-    }
-  } else
-    fprintf(stderr,"** ERROR: EnKF assimilation can not be combined with an iterable analysis module.\n");
-}
 
 
 bool enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_type init_mode, int iter) {
@@ -1975,28 +1838,6 @@ ert_run_context_type * enkf_main_alloc_ert_run_context_INIT_ONLY(const enkf_main
   return ert_run_context_alloc_INIT_ONLY( fs , iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main->subst_list , init_mode , iter );
 }
 
-ert_run_context_type * enkf_main_alloc_ert_run_context_ENKF_ASSIMILATION( const enkf_main_type * enkf_main ,
-                                                                      enkf_fs_type * fs ,
-                                                                      const bool_vector_type * iactive ,
-                                                                      init_mode_type init_mode ,
-                                                                      state_enum init_state_parameter ,
-                                                                      state_enum init_state_dynamic   ,
-                                                                      int step1                       ,
-                                                                      int step2                       ,
-                                                                      int iter) {
-
-  return ert_run_context_alloc_ENKF_ASSIMILATION( enkf_main_get_fs( enkf_main ) ,
-                                                  iactive ,
-                                                  model_config_get_runpath_fmt( enkf_main->model_config ) ,
-                                                  enkf_main->subst_list ,
-                                                  init_mode ,
-                                                  init_state_parameter,
-                                                  init_state_dynamic ,
-                                                  step1 ,  // init_step parameter
-                                                  step2 ,
-                                                  iter );
-
-}
 
 
 
@@ -2136,9 +1977,6 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   item = config_add_schema_item(config , DATA_KW_KEY , false  );
   config_schema_item_set_argc_minmax(item , 2 , 2);
 
-  item = config_add_schema_item(config , KEEP_RUNPATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
-
   config_add_key_value(config , PRE_CLEAR_RUNPATH_KEY , false , CONFIG_BOOL);
 
   item = config_add_schema_item(config , DELETE_RUNPATH_KEY , false  );
@@ -2161,10 +1999,6 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   config_schema_item_set_argc_minmax(item , 1 , 1 );
 
   item = config_add_schema_item(config , LOCAL_CONFIG_KEY  , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  item = config_add_schema_item(config , ENKF_SCHED_FILE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
 
@@ -2210,22 +2044,11 @@ bool enkf_main_get_verbose( const enkf_main_type * enkf_main ) {
 */
 
 
-void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep_runpath_string , const char * delete_runpath_string , int ens_size ) {
+void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * delete_runpath_string , int ens_size ) {
 
   int i;
   for (i = 0; i < ens_size; i++)
     int_vector_iset( enkf_main->keep_runpath , i , DEFAULT_KEEP);
-
-
-  {
-    int_vector_type * active_list = string_util_alloc_active_list(keep_runpath_string);
-
-    for (i = 0; i < int_vector_size( active_list ); i++)
-      int_vector_iset( enkf_main->keep_runpath , int_vector_iget( active_list , i ) , EXPLICIT_KEEP);
-
-    int_vector_free( active_list );
-  }
-
 
   {
     int_vector_type * active_list = string_util_alloc_active_list(delete_runpath_string);
@@ -2845,36 +2668,21 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 
       /*****************************************************************/
       /**
-	 To keep or not to keep the runpath directories? The problem is
-	 that the default behavior is different depending on the run_mode:
-
-	 enkf_mode: In this case the default behaviour is to delete the
-	 runpath directories. You can explicitly say that you want to
-	 keep runpath directories with the KEEP_RUNPATH
-	 directive.
-
-	 experiments: In this case the default is to keep the runpath
-	 directories around, but you can explicitly say that you
-	 want to remove the directories by using the DELETE_RUNPATH
-	 option.
-
-	 The final decision is performed in enkf_state().
+         By default the simulation directories are left intact when
+         the simulations re complete, but using the keyword
+         DELETE_RUNPATH you can request (some of) the directories to
+         be wiped after the simulations are complete.
       */
       {
 	{
-	  char * keep_runpath_string   = NULL;
 	  char * delete_runpath_string = NULL;
 	  int    ens_size              = config_content_get_value_as_int(content , NUM_REALIZATIONS_KEY);
-
-	  if (config_content_has_item(content , KEEP_RUNPATH_KEY))
-	    keep_runpath_string = config_content_alloc_joined_string(content , KEEP_RUNPATH_KEY , "");
 
 	  if (config_content_has_item(content , DELETE_RUNPATH_KEY))
 	    delete_runpath_string = config_content_alloc_joined_string(content , DELETE_RUNPATH_KEY , "");
 
-	  enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string , ens_size );
+	  enkf_main_parse_keep_runpath( enkf_main , delete_runpath_string , ens_size );
 
-	  util_safe_free( keep_runpath_string   );
 	  util_safe_free( delete_runpath_string );
 	}
 
@@ -3073,17 +2881,6 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   /* Internalizing the initial state. */
   model_config_set_internalize_state( enkf_main->model_config , 0);
 
-  /* We internalize all the endpoints in the enkf_sched. */
-  if (run_mode == ENKF_ASSIMILATION) {
-    int inode;
-    enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
-    for (inode = 0; inode < enkf_sched_get_num_nodes( enkf_sched ); inode++) {
-      const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-      int report_step2            = enkf_sched_node_get_last_step( node );
-      model_config_set_internalize_state( enkf_main->model_config , report_step2);
-    }
-  }
-
 
   /* Make sure we internalize at all observation times.*/
   {
@@ -3180,22 +2977,7 @@ void enkf_main_fprintf_runpath_config( const enkf_main_type * enkf_main , FILE *
   fprintf(stream , CONFIG_ENDVALUE_FORMAT , CONFIG_BOOL_STRING( enkf_state_get_pre_clear_runpath( enkf_main->ensemble[0] )));
 
   {
-    bool keep_comma = false;
     bool del_comma  = false;
-
-
-    for (int iens = 0; iens < enkf_main->ens_size; iens++) {
-      keep_runpath_type keep_runpath = enkf_main_iget_keep_runpath( enkf_main , iens );
-      if (keep_runpath == EXPLICIT_KEEP) {
-        if (!keep_comma) {
-          fprintf(stream , CONFIG_KEY_FORMAT , KEEP_RUNPATH_KEY );
-          fprintf(stream , "%d" , iens);
-          keep_comma = true;
-        } else
-          fprintf(stream , ",%d" , iens);
-      }
-    }
-    fprintf(stream , "\n");
 
 
     for (int iens = 0; iens < enkf_main->ens_size; iens++) {

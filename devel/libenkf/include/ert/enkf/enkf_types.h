@@ -172,7 +172,7 @@ typedef enum { TRUNCATE_NONE   = 0,
 
 */
 
-typedef enum { ENKF_ASSIMILATION       = 1,
+typedef enum { //ENKF_ASSIMILATION       = 1,
                ENSEMBLE_EXPERIMENT     = 2,
                SMOOTHER_UPDATE         = 4 ,
                INIT_ONLY               = 8 } run_mode_type;

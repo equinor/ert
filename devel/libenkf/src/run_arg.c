@@ -102,16 +102,6 @@ static run_arg_type * run_arg_alloc(enkf_fs_type * init_fs ,
 }
 
 
-run_arg_type * run_arg_alloc_ENKF_ASSIMILATION(enkf_fs_type * fs ,
-                                               int iens ,
-                                               state_enum init_state_parameter ,
-                                               state_enum init_state_dynamic   ,
-                                               int step1                       ,
-                                               int step2                       ,
-                                               const char * runpath) {
-
-  return run_arg_alloc(fs,fs,fs,iens,ENKF_ASSIMILATION,step1 , init_state_parameter, init_state_dynamic , step1 , step2 , 0 , runpath);
-}
 
 
 
