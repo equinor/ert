@@ -64,13 +64,14 @@ class MDAEnsembleSmootherJob(ErtPlugin):
     def update(self, target_case_format, iteration, weight):
         self.checkIfCancelled()
 
+        source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         next_iteration = (iteration + 1)
         next_target_case_name = target_case_format % next_iteration
         target_fs = self.ert().getEnkfFsManager().getFileSystem(next_target_case_name)
 
         print("[%s] Analyzing iteration: %d with weight %f" % (next_target_case_name, next_iteration, weight))
         self.ert().analysisConfig().setGlobalStdScaling(weight)
-        success = self.ert().getEnkfSimulationRunner().smootherUpdate(target_fs)
+        success = self.ert().getEnkfSimulationRunner().smootherUpdate(source_fs, target_fs)
 
         if not success:
             raise UserWarning("[%s] Analysis of simulation failed for iteration: %d!" % (next_target_case_name, next_iteration))
