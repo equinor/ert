@@ -8,11 +8,11 @@ from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 class Server(ErtShellCollection):
     def __init__(self, parent):
         super(Server, self).__init__("server", parent)
+        self.shellContext()["server_settings"] = self
 
         self.addShellFunction(name="start",
                               function=Server.startServer,
-                              help_arguments="[port_number]",
-                              help_message="Start the ERT RPC Server using the optional port number or a random port")
+                              help_message="Start the ERT RPC Server")
 
         self.addShellFunction(name="stop",
                               function=Server.stopServer,
@@ -22,19 +22,46 @@ class Server(ErtShellCollection):
                               function=Server.inspect,
                               help_message="Shows information about the current job queue")
 
+        self.addShellProperty(name="hostname",
+                              getter=Server.getHost,
+                              setter=Server.setHost,
+                              help_arguments="[hostname]",
+                              help_message="Show or set the server hostname",
+                              pretty_attribute="Hostname")
+
+        self.addShellProperty(name="port",
+                              getter=Server.getPort,
+                              setter=Server.setPort,
+                              help_arguments="[port]",
+                              help_message="Show or set the server port number (0 = automatic)",
+                              pretty_attribute="Port")
+
         self._server = None
         """ :type: ErtRPCServer """
 
+        self._hostname = "localhost"
+        self._port = 0
+
+    def getHost(self):
+        return self._hostname
+
+    def setHost(self, hostname):
+        self._hostname = hostname
+
+    def getPort(self):
+        return self._port
+
+    def setPort(self, port):
+        self._port = int(port)
+
     @assertConfigLoaded
     def startServer(self, line):
-        try:
-            port = int(line.strip())
-        except ValueError:
-            port = 0
+        port = self._port
+        host = self._hostname
 
         if self._server is None:
             try:
-                self._server = ErtRPCServer(self.ert(), port=port)
+                self._server = ErtRPCServer(self.ert(), host=host, port=port)
             except socket.error as e:
                 print("Unable to start the server on port: %d" % port)
             else:

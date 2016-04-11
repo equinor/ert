@@ -6,6 +6,7 @@ set(TEST_SOURCES
     test_ertshell_observations.py
     test_ertshell_plot_settings.py
     test_ertshell_smoother.py
+    test_ertshell_server.py
 
     test_shell_function.py
     test_shell_property.py
@@ -19,6 +20,7 @@ addPythonTest(gui.ertshell.context gui.ertshell.test_ertshell_context.ErtShellCo
 addPythonTest(gui.ertshell.observations gui.ertshell.test_ertshell_observations.ErtShellObservationsTest)
 addPythonTest(gui.ertshell.plot_settings gui.ertshell.test_ertshell_plot_settings.ErtShellPlotSettingsTest)
 addPythonTest(gui.ertshell.smoother gui.ertshell.test_ertshell_smoother.ErtShellSmootherTest)
+addPythonTest(gui.ertshell.server gui.ertshell.test_ertshell_server.ErtShellServerTest)
 
 addPythonTest(gui.ertshell.shell_function gui.ertshell.test_shell_function.ShellFunctionTest)
 addPythonTest(gui.ertshell.shell_property gui.ertshell.test_shell_property.ShellPropertyTest)
