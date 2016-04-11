@@ -3,12 +3,22 @@ import sys
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 
-
 class HookManager(BaseCClass):
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
-
+    
+    def __len__(self):
+        """ @rtype: int """
+        return HookManager.cNamespace().size(self)
+    
+    def __getitem__(self, index):
+        """ @rtype: Hook workflow """
+        assert isinstance(index, int)
+        if index < len(self):
+            return HookManager.cNamespace().iget_hook_workflow(self, index)
+        else:
+            raise IndexError("Invalid index")
 
     def checkRunpathListFile(self):
         """ @rtype: bool """
@@ -20,16 +30,22 @@ class HookManager(BaseCClass):
     def getRunpathList(self):
         """ @rtype: RunpathList """
         return HookManager.cNamespace().get_runpath_list(self)
-    
-    
-    def runWorkflows(self , run_time , ert_self):
-        ert_self_ptr = ert_self.from_param(ert_self).value
-        HookManager.cNamespace().run_workflows(self , run_time , ert_self_ptr)
         
+    def runWorkflows(self , run_time , ert_self):
+        
+        workflow_list = ert_self.getWorkflowList()
+        for hook_workflow in self:
+            
+            if (hook_workflow.getRunMode() is not run_time):
+                continue
+            
+            workflow = hook_workflow.getWorkflow()            
+            workflow.run(ert_self, context=workflow_list.getContext())       
     
 cwrapper = CWrapper(ENKF_LIB)
 
 cwrapper.registerObjectType("hook_manager", HookManager)
 
 HookManager.cNamespace().get_runpath_list_file = cwrapper.prototype("char* hook_manager_get_runpath_list_file(hook_manager)")
-HookManager.cNamespace().run_workflows = cwrapper.prototype("void hook_manager_run_workflows(hook_manager , hook_runtime_enum , void*)")
+HookManager.cNamespace().iget_hook_workflow    = cwrapper.prototype("hook_workflow_ref hook_manager_iget_hook_workflow(hook_manager, int)")
+HookManager.cNamespace().size                  = cwrapper.prototype("int hook_manager_get_size(hook_manager)")

@@ -82,15 +82,14 @@ runpath_list_type * hook_manager_get_runpath_list( hook_manager_type * hook_mana
 }
 
 
-static void hook_manager_add_workflow( hook_manager_type * hook_manager , const char * filename , hook_run_mode_enum run_mode) {
-  char * workflow_name;
-  util_alloc_file_components( filename , NULL , &workflow_name , NULL );
-  {
-    workflow_type * workflow = ert_workflow_list_add_workflow( hook_manager->workflow_list , filename , workflow_name);
-    if (workflow != NULL) {
-      hook_workflow_type * hook = hook_workflow_alloc( workflow , run_mode );
-      vector_append_owned_ref(hook_manager->hook_workflow_list, hook , hook_workflow_free__);
-    }
+static void hook_manager_add_workflow( hook_manager_type * hook_manager , const char * workflow_name , hook_run_mode_enum run_mode) {
+  if (ert_workflow_list_has_workflow( hook_manager->workflow_list , workflow_name) ){
+    workflow_type * workflow = ert_workflow_list_get_workflow( hook_manager->workflow_list , workflow_name);
+    hook_workflow_type * hook = hook_workflow_alloc( workflow , run_mode );
+    vector_append_owned_ref(hook_manager->hook_workflow_list, hook , hook_workflow_free__);
+  }
+  else {
+    fprintf(stderr, "** Warning: While hooking workflow: %s not recognized among the list of loaded workflows.", workflow_name);
   }
 }
 
@@ -98,11 +97,17 @@ static void hook_manager_add_workflow( hook_manager_type * hook_manager , const 
 
 void hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config_content) {
 
-  /* Old stuff explicitly prefixed with QC - the  */
+  /* Old stuff explicitly prefixed with QC  */
   {
     if (config_content_has_item( config_content , QC_WORKFLOW_KEY)) {
+      char * workflow_name;
       const char * file_name = config_content_get_value_as_path(config_content , QC_WORKFLOW_KEY);
-      hook_manager_add_workflow( hook_manager , file_name , POST_SIMULATION );
+      util_alloc_file_components( file_name , NULL , &workflow_name , NULL );
+      workflow_type * workflow = ert_workflow_list_add_workflow( hook_manager->workflow_list , file_name , workflow_name);
+      if (workflow != NULL) {
+       hook_workflow_type * hook = hook_workflow_alloc( workflow , POST_SIMULATION );
+       vector_append_owned_ref(hook_manager->hook_workflow_list, hook , hook_workflow_free__);
+     }
     }
   }
 
@@ -110,9 +115,9 @@ void hook_manager_init( hook_manager_type * hook_manager , const config_content_
 
   if (config_content_has_item( config_content , HOOK_WORKFLOW_KEY)) {
     for (int ihook = 0; ihook < config_content_get_occurences(config_content , HOOK_WORKFLOW_KEY); ihook++) {
-      const char * file_name = config_content_iget( config_content , HOOK_WORKFLOW_KEY, ihook , 0 );
+      const char * workflow_name = config_content_iget( config_content , HOOK_WORKFLOW_KEY, ihook , 0 );
       hook_run_mode_enum run_mode = hook_workflow_run_mode_from_name(config_content_iget(config_content , HOOK_WORKFLOW_KEY , ihook , 1));
-      hook_manager_add_workflow( hook_manager , file_name , run_mode );
+      hook_manager_add_workflow( hook_manager , workflow_name , run_mode );
     }
   }
 }
@@ -138,7 +143,7 @@ void hook_manager_add_config_items( config_parser_type * config ) {
 
   item = config_add_schema_item( config , HOOK_WORKFLOW_KEY , false );
   config_schema_item_set_argc_minmax(item , 2 , 2 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
+  config_schema_item_iset_type( item , 0 , CONFIG_STRING );
   config_schema_item_iset_type( item , 1 , CONFIG_STRING );
   {
     char ** argv = util_malloc( 2 * sizeof * argv );
@@ -211,6 +216,14 @@ void hook_manager_run_workflows( const hook_manager_type * hook_manager , hook_r
       */
     }
   }
+}
+
+const hook_workflow_type * hook_manager_iget_hook_workflow(const hook_manager_type * hook_manager, int index){
+ return vector_iget(hook_manager->hook_workflow_list, index);
+}
+
+int hook_manager_get_size(const hook_manager_type * hook_manager){
+ return vector_get_size(hook_manager->hook_workflow_list);
 }
 
 
