@@ -67,6 +67,10 @@ namespace ERT {
                     join, grid_dims, num, index, default_value ) )
     {}
 
+    int smspec_node::type() const {
+        return smspec_node_get_var_type( this->node.get() );
+    }
+
     const char* smspec_node::wgname() const {
         return smspec_node_get_wgname( this->node.get() );
     }

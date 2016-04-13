@@ -34,6 +34,7 @@ namespace ERT {
                     int dims[ 3 ],
                     int region );
 
+            int type() const;
             const char* wgname() const;
             const char* keyword() const;
 
