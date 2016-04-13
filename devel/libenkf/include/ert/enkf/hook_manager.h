@@ -42,6 +42,10 @@ extern "C" {
   void                  hook_manager_set_runpath_list_file( hook_manager_type * hook_manager , const char * path, const char * filename);
   const char          * hook_manager_get_runpath_list_file(const hook_manager_type * hook_manager);
   void                  hook_manager_run_workflows( const hook_manager_type * hook_manager , hook_run_mode_enum run_mode , void * self);
+
+  const hook_workflow_type   * hook_manager_iget_hook_workflow(const hook_manager_type * hook_manager, int index);
+  int                          hook_manager_get_size(const hook_manager_type * hook_manager);
+
   /*****************************************************************/
   /* Deprecated stuff                                              */
   /*****************************************************************/
