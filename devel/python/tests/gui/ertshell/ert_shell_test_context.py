@@ -36,6 +36,8 @@ class ErtShellTestContext(object):
 
         if os.path.exists(self.config_file):
             test_area.copy_parent_content(self.config_file)
+        elif self.config_file is not None:
+            raise IOError("The config file: '%s' does not exist!" % self.config_file)
 
         self.shell = ErtShell(forget_history=True)
 
