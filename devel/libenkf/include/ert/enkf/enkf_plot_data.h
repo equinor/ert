@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __ENKF_PLOT_DATA_H__
-#define __ENKF_PLOT_DATA_H__
+#ifndef ERT_ENKF_PLOT_DATA_H
+#define ERT_ENKF_PLOT_DATA_H
 
 #ifdef __cplusplus
 extern "C" {

@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#ifndef __MISFIT_RANKING_H__
-#define __MISFIT_RANKING_H__
+#ifndef ERT_MISFIT_RANKING_H
+#define ERT_MISFIT_RANKING_H
 
 #include <ert/util/type_macros.h>
 #include <ert/util/int_vector.h>

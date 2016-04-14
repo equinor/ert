@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#ifndef __ENKF_FS_H__
-#define __ENKF_FS_H__
+#ifndef ERT_ENKF_FS_H
+#define ERT_ENKF_FS_H
 #ifdef __cplusplus
 extern "C" {
 #endif

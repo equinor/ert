@@ -16,8 +16,8 @@
    for more details.
 */
 
-#ifndef __ENKF_OBS_H__
-#define __ENKF_OBS_H__
+#ifndef ERT_ENKF_OBS_H
+#define ERT_ENKF_OBS_H
 #ifdef __cplusplus
 extern "C" {
 #endif

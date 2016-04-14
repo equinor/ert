@@ -16,8 +16,8 @@
    for more details.
  */
 
-#ifndef __QUEUE_DRIVER_H__
-#define __QUEUE_DRIVER_H__
+#ifndef ERT_QUEUE_DRIVER_H
+#define ERT_QUEUE_DRIVER_H
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __ENKF_PLOT_TVECTOR_H__
-#define __ENKF_PLOT_TVECTOR_H__
+#ifndef ERT_ENKF_PLOT_TVECTOR_H
+#define ERT_ENKF_PLOT_TVECTOR_H
 
 #ifdef __cplusplus
 extern "C" {

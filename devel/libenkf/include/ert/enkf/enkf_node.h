@@ -16,8 +16,8 @@
    for more details.
 */
 
-#ifndef __ENKF_NODE_H__
-#define __ENKF_NODE_H__
+#ifndef ERT_ENKF_NODE_H
+#define ERT_ENKF_NODE_H
 #include <stdlib.h>
 #include <stdbool.h>
 

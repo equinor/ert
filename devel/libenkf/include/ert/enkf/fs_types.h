@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#ifndef __FS_TYPES_H__
-#define __FS_TYPES_H__
+#ifndef ERT_FS_TYPES_H
+#define ERT_FS_TYPES_H
 
 
 

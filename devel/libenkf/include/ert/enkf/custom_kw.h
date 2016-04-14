@@ -1,5 +1,5 @@
-#ifndef __CUSTOM_KW_H__
-#define __CUSTOM_KW_H__
+#ifndef ERT_CUSTOM_KW_H
+#define ERT_CUSTOM_KW_H
 #ifdef __cplusplus
 extern "C" {
 #endif

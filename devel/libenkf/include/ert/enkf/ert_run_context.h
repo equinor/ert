@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#ifndef __ERT_RUN_CONTEXT_H__
-#define __ERT_RUN_CONTEXT_H__
+#ifndef ERT_RUN_CONTEXT_H
+#define ERT_RUN_CONTEXT_H
 #ifdef __cplusplus
 extern "C" {
 #endif
