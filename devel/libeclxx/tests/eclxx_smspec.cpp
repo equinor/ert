@@ -61,6 +61,7 @@ void test_smspec_block() {
 
     test_assert_true( block.keyword() == kw );
     test_assert_true( block.type() == ECL_SMSPEC_BLOCK_VAR );
+    test_assert_true( block.num() == 556 );
 }
 
 void test_smspec_region() {
@@ -70,6 +71,7 @@ void test_smspec_region() {
 
     test_assert_true( region.keyword() == kw );
     test_assert_true( region.type() == ECL_SMSPEC_REGION_VAR );
+    test_assert_true( region.num() == 0 );
 }
 
 void test_smspec_completion() {
@@ -81,6 +83,7 @@ void test_smspec_completion() {
 
     test_assert_true( completion.keyword() == kw );
     test_assert_true( completion.type() == ECL_SMSPEC_COMPLETION_VAR );
+    test_assert_true( completion.num() == 112 );
 }
 
 int main (int argc, char **argv) {
