@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#ifndef __ENKF_TUI_UTIL_H__
-#define __ENKF_TUI_UTIL_H__
+#ifndef ERT_ENKF_TUI_UTIL_H
+#define ERT_ENKF_TUI_UTIL_H
 
 #include <ert/util/bool_vector.h>
 
