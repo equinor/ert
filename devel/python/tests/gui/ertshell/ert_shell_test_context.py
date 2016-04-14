@@ -33,7 +33,12 @@ class ErtShellTestContext(object):
     def __enter__(self):
         """ :rtype: ErtShell """
         test_area = self.test_area_context.__enter__()
-        test_area.copy_parent_content(self.config_file)
+
+        if os.path.exists(self.config_file):
+            test_area.copy_parent_content(self.config_file)
+        elif self.config_file is not None:
+            raise IOError("The config file: '%s' does not exist!" % self.config_file)
+
         self.shell = ErtShell(forget_history=True)
 
         config_file = os.path.basename(self.config_file)
