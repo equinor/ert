@@ -109,3 +109,24 @@ class BaseCClass(object):
                 # we can have a Python object with c_pointer == None.
                 if self.__c_pointer > 0:
                     self.free()
+
+                    
+        
+    def _invalidateCPointer(self):
+        self.__c_pointer = None
+
+
+    def __bool__(self):
+        """The BaseCClass instance will evaluate to true if it is bound to an
+        underlying C object, otherwise it will evaluate to False. More
+        elaborate bool tests should be implemented in the derived
+        class.
+        """
+        if self.__c_pointer:
+            return True
+        else:
+            return False
+
+
+    def __nonzero__(self):
+        return self.__bool__( )

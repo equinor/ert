@@ -25,8 +25,8 @@ class TempArea(TestArea):
     created area.
     """
     
-    _temp_area_alloc           = UtilPrototype("void* temp_area_alloc( char* )")
-    _temp_area_alloc_relative  = UtilPrototype("void* temp_area_alloc_relative( char* , char* )")
+    _temp_area_alloc           = UtilPrototype("void* temp_area_alloc( char* )" , bind = False)
+    _temp_area_alloc_relative  = UtilPrototype("void* temp_area_alloc_relative( char* , char* )" , bind = False)
 
     def __init__(self, name, prefix = None , store_area=False):
         if prefix:
@@ -52,7 +52,7 @@ class TempArea(TestArea):
         """
         Will return the full path to the temporary working area.
         """
-        return self._get_cwd(self)
+        return self._get_cwd( )
 
     
 
