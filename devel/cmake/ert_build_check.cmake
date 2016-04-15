@@ -34,7 +34,6 @@ check_function_exists( chmod HAVE_CHMOD )
 check_function_exists( pthread_timedjoin_np HAVE_TIMEDJOIN)
 check_function_exists( pthread_yield_np HAVE_YIELD_NP)
 check_function_exists( pthread_yield HAVE_YIELD)
-check_function_exists( PathIsRelative HAVE_PATH_ISRELATIVE )
 
 check_function_exists( _mkdir HAVE_WINDOWS_MKDIR)
 if (NOT HAVE_WINDOWS_MKDIR)
