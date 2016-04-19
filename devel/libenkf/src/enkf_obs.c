@@ -433,7 +433,7 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
 
               meas_block_iset(meas_block ,
                               iens , active_count ,
-                              summary_get( enkf_node_value_ptr( work_node ) , node_id.report_step , node_id.state ));
+                              summary_get( enkf_node_value_ptr( work_node ) , node_id.report_step ));
 
             }
             active_count++;
