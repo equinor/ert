@@ -422,7 +422,6 @@ void enkf_tui_export_time(void * enkf_main) {
 void enkf_tui_export_fieldP(void * arg) {
   enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg ); 
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  state_enum analysis_state                    = BOTH;
   const enkf_config_node_type * config_node    = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN ,  FIELD  , INVALID_VAR );
   int iens1                                    = 0;
   int iens2                                    = enkf_main_get_ensemble_size( enkf_main );
