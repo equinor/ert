@@ -194,7 +194,7 @@ void * enkf_main_init_case_from_existing_JOB( void * self , const stringlist_typ
     } else
       target_fs = enkf_fs_get_ref( enkf_main_job_get_fs(enkf_main) );    // Using get_ref so that we can unconditionally call decref() further down.
 
-    enkf_main_init_case_from_existing(enkf_main, source_fs, 0, ANALYZED, target_fs);
+    enkf_main_init_case_from_existing(enkf_main, source_fs, 0, target_fs); // Removed ANALYZED argument
     enkf_fs_decref(target_fs);
   }
   enkf_fs_decref(source_fs);

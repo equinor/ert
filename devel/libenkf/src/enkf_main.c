@@ -1774,7 +1774,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations_to
 
     if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
       enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , true);
-      enkf_main_init_case_from_existing(enkf_main, current_case, 0, ANALYZED, initial_case);
+      enkf_main_init_case_from_existing(enkf_main, current_case, 0, initial_case); // ANALYZED argument removed.
       enkf_main_set_fs( enkf_main , initial_case , NULL );
       enkf_fs_decref( initial_case );
     }
@@ -1806,7 +1806,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations_to
         } else {
           fprintf(stderr, "\nAnalysis failed, rerunning simulation on changed initial parameters\n");
           enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false );
-          enkf_main_init_current_case_from_existing(enkf_main, target_fs, 0, ANALYZED);
+          enkf_main_init_current_case_from_existing(enkf_main, target_fs, 0); // ANALYZED argument removed
           enkf_fs_decref(target_fs);
           ++num_tries;
 

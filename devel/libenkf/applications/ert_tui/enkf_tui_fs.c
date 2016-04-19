@@ -210,7 +210,6 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
   int ens_size;
   int last_report;
   int src_step;
-  state_enum src_state;
   enkf_main_type   * enkf_main = enkf_main_safe_cast( arg );
 
   ens_size = enkf_main_get_ensemble_size( enkf_main );
@@ -221,9 +220,8 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
   source_case = enkf_tui_fs_alloc_existing_case( enkf_main , "Initialize from case" , prompt_len);
   if (source_case != NULL) {                                              
     src_step                 = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
-    src_state                = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
     enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , false );
-    enkf_main_init_current_case_from_existing(enkf_main, source_fs , src_step , src_state);
+    enkf_main_init_current_case_from_existing(enkf_main, source_fs , src_step);
     enkf_fs_decref(source_fs);
   }
   util_safe_free( source_case );
