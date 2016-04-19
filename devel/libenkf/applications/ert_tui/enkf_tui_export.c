@@ -435,7 +435,7 @@ void enkf_tui_export_fieldP(void * arg) {
   export_file = util_alloc_stdin_line();
   {
     enkf_fs_type   * fs        = enkf_main_tui_get_fs(enkf_main);
-    enkf_node_type ** ensemble = enkf_node_load_alloc_ensemble( config_node , fs , report_step , iens1 , iens2 , analysis_state );
+    enkf_node_type ** ensemble = enkf_node_load_alloc_ensemble( config_node , fs , report_step , iens1 , iens2 );
     enkf_node_type *  sum      = enkf_node_alloc( config_node );
     int active_ens_size        = 0;
     int iens;
