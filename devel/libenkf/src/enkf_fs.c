@@ -223,7 +223,6 @@ struct enkf_fs_struct {
   int                      lock_fd;
 
   fs_driver_type         * dynamic_forecast;
-  fs_driver_type         * dynamic_analyzed;
   fs_driver_type         * parameter;
   fs_driver_type         * index ;
 
@@ -300,7 +299,6 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point ) {
   fs->index                  = NULL;
   fs->parameter              = NULL;
   fs->dynamic_forecast       = NULL;
-  fs->dynamic_analyzed       = NULL;
   fs->read_only              = true;
   fs->mount_point            = util_alloc_string_copy( mount_point );
   fs->refcount               = 0;
@@ -396,7 +394,6 @@ static void enkf_fs_create_plain_fs( FILE * stream , void * arg) {
 
   plain_driver_create_fs( stream , DRIVER_PARAMETER        , DEFAULT_PLAIN_NODE_PARAMETER_PATH        , DEFAULT_PLAIN_VECTOR_PARAMETER_PATH);
   plain_driver_create_fs( stream , DRIVER_DYNAMIC_FORECAST , DEFAULT_PLAIN_NODE_DYNAMIC_FORECAST_PATH , DEFAULT_PLAIN_VECTOR_DYNAMIC_FORECAST_PATH);
-  plain_driver_create_fs( stream , DRIVER_DYNAMIC_ANALYZED , DEFAULT_PLAIN_NODE_DYNAMIC_ANALYZED_PATH , DEFAULT_PLAIN_VECTOR_DYNAMIC_ANALYZED_PATH);
   plain_driver_create_fs( stream , DRIVER_INDEX            , DEFAULT_PLAIN_NODE_INDEX_PATH            , DEFAULT_PLAIN_VECTOR_INDEX_PATH );
 
 }
@@ -407,7 +404,6 @@ static void enkf_fs_create_block_fs( FILE * stream , int num_drivers , const cha
 
   block_fs_driver_create_fs( stream , mount_point , DRIVER_PARAMETER        , num_drivers , "Ensemble/mod_%d" , "PARAMETER");
   block_fs_driver_create_fs( stream , mount_point , DRIVER_DYNAMIC_FORECAST , num_drivers , "Ensemble/mod_%d" , "FORECAST");
-  block_fs_driver_create_fs( stream , mount_point , DRIVER_DYNAMIC_ANALYZED , num_drivers , "Ensemble/mod_%d" , "ANALYZED");
   block_fs_driver_create_fs( stream , mount_point , DRIVER_INDEX            , 1           , "Index"           , "INDEX");
 
 }
@@ -421,14 +417,14 @@ static void enkf_fs_assign_driver( enkf_fs_type * fs , fs_driver_type * driver ,
   case(DRIVER_DYNAMIC_FORECAST):
     fs->dynamic_forecast = driver;
     break;
-  case(DRIVER_DYNAMIC_ANALYZED):
-    fs->dynamic_analyzed = driver;
-    break;
   case(DRIVER_INDEX):
     fs->index = driver;
     break;
   case(DRIVER_STATIC):
     util_abort("%s: internal error - should not assign a STATIC driver \n",__func__);
+    break;
+  case(DRIVER_DYNAMIC_ANALYZED):
+    util_abort("%s: internal error - should not assign a DYNAMIC_ANALYZED driver \n",__func__);
     break;
   }
 }
@@ -697,7 +693,6 @@ static void enkf_fs_umount( enkf_fs_type * fs ) {
     int refcount = fs->refcount;
     if (refcount == 0) {
       enkf_fs_free_driver( fs->dynamic_forecast );
-      enkf_fs_free_driver( fs->dynamic_analyzed );
       enkf_fs_free_driver( fs->parameter );
       enkf_fs_free_driver( fs->index );
 
@@ -765,7 +760,6 @@ static void enkf_fs_fsync_driver( fs_driver_type * driver ) {
 void enkf_fs_fsync( enkf_fs_type * fs ) {
   enkf_fs_fsync_driver( fs->parameter );
   enkf_fs_fsync_driver( fs->dynamic_forecast );
-  enkf_fs_fsync_driver( fs->dynamic_analyzed );
   enkf_fs_fsync_driver( fs->index );
 
   enkf_fs_fsync_time_map( fs );
@@ -914,7 +908,6 @@ void enkf_fs_debug_fprintf( const enkf_fs_type * fs) {
   printf("fs...................: %p \n",fs );
   printf("Mount point..........: %s \n",fs->mount_point );
   printf("Dynamic forecast.....: %p \n",fs->dynamic_forecast );
-  printf("Dynamic analyzed.....: %p \n",fs->dynamic_analyzed );
   printf("Parameter............: %p \n",fs->parameter );
   printf("Index................: %p \n",fs->index );
   printf("-----------------------------------------------------------------\n");
