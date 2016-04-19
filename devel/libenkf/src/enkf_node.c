@@ -576,7 +576,7 @@ void enkf_node_load(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_typ
 
 
 bool enkf_node_try_load_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens , state_enum state) {
-  if (enkf_config_node_has_vector( enkf_node->config , fs , iens, state)) {
+  if (enkf_config_node_has_vector( enkf_node->config , fs , iens)) {
     enkf_node_load_vector( enkf_node , fs , iens , state );
     return true;
   } else
@@ -594,7 +594,7 @@ bool enkf_node_try_load_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , i
 
 enkf_node_type * enkf_node_load_alloc( const enkf_config_node_type * config_node , enkf_fs_type * fs , node_id_type node_id) {
   if (enkf_config_node_vector_storage( config_node )) {
-    if (enkf_config_node_has_vector( config_node , fs , node_id.iens , node_id.state)) {
+    if (enkf_config_node_has_vector( config_node , fs , node_id.iens)) {
       enkf_node_type * node = enkf_node_alloc( config_node );
       enkf_node_load( node , fs , node_id );
       return node;
@@ -656,7 +656,7 @@ bool enkf_node_has_data( enkf_node_type * enkf_node , enkf_fs_type * fs , node_i
       state_enum state = node_id.state;
 
       // Try to load the vector.
-      if (enkf_config_node_has_vector( enkf_node->config , fs , iens , state ))
+      if (enkf_config_node_has_vector( enkf_node->config , fs , iens ))
           enkf_node_load_vector( enkf_node , fs , iens , state );
 
       // The vector is loaded. Check if we have the report_step/state asked for:

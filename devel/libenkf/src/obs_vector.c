@@ -902,7 +902,7 @@ static bool obs_vector_has_vector_data( const obs_vector_type * obs_vector , con
   while (true) {
     const enkf_config_node_type * data_config = obs_vector->config_node;
     if (bool_vector_iget( active_mask , iens )) {
-      if (!enkf_config_node_has_vector(data_config , fs , iens , FORECAST)) {
+      if (!enkf_config_node_has_vector(data_config , fs , iens)) {
         has_data = false;
         break;
       }
