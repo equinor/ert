@@ -655,7 +655,6 @@ typedef struct {
   const char              * key;
   int                       report_step;
   int                       target_step;
-  state_enum                load_state;
   run_mode_type             run_mode;
   int                       row_offset;
   const active_list_type  * active_list;
@@ -670,14 +669,13 @@ static void serialize_node( enkf_fs_type * fs ,
                             const char * key ,
                             int iens ,
                             int report_step ,
-                            state_enum load_state ,
                             int row_offset ,
                             int column,
                             const active_list_type * active_list,
                             matrix_type * A) {
 
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
-  node_id_type node_id = {.report_step = report_step, .iens = iens , .state = load_state };
+  node_id_type node_id = {.report_step = report_step, .iens = iens , .state = FORECAST  };
   enkf_node_serialize( node , fs , node_id , active_list , A , row_offset , column);
 }
 
@@ -693,7 +691,6 @@ static void * serialize_nodes_mt( void * arg ) {
                       info->key ,
                       iens ,
                       info->report_step ,
-                      info->load_state ,
                       info->row_offset ,
                       column,
                       info->active_list ,
@@ -704,7 +701,6 @@ static void * serialize_nodes_mt( void * arg ) {
 
 
 static void enkf_main_serialize_node( const char * node_key ,
-                                      state_enum load_state ,
                                       const active_list_type * active_list ,
                                       int row_offset ,
                                       thread_pool_type * work_pool ,
@@ -718,7 +714,6 @@ static void enkf_main_serialize_node( const char * node_key ,
   for (icpu = 0; icpu < num_cpu_threads; icpu++) {
     serialize_info[icpu].key         = node_key;
     serialize_info[icpu].active_list = active_list;
-    serialize_info[icpu].load_state  = load_state;
     serialize_info[icpu].row_offset  = row_offset;
 
     thread_pool_add_job( work_pool , serialize_nodes_mt , &serialize_info[icpu]);
@@ -777,7 +772,7 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
         else
           load_state = ANALYZED;
 
-        enkf_main_serialize_node( key , load_state , active_list , row_offset[ikw] , work_pool , serialize_info );
+        enkf_main_serialize_node( key , active_list , row_offset[ikw] , work_pool , serialize_info );
         current_row += active_size[ikw];
       }
     }
@@ -801,7 +796,7 @@ static void deserialize_node( enkf_fs_type            * fs,
                               matrix_type * A) {
 
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
-  node_id_type node_id = { .report_step = target_step , .iens = iens , .state = ANALYZED };
+  node_id_type node_id = { .report_step = target_step , .iens = iens , .state = FORECAST };  // Was ANALYZED
   enkf_node_deserialize(node , fs , node_id , active_list , A , row_offset , column);
   state_map_update_undefined(enkf_fs_get_state_map(fs) , iens , STATE_INITIALIZED);
 }
