@@ -42,7 +42,6 @@ check_function_exists( glob ERT_HAVE_GLOB )
 check_function_exists( getuid ERT_HAVE_GETUID )
 check_function_exists( regexec ERT_HAVE_REGEXP )
 check_function_exists( lockf ERT_HAVE_LOCKF )
-check_function_exists( fseeko ERT_HAVE_FSEEKO )
 
 
 check_type_size(time_t SIZE_OF_TIME_T)
