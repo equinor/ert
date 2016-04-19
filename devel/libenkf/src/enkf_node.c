@@ -456,9 +456,9 @@ static bool enkf_node_store_buffer( enkf_node_type * enkf_node , enkf_fs_type * 
       enkf_var_type var_type = enkf_config_node_get_var_type( config_node );
 
       if (enkf_node->vector_storage)
-        enkf_fs_fwrite_vector( fs , buffer , node_key , var_type , iens , FORECAST );
+        enkf_fs_fwrite_vector( fs , buffer , node_key , var_type , iens );
       else
-        enkf_fs_fwrite_node( fs , buffer , node_key , var_type , report_step , iens , FORECAST );
+        enkf_fs_fwrite_node( fs , buffer , node_key , var_type , report_step , iens );
 
     }
     buffer_free( buffer );
@@ -535,9 +535,9 @@ static void enkf_node_buffer_load( enkf_node_type * enkf_node , enkf_fs_type * f
     enkf_var_type var_type                    = enkf_config_node_get_var_type( config_node );
 
     if (enkf_node->vector_storage)
-      enkf_fs_fread_vector( fs , buffer , node_key , var_type , iens , FORECAST );
+      enkf_fs_fread_vector( fs , buffer , node_key , var_type , iens );
     else
-      enkf_fs_fread_node( fs , buffer , node_key , var_type , report_step , iens , FORECAST );
+      enkf_fs_fread_node( fs , buffer , node_key , var_type , report_step , iens );
 
     buffer_fskip_time_t( buffer );
     enkf_node->read_from_buffer(enkf_node->data , buffer , fs , report_step );

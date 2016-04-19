@@ -827,12 +827,11 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , buffer_type * buffer ,
                         const char * node_key ,
                         enkf_var_type var_type ,
                         int report_step,
-                        int iens ,
-                        state_enum state) {
+                        int iens) {
 
-  fs_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , node_key );
+  fs_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , FORECAST , node_key );
   if (var_type == PARAMETER)
-    report_step = __get_parameter_report_step(driver , node_key , report_step , iens , state);
+    report_step = __get_parameter_report_step(driver , node_key , report_step , iens , FORECAST );
 
   buffer_rewind( buffer );
   driver->load_node(driver , node_key ,  report_step , iens , buffer);
@@ -842,10 +841,9 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , buffer_type * buffer ,
 void enkf_fs_fread_vector(enkf_fs_type * enkf_fs , buffer_type * buffer ,
                           const char * node_key ,
                           enkf_var_type var_type ,
-                          int iens ,
-                          state_enum state) {
+                          int iens) {
 
-  fs_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , node_key );
+  fs_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , FORECAST , node_key );
 
   buffer_rewind( buffer );
   driver->load_vector(driver , node_key ,  iens , buffer);
@@ -853,23 +851,23 @@ void enkf_fs_fread_vector(enkf_fs_type * enkf_fs , buffer_type * buffer ,
 
 
 
-bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int report_step , int iens , state_enum state) {
-  fs_driver_type * driver = fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , node_key));
+bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int report_step , int iens) {
+  fs_driver_type * driver = fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , FORECAST , node_key));
   return driver->has_node(driver , node_key , report_step , iens );
 }
 
 
-bool enkf_fs_has_vector(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int iens , state_enum state) {
-  fs_driver_type * driver = fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , node_key));
+bool enkf_fs_has_vector(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int iens ) {
+  fs_driver_type * driver = fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , FORECAST , node_key));
   return driver->has_vector(driver , node_key , iens );
 }
 
 void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , buffer_type * buffer , const char * node_key, enkf_var_type var_type,
-                         int report_step , int iens , state_enum state) {
+                         int report_step , int iens ) {
   if (enkf_fs->read_only)
     util_abort("%s: attempt to write to read_only filesystem mounted at:%s - aborting. \n",__func__ , enkf_fs->mount_point);
   {
-    void * _driver = enkf_fs_select_driver(enkf_fs , var_type , state , node_key);
+    void * _driver = enkf_fs_select_driver(enkf_fs , var_type , FORECAST , node_key);
     {
       fs_driver_type * driver = fs_driver_safe_cast(_driver);
       driver->save_node(driver , node_key , report_step , iens , buffer);
@@ -879,11 +877,11 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , buffer_type * buffer , const c
 
 
 void enkf_fs_fwrite_vector(enkf_fs_type * enkf_fs , buffer_type * buffer , const char * node_key, enkf_var_type var_type,
-                           int iens , state_enum state) {
+                           int iens ) {
   if (enkf_fs->read_only)
     util_abort("%s: attempt to write to read_only filesystem mounted at:%s - aborting. \n",__func__ , enkf_fs->mount_point);
   {
-    void * _driver = enkf_fs_select_driver(enkf_fs , var_type , state , node_key);
+    void * _driver = enkf_fs_select_driver(enkf_fs , var_type , FORECAST , node_key);
     {
       fs_driver_type * driver = fs_driver_safe_cast(_driver);
       driver->save_vector(driver , node_key  , iens , buffer);

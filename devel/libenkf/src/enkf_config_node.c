@@ -101,12 +101,12 @@ bool enkf_config_node_has_node( const enkf_config_node_type * node , enkf_fs_typ
   if (node->impl_type == CONTAINER)
     return enkf_config_node_has_container( node , fs , node_id );
   else
-    return enkf_fs_has_node( fs , node->key , node->var_type , node_id.report_step , node_id.iens , FORECAST );
+    return enkf_fs_has_node( fs , node->key , node->var_type , node_id.report_step , node_id.iens );
 }
 
 
 bool enkf_config_node_has_vector( const enkf_config_node_type * node , enkf_fs_type * fs , int iens) {
-  bool has_vector = enkf_fs_has_vector( fs , node->key , node->var_type , iens , FORECAST );
+  bool has_vector = enkf_fs_has_vector( fs , node->key , node->var_type , iens );
   return has_vector;
 }
 
