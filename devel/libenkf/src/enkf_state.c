@@ -1381,14 +1381,14 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
     {
       enkf_fs_type * init_fs = run_arg_get_init_fs( run_arg );
       /* Loading parameter information: loaded from timestep: run_arg->init_step_parameters. */
-      enkf_state_fread(enkf_state , init_fs , PARAMETER , run_arg_get_parameter_init_step(run_arg) , run_arg_get_parameter_init_state(run_arg));
+      enkf_state_fread(enkf_state , init_fs , PARAMETER , 0 , FORECAST );
 
 
       /* Loading state information: loaded from timestep: run_arg->step1 */
       if (run_arg_get_step1(run_arg) == 0)
         enkf_state_fread_initial_state(enkf_state , init_fs);
       else
-        enkf_state_fread_state_nodes( enkf_state , init_fs , run_arg_get_step1(run_arg) , run_arg_get_dynamic_init_state(run_arg));
+        enkf_state_fread_state_nodes( enkf_state , init_fs , run_arg_get_step1(run_arg) , FORECAST );
 
       enkf_state_set_dynamic_subst_kw(  enkf_state , run_arg );
       ert_templates_instansiate( enkf_state->shared_info->templates , run_arg_get_runpath( run_arg ) , enkf_state->subst_list );

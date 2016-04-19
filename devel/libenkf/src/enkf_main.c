@@ -105,6 +105,7 @@
 #include <ert/enkf/field.h>
 #include <ert/enkf/ert_log.h>
 #include <ert/enkf/ert_run_context.h>
+#include <ert/enkf/run_arg.h>
 
 /**/
 
