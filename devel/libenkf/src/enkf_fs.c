@@ -770,39 +770,6 @@ void enkf_fs_fsync( enkf_fs_type * fs ) {
 }
 
 
-/**
-  For parameters the state is uniquely identified by the report step,
-  corresponding to the __analyzed__ state. If you really want the
-  forecast that is achieved by subtracting one.
-*/
-
-static int __get_parameter_report_step( fs_driver_type * driver , const char * node_key , int report_step , int iens , state_enum state) {
-  if (state == FORECAST) {
-    if (report_step > 0) /* Time step zero is special - we do not differentiate between forecast and analyzed. */
-      report_step--;
-  } else if (state != ANALYZED)
-    util_abort("%s: asked for state:%d - internal error \n",__func__ , state);
-  {
-    /*
-      Observe that if we do not find the filename we are looking for, we
-      seek backwards through the report numbers, all the way back to
-      report_nr 0. The direct motivation for this functionality is the
-      following situation:
-
-        1. We do a spin-up from report 0 to report R1.
-
-        2. We start the assimulation from R1, then we have to go all the
-           way back to report 0 to get hold of the parameter.
-
-    */
-    while (!driver->has_node( driver , node_key , report_step , iens )) {
-      report_step--;
-      if (report_step < 0)
-        util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , node_key, iens);
-    }
-  }
-  return report_step;
-}
 
 
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , buffer_type * buffer ,
@@ -813,7 +780,8 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , buffer_type * buffer ,
 
   fs_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , node_key );
   if (var_type == PARAMETER)
-    report_step = __get_parameter_report_step(driver , node_key , report_step , iens , FORECAST );
+    /* Parameters are *ONLY* stored at report_step == 0 */
+    report_step = 0;
 
   buffer_rewind( buffer );
   driver->load_node(driver , node_key ,  report_step , iens , buffer);
@@ -848,6 +816,10 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , buffer_type * buffer , const c
                          int report_step , int iens ) {
   if (enkf_fs->read_only)
     util_abort("%s: attempt to write to read_only filesystem mounted at:%s - aborting. \n",__func__ , enkf_fs->mount_point);
+
+
+  if ((var_type == PARAMETER) && (report_step > 0))
+    util_abort("%s: Parameters can only be saved for report_step = 0   %s:%d\n", __func__ , node_key , report_step);
   {
     void * _driver = enkf_fs_select_driver(enkf_fs , var_type , node_key);
     {
