@@ -1038,7 +1038,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
 */
 
 
-void enkf_state_fwrite(const enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step , state_enum state) {
+void enkf_state_fwrite(const enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step ) {
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
@@ -1047,7 +1047,7 @@ void enkf_state_fwrite(const enkf_state_type * enkf_state , enkf_fs_type * fs , 
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask)) {
-      node_id_type node_id = {.report_step = report_step , .iens = member_config_get_iens( my_config ) , .state = state };
+      node_id_type node_id = {.report_step = report_step , .iens = member_config_get_iens( my_config ) , .state = FORECAST};
       enkf_node_store( enkf_node, fs , true , node_id );
     }
   }
@@ -1055,7 +1055,7 @@ void enkf_state_fwrite(const enkf_state_type * enkf_state , enkf_fs_type * fs , 
 }
 
 
-void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step , state_enum state) {
+void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step ) {
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
@@ -1066,7 +1066,7 @@ void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mas
     if (enkf_node_include_type(enkf_node , mask)) {
       node_id_type node_id = {.report_step = report_step ,
                               .iens = member_config_get_iens( my_config ) ,
-                              .state = state };
+                              .state = FORECAST };
       bool forward_init = enkf_node_use_forward_init( enkf_node );
       if (forward_init)
         enkf_node_try_load(enkf_node , fs , node_id );
@@ -1086,7 +1086,7 @@ void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mas
 */
 
 
-static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , enkf_fs_type * fs , int report_step , state_enum load_state) {
+static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , enkf_fs_type * fs , int report_step ) {
   const member_config_type * my_config = enkf_state->my_config;
   const int iens                       = member_config_get_iens( my_config );
 
@@ -1152,7 +1152,7 @@ static void enkf_state_fread_initial_state(enkf_state_type * enkf_state , enkf_f
       if (load_file != NULL) {
         node_id_type node_id = {.report_step = 0 ,
                                 .iens  = member_config_get_iens( my_config ) ,
-                                .state = ANALYZED };
+                                .state = FORECAST };  // Was ANALYZED
         enkf_node_load(enkf_node , fs , node_id);
       }
 
@@ -1381,14 +1381,14 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
     {
       enkf_fs_type * init_fs = run_arg_get_init_fs( run_arg );
       /* Loading parameter information: loaded from timestep: run_arg->init_step_parameters. */
-      enkf_state_fread(enkf_state , init_fs , PARAMETER , 0 , FORECAST );
+      enkf_state_fread(enkf_state , init_fs , PARAMETER , 0);
 
 
       /* Loading state information: loaded from timestep: run_arg->step1 */
       if (run_arg_get_step1(run_arg) == 0)
         enkf_state_fread_initial_state(enkf_state , init_fs);
       else
-        enkf_state_fread_state_nodes( enkf_state , init_fs , run_arg_get_step1(run_arg) , FORECAST );
+        enkf_state_fread_state_nodes( enkf_state , init_fs , run_arg_get_step1(run_arg));
 
       enkf_state_set_dynamic_subst_kw(  enkf_state , run_arg );
       ert_templates_instansiate( enkf_state->shared_info->templates , run_arg_get_runpath( run_arg ) , enkf_state->subst_list );
