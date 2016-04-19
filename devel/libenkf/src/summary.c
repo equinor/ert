@@ -120,7 +120,7 @@ void summary_copy(const summary_type *src , summary_type * target) {
 
 
 
-void summary_read_from_buffer(summary_type * summary , buffer_type * buffer, enkf_fs_type * fs, int report_step, state_enum state) {
+void summary_read_from_buffer(summary_type * summary , buffer_type * buffer, enkf_fs_type * fs, int report_step) {
   enkf_util_assert_buffer_type( buffer , SUMMARY );
   if (summary->vector_storage) {
     double_vector_buffer_fread( summary->data_vector , buffer );
@@ -131,7 +131,7 @@ void summary_read_from_buffer(summary_type * summary , buffer_type * buffer, enk
 }
 
 
-bool summary_write_to_buffer(const summary_type * summary , buffer_type * buffer, int report_step , state_enum state) {
+bool summary_write_to_buffer(const summary_type * summary , buffer_type * buffer, int report_step) {
   buffer_fwrite_int( buffer , SUMMARY );
   if (summary->vector_storage) {
     double_vector_buffer_fwrite( summary->data_vector , buffer );
@@ -143,7 +143,7 @@ bool summary_write_to_buffer(const summary_type * summary , buffer_type * buffer
 }
 
 
-bool summary_has_data( const summary_type * summary , int report_step , state_enum state) {
+bool summary_has_data( const summary_type * summary , int report_step) {
   if (summary->vector_storage) {
     return (double_vector_size( summary->data_vector ) > report_step) ? true : false;
   } else 
@@ -180,7 +180,7 @@ double summary_get(const summary_type * summary, int report_step) {
 }
 
 
-bool summary_user_get(const summary_type * summary , const char * index_key , int report_step , state_enum state, double * value) {
+bool summary_user_get(const summary_type * summary , const char * index_key , int report_step , double * value) {
   if (summary->vector_storage) {
     if (double_vector_size( summary->data_vector ) > report_step) {
       *value = double_vector_iget( summary->data_vector , report_step);
@@ -198,7 +198,7 @@ bool summary_user_get(const summary_type * summary , const char * index_key , in
 
 
 
-void summary_user_get_vector(const summary_type * summary , const char * index_key , state_enum state, double_vector_type * value) {
+void summary_user_get_vector(const summary_type * summary , const char * index_key , double_vector_type * value) {
   if (summary->vector_storage) {
     double_vector_memcpy( value , summary->data_vector);
   } else

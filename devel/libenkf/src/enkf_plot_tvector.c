@@ -140,7 +140,7 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
   enkf_node_type * work_node  = enkf_node_alloc( plot_tvector->config_node );
 
   if (enkf_node_vector_storage( work_node )) {
-    bool has_data = enkf_node_user_get_vector(work_node , fs , index_key , plot_tvector->iens , state , plot_tvector->work);
+    bool has_data = enkf_node_user_get_vector(work_node , fs , index_key , plot_tvector->iens , plot_tvector->work);
 
     if(has_data) {
         for (int step = 0; step < time_map_get_size(time_map); step++)

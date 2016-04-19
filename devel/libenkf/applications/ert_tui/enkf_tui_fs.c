@@ -186,7 +186,7 @@ static void enkf_tui_fs_copy_ensemble__(
         const char * key = stringlist_iget(nodes, i);
         enkf_config_node_type * config_node = ensemble_config_get_node(config , key);
         msg_update(msg , key);
-        enkf_node_copy_ensemble(config_node, src_fs , target_fs , report_step_from, state_from, report_step_to , state_to , ens_size , ranking_permutation);
+        enkf_node_copy_ensemble(config_node, src_fs , target_fs , report_step_from, report_step_to , ens_size , ranking_permutation);
       }
     }
     

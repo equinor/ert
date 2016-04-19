@@ -579,10 +579,10 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                 enkf_config_node_type * config_node = ensemble_config_get_or_create_summary_node(enkf_state->ensemble_config, key);
                 enkf_node_type * node = enkf_state_get_or_create_node(enkf_state, config_node);
 
-                enkf_node_try_load_vector( node , result_fs , iens , FORECAST );  // Ensure that what is currently on file is loaded before we update.
+                enkf_node_try_load_vector( node , result_fs , iens );  // Ensure that what is currently on file is loaded before we update.
 
                 enkf_node_forward_load_vector( node , load_context , time_index);
-                enkf_node_store_vector( node , result_fs , iens , FORECAST );
+                enkf_node_store_vector( node , result_fs , iens );
             }
         }
 
