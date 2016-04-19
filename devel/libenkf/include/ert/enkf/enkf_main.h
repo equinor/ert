@@ -61,6 +61,7 @@ extern "C" {
 #include <ert/enkf/pca_plot_data.h>
 #include <ert/enkf/field_config.h>
 #include <ert/enkf/ert_run_context.h>
+#include <ert/enkf/ert_init_context.h>
 
   /*****************************************************************/
 
@@ -106,12 +107,11 @@ extern "C" {
 
   bool                          enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * source_fs, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode);
   bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * source_fs, enkf_fs_type * target_fs);
-
+  void                          enkf_main_create_run_path(enkf_main_type * enkf_main , bool_vector_type * iactive , int iter);
   bool                          enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_type init_mode, int iter);
 
   void                          enkf_main_run_exp(enkf_main_type * enkf_main ,
-                                                  bool_vector_type * iactive ,
-                                                  bool             simulate);
+                                                  bool_vector_type * iactive);
 
 
   void                          enkf_main_run_smoother(enkf_main_type * enkf_main , enkf_fs_type * source_fs, const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun);
@@ -264,14 +264,14 @@ extern "C" {
   void              enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file );
 
   void              enkf_main_initialize_from_scratch(enkf_main_type * enkf_main ,
-						      enkf_fs_type * init_fs, 
+						      enkf_fs_type * init_fs,
                                                       const stringlist_type * param_list ,
                                                       int iens1 ,
                                                       int iens2,
                                                       init_mode_type init_mode);
 
   void              enkf_main_initialize_from_scratch_with_bool_vector(enkf_main_type * enkf_main ,
-								       enkf_fs_type * init_fs, 
+								       enkf_fs_type * init_fs,
 								       const stringlist_type * param_list ,
 								       const bool_vector_type * iens_mask ,
 								       init_mode_type init_mode);
@@ -324,7 +324,7 @@ extern "C" {
 
   runpath_list_type    * enkf_main_get_runpath_list( const enkf_main_type * enkf_main );
   ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , const bool_vector_type * iactive , init_mode_type init_mode , int iter);
-  ert_run_context_type * enkf_main_alloc_ert_run_context_INIT_ONLY(const enkf_main_type * enkf_main , enkf_fs_type * fs , const bool_vector_type * iactive , init_mode_type init_mode , int iter);
+  ert_init_context_type * enkf_main_alloc_ert_init_context(const enkf_main_type * enkf_main , enkf_fs_type * fs, const bool_vector_type * iactive , init_mode_type init_mode , int iter);
 
 
 UTIL_SAFE_CAST_HEADER(enkf_main);

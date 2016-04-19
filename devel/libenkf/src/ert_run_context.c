@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2014  Statoil ASA, Norway. 
-    
-   The file 'ert_run_context.c' is part of ERT - Ensemble based Reservoir Tool. 
-   
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2014  Statoil ASA, Norway.
+
+   The file 'ert_run_context.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <ert/util/type_macros.h>
@@ -35,7 +35,7 @@
 struct ert_run_context_struct {
   UTIL_TYPE_ID_DECLARATION;
   vector_type      * run_args;
-  bool_vector_type * iactive;   // This can be updated .... 
+  bool_vector_type * iactive;   // This can be updated ....
   run_mode_type      run_mode;
   init_mode_type     init_mode;
   int                iter;
@@ -95,40 +95,17 @@ static ert_run_context_type * ert_run_context_alloc(const bool_vector_type * iac
   ert_run_context_set_init_fs(context, init_fs);
   ert_run_context_set_result_fs(context, result_fs);
   ert_run_context_set_update_target_fs(context, update_target_fs);
-  
+
   context->step1 = 0;
   context->step2 = 0;
   return context;
 }
 
 
-ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * init_fs , const bool_vector_type * iactive , 
-                                                       path_fmt_type * runpath_fmt , 
-                                                       subst_list_type * subst_list ,
-                                                       init_mode_type init_mode , 
-                                                       int iter) {
-
-  ert_run_context_type * context = ert_run_context_alloc( iactive , INIT_ONLY , init_fs , NULL , NULL , init_mode , iter );
-  {
-    stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
-    for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
-      if (bool_vector_iget( iactive , iens )) {
-        run_arg_type * arg = run_arg_alloc_INIT_ONLY( init_fs , iens , iter , stringlist_iget( runpath_list , iens));
-        vector_append_owned_ref( context->run_args , arg , run_arg_free__);
-      }
-    }
-    stringlist_free( runpath_list );
-  }
-  return context;
-}
-
-
-
-
-ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs , const bool_vector_type * iactive , 
-                                                                 path_fmt_type * runpath_fmt , 
+ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs , const bool_vector_type * iactive ,
+                                                                 path_fmt_type * runpath_fmt ,
                                                                  subst_list_type * subst_list ,
-                                                                 init_mode_type init_mode , 
+                                                                 init_mode_type init_mode ,
                                                                  int iter) {
 
   ert_run_context_type * context = ert_run_context_alloc( iactive , ENSEMBLE_EXPERIMENT , fs , fs , NULL , init_mode , iter);
@@ -147,11 +124,11 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
 
 
 
-ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs , 
-                                                          const bool_vector_type * iactive , 
-                                                          path_fmt_type * runpath_fmt , 
+ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
+                                                          const bool_vector_type * iactive ,
+                                                          path_fmt_type * runpath_fmt ,
                                                           subst_list_type * subst_list ,
-                                                          init_mode_type init_mode , 
+                                                          init_mode_type init_mode ,
                                                           int iter) {
 
   ert_run_context_type * context = ert_run_context_alloc( iactive , SMOOTHER_UPDATE , simulate_fs , simulate_fs , target_update_fs , init_mode , iter);
