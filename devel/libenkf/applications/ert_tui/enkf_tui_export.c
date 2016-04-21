@@ -618,12 +618,10 @@ void enkf_tui_export_stat(void * arg) {
   {
     const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
     const enkf_config_node_type * config_node;
-    state_enum analysis_state;
     const int ens_size = enkf_main_get_ensemble_size( enkf_main );
     const int  last_report = enkf_main_get_history_length( enkf_main );
     int        report_step;
     
-    analysis_state = ANALYZED;  /* Hardcoded analyzed */
     config_node    = enkf_tui_util_scanf_key( ensemble_config , PROMPT_LEN ,  INVALID , INVALID_VAR );
     report_step    = util_scanf_int_with_limits("Report step: ", PROMPT_LEN , 0 , last_report);
     {
@@ -660,8 +658,7 @@ void enkf_tui_export_stat(void * arg) {
         enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , 
 										 enkf_main_tui_get_fs( enkf_main ) , 
 										 enkf_config_node_get_key( config_node ) , 
-										 report_step , 
-										 analysis_state );
+										 report_step );
         enkf_node_type * mean                     = enkf_node_copyc( ensemble[0] );
         enkf_node_type * std                      = enkf_node_copyc( ensemble[0] );
         
