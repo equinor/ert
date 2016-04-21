@@ -262,15 +262,9 @@ static void enkf_main_jobs_export_field(const enkf_main_type * enkf_main, const 
   const char *      file_name        = stringlist_iget(args, 1);
   int               report_step      = 0;
   util_sscanf_int(stringlist_iget(args,2), &report_step);
-  state_enum        state            = enkf_types_get_state_enum(stringlist_iget(args, 3));
-
-  if (BOTH == state) {
-      fprintf(stderr,"** Field export jobs only supports state_enum ANALYZED or FORECAST, not BOTH.\n");
-      return;
-  }
 
   bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 4, stringlist_get_size(args), enkf_main_get_ensemble_size(enkf_main));
-  enkf_main_export_field(enkf_main,field, file_name, iactive, file_type, report_step, state) ;
+  enkf_main_export_field(enkf_main,field, file_name, iactive, file_type, report_step ) ;
   bool_vector_free(iactive);
 }
 

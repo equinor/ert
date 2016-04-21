@@ -3185,11 +3185,10 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
                             const char * path,
                             bool_vector_type * iactive,
                             field_file_format_type file_type,
-                            int report_step,
-                            state_enum state)
+                            int report_step)
 {
     enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
-    bool result = enkf_main_export_field_with_fs(enkf_main, kw, path, iactive, file_type, report_step, state, fs);
+    bool result = enkf_main_export_field_with_fs(enkf_main, kw, path, iactive, file_type, report_step, fs);
     return result;
 }
 
@@ -3202,7 +3201,6 @@ bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
                             bool_vector_type * iactive,
                             field_file_format_type file_type,
                             int report_step,
-                            state_enum state,
                             enkf_fs_type * fs) {
 
   bool ret = false;
@@ -3236,7 +3234,7 @@ bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
     int iens;
     for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
       if (bool_vector_iget(iactive, iens)) {
-        node_id_type node_id = {.report_step = report_step , .iens = iens , .state = state };
+        node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
         node = enkf_state_get_node(enkf_main->ensemble[iens] , kw);
         if (node) {
           if (enkf_node_try_load(node , fs , node_id)) {

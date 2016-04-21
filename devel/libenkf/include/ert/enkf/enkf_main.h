@@ -217,8 +217,7 @@ extern "C" {
                               const char * path,
                               bool_vector_type * iactive,
                               field_file_format_type file_type,
-                              int report_step,
-                              state_enum state);
+                              int report_step);
 
   bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
                               const char * kw,
@@ -226,7 +225,6 @@ extern "C" {
                               bool_vector_type * iactive,
                               field_file_format_type file_type,
                               int report_step,
-                              state_enum state,
                               enkf_fs_type * fs);
 
 
