@@ -41,8 +41,7 @@ extern "C" {
                                                        const char * key_index , 
                                                        enkf_fs_type * fs , 
                                                        const enkf_config_node_type * config_node , 
-                                                       int step , 
-                                                       state_enum state);
+                                                       int step);
 
   bool                 ranking_table_has_ranking( const ranking_table_type * ranking_table , const char * ranking_key );
   bool                 ranking_table_display_ranking( const ranking_table_type * ranking_table , const char * ranking_key );
