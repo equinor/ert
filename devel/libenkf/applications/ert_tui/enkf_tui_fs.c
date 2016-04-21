@@ -137,9 +137,7 @@ static void enkf_tui_fs_copy_ensemble__(
   const char     * source_case,
   const char     * target_case,
   int              report_step_from,
-  state_enum       state_from,
   int              report_step_to,
-  state_enum       state_to,
   bool             only_parameters)
 {
   msg_type       * msg          = msg_alloc("Copying: " , false);
@@ -238,8 +236,6 @@ void enkf_tui_fs_copy_ensemble(void * arg)
   int report_step_from;
   char * report_step_from_as_char;
   int report_step_to;
-  state_enum state_from;
-  state_enum state_to;
   
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   
@@ -249,8 +245,7 @@ void enkf_tui_fs_copy_ensemble(void * arg)
   report_step_from_as_char = util_scanf_int_with_limits_return_char("Source report step",prompt_len , 0 , last_report);
   if(strlen(report_step_from_as_char) !=0){
     util_sscanf_int(report_step_from_as_char , &report_step_from);
-    state_from = enkf_tui_util_scanf_state("Source analyzed/forecast [a|f]" , prompt_len , false);
-    if(state_from != UNDEFINED) {
+    {
       util_printf_prompt("Target case" , prompt_len , '=' , "=> ");
       char target_case[256];
 
@@ -264,10 +259,7 @@ void enkf_tui_fs_copy_ensemble(void * arg)
         char * report_step_to_as_char = util_scanf_int_with_limits_return_char("Target report step",prompt_len , 0 , last_report);
         if (strlen(report_step_to_as_char)) {
           util_sscanf_int(report_step_to_as_char , &report_step_to);
-          state_to       = enkf_tui_util_scanf_state("Target analyzed/forecast [a|f]" , prompt_len , false);
-          if(state_to != UNDEFINED) {
-            enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, false);
-          }
+          enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, report_step_to, false);
         }
         free(report_step_to_as_char);
       }
@@ -288,8 +280,6 @@ void enkf_tui_fs_copy_ensemble_of_parameters(void * arg)
   int report_step_from;
   char * report_step_from_as_char;
   int report_step_to;
-  state_enum state_from;
-  state_enum state_to;
   
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   
@@ -299,8 +289,7 @@ void enkf_tui_fs_copy_ensemble_of_parameters(void * arg)
   report_step_from_as_char = util_scanf_int_with_limits_return_char("Source report step",prompt_len , 0 , last_report);
   if(strlen(report_step_from_as_char) !=0){
     util_sscanf_int(report_step_from_as_char , &report_step_from);
-    state_from = enkf_tui_util_scanf_state("Source analyzed/forecast [a|f]" , prompt_len , false);
-    if(state_from != UNDEFINED){
+    {
 
       util_printf_prompt("Target case" , prompt_len , '=' , "=> ");
       char target_case[256];
@@ -315,10 +304,7 @@ void enkf_tui_fs_copy_ensemble_of_parameters(void * arg)
         char * report_step_to_as_char = util_scanf_int_with_limits_return_char("Target report step",prompt_len , 0 , last_report);
         if(strlen(report_step_to_as_char) !=0){
           util_sscanf_int(report_step_to_as_char , &report_step_to);
-          state_to       = enkf_tui_util_scanf_state("Target analyzed/forecast [a|f]" , prompt_len , false);
-          if(state_to != UNDEFINED){
-            enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, true);
-          }
+          enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, report_step_to, true);
         }
         free(report_step_to_as_char);
       }
