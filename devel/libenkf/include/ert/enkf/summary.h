@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#ifndef __SUMMARY_H__
-#define __SUMMARY_H__
+#ifndef ERT_SUMMARY_H
+#define ERT_SUMMARY_H
 #include <ert/util/double_vector.h>
 
 #include <ert/ecl/ecl_sum.h>

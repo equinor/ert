@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __RANKING_TABLE_H__
-#define __RANKING_TABLE_H__
+#ifndef ERT_RANKING_TABLE_H
+#define ERT_RANKING_TABLE_H
 
 #ifdef __cplusplus
 extern "C" {

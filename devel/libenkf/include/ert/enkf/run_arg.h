@@ -16,8 +16,8 @@
    for more details.
 */
 
-#ifndef __RUN_ARG_H__
-#define __RUN_ARG_H__
+#ifndef ERT_RUN_ARG_H
+#define ERT_RUN_ARG_H
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -16,8 +16,8 @@
    for more details.
 */
 
-#ifndef __ENKF_CONFIG_NODE_H__
-#define __ENKF_CONFIG_NODE_H__
+#ifndef ERT_ENKF_CONFIG_NODE_H
+#define ERT_ENKF_CONFIG_NODE_H
 #ifdef __cplusplus
 extern "C" {
 #endif

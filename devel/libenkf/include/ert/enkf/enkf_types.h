@@ -16,8 +16,8 @@
    for more details.
 */
 
-#ifndef __ENKF_TYPES_H__
-#define __ENKF_TYPES_H__
+#ifndef ERT_ENKF_TYPES_H
+#define ERT_ENKF_TYPES_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -85,7 +85,7 @@ keep_runpath_type;
    parameter.
 
    These correspond to implementation types. The numbers are on disk,
-   and should **NOT BE UPDATED**. The __MIN_TYPE and __MAX_TYPE
+   and should **NOT BE UPDATED**. The ERT_MIN_TYPE and MAX_TYPE
    identifiers are needed for the block_fs_driver.
 */
 

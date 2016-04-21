@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#ifndef __DATA_RANKING_H__
-#define __DATA_RANKING_H__
+#ifndef ERT_DATA_RANKING_H
+#define ERT_DATA_RANKING_H
 
 #ifdef __cplusplus
 extern "C" {
