@@ -166,11 +166,9 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
     if ((current_state == STATE_PARENT_FAILURE) && (init_mode != INIT_FORCE))
       return;
     else {
-      state_enum init_state = ANALYZED;
-
       for (int ip = 0; ip < stringlist_get_size(param_list); ip++) {
         enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
-        node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
+        node_id_type node_id = { .report_step = 0, .iens = iens, .state = FORECAST }; // WAS analyzed
         bool has_data = enkf_node_has_data(param_node, fs, node_id);
 
         if ((init_mode == INIT_FORCE) || (has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
@@ -1109,8 +1107,8 @@ static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , enkf_fs_
       enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       enkf_var_type var_type = enkf_node_get_var_type( enkf_node );
       node_id_type node_id = {.report_step = report_step ,
-                           .iens = iens ,
-                           .state = BOTH };
+                              .iens = iens ,
+                              .state = FORECAST }; // Was BOTH
 
       if (var_type == DYNAMIC_STATE) {
         /*

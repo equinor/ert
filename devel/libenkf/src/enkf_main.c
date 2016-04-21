@@ -1195,7 +1195,6 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
         enkf_obs_get_obs_and_measure_data( enkf_main->obs,
                                            source_fs ,
                                            obsdata,
-                                           FORECAST,
                                            ens_active_list ,
                                            meas_forecast,
                                            obs_data);

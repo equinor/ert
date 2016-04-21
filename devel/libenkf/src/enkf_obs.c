@@ -334,7 +334,6 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
                                                  obs_vector_type          * obs_vector ,
                                                  enkf_fs_type             * fs,
                                                  const local_obsdata_node_type * obs_node ,
-                                                 state_enum                 state,
                                                  const int_vector_type     * ens_active_list ,
                                                  meas_data_type             *   meas_data,
                                                  obs_data_type              * obs_data,
@@ -427,7 +426,7 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
               const int iens = int_vector_iget( ens_active_list , iens_index );
               node_id_type node_id = {.report_step = step,
                                       .iens        = iens ,
-                                      .state       = state };
+                                      .state       = FORECAST };
 
               enkf_node_load( work_node , fs , node_id );
 
@@ -448,7 +447,6 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
 void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
                                         enkf_fs_type             * fs,
                                         const local_obsdata_node_type * obs_node ,
-                                        state_enum                 state,
                                         const int_vector_type    * ens_active_list ,
                                         meas_data_type           * meas_data,
                                         obs_data_type            * obs_data) {
@@ -465,7 +463,6 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
                                           obs_vector ,
                                           fs ,
                                           obs_node ,
-                                          state ,
                                           ens_active_list ,
                                           meas_data ,
                                           obs_data ,
@@ -485,7 +482,7 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
         if (obs_vector_iget_active(obs_vector , report_step)) {                             /* The observation is active for this report step.     */
           const active_list_type * active_list = local_obsdata_node_get_active_list( obs_node );
           obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list, fs);  /* Collect the observed data in the obs_data instance. */
-          obs_vector_measure(obs_vector , fs , state , report_step , ens_active_list , meas_data , active_list);
+          obs_vector_measure(obs_vector , fs , report_step , ens_active_list , meas_data , active_list);
         }
       }
     }
@@ -504,7 +501,6 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type      * enkf_obs,
                                        enkf_fs_type             * fs,
                                        const local_obsdata_type * local_obsdata ,
-                                       state_enum                 state,
                                        const int_vector_type    * ens_active_list ,
                                        meas_data_type           * meas_data,
                                        obs_data_type            * obs_data) {
@@ -516,7 +512,6 @@ void enkf_obs_get_obs_and_measure_data(const enkf_obs_type      * enkf_obs,
     enkf_obs_get_obs_and_measure_node( enkf_obs ,
                                        fs ,
                                        obs_node ,
-                                       state ,
                                        ens_active_list ,
                                        meas_data ,
                                        obs_data);
@@ -1189,13 +1184,12 @@ void enkf_obs_local_scale_std( const enkf_obs_type * enkf_obs , const local_obsd
 
 
 double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs , enkf_fs_type * fs , const int_vector_type * ens_active_list , const local_obsdata_type * local_obsdata) {
-  state_enum state  = FORECAST;
   bool_vector_type * ens_mask = int_vector_alloc_mask( ens_active_list );
   meas_data_type * meas_data = meas_data_alloc( ens_mask );
   obs_data_type * obs_data = obs_data_alloc( 1.0 );
   double scale_factor = 1.0;
 
-  enkf_obs_get_obs_and_measure_data( enkf_obs , fs , local_obsdata , state , ens_active_list , meas_data , obs_data );
+  enkf_obs_get_obs_and_measure_data( enkf_obs , fs , local_obsdata , ens_active_list , meas_data , obs_data );
   {
     matrix_type * S      = meas_data_allocS( meas_data );
     if (S) {
