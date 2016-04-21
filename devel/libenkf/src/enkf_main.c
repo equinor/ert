@@ -765,13 +765,6 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
       }
 
       if (active_size[ikw] > 0) {
-        state_enum load_state;
-
-        if (hash_inc_counter( use_count , key) == 0)
-          load_state = FORECAST;           /* This is the first time this keyword is updated for this reportstep */
-        else
-          load_state = ANALYZED;
-
         enkf_main_serialize_node( key , active_list , row_offset[ikw] , work_pool , serialize_info );
         current_row += active_size[ikw];
       }
