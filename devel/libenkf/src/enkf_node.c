@@ -502,27 +502,11 @@ bool enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , bool force
 */
 
 bool enkf_node_try_load(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_type node_id) {
-  if (node_id.state == BOTH) {
-    node_id_type local_id = node_id;
-    local_id.state = ANALYZED;
-    if (enkf_node_has_data( enkf_node , fs , local_id)) {
-      enkf_node_load( enkf_node , fs , local_id );
-      return true;
-    }
-
-    local_id.state = FORECAST;
-    if (enkf_node_has_data( enkf_node , fs , local_id)) {
-      enkf_node_load( enkf_node , fs , local_id);
-      return true;
-    } else
-      return false;
-  } else {
-    if (enkf_node_has_data( enkf_node , fs , node_id)) {
-      enkf_node_load( enkf_node , fs , node_id);
-      return true;
-    } else
-      return false;
-  }
+  if (enkf_node_has_data( enkf_node , fs , node_id)) {
+    enkf_node_load( enkf_node , fs , node_id);
+    return true;
+  } else
+    return false;
 }
 
 

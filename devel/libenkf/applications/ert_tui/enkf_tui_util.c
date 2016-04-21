@@ -42,51 +42,6 @@
 
 
 
-/**
-   This functions displays the user with a prompt, and reads 'A' or
-   'F' (lowercase OK), to check whether the user is interested in the
-   forecast or the analyzed state.
-*/
-
-
-state_enum enkf_tui_util_scanf_state(const char * prompt, int prompt_len, bool accept_both) {
-  char analyzed_string[64];
-  bool OK;
-  state_enum state;
-  do {
-    OK = true;
-    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-    //scanf("%s" , analyzed_string);
-    fgets(analyzed_string, prompt_len, stdin);
-    char *newline = strchr(analyzed_string,'\n');
-    if(newline)
-      *newline = 0;
-    //getchar(); /* Discards trailing <RETURN> from standard input buffer? */
-    if (strlen(analyzed_string) == 0){
-      OK = true;
-      state = UNDEFINED;
-    }
-    else if (strlen(analyzed_string) == 1) {
-      char c = toupper(analyzed_string[0]);
-      if (c == 'A')
-        state = ANALYZED;
-      else if (c == 'F')
-        state = FORECAST;
-      else {
-        if (accept_both) {
-          if (c == 'B') 
-            state = BOTH;
-          else
-            OK = false;
-        } else
-          OK = false;
-      }
-    } else
-      OK = false;
-  } while ( !OK );
-  return state;
-}
-
 
 
 /**

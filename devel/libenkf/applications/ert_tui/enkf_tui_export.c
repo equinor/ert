@@ -44,7 +44,6 @@ void enkf_tui_export_field(const enkf_main_type * enkf_main , field_file_format_
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const bool output_transform = true;
   const enkf_config_node_type * config_node;
-  state_enum analysis_state;
   const int last_report = enkf_main_get_history_length( enkf_main );
   int        iens1 , iens2 , iens , report_step;
   path_fmt_type * export_path;
@@ -53,10 +52,6 @@ void enkf_tui_export_field(const enkf_main_type * enkf_main , field_file_format_
 
   report_step = util_scanf_int_with_limits("Report step: ", PROMPT_LEN , 0 , last_report);
   enkf_tui_util_scanf_iens_range("Realizations members to export(0 - %d)" , enkf_main_get_ensemble_size( enkf_main ) , PROMPT_LEN , &iens1 , &iens2);
-  if (enkf_config_node_get_var_type( config_node ) == DYNAMIC_STATE)
-    analysis_state = enkf_tui_util_scanf_state("Export Forecast/Analyzed: [F|A]" , PROMPT_LEN , false);
-  else
-    analysis_state = ANALYZED;
 
   {
     char * path_fmt;
@@ -71,7 +66,7 @@ void enkf_tui_export_field(const enkf_main_type * enkf_main , field_file_format_
     enkf_node_type * node = enkf_node_alloc(config_node);
 
     for (iens = iens1; iens <= iens2; iens++) {
-      node_id_type node_id = {.report_step = report_step , .iens = iens , .state = BOTH };
+      node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
       if (enkf_node_try_load(node , fs , node_id)) {
         char * filename = path_fmt_alloc_path( export_path , false , iens);
         {
@@ -127,17 +122,10 @@ void enkf_tui_export_gen_data(void * arg) {
     const int last_report = enkf_main_get_history_length( enkf_main );
 
     const enkf_config_node_type * config_node;
-    state_enum state = ANALYZED;
     path_fmt_type * file_fmt;
 
     config_node    = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN ,  GEN_DATA , INVALID_VAR);
     var_type       = enkf_config_node_get_var_type(config_node);
-    if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) 
-      state = enkf_tui_util_scanf_state("Plot Forecast/Analyzed: [F|A]" , PROMPT_LEN , false);
-    else if (var_type == PARAMETER)
-      state = ANALYZED;
-    else 
-      util_abort("%s: internal error \n",__func__);
     
     
     report_step = util_scanf_int_with_limits("Report step: ", PROMPT_LEN , 0 , last_report);
@@ -158,7 +146,7 @@ void enkf_tui_export_gen_data(void * arg) {
       
       msg_show( msg );
       for (iens = iens1; iens <= iens2; iens++) {
-        node_id_type node_id = {.report_step = report_step , .iens = iens , .state = state };
+        node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
         if (enkf_node_try_load(node , fs, node_id)) {
           char * full_path = path_fmt_alloc_path( file_fmt , false , iens);
           char * path;
@@ -363,7 +351,7 @@ void enkf_tui_export_time(void * enkf_main) {
     state_enum analysis_state;
     int        cell_nr;
     
-    analysis_state = ANALYZED;
+    analysis_state = FORECAST;
     config_node = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN , FIELD ,INVALID_VAR);
     cell_nr = enkf_tui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , PROMPT_LEN);
     {
@@ -380,10 +368,7 @@ void enkf_tui_export_time(void * enkf_main) {
       path_fmt_type * file_fmt = path_fmt_scanf_alloc("Give filename to store line (with %d for report iens) =>" , 0 , NULL , false);
       
       
-      if (analysis_state == BOTH) {
-        x = util_calloc( 2 * (step2 - step1 + 1) , sizeof * x);
-        y = util_calloc( 2 * (step2 - step1 + 1) , sizeof * y);
-      } else {
+      {
         x = util_calloc( (step2 - step1 + 1)  , sizeof * x);
         y = util_calloc( (step2 - step1 + 1)  , sizeof * y);
       }
@@ -399,10 +384,6 @@ void enkf_tui_export_time(void * enkf_main) {
           for (report_step = step1; report_step <= step2; report_step++) {
             fprintf(stream , "%g  %g \n",x[index] , y[index]);
             index++;
-            if (analysis_state == BOTH) {
-              fprintf(stream , "%g  %g \n",x[index] , y[index]);
-              index++;
-            }
           }
           fclose(stream);
           free(filename);
@@ -564,7 +545,7 @@ void enkf_tui_export_scalar2csv(void * arg) {
       msg_type * msg        = msg_alloc("Exporting report_step/member: " , false);
       node_id_type node_id;
       
-      node_id.state = BOTH;
+      node_id.state = FORECAST;
 
       /* Header line */
       fprintf(stream , "\"Report step\"");
