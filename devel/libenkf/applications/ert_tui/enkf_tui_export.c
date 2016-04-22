@@ -187,7 +187,7 @@ void enkf_tui_export_profile(void * enkf_main) {
     int       *cell_list; 
     path_fmt_type * file_fmt;
 
-    analysis_state = ANALYZED; /* */
+    analysis_state = FORECAST; 
     config_node    = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN ,  FIELD , INVALID_VAR);
     iens_active    = enkf_tui_util_scanf_alloc_iens_active( ens_size , PROMPT_LEN , &iens1 , &iens2); /* Not used yet ... */
     report_active  = enkf_tui_util_scanf_alloc_report_active( last_report , PROMPT_LEN );
@@ -289,7 +289,7 @@ void enkf_tui_export_cell(void * enkf_main) {
     state_enum analysis_state;
     int        cell_nr;
 
-    analysis_state = ANALYZED;
+    analysis_state = FORECAST;
     config_node = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN , FIELD , INVALID_VAR);
     cell_nr = enkf_tui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , PROMPT_LEN);
     {
