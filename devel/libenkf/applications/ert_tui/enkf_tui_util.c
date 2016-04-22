@@ -285,7 +285,7 @@ void enkf_tui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * co
   int report_step;
   int index = 0;
   for (report_step = step1; report_step <= step2; report_step++) {
-    node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
+    node_id_type node_id = {.report_step = report_step , .iens = iens };
     if (enkf_node_try_load(node , fs , node_id)) {
       const field_type * field = enkf_node_value_ptr( node );
       y[index] = field_iget_double(field , get_index);
