@@ -881,7 +881,7 @@ int enkf_state_forward_init(enkf_state_type * enkf_state ,
         enkf_fs_type * result_fs = run_arg_get_result_fs( run_arg );
         node_id_type node_id = {.report_step = 0 ,
                                 .iens = iens ,
-                                .state = ANALYZED };
+                                .state = FORECAST };
 
 
         /*
@@ -1013,7 +1013,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
         if ((run_arg_get_step1(run_arg) == 0) && (forward_init)) {
           node_id_type node_id = {.report_step = 0,
                                   .iens = iens ,
-                                  .state = ANALYZED };
+                                  .state = FORECAST };
 
           if (enkf_node_has_data( enkf_node , fs , node_id))
             enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export_file , run_arg_get_step1(run_arg));

@@ -88,7 +88,7 @@ int main(int argc , char ** argv) {
       run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , 0 ,0 , "simulations/run0");
       node_id_type node_id = {.report_step = 0 ,  
                               .iens = 0,
-                              .state = ANALYZED };
+                              .state = FORECAST };
 
       create_runpath( enkf_main );
       test_assert_true( util_is_directory( "simulations/run0" ));

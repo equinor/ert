@@ -562,7 +562,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs ,
 
   /* Add the mean back in - and store the updated node to disk.*/
   for (iens = 0; iens < ens_size; iens++) {
-    node_id_type node_id = {.report_step = report_step , .iens = iens , .state = ANALYZED };
+    node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
     enkf_node_iadd( ensemble[iens] , mean );
     enkf_node_store( ensemble[iens] , target_fs , true , node_id);
   }

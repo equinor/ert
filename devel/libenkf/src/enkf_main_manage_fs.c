@@ -320,7 +320,7 @@ static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , 
     int iens = 0;
     do {
       if (bool_vector_safe_iget( mask , iens)) {
-        node_id_type node_id = {.report_step = 0 , .iens = iens , .state = ANALYZED };
+        node_id_type node_id = {.report_step = 0 , .iens = iens , .state = FORECAST };
         initialized = enkf_config_node_has_node( config_node , fs , node_id);
       }
       iens++;

@@ -110,8 +110,7 @@ typedef enum {INVALID          = 0   ,
 */
 
 
-typedef enum   {FORECAST    = 2,              /* FORECAST and ANALYZED must be 2^n */
-                ANALYZED    = 4,
+typedef enum   {FORECAST    = 2              /* FORECAST and ANALYZED must be 2^n */
                 } state_enum;
 
 #define ENKF_STATE_ENUM_DEFS {.value = 2 , .name = "FORECAST"} ,\
