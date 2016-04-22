@@ -68,7 +68,7 @@ class ExportModel(ErtConnector):
 
         for index, value in enumerate(iactive):
             if value:
-                if node.tryLoad(fs, NodeId(report_step, index, state)):
+                if node.tryLoad(fs, NodeId(report_step, index)):
                     gen_kw = GenKw.createCReference(node.valuePointer())
                     filename  =  str(path + "/" + keyword + "_{0}").format(index)
                     if file_type == "Parameter list":
@@ -100,7 +100,7 @@ class ExportModel(ErtConnector):
 
         for index, active in enumerate(iactive):
             if active:
-                node_id = NodeId(int(report_step), index, state)
+                node_id = NodeId(int(report_step), index)
 
                 if node.tryLoad(fs, node_id):
                     gen_data = node.asGenData()

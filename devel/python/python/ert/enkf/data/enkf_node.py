@@ -30,11 +30,11 @@ class EnkfNode(BaseCClass):
         super(EnkfNode, self).__init__(c_pointer, config_node, True)
 
     @classmethod
-    def exportMany(cls , config_node , file_format , fs , iens_list  , state = EnkfStateType.ANALYZED , report_step = 0 , file_type = None , arg = None):
+    def exportMany(cls , config_node , file_format , fs , iens_list  , report_step = 0 , file_type = None , arg = None):
         node = EnkfNode( config_node )
         for iens in iens_list:
             filename = file_format % iens
-            node_id = NodeId( report_step , iens , state )
+            node_id = NodeId( report_step , iens )
             if node.tryLoad(fs , node_id):
                 if node.export( filename , file_type = file_type , arg = arg):
                     print("%s[%03d] -> %s" % (config_node.getKey() , iens , filename))

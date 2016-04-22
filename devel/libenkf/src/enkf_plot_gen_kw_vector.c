@@ -77,7 +77,6 @@ void enkf_plot_gen_kw_vector_load( enkf_plot_gen_kw_vector_type * vector , enkf_
   enkf_plot_gen_kw_vector_reset( vector );
   {
     node_id_type node_id = { .report_step = report_step ,
-                             .state       = FORECAST,
                              .iens        = vector->iens };
 
     enkf_node_type * data_node = enkf_node_alloc( vector->config_node );

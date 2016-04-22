@@ -151,7 +151,6 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
   } else {
     int step;
     node_id_type node_id = {.iens        = plot_tvector->iens,
-                            .state       = FORECAST,
                             .report_step = 0 };
 
     for (step = step1 ; step <= step2; step++) {

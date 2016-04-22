@@ -425,8 +425,7 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
 
               const int iens = int_vector_iget( ens_active_list , iens_index );
               node_id_type node_id = {.report_step = step,
-                                      .iens        = iens ,
-                                      .state       = FORECAST };
+                                      .iens        = iens};
 
               enkf_node_load( work_node , fs , node_id );
 

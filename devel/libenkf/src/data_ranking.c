@@ -77,8 +77,7 @@ static void data_ranking_init(data_ranking_type * ranking ,
 
     double value;
     node_id_type node_id = {.report_step = step , 
-                            .iens = iens , 
-                            .state = FORECAST };
+                            .iens = iens };
 
     if (enkf_node_user_get( enkf_node , fs , key_index , node_id , &value)) {
       double_vector_iset( ranking->data_ensemble , iens , value );

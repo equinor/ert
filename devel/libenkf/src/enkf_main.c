@@ -467,7 +467,6 @@ enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main ,
   const int ens_size              = enkf_main_get_ensemble_size( enkf_main );
   enkf_node_type ** node_ensemble = util_calloc(ens_size , sizeof * node_ensemble );
   node_id_type node_id = {.report_step = report_step ,
-                          .state       = FORECAST ,
                           .iens        = -1 };
   int iens;
 
@@ -562,7 +561,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs ,
 
   /* Add the mean back in - and store the updated node to disk.*/
   for (iens = 0; iens < ens_size; iens++) {
-    node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
+    node_id_type node_id = {.report_step = report_step , .iens = iens };
     enkf_node_iadd( ensemble[iens] , mean );
     enkf_node_store( ensemble[iens] , target_fs , true , node_id);
   }
@@ -614,8 +613,7 @@ static int __get_active_size(const ensemble_config_type * ensemble_config , enkf
     if (enkf_config_node_get_impl_type( config_node ) == GEN_DATA) {
       enkf_node_type * node = enkf_node_alloc( config_node );
       node_id_type node_id = {.report_step = report_step ,
-                              .iens        = 0,
-                              .state       = FORECAST };
+                              .iens        = 0 };
 
       enkf_node_load( node , fs  , node_id );
       enkf_node_free( node );
@@ -675,7 +673,7 @@ static void serialize_node( enkf_fs_type * fs ,
                             matrix_type * A) {
 
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
-  node_id_type node_id = {.report_step = report_step, .iens = iens , .state = FORECAST  };
+  node_id_type node_id = {.report_step = report_step, .iens = iens  };
   enkf_node_serialize( node , fs , node_id , active_list , A , row_offset , column);
 }
 
@@ -789,7 +787,7 @@ static void deserialize_node( enkf_fs_type            * fs,
                               matrix_type * A) {
 
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
-  node_id_type node_id = { .report_step = target_step , .iens = iens , .state = FORECAST };  // Was ANALYZED
+  node_id_type node_id = { .report_step = target_step , .iens = iens };
   enkf_node_deserialize(node , fs , node_id , active_list , A , row_offset , column);
   state_map_update_undefined(enkf_fs_get_state_map(fs) , iens , STATE_INITIALIZED);
 }
@@ -1145,7 +1143,6 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
           enkf_node_type * data_node = enkf_node_alloc( config_node );
           for (int j=0; j < int_vector_size(ens_active_list); j++) {
             node_id_type node_id = {.iens = int_vector_iget( ens_active_list , j ),
-                                    .state = FORECAST ,
                                     .report_step = 0 };
             enkf_node_load( data_node , source_fs , node_id );
             enkf_node_store( data_node , target_fs , false , node_id );
@@ -3226,7 +3223,7 @@ bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
     int iens;
     for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
       if (bool_vector_iget(iactive, iens)) {
-        node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
+        node_id_type node_id = {.report_step = report_step , .iens = iens };
         node = enkf_state_get_node(enkf_main->ensemble[iens] , kw);
         if (node) {
           if (enkf_node_try_load(node , fs , node_id)) {

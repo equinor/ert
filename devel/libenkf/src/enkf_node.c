@@ -338,7 +338,7 @@ bool enkf_node_user_get(enkf_node_type * enkf_node , enkf_fs_type * fs , const c
 }
 
 bool enkf_node_user_get_no_id(enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int report_step, int iens, double * value) {
-  node_id_type node_id = {.report_step = report_step , .iens = iens, .state = FORECAST};
+  node_id_type node_id = {.report_step = report_step , .iens = iens};
   bool loadOK;
   FUNC_ASSERT( enkf_node->user_get );
   {
@@ -583,8 +583,8 @@ enkf_node_type * enkf_node_load_alloc( const enkf_config_node_type * config_node
       enkf_node_load( node , fs , node_id );
       return node;
     } else {
-      util_abort("%s: could not load vector:%s from iens:%d state:%d \n",__func__ , enkf_config_node_get_key( config_node ),
-                 node_id.iens , node_id.state );
+      util_abort("%s: could not load vector:%s from iens:%d\n",__func__ , enkf_config_node_get_key( config_node ),
+                 node_id.iens );
       return NULL;
     }
   } else {
@@ -593,10 +593,10 @@ enkf_node_type * enkf_node_load_alloc( const enkf_config_node_type * config_node
       enkf_node_load( node , fs , node_id );
       return node;
     } else {
-      util_abort("%s: Could not load node: key:%s  iens:%d  report:%d  state:%d\n",
+      util_abort("%s: Could not load node: key:%s  iens:%d  report:%d \n",
                  __func__ ,
                  enkf_config_node_get_key( config_node ) ,
-                 node_id.iens , node_id.report_step , node_id.state );
+                 node_id.iens , node_id.report_step );
       return NULL;
     }
   }
@@ -662,8 +662,8 @@ void enkf_node_copy_ensemble(const enkf_config_node_type * config_node ,
                              int ens_size,
                              const int * permutations) {
 
-  node_id_type src_id    = {.report_step = report_step_from , .iens = 0 , .state = FORECAST};
-  node_id_type target_id = {.report_step = report_step_to   , .iens = 0 , .state = FORECAST};
+  node_id_type src_id    = {.report_step = report_step_from , .iens = 0 };
+  node_id_type target_id = {.report_step = report_step_to   , .iens = 0 };
 
   for(int iens_from = 0; iens_from < ens_size; iens_from++) {
     int iens_to;
@@ -685,7 +685,7 @@ enkf_node_type ** enkf_node_load_alloc_ensemble( const enkf_config_node_type * c
                                                  int report_step , int iens1 , int iens2) {
   enkf_node_type ** ensemble = util_calloc( (iens2 - iens1) , sizeof * ensemble );
   for (int iens = iens1; iens < iens2; iens++) {
-    node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST};
+    node_id_type node_id = {.report_step = report_step , .iens = iens };
     ensemble[iens - iens1] = NULL;
     ensemble[iens - iens1] = enkf_node_load_alloc(config_node , fs , node_id);
   }

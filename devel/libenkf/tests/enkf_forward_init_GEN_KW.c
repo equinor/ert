@@ -86,8 +86,7 @@ int main(int argc , char ** argv) {
       run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , 0 , 0 , "simulations/run0");
       enkf_node_type * gen_kw_node = enkf_state_get_node( state , "MULTFLT" );
       node_id_type node_id = {.report_step = 0 ,
-                              .iens = 0,
-                              .state = FORECAST };
+                              .iens = 0 };
 
       create_runpath( enkf_main );
       test_assert_true( util_is_directory( "simulations/run0" ));

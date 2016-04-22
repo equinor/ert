@@ -72,7 +72,6 @@ void enkf_plot_genvector_load( enkf_plot_genvector_type * vector , enkf_fs_type 
     enkf_node_type * work_node  = enkf_node_alloc( vector->config_node );
 
     node_id_type node_id = { .report_step = report_step ,
-                             .state       = FORECAST ,
                              .iens        = vector->iens };
 
     if (enkf_node_try_load( work_node , fs , node_id )) {

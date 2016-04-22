@@ -221,7 +221,6 @@ typedef enum {
   typedef struct {
     int        report_step;
     int        iens;
-    state_enum state;
   } node_id_type;
 
 

@@ -193,8 +193,8 @@ static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
       for (src_iens = 0; src_iens < enkf_main_get_ensemble_size( enkf_main ); src_iens++) {
         if (bool_vector_safe_iget(iens_mask , src_iens)) {
           int target_iens = ranking_permutation[src_iens];
-          node_id_type src_id    = {.report_step = source_report_step , .iens = src_iens    , .state = FORECAST };
-          node_id_type target_id = {.report_step = target_report_step , .iens = target_iens , .state = FORECAST };
+          node_id_type src_id    = {.report_step = source_report_step , .iens = src_iens    };
+          node_id_type target_id = {.report_step = target_report_step , .iens = target_iens };
 
           /* The copy is careful ... */
           if (enkf_config_node_has_node( config_node , source_case_fs , src_id))
@@ -320,7 +320,7 @@ static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , 
     int iens = 0;
     do {
       if (bool_vector_safe_iget( mask , iens)) {
-        node_id_type node_id = {.report_step = 0 , .iens = iens , .state = FORECAST };
+        node_id_type node_id = {.report_step = 0 , .iens = iens };
         initialized = enkf_config_node_has_node( config_node , fs , node_id);
       }
       iens++;
