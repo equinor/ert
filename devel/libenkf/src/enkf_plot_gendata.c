@@ -159,7 +159,6 @@ void enkf_plot_gendata_load( enkf_plot_gendata_type * plot_data ,
           arg_pack_append_ptr( work_arg , vector );
           arg_pack_append_ptr( work_arg , fs );
           arg_pack_append_int( work_arg , report_step);
-          arg_pack_append_int( work_arg , state );
 
           thread_pool_add_job( tp , enkf_plot_genvector_load__ , work_arg );
         }
