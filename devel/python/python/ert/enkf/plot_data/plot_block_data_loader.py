@@ -1,4 +1,4 @@
-from ert.enkf import EnkfStateType, RealizationStateEnum, EnkfNode, ErtImplType, NodeId
+from ert.enkf import RealizationStateEnum, EnkfNode, ErtImplType, NodeId
 from ert.enkf.plot_data import PlotBlockData, PlotBlockVector
 from ert.util import DoubleVector, BoolVector, ThreadPool
 
@@ -31,11 +31,10 @@ class PlotBlockDataLoader(object):
         return depth
 
 
-    def load(self, fs, report_step, state=EnkfStateType.FORECAST, input_mask=None):
+    def load(self, fs, report_step, input_mask=None):
         """
          @type fs: EnkfFs
          @type report_step: int
-         @type state: EnkfStateType
          @type input_mask: BoolVector
          @rtype: PlotBlockData
         """
@@ -60,7 +59,7 @@ class PlotBlockDataLoader(object):
         thread_pool = ThreadPool()
         for index in range(ensemble_size):
             if mask[index]:
-                thread_pool.addTask(self.loadVector, plot_block_data, fs, report_step, index, state)
+                thread_pool.addTask(self.loadVector, plot_block_data, fs, report_step, index)
 
         thread_pool.nonBlockingStart()
         thread_pool.join()

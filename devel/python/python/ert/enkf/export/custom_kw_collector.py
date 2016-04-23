@@ -1,6 +1,5 @@
 from pandas import DataFrame
-from ert.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, CustomKWConfig, EnkfNode, NodeId, \
-    EnkfStateType
+from ert.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, CustomKWConfig, EnkfNode, NodeId
 from ert.enkf.key_manager import KeyManager
 
 

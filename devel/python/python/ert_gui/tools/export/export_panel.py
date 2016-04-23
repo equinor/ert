@@ -15,7 +15,6 @@
 #  for more details.
 from PyQt4.QtCore import QDir, pyqtSignal
 from PyQt4.QtGui import  QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
-from ert.enkf import EnkfStateType
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.export import ExportKeywordModel

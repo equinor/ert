@@ -1,6 +1,6 @@
 import os.path
 from ert.cwrap import CWrapper, BaseCClass
-from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap, TimeMap, RealizationStateEnum
+from ert.enkf import ENKF_LIB, EnkfFs, StateMap, TimeMap, RealizationStateEnum
 from ert.util import StringList
 
 import re
@@ -182,24 +182,20 @@ class EnkfFsManager(BaseCClass):
         return sorted(caselist, key=naturalSortKey)
 
 
-    def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, source_state, member_mask,
+    def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, member_mask,
                                                 node_list):
-        assert isinstance(source_state, EnkfStateType)
         source_case_fs = self.getFileSystem(source_case)
         EnkfFsManager.cNamespace().custom_initialize_from_existing(self, source_case_fs, source_report_step,
-                                                                   source_state, node_list, member_mask)
+                                                                   node_list, member_mask)
 
     def initializeCurrentCaseFromExisting(self, source_fs, source_report_step, source_state):
-        assert isinstance(source_state, EnkfStateType)
         assert isinstance(source_fs, EnkfFs);
-        EnkfFsManager.cNamespace().initialize_current_case_from_existing(self, source_fs, source_report_step,
-                                                                         source_state)
+        EnkfFsManager.cNamespace().initialize_current_case_from_existing(self, source_fs, source_report_step)
 
-    def initializeCaseFromExisting(self, source_fs, source_report_step, source_state, target_fs):
-        assert isinstance(source_state, EnkfStateType)
+    def initializeCaseFromExisting(self, source_fs, source_report_step, target_fs):
         assert isinstance(source_fs, EnkfFs);
         assert isinstance(target_fs, EnkfFs);
-        EnkfFsManager.cNamespace().initialize_case_from_existing(self, source_fs, source_report_step, source_state,
+        EnkfFsManager.cNamespace().initialize_case_from_existing(self, source_fs, source_report_step, 
                                                                  target_fs)
 
 
@@ -253,9 +249,9 @@ EnkfFsManager.cNamespace().set_case_table = cwrapper.prototype("void enkf_main_s
 EnkfFsManager.cNamespace().initialize_from_scratch = cwrapper.prototype("void enkf_main_initialize_from_scratch(enkf_fs_manager, enkf_fs , stringlist, int, int, bool)")
 EnkfFsManager.cNamespace().is_initialized = cwrapper.prototype("bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)")
 EnkfFsManager.cNamespace().is_case_initialized = cwrapper.prototype("bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)")
-EnkfFsManager.cNamespace().initialize_current_case_from_existing = cwrapper.prototype("void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_state_type_enum)")
-EnkfFsManager.cNamespace().initialize_case_from_existing = cwrapper.prototype("void enkf_main_init_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_state_type_enum, enkf_fs)")
-EnkfFsManager.cNamespace().custom_initialize_from_existing = cwrapper.prototype("void enkf_main_init_current_case_from_existing_custom(enkf_fs_manager, enkf_fs, int, enkf_state_type_enum, stringlist, bool_vector)")
+EnkfFsManager.cNamespace().initialize_current_case_from_existing = cwrapper.prototype("void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int)")
+EnkfFsManager.cNamespace().initialize_case_from_existing = cwrapper.prototype("void enkf_main_init_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_fs)")
+EnkfFsManager.cNamespace().custom_initialize_from_existing = cwrapper.prototype("void enkf_main_init_current_case_from_existing_custom(enkf_fs_manager, enkf_fs, int, stringlist, bool_vector)")
 
 EnkfFsManager.cNamespace().alloc_readonly_state_map = cwrapper.prototype("state_map_obj enkf_main_alloc_readonly_state_map(enkf_fs_manager, char*)")
 EnkfFsManager.cNamespace().alloc_readonly_time_map = cwrapper.prototype("time_map_obj enkf_main_alloc_readonly_time_map(enkf_fs_manager, char*)")

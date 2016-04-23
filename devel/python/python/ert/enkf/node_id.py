@@ -1,6 +1,5 @@
 from ctypes import Structure, c_int
 from ert.cwrap import CWrapper
-from ert.enkf.enums import EnkfStateType
 
 class NodeId(Structure):
     """

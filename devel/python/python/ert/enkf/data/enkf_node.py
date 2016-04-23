@@ -14,11 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 import sys
-
+from ert.enkf.enums import ErtImplType
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, EnkfFs, NodeId
 from ert.enkf.data import GenKw, GenData, CustomKW, Field
-from ert.enkf.enums import ErtImplType,EnkfStateType
 
 class EnkfNode(BaseCClass):
     def __init__(self, config_node, private=False):

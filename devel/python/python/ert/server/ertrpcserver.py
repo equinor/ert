@@ -7,7 +7,7 @@ from ert import Version
 from ert.enkf import EnKFMain, NodeId
 from ert.enkf.config import CustomKWConfig
 from ert.enkf.data import EnkfNode, CustomKW
-from ert.enkf.enums import RealizationStateEnum, EnkfVarType, EnkfStateType, ErtImplType
+from ert.enkf.enums import RealizationStateEnum, EnkfVarType, ErtImplType
 from ert.server import SimulationContext
 from ert.server.ertrpcclient import FAULT_CODES
 from ert.util import IntegerHash
