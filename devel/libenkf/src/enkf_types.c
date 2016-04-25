@@ -139,18 +139,6 @@ void enkf_types_set_truncate_max(truncation_type * __trunc) {
 }
 
 
-/*****************************************************************/
-
-
-const char * enkf_state_enum_iget( int index, int * value) {
-  return util_enum_iget( index , ENKF_STATE_ENUM_SIZE , (const util_enum_element_type []) { ENKF_STATE_ENUM_DEFS }, value);
-}
-
-
-const char * enkf_run_enum_iget( int index, int * value) {
-  return util_enum_iget( index , ENKF_RUN_ENUM_SIZE , (const util_enum_element_type []) { ENKF_RUN_ENUM_DEFS }, value);
-}
-
 
 
 
