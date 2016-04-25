@@ -181,7 +181,6 @@ void enkf_tui_export_profile(void * enkf_main) {
     bool * report_active;
 
     const enkf_config_node_type * config_node;
-    state_enum analysis_state;
     int        direction;  /* 0: i running, 1: j running, 2: k running */
     int        total_cells;
     int       *cell_list; 
@@ -285,7 +284,6 @@ void enkf_tui_export_cell(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const enkf_config_node_type * config_node;
-    state_enum analysis_state;
     int        cell_nr;
 
     config_node = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN , FIELD , INVALID_VAR);
@@ -346,10 +344,8 @@ void enkf_tui_export_time(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const enkf_config_node_type * config_node;
-    state_enum analysis_state;
     int        cell_nr;
     
-    analysis_state = FORECAST;
     config_node = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN , FIELD ,INVALID_VAR);
     cell_nr = enkf_tui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , PROMPT_LEN);
     {
@@ -373,7 +369,7 @@ void enkf_tui_export_time(void * enkf_main) {
         
       
       for (iens = iens1; iens <= iens2; iens++) {
-        enkf_tui_util_get_time(fs , config_node , node , analysis_state , cell_nr , step1 , step2 , iens , x ,y);
+        enkf_tui_util_get_time(fs , config_node , node , cell_nr , step1 , step2 , iens , x ,y);
         {
           char * filename = path_fmt_alloc_file(file_fmt , true , iens);
           FILE * stream = util_fopen(filename , "w");
