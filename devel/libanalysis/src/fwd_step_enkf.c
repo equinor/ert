@@ -97,6 +97,14 @@ void fwd_step_enkf_updateA(void * module_data ,
     int ens_size = matrix_get_columns( S );
     int nx = matrix_get_rows( A );
     int nd = matrix_get_rows( S );
+    int nfolds = fwd_step_data->nfolds;
+
+    /* Should this check be done in an internal module check? */
+    if ( ens_size <= nfolds){
+        fprintf(stderr, "**ERROR: The number of ensembles: %d must be larger than the CV fold %d\n", ens_size, nfolds);
+        fprintf(stderr, "**ERROR: Forward Stepwise regression failed...\n");
+        return;
+    }
 
     {
 
