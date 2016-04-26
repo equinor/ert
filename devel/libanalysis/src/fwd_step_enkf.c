@@ -39,7 +39,8 @@
 #define DEFAULT_R2_LIMIT            0.99
 #define NFOLDS_KEY                  "CV_NFOLDS"
 #define R2_LIMIT_KEY                "FWD_STEP_R2_LIMIT"
-
+#define DEFAULT_VERBOSE             false
+#define VERBOSE_KEY                 "VERBOSE"
 
 struct fwd_step_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -48,6 +49,7 @@ struct fwd_step_enkf_data_struct {
   int                    nfolds;
   long                   option_flags;
   double                 r2_limit;
+  bool                   verbose;
 };
 
 
@@ -63,6 +65,9 @@ void fwd_step_enkf_set_r2_limit( fwd_step_enkf_data_type * data , double limit )
   data->r2_limit = limit;
 }
 
+void fwd_step_enkf_set_verbose( fwd_step_enkf_data_type * data , bool verbose ) {
+  data->verbose = verbose;
+}
 
 void * fwd_step_enkf_data_alloc( rng_type * rng ) {
   fwd_step_enkf_data_type * data = util_malloc( sizeof * data );
@@ -73,10 +78,10 @@ void * fwd_step_enkf_data_alloc( rng_type * rng ) {
   data->nfolds       = DEFAULT_NFOLDS;
   data->r2_limit     = DEFAULT_R2_LIMIT;
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_SCALE_DATA;
+  data->verbose      = DEFAULT_VERBOSE;
 
   return data;
 }
-
 
 
 /*Main function: */
@@ -94,10 +99,12 @@ void fwd_step_enkf_updateA(void * module_data ,
   printf("Running Forward Stepwise regression:\n");
   {
 
-    int ens_size = matrix_get_columns( S );
-    int nx = matrix_get_rows( A );
-    int nd = matrix_get_rows( S );
-    int nfolds = fwd_step_data->nfolds;
+    int ens_size    = matrix_get_columns( S );
+    int nx          = matrix_get_rows( A );
+    int nd          = matrix_get_rows( S );
+    int nfolds      = fwd_step_data->nfolds;
+    double r2_limit = fwd_step_data->r2_limit;
+    bool verbose    = fwd_step_data->verbose;
 
     if ( ens_size <= nfolds)
       util_abort("%s: The number of ensembles must be larger than the CV fold - aborting\n", __func__);
@@ -123,8 +130,20 @@ void fwd_step_enkf_updateA(void * module_data ,
 
       matrix_type * di = matrix_alloc( 1 , nd );
 
-      printf("nx = %d\n",nx);
+      if (verbose){
+       printf("===============================================================================================================================\n");
+       printf("Total number of parameters  : %d\n",nx);
+       printf("Total number of observations: %d\n",nd);
+       printf("Number of ensembles         : %d\n",ens_size);
+       printf("CV folds                    : %d\n",nfolds);
+       printf("Relative R2 tolerance       : %f\n",r2_limit);
+       printf("===============================================================================================================================\n");
+       printf("%-15s%-15s%-15s%-15s\n", "Parameter", "NumAttached", "FinalR2", "ActiveIndices");
+      }
+
       for (int i = 0; i < nx; i++) {
+
+
         /*Update values of y */
         /*Start of the actual update */
         matrix_type * y = matrix_alloc( ens_size , 1 );
@@ -136,7 +155,7 @@ void fwd_step_enkf_updateA(void * module_data ,
         /*This might be illigal???? */
         stepwise_set_Y0( stepwise_data , y );
 
-        stepwise_estimate(stepwise_data , fwd_step_data->r2_limit , fwd_step_data->nfolds );
+        stepwise_estimate(stepwise_data , r2_limit , nfolds );
 
         /*manipulate A directly*/
         for (int j = 0; j < ens_size; j++) {
@@ -148,18 +167,17 @@ void fwd_step_enkf_updateA(void * module_data ,
           matrix_iset(A , i , j , xHat);
         }
 
-
-
+        if (verbose)
+         stepwise_printf(stepwise_data, i);
       }
 
+      if (verbose)
+       printf("===============================================================================================================================\n");
+
       printf("Done with stepwise regression enkf\n");
+
       stepwise_free( stepwise_data );
       matrix_free( di );
-
-      /*workS is freed in stepwise_free() */
-      /*matrix_free( workS ); */
-      /*matrix_free( y );*/
-
 
     }
 
@@ -217,6 +235,21 @@ bool fwd_step_enkf_set_int( void * arg , const char * var_name , int value) {
    }
 }
 
+bool fwd_step_enkf_set_bool( void * arg , const char * var_name , bool value) {
+  fwd_step_enkf_data_type * module_data = fwd_step_enkf_data_safe_cast( arg );
+  {
+    bool name_recognized = true;
+
+    /*Set verbose */
+    if (strcmp( var_name , VERBOSE_KEY) == 0)
+      fwd_step_enkf_set_verbose( module_data , value);
+    else
+      name_recognized = false;
+
+    return name_recognized;
+   }
+}
+
 long fwd_step_enkf_get_options( void * arg , long flag) {
   fwd_step_enkf_data_type * fwd_step_data = fwd_step_enkf_data_safe_cast( arg );
   {
@@ -229,6 +262,8 @@ bool fwd_step_enkf_has_var( const void * arg, const char * var_name) {
     if (strcmp(var_name , NFOLDS_KEY) == 0)
       return true;
     else if (strcmp(var_name , R2_LIMIT_KEY ) == 0)
+      return true;
+    else if (strcmp(var_name , VERBOSE_KEY ) == 0)
       return true;
     else
       return false;
@@ -255,6 +290,15 @@ int fwd_step_enkf_get_int( const void * arg, const char * var_name) {
   }
 }
 
+bool fwd_step_enkf_get_bool( const void * arg, const char * var_name) {
+  const fwd_step_enkf_data_type * module_data = fwd_step_enkf_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , VERBOSE_KEY) == 0)
+      return module_data->verbose;
+    else
+      return false;
+  }
+}
 
 
 
@@ -270,7 +314,7 @@ analysis_table_type SYMBOL_TABLE = {
   .freef           = fwd_step_enkf_data_free,
   .set_int         = fwd_step_enkf_set_int ,
   .set_double      = fwd_step_enkf_set_double ,
-  .set_bool        = NULL ,
+  .set_bool        = fwd_step_enkf_set_bool ,
   .set_string      = NULL ,
   .get_options     = fwd_step_enkf_get_options ,
   .initX           = NULL ,
@@ -280,7 +324,7 @@ analysis_table_type SYMBOL_TABLE = {
   .has_var         = fwd_step_enkf_has_var,
   .get_int         = fwd_step_enkf_get_int ,
   .get_double      = fwd_step_enkf_get_double ,
-  .get_bool        = NULL ,
+  .get_bool        = fwd_step_enkf_get_bool ,
   .get_ptr         = NULL
 };
 
