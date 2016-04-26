@@ -1004,6 +1004,7 @@ static void lsf_driver_shell_init( lsf_driver_type * lsf_driver ) {
   hash_insert_int(lsf_driver->status_map , "USUSP"  , JOB_STAT_USUSP);
   hash_insert_int(lsf_driver->status_map , "RUN"    , JOB_STAT_RUN);
   hash_insert_int(lsf_driver->status_map , "EXIT"   , JOB_STAT_EXIT);
+  hash_insert_int(lsf_driver->status_map , "ZOMBI"  , JOB_STAT_EXIT);     /* The ZOMBI status does not seem to be available from the api. */
   hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_STAT_DONE);
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_STAT_UNKWN);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
