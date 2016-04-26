@@ -94,10 +94,11 @@ void fwd_step_enkf_updateA(void * module_data ,
   printf("Running Forward Stepwise regression:\n");
   {
 
-    int ens_size = matrix_get_columns( S );
-    int nx = matrix_get_rows( A );
-    int nd = matrix_get_rows( S );
-    int nfolds = fwd_step_data->nfolds;
+    int ens_size    = matrix_get_columns( S );
+    int nx          = matrix_get_rows( A );
+    int nd          = matrix_get_rows( S );
+    int nfolds      = fwd_step_data->nfolds;
+    double r2_limit = fwd_step_data->r2_limit;
 
     if ( ens_size <= nfolds)
       util_abort("%s: The number of ensembles must be larger than the CV fold - aborting\n", __func__);
@@ -123,8 +124,19 @@ void fwd_step_enkf_updateA(void * module_data ,
 
       matrix_type * di = matrix_alloc( 1 , nd );
 
-      printf("nx = %d\n",nx);
+      printf("===============================================================================================================================\n");
+      printf("Total number of parameters  : %d\n",nx);
+      printf("Total number of observations: %d\n",nd);
+      printf("Number of ensembles         : %d\n",ens_size);
+      printf("CV folds                    : %d\n",nfolds);
+      printf("Relative R2 tolerance       : %f\n",r2_limit);
+      printf("===============================================================================================================================\n");
+
+      printf("%-15s%-15s%-15s%-15s\n", "Parameter", "NumAttached", "FinalR2", "ActiveIndices");
+
       for (int i = 0; i < nx; i++) {
+
+
         /*Update values of y */
         /*Start of the actual update */
         matrix_type * y = matrix_alloc( ens_size , 1 );
@@ -136,7 +148,7 @@ void fwd_step_enkf_updateA(void * module_data ,
         /*This might be illigal???? */
         stepwise_set_Y0( stepwise_data , y );
 
-        stepwise_estimate(stepwise_data , fwd_step_data->r2_limit , fwd_step_data->nfolds );
+        stepwise_estimate(stepwise_data , r2_limit , nfolds );
 
         /*manipulate A directly*/
         for (int j = 0; j < ens_size; j++) {
@@ -148,18 +160,14 @@ void fwd_step_enkf_updateA(void * module_data ,
           matrix_iset(A , i , j , xHat);
         }
 
-
-
+        stepwise_printf(stepwise_data, i);
       }
 
+      printf("===============================================================================================================================\n");
       printf("Done with stepwise regression enkf\n");
+
       stepwise_free( stepwise_data );
       matrix_free( di );
-
-      /*workS is freed in stepwise_free() */
-      /*matrix_free( workS ); */
-      /*matrix_free( y );*/
-
 
     }
 
