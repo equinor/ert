@@ -10,7 +10,7 @@ namespace ERT {
     static const int dummy_dims[ 3 ] = { -1, -1, -1 };
     const auto default_join = ":";
 
-    static int global_index( int dims[ 3 ], int ijk[ 3 ] ) {
+    static int global_index( const int dims[ 3 ], const int ijk[ 3 ] ) {
         /* num is offset 1 global index */
         return 1 + ijk[ 0 ] + ( ijk[ 1 ] * dims[ 0 ] ) + ( ijk[ 2 ] * dims[ 1 ] * dims[ 0 ] );
     }
@@ -29,8 +29,8 @@ namespace ERT {
 
     smspec_node::smspec_node(
             const std::string& keyword,
-            int dims[ 3 ],
-            int ijk[ 3 ] ) :
+            const int dims[ 3 ],
+            const int ijk[ 3 ] ) :
         smspec_node(
             ECL_SMSPEC_BLOCK_VAR, "", keyword.c_str(), "", default_join, dims, global_index( dims, ijk )
         )
@@ -39,8 +39,8 @@ namespace ERT {
     smspec_node::smspec_node(
             const std::string& keyword,
             const std::string& wellname,
-            int dims[ 3 ],
-            int ijk[ 3 ] ) :
+            const int dims[ 3 ],
+            const int ijk[ 3 ] ) :
         smspec_node(
             ECL_SMSPEC_COMPLETION_VAR, wellname.c_str(), keyword.c_str(), "", default_join, dims, global_index( dims, ijk )
         )
@@ -48,7 +48,7 @@ namespace ERT {
 
     smspec_node::smspec_node(
             const std::string& keyword,
-            int dims[ 3 ],
+            const int dims[ 3 ],
             int region ) :
         smspec_node(
             ECL_SMSPEC_REGION_VAR, "", keyword.c_str(), "", default_join, dims, region
