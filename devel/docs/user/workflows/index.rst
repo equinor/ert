@@ -49,26 +49,27 @@ Jobs related to export
 
 **EXPORT_FIELD**
 
-The EXPORT_FIELD workflow job exports field data to roff or grdecl format dependent on the extension of the export file argument.The job takes the following arguments:
+The EXPORT_FIELD workflow job exports field data to roff or grdecl
+format dependent on the extension of the export file argument.The job
+takes the following arguments:
 
 #. Field to be exported
 #. Filename for export file, must contain %d
 #. Report_step
-#. State
 #. Realization range
 
-The filename must contain a %d. This will be replaced with the realization number.
+The filename must contain a %d. This will be replaced with the
+realization number.
 
-The state parameter is either FORECAST or ANALYZED, BOTH is not supported.
-
-The realization range parameter is optional. Default is all realizations.
+The realization range parameter is optional. Default is all
+realizations.
 
 
 Example use of this job in a workflow:
 
 ::
 
-	EXPORT_FIELD PERMZ path_to_export/filename%d.grdecl 0 FORECAST 0,2
+	EXPORT_FIELD PERMZ path_to_export/filename%d.grdecl 0 0,2
 
 **EXPORT_FIELD_RMS_ROFF**
 
@@ -77,12 +78,9 @@ The EXPORT_FIELD_RMS_ROFF workflow job exports field data to roff format. The jo
 #. Field to be exported
 #. Filename for export file, must contain %d
 #. Report_step
-#. State
 #. Realization range
 
 The filename must contain a %d. This will be replaced with the realization number.
-
-The state parameter is either FORECAST or ANALYZED, BOTH is not supported.
 
 The realization range parameter is optional. Default is all realizations.
 
@@ -91,8 +89,8 @@ Example uses of this job in a workflow:
 
 ::
 
-	EXPORT_FIELD_RMS_ROFF PERMZ path_to_export/filename%d.roff 0 FORECAST
-	EXPORT_FIELD_RMS_ROFF PERMX path_to_export/filename%d 0 FORECAST 0-5 
+	EXPORT_FIELD_RMS_ROFF PERMZ path_to_export/filename%d.roff 0 
+	EXPORT_FIELD_RMS_ROFF PERMX path_to_export/filename%d 0 0-5 
 
 
 **EXPORT_FIELD_ECL_GRDECL**
@@ -102,12 +100,9 @@ The EXPORT_FIELD_ECL_GRDECL workflow job exports field data to grdecl format. Th
 #. Field to be exported
 #. Filename for export file, must contain %d
 #. Report_step
-#. State
 #. Realization range
 
 The filename must contain a %d. This will be replaced with the realization number.
-
-The state parameter is either FORECAST or ANALYZED, BOTH is not supported.
 
 The realization range parameter is optional. Default is all realizations.
 
@@ -116,8 +111,8 @@ Example uses of this job in a workflow:
 
 ::
 
-	EXPORT_FIELD_ECL_GRDECL PERMZ path_to_export/filename%d.grdecl 0 ANALYZED
-	EXPORT_FIELD_ECL_GRDECL PERMX path_to_export/filename%d 0 ANALYZED 0-5 
+	EXPORT_FIELD_ECL_GRDECL PERMZ path_to_export/filename%d.grdecl 0 
+	EXPORT_FIELD_ECL_GRDECL PERMX path_to_export/filename%d 0 0-5 
 
 
 **EXPORT_RUNPATH**
