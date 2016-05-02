@@ -105,6 +105,7 @@
 #include <ert/enkf/field.h>
 #include <ert/enkf/ert_log.h>
 #include <ert/enkf/ert_run_context.h>
+#include <ert/enkf/run_arg.h>
 
 /**/
 
@@ -462,11 +463,10 @@ void enkf_main_exit(enkf_main_type * enkf_main) {
 
 */
 
-enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , enkf_fs_type * src_fs, const char * key , int report_step , state_enum load_state) {
+enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , enkf_fs_type * src_fs, const char * key , int report_step) {
   const int ens_size              = enkf_main_get_ensemble_size( enkf_main );
   enkf_node_type ** node_ensemble = util_calloc(ens_size , sizeof * node_ensemble );
   node_id_type node_id = {.report_step = report_step ,
-                          .state       = load_state ,
                           .iens        = -1 };
   int iens;
 
@@ -531,7 +531,7 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
 
 void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs , enkf_fs_type * target_fs , int report_step , const char * key , const enkf_node_type * min_std) {
   int ens_size                              = enkf_main_get_ensemble_size(enkf_main);
-  enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , src_fs , key , report_step , ANALYZED );
+  enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , src_fs , key , report_step );  // Was ANALYZED
   enkf_node_type * mean                     = enkf_node_copyc( ensemble[0] );
   enkf_node_type * std                      = enkf_node_copyc( ensemble[0] );
   int iens;
@@ -561,7 +561,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs ,
 
   /* Add the mean back in - and store the updated node to disk.*/
   for (iens = 0; iens < ens_size; iens++) {
-    node_id_type node_id = {.report_step = report_step , .iens = iens , .state = ANALYZED };
+    node_id_type node_id = {.report_step = report_step , .iens = iens };
     enkf_node_iadd( ensemble[iens] , mean );
     enkf_node_store( ensemble[iens] , target_fs , true , node_id);
   }
@@ -613,8 +613,7 @@ static int __get_active_size(const ensemble_config_type * ensemble_config , enkf
     if (enkf_config_node_get_impl_type( config_node ) == GEN_DATA) {
       enkf_node_type * node = enkf_node_alloc( config_node );
       node_id_type node_id = {.report_step = report_step ,
-                              .iens        = 0,
-                              .state       = FORECAST };
+                              .iens        = 0 };
 
       enkf_node_load( node , fs  , node_id );
       enkf_node_free( node );
@@ -654,7 +653,6 @@ typedef struct {
   const char              * key;
   int                       report_step;
   int                       target_step;
-  state_enum                load_state;
   run_mode_type             run_mode;
   int                       row_offset;
   const active_list_type  * active_list;
@@ -669,14 +667,13 @@ static void serialize_node( enkf_fs_type * fs ,
                             const char * key ,
                             int iens ,
                             int report_step ,
-                            state_enum load_state ,
                             int row_offset ,
                             int column,
                             const active_list_type * active_list,
                             matrix_type * A) {
 
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
-  node_id_type node_id = {.report_step = report_step, .iens = iens , .state = load_state };
+  node_id_type node_id = {.report_step = report_step, .iens = iens  };
   enkf_node_serialize( node , fs , node_id , active_list , A , row_offset , column);
 }
 
@@ -692,7 +689,6 @@ static void * serialize_nodes_mt( void * arg ) {
                       info->key ,
                       iens ,
                       info->report_step ,
-                      info->load_state ,
                       info->row_offset ,
                       column,
                       info->active_list ,
@@ -703,7 +699,6 @@ static void * serialize_nodes_mt( void * arg ) {
 
 
 static void enkf_main_serialize_node( const char * node_key ,
-                                      state_enum load_state ,
                                       const active_list_type * active_list ,
                                       int row_offset ,
                                       thread_pool_type * work_pool ,
@@ -717,7 +712,6 @@ static void enkf_main_serialize_node( const char * node_key ,
   for (icpu = 0; icpu < num_cpu_threads; icpu++) {
     serialize_info[icpu].key         = node_key;
     serialize_info[icpu].active_list = active_list;
-    serialize_info[icpu].load_state  = load_state;
     serialize_info[icpu].row_offset  = row_offset;
 
     thread_pool_add_job( work_pool , serialize_nodes_mt , &serialize_info[icpu]);
@@ -769,14 +763,7 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
       }
 
       if (active_size[ikw] > 0) {
-        state_enum load_state;
-
-        if (hash_inc_counter( use_count , key) == 0)
-          load_state = FORECAST;           /* This is the first time this keyword is updated for this reportstep */
-        else
-          load_state = ANALYZED;
-
-        enkf_main_serialize_node( key , load_state , active_list , row_offset[ikw] , work_pool , serialize_info );
+        enkf_main_serialize_node( key , active_list , row_offset[ikw] , work_pool , serialize_info );
         current_row += active_size[ikw];
       }
     }
@@ -800,7 +787,7 @@ static void deserialize_node( enkf_fs_type            * fs,
                               matrix_type * A) {
 
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
-  node_id_type node_id = { .report_step = target_step , .iens = iens , .state = ANALYZED };
+  node_id_type node_id = { .report_step = target_step , .iens = iens };
   enkf_node_deserialize(node , fs , node_id , active_list , A , row_offset , column);
   state_map_update_undefined(enkf_fs_get_state_map(fs) , iens , STATE_INITIALIZED);
 }
@@ -1107,7 +1094,6 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   const int active_ens_size = state_map_count_matching( source_state_map , STATE_HAS_DATA );
 
-  printf("src fs:%s \n", enkf_fs_get_case_name(source_fs));
   if (analysis_config_have_enough_realisations(analysis_config , active_ens_size)) {
     double alpha       = analysis_config_get_alpha( enkf_main->analysis_config );
     double std_cutoff  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
@@ -1156,7 +1142,6 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
           enkf_node_type * data_node = enkf_node_alloc( config_node );
           for (int j=0; j < int_vector_size(ens_active_list); j++) {
             node_id_type node_id = {.iens = int_vector_iget( ens_active_list , j ),
-                                    .state = FORECAST ,
                                     .report_step = 0 };
             enkf_node_load( data_node , source_fs , node_id );
             enkf_node_store( data_node , target_fs , false , node_id );
@@ -1206,7 +1191,6 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
         enkf_obs_get_obs_and_measure_data( enkf_main->obs,
                                            source_fs ,
                                            obsdata,
-                                           FORECAST,
                                            ens_active_list ,
                                            meas_forecast,
                                            obs_data);
@@ -1778,7 +1762,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations_to
 
     if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
       enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , true);
-      enkf_main_init_case_from_existing(enkf_main, current_case, 0, ANALYZED, initial_case);
+      enkf_main_init_case_from_existing(enkf_main, current_case, 0, initial_case); // ANALYZED argument removed.
       enkf_main_set_fs( enkf_main , initial_case , NULL );
       enkf_fs_decref( initial_case );
     }
@@ -1810,7 +1794,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations_to
         } else {
           fprintf(stderr, "\nAnalysis failed, rerunning simulation on changed initial parameters\n");
           enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false );
-          enkf_main_init_current_case_from_existing(enkf_main, target_fs, 0, ANALYZED);
+          enkf_main_init_current_case_from_existing(enkf_main, target_fs, 0); // ANALYZED argument removed
           enkf_fs_decref(target_fs);
           ++num_tries;
 
@@ -3189,11 +3173,10 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
                             const char * path,
                             bool_vector_type * iactive,
                             field_file_format_type file_type,
-                            int report_step,
-                            state_enum state)
+                            int report_step)
 {
     enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
-    bool result = enkf_main_export_field_with_fs(enkf_main, kw, path, iactive, file_type, report_step, state, fs);
+    bool result = enkf_main_export_field_with_fs(enkf_main, kw, path, iactive, file_type, report_step, fs);
     return result;
 }
 
@@ -3206,7 +3189,6 @@ bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
                             bool_vector_type * iactive,
                             field_file_format_type file_type,
                             int report_step,
-                            state_enum state,
                             enkf_fs_type * fs) {
 
   bool ret = false;
@@ -3240,7 +3222,7 @@ bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
     int iens;
     for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
       if (bool_vector_iget(iactive, iens)) {
-        node_id_type node_id = {.report_step = report_step , .iens = iens , .state = state };
+        node_id_type node_id = {.report_step = report_step , .iens = iens };
         node = enkf_state_get_node(enkf_main->ensemble[iens] , kw);
         if (node) {
           if (enkf_node_try_load(node , fs , node_id)) {
@@ -3315,12 +3297,11 @@ void enkf_main_rank_on_data(enkf_main_type * enkf_main,
   ranking_table_type * ranking_table     = enkf_main_get_ranking_table( enkf_main );
   ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
   enkf_fs_type * fs                      = enkf_main_get_fs(enkf_main);
-  state_enum state                       = FORECAST;
   char * key_index;
 
   const enkf_config_node_type * config_node = ensemble_config_user_get_node( ensemble_config , data_key , &key_index);
   if (config_node) {
-    ranking_table_add_data_ranking( ranking_table , sort_increasing , ranking_key , data_key , key_index , fs , config_node, step , state );
+    ranking_table_add_data_ranking( ranking_table , sort_increasing , ranking_key , data_key , key_index , fs , config_node, step );
     ranking_table_display_ranking( ranking_table , ranking_key );
   } else {
     fprintf(stderr,"** No data found for key %s\n", data_key);

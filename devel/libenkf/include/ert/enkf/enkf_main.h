@@ -123,7 +123,7 @@ extern "C" {
   enkf_main_type              * enkf_main_bootstrap(const char * model_config, bool strict, bool verbose);
   void                          enkf_main_create_new_config( const char * config_file , const char * storage_path , const char * dbase_type , int num_realizations);
 
-  enkf_node_type             ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , enkf_fs_type * src_fs , const char * key , int report_step , state_enum load_state);
+  enkf_node_type             ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , enkf_fs_type * src_fs , const char * key , int report_step);
   void                          enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean );
   void                          enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const enkf_node_type * mean , enkf_node_type * std);
 
@@ -217,8 +217,7 @@ extern "C" {
                               const char * path,
                               bool_vector_type * iactive,
                               field_file_format_type file_type,
-                              int report_step,
-                              state_enum state);
+                              int report_step);
 
   bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
                               const char * kw,
@@ -226,7 +225,6 @@ extern "C" {
                               bool_vector_type * iactive,
                               field_file_format_type file_type,
                               int report_step,
-                              state_enum state,
                               enkf_fs_type * fs);
 
 
@@ -280,13 +278,11 @@ extern "C" {
 
   void              enkf_main_init_current_case_from_existing(enkf_main_type * enkf_main,
                                                               enkf_fs_type * source_case_fs,
-                                                              int source_report_step,
-                                                              state_enum source_state);
+                                                              int source_report_step);
 
   void              enkf_main_init_current_case_from_existing_custom(enkf_main_type * enkf_main,
                                                                     enkf_fs_type * source_case_fs,
                                                                     int source_report_step,
-                                                                    state_enum source_state,
                                                                     stringlist_type * node_list,
                                                                     bool_vector_type * iactive);
 
@@ -294,13 +290,11 @@ extern "C" {
   void              enkf_main_init_case_from_existing(const enkf_main_type * enkf_main,
                                                       enkf_fs_type * source_case_fs,
                                                       int source_report_step,
-                                                      state_enum source_state,
                                                       enkf_fs_type * target_case);
 
   void              enkf_main_init_case_from_existing_custom(const enkf_main_type * enkf_main,
                                                              enkf_fs_type * source_case_fs,
                                                              int source_report_step,
-                                                             state_enum source_state,
                                                              enkf_fs_type * target_case,
                                                              stringlist_type * node_list,
                                                              bool_vector_type * iactive);

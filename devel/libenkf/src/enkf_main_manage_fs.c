@@ -166,10 +166,8 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , enkf_fs_type
 static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
                                      enkf_fs_type * source_case_fs,
                                      int source_report_step,
-                                     state_enum source_state,
                                      enkf_fs_type * target_case_fs,
                                      int target_report_step,
-                                     state_enum target_state,
                                      const bool_vector_type * iens_mask,
                                      const char * ranking_key , /* It is OK to supply NULL - but if != NULL it must exist */
                                      const stringlist_type * node_list) {
@@ -195,8 +193,8 @@ static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
       for (src_iens = 0; src_iens < enkf_main_get_ensemble_size( enkf_main ); src_iens++) {
         if (bool_vector_safe_iget(iens_mask , src_iens)) {
           int target_iens = ranking_permutation[src_iens];
-          node_id_type src_id    = {.report_step = source_report_step , .iens = src_iens    , .state = source_state };
-          node_id_type target_id = {.report_step = target_report_step , .iens = target_iens , .state = target_state };
+          node_id_type src_id    = {.report_step = source_report_step , .iens = src_iens    };
+          node_id_type target_id = {.report_step = target_report_step , .iens = target_iens };
 
           /* The copy is careful ... */
           if (enkf_config_node_has_node( config_node , source_case_fs , src_id))
@@ -219,15 +217,13 @@ static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
 
 void enkf_main_init_current_case_from_existing(enkf_main_type * enkf_main,
                                                enkf_fs_type * source_case_fs,
-                                               int source_report_step,
-                                               state_enum source_state) {
+                                               int source_report_step) {
 
   enkf_fs_type * current_fs = enkf_main_get_fs(enkf_main);
 
   enkf_main_init_case_from_existing(enkf_main,
                                     source_case_fs,
                                     source_report_step,
-                                    source_state,
                                     current_fs);
 
 }
@@ -236,7 +232,6 @@ void enkf_main_init_current_case_from_existing(enkf_main_type * enkf_main,
 void enkf_main_init_current_case_from_existing_custom(enkf_main_type * enkf_main,
                                                       enkf_fs_type * source_case_fs,
                                                       int source_report_step,
-                                                      state_enum source_state,
                                                       stringlist_type * node_list,
                                                       bool_vector_type * iactive) {
 
@@ -245,7 +240,6 @@ void enkf_main_init_current_case_from_existing_custom(enkf_main_type * enkf_main
   enkf_main_init_case_from_existing_custom(enkf_main,
                                            source_case_fs,
                                            source_report_step,
-                                           source_state,
                                            current_fs,
                                            node_list,
                                            iactive);
@@ -256,21 +250,17 @@ void enkf_main_init_current_case_from_existing_custom(enkf_main_type * enkf_main
 void enkf_main_init_case_from_existing(const enkf_main_type * enkf_main,
                                        enkf_fs_type * source_case_fs,
                                        int source_report_step,
-                                       state_enum source_state,
                                        enkf_fs_type * target_case_fs ) {
 
   stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config(enkf_main) , PARAMETER ); /* Select only paramters - will fail for GEN_DATA of type DYNAMIC_STATE. */
   int target_report_step  = 0;
-  state_enum target_state = ANALYZED;
   bool_vector_type * iactive = bool_vector_alloc( 0 , true );
 
   enkf_main_copy_ensemble(enkf_main,
                           source_case_fs,
                           source_report_step,
-                          source_state,
                           target_case_fs,
                           target_report_step,
-                          target_state ,
                           iactive,
                           NULL,
                           param_list);
@@ -286,21 +276,17 @@ void enkf_main_init_case_from_existing(const enkf_main_type * enkf_main,
 void enkf_main_init_case_from_existing_custom(const enkf_main_type * enkf_main,
                                               enkf_fs_type * source_case_fs,
                                               int source_report_step,
-                                              state_enum source_state,
                                               enkf_fs_type * target_case_fs,
                                               stringlist_type * node_list,
                                               bool_vector_type * iactive) {
 
   int target_report_step  = 0;
-  state_enum target_state = ANALYZED;
 
   enkf_main_copy_ensemble(enkf_main,
                           source_case_fs,
                           source_report_step,
-                          source_state,
                           target_case_fs,
                           target_report_step,
-                          target_state ,
                           iactive,
                           NULL,
                           node_list);
@@ -334,7 +320,7 @@ static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , 
     int iens = 0;
     do {
       if (bool_vector_safe_iget( mask , iens)) {
-        node_id_type node_id = {.report_step = 0 , .iens = iens , .state = ANALYZED };
+        node_id_type node_id = {.report_step = 0 , .iens = iens };
         initialized = enkf_config_node_has_node( config_node , fs , node_id);
       }
       iens++;

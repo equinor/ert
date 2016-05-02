@@ -110,20 +110,6 @@ typedef enum {INVALID          = 0   ,
 */
 
 
-typedef enum   {UNDEFINED   = 0 ,
-                FORECAST    = 2,              /* FORECAST and ANALYZED must be 2^n */
-                ANALYZED    = 4,
-                BOTH        = 6} state_enum;  /* It is important that both == (forecast + analyzed) */
-  /**
-     The state == both is used for output purposes (getting both forecast and analyzed).
-  */
-
-#define ENKF_STATE_ENUM_DEFS {.value = 0 , .name = "UNDEFINED"}, \
-                             {.value = 2 , .name = "FORECAST"} ,\
-                             {.value = 4 , .name = "ANALYZED"},\
-                             {.value = 6 , .name = "BOTH"}
-#define ENKF_STATE_ENUM_SIZE 4
-
 
 
 
@@ -228,7 +214,6 @@ typedef enum {
   typedef struct {
     int        report_step;
     int        iens;
-    state_enum state;
   } node_id_type;
 
 
@@ -261,7 +246,6 @@ const char      * enkf_types_get_var_name(enkf_var_type var_type);
 ert_impl_type     enkf_types_get_impl_type(const char * );
 const char      * enkf_types_get_impl_name(ert_impl_type );
 ert_impl_type     enkf_types_check_impl_type(const char * );
-state_enum        enkf_types_get_state_enum(const char *);
 
 #ifdef __cplusplus
 }

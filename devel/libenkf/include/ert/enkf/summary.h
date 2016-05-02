@@ -32,7 +32,7 @@
 
 
 
-double    summary_get(const summary_type * summary, int report_step , state_enum state);
+double    summary_get(const summary_type * summary, int report_step );
 bool      summary_active_value( double value );
 
 VOID_HAS_DATA_HEADER(summary);

@@ -43,7 +43,6 @@ enkf_plot_genvector_type *  enkf_plot_gendata_iget( const enkf_plot_gendata_type
 void                        enkf_plot_gendata_load( enkf_plot_gendata_type * plot_data ,
                                                     enkf_fs_type * fs ,
                                                     int report_step ,
-                                                    state_enum state ,
                                                     const bool_vector_type * input_mask);
 
 double_vector_type * enkf_plot_gendata_get_min_values(enkf_plot_gendata_type * plot_data);

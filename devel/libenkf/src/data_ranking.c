@@ -69,8 +69,7 @@ static void data_ranking_init(data_ranking_type * ranking ,
                               enkf_fs_type * fs , 
                               const enkf_config_node_type * config_node, 
                               const char * key_index , 
-                              int step , 
-                              state_enum state ) {
+                              int step) { 
 
   enkf_node_type * enkf_node = enkf_node_alloc( config_node );
   int iens;
@@ -78,8 +77,7 @@ static void data_ranking_init(data_ranking_type * ranking ,
 
     double value;
     node_id_type node_id = {.report_step = step , 
-                            .iens = iens , 
-                            .state = state };
+                            .iens = iens };
 
     if (enkf_node_user_get( enkf_node , fs , key_index , node_id , &value)) {
       double_vector_iset( ranking->data_ensemble , iens , value );
@@ -97,7 +95,7 @@ static void data_ranking_init(data_ranking_type * ranking ,
 
 
 
-data_ranking_type * data_ranking_alloc( bool sort_increasing , int ens_size , const char * user_key , const char * key_index , enkf_fs_type * fs , const enkf_config_node_type * config_node , int step , state_enum state) {
+data_ranking_type * data_ranking_alloc( bool sort_increasing , int ens_size , const char * user_key , const char * key_index , enkf_fs_type * fs , const enkf_config_node_type * config_node , int step) {
   data_ranking_type * ranking = util_malloc( sizeof * ranking );
   UTIL_TYPE_ID_INIT( ranking , DATA_RANKING_TYPE_ID );
   ranking->ens_size = ens_size;
@@ -112,7 +110,7 @@ data_ranking_type * data_ranking_alloc( bool sort_increasing , int ens_size , co
   ranking->sort_permutation = NULL;
   ranking->user_key = util_alloc_string_copy( user_key );
 
-  data_ranking_init( ranking , fs , config_node , key_index , step , state );
+  data_ranking_init( ranking , fs , config_node , key_index , step );
   return ranking;
 }
 

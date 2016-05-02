@@ -41,7 +41,6 @@ extern "C" {
                                                         enkf_fs_type           * fs ,
                                                         bool                     transform_data ,
                                                         int                      report_step ,
-                                                        state_enum               state ,
                                                         const bool_vector_type * input_mask);
 
   const char                   * enkf_plot_gen_kw_iget_key( const enkf_plot_gen_kw_type * plot_gen_kw, int index);
