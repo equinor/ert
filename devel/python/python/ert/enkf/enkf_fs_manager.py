@@ -188,7 +188,7 @@ class EnkfFsManager(BaseCClass):
         EnkfFsManager.cNamespace().custom_initialize_from_existing(self, source_case_fs, source_report_step,
                                                                    node_list, member_mask)
 
-    def initializeCurrentCaseFromExisting(self, source_fs, source_report_step, source_state):
+    def initializeCurrentCaseFromExisting(self, source_fs, source_report_step):
         assert isinstance(source_fs, EnkfFs);
         EnkfFsManager.cNamespace().initialize_current_case_from_existing(self, source_fs, source_report_step)
 
