@@ -163,7 +163,7 @@ void fwd_step_enkf_updateA(void * module_data ,
             matrix_iset(di , 0 , k , matrix_iget( D , k , j ) );
           }
 
-          xHat = stepwise_eval(stepwise_data , di );
+          xHat = matrix_iget( A , i , j ) + stepwise_eval(stepwise_data , di );
           matrix_iset(A , i , j , xHat);
         }
 
