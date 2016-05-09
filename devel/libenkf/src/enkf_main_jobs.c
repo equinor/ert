@@ -77,7 +77,7 @@ void * enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) 
   bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args), ens_size);
 
   bool_vector_iset( iactive , ens_size - 1 , true );
-  enkf_main_run_exp( enkf_main , iactive , true );
+  enkf_main_run_exp( enkf_main , iactive);
   bool_vector_free(iactive);
   return NULL;
 }
@@ -92,7 +92,7 @@ static void * enkf_main_smoother_JOB__( void * self , int iter , const stringlis
   enkf_fs_type * source_fs     = enkf_main_job_get_fs( enkf_main );
   //Argument 2: Rerun. Default false.
   bool rerun = (stringlist_get_size(args) >= 2) ? stringlist_iget_as_bool(args, 1, &valid) : false;
-  
+
   if (!valid) {
       fprintf(stderr, "** Warning: Function %s : Second argument must be a bool value. Exiting job\n", __func__);
       return NULL;

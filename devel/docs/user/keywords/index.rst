@@ -1952,7 +1952,6 @@ run. Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW`
 keyword.
 
-NB: Currently the :code:`PRE_SIMULATION` workflow is never called.
 
 Manipulating the Unix environment
 ---------------------------------
