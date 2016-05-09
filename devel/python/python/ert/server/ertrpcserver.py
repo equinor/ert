@@ -163,6 +163,9 @@ class ErtRPCServer(SimpleXMLRPCServer):
         self._initializeRealization(target_fs, geo_id, iens, keywords)
         self._session.simulation_context.addSimulation(iens, target_fs)
 
+        if not target_case_name.startswith("."):
+            self.ert.getEnkfFsManager().switchFileSystem(target_fs)
+
 
     def _initializeRealization(self, target_fs, geo_id, iens, keywords):
         state = self.ert.getRealisation(iens)
