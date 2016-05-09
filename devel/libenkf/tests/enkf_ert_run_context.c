@@ -61,7 +61,7 @@ void test_create_ENSEMBLE_EXPERIMENT() {
     subst_list_type * subst_list = subst_list_alloc( NULL );
     path_fmt_type * runpath_fmt = path_fmt_alloc_directory_fmt("/tmp/path/%04d/%d");
     enkf_fs_type * fs = NULL;
-    ert_run_context_type * context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs, iactive , runpath_fmt , subst_list , INIT_CONDITIONAL , 7 );
+    ert_run_context_type * context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs, iactive , runpath_fmt , subst_list , 7 );
 
     test_assert_true( ert_run_context_is_instance( context ));
     test_assert_int_equal( 8 , ert_run_context_get_size( context ));
