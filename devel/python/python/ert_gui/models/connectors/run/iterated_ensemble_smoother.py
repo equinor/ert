@@ -22,6 +22,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def runAndPostProcess(self, active_realization_mask, phase, phase_count, mode):
         self.setPhase(phase, "Running iteration %d of %d simulation iterations..." % (phase, phase_count - 1), indeterminate=False)
 
+        self.setPhaseName("Pre processing...", indeterminate=True)
+        self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, phase)
+        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
+
+        self.setPhaseName("Running forecast...", indeterminate=True)
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
 
         if not success:
@@ -37,7 +42,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
-        
+
     def createTargetCaseFileSystem(self, phase):
         target_case_format = TargetCaseFormatModel().getValue()
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_format % phase)
