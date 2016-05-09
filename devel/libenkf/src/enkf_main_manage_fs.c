@@ -120,7 +120,7 @@ static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
   return NULL;
 }
 
-void enkf_main_initialize_from_scratch_with_bool_vector(enkf_main_type * enkf_main , enkf_fs_type * init_fs , const stringlist_type * param_list ,const bool_vector_type * iens_mask , init_mode_type init_mode) {
+void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , enkf_fs_type * init_fs , const stringlist_type * param_list ,const bool_vector_type * iens_mask , init_mode_type init_mode) {
   int num_cpu = 4;
   int ens_size               = enkf_main_get_ensemble_size( enkf_main );
   thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
@@ -146,18 +146,6 @@ void enkf_main_initialize_from_scratch_with_bool_vector(enkf_main_type * enkf_ma
   }
   free( arg_list );
   thread_pool_free( tp );
-}
-
-void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , enkf_fs_type * init_fs , const stringlist_type * param_list , int iens1 , int iens2, init_mode_type init_mode) {
-  int iens;
-  int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iens_mask = bool_vector_alloc(ens_size,false);
-
-  for (iens = iens1; iens <= iens2; iens++) 
-    bool_vector_iset( iens_mask , iens , true );
-  
-  enkf_main_initialize_from_scratch_with_bool_vector(enkf_main, init_fs, param_list, iens_mask, init_mode);
-  bool_vector_free(iens_mask);
 }
 
 
