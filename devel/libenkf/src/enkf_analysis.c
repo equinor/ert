@@ -82,12 +82,17 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
               fprintf(stream , "  Active   |");
             else if (active_mode == DEACTIVATED)
               fprintf(stream , "  Inactive |");
+            else if (active_mode == LOCAL_INACTIVE)
+              fprintf(stream , "           |");
             else if (active_mode == MISSING)
               fprintf(stream , "           |");
             else
               util_abort("%s: enum_value:%d not handled - internal error\n" , __func__ , active_mode);
+
             if (active_mode == MISSING)
               fprintf(stream , "                  Missing\n");
+            else if (active_mode == LOCAL_INACTIVE)
+              fprintf(stream , "                  Deactivated - local updates\n");
             else
               fprintf(stream , sim_fmt, meas_block_iget_ens_mean( meas_block , iobs ) , meas_block_iget_ens_std( meas_block , iobs ));
           }
