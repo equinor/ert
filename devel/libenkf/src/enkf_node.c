@@ -639,11 +639,13 @@ bool enkf_node_has_data( enkf_node_type * enkf_node , enkf_fs_type * fs , node_i
       int iens         = node_id.iens;
 
       // Try to load the vector.
-      if (enkf_config_node_has_vector( enkf_node->config , fs , iens ))
-          enkf_node_load_vector( enkf_node , fs , iens);
+      if (enkf_config_node_has_vector( enkf_node->config , fs , iens )) {
+        enkf_node_load_vector( enkf_node , fs , iens);
 
-      // The vector is loaded. Check if we have the report_step/state asked for:
-      return enkf_node->has_data( enkf_node->data , report_step );
+        // The vector is loaded. Check if we have the report_step/state asked for:
+        return enkf_node->has_data( enkf_node->data , report_step );
+      } else
+        return false;
     }
   } else
     return enkf_config_node_has_node( enkf_node->config , fs , node_id );
