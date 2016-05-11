@@ -1,6 +1,7 @@
 import os.path
 from ert.cwrap import BaseCClass
-from ert.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfPrototype
+from ert.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfInitModeEnum, EnkfPrototype
+from ert.util import StringList, BoolVector
 
 import re
 
@@ -76,10 +77,11 @@ class EnkfFsManager(BaseCClass):
     _fs_exists =      EnkfPrototype("bool enkf_main_fs_exists(enkf_fs_manager, char*)")
     _alloc_caselist = EnkfPrototype("stringlist_obj enkf_main_alloc_caselist(enkf_fs_manager)")
     _set_case_table = EnkfPrototype("void enkf_main_set_case_table(enkf_fs_manager, char*)")
+    _ensemble_size  = EnkfPrototype("int enkf_main_get_ensemble_size(enkf_fs_manager)")
 
     _is_initialized =                        EnkfPrototype("bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)")
     _is_case_initialized =                   EnkfPrototype("bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)")
-    _initialize_from_scratch =               EnkfPrototype("void enkf_main_initialize_from_scratch(enkf_fs_manager, enkf_fs , stringlist, int, int, bool)")
+    _initialize_from_scratch =               EnkfPrototype("void enkf_main_initialize_from_scratch(enkf_fs_manager, enkf_fs , stringlist, bool_vector, enkf_init_mode_enum)")
     _initialize_case_from_existing =         EnkfPrototype("void enkf_main_init_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_fs)")
     _custom_initialize_from_existing =       EnkfPrototype("void enkf_main_init_current_case_from_existing_custom(enkf_fs_manager, enkf_fs, int, stringlist, bool_vector)")
     _initialize_current_case_from_existing = EnkfPrototype("void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int)")
@@ -182,6 +184,11 @@ class EnkfFsManager(BaseCClass):
         return len(self._fs_rotator)
 
 
+    def getEnsembleSize(self):
+        """ @rtype: int """
+        return self._ensemble_size( )
+    
+
     def switchFileSystem(self, file_system):
         """
         @type file_system: EnkfFs
@@ -236,8 +243,19 @@ class EnkfFsManager(BaseCClass):
         @type from_iens: int
         @type force_init: bool
         """
-        self._initialize_from_scratch(case, parameter_list, from_iens, to_iens, force_init)
+        mask = BoolVector( initial_size = self.getEnsembleSize(  ) , default_value = False )
+        for iens in range(from_iens,to_iens+1):
+            mask[iens] = True
+            
+        if force_init:
+            init_mode = EnkfInitModeEnum.INIT_FORCE
+        else:
+            init_mode = EnkfInitModeEnum.INIT_CONDITIONAL
+            
+        self._initialize_from_scratch(case, parameter_list, mask , init_mode)
 
+        
+        
     def initializeFromScratch(self, parameter_list, from_iens, to_iens, force_init=True):
         """
         @type parameter_list: ert.util.StringList
