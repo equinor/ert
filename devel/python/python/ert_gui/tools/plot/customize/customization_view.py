@@ -93,9 +93,6 @@ class CustomizationView(QWidget):
 
         self.updateProperty(attribute_name, getter, setter)
 
-    def updateStdDevFactor(self, value):
-        setattr(self.__class__, "std_dev_factor", std_dev)
-
     def updateProperty(self, attribute_name, getter, setter):
         setattr(self.__class__, attribute_name, property(getter, setter))
 
