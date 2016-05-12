@@ -115,18 +115,15 @@ void fwd_step_enkf_updateA(void * module_data ,
       stepwise_type * stepwise_data = stepwise_alloc1(ens_size, nd , fwd_step_data->rng);
 
       matrix_type * workS = matrix_alloc( ens_size , nd  );
-
+      matrix_type * workE = matrix_alloc( ens_size , nd  );
 
       /*workS = S' */
-      for (int i = 0; i < nd; i++) {
-        for (int j = 0; j < ens_size; j++) {
-          matrix_iset( workS , j , i , matrix_iget( S , i , j ) );
-        }
-      }
+      matrix_subtract_row_mean( S );           /* Shift away the mean */
+      workS   = matrix_alloc_transpose( S );
+      workE   = matrix_alloc_transpose( E );
 
-      /*This might be illigal???? */
       stepwise_set_X0( stepwise_data , workS );
-      double xHat;
+      stepwise_set_E0( stepwise_data , workE );
 
       matrix_type * di = matrix_alloc( 1 , nd );
 
@@ -152,7 +149,6 @@ void fwd_step_enkf_updateA(void * module_data ,
           matrix_iset(y , j , 0 , matrix_iget( A, i , j ) );
         }
 
-        /*This might be illigal???? */
         stepwise_set_Y0( stepwise_data , y );
 
         stepwise_estimate(stepwise_data , r2_limit , nfolds );
@@ -162,9 +158,9 @@ void fwd_step_enkf_updateA(void * module_data ,
           for (int k = 0; k < nd; k++) {
             matrix_iset(di , 0 , k , matrix_iget( D , k , j ) );
           }
-
-          xHat = matrix_iget( A , i , j ) + stepwise_eval(stepwise_data , di );
-          matrix_iset(A , i , j , xHat);
+          double aij = matrix_iget( A , i , j );
+          double xHat = stepwise_eval(stepwise_data , di );
+          matrix_iset(A , i , j , aij + xHat);
         }
 
         if (verbose)
