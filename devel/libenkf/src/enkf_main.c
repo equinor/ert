@@ -925,8 +925,11 @@ void enkf_main_get_PC( const matrix_type * S,
 
 
 static void assert_matrix_size(const matrix_type * m , const char * name , int rows , int columns) {
-  if (!matrix_check_dims(m , rows , columns))
+  if (m) {
+    if (!matrix_check_dims(m , rows , columns))
       util_abort("%s: matrix mismatch %s:[%d,%d]   - expected:[%d, %d]", __func__ , name , matrix_get_rows(m) , matrix_get_columns(m) , rows , columns);
+  } else
+    util_abort("%s: matrix:%s is NULL \n",__func__ , name);
 }
 
 static void assert_size_equal(int ens_size , const bool_vector_type * ens_mask) {
