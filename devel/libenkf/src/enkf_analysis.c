@@ -67,17 +67,21 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
         const obs_block_type  * obs_block  = obs_data_iget_block_const( obs_data , block_nr);
         meas_block_type * meas_block = meas_data_iget_block( meas_data , block_nr );
         const char * obs_key = obs_block_get_key( obs_block );
+        bool key_written = false;
 
         for (int iobs = 0; iobs < obs_block_get_size( obs_block ); iobs++) {
-          const char * print_key;
-          if (iobs == 0)
-            print_key = obs_key;
-          else
-            print_key = "  ...";
+          active_type active_mode = obs_block_iget_active_mode( obs_block , iobs );
+          if ((active_mode == MISSING) || (active_mode == LOCAL_INACTIVE))
+            continue;
+          else {
+            const char * print_key;
+            if (iobs == 0)
+              print_key = obs_key;
+            else
+              print_key = "  ...";
 
-          fprintf(stream , obs_fmt , obs_count , print_key , obs_block_iget_value( obs_block , iobs ) , obs_block_iget_std( obs_block , iobs ));
-          {
-            active_type active_mode = obs_block_iget_active_mode( obs_block , iobs );
+            fprintf(stream , obs_fmt , obs_count , print_key , obs_block_iget_value( obs_block , iobs ) , obs_block_iget_std( obs_block , iobs ));
+
             if (active_mode == ACTIVE)
               fprintf(stream , "  Active   |");
             else if (active_mode == DEACTIVATED)
@@ -95,8 +99,9 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
               fprintf(stream , "                  Deactivated - local updates\n");
             else
               fprintf(stream , sim_fmt, meas_block_iget_ens_mean( meas_block , iobs ) , meas_block_iget_ens_std( meas_block , iobs ));
+
+            obs_count++;
           }
-          obs_count++;
         }
       }
     }
