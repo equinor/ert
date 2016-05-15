@@ -28,6 +28,7 @@
 #include <ert/util/msg.h>
 #include <ert/util/buffer.h>
 #include <ert/util/type_macros.h>
+#include <ert/util/perm_vector.h>
 
 #include <ert/enkf/enkf_obs.h>
 #include <ert/enkf/enkf_fs.h>
@@ -42,7 +43,7 @@ struct data_ranking_struct {
   UTIL_TYPE_ID_DECLARATION;
   int                  ens_size;   
   double_vector_type * data_ensemble;
-  int                * sort_permutation;
+  perm_vector_type   * sort_permutation;
   bool_vector_type   * valid;
   char               * user_key;
   bool                 sort_increasing;
@@ -56,7 +57,10 @@ UTIL_IS_INSTANCE_FUNCTION( data_ranking , DATA_RANKING_TYPE_ID );
 void data_ranking_free( data_ranking_type * ranking ) {
   double_vector_free( ranking->data_ensemble );
   bool_vector_free( ranking->valid );
-  util_safe_free( ranking->sort_permutation );
+
+  if (ranking->sort_permutation)
+    perm_vector_free( ranking->sort_permutation );
+
   util_safe_free( ranking->user_key );
   free( ranking );
 }
@@ -122,14 +126,14 @@ void data_ranking_free__( void * arg) {
 }
 
 
-const int * data_ranking_get_permutation( const data_ranking_type * data_ranking ) {
+const perm_vector_type * data_ranking_get_permutation( const data_ranking_type * data_ranking ) {
   return data_ranking->sort_permutation;
 }
 
 
 void data_ranking_display( const data_ranking_type * data_ranking , FILE * stream) {
-  const int ens_size                  = data_ranking->ens_size;
-  const int * permutations            = data_ranking->sort_permutation;
+  const int ens_size                    = data_ranking->ens_size;
+  const perm_vector_type * permutations = data_ranking->sort_permutation;
   
   {
     int i;
@@ -137,10 +141,10 @@ void data_ranking_display( const data_ranking_type * data_ranking , FILE * strea
     fprintf(stream,"  #    Realization    %12s\n" , data_ranking->user_key);
     fprintf(stream,"----------------------------------\n");
     for (i = 0; i < ens_size; i++) {
-      if (bool_vector_iget( data_ranking->valid , permutations[i])) {
-        int    iens         = permutations[i];
+      int iens = perm_vector_iget( permutations , i );
+      if (bool_vector_iget( data_ranking->valid , iens))
         fprintf(stream,"%3d    %3d          %14.3f\n",i,iens,double_vector_iget(data_ranking->data_ensemble , iens));
-      }
+
     }
     fprintf(stream,"----------------------------------\n");
   }
