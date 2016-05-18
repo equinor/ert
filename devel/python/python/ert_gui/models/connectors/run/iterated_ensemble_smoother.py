@@ -26,7 +26,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, phase)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
-        self.setPhaseName("Running forecast...", indeterminate=True)
+        self.setPhaseName("Running forecast...", indeterminate=False)
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
 
         if not success:
