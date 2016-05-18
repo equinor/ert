@@ -1206,7 +1206,7 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
           enkf_analysis_fprintf_obs_summary( obs_data , meas_data  , step_list , local_ministep_get_name( ministep ) , stdout );
         enkf_analysis_fprintf_obs_summary( obs_data , meas_data  , step_list , local_ministep_get_name( ministep ) , log_stream );
 
-        if (obs_data_get_active_size(obs_data) > 0)
+        if ((obs_data_get_active_size(obs_data) > 0) && (meas_data_get_active_obs_size( meas_data ) > 0))
           enkf_main_analysis_update( enkf_main ,
                                      target_fs ,
                                      ens_mask ,
@@ -1218,9 +1218,8 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
                                      ministep ,
                                      meas_data ,
                                      obs_data );
-        else if (target_fs != source_fs) {
-          ert_log_add_fmt_message( 1 , stderr , "No active observations for MINISTEP: %s." , local_ministep_get_name(ministep));
-        }
+        else if (target_fs != source_fs)
+          ert_log_add_fmt_message( 1 , stderr , "No active observations/parameters for MINISTEP: %s." , local_ministep_get_name(ministep));
       }
       fclose( log_stream );
 
