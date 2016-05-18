@@ -16,7 +16,7 @@ class EnsembleExperiment(BaseRunModel):
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 0)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
-        self.setPhaseName("Running ensemble experiment...", indeterminate=True)
+        self.setPhaseName("Running ensemble experiment...", indeterminate=False)
 
         success = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
 
