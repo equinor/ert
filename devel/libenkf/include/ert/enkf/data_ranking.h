@@ -26,6 +26,7 @@ extern "C" {
 #include <stdbool.h>
 
 #include <ert/util/type_macros.h>
+#include <ert/util/perm_vector.h>
 
 #include <ert/enkf/enkf_fs.h>
 
@@ -34,7 +35,7 @@ extern "C" {
   UTIL_IS_INSTANCE_HEADER( data_ranking );
   UTIL_SAFE_CAST_HEADER(data_ranking);
 
-  const int         * data_ranking_get_permutation( const data_ranking_type * data_ranking );
+  const perm_vector_type * data_ranking_get_permutation( const data_ranking_type * data_ranking );
   data_ranking_type * data_ranking_alloc( bool sort_increasing , int ens_size , const char * user_key , const char * key_index , enkf_fs_type * fs , const enkf_config_node_type * config_node , int step );
   void                data_ranking_free__( void * arg );
   void                data_ranking_display( const data_ranking_type * data_ranking , FILE * stream);

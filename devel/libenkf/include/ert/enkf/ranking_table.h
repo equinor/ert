@@ -26,6 +26,8 @@ extern "C" {
 
 #include <stdbool.h>
 
+#include <ert/util/perm_vector.h>
+
 #include <ert/enkf/misfit_ensemble_typedef.h>
 
   typedef struct ranking_table_struct ranking_table_type;
@@ -55,7 +57,7 @@ extern "C" {
 
 
   int                  ranking_table_get_size( const ranking_table_type * ranking_table );
-  const int          * ranking_table_get_permutation( const ranking_table_type * ranking_table , const char * ranking_key);
+  const perm_vector_type * ranking_table_get_permutation( const ranking_table_type * ranking_table , const char * ranking_key);
 
 #ifdef __cplusplus
 }

@@ -139,7 +139,7 @@ bool ranking_table_fwrite_ranking( const ranking_table_type * ranking_table , co
 
 
 
-const int * ranking_table_get_permutation( const ranking_table_type * ranking_table , const char * ranking_key) {
+const perm_vector_type * ranking_table_get_permutation( const ranking_table_type * ranking_table , const char * ranking_key) {
   if (hash_has_key( ranking_table->ranking_table , ranking_key)) {
     void * ranking = hash_get( ranking_table->ranking_table , ranking_key );
     
