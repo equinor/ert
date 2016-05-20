@@ -31,7 +31,7 @@ class StatisticsCustomizationView(CustomizationView):
         self.addStyleChooser("p33_p67_style", "P33-P67", "Line and marker style for the P33-P67 lines.", True)
         self.addSpacing()
 
-        std_box = self.addSpinBox("std_dev_factor", "sigma", "Choose which standard deviation to plot", max_value=3)
+        std_box = self.addSpinBox("std_dev_factor", "Std dev multiplier", "Choose which standard deviation to plot", max_value=3)
 
         self.addCheckBox("distribution_lines", "Connection Lines", "Toggle distribution connection lines visibility.")
 
