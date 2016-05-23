@@ -20,7 +20,7 @@ from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameForm
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation,\
-    TargetCaseFormatModel, AnalysisModuleModel, RunPathModel
+    TargetCaseFormatModel, AnalysisModuleModel, RunPathModel, TextOrFileModel
 from ert_gui.models.mixins.connectorless import DefaultPathModel
 from ert_gui.models.mixins.connectorless import StringModel
 
@@ -35,9 +35,6 @@ from ert_gui.widgets.path_chooser import PathChooser
 # For custom dialog box stuff
 from ert_gui.models.mixins.connectorless import DefaultPathModel, DefaultNameFormatModel, StringModel
 from ert_gui.ide.keywords.definitions import ProperNameFormatArgument, NumberListStringArgument
-from ert_gui.widgets.option_widget import OptionWidget
-
-
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def __init__(self):
@@ -70,16 +67,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         iterated_target_case_format_box = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
         iterated_target_case_format_box.setValidator(ProperNameFormatArgument())
 
-        iteration_weights_path_model = DefaultPathModel("", must_exist=True)
-        iteration_weights_path_chooser = PathChooser(iteration_weights_path_model, path_label="Iteration weights file")
-
-        custom_iteration_weights_model = StringModel("1")
-        custom_iteration_weights_box = StringBox(custom_iteration_weights_model, "Custom iteration weights", "config/simulation/iteration_weights")
-        custom_iteration_weights_box.setValidator(NumberListStringArgument())
-
-        option_widget = OptionWidget("Relative Weights")
-        option_widget.addHelpedWidget("Custom", custom_iteration_weights_box)
-        option_widget.addHelpedWidget("File", iteration_weights_path_chooser)
+        option_widget = TextOrFileModel()
 
         layout.addRow("Relative Weights:", option_widget)
 
