@@ -23,3 +23,5 @@ from .analysis_module_variables_model import AnalysisModuleVariablesModel
 from .sensitivity_study_parameters_model import SensitivityStudyParametersModel
 from .sensitivity_study_parameters_constant_value_model import SensivityStudyParametersConstantValueModel
 from .sensitivity_study_parameters_is_included_model import SensivityStudyParametersIsIncludedModel
+
+from .text_or_file import TextOrFileModel

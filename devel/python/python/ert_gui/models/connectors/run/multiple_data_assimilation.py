@@ -20,8 +20,6 @@ from ert_gui.models.connectors.run import ActiveRealizationsModel,\
     TargetCaseFormatModel, AnalysisModuleModel, BaseRunModel
 from ert_gui.models.mixins import ErtRunError
 
-from ert_gui.widgets.string_box import StringBox
-
 from ert.util import BoolVector
 
 
@@ -139,3 +137,18 @@ class MultipleDataAssimilation(BaseRunModel):
             raise UserWarning("Simulation failed! Number of successful realizations less than MIN_REALIZATIONS %d < %d" % (success_count, min_realization_count))
         elif success_count == 0:
             raise UserWarning("Simulation failed! All realizations failed!")
+
+
+    def normalizeWeights(self, weights):
+        """ :rtype: list of float """
+        length = sqrt(sum((1.0 / x) * (1.0 / x) for x in weights))
+        return [x * length for x in weights]
+
+    def parseWeightsFromString(self, weights):
+        elements = weights.split(",")
+        result = []
+        for element in elements:
+            element = element.strip()
+            result.append(float(element))
+
+        return result
