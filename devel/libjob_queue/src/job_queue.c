@@ -215,6 +215,7 @@ struct job_queue_struct {
   job_queue_status_type    * status;
   char                     * exit_file;                         /* The queue will look for the occurence of this file to detect a failure. */
   char                     * ok_file;                           /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
+  char                     * running_file;                      /* The queue will look for this file to verify that the job is running or has run.  If not, ok_file is ignored. */
   queue_driver_type        * driver;                            /* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
 
   bool                       open;                              /* True if the queue has been reset and is ready for use, false if the queue has been used and not reset */
@@ -693,7 +694,6 @@ static void * job_queue_run_DONE_callback( void * arg ) {
   return NULL;
 }
 
-
 static void job_queue_handle_DONE( job_queue_type * queue , job_queue_node_type * node) {
   job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
   {
@@ -1156,6 +1156,7 @@ UTIL_SAFE_CAST_FUNCTION( job_queue , JOB_QUEUE_TYPE_ID)
 
 job_queue_type * job_queue_alloc(int  max_submit               ,
                                  const char * ok_file ,
+                                 const char * running_file ,
                                  const char * exit_file ) {
 
 
@@ -1170,6 +1171,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   queue->driver           = NULL;
   queue->ok_file          = util_alloc_string_copy( ok_file );
   queue->exit_file        = util_alloc_string_copy( exit_file );
+  queue->running_file     = util_alloc_string_copy( running_file );
   queue->open             = true;
   queue->user_exit        = false;
   queue->pause_on         = false;

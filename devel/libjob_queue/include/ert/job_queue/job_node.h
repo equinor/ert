@@ -51,6 +51,7 @@ typedef struct job_queue_node_struct job_queue_node_type;
 
 
   bool job_queue_node_status_transition( job_queue_node_type * node , job_queue_status_type * status , job_status_type new_status);
+  bool job_queue_node_status_confirmed_running(job_queue_node_type * node);
   submit_status_type job_queue_node_submit( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver);
   void job_queue_node_free_error_info( job_queue_node_type * node );
   void job_queue_node_fscanf_EXIT( job_queue_node_type * node );
@@ -96,8 +97,10 @@ typedef struct job_queue_node_struct job_queue_node_type;
   time_t job_queue_node_get_sim_start( const job_queue_node_type * node );
   time_t job_queue_node_get_sim_end( const job_queue_node_type * node );
   time_t job_queue_node_get_submit_time( const job_queue_node_type * node );
+  time_t job_queue_node_time_since_sim_start (const job_queue_node_type * node ) ;
 
   const char * job_queue_node_get_ok_file( const job_queue_node_type * node);
+  const char * job_queue_node_get_running_file( const job_queue_node_type * node);
   const char * job_queue_node_get_exit_file( const job_queue_node_type * node);
 
   bool job_queue_node_run_DONE_callback( job_queue_node_type * node );
