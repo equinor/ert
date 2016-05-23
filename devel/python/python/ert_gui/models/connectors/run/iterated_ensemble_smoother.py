@@ -52,8 +52,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def analyzeStep(self, target_fs):
         self.setPhaseName("Analyzing...", indeterminate=True)
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
-        success = self.ert().getEnkfSimulationRunner().smootherUpdate(source_fs , target_fs)
+        es_update = self.ert().getESUpdate()
 
+        success = es_update.smootherUpdate(source_fs, target_fs)
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
 

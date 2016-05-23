@@ -83,6 +83,7 @@ from .runpath_list import RunpathList, RunpathNode
 from .hook_workflow import HookWorkflow
 from .hook_manager import HookManager
 
+from .es_update import ESUpdate
 from .enkf_simulation_runner import EnkfSimulationRunner
 from .enkf_fs_manager import EnkfFsManager
 from .run_arg import RunArg
