@@ -19,6 +19,7 @@ from ert.enkf.enums import HookRuntime
 from ert_gui.models.connectors.run import ActiveRealizationsModel,\
     TargetCaseFormatModel, AnalysisModuleModel, BaseRunModel
 from ert_gui.models.mixins import ErtRunError
+from ert_gui.models.mixins.connectorless import RelativeWeightsModel
 
 from ert.util import BoolVector
 
@@ -40,16 +41,12 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
     def runSimulations(self):
-        #if not "%d" in target_case_format:
-        #    raise UserWarning("The target case format requires a %d. For example: default_%d")
+        relativeWeights = RelativeWeightsModel()
+        weights = relativeWeights.getValue()
+        weights = self.parseWeights(weights)
+        print("Running MDA ES with weights %s" % ", ".join(str(weight) for weight in weights))
+        weights = self.normalizeWeights(weights)
 
-        #weights = self.parseWeights(weights)
-        #weights = self.normalizeWeights(weights)
-
-        #weights_model = StringModel()#???
-        #print "weights_model", weights_model
-        #print "weights_model.getValue()", weights_model.getValue()
-        weights = [8,4,2,1]#weigths_model.getValue()
         iteration_count = len(weights)
         self.setPhaseCount(iteration_count+2) # pre + post + weights
 
@@ -67,8 +64,6 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(source_fs, 0)
 
         active_realization_mask = BoolVector(True, self.ert().getEnsembleSize())
-
-
 
 
         phaseName = "Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, ", ".join(str(weight) for weight in weights))
@@ -141,10 +136,14 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def normalizeWeights(self, weights):
         """ :rtype: list of float """
+        from math import sqrt
         length = sqrt(sum((1.0 / x) * (1.0 / x) for x in weights))
         return [x * length for x in weights]
 
-    def parseWeightsFromString(self, weights):
+
+    def parseWeights(self, weights):
+        if not weights:
+            return []
         elements = weights.split(",")
         result = []
         for element in elements:

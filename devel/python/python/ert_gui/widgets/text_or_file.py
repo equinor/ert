@@ -23,16 +23,19 @@ class TextOrFile(OptionWidget):
 
     def __init__(self, weightsModel):
         super(TextOrFile, self).__init__()
-        print "Creating TextOrFile object with weightsModel"
+        self.weightsModel = weightsModel
         iteration_weights_path_model = DefaultPathModel("", must_exist=True)
         iteration_weights_path_chooser = PathChooser(iteration_weights_path_model, path_label="Iteration weights file")
+        iteration_weights_path_model.observable().attach(DefaultPathModel.PATH_CHANGED_EVENT, self.__valueChanged)
 
         custom_iteration_weights_model = StringModel("1")
         custom_iteration_weights_box = StringBox(custom_iteration_weights_model, "Custom iteration weights", "config/simulation/iteration_weights")
         custom_iteration_weights_box.setValidator(NumberListStringArgument())
+
+        custom_iteration_weights_model.observable().attach(StringModel.VALUE_CHANGED_EVENT, self.__valueChanged)
+
         self.addHelpedWidget("Custom", custom_iteration_weights_box)
         self.addHelpedWidget("File", iteration_weights_path_chooser)
-        pass
 
 
     def getValue(self, joiner = ','):
@@ -43,14 +46,30 @@ class TextOrFile(OptionWidget):
         file corresponding to the given filename, and join each line with
         joiner.
         """
-        if self.optionWidget.getCurrentWidget() == 0:
-            return self.optionWidget.getCurrentWidget().getValue()
-        fname = self.optionWidget.getCurrentWidget().getValue()
+        if isinstance(self.getCurrentWidget(), StringBox):
+            x = self.getCurrentWidget().model.getValue()
+            return x
+
+        fname = self.getCurrentWidget().model.getPath()
+        result = self.parseFile(fname, joiner)
+        return joiner.join(result)
+
+
+    def setValue(self, value):
+        self.getCurrentWidget().setValue(str(value))
+
+
+    def __valueChanged(self):
+        self.weightsModel.setValue(self.getValue())
+
+
+    def parseFile(self, fname, joiner = ','):
+        """Reads fname and returns a list where each element is 'joiner' separated
+        """
         result = []
         with open(fname, 'r') as f:
             for line in f:
-                result.append(line)
-                return joiner.join(result)
-
-    def setValue(self, value):
-        self.optionWidget.getCurrentWidget().setValue(value)
+                d = line.strip()
+                if d:
+                    result.append(d)
+        return result
