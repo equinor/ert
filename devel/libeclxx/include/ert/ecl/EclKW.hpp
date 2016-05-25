@@ -54,6 +54,8 @@ namespace ERT {
     template <typename T>
     class EclKW {
     public:
+        explicit EclKW( ecl_kw_type* kw ) : m_kw( kw ) {}
+
         EclKW( const std::string& kw, int size_ ) noexcept :
             m_kw( ecl_kw_alloc( kw.c_str(), size_, ecl_type< T >::type ) )
         {}
@@ -80,6 +82,10 @@ namespace ERT {
             return checkedLoad( fortio, ecl_type< T >::type );
         }
 
+        const char* name() const {
+            return ecl_kw_get_header( m_kw.get() );
+        }
+
         size_t size() const {
             return static_cast<size_t>( ecl_kw_get_size( m_kw.get() ));
         }
@@ -97,11 +103,6 @@ namespace ERT {
         }
 
     private:
-        EclKW(ecl_kw_type * c_ptr) {
-            m_kw.reset( c_ptr );
-        }
-
-
         static EclKW checkedLoad(FortIO& fortio, ecl_type_enum expectedType) {
             ecl_kw_type * c_ptr = ecl_kw_fread_alloc( fortio.get() );
             if (c_ptr) {
