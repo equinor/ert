@@ -35,14 +35,34 @@
 
 
 namespace ERT {
+    template< typename > struct ecl_type {};
+
+    template<> struct ecl_type< float >
+    { static const ecl_type_enum type { ECL_FLOAT_TYPE }; };
+
+    template<> struct ecl_type< double >
+    { static const ecl_type_enum type { ECL_DOUBLE_TYPE }; };
+
+    template<> struct ecl_type< int >
+    { static const ecl_type_enum type { ECL_INT_TYPE }; };
+
+    template<> struct ecl_type< const char* >
+    { static const ecl_type_enum type { ECL_CHAR_TYPE }; };
+
     template <typename T>
     class EclKW
     {
-    public:
-        EclKW(const std::string& kw, int size_);
-        EclKW() { ; }
+    private:
 
-        static EclKW load(FortIO& fortio);
+    public:
+        EclKW( const std::string& kw, int size_ ) :
+            m_kw( ecl_kw_alloc( kw.c_str(), size_, ecl_type< T >::type ) )
+        {}
+        EclKW() {}
+
+        static EclKW load(FortIO& fortio) {
+            return checkedLoad( fortio, ecl_type< T >::type );
+        }
 
         size_t size() const {
             return static_cast<size_t>( ecl_kw_get_size( m_kw.get() ));
