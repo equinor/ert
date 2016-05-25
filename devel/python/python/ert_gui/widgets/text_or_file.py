@@ -1,10 +1,11 @@
-from ert_gui.models import ErtConnector
-from ert_gui.models.mixins import BasicModelMixin
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QComboBox
+from ert_gui.models.mixins import ChoiceModelMixin
+from ert_gui.widgets.helped_widget import HelpedWidget
 from ert_gui.widgets.option_widget import OptionWidget
 from ert_gui.models.mixins.connectorless import DefaultPathModel
 from ert_gui.models.mixins.connectorless import StringModel
 from ert_gui.widgets.path_chooser import PathChooser
-
 
 from ert_gui.widgets.string_box import StringBox
 
@@ -12,20 +13,26 @@ from ert_gui.models.mixins.connectorless import DefaultPathModel, DefaultNameFor
 from ert_gui.ide.keywords.definitions import ProperNameFormatArgument, NumberListStringArgument
 
 
-class TextOrFileModel(ErtConnector, BasicModelMixin):
+class TextOrFile(OptionWidget):
+    """An option widget for text and file combo.
 
-    optionWidget = OptionWidget()
-    def __init__(self):
-        super(TextOrFileModel, self).__init__()
+    The widget contains one tab with a text field, and one tab with a file
+    chooser.
+
+    """
+
+    def __init__(self, weightsModel):
+        super(TextOrFile, self).__init__()
+        print "Creating TextOrFile object with weightsModel"
         iteration_weights_path_model = DefaultPathModel("", must_exist=True)
         iteration_weights_path_chooser = PathChooser(iteration_weights_path_model, path_label="Iteration weights file")
 
         custom_iteration_weights_model = StringModel("1")
         custom_iteration_weights_box = StringBox(custom_iteration_weights_model, "Custom iteration weights", "config/simulation/iteration_weights")
         custom_iteration_weights_box.setValidator(NumberListStringArgument())
-        self.optionWidget.addHelpedWidget("Custom", custom_iteration_weights_box)
-        self.optionWidget.addHelpedWidget("File", iteration_weights_path_chooser)
-
+        self.addHelpedWidget("Custom", custom_iteration_weights_box)
+        self.addHelpedWidget("File", iteration_weights_path_chooser)
+        pass
 
 
     def getValue(self, joiner = ','):
@@ -43,7 +50,7 @@ class TextOrFileModel(ErtConnector, BasicModelMixin):
         with open(fname, 'r') as f:
             for line in f:
                 result.append(line)
-        return joiner.join(result)
+                return joiner.join(result)
 
     def setValue(self, value):
         self.optionWidget.getCurrentWidget().setValue(value)
