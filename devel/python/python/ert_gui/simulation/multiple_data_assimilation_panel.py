@@ -15,7 +15,7 @@
 #  for more details.
 
 from PyQt4.QtCore import Qt, QMargins
-from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout
+from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
@@ -71,6 +71,13 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         option_widget = TextOrFile(rel_weights_model)
 
         layout.addRow("Relative Weights:", option_widget)
+
+        layout.addRow('Note:',
+                      QLabel("Example Custom Relative Weights: '8,4,2,1'\n"
+                             "This means MDA-ES will half the weight\n"
+                             "applied to the Observation Errors from one\n"
+                             "iteration to the next across 4 iterations."))
+
 
 
         analysis_module_model = AnalysisModuleModel()

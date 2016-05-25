@@ -52,6 +52,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         weightString = ", ".join(str(round(weight,3)) for weight in weights)
         phase_string = "Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, weightString)
+        print phase_string
         self.setPhaseName(phase_string, indeterminate=True)
 
         target_case_format = TargetCaseFormatModel()
@@ -138,7 +139,6 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def normalizeWeights(self, weights):
         """ :rtype: list of float """
-        print ":::: MDA.normalizeWeights", weights
         if not weights:
             return []
         from math import sqrt
