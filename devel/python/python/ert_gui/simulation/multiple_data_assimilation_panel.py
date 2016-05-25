@@ -62,9 +62,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow(self.target_case_format_field.getLabel(), self.target_case_format_field)
 
 
-
-
-        # here starts the custom dialog box
+        # Relative Weights Option Widget starts here
         iterated_target_case_format_model = DefaultNameFormatModel(())
         iterated_target_case_format_box = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
         iterated_target_case_format_box.setValidator(ProperNameFormatArgument())
@@ -73,15 +71,6 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         option_widget = TextOrFile(rel_weights_model)
 
         layout.addRow("Relative Weights:", option_widget)
-
-
-
-
-
-
-
-
-
 
 
         analysis_module_model = AnalysisModuleModel()
