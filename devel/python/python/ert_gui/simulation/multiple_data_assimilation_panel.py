@@ -20,15 +20,17 @@ from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameForm
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation,\
-    TargetCaseFormatModel, AnalysisModuleModel, RunPathModel, TextOrFileModel
+    TargetCaseFormatModel, AnalysisModuleModel, RunPathModel#, TextOrFileModel
 from ert_gui.models.mixins.connectorless import DefaultPathModel
 from ert_gui.models.mixins.connectorless import StringModel
+from ert_gui.models.mixins.connectorless import RelativeWeightsModel
 
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.widgets import util
 from ert_gui.widgets.active_label import ActiveLabel
 from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice
+from ert_gui.widgets.text_or_file import TextOrFile
 from ert_gui.widgets.string_box import StringBox
 from ert_gui.widgets.path_chooser import PathChooser
 
@@ -67,7 +69,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         iterated_target_case_format_box = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
         iterated_target_case_format_box.setValidator(ProperNameFormatArgument())
 
-        option_widget = TextOrFileModel()
+        rel_weights_model = RelativeWeightsModel()
+        option_widget = TextOrFile(rel_weights_model)
 
         layout.addRow("Relative Weights:", option_widget)
 
