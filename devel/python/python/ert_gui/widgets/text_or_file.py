@@ -51,7 +51,7 @@ class TextOrFile(OptionWidget):
             return x
 
         fname = self.getCurrentWidget().model.getPath()
-        result = self.parseFile(fname, joiner)
+        result = self.parseFile(fname)
         return joiner.join(result)
 
 
@@ -63,13 +63,22 @@ class TextOrFile(OptionWidget):
         self.weightsModel.setValue(self.getValue())
 
 
-    def parseFile(self, fname, joiner = ','):
-        """Reads fname and returns a list where each element is 'joiner' separated
+    def parseFile(self, fname):
+        """Reads fname and returns a list of tokens.
+
+        A token is a smallest contiguous string separated by a line break,
+        space, tab, or semicolon.
+
+        This parsing returns a list of tokens.
         """
         result = []
         with open(fname, 'r') as f:
             for line in f:
-                d = line.strip()
-                if d:
-                    result.append(d)
+                line = line.replace(",", " ")
+                line = line.replace(";", " ")
+                d = line.strip().split()
+                for x in d:
+                    xstrip = x.strip()
+                    if xstrip:
+                        result.append(xstrip)
         return result
