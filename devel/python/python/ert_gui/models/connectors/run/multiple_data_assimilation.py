@@ -50,10 +50,11 @@ class MultipleDataAssimilation(BaseRunModel):
         iteration_count = len(weights)
         self.setPhaseCount(iteration_count+2) # pre + post + weights
 
-        print("Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, ", ".join(str(weight) for weight in weights)))
+        weightString = ", ".join(str(round(weight,3)) for weight in weights)
+        phase_string = "Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, weightString)
+        self.setPhaseName(phase_string, indeterminate=True)
 
         target_case_format = TargetCaseFormatModel()
-        print "target_case_format.getValue()", target_case_format.getValue()
 
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         target_case_name = target_case_format.getValue() % 0
@@ -66,8 +67,8 @@ class MultipleDataAssimilation(BaseRunModel):
         active_realization_mask = BoolVector(True, self.ert().getEnsembleSize())
 
 
-        phaseName = "Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, ", ".join(str(weight) for weight in weights))
-        self.setPhaseName(phaseName)
+        phase_string = "Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, weightString)
+        self.setPhaseName(phase_string, indeterminate=True)
 
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 1)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
@@ -84,43 +85,44 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
     def update(self, target_case_format, iteration, weight):
-        self.setPhase(self.currentPhase() + 1, "Running simulations...", indeterminate=False)
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         next_iteration = (iteration + 1)
         next_target_case_name = target_case_format.getValue() % next_iteration
         target_fs = self.ert().getEnkfFsManager().getFileSystem(next_target_case_name)
 
-        print("[%s] Analyzing iteration: %d with weight %f" % (next_target_case_name, next_iteration, weight))
+        phase_string = "Analyzing iteration: %d with weight %f" % (next_iteration, weight)
+        self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
         self.ert().analysisConfig().setGlobalStdScaling(weight)
         success = self.ert().getEnkfSimulationRunner().smootherUpdate(source_fs, target_fs)
 
         if not success:
-            raise UserWarning("[%s] Analysis of simulation failed for iteration: %d!" % (next_target_case_name, next_iteration))
+            raise UserWarning("Analysis of simulation failed for iteration: %d!" % next_iteration)
 
 
     def simulateAndPostProcess(self, target_case_format, active_realization_mask, iteration):
-        self.setPhaseName("Post processing...", indeterminate=False)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
-
-        self.setPhaseName("Analyzing...", indeterminate=False)
-
         target_case_name = target_case_format.getValue() % iteration
 
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
         self.ert().getEnkfFsManager().switchFileSystem(target_fs)
 
-        print("[%s] Running simulation for iteration: %d" % (target_case_name, iteration))
+        phase_string = "Running simulation for iteration: %d" % iteration
+        self.setPhaseName(phase_string, indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, iteration)
 
-        print("[%s] Pre processing for iteration: %d" % (target_case_name, iteration))
+        phase_string = "Pre processing for iteration: %d" % iteration
+        self.setPhaseName(phase_string)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
+
+        phase_string = "Running forecast for iteration: %d" % iteration
+        self.setPhaseName(phase_string, indeterminate=False)
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iteration)
 
         if not success:
             self.checkSuccessCount(active_realization_mask)
 
-        print("[%s] Post processing for iteration: %d" % (target_case_name, iteration))
+        phase_string = "Post processing for iteration: %d" % iteration
+        self.setPhaseName(phase_string, indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_SIMULATION)
 
 

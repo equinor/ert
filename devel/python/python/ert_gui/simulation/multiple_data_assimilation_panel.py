@@ -20,7 +20,7 @@ from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameForm
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation,\
-    TargetCaseFormatModel, AnalysisModuleModel, RunPathModel#, TextOrFileModel
+    TargetCaseFormatModel, AnalysisModuleModel, RunPathModel
 from ert_gui.models.mixins.connectorless import DefaultPathModel
 from ert_gui.models.mixins.connectorless import StringModel
 from ert_gui.models.mixins.connectorless import RelativeWeightsModel
