@@ -25,6 +25,14 @@
 #include <ert/ecl/EclKW.hpp>
 #include <ert/ecl/FortIO.hpp>
 
+void test_kw_name() {
+    ERT::EclKW< int > kw1( "short", 1 );
+    ERT::EclKW< int > kw2( "verylong", 1 );
+
+    test_assert_string_equal( kw1.name(), "short" );
+    test_assert_string_equal( kw2.name(), "verylong" );
+}
+
 void test_kw_vector_assign() {
     std::vector< int > vec = { 1, 2, 3, 4, 5 };
     ERT::EclKW< int > kw( "XYZ", vec );
@@ -55,6 +63,7 @@ void test_kw_vector_string() {
 }
 
 int main (int argc, char **argv) {
+    test_kw_name();
     test_kw_vector_assign();
     test_kw_vector_string();
 }
