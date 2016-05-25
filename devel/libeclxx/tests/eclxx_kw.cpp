@@ -25,23 +25,36 @@
 #include <ert/ecl/EclKW.hpp>
 #include <ert/ecl/FortIO.hpp>
 
+void test_kw_vector_assign() {
+    std::vector< int > vec = { 1, 2, 3, 4, 5 };
+    ERT::EclKW< int > kw( "XYZ", vec );
 
-void test_kw() {
-    ERT::EclKW<int> kw("XYZ" , 1000);
-    test_assert_size_t_equal( kw.size() , 1000 );
+    test_assert_size_t_equal( kw.size(), vec.size() );
 
-    kw[0] = 1;
-    kw[10] = 77;
-
-    test_assert_int_equal( kw[0] , 1 );
-    test_assert_int_equal( kw[10] , 77 );
+    for( size_t i = 0; i < kw.size(); ++i )
+        test_assert_int_equal( kw.at( i ), vec[ i ] );
 }
 
+void test_kw_vector_string() {
+    std::vector< const char* > vec = {
+        "short",
+        "sweet",
+        "padded  ",
+        "verylongkeyword"
+    };
 
+    ERT::EclKW< const char* > kw( "XYZ", vec );
 
+    test_assert_size_t_equal( kw.size(), vec.size() );
 
-
+    test_assert_string_equal( kw.at( 0 ), "short   " );
+    test_assert_string_equal( kw.at( 1 ), "sweet   " );
+    test_assert_string_equal( kw.at( 2 ), vec.at( 2 ) );
+    test_assert_string_equal( kw.at( 3 ), "verylong" );
+    test_assert_string_not_equal( kw.at( 2 ), "verylongkeyword" );
+}
 
 int main (int argc, char **argv) {
-    test_kw();
+    test_kw_vector_assign();
+    test_kw_vector_string();
 }
