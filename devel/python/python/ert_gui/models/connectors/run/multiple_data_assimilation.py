@@ -138,6 +138,9 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def normalizeWeights(self, weights):
         """ :rtype: list of float """
+        print ":::: MDA.normalizeWeights", weights
+        if not weights:
+            return []
         from math import sqrt
         length = sqrt(sum((1.0 / x) * (1.0 / x) for x in weights))
         return [x * length for x in weights]
@@ -150,6 +153,13 @@ class MultipleDataAssimilation(BaseRunModel):
         result = []
         for element in elements:
             element = element.strip()
-            result.append(float(element))
+            try:
+                f = float(element)
+                if f == 0:
+                    print 'Warning: 0 weight, will ignore'
+                else:
+                    result.append(f)
+            except ValueError:
+                print 'Warning: cannot parse weight %s' % element
 
         return result
