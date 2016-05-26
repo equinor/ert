@@ -82,7 +82,7 @@ extern "C" {
   bool                job_queue_get_pause( const job_queue_type * job_queue );
   void                job_queue_set_pause_on( job_queue_type * job_queue);
   void                job_queue_set_pause_off( job_queue_type * job_queue);
-  void                job_queue_user_exit( job_queue_type * queue);
+  bool                job_queue_user_exit( job_queue_type * queue);
   void              * job_queue_iget_job_data( job_queue_type * job_queue , int job_nr );
 
   int                 job_queue_get_active_size( const job_queue_type * queue );
