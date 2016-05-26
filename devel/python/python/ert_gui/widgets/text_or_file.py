@@ -1,4 +1,3 @@
-from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QComboBox
 from ert_gui.models.mixins import ChoiceModelMixin
 from ert_gui.widgets.helped_widget import HelpedWidget
@@ -21,21 +20,31 @@ class TextOrFile(OptionWidget):
 
     """
 
-    def __init__(self, weightsModel):
+    def __init__(self, setter):
+        """
+        Takes as argument a setter for the simulation model to set the current
+        value of this widget.
+        """
         super(TextOrFile, self).__init__()
-        self.weightsModel = weightsModel
+        self.model_setter = setter
+
         iteration_weights_path_model = DefaultPathModel("", must_exist=True)
         iteration_weights_path_chooser = PathChooser(iteration_weights_path_model, path_label="Iteration weights file")
-        iteration_weights_path_model.observable().attach(DefaultPathModel.PATH_CHANGED_EVENT, self.__valueChanged)
+        iteration_weights_path_model.observable().attach(DefaultPathModel.PATH_CHANGED_EVENT, self._valueChanged)
 
         custom_iteration_weights_model = StringModel("1")
         custom_iteration_weights_box = StringBox(custom_iteration_weights_model, "Custom iteration weights", "config/simulation/iteration_weights")
         custom_iteration_weights_box.setValidator(NumberListStringArgument())
-
-        custom_iteration_weights_model.observable().attach(StringModel.VALUE_CHANGED_EVENT, self.__valueChanged)
+        custom_iteration_weights_model.observable().attach(StringModel.VALUE_CHANGED_EVENT, self._valueChanged)
 
         self.addHelpedWidget("Custom", custom_iteration_weights_box)
         self.addHelpedWidget("File", iteration_weights_path_chooser)
+
+    def isValid(self):
+        """Returns the validation value"""
+        if self.getCurrentWidget():
+            return self.getCurrentWidget().isValid()
+        return False
 
 
     def getValue(self, joiner = ','):
@@ -51,6 +60,8 @@ class TextOrFile(OptionWidget):
             return x
 
         fname = self.getCurrentWidget().model.getPath()
+        if not fname:
+            return ""
         result = self.parseFile(fname)
         return joiner.join(result)
 
@@ -59,8 +70,8 @@ class TextOrFile(OptionWidget):
         self.getCurrentWidget().setValue(str(value))
 
 
-    def __valueChanged(self):
-        self.weightsModel.setValue(self.getValue())
+    def _valueChanged(self):
+        self.model_setter(self.getValue())
 
 
     def parseFile(self, fname):

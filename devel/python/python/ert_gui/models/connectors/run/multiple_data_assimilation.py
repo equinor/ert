@@ -19,7 +19,6 @@ from ert.enkf.enums import HookRuntime
 from ert_gui.models.connectors.run import ActiveRealizationsModel,\
     TargetCaseFormatModel, AnalysisModuleModel, BaseRunModel
 from ert_gui.models.mixins import ErtRunError
-from ert_gui.models.mixins.connectorless import RelativeWeightsModel
 
 from ert.util import BoolVector
 
@@ -31,6 +30,13 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def __init__(self):
         super(MultipleDataAssimilation, self).__init__(name="Multiple Data Assimilation", phase_count=2)
+        self.weights = "1" # default value
+
+    def getWeights(self):
+        return self.weights
+
+    def setWeights(self, weights):
+        self.weights = weights
 
     def setAnalysisModule(self):
         module_name = AnalysisModuleModel().getCurrentChoice()
@@ -41,19 +47,17 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
     def runSimulations(self):
-        relativeWeights = RelativeWeightsModel()
-        weights = relativeWeights.getValue()
-        weights = self.parseWeights(weights)
-        print("Running MDA ES with weights %s" % ", ".join(str(weight) for weight in weights))
+        weights = self.parseWeights(self.weights)
+        iteration_count = len(weights)
+
+        print("Running MDA ES for %s  iterations\t%s" % (iteration_count, ", ".join(str(weight) for weight in weights)))
         weights = self.normalizeWeights(weights)
 
-        iteration_count = len(weights)
-        self.setPhaseCount(iteration_count+2) # pre + post + weights
+        weight_string = ", ".join(str(round(weight,3)) for weight in weights)
+        print("Running MDA ES on (weights normalized)\t%s" % weight_string)
 
-        weightString = ", ".join(str(round(weight,3)) for weight in weights)
-        phase_string = "Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, weightString)
-        print phase_string
-        self.setPhaseName(phase_string, indeterminate=True)
+
+        self.setPhaseCount(iteration_count+2) # pre + post + weights
 
         target_case_format = TargetCaseFormatModel()
 
@@ -68,7 +72,7 @@ class MultipleDataAssimilation(BaseRunModel):
         active_realization_mask = BoolVector(True, self.ert().getEnsembleSize())
 
 
-        phase_string = "Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, weightString)
+        phase_string = "Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, weight_string)
         self.setPhaseName(phase_string, indeterminate=True)
 
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 1)

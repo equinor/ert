@@ -23,7 +23,6 @@ from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataA
     TargetCaseFormatModel, AnalysisModuleModel, RunPathModel
 from ert_gui.models.mixins.connectorless import DefaultPathModel
 from ert_gui.models.mixins.connectorless import StringModel
-from ert_gui.models.mixins.connectorless import RelativeWeightsModel
 
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.widgets import util
@@ -61,24 +60,17 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self.target_case_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow(self.target_case_format_field.getLabel(), self.target_case_format_field)
 
-
-        # Relative Weights Option Widget starts here
         iterated_target_case_format_model = DefaultNameFormatModel(())
         iterated_target_case_format_box = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
         iterated_target_case_format_box.setValidator(ProperNameFormatArgument())
 
-        rel_weights_model = RelativeWeightsModel()
-        option_widget = TextOrFile(rel_weights_model)
-
-        layout.addRow("Relative Weights:", option_widget)
-
+        self.option_widget = TextOrFile(self.getSimulationModel().setWeights)
+        layout.addRow("Relative Weights:", self.option_widget)
         layout.addRow('Note:',
                       QLabel("Example Custom Relative Weights: '8,4,2,1'\n"
                              "This means MDA-ES will half the weight\n"
                              "applied to the Observation Errors from one\n"
                              "iteration to the next across 4 iterations."))
-
-
 
         analysis_module_model = AnalysisModuleModel()
         self.analysis_module_choice = ComboChoice(analysis_module_model, "Analysis Module", "config/analysis/analysis_module")
@@ -103,11 +95,12 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
         self.target_case_format_field.validationChanged.connect(self.simulationConfigurationChanged)
         self.active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)
+        self.option_widget.validationChanged.connect(self.simulationConfigurationChanged)
 
         self.setLayout(layout)
 
     def isConfigurationValid(self):
-        return self.target_case_format_field.isValid() and self.active_realizations_field.isValid()
+        return self.target_case_format_field.isValid() and self.active_realizations_field.isValid() and self.option_widget.isValid()
 
     def toggleAdvancedOptions(self, show_advanced):
         self.active_realizations_field.setVisible(show_advanced)
