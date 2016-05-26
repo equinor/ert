@@ -72,7 +72,7 @@ class MultipleDataAssimilation(BaseRunModel):
         active_realization_mask = BoolVector(True, self.ert().getEnsembleSize())
 
 
-        phase_string = "Running MDA ES for %d iterations with the following normalized weights: %s" % (iteration_count, weight_string)
+        phase_string = "Running MDA ES %d iteration%s." % (iteration_count, ('s' if (iteration_count != 1) else ''))
         self.setPhaseName(phase_string, indeterminate=True)
 
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 1)
