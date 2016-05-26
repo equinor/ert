@@ -77,6 +77,11 @@ namespace ERT {
             return *static_cast< T* >( ecl_kw_iget_ptr( this->m_kw, i ) );
         }
 
+        const typename std::remove_pointer< T >::type* data() const {
+            using Tp = const typename std::remove_pointer< T >::type*;
+            return static_cast< Tp >( ecl_kw_get_ptr( this->m_kw ) );
+        }
+
         ecl_kw_type* get() const {
             return this->m_kw;
         }
