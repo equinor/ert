@@ -62,8 +62,29 @@ void test_kw_vector_string() {
     test_assert_string_not_equal( kw.at( 2 ), "verylongkeyword" );
 }
 
+void test_move_semantics_no_crash() {
+    std::vector< int > vec = { 1, 2, 3, 4, 5 };
+    ERT::EclKW< int > kw1( "XYZ", vec );
+
+    ERT::EclKW< int > kw2( std::move( kw1 ) );
+    test_assert_true( kw1.get() == nullptr );
+}
+
+void test_exception_assing_ref_wrong_type() {
+    auto* ptr = ecl_kw_alloc( "XYZ", 1, ECL_INT_TYPE );
+
+    try {
+        ERT::EclKW< double > kw( ptr );
+        test_assert_true( false );
+    } catch (...) {
+        ERT::EclKW< int > kw( ptr );
+    }
+}
+
 int main (int argc, char **argv) {
     test_kw_name();
     test_kw_vector_assign();
     test_kw_vector_string();
+    test_move_semantics_no_crash();
+    test_exception_assing_ref_wrong_type();
 }
