@@ -1275,21 +1275,27 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
 
 
 static void enkf_main_report_run_failure( const enkf_main_type * enkf_main , const run_arg_type * run_arg) {
-  job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
   int queue_index = run_arg_get_queue_index( run_arg );
-
-  const char * stderr_file = job_queue_iget_stderr_file( job_queue , queue_index );
-  if (stderr_file == NULL)
-    ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" ,
-                             job_queue_iget_run_path( job_queue , queue_index),
-                             job_queue_iget_failed_job( job_queue , queue_index),
-                             job_queue_iget_error_reason( job_queue , queue_index ));
-  else
-    ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s  Check file:%s" ,
-                             job_queue_iget_run_path( job_queue , queue_index),
-                             job_queue_iget_failed_job( job_queue , queue_index),
-                             job_queue_iget_error_reason( job_queue , queue_index ),
-                             job_queue_iget_stderr_file( job_queue , queue_index ));
+  /*
+    In the case the jobs have been killed before the jobs has even got
+    a slot in the internal queue we will get queue_index < 0; in that
+    case there is really nothing to report.
+  */
+  if (queue_index >= 0) {
+    job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+    const char * stderr_file = job_queue_iget_stderr_file( job_queue , queue_index );
+    if (stderr_file == NULL)
+      ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" ,
+                               job_queue_iget_run_path( job_queue , queue_index),
+                               job_queue_iget_failed_job( job_queue , queue_index),
+                               job_queue_iget_error_reason( job_queue , queue_index ));
+    else
+      ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s  Check file:%s" ,
+                               job_queue_iget_run_path( job_queue , queue_index),
+                               job_queue_iget_failed_job( job_queue , queue_index),
+                               job_queue_iget_error_reason( job_queue , queue_index ),
+                               job_queue_iget_stderr_file( job_queue , queue_index ));
+  }
 }
 
 
