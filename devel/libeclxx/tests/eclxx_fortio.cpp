@@ -100,9 +100,12 @@ void test_fortio() {
 
 void test_fortio_kw() {
     ERT::TestArea ta("fortio");
-    ERT::EclKW<int> kw("XYZ" , 1000);
-    for (size_t i =0 ; i < kw.size(); i++)
-        kw[i] = i;
+    std::vector< int > vec( 1000 );
+
+    for (size_t i =0 ; i < vec.size(); i++)
+        vec[ i ] = i;
+
+    ERT::EclKW<int> kw("XYZ" , vec );
 
     {
         ERT::FortIO fortio("new_file" , std::fstream::out );
@@ -115,7 +118,7 @@ void test_fortio_kw() {
         ERT::EclKW<int> kw2 = ERT::EclKW<int>::load( fortio );
         fortio.close( );
         for (size_t i =0 ; i < kw.size(); i++)
-            test_assert_int_equal( kw[i] , kw2[i]);
+            test_assert_int_equal( kw.at( i ), kw2.at( i ) );
 
 
         fortio = ERT::FortIO("new_file" , std::fstream::in );
