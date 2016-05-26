@@ -256,11 +256,19 @@ class JobQueue(BaseCClass):
         self.driver.set_max_running(max_running)
 
     def killAllJobs(self):
-        if self.isRunning():
-            JobQueue.cNamespace().user_exit(self)
-
+        # The queue will not set the user_exit flag before the
+        # queue is in a running state. If the queue does not
+        # change to running state within a timeout the C function
+        # will return False, and that False value is just passed
+        # along.
+        user_exit = JobQueue.cNamespace().user_exit(self)
+        if user_exit:
             while self.isRunning():
                 time.sleep(0.1)
+            return True
+        else:
+            return False
+
 
     def set_pause_on(self):
         JobQueue.cNamespace().set_pause_on(self)
@@ -284,7 +292,7 @@ cwrapper = CWrapper(JOB_QUEUE_LIB)
 cwrapper.registerObjectType("job_queue", JobQueue)
 
 JobQueue.cNamespace().alloc           = cwrapper.prototype("c_void_p job_queue_alloc( int , char* , char* )")
-JobQueue.cNamespace().user_exit       = cwrapper.prototype("void job_queue_user_exit( job_queue )")
+JobQueue.cNamespace().user_exit       = cwrapper.prototype("bool job_queue_user_exit( job_queue )")
 JobQueue.cNamespace().free            = cwrapper.prototype("void job_queue_free( job_queue )")
 JobQueue.cNamespace().set_max_running = cwrapper.prototype("void job_queue_set_max_running( job_queue , int)")
 JobQueue.cNamespace().get_max_running = cwrapper.prototype("int  job_queue_get_max_running( job_queue )")
