@@ -39,7 +39,7 @@ extern "C" {
   bool                job_queue_has_driver(const job_queue_type * queue );
   //void                job_queue_set_size( job_queue_type * job_queue , int size );
   void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
-  job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * running_file, const char * exit_file);
+  job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * status_file, const char * exit_file);
   void                job_queue_free(job_queue_type *);
 
   int                 job_queue_add_job(job_queue_type * ,

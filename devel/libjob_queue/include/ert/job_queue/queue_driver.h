@@ -63,8 +63,7 @@ extern "C" {
     JOB_QUEUE_USER_EXIT   =  8192, /* The whole job_queue has been exited by the user - the job can NOT be restarted. */
     JOB_QUEUE_SUCCESS     = 16384,
     JOB_QUEUE_RUNNING_CALLBACK = 32768,
-    JOB_QUEUE_FAILED      = 65536,
-    JOB_QUEUE_CONFIRMED_RUNNING = 32 + (1<<17), /* LSF workaround:  A running_file file has been written to disk to confirm job is (has been) alive. */
+    JOB_QUEUE_FAILED      = 65536
   } job_status_type;
 
 #define JOB_QUEUE_MAX_STATE 12

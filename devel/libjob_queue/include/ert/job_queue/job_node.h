@@ -100,7 +100,7 @@ typedef struct job_queue_node_struct job_queue_node_type;
   time_t job_queue_node_time_since_sim_start (const job_queue_node_type * node ) ;
 
   const char * job_queue_node_get_ok_file( const job_queue_node_type * node);
-  const char * job_queue_node_get_running_file( const job_queue_node_type * node);
+  const char * job_queue_node_get_status_file( const job_queue_node_type * node);
   const char * job_queue_node_get_exit_file( const job_queue_node_type * node);
 
   bool job_queue_node_run_DONE_callback( job_queue_node_type * node );
