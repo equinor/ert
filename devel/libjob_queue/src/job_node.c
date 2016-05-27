@@ -41,7 +41,7 @@ struct job_queue_node_struct {
   char                  *run_cmd;         /* The path to the actual executable. */
   char                  *exit_file;       /* The queue will look for the occurence of this file to detect a failure. */
   char                  *ok_file;         /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
-  char                  *running_file;    /* The queue will look for this file to verify that the job is running or has run.  If not, ok_file is ignored. */
+  char                  *status_file;     /* The queue will look for this file to verify that the job is running or has run. */
   char                  *job_name;        /* The name of the job. */
   char                  *run_path;        /* Where the job is run - absolute path. */
   job_callback_ftype    *done_callback;
@@ -61,13 +61,13 @@ struct job_queue_node_struct {
 
   int                    submit_attempt;  /* Which attempt is this ... */
   job_status_type        job_status;      /* The current status of the job. */
-  bool                   confirmed_running;/* Set to true if file running_file has been detected written. */
+  bool                   confirmed_running;/* Set to true if file status_file has been detected written. */
   pthread_mutex_t        data_mutex;      /* Protecting the access to the job_data pointer. */
   void                  *job_data;        /* Driver specific data about this job - fully handled by the driver. */
   time_t                 submit_time;     /* When was the job added to job_queue - the FIRST TIME. */
   time_t                 sim_start;       /* When did the job change status -> RUNNING - the LAST TIME. */
   time_t                 sim_end ;        /* When did the job finish successfully */
-  time_t                 max_confirm_wait;/* Max waiting between sim_start and confirmed_running is 2 minutes, after 2*max_conf_w we set fail*/
+  time_t                 max_confirm_wait;/* Max waiting between sim_start and confirmed_running is 2 minutes */
 };
 
 
@@ -352,8 +352,8 @@ const char * job_queue_node_get_ok_file( const job_queue_node_type * node) {
   return node->ok_file;
 }
 
-const char * job_queue_node_get_running_file( const job_queue_node_type * node) {
-  return node->running_file;
+const char * job_queue_node_get_status_file( const job_queue_node_type * node) {
+  return node->status_file;
 }
 
 const char * job_queue_node_get_run_path( const job_queue_node_type * node) {
@@ -475,33 +475,23 @@ submit_status_type job_queue_node_submit( job_queue_node_type * node , job_queue
   return submit_status;
 }
 
-
-// TODO PGDR
-//
-// if status = running, and current_time > sim_start + 2min, check if
-// running_file exists, and if so, set status to confirmed_running, else if
-// ctime > sim_start + 4min, set to fail
-//
-//
+// if status = running, and current_time > sim_start + max_confirm_wait
+// (usually 2 min), check if job is confirmed running (status_file exists).
+// If not confirmed, set job to JOB_QUEUE_FAILED.
 bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver) {
   bool status_change = false;
   pthread_mutex_lock( &node->data_mutex );
   {
     if (node->job_data) {
       job_status_type current_status = job_queue_node_get_status(node);
-      if (current_status & JOB_QUEUE_RUNNING) {
+      if ((current_status & JOB_QUEUE_RUNNING) && !job_queue_node_status_confirmed_running(node)) {
+        // it's running, but not confirmed running.
         time_t runtime = job_queue_node_time_since_sim_start(node);
         if (runtime > node->max_confirm_wait) {
-          if (job_queue_node_status_confirmed_running(node)) {
-            job_status_type new_status = JOB_QUEUE_CONFIRMED_RUNNING;
-            status_change = job_queue_status_transition(status, current_status, new_status);
-            job_queue_node_set_status(node, new_status);
-          } else if (runtime > 2 * node->max_confirm_wait) {
-            // Netcraft has confirmed: the job is dying
-            job_status_type new_status = JOB_QUEUE_FAILED;
-            status_change = job_queue_status_transition(status, current_status, new_status);
-            job_queue_node_set_status(node, new_status);
-          }
+          // max_confirm_wait has passed since sim_start without success; the job is dead
+          job_status_type new_status = JOB_QUEUE_FAILED;
+          status_change = job_queue_status_transition(status, current_status, new_status);
+          job_queue_node_set_status(node, new_status);
         }
       }
       if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
@@ -531,15 +521,18 @@ bool job_queue_node_status_transition( job_queue_node_type * node , job_queue_st
 }
 
 bool job_queue_node_status_confirmed_running(job_queue_node_type * node) {
-  if (node->confirmed_running == false) {
-    pthread_mutex_lock(&node->data_mutex);
-    {
-      if (node->running_file)
-        if (util_file_exists(node->running_file))
-          node->confirmed_running = true;
-    }
-    pthread_mutex_unlock(&node->data_mutex);
+  if (!node->status_file)
+    return node->confirmed_running;
+
+  if (node->confirmed_running)
+    return true;
+
+  pthread_mutex_lock(&node->data_mutex);
+  {
+    if (util_file_exists(node->status_file))
+      node->confirmed_running = true;
   }
+  pthread_mutex_unlock(&node->data_mutex);
   return node->confirmed_running;
 }
 
