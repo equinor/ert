@@ -20,9 +20,13 @@ Module implementing a queue for managing external jobs.
 import ctypes
 from types import StringType, IntType
 import time
-from ert.cwrap import BaseCClass, CWrapper
 
-from ert.job_queue import JOB_QUEUE_LIB, Job, JobStatusType
+from ert.cwrap import BaseCClass,BaseCEnum
+
+from ert.job_queue import QueuePrototype
+from ert.job_queue import Job, JobStatusType
+
+
 
 
 class JobList:
@@ -91,7 +95,7 @@ class runtimeList:
     def __getitem__(self, index):
         job = self.job_list.__getitem__(index)
         if job:
-            sim_start = self.queue.cNamespace().iget_sim_start(self.queue, job.job_nr)
+            sim_start = self.queue.igetSimStart( job.job_nr )
             if not sim_start.ctime() == -1:
                 return time.time() - sim_start.ctime()
             else:
@@ -110,6 +114,39 @@ class JobQueue(BaseCClass):
     # queue with a finite value for size, in that case it is not
     # necessary to explitly inform the queue layer when all jobs have
     # been submitted.
+    TYPE_NAME        = "job_queue"
+    _alloc           = QueuePrototype("void* job_queue_alloc( int , char* , char* )" , bind = False)
+    _start_user_exit = QueuePrototype("bool job_queue_start_user_exit( job_queue )")
+    _get_user_exit   = QueuePrototype("bool job_queue_get_user_exit( job_queue )")
+    _free            = QueuePrototype("void job_queue_free( job_queue )")
+    _set_max_running = QueuePrototype("void job_queue_set_max_running( job_queue , int)")
+    _get_max_running = QueuePrototype("int  job_queue_get_max_running( job_queue )")
+    _set_driver      = QueuePrototype("void job_queue_set_driver( job_queue , void* )")
+    _add_job         = QueuePrototype("int   job_queue_add_job( job_queue , char* , void* , void* , void* , void* , int , char* , char* , int , char**)")
+    _start_queue     = QueuePrototype("void job_queue_run_jobs( job_queue , int , bool)")
+    _run_jobs        = QueuePrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
+    _sim_start       = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
+
+    
+    _num_running     = QueuePrototype("int  job_queue_get_num_running( job_queue )")
+    _num_complete    = QueuePrototype("int  job_queue_get_num_complete( job_queue )")
+    _num_waiting     = QueuePrototype("int  job_queue_get_num_waiting( job_queue )")
+    _num_pending     = QueuePrototype("int  job_queue_get_num_pending( job_queue )")
+
+    _is_running      = QueuePrototype("bool job_queue_is_running( job_queue )")
+    _submit_complete = QueuePrototype("void job_queue_submit_complete( job_queue )")
+    _iget_sim_start  = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
+    _get_active_size = QueuePrototype("int job_queue_get_active_size( job_queue )")
+    _get_pause       = QueuePrototype("bool job_queue_get_pause(job_queue)")
+    _set_pause_on    = QueuePrototype("void job_queue_set_pause_on(job_queue)")
+    _set_pause_off   = QueuePrototype("void job_queue_set_pause_off(job_queue)")
+
+    # The return type of the job_queue_iget_job_status should really
+    # be the enum job_status_type_enum, but I just did not manage to
+    # get the prototyping right. Have therefor taken the return as an
+    # integer and convert it in the getJobStatus() method.
+    _get_job_status  = QueuePrototype("int job_queue_iget_job_status(job_queue, int)")
+
 
     def __init__(self, driver=None, max_submit=1, size=0):
         """
@@ -134,7 +171,7 @@ class JobQueue(BaseCClass):
         OK_file = None
         exit_file = None
 
-        c_ptr = JobQueue.cNamespace().alloc(max_submit, OK_file, exit_file)
+        c_ptr = self._alloc(max_submit, OK_file, exit_file)
         super(JobQueue, self).__init__(c_ptr)
 
         self.jobs = JobList()
@@ -147,7 +184,7 @@ class JobQueue(BaseCClass):
         self.start(blocking=False)
         if driver:
             self.driver = driver
-            JobQueue.cNamespace().set_driver(self, driver.c_ptr)
+            self._set_driver(driver.c_ptr)
 
 
     def kill_job(self, index):
@@ -160,7 +197,7 @@ class JobQueue(BaseCClass):
 
     def start( self, blocking=False):
         verbose = False
-        JobQueue.cNamespace().run_jobs(self, self.size, verbose)
+        self._run_jobs(self.size, verbose)
 
 
     def submit( self, cmd, run_path, job_name, argv, num_cpu=1):
@@ -174,18 +211,18 @@ class JobQueue(BaseCClass):
         exit_callback = None
 
 
-        queue_index = JobQueue.cNamespace().add_job(self,
-                                                    cmd,
-                                                    done_callback,
-                                                    retry_callback,
-                                                    exit_callback,
-                                                    callback_arg,
-                                                    num_cpu,
-                                                    run_path,
-                                                    job_name,
-                                                    len(argv),
-                                                    c_argv)
-
+        queue_index = self._add_job(self,
+                                    cmd,
+                                    done_callback,
+                                    retry_callback,
+                                    exit_callback,
+                                    callback_arg,
+                                    num_cpu,
+                                    run_path,
+                                    job_name,
+                                    len(argv),
+                                    c_argv)
+        
         job_ptr = None
         job = Job(self.driver, job_ptr , queue_index, False)
         self.jobs.add_job(job, job_name)
@@ -224,23 +261,23 @@ class JobQueue(BaseCClass):
         queue, in that case it is not necessary to call the
         submit_complete() method.
         """
-        JobQueue.cNamespace().submit_complete(self)
+        self._submit_complete( )
 
 
     def isRunning(self):
-        return JobQueue.cNamespace().is_running(self)
+        return self._is_running( )
 
     def num_running( self ):
-        return JobQueue.cNamespace().num_running(self)
+        return self._num_running( )
 
     def num_pending( self ):
-        return JobQueue.cNamespace().num_pending(self)
+        return self._.num_pending( )
 
     def num_waiting( self ):
-        return JobQueue.cNamespace().num_waiting(self)
+        return self._num_waiting( )
 
     def num_complete( self ):
-        return JobQueue.cNamespace().num_complete(self)
+        return self._num_complete( )
 
     def exists(self, index):
         job = self.__getitem__(index)
@@ -261,7 +298,7 @@ class JobQueue(BaseCClass):
         # change to running state within a timeout the C function
         # will return False, and that False value is just passed
         # along.
-        user_exit = JobQueue.cNamespace().start_user_exit(self)
+        user_exit = self._start_user_exit( )
         if user_exit:
             while self.isRunning():
                 time.sleep(0.1)
@@ -269,6 +306,9 @@ class JobQueue(BaseCClass):
         else:
             return False
 
+    def igetSimStart(self, job_index):
+        return self._iget_sim_start( self , job_index )
+        
 
     def getUserExit(self):
         # Will check if a user_exit has been initated on the job. The
@@ -276,49 +316,25 @@ class JobQueue(BaseCClass):
         # job_queue_reset() call is invoked, and that should not be
         # done before the queue is recycled to run another batch of
         # simulations.
-        return JobQueue.cNamespace().get_user_exit(self)
+        return self._get_user_exit( )
 
     def set_pause_on(self):
-        JobQueue.cNamespace().set_pause_on(self)
+        self._set_pause_on( )
 
     def set_pause_off(self):
-        JobQueue.cNamespace().set_pause_off(self)
+        self._set_pause_off( )
 
     def free(self):
-        JobQueue.cNamespace().free(self)
+        self._free(self)
 
     def __len__(self):
-        return self.cNamespace().get_active_size(self)
+        return self._get_active_size( )
 
     def getJobStatus(self, job_number):
+        # See comment about return type in the prototype section at
+        # the top of class.
         """ @rtype: JobStatusType """
-        return self.cNamespace().get_job_status(self, job_number)
+        int_status = self._get_job_status(job_number)
+        return JobStatusType( int_status )
 
-#################################################################
 
-cwrapper = CWrapper(JOB_QUEUE_LIB)
-cwrapper.registerObjectType("job_queue", JobQueue)
-
-JobQueue.cNamespace().alloc           = cwrapper.prototype("c_void_p job_queue_alloc( int , char* , char* )")
-JobQueue.cNamespace().start_user_exit = cwrapper.prototype("bool job_queue_start_user_exit( job_queue )")
-JobQueue.cNamespace().free            = cwrapper.prototype("void job_queue_free( job_queue )")
-JobQueue.cNamespace().set_max_running = cwrapper.prototype("void job_queue_set_max_running( job_queue , int)")
-JobQueue.cNamespace().get_max_running = cwrapper.prototype("int  job_queue_get_max_running( job_queue )")
-JobQueue.cNamespace().set_driver      = cwrapper.prototype("void job_queue_set_driver( job_queue , c_void_p )")
-JobQueue.cNamespace().add_job         = cwrapper.prototype("int   job_queue_add_job( job_queue , char* , c_void_p , c_void_p , c_void_p , c_void_p , int , char* , char* , int , char**)")
-JobQueue.cNamespace().start_queue     = cwrapper.prototype("void job_queue_run_jobs( job_queue , int , bool)")
-JobQueue.cNamespace().run_jobs        = cwrapper.prototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
-
-JobQueue.cNamespace().num_running     = cwrapper.prototype("int  job_queue_get_num_running( job_queue )")
-JobQueue.cNamespace().num_complete    = cwrapper.prototype("int  job_queue_get_num_complete( job_queue )")
-JobQueue.cNamespace().num_waiting     = cwrapper.prototype("int  job_queue_get_num_waiting( job_queue )")
-JobQueue.cNamespace().num_pending     = cwrapper.prototype("int  job_queue_get_num_pending( job_queue )")
-
-JobQueue.cNamespace().is_running      = cwrapper.prototype("bool job_queue_is_running( job_queue )")
-JobQueue.cNamespace().submit_complete = cwrapper.prototype("void job_queue_submit_complete( job_queue )")
-JobQueue.cNamespace().iget_sim_start  = cwrapper.prototype("time_t job_queue_iget_sim_start( job_queue , int)")
-JobQueue.cNamespace().get_active_size = cwrapper.prototype("int job_queue_get_active_size( job_queue )")
-JobQueue.cNamespace().get_pause       = cwrapper.prototype("bool job_queue_get_pause(job_queue)")
-JobQueue.cNamespace().set_pause_on    = cwrapper.prototype("void job_queue_set_pause_on(job_queue)")
-JobQueue.cNamespace().set_pause_off   = cwrapper.prototype("void job_queue_set_pause_off(job_queue)")
-JobQueue.cNamespace().get_job_status  = cwrapper.prototype("job_status_type_enum job_queue_iget_job_status(job_queue, int)")

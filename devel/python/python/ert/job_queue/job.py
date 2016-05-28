@@ -17,27 +17,28 @@
 
 import time
 import datetime
-from ert.cwrap.cclass import CClass
-
-# Enum values nicked from libjob_queue/src/basic_queue_driver.h
-STATUS_PENDING = 16
-STATUS_RUNNING = 32
-STATUS_DONE = 64
-STATUS_EXIT = 128
+from ert.cwrap import BaseCClass
+from ert.job_queue import JobStatusType
 
 
-class Job(CClass):
-    def __init__(self, driver, c_ptr, queue_index, blocking=False):
+class Job(BaseCClass):
+    TYPE_NAME = "job"
+    
+    def __init__(self, driver, c_ptr , blocking=False):
         self.driver = driver
         self.init_cobj(c_ptr, self.driver.free_job)
         self.submit_time = datetime.datetime.now()
-        self.queue_index = queue_index
+        super(Job , self).__init__( c_ptr )
+
+
+    def free(self):
+        pass
 
 
     def block( self ):
         while True:
             status = self.status()
-            if status == STATUS_DONE or status == STATUS_EXIT:
+            if status == JobStatusType.JOB_QUEUE_DONE or status == JobStatusType.JOB_QUEUE_EXIT:
                 break
             else:
                 time.sleep(1)
@@ -59,7 +60,7 @@ class Job(CClass):
     @property
     def running( self ):
         status = self.driver.get_status(self)
-        if status == STATUS_RUNNING:
+        if status == JobStatusType.JOB_QUEUE_RUNNING:
             return True
         else:
             return False
@@ -68,7 +69,7 @@ class Job(CClass):
     @property
     def pending( self ):
         status = self.driver.get_status(self)
-        if status == STATUS_PENDING:
+        if status == JobStatusType.JOB_QUEUE_PENDING:
             return True
         else:
             return False
@@ -76,7 +77,7 @@ class Job(CClass):
     @property
     def complete( self ):
         status = self.driver.get_status(self)
-        if status == STATUS_DONE or status == STATUS_EXIT:
+        if status == JobStatusType.JOB_QUEUE_DONE or status == JobStatusType.JOB_QUEUE_EXIT:
             return True
         else:
             return False
