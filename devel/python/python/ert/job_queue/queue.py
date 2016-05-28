@@ -261,7 +261,7 @@ class JobQueue(BaseCClass):
         # change to running state within a timeout the C function
         # will return False, and that False value is just passed
         # along.
-        user_exit = JobQueue.cNamespace().user_exit(self)
+        user_exit = JobQueue.cNamespace().start_user_exit(self)
         if user_exit:
             while self.isRunning():
                 time.sleep(0.1)
@@ -269,6 +269,14 @@ class JobQueue(BaseCClass):
         else:
             return False
 
+
+    def getUserExit(self):
+        # Will check if a user_exit has been initated on the job. The
+        # queue can be queried about this status until a
+        # job_queue_reset() call is invoked, and that should not be
+        # done before the queue is recycled to run another batch of
+        # simulations.
+        return JobQueue.cNamespace().get_user_exit(self)
 
     def set_pause_on(self):
         JobQueue.cNamespace().set_pause_on(self)
@@ -292,7 +300,7 @@ cwrapper = CWrapper(JOB_QUEUE_LIB)
 cwrapper.registerObjectType("job_queue", JobQueue)
 
 JobQueue.cNamespace().alloc           = cwrapper.prototype("c_void_p job_queue_alloc( int , char* , char* )")
-JobQueue.cNamespace().user_exit       = cwrapper.prototype("bool job_queue_user_exit( job_queue )")
+JobQueue.cNamespace().start_user_exit = cwrapper.prototype("bool job_queue_start_user_exit( job_queue )")
 JobQueue.cNamespace().free            = cwrapper.prototype("void job_queue_free( job_queue )")
 JobQueue.cNamespace().set_max_running = cwrapper.prototype("void job_queue_set_max_running( job_queue , int)")
 JobQueue.cNamespace().get_max_running = cwrapper.prototype("int  job_queue_get_max_running( job_queue )")

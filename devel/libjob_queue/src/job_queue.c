@@ -1262,7 +1262,7 @@ void job_queue_set_pause_off( job_queue_type * job_queue) {
   function return false.
 */
 
-bool job_queue_user_exit( job_queue_type * queue) {
+bool job_queue_start_user_exit( job_queue_type * queue) {
   if (!queue->user_exit) {
     int timeout_limit = 10 * 1000000;  // 10 seconds
     int usleep_time   =       100000;  // 0.1 second
@@ -1283,7 +1283,9 @@ bool job_queue_user_exit( job_queue_type * queue) {
   return queue->user_exit;
 }
 
-
+bool job_queue_get_user_exit( const job_queue_type * queue) {
+  return queue->user_exit;
+}
 
 void job_queue_free(job_queue_type * queue) {
   util_safe_free( queue->ok_file );
