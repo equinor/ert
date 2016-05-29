@@ -20,13 +20,14 @@ import datetime
 from ert.cwrap import BaseCClass
 from ert.job_queue import JobStatusType
 
+# The wrapping here and the interplay with the queue class is on a
+# 'barely working' standard.
 
 class Job(BaseCClass):
     TYPE_NAME = "job"
-    
+
     def __init__(self, driver, c_ptr , blocking=False):
         self.driver = driver
-        self.init_cobj(c_ptr, self.driver.free_job)
         self.submit_time = datetime.datetime.now()
         super(Job , self).__init__( c_ptr )
 
