@@ -40,6 +40,13 @@ class TextOrFile(OptionWidget):
         self.addHelpedWidget("Custom", custom_iteration_weights_box)
         self.addHelpedWidget("File", iteration_weights_path_chooser)
 
+        # It is necessary to set a minimum height in some way;
+        # otherwise the input field becomes invisible when the window
+        # is resized to minimum vertical size. The value '50' is taken
+        # out of thin air, but seems to work.
+        self.setMinimumHeight( 50 )
+
+        
     def isValid(self):
         """Returns the validation value"""
         if self.getCurrentWidget():
