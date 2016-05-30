@@ -67,6 +67,7 @@ extern "C" {
   time_t              job_queue_iget_sim_start( job_queue_type * queue, int job_index);
   time_t              job_queue_iget_sim_end( job_queue_type * queue, int job_index);
   time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);
+  void                job_queue_iset_max_confirm_wait_time( job_queue_type * queue, int job_index, time_t time );
 
   void                job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_seconds);
   int                 job_queue_get_max_job_duration(const job_queue_type * queue);

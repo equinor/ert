@@ -505,7 +505,14 @@ job_status_type job_queue_iget_job_status( job_queue_type * queue , int job_inde
 }
 
 
-
+void job_queue_iset_max_confirm_wait_time(job_queue_type * queue, int job_index, time_t time) {
+  job_list_get_rdlock( queue->job_list );
+   {
+     job_queue_node_type * node = job_list_iget_job( queue->job_list , job_index );
+     job_queue_node_set_max_confirmation_wait_time( node, time );
+   }
+   job_list_unlock( queue->job_list );
+}
 
 
 
@@ -1121,6 +1128,7 @@ int job_queue_add_job(job_queue_type * queue ,
                                                        argv ,
                                                        num_cpu ,
                                                        queue->ok_file ,
+                                                       queue->status_file ,
                                                        queue->exit_file,
                                                        done_callback ,
                                                        retry_callback ,
@@ -1310,14 +1318,3 @@ int job_queue_get_max_running( const job_queue_type * queue ) {
 void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
   job_queue_set_max_running_option(queue->driver, max_running);
 }
-
-/*
-  The return value is the new value for max_running.
-*/
-/// TODO Delete this function? (note: 1, not used. 2, spelled runnning)
-int job_queue_inc_max_runnning( job_queue_type * queue, int delta ) {
-  job_queue_set_max_running( queue , job_queue_get_max_running( queue ) + delta );
-  return job_queue_get_max_running( queue );
-}
-
-
