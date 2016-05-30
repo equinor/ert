@@ -68,7 +68,9 @@
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/enkf_linalg.h>
-
+#include <ert/analysis/module_data_block.h>
+#include <ert/analysis/module_data_block_vector.h>
+#include <ert/analysis/module_info.h>
 
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_config_node.h>
@@ -662,7 +664,6 @@ typedef struct {
 } serialize_info_type;
 
 
-
 static void serialize_node( enkf_fs_type * fs ,
                             enkf_state_type ** ensemble ,
                             const char * key ,
@@ -734,13 +735,15 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
                                         int * active_size ,
                                         int * row_offset,
                                         thread_pool_type * work_pool,
-                                        serialize_info_type * serialize_info ) {
+                                        serialize_info_type * serialize_info,
+                                        module_info_type * module_info) {
 
   matrix_type * A   = serialize_info->A;
   stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
   const int num_kw  = stringlist_get_size( update_keys );
   int ens_size      = matrix_get_columns( A );
   int current_row   = 0;
+  module_data_block_vector_type * module_data_block_vector = module_info_get_data_block_vector(module_info);
 
   for (int ikw=0; ikw < num_kw; ikw++) {
     const char             * key         = stringlist_iget(update_keys , ikw);
@@ -754,9 +757,9 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
     } else {
       const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
       enkf_fs_type * src_fs = serialize_info->src_fs;
-
       active_size[ikw] = __get_active_size( ens_config , src_fs , key , report_step , active_list );
       row_offset[ikw]  = current_row;
+
       {
         int matrix_rows = matrix_get_rows( A );
         if ((active_size[ikw] + current_row) > matrix_rows)
@@ -767,6 +770,8 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
         enkf_main_serialize_node( key , active_list , row_offset[ikw] , work_pool , serialize_info );
         current_row += active_size[ikw];
       }
+      const module_data_block_type * data_block = module_data_block_alloc( key, active_list_get_active(active_list),  row_offset[ikw], active_size[ikw] );
+      module_data_block_vector_add_data_block(module_data_block_vector, data_block);
     }
   }
   matrix_shrink_header( A , current_row , ens_size );
@@ -885,6 +890,16 @@ static serialize_info_type * serialize_info_alloc( enkf_fs_type * src_fs,
   return serialize_info;
 }
 
+static module_info_type * enkf_main_module_info_alloc( const local_ministep_type* ministep ) {
+
+  module_info_type * module_info = module_info_alloc(local_ministep_get_name(ministep));
+  return module_info;
+}
+
+static void enkf_main_module_info_free( module_info_type * module_info ) {
+  free( module_info );
+}
+
 void enkf_main_fprintf_PC(const char * filename ,
                           matrix_type * PC ,
                           matrix_type * PC_obs) {
@@ -1001,6 +1016,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                                                  A ,
                                                                  cpu_threads);
 
+
     // Store PC:
     if (analysis_config_get_store_PC( enkf_main->analysis_config )) {
       double truncation    = -1;
@@ -1033,18 +1049,19 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
+      module_info_type * module_info = enkf_main_module_info_alloc(ministep);
       if (local_dataset_get_size( dataset )) {
         int * active_size = util_calloc( local_dataset_get_size( dataset ) , sizeof * active_size );
         int * row_offset  = util_calloc( local_dataset_get_size( dataset ) , sizeof * row_offset  );
 
-        enkf_main_serialize_dataset( enkf_main->ensemble_config , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
+        enkf_main_serialize_dataset( enkf_main->ensemble_config , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info, module_info);
 
         if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
           if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
-            analysis_module_updateA( module , localA , S , R , dObs , E , D );
+            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info );
           }
           else
-            analysis_module_updateA( module , localA , S , R , dObs , E , D );
+            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info );
         }
         else {
           if (analysis_module_check_option( module , ANALYSIS_USE_A)){
@@ -1060,8 +1077,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
         free( active_size );
         free( row_offset );
       }
+      enkf_main_module_info_free( module_info );
     }
-
     hash_iter_free( dataset_iter );
     serialize_info_free( serialize_info );
   }

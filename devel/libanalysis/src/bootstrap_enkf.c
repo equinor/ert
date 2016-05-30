@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'bootstrap_enkf.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'bootstrap_enkf.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@
 #define DEFAULT_TRUNCATION          0.95
 #define DEFAULT_NCOMP               INVALID_SUBSPACE_DIMENSION
 
-#define  DEFAULT_DO_CV               false 
+#define  DEFAULT_DO_CV               false
 #define  DEFAULT_NFOLDS              10
 #define  NFOLDS_KEY                  "BOOTSTRAP_NFOLDS"
 
@@ -50,9 +50,9 @@ typedef struct {
   UTIL_TYPE_ID_DECLARATION;
   std_enkf_data_type   * std_enkf_data;
   cv_enkf_data_type    * cv_enkf_data;
-  rng_type             * rng; 
+  rng_type             * rng;
   long                   option_flags;
-  bool                   doCV;  
+  bool                   doCV;
 } bootstrap_enkf_data_type;
 
 
@@ -84,7 +84,7 @@ void * bootstrap_enkf_data_alloc( rng_type * rng ) {
 
   boot_data->std_enkf_data = std_enkf_data_alloc( NULL );
   boot_data->cv_enkf_data = cv_enkf_data_alloc( rng );
-  
+
   boot_data->rng = rng;
   bootstrap_enkf_set_truncation( boot_data , DEFAULT_TRUNCATION );
   bootstrap_enkf_set_subspace_dimension( boot_data , DEFAULT_NCOMP );
@@ -114,11 +114,11 @@ static int ** alloc_iens_resample( rng_type * rng , int ens_size ) {
   iens_resample = util_calloc( ens_size , sizeof * iens_resample );
   for (iens = 0; iens < ens_size; iens++)
     iens_resample[iens] = util_calloc( ens_size , sizeof( ** iens_resample ) );
-  
+
   {
     int i,j;
     for (i=0; i < ens_size; i++)
-      for (j=0; j < ens_size; j++) 
+      for (j=0; j < ens_size; j++)
         iens_resample[i][j] = rng_get_int( rng , ens_size );
   }
   return iens_resample;
@@ -133,14 +133,15 @@ static void free_iens_resample( int ** iens_resample, int ens_size ) {
 
 
 
-void bootstrap_enkf_updateA(void * module_data , 
-                            matrix_type * A , 
-                            matrix_type * S , 
-                            matrix_type * R , 
-                            matrix_type * dObs , 
+void bootstrap_enkf_updateA(void * module_data ,
+                            matrix_type * A ,
+                            matrix_type * S ,
+                            matrix_type * R ,
+                            matrix_type * dObs ,
                             matrix_type * E ,
-                            matrix_type * D ) {
-  
+                            matrix_type * D ,
+                            module_info_type* module_info) {
+
   bootstrap_enkf_data_type * bootstrap_data = bootstrap_enkf_data_safe_cast( module_data );
   {
     const int num_cpu_threads = 4;
@@ -152,7 +153,7 @@ void bootstrap_enkf_updateA(void * module_data ,
     int ** iens_resample      = alloc_iens_resample( bootstrap_data->rng , ens_size );
     {
       int ensemble_members_loop;
-      for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
+      for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) {
         int unique_bootstrap_components;
         int ensemble_counter;
         /* Resample A and meas_data. Here we are careful to resample the working copy.*/
@@ -169,12 +170,12 @@ void bootstrap_enkf_updateA(void * module_data ,
             unique_bootstrap_components = int_vector_size( bootstrap_components );
             int_vector_free( bootstrap_components );
           }
-          
+
           if (bootstrap_data->doCV) {
             const bool_vector_type * ens_mask = NULL;
             cv_enkf_init_update( bootstrap_data->cv_enkf_data , ens_mask , S_resampled , R , dObs , E , D);
             cv_enkf_initX( bootstrap_data->cv_enkf_data , X , A_resampled , S_resampled , R , dObs , E , D);
-          } else 
+          } else
             std_enkf_initX(bootstrap_data->std_enkf_data , X , NULL , S_resampled,R, dObs, E,D );
 
 
@@ -185,7 +186,7 @@ void bootstrap_enkf_updateA(void * module_data ,
         }
       }
     }
-    
+
 
     free_iens_resample( iens_resample , ens_size);
     matrix_free( X );
@@ -282,18 +283,18 @@ analysis_table_type LINK_NAME = {
   .name            = "BOOTSTRAP_ENKF",
   .alloc           = bootstrap_enkf_data_alloc,
   .freef           = bootstrap_enkf_data_free,
-  .set_int         = bootstrap_enkf_set_int , 
-  .set_double      = bootstrap_enkf_set_double , 
-  .set_bool        = bootstrap_enkf_set_bool , 
-  .set_string      = NULL , 
-  .get_options     = bootstrap_enkf_get_options , 
+  .set_int         = bootstrap_enkf_set_int ,
+  .set_double      = bootstrap_enkf_set_double ,
+  .set_bool        = bootstrap_enkf_set_bool ,
+  .set_string      = NULL ,
+  .get_options     = bootstrap_enkf_get_options ,
   .initX           = NULL,
-  .updateA         = bootstrap_enkf_updateA, 
+  .updateA         = bootstrap_enkf_updateA,
   .init_update     = NULL,
-  .complete_update = NULL, 
+  .complete_update = NULL,
   .has_var         = bootstrap_enkf_has_var,
   .get_int         = bootstrap_enkf_get_int,
   .get_double      = bootstrap_enkf_get_double,
   .get_bool        = NULL,
-  .get_ptr         = NULL, 
+  .get_ptr         = NULL,
 };

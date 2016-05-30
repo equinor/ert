@@ -26,6 +26,7 @@ extern "C" {
 #include <ert/util/matrix.h>
 #include <ert/util/bool_vector.h>
 
+#include <ert/analysis/module_info.h>
 
 /*
    These are option flag values which are used by the core ert code to
@@ -94,7 +95,8 @@ typedef enum {
                                matrix_type * R ,
                                matrix_type * dObs ,
                                matrix_type * E ,
-                               matrix_type * D );
+                               matrix_type * D ,
+                               module_info_type* module_info);
 
 
   void                   analysis_module_init_update( analysis_module_type * module ,

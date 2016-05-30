@@ -271,9 +271,10 @@ void analysis_module_updateA(analysis_module_type * module ,
                              matrix_type * R ,
                              matrix_type * dObs ,
                              matrix_type * E ,
-                             matrix_type * D ) {
+                             matrix_type * D ,
+                             module_info_type* module_info) {
 
-  module->updateA(module->module_data , A , S , R , dObs , E , D );
+  module->updateA(module->module_data , A , S , R , dObs , E , D, module_info);
 }
 
 
@@ -295,9 +296,6 @@ void analysis_module_complete_update( analysis_module_type * module ) {
   if (module->complete_update != NULL)
     module->complete_update( module->module_data );
 }
-
-
-
 
 /*****************************************************************/
 
