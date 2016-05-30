@@ -255,7 +255,7 @@ job_queue_node_type * job_queue_node_alloc_simple( const char * job_name ,
                                                    const char * run_cmd ,
                                                    int argc ,
                                                    const char ** argv) {
-  return job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, NULL , NULL, NULL, NULL, NULL, NULL);
+  return job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, NULL , NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 
@@ -266,6 +266,7 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
                                             const char ** argv,
                                             int num_cpu,
                                             const char * ok_file,
+                                            const char * status_file,
                                             const char * exit_file,
                                             job_callback_ftype * done_callback,
                                             job_callback_ftype * retry_callback,
@@ -294,6 +295,12 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
         node->ok_file = util_alloc_filename(node->run_path , ok_file , NULL);
       else
         node->ok_file = NULL;
+
+      if (status_file)
+        node->status_file = util_alloc_filename(node->run_path , status_file , NULL);
+      else
+        node->status_file = NULL;
+      node->confirmed_running = false;
 
       if (exit_file)
         node->exit_file = util_alloc_filename(node->run_path , exit_file , NULL);
@@ -382,8 +389,8 @@ time_t job_queue_node_get_submit_time( const job_queue_node_type * node ) {
   return node->submit_time;
 }
 
-time_t job_queue_node_time_since_sim_start (const job_queue_node_type * node ) {
-  return difftime(time(NULL), node->sim_start);
+double job_queue_node_time_since_sim_start (const job_queue_node_type * node ) {
+  return util_difftime_seconds( node->sim_start , time(NULL));
 }
 
 bool job_queue_node_run_DONE_callback( job_queue_node_type * node ) {
@@ -475,25 +482,43 @@ submit_status_type job_queue_node_submit( job_queue_node_type * node , job_queue
   return submit_status;
 }
 
+static bool job_queue_node_status_update_confirmed_running__(job_queue_node_type * node) {
+  if (node->confirmed_running)
+      return true;
+
+  if (!node->status_file) {
+    node->confirmed_running = true;
+    return true;
+  }
+
+  if (util_file_exists(node->status_file))
+    node->confirmed_running = true;
+  return node->confirmed_running;
+}
+
 // if status = running, and current_time > sim_start + max_confirm_wait
 // (usually 2 min), check if job is confirmed running (status_file exists).
 // If not confirmed, set job to JOB_QUEUE_FAILED.
-bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver) {
+bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver ) {
   bool status_change = false;
-  pthread_mutex_lock( &node->data_mutex );
+  pthread_mutex_lock(&node->data_mutex);
   {
     if (node->job_data) {
       job_status_type current_status = job_queue_node_get_status(node);
-      if ((current_status & JOB_QUEUE_RUNNING) && !job_queue_node_status_confirmed_running(node)) {
+
+      bool confirmed = job_queue_node_status_update_confirmed_running__(node);
+
+      if ((current_status & JOB_QUEUE_RUNNING) && !confirmed) {
         // it's running, but not confirmed running.
-        time_t runtime = job_queue_node_time_since_sim_start(node);
-        if (runtime > node->max_confirm_wait) {
+        double runtime = job_queue_node_time_since_sim_start(node);
+        if (runtime >= node->max_confirm_wait) {
           // max_confirm_wait has passed since sim_start without success; the job is dead
-          job_status_type new_status = JOB_QUEUE_FAILED;
+          job_status_type new_status = JOB_QUEUE_EXIT;
           status_change = job_queue_status_transition(status, current_status, new_status);
           job_queue_node_set_status(node, new_status);
         }
       }
+      current_status = job_queue_node_get_status(node);
       if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
         job_status_type new_status = queue_driver_get_status( driver , node->job_data);
         status_change = job_queue_status_transition(status , current_status , new_status);
@@ -504,7 +529,6 @@ bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status
   pthread_mutex_unlock( &node->data_mutex );
   return status_change;
 }
-
 
 bool job_queue_node_status_transition( job_queue_node_type * node , job_queue_status_type * status , job_status_type new_status) {
   bool status_change;
@@ -520,21 +544,16 @@ bool job_queue_node_status_transition( job_queue_node_type * node , job_queue_st
   return status_change;
 }
 
+void job_queue_node_set_max_confirmation_wait_time(job_queue_node_type * node, time_t time) {
+  node->max_confirm_wait = time;
+}
+
+
+
 bool job_queue_node_status_confirmed_running(job_queue_node_type * node) {
-  if (!node->status_file)
-    return node->confirmed_running;
-
-  if (node->confirmed_running)
-    return true;
-
-  pthread_mutex_lock(&node->data_mutex);
-  {
-    if (util_file_exists(node->status_file))
-      node->confirmed_running = true;
-  }
-  pthread_mutex_unlock(&node->data_mutex);
   return node->confirmed_running;
 }
+
 
 bool job_queue_node_kill( job_queue_node_type * node , job_queue_status_type * status , queue_driver_type * driver) {
   bool result = false;

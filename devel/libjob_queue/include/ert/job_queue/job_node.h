@@ -65,6 +65,7 @@ typedef struct job_queue_node_struct job_queue_node_type;
                                               const char ** argv ,
                                               int num_cpu ,
                                               const char * ok_file,
+                                              const char * status_file,
                                               const char * exit_file,
                                               job_callback_ftype * done_callback,
                                               job_callback_ftype * retry_callback,
@@ -97,7 +98,8 @@ typedef struct job_queue_node_struct job_queue_node_type;
   time_t job_queue_node_get_sim_start( const job_queue_node_type * node );
   time_t job_queue_node_get_sim_end( const job_queue_node_type * node );
   time_t job_queue_node_get_submit_time( const job_queue_node_type * node );
-  time_t job_queue_node_time_since_sim_start (const job_queue_node_type * node ) ;
+  double job_queue_node_time_since_sim_start( const job_queue_node_type * node ) ;
+  void job_queue_node_set_max_confirmation_wait_time( job_queue_node_type * node, time_t time );
 
   const char * job_queue_node_get_ok_file( const job_queue_node_type * node);
   const char * job_queue_node_get_status_file( const job_queue_node_type * node);
