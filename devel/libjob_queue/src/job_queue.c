@@ -559,6 +559,19 @@ void job_queue_iset_external_fail(job_queue_type * queue , int job_index) {
 }
 
 
+/*
+  This returns a pointer to a very internal datastructure; used by the
+  Job class in Python which interacts directly with the driver
+  implementation. This is too low level, and the whole Driver / Job
+  implementation in Python should be changed to only expose the higher
+  level queue class.
+*/
+
+void  * job_queue_iget_driver_data( job_queue_type * queue , int job_index) {
+  void * driver_data;
+  ASSIGN_LOCKED_ATTRIBUTE(driver_data, job_queue_node_get_driver_data , node );
+  return driver_data;
+}
 
 
 

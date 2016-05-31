@@ -94,6 +94,7 @@ extern "C" {
   int                 job_queue_get_num_complete( const job_queue_type * queue);
   int                 job_queue_get_num_failed( const job_queue_type * queue);
   int                 job_queue_get_num_killed( const job_queue_type * queue);
+  void              * job_queue_iget_driver_data( job_queue_type * queue , int job_index);
   const char        * job_queue_iget_failed_job(  job_queue_type * queue , int job_index);
   const char        * job_queue_iget_error_reason(  job_queue_type * queue , int job_index);
   const char        * job_queue_iget_stderr_capture(  job_queue_type * queue , int job_index);
