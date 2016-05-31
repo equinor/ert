@@ -122,22 +122,12 @@ int main(int argc, char ** argv) {
 
   util_install_signals();
   job_queue_set_driver(queue, driver);
-  job_queue_manager_start_queue(queue_manager, 0, false, true);
+  job_queue_manager_start_queue(queue_manager, number_of_jobs, false, true);
 
   {
     submit_jobs(queue, number_of_jobs, jobs);
 
-    job_queue_submit_complete(queue);
-
-    int x = job_queue_get_num_running( queue)+
-            job_queue_get_num_pending( queue) +
-            job_queue_get_num_waiting( queue) +
-            job_queue_get_num_complete(queue) +
-            job_queue_get_num_failed(  queue) +
-            job_queue_get_num_killed(  queue) +
-            job_queue_get_num_callback(queue);
-
-    if (x > 0) {
+    if (job_queue_get_active_size(queue) > 0) {
       job_queue_iset_max_confirm_wait_time(queue, 0, running_timeout); // job 0
     } else {
       util_exit("Job failed to be queued!\n");
