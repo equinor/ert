@@ -75,14 +75,14 @@ class Driver(BaseCClass):
     def is_driver_instance( self ):
         return True
 
-
+    
     def submit( self, name, cmd, run_path, argList, num_cpu=1, blocking=False):
         argc = len(argList)
         argv = (ctypes.c_char_p * argc)()
         argv[:] = map(str, argList)
-
+    
         c_ptr = self._submit(cmd, num_cpu, run_path, name, argc, argv)
-        job = Job( self , c_ptr )
+        job = Job( c_ptr , self )
         if blocking:
             job.block()
             job = None

@@ -126,7 +126,7 @@ class JobQueue(BaseCClass):
     _start_queue     = QueuePrototype("void job_queue_run_jobs( job_queue , int , bool)")
     _run_jobs        = QueuePrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
     _sim_start       = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
-
+    _iget_driver_data= QueuePrototype("void* job_queue_iget_driver_data( job_queue , int)")
     
     _num_running     = QueuePrototype("int  job_queue_get_num_running( job_queue )")
     _num_complete    = QueuePrototype("int  job_queue_get_num_complete( job_queue )")
@@ -223,8 +223,8 @@ class JobQueue(BaseCClass):
                                     len(argv),
                                     c_argv)
         
-        job_ptr = None
-        job = Job(self.driver, job_ptr , queue_index, False)
+        c_ptr = self._iget_driver_data( queue_index )
+        job = Job(c_ptr , self.driver, False)
         self.jobs.add_job(job, job_name)
         return job
 

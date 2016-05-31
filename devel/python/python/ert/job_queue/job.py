@@ -20,13 +20,15 @@ import datetime
 from ert.cwrap import BaseCClass
 from ert.job_queue import JobStatusType
 
-# The wrapping here and the interplay with the queue class is on a
-# 'barely working' standard.
+# This class and the interplay between this class and the Driver and
+# JobQueue classes is quite fragile; in particular the Job class
+# internalizes a void * pointer to the completely driver specific job
+# information - this is way too low level.
 
 class Job(BaseCClass):
     TYPE_NAME = "job"
 
-    def __init__(self, driver, c_ptr , blocking=False):
+    def __init__(self, c_ptr , driver ):
         self.driver = driver
         self.submit_time = datetime.datetime.now()
         super(Job , self).__init__( c_ptr )
