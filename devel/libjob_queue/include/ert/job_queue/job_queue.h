@@ -39,7 +39,7 @@ extern "C" {
   bool                job_queue_has_driver(const job_queue_type * queue );
   //void                job_queue_set_size( job_queue_type * job_queue , int size );
   void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
-  job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * exit_file);
+  job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * status_file, const char * exit_file);
   void                job_queue_free(job_queue_type *);
 
   int                 job_queue_add_job(job_queue_type * ,
@@ -67,6 +67,7 @@ extern "C" {
   time_t              job_queue_iget_sim_start( job_queue_type * queue, int job_index);
   time_t              job_queue_iget_sim_end( job_queue_type * queue, int job_index);
   time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);
+  void                job_queue_iset_max_confirm_wait_time( job_queue_type * queue, int job_index, time_t time );
 
   void                job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_seconds);
   int                 job_queue_get_max_job_duration(const job_queue_type * queue);
