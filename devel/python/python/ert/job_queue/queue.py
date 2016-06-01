@@ -122,7 +122,7 @@ class JobQueue(BaseCClass):
     _set_max_running = QueuePrototype("void job_queue_set_max_running( job_queue , int)")
     _get_max_running = QueuePrototype("int  job_queue_get_max_running( job_queue )")
     _set_driver      = QueuePrototype("void job_queue_set_driver( job_queue , void* )")
-    _add_job         = QueuePrototype("int   job_queue_add_job( job_queue , char* , void* , void* , void* , void* , int , char* , char* , int , char**)")
+    _add_job         = QueuePrototype("int  job_queue_add_job( job_queue , char* , void* , void* , void* , void* , int , char* , char* , int , char**)")
     _start_queue     = QueuePrototype("void job_queue_run_jobs( job_queue , int , bool)")
     _run_jobs        = QueuePrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
     _sim_start       = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
@@ -136,7 +136,7 @@ class JobQueue(BaseCClass):
     _is_running      = QueuePrototype("bool job_queue_is_running( job_queue )")
     _submit_complete = QueuePrototype("void job_queue_submit_complete( job_queue )")
     _iget_sim_start  = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
-    _get_active_size = QueuePrototype("int job_queue_get_active_size( job_queue )")
+    _get_active_size = QueuePrototype("int  job_queue_get_active_size( job_queue )")
     _get_pause       = QueuePrototype("bool job_queue_get_pause(job_queue)")
     _set_pause_on    = QueuePrototype("void job_queue_set_pause_on(job_queue)")
     _set_pause_off   = QueuePrototype("void job_queue_set_pause_off(job_queue)")
@@ -184,7 +184,7 @@ class JobQueue(BaseCClass):
         self.start(blocking=False)
         if driver:
             self.driver = driver
-            self._set_driver(driver.c_ptr)
+            self._set_driver(driver.from_param(driver))
 
 
     def kill_job(self, index):
@@ -211,8 +211,7 @@ class JobQueue(BaseCClass):
         exit_callback = None
 
 
-        queue_index = self._add_job(self,
-                                    cmd,
+        queue_index = self._add_job(cmd,
                                     done_callback,
                                     retry_callback,
                                     exit_callback,
@@ -224,7 +223,7 @@ class JobQueue(BaseCClass):
                                     c_argv)
         
         c_ptr = self._iget_driver_data( queue_index )
-        job = Job(c_ptr , self.driver, False)
+        job = Job(c_ptr , self.driver)
         self.jobs.add_job(job, job_name)
         return job
 
