@@ -602,6 +602,18 @@ void job_queue_node_free_driver_data( job_queue_node_type * node , queue_driver_
 }
 
 
+/*
+  This returns a pointer to a very internal datastructure; used by the
+  Job class in Python which interacts directly with the driver
+  implementation. This is too low level, and the whole Driver / Job
+  implementation in Python should be changed to only expose the higher
+  level queue class.
+*/
+
+void * job_queue_node_get_driver_data( job_queue_node_type * node ) {
+  return node->job_data;
+}
+
 
 void job_queue_node_restart( job_queue_node_type * node , job_queue_status_type * status) {
   pthread_mutex_lock( &node->data_mutex );
