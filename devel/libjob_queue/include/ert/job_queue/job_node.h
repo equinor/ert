@@ -111,6 +111,8 @@ typedef struct job_queue_node_struct job_queue_node_type;
   int job_queue_node_get_queue_index( const job_queue_node_type * node );
   void job_queue_node_set_queue_index( job_queue_node_type * node , int queue_index);
 
+  void * job_queue_node_get_driver_data( job_queue_node_type * node );
+
   UTIL_IS_INSTANCE_HEADER( job_queue_node );
   UTIL_SAFE_CAST_HEADER( job_queue_node );
 

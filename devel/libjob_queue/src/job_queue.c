@@ -559,6 +559,19 @@ void job_queue_iset_external_fail(job_queue_type * queue , int job_index) {
 }
 
 
+/*
+  This returns a pointer to a very internal datastructure; used by the
+  Job class in Python which interacts directly with the driver
+  implementation. This is too low level, and the whole Driver / Job
+  implementation in Python should be changed to only expose the higher
+  level queue class.
+*/
+
+void  * job_queue_iget_driver_data( job_queue_type * queue , int job_index) {
+  void * driver_data;
+  ASSIGN_LOCKED_ATTRIBUTE(driver_data, job_queue_node_get_driver_data , node );
+  return driver_data;
+}
 
 
 
@@ -855,7 +868,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
   int trylock = pthread_mutex_trylock( &queue->run_mutex );
   if (trylock != 0)
     util_abort("%s: another thread is already running the queue_manager\n",__func__);
-  else {
+  else if (!queue->user_exit) {
     /* OK - we have got an exclusive lock to the run_jobs code. */
 
     //Check if queue is open. Fails hard if not open
@@ -867,13 +880,13 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
       too many threads.
     */
     const int NUM_WORKER_THREADS = 4;
-    queue->running = true;
     queue->work_pool = thread_pool_alloc( NUM_WORKER_THREADS , true );
     {
       bool new_jobs         = false;
       bool cont             = true;
       int  phase = 0;
 
+      queue->running = true;
       do {
         bool local_user_exit = false;
         job_list_get_rdlock( queue->job_list );
@@ -1051,11 +1064,6 @@ void job_queue_start_manager_thread( job_queue_type * job_queue , pthread_t * qu
   arg_pack_append_int(queue_args  , job_size);
   arg_pack_append_bool(queue_args , verbose);
 
-  /*
-    The running status of the job is set to true here; this is to
-    guarantee that if calling scope queries the status of the queue
-    before queue_thread has actually started running the queue.
-  */
   job_queue->running = true;
   pthread_create( queue_thread , NULL , job_queue_run_jobs__ , queue_args);
 }
@@ -1259,15 +1267,38 @@ void job_queue_set_pause_off( job_queue_type * job_queue) {
 }
 
 /*
-  An external thread sets the user_exit flag to true, then subsequently the
-  thread managing the queue will see this, and close down the queue.
+  An external thread sets the user_exit flag to true, then
+  subsequently the thread managing the queue will see this, and close
+  down the queue. Will check that the queue is actually running before
+  setting the user_exit flag. If the queue does not change to running
+  state within a timeout limit the user_exit flag is not set, and the
+  function return false.
 */
 
-void job_queue_user_exit( job_queue_type * queue) {
-  queue->user_exit = true;
+bool job_queue_start_user_exit( job_queue_type * queue) {
+  if (!queue->user_exit) {
+    int timeout_limit = 10 * 1000000;  // 10 seconds
+    int usleep_time   =       100000;  // 0.1 second
+    int total_sleep   = 0;
+
+    while (true) {
+      if (queue->running) {
+        queue->user_exit = true;
+        break;
+    }
+      usleep( usleep_time );
+      total_sleep += usleep_time;
+
+      if (total_sleep > timeout_limit)
+        break;
+    }
+  }
+  return queue->user_exit;
 }
 
-
+bool job_queue_get_user_exit( const job_queue_type * queue) {
+  return queue->user_exit;
+}
 
 void job_queue_free(job_queue_type * queue) {
   util_safe_free( queue->ok_file );

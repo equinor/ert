@@ -163,7 +163,7 @@ void * global_status( void * arg ) {
 
       if (job_queue_accept_jobs( job_queue )) {
         exit_called = true;
-        job_queue_user_exit( job_queue );
+        job_queue_start_user_exit( job_queue );
       }
     }
 
