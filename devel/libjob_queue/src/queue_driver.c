@@ -272,7 +272,6 @@ bool queue_driver_has_option(queue_driver_type * driver, const char * option_key
 /*****************************************************************/
 
 const void * queue_driver_get_option(queue_driver_type * driver, const char * option_key) {
-  printf("driver: %p key: %s\n", driver, option_key);
   if (queue_driver_has_generic_option__(driver, option_key)) {
     return queue_driver_get_generic_option__(driver, option_key);
   } else if (driver->get_option != NULL)
