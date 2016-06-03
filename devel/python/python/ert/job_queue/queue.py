@@ -44,7 +44,7 @@ class JobQueue(BaseCClass):
     # necessary to explitly inform the queue layer when all jobs have
     # been submitted.
     TYPE_NAME        = "job_queue"
-    _alloc           = QueuePrototype("void* job_queue_alloc( int , char* , char* )" , bind = False)
+    _alloc           = QueuePrototype("void* job_queue_alloc( int , char* , char* , char* )" , bind = False)
     _start_user_exit = QueuePrototype("bool job_queue_start_user_exit( job_queue )")
     _get_user_exit   = QueuePrototype("bool job_queue_get_user_exit( job_queue )")
     _free            = QueuePrototype("void job_queue_free( job_queue )")
@@ -99,9 +99,10 @@ class JobQueue(BaseCClass):
             """
 
         OK_file = None
+        status_file = None
         exit_file = None
 
-        c_ptr = self._alloc(max_submit, OK_file, exit_file)
+        c_ptr = self._alloc(max_submit, OK_file, status_file , exit_file)
         super(JobQueue, self).__init__(c_ptr)
         self.size = size
 
