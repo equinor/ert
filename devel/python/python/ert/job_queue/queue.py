@@ -29,79 +29,8 @@ from ert.job_queue import Job, JobStatusType
 
 
 
-class JobList:
-    def __init__(self):
-        self.job_list = []
-        self.job_dict = {}
 
 
-    def __getitem__(self, index):
-        job = None
-        if isinstance(index, StringType):
-            job = self.job_dict.get(index)
-        elif isinstance(index, IntType):
-            try:
-                job = self.job_list[index]
-            except LookupError:
-                job = None
-        return job
-
-
-    def add_job( self, job, job_name ):
-        job_index = len(self.job_list)
-        job.job_nr = job_index
-        self.job_dict[job_name] = job
-        self.job_list.append(job)
-
-
-    @property
-    def size(self):
-        return len(self.job_list)
-
-
-class exList:
-    def __init__(self, job_list):
-        self.job_list = job_list
-
-    def __getitem__(self, index):
-        job = self.job_list.__getitem__(index)
-        if job:
-            return True
-        else:
-            return False
-
-
-class statusList:
-    def __init__(self, job_list ):
-        self.job_list = job_list
-
-    def __getitem__(self, index):
-        job = self.job_list.__getitem__(index)
-        if job:
-            return job.status()
-        else:
-            return None
-
-
-class runtimeList:
-    def __init__(self, job_list, queue):
-        """
-        @type job_list: JobList
-        @type queue: JobQueue
-        """
-        self.job_list = job_list
-        self.queue = queue
-
-    def __getitem__(self, index):
-        job = self.job_list.__getitem__(index)
-        if job:
-            sim_start = self.queue.igetSimStart( job.job_nr )
-            if not sim_start.ctime() == -1:
-                return time.time() - sim_start.ctime()
-            else:
-                return None
-        else:
-            return None
 
 
 class JobQueue(BaseCClass):
@@ -123,6 +52,7 @@ class JobQueue(BaseCClass):
     _get_max_running = QueuePrototype("int  job_queue_get_max_running( job_queue )")
     _set_driver      = QueuePrototype("void job_queue_set_driver( job_queue , void* )")
     _add_job         = QueuePrototype("int  job_queue_add_job( job_queue , char* , void* , void* , void* , void* , int , char* , char* , int , char**)")
+    _kill_job        = QueuePrototype("bool job_queue_kill_job( job_queue , int )")
     _start_queue     = QueuePrototype("void job_queue_run_jobs( job_queue , int , bool)")
     _run_jobs        = QueuePrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
     _sim_start       = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
@@ -173,13 +103,8 @@ class JobQueue(BaseCClass):
 
         c_ptr = self._alloc(max_submit, OK_file, exit_file)
         super(JobQueue, self).__init__(c_ptr)
-
-        self.jobs = JobList()
         self.size = size
 
-        self.exists = exList(self.jobs)
-        self.status = statusList(self.jobs)
-        self.run_time = runtimeList(self.jobs, self)
 
         self.start(blocking=False)
         if driver:
@@ -187,14 +112,13 @@ class JobQueue(BaseCClass):
             self._set_driver(driver.from_param(driver))
 
 
-    def kill_job(self, index):
+    def kill_job(self, queue_index):
         """
         Will kill job nr @index.
         """
-        job = self.jobs.__getitem__(index)
-        if job:
-            job.kill()
+        self._kill_job( queue_index )
 
+        
     def start( self, blocking=False):
         verbose = False
         self._run_jobs(self.size, verbose)
@@ -203,7 +127,6 @@ class JobQueue(BaseCClass):
     def submit( self, cmd, run_path, job_name, argv, num_cpu=1):
         c_argv = (ctypes.c_char_p * len(argv))()
         c_argv[:] = argv
-        job_index = self.jobs.size
 
         done_callback = None
         callback_arg = None
@@ -222,10 +145,7 @@ class JobQueue(BaseCClass):
                                     len(argv),
                                     c_argv)
         
-        c_ptr = self._iget_driver_data( queue_index )
-        job = Job(c_ptr , self.driver)
-        self.jobs.add_job(job, job_name)
-        return job
+        return queue_index
 
 
     def clear( self ):

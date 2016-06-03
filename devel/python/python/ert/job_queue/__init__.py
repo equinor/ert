@@ -84,7 +84,7 @@ class QueuePrototype(Prototype):
 #from .job_status_type_enum import JobStatusType
 from .job_status_type_enum import JobStatusType
 from .job import Job
-from .queue import JobList, JobQueue, statusList, exList, runtimeList
+from .queue import JobQueue
 from .job_queue_manager import JobQueueManager
 from .driver import QueueDriverEnum, Driver, LSFDriver, RSHDriver, LocalDriver
 from .ext_job import ExtJob

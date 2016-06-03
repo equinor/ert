@@ -36,6 +36,12 @@ QueueDriverEnum.addEnum( "TORQUE_DRIVER" , 4 )
 QueueDriverEnum.registerEnum(JOB_QUEUE_LIB, "queue_driver_enum")    
 
 
+LSF_DRIVER   = QueueDriverEnum.LSF_DRIVER
+RSH_DRIVER   = QueueDriverEnum.RSH_DRIVER
+LOCAL_DRIVER = QueueDriverEnum.LOCAL_DRIVER
+
+
+
 class Driver(BaseCClass):
     TYPE_NAME = "driver"
     _alloc = QueuePrototype("void* queue_driver_alloc( queue_driver_enum )" , bind = False)
