@@ -17,9 +17,10 @@
 Module implementing a queue for managing external jobs.
 
 """
-import ctypes
+import sys
 from types import StringType, IntType
 import time
+import ctypes
 
 from ert.cwrap import BaseCClass,BaseCEnum
 
@@ -78,7 +79,7 @@ class JobQueue(BaseCClass):
     _get_job_status  = QueuePrototype("int job_queue_iget_job_status(job_queue, int)")
 
 
-    def __init__(self, driver=None, max_submit=1, size=0):
+    def __init__(self, driver , max_submit=1, size=0):
         """
         Short doc...
         
@@ -106,12 +107,10 @@ class JobQueue(BaseCClass):
         super(JobQueue, self).__init__(c_ptr)
         self.size = size
 
-
-        self.start(blocking=False)
-        if driver:
-            self.driver = driver
-            self._set_driver(driver.from_param(driver))
-
+        self.driver = driver
+        self._set_driver(driver.from_param(driver))
+        self.start( blocking=False )
+            
 
     def kill_job(self, queue_index):
         """
@@ -134,7 +133,6 @@ class JobQueue(BaseCClass):
         retry_callback = None
         exit_callback = None
 
-
         queue_index = self._add_job(cmd,
                                     done_callback,
                                     retry_callback,
@@ -145,7 +143,7 @@ class JobQueue(BaseCClass):
                                     job_name,
                                     len(argv),
                                     c_argv)
-        
+
         return queue_index
 
 
@@ -245,7 +243,7 @@ class JobQueue(BaseCClass):
         self._set_pause_off( )
 
     def free(self):
-        self._free(self)
+        self._free( )
 
     def __len__(self):
         return self._get_active_size( )
