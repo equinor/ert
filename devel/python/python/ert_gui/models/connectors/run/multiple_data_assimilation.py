@@ -29,7 +29,7 @@ class MultipleDataAssimilation(BaseRunModel):
     """
 
     def __init__(self):
-        super(MultipleDataAssimilation, self).__init__(name="Multiple Data Assimilation", phase_count=2)
+        super(MultipleDataAssimilation, self).__init__(name="Multiple Data Assimilation (ES MDA)", phase_count=2)
         self.weights = "1" # default value
 
     def getWeights(self):
