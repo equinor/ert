@@ -36,9 +36,16 @@ QueueDriverEnum.addEnum( "TORQUE_DRIVER" , 4 )
 QueueDriverEnum.registerEnum(JOB_QUEUE_LIB, "queue_driver_enum")    
 
 
+LSF_DRIVER   = QueueDriverEnum.LSF_DRIVER
+RSH_DRIVER   = QueueDriverEnum.RSH_DRIVER
+LOCAL_DRIVER = QueueDriverEnum.LOCAL_DRIVER
+
+
+
 class Driver(BaseCClass):
     TYPE_NAME = "driver"
     _alloc = QueuePrototype("void* queue_driver_alloc( queue_driver_enum )" , bind = False)
+    _free = QueuePrototype("void queue_driver_free( driver )")
     _set_option = QueuePrototype("void queue_driver_set_option( driver , char* , char*)")
     _submit = QueuePrototype("void* queue_driver_submit_job( driver , char* , int , char* , char* , int , char**)")
     _free_job = QueuePrototype("void   queue_driver_free_job( driver , job )")
@@ -111,6 +118,9 @@ class Driver(BaseCClass):
     def name(self):
         return self._get_name(self)
 
+    def free(self):
+        self._free( )
+    
 
 class LSFDriver(Driver):
     def __init__(self,
