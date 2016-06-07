@@ -304,7 +304,6 @@ EnKFMain.cNamespace().get_workflow_list = cwrapper.prototype("ert_workflow_list_
 EnKFMain.cNamespace().get_hook_manager = cwrapper.prototype("hook_manager_ref enkf_main_get_hook_manager(enkf_main)")
 
 
-EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprintf_config(enkf_main)")
 EnKFMain.cNamespace().create_new_config = cwrapper.prototype("void enkf_main_create_new_config(char* , char*, char* , int)")
 
 EnKFMain.cNamespace().get_user_config_file = cwrapper.prototype("char* enkf_main_get_user_config_file(enkf_main)")

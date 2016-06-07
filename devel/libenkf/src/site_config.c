@@ -93,8 +93,6 @@ struct site_config_struct {
   hash_type * env_variables_site; /* The environment variables set in site_config file - not exported. */
 
   mode_t umask;
-  mode_t umask_site;
-
 
   char * license_root_path; /* The license_root_path value set by the user. */
   char * license_root_path_site; /* The license_root_path value set by the site. */
@@ -133,11 +131,7 @@ struct site_config_struct {
 
 void site_config_set_umask(site_config_type * site_config, mode_t new_mask) {
   umask(new_mask);
-
   site_config->umask = new_mask;
-  if (!site_config->user_mode)
-    site_config->umask_site = new_mask;
-
 }
 
 mode_t site_config_get_umask(const site_config_type * site_config) {
@@ -712,6 +706,7 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
      The string is supposed to be in OCTAL representation (without any
      prefix characters).
    */
+
   if (config_content_has_item(config, UMASK_KEY)) {
     const char * string_mask = config_content_get_value(config, UMASK_KEY);
     mode_t umask_value;
@@ -865,133 +860,6 @@ job_queue_type * site_config_get_job_queue(const site_config_type * site_config)
 
 void site_config_set_ens_size(site_config_type * site_config, int ens_size) {
   //job_queue_set_size( site_config->job_queue , ens_size );
-}
-
-/*****************************************************************/
-
-void site_config_fprintf_config(const site_config_type * site_config, FILE * stream) {
-  fprintf(stream, CONFIG_COMMENTLINE_FORMAT);
-  fprintf(stream, CONFIG_COMMENT_FORMAT, "Here comes system related information - which typically");
-  fprintf(stream, CONFIG_COMMENT_FORMAT, "overrides information from the site-wide configuration file.");
-  /* Starting with the user defined jobs. */
-  {
-    stringlist_type * joblist = ext_joblist_alloc_list(site_config->joblist);
-    char * fmt_key = util_alloc_sprintf(CONFIG_KEY_FORMAT, INSTALL_JOB_KEY);
-    char * install_fmt = util_alloc_sprintf("%s%s%s", fmt_key, CONFIG_VALUE_FORMAT, CONFIG_ENDVALUE_FORMAT);
-
-    for (int i = 0; i < stringlist_get_size(joblist); i++) {
-      ext_job_type * ext_job = ext_joblist_get_job(site_config->joblist, stringlist_iget(joblist, i));
-      if (ext_job_is_private(ext_job))
-        ext_job_fprintf_config(ext_job, install_fmt, stream);
-
-    }
-
-    free(install_fmt);
-    free(fmt_key);
-  }
-
-
-  /* Storing the env variables set with SETENV */
-  {
-    hash_iter_type * iter = hash_iter_alloc(site_config->env_variables_user);
-    while (!hash_iter_is_complete(iter)) {
-      const char * var = hash_iter_get_next_key(iter);
-      const char * user_value = hash_get(site_config->env_variables_user, var);
-      const char * site_value = hash_safe_get(site_config->env_variables_site, var);
-
-      if (!util_string_equal(user_value, site_value)) {
-        fprintf(stream, CONFIG_KEY_FORMAT, SETENV_KEY);
-        fprintf(stream, CONFIG_VALUE_FORMAT, var);
-        fprintf(stream, CONFIG_ENDVALUE_FORMAT, user_value);
-      }
-    }
-  }
-
-  /* Storing the driver type setting: */
-  if (site_config->driver_type != site_config->driver_type_site) {
-    fprintf(stream, CONFIG_KEY_FORMAT, QUEUE_SYSTEM_KEY);
-    fprintf(stream, CONFIG_ENDVALUE_FORMAT, site_config_get_queue_name(site_config));
-  }
-
-  /* Storing UMASK setting */
-  if (site_config->umask != site_config->umask_site) {
-    fprintf(stream, CONFIG_KEY_FORMAT, UMASK_KEY);
-    fprintf(stream, "%o\n", site_config->umask);
-  }
-
-  /* Storing MAX_SUBMIT setting */
-  if (site_config->max_submit != site_config->max_submit_site) {
-    fprintf(stream, CONFIG_KEY_FORMAT, MAX_SUBMIT_KEY);
-    fprintf(stream, "%d\n", site_config->max_submit);
-  }
-
-  /* Storing LICENSE_ROOT_PATH */
-  if (!util_string_equal(site_config->license_root_path, site_config->license_root_path_site)) {
-    fprintf(stream, CONFIG_KEY_FORMAT, LICENSE_PATH_KEY);
-    fprintf(stream, CONFIG_ENDVALUE_FORMAT, site_config->license_root_path);
-  }
-
-  /* Storing jobscript */
-  if (!util_string_equal(site_config->job_script, site_config->job_script_site)) {
-    fprintf(stream, CONFIG_KEY_FORMAT, LICENSE_PATH_KEY);
-    fprintf(stream, CONFIG_ENDVALUE_FORMAT, site_config->job_script);
-  }
-
-  /* Storing local settings. */
-  if (site_config_get_max_running_local(site_config) != site_config->max_running_local_site) {
-    fprintf(stream, CONFIG_KEY_FORMAT, MAX_RUNNING_LOCAL_KEY);
-    fprintf(stream, CONFIG_INT_FORMAT, site_config_get_max_running_local(site_config));
-    fprintf(stream, "\n");
-  }
-
-  /* Storing LSF settings. */
-  {
-    if (site_config_get_max_running_lsf(site_config) != site_config->max_running_lsf_site) {
-      fprintf(stream, CONFIG_KEY_FORMAT, MAX_RUNNING_LSF_KEY);
-      fprintf(stream, CONFIG_INT_FORMAT, site_config_get_max_running_lsf(site_config));
-      fprintf(stream, "\n");
-    }
-
-    if (!util_string_equal(site_config_get_lsf_queue(site_config), site_config->lsf_queue_name_site)) {
-      fprintf(stream, CONFIG_KEY_FORMAT, LSF_QUEUE_KEY);
-      fprintf(stream, CONFIG_ENDVALUE_FORMAT, site_config_get_lsf_queue(site_config));
-    }
-
-    if (!util_string_equal(site_config_get_lsf_request(site_config), site_config->lsf_request_site)) {
-      fprintf(stream, CONFIG_KEY_FORMAT, LSF_RESOURCES_KEY);
-      fprintf(stream, CONFIG_ENDVALUE_FORMAT, site_config_get_lsf_request(site_config));
-    }
-  }
-
-
-  /* Storing RSH settings. */
-  {
-    if (site_config_get_max_running_rsh(site_config) != site_config->max_running_rsh_site) {
-      fprintf(stream, CONFIG_KEY_FORMAT, MAX_RUNNING_RSH_KEY);
-      fprintf(stream, CONFIG_INT_FORMAT, site_config_get_max_running_rsh(site_config));
-      fprintf(stream, "\n");
-    }
-
-    if (!util_string_equal(site_config_get_rsh_command(site_config), site_config->rsh_command_site)) {
-      fprintf(stream, CONFIG_KEY_FORMAT, LICENSE_PATH_KEY);
-      fprintf(stream, CONFIG_ENDVALUE_FORMAT, site_config_get_rsh_command(site_config));
-    }
-
-    {
-      queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
-      hash_type * host_list = hash_safe_cast((void *) queue_driver_get_option(rsh_driver, RSH_HOSTLIST));
-      hash_iter_type * iter = hash_iter_alloc(host_list);
-      while (!hash_iter_is_complete(iter)) {
-        const char * host_name = hash_iter_get_next_key(iter);
-        fprintf(stream, CONFIG_KEY_FORMAT, RSH_HOST_KEY);
-        fprintf(stream, "%s:%d\n", host_name, hash_get_int(host_list, host_name));
-      }
-      hash_iter_free(iter);
-    }
-  }
-
-
-  fprintf(stream, "\n\n");
 }
 
 /*****************************************************************/
