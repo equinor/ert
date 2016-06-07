@@ -6,6 +6,7 @@ set(TEST_SOURCES
     test_block_obs.py
     test_custom_kw_config_set.py
     test_ecl_config.py
+    test_es_update.py
     test_enkf.py
     test_enkf_fs.py
     test_enkf_fs_manager1.py
@@ -39,7 +40,7 @@ set(TEST_SOURCES
 )
 
 add_python_package("python.tests.ert.enkf" ${PYTHON_INSTALL_PREFIX}/tests/ert/enkf "${TEST_SOURCES}" False)
-
+addPythonTest(ert.enkf.es_update tests.ert.enkf.test_es_update.ESUpdateTest)
 addPythonTest(ert.enkf.forward_load_context tests.ert.enkf.test_forward_load_context.ForwardLoadContextTest)
 addPythonTest(ert.enkf.enkf tests.ert.enkf.test_enkf.EnKFTest LABELS StatoilData)
 addPythonTest(ert.enkf.enkf_obs tests.ert.enkf.test_enkf_obs.EnKFObsTest LABELS StatoilData)
