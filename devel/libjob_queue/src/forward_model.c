@@ -30,6 +30,7 @@
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/forward_model.h>
 
+
 /**
    This file implements a 'forward-model' object. I
 */
@@ -192,7 +193,10 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
   used when running the remote jobs.
 */
 
-void forward_model_python_fprintf(const forward_model_type * forward_model , const char * path, const subst_list_type * global_args) {
+void forward_model_python_fprintf(const forward_model_type * forward_model ,
+                                  const char * path,
+                                  const subst_list_type * global_args,
+                                  mode_t umask) {
   char * module_file = util_alloc_filename(path , DEFAULT_JOB_MODULE , NULL);
   FILE * stream      = util_fopen(module_file , "w");
   int i;
@@ -205,6 +209,7 @@ void forward_model_python_fprintf(const forward_model_type * forward_model , con
       fprintf(stream,",\n");
   }
   fprintf(stream , "]\n");
+  fprintf(stream, "umask = %04o\n", umask);
   fclose(stream);
   free(module_file);
 }
