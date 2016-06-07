@@ -9,6 +9,7 @@ class ESUpdate(BaseCClass):
         assert isinstance(ert , BaseCClass)
         super(ESUpdate, self).__init__(ert.from_param(ert).value , parent=ert , is_reference=True)
         self.ert = ert
+        self.analysis_config = self.ert.analysisConfig( )
 
 
     def hasModule(self, name):
@@ -34,4 +35,5 @@ class ESUpdate(BaseCClass):
         return self._smoother_update(data_fs , target_fs )
 
     
+
     

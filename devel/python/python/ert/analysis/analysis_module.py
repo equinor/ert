@@ -23,6 +23,7 @@ class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
     
     _alloc_external      = AnalysisPrototype("void* analysis_module_alloc_external(rng, char*, char*)" , bind = False)
+    _alloc_internal      = AnalysisPrototype("void* analysis_module_alloc_internal(rng, char*, char*)" , bind = False)
     _free                = AnalysisPrototype("void analysis_module_free(analysis_module)")
     _get_lib_name        = AnalysisPrototype("char* analysis_module_get_lib_name(analysis_module)")
     _get_module_internal = AnalysisPrototype("bool analysis_module_internal(analysis_module)")
@@ -56,10 +57,27 @@ class AnalysisModule(BaseCClass):
         "CV_PEN_PRESS": {"type": bool, "description": "CV_PEN_PRESS"}
     }
 
-    def __init__(self, rng, user_name, lib_name):
-        c_ptr = self._alloc_external(rng, user_name, lib_name)
+    def __init__(self, rng , internal = None , external = None):
+        if internal is None and external is None:
+            raise ValueError("Must supply exactly one of internal or external")
+
+        if internal and external:
+            raise ValueError("Must supply exactly one of internal or external")
+
+        if external:
+            user_name , lib_name = external
+            c_ptr = self._alloc_external(rng, user_name, lib_name)
+        else:
+            # It is really the symbol table which is the important
+            # identifier which is used in the dlsym( ) call.
+            symbol_table = internal.lower() + "_symbol_table"
+            c_ptr = self._alloc_internal( rng , internal , symbol_table )
+            if not c_ptr:
+                raise KeyError("Failed to load internal module:%s" % internal)
+            
         super(AnalysisModule, self).__init__(c_ptr)
 
+        
     def getVariableNames(self):
         """ @rtype: list of str """
         items = []
