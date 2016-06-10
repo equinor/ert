@@ -45,13 +45,12 @@ def update(rng , mask , module , ert , meas_data , obs_data , state_size):
 class UpdateTest(ExtendedTestCase):
     def setUp(self):
         self.libname = clib.ert_lib_path + "/rml_enkf.so"
-        self.user    = "TEST"
         self.config_file = self.createTestPath("Statoil/config/obs_testing2/config")
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 
 
     def createAnalysisModule(self):
-        return AnalysisModule(self.rng, self.user, self.libname)
+        return AnalysisModule(self.rng, lib_name = self.libname)
         
         
     def test_it(self):

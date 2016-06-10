@@ -300,16 +300,15 @@ bool fwd_step_enkf_get_bool( const void * arg, const char * var_name) {
   }
 }
 
-
-
 #ifdef INTERNAL_LINK
-#define SYMBOL_TABLE fwd_step_enkf_symbol_table
+#define LINK_NAME FWD_STEP_ENKF
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
+#define LINK_NAME EXTERNAL_MODULE_SYMBOL
 #endif
 
 
-analysis_table_type SYMBOL_TABLE = {
+analysis_table_type LINK_NAME = {
+  .name            = "FWD_STEP_ENKF",
   .alloc           = fwd_step_enkf_data_alloc,
   .freef           = fwd_step_enkf_data_free,
   .set_int         = fwd_step_enkf_set_int ,

@@ -32,7 +32,6 @@
 #include <ert/analysis/std_enkf.h>
 #include <ert/analysis/cv_enkf.h>
 
-
 #define CV_ENKF_TYPE_ID 765523
 
 #define INVALID_SUBSPACE_DIMENSION  -1
@@ -694,16 +693,15 @@ bool cv_enkf_get_bool( const void * arg, const char * var_name) {
 }
 
 
-
-
 #ifdef INTERNAL_LINK
-#define SYMBOL_TABLE cv_enkf_symbol_table
+#define LINK_NAME CV_ENKF
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
+#define LINK_NAME EXTERNAL_MODULE_SYMBOL
 #endif
 
 
-analysis_table_type SYMBOL_TABLE = {
+analysis_table_type LINK_NAME = {
+  .name            = "CV_ENKF",
   .alloc           = cv_enkf_data_alloc,
   .freef           = cv_enkf_data_free,
   .set_int         = cv_enkf_set_int , 

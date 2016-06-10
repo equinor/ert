@@ -22,8 +22,8 @@ from ert.analysis import AnalysisPrototype
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
     
-    _alloc_external      = AnalysisPrototype("void* analysis_module_alloc_external(rng, char*, char*)" , bind = False)
-    _alloc_internal      = AnalysisPrototype("void* analysis_module_alloc_internal(rng, char*, char*)" , bind = False)
+    _alloc_external      = AnalysisPrototype("void* analysis_module_alloc_external(rng, char*)" , bind = False)
+    _alloc_internal      = AnalysisPrototype("void* analysis_module_alloc_internal(rng, char*)" , bind = False)
     _free                = AnalysisPrototype("void analysis_module_free(analysis_module)")
     _get_lib_name        = AnalysisPrototype("char* analysis_module_get_lib_name(analysis_module)")
     _get_module_internal = AnalysisPrototype("bool analysis_module_internal(analysis_module)")
@@ -57,23 +57,19 @@ class AnalysisModule(BaseCClass):
         "CV_PEN_PRESS": {"type": bool, "description": "CV_PEN_PRESS"}
     }
 
-    def __init__(self, rng , internal = None , external = None):
-        if internal is None and external is None:
-            raise ValueError("Must supply exactly one of internal or external")
+    def __init__(self, rng , name = None , lib_name = None):
+        if name is None and lib_name is None:
+            raise ValueError("Must supply exactly one of lib or lib_name")
 
-        if internal and external:
-            raise ValueError("Must supply exactly one of internal or external")
+        if name and lib_name:
+            raise ValueError("Must supply exactly one of name or lib_name")
 
-        if external:
-            user_name , lib_name = external
-            c_ptr = self._alloc_external(rng, user_name, lib_name)
+        if lib_name:
+            c_ptr = self._alloc_external(rng, lib_name )
         else:
-            # It is really the symbol table which is the important
-            # identifier which is used in the dlsym( ) call.
-            symbol_table = internal.lower() + "_symbol_table"
-            c_ptr = self._alloc_internal( rng , internal , symbol_table )
+            c_ptr = self._alloc_internal( rng , name )
             if not c_ptr:
-                raise KeyError("Failed to load internal module:%s" % internal)
+                raise KeyError("Failed to load internal module:%s" % name)
             
         super(AnalysisModule, self).__init__(c_ptr)
 
