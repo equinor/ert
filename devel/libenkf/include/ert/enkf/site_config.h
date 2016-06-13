@@ -98,7 +98,6 @@ typedef struct site_config_struct site_config_type;
 
   void                     site_config_set_umask( site_config_type * site_config , mode_t umask);
   mode_t                   site_config_get_umask( const site_config_type * site_config );
-  void                     site_config_fprintf_config( const site_config_type * site_config , FILE * stream );
 
   site_config_type       * site_config_alloc_empty();
   void                     site_config_add_config_items( config_parser_type * config , bool site_mode);

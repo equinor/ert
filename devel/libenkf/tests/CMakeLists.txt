@@ -375,6 +375,15 @@ add_test( enkf_export_inactive_cells
 #-----------------------------------------------------------------
 
 
+add_executable( enkf_umask_config_test enkf_umask_config_test.c )
+target_link_libraries( enkf_umask_config_test enkf test_util )
+
+add_test( enkf_umask_config_test
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_umask_config_test
+          ${PROJECT_SOURCE_DIR}/test-data/local/simple_config/config_umask)
+
+#-----------------------------------------------------------------
+
 add_executable( enkf_iter_config enkf_iter_config.c )
 target_link_libraries( enkf_iter_config enkf test_util )
 add_test( enkf_iter_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_iter_config )
