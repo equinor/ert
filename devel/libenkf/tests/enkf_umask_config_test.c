@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2016  Statoil ASA, Norway.
 
-   The file 'enkf_export_inactive_cells.c' is part of ERT - Ensemble based Reservoir Tool.
+   This file is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ int main(int argc , char ** argv) {
   enkf_main_install_SIGNALS();
 
   const char * config_file             = argv[1];
-  int iens                             = 0;
   ert_test_context_type * test_context = ert_test_context_alloc("VerifyJobsFileTest" , config_file);
   enkf_main_type * enkf_main           = ert_test_context_get_main(test_context);
 
@@ -46,12 +45,16 @@ int main(int argc , char ** argv) {
     bool_vector_free(iactive);
   }
 
-  const char * filename = util_alloc_filename(ert_test_context_get_cwd(test_context),"simulations/run0/jobs.py", NULL);
+  const char * filename = util_alloc_filename(ert_test_context_get_cwd(test_context),
+                                              "simulations/run0/jobs.py", NULL);
   const char * jobs_file_content = util_fread_alloc_file_content(filename, NULL);
 
-  test_assert_true (strstr(jobs_file_content, "umask = 0022") != NULL);
+  test_assert_true  (strstr(jobs_file_content, "umask = 0022") != NULL);
+  test_assert_false (strstr(jobs_file_content, "umask = 0023") != NULL);
+  test_assert_false (strstr(jobs_file_content, "umask = 0032") != NULL);
+  test_assert_false (strstr(jobs_file_content, "umask = 0122") != NULL);
+  test_assert_false (strstr(jobs_file_content, "umask = 1022") != NULL);
 
   ert_test_context_free(test_context);
   exit(0);
 }
-

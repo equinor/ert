@@ -380,7 +380,7 @@ target_link_libraries( enkf_umask_config_test enkf test_util )
 
 add_test( enkf_umask_config_test
           ${EXECUTABLE_OUTPUT_PATH}/enkf_umask_config_test
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/enkf_state_runpath/config_umask)
+          ${PROJECT_SOURCE_DIR}/test-data/local/simple_config/config_umask)
 
 #-----------------------------------------------------------------
 
