@@ -54,7 +54,7 @@ int main(int argc , char ** argv) {
     test_assert_uint_not_equal( rand1 , rand2 );
     test_work_area_free( work_area );
   }
-
+  
   /*****************************************************************/
 
   {

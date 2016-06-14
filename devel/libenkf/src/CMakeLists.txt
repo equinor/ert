@@ -194,7 +194,12 @@ set( header_files
 add_library( enkf  ${LIBRARY_TYPE} ${source_files} )
 set_target_properties( enkf PROPERTIES VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} SOVERSION ${ERT_VERSION_MAJOR} )
 
-set( SITE_CONFIG_FILE /project/res/etc/ERT/site-config CACHE FILEPATH "Path to global ERT Configuration file")
+if (STATOIL_TESTDATA_ROOT)
+  set( SITE_CONFIG_FILE /project/res/etc/ERT/site-config CACHE FILEPATH "Path to global ERT Configuration file")
+else()
+  set( SITE_CONFIG_FILE "${PROJECT_SOURCE_DIR}/share/site-config")
+endif()
+
 set_source_files_properties( site_config.c PROPERTIES COMPILE_DEFINITIONS "SITE_CONFIG_FILE=\"${SITE_CONFIG_FILE}\"")
 
 target_link_libraries( enkf ecl sched analysis rms config job_queue )
