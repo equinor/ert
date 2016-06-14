@@ -17,17 +17,30 @@ set( ERT_VERSION_MICRO git )
 #-----------------------------------------------------------------
 
 
-option( BUILD_ERT           "Build the full ERT application - Linux only" OFF)
-option( BUILD_TESTS         "Should the tests be built" OFF)
-option( BUILD_APPLICATIONS  "Should we build small utility applications" OFF)
-option( BUILD_ECL_SUMMARY   "Build the commandline application ecl_summary" OFF)
-option( BUILD_PYTHON        "Run py_compile on the python wrappers" ON)
-option( BUILD_SHARED_LIBS   "Build shared libraries" ON )
-option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON)
-option( ERT_BUILD_GUI       "Should the pyQt based gui be compiled and installed" OFF )
-option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" OFF)
-option( ERT_DOC             "Build ERT documantation" OFF)
-option( ERT_BUILD_CXX       "Build some CXX wrappers" ON)
+option( BUILD_ERT           	"Build the full ERT application - Linux only" OFF)
+option( BUILD_TESTS         	"Should the tests be built" OFF)
+option( BUILD_APPLICATIONS  	"Should we build small utility applications" OFF)
+option( BUILD_ECL_SUMMARY   	"Build the commandline application ecl_summary" OFF)
+option( BUILD_PYTHON        	"Run py_compile on the python wrappers" ON)
+option( BUILD_SHARED_LIBS   	"Build shared libraries" ON )
+option( INSTALL_ERT         	"Should anything be installed when issuing make install?" ON)
+option( ERT_BUILD_GUI       	"Should the pyQt based gui be compiled and installed" OFF )
+option( ERT_USE_OPENMP      	"Use OpenMP - currently only in EclGrid" OFF)
+option( ERT_DOC             	"Build ERT documantation" OFF)
+option( ERT_BUILD_CXX       	"Build some CXX wrappers" ON)
+
+set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
+if (EXISTS ${STATOIL_TESTDATA_ROOT})
+  set( LINK "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Statoil" )
+  if (EXISTS ${LINK})
+    EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E remove "${LINK}")
+  endif()
+
+  EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${STATOIL_TESTDATA_ROOT}" "${LINK}")
+  message(STATUS "Linking testdata: ${LINK} -> ${STATOIL_TESTDATA_ROOT}")
+endif()
+
+
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
