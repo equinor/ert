@@ -15,6 +15,7 @@
 #  for more details.
 from ert.enkf.enums import EnkfInitModeEnum
 from ert.enkf.enums import HookRuntime
+from ert.enkf import ESUpdate
 
 from ert_gui.models.connectors.run import ActiveRealizationsModel,\
     TargetCaseFormatModel, AnalysisModuleModel, BaseRunModel
@@ -109,9 +110,11 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = "Analyzing iteration: %d with weight %f" % (next_iteration, weight)
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
-        self.ert().analysisConfig().setGlobalStdScaling(weight)
-        success = self.ert().getEnkfSimulationRunner().smootherUpdate(source_fs, target_fs)
 
+        es_update = self.ert().getESUpdate( ) 
+        es_update.setGlobalStdScaling(weight)
+        success = es_update.smootherUpdate(source_fs, target_fs)
+        
         if not success:
             raise UserWarning("Analysis of simulation failed for iteration: %d!" % next_iteration)
 

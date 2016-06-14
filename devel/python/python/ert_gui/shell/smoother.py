@@ -1,4 +1,4 @@
-from ert.enkf import EnkfSimulationRunner
+from ert.enkf import ESUpdate
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import splitArguments, createFloatValidator
 
@@ -69,10 +69,13 @@ class Smoother(ErtShellCollection):
 
         if len(arguments) == 1:
             case_name = arguments[0]
-            target_fs = self.ert().getEnkfFsManager().getFileSystem(case_name)
-            source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem( )
-            simulation_runner = EnkfSimulationRunner(self.ert())
-            success = simulation_runner.smootherUpdate(source_fs , target_fs)
+            ert = self.ert()
+            fs_manager = ert.getEnkfFsManager() 
+            es_update = ESUpdate( ert )
+            
+            target_fs = fs_manager.getFileSystem(case_name)
+            source_fs = fs_manager.getCurrentFileSystem( )
+            success = es_update.smootherUpdate( source_fs , target_fs )
 
             if not success:
                 self.lastCommandFailed("Unable to perform update")
