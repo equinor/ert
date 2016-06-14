@@ -49,8 +49,9 @@ class EnsembleSmoother(BaseRunModel):
         target_case_name = TargetCaseModel().getValue()
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
-        success = self.ert().getEnkfSimulationRunner().smootherUpdate(source_fs , target_fs)
-
+        
+        es_update = self.ert().getESUpdate( ) 
+        success = es_update.smootherUpdate(source_fs, target_fs)
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
 

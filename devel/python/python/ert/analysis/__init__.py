@@ -16,7 +16,16 @@
 
 
 import ert.cwrap.clib as clib
+from ert.cwrap.metacwrap import Prototype
 import ert.util
+
+class AnalysisPrototype(Prototype):
+    lib = clib.ert_load("libanalysis")
+
+    def __init__(self, prototype, bind=True):
+        super(AnalysisPrototype, self).__init__(AnalysisPrototype.lib, prototype, bind=bind)
+
+
 
 ANALYSIS_LIB = clib.ert_load("libanalysis")
 

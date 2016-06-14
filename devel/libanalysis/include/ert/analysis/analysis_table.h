@@ -58,8 +58,6 @@ extern "C" {
 /*****************************************************************/
 
 
-
-
 typedef struct {
   const char                     * name;
   analysis_updateA_ftype         * updateA;
@@ -82,6 +80,9 @@ typedef struct {
   analysis_get_bool_ftype        * get_bool;
   analysis_get_ptr_ftype         * get_ptr;
 } analysis_table_type;
+
+
+
 
 
 #ifdef __cplusplus

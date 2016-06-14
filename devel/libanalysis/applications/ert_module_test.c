@@ -26,7 +26,7 @@
 
 int check_module( rng_type * rng , const char * lib_name ) {
   analysis_module_load_status_enum  load_status;
-  analysis_module_type * module = analysis_module_alloc_external__( rng , "MODULE" , lib_name , false , &load_status);
+  analysis_module_type * module = analysis_module_alloc_external__( rng , lib_name , false , &load_status);
   if (module != NULL) {
     printf("Module loaded successfully\n");
     analysis_module_free( module );

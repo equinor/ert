@@ -14,8 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ert.cwrap import BaseCClass, CWrapper
-from ert.analysis import ANALYSIS_LIB
+from ert.cwrap import BaseCClass
+from ert.analysis import AnalysisPrototype
 
 
 __all__ = ["numPC"]
@@ -26,14 +26,12 @@ class Linalg(BaseCClass):
     namespace for a collection of ensemble based linear algebra
     methods.
     """
+    _get_num_PC = AnalysisPrototype("int enkf_linalg_num_PC( matrix , double)" , bind = False)
     
     @staticmethod
     def numPC(S , truncation):
         if 0 < truncation <= 1:
-            return Linalg.cNamespace().get_num_PC( S , truncation )
+            return Linalg._get_num_PC( S , truncation )
         else:
             raise ValueError("truncation must be in the interval (0,1]")
 
-
-cwrapper = CWrapper(ANALYSIS_LIB)
-Linalg.cNamespace().get_num_PC = cwrapper.prototype("int enkf_linalg_num_PC( matrix , double)")

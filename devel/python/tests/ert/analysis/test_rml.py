@@ -83,7 +83,7 @@ class RMLTest(ExtendedTestCase):
 
     def createAnalysisModule(self):
         rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
-        return AnalysisModule(rng, self.user, self.libname)
+        return AnalysisModule(rng, lib_name = self.libname)
 
     def test_load_status_enum(self):
         source_file_path = "libanalysis/include/ert/analysis/analysis_module.h"

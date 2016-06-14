@@ -16,7 +16,7 @@
 import ctypes
 from ert.cwrap import BaseCClass, CWrapper
 
-from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsembleConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, HookManager, HookWorkflow
+from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsembleConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, HookManager, HookWorkflow, ESUpdate
 from ert.enkf.enums import EnkfInitModeEnum
 from ert.enkf.key_manager import KeyManager
 from ert.util import SubstitutionList, Log
@@ -34,10 +34,12 @@ class EnKFMain(BaseCClass):
         if model_config is None:
             self.__simulation_runner = None
             self.__fs_manager = None
+            self.__es_update = None
         else:
             self.__simulation_runner = EnkfSimulationRunner(self)
             self.__fs_manager = EnkfFsManager(self)
-
+            self.__es_update = ESUpdate(self)
+            
 
         self.__key_manager = KeyManager(self)
 
@@ -199,6 +201,11 @@ class EnKFMain(BaseCClass):
     def get_observation_count(self, user_key):
         return EnKFMain.cNamespace().get_observation_count(self, user_key)
 
+    
+    def getESUpdate(self):
+        """ @rtype: ESUpdate """
+        return self._es_update
+    
     def getEnkfSimulationRunner(self):
         """ @rtype: EnkfSimulationRunner """
         return self.__simulation_runner
@@ -257,7 +264,10 @@ class EnKFMain(BaseCClass):
     def addNode(self, enkf_config_node):
         EnKFMain.cNamespace().add_node(self, enkf_config_node)
 
+        
 
+
+        
 ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
@@ -321,3 +331,4 @@ EnKFMain.cNamespace().alloc_field_init_file = cwrapper.prototype("cstring_obj en
 EnKFMain.cNamespace().get_runpath_list = cwrapper.prototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
 
 EnKFMain.cNamespace().add_node = cwrapper.prototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
+

@@ -57,7 +57,6 @@ typedef struct rml_enkf_data_struct rml_enkf_data_type;
 
 
 
-
 #define  USE_PRIOR_KEY               "USE_PRIOR"
 #define  LAMBDA_REDUCE_FACTOR_KEY    "LAMBDA_REDUCE"
 #define  LAMBDA_INCREASE_FACTOR_KEY  "LAMBDA_INCREASE"
@@ -796,13 +795,14 @@ void * rml_enkf_get_ptr( const void * arg , const char * var_name ) {
 // Symbol table
 //**********************************************
 #ifdef INTERNAL_LINK
-#define SYMBOL_TABLE rml_enkf_symbol_table
+#define LINK_NAME RML_ENKF
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
+#define LINK_NAME EXTERNAL_MODULE_SYMBOL
 #endif
 
 
-analysis_table_type SYMBOL_TABLE = {
+analysis_table_type LINK_NAME = {
+  .name            = "RML_ENKF",
   .alloc           = rml_enkf_data_alloc,
   .freef           = rml_enkf_data_free,
   .set_int         = rml_enkf_set_int ,

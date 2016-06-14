@@ -116,7 +116,7 @@ void test_continue( ) {
 void test_current_module_options() {
   analysis_config_type * ac = create_analysis_config( );
   test_assert_NULL( analysis_config_get_active_module( ac ));
-  analysis_config_load_internal_module(ac , "STD_ENKF" , "std_enkf_symbol_table");
+  analysis_config_load_internal_module(ac , "STD_ENKF");
 
   test_assert_false( analysis_config_get_module_option( ac , ANALYSIS_SCALE_DATA));
   test_assert_true(analysis_config_select_module(ac , "STD_ENKF"));

@@ -41,7 +41,7 @@
 
 
 void test_load_external_module( analysis_config_type * ac , const char * user_name , const char * lib_name) {
-  test_assert_true( analysis_config_load_external_module(ac , user_name , lib_name));
+  test_assert_true( analysis_config_load_external_module(ac , lib_name , user_name ));
 }
 
 

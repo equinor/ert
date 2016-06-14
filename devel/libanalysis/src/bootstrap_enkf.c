@@ -33,6 +33,7 @@
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/enkf_linalg.h>
 
+
 #define BOOTSTRAP_ENKF_TYPE_ID 741223
 
 #define INVALID_SUBSPACE_DIMENSION  -1
@@ -271,15 +272,14 @@ int bootstrap_enkf_get_int( const void * arg, const char * var_name) {
 
 
 #ifdef INTERNAL_LINK
-#define SYMBOL_TABLE bootstrap_enkf_symbol_table
+#define LINK_NAME BOOTSTRAP_ENKF
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
+#define LINK_NAME EXTERNAL_MODULE_SYMBOL
 #endif
 
 
-
-
-analysis_table_type SYMBOL_TABLE = {
+analysis_table_type LINK_NAME = {
+  .name            = "BOOTSTRAP_ENKF",
   .alloc           = bootstrap_enkf_data_alloc,
   .freef           = bootstrap_enkf_data_free,
   .set_int         = bootstrap_enkf_set_int , 

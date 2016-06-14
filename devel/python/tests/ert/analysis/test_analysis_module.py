@@ -25,11 +25,10 @@ import ert.cwrap.clib as clib
 class AnalysisModuleTest(ExtendedTestCase):
     def setUp(self):
         self.libname = clib.ert_lib_path + "/rml_enkf.so"
-        self.user    = "TEST"
+        self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 
     def createAnalysisModule(self):
-        rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
-        return AnalysisModule(rng, self.user, self.libname)
+        return AnalysisModule(self.rng, lib_name = self.libname)
 
     def test_load_status_enum(self):
         source_file_path = "libanalysis/include/ert/analysis/analysis_module.h"
@@ -46,8 +45,6 @@ class AnalysisModuleTest(ExtendedTestCase):
 
         self.assertEqual(am.getTableName(), "analysis_table")
 
-        self.assertEqual(am.getName(), self.user)
-
         self.assertTrue(am.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE))
 
         self.assertTrue(am.hasVar("ITER"))
@@ -56,6 +53,11 @@ class AnalysisModuleTest(ExtendedTestCase):
 
         self.assertIsInstance(am.getInt("ITER"), int)
 
+        
+    def test_create_internal(self):
+        with self.assertRaises( KeyError ):
+            mod = AnalysisModule( self.rng , name = "STD_ENKFXXX" )
 
-
+        mod = AnalysisModule( self.rng , name = "STD_ENKF" )
+        
 

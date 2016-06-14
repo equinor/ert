@@ -69,11 +69,11 @@ typedef enum {
 
   typedef struct analysis_module_struct analysis_module_type;
 
-  analysis_module_type * analysis_module_alloc_internal__( rng_type * rng , const char * user_name , const char * symbol_table , bool verbose , analysis_module_load_status_enum * load_status);
-  analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * user_name , const char * symbol_table );
+  analysis_module_type * analysis_module_alloc_internal__( rng_type * rng , const char * symbol_table , bool verbose , analysis_module_load_status_enum * load_status);
+  analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * symbol_table );
 
-  analysis_module_type * analysis_module_alloc_external__(rng_type * rng , const char * user_name , const char * lib_name , bool verbose , analysis_module_load_status_enum * load_status);
-  analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * user_name , const char * libname );
+  analysis_module_type * analysis_module_alloc_external__(rng_type * rng , const char * lib_name , bool verbose , analysis_module_load_status_enum * load_status);
+  analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * libname );
 
   void                   analysis_module_free( analysis_module_type * module );
   void                   analysis_module_free__( void * arg);
@@ -111,6 +111,7 @@ typedef enum {
   bool                   analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
   const char           * analysis_module_get_table_name( const analysis_module_type * module);
   const char           * analysis_module_get_name( const analysis_module_type * module );
+  void                   analysis_module_set_name( analysis_module_type * module , const char * name);
   bool                   analysis_module_check_option( const analysis_module_type * module , long flag);
   void                   analysis_module_complete_update( analysis_module_type * module );
 

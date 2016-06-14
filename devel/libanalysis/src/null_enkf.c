@@ -30,6 +30,8 @@
 #include <ert/analysis/enkf_linalg.h>
 
 
+
+
 void null_enkf_initX(void * module_data , 
                     matrix_type * X , 
                     matrix_type * A , 
@@ -58,12 +60,13 @@ long null_enkf_get_options( void * arg , long flag ) {
 
 
 #ifdef INTERNAL_LINK
-#define SYMBOL_TABLE null_enkf_symbol_table
+#define LINK_NAME NULL_ENKF
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
+#define LINK_NAME EXTERNAL_MODULE_SYMBOL
 #endif
 
-analysis_table_type SYMBOL_TABLE = {
+analysis_table_type LINK_NAME = {
+    .name            = "NULL_ENKF",
     .alloc           = NULL ,
     .freef           = NULL ,
     .set_int         = NULL ,

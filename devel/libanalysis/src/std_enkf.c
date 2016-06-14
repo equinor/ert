@@ -39,7 +39,6 @@
 
 
 
-
 /*
   Observe that only one of the settings subspace_dimension and
   truncation can be valid at a time; otherwise the svd routine will
@@ -269,15 +268,15 @@ int std_enkf_get_int( const void * arg, const char * var_name) {
 */
 
 
-
 #ifdef INTERNAL_LINK
-#define SYMBOL_TABLE std_enkf_symbol_table
+#define LINK_NAME STD_ENKF
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
+#define LINK_NAME EXTERNAL_MODULE_SYMBOL
 #endif
 
 
-analysis_table_type SYMBOL_TABLE = {
+analysis_table_type LINK_NAME = {
+    .name            = "STD_ENKF",
     .alloc           = std_enkf_data_alloc,
     .freef           = std_enkf_data_free,
     .set_int         = std_enkf_set_int , 

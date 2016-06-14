@@ -71,7 +71,7 @@ void test_set_get(analysis_module_type * module , const char * var_value) {
 
 void load_module( rng_type * rng , const char * user_name , const char * lib_name, const char * options_str , int nvar , const char ** var_list) {
   long flags = strtol(options_str , NULL , 10);
-  analysis_module_type * analysis_module = analysis_module_alloc_external(rng , user_name , lib_name);
+  analysis_module_type * analysis_module = analysis_module_alloc_external(rng , lib_name);
 
   printf("Loading:%s \n" , lib_name);
   test_assert_string_equal( EXTERNAL_MODULE_NAME , analysis_module_get_table_name(analysis_module));

@@ -287,12 +287,12 @@ void analysis_config_set_merge_observations( analysis_config_type * config , boo
 /*****************************************************************/
 
 void analysis_config_load_internal_module( analysis_config_type * config ,
-                                           const char * user_name , const char * symbol_table ) {
-  analysis_module_type * module = analysis_module_alloc_internal( config->rng , user_name , symbol_table );
+                                           const char * symbol_table ) {
+  analysis_module_type * module = analysis_module_alloc_internal( config->rng , symbol_table );
   if (module != NULL)
-    hash_insert_hash_owned_ref( config->analysis_modules , user_name , module , analysis_module_free__ );
+    hash_insert_hash_owned_ref( config->analysis_modules , analysis_module_get_name( module ) , module , analysis_module_free__ );
   else
-    fprintf(stderr,"** Warning: failed to load module %s from %s.\n",user_name , symbol_table);
+    fprintf(stderr,"** Warning: failed to load module %s from %s.\n", analysis_module_get_name( module ) , symbol_table);
 }
 
 
@@ -305,20 +305,23 @@ void analysis_config_load_all_external_modules_from_config ( analysis_config_typ
       const char * user_name = config_content_node_iget( load_node , 0 );
       const char * lib_name  = config_content_node_iget( load_node , 1 );
 
-      analysis_config_load_external_module( analysis , user_name , lib_name);
+      analysis_config_load_external_module( analysis , lib_name , user_name);
     }
   }
 }
 
 
 bool analysis_config_load_external_module( analysis_config_type * config ,
-                                           const char * user_name , const char * lib_name) {
-  analysis_module_type * module = analysis_module_alloc_external( config->rng , user_name , lib_name );
+                                           const char * lib_name,
+                                           const char * user_name) {
+  analysis_module_type * module = analysis_module_alloc_external( config->rng , lib_name );
   if (module != NULL) {
-    hash_insert_hash_owned_ref( config->analysis_modules , user_name , module , analysis_module_free__ );
+    if (user_name)
+      analysis_module_set_name(module, user_name);
+    hash_insert_hash_owned_ref( config->analysis_modules , analysis_module_get_name( module ) ,  module , analysis_module_free__ );
     return true;
   } else {
-    fprintf(stderr,"** Warning: failed to load module %s from %s.\n",user_name , lib_name);
+    fprintf(stderr,"** Warning: failed to load module from %s.\n",lib_name);
     return false;
   }
 }
@@ -327,11 +330,19 @@ bool analysis_config_load_external_module( analysis_config_type * config ,
 void analysis_config_add_module_copy( analysis_config_type * config ,
                                       const char * src_name ,
                                       const char * target_name) {
-  analysis_module_type * module = analysis_config_get_module( config , src_name );
-  if (analysis_module_internal( module ))
-    analysis_config_load_internal_module( config , target_name , analysis_module_get_table_name( module ));
-  else
-    analysis_config_load_external_module( config , target_name , analysis_module_get_lib_name( module ));
+  const analysis_module_type * src_module = analysis_config_get_module( config , src_name );
+  analysis_module_type * target_module;
+
+  if (analysis_module_internal( src_module )) {
+    const char * symbol_table = analysis_module_get_table_name( src_module );
+    target_module = analysis_module_alloc_internal( config->rng , symbol_table );
+  } else {
+    const char * lib_name = analysis_module_get_lib_name( src_module );
+    target_module = analysis_module_alloc_external( config->rng , lib_name );
+  }
+
+  hash_insert_hash_owned_ref( config->analysis_modules , target_name , target_module , analysis_module_free__ );
+  analysis_module_set_name( target_module , target_name );
 }
 
 
@@ -440,12 +451,12 @@ const char * analysis_config_get_active_module_name( const analysis_config_type 
 
 
 void analysis_config_load_internal_modules( analysis_config_type * config ) {
-  analysis_config_load_internal_module( config , "STD_ENKF"       , "std_enkf_symbol_table");
-  analysis_config_load_internal_module( config , "NULL_ENKF"      , "null_enkf_symbol_table");
-  analysis_config_load_internal_module( config , "SQRT_ENKF"      , "sqrt_enkf_symbol_table");
-  analysis_config_load_internal_module( config , "CV_ENKF"        , "cv_enkf_symbol_table");
-  analysis_config_load_internal_module( config , "BOOTSTRAP_ENKF" , "bootstrap_enkf_symbol_table");
-  analysis_config_load_internal_module( config , "FWD_STEP_ENKF"  , "fwd_step_enkf_symbol_table");
+  analysis_config_load_internal_module( config , "STD_ENKF");
+  analysis_config_load_internal_module( config , "NULL_ENKF");
+  analysis_config_load_internal_module( config , "SQRT_ENKF");
+  analysis_config_load_internal_module( config , "CV_ENKF");
+  analysis_config_load_internal_module( config , "BOOTSTRAP_ENKF");
+  analysis_config_load_internal_module( config , "FWD_STEP_ENKF");
   analysis_config_select_module( config , DEFAULT_ANALYSIS_MODULE);
 }
 

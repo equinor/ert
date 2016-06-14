@@ -194,15 +194,15 @@ int sqrt_enkf_get_int( const void * arg, const char * var_name) {
 /*****************************************************************/
 
 #ifdef INTERNAL_LINK
-#define SYMBOL_TABLE sqrt_enkf_symbol_table
+#define LINK_NAME SQRT_ENKF
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
+#define LINK_NAME EXTERNAL_MODULE_SYMBOL
 #endif
 
 
 
-
-analysis_table_type SYMBOL_TABLE = {
+analysis_table_type LINK_NAME = {
+  .name            = "SQRT_ENKF",
   .alloc           = sqrt_enkf_data_alloc,
   .freef           = sqrt_enkf_data_free,
   .set_int         = sqrt_enkf_set_int , 
