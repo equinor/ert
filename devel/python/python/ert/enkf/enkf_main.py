@@ -39,7 +39,7 @@ class EnKFMain(BaseCClass):
             self.__simulation_runner = EnkfSimulationRunner(self)
             self.__fs_manager = EnkfFsManager(self)
             self.__es_update = ESUpdate(self)
-            
+
 
         self.__key_manager = KeyManager(self)
 
@@ -201,11 +201,11 @@ class EnKFMain(BaseCClass):
     def get_observation_count(self, user_key):
         return EnKFMain.cNamespace().get_observation_count(self, user_key)
 
-    
+
     def getESUpdate(self):
         """ @rtype: ESUpdate """
-        return self._es_update
-    
+        return self.__es_update
+
     def getEnkfSimulationRunner(self):
         """ @rtype: EnkfSimulationRunner """
         return self.__simulation_runner
@@ -264,10 +264,10 @@ class EnKFMain(BaseCClass):
     def addNode(self, enkf_config_node):
         EnKFMain.cNamespace().add_node(self, enkf_config_node)
 
-        
 
 
-        
+
+
 ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
