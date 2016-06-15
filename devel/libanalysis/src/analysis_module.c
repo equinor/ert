@@ -272,7 +272,7 @@ void analysis_module_updateA(analysis_module_type * module ,
                              matrix_type * dObs ,
                              matrix_type * E ,
                              matrix_type * D ,
-                             module_info_type* module_info) {
+                             const module_info_type* module_info) {
 
   module->updateA(module->module_data , A , S , R , dObs , E , D, module_info);
 }

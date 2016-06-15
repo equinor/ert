@@ -184,7 +184,7 @@ void fwd_step_enkf_updateA(void * module_data ,
                            matrix_type * dObs ,
                            matrix_type * E ,
                            matrix_type * D ,
-                           module_info_type* module_info) {
+                           const module_info_type* module_info) {
 
 
 

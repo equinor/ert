@@ -96,7 +96,7 @@ typedef enum {
                                matrix_type * dObs ,
                                matrix_type * E ,
                                matrix_type * D ,
-                               module_info_type* module_info);
+                               const module_info_type* module_info);
 
 
   void                   analysis_module_init_update( analysis_module_type * module ,

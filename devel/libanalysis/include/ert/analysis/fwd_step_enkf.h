@@ -34,7 +34,7 @@ void fwd_step_enkf_updateA(void * module_data ,
                             matrix_type * dObs ,
                             matrix_type * E ,
                             matrix_type * D ,
-                            module_info_type* module_info);
+                            const module_info_type* module_info);
 
 
 void        fwd_step_enkf_set_truncation( fwd_step_enkf_data_type * data , double truncation );

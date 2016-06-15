@@ -20,7 +20,7 @@ extern "C" {
                                          matrix_type * dObs ,
                                          matrix_type * E ,
                                          matrix_type * D ,
-                                         module_info_type* module_info);
+                                         const module_info_type* module_info);
 
 
   typedef void (analysis_initX_ftype)       (void * module_data ,

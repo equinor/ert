@@ -37,7 +37,7 @@ class AnalysisModule(BaseCClass):
     _get_bool            = AnalysisPrototype("bool analysis_module_get_bool(analysis_module, char*)")
     _get_str             = AnalysisPrototype("char* analysis_module_get_ptr(analysis_module, char*)")
     _init_update         = AnalysisPrototype("void analysis_module_init_update(analysis_module, bool_vector , matrix , matrix , matrix , matrix, matrix)")
-    _updateA             = AnalysisPrototype("void analysis_module_updateA(analysis_module, matrix , matrix ,  matrix , matrix, matrix, matrix)")
+    _updateA             = AnalysisPrototype("void analysis_module_updateA(analysis_module, matrix , matrix ,  matrix , matrix, matrix, matrix, void*)")
     _initX               = AnalysisPrototype("void analysis_module_initX(analysis_module, matrix , matrix , matrix , matrix , matrix, matrix, matrix)")
 
 
@@ -149,7 +149,7 @@ class AnalysisModule(BaseCClass):
         self._init_update(mask, S, R, dObs, E, D)
 
     def updateA(self, A, S, R, dObs, E, D):
-        self._updateA(A, S, R, dObs, E, D)
+        self._updateA(A, S, R, dObs, E, D, None)
 
     def initX(self, X, A, S, R, dObs, E, D):
         self._initX(X, A, S, R, dObs, E, D)
