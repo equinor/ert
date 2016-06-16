@@ -146,12 +146,16 @@ class AnalysisModule(BaseCClass):
         test = self._get_str(var)
         return str(test)
 
+    
     def initUpdate(self, mask, S, R, dObs, E, D):
         self._init_update(mask, S, R, dObs, E, D)
 
+        
     def updateA(self, A, S, R, dObs, E, D):
         self._updateA(A, S, R, dObs, E, D)
 
-    def initX(self, X, A, S, R, dObs, E, D):
+        
+    def initX(self, A, S, R, dObs, E, D):
+        X = Matrix( A.columns() , A.columns())
         self._initX(X, A, S, R, dObs, E, D)
-
+        return X
