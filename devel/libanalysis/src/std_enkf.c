@@ -154,11 +154,16 @@ void std_enkf_initX__( matrix_type * X ,
   
   matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
   double      * eig = util_calloc( nrmin , sizeof * eig);    
-  
+  matrix_type * Et = matrix_alloc_transpose( E );
+  matrix_type * Cee = matrix_alloc_matmul( E , Et );
+
+  matrix_scale( Cee , 1.0 / (ens_size - 1));
   matrix_subtract_row_mean( S );           /* Shift away the mean */
-  enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
+  enkf_linalg_lowrankCinv( S , Cee , W , eig , truncation , ncomp);    
   enkf_linalg_init_stdX( X , S , D , W , eig , bootstrap);
-  
+
+  matrix_free( Et );
+  matrix_free( Cee );
   matrix_free( W );
   free( eig );
   enkf_linalg_checkX( X , bootstrap );
