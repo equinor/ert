@@ -111,7 +111,8 @@ class AnalysisModule(BaseCClass):
     def getInternal(self):
         return self._get_module_internal( )
 
-    def setVar(self, var_name, string_value):
+    def setVar(self, var_name, value):
+        string_value = str(value)
         return self._set_var(var_name, string_value)
 
     def getTableName(self):

@@ -26,6 +26,13 @@ class ObsData(BaseCClass):
         return (value,std)
 
 
+    def __str__(self):
+        s = ""
+        for pair in self:
+            s += "(%g, %g)\n" % pair
+        return s
+
+
     
     def addBlock(self , obs_key , obs_size):
         error_covar = None 
