@@ -18,10 +18,10 @@ endif()
 
 set_source_files_properties( main.c PROPERTIES COMPILE_DEFINITIONS "COMPILE_TIME_STAMP=\"${BUILD_TIME}\";GIT_COMMIT=\"${GIT_COMMIT}\"")
 
-add_executable( ert ${src_list} )
-target_link_libraries( ert enkf sched rms ecl config job_queue analysis ert_util )
+add_executable( ert_tui ${src_list} )
+target_link_libraries( ert_tui enkf sched rms ecl config job_queue analysis ert_util )
 if (USE_RUNPATH)
-   add_runpath( ert )
+   add_runpath( ert_tui )
 endif()
 
 if (ERT_INSTALL_PREFIX)
@@ -32,9 +32,9 @@ endif()
 
 
 if (INSTALL_ERT)
-   install(TARGETS ert DESTINATION ${destination})
+   install(TARGETS ert_tui DESTINATION ${destination})
    if (INSTALL_GROUP)
-      install(CODE "EXECUTE_PROCESS(COMMAND chgrp ${INSTALL_GROUP} ${destination}/ert)")
-      install(CODE "EXECUTE_PROCESS(COMMAND chmod g+w ${destination}/ert)")
+      install(CODE "EXECUTE_PROCESS(COMMAND chgrp ${INSTALL_GROUP} ${destination}/ert_tui)")
+      install(CODE "EXECUTE_PROCESS(COMMAND chmod g+w ${destination}/ert_tui)")
    endif()
 endif()
