@@ -24,12 +24,7 @@ if (USE_RUNPATH)
    add_runpath( ert_tui )
 endif()
 
-if (ERT_INSTALL_PREFIX)
-   set (destination ${CMAKE_INSTALL_PREFIX}/${ERT_INSTALL_PREFIX}/bin)
-else()
-   set (destination ${CMAKE_INSTALL_PREFIX}/bin)
-endif()
-
+set (destination ${CMAKE_INSTALL_PREFIX}/bin)
 
 if (INSTALL_ERT)
    install(TARGETS ert_tui DESTINATION ${destination})
