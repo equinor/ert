@@ -181,6 +181,7 @@ if (BUILD_ERT)
    if (BUILD_TESTS)
       option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit" OFF)
    endif()
+   add_subdirectory( bin )
 
    include(cmake/ert_module_name.cmake)
 
