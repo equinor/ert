@@ -1,4 +1,4 @@
-import os.path
+from os import path, symlink, remove
 
 from ert.cwrap import clib, CWrapper
 from ert.test import ExtendedTestCase, TestAreaContext,ErtTestContext
@@ -80,11 +80,37 @@ class RunpathListTest(ExtendedTestCase):
         with ErtTestContext("create_runpath" , self.createTestPath("local/snake_oil_no_data/snake_oil.ert")) as tc:
             ert = tc.getErt( )
             runpath_list = ert.getRunpathList( )
-            self.assertFalse( os.path.isfile( runpath_list.getExportFile( ) ))
+            self.assertFalse( path.isfile( runpath_list.getExportFile( ) ))
 
             ens_size = ert.getEnsembleSize( )
             runner = ert.getEnkfSimulationRunner( )
             mask = BoolVector( initial_size = ens_size , default_value = True )
             runner.createRunPath( mask , 0 )
 
-            self.assertTrue( os.path.isfile( runpath_list.getExportFile( ) ))
+            self.assertTrue( path.isfile( runpath_list.getExportFile( ) ))
+
+
+    def test_assert_symlink_deleted(self):
+
+        with ErtTestContext("create_runpath" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
+            ert = tc.getErt( )
+            runpath_list = ert.getRunpathList( )
+            self.assertFalse( path.isfile( runpath_list.getExportFile( ) ))
+
+            ens_size = ert.getEnsembleSize( )
+            runner = ert.getEnkfSimulationRunner( )
+            mask = BoolVector( initial_size = ens_size , default_value = True )
+
+            #create run_path/real0/permx.grdcel symlink
+            runner.createRunPath( mask , 0 )
+            print runpath_list[0].runpath
+            linkpath = '%s/permx.grdcel' % str(runpath_list[0].runpath)
+            targetpath = '%s/permx.grdcel.target' % str(runpath_list[0].runpath)
+            open(targetpath, 'a').close()
+            print linkpath
+            remove(linkpath)
+            symlink(targetpath, linkpath)
+            runner.createRunPath( mask , 0 )
+
+            self.assertFalse( path.islink(linkpath) )
+
