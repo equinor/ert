@@ -1,7 +1,9 @@
-from ert.cwrap import clib, CWrapper
-from ert.test import ExtendedTestCase, TestAreaContext
-from ert.enkf import RunpathList, RunpathNode
+import os.path
 
+from ert.cwrap import clib, CWrapper
+from ert.test import ExtendedTestCase, TestAreaContext,ErtTestContext
+from ert.enkf import RunpathList, RunpathNode
+from ert.util import BoolVector
 
 test_lib  = clib.ert_load("libenkf") # create a local namespace
 cwrapper =  CWrapper(test_lib)
@@ -73,3 +75,16 @@ class RunpathListTest(ExtendedTestCase):
                 self.assertEqual( t0[1] , 0 )
                 self.assertEqual( t4[1] , 1 )
 
+
+    def test_assert_export(self):
+        with ErtTestContext("create_runpath" , self.createTestPath("local/snake_oil_no_data/snake_oil.ert")) as tc:
+            ert = tc.getErt( )
+            runpath_list = ert.getRunpathList( )
+            self.assertFalse( os.path.isfile( runpath_list.getExportFile( ) ))
+
+            ens_size = ert.getEnsembleSize( )
+            runner = ert.getEnkfSimulationRunner( )
+            mask = BoolVector( initial_size = ens_size , default_value = True )
+            runner.createRunPath( mask , 0 )
+
+            self.assertTrue( os.path.isfile( runpath_list.getExportFile( ) ))

@@ -1434,6 +1434,19 @@ void enkf_main_create_run_path(enkf_main_type * enkf_main , bool_vector_type * i
                                                    iter );
   enkf_main_create_run_path__( enkf_main , init_context, iactive );
   ert_init_context_free( init_context );
+
+  /*
+    The runpath_list is written to disk here, when all the simulation
+    folders have been created and filled with content. The
+    runpath_list instance is owned and managed by the hook manager;
+    could say that the responsability for writing that data should be
+    with the hook_manager?
+  */
+
+  {
+    runpath_list_type * runpath_list = hook_manager_get_runpath_list(enkf_main->hook_manager );
+    runpath_list_fprintf( runpath_list );
+  }
 }
 
 
@@ -1497,7 +1510,6 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
 
   thread_pool_join(submit_threads);
   thread_pool_free(submit_threads);
-  runpath_list_fprintf( runpath_list );
 
   for (iens = 0; iens < ens_size; iens++)
     arg_pack_free( arg_pack_list[iens] );
