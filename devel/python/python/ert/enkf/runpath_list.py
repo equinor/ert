@@ -17,6 +17,8 @@ class RunpathList(BaseCClass):
     _basename = EnkfPrototype("char* runpath_list_iget_basename(runpath_list, int)")
     _export = EnkfPrototype("void runpath_list_fprintf(runpath_list)")
     
+    _get_export_file = EnkfPrototype("char* runpath_list_get_export_file(runpath_list)")
+    _set_export_file = EnkfPrototype("void runpath_list_set_export_file(runpath_list, char*)")
     
     def __init__(self, export_file):
         c_ptr = self._alloc( export_file )
@@ -42,6 +44,13 @@ class RunpathList(BaseCClass):
         while index < len(self):
             yield self[index]
             index += 1
+
+    def getExportFile(self):
+        return self._get_export_file( )
+
+
+    def setExportFile(self , export_file):
+        self._set_export_file( export_file )
 
 
     def add(self, realization_number, iteration_number, runpath, basename):
