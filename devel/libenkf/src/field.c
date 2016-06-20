@@ -780,6 +780,9 @@ void field_ecl_write(const field_type * field , const char * run_path , const ch
   }
   else {
     char * full_path = util_alloc_filename( run_path , file  , NULL);
+    if (util_is_link(full_path)) {
+    	util_unlink_existing(full_path);
+    }
     field_export(field , full_path , NULL , export_format , true, NULL);
     free( full_path );
   }

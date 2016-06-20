@@ -78,7 +78,6 @@ void test_change_case(const char * model_config) {
     enkf_main_free(enkf_main); 
 }
 
-
 int main(int argc, char ** argv) {
   const char * config_file = argv[1];
   test_work_area_type * work_area = test_work_area_alloc( "enkf_main_fs_current_file_test" );

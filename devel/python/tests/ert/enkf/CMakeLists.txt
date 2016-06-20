@@ -37,6 +37,7 @@ set(TEST_SOURCES
     test_field_export.py
     test_hook_workflow.py
     test_forward_load_context.py
+    test_runpath_list.py
 )
 
 add_python_package("python.tests.ert.enkf" ${PYTHON_INSTALL_PREFIX}/tests/ert/enkf "${TEST_SOURCES}" False)
@@ -62,6 +63,7 @@ addPythonTest(ert.enkf.local_obsdata_node tests.ert.enkf.test_local_obsdata_node
 addPythonTest(ert.enkf.local_config tests.ert.enkf.test_local_config.LocalConfigTest)
 addPythonTest(ert.enkf.ensemble_config tests.ert.enkf.test_ensemble_config.EnsembleConfigTest)
 addPythonTest(ert.enkf.hook_workflow tests.ert.enkf.test_hook_workflow.HookWorkFlowTest)
+addPythonTest(ert.enkf.runpath_list tests.ert.enkf.test_runpath_list.RunpathListTest)
 
 if (STATOIL_TESTDATA_ROOT)
   addPythonTest(ert.enkf.enkf tests.ert.enkf.test_enkf.EnKFTest LABELS StatoilData)
