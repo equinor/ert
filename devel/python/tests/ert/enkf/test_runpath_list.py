@@ -95,22 +95,24 @@ class RunpathListTest(ExtendedTestCase):
         with ErtTestContext("create_runpath" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
             ert = tc.getErt( )
             runpath_list = ert.getRunpathList( )
-            self.assertFalse( path.isfile( runpath_list.getExportFile( ) ))
 
             ens_size = ert.getEnsembleSize( )
             runner = ert.getEnkfSimulationRunner( )
             mask = BoolVector( initial_size = ens_size , default_value = True )
 
-            #create run_path/real0/permx.grdcel symlink
+            # create directory structure
             runner.createRunPath( mask , 0 )
-            print runpath_list[0].runpath
+
+            # replace field file with symlink
             linkpath = '%s/permx.grdcel' % str(runpath_list[0].runpath)
             targetpath = '%s/permx.grdcel.target' % str(runpath_list[0].runpath)
             open(targetpath, 'a').close()
-            print linkpath
             remove(linkpath)
             symlink(targetpath, linkpath)
+
+            # recreate directory structure
             runner.createRunPath( mask , 0 )
 
+            # ensure field symlink is replaced by file
             self.assertFalse( path.islink(linkpath) )
 
