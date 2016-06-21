@@ -111,10 +111,16 @@ class AnalysisModule(BaseCClass):
     def getInternal(self):
         return self._get_module_internal( )
 
+    def __assertVar(self , var_name):
+        if not self.hasVar(var_name):
+            raise KeyError("Module does not support key:%s" % var_name)
+    
     def setVar(self, var_name, value):
+        self.__assertVar( var_name )
         string_value = str(value)
         return self._set_var(var_name, string_value)
 
+    
     def getTableName(self):
         return self._get_table_name( )
 
@@ -131,20 +137,23 @@ class AnalysisModule(BaseCClass):
 
     def getDouble(self, var):
         """ :rtype: float """
+        self.__assertVar( var )
         return self._get_double(var)
 
     def getInt(self, var):
         """ :rtype: int """
+        self.__assertVar( var )
         return self._get_int(var)
 
     def getBool(self, var):
         """ :rtype: bool """
+        self.__assertVar( var )
         return self._get_bool(var)
 
     def getStr(self, var):
         """ :rtype: str """
-        test = self._get_str(var)
-        return str(test)
+        self.__assertVar( var )
+        return self._get_str(var)
 
     
     def initUpdate(self, mask, S, R, dObs, E, D):
