@@ -25,7 +25,6 @@ set(TEST_SOURCES
     test_meas_data.py
     test_obs_block.py
     test_obs_data.py
-    test_runpath_list.py
     test_state_map.py
     test_summary_key_matcher.py
     test_summary_key_set.py
@@ -76,7 +75,6 @@ if (STATOIL_TESTDATA_ROOT)
   addPythonTest(ert.enkf.summary_key_set tests.ert.enkf.test_summary_key_set.SummaryKeySetTest LABELS StatoilData)
   addPythonTest(ert.enkf.ecl_config tests.ert.enkf.test_ecl_config.EclConfigTest LABELS StatoilData)
   addPythonTest(ert.enkf.ert_test_context tests.ert.enkf.test_ert_context.ErtTestContextTest LABELS StatoilData)
-  addPythonTest(ert.enkf.runpath_list tests.ert.enkf.test_runpath_list.RunpathListTest)
   addPythonTest(ert.enkf.update tests.ert.enkf.test_update.UpdateTest LABELS StatoilData)
   addPythonTest(ert.enkf.labscale tests.ert.enkf.test_labscale.LabScaleTest LABELS StatoilData)
   addPythonTest(ert.enkf.field_export tests.ert.enkf.test_field_export.FieldExportTest LABELS StatoilData)
