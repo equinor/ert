@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'std_enkf.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'std_enkf.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -33,7 +33,7 @@
 
 /*
   A random 'magic' integer id which is used for run-time type checking
-  of the input data. 
+  of the input data.
 */
 #define STD_ENKF_TYPE_ID 261123
 
@@ -46,7 +46,7 @@
   set_subspace_dimension() routines will set one variable, AND
   INVALIDATE THE OTHER. For most situations this will be OK, but if
   you have repeated calls to both of these functions the end result
-  might be a surprise.  
+  might be a surprise.
 */
 #define INVALID_SUBSPACE_DIMENSION  -1
 #define INVALID_TRUNCATION          -1
@@ -96,7 +96,7 @@ static UTIL_SAFE_CAST_FUNCTION_CONST( std_enkf_data , STD_ENKF_TYPE_ID )
      std_enkf_data_type * std_enkf_data_safe_cast( void * arg ) {}
 
   which is used for runtime type checking of all the functions which
-  accept a void pointer as first argument. 
+  accept a void pointer as first argument.
 */
 static UTIL_SAFE_CAST_FUNCTION( std_enkf_data , STD_ENKF_TYPE_ID )
 
@@ -126,7 +126,7 @@ void std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_d
 void * std_enkf_data_alloc( rng_type * rng) {
   std_enkf_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , STD_ENKF_TYPE_ID );
-  
+
   std_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   std_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA;
@@ -135,17 +135,17 @@ void * std_enkf_data_alloc( rng_type * rng) {
 }
 
 
-void std_enkf_data_free( void * data ) { 
+void std_enkf_data_free( void * data ) {
   free( data );
 }
 
 
 
 
-static void std_enkf_initX__( matrix_type * X , 
-                              matrix_type * S , 
-                              matrix_type * R , 
-                              matrix_type * E , 
+static void std_enkf_initX__( matrix_type * X ,
+                              matrix_type * S ,
+                              matrix_type * R ,
+                              matrix_type * E ,
                               matrix_type * D ,
                               double truncation,
                               int    ncomp,
@@ -154,10 +154,10 @@ static void std_enkf_initX__( matrix_type * X ,
 
   int nrobs         = matrix_get_rows( S );
   int ens_size      = matrix_get_columns( S );
-  int nrmin         = util_int_min( ens_size , nrobs); 
-  
-  matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
-  double      * eig = util_calloc( nrmin , sizeof * eig);    
+  int nrmin         = util_int_min( ens_size , nrobs);
+
+  matrix_type * W   = matrix_alloc(nrobs , nrmin);
+  double      * eig = util_calloc( nrmin , sizeof * eig);
 
   matrix_subtract_row_mean( S );           /* Shift away the mean */
 
@@ -185,13 +185,13 @@ static void std_enkf_initX__( matrix_type * X ,
 
 
 
-void std_enkf_initX(void * module_data , 
-                    matrix_type * X , 
-                    matrix_type * A , 
-                    matrix_type * S , 
-                    matrix_type * R , 
-                    matrix_type * dObs , 
-                    matrix_type * E , 
+void std_enkf_initX(void * module_data ,
+                    matrix_type * X ,
+                    matrix_type * A ,
+                    matrix_type * S ,
+                    matrix_type * R ,
+                    matrix_type * dObs ,
+                    matrix_type * E ,
                     matrix_type * D) {
 
 
@@ -229,7 +229,7 @@ bool std_enkf_set_int( void * arg , const char * var_name , int value) {
   std_enkf_data_type * module_data = std_enkf_data_safe_cast( arg );
   {
     bool name_recognized = true;
-    
+
     if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
       std_enkf_set_subspace_dimension( module_data , value );
     else
@@ -325,12 +325,12 @@ analysis_table_type LINK_NAME = {
     .name            = "STD_ENKF",
     .alloc           = std_enkf_data_alloc,
     .freef           = std_enkf_data_free,
-    .set_int         = std_enkf_set_int , 
-    .set_double      = std_enkf_set_double , 
+    .set_int         = std_enkf_set_int ,
+    .set_double      = std_enkf_set_double ,
     .set_bool        = std_enkf_set_bool,
-    .set_string      = NULL , 
-    .get_options     = std_enkf_get_options , 
-    .initX           = std_enkf_initX , 
+    .set_string      = NULL ,
+    .get_options     = std_enkf_get_options ,
+    .initX           = std_enkf_initX ,
     .updateA         = NULL,
     .init_update     = NULL,
     .complete_update = NULL,
@@ -338,6 +338,6 @@ analysis_table_type LINK_NAME = {
     .get_int         = std_enkf_get_int,
     .get_double      = std_enkf_get_double,
     .get_bool        = std_enkf_get_bool,
-    .get_ptr         = NULL, 
+    .get_ptr         = NULL,
 };
 
