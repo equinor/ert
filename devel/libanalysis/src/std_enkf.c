@@ -142,15 +142,15 @@ void std_enkf_data_free( void * data ) {
 
 
 
-void std_enkf_initX__( matrix_type * X , 
-                       matrix_type * S , 
-                       matrix_type * R , 
-                       matrix_type * E , 
-                       matrix_type * D ,
-                       double truncation,
-                       int    ncomp,
-                       bool   bootstrap ,
-                       bool   use_EE) {
+static void std_enkf_initX__( matrix_type * X , 
+                              matrix_type * S , 
+                              matrix_type * R , 
+                              matrix_type * E , 
+                              matrix_type * D ,
+                              double truncation,
+                              int    ncomp,
+                              bool   bootstrap ,
+                              bool   use_EE) {
 
   int nrobs         = matrix_get_rows( S );
   int ens_size      = matrix_get_columns( S );

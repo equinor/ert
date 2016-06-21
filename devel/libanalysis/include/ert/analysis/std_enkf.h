@@ -20,7 +20,7 @@ extern "C" {
 
   void     std_enkf_initX(void * module_data , matrix_type * X , matrix_type * A , matrix_type * S , matrix_type * R , matrix_type * innov , matrix_type * E , matrix_type *D );
   bool     std_enkf_set_double( void * arg , const char * var_name , double value);
-  
+
   bool     std_enkf_set_int( void * arg , const char * var_name , int value);
   int      std_enkf_get_subspace_dimension( std_enkf_data_type * data );
   void     std_enkf_set_truncation( std_enkf_data_type * data , double truncation );
@@ -29,23 +29,11 @@ extern "C" {
   bool     std_enkf_has_var( const void * arg, const char * var_name);
   int std_enkf_get_int( const void * arg, const char * var_name);
   double std_enkf_get_double( const void * arg, const char * var_name);
-  
+
   double   std_enkf_get_truncation( std_enkf_data_type * data );
   void   * std_enkf_data_alloc( rng_type * rng);
   void     std_enkf_data_free( void * module_data );
-  
-  void     std_enkf_initX__( matrix_type * X , 
-                             matrix_type * S , 
-                             matrix_type * R , 
-                             matrix_type * E , 
-                             matrix_type * D ,
-                             double truncation,
-                             int    ncomp,
-                             bool   bootstrap,
-                             bool   use_EE);
-  
-  
-  
+
 #ifdef __cplusplus
 }
 #endif
