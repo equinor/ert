@@ -51,6 +51,7 @@
 #define INVALID_SUBSPACE_DIMENSION  -1
 #define INVALID_TRUNCATION          -1
 #define DEFAULT_SUBSPACE_DIMENSION  INVALID_SUBSPACE_DIMENSION
+#define DEFAULT_USE_EE              false
 
 
 
@@ -83,6 +84,7 @@ struct std_enkf_data_struct {
   double    truncation;            // Controlled by config key: ENKF_TRUNCATION_KEY
   int       subspace_dimension;    // Controlled by config key: ENKF_NCOMP_KEY (-1: use Truncation instead)
   long      option_flags;
+  bool      use_EE;
 };
 
 static UTIL_SAFE_CAST_FUNCTION_CONST( std_enkf_data , STD_ENKF_TYPE_ID )
@@ -128,6 +130,7 @@ void * std_enkf_data_alloc( rng_type * rng) {
   std_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   std_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA;
+  data->use_EE = DEFAULT_USE_EE;
   return data;
 }
 
@@ -228,6 +231,22 @@ bool std_enkf_set_int( void * arg , const char * var_name , int value) {
 }
 
 
+bool std_enkf_set_bool( void * arg , const char * var_name , bool value) {
+  std_enkf_data_type * module_data = std_enkf_data_safe_cast( arg );
+  {
+    bool name_recognized = true;
+
+    if (strcmp( var_name , USE_EE_KEY_) == 0)
+      module_data->use_EE = value;
+    else
+      name_recognized = false;
+
+    return name_recognized;
+  }
+}
+
+
+
 long std_enkf_get_options( void * arg , long flag ) {
   std_enkf_data_type * module_data = std_enkf_data_safe_cast( arg );
   {
@@ -240,6 +259,8 @@ bool std_enkf_has_var( const void * arg, const char * var_name) {
     if (strcmp(var_name , ENKF_NCOMP_KEY_) == 0)
       return true;
     else if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
+      return true;
+    else if (strcmp(var_name , USE_EE_KEY_) == 0)
       return true;
     else
       return false;
@@ -267,6 +288,17 @@ int std_enkf_get_int( const void * arg, const char * var_name) {
 }
 
 
+bool std_enkf_get_bool( const void * arg, const char * var_name) {
+  const std_enkf_data_type * module_data = std_enkf_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , USE_EE_KEY_) == 0)
+      return module_data->use_EE;
+    else
+      return false;
+  }
+}
+
+
 /**
    gcc -fpic -c <object_file> -I??  <src_file>
    gcc -shared -o <lib_file> <object_files>
@@ -286,7 +318,7 @@ analysis_table_type LINK_NAME = {
     .freef           = std_enkf_data_free,
     .set_int         = std_enkf_set_int , 
     .set_double      = std_enkf_set_double , 
-    .set_bool        = NULL , 
+    .set_bool        = std_enkf_set_bool,
     .set_string      = NULL , 
     .get_options     = std_enkf_get_options , 
     .initX           = std_enkf_initX , 
@@ -296,7 +328,7 @@ analysis_table_type LINK_NAME = {
     .has_var         = std_enkf_has_var,
     .get_int         = std_enkf_get_int,
     .get_double      = std_enkf_get_double,
-    .get_bool        = NULL,
+    .get_bool        = std_enkf_get_bool,
     .get_ptr         = NULL, 
 };
 
