@@ -149,7 +149,8 @@ void std_enkf_initX__( matrix_type * X ,
                        matrix_type * D ,
                        double truncation,
                        int    ncomp,
-                       bool   bootstrap ) {
+                       bool   bootstrap ,
+                       bool   use_EE) {
 
   int nrobs         = matrix_get_rows( S );
   int ens_size      = matrix_get_columns( S );
@@ -157,16 +158,24 @@ void std_enkf_initX__( matrix_type * X ,
   
   matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
   double      * eig = util_calloc( nrmin , sizeof * eig);    
-  matrix_type * Et = matrix_alloc_transpose( E );
-  matrix_type * Cee = matrix_alloc_matmul( E , Et );
 
-  matrix_scale( Cee , 1.0 / (ens_size - 1));
   matrix_subtract_row_mean( S );           /* Shift away the mean */
-  enkf_linalg_lowrankCinv( S , Cee , W , eig , truncation , ncomp);    
+
+  if (use_EE) {
+    matrix_type * Et = matrix_alloc_transpose( E );
+    matrix_type * Cee = matrix_alloc_matmul( E , Et );
+    matrix_scale( Cee , 1.0 / (ens_size - 1));
+
+    enkf_linalg_lowrankCinv( S , Cee , W , eig , truncation , ncomp);
+
+    matrix_free( Et );
+    matrix_free( Cee );
+  } else
+    enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);
+
+
   enkf_linalg_init_stdX( X , S , D , W , eig , bootstrap);
 
-  matrix_free( Et );
-  matrix_free( Cee );
   matrix_free( W );
   free( eig );
   enkf_linalg_checkX( X , bootstrap );
@@ -191,7 +200,7 @@ void std_enkf_initX(void * module_data ,
     int ncomp         = data->subspace_dimension;
     double truncation = data->truncation;
 
-    std_enkf_initX__(X,S,R,E,D,truncation,ncomp,false);
+    std_enkf_initX__(X,S,R,E,D,truncation,ncomp,false,data->use_EE);
   }
 }
 

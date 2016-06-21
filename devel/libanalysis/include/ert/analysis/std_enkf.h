@@ -41,7 +41,8 @@ extern "C" {
                              matrix_type * D ,
                              double truncation,
                              int    ncomp,
-                             bool   bootstrap );
+                             bool   bootstrap,
+                             bool   use_EE);
   
   
   
