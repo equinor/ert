@@ -156,8 +156,8 @@ class MultipleDataAssimilation(BaseRunModel):
             return False
         return True
 
-    
-    def normalizeWeights(self, weights):
+    @staticmethod
+    def normalizeWeights(weights):
         """ :rtype: list of float """
         if not weights:
             return []
@@ -166,7 +166,8 @@ class MultipleDataAssimilation(BaseRunModel):
         return [x * length for x in weights]
 
 
-    def parseWeights(self, weights):
+    @staticmethod
+    def parseWeights(weights):
         if not weights:
             return []
         elements = weights.split(",")
@@ -180,6 +181,6 @@ class MultipleDataAssimilation(BaseRunModel):
                 else:
                     result.append(f)
             except ValueError:
-                print 'Warning: cannot parse weight %s' % element
+                raise ValueError('Warning: cannot parse weight %s' % element)
 
         return result
