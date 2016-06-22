@@ -10,25 +10,29 @@ extern "C" {
 #include <ert/util/rng.h>
 #include <ert/util/bool_vector.h>
 
-  typedef void (analysis_updateA_ftype) (void * module_data , 
-                                         matrix_type * A , 
-                                         matrix_type * S , 
-                                         matrix_type * R , 
-                                         matrix_type * dObs , 
+#include <ert/analysis/module_info.h>
+
+
+  typedef void (analysis_updateA_ftype) (void * module_data ,
+                                         matrix_type * A ,
+                                         matrix_type * S ,
+                                         matrix_type * R ,
+                                         matrix_type * dObs ,
                                          matrix_type * E ,
-                                         matrix_type * D );
-  
-  
-  typedef void (analysis_initX_ftype)       (void * module_data , 
-                                             matrix_type * X , 
-                                             matrix_type * A , 
-                                             matrix_type * S , 
-                                             matrix_type * R , 
-                                             matrix_type * dObs , 
-                                             matrix_type * E , 
+                                         matrix_type * D ,
+                                         const module_info_type* module_info);
+
+
+  typedef void (analysis_initX_ftype)       (void * module_data ,
+                                             matrix_type * X ,
+                                             matrix_type * A ,
+                                             matrix_type * S ,
+                                             matrix_type * R ,
+                                             matrix_type * dObs ,
+                                             matrix_type * E ,
                                              matrix_type * D );
-  
-  
+
+
   typedef bool (analysis_set_int_ftype)       (void * module_data , const char * flag , int value);
   typedef bool (analysis_set_bool_ftype)      (void * module_data , const char * flag , bool value);
   typedef bool (analysis_set_double_ftype)    (void * module_data , const char * var , double value);
@@ -37,16 +41,16 @@ extern "C" {
   typedef void * (analysis_alloc_ftype) ( rng_type * rng );
 
 
-  typedef void (analysis_init_update_ftype) (void * module_data, 
-                                             const bool_vector_type * ens_mask , 
-                                             const matrix_type * S , 
-                                             const matrix_type * R , 
-                                             const matrix_type * dObs , 
-                                             const matrix_type * E , 
+  typedef void (analysis_init_update_ftype) (void * module_data,
+                                             const bool_vector_type * ens_mask ,
+                                             const matrix_type * S ,
+                                             const matrix_type * R ,
+                                             const matrix_type * dObs ,
+                                             const matrix_type * E ,
                                              const matrix_type * D);
-  
+
   typedef void (analysis_complete_update_ftype) (void * module_data );
-  
+
   typedef long (analysis_get_options_ftype) (void * module_data , long option);
 
   typedef bool   (analysis_has_var_ftype)    (const void * module_data , const char * var_name);
@@ -70,7 +74,7 @@ typedef struct {
 
   analysis_set_int_ftype         * set_int;
   analysis_set_double_ftype      * set_double;
-  analysis_set_bool_ftype        * set_bool; 
+  analysis_set_bool_ftype        * set_bool;
   analysis_set_string_ftype      * set_string;
   analysis_get_options_ftype     * get_options;
 

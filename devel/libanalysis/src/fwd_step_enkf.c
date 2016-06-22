@@ -29,8 +29,11 @@
 #include <ert/util/stepwise.h>
 
 #include <ert/analysis/fwd_step_enkf.h>
+#include <ert/analysis/fwd_step_log.h>
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/analysis_module.h>
+#include <ert/analysis/module_data_block.h>
+#include <ert/analysis/module_data_block_vector.h>
 
 
 #define FWD_STEP_ENKF_TYPE_ID 765524
@@ -41,15 +44,18 @@
 #define R2_LIMIT_KEY                "FWD_STEP_R2_LIMIT"
 #define DEFAULT_VERBOSE             false
 #define VERBOSE_KEY                 "VERBOSE"
+#define  LOG_FILE_KEY               "LOG_FILE"
+#define  CLEAR_LOG_KEY              "CLEAR_LOG"
 
 struct fwd_step_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
-  stepwise_type        * stepwise_data;
-  rng_type             * rng;
-  int                    nfolds;
-  long                   option_flags;
-  double                 r2_limit;
-  bool                   verbose;
+  stepwise_type            * stepwise_data;
+  rng_type                 * rng;
+  int                        nfolds;
+  long                       option_flags;
+  double                     r2_limit;
+  bool                       verbose;
+  fwd_step_log_type        * fwd_step_log;
 };
 
 
@@ -79,10 +85,96 @@ void * fwd_step_enkf_data_alloc( rng_type * rng ) {
   data->r2_limit     = DEFAULT_R2_LIMIT;
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_SCALE_DATA;
   data->verbose      = DEFAULT_VERBOSE;
-
+  data->fwd_step_log = fwd_step_log_alloc();
   return data;
 }
 
+void fwd_step_enkf_data_free( void * arg ) {
+  fwd_step_enkf_data_type * fwd_step_data = fwd_step_enkf_data_safe_cast( arg );
+  {
+
+    if (fwd_step_data != NULL) {
+      if (fwd_step_data->stepwise_data != NULL) {
+        stepwise_free( fwd_step_data->stepwise_data );
+      }
+    }
+  }
+  fwd_step_log_free( fwd_step_data->fwd_step_log );
+  free( fwd_step_data );
+}
+
+
+//**********************************************
+// Log-file related stuff
+//**********************************************
+
+
+static void fwd_step_enkf_write_log_header( fwd_step_enkf_data_type * fwd_step_data, const char * ministep_name, const int nx, const int nd, const int ens_size) {
+  const char * format = "%-15s%-15s%-15s%-15s%-15s%-15s\n";
+  const char * column1 = "Parameter";
+  const char * column2 = "ActiveIndex";
+  const char * column3 = "GlobalIndex";
+  const char * column4 = "NumAttached";
+  const char * column5 = "FinalR2";
+  const char * column6 = "AttachedObs";
+  int nfolds      = fwd_step_data->nfolds;
+  double r2_limit = fwd_step_data->r2_limit;
+
+  if (fwd_step_log_is_open( fwd_step_data->fwd_step_log )) {
+    fwd_step_log_line(fwd_step_data->fwd_step_log, "===============================================================================================================================\n");
+    fwd_step_log_line(fwd_step_data->fwd_step_log, "Ministep                    : %s\n",ministep_name);
+    fwd_step_log_line(fwd_step_data->fwd_step_log, "Total number of parameters  : %d\n",nx);
+    fwd_step_log_line(fwd_step_data->fwd_step_log, "Total number of observations: %d\n",nd);
+    fwd_step_log_line(fwd_step_data->fwd_step_log, "Number of ensembles         : %d\n",ens_size);
+    fwd_step_log_line(fwd_step_data->fwd_step_log, "CV folds                    : %d\n",nfolds);
+    fwd_step_log_line(fwd_step_data->fwd_step_log, "Relative R2 tolerance       : %f\n",r2_limit);
+    fwd_step_log_line(fwd_step_data->fwd_step_log, "===============================================================================================================================\n");
+    fwd_step_log_line(fwd_step_data->fwd_step_log, format, column1, column2, column3, column4, column5, column6 );
+  }
+
+  printf("===============================================================================================================================\n");
+  printf("Ministep                    : %s\n",ministep_name);
+  printf("Total number of parameters  : %d\n",nx);
+  printf("Total number of observations: %d\n",nd);
+  printf("Number of ensembles         : %d\n",ens_size);
+  printf("CV folds                    : %d\n",nfolds);
+  printf("Relative R2 tolerance       : %f\n",r2_limit);
+  printf("===============================================================================================================================\n");
+  printf(format, column1, column2, column3, column4, column5, column6);
+}
+
+static void fwd_step_enkf_write_iter_info( fwd_step_enkf_data_type * data , stepwise_type * stepwise, const char* key, const int active_index, const int global_index ) {
+  const char * format = "%-15s%-15d%-15d%-15d%-15f";
+  int n_active = stepwise_get_n_active( stepwise);
+  double R2 = stepwise_get_R2(stepwise);
+  bool_vector_type * active_set = stepwise_get_active_set(stepwise);
+  bool has_log = fwd_step_log_is_open( data->fwd_step_log );
+
+  if (has_log)
+    fwd_step_log_line( data->fwd_step_log , format, key, active_index, global_index, n_active, R2);
+
+  printf(format, key, active_index, global_index, n_active, R2);
+
+  if (has_log)
+    fwd_step_log_line( data->fwd_step_log , "%s","[");
+
+  printf("%s","[");
+
+  for (int ivar = 0; ivar < bool_vector_size( active_set); ivar++) {
+    if (!bool_vector_iget( active_set , ivar))
+      continue;
+
+    if (has_log)
+      fwd_step_log_line( data->fwd_step_log , "%d ",ivar);
+
+    printf("%d ",ivar);
+  }
+  if (has_log)
+    fwd_step_log_line( data->fwd_step_log , "]\n");
+
+  printf("]\n");
+
+}
 
 /*Main function: */
 void fwd_step_enkf_updateA(void * module_data ,
@@ -91,11 +183,14 @@ void fwd_step_enkf_updateA(void * module_data ,
                            matrix_type * R ,
                            matrix_type * dObs ,
                            matrix_type * E ,
-                           matrix_type * D ) {
+                           matrix_type * D ,
+                           const module_info_type* module_info) {
 
 
 
   fwd_step_enkf_data_type * fwd_step_data = fwd_step_enkf_data_safe_cast( module_data );
+  fwd_step_log_open(fwd_step_data->fwd_step_log);
+  module_data_block_vector_type * data_block_vector = module_info_get_data_block_vector(module_info);
   printf("Running Forward Stepwise regression:\n");
   {
 
@@ -105,6 +200,8 @@ void fwd_step_enkf_updateA(void * module_data ,
     int nfolds      = fwd_step_data->nfolds;
     double r2_limit = fwd_step_data->r2_limit;
     bool verbose    = fwd_step_data->verbose;
+    int num_kw     =  module_data_block_vector_get_size(data_block_vector);
+
 
     if ( ens_size <= nfolds)
       util_abort("%s: The number of ensembles must be larger than the CV fold - aborting\n", __func__);
@@ -128,43 +225,57 @@ void fwd_step_enkf_updateA(void * module_data ,
       matrix_type * di = matrix_alloc( 1 , nd );
 
       if (verbose){
-       printf("===============================================================================================================================\n");
-       printf("Total number of parameters  : %d\n",nx);
-       printf("Total number of observations: %d\n",nd);
-       printf("Number of ensembles         : %d\n",ens_size);
-       printf("CV folds                    : %d\n",nfolds);
-       printf("Relative R2 tolerance       : %f\n",r2_limit);
-       printf("===============================================================================================================================\n");
-       printf("%-15s%-15s%-15s%-15s\n", "Parameter", "NumAttached", "FinalR2", "ActiveIndices");
+        char * ministep_name = module_data_block_vector_get_ministep_name(data_block_vector);
+        fwd_step_enkf_write_log_header(fwd_step_data, ministep_name, nx, nd, ens_size);
       }
 
-      for (int i = 0; i < nx; i++) {
+      for (int kw = 0; kw < num_kw; kw++) {
 
+        module_data_block_type * data_block = module_data_block_vector_iget_module_data_block(data_block_vector, kw);
+        const char * key = module_data_block_get_key(data_block);
+        int row_start = module_data_block_get_row_start(data_block);
+        int row_end   = module_data_block_get_row_end(data_block);
+        const int* active_indices = module_data_block_get_active_indices(data_block);
+        int local_index = 0;
+        int active_index = 0;
+        bool all_active = active_indices == NULL; /* Inactive are not present in A */
 
-        /*Update values of y */
-        /*Start of the actual update */
-        matrix_type * y = matrix_alloc( ens_size , 1 );
+        for (int i = row_start; i < row_end; i++) {
 
-        for (int j = 0; j < ens_size; j++) {
-          matrix_iset(y , j , 0 , matrix_iget( A, i , j ) );
-        }
+          /*Update values of y */
+          /*Start of the actual update */
+          matrix_type * y = matrix_alloc( ens_size , 1 );
 
-        stepwise_set_Y0( stepwise_data , y );
-
-        stepwise_estimate(stepwise_data , r2_limit , nfolds );
-
-        /*manipulate A directly*/
-        for (int j = 0; j < ens_size; j++) {
-          for (int k = 0; k < nd; k++) {
-            matrix_iset(di , 0 , k , matrix_iget( D , k , j ) );
+          for (int j = 0; j < ens_size; j++) {
+            matrix_iset(y , j , 0 , matrix_iget( A, i , j ) );
           }
-          double aij = matrix_iget( A , i , j );
-          double xHat = stepwise_eval(stepwise_data , di );
-          matrix_iset(A , i , j , aij + xHat);
-        }
 
-        if (verbose)
-         stepwise_printf(stepwise_data, i);
+          stepwise_set_Y0( stepwise_data , y );
+
+          stepwise_estimate(stepwise_data , r2_limit , nfolds );
+
+          /*manipulate A directly*/
+          for (int j = 0; j < ens_size; j++) {
+            for (int k = 0; k < nd; k++) {
+              matrix_iset(di , 0 , k , matrix_iget( D , k , j ) );
+            }
+            double aij = matrix_iget( A , i , j );
+            double xHat = stepwise_eval(stepwise_data , di );
+            matrix_iset(A , i , j , aij + xHat);
+          }
+
+          if (verbose){
+            if (all_active)
+             active_index = local_index;
+            else
+             active_index = active_indices[local_index];
+
+            fwd_step_enkf_write_iter_info(fwd_step_data, stepwise_data, key, active_index, i);
+
+          }
+
+          local_index ++;
+        }
       }
 
       if (verbose)
@@ -181,24 +292,12 @@ void fwd_step_enkf_updateA(void * module_data ,
 
   }
 
-
+  fwd_step_log_close( fwd_step_data->fwd_step_log );
 }
 
 
 
 
-void fwd_step_enkf_data_free( void * arg ) {
-  fwd_step_enkf_data_type * fwd_step_data = fwd_step_enkf_data_safe_cast( arg );
-  {
-
-    if (fwd_step_data != NULL) {
-      if (fwd_step_data->stepwise_data != NULL) {
-        stepwise_free( fwd_step_data->stepwise_data );
-      }
-    }
-  }
-  free( fwd_step_data );
-}
 
 
 bool fwd_step_enkf_set_double( void * arg , const char * var_name , double value) {
@@ -239,11 +338,27 @@ bool fwd_step_enkf_set_bool( void * arg , const char * var_name , bool value) {
     /*Set verbose */
     if (strcmp( var_name , VERBOSE_KEY) == 0)
       fwd_step_enkf_set_verbose( module_data , value);
+    else if (strcmp( var_name , CLEAR_LOG_KEY) == 0)
+      fwd_step_log_set_clear_log( module_data->fwd_step_log , value );
     else
       name_recognized = false;
 
     return name_recognized;
    }
+}
+
+bool fwd_step_enkf_set_string( void * arg , const char * var_name , const char * value) {
+  fwd_step_enkf_data_type * module_data = fwd_step_enkf_data_safe_cast( arg );
+  {
+    bool name_recognized = true;
+
+    if (strcmp( var_name , LOG_FILE_KEY) == 0)
+      fwd_step_log_set_log_file( module_data->fwd_step_log , value );
+    else
+      name_recognized = false;
+
+    return name_recognized;
+  }
 }
 
 long fwd_step_enkf_get_options( void * arg , long flag) {
@@ -260,6 +375,10 @@ bool fwd_step_enkf_has_var( const void * arg, const char * var_name) {
     else if (strcmp(var_name , R2_LIMIT_KEY ) == 0)
       return true;
     else if (strcmp(var_name , VERBOSE_KEY ) == 0)
+      return true;
+    else if (strcmp(var_name , LOG_FILE_KEY) == 0)
+      return true;
+    else if (strcmp(var_name , CLEAR_LOG_KEY) == 0)
       return true;
     else
       return false;
@@ -291,10 +410,26 @@ bool fwd_step_enkf_get_bool( const void * arg, const char * var_name) {
   {
     if (strcmp(var_name , VERBOSE_KEY) == 0)
       return module_data->verbose;
+     else if (strcmp(var_name , CLEAR_LOG_KEY) == 0)
+      return fwd_step_log_get_clear_log( module_data->fwd_step_log );
     else
       return false;
   }
 }
+
+void * fwd_step_enkf_get_ptr( const void * arg , const char * var_name ) {
+  const fwd_step_enkf_data_type * module_data = fwd_step_enkf_data_safe_cast_const( arg );
+  {
+    if (strcmp(var_name , LOG_FILE_KEY) == 0)
+      return (void *) fwd_step_log_get_log_file( module_data->fwd_step_log );
+    else
+      return NULL;
+  }
+}
+
+
+
+
 
 #ifdef INTERNAL_LINK
 #define LINK_NAME FWD_STEP_ENKF
@@ -310,7 +445,7 @@ analysis_table_type LINK_NAME = {
   .set_int         = fwd_step_enkf_set_int ,
   .set_double      = fwd_step_enkf_set_double ,
   .set_bool        = fwd_step_enkf_set_bool ,
-  .set_string      = NULL ,
+  .set_string      = fwd_step_enkf_set_string ,
   .get_options     = fwd_step_enkf_get_options ,
   .initX           = NULL ,
   .updateA         = fwd_step_enkf_updateA,
@@ -320,7 +455,7 @@ analysis_table_type LINK_NAME = {
   .get_int         = fwd_step_enkf_get_int ,
   .get_double      = fwd_step_enkf_get_double ,
   .get_bool        = fwd_step_enkf_get_bool ,
-  .get_ptr         = NULL
+  .get_ptr         = fwd_step_enkf_get_ptr
 };
 
 

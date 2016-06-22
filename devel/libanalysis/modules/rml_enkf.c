@@ -497,13 +497,14 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, m
 }
 
 
-void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matrix_type * R, matrix_type * dObs, matrix_type * E, matrix_type * D) {
+void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matrix_type * R, matrix_type * dObs, matrix_type * E, matrix_type * D, const module_info_type* module_info) {
 // A : ensemble matrix
 // R : (Inv?) Obs error cov.
 // S : measured ensemble
 // dObs: observed data
 // E : perturbations for obs
 // D = dObs + E - S : Innovations (wrt pert. obs)
+// module_info: Information on parameters/data for internal logging
 
 
 
