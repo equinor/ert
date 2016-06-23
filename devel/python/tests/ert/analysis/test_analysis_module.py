@@ -53,11 +53,23 @@ class AnalysisModuleTest(ExtendedTestCase):
 
         self.assertIsInstance(am.getInt("ITER"), int)
 
-        
+    def test_set_get_var(self):
+        mod = AnalysisModule( self.rng , name = "STD_ENKF" )
+        with self.assertRaises(KeyError):
+            mod.setVar("NO-NOT_THIS_KEY" , 100)
+
+
+        with self.assertRaises(KeyError):
+            mod.getInt("NO-NOT_THIS_KEY")
+
+
+
+
+
     def test_create_internal(self):
         with self.assertRaises( KeyError ):
             mod = AnalysisModule( self.rng , name = "STD_ENKFXXX" )
 
         mod = AnalysisModule( self.rng , name = "STD_ENKF" )
-        
+
 
