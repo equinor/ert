@@ -92,7 +92,7 @@ void enkf_tui_run_exp(void * enkf_main) {
     free( prompt );
   }
   if (bool_vector_count_equal(iactive , true))
-    enkf_main_run_exp(enkf_main , iactive );
+    enkf_main_run_tui_exp(enkf_main , iactive );
 
   bool_vector_free(iactive);
 }
