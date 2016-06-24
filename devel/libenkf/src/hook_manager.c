@@ -53,9 +53,11 @@ hook_manager_type * hook_manager_alloc( ert_workflow_list_type * workflow_list )
   hook_manager_type * hook_manager = util_malloc( sizeof * hook_manager );
   hook_manager->hook_workflow_list = vector_alloc_new();
 
-  hook_manager->runpath_list = runpath_list_alloc( NULL );
   hook_manager->workflow_list = workflow_list;
+
+  hook_manager->runpath_list = runpath_list_alloc( NULL );
   hook_manager_set_runpath_list_file( hook_manager, NULL, RUNPATH_LIST_FILE );
+
   hook_manager->input_context = hash_alloc();
 
   return hook_manager;
@@ -120,6 +122,10 @@ void hook_manager_init( hook_manager_type * hook_manager , const config_content_
       hook_manager_add_workflow( hook_manager , workflow_name , run_mode );
     }
   }
+
+
+  if (config_content_has_item( config_content , RUNPATH_FILE_KEY))
+    hook_manager_set_runpath_list_file( hook_manager, NULL, config_content_get_value( config_content , RUNPATH_FILE_KEY));
 }
 
 
@@ -173,7 +179,6 @@ static void hook_manager_set_runpath_list_file__( hook_manager_type * hook_manag
 }
 
 void hook_manager_set_runpath_list_file( hook_manager_type * hook_manager , const char * basepath, const char * filename) {
-
   if (filename && util_is_abs_path( filename ))
     hook_manager_set_runpath_list_file__( hook_manager , filename );
   else {

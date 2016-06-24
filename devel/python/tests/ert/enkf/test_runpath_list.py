@@ -88,7 +88,8 @@ class RunpathListTest(ExtendedTestCase):
             runner.createRunPath( mask , 0 )
 
             self.assertTrue( path.isfile( runpath_list.getExportFile( ) ))
-
+            self.assertEqual( "test_runpath_list.txt" , path.basename( runpath_list.getExportFile( ) ))
+            
 
     def test_assert_symlink_deleted(self):
 
