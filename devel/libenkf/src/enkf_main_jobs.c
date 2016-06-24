@@ -538,5 +538,15 @@ void * enkf_main_std_scale_correlated_obs_JOB(void * self, const stringlist_type
 }
 
 
+void * enkf_main_analysis_update_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  enkf_fs_type   * source_fs = enkf_main_mount_alt_fs( enkf_main , stringlist_iget(args , 0 ) , false);
+  enkf_fs_type   * target_fs = enkf_main_mount_alt_fs( enkf_main , stringlist_iget(args , 1 ) , true);
 
+  enkf_main_smoother_update( enkf_main , source_fs , target_fs);
+
+  enkf_fs_decref( source_fs );
+  enkf_fs_decref( target_fs );
+  return NULL;
+}
 
