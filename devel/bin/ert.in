@@ -13,7 +13,7 @@ def updateEnvPath(path_var, value):
     if path_var in os.environ:
         path = "%s%s%s" % (value, os.pathsep, os.environ[path_var])
     else:
-        path = new_path
+        path = value
 
     os.environ[path_var] = path
 
