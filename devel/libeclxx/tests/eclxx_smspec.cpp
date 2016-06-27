@@ -29,6 +29,13 @@ void test_smspec_copy() {
     ERT::smspec_node copy( field );
 }
 
+void test_smspec_get() {
+    std::string kw( "FOPT" );
+    ERT::smspec_node field( kw );
+
+    test_assert_true( field.get() != nullptr );
+}
+
 void test_smspec_wg() {
     std::string kw( "WWCT" );
     std::string wg( "OP1" );
@@ -88,6 +95,7 @@ void test_smspec_completion() {
 
 int main (int argc, char **argv) {
     test_smspec_copy();
+    test_smspec_get();
     test_smspec_wg();
     test_smspec_field();
     test_smspec_block();

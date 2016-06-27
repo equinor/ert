@@ -82,4 +82,12 @@ namespace ERT {
     int smspec_node::num() const {
         return smspec_node_get_num( this->node.get() );
     }
+
+    smspec_node_type* smspec_node::get() {
+        return this->node.get();
+    }
+
+    const smspec_node_type* smspec_node::get() const {
+        return this->node.get();
+    }
 }
