@@ -18,3 +18,13 @@ class ErtLogTest(ExtendedTestCase):
                 text = f.readlines()
                 self.assertTrue(len(text) > 0)
                 self.assertTrue(message in text[-1])
+
+    def test_get_filename(self):
+        with TestAreaContext("python/ert_log/log") as work_area:
+            test_log_filename = "log_test_file.txt"
+            ErtLog.cnamespace.init(1, test_log_filename, "unittester", True)
+            message = "This is fun"
+            ErtLog.log(1, message)
+
+            self.assertEqual(ErtLog.getFilename(), test_log_filename)
+
