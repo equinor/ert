@@ -591,7 +591,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
             if(summary_key_matcher_summary_key_is_required(matcher, key)) {
                 if(!ecl_smspec_has_general_var(smspec, key)) {
                   forward_load_context_update_result(load_context, LOAD_FAILURE);
-                  ert_log_add_fmt_message( 3 , NULL , "[%03d:----] Unable to find Eclipse data for summary key: %s", iens , key);
+                  ert_log_add_fmt_message( 1 , NULL , "[%03d:----] Unable to find Eclipse data for summary key: %s", iens , key);
 
                   if (forward_load_context_accept_messages( load_context )) {
                     char * msg = util_alloc_sprintf("Failed to load vector: %s" , key);
