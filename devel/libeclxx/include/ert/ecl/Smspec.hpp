@@ -38,6 +38,8 @@ namespace ERT {
             const char* wgname() const;
             const char* keyword() const;
             int num() const;
+            smspec_node_type* get();
+            const smspec_node_type* get() const;
 
         private:
             smspec_node(
