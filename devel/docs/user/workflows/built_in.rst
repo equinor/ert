@@ -162,68 +162,18 @@ Jobs related to analysis update
 
 **ANALYSIS_UPDATE**
 
-This job will perform a update based on the current case, it is
-assumed that you have already completed the necessary simulations. By
-default the job will use all available data in the conditioning and
-store the updated parameters as the new initial parameters of the
-current case. However you can use optional argument to control which
-case the parameters go to, at which report step they are stored and
-also which report steps are considered when assembling the data. In
-the simplest form the ANALYSIS_UPDATE job looks like this:
+This job will perform a update and store the updated parameters as
+initial parameters of a different case. The name of the source case
+and the target case must be given as arguments:
 
 ::
 
-	ANALYSIS_UPDATE 
+   ANALYSIS_UPDATE prior posterior
 
-In this case the initial parameters in the current case will be
-updated; using all available data in the conditioning process. In the
-example below we redirect the updated parameters to the new case
-NewCase:
-
-::
-
-	ANALYSIS_UPDATE NewCase
-
-Optionally we can decide to update the parameters at a later stage,
-i.e. for instance at report step 100:
-
-::
-
-	ANALYSIS_UPDATE * 100
-
-The '*' above means that we should update parameters in the current
-case. Finally we can limit the report steps used for data:
-
-::
-
-	ANALYSIS_UPDATE NewCaseII  0   10,20,30,40,100,120-200
-
-In the last example 10,20,30,40,100,120-200 mean the report steps we
-are considering when updating. Observe that when we use the first
-argument to specify a new case the will be created if it does not
-exist, but not selected.
-
-
-**ANALYSIS_ENKF_UPDATE**
-
-The ANALYSIS_ENKF_UPDATE job will do an EnKF update at the current
-report step. The job requires the report step as the first argument:
-
-::
-
-	ANALYSIS_ENKF_UPDATE  10
-
-by default the ENKF_UPDATE will use the observed data at the
-updatestep, but you can configure it use the report steps you like for
-data. In the example below the parameters at step 20 will be updated
-based on the observations at report step 0,5,10,15,16,17,18,19,20:
-
-::
-
-	ANALYSIS_ENKF_UPDATE  20  0,5,10,15-20 
-
-The ANALYSIS_ENKF_UPDATE job is a special case of the ANALYSIS_UPDATE
-job, in principle the same can be achieved with the ENKF_UPDATE job.
+Will fetch prior parameters and simulated responses from the
+case:`prior` and store updated parameters in the case:`posterior`. If
+you have configured local updates that will be respected, otherwise
+all available data will be used - and all parameters will be updated.
 
 
 Jobs related to running simulations - including updates
