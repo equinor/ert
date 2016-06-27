@@ -1693,9 +1693,10 @@ void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type 
 
 
 
-void enkf_main_run_exp(enkf_main_type * enkf_main ,
-                       bool_vector_type * iactive) {
+void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
+                           bool_vector_type * iactive) {
 
+  hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
   ert_run_context_type * run_context;
   init_mode_type init_mode = INIT_CONDITIONAL;
   int iter = 0;
@@ -1705,10 +1706,10 @@ void enkf_main_run_exp(enkf_main_type * enkf_main ,
                                                                     iactive ,
                                                                     iter );
   enkf_main_init_run( enkf_main , run_context , init_mode);
-  if (enkf_main_run_step(enkf_main , run_context)) {
-    hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
+  enkf_main_create_run_path( enkf_main , iactive , iter );
+  hook_manager_run_workflows(hook_manager, PRE_SIMULATION, enkf_main);
+  if (enkf_main_run_step(enkf_main , run_context))
     hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
-  }
 
   ert_run_context_free( run_context );
 }

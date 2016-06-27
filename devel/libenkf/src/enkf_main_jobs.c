@@ -77,7 +77,7 @@ void * enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) 
   bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args), ens_size);
 
   bool_vector_iset( iactive , ens_size - 1 , true );
-  enkf_main_run_exp( enkf_main , iactive);
+  enkf_main_run_tui_exp( enkf_main , iactive);
   bool_vector_free(iactive);
   return NULL;
 }

@@ -110,8 +110,8 @@ extern "C" {
   void                          enkf_main_create_run_path(enkf_main_type * enkf_main , bool_vector_type * iactive , int iter);
   bool                          enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_type init_mode, int iter);
 
-  void                          enkf_main_run_exp(enkf_main_type * enkf_main ,
-                                                  bool_vector_type * iactive);
+  void                          enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
+                                                      bool_vector_type * iactive);
 
 
   void                          enkf_main_run_smoother(enkf_main_type * enkf_main , enkf_fs_type * source_fs, const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun);
