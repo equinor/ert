@@ -212,7 +212,7 @@ char * runpath_list_iget_basename( runpath_list_type * list , int index) {
 void runpath_list_fprintf(runpath_list_type * list ) {
   pthread_rwlock_rdlock( &list->lock );
   {
-    FILE * stream = util_fopen( list->export_file , "w");
+    FILE * stream = util_mkdir_fopen( list->export_file , "w");
     const char * line_fmt = runpath_list_get_line_fmt( list );
     int index;
     vector_sort( list->list , runpath_node_cmp );
