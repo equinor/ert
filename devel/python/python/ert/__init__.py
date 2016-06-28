@@ -74,7 +74,7 @@ required_version_hex = 0x02060000
 
 ert_lib_path = None
 ert_so_version = ""
-
+__version__ = "0.0.0"
 
 
 # 1. Try to load the __ert_lib_info module; this module has been
@@ -85,6 +85,7 @@ try:
     import __ert_lib_info
     ert_lib_path = __ert_lib_info.lib_path
     ert_so_version = __ert_lib_info.so_version
+    __version__ = __ert_lib_info.__version__
 except ImportError:
     pass
 
