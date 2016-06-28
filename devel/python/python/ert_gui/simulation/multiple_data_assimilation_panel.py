@@ -15,14 +15,12 @@
 #  for more details.
 
 from PyQt4.QtCore import Qt, QMargins
-from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel
-from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
+from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout
+from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation,\
     TargetCaseFormatModel, AnalysisModuleModel, RunPathModel
-from ert_gui.models.mixins.connectorless import DefaultPathModel
-from ert_gui.models.mixins.connectorless import StringModel
 
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.widgets import util
@@ -31,11 +29,10 @@ from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice
 from ert_gui.widgets.text_or_file import TextOrFile
 from ert_gui.widgets.string_box import StringBox
-from ert_gui.widgets.path_chooser import PathChooser
 
 # For custom dialog box stuff
-from ert_gui.models.mixins.connectorless import DefaultPathModel, DefaultNameFormatModel, StringModel
-from ert_gui.ide.keywords.definitions import ProperNameFormatArgument, NumberListStringArgument
+from ert_gui.models.mixins.connectorless import DefaultNameFormatModel, StringModel
+from ert_gui.ide.keywords.definitions import ProperNameFormatArgument
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def __init__(self):
@@ -64,13 +61,23 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         iterated_target_case_format_box = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
         iterated_target_case_format_box.setValidator(ProperNameFormatArgument())
 
-        self.option_widget = TextOrFile(self.getSimulationModel().setWeights)
+        self.option_widget = TextOrFile(self.getSimulationModel().setWeights, help_link="config/simulation/iteration_weights")
         layout.addRow("Relative Weights:", self.option_widget)
-        layout.addRow('Note:',
-                      QLabel("Example Custom Relative Weights: '8,4,2,1'\n"
-                             "This means MDA-ES will half the weight\n"
-                             "applied to the Observation Errors from one\n"
-                             "iteration to the next across 4 iterations."))
+
+        normalized_weights_model = StringModel()
+        normalized_weights_model.setValue("1")
+        normalized_weights_widget = ActiveLabel(normalized_weights_model, help_link="config/simulation/iteration_weights")
+        layout.addRow('Normalized weights:', normalized_weights_widget)
+
+        def updateNormalizedWeights():
+            if self.option_widget.isValid():
+                weights = MultipleDataAssimilation.parseWeights(self.option_widget.getValue())
+                normalized_weights = MultipleDataAssimilation.normalizeWeights(weights)
+                normalized_weights_model.setValue(", ".join("%.2f" % x for x in normalized_weights))
+            else:
+                normalized_weights_model.setValue("The weights are invalid!")
+
+        self.option_widget.validationChanged.connect(updateNormalizedWeights)
 
         analysis_module_model = AnalysisModuleModel()
         self.analysis_module_choice = ComboChoice(analysis_module_model, "Analysis Module", "config/analysis/analysis_module")
