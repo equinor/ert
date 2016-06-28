@@ -16,7 +16,6 @@
 
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QPalette
 from ert_gui.models.mixins import BasicModelMixin
 from ert_gui.widgets.helped_widget import HelpedWidget
@@ -25,13 +24,18 @@ from ert_gui.widgets.helped_widget import HelpedWidget
 class StringBox(HelpedWidget):
     """StringBox shows a string. The data structure expected and sent to the getter and setter is a string."""
 
-    def __init__(self, model, path_label="String", help_link="", defaultString=""):
+    def __init__(self, model, path_label="String", help_link="", defaultString="", continuous_update=False):
         HelpedWidget.__init__(self, path_label, help_link)
 
         self.box_string = QtGui.QLineEdit()
-        self.connect(self.box_string, QtCore.SIGNAL('editingFinished()'), self.validateString)
         self.connect(self.box_string, QtCore.SIGNAL('editingFinished()'), self.stringBoxChanged)
+        self.connect(self.box_string, QtCore.SIGNAL('editingFinished()'), self.validateString)
+
+        if continuous_update:
+            self.connect(self.box_string, QtCore.SIGNAL('textChanged(QString)'), self.stringBoxChanged)
+
         self.connect(self.box_string, QtCore.SIGNAL('textChanged(QString)'), self.validateString)
+
         self.addWidget(self.box_string)
 
         self.valid_color = self.box_string.palette().color(self.box_string.backgroundRole())
@@ -52,14 +56,18 @@ class StringBox(HelpedWidget):
 
             palette = QPalette()
             if not status:
-                self.setValidationMessage(str(status), HelpedWidget.EXCLAMATION)
                 palette.setColor(self.box_string.backgroundRole(), self.ERROR_COLOR)
                 self.box_string.setPalette(palette)
+                self.setValidationMessage(str(status), HelpedWidget.EXCLAMATION)
             else:
-                self.setValidationMessage("")
                 palette.setColor(self.box_string.backgroundRole(), self.valid_color)
                 self.box_string.setPalette(palette)
+                self.setValidationMessage("")
 
+
+
+    def emitChange(self, q_string):
+        self.textChanged.emit(str(q_string))
 
     def stringBoxChanged(self):
         """Called whenever the contents of the editline changes."""
