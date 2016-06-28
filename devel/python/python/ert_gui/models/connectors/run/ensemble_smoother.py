@@ -44,7 +44,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
-        self.setPhaseName("Analyzing...", indeterminate=True)
+        self.setPhaseName("Analyzing...")
 
         target_case_name = TargetCaseModel().getValue()
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
@@ -55,10 +55,10 @@ class EnsembleSmoother(BaseRunModel):
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
 
-        self.setPhase(1, "Running simulations...", indeterminate=False)
+        self.setPhase(1, "Running simulations...")
         self.ert().getEnkfFsManager().switchFileSystem(target_fs)
         
-        self.setPhaseName("Pre processing...", indeterminate=True)
+        self.setPhaseName("Pre processing...")
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 1)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
