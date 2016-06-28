@@ -5,10 +5,10 @@ from ert.test import ExtendedTestCase, TestAreaContext
 
 class ErtLogTest(ExtendedTestCase):
 
-    def test_write_log(self):
+    def test_log(self):
         with TestAreaContext("python/ert_log/log") as work_area:
             test_log_filename = "test_log"
-            ErtLog.cnamespace.init(1, test_log_filename, "unittester", True)
+            ErtLog.init(1, test_log_filename, True)
             message = "This is fun"
             ErtLog.log(1, message)
 
@@ -19,10 +19,11 @@ class ErtLogTest(ExtendedTestCase):
                 self.assertTrue(len(text) > 0)
                 self.assertTrue(message in text[-1])
 
-    def test_get_filename(self):
+
+    def test_getFilename(self):
         with TestAreaContext("python/ert_log/log") as work_area:
             test_log_filename = "log_test_file.txt"
-            ErtLog.cnamespace.init(1, test_log_filename, "unittester", True)
+            ErtLog.init(1, test_log_filename, True)
             message = "This is fun"
             ErtLog.log(1, message)
 
