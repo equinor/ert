@@ -79,6 +79,10 @@ namespace ERT {
         return smspec_node_get_keyword( this->node.get() );
     }
 
+    const char* smspec_node::key1() const {
+        return smspec_node_get_gen_key1( this->node.get() );
+    }
+
     int smspec_node::num() const {
         return smspec_node_get_num( this->node.get() );
     }
