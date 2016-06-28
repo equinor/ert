@@ -1,5 +1,4 @@
-from ert.job_queue import ErtScript
-from ert.test import ErtTestContext, ExtendedTestCase
+from ert.test import ExtendedTestCase
 from ert_gui.models.connectors.run import MultipleDataAssimilation as mda
 
 
@@ -8,7 +7,14 @@ class MDAWeightsTest(ExtendedTestCase):
     def test_weights(self):
         
         weights = mda.parseWeights("2, 2, 2, 2")
+        print(weights)
         self.assertAlmostEqualList([2, 2, 2, 2], weights)
+
+        weights = mda.parseWeights("1, 2, 3, ")
+        self.assertAlmostEqualList([1, 2, 3], weights)
+
+        weights = mda.parseWeights("1, 0, 1")
+        self.assertAlmostEqualList([1, 1], weights)
 
         weights = mda.parseWeights("1.414213562373095, 1.414213562373095")
         self.assertAlmostEqualList([1.414213562373095, 1.414213562373095], weights)
@@ -23,6 +29,9 @@ class MDAWeightsTest(ExtendedTestCase):
         self.assertAlmostEqualList([1.0], weights)
          
         weights = mda.normalizeWeights([1, 1])
+        self.assertAlmostEqualList([1.414214, 1.414214], weights)
+
+        weights = mda.normalizeWeights([1, 0, 1])
         self.assertAlmostEqualList([1.414214, 1.414214], weights)
          
         weights = mda.normalizeWeights([1, 1, 1])
