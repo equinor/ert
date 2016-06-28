@@ -8,7 +8,7 @@ DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>
 STORE_SEED SEED
 LOAD_SEED  SEED
 
-RUNPATH_FILE test_runpath_list.txt
+RUNPATH_FILE directory/test_runpath_list.txt
 RUNPATH <STORAGE>/runpath/realisation-%d/iter-%d
 ENSPATH <STORAGE>/ensemble
 ECLBASE SNAKE_OIL_FIELD
