@@ -35,8 +35,9 @@ namespace ERT {
                     int region );
 
             int type() const;
-            const char* wgname() const;
             const char* keyword() const;
+            const char* wgname() const;
+            const char* key1() const;
             int num() const;
             smspec_node_type* get();
             const smspec_node_type* get() const;
