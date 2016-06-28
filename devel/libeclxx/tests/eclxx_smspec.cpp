@@ -30,16 +30,21 @@ void test_smspec_copy() {
 }
 
 void test_smspec_wg() {
-    std::string kw( "WWCT" );
+    std::string wkw( "WWCT" );
+    std::string gkw( "GWCT" );
     std::string wg( "OP1" );
     std::string gr( "WG1" );
 
-    ERT::smspec_node well( ECL_SMSPEC_WELL_VAR, wg, kw );
-    ERT::smspec_node group( ECL_SMSPEC_GROUP_VAR, gr, kw );
+    ERT::smspec_node well( ECL_SMSPEC_WELL_VAR, wg, wkw );
+    ERT::smspec_node group( ECL_SMSPEC_GROUP_VAR, gr, gkw );
 
+    test_assert_string_equal(well.key1() , "WWCT:OP1");
+    test_assert_string_equal(well.keyword() , "WWCT");
     test_assert_true(well.wgname() == wg);
     test_assert_true(well.type() == ECL_SMSPEC_WELL_VAR );
 
+    test_assert_string_equal(group.key1(), "GWCT:WG1");
+    test_assert_string_equal(group.keyword() , "GWCT");
     test_assert_true(group.wgname() == gr);
     test_assert_true(group.type() == ECL_SMSPEC_GROUP_VAR );
 }
@@ -48,6 +53,7 @@ void test_smspec_field() {
     std::string kw( "FOPT" );
     ERT::smspec_node field( kw );
 
+    test_assert_string_equal( field.key1() , "FOPT" );
     test_assert_true( field.keyword() == kw );
     test_assert_true( field.type() == ECL_SMSPEC_FIELD_VAR );
 }
@@ -59,6 +65,11 @@ void test_smspec_block() {
 
     ERT::smspec_node block( kw, dims, ijk );
 
+    // Observe that ERT::smspec_node( ) constructor is considered part
+    // of the developer API, with offset zero indices, whereas the
+    // key1() string is meant for user consumption and has offset 1 -
+    // what a mess!
+    test_assert_string_equal( block.key1(), "BPR:6,6,6" );
     test_assert_true( block.keyword() == kw );
     test_assert_true( block.type() == ECL_SMSPEC_BLOCK_VAR );
     test_assert_true( block.num() == 556 );
