@@ -62,7 +62,7 @@ class EnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 1)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
-        self.setPhaseName("Running forecast...", indeterminate=True)
+        self.setPhaseName("Running forecast...", indeterminate=False)
 
         success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_NONE, 1)
 
