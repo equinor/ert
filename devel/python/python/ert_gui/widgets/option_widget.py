@@ -15,7 +15,7 @@
 #  for more details. 
 
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 from ert_gui.widgets.helped_widget import HelpedWidget
 
 
