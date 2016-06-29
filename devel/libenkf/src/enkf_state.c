@@ -74,6 +74,7 @@
 #include <ert/enkf/run_arg.h>
 #include <ert/enkf/summary_key_matcher.h>
 #include <ert/enkf/forward_load_context.h>
+#include <ert/enkf/enkf_config_node.h>
 
 #define  ENKF_STATE_TYPE_ID 78132
 
@@ -520,6 +521,43 @@ static int_vector_type * __enkf_state_get_time_index(enkf_fs_type * result_fs, c
 }
 
 
+/*
+ * Check if there are summary keys in the ensemble config that is not found in Eclipse. If this is the case, AND we
+ * have observations for this key, we have a problem. Otherwise, just print a message to the log.
+ */
+static void enkf_state_check_for_missing_eclipse_summary_data(const summary_key_matcher_type * matcher, const ecl_smspec_type * smspec,
+                                                  const enkf_state_type * enkf_state, forward_load_context_type * load_context, const int iens ) {
+
+  stringlist_type * keys = summary_key_matcher_get_keys(matcher);
+
+  for (int i = 0; i < stringlist_get_size(keys); i++) {
+
+    const char *key = stringlist_iget(keys, i);
+
+    if (ecl_smspec_has_general_var(smspec, key) || !summary_key_matcher_summary_key_is_required(matcher, key))
+      continue;
+
+    if (!ensemble_config_has_key(enkf_state->ensemble_config, key))
+      continue;
+
+    const enkf_config_node_type *config_node = ensemble_config_get_node(enkf_state->ensemble_config, key);
+    if (enkf_config_node_get_num_obs(config_node) == 0) {
+      ert_log_add_fmt_message(3, NULL, "[%03d:----] Unable to find Eclipse data for summary key: %s, but have no observations either, so will continue.",
+                              iens, key);
+    } else {
+      ert_log_add_fmt_message(1, NULL, "[%03d:----] Unable to find Eclipse data for summary key: %s, but have observation for this, job will fail.",
+                              iens, key);
+      forward_load_context_update_result(load_context, LOAD_FAILURE);
+      if (forward_load_context_accept_messages(load_context)) {
+        char *msg = util_alloc_sprintf("Failed to load vector: %s", key);
+        forward_load_context_add_message(load_context, msg);
+        free(msg);
+      }
+    }
+  }
+
+  stringlist_free(keys);
+}
 
 static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state ,
 							   forward_load_context_type * load_context ,
@@ -584,27 +622,13 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
             }
         }
 
-        /* */
-        stringlist_type * keys = summary_key_matcher_get_keys(matcher);
-        for(int i = 0; i < stringlist_get_size(keys); i++) {
-            const char * key = stringlist_iget(keys, i);
-            if(summary_key_matcher_summary_key_is_required(matcher, key)) {
-                if(!ecl_smspec_has_general_var(smspec, key)) {
-                  forward_load_context_update_result(load_context, LOAD_FAILURE);
-                  ert_log_add_fmt_message( 1 , NULL , "[%03d:----] Unable to find Eclipse data for summary key: %s", iens , key);
-
-                  if (forward_load_context_accept_messages( load_context )) {
-                    char * msg = util_alloc_sprintf("Failed to load vector: %s" , key);
-                    forward_load_context_add_message( load_context , msg );
-                    free( msg );
-                  }
-
-                }
-            }
-        }
-
-        stringlist_free(keys);
         int_vector_free( time_index );
+
+        /*
+        Check if some of the specified keys are missing from the Eclipse data, and if there are observations for them. That is a problem.
+        */
+        enkf_state_check_for_missing_eclipse_summary_data(matcher, smspec, enkf_state, load_context, iens);
+
         return true;
       } else {
         fprintf(stderr , "** Warning: could not load ECLIPSE summary data from %s - this will probably fail later ...\n" , run_arg_get_runpath( run_arg ));
