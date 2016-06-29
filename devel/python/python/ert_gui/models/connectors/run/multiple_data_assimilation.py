@@ -161,6 +161,7 @@ class MultipleDataAssimilation(BaseRunModel):
         """ :rtype: list of float """
         if not weights:
             return []
+        weights = [weight for weight in weights if abs(weight) != 0.0]
         from math import sqrt
         length = sqrt(sum((1.0 / x) * (1.0 / x) for x in weights))
         return [x * length for x in weights]
@@ -170,14 +171,16 @@ class MultipleDataAssimilation(BaseRunModel):
     def parseWeights(weights):
         if not weights:
             return []
+
         elements = weights.split(",")
+        elements = [element.strip() for element in elements if not element.strip() == ""]
+
         result = []
         for element in elements:
-            element = element.strip()
             try:
                 f = float(element)
                 if f == 0:
-                    print 'Warning: 0 weight, will ignore'
+                    print('Warning: 0 weight, will ignore')
                 else:
                     result.append(f)
             except ValueError:
