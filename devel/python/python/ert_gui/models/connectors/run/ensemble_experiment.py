@@ -1,6 +1,7 @@
 from ert_gui.models.connectors.run import ActiveRealizationsModel, BaseRunModel
 from ert_gui.models.mixins.run_model import ErtRunError
 from ert.enkf.enums import HookRuntime
+from ert.enkf import ErtLog
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -21,7 +22,8 @@ class EnsembleExperiment(BaseRunModel):
         success = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
 
         if not success:
-            raise ErtRunError("Simulation failed!")
+            raise ErtRunError("Simulation or loading of results failed! \n"
+                              "Check ERT log file '%s' or simulation folder for details." % ErtLog.getFilename())
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
