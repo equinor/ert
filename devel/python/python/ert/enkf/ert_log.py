@@ -1,17 +1,20 @@
-from ert.cwrap import CWrapper, CNamespace
-from ert.enkf import ENKF_LIB
+from ert.enkf import EnkfPrototype
 
 
 class ErtLog(object):
-    cnamespace = None
+    _init = EnkfPrototype("void ert_log_init_log(int, char*, bool)", bind=False)
+    _write_log = EnkfPrototype("void ert_log_add_message_py(int, char*)", bind=False)
+    _get_filename = EnkfPrototype("char* ert_log_get_filename()", bind=False)
 
-    @staticmethod
-    def log(log_level, message ):
-        ErtLog.cnamespace.write_log(log_level, message)
+    @classmethod
+    def init(cls, log_level, log_filename, verbose):
+        cls._init(log_level, log_filename, verbose)
 
-ErtLog.cnamespace = CNamespace("ErtLog")
+    @classmethod
+    def log(cls, log_level, message):
+        cls._write_log(log_level, message)
 
-cwrapper = CWrapper(ENKF_LIB)
-
-ErtLog.cnamespace.init = cwrapper.prototype("void ert_log_init_log(int, char*, char*, bool)")
-ErtLog.cnamespace.write_log = cwrapper.prototype("void ert_log_add_message_py(int, char*)")
+    @classmethod
+    def getFilename(cls):
+        """ @rtype: string """
+        return cls._get_filename()

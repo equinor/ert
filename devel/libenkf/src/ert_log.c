@@ -26,6 +26,10 @@
 
 static log_type * logh = NULL;               /* Handle to an open log file. */
 
+/**
+ * The logging uses log_level to determine if an incoming message is to be included in the log.
+ * A high log_level setting will include more messages.
+ */
 void ert_log_init_log( int log_level , const char * log_file_name, bool verbose){
   logh = log_open( NULL , DEFAULT_LOG_LEVEL );
   
@@ -42,12 +46,20 @@ void ert_log_add_message_py(int message_level, char* message){
     ert_log_add_message(message_level, NULL, message, false);
 }
 
+/**
+ * Adding a message with a given message_level. A low message_level means "more important", as only messages with
+ * message_level below the configured log_level will be included.
+ */
 void ert_log_add_message(int message_level , FILE * dup_stream , char* message, bool free_message) {
    if(logh==NULL)
      ert_log_init_log(1,NULL,true);
    log_add_message(logh, message_level, dup_stream, message, free_message);
 }
 
+/**
+ * Adding a message with a given message_level. A low message_level means "more important", as only messages with
+ * message_level below the configured log_level will be included.
+ */
 void ert_log_add_fmt_message(int message_level , FILE * dup_stream , const char * fmt , ...) {
     if (log_include_message(logh,message_level)) {
       char * message;

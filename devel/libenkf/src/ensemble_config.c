@@ -68,6 +68,7 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/summary_key_matcher.h>
 #include <ert/enkf/custom_kw_config_set.h>
+#include <ert/enkf/ensemble_config.h>
 
 
 #define ENSEMBLE_CONFIG_TYPE_ID 8825306
