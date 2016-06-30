@@ -17,17 +17,44 @@ set( ERT_VERSION_MICRO git )
 #-----------------------------------------------------------------
 
 
-option( BUILD_ERT           	"Build the full ERT application - Linux only" OFF)
-option( BUILD_TESTS         	"Should the tests be built" OFF)
-option( BUILD_APPLICATIONS  	"Should we build small utility applications" OFF)
-option( BUILD_ECL_SUMMARY   	"Build the commandline application ecl_summary" OFF)
-option( BUILD_PYTHON        	"Run py_compile on the python wrappers" ON)
-option( BUILD_SHARED_LIBS   	"Build shared libraries" ON )
-option( INSTALL_ERT         	"Should anything be installed when issuing make install?" ON)
-option( ERT_BUILD_GUI       	"Should the pyQt based gui be compiled and installed" OFF )
-option( ERT_USE_OPENMP      	"Use OpenMP - currently only in EclGrid" OFF)
-option( ERT_DOC             	"Build ERT documantation" OFF)
-option( ERT_BUILD_CXX       	"Build some CXX wrappers" ON)
+
+
+
+
+find_package( PythonLibs   2.7 REQUIRED )
+find_package( PythonInterp 2.7 REQUIRED )
+
+include(cmake/python_module.cmake)
+
+# These are some python libraries we depend on
+find_python_module( matplotlib 1.2.0  )
+find_python_module( numpy      1.7.1  )
+find_python_module( pandas     0.15.1 )
+find_python_module( scipy      0.16.1 )
+find_python_module( PyQt4      4.8.0  ) # needed for all GUI
+
+
+option( BUILD_ERT           "Build the full ERT application - Linux only"             OFF)
+option( BUILD_TESTS         "Should the tests be built"                               OFF)
+option( BUILD_APPLICATIONS  "Should we build small utility applications"              OFF)
+option( BUILD_ECL_SUMMARY   "Build the commandline application ecl_summary"           OFF)
+option( BUILD_PYTHON        "Run py_compile on the python wrappers"                   ON )
+option( BUILD_SHARED_LIBS   "Build shared libraries"                                  ON )
+option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON )
+
+if (DEFINED PY_PyQt4)
+  option( ERT_BUILD_GUI     "Should the PyQt based GUI be compiled and installed"     OFF)
+else()
+  message(WARNING "Cannot build GUI without PyQt4.  ERT_BUILD_GUI disabled.")
+endif()
+
+option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid"                  OFF)
+option( ERT_DOC             "Build ERT documantation"                                 OFF)
+option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)
+
+
+
+
 
 set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
 if (EXISTS ${STATOIL_TESTDATA_ROOT})
