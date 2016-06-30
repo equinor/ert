@@ -33,7 +33,6 @@ extern "C" {
   void                              module_data_block_vector_add_data_block( module_data_block_vector_type * module_data_block_vector , const module_data_block_type * data_block);
   module_data_block_type          * module_data_block_vector_iget_module_data_block(const module_data_block_vector_type * module_data_block_vector, int index);
   int                               module_data_block_vector_get_size(const module_data_block_vector_type * module_data_block_vector);
-  char *                            module_data_block_vector_get_ministep_name(const module_data_block_vector_type * module_data_block_vector);
 
 #ifdef __cplusplus
 }

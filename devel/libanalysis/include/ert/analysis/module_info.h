@@ -19,6 +19,7 @@
 #define ERT_MODULE_INFO_H
 
 #include <ert/analysis/module_data_block_vector.h>
+#include <ert/analysis/module_obs_block_vector.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,7 +31,9 @@ extern "C" {
 
   module_info_type                * module_info_alloc(const char* ministep_name);
   void                              module_info_free();
+  char                          *   module_info_get_ministep_name(const module_info_type * module_info);
   module_data_block_vector_type *   module_info_get_data_block_vector(const module_info_type * module_info);
+  module_obs_block_vector_type  *   module_info_get_obs_block_vector(const module_info_type * module_info);
 
 #ifdef __cplusplus
 }

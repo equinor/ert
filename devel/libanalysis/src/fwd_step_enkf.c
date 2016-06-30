@@ -27,6 +27,8 @@
 #include <ert/util/matrix.h>
 #include <ert/util/matrix_blas.h>
 #include <ert/util/stepwise.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/analysis/fwd_step_enkf.h>
 #include <ert/analysis/fwd_step_log.h>
@@ -34,6 +36,8 @@
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/module_data_block.h>
 #include <ert/analysis/module_data_block_vector.h>
+#include <ert/analysis/module_obs_block.h>
+#include <ert/analysis/module_obs_block_vector.h>
 
 
 #define FWD_STEP_ENKF_TYPE_ID 765524
@@ -110,13 +114,11 @@ void fwd_step_enkf_data_free( void * arg ) {
 
 
 static void fwd_step_enkf_write_log_header( fwd_step_enkf_data_type * fwd_step_data, const char * ministep_name, const int nx, const int nd, const int ens_size) {
-  const char * format = "%-15s%-15s%-15s%-15s%-15s%-15s\n";
-  const char * column1 = "Parameter";
-  const char * column2 = "ActiveIndex";
-  const char * column3 = "GlobalIndex";
-  const char * column4 = "NumAttached";
-  const char * column5 = "FinalR2";
-  const char * column6 = "AttachedObs";
+  const char * format = "%-25s%-25s%-25s%-25s\n";
+  const char * column1 = "Parameter(ActiveIndex)";
+  const char * column2 = "GlobalIndex";
+  const char * column3 = "NumAttached";
+  const char * column4 = "AttachedObs(ActiveIndex)[Percentage sensitivity]";
   int nfolds      = fwd_step_data->nfolds;
   double r2_limit = fwd_step_data->r2_limit;
 
@@ -129,7 +131,8 @@ static void fwd_step_enkf_write_log_header( fwd_step_enkf_data_type * fwd_step_d
     fwd_step_log_line(fwd_step_data->fwd_step_log, "CV folds                    : %d\n",nfolds);
     fwd_step_log_line(fwd_step_data->fwd_step_log, "Relative R2 tolerance       : %f\n",r2_limit);
     fwd_step_log_line(fwd_step_data->fwd_step_log, "===============================================================================================================================\n");
-    fwd_step_log_line(fwd_step_data->fwd_step_log, format, column1, column2, column3, column4, column5, column6 );
+    fwd_step_log_line(fwd_step_data->fwd_step_log, format, column1, column2, column3, column4);
+    fwd_step_log_line(fwd_step_data->fwd_step_log, "===============================================================================================================================\n");
   }
 
   printf("===============================================================================================================================\n");
@@ -140,40 +143,84 @@ static void fwd_step_enkf_write_log_header( fwd_step_enkf_data_type * fwd_step_d
   printf("CV folds                    : %d\n",nfolds);
   printf("Relative R2 tolerance       : %f\n",r2_limit);
   printf("===============================================================================================================================\n");
-  printf(format, column1, column2, column3, column4, column5, column6);
+  printf(format, column1, column2, column3, column4);
+  printf("===============================================================================================================================\n");
 }
 
-static void fwd_step_enkf_write_iter_info( fwd_step_enkf_data_type * data , stepwise_type * stepwise, const char* key, const int active_index, const int global_index ) {
-  const char * format = "%-15s%-15d%-15d%-15d%-15f";
+static void fwd_step_enkf_write_iter_info( fwd_step_enkf_data_type * data , stepwise_type * stepwise, const char* key, const int data_active_index, const int global_index, const module_info_type * module_info ) {
+
+  const char * format = "%-25s%-25d%-25d";
   int n_active = stepwise_get_n_active( stepwise);
-  double R2 = stepwise_get_R2(stepwise);
   bool_vector_type * active_set = stepwise_get_active_set(stepwise);
   bool has_log = fwd_step_log_is_open( data->fwd_step_log );
-
+  module_obs_block_vector_type * module_obs_block_vector  = module_info_get_obs_block_vector(module_info);
+  char * loc_key = util_alloc_string_copy(key);
+  char * data_active_index_str = util_alloc_sprintf( "(%d)" , data_active_index );
+  char * cat = util_strcat_realloc(loc_key , data_active_index_str );
   if (has_log)
-    fwd_step_log_line( data->fwd_step_log , format, key, active_index, global_index, n_active, R2);
+    fwd_step_log_line( data->fwd_step_log , format, cat, global_index, n_active);
 
-  printf(format, key, active_index, global_index, n_active, R2);
+  printf(format, cat, global_index,n_active);
 
-  if (has_log)
-    fwd_step_log_line( data->fwd_step_log , "%s","[");
+  const double sum_beta = stepwise_get_sum_beta(stepwise);
+  int obs_active_index = 0;
+  stringlist_type * obs_list = stringlist_alloc_new( );
+  double_vector_type * r_list = double_vector_alloc(0, 0);
 
-  printf("%s","[");
-
+  const char * format1 = "%s(%d)[%.1f]   ";
   for (int ivar = 0; ivar < bool_vector_size( active_set); ivar++) {
     if (!bool_vector_iget( active_set , ivar))
       continue;
 
-    if (has_log)
-      fwd_step_log_line( data->fwd_step_log , "%d ",ivar);
+    const module_obs_block_type  * module_obs_block = module_obs_block_vector_search_module_obs_block(module_obs_block_vector, ivar);
+    const int* active_indices = module_obs_block_get_active_indices(module_obs_block);
+    bool all_active = active_indices == NULL; /* Inactive are not present in D */
+    int row_start = module_obs_block_get_row_start(module_obs_block);
+    int row_end   = module_obs_block_get_row_end(module_obs_block);
+    const char* obs_key = module_obs_block_get_key(module_obs_block);
+    const double var_beta = stepwise_iget_beta(stepwise, ivar);
+    const double var_beta_percent = 100.0 * fabs(var_beta) / sum_beta;
 
-    printf("%d ",ivar);
+    int local_index = 0;
+    for (int i = row_start; i < row_end; i++) {
+      if (i == ivar){
+        if (all_active)
+          obs_active_index = local_index;
+        else
+          obs_active_index = active_indices[local_index];
+        break;
+      }
+      local_index ++;
+    }
+
+    char * obs_list_entry = util_alloc_sprintf(format1 , obs_key, obs_active_index,var_beta_percent);
+    stringlist_append_copy(obs_list, obs_list_entry);
+    double_vector_append(r_list, var_beta_percent);
   }
+
+  {
+    /* Sorting with respect to sensitivity */
+    perm_vector_type * sort_perm =  double_vector_alloc_rsort_perm(r_list);
+    for (int i = 0; i < stringlist_get_size( obs_list); i++) {
+      const char * obs_list_entry = stringlist_iget(obs_list, perm_vector_iget(sort_perm, i));
+      if (has_log)
+        fwd_step_log_line( data->fwd_step_log , "%s", obs_list_entry);
+
+      printf("%s", obs_list_entry);
+    }
+    perm_vector_free(sort_perm);
+  }
+
+
+
   if (has_log)
-    fwd_step_log_line( data->fwd_step_log , "]\n");
+    fwd_step_log_line( data->fwd_step_log , "\n");
 
-  printf("]\n");
+  printf("\n");
 
+  stringlist_free(obs_list);
+  util_safe_free(data_active_index_str);
+  util_safe_free(cat);
 }
 
 /*Main function: */
@@ -225,7 +272,7 @@ void fwd_step_enkf_updateA(void * module_data ,
       matrix_type * di = matrix_alloc( 1 , nd );
 
       if (verbose){
-        char * ministep_name = module_data_block_vector_get_ministep_name(data_block_vector);
+        char * ministep_name = module_info_get_ministep_name(module_info);
         fwd_step_enkf_write_log_header(fwd_step_data, ministep_name, nx, nd, ens_size);
       }
 
@@ -270,7 +317,7 @@ void fwd_step_enkf_updateA(void * module_data ,
             else
              active_index = active_indices[local_index];
 
-            fwd_step_enkf_write_iter_info(fwd_step_data, stepwise_data, key, active_index, i);
+            fwd_step_enkf_write_iter_info(fwd_step_data, stepwise_data, key, active_index, i, module_info);
 
           }
 

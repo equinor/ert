@@ -39,19 +39,19 @@ module_data_block_type * module_data_block_alloc(  const char * key,  const int 
 }
 
 
-const char * module_data_block_get_key(module_data_block_type * module_data_block){
+const char * module_data_block_get_key(const module_data_block_type * module_data_block){
   return module_data_block->key;
 }
 
-const int module_data_block_get_row_start(module_data_block_type * module_data_block){
+const int module_data_block_get_row_start(const module_data_block_type * module_data_block){
   return module_data_block->A_row_start;
 }
 
-const int module_data_block_get_row_end(module_data_block_type * module_data_block){
+const int module_data_block_get_row_end(const module_data_block_type * module_data_block){
   return module_data_block->A_row_start + module_data_block->n_active;
 }
 
-const int  * module_data_block_get_active_indices(module_data_block_type * module_data_block ){
+const int  * module_data_block_get_active_indices(const module_data_block_type * module_data_block ){
   return module_data_block->index_list;
 }
 
