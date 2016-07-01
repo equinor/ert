@@ -1,6 +1,6 @@
 # try import python module, if success, check its version, store as PY_module.
 # the module is imported as-is, hence the case (e.g. PyQt4) must be correct.
-function(find_python_module_version module)
+function(python_module_version module)
   set(PY_VERSION_ACCESSOR "__version__")
   set(PY_module_name ${module})
 
@@ -9,7 +9,7 @@ function(find_python_module_version module)
     set(PY_VERSION_ACCESSOR "PYQT_VERSION_STR")
   endif()
 
-  execute_process(COMMAND "python" "-c"
+  execute_process(COMMAND "${PYTHON_EXECUTABLE}" "-c"
     "import ${PY_module_name} as py_m; print(py_m.${PY_VERSION_ACCESSOR})"
     RESULT_VARIABLE _${module}_fail#    error code 0 if success
     OUTPUT_VARIABLE _${module}_version# major.minor.patch
@@ -25,8 +25,8 @@ endfunction()
 # If we find the correct module and new enough version, set PY_package, where
 # "package" is the given argument to the version we found else, display warning
 # and do not set any variables.
-function(find_python_module package version)
-  find_python_module_version(${package})
+function(python_module package version)
+  python_module_version(${package})
 
   if(NOT DEFINED PY_${package})
     message(WARNING "Could not find Python module " ${package})
