@@ -21,8 +21,6 @@ set( ERT_VERSION_MICRO git )
 
 
 
-find_package( PythonLibs   2.7 REQUIRED )
-find_package( PythonInterp 2.7 REQUIRED )
 
 include(cmake/python_module.cmake)
 
