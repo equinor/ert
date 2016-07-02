@@ -1,12 +1,17 @@
 include(cmake/find_python_module.cmake)
 include(cmake/python_module_versions.cmake) # finds version
 
-FIND_PACKAGE(PythonInterp 2.7 REQUIRED)
+FIND_PACKAGE(PythonInterp 2.7)
+if (NOT DEFINED PYTHON_EXECUTABLE)
+   message("Python2.7 interpreter not found - Python wrappers not enabled")
+   return()
+endif()
 
-# These are some python libraries we depend on
+
 python_module(numpy 1.7.1)
-if(NOT DEFINED PY_numpy)
-  message(SEND_ERROR "numpy is required to use ERT with python")
+if (NOT DEFINED PY_numpy)
+   message("numpy module not found - Python wrappers not enabled")
+   return()
 endif()
 
 
