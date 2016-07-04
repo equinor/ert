@@ -17,17 +17,16 @@
 from PyQt4.QtCore import Qt, QMargins
 from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout
 from ert_gui.ide.keywords.definitions import RangeStringArgument
+from ert_gui.ide.keywords.definitions import NumberListStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation,\
-    TargetCaseFormatModel, AnalysisModuleModel, RunPathModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation, TargetCaseFormatModel, AnalysisModuleModel, RunPathModel
 
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.widgets import util
 from ert_gui.widgets.active_label import ActiveLabel
 from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice
-from ert_gui.widgets.text_or_file import TextOrFile
 from ert_gui.widgets.string_box import StringBox
 
 # For custom dialog box stuff
@@ -53,69 +52,82 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow(number_of_realizations_label.getLabel(), number_of_realizations_label)
 
         target_case_format_model = TargetCaseFormatModel()
-        self.target_case_format_field = StringBox(target_case_format_model, "Target case format", "config/simulation/target_case_format")
-        self.target_case_format_field.setValidator(ProperNameFormatArgument())
-        layout.addRow(self.target_case_format_field.getLabel(), self.target_case_format_field)
+        self._target_case_format_field = StringBox(target_case_format_model, "Target case format", "config/simulation/target_case_format")
+        self._target_case_format_field.setValidator(ProperNameFormatArgument())
+        layout.addRow(self._target_case_format_field.getLabel(), self._target_case_format_field)
 
         iterated_target_case_format_model = DefaultNameFormatModel(())
         iterated_target_case_format_box = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
         iterated_target_case_format_box.setValidator(ProperNameFormatArgument())
 
-        self.option_widget = TextOrFile(self.getSimulationModel().setWeights, help_link="config/simulation/iteration_weights")
-        layout.addRow("Relative Weights:", self.option_widget)
+        self._createInputForWeights(layout)
+
+        analysis_module_model = AnalysisModuleModel()
+        self._analysis_module_choice = ComboChoice(analysis_module_model, "Analysis Module", "config/analysis/analysis_module")
+
+        self._variables_popup_button = QToolButton()
+        self._variables_popup_button.setIcon(util.resourceIcon("ide/small/cog_edit.png"))
+        self._variables_popup_button.clicked.connect(self.showVariablesPopup)
+        self._variables_popup_button.setMaximumSize(20, 20)
+
+        self._variables_layout = QHBoxLayout()
+        self._variables_layout.addWidget(self._analysis_module_choice, 0, Qt.AlignLeft)
+        self._variables_layout.addWidget(self._variables_popup_button, 0, Qt.AlignLeft)
+        self._variables_layout.setContentsMargins(QMargins(0,0,0,0))
+        self._variables_layout.addStretch()
+
+        layout.addRow(self._analysis_module_choice.getLabel(), self._variables_layout)
+
+        active_realizations_model = ActiveRealizationsModel()
+        self._active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
+        self._active_realizations_field.setValidator(RangeStringArgument())
+        layout.addRow(self._active_realizations_field.getLabel(), self._active_realizations_field)
+
+        self._target_case_format_field.validationChanged.connect(self.simulationConfigurationChanged)
+        self._active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)
+        self._relative_iteration_weights_box.validationChanged.connect(self.simulationConfigurationChanged)
+
+        self.setLayout(layout)
+
+    def _createInputForWeights(self, layout):
+        relative_iteration_weights_model = StringModel(self.getSimulationModel().getWeights())
+        self._relative_iteration_weights_box = StringBox(relative_iteration_weights_model, "Custom iteration weights", help_link="config/simulation/iteration_weights", continuous_update=True)
+        self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
+        layout.addRow("Relative Weights:", self._relative_iteration_weights_box)
+
+        def updateModelWithRelativeWeights():
+            weights = relative_iteration_weights_model.getValue()
+            self.getSimulationModel().setWeights(weights)
+
+        relative_iteration_weights_model.observable().attach(StringModel.VALUE_CHANGED_EVENT, updateModelWithRelativeWeights)
 
         normalized_weights_model = StringModel()
-        normalized_weights_model.setValue("1")
+        normalized_weights_model.setValue("")
         normalized_weights_widget = ActiveLabel(normalized_weights_model, help_link="config/simulation/iteration_weights")
         layout.addRow('Normalized weights:', normalized_weights_widget)
 
-        def updateNormalizedWeights():
-            if self.option_widget.isValid():
-                weights = MultipleDataAssimilation.parseWeights(self.option_widget.getValue())
+        def updateVisualizationOfNormalizedWeights():
+            if self._relative_iteration_weights_box.isValid():
+                weights = MultipleDataAssimilation.parseWeights(relative_iteration_weights_model.getValue())
                 normalized_weights = MultipleDataAssimilation.normalizeWeights(weights)
                 normalized_weights_model.setValue(", ".join("%.2f" % x for x in normalized_weights))
             else:
                 normalized_weights_model.setValue("The weights are invalid!")
 
-        self.option_widget.validationChanged.connect(updateNormalizedWeights)
+        self._relative_iteration_weights_box.validationChanged.connect(updateVisualizationOfNormalizedWeights)
 
-        analysis_module_model = AnalysisModuleModel()
-        self.analysis_module_choice = ComboChoice(analysis_module_model, "Analysis Module", "config/analysis/analysis_module")
-
-        self.variables_popup_button = QToolButton()
-        self.variables_popup_button.setIcon(util.resourceIcon("ide/small/cog_edit.png"))
-        self.variables_popup_button.clicked.connect(self.showVariablesPopup)
-        self.variables_popup_button.setMaximumSize(20, 20)
-
-        self.variables_layout = QHBoxLayout()
-        self.variables_layout.addWidget(self.analysis_module_choice, 0, Qt.AlignLeft)
-        self.variables_layout.addWidget(self.variables_popup_button, 0, Qt.AlignLeft)
-        self.variables_layout.setContentsMargins(QMargins(0,0,0,0))
-        self.variables_layout.addStretch()
-
-        layout.addRow(self.analysis_module_choice.getLabel(), self.variables_layout)
-
-        active_realizations_model = ActiveRealizationsModel()
-        self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
-        self.active_realizations_field.setValidator(RangeStringArgument())
-        layout.addRow(self.active_realizations_field.getLabel(), self.active_realizations_field)
-
-        self.target_case_format_field.validationChanged.connect(self.simulationConfigurationChanged)
-        self.active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)
-        self.option_widget.validationChanged.connect(self.simulationConfigurationChanged)
-
-        self.setLayout(layout)
+        updateVisualizationOfNormalizedWeights() # To normalize the default weights
 
     def isConfigurationValid(self):
-        return self.target_case_format_field.isValid() and self.active_realizations_field.isValid() and self.option_widget.isValid()
+        return self._target_case_format_field.isValid() and self._active_realizations_field.isValid() and self._relative_iteration_weights_box.isValid()
 
     def toggleAdvancedOptions(self, show_advanced):
-        self.active_realizations_field.setVisible(show_advanced)
-        self.layout().labelForField(self.active_realizations_field).setVisible(show_advanced)
+        self._active_realizations_field.setVisible(show_advanced)
+        self.layout().labelForField(self._active_realizations_field).setVisible(show_advanced)
 
-        self.analysis_module_choice.setVisible(show_advanced)
-        self.layout().labelForField(self.variables_layout).setVisible(show_advanced)
-        self.variables_popup_button.setVisible(show_advanced)
+        self._analysis_module_choice.setVisible(show_advanced)
+        self.layout().labelForField(self._variables_layout).setVisible(show_advanced)
+        self._variables_popup_button.setVisible(show_advanced)
 
     def showVariablesPopup(self):
         analysis_module_name = AnalysisModuleModel().getCurrentChoice()
