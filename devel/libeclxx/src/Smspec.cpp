@@ -7,6 +7,15 @@ namespace ERT {
         node( smspec_node_alloc_copy( rhs.node.get() ) )
     {}
 
+    smspec_node::smspec_node( smspec_node&& rhs ) :
+        node( std::move( rhs.node ) )
+    {}
+
+    smspec_node& smspec_node::operator=( const smspec_node& rhs ) {
+        this->node.reset( smspec_node_alloc_copy( rhs.node.get() ) );
+        return *this;
+    }
+
     static const int dummy_dims[ 3 ] = { -1, -1, -1 };
     const auto default_join = ":";
 
