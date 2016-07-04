@@ -12,6 +12,9 @@ namespace ERT {
     class smspec_node {
         public:
             smspec_node( const smspec_node& );
+            smspec_node( smspec_node&& );
+
+            smspec_node& operator=( const smspec_node& );
 
             smspec_node(
                     ecl_smspec_var_type,
