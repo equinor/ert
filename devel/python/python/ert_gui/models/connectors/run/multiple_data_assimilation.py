@@ -15,10 +15,8 @@
 #  for more details.
 from ert.enkf.enums import EnkfInitModeEnum
 from ert.enkf.enums import HookRuntime
-from ert.enkf import ESUpdate
 
-from ert_gui.models.connectors.run import ActiveRealizationsModel,\
-    TargetCaseFormatModel, AnalysisModuleModel, BaseRunModel
+from ert_gui.models.connectors.run import TargetCaseFormatModel, AnalysisModuleModel, BaseRunModel
 from ert_gui.models.mixins import ErtRunError
 
 from ert.util import BoolVector
@@ -31,7 +29,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def __init__(self):
         super(MultipleDataAssimilation, self).__init__(name="Multiple Data Assimilation (ES MDA)", phase_count=2)
-        self.weights = "1" # default value
+        self.weights = "3, 2, 1" # default value
 
     def getWeights(self):
         return self.weights
