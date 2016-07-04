@@ -13,11 +13,12 @@ from ert_gui.widgets.simple_progress import SimpleProgress
 
 class RunDialog(QDialog):
 
-    def __init__(self, run_model):
-        QDialog.__init__(self)
+    def __init__(self, run_model, parent):
+        QDialog.__init__(self, parent)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
         self.setModal(True)
+        self.setWindowModality(Qt.WindowModal)
         self.setWindowTitle("Simulations")
 
         assert isinstance(run_model, RunModelMixin)
@@ -63,7 +64,7 @@ class RunDialog(QDialog):
             ert = run_model.ert()
 
         self.plot_tool = PlotTool(ert)
-        self.plot_tool.setParent(self)
+        self.plot_tool.setParent(None)
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
         self.plot_button.setEnabled(ert is not None)
