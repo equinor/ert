@@ -7,7 +7,6 @@ set(PYTHON_SOURCES
     checkbox.py
     clearable_line_edit.py
     closable_dialog.py
-    cogwheel.py
     combo_choice.py
     custom_date_edit.py
     custom_dialog.py
@@ -17,15 +16,12 @@ set(PYTHON_SOURCES
     helped_widget.py
     integer_spinner.py
     keyword_list.py
-    keyword_table.py
     legend.py
     list_edit_box.py
-    list_spin_box.py
     option_widget.py
     path_chooser.py
     path_format.py
     progress.py
-    reloadbutton.py
     row_group.py
     row_panel.py
     search_box.py
@@ -33,7 +29,6 @@ set(PYTHON_SOURCES
     string_box.py
     util.py
     validated_dialog.py
-    warning_panel.py
     workflow_dialog.py
 )
 
