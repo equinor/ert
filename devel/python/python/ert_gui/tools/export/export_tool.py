@@ -14,11 +14,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from weakref import ref
-from ert_gui.models.connectors.export import ExportKeywordModel
-from ert_gui.models.connectors.init import CaseSelectorModel
+
+from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 
 from ert_gui.tools import Tool
-from ert_gui.tools.export import ExportPanel, Exporter
+from ert_gui.tools.export import ExportPanel, Exporter, ExportKeywordModel
 from ert_gui.widgets import util
 from ert_gui.widgets.closable_dialog import ClosableDialog
 
@@ -31,15 +31,13 @@ class ExportTool(Tool):
         self.__exporter = None
         self.setEnabled(ExportKeywordModel().hasKeywords())
 
-
     def trigger(self):
         if self.__export_widget is None:
             self.__export_widget = ref(ExportPanel(self.parent()))
             self.__exporter = Exporter()
             self.__export_widget().runExport.connect(self.__exporter.runExport)
 
-
-        self.__export_widget().setSelectedCase(CaseSelectorModel().getCurrentChoice())
+        self.__export_widget().setSelectedCase(getCurrentCaseName())
         self.__dialog = ref(ClosableDialog("Export", self.__export_widget(), self.parent()))
         self.__export_widget().updateExportButton.connect(self.__dialog().toggleButton)
         self.__dialog().addButton("Export", self.export)
