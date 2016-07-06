@@ -1,5 +1,6 @@
 from PyQt4.QtCore import QSize, Qt
-from PyQt4.QtGui import QToolButton, QHBoxLayout, QLabel, QListWidget, QWidget, QVBoxLayout, QListWidgetItem, QMenu, QAction, QAbstractItemView, QListView
+from PyQt4.QtGui import QToolButton, QHBoxLayout, QLabel, QListWidget
+from PyQt4.QtGui import QWidget, QVBoxLayout, QListWidgetItem, QMenu, QAbstractItemView
 
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.widgets.search_box import SearchBox
@@ -7,7 +8,6 @@ from ert_gui.widgets.util import resourceIcon
 
 
 class CheckList(QWidget):
-    
     def __init__(self, model, label="", help_link=""):
         QWidget.__init__(self)
 
@@ -112,7 +112,6 @@ class CheckList(QWidget):
             else:
                 item.setHidden(True)
 
-
     def checkAll(self):
         self._model.selectAll()
 
@@ -151,4 +150,3 @@ class CheckList(QWidget):
             self.uncheckSelected()
         elif selected_item == clear_selection:
             self._list.clearSelection()
-
