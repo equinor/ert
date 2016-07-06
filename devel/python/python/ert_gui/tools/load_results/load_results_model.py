@@ -14,63 +14,60 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-from ert.util import StringList
 
-from ert_gui.models import ErtConnector
+from ert_gui import ERT
 
-class LoadResultsModel(ErtConnector):
 
-    def __init__(self):
-        super(LoadResultsModel, self).__init__()
+class LoadResultsModel(object):
 
-    def loadResults(self, selected_case, realisations, iteration):
+    @staticmethod
+    def loadResults(selected_case, realisations, iteration):
         """
         @type selected_case: str
         @type realisations: BoolVector
         @type iteration: int
         """
-        fs = self.ert().getEnkfFsManager().getFileSystem(selected_case)
-        self.ert().loadFromForwardModel(realisations, iteration, fs)
+        fs = ERT.ert.getEnkfFsManager().getFileSystem(selected_case)
+        ERT.ert.loadFromForwardModel(realisations, iteration, fs)
 
-
-    def isValidRunPath(self):
+    @staticmethod
+    def isValidRunPath():
         """ @rtype: bool """
-        run_path = self.ert().getModelConfig().getRunpathAsString()
-        hasIterations = True
+        run_path = ERT.ert.getModelConfig().getRunpathAsString()
         try:
-            formated = run_path % (0, 0)
+            result = run_path % (0, 0)
             return True
         except TypeError:
-            hasIterations = False
+            pass
 
-        hasRealization = True
         try:
-            formated = run_path % 0
+            result = run_path % 0
             return True
         except TypeError:
-            hasRealization = False
+            pass
 
         return False
 
-    def getCurrentRunPath(self):
+    @staticmethod
+    def getCurrentRunPath():
         """ @rtype: str """
-        return self.ert().getModelConfig().getRunpathAsString()
+        return ERT.ert.getModelConfig().getRunpathAsString()
 
 
-    def getIterationCount(self):
+    @staticmethod
+    def getIterationCount():
         """ @rtype: int """
-        run_path = self.ert().getModelConfig().getRunpathAsString()
-        formated = None
+        run_path = ERT.ert.getModelConfig().getRunpathAsString()
         try:
-            formated = run_path % (0, 0)
+            results = run_path % (0, 0)
         except TypeError:
             return 0
 
         iteration = 0
         valid_directory = True
         while valid_directory:
-            formated = run_path % (0, iteration)
-            valid_directory = os.path.exists(formated)
+            formatted = run_path % (0, iteration)
+            valid_directory = os.path.exists(formatted)
             if valid_directory:
                 iteration += 1
 

@@ -9,4 +9,4 @@ add_python_package("python.ert_gui.models.connectors"  ${PYTHON_INSTALL_PREFIX}/
 add_subdirectory(plot)
 add_subdirectory(queue_system)
 add_subdirectory(run)
-add_subdirectory(load_results)
+

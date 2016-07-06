@@ -1,3 +1,4 @@
+from .load_results_model import LoadResultsModel
 from .load_results_realisations_model import LoadResultsRealizationsModel
 from .load_results_iterations_model import LoadResultsIterationsModel
 from .load_results_panel import LoadResultsPanel
