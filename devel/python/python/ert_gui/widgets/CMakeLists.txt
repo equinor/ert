@@ -15,7 +15,6 @@ set(PYTHON_SOURCES
     error_popup.py
     helped_widget.py
     integer_spinner.py
-    keyword_list.py
     legend.py
     list_edit_box.py
     option_widget.py

@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 # This file is the main script of the ert with graphical UI, e.g. gert or
 # ert_gui. To run successfully the ert GUI requires a quite well prepared
 # environment. This includes the following:
@@ -77,7 +77,7 @@
 #
 # An example shell script achieving this could look like:
 #
-#-------------------- <Example shell script> --------------------
+# -------------------- <Example shell script> --------------------
 #  #!/bin/bash
 #
 #  # The LSF libraries are installed in directory /site/LSF/7.0/linux/lib, this
@@ -108,15 +108,17 @@
 #
 #  exec python /opt/ert/python/ert_gui/gert_main.py $@
 #
-#-------------------- </Example shell script> --------------------
+# -------------------- </Example shell script> --------------------
 
 import sys
 import os
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication, QSplashScreen, QFileDialog
+from PyQt4.QtGui import QApplication, QFileDialog
 import time
 from ert.enkf import EnKFMain
 from ert.util import Version
+
+import ert_gui
 from ert_gui.main_window import GertMainWindow
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.models import ErtConnector
@@ -144,8 +146,8 @@ else:
     # source location relative to the location of the current file;
     # assuming we are in the source directory. Will not work if we are
     # in an arbitrary build directory.
-    ert_share_path = os.path.realpath( os.path.join( os.path.dirname( os.path.abspath( __file__)) , "../../../share"))
-    
+    ert_share_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share"))
+
 ert_gui.widgets.util.img_prefix = ert_share_path + "/gui/img/"
 
 from ert_gui.newconfig import NewConfigurationDialog
@@ -153,27 +155,8 @@ from ert_gui.newconfig import NewConfigurationDialog
 from ert_gui.widgets.util import resourceImage
 
 
-class Ert(object):
-    def __init__(self, enkf_main):
-        super(Ert, self).__init__()
-
-        assert isinstance(enkf_main, EnKFMain)
-        self.__ert = enkf_main
-
-    def reloadERT(self, config_file):
-        python_executable = sys.executable
-        ert_gui_main = sys.argv[0]
-
-        self.__ert.free()
-        os.execl(python_executable, python_executable, ert_gui_main, config_file)
-
-    def ert(self):
-        return self.__ert
-
-
 def main(argv):
-
-    app = QApplication(argv) #Early so that QT is initialized before other imports
+    app = QApplication(argv)  # Early so that QT is initialized before other imports
     app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
 
     if len(argv) == 1:
@@ -201,13 +184,12 @@ def main(argv):
     help_center.setHelpMessageLink("welcome_to_ert")
 
     strict = True
-        
+
     verbose = False
     verbose_var = os.getenv("ERT_VERBOSE", "False")
-    lower_verbose_var = verbose_var.lower() 
-    if lower_verbose_var == "true": 
+    lower_verbose_var = verbose_var.lower()
+    if lower_verbose_var == "true":
         verbose = True
-
 
     if not os.path.exists(config_file):
         print("Trying to start new config")
@@ -225,11 +207,9 @@ def main(argv):
             EnKFMain.createNewConfig(config_file, storage_path, dbase_type, num_realizations)
             strict = False
 
-
     if os.path.isdir(config_file):
         print("The specified configuration file is a directory!")
         sys.exit(1)
-
 
     splash = ErtSplash()
     splash.version = "Version %s" % Version.getVersion()
@@ -240,20 +220,21 @@ def main(argv):
 
     now = time.time()
 
+    ert = EnKFMain(config_file, strict=strict, verbose=verbose)
+    ErtConnector.setErt(ert)
 
-    ert = Ert(EnKFMain(config_file, strict=strict, verbose=verbose))
-    ErtConnector.setErt(ert.ert())
+    ert_gui.ertnotifier.configureErtNotifier(ert, config_file)
 
     window = GertMainWindow()
     window.setWidget(SimulationPanel())
 
-    plugin_handler = PluginHandler(ert.ert(), ert.ert().getWorkflowList().getPluginJobs(), window)
+    plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
 
     help_tool = HelpTool("ERT", window)
 
     window.addDock("Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea)
-    window.addTool(IdeTool(os.path.basename(config_file), ert.reloadERT, help_tool))
-    window.addTool(PlotTool(ert.ert()))
+    window.addTool(IdeTool(os.path.basename(config_file), help_tool))
+    window.addTool(PlotTool())
     window.addTool(ExportTool())
     window.addTool(WorkflowsTool())
     window.addTool(ManageCasesTool())
@@ -272,17 +253,10 @@ def main(argv):
     window.raise_()
     finished_code = app.exec_()
 
-    ert.ert().free()
+    ert.free()
 
     sys.exit(finished_code)
 
 
 if __name__ == "__main__":
     main(sys.argv)
-
-
-
-
-
-
-
