@@ -2,11 +2,10 @@ from PyQt4.QtGui import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
 from ert_gui.ide.keywords.definitions import RangeStringArgument
-from ert_gui.models.connectors.run import EnsembleExperiment, ActiveRealizationsModel, RunPathModel
+from ert_gui.models.connectors.run import EnsembleExperiment, ActiveRealizationsModel
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
-from ert_gui.widgets.active_label import ActiveLabel
 from ert_gui.widgets.string_box import StringBox
 
 
@@ -20,9 +19,9 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         case_selector = CaseSelector()
         layout.addRow("Current case:", case_selector)
 
-        runpath_model = RunPathModel()
-        runpath_label = ActiveLabel(runpath_model, "Runpath", "config/simulation/runpath")
-        layout.addRow(runpath_label.getLabel(), runpath_label)
+        run_path_label = QLabel("<b>%s</b>" % getRunPath())
+        addHelpToWidget(run_path_label, "config/simulation/runpath")
+        layout.addRow("Runpath:", run_path_label)
 
         number_of_realizations_label = QLabel("<b>%d</b>" % getRealizationCount())
         addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")

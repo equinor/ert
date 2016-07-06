@@ -1,6 +1,5 @@
 set(PYTHON_SOURCES
     __init__.py
-    active_label.py
     add_remove_widget.py
     checkbox.py
     clearable_line_edit.py
@@ -18,8 +17,6 @@ set(PYTHON_SOURCES
     path_chooser.py
     path_format.py
     progress.py
-    row_group.py
-    row_panel.py
     search_box.py
     simple_progress.py
     string_box.py
