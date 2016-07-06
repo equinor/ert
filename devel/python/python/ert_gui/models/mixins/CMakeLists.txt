@@ -4,15 +4,11 @@ set(PYTHON_SOURCES
     boolean_model.py
     button_model.py
     choice_model.py
-    dictionary_model.py
-    keyword_model.py
     list_model.py
     model.py
     path_model.py
     range_model.py
     run_model.py
-    selectable_list_model.py
-    selectable_model.py
     spinner_model.py
 )
 
