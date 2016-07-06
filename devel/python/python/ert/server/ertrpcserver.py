@@ -10,8 +10,6 @@ from ert.enkf.data import EnkfNode, CustomKW
 from ert.enkf.enums import RealizationStateEnum, EnkfVarType, ErtImplType
 from ert.server import SimulationContext
 from ert.server.ertrpcclient import FAULT_CODES
-from ert.util import IntegerHash
-from ert_gui.gert_main import Ert
 
 
 def checkRealizationState(state):
