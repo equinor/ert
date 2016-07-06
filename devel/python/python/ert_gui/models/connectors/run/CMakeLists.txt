@@ -10,7 +10,6 @@ set(PYTHON_SOURCES
     iterated_ensemble_smoother.py
     multiple_data_assimilation.py
     number_of_iterations.py
-    run_path.py
     simulation_mode.py
     simulations_tracker.py
     target_case_format_model.py

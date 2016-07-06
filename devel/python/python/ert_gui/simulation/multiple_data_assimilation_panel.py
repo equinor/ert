@@ -17,17 +17,16 @@
 from PyQt4.QtCore import Qt, QMargins
 from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel
 
-from ert_gui.ertwidgets import addHelpToWidget
-from ert_gui.ertwidgets.caseselector import CaseSelector
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
+from ert_gui.ertwidgets import addHelpToWidget, CaseSelector, ActiveLabel
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
+from ert_gui.ertwidgets.models.value_model import ValueModel
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.ide.keywords.definitions import NumberListStringArgument
 
-from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation, TargetCaseFormatModel, AnalysisModuleModel, RunPathModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation, TargetCaseFormatModel, AnalysisModuleModel
 
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.widgets import util
-from ert_gui.widgets.active_label import ActiveLabel
 from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice
 from ert_gui.widgets.string_box import StringBox
@@ -45,9 +44,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         case_selector = CaseSelector()
         layout.addRow("Current case:", case_selector)
 
-        run_path_model = RunPathModel()
-        run_path_label = ActiveLabel(run_path_model, "Runpath", "config/simulation/runpath")
-        layout.addRow(run_path_label.getLabel(), run_path_label)
+        run_path_label = QLabel("<b>%s</b>" % getRunPath())
+        addHelpToWidget(run_path_label, "config/simulation/runpath")
+        layout.addRow("Runpath:", run_path_label)
 
         number_of_realizations_label = QLabel("<b>%d</b>" % getRealizationCount())
         addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
@@ -103,8 +102,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
         relative_iteration_weights_model.observable().attach(StringModel.VALUE_CHANGED_EVENT, updateModelWithRelativeWeights)
 
-        normalized_weights_model = StringModel()
-        normalized_weights_model.setValue("")
+        normalized_weights_model = ValueModel()
         normalized_weights_widget = ActiveLabel(normalized_weights_model, help_link="config/simulation/iteration_weights")
         layout.addRow('Normalized weights:', normalized_weights_widget)
 

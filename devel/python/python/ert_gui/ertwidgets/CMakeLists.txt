@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    activelabel.py
     caselist.py
     caseselector.py
     checklist.py

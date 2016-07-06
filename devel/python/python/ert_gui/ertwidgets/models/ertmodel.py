@@ -16,10 +16,12 @@ def getAllCases():
 
 
 def caseExists(case_name):
+    """ @rtype: bool """
     return str(case_name) in getAllCases()
 
 
 def caseIsInitialized(case_name):
+    """ @rtype: bool """
     return ERT.ert.getEnkfFsManager().isCaseInitialized(case_name)
 
 
@@ -75,6 +77,7 @@ def getAllCasesNotRunning():
 
 
 def getCaseRealizationStates(case_name):
+    """ @rtype: list[ert.enkf.enums.RealizationStateEnum] """
     state_map = ERT.ert.getEnkfFsManager().getStateMapForCase(case_name)
     return [state for state in state_map]
 
@@ -105,3 +108,8 @@ def initializeCurrentCaseFromExisting(source_case, target_case, source_report_st
 def getParameterList():
     """ @rtype: list[str] """
     return [str(p) for p in ERT.ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)]
+
+
+def getRunPath():
+    """ @rtype: str """
+    return ERT.ert.getModelConfig().getRunpathAsString()
