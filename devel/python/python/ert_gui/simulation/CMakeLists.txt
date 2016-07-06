@@ -9,5 +9,6 @@ set(PYTHON_SOURCES
     simulation_panel.py
 )
 
-add_python_package("python.ert_gui.simulation"  ${PYTHON_INSTALL_PREFIX}/ert_gui/simulation "${PYTHON_SOURCES}" True)
+add_python_package("python.ert_gui.simulation" ${PYTHON_INSTALL_PREFIX}/ert_gui/simulation "${PYTHON_SOURCES}" True)
 
+add_subdirectory(models)

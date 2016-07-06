@@ -1,7 +1,7 @@
-from ert_gui.models.connectors.run import ActiveRealizationsModel, BaseRunModel
-from ert_gui.models.mixins.run_model import ErtRunError
+from ert_gui.models.connectors.run import ActiveRealizationsModel
 from ert.enkf.enums import HookRuntime
 from ert.enkf import ErtLog
+from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 
 class EnsembleExperiment(BaseRunModel):
