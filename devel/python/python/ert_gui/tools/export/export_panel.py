@@ -16,9 +16,8 @@
 from PyQt4.QtCore import QDir, pyqtSignal
 from PyQt4.QtGui import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
 
-from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
+from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName, getRealizationCount
 from ert_gui.ide.keywords.definitions import RangeStringArgument
-from ert_gui.models.connectors import EnsembleSizeModel
 
 from ert_gui.tools.export import ExportRealizationsModel, ExportKeywordModel
 from ert_gui.models.qt.all_cases_model import AllCasesModel
@@ -56,7 +55,7 @@ class ExportPanel(QWidget):
         self.__keywords.addItems(self.__kw_model)
         layout.addRow("Select keyword:", self.__keywords)
 
-        self.__active_realizations_model = ExportRealizationsModel(EnsembleSizeModel().getValue())
+        self.__active_realizations_model = ExportRealizationsModel(getRealizationCount())
         self.__active_realizations_field = StringBox(self.__active_realizations_model, "Active realizations", "config/simulation/active_realizations")
         self.__active_realizations_field.setValidator(RangeStringArgument())
         self.__active_realizations_field.validationChanged.connect(self.validateExportDialog)

@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    ert_summary.py
     popup_dialog.py
     run_dialog.py
     summary_panel.py
