@@ -15,7 +15,6 @@ set(PYTHON_SOURCES
     integer_spinner.py
     legend.py
     list_edit_box.py
-    option_widget.py
     path_chooser.py
     path_format.py
     progress.py
