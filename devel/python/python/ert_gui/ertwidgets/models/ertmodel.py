@@ -56,7 +56,7 @@ def caseHasDataAndIsNotRunning(case):
             case_has_data = True
             break
 
-    return case_has_data and not ERT.ert.getEnkfFsManager().isCaseRunning(case)
+    return case_has_data and not caseIsRunning(case)
 
 
 def getAllCasesWithDataAndNotRunning():
@@ -64,14 +64,14 @@ def getAllCasesWithDataAndNotRunning():
     return [case for case in getAllCases() if caseHasDataAndIsNotRunning(case)]
 
 
-def caseIsNotRunning(case):
+def caseIsRunning(case):
     """ @rtype: bool """
     return ERT.ert.getEnkfFsManager().isCaseRunning(case)
 
 
 def getAllCasesNotRunning():
     """ @rtype: list[str] """
-    return [case for case in getAllCases() if caseIsNotRunning(case)]
+    return [case for case in getAllCases() if not caseIsRunning(case)]
 
 
 def getCaseRealizationStates(case_name):
