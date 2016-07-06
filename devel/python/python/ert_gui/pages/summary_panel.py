@@ -1,6 +1,6 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
-from ert_gui.models.connectors import ErtSummary
+from .ert_summary import ErtSummary
 
 
 class SummaryTemplate(object):

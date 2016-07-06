@@ -1,6 +1,6 @@
 from ert.util import BoolVector
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
 from ert_gui.models import ErtConnector
-from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.mixins import BasicModelMixin
 
 
@@ -10,14 +10,8 @@ class ActiveRealizationsModel(ErtConnector, BasicModelMixin):
     def __init__(self):
         self.__active_realizations = self.getDefaultValue()
         self.__custom = False
-        EnsembleSizeModel().observable().attach(EnsembleSizeModel.SPINNER_VALUE_CHANGED_EVENT, self.__ensembleSizeChanged)
         super(ActiveRealizationsModel, self).__init__()
 
-
-    def __ensembleSizeChanged(self):
-        if not self.__custom:
-            self.__active_realizations = self.getDefaultValue()
-            self.observable().notify(self.VALUE_CHANGED_EVENT)
 
     def getValue(self):
         """ @rtype: str """
@@ -35,11 +29,11 @@ class ActiveRealizationsModel(ErtConnector, BasicModelMixin):
 
 
     def getDefaultValue(self):
-        size = EnsembleSizeModel().getValue()
+        size = getRealizationCount()
         return "0-%d" % (size - 1)
 
     def getActiveRealizationsMask(self):
-        count = EnsembleSizeModel().getValue()
+        count = getRealizationCount()
 
         mask = BoolVector.createActiveMask(self.getValue())
 

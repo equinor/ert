@@ -1,11 +1,12 @@
 from PyQt4.QtCore import Qt, QMargins
-from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout
+from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel
 
 from ert_gui.ertwidgets.caseselector import CaseSelector
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
-from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.run import ActiveRealizationsModel, EnsembleSmoother, TargetCaseModel, AnalysisModuleModel, RunPathModel
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
+from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.widgets import util
 from ert_gui.widgets.active_label import ActiveLabel
 from ert_gui.widgets.closable_dialog import ClosableDialog
@@ -26,9 +27,9 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         run_path_label = ActiveLabel(run_path_model, "Runpath", "config/simulation/runpath")
         layout.addRow(run_path_label.getLabel(), run_path_label)
 
-        number_of_realizations_model = EnsembleSizeModel()
-        number_of_realizations_label = ActiveLabel(number_of_realizations_model, "Number of realizations", "config/ensemble/num_realizations")
-        layout.addRow(number_of_realizations_label.getLabel(), number_of_realizations_label)
+        number_of_realizations_label = QLabel("<b>%d</b>" % getRealizationCount())
+        addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
+        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         target_case_model = TargetCaseModel()
         self.target_case_field = StringBox(target_case_model, "Target case", "config/simulation/target_case")

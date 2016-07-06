@@ -1,8 +1,9 @@
-from PyQt4.QtGui import QFormLayout
+from PyQt4.QtGui import QFormLayout, QLabel
 
+from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
 from ert_gui.ide.keywords.definitions import RangeStringArgument
-from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.run import EnsembleExperiment, ActiveRealizationsModel, RunPathModel
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 from ert_gui.widgets.active_label import ActiveLabel
@@ -23,13 +24,13 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         runpath_label = ActiveLabel(runpath_model, "Runpath", "config/simulation/runpath")
         layout.addRow(runpath_label.getLabel(), runpath_label)
 
-        number_of_realizations_model = EnsembleSizeModel()
-        number_of_realizations_label = ActiveLabel(number_of_realizations_model, "Number of realizations", "config/ensemble/num_realizations")
-        layout.addRow(number_of_realizations_label.getLabel(), number_of_realizations_label)
+        number_of_realizations_label = QLabel("<b>%d</b>" % getRealizationCount())
+        addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
+        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         active_realizations_model = ActiveRealizationsModel()
         self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
-        self.active_realizations_field.setValidator(RangeStringArgument(number_of_realizations_model.getValue()))
+        self.active_realizations_field.setValidator(RangeStringArgument(getRealizationCount()))
         layout.addRow(self.active_realizations_field.getLabel(), self.active_realizations_field)
 
         self.active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)

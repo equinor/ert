@@ -1,32 +1,32 @@
 from ert.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
 from ert.enkf.enums.enkf_var_type_enum import EnkfVarType
-from ert_gui.models import ErtConnector
+from ert_gui import ERT
 
-class ErtSummary(ErtConnector):
+class ErtSummary(object):
 
     def getForwardModels(self):
         """ @rtype: list of str """
-        forward_model  = self.ert().getModelConfig().getForwardModel()
+        forward_model  = ERT.ert.getModelConfig().getForwardModel()
         return [job for job in forward_model.joblist()]
 
     def getParameters(self):
         """ @rtype: list of str """
-        parameters = self.ert().ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
+        parameters = ERT.ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
         return sorted([parameter for parameter in parameters], key=lambda k : k.lower())
 
 
     def getObservations(self):
         """ @rtype: list of str """
-        gen_obs = self.ert().getObservations().getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
+        gen_obs = ERT.ert.getObservations().getTypedKeylist(EnkfObservationImplementationType.GEN_OBS)
 
 
-        summary_obs = self.ert().getObservations().getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
+        summary_obs = ERT.ert.getObservations().getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
 
         keys = []
         summary_keys_count = {}
         summary_keys = []
         for key in summary_obs:
-            data_key = self.ert().getObservations()[key].getDataKey()
+            data_key = ERT.ert.getObservations()[key].getDataKey()
 
             if not data_key in summary_keys_count:
                 summary_keys_count[data_key] = 1
