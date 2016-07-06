@@ -1,5 +1,6 @@
 from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
-from ert_gui.models.connectors.init import CaseList
+
+from ert_gui.ertwidgets.models.ertmodel import getAllCases
 
 
 class AllCasesModel(QAbstractItemModel):
@@ -46,7 +47,7 @@ class AllCasesModel(QAbstractItemModel):
 
 
     def getAllItems(self):
-        return CaseList().getList()
+        return getAllCases()
 
 
     def indexOf(self, item):

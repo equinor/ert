@@ -1,5 +1,6 @@
 from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
-from ert_gui.models.connectors.init import CaseList
+
+from ert_gui.ertwidgets.models.ertmodel import getAllCasesNotRunning
 
 
 class PlotCaseModel(QAbstractItemModel):
@@ -47,7 +48,7 @@ class PlotCaseModel(QAbstractItemModel):
 
     def getAllItems(self):
         if self.__data is None:
-            self.__data = CaseList().getAllCasesNotRunning()
+            self.__data = getAllCasesNotRunning()
 
         return self.__data
 

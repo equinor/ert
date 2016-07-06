@@ -7,7 +7,7 @@ from ert_gui.ertwidgets.caselist import CaseList
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.checklist import CheckList
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, initializeCurrentCaseFromScratch, getCaseRealizationStates, getParameterList, getHistoryLength, \
-    initializeCurrentCaseFromExisting
+    initializeCurrentCaseFromExisting, getCurrentCaseName
 from ert_gui.ertwidgets.models.selectable_list_model import SelectableListModel
 
 
@@ -174,28 +174,27 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         layout.addLayout(row1)
 
-        case_info_area = QTextEdit()
-        case_info_area.setReadOnly(True)
-        case_info_area.setMinimumHeight(300)
+        self._case_info_area = QTextEdit()
+        self._case_info_area.setReadOnly(True)
+        self._case_info_area.setMinimumHeight(300)
 
-        row2 = createRow(QLabel("Case info:"), case_info_area)
+        row2 = createRow(QLabel("Case info:"), self._case_info_area)
 
         layout.addLayout(row2)
 
         case_widget.setLayout(layout)
 
-        def showInfo():
-            case_name = str(case_selector.currentText())
-            self.showInfoForCase(case_info_area, case_name)
-
-        case_selector.currentIndexChanged[str].connect(showInfo)
-        ERT.ertChanged.connect(showInfo)
+        case_selector.currentIndexChanged[str].connect(self._showInfoForCase)
+        ERT.ertChanged.connect(self._showInfoForCase)
 
         self.addTab(case_widget, "Case Info")
 
-        showInfo()
+        self._showInfoForCase()
 
-    def showInfoForCase(self, text_area, case_name):
+    def _showInfoForCase(self, case_name=None):
+        if case_name is None:
+            case_name = getCurrentCaseName()
+
         states = getCaseRealizationStates(str(case_name))
 
         html = "<table>"
@@ -204,4 +203,4 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         html += "</table>"
 
-        text_area.setHtml(html)
+        self._case_info_area.setHtml(html)

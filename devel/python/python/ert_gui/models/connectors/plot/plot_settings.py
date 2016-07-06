@@ -1,7 +1,5 @@
 import os
 from ert_gui.models import ErtConnector
-from ert_gui.models.connectors.init.case_selector import CaseSelectorModel
-
 
 class PlotSettingsModel(ErtConnector):
 

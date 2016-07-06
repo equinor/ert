@@ -1,15 +1,15 @@
+from ert_gui import ERT
+from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.models import ErtConnector
-from ert_gui.models.connectors.init.case_selector import CaseSelectorModel
 from ert_gui.models.mixins import BasicModelMixin
 
 
 class TargetCaseModel(ErtConnector, BasicModelMixin):
 
-
     def __init__(self):
         self.__target_case = self.getDefaultName()
         self.__custom = False
-        CaseSelectorModel().observable().attach(CaseSelectorModel.CURRENT_CHOICE_CHANGED_EVENT, self.__caseChanged)
+        ERT.ertChanged.connect(self.__caseChanged)
         super(TargetCaseModel, self).__init__()
 
     def getValue(self):
@@ -28,7 +28,7 @@ class TargetCaseModel(ErtConnector, BasicModelMixin):
 
 
     def getDefaultName(self):
-        case_name = CaseSelectorModel().getCurrentChoice()
+        case_name = getCurrentCaseName()
         return "%s_smoother_update" % case_name
 
     def __caseChanged(self):

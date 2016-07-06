@@ -63,7 +63,7 @@ class RunDialog(QDialog):
         if isinstance(run_model, ErtConnector):
             ert = run_model.ert()
 
-        self.plot_tool = PlotTool(ert)
+        self.plot_tool = PlotTool()
         self.plot_tool.setParent(None)
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)

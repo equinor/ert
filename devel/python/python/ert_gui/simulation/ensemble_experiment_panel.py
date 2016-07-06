@@ -1,11 +1,11 @@
 from PyQt4.QtGui import QFormLayout
+
+from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
-from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import EnsembleExperiment, ActiveRealizationsModel, RunPathModel
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 from ert_gui.widgets.active_label import ActiveLabel
-from ert_gui.widgets.combo_choice import ComboChoice
 from ert_gui.widgets.string_box import StringBox
 
 
@@ -16,14 +16,12 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         layout = QFormLayout()
 
-        case_model = CaseSelectorModel()
-        case_selector = ComboChoice(case_model, "Current case", "init/current_case_selection")
-        layout.addRow(case_selector.getLabel(), case_selector)
+        case_selector = CaseSelector()
+        layout.addRow("Current case:", case_selector)
 
         runpath_model = RunPathModel()
         runpath_label = ActiveLabel(runpath_model, "Runpath", "config/simulation/runpath")
         layout.addRow(runpath_label.getLabel(), runpath_label)
-
 
         number_of_realizations_model = EnsembleSizeModel()
         number_of_realizations_label = ActiveLabel(number_of_realizations_model, "Number of realizations", "config/ensemble/num_realizations")
@@ -36,7 +34,6 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         self.active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)
 
-
         self.setLayout(layout)
 
 
@@ -46,7 +43,3 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
     def toggleAdvancedOptions(self, show_advanced):
         self.active_realizations_field.setVisible(show_advanced)
         self.layout().labelForField(self.active_realizations_field).setVisible(show_advanced)
-
-
-
-

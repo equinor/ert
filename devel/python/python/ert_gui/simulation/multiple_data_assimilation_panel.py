@@ -16,10 +16,11 @@
 
 from PyQt4.QtCore import Qt, QMargins
 from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout
+
+from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.ide.keywords.definitions import NumberListStringArgument
 from ert_gui.models.connectors import EnsembleSizeModel
-from ert_gui.models.connectors.init import CaseSelectorModel
 from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation, TargetCaseFormatModel, AnalysisModuleModel, RunPathModel
 
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
@@ -39,9 +40,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
         layout = QFormLayout()
 
-        case_model = CaseSelectorModel()
-        case_selector = ComboChoice(case_model, "Current case", "init/current_case_selection")
-        layout.addRow(case_selector.getLabel(), case_selector)
+        case_selector = CaseSelector()
+        layout.addRow("Current case:", case_selector)
 
         run_path_model = RunPathModel()
         run_path_label = ActiveLabel(run_path_model, "Runpath", "config/simulation/runpath")
