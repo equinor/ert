@@ -5,8 +5,6 @@ set(PYTHON_SOURCES
     ensemble_smoother_panel.py
     iterated_ensemble_smoother_panel.py
     multiple_data_assimilation_panel.py
-    sensitivity_study_panel.py
-    sensitivity_study_parameters_panel.py
     simulation_config_panel.py
     simulation_panel.py
 )
