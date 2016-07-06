@@ -17,10 +17,10 @@ from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QLineEdit, QLabel, QTex
 
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName, getRealizationCount
 from ert_gui.ide.keywords.definitions import RangeStringArgument, IntegerArgument
-from ert_gui.models.connectors.load_results import LoadResultsModel
 from ert_gui.tools.load_results import LoadResultsRealizationsModel, LoadResultsIterationsModel
 from ert_gui.models.qt.all_cases_model import AllCasesModel
 from ert_gui.widgets.string_box import StringBox
+from ert_gui.tools.load_results import LoadResultsModel
 
 
 class LoadResultsPanel(QWidget):
@@ -59,7 +59,7 @@ class LoadResultsPanel(QWidget):
         self.__active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow(self.__active_realizations_field.getLabel(), self.__active_realizations_field)
 
-        self.__iterations_count = LoadResultsModel().getIterationCount()
+        self.__iterations_count = LoadResultsModel.getIterationCount()
 
         self._iterations_model = LoadResultsIterationsModel(self.__iterations_count)
         self._iterations_field = StringBox(self._iterations_model, "Iteration to load", "load_results_manually/iterations")
@@ -70,7 +70,7 @@ class LoadResultsPanel(QWidget):
 
     def readCurrentRunPath(self):
         current_case = getCurrentCaseName()
-        run_path = LoadResultsModel().getCurrentRunPath()
+        run_path = LoadResultsModel.getCurrentRunPath()
         run_path = run_path.replace("<ERTCASE>",current_case)
         run_path = run_path.replace("<ERT-CASE>",current_case)
         return run_path
@@ -82,7 +82,7 @@ class LoadResultsPanel(QWidget):
         realizations = self.__active_realizations_model.getActiveRealizationsMask()
         iteration = self._iterations_model.getActiveIteration()
 
-        LoadResultsModel().loadResults(selected_case, realizations, iteration)
+        LoadResultsModel.loadResults(selected_case, realizations, iteration)
 
     def setCurrectCase(self):
         current_case = getCurrentCaseName()
