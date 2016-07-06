@@ -19,14 +19,11 @@ from ert_gui.models.mixins import BasicModelMixin
 
 
 class ExportRealizationsModel(BasicModelMixin):
-
-
     def __init__(self, realization_count):
         self.__realization_count = realization_count
         self.__active_realizations = self.getDefaultValue()
         self.__custom = False
         super(ExportRealizationsModel, self).__init__()
-
 
     def getValue(self):
         """ @rtype: str """
@@ -39,7 +36,6 @@ class ExportRealizationsModel(BasicModelMixin):
         else:
             self.__custom = True
             self.__active_realizations = active_realizations
-
 
     def getDefaultValue(self):
         return "0-%d" % (self.__realization_count - 1)
@@ -54,15 +50,3 @@ class ExportRealizationsModel(BasicModelMixin):
             raise ValueError("Mask size changed %d != %d!" % (self.__realization_count, len(mask)))
 
         return mask
-
-
-
-
-
-
-
-
-
-
-
-

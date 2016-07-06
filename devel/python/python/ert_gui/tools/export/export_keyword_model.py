@@ -14,10 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from ert.enkf import EnkfVarType, ErtImplType
-from ert_gui.models import ErtConnector
+from ert_gui import ERT
 
-class ExportKeywordModel(ErtConnector):
 
+class ExportKeywordModel(object):
     def __init__(self):
         super(ExportKeywordModel, self).__init__()
         self.__gen_kw = None
@@ -26,7 +26,7 @@ class ExportKeywordModel(ErtConnector):
         self.__gen_param = None
 
     def getKeylistFromImplType(self, ert_impl_type):
-        return sorted(self.ert().ensembleConfig().getKeylistFromImplType(ert_impl_type))
+        return sorted(ERT.ert.ensembleConfig().getKeylistFromImplType(ert_impl_type))
 
     def isDynamicPlot(self, key):
         variable_type = self.getVarType(key)
@@ -41,19 +41,18 @@ class ExportKeywordModel(ErtConnector):
     def isDynamicField(self, key):
         return self.getVarType(key) == EnkfVarType.DYNAMIC_STATE
 
-
     def getVarType(self, key):
-        config_node = self.ert().ensembleConfig().getNode(key)
+        config_node = ERT.ert.ensembleConfig().getNode(key)
         variable_type = config_node.getVariableType()
         return variable_type
 
     def getImplementationType(self, key):
-        config_node = self.ert().ensembleConfig().getNode(key)
+        config_node = ERT.ert.ensembleConfig().getNode(key)
         return config_node.getImplementationType()
 
     def getGenKwKeyWords(self):
         if self.__gen_kw is None:
-            self.__gen_kw = [key for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)]
+            self.__gen_kw = [key for key in ERT.ert.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)]
 
         return self.__gen_kw
 
@@ -61,13 +60,13 @@ class ExportKeywordModel(ErtConnector):
         if self.__gen_data is None:
             gen_data_list = []
             gen_param_list = []
-            for key in self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA):
+            for key in ERT.ert.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA):
                 if self.getVarType(key) == EnkfVarType.PARAMETER:
                     gen_param_list.append(key)
                     continue
-                if self.ert().ensembleConfig().getNode(key).getDataModelConfig().getOutputFormat() is not None:
+                if ERT.ert.ensembleConfig().getNode(key).getDataModelConfig().getOutputFormat() is not None:
                     gen_data_list.append(key)
-                elif self.ert().ensembleConfig().getNode(key).getDataModelConfig().getInputFormat() is not None:
+                elif ERT.ert.ensembleConfig().getNode(key).getDataModelConfig().getInputFormat() is not None:
                     gen_data_list.append(key)
             self.__gen_data = gen_data_list
             self.__gen_param = gen_param_list
@@ -84,7 +83,7 @@ class ExportKeywordModel(ErtConnector):
 
     def hasKeywords(self):
         keys = self.getKeyWords()
-        if keys.count >0:
+        if keys.count > 0:
             return True
         else:
             return False
@@ -114,10 +113,10 @@ class ExportKeywordModel(ErtConnector):
         return key in self.__gen_param
 
     def getGenDataReportSteps(self, key):
-        gen_data_list=[]
-        obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
+        gen_data_list = []
+        obs_keys = ERT.ert.ensembleConfig().getNode(key).getObservationKeys()
         for obs_key in obs_keys:
-            obs_vector = self.ert().getObservations()[obs_key]
+            obs_vector = ERT.ert.getObservations()[obs_key]
             for report_step in obs_vector:
                 gen_data_list.append(str(report_step))
 
