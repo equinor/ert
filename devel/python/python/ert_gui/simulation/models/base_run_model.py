@@ -1,42 +1,48 @@
 import time
 from ert.job_queue import JobStatusType
-from ert_gui.models import ErtConnector
-from ert_gui.models.mixins import RunModelMixin, ErtRunError, AbstractMethodError
+from ert_gui import ERT
 
 
-class BaseRunModel(ErtConnector, RunModelMixin):
+class ErtRunError(Exception):
+    pass
 
-    def __init__(self, name, phase_count=1, *args):
-        super(BaseRunModel, self).__init__(*args)
-        self.__name = name
-        self.__phase = 0
-        self.__phase_count = phase_count
-        self.__phase_update_count = 0
-        self.__phase_name = "Not defined"
+class BaseRunModel(object):
 
-        self.__job_start_time  = 0
-        self.__job_stop_time = 0
-        self.__indeterminate = False
-        self.__fail_message = ""
+    def __init__(self, name, phase_count=1):
+        super(BaseRunModel, self).__init__()
+        self._name = name
+        self._phase = 0
+        self._phase_count = phase_count
+        self._phase_update_count = 0
+        self._phase_name = "Not defined"
+
+        self._job_start_time  = 0
+        self._job_stop_time = 0
+        self._indeterminate = False
+        self._fail_message = ""
+        self._failed = False
         self.reset( )
 
 
+    def ert(self):
+        """ @rtype: ert.enkf.EnKFMain"""
+        return ERT.ert
 
     def reset(self):
-        self.__failed = False
+        self._failed = False
 
 
     def startSimulations(self):
         try:
             self.runSimulations()
         except ErtRunError as e:
-            self.__failed = True
-            self.__fail_message = str(e)
-            self.__simulationEnded()
+            self._failed = True
+            self._fail_message = str(e)
+            self._simulationEnded()
 
 
     def runSimulations(self):
-        raise AbstractMethodError(self, "runSimulations")
+        raise NotImplementedError("Class must be implemented by inheritors!")
 
 
     def killAllSimulations(self):
@@ -45,83 +51,87 @@ class BaseRunModel(ErtConnector, RunModelMixin):
 
 
     def userExitCalled(self):
+        """ @rtype: bool """
         job_queue = self.ert().siteConfig().getJobQueue()
         return job_queue.getUserExit( )
 
 
     def phaseCount(self):
         """ @rtype: int """
-        return self.__phase_count
+        return self._phase_count
 
 
     def setPhaseCount(self, phase_count):
-        self.__phase_count = phase_count
+        self._phase_count = phase_count
         self.setPhase(0, "")
 
 
     def currentPhase(self):
         """ @rtype: int """
-        return self.__phase
+        return self._phase
 
 
     def setPhaseName(self, phase_name, indeterminate=None):
-        self.__phase_name = phase_name
+        self._phase_name = phase_name
         self.setIndeterminate(indeterminate)
 
 
     def getPhaseName(self):
         """ @rtype: str """
-        return self.__phase_name
+        return self._phase_name
 
 
     def setIndeterminate(self, indeterminate):
         if indeterminate is not None:
-            self.__indeterminate = indeterminate
+            self._indeterminate = indeterminate
 
 
     def isFinished(self):
         """ @rtype: bool """
-        return self.__phase == self.__phase_count or self.hasRunFailed()
+        return self._phase == self._phase_count or self.hasRunFailed()
 
 
     def hasRunFailed(self):
-        return self.__failed
+        """ @rtype: bool """
+        return self._failed
 
 
     def getFailMessage(self):
         """ @rtype: str """
-        return self.__fail_message
+        return self._fail_message
 
 
-    def __simulationEnded(self):
-        self.__job_stop_time = int(time.time())
+    def _simulationEnded(self):
+        self._job_stop_time = int(time.time())
 
 
     def setPhase(self, phase, phase_name, indeterminate=None):
         self.setPhaseName(phase_name)
-        if not 0 <= phase <= self.__phase_count:
-            raise ValueError("Phase must be an integer from 0 to less than %d." % self.__phase_count)
+        if not 0 <= phase <= self._phase_count:
+            raise ValueError("Phase must be an integer from 0 to less than %d." % self._phase_count)
 
         self.setIndeterminate(indeterminate)
 
         if phase == 0:
-            self.__job_start_time = int(time.time())
+            self._job_start_time = int(time.time())
 
-        if phase == self.__phase_count:
-            self.__simulationEnded()
+        if phase == self._phase_count:
+            self._simulationEnded()
 
-        self.__phase = phase
-        self.__phase_update_count = 0
+        self._phase = phase
+        self._phase_update_count = 0
 
 
     def getRunningTime(self):
-        if self.__job_stop_time < self.__job_start_time:
-            return time.time() - self.__job_start_time
+        """ @rtype: float """
+        if self._job_stop_time < self._job_start_time:
+            return time.time() - self._job_start_time
         else:
-            return self.__job_stop_time - self.__job_start_time
+            return self._job_stop_time - self._job_start_time
 
 
     def getQueueSize(self):
+        """ @rtype: int """
         queue_size = len(self.ert().siteConfig().getJobQueue())
 
         if queue_size == 0:
@@ -156,10 +166,10 @@ class BaseRunModel(ErtConnector, RunModelMixin):
         """ @rtype: float """
         if self.isFinished():
             current_progress = 1.0
-        elif not self.isQueueRunning() and self.__phase_update_count > 0:
-            current_progress = (self.__phase + 1.0) / self.__phase_count
+        elif not self.isQueueRunning() and self._phase_update_count > 0:
+            current_progress = (self._phase + 1.0) / self._phase_count
         else:
-            self.__phase_update_count += 1
+            self._phase_update_count += 1
             queue_status = self.getQueueStatus()
             queue_size = self.getQueueSize()
 
@@ -171,17 +181,17 @@ class BaseRunModel(ErtConnector, RunModelMixin):
                     done_count += queue_status[state]
 
             phase_progress = float(done_count) / queue_size
-            current_progress = (self.__phase + phase_progress) / self.__phase_count
+            current_progress = (self._phase + phase_progress) / self._phase_count
 
         return current_progress
 
 
     def isIndeterminate(self):
         """ @rtype: bool """
-        return not self.isFinished() and self.__indeterminate
+        return not self.isFinished() and self._indeterminate
 
 
     def __str__(self):
-        return self.__name
+        return self._name
 
 

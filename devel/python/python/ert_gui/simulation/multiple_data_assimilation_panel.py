@@ -23,9 +23,10 @@ from ert_gui.ertwidgets.models.value_model import ValueModel
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.ide.keywords.definitions import NumberListStringArgument
 
-from ert_gui.models.connectors.run import ActiveRealizationsModel, MultipleDataAssimilation, TargetCaseFormatModel, AnalysisModuleModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseFormatModel, AnalysisModuleModel
 
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
+from ert_gui.simulation.models import MultipleDataAssimilation
 from ert_gui.widgets import util
 from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice

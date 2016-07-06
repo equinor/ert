@@ -4,9 +4,10 @@ from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
-from ert_gui.models.connectors.run import ActiveRealizationsModel, EnsembleSmoother, TargetCaseModel, AnalysisModuleModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseModel, AnalysisModuleModel
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.ertwidgets import addHelpToWidget
+from ert_gui.simulation.models import EnsembleSmoother
 from ert_gui.widgets import util
 from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice

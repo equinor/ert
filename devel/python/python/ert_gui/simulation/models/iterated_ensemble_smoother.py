@@ -1,7 +1,7 @@
 from ert.enkf.enums import EnkfInitModeEnum, HookRuntime
-from ert_gui.models.connectors.run import NumberOfIterationsModel, ActiveRealizationsModel, IteratedAnalysisModuleModel, BaseRunModel
+from ert_gui.models.connectors.run import NumberOfIterationsModel, ActiveRealizationsModel, IteratedAnalysisModuleModel
 from ert_gui.models.connectors.run.target_case_format_model import TargetCaseFormatModel
-from ert_gui.models.mixins import ErtRunError
+from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 
 class IteratedEnsembleSmoother(BaseRunModel):

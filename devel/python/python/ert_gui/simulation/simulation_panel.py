@@ -1,18 +1,13 @@
 from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, \
-    QMessageBox
+from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
 
 from ert_gui import ERT
+from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
-from ert_gui.models.connectors.run import SimulationModeModel
 from ert_gui.pages.run_dialog import RunDialog
-from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel, \
-    IteratedEnsembleSmootherPanel, MultipleDataAssimilationPanel
-from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
+from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel
+from ert_gui.simulation import IteratedEnsembleSmootherPanel, MultipleDataAssimilationPanel, SimulationConfigPanel
 from ert_gui.widgets import util
-
-from ert_gui.widgets.combo_choice import ComboChoice
-from ert_gui.widgets.helped_widget import HelpedWidget
 
 
 class SimulationPanel(QWidget):
@@ -22,15 +17,16 @@ class SimulationPanel(QWidget):
 
         layout = QVBoxLayout()
 
+        self._simulation_mode_combo = QComboBox()
+        addHelpToWidget(self._simulation_mode_combo, "run/simulation_mode")
+
+        self._simulation_mode_combo.currentIndexChanged.connect(self.toggleSimulationMode)
+
         simulation_mode_layout = QHBoxLayout()
         simulation_mode_layout.addSpacing(10)
-        simulation_mode_model = SimulationModeModel()
-        simulation_mode_model.observable().attach(SimulationModeModel.CURRENT_CHOICE_CHANGED_EVENT, self.toggleSimulationMode)
-        simulation_mode_combo = ComboChoice(simulation_mode_model, "Simulation mode", "run/simulation_mode")
-        simulation_mode_layout.addWidget(QLabel(simulation_mode_combo.getLabel()), 0, Qt.AlignVCenter)
-        simulation_mode_layout.addWidget(simulation_mode_combo, 0, Qt.AlignVCenter)
+        simulation_mode_layout.addWidget(QLabel("Simulation mode:"), 0, Qt.AlignVCenter)
+        simulation_mode_layout.addWidget(self._simulation_mode_combo, 0, Qt.AlignVCenter)
 
-        # simulation_mode_layout.addStretch()
         simulation_mode_layout.addSpacing(20)
 
         self.run_button = QToolButton()
@@ -39,7 +35,7 @@ class SimulationPanel(QWidget):
         self.run_button.setIcon(util.resourceIcon("ide/gear_in_play"))
         self.run_button.clicked.connect(self.runSimulation)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        HelpedWidget.addHelpToWidget(self.run_button, "run/start_simulation")
+        addHelpToWidget(self.run_button, "run/start_simulation")
 
         simulation_mode_layout.addWidget(self.run_button)
         simulation_mode_layout.addStretch(1)
@@ -58,8 +54,8 @@ class SimulationPanel(QWidget):
 
         self.addSimulationConfigPanel(EnsembleExperimentPanel())
         self.addSimulationConfigPanel(EnsembleSmootherPanel())
-        self.addSimulationConfigPanel(MultipleDataAssimilationPanel())
         self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel())
+        self.addSimulationConfigPanel(MultipleDataAssimilationPanel())
 
         self.setLayout(layout)
 
@@ -69,8 +65,11 @@ class SimulationPanel(QWidget):
 
         panel.toggleAdvancedOptions(False)
         self.simulation_stack.addWidget(panel)
-        self.simulation_widgets[panel.getSimulationModel()] = panel
 
+        simulation_model = panel.getSimulationModel()
+
+        self.simulation_widgets[simulation_model] = panel
+        self._simulation_mode_combo.addItem(str(simulation_model), simulation_model)
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
 
@@ -84,7 +83,8 @@ class SimulationPanel(QWidget):
 
 
     def getCurrentSimulationMode(self):
-        return SimulationModeModel().getCurrentChoice()
+        data = self._simulation_mode_combo.itemData(self._simulation_mode_combo.currentIndex(), Qt.UserRole)
+        return data.toPyObject()
 
 
     def runSimulation(self):
