@@ -42,7 +42,7 @@ class BaseRunModel(object):
 
 
     def runSimulations(self):
-        raise NotImplementedError("Class must be implemented by inheritors!")
+        raise NotImplementedError("Method must be implemented by inheritors!")
 
 
     def killAllSimulations(self):

@@ -8,7 +8,6 @@ set(PYTHON_SOURCES
     model.py
     path_model.py
     range_model.py
-    run_model.py
     spinner_model.py
 )
 
