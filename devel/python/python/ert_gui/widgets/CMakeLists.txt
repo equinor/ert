@@ -2,8 +2,6 @@ set(PYTHON_SOURCES
     __init__.py
     active_label.py
     add_remove_widget.py
-    button.py
-    check_list.py
     checkbox.py
     clearable_line_edit.py
     closable_dialog.py
