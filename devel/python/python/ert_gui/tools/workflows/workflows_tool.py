@@ -1,4 +1,4 @@
-from ert_gui.models.connectors.init import CaseList
+from ert_gui import ERT
 from ert_gui.models.connectors.run.workflows_model import WorkflowsModel
 from ert_gui.tools import Tool
 from ert_gui.tools.workflows import RunWorkflowWidget
@@ -16,5 +16,5 @@ class WorkflowsTool(Tool):
         run_workflow_widget = RunWorkflowWidget()
         dialog = ClosableDialog("Run workflow", run_workflow_widget, self.parent())
         dialog.exec_()
-        CaseList().externalModificationNotification() # workflow may have added new cases.
+        ERT.emitErtChange() # workflow may have added new cases.
 

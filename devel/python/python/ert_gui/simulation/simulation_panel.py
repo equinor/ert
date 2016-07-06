@@ -1,7 +1,9 @@
 from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, \
     QMessageBox
-from ert_gui.models.connectors.init import CaseList, CaseSelectorModel
+
+from ert_gui import ERT
+from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.models.connectors.run import SimulationModeModel
 from ert_gui.pages.run_dialog import RunDialog
 from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel, \
@@ -86,7 +88,7 @@ class SimulationPanel(QWidget):
 
 
     def runSimulation(self):
-        case_name = CaseSelectorModel().getCurrentChoice()
+        case_name = getCurrentCaseName()
         message = "Are you sure you want to use case '%s' for initialization of the initial ensemble when running the simulations?" % case_name
         start_simulations = QMessageBox.question(self, "Start simulations?", message, QMessageBox.Yes | QMessageBox.No )
 
@@ -97,7 +99,7 @@ class SimulationPanel(QWidget):
             dialog.startSimulation()
             dialog.exec_()
 
-            CaseList().externalModificationNotification() # simulations may have added new cases.
+            ERT.emitErtChange() # simulations may have added new cases.
 
 
     def toggleSimulationMode(self):

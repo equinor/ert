@@ -1,5 +1,5 @@
+from ert_gui.ertwidgets.models.ertmodel import getAllCasesWithDataAndNotRunning
 from ert_gui.models import ErtConnector
-from ert_gui.models.connectors.init.case_list import CaseList
 from ert_gui.models.mixins import ListModelMixin
 from ert.enkf.util import TimeMap
 
@@ -15,7 +15,7 @@ class ReportStepsModel(ErtConnector, ListModelMixin):
     def getReportSteps(self):
         """ @rtype: TimeMap """
         if self.__time_map is None:
-            case_list = CaseList().getAllCasesWithDataAndNotRunning()
+            case_list = getAllCasesWithDataAndNotRunning()
 
             for case in case_list:
                 time_map = self.ert().getEnkfFsManager().getTimeMapForCase(case)

@@ -1,5 +1,6 @@
+from ert_gui import ERT
+from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.models import ErtConnector
-from ert_gui.models.connectors.init.case_selector import CaseSelectorModel
 from ert_gui.models.mixins import BasicModelMixin
 
 
@@ -7,7 +8,7 @@ class TargetCaseFormatModel(ErtConnector, BasicModelMixin):
     def __init__(self):
         self.__target_case_fmt = self.getDefaultName()
         self.__custom = False
-        CaseSelectorModel().observable().attach(CaseSelectorModel.CURRENT_CHOICE_CHANGED_EVENT, self.__caseChanged)
+        ERT.ertChanged.connect(self.__caseChanged)
         super(TargetCaseFormatModel, self).__init__()
 
 
@@ -32,7 +33,7 @@ class TargetCaseFormatModel(ErtConnector, BasicModelMixin):
         if self.ert().analysisConfig().getAnalysisIterConfig().caseFormatSet():
             return self.ert().analysisConfig().getAnalysisIterConfig().getCaseFormat()
         else:
-            case_name = CaseSelectorModel().getCurrentChoice()
+            case_name = getCurrentCaseName()
             return "%s_%%d" % case_name
 
 
