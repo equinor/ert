@@ -1,9 +1,9 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
+from ert_gui import ERT
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.plottery import PlotContext, PlotDataGatherer as PDG, PlotConfig, plots
-from ert_gui.plottery.plot_config_factory import PlotConfigFactory
+from ert_gui.plottery import PlotContext, PlotDataGatherer as PDG, PlotConfig, plots, PlotConfigFactory
 
 from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget, DataTypeKeysListModel
 from ert_gui.tools.plot.customize import PlotCustomizer
@@ -19,13 +19,13 @@ STATISTICS = "Statistics"
 class PlotWindow(QMainWindow):
 
 
-    def __init__(self, ert, parent):
+    def __init__(self, parent):
         QMainWindow.__init__(self, parent)
 
-        self._ert = ert
+        self._ert = ERT.ert
         """:type: ert.enkf.enkf_main.EnKFMain"""
 
-        key_manager = ert.getKeyManager()
+        key_manager = self._ert.getKeyManager()
         """:type: ert.enkf.key_manager.KeyManager """
 
         self.setMinimumWidth(850)
