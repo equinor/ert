@@ -26,8 +26,3 @@ class EnsembleSizeModel(ErtConnector, SpinnerModelMixin, BasicModelMixin):
 
     def setValue(self, value):
         self.setSpinnerValue(value)
-
-
-
-
-
