@@ -7,4 +7,3 @@ from .list_model import ListModelMixin
 from .path_model import PathModelMixin
 from .boolean_model import BooleanModelMixin
 from .button_model import ButtonModelMixin
-from .run_model import RunModelMixin, ErtRunError

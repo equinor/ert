@@ -1,9 +1,9 @@
 from threading import Thread
 from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QSize
 from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
+
 from ert_gui.models.connectors.run import SimulationsTracker
-from ert_gui.models.ert_connector import ErtConnector
-from ert_gui.models.mixins.run_model import RunModelMixin
+from ert_gui.simulation.models import BaseRunModel
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_gui.widgets import util
 from ert_gui.widgets.legend import Legend
@@ -21,7 +21,7 @@ class RunDialog(QDialog):
         self.setWindowModality(Qt.WindowModal)
         self.setWindowTitle("Simulations")
 
-        assert isinstance(run_model, RunModelMixin)
+        assert isinstance(run_model, BaseRunModel)
         self.__run_model = run_model
 
         layout = QVBoxLayout()
@@ -60,7 +60,7 @@ class RunDialog(QDialog):
         self.running_time = QLabel("")
 
         ert = None
-        if isinstance(run_model, ErtConnector):
+        if isinstance(run_model, BaseRunModel):
             ert = run_model.ert()
 
         self.plot_tool = PlotTool()
