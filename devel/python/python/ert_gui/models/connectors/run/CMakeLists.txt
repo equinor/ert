@@ -11,11 +11,6 @@ set(PYTHON_SOURCES
     multiple_data_assimilation.py
     number_of_iterations.py
     run_path.py
-    sensitivity_study.py
-    sensitivity_study_parameters_constant_value_model.py
-    sensitivity_study_parameters_is_included_model.py
-    sensitivity_study_parameters_model.py
-    sensitivity_target_case_format_model.py
     simulation_mode.py
     simulations_tracker.py
     target_case_format_model.py
