@@ -14,10 +14,7 @@ class SelectableListModel(QObject):
         return self._items
 
     def isValueSelected(self, value):
-        if self._selection.has_key(value):
-            return self._selection[value]
-        else:
-            return True
+        return self._selection.get(value, True)
 
     def selectValue(self, value):
         self._setSelectState(value, True)
