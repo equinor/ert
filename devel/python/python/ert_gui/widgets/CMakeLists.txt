@@ -2,7 +2,6 @@ set(PYTHON_SOURCES
     __init__.py
     add_remove_widget.py
     clearable_line_edit.py
-    combo_choice.py
     custom_date_edit.py
     error_popup.py
     helped_widget.py
