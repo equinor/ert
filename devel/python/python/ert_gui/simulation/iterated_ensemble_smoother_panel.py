@@ -1,18 +1,18 @@
 from PyQt4.QtCore import Qt, QMargins
-from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel
+from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel, QSpinBox
 
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, setNumberOfIterations, \
+    getNumberOfIterations
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
 from ert_gui.models.connectors.run import ActiveRealizationsModel
-from ert_gui.models.connectors.run import IteratedAnalysisModuleModel, NumberOfIterationsModel, TargetCaseFormatModel
+from ert_gui.models.connectors.run import IteratedAnalysisModuleModel, TargetCaseFormatModel
 from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
 from ert_gui.simulation.models import IteratedEnsembleSmoother
 from ert_gui.widgets import util
 from ert_gui.widgets.closable_dialog import ClosableDialog
 from ert_gui.widgets.combo_choice import ComboChoice
-from ert_gui.widgets.integer_spinner import IntegerSpinner
 from ert_gui.widgets.string_box import StringBox
 
 
@@ -33,9 +33,14 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        num_iterations_model = NumberOfIterationsModel()
-        num_iterations_spinner = IntegerSpinner(num_iterations_model, "Number of iterations", "config/simulation/number_of_iterations")
-        layout.addRow(num_iterations_spinner.getLabel(), num_iterations_spinner)
+        num_iterations_spinner = QSpinBox()
+        num_iterations_spinner.setMinimum(1)
+        num_iterations_spinner.setMaximum(100)
+        num_iterations_spinner.setValue(getNumberOfIterations())
+        addHelpToWidget(num_iterations_spinner, "config/simulation/number_of_iterations")
+        num_iterations_spinner.valueChanged[int].connect(setNumberOfIterations)
+
+        layout.addRow("Number of iterations", num_iterations_spinner)
 
         iterated_target_case_format_model = TargetCaseFormatModel()
         self.iterated_target_case_format_field = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")

@@ -4,9 +4,9 @@ from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidge
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
-from ert_gui.pages.run_dialog import RunDialog
 from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel
 from ert_gui.simulation import IteratedEnsembleSmootherPanel, MultipleDataAssimilationPanel, SimulationConfigPanel
+from ert_gui.simulation import RunDialog
 from ert_gui.widgets import util
 
 

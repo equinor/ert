@@ -1,3 +1,4 @@
+from .run_dialog import RunDialog
 from .analysis_module_variables_panel import AnalysisModuleVariablesPanel
 from .simulation_config_panel import SimulationConfigPanel
 from .ensemble_experiment_panel import EnsembleExperimentPanel

@@ -113,3 +113,14 @@ def getParameterList():
 def getRunPath():
     """ @rtype: str """
     return ERT.ert.getModelConfig().getRunpathAsString()
+
+
+def getNumberOfIterations():
+    """ @rtype: int """
+    return ERT.ert.analysisConfig().getAnalysisIterConfig().getNumIterations()
+
+def setNumberOfIterations(iteration_count):
+    """ @type iteration_count: int """
+    if iteration_count != getNumberOfIterations():
+        ERT.ert.analysisConfig().getAnalysisIterConfig().setNumIterations(iteration_count)
+        ERT.emitErtChange()

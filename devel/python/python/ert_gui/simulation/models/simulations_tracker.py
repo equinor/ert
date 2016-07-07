@@ -48,7 +48,7 @@ class SimulationStateStatus(object):
         self.__total_count = value
 
 
-class SimulationsTracker(ListModelMixin):
+class SimulationsTracker(object):
     def __init__(self):
         super(SimulationsTracker, self).__init__()
 
@@ -65,8 +65,8 @@ class SimulationsTracker(ListModelMixin):
 
         self.__checkForUnusedEnums()
 
-    def getList(self):
-        """ @rtype: list of SimulationStateStatus """
+    def getStates(self):
+        """ @rtype: list[SimulationStateStatus] """
         return list(self.custom_states)
 
     def __checkForUnusedEnums(self):

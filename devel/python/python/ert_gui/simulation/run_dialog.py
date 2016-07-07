@@ -2,8 +2,7 @@ from threading import Thread
 from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QSize
 from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
 
-from ert_gui.models.connectors.run import SimulationsTracker
-from ert_gui.simulation.models import BaseRunModel
+from ert_gui.simulation.models import BaseRunModel, SimulationsTracker
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_gui.widgets import util
 from ert_gui.widgets.legend import Legend
@@ -28,7 +27,7 @@ class RunDialog(QDialog):
         layout.setSizeConstraint(QLayout.SetFixedSize)
 
         self.simulations_tracker = SimulationsTracker()
-        states = self.simulations_tracker.getList()
+        states = self.simulations_tracker.getStates()
 
         self.total_progress = SimpleProgress()
         layout.addWidget(self.total_progress)
@@ -138,7 +137,7 @@ class RunDialog(QDialog):
 
         self.__status_label.setText(self.__run_model.getPhaseName())
 
-        states = self.simulations_tracker.getList()
+        states = self.simulations_tracker.getStates()
 
         if self.__run_model.isIndeterminate():
             self.progress.setIndeterminate(True)
