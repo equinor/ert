@@ -1,7 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
     basic_model.py
-    choice_model.py
     model.py
     path_model.py
 )

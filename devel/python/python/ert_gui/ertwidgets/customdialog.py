@@ -15,23 +15,19 @@
 #  for more details.
 from PyQt4.QtCore import Qt, QSize, SIGNAL
 from PyQt4.QtGui import QDialog, QColor, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLayout
-from ert_gui.widgets.helped_widget import HelpedWidget
 
 
 class CustomDialog(QDialog):
-
     INVALID_COLOR = QColor(255, 235, 235)
 
-    def __init__(self, title = "Title", description = "Description", parent=None):
+    def __init__(self, title="Title", description="Description", parent=None):
         QDialog.__init__(self, parent)
 
         self._option_list = []
-        """ :type: list of HelpedWidget """
+        """ :type: list of QWidget """
 
         self.setModal(True)
         self.setWindowTitle(title)
-        # self.setMinimumWidth(250)
-        # self.setMinimumHeight(150)
 
         self.layout = QFormLayout()
         self.layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
@@ -39,13 +35,12 @@ class CustomDialog(QDialog):
 
         label = QLabel(description)
         label.setAlignment(Qt.AlignHCenter)
-        
+
         self.layout.addRow(self.createSpace(5))
         self.layout.addRow(label)
         self.layout.addRow(self.createSpace(10))
 
         self.ok_button = None
-
 
         self.setLayout(self.layout)
 
@@ -68,7 +63,6 @@ class CustomDialog(QDialog):
         if valid:
             self.valid()
 
-
     def showAndTell(self):
         """
         Shows the dialog modally and returns the true or false (accept/reject)
@@ -77,7 +71,7 @@ class CustomDialog(QDialog):
         self.optionValidationChanged()
         return self.exec_()
 
-    def createSpace(self, size = 5):
+    def createSpace(self, size=5):
         """Creates a widget that can be used as spacing on  a panel."""
         qw = QWidget()
         qw.setMinimumSize(QSize(size, size))
@@ -88,15 +82,6 @@ class CustomDialog(QDialog):
         """ Add some vertical spacing """
         space_widget = self.createSpace(size)
         self.layout.addRow("", space_widget)
-
-    def addOption(self, option_widget):
-        """
-        @type option_widget: HelpedWidget
-        """
-        assert isinstance(option_widget, HelpedWidget)
-        self._option_list.append(option_widget)
-        option_widget.validationChanged.connect(self.optionValidationChanged)
-        self.layout.addRow(option_widget.getLabel(), option_widget)
 
     def addLabeledOption(self, label, option_widget):
         """
@@ -117,7 +102,6 @@ class CustomDialog(QDialog):
         if not label.endswith(":"):
             label = "%s:" % label
         self.layout.addRow(label, widget)
-
 
     def addButtons(self):
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
