@@ -1,5 +1,5 @@
 from ert.test import ExtendedTestCase
-from ert_gui.models.connectors.run import MultipleDataAssimilation as mda
+from ert_gui.simulation.models import MultipleDataAssimilation as mda
 
 
 class MDAWeightsTest(ExtendedTestCase):
