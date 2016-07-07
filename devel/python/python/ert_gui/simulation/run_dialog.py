@@ -12,7 +12,7 @@ from ert_gui.widgets.simple_progress import SimpleProgress
 
 class RunDialog(QDialog):
 
-    def __init__(self, run_model, parent):
+    def __init__(self, run_model, run_arguments, parent):
         QDialog.__init__(self, parent)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
@@ -21,7 +21,8 @@ class RunDialog(QDialog):
         self.setWindowTitle("Simulations")
 
         assert isinstance(run_model, BaseRunModel)
-        self.__run_model = run_model
+        self._run_model = run_model
+        self._run_arguments = run_arguments
 
         layout = QVBoxLayout()
         layout.setSizeConstraint(QLayout.SetFixedSize)
@@ -110,22 +111,25 @@ class RunDialog(QDialog):
 
 
     def startSimulation(self):
-        self.__run_model.reset( )
+        self._run_model.reset()
+
+        def run():
+            self._run_model.startSimulations(self._run_arguments)
 
         simulation_thread = Thread(name="ert_gui_simulation_thread")
         simulation_thread.setDaemon(True)
-        simulation_thread.run = self.__run_model.startSimulations
+        simulation_thread.run = run
         simulation_thread.start()
 
         self.__update_timer.start()
 
 
     def checkIfRunFinished(self):
-        if self.__run_model.isFinished():
+        if self._run_model.isFinished():
             self.hideKillAndShowDone()
 
-            if self.__run_model.hasRunFailed():
-                error = self.__run_model.getFailMessage()
+            if self._run_model.hasRunFailed():
+                error = self._run_model.getFailMessage()
                 QMessageBox.critical(self, "Simulations failed!", "The simulation failed with the following error:\n\n%s" % error)
                 self.reject()
 
@@ -133,13 +137,13 @@ class RunDialog(QDialog):
     def updateRunStatus(self):
         self.checkIfRunFinished()
 
-        self.total_progress.setProgress(self.__run_model.getProgress())
+        self.total_progress.setProgress(self._run_model.getProgress())
 
-        self.__status_label.setText(self.__run_model.getPhaseName())
+        self.__status_label.setText(self._run_model.getPhaseName())
 
         states = self.simulations_tracker.getStates()
 
-        if self.__run_model.isIndeterminate():
+        if self._run_model.isIndeterminate():
             self.progress.setIndeterminate(True)
 
             for state in states:
@@ -147,8 +151,8 @@ class RunDialog(QDialog):
 
         else:
             self.progress.setIndeterminate(False)
-            total_count = self.__run_model.getQueueSize()
-            queue_status = self.__run_model.getQueueStatus()
+            total_count = self._run_model.getQueueSize()
+            queue_status = self._run_model.getQueueStatus()
 
             for state in states:
                 state.count = 0
@@ -169,7 +173,7 @@ class RunDialog(QDialog):
         days = 0
         hours = 0
         minutes = 0
-        seconds = self.__run_model.getRunningTime()
+        seconds = self._run_model.getRunningTime()
 
         if seconds >= 60:
             minutes, seconds = divmod(seconds, 60)
@@ -194,7 +198,7 @@ class RunDialog(QDialog):
         kill_job = QMessageBox.question(self, "Kill simulations?", "Are you sure you want to kill the currently running simulations?", QMessageBox.Yes | QMessageBox.No )
 
         if kill_job == QMessageBox.Yes:
-            if self.__run_model.killAllSimulations():
+            if self._run_model.killAllSimulations():
                 self.reject()
 
 

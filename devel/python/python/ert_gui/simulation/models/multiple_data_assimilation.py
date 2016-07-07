@@ -16,7 +16,7 @@
 from ert.enkf.enums import EnkfInitModeEnum
 from ert.enkf.enums import HookRuntime
 
-from ert_gui.models.connectors.run import TargetCaseFormatModel, AnalysisModuleModel
+from ert_gui.models.connectors.run import TargetCaseFormatModel
 
 from ert.util import BoolVector
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
@@ -37,17 +37,18 @@ class MultipleDataAssimilation(BaseRunModel):
     def setWeights(self, weights):
         self.weights = weights
 
-    def setAnalysisModule(self):
-        module_name = AnalysisModuleModel().getCurrentChoice()
+    def setAnalysisModule(self, module_name):
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
 
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
 
-    def runSimulations(self):
+    def runSimulations(self, arguments):
         weights = self.parseWeights(self.weights)
         iteration_count = len(weights)
+
+        self.setAnalysisModule(arguments["analysis_module"])
 
         print("Running MDA ES for %s  iterations\t%s" % (iteration_count, ", ".join(str(weight) for weight in weights)))
         weights = self.normalizeWeights(weights)

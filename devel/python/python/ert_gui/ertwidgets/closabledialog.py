@@ -1,6 +1,6 @@
-#  Copyright (C) 2014  Statoil ASA, Norway.
+#  Copyright (C) 2016  Statoil ASA, Norway.
 #
-#  The file 'closable_dialog.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'closabledialog.py' is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from PyQt4.QtCore import Qt, QString, QRegExp
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import  QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
 
 

@@ -1,3 +1,5 @@
+from ert.analysis.analysis_module import AnalysisModule
+from ert.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
 from ert.enkf import RealizationStateEnum, EnkfVarType
 from ert.job_queue import WorkflowRunner
 from ert.util import BoolVector, StringList
@@ -133,6 +135,7 @@ def getWorkflowNames():
     """ @rtype: list[str] """
     return sorted(ERT.ert.getWorkflowList().getWorkflowNames(), key=str.lower)
 
+
 def createWorkflowRunner(workflow_name):
     """ @rtype: WorkflowRunner """
     workflow_list = ERT.ert.getWorkflowList()
@@ -140,3 +143,30 @@ def createWorkflowRunner(workflow_name):
     workflow = workflow_list[workflow_name]
     context = workflow_list.getContext()
     return WorkflowRunner(workflow, ERT.ert, context)
+
+
+def getAnalysisModules(iterable=False):
+    """ @rtype: list[ert.analysis.AnalysisModule]"""
+    module_names = ERT.ert.analysisConfig().getModuleList()
+
+    modules = []
+    for module_name in module_names:
+        module = ERT.ert.analysisConfig().getModule(module_name)
+        module_is_iterable = module.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE)
+
+        if iterable == module_is_iterable:
+            modules.append(module)
+
+    return sorted(modules, key=AnalysisModule.getName)
+
+def getAnalysisModuleNames(iterable=False):
+    """ @rtype: list[str] """
+    modules = getAnalysisModules(iterable)
+    return [module.getName() for module in modules]
+
+
+def getCurrentAnalysisModuleName():
+    """ @rtype: str """
+    return ERT.ert.analysisConfig().activeModuleName()
+
+

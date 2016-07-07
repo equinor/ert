@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     active_realizations_model.py
+    analysismodulevariablesmodel.py
     ertmodel.py
     ertsummary.py
     selectable_list_model.py

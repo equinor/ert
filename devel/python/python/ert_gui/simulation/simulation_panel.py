@@ -44,13 +44,14 @@ class SimulationPanel(QWidget):
         layout.addLayout(simulation_mode_layout)
         layout.addSpacing(10)
 
-        self.simulation_stack = QStackedWidget()
-        self.simulation_stack.setLineWidth(1)
-        self.simulation_stack.setFrameStyle(QFrame.StyledPanel)
+        self._simulation_stack = QStackedWidget()
+        self._simulation_stack.setLineWidth(1)
+        self._simulation_stack.setFrameStyle(QFrame.StyledPanel)
 
-        layout.addWidget(self.simulation_stack)
+        layout.addWidget(self._simulation_stack)
 
-        self.simulation_widgets = {}
+        self._simulation_widgets = {}
+        """ :type: dict[BaseRunModel,SimulationConfigPanel]"""
 
         self.addSimulationConfigPanel(EnsembleExperimentPanel())
         self.addSimulationConfigPanel(EnsembleSmootherPanel())
@@ -64,11 +65,11 @@ class SimulationPanel(QWidget):
         assert isinstance(panel, SimulationConfigPanel)
 
         panel.toggleAdvancedOptions(False)
-        self.simulation_stack.addWidget(panel)
+        self._simulation_stack.addWidget(panel)
 
         simulation_model = panel.getSimulationModel()
 
-        self.simulation_widgets[simulation_model] = panel
+        self._simulation_widgets[simulation_model] = panel
         self._simulation_mode_combo.addItem(str(simulation_model), simulation_model)
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
@@ -78,13 +79,18 @@ class SimulationPanel(QWidget):
 
 
     def toggleAdvancedMode(self, show_advanced):
-        for panel in self.simulation_widgets.values():
+        for panel in self._simulation_widgets.values():
             panel.toggleAdvancedOptions(show_advanced)
 
 
-    def getCurrentSimulationMode(self):
+    def getCurrentSimulationModel(self):
         data = self._simulation_mode_combo.itemData(self._simulation_mode_combo.currentIndex(), Qt.UserRole)
         return data.toPyObject()
+
+    def getSimulationArguments(self):
+        """ @rtype: dict[str,object]"""
+        simulation_widget = self._simulation_widgets[self.getCurrentSimulationModel()]
+        return simulation_widget.getSimulationArguments()
 
 
     def runSimulation(self):
@@ -93,9 +99,9 @@ class SimulationPanel(QWidget):
         start_simulations = QMessageBox.question(self, "Start simulations?", message, QMessageBox.Yes | QMessageBox.No )
 
         if start_simulations == QMessageBox.Yes:
-            run_model = self.getCurrentSimulationMode()
-
-            dialog = RunDialog(run_model, self)
+            run_model = self.getCurrentSimulationModel()
+            arguments = self.getSimulationArguments()
+            dialog = RunDialog(run_model, arguments, self)
             dialog.startSimulation()
             dialog.exec_()
 
@@ -103,11 +109,11 @@ class SimulationPanel(QWidget):
 
 
     def toggleSimulationMode(self):
-        widget = self.simulation_widgets[self.getCurrentSimulationMode()]
-        self.simulation_stack.setCurrentWidget(widget)
+        widget = self._simulation_widgets[self.getCurrentSimulationModel()]
+        self._simulation_stack.setCurrentWidget(widget)
         self.validationStatusChanged()
 
 
     def validationStatusChanged(self):
-        widget = self.simulation_widgets[self.getCurrentSimulationMode()]
+        widget = self._simulation_widgets[self.getCurrentSimulationModel()]
         self.run_button.setEnabled(widget.isConfigurationValid())

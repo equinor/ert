@@ -1,9 +1,12 @@
 set(PYTHON_SOURCES
     __init__.py
     activelabel.py
+    analysismoduleselector.py
+    analysismodulevariablespanel.py
     caselist.py
     caseselector.py
     checklist.py
+    closabledialog.py
     customdialog.py
     listeditbox.py
     summarypanel.py

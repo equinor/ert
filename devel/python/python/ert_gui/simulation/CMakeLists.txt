@@ -1,6 +1,5 @@
 set(PYTHON_SOURCES
     __init__.py
-    analysis_module_variables_panel.py
     ensemble_experiment_panel.py
     ensemble_smoother_panel.py
     iterated_ensemble_smoother_panel.py

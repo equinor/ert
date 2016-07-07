@@ -1,5 +1,5 @@
 from ert.enkf.enums import EnkfInitModeEnum
-from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseModel, AnalysisModuleModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseModel
 from ert.enkf.enums import HookRuntime
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
@@ -9,17 +9,17 @@ class EnsembleSmoother(BaseRunModel):
     def __init__(self):
         super(EnsembleSmoother, self).__init__(name="Ensemble Smoother", phase_count=2)
 
-    def setAnalysisModule(self):
-        module_name = AnalysisModuleModel().getCurrentChoice()
+    def setAnalysisModule(self, module_name):
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
 
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
 
-    def runSimulations(self):
+    def runSimulations(self, arguments):
         self.setPhase(0, "Running simulations...", indeterminate=False)
-        self.setAnalysisModule()
+
+        self.setAnalysisModule(arguments["analysis_module"])
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
 
         self.setPhaseName("Pre processing...", indeterminate=True)
@@ -38,7 +38,6 @@ class EnsembleSmoother(BaseRunModel):
             elif success_count == 0:
                 raise ErtRunError("Simulation failed! All realizations failed!")
             #else ignore and continue
-
 
 
         self.setPhaseName("Post processing...", indeterminate=True)
@@ -73,5 +72,3 @@ class EnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
         self.setPhase(2, "Simulations completed.")
-
-

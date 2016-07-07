@@ -32,16 +32,16 @@ class BaseRunModel(object):
         self._failed = False
 
 
-    def startSimulations(self):
+    def startSimulations(self, run_arguments):
         try:
-            self.runSimulations()
+            self.runSimulations(run_arguments)
         except ErtRunError as e:
             self._failed = True
             self._fail_message = str(e)
             self._simulationEnded()
 
 
-    def runSimulations(self):
+    def runSimulations(self, run_arguments):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
 

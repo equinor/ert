@@ -9,7 +9,7 @@ class EnsembleExperiment(BaseRunModel):
     def __init__(self):
         super(EnsembleExperiment, self).__init__("Ensemble Experiment")
 
-    def runSimulations(self):
+    def runSimulations(self, arguments):
         self.setPhase(0, "Running simulations...", indeterminate=False)
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
 
