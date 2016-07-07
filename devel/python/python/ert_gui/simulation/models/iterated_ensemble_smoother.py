@@ -1,5 +1,6 @@
 from ert.enkf.enums import EnkfInitModeEnum, HookRuntime
-from ert_gui.models.connectors.run import NumberOfIterationsModel, ActiveRealizationsModel, IteratedAnalysisModuleModel
+from ert_gui.ertwidgets.models.ertmodel import getNumberOfIterations
+from ert_gui.models.connectors.run import ActiveRealizationsModel, IteratedAnalysisModuleModel
 from ert_gui.models.connectors.run.target_case_format_model import TargetCaseFormatModel
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
@@ -60,7 +61,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
 
     def runSimulations(self):
-        phase_count = NumberOfIterationsModel().getValue() + 1
+        phase_count = getNumberOfIterations() + 1
         self.setPhaseCount(phase_count)
 
         analysis_module = self.setAnalysisModule()
@@ -83,7 +84,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         num_tries = 0
         current_iteration = 1
 
-        while current_iteration <= NumberOfIterationsModel().getValue() and num_tries < num_retries_per_iteration:
+        while current_iteration <= getNumberOfIterations() and num_tries < num_retries_per_iteration:
             target_fs = self.createTargetCaseFileSystem(current_iteration)
 
             pre_analysis_iter_num = analysis_module.getInt("ITER")

@@ -2,8 +2,6 @@ from .active_realizations_model import ActiveRealizationsModel
 from .analysis_module_model import AnalysisModuleModel
 from .analysis_module_variables_model import AnalysisModuleVariablesModel
 from .iterated_analysis_module_model import IteratedAnalysisModuleModel
-from .number_of_iterations import NumberOfIterationsModel
-from .simulations_tracker import SimulationsTracker
 from .target_case_format_model import TargetCaseFormatModel
 from .target_case_model import TargetCaseModel
 from .workflows_model import WorkflowsModel
