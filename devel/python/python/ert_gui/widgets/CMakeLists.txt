@@ -5,7 +5,6 @@ set(PYTHON_SOURCES
     legend.py
     path_chooser.py
     path_format.py
-    search_box.py
     string_box.py
     util.py
 )

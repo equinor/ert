@@ -18,7 +18,7 @@ from PyQt4.QtGui import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget, CaseSelector, ActiveLabel, AnalysisModuleSelector
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
-from ert_gui.ertwidgets.models.value_model import ValueModel
+from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ide.keywords.definitions import NumberListStringArgument
 from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseFormatModel
