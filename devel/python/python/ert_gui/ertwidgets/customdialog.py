@@ -107,6 +107,10 @@ class CustomDialog(QDialog):
         if hasattr(option_widget, "validationChanged"):
             option_widget.validationChanged.connect(self.optionValidationChanged)
 
+        if hasattr(option_widget, "getValidationSupport"):
+            validation_support = option_widget.getValidationSupport()
+            validation_support.validationChanged.connect(self.optionValidationChanged)
+
         self.layout.addRow("%s:" % label, option_widget)
 
     def addWidget(self, widget, label=""):

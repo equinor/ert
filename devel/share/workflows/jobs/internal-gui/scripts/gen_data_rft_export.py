@@ -10,9 +10,9 @@ from ert.enkf import ErtPlugin, CancelPluginException
 from ert.enkf import RealizationStateEnum
 from ert.enkf.enums import EnkfObservationImplementationType
 from ert.enkf.export import GenDataCollector, ArgLoader
+from ert_gui.ertwidgets.customdialog import CustomDialog
+from ert_gui.ertwidgets.listeditbox import ListEditBox
 from ert_gui.models.mixins.connectorless import DefaultPathModel
-from ert_gui.widgets.custom_dialog import CustomDialog
-from ert_gui.widgets.list_edit_box import ListEditBox
 from ert_gui.widgets.path_chooser import PathChooser
 
 
@@ -174,7 +174,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         fs_manager = self.ert().getEnkfFsManager()
         all_case_list = fs_manager.getCaseList()
         all_case_list = [case for case in all_case_list if fs_manager.caseHasData(case)]
-        list_edit = ListEditBox(all_case_list, "List of cases to export")
+        list_edit = ListEditBox(all_case_list)
 
         infer_iteration_check = QCheckBox()
         infer_iteration_check.setChecked(True)

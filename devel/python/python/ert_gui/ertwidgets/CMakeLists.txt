@@ -4,6 +4,9 @@ set(PYTHON_SOURCES
     caselist.py
     caseselector.py
     checklist.py
+    customdialog.py
+    listeditbox.py
+    validationsupport.py
 )
 
 add_python_package("python.ert_gui.ertwidgets" ${PYTHON_INSTALL_PREFIX}/ert_gui/ertwidgets "${PYTHON_SOURCES}" True)

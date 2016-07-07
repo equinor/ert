@@ -1,14 +1,14 @@
 import os
 import re
+
 import pandas
 from PyQt4.QtGui import QCheckBox
 
 from ert.enkf import ErtPlugin, CancelPluginException
 from ert.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader, CustomKWCollector
-from ert.util import Profiler
+from ert_gui.ertwidgets.customdialog import CustomDialog
+from ert_gui.ertwidgets.listeditbox import ListEditBox
 from ert_gui.models.mixins.connectorless import DefaultPathModel
-from ert_gui.widgets.custom_dialog import CustomDialog
-from ert_gui.widgets.list_edit_box import ListEditBox
 from ert_gui.widgets.path_chooser import PathChooser
 
 
@@ -149,8 +149,7 @@ class CSVExportJob(ErtPlugin):
         design_matrix_path_model = DefaultPathModel(design_matrix_default, is_required=False, must_exist=True)
         design_matrix_path_chooser = PathChooser(design_matrix_path_model, path_label="Design Matrix path")
 
-        all_case_list = self.getAllCaseList()
-        list_edit = ListEditBox(all_case_list, "List of cases to export")
+        list_edit = ListEditBox(self.getAllCaseList())
 
         infer_iteration_check = QCheckBox()
         infer_iteration_check.setChecked(True)

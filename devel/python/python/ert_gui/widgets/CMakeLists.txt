@@ -5,13 +5,9 @@ set(PYTHON_SOURCES
     closable_dialog.py
     combo_choice.py
     custom_date_edit.py
-    custom_dialog.py
-    double_box.py
-    double_spinner.py
     error_popup.py
     helped_widget.py
     legend.py
-    list_edit_box.py
     path_chooser.py
     path_format.py
     progress.py
