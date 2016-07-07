@@ -1,15 +1,15 @@
 from ert_gui import ERT
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.ertwidgets.models.ertmodel import getWorkflowNames
 from ert_gui.tools import Tool
 from ert_gui.tools.workflows import RunWorkflowWidget
-from ert_gui.widgets import util
 
 
 class WorkflowsTool(Tool):
     def __init__(self):
         enabled = len(getWorkflowNames()) > 0
-        super(WorkflowsTool, self).__init__("Run Workflow", "tools/workflows", util.resourceIcon("ide/to_do_list_checked_1"), enabled)
+        super(WorkflowsTool, self).__init__("Run Workflow", "tools/workflows", resourceIcon("ide/to_do_list_checked_1"), enabled)
 
 
     def trigger(self):

@@ -1,18 +1,17 @@
 
 import sys
 import os
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication, QSplashScreen, QFileDialog
+from PyQt4.QtGui import QApplication
 import time
 from ert.enkf import EnKFMain
 from ert.util import Version
 from ert_gui.ert_splash import ErtSplash
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.models import ErtConnector
 from ert_gui.tools.plot.plot_window import PlotWindow
 
-from ert_gui.widgets import util
 
-import ert_gui.widgets.util
+import ert_gui.ertwidgets
 
 if os.getenv("ERT_SHARE_PATH"):
     ert_share_path = os.getenv("ERT_SHARE_PATH")
@@ -23,15 +22,13 @@ else:
     # in an arbitrary build directory.
     ert_share_path = os.path.realpath( os.path.join( os.path.dirname( os.path.abspath( __file__)) , "../../../share"))
     
-ert_gui.widgets.util.img_prefix = ert_share_path + "/gui/img/"
-
-from ert_gui.widgets.util import resourceImage
+ert_gui.ertwidgets.img_prefix = ert_share_path + "/gui/img/"
 
 
 def main(argv):
 
     app = QApplication(argv) #Early so that QT is initialized before other imports
-    app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
+    app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
 
     if len(argv) == 1:
         sys.stderr.write("Missing configuration file")

@@ -3,9 +3,8 @@ import datetime
 from PyQt4.QtCore import QDate
 from PyQt4.QtGui import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
 
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
-from ert_gui.widgets import util
-
 
 class CustomDateEdit(QWidget):
     def __init__(self):
@@ -16,7 +15,7 @@ class CustomDateEdit(QWidget):
         self._calendar_button.setPopupMode(QToolButton.InstantPopup)
         self._calendar_button.setFixedSize(26, 26)
         self._calendar_button.setAutoRaise(True)
-        self._calendar_button.setIcon(util.resourceIcon("calendar.png"))
+        self._calendar_button.setIcon(resourceIcon("calendar.png"))
         self._calendar_button.setStyleSheet("QToolButton::menu-indicator { image: none; }")
 
         tool_menu = QMenu(self._calendar_button)

@@ -1,4 +1,4 @@
-from PyQt4.QtCore import SIGNAL, pyqtSignal, Qt
+from PyQt4.QtCore import pyqtSignal, Qt
 from PyQt4.QtGui import QLineEdit, QColor
 
 

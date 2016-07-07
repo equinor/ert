@@ -2,12 +2,11 @@ from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
 
 from ert_gui import ERT
-from ert_gui.ertwidgets import addHelpToWidget
+from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel
 from ert_gui.simulation import IteratedEnsembleSmootherPanel, MultipleDataAssimilationPanel, SimulationConfigPanel
 from ert_gui.simulation import RunDialog
-from ert_gui.widgets import util
 
 
 class SimulationPanel(QWidget):
@@ -32,7 +31,7 @@ class SimulationPanel(QWidget):
         self.run_button = QToolButton()
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.setText("Start Simulation")
-        self.run_button.setIcon(util.resourceIcon("ide/gear_in_play"))
+        self.run_button.setIcon(resourceIcon("ide/gear_in_play"))
         self.run_button.clicked.connect(self.runSimulation)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         addHelpToWidget(self.run_button, "run/start_simulation")

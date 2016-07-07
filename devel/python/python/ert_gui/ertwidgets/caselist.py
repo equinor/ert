@@ -6,7 +6,7 @@ from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import getAllCases, selectOrCreateNewCase
 from ert_gui.ertwidgets.validateddialog import ValidatedDialog
-from ert_gui.widgets.util import resourceIcon
+from ert_gui.ertwidgets import resourceIcon
 
 
 class AddRemoveWidget(QWidget):

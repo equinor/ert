@@ -1,14 +1,14 @@
 from weakref import ref
 
 from ert_gui import ERT
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools import Tool
 from ert_gui.tools.ide import IdeWindow
-from ert_gui.widgets import util
 
 
 class IdeTool(Tool):
     def __init__(self, path, help_tool):
-        super(IdeTool, self).__init__("Configure", "tools/ide", util.resourceIcon("ide/widgets"))
+        super(IdeTool, self).__init__("Configure", "tools/ide", resourceIcon("ide/widgets"))
 
         self.ide_window = None
         self.path = path

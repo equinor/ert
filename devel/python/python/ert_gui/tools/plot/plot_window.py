@@ -2,12 +2,12 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
 from ert_gui import ERT
+from ert_gui.ertwidgets import showWaitCursorWhileWaiting
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.plottery import PlotContext, PlotDataGatherer as PDG, PlotConfig, plots, PlotConfigFactory
 
 from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget, DataTypeKeysListModel
 from ert_gui.tools.plot.customize import PlotCustomizer
-from ert_gui.widgets.util import may_take_a_long_time
 
 CROSS_CASE_STATISTICS = "Cross Case Statistics"
 DISTRIBUTION = "Distribution"
@@ -180,7 +180,7 @@ class PlotWindow(QMainWindow):
         return dock_widget
 
 
-    @may_take_a_long_time
+    @showWaitCursorWhileWaiting
     def keySelected(self):
         key = self.getSelectedKey()
         self._plot_customizer.switchPlotConfigHistory(key)
