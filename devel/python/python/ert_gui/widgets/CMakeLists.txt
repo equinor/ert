@@ -15,8 +15,6 @@ set(PYTHON_SOURCES
     simple_progress.py
     string_box.py
     util.py
-    validated_dialog.py
-    workflow_dialog.py
 )
 
 add_python_package("python.ert_gui.widgets" ${PYTHON_INSTALL_PREFIX}/ert_gui/widgets "${PYTHON_SOURCES}" True)

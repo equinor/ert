@@ -2,9 +2,9 @@ from PyQt4.QtGui import QListWidget, QMessageBox, QAbstractItemView, QWidget, QV
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget
-from ert_gui.widgets.add_remove_widget import AddRemoveWidget
 from ert_gui.ertwidgets.models.ertmodel import getAllCases, selectOrCreateNewCase
-from ert_gui.widgets.validated_dialog import ValidatedDialog
+from ert_gui.ertwidgets.validateddialog import ValidatedDialog
+from ert_gui.widgets.add_remove_widget import AddRemoveWidget
 
 
 class CaseList(QWidget):

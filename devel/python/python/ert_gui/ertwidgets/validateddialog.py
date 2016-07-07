@@ -1,6 +1,6 @@
 #  Copyright (C) 2011  Statoil ASA, Norway. 
 #   
-#  The file 'validated_dialog.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'validateddialog.py' is part of ERT - Ensemble based Reservoir Tool.
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -26,7 +26,7 @@ class ValidatedDialog(QDialog):
 
     INVALID_COLOR = QColor(255, 235, 235)
 
-    def __init__(self, title = "Title", description = "Description", unique_names = None, choose_from_list=False):
+    def __init__(self, title="Title", description="Description", unique_names=None, choose_from_list=False):
         QDialog.__init__(self)
         self.setModal(True)
         self.setWindowTitle(title)
@@ -44,16 +44,14 @@ class ValidatedDialog(QDialog):
 
         label = QLabel(description)
         label.setAlignment(Qt.AlignHCenter)
-        
+
         self.layout.addRow(self.createSpace(5))
         self.layout.addRow(label)
         self.layout.addRow(self.createSpace(10))
 
-
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         self.ok_button = buttons.button(QDialogButtonBox.Ok)
         self.ok_button.setEnabled(False)
-
 
         if choose_from_list:
             self.param_name_combo = QComboBox()
@@ -71,13 +69,10 @@ class ValidatedDialog(QDialog):
 
         self.layout.addRow(self.createSpace(10))
 
-
         self.layout.addRow(buttons)
 
         self.connect(buttons, SIGNAL('accepted()'), self.accept)
         self.connect(buttons, SIGNAL('rejected()'), self.reject)
-
-
 
         self.setLayout(self.layout)
 
@@ -113,7 +108,6 @@ class ValidatedDialog(QDialog):
     def validateChoice(self, choice):
         """Only called when using selection mode."""
         self.ok_button.setEnabled(not choice == "")
-            
 
     def getName(self):
         """Return the new name chosen by the user"""
@@ -129,7 +123,7 @@ class ValidatedDialog(QDialog):
 
         return ""
 
-    def createSpace(self, size = 5):
+    def createSpace(self, size=5):
         """Creates a widget that can be used as spacing on  a panel."""
         qw = QWidget()
         qw.setMinimumSize(QSize(size, size))
