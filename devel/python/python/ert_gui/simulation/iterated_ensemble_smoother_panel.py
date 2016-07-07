@@ -33,6 +33,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
+        # The num_iterations_spinner does not track any external changes (will that ever happen?)
         num_iterations_spinner = QSpinBox()
         num_iterations_spinner.setMinimum(1)
         num_iterations_spinner.setMaximum(100)

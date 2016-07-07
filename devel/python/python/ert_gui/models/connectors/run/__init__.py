@@ -4,5 +4,4 @@ from .analysis_module_variables_model import AnalysisModuleVariablesModel
 from .iterated_analysis_module_model import IteratedAnalysisModuleModel
 from .target_case_format_model import TargetCaseFormatModel
 from .target_case_model import TargetCaseModel
-from .workflows_model import WorkflowsModel
 

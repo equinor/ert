@@ -1,7 +1,8 @@
 from ert.enkf import RealizationStateEnum, EnkfVarType
+from ert.job_queue import WorkflowRunner
+from ert.util import BoolVector, StringList
 from ert_gui import ERT
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
-from ert.util import BoolVector, StringList
 
 
 def getRealizationCount():
@@ -100,7 +101,8 @@ def initializeCurrentCaseFromExisting(source_case, target_case, source_report_st
         member_mask = BoolVector.createFromList(total_member_count, members)
         selected_parameters = StringList(parameters)
 
-        ERT.ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(source_case, source_report_step, member_mask, selected_parameters)
+        ERT.ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(source_case, source_report_step, member_mask,
+                                                                           selected_parameters)
 
         ERT.emitErtChange()
 
@@ -119,8 +121,22 @@ def getNumberOfIterations():
     """ @rtype: int """
     return ERT.ert.analysisConfig().getAnalysisIterConfig().getNumIterations()
 
+
 def setNumberOfIterations(iteration_count):
     """ @type iteration_count: int """
     if iteration_count != getNumberOfIterations():
         ERT.ert.analysisConfig().getAnalysisIterConfig().setNumIterations(iteration_count)
         ERT.emitErtChange()
+
+
+def getWorkflowNames():
+    """ @rtype: list[str] """
+    return sorted(ERT.ert.getWorkflowList().getWorkflowNames(), key=str.lower)
+
+def createWorkflowRunner(workflow_name):
+    """ @rtype: WorkflowRunner """
+    workflow_list = ERT.ert.getWorkflowList()
+
+    workflow = workflow_list[workflow_name]
+    context = workflow_list.getContext()
+    return WorkflowRunner(workflow, ERT.ert, context)
