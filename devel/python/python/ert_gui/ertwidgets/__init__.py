@@ -36,3 +36,4 @@ from .caselist import CaseList
 from .checklist import CheckList
 from .listeditbox import ListEditBox
 from .customdialog import CustomDialog
+from .summarypanel import SummaryPanel

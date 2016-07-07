@@ -6,6 +6,7 @@ set(PYTHON_SOURCES
     checklist.py
     customdialog.py
     listeditbox.py
+    summarypanel.py
     validateddialog.py
     validationsupport.py
 )
