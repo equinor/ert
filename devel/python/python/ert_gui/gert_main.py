@@ -110,34 +110,32 @@
 #
 # -------------------- </Example shell script> --------------------
 
-import sys
 import os
+import sys
+import time
+
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QFileDialog
-import time
-from ert.enkf import EnKFMain
-from ert.util import Version
 
 import ert_gui
-from ert_gui.main_window import GertMainWindow
+import ert_gui.widgets.util
+from ert.enkf import EnKFMain
+from ert.util import Version
 from ert_gui.ert_splash import ErtSplash
+from ert_gui.ertwidgets import SummaryPanel
+from ert_gui.main_window import GertMainWindow
 from ert_gui.models import ErtConnector
-from ert_gui.pages.summary_panel import SummaryPanel
-from ert_gui.tools.plugins import PluginHandler
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools import HelpCenter
-
+from ert_gui.tools.export import ExportTool
 from ert_gui.tools.help import HelpTool
 from ert_gui.tools.ide import IdeTool
 from ert_gui.tools.load_results import LoadResultsTool
 from ert_gui.tools.manage_cases import ManageCasesTool
 from ert_gui.tools.plot import PlotTool
-from ert_gui.tools.export import ExportTool
-from ert_gui.tools.plugins import PluginsTool
+from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.workflows import WorkflowsTool
 from ert_gui.widgets import util
-
-import ert_gui.widgets.util
 
 if os.getenv("ERT_SHARE_PATH"):
     ert_share_path = os.getenv("ERT_SHARE_PATH")
@@ -151,8 +149,6 @@ else:
 ert_gui.widgets.util.img_prefix = ert_share_path + "/gui/img/"
 
 from ert_gui.newconfig import NewConfigurationDialog
-
-from ert_gui.widgets.util import resourceImage
 
 
 def main(argv):
