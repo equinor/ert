@@ -6,7 +6,6 @@ set(PYTHON_SOURCES
     iterated_analysis_module_model.py
     target_case_format_model.py
     target_case_model.py
-    workflows_model.py
 )
 
 add_python_package("python.ert_gui.models.connectors.run" ${PYTHON_INSTALL_PREFIX}/ert_gui/models/connectors/run "${PYTHON_SOURCES}" True)
