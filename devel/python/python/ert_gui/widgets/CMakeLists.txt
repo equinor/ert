@@ -11,7 +11,6 @@ set(PYTHON_SOURCES
     double_spinner.py
     error_popup.py
     helped_widget.py
-    integer_spinner.py
     legend.py
     list_edit_box.py
     path_chooser.py
