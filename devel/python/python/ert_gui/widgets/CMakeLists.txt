@@ -2,7 +2,6 @@ set(PYTHON_SOURCES
     __init__.py
     error_popup.py
     helped_widget.py
-    legend.py
     path_chooser.py
     path_format.py
     string_box.py

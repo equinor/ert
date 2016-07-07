@@ -8,6 +8,7 @@ set(PYTHON_SOURCES
     checklist.py
     closabledialog.py
     customdialog.py
+    legend.py
     listeditbox.py
     searchbox.py
     summarypanel.py

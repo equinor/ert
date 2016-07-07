@@ -14,16 +14,3 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-
-def addHelpToWidget(widget, link):
-    original_enter_event = widget.enterEvent
-
-    def enterEvent(event):
-        original_enter_event(event)
-        try:
-            from ert_gui.tools import HelpCenter
-            HelpCenter.getHelpCenter("ERT").setHelpMessageLink(link)
-        except AttributeError:
-            pass
-
-    widget.enterEvent = enterEvent

@@ -58,6 +58,7 @@ def resourceMovie(name):
     return movie
 
 
+from .legend import Legend
 from .validationsupport import ValidationSupport
 from .closabledialog import ClosableDialog
 from .analysismoduleselector import AnalysisModuleSelector
