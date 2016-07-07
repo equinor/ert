@@ -1,12 +1,13 @@
+import time
 from threading import Thread
+
 from PyQt4.QtCore import QSize, Qt, pyqtSignal
 from PyQt4.QtGui import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
-import time
 
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import getWorkflowNames, createWorkflowRunner
+from ert_gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert_gui.widgets import util
-from ert_gui.widgets.workflow_dialog import WorkflowDialog
 
 
 class RunWorkflowWidget(QWidget):
