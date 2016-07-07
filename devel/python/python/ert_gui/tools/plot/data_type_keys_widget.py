@@ -1,9 +1,8 @@
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
 
-from ert_gui.ertwidgets import SearchBox, resourceIcon
+from ert_gui.ertwidgets import SearchBox, resourceIcon, Legend
 from ert_gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel, FilterPopup
-from ert_gui.widgets.legend import Legend
 
 
 class DataTypeKeysWidget(QWidget):

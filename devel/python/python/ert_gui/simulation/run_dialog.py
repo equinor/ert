@@ -3,11 +3,10 @@ from threading import Thread
 from PyQt4.QtCore import Qt, QTimer, QSize
 from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
 
-from ert_gui.ertwidgets import resourceMovie
+from ert_gui.ertwidgets import resourceMovie, Legend
 from ert_gui.simulation import Progress, SimpleProgress
 from ert_gui.simulation.models import BaseRunModel, SimulationsTracker
 from ert_gui.tools.plot.plot_tool import PlotTool
-from ert_gui.widgets.legend import Legend
 
 
 class RunDialog(QDialog):
