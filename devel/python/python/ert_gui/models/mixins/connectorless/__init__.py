@@ -1,4 +1,3 @@
 from .default_path_model import DefaultPathModel
-from .default_boolean_model import DefaultBooleanModel
 from .string_model import StringModel
 from .default_name_format_model import DefaultNameFormatModel

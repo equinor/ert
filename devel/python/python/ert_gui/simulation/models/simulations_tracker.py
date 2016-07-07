@@ -1,6 +1,4 @@
 from ert.job_queue import JobStatusType
-from ert_gui.models.mixins import ListModelMixin
-
 
 class SimulationStateStatus(object):
     COLOR_WAITING = (164, 164, 255)

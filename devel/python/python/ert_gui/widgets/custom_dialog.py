@@ -25,7 +25,7 @@ class CustomDialog(QDialog):
     def __init__(self, title = "Title", description = "Description", parent=None):
         QDialog.__init__(self, parent)
 
-        self.__option_list = []
+        self._option_list = []
         """ :type: list of HelpedWidget """
 
         self.setModal(True)
@@ -59,10 +59,11 @@ class CustomDialog(QDialog):
 
     def optionValidationChanged(self):
         valid = True
-        for option in self.__option_list:
-            if not option.isValid():
-                valid = False
-                self.notValid("One or more options are incorrectly set!")
+        for option in self._option_list:
+            if hasattr(option, "isValid"):
+                if not option.isValid():
+                    valid = False
+                    self.notValid("One or more options are incorrectly set!")
 
         if valid:
             self.valid()
@@ -93,9 +94,20 @@ class CustomDialog(QDialog):
         @type option_widget: HelpedWidget
         """
         assert isinstance(option_widget, HelpedWidget)
-        self.__option_list.append(option_widget)
+        self._option_list.append(option_widget)
         option_widget.validationChanged.connect(self.optionValidationChanged)
         self.layout.addRow(option_widget.getLabel(), option_widget)
+
+    def addLabeledOption(self, label, option_widget):
+        """
+        @type option_widget: QWidget
+        """
+        self._option_list.append(option_widget)
+
+        if hasattr(option_widget, "validationChanged"):
+            option_widget.validationChanged.connect(self.optionValidationChanged)
+
+        self.layout.addRow("%s:" % label, option_widget)
 
     def addWidget(self, widget, label=""):
         if not label.endswith(":"):
