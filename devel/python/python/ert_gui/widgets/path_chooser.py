@@ -17,8 +17,9 @@ import os
 import re
 from PyQt4.QtCore import SIGNAL, QSize
 from PyQt4.QtGui import QLineEdit, QToolButton, QFileDialog
+
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.models.mixins import PathModelMixin
-from ert_gui.widgets.util import resourceIcon
 from ert_gui.widgets.helped_widget import HelpedWidget
 
 

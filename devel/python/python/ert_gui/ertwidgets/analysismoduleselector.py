@@ -1,9 +1,8 @@
 from PyQt4.QtCore import QMargins, Qt
 from PyQt4.QtGui import QWidget, QHBoxLayout, QComboBox, QToolButton
 
-from ert_gui.ertwidgets import addHelpToWidget, ClosableDialog
+from ert_gui.ertwidgets import addHelpToWidget, ClosableDialog, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getCurrentAnalysisModuleName, getAnalysisModuleNames
-from ert_gui.widgets import util
 from ert_gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
@@ -29,7 +28,7 @@ class AnalysisModuleSelector(QWidget):
         analysis_module_combo.currentIndexChanged[int].connect(self.analysisModuleChanged)
 
         variables_popup_button = QToolButton()
-        variables_popup_button.setIcon(util.resourceIcon("ide/small/cog_edit.png"))
+        variables_popup_button.setIcon(resourceIcon("ide/small/cog_edit.png"))
         variables_popup_button.clicked.connect(self.showVariablesPopup)
         variables_popup_button.setMaximumSize(20, 20)
 

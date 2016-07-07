@@ -117,12 +117,11 @@ import time
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QFileDialog
 
-import ert_gui
-import ert_gui.widgets.util
+import ert_gui.ertwidgets
 from ert.enkf import EnKFMain
 from ert.util import Version
 from ert_gui.ert_splash import ErtSplash
-from ert_gui.ertwidgets import SummaryPanel
+from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 from ert_gui.main_window import GertMainWindow
 from ert_gui.models import ErtConnector
 from ert_gui.simulation.simulation_panel import SimulationPanel
@@ -135,7 +134,6 @@ from ert_gui.tools.manage_cases import ManageCasesTool
 from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.workflows import WorkflowsTool
-from ert_gui.widgets import util
 
 if os.getenv("ERT_SHARE_PATH"):
     ert_share_path = os.getenv("ERT_SHARE_PATH")
@@ -146,14 +144,14 @@ else:
     # in an arbitrary build directory.
     ert_share_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share"))
 
-ert_gui.widgets.util.img_prefix = ert_share_path + "/gui/img/"
+ert_gui.ertwidgets.img_prefix = ert_share_path + "/gui/img/"
 
 from ert_gui.newconfig import NewConfigurationDialog
 
 
 def main(argv):
     app = QApplication(argv)  # Early so that QT is initialized before other imports
-    app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
+    app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
 
     if len(argv) == 1:
         config_file = QFileDialog.getOpenFileName(None, "Open Configuration File")

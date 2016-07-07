@@ -15,16 +15,16 @@
 #  for more details.
 from weakref import ref
 
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.tools import Tool
 from ert_gui.tools.export import ExportPanel, Exporter, ExportKeywordModel
-from ert_gui.widgets import util
 
 
 class ExportTool(Tool):
     def __init__(self):
-        super(ExportTool, self).__init__("Export Data", "tools/export", util.resourceIcon("ide/table_export"))
+        super(ExportTool, self).__init__("Export Data", "tools/export", resourceIcon("ide/table_export"))
         self.__export_widget = None
         self.__dialog = None
         self.__exporter = None

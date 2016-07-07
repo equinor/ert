@@ -2,9 +2,11 @@
 import os
 from PyQt4.QtGui import QApplication
 import sys
+
+import ert_gui
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.shell import ErtShell
 from ert_gui.tools import HelpCenter
-from ert_gui.widgets import util
 
 
 if __name__ == '__main__':
@@ -13,14 +15,14 @@ if __name__ == '__main__':
     else:
         ert_share_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../share"))
 
-    util.img_prefix = ert_share_path + "/gui/img/"
+    ert_gui.ertwidgets.img_prefix = ert_share_path + "/gui/img/"
 
     help_center = HelpCenter("ERT")
     help_center.setHelpLinkPrefix(os.getenv("ERT_SHARE_PATH") + "/gui/help/")
 
 
     app = QApplication(sys.argv)
-    app.setWindowIcon(util.resourceIcon("application/window_icon_cutout"))
+    app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
 
     ert_shell = ErtShell()
     if len(sys.argv) > 1:

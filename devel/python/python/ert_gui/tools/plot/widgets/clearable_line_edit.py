@@ -1,7 +1,7 @@
 from PyQt4.QtCore import QString, QSize, Qt
 from PyQt4.QtGui import QPushButton, QColor, QLineEdit, QStyle
 
-from ert_gui.widgets import util
+from ert_gui.ertwidgets import resourceIcon
 
 
 class ClearableLineEdit(QLineEdit):
@@ -15,7 +15,7 @@ class ClearableLineEdit(QLineEdit):
         self._placeholder_active = False
 
         self._clear_button = QPushButton(self)
-        self._clear_button.setIcon(util.resourceIcon("remove_favorite.png"))
+        self._clear_button.setIcon(resourceIcon("remove_favorite.png"))
         self._clear_button.setFlat(True)
         self._clear_button.setFocusPolicy(Qt.NoFocus)
         self._clear_button.setFixedSize(17, 17)

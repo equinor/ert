@@ -2,8 +2,7 @@ from PyQt4.QtCore import QSize, Qt
 from PyQt4.QtGui import QToolButton, QHBoxLayout, QLabel, QListWidget
 from PyQt4.QtGui import QWidget, QVBoxLayout, QListWidgetItem, QMenu, QAbstractItemView
 
-from ert_gui.ertwidgets import addHelpToWidget, SearchBox
-from ert_gui.widgets.util import resourceIcon
+from ert_gui.ertwidgets import addHelpToWidget, SearchBox, resourceIcon
 
 
 class CheckList(QWidget):

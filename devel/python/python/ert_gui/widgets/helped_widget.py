@@ -3,10 +3,6 @@ from PyQt4.QtGui import QWidget, QColor, QLabel, QHBoxLayout, QIcon, QPixmap
 from ert_gui.tools import HelpCenter
 from ert_gui.widgets.error_popup import ErrorPopup
 
-from ert_gui.widgets.util import resourceImage
-
-
-
 class HelpedWidget(QWidget):
     """
     HelpedWidget is a class that enables embedded help messages in widgets.

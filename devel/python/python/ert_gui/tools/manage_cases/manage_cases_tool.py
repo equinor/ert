@@ -1,12 +1,12 @@
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool
 from ert_gui.tools.manage_cases.case_init_configuration import CaseInitializationConfigurationPanel
-from ert_gui.widgets import util
 
 
 class ManageCasesTool(Tool):
     def __init__(self):
-        super(ManageCasesTool, self).__init__("Manage Cases", "tools/manage_cases", util.resourceIcon("ide/database_gear"))
+        super(ManageCasesTool, self).__init__("Manage Cases", "tools/manage_cases", resourceIcon("ide/database_gear"))
 
 
     def trigger(self):

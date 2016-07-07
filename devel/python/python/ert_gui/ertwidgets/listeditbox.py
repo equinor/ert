@@ -16,8 +16,8 @@
 from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
 
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.validationsupport import ValidationSupport
-from ert_gui.widgets.util import resourceIcon
 
 
 class AutoCompleteLineEdit(QLineEdit):

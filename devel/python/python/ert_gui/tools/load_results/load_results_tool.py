@@ -13,16 +13,16 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool
 from ert_gui.tools.load_results import LoadResultsModel
 from ert_gui.tools.load_results import LoadResultsPanel
-from ert_gui.widgets import util
 
 
 class LoadResultsTool(Tool):
     def __init__(self):
-        super(LoadResultsTool, self).__init__("Load results manually", "tools/load_manually", util.resourceIcon("ide/table_import"))
+        super(LoadResultsTool, self).__init__("Load results manually", "tools/load_manually", resourceIcon("ide/table_import"))
         self.__import_widget = None
         self.__dialog = None
         self.setVisible(False)

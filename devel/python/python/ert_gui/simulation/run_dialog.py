@@ -3,10 +3,10 @@ from threading import Thread
 from PyQt4.QtCore import Qt, QTimer, QSize
 from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
 
+from ert_gui.ertwidgets import resourceMovie
 from ert_gui.simulation import Progress, SimpleProgress
 from ert_gui.simulation.models import BaseRunModel, SimulationsTracker
 from ert_gui.tools.plot.plot_tool import PlotTool
-from ert_gui.widgets import util
 from ert_gui.widgets.legend import Legend
 
 
@@ -76,7 +76,7 @@ class RunDialog(QDialog):
         button_layout = QHBoxLayout()
 
         size = 20
-        spin_movie = util.resourceMovie("ide/loading.gif")
+        spin_movie = resourceMovie("ide/loading.gif")
         spin_movie.setSpeed(60)
         spin_movie.setScaledSize(QSize(size, size))
         spin_movie.start()
