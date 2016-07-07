@@ -4,7 +4,9 @@ set(PYTHON_SOURCES
     ensemble_smoother_panel.py
     iterated_ensemble_smoother_panel.py
     multiple_data_assimilation_panel.py
+    progress.py
     run_dialog.py
+    simple_progress.py
     simulation_config_panel.py
     simulation_panel.py
 )

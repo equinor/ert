@@ -1,10 +1,10 @@
 from PyQt4.QtGui import QDoubleValidator, QStackedWidget, QIntValidator, QLabel
+from ert_gui.tools.plot.widgets.custom_date_edit import CustomDateEdit
 
 from ert_gui.plottery import PlotContext
 from ert_gui.plottery.plot_limits import PlotLimits
 from ert_gui.tools.plot.customize import CustomizationView
-from ert_gui.widgets.clearable_line_edit import ClearableLineEdit
-from ert_gui.widgets.custom_date_edit import CustomDateEdit
+from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 
 
 class StackedInput(QStackedWidget):

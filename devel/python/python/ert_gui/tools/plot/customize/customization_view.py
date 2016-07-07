@@ -1,8 +1,8 @@
 from PyQt4.QtGui import QWidget, QFormLayout, QSpacerItem, QCheckBox, QHBoxLayout, QSpinBox
 
-from ert_gui.tools.plot import StyleChooser
 from ert_gui.plottery import PlotConfig
-from ert_gui.widgets.clearable_line_edit import ClearableLineEdit
+from ert_gui.tools.plot import StyleChooser
+from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 
 
 class CustomizationView(QWidget):
