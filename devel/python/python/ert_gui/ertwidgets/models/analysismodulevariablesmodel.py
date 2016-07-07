@@ -1,6 +1,6 @@
 #  Copyright (C) 2013  Statoil ASA, Norway.
 #
-#  The file 'analysis_module_variables_model.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'analysismodulevariablesmodel.py' is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,14 +14,12 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from ert.analysis.analysis_module import AnalysisModule
+from ert_gui import ERT
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
-from ert_gui.models import ErtConnector
 
-class AnalysisModuleVariablesModel(ErtConnector):
+class AnalysisModuleVariablesModel(object):
 
-    def __init__(self):
-        super(AnalysisModuleVariablesModel, self).__init__()
-        self.__variable_names = {
+    _VARIABLE_NAMES = {
             "LAMBDA0": {"type": float, "min": -1, "max": 10000000000000, "step":1.0, "labelname":"Initial Lambda", "pos":0},
             "USE_PRIOR": {"type": bool, "labelname":"Use both Prior and Observation Variability", "pos":1},
             "LAMBDA_REDUCE": {"type": float, "min": 0, "max": 1, "step":0.1, "labelname":"Lambda Reduction Factor", "pos":2},
@@ -32,52 +30,59 @@ class AnalysisModuleVariablesModel(ErtConnector):
             "LAMBDA_RECALCULATE": {"type": bool, "labelname":"Recalculate Lambda after each Iteration", "pos":7},
             "ENKF_TRUNCATION" :{"type": float, "min": 0, "max": 1, "step":0.1, "labelname":"Singular value truncation", "pos":9},
             "ENKF_NCOMP": {"type": int, "min": -1, "max": 10, "step":1.0, "labelname":"ENKF_NCOMP", "pos":10},
-            "CV_NFOLDS": {"type": int, "min": 2, "max": getRealizationCount() - 1, "step":1.0, "labelname":"CV_NFOLDS", "pos":11},
+            "CV_NFOLDS": {"type": int, "min": 2, "max": 9999, "step":1.0, "labelname":"CV_NFOLDS", "pos":11},
             "FWD_STEP_R2_LIMIT":{"type": float, "min": -1, "max": 100, "step":1.0, "labelname":"FWD_STEP_R2_LIMIT", "pos":12},
             "CV_PEN_PRESS": {"type": bool, "labelname":"CV_PEN_PRESS", "pos":13}
-        }
+    }
 
-
-    def getVariableNames(self, analysis_module_name):
+    @classmethod
+    def getVariableNames(cls, analysis_module_name):
         """ @rtype: list of str """
-        analysis_module = self.ert().analysisConfig().getModule(analysis_module_name)
+        analysis_module = ERT.ert.analysisConfig().getModule(analysis_module_name)
         assert isinstance(analysis_module, AnalysisModule)
         items = []
-        for name in self.__variable_names:
+        for name in cls._VARIABLE_NAMES:
             if analysis_module.hasVar(name):
                 items.append(name)
         return items
 
-    def getVariableType(self, name):
-        return self.__variable_names[name]["type"]
+    @classmethod
+    def getVariableType(cls, name):
+        return cls._VARIABLE_NAMES[name]["type"]
 
-    def getVariableMaximumValue(self, name):
-        return self.__variable_names[name]["max"]
+    @classmethod
+    def getVariableMaximumValue(cls, name):
+        if name == "CV_NFOLDS":
+            return getRealizationCount() - 1
 
-    def getVariableMinimumValue(self, name):
-        return self.__variable_names[name]["min"]
+        return cls._VARIABLE_NAMES[name]["max"]
 
-    def getVariableStepValue(self, name):
-        return self.__variable_names[name]["step"]
+    @classmethod
+    def getVariableMinimumValue(cls, name):
+        return cls._VARIABLE_NAMES[name]["min"]
 
-    def getVariableLabelName(self, name):
-        return self.__variable_names[name]["labelname"]
+    @classmethod
+    def getVariableStepValue(cls, name):
+        return cls._VARIABLE_NAMES[name]["step"]
 
-    def getVariablePosition(self, name):
-        return self.__variable_names[name]["pos"]
+    @classmethod
+    def getVariableLabelName(cls, name):
+        return cls._VARIABLE_NAMES[name]["labelname"]
 
+    @classmethod
+    def getVariablePosition(cls, name):
+        return cls._VARIABLE_NAMES[name]["pos"]
 
+    @classmethod
+    def setVariableValue(cls, analysis_module_name, name, value):
+        analysis_module = ERT.ert.analysisConfig().getModule(analysis_module_name)
+        result = analysis_module.setVar(name, str(value))
 
-    def setVariableValue(self, analysis_module_name, name, value):
-        analysis_module = self.ert().analysisConfig().getModule(analysis_module_name)
-        result = analysis_module.setVar(name,str(value))
-
-
-
-    def getVariableValue(self, analysis_module_name, name):
+    @classmethod
+    def getVariableValue(cls, analysis_module_name, name):
         """ @rtype: int or float or bool or str """
-        analysis_module = self.ert().analysisConfig().getModule(analysis_module_name)
-        variable_type = self.getVariableType(name)
+        analysis_module = ERT.ert.analysisConfig().getModule(analysis_module_name)
+        variable_type = cls.getVariableType(name)
         if variable_type == float:
             return analysis_module.getDouble(name)
         elif variable_type == bool:
@@ -85,6 +90,4 @@ class AnalysisModuleVariablesModel(ErtConnector):
         elif variable_type == str:
             return analysis_module.getStr(name)
         elif variable_type == int:
-            return  analysis_module.getInt(name)
-
-
+            return analysis_module.getInt(name)

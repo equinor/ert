@@ -1,9 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
     active_realizations_model.py
-    analysis_module_model.py
-    analysis_module_variables_model.py
-    iterated_analysis_module_model.py
     target_case_format_model.py
     target_case_model.py
 )

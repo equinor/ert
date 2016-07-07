@@ -14,22 +14,16 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from PyQt4.QtCore import Qt, QMargins
-from PyQt4.QtGui import QFormLayout, QToolButton, QHBoxLayout, QLabel
+from PyQt4.QtGui import QFormLayout, QLabel
 
-from ert_gui.ertwidgets import addHelpToWidget, CaseSelector, ActiveLabel
+from ert_gui.ertwidgets import addHelpToWidget, CaseSelector, ActiveLabel, AnalysisModuleSelector
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
 from ert_gui.ertwidgets.models.value_model import ValueModel
-from ert_gui.ide.keywords.definitions import RangeStringArgument
 from ert_gui.ide.keywords.definitions import NumberListStringArgument
-
-from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseFormatModel, AnalysisModuleModel
-
-from ert_gui.simulation import SimulationConfigPanel, AnalysisModuleVariablesPanel
+from ert_gui.ide.keywords.definitions import RangeStringArgument
+from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseFormatModel
+from ert_gui.simulation import SimulationConfigPanel
 from ert_gui.simulation.models import MultipleDataAssimilation
-from ert_gui.widgets import util
-from ert_gui.widgets.closable_dialog import ClosableDialog
-from ert_gui.widgets.combo_choice import ComboChoice
 from ert_gui.widgets.string_box import StringBox
 
 # For custom dialog box stuff
@@ -64,21 +58,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
         self._createInputForWeights(layout)
 
-        analysis_module_model = AnalysisModuleModel()
-        self._analysis_module_choice = ComboChoice(analysis_module_model, "Analysis Module", "config/analysis/analysis_module")
+        self._analysis_module_selector = AnalysisModuleSelector(iterable=False, help_link="config/analysis/analysis_module")
+        layout.addRow("Analysis Module:", self._analysis_module_selector)
 
-        self._variables_popup_button = QToolButton()
-        self._variables_popup_button.setIcon(util.resourceIcon("ide/small/cog_edit.png"))
-        self._variables_popup_button.clicked.connect(self.showVariablesPopup)
-        self._variables_popup_button.setMaximumSize(20, 20)
-
-        self._variables_layout = QHBoxLayout()
-        self._variables_layout.addWidget(self._analysis_module_choice, 0, Qt.AlignLeft)
-        self._variables_layout.addWidget(self._variables_popup_button, 0, Qt.AlignLeft)
-        self._variables_layout.setContentsMargins(QMargins(0,0,0,0))
-        self._variables_layout.addStretch()
-
-        layout.addRow(self._analysis_module_choice.getLabel(), self._variables_layout)
 
         active_realizations_model = ActiveRealizationsModel()
         self._active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
@@ -126,14 +108,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._active_realizations_field.setVisible(show_advanced)
         self.layout().labelForField(self._active_realizations_field).setVisible(show_advanced)
 
-        self._analysis_module_choice.setVisible(show_advanced)
-        self.layout().labelForField(self._variables_layout).setVisible(show_advanced)
-        self._variables_popup_button.setVisible(show_advanced)
+        self._analysis_module_selector.setVisible(show_advanced)
+        self.layout().labelForField(self._analysis_module_selector).setVisible(show_advanced)
 
-    def showVariablesPopup(self):
-        analysis_module_name = AnalysisModuleModel().getCurrentChoice()
-        if analysis_module_name is not None:
-            variable_dialog = AnalysisModuleVariablesPanel(analysis_module_name)
-            dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
+    def getSimulationArguments(self):
+        return {"analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName()}
 
-            dialog.exec_()

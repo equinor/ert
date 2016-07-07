@@ -15,12 +15,11 @@
 #  for more details.
 from weakref import ref
 
+from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
-
 from ert_gui.tools import Tool
 from ert_gui.tools.export import ExportPanel, Exporter, ExportKeywordModel
 from ert_gui.widgets import util
-from ert_gui.widgets.closable_dialog import ClosableDialog
 
 
 class ExportTool(Tool):

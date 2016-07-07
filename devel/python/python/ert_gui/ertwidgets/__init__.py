@@ -30,6 +30,8 @@ def showWaitCursorWhileWaiting(func):
     return wrapper
 
 from .validationsupport import ValidationSupport
+from .closabledialog import ClosableDialog
+from .analysismoduleselector import AnalysisModuleSelector
 from .activelabel import ActiveLabel
 from .caseselector import CaseSelector
 from .caselist import CaseList

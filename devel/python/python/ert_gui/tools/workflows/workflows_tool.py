@@ -1,9 +1,9 @@
 from ert_gui import ERT
+from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.ertwidgets.models.ertmodel import getWorkflowNames
 from ert_gui.tools import Tool
 from ert_gui.tools.workflows import RunWorkflowWidget
 from ert_gui.widgets import util
-from ert_gui.widgets.closable_dialog import ClosableDialog
 
 
 class WorkflowsTool(Tool):
