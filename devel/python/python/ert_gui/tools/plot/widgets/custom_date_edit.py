@@ -3,8 +3,8 @@ import datetime
 from PyQt4.QtCore import QDate
 from PyQt4.QtGui import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
 
+from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 from ert_gui.widgets import util
-from ert_gui.widgets.clearable_line_edit import ClearableLineEdit
 
 
 class CustomDateEdit(QWidget):
