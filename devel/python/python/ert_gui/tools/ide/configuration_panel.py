@@ -1,12 +1,14 @@
 import re
 import shutil
+
 from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QStyle, QMessageBox, QSizePolicy, QFileDialog
+from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
+
+from ert_gui.ertwidgets import SearchBox
 from ert_gui.ide.highlighter import KeywordHighlighter
 from ert_gui.ide.keywords.definitions.path_argument import PathArgument
 from ert_gui.tools.ide import IdePanel
 from ert_gui.widgets import util
-from ert_gui.widgets.search_box import SearchBox
 
 
 class ConfigurationPanel(QWidget):

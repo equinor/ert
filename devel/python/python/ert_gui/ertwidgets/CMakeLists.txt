@@ -9,6 +9,7 @@ set(PYTHON_SOURCES
     closabledialog.py
     customdialog.py
     listeditbox.py
+    searchbox.py
     summarypanel.py
     validateddialog.py
     validationsupport.py

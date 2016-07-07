@@ -39,3 +39,4 @@ from .checklist import CheckList
 from .listeditbox import ListEditBox
 from .customdialog import CustomDialog
 from .summarypanel import SummaryPanel
+from .searchbox import SearchBox
