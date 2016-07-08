@@ -1,5 +1,4 @@
 from ert.enkf.enums import EnkfInitModeEnum
-from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseModel
 from ert.enkf.enums import HookRuntime
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
@@ -20,7 +19,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         self.setAnalysisModule(arguments["analysis_module"])
-        active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
+        active_realization_mask = arguments["active_realizations"]
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 0)
@@ -45,7 +44,7 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Analyzing...")
 
-        target_case_name = TargetCaseModel().getValue()
+        target_case_name = arguments["target_case"]
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         

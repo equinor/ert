@@ -5,6 +5,7 @@ set(PYTHON_SOURCES
     ertmodel.py
     ertsummary.py
     selectable_list_model.py
+    targetcasemodel.py
     valuemodel.py
 )
 

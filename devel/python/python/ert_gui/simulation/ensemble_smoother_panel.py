@@ -1,13 +1,14 @@
 from PyQt4.QtGui import QFormLayout, QLabel
 
-from ert_gui.ertwidgets.caseselector import CaseSelector
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
-from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
-from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseModel
-from ert_gui.simulation import SimulationConfigPanel
 from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector
+from ert_gui.ertwidgets.caseselector import CaseSelector
+from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
+from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
+from ert_gui.ertwidgets.stringbox import StringBox
+from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
+from ert_gui.simulation import SimulationConfigPanel
 from ert_gui.simulation.models import EnsembleSmoother
-from ert_gui.widgets.string_box import StringBox
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
@@ -27,35 +28,37 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        target_case_model = TargetCaseModel()
-        self.target_case_field = StringBox(target_case_model, "Target case", "config/simulation/target_case")
-        self.target_case_field.setValidator(ProperNameArgument())
-        layout.addRow(self.target_case_field.getLabel(), self.target_case_field)
-
+        self._target_case_model = TargetCaseModel()
+        self._target_case_field = StringBox(self._target_case_model, "config/simulation/target_case")
+        self._target_case_field.setValidator(ProperNameArgument())
+        layout.addRow("Target case:", self._target_case_field)
 
         self._analysis_module_selector = AnalysisModuleSelector(iterable=False, help_link="config/analysis/analysis_module")
-
         layout.addRow("Analysis Module:", self._analysis_module_selector)
 
-        active_realizations_model = ActiveRealizationsModel()
-        self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
-        self.active_realizations_field.setValidator(RangeStringArgument())
-        layout.addRow(self.active_realizations_field.getLabel(), self.active_realizations_field)
+        self._active_realizations_model = ActiveRealizationsModel()
+        self._active_realizations_field = StringBox(self._active_realizations_model, "config/simulation/active_realizations")
+        self._active_realizations_field.setValidator(RangeStringArgument(getRealizationCount()))
+        layout.addRow("Active realizations", self._active_realizations_field)
 
-        self.target_case_field.validationChanged.connect(self.simulationConfigurationChanged)
-        self.active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)
+        self._target_case_field.getValidationSupport().validationChanged.connect(self.simulationConfigurationChanged)
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(self.simulationConfigurationChanged)
 
         self.setLayout(layout)
 
     def isConfigurationValid(self):
-        return self.target_case_field.isValid() and self.active_realizations_field.isValid()
+        return self._target_case_field.isValid() and self._active_realizations_field.isValid()
 
     def toggleAdvancedOptions(self, show_advanced):
-        self.active_realizations_field.setVisible(show_advanced)
-        self.layout().labelForField(self.active_realizations_field).setVisible(show_advanced)
+        self._active_realizations_field.setVisible(show_advanced)
+        self.layout().labelForField(self._active_realizations_field).setVisible(show_advanced)
 
         self._analysis_module_selector.setVisible(show_advanced)
         self.layout().labelForField(self._analysis_module_selector).setVisible(show_advanced)
 
     def getSimulationArguments(self):
-        return {"analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName()}
+        arguments = {"active_realizations": self._active_realizations_model.getActiveRealizationsMask(),
+                     "target_case": self._target_case_model.getValue(),
+                     "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName()
+                     }
+        return arguments

@@ -67,6 +67,7 @@ from .searchbox import SearchBox
 from .caseselector import CaseSelector
 from .caselist import CaseList
 from .checklist import CheckList
+from .stringbox import StringBox
 from .listeditbox import ListEditBox
 from .customdialog import CustomDialog
 from .summarypanel import SummaryPanel

@@ -14,7 +14,7 @@ class ActiveLabel(QLabel):
         font.setWeight(QFont.Bold)
         self.setFont(font)
 
-        self._model.labelChanged.connect(self.updateLabel)
+        self._model.valueChanged.connect(self.updateLabel)
 
         self.updateLabel()
 
