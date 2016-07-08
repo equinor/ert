@@ -11,6 +11,7 @@ set(PYTHON_SOURCES
     legend.py
     listeditbox.py
     searchbox.py
+    stringbox.py
     summarypanel.py
     validateddialog.py
     validationsupport.py

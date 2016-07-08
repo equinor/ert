@@ -3,7 +3,6 @@ set(PYTHON_SOURCES
     export_panel.py
     export_tool.py
     exporter.py
-    export_realizations_model.py
     export_keyword_model.py
     export_model.py
 )

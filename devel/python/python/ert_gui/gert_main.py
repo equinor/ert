@@ -123,7 +123,6 @@ from ert.util import Version
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 from ert_gui.main_window import GertMainWindow
-from ert_gui.models import ErtConnector
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools import HelpCenter
 from ert_gui.tools.export import ExportTool
@@ -215,8 +214,6 @@ def main(argv):
     now = time.time()
 
     ert = EnKFMain(config_file, strict=strict, verbose=verbose)
-    ErtConnector.setErt(ert)
-
     ert_gui.ertnotifier.configureErtNotifier(ert, config_file)
 
     window = GertMainWindow()

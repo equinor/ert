@@ -1,4 +1,3 @@
-from ert_gui.models.connectors.run import ActiveRealizationsModel
 from ert.enkf.enums import HookRuntime
 from ert.enkf import ErtLog
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
@@ -11,7 +10,7 @@ class EnsembleExperiment(BaseRunModel):
 
     def runSimulations(self, arguments):
         self.setPhase(0, "Running simulations...", indeterminate=False)
-        active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
+        active_realization_mask = arguments["active_realizations"]
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 0)

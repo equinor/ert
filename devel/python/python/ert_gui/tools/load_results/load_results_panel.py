@@ -13,14 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QLineEdit, QLabel, QTextEdit
+from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QTextEdit
 
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName, getRealizationCount
+from ert_gui.ertwidgets.stringbox import StringBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument, IntegerArgument
-from ert_gui.tools.load_results import LoadResultsRealizationsModel, LoadResultsIterationsModel
 from ert_gui.models.qt.all_cases_model import AllCasesModel
-from ert_gui.widgets.string_box import StringBox
 from ert_gui.tools.load_results import LoadResultsModel
+from ert_gui.tools.load_results import LoadResultsRealizationsModel, LoadResultsIterationsModel
 
 
 class LoadResultsPanel(QWidget):

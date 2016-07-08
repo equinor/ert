@@ -1,7 +1,5 @@
 from ert.enkf.enums import EnkfInitModeEnum, HookRuntime
 from ert_gui.ertwidgets.models.ertmodel import getNumberOfIterations
-from ert_gui.models.connectors.run import ActiveRealizationsModel
-from ert_gui.models.connectors.run.target_case_format_model import TargetCaseFormatModel
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 
@@ -43,8 +41,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
 
-    def createTargetCaseFileSystem(self, phase):
-        target_case_format = TargetCaseFormatModel().getValue()
+    def createTargetCaseFileSystem(self, phase, target_case_format):
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_format % phase)
         return target_fs
 
@@ -64,17 +61,18 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseCount(phase_count)
 
         analysis_module = self.setAnalysisModule(arguments["analysis_module"])
-        active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
+        active_realization_mask = arguments["active_realizations"]
+        target_case_format = arguments["target_case"]
 
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
-        initial_fs = self.createTargetCaseFileSystem(0)
+        initial_fs = self.createTargetCaseFileSystem(0, target_case_format)
 
         if not source_fs == initial_fs:
             self.ert().getEnkfFsManager().switchFileSystem(initial_fs)
             self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(source_fs, 0)
 
         self.runAndPostProcess(active_realization_mask, 0, phase_count, EnkfInitModeEnum.INIT_CONDITIONAL)
-        target_case_format = TargetCaseFormatModel().getValue()
+
         self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat( target_case_format )
 
         analysis_config = self.ert().analysisConfig()
@@ -84,7 +82,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         current_iteration = 1
 
         while current_iteration <= getNumberOfIterations() and num_tries < num_retries_per_iteration:
-            target_fs = self.createTargetCaseFileSystem(current_iteration)
+            target_fs = self.createTargetCaseFileSystem(current_iteration, target_case_format)
 
             pre_analysis_iter_num = analysis_module.getInt("ITER")
             self.analyzeStep(target_fs)

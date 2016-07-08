@@ -16,9 +16,6 @@
 from ert.enkf.enums import EnkfInitModeEnum
 from ert.enkf.enums import HookRuntime
 
-from ert_gui.models.connectors.run import TargetCaseFormatModel
-
-from ert.util import BoolVector
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 
@@ -35,6 +32,7 @@ class MultipleDataAssimilation(BaseRunModel):
         return self.weights
 
     def setWeights(self, weights):
+        print("Weights changed: %s" % weights)
         self.weights = weights
 
     def setAnalysisModule(self, module_name):
@@ -59,7 +57,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhaseCount(iteration_count+2) # pre + post + weights
 
-        target_case_format = TargetCaseFormatModel()
+        target_case_format = arguments["target_case"]
 
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         target_case_name = target_case_format.getValue() % 0
@@ -69,7 +67,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert().getEnkfFsManager().switchFileSystem(target_fs)
             self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(source_fs, 0)
 
-        active_realization_mask = BoolVector(True, self.ert().getEnsembleSize())
+        active_realization_mask = arguments["active_realizations"]
 
 
         phase_string = "Running MDA ES %d iteration%s." % (iteration_count, ('s' if (iteration_count != 1) else ''))

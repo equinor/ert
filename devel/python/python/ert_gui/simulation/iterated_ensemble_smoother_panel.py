@@ -1,12 +1,13 @@
 from PyQt4.QtGui import QFormLayout, QLabel, QSpinBox
 
 from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector, CaseSelector
+from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, setNumberOfIterations, getNumberOfIterations
+from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
+from ert_gui.ertwidgets.stringbox import StringBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
-from ert_gui.models.connectors.run import ActiveRealizationsModel, TargetCaseFormatModel
 from ert_gui.simulation import SimulationConfigPanel
 from ert_gui.simulation.models import IteratedEnsembleSmoother
-from ert_gui.widgets.string_box import StringBox
 
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
@@ -36,37 +37,42 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
         layout.addRow("Number of iterations", num_iterations_spinner)
 
-        iterated_target_case_format_model = TargetCaseFormatModel()
-        self.iterated_target_case_format_field = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
-        self.iterated_target_case_format_field.setValidator(ProperNameFormatArgument())
-        layout.addRow(self.iterated_target_case_format_field.getLabel(), self.iterated_target_case_format_field)
+        self._iterated_target_case_format_model = TargetCaseModel(format_mode=True)
+        self._iterated_target_case_format_field = StringBox(self._iterated_target_case_format_model, "config/simulation/iterated_target_case_format")
+        self._iterated_target_case_format_field.setValidator(ProperNameFormatArgument())
+        layout.addRow("Target case format:", self._iterated_target_case_format_field)
 
 
         self._analysis_module_selector = AnalysisModuleSelector(iterable=True, help_link="config/analysis/analysis_module")
         layout.addRow("Analysis Module:", self._analysis_module_selector)
 
-        active_realizations_model = ActiveRealizationsModel()
-        self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
-        self.active_realizations_field.setValidator(RangeStringArgument())
-        layout.addRow(self.active_realizations_field.getLabel(), self.active_realizations_field)
+        self._active_realizations_model = ActiveRealizationsModel()
+        self._active_realizations_field = StringBox(self._active_realizations_model, "config/simulation/active_realizations")
+        self._active_realizations_field.setValidator(RangeStringArgument(getRealizationCount()))
+        layout.addRow("Active realizations", self._active_realizations_field)
 
-        self.iterated_target_case_format_field.validationChanged.connect(self.simulationConfigurationChanged)
-        self.active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)
+
+        self._iterated_target_case_format_field.getValidationSupport().validationChanged.connect(self.simulationConfigurationChanged)
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(self.simulationConfigurationChanged)
 
         self.setLayout(layout)
         
     def isConfigurationValid(self):
         analysis_module = self._analysis_module_selector.getSelectedAnalysisModuleName()
-        return self.iterated_target_case_format_field.isValid() and self.active_realizations_field.isValid() and analysis_module is not None
+        return self._iterated_target_case_format_field.isValid() and self._active_realizations_field.isValid() and analysis_module is not None
 
 
     def toggleAdvancedOptions(self, show_advanced):
-        self.active_realizations_field.setVisible(show_advanced)
-        self.layout().labelForField(self.active_realizations_field).setVisible(show_advanced)
+        self._active_realizations_field.setVisible(show_advanced)
+        self.layout().labelForField(self._active_realizations_field).setVisible(show_advanced)
 
         self._analysis_module_selector.setVisible(show_advanced)
         self.layout().labelForField(self._analysis_module_selector).setVisible(show_advanced)
 
 
     def getSimulationArguments(self):
-        return {"analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName()}
+        arguments = {"active_realizations": self._active_realizations_model.getActiveRealizationsMask(),
+                     "target_case": self._iterated_target_case_format_model.getValue(),
+                     "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName()
+                     }
+        return arguments
