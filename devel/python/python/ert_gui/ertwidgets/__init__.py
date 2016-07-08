@@ -71,3 +71,4 @@ from .stringbox import StringBox
 from .listeditbox import ListEditBox
 from .customdialog import CustomDialog
 from .summarypanel import SummaryPanel
+from .pathchooser import PathChooser

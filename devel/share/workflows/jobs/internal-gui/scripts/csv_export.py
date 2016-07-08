@@ -8,8 +8,8 @@ from ert.enkf import ErtPlugin, CancelPluginException
 from ert.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader, CustomKWCollector
 from ert_gui.ertwidgets.customdialog import CustomDialog
 from ert_gui.ertwidgets.listeditbox import ListEditBox
-from ert_gui.models.mixins.connectorless import DefaultPathModel
-from ert_gui.widgets.path_chooser import PathChooser
+from ert_gui.ertwidgets.models.path_model import PathModel
+from ert_gui.ertwidgets.pathchooser import PathChooser
 
 
 class CSVExportJob(ErtPlugin):
@@ -142,12 +142,12 @@ class CSVExportJob(ErtPlugin):
         dialog = CustomDialog("CSV Export", description, parent)
 
         default_csv_output_path = self.getDataKWValue("CSV_OUTPUT_PATH", default="output.csv")
-        output_path_model = DefaultPathModel(default_csv_output_path)
-        output_path_chooser = PathChooser(output_path_model, path_label="Output file path")
+        output_path_model = PathModel(default_csv_output_path)
+        output_path_chooser = PathChooser(output_path_model)
 
         design_matrix_default = self.getDataKWValue("DESIGN_MATRIX_PATH", default="")
-        design_matrix_path_model = DefaultPathModel(design_matrix_default, is_required=False, must_exist=True)
-        design_matrix_path_chooser = PathChooser(design_matrix_path_model, path_label="Design Matrix path")
+        design_matrix_path_model = PathModel(design_matrix_default, is_required=False, must_exist=True)
+        design_matrix_path_chooser = PathChooser(design_matrix_path_model)
 
         list_edit = ListEditBox(self.getAllCaseList())
 

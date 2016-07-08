@@ -35,7 +35,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         addHelpToWidget(num_iterations_spinner, "config/simulation/number_of_iterations")
         num_iterations_spinner.valueChanged[int].connect(setNumberOfIterations)
 
-        layout.addRow("Number of iterations", num_iterations_spinner)
+        layout.addRow("Number of iterations:", num_iterations_spinner)
 
         self._iterated_target_case_format_model = TargetCaseModel(format_mode=True)
         self._iterated_target_case_format_field = StringBox(self._iterated_target_case_format_model, "config/simulation/iterated_target_case_format")

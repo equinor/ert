@@ -1,9 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     load_results_panel.py
-    load_results_realisations_model.py
     load_results_tool.py
-    load_results_iterations_model.py
     load_results_model.py
 
 )

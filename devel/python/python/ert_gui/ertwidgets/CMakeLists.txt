@@ -10,6 +10,7 @@ set(PYTHON_SOURCES
     customdialog.py
     legend.py
     listeditbox.py
+    pathchooser.py
     searchbox.py
     stringbox.py
     summarypanel.py
