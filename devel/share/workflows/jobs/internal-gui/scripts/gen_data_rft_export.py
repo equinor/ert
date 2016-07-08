@@ -12,8 +12,8 @@ from ert.enkf.enums import EnkfObservationImplementationType
 from ert.enkf.export import GenDataCollector, ArgLoader
 from ert_gui.ertwidgets.customdialog import CustomDialog
 from ert_gui.ertwidgets.listeditbox import ListEditBox
-from ert_gui.models.mixins.connectorless import DefaultPathModel
-from ert_gui.widgets.path_chooser import PathChooser
+from ert_gui.ertwidgets.models.path_model import PathModel
+from ert_gui.ertwidgets.pathchooser import PathChooser
 
 
 class GenDataRFTCSVExportJob(ErtPlugin):
@@ -165,11 +165,11 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         description = "The GEN_DATA RFT CSV export requires some information before it starts:"
         dialog = CustomDialog("Robust CSV Export", description, parent)
 
-        output_path_model = DefaultPathModel("output.csv")
-        output_path_chooser = PathChooser(output_path_model, path_label="Output file path")
+        output_path_model = PathModel("output.csv")
+        output_path_chooser = PathChooser(output_path_model)
 
-        trajectory_model = DefaultPathModel("wellpath", must_be_a_directory=True, must_be_a_file=False, must_exist=True)
-        trajectory_chooser = PathChooser(trajectory_model, path_label="Trajectory file")
+        trajectory_model = PathModel("wellpath", must_be_a_directory=True, must_be_a_file=False, must_exist=True)
+        trajectory_chooser = PathChooser(trajectory_model)
 
         fs_manager = self.ert().getEnkfFsManager()
         all_case_list = fs_manager.getCaseList()

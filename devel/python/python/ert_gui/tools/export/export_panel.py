@@ -17,10 +17,10 @@ from PyQt4.QtCore import QDir, pyqtSignal
 from PyQt4.QtGui import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
+from ert_gui.ertwidgets.models.all_cases_model import AllCasesModel
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument
-from ert_gui.models.qt.all_cases_model import AllCasesModel
 from ert_gui.tools.export import ExportKeywordModel
 
 

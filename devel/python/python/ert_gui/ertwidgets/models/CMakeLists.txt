@@ -1,9 +1,11 @@
 set(PYTHON_SOURCES
     __init__.py
     activerealizationsmodel.py
+    all_cases_model.py
     analysismodulevariablesmodel.py
     ertmodel.py
     ertsummary.py
+    path_model.py
     selectable_list_model.py
     targetcasemodel.py
     valuemodel.py

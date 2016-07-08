@@ -1,6 +1,6 @@
 #  Copyright (C) 2011  Statoil ASA, Norway. 
 #   
-#  The file 'path_chooser.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'pathchooser.py' is part of ERT - Ensemble based Reservoir Tool.
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -15,15 +15,14 @@
 #  for more details.
 import os
 import re
-from PyQt4.QtCore import SIGNAL, QSize
-from PyQt4.QtGui import QLineEdit, QToolButton, QFileDialog
+from PyQt4.QtCore import QSize
+from PyQt4.QtGui import QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
 
-from ert_gui.ertwidgets import resourceIcon
-from ert_gui.models.mixins import PathModelMixin
-from ert_gui.widgets.helped_widget import HelpedWidget
+from ert_gui.ertwidgets import resourceIcon, addHelpToWidget
+from ert_gui.ertwidgets.validationsupport import ValidationSupport
 
 
-class PathChooser(HelpedWidget):
+class PathChooser(QWidget):
     """
     PathChooser: shows, enables choosing of and validates paths.
     The data structure expected and sent to the models getValue and setValue is a string.
@@ -43,38 +42,45 @@ class PathChooser(HelpedWidget):
 #    MUST_EXIST = 8
 #    EXECUTABLE = 16
 
-    def __init__(self, model, path_label="Path", help_link=""):
-        HelpedWidget.__init__(self, path_label, help_link)
+    def __init__(self, model, help_link=""):
+        """
+        :type model: ert_gui.ertwidgets.models.path_model.PathModel
+        :param help_link: str
+        """
+        QWidget.__init__(self)
+        addHelpToWidget(self, help_link)
+        self._validation_support = ValidationSupport(self)
 
-        self.__editing = True
-        self.__valid = True
+        self._editing = True
 
-        self.path_line = QLineEdit()
-        self.path_line.setMinimumWidth(250)
+        layout = QHBoxLayout()
+        layout.setMargin(0)
 
-        self.addWidget(self.path_line)
+        self._path_line = QLineEdit()
+        self._path_line.setMinimumWidth(250)
+
+        layout.addWidget(self._path_line)
 
         dialog_button = QToolButton(self)
         dialog_button.setIcon(resourceIcon("ide/small/folder"))
         dialog_button.setIconSize(QSize(16, 16))
-        self.connect(dialog_button, SIGNAL('clicked()'), self.selectPath)
-        self.addWidget(dialog_button)
+        dialog_button.clicked.connect(self.selectPath)
+        layout.addWidget(dialog_button)
 
-        self.valid_color = self.path_line.palette().color(self.path_line.backgroundRole())
+        self.valid_color = self._path_line.palette().color(self._path_line.backgroundRole())
 
-        self.path_line.setText(os.getcwd())
-        self.__editing = False
+        self._path_line.setText(os.getcwd())
+        self._editing = False
 
-        assert isinstance(model, PathModelMixin)
-        self.model = model
-        model.observable().attach(PathModelMixin.PATH_CHANGED_EVENT, self.getPathFromModel)
+        self._model = model
+        self._model.valueChanged.connect(self.getPathFromModel)
 
-        self.connect(self.path_line, SIGNAL('editingFinished()'), self.validatePath)
-        self.connect(self.path_line, SIGNAL('editingFinished()'), self.contentsChanged)
-        self.connect(self.path_line, SIGNAL('textChanged(QString)'), self.validatePath)
+        self._path_line.editingFinished.connect(self.validatePath)
+        self._path_line.editingFinished.connect(self.contentsChanged)
+        self._path_line.textChanged.connect(self.validatePath)
 
+        self.setLayout(layout)
         self.getPathFromModel()
-
 
 
     def isPathValid(self, path):
@@ -90,25 +96,25 @@ class PathChooser(HelpedWidget):
         message = ""
 
         if path == "":
-            if self.model.pathIsRequired():
+            if self._model.pathIsRequired():
                 valid = False
                 message = PathChooser.REQUIRED_FIELD_MSG
         elif not path_exists:
-            if self.model.pathMustExist():
+            if self._model.pathMustExist():
                 valid = False
                 message = PathChooser.PATH_DOES_NOT_EXIST_MSG
             #todo: check if new (non-existing) file has directory or file format?
         elif path_exists:
-            if self.model.pathMustBeExecutable() and is_file and not is_executable:
+            if self._model.pathMustBeExecutable() and is_file and not is_executable:
                 valid = False
                 message = PathChooser.FILE_IS_NOT_EXECUTABLE_MSG
-            elif self.model.pathMustBeADirectory() and not is_directory:
+            elif self._model.pathMustBeADirectory() and not is_directory:
                 valid = False
                 message = PathChooser.PATH_IS_NOT_A_DIRECTORY_MSG
-            elif self.model.pathMustBeAbsolute() and not is_absolute:
+            elif self._model.pathMustBeAbsolute() and not is_absolute:
                 valid = False
                 message = PathChooser.PATH_IS_NOT_ABSOLUTE_MSG
-            elif self.model.pathMustBeAFile() and not is_file:
+            elif self._model.pathMustBeAFile() and not is_file:
                 valid = False
                 message = PathChooser.PATH_IS_NOT_A_FILE_MSG
 
@@ -117,86 +123,85 @@ class PathChooser(HelpedWidget):
 
     def validatePath(self):
         """Called whenever the path is modified"""
-        palette = self.path_line.palette()
+        palette = self._path_line.palette()
 
         valid, message = self.isPathValid(self.getPath())
 
-        validity_type = self.WARNING
+        validity_type = ValidationSupport.WARNING
 
         if not valid:
-            color = self.ERROR_COLOR
+            color = ValidationSupport.ERROR_COLOR
         else:
             color = self.valid_color
 
-        self.__valid = valid
+        self._validation_support.setValidationMessage(message, validity_type)
+        self._path_line.setToolTip(message)
+        palette.setColor(self._path_line.backgroundRole(), color)
 
-        self.setValidationMessage(message, validity_type)
-        self.path_line.setToolTip(message)
-        palette.setColor(self.path_line.backgroundRole(), color)
-
-        self.path_line.setPalette(palette)
+        self._path_line.setPalette(palette)
 
 
     def getPath(self):
         """Returns the path"""
-        return os.path.expanduser(str(self.path_line.text()).strip())
+        return os.path.expanduser(str(self._path_line.text()).strip())
 
     def pathExists(self):
         """Returns True if the entered path exists"""
         return os.path.exists(self.getPath())
-        
-    def isValid(self):
-        """Returns the validation value"""
-        return self.__valid
-
 
     def selectPath(self):
         """Pops up the 'select a file/directory' dialog"""
         # todo: This probably needs some reworking to work properly with different scenarios... (file + dir)
-        self.__editing = True
+        self._editing = True
         current_directory = self.getPath()
 
         #if not os.path.exists(currentDirectory):
         #    currentDirectory = "~"
 
-        if self.model.pathMustBeAFile():
+        if self._model.pathMustBeAFile():
             current_directory = QFileDialog.getOpenFileName(self, "Select a file path", current_directory)
         else:
             current_directory = QFileDialog.getExistingDirectory(self, "Select a directory", current_directory)
 
         if not current_directory == "":
-            if not self.model.pathMustBeAbsolute():
+            if not self._model.pathMustBeAbsolute():
                 cwd = os.getcwd()
                 match = re.match(cwd + "/(.*)", current_directory)
                 if match:
                     current_directory = match.group(1)
 
-            self.path_line.setText(current_directory)
-            self.model.setPath(self.getPath())
+            self._path_line.setText(current_directory)
+            self._model.setPath(self.getPath())
 
-        self.__editing = False
+        self._editing = False
 
 
     def contentsChanged(self):
         """Called whenever the path is changed."""
         path_is_valid, message = self.isPathValid(self.getPath())
 
-        if not self.__editing and path_is_valid:
-            self.model.setPath(self.getPath())
+        if not self._editing and path_is_valid:
+            self._model.setPath(self.getPath())
 
 
     def getPathFromModel(self):
         """Retrieves data from the model and inserts it into the edit line"""
-        self.__editing = True
+        self._editing = True
 
-        path = self.model.getPath()
+        path = self._model.getPath()
         if path is None:
             path = ""
 
-        self.path_line.setText("%s" % path)
-        self.__editing = False
+        self._path_line.setText("%s" % path)
+        self._editing = False
 
 
-    def cleanup(self):
-        self.model.observable().detach(PathModelMixin.PATH_CHANGED_EVENT, self.getPathFromModel)
+    def getValidationSupport(self):
+        return self._validation_support
+
+    def isValid(self):
+        return self._validation_support.isValid()
+
+
+
 
