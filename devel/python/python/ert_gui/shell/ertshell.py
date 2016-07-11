@@ -129,7 +129,7 @@ class ErtShell(Cmd):
     def do_load_config(self, config_file):
         if os.path.exists(config_file) and os.path.isfile(config_file):
             self.shellContext().setErt(EnKFMain(config_file))
-            ert_gui.ertnotifier.configureErtNotifier(self.shellContext().ert(), config_file)
+            ert_gui.configureErtNotifier(self.shellContext().ert(), config_file)
         else:
             self.lastCommandFailed("Config file '%s' not found!\n" % config_file)
 

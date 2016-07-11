@@ -20,3 +20,4 @@ else:
 
 
 from .ertnotifier import ERT
+from .ertnotifier import configureErtNotifier
