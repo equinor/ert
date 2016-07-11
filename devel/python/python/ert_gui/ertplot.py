@@ -56,7 +56,7 @@ def main(argv):
 
 
     ert = EnKFMain(config_file, strict=strict, verbose=False)
-    ert_gui.ertnotifier.configureErtNotifier(ert, config_file)
+    ert_gui.configureErtNotifier(ert, config_file)
 
     window = PlotWindow(ert, None)
 

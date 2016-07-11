@@ -214,7 +214,7 @@ def main(argv):
     now = time.time()
 
     ert = EnKFMain(config_file, strict=strict, verbose=verbose)
-    ert_gui.ertnotifier.configureErtNotifier(ert, config_file)
+    ert_gui.configureErtNotifier(ert, config_file)
 
     window = GertMainWindow()
     window.setWidget(SimulationPanel())
