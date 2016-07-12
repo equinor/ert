@@ -1414,10 +1414,11 @@ void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * ru
   return NULL;
 }
 
-void * enkf_main_create_run_path__( enkf_main_type * enkf_main,
-                                    const ert_init_context_type * init_context,
-                                    const bool_vector_type * iactive ){
 
+static void * enkf_main_create_run_path__( enkf_main_type * enkf_main,
+                                           const ert_init_context_type * init_context) {
+
+  const bool_vector_type * iactive = ert_init_context_get_iactive(init_context);
   const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
   int iens;
   for (iens = 0; iens < active_ens_size; iens++) {
@@ -1429,9 +1430,8 @@ void * enkf_main_create_run_path__( enkf_main_type * enkf_main,
   return NULL;
 }
 
-void enkf_main_create_run_path(enkf_main_type * enkf_main , bool_vector_type * iactive , int iter) {
+void enkf_main_create_run_path(enkf_main_type * enkf_main , const bool_vector_type * iactive , int iter) {
   init_mode_type init_mode = INIT_CONDITIONAL;
-  ert_init_context_type * init_context = NULL;
 
   enkf_main_init_internalization(enkf_main , init_mode);
   {
@@ -1444,13 +1444,17 @@ void enkf_main_create_run_path(enkf_main_type * enkf_main , bool_vector_type * i
     stringlist_free( param_list );
   }
 
-  init_context = enkf_main_alloc_ert_init_context( enkf_main ,
-                                                   enkf_main_get_fs( enkf_main ),
-                                                   iactive ,
-                                                   init_mode ,
-                                                   iter );
-  enkf_main_create_run_path__( enkf_main , init_context, iactive );
-  ert_init_context_free( init_context );
+
+  {
+    ert_init_context_type * init_context = enkf_main_alloc_ert_init_context( enkf_main ,
+                                                                             enkf_main_get_fs( enkf_main ),
+                                                                             iactive ,
+                                                                             init_mode ,
+                                                                             iter );
+    enkf_main_create_run_path__( enkf_main , init_context );
+    ert_init_context_free( init_context );
+  }
+
 
   /*
     The runpath_list is written to disk here, when all the simulation
@@ -1498,6 +1502,7 @@ static void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
         arg_pack_append_ptr( arg_pack , enkf_main );
         arg_pack_append_ptr( arg_pack , run_arg);
 
+        run_arg_set_run_status( run_arg, JOB_SUBMITTED );
         thread_pool_add_job(submit_threads , enkf_main_isubmit_job__ , arg_pack);
       }
     }
@@ -1542,7 +1547,7 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
 
 
 static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
-                               const ert_run_context_type * run_context) {
+                               ert_run_context_type * run_context) {
 
   if (ert_run_context_get_step1(run_context))
     ecl_config_assert_restart( enkf_main_get_ecl_config( enkf_main ) );
@@ -1594,27 +1599,11 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
         run_arg_type * run_arg = ert_run_context_iens_get_arg( run_context , iens );
         run_status_type run_status = run_arg_get_run_status( run_arg );
 
-        switch (run_status) {
-        case JOB_RUN_FAILURE:
-          enkf_main_report_run_failure( enkf_main , run_arg );
-          bool_vector_iset(ert_run_context_get_iactive( run_context ), iens, false);
-          break;
-        case JOB_NOT_STARTED:
-          enkf_main_report_run_failure( enkf_main , run_arg );
-          bool_vector_iset(ert_run_context_get_iactive( run_context ), iens, false);
-          break;
-        case JOB_LOAD_FAILURE:
-          enkf_main_report_load_failure( enkf_main , run_arg );
-          bool_vector_iset(ert_run_context_get_iactive( run_context ), iens, false);
-          break;
-        case JOB_RUN_OK:
-          break;
-        default:
-          util_abort("%s: invalid job status:%d \n",__func__ , run_status );
+        if ((run_status == JOB_LOAD_FAILURE) || (run_status == JOB_RUN_FAILURE)) {
+          ert_run_context_deactivate_realization(run_context, iens);
+          totalOK = false;
         }
-        totalOK = totalOK && ( run_status == JOB_RUN_OK );
       }
-
     }
     enkf_fs_fsync( ert_run_context_get_result_fs( run_context ) );
     if (totalOK)
@@ -1793,7 +1782,6 @@ static bool enkf_main_run_analysis(enkf_main_type * enkf_main, enkf_fs_type * so
     updateOK = enkf_main_smoother_update(enkf_main, source_fs, enkf_main_get_fs(enkf_main));
   } else {
     enkf_fs_type * target_fs = enkf_main_mount_alt_fs(enkf_main , target_fs_name , true );
-    printf("Running analysis on case %s, target case is %s\n", enkf_main_get_current_fs(enkf_main), enkf_fs_get_case_name(target_fs));
     updateOK = enkf_main_smoother_update(enkf_main, source_fs , target_fs);
     enkf_fs_decref( target_fs );
   }

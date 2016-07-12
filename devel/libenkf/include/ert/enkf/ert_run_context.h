@@ -36,14 +36,14 @@ typedef struct ert_run_context_struct ert_run_context_type;
   stringlist_type      * ert_run_context_alloc_runpath_list(const bool_vector_type * iactive , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter);
   char                 * ert_run_context_alloc_runpath( int iens , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter);
   ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs ,
-                                                                   const bool_vector_type * iactive ,
+                                                                   bool_vector_type * iactive ,
                                                                    path_fmt_type * runpath_fmt ,
                                                                    subst_list_type * subst_list ,
                                                                    int iter);
 
 
   ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
-                                                            const bool_vector_type * iactive ,
+                                                            bool_vector_type * iactive ,
                                                             path_fmt_type * runpath_fmt ,
                                                             subst_list_type * subst_list ,
                                                             int iter);
@@ -61,6 +61,7 @@ typedef struct ert_run_context_struct ert_run_context_type;
   int                      ert_run_context_get_load_start( const ert_run_context_type * context );
   run_arg_type           * ert_run_context_iget_arg( const ert_run_context_type * context , int index);
   run_arg_type           * ert_run_context_iens_get_arg( const ert_run_context_type * context , int iens);
+  void                     ert_run_context_deactivate_realization( ert_run_context_type * context , int iens);
 
   enkf_fs_type * ert_run_context_get_init_fs(const ert_run_context_type * run_context);
   enkf_fs_type * ert_run_context_get_result_fs(const ert_run_context_type * run_context);

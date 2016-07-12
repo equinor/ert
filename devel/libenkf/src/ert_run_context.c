@@ -35,7 +35,12 @@
 struct ert_run_context_struct {
   UTIL_TYPE_ID_DECLARATION;
   vector_type      * run_args;
-  bool_vector_type * iactive;   // This can be updated ....
+
+  // Observe that the iactive mask is a shared reference which has
+  // lifetime longer than the ert_run_context instance. When
+  // simulations have failed elements in the iactive vector can be set
+  // to false during runtime.
+  bool_vector_type * iactive;
   run_mode_type      run_mode;
   int                iter;
   int                step1;
@@ -81,11 +86,11 @@ stringlist_type * ert_run_context_alloc_runpath_list(const bool_vector_type * ia
 }
 
 
-static ert_run_context_type * ert_run_context_alloc(const bool_vector_type * iactive , run_mode_type run_mode , enkf_fs_type * init_fs , enkf_fs_type * result_fs , enkf_fs_type * update_target_fs , int iter) {
+static ert_run_context_type * ert_run_context_alloc(bool_vector_type * iactive , run_mode_type run_mode , enkf_fs_type * init_fs , enkf_fs_type * result_fs , enkf_fs_type * update_target_fs , int iter) {
   ert_run_context_type * context = util_malloc( sizeof * context );
   UTIL_TYPE_ID_INIT( context , ERT_RUN_CONTEXT_TYPE_ID );
 
-  context->iactive = bool_vector_alloc_copy( iactive );
+  context->iactive = iactive;
   context->iens_map = bool_vector_alloc_active_index_list( iactive , -1 );
   context->run_args = vector_alloc_new();
   context->run_mode = run_mode;
@@ -100,7 +105,7 @@ static ert_run_context_type * ert_run_context_alloc(const bool_vector_type * iac
 }
 
 
-ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs , const bool_vector_type * iactive ,
+ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs , bool_vector_type * iactive ,
                                                                  path_fmt_type * runpath_fmt ,
                                                                  subst_list_type * subst_list ,
                                                                  int iter) {
@@ -122,7 +127,7 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
 
 
 ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
-                                                          const bool_vector_type * iactive ,
+                                                          bool_vector_type * iactive ,
                                                           path_fmt_type * runpath_fmt ,
                                                           subst_list_type * subst_list ,
                                                           int iter) {
@@ -158,7 +163,6 @@ void ert_run_context_free( ert_run_context_type * context ) {
   }
 
   vector_free( context->run_args );
-  bool_vector_free( context->iactive );
   int_vector_free( context->iens_map );
   free( context );
 }
@@ -265,4 +269,10 @@ void ert_run_context_set_update_target_fs(ert_run_context_type * context, enkf_f
     enkf_fs_increase_write_count(update_target_fs);
   } else
     context->update_target_fs = NULL;
+}
+
+
+
+void ert_run_context_deactivate_realization( ert_run_context_type * context , int iens) {
+  bool_vector_iset( context->iactive , iens , false );
 }
