@@ -65,6 +65,7 @@ void test_open() {
         for (size_t i =0; i < 1000; i++)
             test_assert_size_t_equal(data[i], i);
     }
+    test_assert_false( fortio.ftruncate( 0 ));
     fortio.close();
 }
 

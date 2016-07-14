@@ -38,6 +38,8 @@ namespace ERT {
         FortIO();
         FortIO(const std::string& filename , std::ios_base::openmode mode , bool fmt_file = false , bool endian_flip_header = ECL_ENDIAN_FLIP);
         void open(const std::string& filename , std::ios_base::openmode mode , bool fmt_file = false , bool endian_flip_header = ECL_ENDIAN_FLIP);
+        void fflush() const;
+        bool ftruncate( offset_type new_size );
 
         fortio_type * get() const;
         void close();
