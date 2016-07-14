@@ -64,6 +64,16 @@ namespace ERT {
         return m_fortio.get();
     }
 
+
+    void FortIO::fflush() const {
+        fortio_fflush( m_fortio.get() );
+    }
+
+
+
+    bool FortIO::ftruncate(offset_type new_size) {
+        return fortio_ftruncate( m_fortio.get() , new_size );
+    }
 }
 
 
