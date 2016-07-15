@@ -8,7 +8,6 @@ class SimulationStateStatus(object):
     COLOR_RUNNING = (200, 255, 200)
     COLOR_FAILED  = (255, 200, 200)
 
-    COLOR_USER_KILLED = (255, 255, 200)
     COLOR_FINISHED   = (200, 200, 200)
     COLOR_NOT_ACTIVE  = (255, 255, 255)
 
@@ -56,11 +55,12 @@ class SimulationsTracker(ListModelMixin):
         waiting_state = SimulationStateStatus("Waiting", JobStatusType.JOB_QUEUE_NOT_ACTIVE | JobStatusType.JOB_QUEUE_WAITING | JobStatusType.JOB_QUEUE_SUBMITTED, SimulationStateStatus.COLOR_WAITING)
         pending_state = SimulationStateStatus("Pending", JobStatusType.JOB_QUEUE_PENDING, SimulationStateStatus.COLOR_PENDING)
         running_state = SimulationStateStatus("Running", JobStatusType.JOB_QUEUE_RUNNING | JobStatusType.JOB_QUEUE_EXIT | JobStatusType.JOB_QUEUE_RUNNING_CALLBACK, SimulationStateStatus.COLOR_RUNNING)
-        killed_state = SimulationStateStatus("User killed", JobStatusType.JOB_QUEUE_USER_KILLED | JobStatusType.JOB_QUEUE_USER_EXIT, SimulationStateStatus.COLOR_USER_KILLED)
-        failed_state = SimulationStateStatus("Failed", JobStatusType.JOB_QUEUE_FAILED, SimulationStateStatus.COLOR_FAILED)
+
+        # Failed also includes simulations which have been killed by the MAX_RUNTIME system.
+        failed_state = SimulationStateStatus("Failed", JobStatusType.JOB_QUEUE_USER_KILLED | JobStatusType.JOB_QUEUE_USER_EXIT | JobStatusType.JOB_QUEUE_FAILED, SimulationStateStatus.COLOR_FAILED)
         done_state = SimulationStateStatus("Finished", JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS, SimulationStateStatus.COLOR_FINISHED)
 
-        self.states = [waiting_state, pending_state, running_state, killed_state, failed_state, done_state]
+        self.states = [waiting_state, pending_state, running_state, failed_state, done_state]
         self.custom_states = [waiting_state, pending_state, running_state, failed_state, done_state]
 
         self.__checkForUnusedEnums()
