@@ -25,7 +25,7 @@
 #include <ert/analysis/fwd_step_log.h>
 
 #define DEFAULT_LOG_FILE               "fwd_step.out"
-#define DEFAULT_CLEAR_LOG              true
+#define DEFAULT_CLEAR_LOG              false
 
 struct fwd_step_log_struct {
   bool      clear_log;
