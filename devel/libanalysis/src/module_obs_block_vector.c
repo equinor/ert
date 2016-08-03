@@ -57,7 +57,6 @@ module_obs_block_type * module_obs_block_vector_iget_module_obs_block(const modu
 }
 
 const module_obs_block_type * module_obs_block_vector_search_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int global_index){
-  module_obs_block_type * module_obs_block = NULL;
   for (int block_nr = 0; block_nr < module_obs_block_vector_get_size( module_obs_block_vector ); block_nr++) {
     module_obs_block_type * module_obs_block =  module_obs_block_vector_iget_module_obs_block (module_obs_block_vector, block_nr);
     int row_start =  module_obs_block_get_row_start(module_obs_block);
@@ -66,7 +65,7 @@ const module_obs_block_type * module_obs_block_vector_search_module_obs_block(co
       return module_obs_block;
   }
 
-  return module_obs_block;
+  return NULL;
 }
 
 int module_obs_block_vector_get_size(const module_obs_block_vector_type * module_obs_block_vector){
