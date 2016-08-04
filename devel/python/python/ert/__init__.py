@@ -88,6 +88,8 @@ try:
     __version__ = __ert_lib_info.__version__
 except ImportError:
     pass
+except AttributeError:
+    pass
 
 
 # 2. Using the environment variable ERT_LIBRARY_PATH it is possible to
