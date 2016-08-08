@@ -103,7 +103,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self):
         arguments = {"active_realizations": self._active_realizations_model.getActiveRealizationsMask(),
-                     "target_case": self._target_case_model.getValue(),
+                     "target_case": self._target_case_format_model.getValue(),
                      "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName()
                      }
         return arguments
