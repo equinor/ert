@@ -68,8 +68,6 @@
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/enkf_linalg.h>
-#include <ert/analysis/module_data_block.h>
-#include <ert/analysis/module_data_block_vector.h>
 #include <ert/analysis/module_info.h>
 
 #include <ert/enkf/enkf_types.h>
@@ -775,44 +773,6 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
   return matrix_get_rows( A );
 }
 
-static void enkf_main_init_module_info( const obs_data_type * obs_data,
-                                        const local_dataset_type * dataset ,
-                                        const local_obsdata_type   * local_obsdata ,
-                                        int * active_size ,
-                                        int * row_offset,
-                                        module_info_type * module_info) {
-  { /* Init data blocks in module_info */
-    stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
-    const int num_kw  = stringlist_get_size( update_keys );
-    module_data_block_vector_type * module_data_block_vector = module_info_get_data_block_vector(module_info);
-
-    for (int ikw=0; ikw < num_kw; ikw++) {
-      const char             * key         = stringlist_iget(update_keys , ikw);
-      const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
-      const module_data_block_type * data_block = module_data_block_alloc( key, active_list_get_active(active_list),  row_offset[ikw], active_size[ikw] );
-      module_data_block_vector_add_data_block(module_data_block_vector, data_block);
-    }
-    stringlist_free( update_keys );
-  }
-
-
-  { /* Init obs blocks in module_info */
-    module_obs_block_vector_type  * module_obs_block_vector =  module_info_get_obs_block_vector ( module_info );
-    int current_row = 0;
-    for (int block_nr = 0; block_nr < local_obsdata_get_size( local_obsdata ); block_nr++) {
-      const obs_block_type  * obs_block  = obs_data_iget_block_const( obs_data , block_nr);
-      int total_size =  obs_block_get_size(obs_block);
-      local_obsdata_node_type * node   = local_obsdata_iget ( local_obsdata, block_nr );
-      const char * key  = local_obsdata_node_get_key ( node );
-      const active_list_type * active_list      = local_obsdata_node_get_active_list( node );
-      int n_active = active_list_get_active_size(active_list, total_size);
-      const module_obs_block_type * module_obs_block = module_obs_block_alloc(key, active_list_get_active(active_list), current_row, n_active);
-      module_obs_block_vector_add_obs_block ( module_obs_block_vector, module_obs_block );
-      current_row += n_active;
-    }
-  }
-}
-
 static void deserialize_node( enkf_fs_type            * fs,
                               enkf_state_type ** ensemble ,
                               const char * key ,
@@ -921,9 +881,47 @@ static serialize_info_type * serialize_info_alloc( enkf_fs_type * src_fs,
   return serialize_info;
 }
 
-static module_info_type * enkf_main_module_info_alloc( const local_ministep_type* ministep ) {
-
+static module_info_type * enkf_main_module_info_alloc( const local_ministep_type* ministep,
+                                                       const obs_data_type * obs_data,
+                                                       const local_dataset_type * dataset ,
+                                                       const local_obsdata_type   * local_obsdata ,
+                                                       int * active_size ,
+                                                       int * row_offset)
+{
+  // Create and initialize the module_info instance.
   module_info_type * module_info = module_info_alloc(local_ministep_get_name(ministep));
+
+  { /* Init data blocks in module_info */
+    stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
+    const int num_kw  = stringlist_get_size( update_keys );
+    module_data_block_vector_type * module_data_block_vector = module_info_get_data_block_vector(module_info);
+
+    for (int ikw=0; ikw < num_kw; ikw++) {
+      const char             * key         = stringlist_iget(update_keys , ikw);
+      const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
+      const module_data_block_type * data_block = module_data_block_alloc( key, active_list_get_active(active_list),  row_offset[ikw], active_size[ikw] );
+      module_data_block_vector_add_data_block(module_data_block_vector, data_block);
+    }
+    stringlist_free( update_keys );
+  }
+
+
+  { /* Init obs blocks in module_info */
+    module_obs_block_vector_type  * module_obs_block_vector =  module_info_get_obs_block_vector ( module_info );
+    int current_row = 0;
+    for (int block_nr = 0; block_nr < local_obsdata_get_size( local_obsdata ); block_nr++) {
+      const obs_block_type  * obs_block  = obs_data_iget_block_const( obs_data , block_nr);
+      int total_size =  obs_block_get_size(obs_block);
+      local_obsdata_node_type * node   = local_obsdata_iget ( local_obsdata, block_nr );
+      const char * key  = local_obsdata_node_get_key ( node );
+      const active_list_type * active_list      = local_obsdata_node_get_active_list( node );
+      int n_active = active_list_get_active_size(active_list, total_size);
+      module_obs_block_type * module_obs_block = module_obs_block_alloc(key, active_list_get_active(active_list), current_row, n_active);
+      module_obs_block_vector_add_obs_block ( module_obs_block_vector, module_obs_block );
+      current_row += n_active;
+    }
+  }
+
   return module_info;
 }
 
@@ -1080,14 +1078,13 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
-      module_info_type * module_info = enkf_main_module_info_alloc(ministep);
       if (local_dataset_get_size( dataset )) {
         int * active_size = util_calloc( local_dataset_get_size( dataset ) , sizeof * active_size );
         int * row_offset  = util_calloc( local_dataset_get_size( dataset ) , sizeof * row_offset  );
         local_obsdata_type   * local_obsdata = local_ministep_get_obsdata( ministep );
 
         enkf_main_serialize_dataset( enkf_main->ensemble_config , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
-        enkf_main_init_module_info(obs_data, dataset, local_obsdata, active_size , row_offset, module_info);
+        module_info_type * module_info = enkf_main_module_info_alloc(ministep, obs_data, dataset, local_obsdata, active_size , row_offset);
 
         if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
           if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
@@ -1109,8 +1106,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
         free( active_size );
         free( row_offset );
+        enkf_main_module_info_free( module_info );
       }
-      enkf_main_module_info_free( module_info );
     }
     hash_iter_free( dataset_iter );
     serialize_info_free( serialize_info );

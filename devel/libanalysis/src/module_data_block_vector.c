@@ -33,8 +33,9 @@ struct module_data_block_vector_struct {
   vector_type            * data_block_vector;
 };
 
+UTIL_IS_INSTANCE_FUNCTION( module_data_block_vector , MODULE_DATA_BLOCK_VECTOR_TYPE_ID)
 
-module_data_block_vector_type * module_data_block_vector_alloc( const char* ministep_name) {
+module_data_block_vector_type * module_data_block_vector_alloc( ) {
   module_data_block_vector_type * module_data_block_vector = util_malloc( sizeof * module_data_block_vector );
   UTIL_TYPE_ID_INIT( module_data_block_vector , MODULE_DATA_BLOCK_VECTOR_TYPE_ID );
   module_data_block_vector->data_block_vector = vector_alloc_new();

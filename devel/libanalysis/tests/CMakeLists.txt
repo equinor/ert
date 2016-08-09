@@ -16,4 +16,6 @@ add_test( analysis_module_rml ${EXECUTABLE_OUTPUT_PATH}/analysis_test_external_m
           LAMBDA_RECALCULATE:True )
 
 
-    
+add_executable( analysis_test_module_info analysis_test_module_info.c )
+target_link_libraries( analysis_test_module_info analysis util test_util)
+add_test( analysis_test_module_info ${EXECUTABLE_OUTPUT_PATH}/analysis_test_module_info )

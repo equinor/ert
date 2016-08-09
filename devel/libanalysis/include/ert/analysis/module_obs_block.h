@@ -43,6 +43,8 @@ extern "C" {
   void                     module_obs_block_free(module_obs_block_type * module_obs_block);
   void                     module_obs_block_free__( void * arg );
 
+  UTIL_IS_INSTANCE_HEADER( module_obs_block );
+
 #ifdef __cplusplus
 }
 #endif

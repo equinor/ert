@@ -43,6 +43,8 @@ extern "C" {
   void                     module_data_block_free(module_data_block_type * module_data_block);
   void                     module_data_block_free__( void * arg );
 
+  UTIL_IS_INSTANCE_HEADER( module_data_block );
+
 #ifdef __cplusplus
 }
 #endif

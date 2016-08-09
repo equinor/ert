@@ -27,6 +27,7 @@
 
 #define MODULE_DATA_BLOCK_TYPE_ID 73217801
 static UTIL_SAFE_CAST_FUNCTION( module_data_block , MODULE_DATA_BLOCK_TYPE_ID);
+UTIL_IS_INSTANCE_FUNCTION( module_data_block , MODULE_DATA_BLOCK_TYPE_ID)
 
 module_data_block_type * module_data_block_alloc(  const char * key,  const int * index_list , const int row_start, const int n_active) {
   module_data_block_type * module_data_block = util_malloc( sizeof * module_data_block );

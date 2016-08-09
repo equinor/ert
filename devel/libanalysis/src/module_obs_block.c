@@ -27,6 +27,7 @@
 
 #define MODULE_OBS_BLOCK_TYPE_ID 73217901
 static UTIL_SAFE_CAST_FUNCTION( module_obs_block , MODULE_OBS_BLOCK_TYPE_ID);
+UTIL_IS_INSTANCE_FUNCTION( module_obs_block , MODULE_OBS_BLOCK_TYPE_ID)
 
 module_obs_block_type * module_obs_block_alloc(  const char * key, const int * index_list, const int row_start, const int n_active) {
   module_obs_block_type * module_obs_block = util_malloc( sizeof * module_obs_block );

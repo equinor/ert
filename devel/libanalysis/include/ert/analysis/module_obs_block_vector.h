@@ -30,10 +30,12 @@ extern "C" {
 
   module_obs_block_vector_type    * module_obs_block_vector_alloc();
   void                              module_obs_block_vector_free();
-  void                              module_obs_block_vector_add_obs_block( module_obs_block_vector_type * module_obs_block_vector , const module_obs_block_type * obs_block);
+  void                              module_obs_block_vector_add_obs_block( module_obs_block_vector_type * module_obs_block_vector , module_obs_block_type * obs_block);
   module_obs_block_type           * module_obs_block_vector_iget_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int index);
   const  module_obs_block_type    * module_obs_block_vector_search_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int global_index);
   int                               module_obs_block_vector_get_size(const module_obs_block_vector_type * module_obs_block_vector);
+
+  UTIL_IS_INSTANCE_HEADER( module_obs_block_vector );
 
 #ifdef __cplusplus
 }

@@ -28,11 +28,13 @@ extern "C" {
 
   typedef struct module_data_block_vector_struct module_data_block_vector_type;
 
-  module_data_block_vector_type   * module_data_block_vector_alloc(const char* ministep_name);
+  module_data_block_vector_type   * module_data_block_vector_alloc();
   void                              module_data_block_vector_free();
   void                              module_data_block_vector_add_data_block( module_data_block_vector_type * module_data_block_vector , const module_data_block_type * data_block);
   module_data_block_type          * module_data_block_vector_iget_module_data_block(const module_data_block_vector_type * module_data_block_vector, int index);
   int                               module_data_block_vector_get_size(const module_data_block_vector_type * module_data_block_vector);
+
+  UTIL_IS_INSTANCE_HEADER( module_data_block_vector );
 
 #ifdef __cplusplus
 }

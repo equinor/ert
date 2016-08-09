@@ -26,7 +26,6 @@ extern "C" {
 #endif
 
 
-
   typedef struct module_info_struct module_info_type;
 
   module_info_type                * module_info_alloc(const char* ministep_name);
@@ -34,6 +33,8 @@ extern "C" {
   char                          *   module_info_get_ministep_name(const module_info_type * module_info);
   module_data_block_vector_type *   module_info_get_data_block_vector(const module_info_type * module_info);
   module_obs_block_vector_type  *   module_info_get_obs_block_vector(const module_info_type * module_info);
+
+  UTIL_IS_INSTANCE_HEADER( module_info );
 
 #ifdef __cplusplus
 }

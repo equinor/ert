@@ -33,6 +33,7 @@ struct module_obs_block_vector_struct {
   vector_type            * obs_block_vector;
 };
 
+UTIL_IS_INSTANCE_FUNCTION( module_obs_block_vector , MODULE_OBS_BLOCK_VECTOR_TYPE_ID)
 
 module_obs_block_vector_type * module_obs_block_vector_alloc() {
   module_obs_block_vector_type * module_obs_block_vector = util_malloc( sizeof * module_obs_block_vector );
@@ -47,7 +48,7 @@ void module_obs_block_vector_free( module_obs_block_vector_type * module_obs_blo
   free( module_obs_block_vector );
 }
 
-void module_obs_block_vector_add_obs_block( module_obs_block_vector_type * module_obs_block_vector , const module_obs_block_type * obs_block) {
+void module_obs_block_vector_add_obs_block( module_obs_block_vector_type * module_obs_block_vector , module_obs_block_type * obs_block) {
   vector_append_owned_ref(module_obs_block_vector->obs_block_vector, obs_block , module_obs_block_free__);
 }
 
@@ -57,14 +58,20 @@ module_obs_block_type * module_obs_block_vector_iget_module_obs_block(const modu
 }
 
 const module_obs_block_type * module_obs_block_vector_search_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int global_index){
-  for (int block_nr = 0; block_nr < module_obs_block_vector_get_size( module_obs_block_vector ); block_nr++) {
+  /* This function maps from a global index to an observation information block. Will return NULL if block is not found */
+  int block_nr = 0;
+  while (true) {
+    if (block_nr >= module_obs_block_vector_get_size( module_obs_block_vector ))
+      break;
+
     module_obs_block_type * module_obs_block =  module_obs_block_vector_iget_module_obs_block (module_obs_block_vector, block_nr);
     int row_start =  module_obs_block_get_row_start(module_obs_block);
     int row_end =  module_obs_block_get_row_end(module_obs_block);
     if (global_index >= row_start && global_index < row_end)
       return module_obs_block;
-  }
 
+    block_nr++;
+  }
   return NULL;
 }
 

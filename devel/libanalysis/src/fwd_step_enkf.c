@@ -196,6 +196,7 @@ static void fwd_step_enkf_write_iter_info( fwd_step_enkf_data_type * data , step
     char * obs_list_entry = util_alloc_sprintf(format1 , obs_key, obs_active_index,var_beta_percent);
     stringlist_append_copy(obs_list, obs_list_entry);
     double_vector_append(r_list, var_beta_percent);
+    free( obs_list_entry );
   }
 
   {
