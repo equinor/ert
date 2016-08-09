@@ -30,22 +30,20 @@
 
 struct module_data_block_vector_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char                   * ministep_name;
   vector_type            * data_block_vector;
 };
 
+UTIL_IS_INSTANCE_FUNCTION( module_data_block_vector , MODULE_DATA_BLOCK_VECTOR_TYPE_ID)
 
-module_data_block_vector_type * module_data_block_vector_alloc( const char* ministep_name) {
+module_data_block_vector_type * module_data_block_vector_alloc( ) {
   module_data_block_vector_type * module_data_block_vector = util_malloc( sizeof * module_data_block_vector );
   UTIL_TYPE_ID_INIT( module_data_block_vector , MODULE_DATA_BLOCK_VECTOR_TYPE_ID );
-  module_data_block_vector->ministep_name =util_alloc_string_copy( ministep_name );
   module_data_block_vector->data_block_vector = vector_alloc_new();
   return module_data_block_vector;
 }
 
 
 void module_data_block_vector_free( module_data_block_vector_type * module_data_block_vector ) {
-  util_safe_free(module_data_block_vector->ministep_name);
   vector_free( module_data_block_vector->data_block_vector );
   free( module_data_block_vector );
 }
@@ -63,7 +61,4 @@ int module_data_block_vector_get_size(const module_data_block_vector_type * modu
  return vector_get_size(module_data_block_vector->data_block_vector);
 }
 
-char * module_data_block_vector_get_ministep_name(const module_data_block_vector_type * module_data_block_vector){
-  return module_data_block_vector->ministep_name;
-}
 

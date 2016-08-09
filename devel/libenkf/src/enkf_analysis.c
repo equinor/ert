@@ -67,8 +67,7 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
         const obs_block_type  * obs_block  = obs_data_iget_block_const( obs_data , block_nr);
         meas_block_type * meas_block = meas_data_iget_block( meas_data , block_nr );
         const char * obs_key = obs_block_get_key( obs_block );
-        bool key_written = false;
-
+        
         for (int iobs = 0; iobs < obs_block_get_size( obs_block ); iobs++) {
           active_type active_mode = obs_block_iget_active_mode( obs_block , iobs );
           if ((active_mode == MISSING) || (active_mode == LOCAL_INACTIVE))
