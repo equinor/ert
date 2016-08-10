@@ -77,7 +77,7 @@ class RunpathListTest(ExtendedTestCase):
 
 
     def test_assert_export(self):
-        with ErtTestContext("create_runpath" , self.createTestPath("local/snake_oil_no_data/snake_oil.ert")) as tc:
+        with ErtTestContext("create_runpath1" , self.createTestPath("local/snake_oil_no_data/snake_oil.ert")) as tc:
             ert = tc.getErt( )
             runpath_list = ert.getRunpathList( )
             self.assertFalse( path.isfile( runpath_list.getExportFile( ) ))
@@ -91,9 +91,9 @@ class RunpathListTest(ExtendedTestCase):
             self.assertEqual( "test_runpath_list.txt" , path.basename( runpath_list.getExportFile( ) ))
             
 
+            
     def test_assert_symlink_deleted(self):
-
-        with ErtTestContext("create_runpath" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
+        with ErtTestContext("create_runpath2" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
             ert = tc.getErt( )
             runpath_list = ert.getRunpathList( )
 
