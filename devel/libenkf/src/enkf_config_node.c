@@ -787,7 +787,7 @@ int enkf_config_node_load_obs( const enkf_config_node_type * config_node , enkf_
     double_vector_type * y        = double_vector_alloc_shared_wrapper( 0 , 0 , _y        , obs_count );
     double_vector_type * std      = double_vector_alloc_shared_wrapper( 0 , 0 , _std      , obs_count );
     time_t_vector_type * sim_time = time_t_vector_alloc_shared_wrapper( 0 , 0 , _sim_time , obs_count );
-    int * sort_perm               = time_t_vector_alloc_sort_perm( sim_time );
+    perm_vector_type * sort_perm  = time_t_vector_alloc_sort_perm( sim_time );
 
     time_t_vector_permute( sim_time , sort_perm );
     double_vector_permute( y        , sort_perm );

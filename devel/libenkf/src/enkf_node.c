@@ -662,7 +662,7 @@ void enkf_node_copy_ensemble(const enkf_config_node_type * config_node ,
                              int report_step_from,    /* src state */
                              int report_step_to  ,    /* target state */
                              int ens_size,
-                             const int * permutations) {
+                             const perm_vector_type * permutations) {
 
   node_id_type src_id    = {.report_step = report_step_from , .iens = 0 };
   node_id_type target_id = {.report_step = report_step_to   , .iens = 0 };
@@ -672,7 +672,7 @@ void enkf_node_copy_ensemble(const enkf_config_node_type * config_node ,
     if (permutations == NULL)
       iens_to = iens_from;
     else
-      iens_to = permutations[iens_from];
+      iens_to = perm_vector_iget(permutations, iens_from);
 
     src_id.iens = iens_from;
     target_id.iens = iens_to;
