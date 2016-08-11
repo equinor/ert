@@ -10,7 +10,7 @@ class SourceEnumerator(object):
                 print("Looking at: %s" % dev_root)
 
             dev_path = os.path.join(dev_root , root_directory_name)
-            if os.path.exists( dev_path ):
+            if os.path.exists( os.path.join(dev_path, root_directory_name, "libecl", "include", "ert", "ecl", "ecl_region.h") ):
                 dev_root = os.path.join(dev_root , root_directory_name)
                 if verbose:
                     print("break: %s" % dev_path)
