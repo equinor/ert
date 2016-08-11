@@ -41,12 +41,12 @@ paths. The file path_config should define make-variables for the
 location of all the libraries, this is an example of a valid
 path-config file:
 
-   LIBHASH_HOME  = /h/a152128/EnKF/devel/EnKF/libhash
-   LIBUTIL_HOME  = /h/a152128/EnKF/devel/EnKF/libutil
-   LIBSCHED_HOME = /h/a152128/EnKF/devel/EnKF/libsched
-   LIBRMS_HOME   = /h/a152128/EnKF/devel/EnKF/librms
-   LIBECL_HOME   = /h/a152128/EnKF/devel/EnKF/libecl
-   LIBENKF_HOME  = /h/a152128/EnKF/devel/EnKF/libenkf
+   LIBHASH_HOME  = /h/a152128/EnKF/EnKF/libhash
+   LIBUTIL_HOME  = /h/a152128/EnKF/EnKF/libutil
+   LIBSCHED_HOME = /h/a152128/EnKF/EnKF/libsched
+   LIBRMS_HOME   = /h/a152128/EnKF/EnKF/librms
+   LIBECL_HOME   = /h/a152128/EnKF/EnKF/libecl
+   LIBENKF_HOME  = /h/a152128/EnKF/EnKF/libenkf
 
 In this example all libraries have a common path prefix, that is not
 a requirement.
