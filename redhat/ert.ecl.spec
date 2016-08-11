@@ -64,12 +64,10 @@ This package contains the development and header files for ert.ecl
 
 %build
 %{?el6:scl enable devtoolset-2 bash}
-cd devel
 DESTDIR=${RPM_BUILD_ROOT} %{?el6:cmake28} %{?!el6:cmake} -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{_prefix} -DBUILD_ECL_SUMMARY=1 %{?el6:-DBUILD_PYTHON=0} %{?el6:-DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-2/root/usr/bin/g++ -DCMAKE_C_COMPILER=/opt/rh/devtoolset-2/root/usr/bin/gcc -DCMAKE_Fortran_COMPILER=/opt/rh/devtoolset-2/root/usr/bin/gfortran}
 make
 
 %install
-cd devel
 make install DESTDIR=${RPM_BUILD_ROOT}
 
 %clean
