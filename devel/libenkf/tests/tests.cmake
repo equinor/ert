@@ -91,6 +91,11 @@ add_executable( enkf_fs enkf_fs.c )
 target_link_libraries( enkf_fs enkf test_util )
 add_test( enkf_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_fs )
 
+add_executable( enkf_workflow_job_test_version enkf_workflow_job_test_version.c )
+target_link_libraries( enkf_workflow_job_test_version enkf test_util )
+add_test( enkf_workflow_job_test_version  ${EXECUTABLE_OUTPUT_PATH}/enkf_workflow_job_test_version 
+  ${CMAKE_CURRENT_SOURCE_DIR}/data/workflow_jobs )
+
 
 add_executable( enkf_ert_test_context enkf_ert_test_context.c )
 target_link_libraries( enkf_ert_test_context enkf test_util )

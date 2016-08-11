@@ -24,6 +24,8 @@
 #include <dirent.h>
 
 #include <ert/util/hash.h>
+#include <ert/util/set.h>
+#include <ert/util/ert_version.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/util.h>
 #include <ert/util/subst_list.h>
@@ -148,23 +150,88 @@ const workflow_job_type * ert_workflow_list_get_job( const ert_workflow_list_typ
     return workflow_joblist_get_job(workflow_list->joblist, job_name);
 }
 
+/**
+   This function will create the most specific matching filename
+   corresponding to the @root_name input. I.e. it will look for
+   filename in this order:
+
+     ROOT@X.Y.Z, ROOT@X.Y, ROOT@X, ROOT
+
+   And return the first name corresponding to an existing file. If no
+   file can be found the function will return NULL.
+*/
+
+static char * ert_workflow_list_alloc_version_name( const char * path , const char * root_name ) {
+  char * full_path = util_alloc_sprintf( "%s%s%s@%d.%d.%s" , path , UTIL_PATH_SEP_STRING , root_name ,
+					 version_get_major_ert_version(),
+					 version_get_minor_ert_version(),
+					 version_get_micro_ert_version());
+  if (util_file_exists( full_path ))
+    return full_path;
+  else
+    free( full_path );
+
+  /*****************************************************************/
+
+  full_path = util_alloc_sprintf( "%s%s%s@%d.%d" , path , UTIL_PATH_SEP_STRING , root_name ,
+				  version_get_major_ert_version(),
+				  version_get_minor_ert_version());
+
+  if (util_file_exists( full_path ))
+    return full_path;
+  else
+    free( full_path );
+
+  /*****************************************************************/
+
+  full_path = util_alloc_sprintf( "%s%s%s@%d" , path , UTIL_PATH_SEP_STRING , root_name ,
+				  version_get_major_ert_version());
+
+  if (util_file_exists( full_path ))
+    return full_path;
+  else
+    free( full_path );
+
+
+  /*****************************************************************/
+
+  full_path = util_alloc_sprintf( "%s%s%s" , path , UTIL_PATH_SEP_STRING , root_name);
+
+  if (util_file_exists( full_path ))
+    return full_path;
+  else
+    free( full_path );
+
+  return NULL;
+}
+
+
+
 void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path ) {
   DIR * dirH = opendir( path );
+  set_type * names = set_alloc( 0 , NULL );
   if (dirH) {
     while (true) {
       struct dirent * entry = readdir( dirH );
       if (entry != NULL) {
         if ((strcmp(entry->d_name , ".") != 0) && (strcmp(entry->d_name , "..") != 0)) {
-          char * full_path = util_alloc_filename( path , entry->d_name , NULL );
+	  char * root_name, * version;
+	  util_binary_split_string( entry->d_name , "@" , false , &root_name , &version);
+	  if (!set_has_key( names , root_name)) {
+	    char * full_path = ert_workflow_list_alloc_version_name( path , root_name );
 
-          if (util_is_file( full_path )) {
-           if (ert_log_is_open())
-              ert_log_add_message( 1 , NULL , util_alloc_sprintf("Adding workflow job:%s " , full_path ), true);
+	    if (full_path) {
+	      set_add_key( names , root_name );
+	      if (ert_log_is_open())
+		ert_log_add_message( 1 , NULL , util_alloc_sprintf("Adding workflow job:%s " , full_path ), true);
 
-            ert_workflow_list_add_job( workflow_list , entry->d_name , full_path );
-          }
+	      ert_workflow_list_add_job( workflow_list , root_name , full_path );
+	    }
 
-          free( full_path );
+	    free( full_path );
+	  }
+	  free( root_name );
+	  free( version );
         }
       } else
         break;
@@ -172,6 +239,8 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
     closedir( dirH );
   } else
     fprintf(stderr, "** Warning: failed to open workflow/jobs directory: %s\n", path);
+
+  set_free( names );
 }
 
 
