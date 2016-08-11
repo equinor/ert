@@ -3,7 +3,7 @@ import re
 
 class SourceEnumerator(object):
     @classmethod
-    def findDevRoot(cls, root_directory_name = "devel", verbose=False):
+    def findDevRoot(cls, root_directory_name = ".", verbose=False):
         dev_root = os.path.dirname(os.path.realpath(__file__))
         while True:
             if verbose:

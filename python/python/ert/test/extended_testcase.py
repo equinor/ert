@@ -133,8 +133,8 @@ class ExtendedTestCase(TestCase):
     def createTestPath(self, path, testdata_root=None):
         if testdata_root is None and self.__testdata_root is None:
             file_path = os.path.realpath(__file__)
-            build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../devel/test-data/"))
-            site_packages_build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../../../devel/test-data/"))
+            build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../test-data/"))
+            site_packages_build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../../../test-data/"))
             src_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../test-data/"))
             env_root = os.getenv("ERT_TEST_ROOT_PATH")
 
@@ -178,8 +178,8 @@ class ExtendedTestCase(TestCase):
     @staticmethod
     def findShareRoot():
         file_path = os.path.realpath(__file__)
-        build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../devel/share/"))
-        site_packages_build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../../../devel/share/"))
+        build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../share/"))
+        site_packages_build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../../../share/"))
         src_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../share/"))
         env_root = os.getenv("ERT_SHARE_PATH")
 
