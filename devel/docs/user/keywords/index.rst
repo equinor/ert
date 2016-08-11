@@ -80,7 +80,7 @@ Keyword name                                                        	Required by
 :ref:`IGNORE_SCHEDULE <ignore_schedule>`                            	NO                                          
 :ref:`IMAGE_TYPE <image_type>`                                      	NO                    			png                   		The type of the images created when plotting.
 :ref:`IMAGE_VIEWER <image_viewer>`                                  	NO                    			/usr/bin/display      		External program spawned to view images.
-:ref:`INIT_SECTION <init_section>`                                  	YES                                         				Initialization code for the reservoir model.
+:ref:`INIT_SECTION <init_section>`                                  	NO                                         				Initialization code for the reservoir model.
 :ref:`INSTALL_JOB <install_jobb>`                                   	NO                                          				Install a job for use in a forward model. 
 :ref:`ITER_CASE <iter_Case>`                                        	NO                    			IES%d         	        	Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother 
@@ -129,7 +129,7 @@ Keyword name                                                        	Required by
 :ref:`RUNPATH <runoath>`  						NO 					simulations/realization%d 	Directory to run simulations
 :ref:`RUN_TEMPLATE <run_template>`  					NO 									Install arbitrary files in the runpath directory.
 :ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std.     
-:ref:`SCHEDULE_FILE <schedule_file>`  					YES 									Provide an ECLIPSE schedule file for the problem. 
+:ref:`SCHEDULE_FILE <schedule_file>`  					NO 									Provide an ECLIPSE schedule file for the problem. 
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file. 
 :ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls. 
 :ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				... 
