@@ -166,7 +166,7 @@ static char * ert_workflow_list_alloc_version_name( const char * path , const ch
 					 version_get_major_ert_version(),
 					 version_get_minor_ert_version(),
 					 version_get_micro_ert_version());
-  if (util_file_exists( full_path ))
+  if (util_is_file( full_path ))
     return full_path;
   else
     free( full_path );
@@ -177,7 +177,7 @@ static char * ert_workflow_list_alloc_version_name( const char * path , const ch
 				  version_get_major_ert_version(),
 				  version_get_minor_ert_version());
 
-  if (util_file_exists( full_path ))
+  if (util_is_file( full_path ))
     return full_path;
   else
     free( full_path );
@@ -187,7 +187,7 @@ static char * ert_workflow_list_alloc_version_name( const char * path , const ch
   full_path = util_alloc_sprintf( "%s%s%s@%d" , path , UTIL_PATH_SEP_STRING , root_name ,
 				  version_get_major_ert_version());
 
-  if (util_file_exists( full_path ))
+  if (util_is_file( full_path ))
     return full_path;
   else
     free( full_path );
@@ -197,7 +197,7 @@ static char * ert_workflow_list_alloc_version_name( const char * path , const ch
 
   full_path = util_alloc_sprintf( "%s%s%s" , path , UTIL_PATH_SEP_STRING , root_name);
 
-  if (util_file_exists( full_path ))
+  if (util_is_file( full_path ))
     return full_path;
   else
     free( full_path );
