@@ -1319,43 +1319,6 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
 }
 
 
-
-
-static void enkf_main_report_run_failure( const enkf_main_type * enkf_main , const run_arg_type * run_arg) {
-  int queue_index = run_arg_get_queue_index( run_arg );
-  /*
-    In the case the jobs have been killed before the jobs has even got
-    a slot in the internal queue we will get queue_index < 0; in that
-    case there is really nothing to report.
-  */
-  if (queue_index >= 0) {
-    job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-    const char * stderr_file = job_queue_iget_stderr_file( job_queue , queue_index );
-    if (stderr_file == NULL)
-      ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" ,
-                               job_queue_iget_run_path( job_queue , queue_index),
-                               job_queue_iget_failed_job( job_queue , queue_index),
-                               job_queue_iget_error_reason( job_queue , queue_index ));
-    else
-      ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s  Check file:%s" ,
-                               job_queue_iget_run_path( job_queue , queue_index),
-                               job_queue_iget_failed_job( job_queue , queue_index),
-                               job_queue_iget_error_reason( job_queue , queue_index ),
-                               job_queue_iget_stderr_file( job_queue , queue_index ));
-  }
-}
-
-
-
-static void enkf_main_report_load_failure( const enkf_main_type * enkf_main , run_arg_type * run_arg ) {
-  job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-  int queue_index = run_arg_get_queue_index( run_arg );
-
-  ert_log_add_fmt_message( 1 , stderr , "** ERROR ** path:%s - Could not load all required data",
-                           job_queue_iget_run_path( job_queue , queue_index));
-}
-
-
 static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
   if (analysis_config_get_stop_long_running(enkf_main_get_analysis_config( enkf_main ))) {
 
@@ -1781,7 +1744,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , enkf_fs_type * source_f
 }
 
 
-static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main, const ert_run_context_type * run_context) {
+static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main, ert_run_context_type * run_context) {
   bool ret = true;
   analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   const int min_realizations = analysis_config_get_min_realisations(analysis_config);
@@ -1895,7 +1858,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int num_iterations_to
 }
 
 
-ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , const bool_vector_type * iactive , int iter) {
+ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter) {
   return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main->subst_list , iter );
 }
 
@@ -3102,13 +3065,13 @@ void enkf_main_load_from_forward_model_from_gui(enkf_main_type * enkf_main, int 
   free(realizations_msg_list);
 }
 
-void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , const bool_vector_type * iactive, stringlist_type ** realizations_msg_list){
+void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list){
   enkf_fs_type * fs         = enkf_main_get_fs( enkf_main );
   enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive, realizations_msg_list, fs);
 }
 
 
-void enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int iter , const bool_vector_type * iactive, stringlist_type ** realizations_msg_list, enkf_fs_type * fs) {
+void enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list, enkf_fs_type * fs) {
 
   const int ens_size        = enkf_main_get_ensemble_size( enkf_main );
   int result[ens_size];

@@ -151,7 +151,7 @@ extern "C" {
                                int report_step_from,     /* src state */
                                int report_step_to  ,      /* target state */
                                int ens_size,
-                               const int * permutations);
+                               const perm_vector_type * permutations);
 
   void enkf_node_copy(const enkf_config_node_type * config_node ,
                       enkf_fs_type * src_case ,
