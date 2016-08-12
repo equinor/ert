@@ -140,7 +140,7 @@ Keyword name                                                        	Required by
 :ref:`SURFACE <surface>`  						NO 									Surface parameter read from RMS IRAP file. 
 :ref:`TORQUE_QUEUE  <torque_queue>` 					NO 									... 
 :ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping.
-:ref:`UMASK <umask>`  							NO 									... 
+:ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT. 
 :ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the EnKF update steps are stored in this directory. 
 :ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH. 
 :ref:`UPDATE_RESULTS  <update_results>` 				NO 					FALSE 				... 
@@ -1862,3 +1862,62 @@ The two keywords SETENV and UPDATE_PATH can be used to manipulate the Unix envir
 		setenv PATH /some/funky/path/bin:$PATH
 
 	The whole thing is just a workaround because we can not use $PATH.
+
+.. _umask:
+.. topic:: UMASK
+
+        The `umask` is a concept used by Linux to controll the
+        permissions on newly created files. By default the files
+        created by ert will have the default permissions of your
+        account, but by using the keyword `UMASK` you can alter the
+        permissions of files created by ert.
+
+        To determine the initial permissions on newly created files
+        start with the initial permissions `-rw-rw-rw-` (octal 0666)
+        for files and `-rwxrwxrwx` (octal 0777) for directories, and
+        then *~subtract* the current umask setting. So if you wish the
+        newly created files to have permissions `-rw-r-----` you need
+        to subtract write permissions for group and read and write
+        permissions for others - corresponding to `umask
+        0026`. 
+
+        ::
+
+           UMASK 0022
+
+        We remove write permissions from group and others, implying
+        that everyone can read the files and directories created by
+        ert, but only the owner can write to them. Also everyone can
+        execute the directories (i.e. list the content).
+
+        ::
+
+           UMASK 0
+
+        No permissions are removed, i.e. everyone can do everything
+        with the files and directories created by ert.
+
+        The umask setting in ert is passed on to the forward model,
+        and should apply to the files/directories created by the
+        forward model also. However - the executables in the forward
+        model can in principle set it's own umask setting or alter
+        permissions in another way - so there is no guarantee that the
+        umask setting will apply to all files created by the forward
+        model.
+
+        The octal permissions are based on three octal numbers for
+        owner, group and others, where each value is based on adding
+        the constants:
+
+         1: Execute permission
+         2: Write permission
+         4: Read permission
+
+        So an octal permission of 0754 means:
+
+         - Owner(7) can execute(1), write(2) and read(4).
+         - Group(5) can execute(1) and read(4).
+         - Others(2) can read(4)
+
+           
+        
