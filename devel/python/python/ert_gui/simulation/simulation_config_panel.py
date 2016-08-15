@@ -18,4 +18,8 @@ class SimulationConfigPanel(QWidget):
         return True
 
     def toggleAdvancedOptions(self, show_advanced):
-        raise NotImplementedError()
+        raise NotImplementedError("toggleAdvancedOptions must be implemented!")
+
+    def getSimulationArguments(self):
+        """" @rtype: dict[str, object]"""
+        return {}

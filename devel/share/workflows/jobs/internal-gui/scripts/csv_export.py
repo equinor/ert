@@ -1,14 +1,15 @@
 import os
 import re
+
 import pandas
+from PyQt4.QtGui import QCheckBox
+
 from ert.enkf import ErtPlugin, CancelPluginException
 from ert.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader, CustomKWCollector
-from ert.util import Profiler
-from ert_gui.models.mixins.connectorless import DefaultPathModel, DefaultBooleanModel
-from ert_gui.widgets.checkbox import CheckBox
-from ert_gui.widgets.custom_dialog import CustomDialog
-from ert_gui.widgets.list_edit_box import ListEditBox
-from ert_gui.widgets.path_chooser import PathChooser
+from ert_gui.ertwidgets.customdialog import CustomDialog
+from ert_gui.ertwidgets.listeditbox import ListEditBox
+from ert_gui.ertwidgets.models.path_model import PathModel
+from ert_gui.ertwidgets.pathchooser import PathChooser
 
 
 class CSVExportJob(ErtPlugin):
@@ -141,24 +142,23 @@ class CSVExportJob(ErtPlugin):
         dialog = CustomDialog("CSV Export", description, parent)
 
         default_csv_output_path = self.getDataKWValue("CSV_OUTPUT_PATH", default="output.csv")
-        output_path_model = DefaultPathModel(default_csv_output_path)
-        output_path_chooser = PathChooser(output_path_model, path_label="Output file path")
+        output_path_model = PathModel(default_csv_output_path)
+        output_path_chooser = PathChooser(output_path_model)
 
         design_matrix_default = self.getDataKWValue("DESIGN_MATRIX_PATH", default="")
-        design_matrix_path_model = DefaultPathModel(design_matrix_default, is_required=False, must_exist=True)
-        design_matrix_path_chooser = PathChooser(design_matrix_path_model, path_label="Design Matrix path")
+        design_matrix_path_model = PathModel(design_matrix_default, is_required=False, must_exist=True)
+        design_matrix_path_chooser = PathChooser(design_matrix_path_model)
 
-        all_case_list = self.getAllCaseList()
-        list_edit = ListEditBox(all_case_list, "List of cases to export")
+        list_edit = ListEditBox(self.getAllCaseList())
 
-        infer_iteration_model = DefaultBooleanModel()
-        infer_iteration_checkbox = CheckBox(infer_iteration_model, label="Infer iteration number", show_label=False)
-        infer_iteration_checkbox.setToolTip(CSVExportJob.INFER_HELP)
+        infer_iteration_check = QCheckBox()
+        infer_iteration_check.setChecked(True)
+        infer_iteration_check.setToolTip(CSVExportJob.INFER_HELP)
 
-        dialog.addOption(output_path_chooser)
-        dialog.addOption(design_matrix_path_chooser)
-        dialog.addOption(list_edit)
-        dialog.addOption(infer_iteration_checkbox)
+        dialog.addLabeledOption("Output file path", output_path_chooser)
+        dialog.addLabeledOption("Design Matrix path", design_matrix_path_chooser)
+        dialog.addLabeledOption("List of cases to export", list_edit)
+        dialog.addLabeledOption("Infer iteration number", infer_iteration_check)
 
         dialog.addButtons()
 
@@ -171,7 +171,7 @@ class CSVExportJob(ErtPlugin):
 
             case_list = ",".join(list_edit.getItems())
 
-            return [output_path_model.getPath(), case_list, design_matrix_path, infer_iteration_model.isTrue()]
+            return [output_path_model.getPath(), case_list, design_matrix_path, infer_iteration_check.isChecked()]
 
         raise CancelPluginException("User cancelled!")
 

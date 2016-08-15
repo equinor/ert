@@ -17,3 +17,7 @@ if headless():
     matplotlib.use("Agg")
 else:
     matplotlib.use("Qt4Agg")
+
+
+from .ertnotifier import ERT
+from .ertnotifier import configureErtNotifier

@@ -1,6 +1,7 @@
 from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 from PyQt4.QtGui import QColor
-from ert_gui.widgets import util
+
+from ert_gui.ertwidgets import resourceIcon
 
 
 class DataTypeKeysListModel(QAbstractItemModel):
@@ -14,7 +15,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
         """
         QAbstractItemModel.__init__(self)
         self.__ert = ert
-        self.__icon = util.resourceIcon("ide/small/bullet_star")
+        self.__icon = resourceIcon("ide/small/bullet_star")
 
     def keyManager(self):
         return self.__ert.getKeyManager()

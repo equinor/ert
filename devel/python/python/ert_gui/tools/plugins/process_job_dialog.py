@@ -1,6 +1,7 @@
 from PyQt4.QtCore import Qt, pyqtSignal, QSize
 from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout, QWidget, QLabel, QMessageBox, QSizePolicy, QSpacerItem
-from ert_gui.widgets import util
+
+from ert_gui.ertwidgets import resourceMovie
 
 
 class ProcessJobDialog(QDialog):
@@ -29,7 +30,7 @@ class ProcessJobDialog(QDialog):
         widget_layout = QHBoxLayout()
 
         size = 64
-        spin_movie = util.resourceMovie("ide/loading.gif")
+        spin_movie = resourceMovie("ide/loading.gif")
         spin_movie.setSpeed(60)
         spin_movie.setScaledSize(QSize(size, size))
         spin_movie.start()

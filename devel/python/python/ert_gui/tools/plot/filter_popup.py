@@ -1,6 +1,5 @@
-from PyQt4.QtCore import Qt, pyqtSignal, QSize, SIGNAL
-from PyQt4.QtGui import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout, QCursor, QHBoxLayout, QToolButton
-from ert_gui.widgets.util import resourceIcon
+from PyQt4.QtCore import Qt, pyqtSignal
+from PyQt4.QtGui import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout, QCursor
 
 
 class FilterPopup(QDialog):

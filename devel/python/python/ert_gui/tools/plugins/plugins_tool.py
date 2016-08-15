@@ -1,7 +1,8 @@
 from PyQt4.QtGui import QMenu
-from ert_gui.models.connectors.init import CaseList
+
+from ert_gui import ERT
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools import Tool
-from ert_gui.widgets import util
 from ert_gui.tools.plugins import PluginHandler, PluginRunner
 
 
@@ -11,7 +12,7 @@ class PluginsTool(Tool):
         @type plugin_handler: PluginHandler
         """
         enabled = len(plugin_handler) > 0
-        super(PluginsTool, self).__init__("Plugins", "tools/plugins", util.resourceIcon("ide/plugin"), enabled, popup_menu=True)
+        super(PluginsTool, self).__init__("Plugins", "tools/plugins", resourceIcon("ide/plugin"), enabled, popup_menu=True)
 
         self.__plugins = {}
 
@@ -29,5 +30,5 @@ class PluginsTool(Tool):
 
 
     def trigger(self):
-        CaseList().externalModificationNotification() # plugin may have added new cases.
+        ERT.emitErtChange() # plugin may have added new cases.
 

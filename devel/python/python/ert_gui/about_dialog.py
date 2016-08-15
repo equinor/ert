@@ -1,6 +1,6 @@
 #  Copyright (C) 2014  Statoil ASA, Norway.
 #
-#  The file 'closable_dialog.py' is part of ERT - Ensemble based Reservoir Tool.
+#  This file is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -15,9 +15,9 @@
 #  for more details.
 
 from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import  QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QFont
+from PyQt4.QtGui import  QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QFont
 from ert.util import Version
-from ert_gui.widgets import util
+from ert_gui.ertwidgets import resourceImage
 
 
 class AboutDialog(QDialog):
@@ -45,7 +45,7 @@ class AboutDialog(QDialog):
         top_layout = QHBoxLayout()
 
         image_label = QLabel()
-        image = util.resourceImage("splash.jpg")
+        image = resourceImage("splash.jpg")
         image_label.setPixmap(image.scaled(200, 240, Qt.KeepAspectRatio))
 
         top_layout.addWidget(image_label)

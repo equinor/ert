@@ -17,11 +17,10 @@ import os
 from PyQt4.QtCore import QDir
 from PyQt4.QtGui import QMessageBox
 from ert.enkf import EnkfFieldFileFormatEnum
-from ert_gui.models.connectors.export import ExportModel, ExportKeywordModel
+from ert_gui.tools.export import ExportModel, ExportKeywordModel
 
 
 class Exporter():
-
     def __init__(self):
         self.__export_keyword_model = ExportKeywordModel()
 
@@ -44,7 +43,7 @@ class Exporter():
 
         result = ExportModel().exportField(keyword, file_name, iactive, file_type, report_step, selected_case)
         if not result:
-            QMessageBox.warning(self, "Warning",'''Something did not work!''', QMessageBox.Ok)
+            QMessageBox.warning(self, "Warning", '''Something did not work!''', QMessageBox.Ok)
 
     def exportGenData(self, keyword, file_name, iactive, file_type_key, report_step, selected_case):
         ExportModel().exportGenData(keyword, file_name, iactive, file_type_key, report_step, selected_case)
