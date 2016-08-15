@@ -1,12 +1,13 @@
 import re
 import shutil
+
 from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QStyle, QMessageBox, QSizePolicy, QFileDialog
+from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
+
+from ert_gui.ertwidgets import SearchBox, resourceIcon
 from ert_gui.ide.highlighter import KeywordHighlighter
 from ert_gui.ide.keywords.definitions.path_argument import PathArgument
 from ert_gui.tools.ide import IdePanel
-from ert_gui.widgets import util
-from ert_gui.widgets.search_box import SearchBox
 
 
 class ConfigurationPanel(QWidget):
@@ -21,10 +22,10 @@ class ConfigurationPanel(QWidget):
         toolbar = QToolBar("toolbar")
 
 
-        save_action = toolbar.addAction(util.resourceIcon("ide/disk"), "Save")
+        save_action = toolbar.addAction(resourceIcon("ide/disk"), "Save")
         save_action.triggered.connect(self.save)
 
-        save_as_action = toolbar.addAction(util.resourceIcon("ide/save_as"), "Save As")
+        save_as_action = toolbar.addAction(resourceIcon("ide/save_as"), "Save As")
         save_as_action.triggered.connect(self.saveAs)
 
         # reload_icon = toolbar.style().standardIcon(QStyle.SP_BrowserReload)

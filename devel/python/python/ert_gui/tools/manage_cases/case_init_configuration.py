@@ -1,29 +1,49 @@
-from PyQt4.QtGui import QToolButton, QComboBox, QTextEdit
-from ert_gui.models.connectors.init import InitializeFromScratchModel, CaseSelectorModel
-from ert_gui.models.connectors.init.case_list import CaseList
-from ert_gui.models.connectors.init.init_from_existing import InitializeFromExistingCaseModel
-from ert_gui.models.connectors.init.init_history_length import HistoryLengthModel
-from ert_gui.models.connectors.init.init_members import InitializationMembersModel
-from ert_gui.models.connectors.init.init_parameters import InitializationParametersModel
-from ert_gui.models.connectors.init.initialized_case_selector import InitializedCaseSelectorModel
-from ert_gui.models.qt.all_cases_model import AllCasesModel
-from ert_gui.widgets.button import Button
-from ert_gui.widgets.check_list import CheckList
-from ert_gui.widgets.combo_choice import ComboChoice
-from ert_gui.widgets.helped_widget import HelpedWidget
-from ert_gui.widgets.integer_spinner import IntegerSpinner
-from ert_gui.widgets.keyword_list import KeywordList
-from ert_gui.widgets.row_group import RowGroup
-from ert_gui.widgets.row_panel import RowPanel
-from ert_gui.widgets.util import may_take_a_long_time
-from ert_gui.widgets.validated_dialog import ValidatedDialog
+from PyQt4.QtGui import QToolButton, QTextEdit, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
+from PyQt4.QtCore import Qt
+
+from ert_gui import ERT
+from ert_gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting
+from ert_gui.ertwidgets.caselist import CaseList
+from ert_gui.ertwidgets.caseselector import CaseSelector
+from ert_gui.ertwidgets.checklist import CheckList
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, initializeCurrentCaseFromScratch, getCaseRealizationStates, getParameterList, getHistoryLength, \
+    initializeCurrentCaseFromExisting, getCurrentCaseName
+from ert_gui.ertwidgets.models.selectable_list_model import SelectableListModel
 
 
-class CaseInitializationConfigurationPanel(RowPanel):
+def createCheckLists():
+    parameter_model = SelectableListModel([])
 
-    @may_take_a_long_time
+    parameter_model.getList = getParameterList
+    parameter_check_list = CheckList(parameter_model, "Parameters", "init/select_parameters")
+    parameter_check_list.setMaximumWidth(300)
+
+    members_model = SelectableListModel([])
+
+    def getMemberList():
+        return [str(member) for member in range(getRealizationCount())]
+
+    members_model.getList = getMemberList
+    member_check_list = CheckList(members_model, "Members", "init/select_members")
+    member_check_list.setMaximumWidth(150)
+    return createRow(parameter_check_list, member_check_list), parameter_model, members_model
+
+
+def createRow(*widgets):
+    row = QHBoxLayout()
+
+    for widget in widgets:
+        row.addWidget(widget)
+
+    row.addStretch()
+    return row
+
+
+class CaseInitializationConfigurationPanel(QTabWidget):
+    @showWaitCursorWhileWaiting
     def __init__(self):
-        RowPanel.__init__(self, "Case Management")
+        QTabWidget.__init__(self)
+        self.setWindowTitle("Case Management")
         self.setMinimumWidth(600)
 
         self.addCreateNewCaseTab()
@@ -31,141 +51,151 @@ class CaseInitializationConfigurationPanel(RowPanel):
         self.addInitializeFromExistingTab()
         self.addShowCaseInfo()
 
-        self.endTabs()
-
-    def newValidatedKeywordPopup(self, existing_keywords):
-        dialog = ValidatedDialog("New case", "Enter name of new case:", existing_keywords)
-        return dialog.showAndTell()
-
     def addCreateNewCaseTab(self):
-        self.startTabs("Create new case")
-
-        case_list = KeywordList(CaseList(), "Available cases", "init/case_list")
+        panel = QWidget()
+        layout = QVBoxLayout()
+        case_list = CaseList()
         case_list.setMaximumWidth(250)
-        case_list.newKeywordPopup = self.newValidatedKeywordPopup
-        case_list.setSelectable(False)
 
-        self.addRow(case_list)
+        layout.addWidget(case_list)
+        layout.addStretch()
 
+        panel.setLayout(layout)
+
+        self.addTab(panel, "Create new case")
 
     def addInitializeFromScratchTab(self):
-        self.addTab("Initialize from scratch")
+        panel = QWidget()
+        layout = QVBoxLayout()
 
-        case_model = CaseSelectorModel()
-        case_selector = ComboChoice(case_model, "Target case", "init/current_case_selection")
-        self.addRow(case_selector)
+        row1 = createRow(QLabel("Target case:"), CaseSelector())
+        layout.addLayout(row1)
 
-        row_group = RowGroup()
+        check_list_layout, parameter_model, members_model = createCheckLists()
+        layout.addLayout(check_list_layout)
 
+        layout.addSpacing(10)
 
-        parameter_model = InitializationParametersModel()
-        parameter_check_list = CheckList(parameter_model, "Parameters", "init/select_parameters")
-        parameter_check_list.setMaximumWidth(300)
-        row_group.addWidget(parameter_check_list)
+        initialize_button = QPushButton("Initialize")
+        addHelpToWidget(initialize_button, "init/initialize_from_scratch")
+        initialize_button.setMinimumWidth(75)
+        initialize_button.setMaximumWidth(150)
 
-        member_model = InitializationMembersModel()
-        member_check_list = CheckList(member_model, "Members", "init/select_members")
-        member_check_list.setMaximumWidth(150)
-        row_group.addWidget(member_check_list)
+        def initializeFromScratch():
+            parameters = parameter_model.getSelectedItems()
+            members = members_model.getSelectedItems()
+            initializeCurrentCaseFromScratch(parameters, members)
 
-        self.addRow(row_group)
+        initialize_button.clicked.connect(initializeFromScratch)
+        layout.addWidget(initialize_button, 0, Qt.AlignCenter)
 
-        self.addSpace(10)
+        layout.addSpacing(10)
 
-        initialize_from_scratch = InitializeFromScratchModel()
-        self.addRow(Button(initialize_from_scratch, help_link="init/initialize_from_scratch"))
-
-        self.addSpace(10)
-
+        panel.setLayout(layout)
+        self.addTab(panel, "Initialize from scratch")
 
     def addInitializeFromExistingTab(self):
-        self.addTab("Initialize from existing")
+        widget = QWidget()
+        layout = QVBoxLayout()
 
-        case_model = CaseSelectorModel()
-        target_case_selector = ComboChoice(case_model, "Target case", "init/current_case_selection")
-        self.addRow(target_case_selector)
+        target_case = CaseSelector()
+        row = createRow(QLabel("Target case:"), target_case)
+        layout.addLayout(row)
 
-        initialized_cases = ComboChoice(InitializedCaseSelectorModel(), "Source case", "init/source_case")
-        self.addRow(initialized_cases)
+        source_case = CaseSelector(update_ert=False, show_only_initialized=True, ignore_current=True)
+        row = createRow(QLabel("Source case:"), source_case)
+        layout.addLayout(row)
 
-        #self.addRow("State", "Analyzed/Forecast")
+        row, history_length_spinner = self.createTimeStepRow()
+        layout.addLayout(row)
 
-        timestep_group = RowGroup("Timestep")
-        history_length = HistoryLengthModel()
-        history_length_spinner = IntegerSpinner(history_length, "Timestep", "config/init/history_length")
-        timestep_group.addWidget(history_length_spinner)
+        layout.addSpacing(10)
+        check_list_layout, parameter_model, members_model = createCheckLists()
+        layout.addLayout(check_list_layout)
+        layout.addSpacing(10)
+
+        initialize_button = QPushButton("Initialize")
+        addHelpToWidget(initialize_button, "init/initialize_from_existing")
+        initialize_button.setMinimumWidth(75)
+        initialize_button.setMaximumWidth(150)
+
+        def initializeFromExisting():
+            source_case_name = str(source_case.currentText())
+            target_case_name = str(target_case.currentText())
+            report_step = history_length_spinner.value()
+            parameters = parameter_model.getSelectedItems()
+            members = members_model.getSelectedItems()
+            initializeCurrentCaseFromExisting(source_case_name, target_case_name,  report_step, parameters, members)
+
+        initialize_button.clicked.connect(initializeFromExisting)
+        layout.addWidget(initialize_button, 0, Qt.AlignCenter)
+
+
+        layout.addSpacing(10)
+
+        layout.addStretch()
+        widget.setLayout(layout)
+        self.addTab(widget, "Initialize from existing")
+
+    def createTimeStepRow(self):
+        history_length_spinner = QSpinBox()
+        addHelpToWidget(history_length_spinner, "config/init/history_length")
+        history_length_spinner.setMinimum(0)
+        history_length_spinner.setMaximum(getHistoryLength())
 
         initial = QToolButton()
         initial.setText("Initial")
-        initial.clicked.connect(history_length.setToMin)
-        timestep_group.addWidget(initial)
+        addHelpToWidget(initial, "config/init/history_length")
+
+        def setToMin():
+            history_length_spinner.setValue(0)
+
+        initial.clicked.connect(setToMin)
 
         end_of_time = QToolButton()
         end_of_time.setText("End of time")
-        end_of_time.clicked.connect(history_length.setToMax)
-        timestep_group.addWidget(end_of_time)
+        addHelpToWidget(end_of_time, "config/init/history_length")
 
-        timestep_group.addGroupStretch()
+        def setToMax():
+            history_length_spinner.setValue(getHistoryLength())
 
-        self.addRow(timestep_group)
+        end_of_time.clicked.connect(setToMax)
 
-        self.addSpace(10)
+        row = createRow(QLabel("Timestep:"), history_length_spinner, initial, end_of_time)
 
-        row_group = RowGroup()
-        parameter_model = InitializationParametersModel()
-        parameter_check_list = CheckList(parameter_model, "Parameters", "init/select_parameters")
-        parameter_check_list.setMaximumWidth(300)
-        row_group.addWidget(parameter_check_list)
-
-        member_model = InitializationMembersModel()
-        member_check_list = CheckList(member_model, "Members", "init/select_members")
-        member_check_list.setMaximumWidth(150)
-        row_group.addWidget(member_check_list)
-
-        self.addRow(row_group)
-
-        self.addSpace(10)
-
-        initialize_from_existing = InitializeFromExistingCaseModel()
-        self.addRow(Button(initialize_from_existing, help_link="init/initialize_from_existing"))
-
-        self.addSpace(10)
+        return row, history_length_spinner
 
     def addShowCaseInfo(self):
-        self.addTab("Case Info")
+        case_widget = QWidget()
+        layout = QVBoxLayout()
 
-        case_widget = HelpedWidget("Select case", "init/select_case_for_info")
+        case_selector = CaseSelector(update_ert=False, help_link="init/selected_case_info")
+        row1 = createRow(QLabel("Select case:"), case_selector)
 
-        model = AllCasesModel()
-        self.combo = QComboBox()
-        self.combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
-        self.combo.setMinimumContentsLength(20)
-        self.combo.setModel(model)
-        self.combo.currentIndexChanged.connect(self.showInfoForCase)
+        layout.addLayout(row1)
 
-        case_widget.addWidget(self.combo)
-        case_widget.addStretch()
-        self.addRow(case_widget)
+        self._case_info_area = QTextEdit()
+        self._case_info_area.setReadOnly(True)
+        self._case_info_area.setMinimumHeight(300)
 
+        row2 = createRow(QLabel("Case info:"), self._case_info_area)
 
-        area_widget = HelpedWidget("Case info", "init/selected_case_info")
+        layout.addLayout(row2)
 
-        self.text_area = QTextEdit()
-        self.text_area.setReadOnly(True)
-        self.text_area.setMinimumHeight(300)
+        case_widget.setLayout(layout)
 
-        area_widget.addWidget(self.text_area)
-        area_widget.addStretch()
-        self.addRow(area_widget)
+        case_selector.currentIndexChanged[str].connect(self._showInfoForCase)
+        ERT.ertChanged.connect(self._showInfoForCase)
 
-        choice = CaseSelectorModel().getCurrentChoice()
-        self.combo.setCurrentIndex(model.indexOf(choice))
+        self.addTab(case_widget, "Case Info")
 
+        self._showInfoForCase()
 
-    def showInfoForCase(self):
-        case = self.combo.currentText()
+    def _showInfoForCase(self, case_name=None):
+        if case_name is None:
+            case_name = getCurrentCaseName()
 
-        states = CaseList().getCaseRealizationStates(str(case))
+        states = getCaseRealizationStates(str(case_name))
 
         html = "<table>"
         for index in range(len(states)):
@@ -173,6 +203,4 @@ class CaseInitializationConfigurationPanel(RowPanel):
 
         html += "</table>"
 
-
-        self.text_area.setHtml(html)
-
+        self._case_info_area.setHtml(html)

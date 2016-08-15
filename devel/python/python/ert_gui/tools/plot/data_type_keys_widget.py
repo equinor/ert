@@ -1,9 +1,8 @@
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
+
+from ert_gui.ertwidgets import SearchBox, resourceIcon, Legend
 from ert_gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel, FilterPopup
-from ert_gui.widgets import util
-from ert_gui.widgets.legend import Legend
-from ert_gui.widgets.search_box import SearchBox
 
 
 class DataTypeKeysWidget(QWidget):
@@ -27,7 +26,7 @@ class DataTypeKeysWidget(QWidget):
         filter_layout.addWidget(self.search_box)
 
         filter_popup_button = QToolButton()
-        filter_popup_button.setIcon(util.resourceIcon("ide/cog_edit.png"))
+        filter_popup_button.setIcon(resourceIcon("ide/cog_edit.png"))
         filter_popup_button.clicked.connect(self.showFilterPopup)
         filter_layout.addWidget(filter_popup_button)
         layout.addLayout(filter_layout)

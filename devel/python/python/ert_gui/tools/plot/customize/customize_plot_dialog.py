@@ -1,9 +1,9 @@
 from PyQt4.QtCore import Qt, pyqtSignal, QObject
 from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayout, QPushButton, QToolButton, QMenu, QWidgetAction, QListWidget
 
+from ert_gui.ertwidgets import resourceIcon
 from ert_gui.plottery import PlotConfig, PlotConfigHistory
 from ert_gui.tools.plot.customize import DefaultCustomizationView, StyleCustomizationView, StatisticsCustomizationView, LimitsCustomizationView
-from ert_gui.widgets import util
 
 
 class PlotCustomizer(QObject):
@@ -156,23 +156,23 @@ class CustomizePlotDialog(QDialog):
         self._button_layout = QHBoxLayout()
 
         self._reset_button = QToolButton()
-        self._reset_button.setIcon(util.resourceIcon("update.png"))
+        self._reset_button.setIcon(resourceIcon("update.png"))
         self._reset_button.setToolTip("Reset all settings back to default")
         self._reset_button.clicked.connect(self.resetSettings)
 
         self._undo_button = QToolButton()
-        self._undo_button.setIcon(util.resourceIcon("undo.png"))
+        self._undo_button.setIcon(resourceIcon("undo.png"))
         self._undo_button.setToolTip("Undo")
         self._undo_button.clicked.connect(self.undoSettings)
 
         self._redo_button = QToolButton()
-        self._redo_button.setIcon(util.resourceIcon("redo.png"))
+        self._redo_button.setIcon(resourceIcon("redo.png"))
         self._redo_button.setToolTip("Redo")
         self._redo_button.clicked.connect(self.redoSettings)
         self._redo_button.setEnabled(False)
 
         self._copy_button = QToolButton()
-        self._copy_button.setIcon(util.resourceIcon("page_copy.png"))
+        self._copy_button.setIcon(resourceIcon("page_copy.png"))
         self._copy_button.setToolTip("Copy settings from another key")
         self._copy_button.setPopupMode(QToolButton.InstantPopup)
         self._copy_button.setEnabled(False)

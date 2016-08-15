@@ -13,14 +13,15 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QLineEdit, QLabel, QTextEdit
+from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QTextEdit
+
+from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
+from ert_gui.ertwidgets.models.all_cases_model import AllCasesModel
+from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
+from ert_gui.ertwidgets.models.valuemodel import ValueModel
+from ert_gui.ertwidgets.stringbox import StringBox
 from ert_gui.ide.keywords.definitions import RangeStringArgument, IntegerArgument
-from ert_gui.models.connectors import EnsembleSizeModel
-from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.models.connectors.load_results import LoadResultsModel
-from ert_gui.tools.load_results import LoadResultsRealizationsModel, LoadResultsIterationsModel
-from ert_gui.models.qt.all_cases_model import AllCasesModel
-from ert_gui.widgets.string_box import StringBox
+from ert_gui.tools.load_results import LoadResultsModel
 
 
 class LoadResultsPanel(QWidget):
@@ -30,13 +31,13 @@ class LoadResultsPanel(QWidget):
 
         self.setMinimumWidth(500)
         self.setMinimumHeight(200)
-        self.__dynamic = False
+        self._dynamic = False
 
         self.setWindowTitle("Load results manually")
         self.activateWindow()
 
         layout = QFormLayout()
-        current_case = CaseSelectorModel().getCurrentChoice()
+        current_case = getCurrentCaseName()
 
         run_path_text = QTextEdit()
         run_path_text.setText(self.readCurrentRunPath())
@@ -45,45 +46,45 @@ class LoadResultsPanel(QWidget):
 
         layout.addRow("Load data from current run path: ",run_path_text)
 
-        self.__case_model = AllCasesModel()
-        self.__case_combo = QComboBox()
-        self.__case_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
-        self.__case_combo.setMinimumContentsLength(20)
-        self.__case_combo.setModel(self.__case_model)
-        self.__case_combo.setCurrentIndex(self.__case_model.indexOf(current_case))
-        layout.addRow("Load into case:",self.__case_combo)
+        self._case_model = AllCasesModel()
+        self._case_combo = QComboBox()
+        self._case_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
+        self._case_combo.setMinimumContentsLength(20)
+        self._case_combo.setModel(self._case_model)
+        self._case_combo.setCurrentIndex(self._case_model.indexOf(current_case))
+        layout.addRow("Load into case:", self._case_combo)
 
 
-        self.__active_realizations_model = LoadResultsRealizationsModel(EnsembleSizeModel().getValue())
-        self.__active_realizations_field = StringBox(self.__active_realizations_model, "Realizations to load", "load_results_manually/Realizations")
-        self.__active_realizations_field.setValidator(RangeStringArgument())
-        layout.addRow(self.__active_realizations_field.getLabel(), self.__active_realizations_field)
+        self._active_realizations_model = ActiveRealizationsModel()
+        self._active_realizations_field = StringBox(self._active_realizations_model, "load_results_manually/Realizations")
+        self._active_realizations_field.setValidator(RangeStringArgument())
+        layout.addRow("Realizations to load:", self._active_realizations_field)
 
-        self.__iterations_count = LoadResultsModel().getIterationCount()
+        iterations_count = LoadResultsModel.getIterationCount()
 
-        self._iterations_model = LoadResultsIterationsModel(self.__iterations_count)
-        self._iterations_field = StringBox(self._iterations_model, "Iteration to load", "load_results_manually/iterations")
-        self._iterations_field.setValidator(IntegerArgument())
-        layout.addRow(self._iterations_field.getLabel(), self._iterations_field)
+        self._iterations_model = ValueModel(iterations_count)
+        self._iterations_field = StringBox(self._iterations_model, "load_results_manually/iterations")
+        self._iterations_field.setValidator(IntegerArgument(from_value=1))
+        layout.addRow("Iteration to load:", self._iterations_field)
 
         self.setLayout(layout)
 
     def readCurrentRunPath(self):
-        current_case = CaseSelectorModel().getCurrentChoice()
-        run_path = LoadResultsModel().getCurrentRunPath()
+        current_case = getCurrentCaseName()
+        run_path = LoadResultsModel.getCurrentRunPath()
         run_path = run_path.replace("<ERTCASE>",current_case)
         run_path = run_path.replace("<ERT-CASE>",current_case)
         return run_path
 
 
     def load(self):
-        all_cases = self.__case_model.getAllItems()
-        selected_case  = all_cases[self.__case_combo.currentIndex()]
-        realizations = self.__active_realizations_model.getActiveRealizationsMask()
+        all_cases = self._case_model.getAllItems()
+        selected_case  = all_cases[self._case_combo.currentIndex()]
+        realizations = self._active_realizations_model.getActiveRealizationsMask()
         iteration = self._iterations_model.getActiveIteration()
 
-        LoadResultsModel().loadResults(selected_case, realizations, iteration)
+        LoadResultsModel.loadResults(selected_case, realizations, iteration)
 
     def setCurrectCase(self):
-        current_case = CaseSelectorModel().getCurrentChoice()
-        self.__case_combo.setCurrentIndex(self.__case_model.indexOf(current_case))
+        current_case = getCurrentCaseName()
+        self._case_combo.setCurrentIndex(self._case_model.indexOf(current_case))

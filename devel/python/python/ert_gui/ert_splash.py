@@ -1,6 +1,7 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QSplashScreen, QApplication, QColor, QPen, QFont
-from ert_gui.widgets import util
+
+from ert_gui.ertwidgets import resourceImage
 
 
 class ErtSplash(QSplashScreen):
@@ -20,7 +21,7 @@ class ErtSplash(QSplashScreen):
         self.setGeometry(x, y, splash_width, splash_height)
 
 
-        self.splash_image = util.resourceImage("splash.jpg")
+        self.splash_image = resourceImage("splash.jpg")
 
         self.ert = "ERT"
         self.ert_title = "Ensemble based Reservoir Tool"

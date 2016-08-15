@@ -15,14 +15,24 @@
 #  for more details. 
 
 
-from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QCheckBox , QSpinBox , QLineEdit
-from PyQt4.QtCore import Qt, SIGNAL
-from widgets.util import createSpace
 import os
+
+from PyQt4.QtCore import Qt, SIGNAL, QSize
+from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QSpinBox, QLineEdit, QWidget
+
+
+def createSpace(size=5):
+    """Creates a widget that can be used as spacing on  a panel."""
+    qw = QWidget()
+    qw.setMinimumSize(QSize(size, size))
+
+    return qw
+
 
 class NewConfigurationDialog(QDialog):
     """A dialog for selecting defaults for a new configuration."""
-    def __init__(self, configuration_path, parent = None):
+
+    def __init__(self, configuration_path, parent=None):
         QDialog.__init__(self, parent)
 
         self.setModal(True)
@@ -40,7 +50,6 @@ class NewConfigurationDialog(QDialog):
         else:
             self.configuration_path = configuration_path
 
-
         configuration_location = QLabel()
         configuration_location.setText(directory)
 
@@ -50,23 +59,22 @@ class NewConfigurationDialog(QDialog):
         self.db_type = QComboBox()
         self.db_type.addItem("BLOCK_FS")
         self.db_type.addItem("PLAIN")
-        
+
         self.num_realizations = QSpinBox()
-        self.num_realizations.setMinimum( 1 )
-        self.num_realizations.setMaximum( 1000 )
-        self.num_realizations.setValue( 10 )
+        self.num_realizations.setMinimum(1)
+        self.num_realizations.setMaximum(1000)
+        self.num_realizations.setValue(10)
 
         self.storage_path = QLineEdit()
         self.storage_path.setText("Storage")
         self.connect(self.storage_path, SIGNAL('textChanged(QString)'), self._validateName)
 
-
         layout.addRow(createSpace(10))
         layout.addRow("Configuration name:", configuration_name)
         layout.addRow("Configuration location:", configuration_location)
-        layout.addRow("Path to store DBase:",self.storage_path)
+        layout.addRow("Path to store DBase:", self.storage_path)
         layout.addRow("DBase type:", self.db_type)
-        layout.addRow("Number of realizations" , self.num_realizations)
+        layout.addRow("Number of realizations", self.num_realizations)
         layout.addRow(createSpace(10))
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
@@ -77,13 +85,11 @@ class NewConfigurationDialog(QDialog):
         self.connect(buttons, SIGNAL('accepted()'), self.accept)
         self.connect(buttons, SIGNAL('rejected()'), self.reject)
 
-
         self.setLayout(layout)
-
 
     def getNumberOfRealizations(self):
         return self.num_realizations.value()
-    
+
     def getConfigurationPath(self):
         return self.configuration_path
 

@@ -1,13 +1,13 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
-from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.plottery import PlotContext, PlotDataGatherer as PDG, PlotConfig, plots
-from ert_gui.plottery.plot_config_factory import PlotConfigFactory
+from ert_gui import ERT
+from ert_gui.ertwidgets import showWaitCursorWhileWaiting
+from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
+from ert_gui.plottery import PlotContext, PlotDataGatherer as PDG, PlotConfig, plots, PlotConfigFactory
 
 from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget, DataTypeKeysListModel
 from ert_gui.tools.plot.customize import PlotCustomizer
-from ert_gui.widgets.util import may_take_a_long_time
 
 CROSS_CASE_STATISTICS = "Cross Case Statistics"
 DISTRIBUTION = "Distribution"
@@ -19,13 +19,13 @@ STATISTICS = "Statistics"
 class PlotWindow(QMainWindow):
 
 
-    def __init__(self, ert, parent):
+    def __init__(self, parent):
         QMainWindow.__init__(self, parent)
 
-        self._ert = ert
+        self._ert = ERT.ert
         """:type: ert.enkf.enkf_main.EnKFMain"""
 
-        key_manager = ert.getKeyManager()
+        key_manager = self._ert.getKeyManager()
         """:type: ert.enkf.key_manager.KeyManager """
 
         self.setMinimumWidth(850)
@@ -37,7 +37,7 @@ class PlotWindow(QMainWindow):
         self._plot_customizer = PlotCustomizer(self)
 
         def plotConfigCreator(key):
-            return PlotConfigFactory.createPlotConfigForKey(ert, key)
+            return PlotConfigFactory.createPlotConfigForKey(self._ert, key)
 
         self._plot_customizer.setPlotConfigCreator(plotConfigCreator)
         self._plot_customizer.settingsChanged.connect(self.keySelected)
@@ -74,13 +74,13 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(CROSS_CASE_STATISTICS, plots.plotCrossCaseStatistics, [gen_kw_gatherer, custom_kw_gatherer])
 
 
-        data_types_key_model = DataTypeKeysListModel(ert)
+        data_types_key_model = DataTypeKeysListModel(self._ert)
 
         self._data_type_keys_widget = DataTypeKeysWidget(data_types_key_model)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self._data_type_keys_widget)
 
-        current_case = CaseSelectorModel().getCurrentChoice()
+        current_case = getCurrentCaseName()
         self._case_selection_widget = CaseSelectionWidget(current_case)
         self._case_selection_widget.caseSelectionChanged.connect(self.keySelected)
         self.addDock("Plot case", self._case_selection_widget)
@@ -180,7 +180,7 @@ class PlotWindow(QMainWindow):
         return dock_widget
 
 
-    @may_take_a_long_time
+    @showWaitCursorWhileWaiting
     def keySelected(self):
         key = self.getSelectedKey()
         self._plot_customizer.switchPlotConfigHistory(key)
