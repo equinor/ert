@@ -143,7 +143,6 @@ extern "C" {
 #define  SURFACE_KEY                       "SURFACE"
 #define  UPDATE_LOG_PATH_KEY               "UPDATE_LOG_PATH"
 #define  UPDATE_PATH_KEY                   "UPDATE_PATH"
-#define  UPDATE_RESULTS_KEY                "UPDATE_RESULTS"
 #define  SINGLE_NODE_UPDATE_KEY            "SINGLE_NODE_UPDATE"
 #define  STORE_SEED_KEY                    "STORE_SEED"
 #define  UMASK_KEY                         "UMASK"

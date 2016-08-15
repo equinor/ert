@@ -1879,7 +1879,6 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 
 
   bool single_node_update = analysis_config_get_single_node_update( enkf_main->analysis_config );
-  bool update_results     = analysis_config_get_update_results( enkf_main->analysis_config );
   local_config_type * local_config = enkf_main->local_config;
   local_config_clear( local_config );
   {
@@ -1904,16 +1903,13 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 
     /* Adding all node which can be updated. */
     {
-      stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE + DYNAMIC_RESULT);
+      stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER);
       int i;
       for (i = 0; i < stringlist_get_size( keylist ); i++) {
         const char * key = stringlist_iget( keylist , i);
         const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
         enkf_var_type var_type = enkf_config_node_get_var_type( config_node );
         bool add_node = true;
-
-        if ((var_type == DYNAMIC_RESULT) && (!update_results))
-          add_node = false;
 
         /*
           Make sure the funny GEN_KW instance masquerading as
