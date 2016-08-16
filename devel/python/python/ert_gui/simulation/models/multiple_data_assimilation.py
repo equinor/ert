@@ -60,7 +60,7 @@ class MultipleDataAssimilation(BaseRunModel):
         target_case_format = arguments["target_case"]
 
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
-        target_case_name = target_case_format.getValue() % 0
+        target_case_name = target_case_format % 0
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
 
         if not source_fs == target_fs:
@@ -102,7 +102,7 @@ class MultipleDataAssimilation(BaseRunModel):
     def update(self, target_case_format, iteration, weight):
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
         next_iteration = (iteration + 1)
-        next_target_case_name = target_case_format.getValue() % next_iteration
+        next_target_case_name = target_case_format % next_iteration
         target_fs = self.ert().getEnkfFsManager().getFileSystem(next_target_case_name)
 
         phase_string = "Analyzing iteration: %d with weight %f" % (next_iteration, weight)
@@ -117,7 +117,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
     def simulateAndPostProcess(self, target_case_format, active_realization_mask, iteration):
-        target_case_name = target_case_format.getValue() % iteration
+        target_case_name = target_case_format % iteration
 
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
         self.ert().getEnkfFsManager().switchFileSystem(target_fs)
