@@ -65,7 +65,6 @@ class LocalConfigTest(ExtendedTestCase):
         dataset = ministep["ALL_DATA"]
         
         self.assertTrue( "PERLIN_PARAM" in dataset )
-        self.assertTrue( "PERLIN" in dataset )
 
         obsdata = ministep.getLocalObsData()
         self.assertEqual( len(obsdata) , 3 )

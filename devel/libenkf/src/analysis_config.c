@@ -55,7 +55,6 @@ struct analysis_config_struct {
   char                          * PC_filename;
   char                          * PC_path;
   bool                            store_PC;
-  bool                            update_results;              /* Should result values like e.g. WWCT be updated? */
   bool                            single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */
   rng_type                      * rng;
   analysis_iter_config_type     * iter_config;
@@ -254,14 +253,6 @@ void analysis_config_set_rerun(analysis_config_type * config , bool rerun) {
 
 bool analysis_config_get_rerun(const analysis_config_type * config) {
   return config->rerun;
-}
-
-void analysis_config_set_update_results(analysis_config_type * config , bool update_results) {
-  config->update_results = update_results;
-}
-
-bool analysis_config_get_update_results(const analysis_config_type * config) {
-  return config->update_results;
 }
 
 void analysis_config_set_single_node_update(analysis_config_type * config , bool single_node_update) {
@@ -481,9 +472,6 @@ void analysis_config_init( analysis_config_type * analysis , const config_conten
   if (config_content_has_item( config , ENKF_RERUN_KEY ))
     analysis_config_set_rerun( analysis , config_content_get_value_as_bool( config , ENKF_RERUN_KEY ));
 
-  if (config_content_has_item( config , UPDATE_RESULTS_KEY ))
-    analysis_config_set_update_results( analysis , config_content_get_value_as_bool( config , UPDATE_RESULTS_KEY ));
-
   if (config_content_has_item( config , SINGLE_NODE_UPDATE_KEY ))
     analysis_config_set_single_node_update( analysis , config_content_get_value_as_bool( config , SINGLE_NODE_UPDATE_KEY ));
 
@@ -611,7 +599,6 @@ analysis_config_type * analysis_config_alloc( rng_type * rng ) {
   analysis_config_set_merge_observations( config       , DEFAULT_MERGE_OBSERVATIONS );
   analysis_config_set_rerun( config                    , DEFAULT_RERUN );
   analysis_config_set_rerun_start( config              , DEFAULT_RERUN_START );
-  analysis_config_set_update_results( config           , DEFAULT_UPDATE_RESULTS);
   analysis_config_set_single_node_update( config       , DEFAULT_SINGLE_NODE_UPDATE );
   analysis_config_set_log_path( config                 , DEFAULT_UPDATE_LOG_PATH);
 
@@ -645,7 +632,6 @@ void analysis_config_add_config_items( config_parser_type * config ) {
   config_add_key_value( config , ENKF_ALPHA_KEY              , false , CONFIG_FLOAT);
   config_add_key_value( config , STD_CUTOFF_KEY              , false , CONFIG_FLOAT);
   config_add_key_value( config , ENKF_MERGE_OBSERVATIONS_KEY , false , CONFIG_BOOL);
-  config_add_key_value( config , UPDATE_RESULTS_KEY          , false , CONFIG_BOOL);
   config_add_key_value( config , SINGLE_NODE_UPDATE_KEY      , false , CONFIG_BOOL);
   config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOL);
   config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOL);
@@ -696,10 +682,6 @@ void analysis_config_fprintf_config( analysis_config_type * config , FILE * stre
     fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->merge_observations ));
   }
 
-  if (config->update_results != DEFAULT_UPDATE_RESULTS) {
-    fprintf( stream , CONFIG_KEY_FORMAT        , UPDATE_RESULTS_KEY);
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->update_results ));
-  }
 
   if (config->std_cutoff != DEFAULT_ENKF_STD_CUTOFF) {
     fprintf( stream , CONFIG_KEY_FORMAT   , STD_CUTOFF_KEY );
@@ -713,7 +695,7 @@ void analysis_config_fprintf_config( analysis_config_type * config , FILE * stre
     fprintf( stream , "\n");
   }
 
-  if (config->update_results != DEFAULT_SINGLE_NODE_UPDATE) {
+  if (config->single_node_update != DEFAULT_SINGLE_NODE_UPDATE) {
     fprintf( stream , CONFIG_KEY_FORMAT        , SINGLE_NODE_UPDATE_KEY);
     fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->single_node_update ));
   }

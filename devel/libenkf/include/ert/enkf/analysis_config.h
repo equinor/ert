@@ -91,8 +91,6 @@ void                   analysis_config_fprintf_config( analysis_config_type * co
 
 bool                   analysis_config_select_module( analysis_config_type * config , const char * module_name );
 analysis_module_type * analysis_config_get_active_module( analysis_config_type * config );
-void                   analysis_config_set_update_results(analysis_config_type * config , bool update_results);
-bool                   analysis_config_get_update_results(const analysis_config_type * config);
 void                   analysis_config_set_single_node_update(analysis_config_type * config , bool single_node_update);
 bool                   analysis_config_get_single_node_update(const analysis_config_type * config);
 

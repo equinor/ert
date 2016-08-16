@@ -143,7 +143,6 @@ Keyword name                                                        	Required by
 :ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT. 
 :ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the EnKF update steps are stored in this directory. 
 :ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH. 
-:ref:`UPDATE_RESULTS  <update_results>` 				NO 					FALSE 				... 
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>` 		NO 									Directory containing workflow jobs. 
 =====================================================================	======================================	============================== 	==============================================================================================================================================
 
