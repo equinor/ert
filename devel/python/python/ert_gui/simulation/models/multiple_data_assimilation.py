@@ -32,8 +32,9 @@ class MultipleDataAssimilation(BaseRunModel):
         return self.weights
 
     def setWeights(self, weights):
-        print("Weights changed: %s" % weights)
-        self.weights = weights
+        str_weights = str(weights)
+        print("Weights changed: %s" % str_weights)
+        self.weights = str_weights
 
     def setAnalysisModule(self, module_name):
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
