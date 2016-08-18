@@ -26,6 +26,9 @@ as separate jobs on the cluster - one for each realization, the
 workflow jobs will be invoked on the workstation running ert, and
 typically go through all the realizations in one loop.
 
+The executable invoked by the workflow job can be an executable you
+have written yourself - in any language, or it can be an existing
+Linux command like e.g. :code:`cp` or :code:`mv`.
 
 Internal workflow jobs
 ----------------------
@@ -42,9 +45,11 @@ Invoke a pre exported function
 This is the simplest, where you can invoke a a predefined ERT
 function. The function must already have been marked as *exported* in
 the ert code base. The list of predefined workflow jobs based on this
-method can be found here: :ref:`built_in_workflow_jobs`.
+method can be found here: :ref:`built_in_workflow_jobs`. Marking a new
+function as exported is quite simple, but it requires changes to the
+core code and a new version must be installed.
 
-
+.. _ert_script:
 Run a Python Script
 ...................
 
