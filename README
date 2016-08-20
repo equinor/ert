@@ -1,3 +1,39 @@
+Coming from OPM??
+-----------------
+
+ERT is a package for handling an ensemble of reservoir models, an
+important part of that is beeing able to read and write the files from
+standard reservoir applications; ert has quite extensive support for
+reading and writing the result files from the ECLIPSE reservoir
+simulator. The capabilities to read and write ECLIPSE result files is
+used by the OPM simulator codes.
+
+The ERT build system has many configuration options, but when
+compiling for OPM you should be able to use the all defaults route:
+
+   git clone https://github.com/Ensembles/ert.git
+   cd ert
+   mkdir build
+   cd build
+   cmake ..
+   make
+
+The OPM build system can find an ERT distribution in the sibling
+location, i.e. if you have cloned ert beside the opm modules like:
+
+   ert/
+   opm-common/
+   opm-parser/
+   opm-material/
+   ....
+
+The opm build system will find the ert distribution in-place,
+otherwise you should install ert with 'make install' and the normal
+cmake machinery of the opm build system should find it.
+
+
+------------------------------------------------------------------------
+
                     _________________________________ 
                    /                                 \ 
                    |   ______   ______   _______     |
