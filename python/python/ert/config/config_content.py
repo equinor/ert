@@ -1,18 +1,18 @@
-#  Copyright (C) 2015  Statoil ASA, Norway. 
-#   
-#  The file 'config_content.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+#  Copyright (C) 2015  Statoil ASA, Norway.
+#
+#  The file 'config_content.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+#  for more details.
 
 import os.path
 
@@ -55,17 +55,17 @@ class ContentNode(BaseCClass):
         if isinstance(index, int):
             if index < 0:
                 index += len(self)
-                
+
             if not 0 <= index < len(self):
                 raise IndexError
             return index
         else:
             raise TypeError("Invalid argument type: %s" % index)
 
-                
+
     def __getitem__(self, index):
         index = self.__assertIndex(index)
-        
+
         content_type = self._iget_type(index)
         typed_get = self.typed_get[content_type]
         return typed_get(self, index)
@@ -84,7 +84,7 @@ class ContentNode(BaseCClass):
                     return os.path.relpath( abs_path , relative_start )
         else:
             raise TypeError("The getPath() method can only be called on PATH items")
-        
+
     def content(self, sep=" "):
         return self._get_full_string(sep)
 
@@ -167,12 +167,12 @@ class ConfigContent(BaseCClass):
     def getValue(self , key , item_index = -1 , node_index = 0):
         item = self[key]
         return item.getValue( item_index , node_index )
-        
+
 
     def isValid(self):
         return self._is_valid()
 
-        
+
     def free(self):
         self._free()
 
