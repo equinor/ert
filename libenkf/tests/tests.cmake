@@ -57,7 +57,7 @@ add_test( enkf_cases_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_cases_config )
 
 add_executable( enkf_analysis_config enkf_analysis_config.c )
 target_link_libraries( enkf_analysis_config enkf test_util )
-add_test( enkf_analysis  ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config)
+add_test( enkf_analysis_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config)
 
 add_executable( enkf_analysis_config_ext_module enkf_analysis_config_ext_module.c )
 target_link_libraries( enkf_analysis_config_ext_module enkf test_util )
