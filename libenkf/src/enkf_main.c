@@ -1145,11 +1145,11 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   const int active_ens_size = state_map_count_matching( source_state_map , STATE_HAS_DATA );
 
-  if (analysis_config_have_enough_realisations(analysis_config , active_ens_size)) {
+  const int total_ens_size = enkf_main_get_ensemble_size(enkf_main);
+  if (analysis_config_have_enough_realisations(analysis_config , active_ens_size, total_ens_size)) {
     double alpha       = analysis_config_get_alpha( enkf_main->analysis_config );
     double std_cutoff  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
     int current_step   = int_vector_get_last( step_list );
-    const int total_ens_size = enkf_main_get_ensemble_size(enkf_main);
     state_map_type * target_state_map = enkf_fs_get_state_map( target_fs );
     bool_vector_type * ens_mask = bool_vector_alloc(total_ens_size , false);
     int_vector_type * ens_active_list = int_vector_alloc(0,0);

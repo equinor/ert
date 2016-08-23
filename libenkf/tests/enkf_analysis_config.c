@@ -60,6 +60,7 @@ void test_min_realizations_percent(const char * num_realizations_str, const char
     config_schema_item_type * item = config_add_schema_item(c , NUM_REALIZATIONS_KEY , true );
     config_schema_item_set_default_type(item, CONFIG_INT);
     config_schema_item_set_argc_minmax( item , 1 , 1);
+
     item = config_add_schema_item(c , MIN_REALIZATIONS_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 2);
     {
@@ -68,7 +69,8 @@ void test_min_realizations_percent(const char * num_realizations_str, const char
 
       analysis_config_type * ac = create_analysis_config( );
       analysis_config_init(ac, content);
-
+      
+      int num_realizations = config_content_get_value_as_int(content, NUM_REALIZATIONS_KEY);
       test_assert_int_equal( min_realizations , analysis_config_get_min_realisations( ac ) );
 
       analysis_config_free( ac );
@@ -85,29 +87,34 @@ void test_min_realizations_percent(const char * num_realizations_str, const char
 void test_min_realisations( ) {
   analysis_config_type * ac = create_analysis_config( );
   test_assert_int_equal( 0 , analysis_config_get_min_realisations( ac ) );
+  analysis_config_set_min_realisations( ac , 8 );
+  test_assert_int_equal( 8 , analysis_config_get_min_realisations( ac ) );
   analysis_config_set_min_realisations( ac , 26 );
   test_assert_int_equal( 26 , analysis_config_get_min_realisations( ac ) );
   analysis_config_free( ac );
 }
 
 
-void test_continue( ) {
+void test_have_enough_realisations( ) {
   analysis_config_type * ac = create_analysis_config( );
-
-  test_assert_true( analysis_config_have_enough_realisations( ac , 10 ));
-  test_assert_false( analysis_config_have_enough_realisations( ac , 0 ));
+  int ensemble_size = 20;
+  
+  // min_realizations not set, should then require 20 (ensemble_size)
+  test_assert_false( analysis_config_have_enough_realisations( ac , 0, ensemble_size ));
+  test_assert_false( analysis_config_have_enough_realisations( ac , 10, ensemble_size ));
+  test_assert_true( analysis_config_have_enough_realisations( ac , 20, ensemble_size ));
 
   analysis_config_set_min_realisations( ac , 5 );
-  test_assert_true( analysis_config_have_enough_realisations( ac , 10 ));
+  test_assert_true( analysis_config_have_enough_realisations( ac , 10, ensemble_size ));
 
   analysis_config_set_min_realisations( ac , 15 );
-  test_assert_false( analysis_config_have_enough_realisations( ac , 10 ));
+  test_assert_false( analysis_config_have_enough_realisations( ac , 10, ensemble_size ));
 
   analysis_config_set_min_realisations( ac , 10 );
-  test_assert_true( analysis_config_have_enough_realisations( ac , 10 ));
+  test_assert_true( analysis_config_have_enough_realisations( ac , 10, ensemble_size ));
 
   analysis_config_set_min_realisations( ac , 0 );
-  test_assert_true( analysis_config_have_enough_realisations( ac , 10 ));
+  test_assert_false( analysis_config_have_enough_realisations( ac , 10, ensemble_size ));
 
   analysis_config_free( ac );
 }
@@ -139,7 +146,7 @@ void test_stop_long_running( ) {
 int main(int argc , char ** argv) {
   test_create();
   test_min_realisations();
-  test_continue();
+  test_have_enough_realisations();
 
   {
     const char * num_realizations_str = "NUM_REALIZATIONS 80\n";
