@@ -1286,9 +1286,8 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
     int_vector_free( ens_active_list );
     return true;
   } else {
-    fprintf(stderr,"** ERROR ** There are %d active realisations left, which is less than the minimum specified (%d) - stopping assimilation.\n" ,
-            active_ens_size ,
-            analysis_config_get_min_realisations(analysis_config));
+    fprintf(stderr,"** ERROR ** There are %d active realisations left, which is less than the minimum specified - stopping assimilation.\n" ,
+            active_ens_size );
     return false;
   }
 
@@ -1320,29 +1319,26 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
 
 
 static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
-  if (analysis_config_get_stop_long_running(enkf_main_get_analysis_config( enkf_main ))) {
-
+  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  if (analysis_config_get_stop_long_running(analysis_config)) {
     job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-    int min_realisations = analysis_config_get_min_realisations(enkf_main->analysis_config);
 
     bool cont = true;
-    if (0 >= min_realisations)
-      cont = false;
-
     while (cont) {
       //Check if minimum number of realizations have run, and if so, kill the rest after a certain time
-      if ((job_queue_get_num_complete(job_queue) >= min_realisations)) {
+      if (analysis_config_have_enough_realisations(analysis_config, job_queue_get_num_complete(job_queue), enkf_main_get_ensemble_size(enkf_main))) {
         job_queue_set_auto_job_stop_time(job_queue);
         cont = false;
       }
 
-      //Check if minimum number of realizations is not possible. If so, it is time to give up
+      //Check if all possible sucesses satisfies the minimum number of realizations threshold. If not so, it is time to give up
       int possible_sucesses = job_queue_get_num_running(job_queue) +
         job_queue_get_num_waiting(job_queue) +
         job_queue_get_num_pending(job_queue) +
         job_queue_get_num_complete(job_queue);
 
-      if (possible_sucesses < min_realisations) {
+      
+      if (analysis_config_have_enough_realisations(analysis_config, possible_sucesses, enkf_main_get_ensemble_size(enkf_main))) {
         cont = false;
       }
 
@@ -1747,11 +1743,10 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , enkf_fs_type * source_f
 static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main, ert_run_context_type * run_context) {
   bool ret = true;
   analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
-  const int min_realizations = analysis_config_get_min_realisations(analysis_config);
 
   bool total_ok = enkf_main_run_step(enkf_main , run_context);
-
-  if (total_ok || (bool_vector_count_equal(ert_run_context_get_iactive( run_context ), true) >= min_realizations)) {
+  int active_after_step = bool_vector_count_equal(ert_run_context_get_iactive( run_context ), true);
+  if (total_ok || analysis_config_have_enough_realisations(analysis_config, active_after_step, enkf_main_get_ensemble_size(enkf_main))) {
     hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
     hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
   }  else {
