@@ -26,10 +26,10 @@ class ErtPlugin(ErtScript):
             raise CancelPluginException("Plugin '%s' cancelled by user!" % self.getName())
 
     def startCancellableThread(self, runFunction, cancelFunction):
-        return_value = None
+        runFunction.return_value = None
 
         def runFunctionWrapper():
-            return_value = runFunction()
+            runFuntion.return_value = runFunction()
 
         thread = Thread()
         thread.run = runFunctionWrapper
@@ -45,4 +45,4 @@ class ErtPlugin(ErtScript):
                 print("Plugin '%s' cancelled (CTRL+C)" % self.getName())
                 self.cancel()
 
-        return return_value
+        return runFunction.return_value
