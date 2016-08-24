@@ -17,10 +17,9 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName("Running ensemble experiment...", indeterminate=False)
 
-        success = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
 
-        if not success:
-            self.checkHaveSufficientRealizations(active_realization_mask)
+        self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )

@@ -25,10 +25,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
 
-        if not success:
-            self.checkHaveSufficientRealizations(active_realization_mask)
+        self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
