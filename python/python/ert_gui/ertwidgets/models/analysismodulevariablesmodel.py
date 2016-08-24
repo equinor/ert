@@ -53,7 +53,7 @@ class AnalysisModuleVariablesModel(object):
     @classmethod
     def getVariableMaximumValue(cls, name):
         if name == "CV_NFOLDS":
-            return getRealizationCount() - 1
+            return getRealizationCount() 
 
         return cls._VARIABLE_NAMES[name]["max"]
 
