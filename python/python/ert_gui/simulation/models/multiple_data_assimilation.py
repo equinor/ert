@@ -79,20 +79,18 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
         for iteration, weight in enumerate(weights):
-            self.simulateAndPostProcess(target_case_format, active_realization_mask, iteration)
+            success = self.simulateAndPostProcess(target_case_format, active_realization_mask, iteration)
 
             # We exit because the user has pressed 'Kill all simulations'.
             if self.userExitCalled( ):
                 self.setPhase(iteration_count + 2, "Simulations stopped")
                 return
 
-            # We exit because there are too few realisations left for updating.
-            if not self.checkSuccessCount( active_realization_mask ):
-                self.setPhase(iteration_count + 2, "Simulations failed")
-                return
+            # We exit if there are too few realisations left for updating.
+            if not success:
+                self.checkHaveSufficientRealizations(active_realization_mask)
 
             self.update(target_case_format, iteration, weights[iteration])
-
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.simulateAndPostProcess(target_case_format, active_realization_mask, iteration_count)
@@ -141,18 +139,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_SIMULATION)
 
         return success
-    
 
-    # This is completely broken; the success_count will only count the
-    # number of realisations in the mask which was sent in to the
-    # runSimulations( ) method.
-    def checkSuccessCount(self, active_realization_mask):
-        min_realization_count = self.ert().analysisConfig().getMinRealisations()
-        success_count = active_realization_mask.count()
-
-        if success_count < min_realization_count:
-            return False
-        return True
 
     @staticmethod
     def normalizeWeights(weights):
