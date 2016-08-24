@@ -1530,12 +1530,11 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
 
 
 /**
-  If all simulations have completed successfully the function will
-  return true, otherwise it will return false.
+  The function will return number of non-failing jobs.
 */
 
 
-static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
+static int enkf_main_run_step(enkf_main_type * enkf_main       ,
                                ert_run_context_type * run_context) {
 
   if (ert_run_context_get_step1(run_context))
@@ -1582,7 +1581,8 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
     /* This should be carefully checked for the situation where only a
        subset (with offset > 0) of realisations are simulated. */
 
-    bool totalOK = true;
+    int totalOK = 0;
+    int totalFailed = 0;
     for (iens = 0; iens < active_ens_size; iens++) {
       if (bool_vector_iget(ert_run_context_get_iactive(run_context) , iens)) {
         run_arg_type * run_arg = ert_run_context_iens_get_arg( run_context , iens );
@@ -1590,12 +1590,16 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
 
         if ((run_status == JOB_LOAD_FAILURE) || (run_status == JOB_RUN_FAILURE)) {
           ert_run_context_deactivate_realization(run_context, iens);
-          totalOK = false;
+          totalFailed++;
+        }
+        else {
+          totalOK++;
         }
       }
     }
+    
     enkf_fs_fsync( ert_run_context_get_result_fs( run_context ) );
-    if (totalOK)
+    if (totalFailed == 0)
       ert_log_add_fmt_message( 1 , NULL , "All jobs complete and data loaded.");
 
 
@@ -1674,6 +1678,7 @@ void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type 
 void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
                            bool_vector_type * iactive) {
 
+  int active_before = bool_vector_count_equal(iactive, true);
   hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
   ert_run_context_type * run_context;
   init_mode_type init_mode = INIT_CONDITIONAL;
@@ -1686,7 +1691,10 @@ void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
   enkf_main_init_run( enkf_main , run_context , init_mode);
   enkf_main_create_run_path( enkf_main , iactive , iter );
   hook_manager_run_workflows(hook_manager, PRE_SIMULATION, enkf_main);
-  if (enkf_main_run_step(enkf_main , run_context))
+  enkf_main_run_step(enkf_main , run_context);
+  
+  int active_after = bool_vector_count_equal(iactive, true);
+  if (active_after == active_before)
     hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
 
   ert_run_context_free( run_context );
@@ -1695,17 +1703,16 @@ void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
 
 
 
-bool enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_type init_mode, int iter) {
-  bool run_ok;
+int enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_type init_mode, int iter) {
   ert_run_context_type * run_context = enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main ,
                                                                                             enkf_main_get_fs( enkf_main ) ,
                                                                                             iactive ,
                                                                                             iter );
   enkf_main_init_run( enkf_main , run_context , init_mode);
-  run_ok = enkf_main_run_step( enkf_main , run_context );
+  int successful_realizations = enkf_main_run_step( enkf_main , run_context );
   ert_run_context_free( run_context );
 
-  return run_ok;
+  return successful_realizations;
 }
 
 
@@ -1744,9 +1751,8 @@ static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main
   bool ret = true;
   analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
 
-  bool total_ok = enkf_main_run_step(enkf_main , run_context);
-  int active_after_step = bool_vector_count_equal(ert_run_context_get_iactive( run_context ), true);
-  if (total_ok || analysis_config_have_enough_realisations(analysis_config, active_after_step, enkf_main_get_ensemble_size(enkf_main))) {
+  int active_after_step = enkf_main_run_step(enkf_main , run_context);
+  if (analysis_config_have_enough_realisations(analysis_config, active_after_step, enkf_main_get_ensemble_size(enkf_main))) {
     hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
     hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
   }  else {

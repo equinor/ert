@@ -108,7 +108,7 @@ extern "C" {
   bool                          enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * source_fs, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode);
   bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * source_fs, enkf_fs_type * target_fs);
   void                          enkf_main_create_run_path(enkf_main_type * enkf_main , const bool_vector_type * iactive , int iter);
-  bool                          enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_type init_mode, int iter);
+  int                           enkf_main_run_simple_step( enkf_main_type* enkf_main, bool_vector_type* iactive, init_mode_type init_mode, int iter );
 
   void                          enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
                                                       bool_vector_type * iactive);

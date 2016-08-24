@@ -13,7 +13,7 @@ class EnkfSimulationRunner(BaseCClass):
         """:type: ert.enkf.EnKFMain """
 
     def runSimpleStep(self, active_realization_mask, initialization_mode, iter_nr):
-        """ @rtype: bool """
+        """ @rtype: int """
         assert isinstance(active_realization_mask, BoolVector)
         assert isinstance(initialization_mode, EnkfInitModeEnum)
         return EnkfSimulationRunner.cNamespace().run_simple_step(self, active_realization_mask, initialization_mode , iter_nr)
@@ -24,7 +24,7 @@ class EnkfSimulationRunner(BaseCClass):
         return EnkfSimulationRunner.cNamespace().create_run_path(self, active_realization_mask, iter_nr)
 
     def runEnsembleExperiment(self, active_realization_mask=None):
-        """ @rtype: bool """
+        """ @rtype: int """
         if active_realization_mask is None:
             count = self.ert.getEnsembleSize()
             active_realization_mask = BoolVector(default_value=True, initial_size=count)
@@ -46,4 +46,4 @@ cwrapper.registerType("enkf_simulation_runner", EnkfSimulationRunner)
 
 EnkfSimulationRunner.cNamespace().run_smoother      = cwrapper.prototype("void enkf_main_run_smoother(enkf_simulation_runner, char*, bool)")
 EnkfSimulationRunner.cNamespace().create_run_path   = cwrapper.prototype("bool enkf_main_create_run_path(enkf_simulation_runner, bool_vector, int)")
-EnkfSimulationRunner.cNamespace().run_simple_step   = cwrapper.prototype("bool enkf_main_run_simple_step(enkf_simulation_runner, bool_vector, enkf_init_mode_enum, int)")
+EnkfSimulationRunner.cNamespace().run_simple_step   = cwrapper.prototype("int enkf_main_run_simple_step(enkf_simulation_runner, bool_vector, enkf_init_mode_enum, int)")
