@@ -37,6 +37,4 @@ void fwd_step_enkf_updateA(void * module_data ,
                             const module_info_type* module_info);
 
 
-void        fwd_step_enkf_set_truncation( fwd_step_enkf_data_type * data , double truncation );
-void        fwd_step_enkf_set_subspace_dimension( fwd_step_enkf_data_type * data , int subspace_dimension);
 
