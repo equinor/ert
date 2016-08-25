@@ -128,16 +128,10 @@ ANALYSIS_SELECT  ModuleName
 bool analysis_config_have_enough_realisations( const analysis_config_type * config , int realisations, int ensemble_size) {
   if (config->min_realisations > 0) {
     /* A value > 0 has been set in the config; compare with this value. */
-    if (realisations >= config->min_realisations)
-        return true;
-      else
-        return false;
-  } else {
-    /* The min_realizations is set to zero, so rather check that the number of realizations is equal to the given ensemble_size */
-    if (realisations >= ensemble_size)
-      return true;
-    else
-      return false;
+    return realisations >= config->min_realisations;
+  } 
+  else {
+    return realisations >= ensemble_size;
   }
 }
 

@@ -36,7 +36,7 @@ static const int status_index[] = {  JOB_QUEUE_NOT_ACTIVE ,  // Initial, allocat
                                      JOB_QUEUE_SUBMITTED  ,  // Job is submitted to driver - temporary state                               - controlled by job_queue
                                      JOB_QUEUE_PENDING    ,  // Job is pending, before actual execution                                    - controlled by queue_driver
                                      JOB_QUEUE_RUNNING    ,  // Job is executing                                                           - controlled by queue_driver
-                                     JOB_QUEUE_DONE       ,  // Job is done (sucessful or not), temporary state                            - controlled/returned by by queue_driver
+                                     JOB_QUEUE_DONE       ,  // Job is done (successful or not), temporary state                            - controlled/returned by by queue_driver
                                      JOB_QUEUE_EXIT       ,  // Job is done, with exit status != 0, temporary state                        - controlled/returned by by queue_driver
                                      JOB_QUEUE_USER_EXIT  ,  // User / queue system has requested killing of job                           - controlled by job_queue / external scope
                                      JOB_QUEUE_USER_KILLED,  // Job has been killed, due to JOB_QUEUE_USER_EXIT, FINAL STATE               - controlled by job_queue

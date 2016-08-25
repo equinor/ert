@@ -1331,14 +1331,14 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
         cont = false;
       }
 
-      //Check if all possible sucesses satisfies the minimum number of realizations threshold. If not so, it is time to give up
-      int possible_sucesses = job_queue_get_num_running(job_queue) +
+      //Check if all possible successes satisfies the minimum number of realizations threshold. If not so, it is time to give up
+      int possible_successes = job_queue_get_num_running(job_queue) +
         job_queue_get_num_waiting(job_queue) +
         job_queue_get_num_pending(job_queue) +
         job_queue_get_num_complete(job_queue);
 
       
-      if (analysis_config_have_enough_realisations(analysis_config, possible_sucesses, enkf_main_get_ensemble_size(enkf_main))) {
+      if (analysis_config_have_enough_realisations(analysis_config, possible_successes, enkf_main_get_ensemble_size(enkf_main))) {
         cont = false;
       }
 
