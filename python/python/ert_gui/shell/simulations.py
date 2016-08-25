@@ -40,7 +40,7 @@ class Simulations(ErtShellCollection):
 
         success = self.ert().analysisConfig().haveEnoughRealisations(num_successful_realizations, self.ert().getEnsembleSize())
         if not success:
-            print("Error: Number of successful realizations is too low, you can change this by altering the MIN_REALIZATIONS element!")
+            print("Error: Number of successful realizations is too low.\nYou can allow more failed realizations by setting / changing the MIN_REALIZATIONS configuration element!")
             return
 
         print("Ensemble Experiment post processing!")
