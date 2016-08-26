@@ -250,11 +250,8 @@ bool std_enkf_set_bool( void * arg , const char * var_name , bool value) {
 
     if (strcmp( var_name , USE_EE_KEY_) == 0)
       module_data->use_EE = value;
-    else if (strcmp( var_name , ANALYSIS_SCALE_DATA_KEY_) == 0) {
+    else if (strcmp( var_name , ANALYSIS_SCALE_DATA_KEY_) == 0)
       module_data->analysis_scale_data = value;
-      // the next line is double book-keeping
-      module_data->option_flags &= value * ANALYSIS_SCALE_DATA;
-    }
     else
       name_recognized = false;
 
@@ -266,9 +263,8 @@ bool std_enkf_set_bool( void * arg , const char * var_name , bool value) {
 
 long std_enkf_get_options( void * arg , long flag ) {
   std_enkf_data_type * module_data = std_enkf_data_safe_cast( arg );
-  {
-    return module_data->option_flags;
-  }
+  int scale_option = (module_data->analysis_scale_data) ? ANALYSIS_SCALE_DATA : 0;
+  return module_data->option_flags + scale_option;
 }
 
 bool std_enkf_has_var( const void * arg, const char * var_name) {
