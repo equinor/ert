@@ -28,8 +28,19 @@ class StdEnKFTest(ExtendedTestCase):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
         self.module = AnalysisModule( self.rng , name = "STD_ENKF" )
 
+    def toggleKey(self, key):
+        self.assertTrue( self.module.hasVar( key ))
+
+        # check it is true
+        self.assertTrue( self.module.setVar( key , True ) )
+        self.assertTrue( self.module.getBool(key) )
+
+        # set it to false
+        self.assertTrue( self.module.setVar( key , False ) )
+        self.assertFalse( self.module.getBool(key) )
 
     def test_EE_option(self):
-        self.assertTrue( self.module.setVar( "USE_EE" , True ) )
-        
-        
+        self.toggleKey( 'USE_EE' )
+
+    def test_scaledata_option(self):
+        self.toggleKey( 'ANALYSIS_SCALE_DATA' )

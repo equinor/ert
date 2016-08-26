@@ -52,6 +52,7 @@
 #define INVALID_TRUNCATION          -1
 #define DEFAULT_SUBSPACE_DIMENSION  INVALID_SUBSPACE_DIMENSION
 #define DEFAULT_USE_EE              false
+#define DEFAULT_ANALYSIS_SCALE_DATA true
 
 
 
@@ -85,6 +86,7 @@ struct std_enkf_data_struct {
   int       subspace_dimension;    // Controlled by config key: ENKF_NCOMP_KEY (-1: use Truncation instead)
   long      option_flags;
   bool      use_EE;
+  bool      analysis_scale_data;
 };
 
 static UTIL_SAFE_CAST_FUNCTION_CONST( std_enkf_data , STD_ENKF_TYPE_ID )
@@ -129,8 +131,9 @@ void * std_enkf_data_alloc( rng_type * rng) {
 
   std_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   std_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
-  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA;
+  data->option_flags = ANALYSIS_NEED_ED;
   data->use_EE = DEFAULT_USE_EE;
+  data->analysis_scale_data = DEFAULT_ANALYSIS_SCALE_DATA;
   return data;
 }
 
@@ -247,6 +250,8 @@ bool std_enkf_set_bool( void * arg , const char * var_name , bool value) {
 
     if (strcmp( var_name , USE_EE_KEY_) == 0)
       module_data->use_EE = value;
+    else if (strcmp( var_name , ANALYSIS_SCALE_DATA_KEY_) == 0)
+      module_data->analysis_scale_data = value;
     else
       name_recognized = false;
 
@@ -270,6 +275,8 @@ bool std_enkf_has_var( const void * arg, const char * var_name) {
     else if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0)
       return true;
     else if (strcmp(var_name , USE_EE_KEY_) == 0)
+      return true;
+    else if (strcmp(var_name , ANALYSIS_SCALE_DATA_KEY_) == 0)
       return true;
     else
       return false;
@@ -302,6 +309,8 @@ bool std_enkf_get_bool( const void * arg, const char * var_name) {
   {
     if (strcmp(var_name , USE_EE_KEY_) == 0)
       return module_data->use_EE;
+    if (strcmp(var_name , ANALYSIS_SCALE_DATA_KEY_) == 0)
+      return module_data->analysis_scale_data;
     else
       return false;
   }
