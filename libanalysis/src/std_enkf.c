@@ -250,8 +250,11 @@ bool std_enkf_set_bool( void * arg , const char * var_name , bool value) {
 
     if (strcmp( var_name , USE_EE_KEY_) == 0)
       module_data->use_EE = value;
-    else if (strcmp( var_name , ANALYSIS_SCALE_DATA_KEY_) == 0)
+    else if (strcmp( var_name , ANALYSIS_SCALE_DATA_KEY_) == 0) {
       module_data->analysis_scale_data = value;
+      // the next line is double book-keeping
+      module_data->option_flags &= value * ANALYSIS_SCALE_DATA;
+    }
     else
       name_recognized = false;
 
