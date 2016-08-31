@@ -301,7 +301,7 @@ def run_one(job):
             (return_pid , exit_status) = os.waitpid(pid , 0)
 
 
-    # Check sucess of job; look for both target_file and
+    # Check success of job; look for both target_file and
     # error_file. Both can be used to signal failure
     # independently.
 
