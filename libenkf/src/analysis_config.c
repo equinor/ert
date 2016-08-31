@@ -125,19 +125,13 @@ ANALYSIS_SELECT  ModuleName
 
 /*****************************************************************/
 
-bool analysis_config_have_enough_realisations( const analysis_config_type * config , int realisations) {
+bool analysis_config_have_enough_realisations( const analysis_config_type * config , int realisations, int ensemble_size) {
   if (config->min_realisations > 0) {
     /* A value > 0 has been set in the config; compare with this value. */
-    if (realisations >= config->min_realisations)
-        return true;
-      else
-        return false;
-  } else {
-    /* No value has been set in the config; just compare the input with zero. */
-    if (realisations > 0)
-      return true;
-    else
-      return false;
+    return realisations >= config->min_realisations;
+  } 
+  else {
+    return realisations >= ensemble_size;
   }
 }
 
@@ -173,12 +167,8 @@ void analysis_config_set_max_runtime( analysis_config_type * config, int max_run
   config->max_runtime = max_runtime;
 }
 
-void analysis_config_set_min_realisations( analysis_config_type * config , int min_realisations) {
+static void analysis_config_set_min_realisations( analysis_config_type * config , int min_realisations) {
   config->min_realisations = min_realisations;
-}
-
-int analysis_config_get_min_realisations( const analysis_config_type * config ) {
-  return config->min_realisations;
 }
 
 void analysis_config_set_alpha( analysis_config_type * config , double alpha) {
@@ -482,21 +472,26 @@ void analysis_config_init( analysis_config_type * analysis , const config_conten
     analysis_config_set_rerun_start( analysis , config_content_get_value_as_int( config , RERUN_START_KEY ));
 
   if (config_content_has_item( config , MIN_REALIZATIONS_KEY )) {
-    double percent                            = 0.0;
+    
     config_content_node_type * config_content = config_content_get_value_node(config , MIN_REALIZATIONS_KEY);
     char * min_realizations_string            = config_content_node_alloc_joined_string(config_content, " ");
-
+    
+    int num_realizations = config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
+    int min_realizations                      = DEFAULT_ANALYSIS_MIN_REALISATIONS;
+    double percent                            = 0.0;
     if (util_sscanf_percent(min_realizations_string, &percent)) {
-      int num_realizations = config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
-      int min_realizations = num_realizations * percent/100;
-      analysis_config_set_min_realisations(analysis, min_realizations);
+      
+      min_realizations = num_realizations * percent/100;
     } else {
-      int min_realizations = 0;
-      if (util_sscanf_int(min_realizations_string, &min_realizations))
-        analysis_config_set_min_realisations( analysis , min_realizations);
-      else
-        fprintf(stderr, "Method %s: failed to read integer value for MIN_REALIZATION_KEY\n", __func__);
+      bool min_realizations_int_exists = util_sscanf_int(min_realizations_string, &min_realizations);
+      if (!min_realizations_int_exists)
+        fprintf(stderr, "Method %s: failed to read integer value for MIN_REALIZATIONS_KEY\n", __func__);
     }
+    
+    if (min_realizations > num_realizations)
+      min_realizations = num_realizations;
+    
+    analysis_config_set_min_realisations(analysis, min_realizations);
     free(min_realizations_string);
   }
 

@@ -24,9 +24,11 @@ class AnalysisConfigTest(ExtendedTestCase):
 
     def test_keywords_for_monitoring_simulation_runtime(self):
         ac = AnalysisConfig()
-        ac.set_min_realisations( 100 )
-        self.assertEqual( 100 , ac.getMinRealisations() )
-        
+
+        # Unless the MIN_REALIZATIONS is set in config, one is required to have "all" realizations.
+        self.assertFalse(ac.haveEnoughRealisations(5, 10))
+        self.assertTrue(ac.haveEnoughRealisations(10, 10))
+
         ac.set_max_runtime( 50 )
         self.assertEqual( 50 , ac.get_max_runtime() )
 

@@ -79,20 +79,17 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
         for iteration, weight in enumerate(weights):
-            self.simulateAndPostProcess(target_case_format, active_realization_mask, iteration)
+            num_successful_realizations = self.simulateAndPostProcess(target_case_format, active_realization_mask, iteration)
 
             # We exit because the user has pressed 'Kill all simulations'.
             if self.userExitCalled( ):
                 self.setPhase(iteration_count + 2, "Simulations stopped")
                 return
 
-            # We exit because there are too few realisations left for updating.
-            if not self.checkSuccessCount( active_realization_mask ):
-                self.setPhase(iteration_count + 2, "Simulations failed")
-                return
+            # We exit if there are too few realisations left for updating.
+            self.checkHaveSufficientRealizations(num_successful_realizations)
 
             self.update(target_case_format, iteration, weights[iteration])
-
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.simulateAndPostProcess(target_case_format, active_realization_mask, iteration_count)
@@ -131,28 +128,16 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
-
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)
-        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iteration)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iteration)
         
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_SIMULATION)
 
-        return success
-    
+        return num_successful_realizations
 
-    # This is completely broken; the success_count will only count the
-    # number of realisations in the mask which was sent in to the
-    # runSimulations( ) method.
-    def checkSuccessCount(self, active_realization_mask):
-        min_realization_count = self.ert().analysisConfig().getMinRealisations()
-        success_count = active_realization_mask.count()
-
-        if success_count < min_realization_count:
-            return False
-        return True
 
     @staticmethod
     def normalizeWeights(weights):

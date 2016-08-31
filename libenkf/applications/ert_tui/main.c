@@ -78,7 +78,7 @@ void enkf_usage() {
   printf(" **                            E R T                                **\n");
   printf(" **                                                                 **\n");
   printf(" **-----------------------------------------------------------------**\n");
-  printf(" ** You have sucessfully started the ert program developed at       **\n");
+  printf(" ** You have successfully started the ert program developed at      **\n");
   printf(" ** Statoil. Before you can actually start using the program, you   **\n");
   printf(" ** must create a configuration file. When the configuration file   **\n");
   printf(" ** has been created, you can start the ert application with:       **\n");

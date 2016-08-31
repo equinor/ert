@@ -25,17 +25,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
 
-        if not success:
-            min_realization_count = self.ert().analysisConfig().getMinRealisations()
-            success_count = active_realization_mask.count()
-
-            if min_realization_count > success_count:
-                raise ErtRunError("Simulation failed! Number of successful realizations less than MIN_REALIZATIONS %d < %d" % (success_count, min_realization_count))
-            elif success_count == 0:
-                raise ErtRunError("Simulation failed! All realizations failed!")
-            #ignore and continue
+        self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )

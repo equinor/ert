@@ -36,10 +36,11 @@ class Simulations(ErtShellCollection):
 
         print("Ensemble Experiment started at: %s" % datetime.now().isoformat(sep=" "))
 
-        success = simulation_runner.runEnsembleExperiment()
+        num_successful_realizations = simulation_runner.runEnsembleExperiment()
 
+        success = self.ert().analysisConfig().haveEnoughRealisations(num_successful_realizations, self.ert().getEnsembleSize())
         if not success:
-            print("Error: Simulations failed!")
+            print("Error: Number of successful realizations is too low.\nYou can allow more failed realizations by setting / changing the MIN_REALIZATIONS configuration element!")
             return
 
         print("Ensemble Experiment post processing!")

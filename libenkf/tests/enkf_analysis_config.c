@@ -46,20 +46,22 @@ void test_create() {
 }
 
 
-void test_min_realizations_percent(const char * num_realizations_str, const char * min_realizations_str, int min_realizations){
-  test_work_area_type * work_area = test_work_area_alloc("test_min_realizations");
+void test_min_realizations(const char * num_realizations_str, const char * min_realizations_str, int min_realizations_expected_needed) {
+  test_work_area_type * work_area = test_work_area_alloc("test_min_realizations_string");
 
   {
     FILE * config_file_stream = util_mkdir_fopen("config_file", "w");
     test_assert_not_NULL(config_file_stream);
-    fprintf(config_file_stream, num_realizations_str);
-    fprintf(config_file_stream, min_realizations_str);
+
+    fputs(num_realizations_str, config_file_stream);
+    fputs(min_realizations_str, config_file_stream);
     fclose(config_file_stream);
 
     config_parser_type * c = config_alloc();
     config_schema_item_type * item = config_add_schema_item(c , NUM_REALIZATIONS_KEY , true );
     config_schema_item_set_default_type(item, CONFIG_INT);
     config_schema_item_set_argc_minmax( item , 1 , 1);
+
     item = config_add_schema_item(c , MIN_REALIZATIONS_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 2);
     {
@@ -68,9 +70,11 @@ void test_min_realizations_percent(const char * num_realizations_str, const char
 
       analysis_config_type * ac = create_analysis_config( );
       analysis_config_init(ac, content);
-
-      test_assert_int_equal( min_realizations , analysis_config_get_min_realisations( ac ) );
-
+      
+      int num_realizations = config_content_get_value_as_int(content, NUM_REALIZATIONS_KEY);
+      test_assert_false(analysis_config_have_enough_realisations(ac, min_realizations_expected_needed - 1, num_realizations ));
+      test_assert_true(analysis_config_have_enough_realisations(ac, min_realizations_expected_needed, num_realizations ));
+      test_assert_true(analysis_config_have_enough_realisations(ac, min_realizations_expected_needed + 1, num_realizations ));
       analysis_config_free( ac );
       config_content_free( content );
       config_free( c );
@@ -81,33 +85,14 @@ void test_min_realizations_percent(const char * num_realizations_str, const char
 }
 
 
-
-void test_min_realisations( ) {
+void test_have_enough_realisations_defaulted( ) {
   analysis_config_type * ac = create_analysis_config( );
-  test_assert_int_equal( 0 , analysis_config_get_min_realisations( ac ) );
-  analysis_config_set_min_realisations( ac , 26 );
-  test_assert_int_equal( 26 , analysis_config_get_min_realisations( ac ) );
-  analysis_config_free( ac );
-}
-
-
-void test_continue( ) {
-  analysis_config_type * ac = create_analysis_config( );
-
-  test_assert_true( analysis_config_have_enough_realisations( ac , 10 ));
-  test_assert_false( analysis_config_have_enough_realisations( ac , 0 ));
-
-  analysis_config_set_min_realisations( ac , 5 );
-  test_assert_true( analysis_config_have_enough_realisations( ac , 10 ));
-
-  analysis_config_set_min_realisations( ac , 15 );
-  test_assert_false( analysis_config_have_enough_realisations( ac , 10 ));
-
-  analysis_config_set_min_realisations( ac , 10 );
-  test_assert_true( analysis_config_have_enough_realisations( ac , 10 ));
-
-  analysis_config_set_min_realisations( ac , 0 );
-  test_assert_true( analysis_config_have_enough_realisations( ac , 10 ));
+  int ensemble_size = 20;
+  
+  // min_realizations not set, should then require 20 (ensemble_size)
+  test_assert_false( analysis_config_have_enough_realisations( ac , 0, ensemble_size ));
+  test_assert_false( analysis_config_have_enough_realisations( ac , 10, ensemble_size ));
+  test_assert_true( analysis_config_have_enough_realisations( ac , 20, ensemble_size ));
 
   analysis_config_free( ac );
 }
@@ -136,47 +121,76 @@ void test_stop_long_running( ) {
   analysis_config_free( ac );
 }
 
-int main(int argc , char ** argv) {
-  test_create();
-  test_min_realisations();
-  test_continue();
+void test_min_realizations_percent() {
+  {
+    const char * num_realizations_str = "NUM_REALIZATIONS 80\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 10%\n";
+    int min_realizations_expected_needed              = 8;
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed);
+  }
+  {
+    const char * num_realizations_str = "NUM_REALIZATIONS 8\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 50%\n";
+    int min_realizations_expected_needed              = 4;
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed );
+  }
+  {
+    const char * num_realizations_str = "NUM_REALIZATIONS 8\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 100%\n";
+    int min_realizations_expected_needed              = 8;
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed );
+  }
+  {
+    const char * num_realizations_str = "NUM_REALIZATIONS 8\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 10%\n";
+    int min_realizations_expected_needed              = 8; // Expect 8 because 10 % of 8 will be calculated to zero.
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed );
+  }
+}
 
+void test_min_realizations_number() {
   {
     const char * num_realizations_str = "NUM_REALIZATIONS 80\n";
-    const char * min_realizations_str = "MIN_REALIZATIONS 10%%\n";
-    int min_realizations              = 8;
-    test_min_realizations_percent(num_realizations_str, min_realizations_str, min_realizations);
+    const char * min_realizations_str = "MIN_REALIZATIONS 0\n";
+    int min_realizations_expected_needed              = 80;
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed);
   }
   {
-    const char * num_realizations_str = "NUM_REALIZATIONS 8\n";
-    const char * min_realizations_str = "MIN_REALIZATIONS 50%%\n";
-    int min_realizations              = 4;
-    test_min_realizations_percent(num_realizations_str, min_realizations_str, min_realizations);
-  }
-  {
-    const char * num_realizations_str = "NUM_REALIZATIONS 80\n";
-    const char * min_realizations_str = "MIN_REALIZATIONS 2\n";
-    int min_realizations              = 2;
-    test_min_realizations_percent(num_realizations_str, min_realizations_str, min_realizations);
-  }
-  {
-    const char * num_realizations_str = "NUM_REALIZATIONS 8\n";
-    const char * min_realizations_str = "MIN_REALIZATIONS 10%%\n";
-    int min_realizations              = 0;
-    test_min_realizations_percent(num_realizations_str, min_realizations_str, min_realizations);
+    const char * num_realizations_str = "NUM_REALIZATIONS 900\n";
+    int min_realizations_expected_needed              = 900; // Nothing specified, expect NUM_REALIZATIONS
+    test_min_realizations(num_realizations_str, "", min_realizations_expected_needed);
   }
   {
     const char * num_realizations_str = "NUM_REALIZATIONS 900\n";
     const char * min_realizations_str = "MIN_REALIZATIONS 10 \n";
-    int min_realizations              = 10;
-    test_min_realizations_percent(num_realizations_str, min_realizations_str, min_realizations);
+    int min_realizations_expected_needed              = 10;
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed);
   }
   {
-    const char * num_realizations_str = "NUM_REALIZATIONS 900\n";
-    int min_realizations              = 0;
-    test_min_realizations_percent(num_realizations_str, "", min_realizations);
+    const char * num_realizations_str = "NUM_REALIZATIONS 80\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 50\n";
+    int min_realizations_expected_needed              = 50;
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed);
   }
+  {
+    const char * num_realizations_str = "NUM_REALIZATIONS 80\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 80\n";
+    int min_realizations_expected_needed              = 80;
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed);
+  }
+  {
+    const char * num_realizations_str = "NUM_REALIZATIONS 80\n";
+    const char * min_realizations_str = "MIN_REALIZATIONS 100\n";
+    int min_realizations_expected_needed              = 80;
+    test_min_realizations(num_realizations_str, min_realizations_str, min_realizations_expected_needed);
+  }
+}
 
+int main(int argc , char ** argv) {
+  test_create();
+  test_have_enough_realisations_defaulted();
+  test_min_realizations_percent();
+  test_min_realizations_number();
   test_current_module_options();
   test_stop_long_running();
   exit(0);
