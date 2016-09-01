@@ -81,7 +81,7 @@ endif()
 if (MSVC)
     add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4996" )
 else()
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
 endif()
 
 
@@ -106,7 +106,7 @@ set( CMAKE_CXX_FLAGS_main ${CMAKE_CXX_FLAGS} )
 
 if (NOT ERT_WINDOWS)
   set( CMAKE_C_FLAGS "-std=gnu99" )
-  set( CMAKE_CXX_FLAGS "-std=c++0x")
+  set( CMAKE_CXX_FLAGS "-std=c+11")
 endif()
 
 set( ERT_EXTERNAL_UTIL_LIBS "" )
