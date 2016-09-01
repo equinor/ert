@@ -87,11 +87,9 @@ rng_type * rng_config_init_rng__(const rng_config_type * rng_config, rng_type * 
   const char * seed_store = rng_config_get_seed_store_file( rng_config );
 
   if (seed_load != NULL) {
-    if (util_file_exists( seed_load)) {
-      FILE * stream = util_fopen( seed_load , "r");
-      rng_fscanf_state( rng , stream );
-      fclose( stream );
-    } else {
+    if (util_file_exists( seed_load)) 
+      rng_load_state( rng , seed_load );
+    else {
       /*
          In the special case that seed_load == seed_store; we accept a
          seed_load argument pointing to a non-existant file.
@@ -107,11 +105,8 @@ rng_type * rng_config_init_rng__(const rng_config_type * rng_config, rng_type * 
     rng_init( rng , INIT_DEV_URANDOM );
 
 
-  if (seed_store != NULL) {
-    FILE * stream = util_mkdir_fopen( seed_store , "w");
-    rng_fprintf_state( rng , stream );
-    fclose( stream );
-  }
+  if (seed_store != NULL) 
+    rng_save_state( rng , seed_store );
 
   return rng;
 }
