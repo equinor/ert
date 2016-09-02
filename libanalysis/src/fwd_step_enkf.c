@@ -47,12 +47,9 @@
 #define NFOLDS_KEY                  "CV_NFOLDS"
 #define R2_LIMIT_KEY                "FWD_STEP_R2_LIMIT"
 #define DEFAULT_VERBOSE             false
-#define DEFAULT_CROSS_VALIDATION    true
-
 #define VERBOSE_KEY                 "VERBOSE"
-#define LOG_FILE_KEY                "LOG_FILE"
-#define CLEAR_LOG_KEY               "CLEAR_LOG"
-#define CROSS_VALIDATION_KEY        "CROSS_VALIDATION"
+#define  LOG_FILE_KEY               "LOG_FILE"
+#define  CLEAR_LOG_KEY              "CLEAR_LOG"
 
 struct fwd_step_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -63,7 +60,6 @@ struct fwd_step_enkf_data_struct {
   double                     r2_limit;
   bool                       verbose;
   fwd_step_log_type        * fwd_step_log;
-  bool                       cross_validation;
 };
 
 
@@ -83,10 +79,6 @@ void fwd_step_enkf_set_verbose( fwd_step_enkf_data_type * data , bool verbose ) 
   data->verbose = verbose;
 }
 
-void fwd_step_enkf_set_cross_validation( fwd_step_enkf_data_type * data , bool cross_validation ) {
-  data->cross_validation = cross_validation;
-}
-
 void * fwd_step_enkf_data_alloc( rng_type * rng ) {
   fwd_step_enkf_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , FWD_STEP_ENKF_TYPE_ID );
@@ -98,7 +90,6 @@ void * fwd_step_enkf_data_alloc( rng_type * rng ) {
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_SCALE_DATA;
   data->verbose      = DEFAULT_VERBOSE;
   data->fwd_step_log = fwd_step_log_alloc();
-  data->cross_validation = DEFAULT_CROSS_VALIDATION;
   return data;
 }
 
@@ -258,7 +249,6 @@ void fwd_step_enkf_updateA(void * module_data ,
     double r2_limit = fwd_step_data->r2_limit;
     bool verbose    = fwd_step_data->verbose;
     int num_kw     =  module_data_block_vector_get_size(data_block_vector);
-    bool cross_validation = fwd_step_data->cross_validation;
 
 
     if ( ens_size <= nfolds)
@@ -310,7 +300,7 @@ void fwd_step_enkf_updateA(void * module_data ,
 
           stepwise_set_Y0( stepwise_data , y );
 
-          stepwise_estimate(stepwise_data , r2_limit , nfolds, cross_validation );
+          stepwise_estimate(stepwise_data , r2_limit , nfolds );
 
           /*manipulate A directly*/
           for (int j = 0; j < ens_size; j++) {
@@ -398,8 +388,6 @@ bool fwd_step_enkf_set_bool( void * arg , const char * var_name , bool value) {
       fwd_step_enkf_set_verbose( module_data , value);
     else if (strcmp( var_name , CLEAR_LOG_KEY) == 0)
       fwd_step_log_set_clear_log( module_data->fwd_step_log , value );
-    else if (strcmp( var_name , CROSS_VALIDATION_KEY) == 0)
-      fwd_step_enkf_set_cross_validation( module_data , value );
     else
       name_recognized = false;
 
@@ -440,8 +428,6 @@ bool fwd_step_enkf_has_var( const void * arg, const char * var_name) {
       return true;
     else if (strcmp(var_name , CLEAR_LOG_KEY) == 0)
       return true;
-    else if (strcmp(var_name , CROSS_VALIDATION_KEY ) == 0)
-      return true;
     else
       return false;
   }
@@ -474,8 +460,6 @@ bool fwd_step_enkf_get_bool( const void * arg, const char * var_name) {
       return module_data->verbose;
      else if (strcmp(var_name , CLEAR_LOG_KEY) == 0)
       return fwd_step_log_get_clear_log( module_data->fwd_step_log );
-    if (strcmp(var_name , CROSS_VALIDATION_KEY) == 0)
-      return module_data->cross_validation;
     else
       return false;
   }
