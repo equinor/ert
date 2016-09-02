@@ -109,7 +109,7 @@ class EnKFMain(BaseCClass):
     def getLocalConfig(self):
         """ @rtype: LocalConfig """
         config = EnKFMain.cNamespace().get_local_config(self).setParent(self)
-        config.initAttributes( self.ensembleConfig() , self.getObservations() , self.eclConfig().get_grid() )
+        config.initAttributes( self.ensembleConfig() , self.getObservations() , self.eclConfig().getGrid() )
         return config
 
 

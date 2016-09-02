@@ -26,6 +26,8 @@ extern "C" {
 #include <ert/util/hash.h>
 #include <ert/util/stringlist.h>
 
+#include <ert/analysis/analysis_module.h>
+
 #include <ert/enkf/active_list.h>
 #include <ert/enkf/local_dataset.h>
 #include <ert/enkf/local_obsdata.h>
@@ -33,7 +35,7 @@ extern "C" {
 
 typedef struct local_ministep_struct local_ministep_type;
 
-local_ministep_type * local_ministep_alloc(const char * name);
+local_ministep_type * local_ministep_alloc(const char * name, analysis_module_type* analysis_module);
 void                  local_ministep_free(local_ministep_type * ministep);
 void                  local_ministep_free__(void * arg);
 void                  local_ministep_add_obs(local_ministep_type * ministep, const char * obs_key);
@@ -56,6 +58,8 @@ local_obsdata_type  * local_ministep_get_obsdata(const local_ministep_type * min
 local_dataset_type  * local_ministep_get_dataset( const local_ministep_type * ministep, const char * dataset_name);
 bool                  local_ministep_has_dataset( const local_ministep_type * ministep, const char * dataset_name);
 int                   local_ministep_get_num_dataset( const local_ministep_type * ministep );
+bool                  local_ministep_has_analysis_module( const local_ministep_type * ministep );
+analysis_module_type* local_ministep_get_analysis_module( const local_ministep_type * ministep );
 
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);

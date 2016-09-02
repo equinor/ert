@@ -16,6 +16,7 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, LocalUpdateStep
 from ert.enkf.local_ministep import LocalMinistep
+from ert.analysis import AnalysisModule
 
 
 class LocalConfig(BaseCClass):
@@ -70,10 +71,12 @@ class LocalConfig(BaseCClass):
         assert isinstance(filename, str)
         LocalConfig.cNamespace().add_config_file(self, filename)
                          
-    def createMinistep(self, mini_step_key):
+    def createMinistep(self, mini_step_key, analysis_module = None):
         """ @rtype: Ministep """
         assert isinstance(mini_step_key, str)
-        LocalConfig.cNamespace().create_ministep(self, mini_step_key)         
+        if analysis_module:
+            assert isinstance(analysis_module, AnalysisModule)
+        LocalConfig.cNamespace().create_ministep(self, mini_step_key, analysis_module)         
         return self.getMinistep(mini_step_key)  
     
     def createObsdata(self, obsdata_key):
@@ -170,7 +173,7 @@ LocalConfig.cNamespace().add_config_file                 = cwrapper.prototype("v
 LocalConfig.cNamespace().get_updatestep                  = cwrapper.prototype("local_updatestep_ref local_config_get_updatestep( local_config )")
                                                          
 LocalConfig.cNamespace().get_ministep                    = cwrapper.prototype("local_ministep_ref local_config_get_ministep( local_config, char*)")
-LocalConfig.cNamespace().create_ministep                 = cwrapper.prototype("void local_config_alloc_ministep( local_config, char*)")
+LocalConfig.cNamespace().create_ministep                 = cwrapper.prototype("void local_config_alloc_ministep( local_config, char*, analysis_module)")
 LocalConfig.cNamespace().attach_ministep                 = cwrapper.prototype("void local_updatestep_add_ministep( local_updatestep, local_ministep)")
                                                          
 LocalConfig.cNamespace().get_obsdata                     = cwrapper.prototype("local_obsdata_ref local_config_get_obsdata( local_config, char*)")
