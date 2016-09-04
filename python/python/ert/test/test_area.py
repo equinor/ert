@@ -32,7 +32,8 @@ class TestArea(BaseCClass):
     _get_cwd                   = UtilPrototype("char* test_work_area_get_cwd( test_area )")
     _get_original_cwd          = UtilPrototype("char* test_work_area_get_original_cwd( test_area )")
     _set_store                 = UtilPrototype("void test_work_area_set_store( test_area , bool)")
-
+    _sync                      = UtilPrototype("void test_work_area_sync( test_area )")
+    
     def __init__(self, test_name, prefix = None , store_area=False , c_ptr = None):
 
         if c_ptr is None:
@@ -124,6 +125,9 @@ class TestArea(BaseCClass):
         return os.path.join( self.get_cwd() , path )
 
 
+    def sync(self):
+        return self._sync( )
+    
     
 
 class TestAreaContext(object):
