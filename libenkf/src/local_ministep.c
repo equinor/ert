@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
@@ -55,6 +56,7 @@ struct local_ministep_struct {
   char              * name;             /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
   hash_type         * datasets;         /* A hash table of local_dataset_type instances - indexed by the name of the datasets. */
   local_obsdata_type * observations;
+  analysis_module_type * analysis_module;
 };
 
 
@@ -66,7 +68,7 @@ struct local_ministep_struct {
 UTIL_SAFE_CAST_FUNCTION(local_ministep , LOCAL_MINISTEP_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(local_ministep , LOCAL_MINISTEP_TYPE_ID)
 
-local_ministep_type * local_ministep_alloc(const char * name) {
+local_ministep_type * local_ministep_alloc(const char * name, analysis_module_type* analysis_module) {
   local_ministep_type * ministep = util_malloc( sizeof * ministep );
 
   ministep->name         = util_alloc_string_copy( name );
@@ -79,6 +81,7 @@ local_ministep_type * local_ministep_alloc(const char * name) {
 
 
   ministep->datasets     = hash_alloc();
+  ministep->analysis_module = analysis_module;
   UTIL_TYPE_ID_INIT( ministep , LOCAL_MINISTEP_TYPE_ID);
 
   return ministep;
@@ -236,6 +239,14 @@ bool local_ministep_has_data_key(const local_ministep_type * ministep , const ch
     hash_iter_free( dataset_iter );
   }
   return has_key;
+}
+
+bool local_ministep_has_analysis_module( const local_ministep_type * ministep){
+  return ministep->analysis_module != NULL;
+}
+
+analysis_module_type* local_ministep_get_analysis_module( const local_ministep_type * ministep ){
+  return ministep->analysis_module;
 }
 
 /*****************************************************************/

@@ -572,8 +572,8 @@ void local_config_free(local_config_type * local_config) {
 
 
 
-local_ministep_type * local_config_alloc_ministep( local_config_type * local_config , const char * key) {
-  local_ministep_type * ministep = local_ministep_alloc( key );
+local_ministep_type * local_config_alloc_ministep( local_config_type * local_config , const char * key, analysis_module_type* analysis_module) {
+  local_ministep_type * ministep = local_ministep_alloc( key, analysis_module );
   hash_insert_hash_owned_ref( local_config->ministep_storage , key , ministep , local_ministep_free__);
   return ministep;
 }
@@ -949,7 +949,7 @@ static void local_config_CREATE_UPDATESTEP( local_config_type * config , local_c
 
 static void local_config_CREATE_MINISTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
   char * mini_name = read_alloc_string( stream , binary );
-  local_config_alloc_ministep( config , mini_name );
+  local_config_alloc_ministep( config , mini_name, NULL );
   free( mini_name );
 }
 

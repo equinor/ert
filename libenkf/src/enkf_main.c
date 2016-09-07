@@ -997,7 +997,6 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   const int cpu_threads       = 4;
   const int matrix_start_size = 250000;
   thread_pool_type * tp       = thread_pool_alloc( cpu_threads , false );
-  analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
   int active_ens_size   = meas_data_get_active_ens_size( forecast );
   int active_size       = obs_data_get_active_size( obs_data );
   matrix_type * X       = matrix_alloc( active_ens_size , active_ens_size );
@@ -1010,6 +1009,9 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
 
+  analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
+  if ( local_ministep_has_analysis_module (ministep))
+    module = local_ministep_get_analysis_module (ministep);
 
   assert_matrix_size(X , "X" , active_ens_size , active_ens_size);
   assert_matrix_size(S , "S" , active_size , active_ens_size);
@@ -1884,7 +1886,7 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
   local_config_clear( local_config );
   {
     local_updatestep_type * default_step = local_config_get_updatestep(local_config);
-    local_ministep_type * ministep = local_config_alloc_ministep( local_config , "ALL_ACTIVE");
+    local_ministep_type * ministep = local_config_alloc_ministep( local_config , "ALL_ACTIVE", NULL);
     local_obsdata_type * obsdata = local_config_alloc_obsdata(local_config, "ALL_OBS");
     local_dataset_type * all_active_dataset = local_config_alloc_dataset(local_config, "ALL_DATA");
 
@@ -1908,8 +1910,6 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
       int i;
       for (i = 0; i < stringlist_get_size( keylist ); i++) {
         const char * key = stringlist_iget( keylist , i);
-        const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
-        enkf_var_type var_type = enkf_config_node_get_var_type( config_node );
         bool add_node = true;
 
         /*
