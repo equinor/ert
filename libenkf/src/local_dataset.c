@@ -116,22 +116,6 @@ stringlist_type * local_dataset_alloc_keys( const local_dataset_type * dataset )
   return hash_alloc_stringlist( dataset->nodes );
 }
 
-
-void local_dataset_fprintf( const local_dataset_type * dataset , FILE * stream) {
-  fprintf(stream , "\n%s %s\n", local_config_get_cmd_string( CREATE_DATASET ), local_dataset_get_name(dataset));
- {
-  hash_iter_type * data_iter = hash_iter_alloc( dataset->nodes );
-  while (!hash_iter_is_complete( data_iter )) {
-    const char * data_key          = hash_iter_get_next_key( data_iter );
-    active_list_type * active_list = hash_get( dataset->nodes , data_key );
-
-    fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ADD_DATA ) , dataset->name , data_key );
-    active_list_fprintf( active_list , local_dataset_get_name(dataset) , data_key , stream );
-  }
-  hash_iter_free( data_iter );
- }
-}
-
 void local_dataset_summary_fprintf( const local_dataset_type * dataset , FILE * stream) {
 {
   hash_iter_type * data_iter = hash_iter_alloc( dataset->nodes );

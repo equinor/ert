@@ -2740,21 +2740,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
 	enkf_main_resize_ensemble( enkf_main  , config_content_iget_as_int(content , NUM_REALIZATIONS_KEY , 0 , 0) );
 
 	/*****************************************************************/
-	/*
-	  Installing the local_config object. Observe that the
-	  ALL_ACTIVE local_config configuration is ALWAYS loaded. But
-	  if you have created a personal local config that will be
-	  loaded on top.
-	*/
-        /* Install custom local_config - if present.*/
-        {
-          int i;
-          for (i = 0; i < config_content_get_occurences( content , LOCAL_CONFIG_KEY); i++) {
-            const stringlist_type * files = config_content_iget_stringlist_ref(content , LOCAL_CONFIG_KEY , i);
-            for (int j=0; j < stringlist_get_size( files ); j++)
-              local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
-          }
-        }
 
         /* Loading observations */
         enkf_main_alloc_obs(enkf_main);

@@ -152,19 +152,6 @@ active_list_type * local_obsdata_get_node_active_list(const local_obsdata_type *
   return active_list;
 }
 
-void local_obsdata_fprintf( const local_obsdata_type * obsdata , FILE * stream ) {
-fprintf(stream , "\n%s %s\n", local_config_get_cmd_string( CREATE_OBSSET ) , local_obsdata_get_name(obsdata));
-  {
-    int i;
-    for (i=0; i < local_obsdata_get_size( obsdata ); i++ ) {
-     local_obsdata_node_type * node = local_obsdata_iget( obsdata  , i );
-     const char * obs_key =  local_obsdata_node_get_key(node);
-
-     fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ADD_OBS ) , local_obsdata_get_name(obsdata) , obs_key );
-    }
-  }
-}
-
 void local_obsdata_summary_fprintf( const local_obsdata_type * obsdata , FILE * stream) {
 
   fprintf(stream , "LOCAL OBSDATA NAME:%s,LOCAL OBSDATA SIZE:%d,", local_obsdata_get_name(obsdata), local_obsdata_get_size(obsdata) );
