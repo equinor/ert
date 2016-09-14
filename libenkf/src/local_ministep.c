@@ -249,28 +249,6 @@ analysis_module_type* local_ministep_get_analysis_module( const local_ministep_t
   return ministep->analysis_module;
 }
 
-/*****************************************************************/
-
-void local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream ) {
-  fprintf(stream , "\n%s %s\n", local_config_get_cmd_string( CREATE_MINISTEP ), ministep->name);
-  {
-    /* Dumping all the DATASET instances. */
-    {
-     hash_iter_type * dataset_iter = hash_iter_alloc( ministep->datasets );
-     while (!hash_iter_is_complete( dataset_iter )) {
-       const local_dataset_type * dataset = hash_iter_get_next_value( dataset_iter );
-       fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_DATASET ) , ministep->name , local_dataset_get_name( dataset ) );
-     }
-     hash_iter_free( dataset_iter );
-    }
-
-    /* Only one OBSDATA */
-   local_obsdata_type * obsdata = local_ministep_get_obsdata(ministep);
-   local_obsdata_fprintf( obsdata , stream );
-   fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_OBSSET ) , ministep->name, local_obsdata_get_name(obsdata));
-  }
-}
-
 void local_ministep_summary_fprintf( const local_ministep_type * ministep , FILE * stream) {
 
   fprintf(stream , "MINISTEP:%s,", ministep->name);

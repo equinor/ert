@@ -204,23 +204,6 @@ bool active_list_iget( const active_list_type * active_list , int index ) {
     return int_vector_iget( active_list->index_list , index );
 }
 
-
-/*****************************************************************/
-
-void active_list_fprintf( const active_list_type * active_list , const char *dataset_key, const char *key , FILE * stream ) {
-  if (active_list->mode == PARTLY_ACTIVE) {
-    int i;
-    fprintf(stream , "%s  %s  %s " , local_config_get_cmd_string( ACTIVE_LIST_ADD_DATA_INDEX ) , dataset_key, key);
-
-    for (i = 0; i < int_vector_size( active_list->index_list ); i++) {
-      fprintf(stream , "  %6d " , int_vector_iget( active_list->index_list , i));
-      if ((i % 10) == 9)
-        fprintf(stream , "\n");
-    }
-    fprintf(stream , "\n");
-  } /* else: if mode == ALL_ACTIVE nothing is written */
-}
-
 void active_list_summary_fprintf( const active_list_type * active_list , const char *dataset_key, const char *key , FILE * stream) {
   int number_of_active = int_vector_size( active_list->index_list );
   if (active_list->mode == ALL_ACTIVE){

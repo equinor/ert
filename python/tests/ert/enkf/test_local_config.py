@@ -43,10 +43,6 @@ class LocalConfigTest(ExtendedTestCase):
             local_config.writeSummaryFile( local_config_file_summary )
             self.assertTrue( os.path.isfile( local_config_file_summary ))
 
-            local_config_file = "local_config.txt"
-            local_config.writeLocalConfigFile( local_config_file )
-            self.assertTrue( os.path.isfile( local_config_file ))
-
             self.clear(local_config)
 
             grid = local_config.getGrid()

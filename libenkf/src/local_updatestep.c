@@ -116,16 +116,3 @@ const char * local_updatestep_get_name( const local_updatestep_type * updatestep
 }
 
 
-/*****************************************************************/
-
-
-void local_updatestep_fprintf( const local_updatestep_type * updatestep , FILE * stream) {
-  fprintf(stream , "\n%s %s\n" , local_config_get_cmd_string( CREATE_UPDATESTEP ) , updatestep->name );
-  {
-    int i;
-    for (i=0; i < vector_get_size( updatestep->ministep ); i++) {
-      const local_ministep_type * ministep = vector_iget_const( updatestep->ministep , i );
-      fprintf(stream , "%s %s %s\n",local_config_get_cmd_string( ATTACH_MINISTEP ) , updatestep->name , local_ministep_get_name( ministep ));
-    }
-  }
-}

@@ -59,18 +59,6 @@ class LocalConfig(BaseCClass):
     def clear(self):
         LocalConfig.cNamespace().clear(self)
 
-        
-    def getConfigFiles(self):
-        """ @rtype: StringList """
-        return LocalConfig.cNamespace().get_config_files(self).setParent(self)
-
-    def clearConfigFiles(self):
-        LocalConfig.cNamespace().clear_config_files(self)
-
-    def addConfigFile(self, filename):
-        assert isinstance(filename, str)
-        LocalConfig.cNamespace().add_config_file(self, filename)
-                         
     def createMinistep(self, mini_step_key, analysis_module = None):
         """ @rtype: Ministep """
         assert isinstance(mini_step_key, str)
@@ -147,11 +135,7 @@ class LocalConfig(BaseCClass):
         assert isinstance(update_step, LocalUpdateStep)
         LocalConfig.cNamespace().attach_ministep(update_step, mini_step)
         
-    def writeLocalConfigFile(self, filename):                                                                                                                  
-        assert isinstance(filename, str)                                                                                                                       
-        LocalConfig.cNamespace().write_local_config_file(self, filename)                                                                                       
-                                                                                                                                                               
-                                                                                                                                                               
+
     def writeSummaryFile(self, filename):                                                                                                                          
         """                                                                                                                                                    
         Writes a summary of the local config object                                                                                                            
@@ -167,27 +151,19 @@ cwrapper.registerObjectType("local_config", LocalConfig)
 
 LocalConfig.cNamespace().free                            = cwrapper.prototype("void local_config_free( local_config )")
 LocalConfig.cNamespace().clear                           = cwrapper.prototype("void local_config_clear( local_config )")
-LocalConfig.cNamespace().get_config_files                = cwrapper.prototype("stringlist_ref local_config_get_config_files( local_config )")
-LocalConfig.cNamespace().clear_config_files              = cwrapper.prototype("void local_config_clear_config_files( local_config )")
-LocalConfig.cNamespace().add_config_file                 = cwrapper.prototype("void local_config_add_config_file( local_config , char*)")
 LocalConfig.cNamespace().get_updatestep                  = cwrapper.prototype("local_updatestep_ref local_config_get_updatestep( local_config )")
-                                                         
 LocalConfig.cNamespace().get_ministep                    = cwrapper.prototype("local_ministep_ref local_config_get_ministep( local_config, char*)")
 LocalConfig.cNamespace().create_ministep                 = cwrapper.prototype("void local_config_alloc_ministep( local_config, char*, analysis_module)")
 LocalConfig.cNamespace().attach_ministep                 = cwrapper.prototype("void local_updatestep_add_ministep( local_updatestep, local_ministep)")
-                                                         
 LocalConfig.cNamespace().get_obsdata                     = cwrapper.prototype("local_obsdata_ref local_config_get_obsdata( local_config, char*)")
 LocalConfig.cNamespace().create_obsdata                  = cwrapper.prototype("void local_config_alloc_obsdata( local_config, char*)")
 LocalConfig.cNamespace().copy_obsdata                    = cwrapper.prototype("local_obsdata_ref local_config_alloc_obsdata_copy( local_config, char*, char*)")
 LocalConfig.cNamespace().has_obsdata                     = cwrapper.prototype("bool local_config_has_obsdata( local_config, char*)")
-
-                                                         
 LocalConfig.cNamespace().get_dataset                     = cwrapper.prototype("local_dataset_ref local_config_get_dataset( local_config, char*)")
 LocalConfig.cNamespace().create_dataset                  = cwrapper.prototype("void local_config_alloc_dataset( local_config, char*)")
 LocalConfig.cNamespace().copy_dataset                    = cwrapper.prototype("local_dataset_ref local_config_alloc_dataset_copy( local_config, char*, char*)")
 LocalConfig.cNamespace().has_dataset                     = cwrapper.prototype("bool local_config_has_dataset( local_config, char*)")
 
-LocalConfig.cNamespace().write_local_config_file         = cwrapper.prototype("void local_config_fprintf( local_config, char*)")
 LocalConfig.cNamespace().write_local_config_summary_file = cwrapper.prototype("void local_config_summary_fprintf( local_config, char*)")
 
 
