@@ -8,12 +8,7 @@ General overview
 ----------------
 
 To create a configuration for localization you must "program" your own
-configuration file, this file is then loaded from the ert/enkf proper
-application. The 'commands' available in the local_config programming
-language are listed below. 
-
-An alterative way to 'program' the local config commands is by writing a Python script, and invoking it from a workflow.
-Not all the commands available from the local config programming are supported for Python scripting. 
+local config commands by writing a Python script, and invoking it from a workflow.
 
 
 **Local config python script example:**
@@ -74,75 +69,55 @@ Not all the commands available from the local config programming are supported f
          # Then attach the ministep to the update step
          updatestep.attachMinistep(ministep)
  
-         # Write a .csv file for debugging. The generated file can be imported into Excel for a better tabulation of the setup
+         # Write a .csv file for debugging. The generated file can be imported into Excel for better tabulation of the setup
          local_config.writeSummaryFile("tmp/summary_local_config.csv")
-        
 
+===========================================================================================   ==============================================================================================================================================
+ERT script function                                                                           Purpose
+===========================================================================================   ==============================================================================================================================================
+:ref:`getObservations                  <all_obs>`                                             Get the observations currently imported, use to filter the observations to localize
+:ref:`getGrid                          <ert_grid>`                                            Get the underlying grid use to define active cells in a field
+:ref:`getUpdatestep                    <create_updatestep>`                                   Creates and gets default updatestep
+:ref:`createMinistep                   <create_ministep>`                                     Creates ministep
+:ref:`createDataset                    <create_dataset>`                                      Creates dataset
+:ref:`copyDataset                      <copy_dataset>`                                        Deep copy of dataset
+:ref:`createObsdata                    <create_obsset>`                                       Creates observation set
+:ref:`copyObsdata                      <copy_obsset>`                                         Deep copy of observation set
+:ref:`attachMinistep                   <attach_ministep>`                                     Attaches ministep to update step
+:ref:`attachDataset                    <attach_dataset>`                                      Attaches dataset to mini step
+:ref:`attachObsset                     <attach_obsset>`                                       Attaches observation set to mini step
+:ref:`addNode                          <add_data>`                                            Adds data node to dataset
+:ref:`del (data)                       <del_data>`                                            Deletes observation node from dataset
+:ref:`addNode, addNodeAndRange         <add_obs>`                                             Adds observation node to observation set for all times or in a given time range
+:ref:`del (obs)                        <del_obs>`                                             Deletes observation node from observation set
+:ref:`clear                            <dataset_del_all_data>`                                Delete all the data keys from a dataset
+:ref:`addActiveIndex (data)            <active_list_add_data_index>`                          Adds several data indices to the list of active indices
+:ref:`addActiveIndex (obs)             <active_list_add_obs_index>`                           Adds several observation indices to the list of active indices
+:ref:`addField                         <add_field>`                                           Adds field node to dataset
+:ref:`EclGrid, EclInitFile             <load_file>`                                           Loads eclipse file in restart format
+:ref:`EclRegion                        <create_eclregion>`                                    Creates a new region for use when defining active regions for fields
+:ref:`select_active                    <eclregion_select_all>`                                Selects or deselects cells in a region
+:ref:`select_equal                     <eclregion_select_value_equal>`                        Selects or deselects cells in a region equal to given value
+:ref:`select_less                      <eclregion_select_value_less>`                         Selects or deselects cells in a region equal less than a given value
+:ref:`select_more                      <eclregion_select_value_more>`                         Selects or deselects cells in a region equal greater than a given value
+:ref:`select_box                       <eclregion_select_box>`                                Selects or deselects cells in a box
+:ref:`select_islice, _jslice,_kslice   <eclregion_select_slice>`                              Selects or deselects cells in a slice
+:ref:`select_below_plane               <eclregion_select_plane>`                              Selects or deselects cells in a half space defined by a plane
+:ref:`select_inside_polygon            <eclregion_select_in_polygon>`                         Selects or deselects cells in region inside polygon
+:ref:`Example create polygon           <create_polygon>`                                      Creates a geo-polygon based on coordinate list
+:ref:`Example load polygon             <load_polygon>`                                        Loads polygon in Irap RMS format from file
 
+===========================================================================================   ==============================================================================================================================================
 
-
-List of keywords  
-----------------
-===========================================================================================  ===========================================================   ==============================================================================================================================================
-Keyword name                                                                                 ERT script function                                           Purpose
-===========================================================================================  ===========================================================   ==============================================================================================================================================
-:ref:`CREATE_UPDATESTEP                <create_updatestep>`                                  getUpdatestep                                                 Creates/gets default updatestep
-:ref:`CREATE_MINISTEP                  <create_ministep>`                                    createMinistep                                                Creates ministep
-:ref:`CREATE_DATASET                   <create_dataset>`                                     createDataset                                                 Creates dataset
-:ref:`COPY_DATASET                     <copy_dataset>`                                       copyDataset                                                   Deep copy of dataset
-:ref:`CREATE_OBSSET                    <create_obsset>`                                      createObsdata                                                 Creates observation set
-:ref:`COPY_OBSSET                      <copy_obsset>`                                        copyObsdata                                                   Deep copy of observation set
-:ref:`ATTACH_MINISTEP                  <attach_ministep>`                                    attachMinistep                                                Attaches ministep to update step 
-:ref:`ATTACH_DATASET                   <attach_dataset>`                                     attachDataset                                                 Attaches dataset to mini step
-:ref:`ATTACH_OBSSET                    <attach_obsset>`                                      attachObsset                                                  Attaches observation set to mini step
-:ref:`ADD_DATA                         <add_data>`                                           addNode                                                       Adds data node to dataset
-:ref:`DEL_DATA                         <del_data>`                                           del                                                           Deletes observation node from dataset
-:ref:`ADD_OBS                          <add_obs>`                                            addNode, addNodeAndRange                                      Adds observation node to observation set for all times or in a given time range
-:ref:`DEL_OBS                          <del_obs>`                                            del                                                           Deletes observation node from observation set
-:ref:`DATASET_DEL_ALL_DATA             <dataset_del_all_data>`                               clear                                                         Delete all the data keys from a dataset
-:ref:`ACTIVE_LIST_ADD_DATA_INDEX       <active_list_add_data_index>`                         addActiveIndex                                                Adds data index to the list of active indices
-:ref:`ACTIVE_LIST_ADD_OBS_INDEX        <active_list_add_obs_index>`                          addActiveIndex                                                Adds observation index to the list of active indices  
-:ref:`ACTIVE_LIST_ADD_MANY_DATA_INDEX  <active_list_add_many_data_index>`                    addActiveIndex                                                Adds several data indices to the list of active indices
-:ref:`ACTIVE_LIST_ADD_MANY_OBS_INDEX   <active_list_add_many_obs_index>`                     addActiveIndex                                                Adds several observation indinces to the list of active indices
-:ref:`ADD_FIELD                        <add_field>`                                          addField                                                      Adds field node to dataset
-:ref:`LOAD_FILE                        <load_file>`                                          EclGrid, EclInitFile,                                         Loads eclipse file in restart format
-:ref:`CREATE_ECLREGION                 <create_eclregion>`                                   EclRegion                                                     Creates a new region for use when defining active regions for fields
-:ref:`ECLREGION_SELECT_ALL             <eclregion_select_all>`                               select_active                                                 Selects or deselects cells in a region
-:ref:`ECLREGION_SELECT_VALUE_EQUAL     <eclregion_select_value_equal>`                       select_equal                                                  Selects or deselects cells in a region equal to given value
-:ref:`ECLREGION_SELECT_VALUE_LESS      <eclregion_select_value_less>`                        select_less                                                   Selects or deselects cells in a region equal less than a given value
-:ref:`ECLREGION_SELECT_VALUE_MORE      <eclregion_select_value_more>`                        select_more                                                   Selects or deselects cells in a region equal greater than a given value
-:ref:`ECLREGION_SELECT_BOX             <eclregion_select_box>`                               select_box                                                    Selects or deselects cells in a box
-:ref:`ECLREGION_SELECT_SLICE           <eclregion_select_slice>`                             select_islice, select_jslice, select_kslice                   Selects or deselects cells in a slice
-:ref:`ECLREGION_SELECT_PLANE           <eclregion_select_plane>`                             select_below_plane                                            Selects or deselects cells in a half space defined by a plane
-:ref:`ECLREGION_SELECT_IN_POLYGON      <eclregion_select_in_polygon>`                        select_inside_polygon                                         Selects or deselects cells in region inside polygon
-:ref:`CREATE_POLYGON                   <create_polygon>`                                     :ref:`Example <create_polygon>`                               Creates a geo-polygon based on coordinate list
-:ref:`LOAD_POLYGON                     <load_polygon>`                                       :ref:`Example <load_polygon>`                                 Loads polygon in Irap RMS format from file
-:ref:`LOAD_SURFACE                     <load_surface>`                                                                                                     Loads surface in Irap RMS format from file
-:ref:`CREATE_SURFACE_REGION            <create_surface_region>`                                                                                            Creates region to select or deselect parts of a surface
-:ref:`SURFACE_REGION_SELECT_IN_POLYGON <surface_region_select_in_polygon>`                                                                                 Creates region to select or deselect parts of a surface
-:ref:`SURFACE_REGION_SELECT_LINE       <surface_region_select_line>`                                                                                       Selects or deselects parts of a surface in half space define by a line
-:ref:`ADD_DATA_SURFACE                 <add_data_surface>`                                                                                                 Adds surface node to dataset with elements in a surface region
-|                                                                                            getObservations                                               Get the observations currently imported. Use to filter the observations to localize.
-|                                                                                            getGrid                                                       Get the underlying grid. Use to define active cells in a field.
-===========================================================================================  ===========================================================   ==============================================================================================================================================
 
 .. ###########################################################################################################
 
 .. _create_updatestep:
-.. topic:: CREATE_UPDATESTEP 
+.. topic:: getUpdatestep
 
-  | This function will create a updatestep with the name 'NAME_OF_UPDATESTEP'. 
-  | Observe that you must add (at least) one ministep to the updatestep, otherwise it will not be able to do anything.
-  | Currently supports only one update step. It is kept here due to historical reasons when it was possible to have several update steps.
+  | This function will create the default updatestep. 
+  | Observe that you must get, otherwise it will not be able to do anything.
   
-  *Example:*
-
-  ::
-
-    -- Updatestep     
-    CREATE_UPDATESTEP DEFAULT
-
-   
   *Example:*
 
   ::
@@ -151,41 +126,62 @@ Keyword name                                                                    
 
 .. ###########################################################################################################
 
+.. _all_obs:
+.. topic:: getObservations
 
-.. _create_ministep:
-.. topic:: CREATE_MINISTEP 
-
-  | This function will create a new ministep with the name 'NAME_OF_MINISTEP'. A given OBSSET can be attached to a given ministep.The ministep is then ready for adding data. Before the ministep can be used you must attach it to an updatestep with the ATTACH_MINISTEP command 
+  | This function will retrieve ERT's observations
   
   *Example:*
 
   ::
+  
+    all_obs = local_config.getObservations()
 
-    -- Ministep in updatestep 
-    CREATE_MINISTEP MINISTEP
+.. ###########################################################################################################
 
+.. _ert_grid:
+.. topic:: getGrid
+
+  | This function will retrieve ERT's grid
+  
+  *Example:*
+
+  ::
+  
+    grid = local_config.getGrid()
+
+.. ###########################################################################################################
+
+
+.. _create_ministep:
+.. topic:: createMinistep 
+
+  | This function will create a new ministep with a given name and an optional analysis module. The default analysis module for this ministep is ERT's current analysis module.
+  | A given observation set can be attached to a given ministep with attachObsset.The ministep is then ready for adding data. Before the ministep can be used you must attach it to an updatestep with the attachMinistep command 
+  
   *Example:*
 
   ::
   
     ministep = local_config.createMinistep("MINISTEP")
 
+  *Example:*
+
+  ::
+
+    analysis_config = ert.analysisConfig()
+    std_enkf_analysis_module = analysis_config.getModule("STD_ENKF")
+    ministep_using_std_enkf = local_config.createMinistep("MINISTEP", std_enkf_analysis_module)
 
 
 .. ###########################################################################################################
 
 .. _create_dataset:
-.. topic:: CREATE_DATASET 
+.. topic:: createDataset
 
-  | This function will create a new dataset, i.e. a collection of enkf_nodes which should be updated together. Before you can actually use a dataset you must attach it to a ministep with the ATTACH_DATASET command.  
+  | This function will create a new dataset with a given name, i.e. a collection of enkf_nodes which should be updated together. Before you can actually use a dataset you must attach it to a ministep with the attachDataset command.  
   
-  *Example:*
 
-  ::
-
-    -- Create a DATASET_MULTFLT dataset
-    CREATE_DATASET DATASET_MULTFLT
-    
   *Example:*
 
   ::
@@ -195,33 +191,26 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _copy_dataset:
-.. topic:: COPY_DATASET 
+.. topic:: copyDataset
 
-  | Will create a new local_obsset instance which is a copy of the 'SRC_OBSSET'; this is a deep copy where also the lowest level active_list instances are copied, and can then subsequently be updated independently of each other.
+  | Will create a new local_obsset instance which is a copy of the
+    source dataset; this is a deep copy where also the lowest level active_list instances are copied, and can then subsequently be updated independently of each other.
 
 
   *Example:*
 
   ::
 
-    -- Deep copy DATASET_MULTFLT dataset
-    COPY_DATASET DATASET_MULTFLT COPY_DATASET_MULTFLT 
+    dataset_multflt_copy = local_config.copyDataset("DATASET_MULTFLT","DATASET_MULTFLT_COPY")   
 
 .. ###########################################################################################################
 
 .. _create_obsset:
-.. topic:: CREATE_OBSSET 
+.. topic:: createObsdata
 
-  | This function will create an observation set, i.e. a collection of observation keys which will be used as the observations in one ministep. Before the obsset can be used it must be attached to a ministep with the ATTACH_OBSSET command.
+  | This function will create an observation set, i.e. a collection of observation keys which will be used as the observations in one ministep. Before the obsset can be used it must be attached to a ministep with the attachDataset command.
   
   
-  *Example:*
-
-  ::
-
-    -- Create a OBS_WELL obsset
-    CREATE_OBSSET OBS_WELL
-    
   *Example:*
 
   ::
@@ -232,31 +221,24 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _copy_obsset:
-.. topic:: COPY_OBSSET 
+.. topic:: copyObsdata
 
-  | Will create a new local_obsset instance which is a copy of the 'SRC_OBSSET'; this is a deep copy where also the lowest level active_list instances are copied, and can then subsequently be updated independently of each other.
+  | Will create a new local_obsset instance which is a copy of the
+    source dataset; this is a deep copy where also the lowest level active_list instances are copied, and can then subsequently be updated independently of each other.
   
 
   *Example:*
 
   ::
 
-    -- Deep copy OBS_WELL observation set
-    COPY_OBSSET OBS_WELL COPY_OBS_WELL 
+    obsset_obs_well_copy = local_config.copyObsdata("OBS_WELL", "OBS_WELL_COPY")
 
 .. ###########################################################################################################
 
 .. _attach_ministep:
-.. topic:: ATTACH_MINISTEP 
+.. topic:: attachMinistep
 
-  | This function will attach the ministep 'NAME_OF_MINISTEP' to the updatestep 'NAME_OF_UPDATESTEP'; one ministep can be attached to many updatesteps.
-
-  *Example:*
-
-  ::
-
-    -- Attach MINISTEP to UPDATESTEP
-    ATTACH_MINISTEP UPDATESTEP MINISTEP
+  | This function will attach the ministep to the default updatestep.
 
   *Example:*
 
@@ -268,16 +250,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _attach_dataset:
-.. topic:: ATTACH_DATASET 
+.. topic:: attachDataset
 
-  | Will attach the dataset 'NAME_OF_DATASET' to the ministep given by 'NAME_OF_MINISTEP'.
+  | Will attach the given dataset to the ministep.
 
-  *Example:*
-
-  ::
-
-    -- Attach DATASET_MULTFLT to MINISTEP
-    ATTACH_MINISTEP MINISTEP DATASET_MULTFLT
 
   *Example:*
 
@@ -289,17 +265,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _attach_obsset:
-.. topic:: ATTACH_OBSSET 
+.. topic:: attachObsset
 
-  | Will attach the obsset 'NAME_OF_OBSSET' to the ministep given by 'NAME_OF_MINISTEP'.
+  | Will attach the given obsset to the ministep.
   
-  *Example:*
-
-  ::
-
-    -- Attach OBS_WELL to MINISTEP
-    ATTACH_MINISTEP MINISTEP OBS_WELL
-
   *Example:*
 
   ::
@@ -310,18 +279,11 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _add_data:
-.. topic:: ADD_DATA 
+.. topic:: addNode
 
-  | This function will install 'KEY' as one enkf node which should be updated in this dataset. If you do not manipulate the KEY further with the ACTIVE_LIST_ADD_DATA_INDEX function the KEY will be added as 'ALL_ACTIVE', i.e. all elements will be updated.
+  | This function will add the data KEY as one enkf node which should be updated in this dataset. If you do not manipulate the KEY further with addActiveIndex, the KEY will be added as 'ALL_ACTIVE', i.e. all elements will be updated.
   
   
-  *Example:*
-
-  ::
-
-    -- Add data node to data set
-    ADD_DATA DATASET_MULTFLT MULTFLT
-
   *Example:*
 
   ::
@@ -331,18 +293,11 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _del_data:
-.. topic:: DEL_DATA 
+.. topic:: del (data)
 
-  | This function will delete the data 'KEY' from the dataset 'NAME_OF_DATASET'.
+  | This function will delete the data 'KEY' from the dataset.
   
   
-  *Example:*
-
-  ::
-
-    -- Delete data node from data set
-    DEL_DATA DATASET_MULTFLT MULTFLT
-
   *Example:*
 
   ::
@@ -353,18 +308,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _add_obs:
-.. topic:: ADD_OBS 
+.. topic:: addNode
 
-  | This function will install the observation 'OBS_KEY' as an observation for this obsset - similarly to the ADD_DATA function.
+  | This function will install the observation 'OBS_KEY' as an observation for this obsset - similarly to the addNode function.
   
-  
-  *Example:*
-
-  ::
-
-    -- Add data node to observation set
-    ADD_OBS OBS_WELL WOPR:OBS_WELL
-
   *Example:*
 
   ::
@@ -379,18 +326,11 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _del_obs:
-.. topic:: DEL_OBS 
+.. topic:: del (obs)
 
   | This function will delete the obs 'OBS_KEY' from the obsset 'NAME_OF_OBSSET'.
   
   
-  *Example:*
-
-  ::
-
-    -- Delete data node from observation set
-    DEL_OBS OBS_WELL WOPR:OBS_WELL
-
   *Example:*
 
   ::
@@ -401,18 +341,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _dataset_del_all_data:
-.. topic:: DATASET_DEL_ALL_DATA 
+.. topic:: clear
 
-  | This function will delete all the data keys from the dataset 'NAME_OF_DATASET'.
+  | This function will delete all the data keys from the dataset.
   
-  
-  *Example:*
-
-  ::
-
-    -- Delete all data nodes from DATASET_MULTFLT
-    DATASET_DEL_ALL_DATA DATASET_MULTFLT
-
   *Example:*
 
   ::
@@ -422,18 +354,11 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _active_list_add_data_index:
-.. topic:: ACTIVE_LIST_ADD_DATA_INDEX 
+.. topic:: addActiveIndex (data)
 
   | This function will say that the data with name 'DATA_KEY' in dataset with name 'DATASTEP_NAME' should have the index 'INDEX' active.
   
   
-  *Example:*
-
-  ::
-
-    -- Add index 0 from data MULTFLT to dataset DATASET_MULTFLT 
-    ACTIVE_LIST_ADD_DATA_INDEX DATASET_MULTFLT MULTFLT 0
-
   *Example:*
 
   ::
@@ -444,18 +369,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _active_list_add_obs_index:
-.. topic:: ACTIVE_LIST_ADD_OBS_INDEX 
+.. topic:: addActiveIndex (obs)
 
   | This function will say that the observation with name 'OBS_KEY' in obsset with name 'OBSSET_NAME' should have the index 'INDEX' active.
   
-  
-  *Example:*
-
-  ::
-
-    -- Add index 0 from data WOPR:OBS_WELL to obsset OBS_WELL 
-    ACTIVE_LIST_ADD_OBS_INDEX OBS_WELL WOPR:OBS_WELL 0
-
   *Example:*
 
   ::
@@ -463,55 +380,14 @@ Keyword name                                                                    
     active_list = obsset_obs_well.getActiveList("WOPR:OBS_WELL")
     active_list.addActiveIndex(0);
 
-.. ###########################################################################################################
 
-.. _active_list_add_many_data_index:
-.. topic:: ACTIVE_LIST_ADD_MANY_DATA_INDEX
-
-  | This function is similar to ACTIVE_LIST_ADD_DATA_INDEX, but it will add many indices.
-  
-  
-  *Example:*
-
-  ::
-
-    -- Add indices 0, 1 and 2 from data MULTFLT to dataset DATASET_MULTFLT 
-    ACTIVE_LIST_ADD_MANY_DATA_INDEX DATASET_MULTFLT MULTFLT 0 1 2
-
-
-.. ###########################################################################################################
-
-.. _active_list_add_many_obs_index:
-.. topic:: ACTIVE_LIST_ADD_MANY_OBS_INDEX
-
-  | This function is similar to ACTIVE_LIST_ADD_OBS_INDEX, but it will add many indices.
-  
-  
-  *Example:*
-
-  ::
-
-    -- Add index 0, 1 and 2 from data WOPR:OBS_WELL to obsset OBS_WELL 
-    ACTIVE_LIST_ADD_MANY_OBS_INDEX OBS_WELL WOPR:OBS_WELL 0 1 2
-
-    
-    
 .. ###########################################################################################################
 
 .. _add_field:
-.. topic:: ADD_FIELD   
+.. topic:: addField
 
   | This function will install the node with name 'FIELD_NAME' in the dataset 'DATASET_NAME'. It will in addition select all the (currently) active cells in the region 'ECLREGION_NAME' as active for this field/ministep combination. The ADD_FIELD command is actually a shortcut of:   ADD_DATA   DATASET  FIELD_NAME; followed by: ACTIVE_LIST_ADD_MANY_DATA_INDEX  <All the indices from the region>
   
-  
-  
-  *Example:*
-
-  ::
-
-    -- Add data node PORO to data set DATA_PORO activating indices in ECLREG_PORO     
-    ADD_FIELD   DATA_PORO   PORO    ECLREG_PORO
-
   *Example:*
 
   ::
@@ -534,20 +410,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _load_file:
-.. topic:: LOAD_FILE    
+.. topic:: EclGrid, EclInitFile
 
-  | This function will load an ECLIPSE file in restart format (i.e. restart file or INIT file), the keywords in this file can then subsequently be used in ECLREGION_SELECT_VALUE_XXX commands below. The 'KEY' argument is a string which will be used later when we refer to the content of this file
+  | This function will load an ECLIPSE file in restart format (i.e. restart file or INIT file), the keywords in this file can then subsequently be used in ECLREGION_SELECT_VALUE_XXX commands below. The 'KEY' argument is a string which will be used later when we refer to the content of this file.
   
-  
-  
-  
-  *Example:*
-
-  ::
-
-    -- Load Eclipse init file     
-    LOAD_FILE  REFINIT path/to/FULLMODEL.INIT
-    
   *Example:*
 
   ::
@@ -559,18 +425,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _create_eclregion:
-.. topic:: CREATE_ECLREGION
+.. topic:: EclRegion
 
   | This function will create a new region 'ECLREGION_NAME', which can subsequently be used when defining active regions for fields. The second argument, SELECT_ALL, is a boolean value. If this value is set to true the region will start with all cells selected, if set to false the region will start with no cells selected.
   
-  
-  *Example:*
-
-  ::
-
-    -- New Eclipse region with all cells inactive       
-    CREATE_ECLREGION  ECL_REGION FALSE
-
   *Example:*
 
   ::
@@ -581,50 +439,24 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _eclregion_select_all:
-.. topic:: ECLREGION_SELECT_ALL
+.. topic:: select_active
 
   | Will select all the cells in the region (or deselect if SELECT == FALSE).
   
-  
-  
-  
-  
-  *Example:*
 
-  ::
-
-    -- Select cells in region       
-    ECLREGION_SELECT_ALL  ECL_REGION TRUE
-    
-    
   *Example:*
 
   ::
          
     eclreg_poro.select_active()  
-    
-       
-    
+
 
 .. ###########################################################################################################
 
 .. _eclregion_select_value_equal:
-.. topic:: ECLREGION_SELECT_VALUE_EQUAL
+.. topic:: select_equal
 
   | This function will compare an ecl_kw instance loaded from file with a user supplied value, and select (or deselect) all cells which match this value. It is assumed that the ECLIPSE keyword is an INTEGER keyword, for float comparisons use the ECLREGION_SELECT_VALUE_LESS and ECLREGION_SELECT_VALUE_MORE functions.
-  
-  
-  
-  
-  
-  
-  *Example:*
-
-  ::
-
-    -- Select cells in region ECL_REGION equal to 0     
-    ECLREGION_SELECT_VALUE_EQUAL  ECL_REGION ECL_REGION:LOCAL 0 TRUE
-    
 
   *Example:*
 
@@ -648,21 +480,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _eclregion_select_value_less:
-.. topic:: ECLREGION_SELECT_VALUE_LESS 
+.. topic:: select_less
 
   | This function will compare an ecl_kw instance loaded from disc with a numerical value, and select all cells which have numerical below the limiting value. The ecl_kw value should be a floating point value like e.g. PRESSURE or PORO. The arguments are just as for ECLREGION_SELECT_VALUE_EQUAL. 
-  
-  
-  
-  
-  
-  *Example:*
 
-  ::
-
-    -- Select cells in region ECL_REGION less than 1     
-    ECLREGION_SELECT_VALUE_LESS  ECL_REGION ECL_REGION:LOCAL 1 TRUE
-    
   *Example:*
 
   ::
@@ -673,21 +494,11 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _eclregion_select_value_more:
-.. topic:: ECLREGION_SELECT_VALUE_MORE 
+.. topic:: select_more
 
   | This function will compare an ecl_kw instance loaded from disc with a numerical value, and select all cells which have numerical above the limiting value. The ecl_kw value should be a floating point value like e.g. PRESSURE or PORO. The arguments are just as for ECLREGION_SELECT_VALUE_EQUAL. 
   
-  
-  
-  
-  
-  *Example:*
 
-  ::
-
-    -- Select cells in region ECL_REGION greater than 0     
-    ECLREGION_SELECT_VALUE_MORE  ECL_REGION ECL_REGION:LOCAL 0 TRUE
-    
   *Example:*
 
   ::
@@ -697,20 +508,11 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _eclregion_select_box:
-.. topic:: ECLREGION_SELECT_BOX        
+.. topic:: select_box
 
   | This function will select (or deselect) all the cells in the box defined by the six coordinates i1 i2 j1 j2 k1 k2. The coordinates are inclusive, and the counting starts at 1.   
     
-  
-  
-  
-  *Example:*
 
-  ::
-
-    -- Select cells in box [0,1] x [2,3] x [4,5]      
-    ECLREGION_SELECT_BOX  ECL_REGION 0 1 2 3 4 5 TRUE
-    
   *Example:*
 
   ::
@@ -722,19 +524,11 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _eclregion_select_slice:
-.. topic:: ECLREGION_SELECT_SLICE      
+.. topic:: select_islice, _jslice,_kslice
 
   | This function will select a slice in the direction given by 'dir', which can 'x', 'y' or 'z'. Depending on the value of 'dir' the numbers n1 and n2 are interpreted as (i1 i2), (j1 j2) or (k1 k2) respectively. The numbers n1 and n2 are inclusice and the counting starts at 1. It is OK to use very high/low values to imply "the rest of the cells" in one direction.
      
   
-  
-  *Example:*
-
-  ::
-
-    -- Select layer from z=2 to z=3      
-    ECLREGION_SELECT_SLICE  ECL_REGION z 2 3 TRUE
-
   *Example:*
 
   ::
@@ -745,18 +539,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _eclregion_select_plane:
-.. topic:: ECLREGION_SELECT_PLANE 
+.. topic:: select_below_plane
 
   | Will select all points which have positive (sign > 0) distance to the plane defined by normal vector n = (nx,ny,nz) and point p = (px,py,pz). If sign < 0 all cells with negative distance to plane will be selected.
   
-  
-  *Example:*
-
-  ::
-
-    -- Select half space defined by plane perpendicular to vector [1 1 1]       
-    ECLREGION_SELECT_PLANE  ECL_REGION 1 1 1 0 0 0 -1 TRUE
-
   *Example:*
 
   ::
@@ -767,20 +553,12 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _eclregion_select_in_polygon:
-.. topic:: ECLREGION_SELECT_IN_POLYGON 
+.. topic:: select_inside_polygon
 
   | Well select all the points which are inside the polygon with name 'POLYGON_NAME'. The polygon should have been created with command CREATE_POLYGON or loaded with command 'LOAD_POLYGON' first.
   
   
   
-  
-  *Example:*
-
-  ::
-
-    -- Select region inside polygon in xy plane      
-    ECLREGION_SELECT_IN_POLYGON  POLYGON TRUE
-
   *Example:*
 
   ::
@@ -791,19 +569,12 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _create_polygon:
-.. topic:: CREATE_POLYGON  
+.. topic:: Example create polygon
 
   | Will create a geo_polygon instance based on the coordinate list: (x1,y1), (x2,y2), (x3,y3), ... The polygon should not be explicitly closed - i.e. you should in general have (x1,y1) != (xn,yn). The polygon will be stored under the name 'POLYGON_NAME' - which should later be used when referring to the polygon in region select operations.
   
 
-  
-  *Example:*
 
-  ::
-
-    -- Create polygon in xy plane      
-    CREATE_POLYGON  POLYGON 0 0 0 1 1 0 TRUE
-    
   *Example:*
 
   ::
@@ -813,20 +584,10 @@ Keyword name                                                                    
 .. ###########################################################################################################
 
 .. _load_polygon:
-.. topic:: LOAD_POLYGON  
+.. topic:: Example load polygon
 
   | Will load a polygon instance from the file 'FILENAME' - the file should be in irap RMS format. The polygon will be stored under the name 'POLYGON_NAME' which can then later be used to refer to the polygon for e.g. select operations.  
 
-    
-  
-  
-  
-  *Example:*
-
-  ::
-
-    -- Load polygon from RMS file      
-    LOAD_POLYGON  path/to/polygon.irap
     
   *Example:*
 
@@ -838,108 +599,4 @@ Keyword name                                                                    
        tmp = line.split()
        polygon.append( (float(tmp[0]) , float(tmp[1])))
 
-.. ###########################################################################################################
 
-.. _load_surface:
-.. topic:: LOAD_SURFACE  
-
-  | Will load an irap surface from file 'SURFACE_FILE'. The surface will be stored internally as 'SURFACE_NAME' - this function is mainly needed to have a base surface available for the CREATE_SURFACE_REGION command.
-    
-
-    
-  
-  
-  
-  *Example:*
-
-  ::
-
-    -- Load Irap RMS surface from file      
-    LOAD_SURFACE  path/to/surface.irap
-
-.. ###########################################################################################################
-
-.. _create_surface_region:
-.. topic:: CREATE_SURFACE_REGION 
-
-  | Will create a new surface region object which can be used to select and deselect parts of a surface. The region will be called 'REGION_NAME' and it will be based on the surface given by 'BASE_SURFACE'. 'PRESELECT' is a boolean 'TRUE' or 'FALSE' which determines whether the region is created with all points selected, or no points selected.
-  
-    
-  
-  *Example:*
-
-  ::
-
-    -- Create surface region in xy plane      
-    CREATE_SURFACE_REGION  SURF_REGION BASE_SURFACE TRUE
-
-.. ###########################################################################################################
-
-.. _surface_region_select_in_polygon:
-.. topic:: SURFACE_REGION_SELECT_IN_POLYGON 
-
-  | Well select all the points which are inside the polygon with name 'POLYGON_NAME'. The polygon should have been created with command CREATE_POLYGON or loaded with command 'LOAD_POLYGON' first.
-  
-  
-     
-    
-  
-  
-  
-  *Example:*
-
-  ::
-
-    -- Select surface region inside polygon      
-    SURFACE_REGION_SELECT_IN_POLYGON SURF_REGION TRIANGLE TRUE
-            
-            
-.. ###########################################################################################################
-
-.. _surface_region_select_line:
-.. topic:: SURFACE_REGION_SELECT_LINE  
-
-  | Well select|deselect all the points which are above|below the line: (x1,y1) -> (x2,y2). If SIGN is positive the select will apply to all points with a positive (right hand system) distance to the line; if SIGN is negative the selector will apply to all points with a negative distance to the line.
-  
-  
-  
-     
-    
-  
-  
-  
-  *Example:*
-
-  ::
-
-    -- Select surface region inside a half space defined by a line from [0,0] to [1,1]     
-    SURFACE_REGION_SELECT_LINE SURF_REGION 0 0 1 1 -1 TRUE
-    
-.. ###########################################################################################################
-
-.. _add_data_surface:
-.. topic:: ADD_DATA_SURFACE   
-
-  | Will add the node 'SURFACE_NAME' (not one of the loaded surfaces, but an enkf_node object) to the dataset 'DATASET_NAME'. Only the elements in the region 'REGION_NAME' will be added. Typically SURFACE_REGION_SELECT_xxxx has been used first to build a suitable region selection.
-  
-  
-  
-  
-     
-    
-  
-  
-  
-  *Example:*
-
-  ::
-
-    -- Add EnKF node object to dataset DATA_MULTFLT, with elements in SURF_REGION from BASE_SURFACE      
-    ADD_DATA_SURFACE DATA_MULTFLT BASE_SURFACE SURF_REGION
-    
-    
-
-.. ###########################################################################################################
-
-
-                
