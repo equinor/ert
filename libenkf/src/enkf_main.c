@@ -2228,7 +2228,7 @@ static void enkf_main_install_common_data_kw( enkf_main_type * enkf_main ) {
      ensemble members, and independent of time.
   */
   char * cwd                    = util_alloc_cwd();
-  char * date_string            = util_alloc_date_stamp();
+  char * date_string            = util_alloc_date_stamp_utc();
   const char * num_cpu_string   = "1";
 
   enkf_main_add_subst_kw( enkf_main , "CWD"          , cwd , "The current working directory we are running from - the location of the config file." , true);
