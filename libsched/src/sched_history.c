@@ -735,7 +735,7 @@ void sched_history_fprintf( const sched_history_type * sched_history , const str
         int mday,month,year;
         time_t t = time_t_vector_iget( sched_history->time , step );
         double days = (t - start_time) * 1.0 / 86400;
-        util_set_date_values( t , &mday , &month , &year);
+        util_set_date_values_utc( t , &mday , &month , &year);
         //fprintf(stream , "%02d-%02d-%4d  " , mday , month , year );
         fprintf(stream , " %5.0f " , days);
       }

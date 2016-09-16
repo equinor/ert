@@ -531,8 +531,8 @@ static void time_map_update_abort( time_map_type * map , int step , time_t time)
   int current[3];
   int new[3];
 
-  util_set_date_values( current_time , &current[0] , &current[1] , &current[2]);
-  util_set_date_values( time , &new[0] , &new[1] , &new[2]);
+  util_set_date_values_utc( current_time , &current[0] , &current[1] , &current[2]);
+  util_set_date_values_utc( time , &new[0] , &new[1] , &new[2]);
 
   util_abort("%s: time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",__func__ , step ,
              new[0]     , new[1]     , new[2] ,
@@ -561,8 +561,8 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
             int ref[3];
             int new[3];
 
-            util_set_date_values( time , &new[0] , &new[1] , &new[2]);
-            util_set_date_values( ref_time , &ref[0] , &ref[1] , &ref[2]);
+            util_set_date_values_utc( time , &new[0] , &new[1] , &new[2]);
+            util_set_date_values_utc( ref_time , &ref[0] , &ref[1] , &ref[2]);
 
             fprintf(stderr," Time mismatch for step:%d  New: %02d/%02d/%04d   refcase: %02d/%02d/%04d \n", step ,
                     new[0] , new[1] , new[2] ,
@@ -576,8 +576,8 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
           int current[3];
           int new[3];
 
-          util_set_date_values( current_time , &current[0] , &current[1] , &current[2]);
-          util_set_date_values( time , &new[0] , &new[1] , &new[2]);
+          util_set_date_values_utc( current_time , &current[0] , &current[1] , &current[2]);
+          util_set_date_values_utc( time , &new[0] , &new[1] , &new[2]);
 
           fprintf(stderr,"Time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",step ,
                   new[0] , new[1] , new[2] ,
@@ -656,7 +656,7 @@ int_vector_type * time_map_alloc_index_map( time_map_type * map , const ecl_sum_
 
           if (sum_time > map_time) {
             int day,month,year;
-            util_set_date_values( map_time , &day , &month , &year);
+            util_set_date_values_utc( map_time , &day , &month , &year);
             util_abort("%s: The eclipse summary cases is missing data for date:%02d/%02d/%4d - aborting\n", __func__ , day , month , year);
           } else if (sum_time < map_time) {
             sum_index++;
