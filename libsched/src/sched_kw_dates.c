@@ -86,7 +86,7 @@ static time_t parse_time_t(const char * day_string , const char * month_string ,
     util_abort("%s: failed to interpret:%s a month name \n",__func__ , month_string );
 
   if (util_sscanf_int(day_string , &mday) && util_sscanf_int(year_string , &year))
-    time = util_make_date(mday , month , year);
+    time = util_make_date_utc(mday , month , year);
   else 
     util_abort("%s: fatal error when extracting date from:%s %s %s \n", __func__, day_string , month_string , year_string);
 
