@@ -95,7 +95,7 @@ time_t sched_time_get_target( const sched_time_type * time_node , time_t current
     break;
   case( TSTEP_TIME ):
     target = current_time;
-    util_inplace_forward_days( &target , time_node->tstep_length );
+    util_inplace_forward_days_utc( &target , time_node->tstep_length );
     break;
   default:
     util_abort("%s: invalid time_type value:%d \n",__func__ , time_node->time_type );

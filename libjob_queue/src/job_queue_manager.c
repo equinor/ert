@@ -76,7 +76,7 @@ bool job_queue_manager_try_wait( job_queue_manager_type * manager , int timeout_
   struct timespec ts;
   time_t timeout_time = time( NULL );
 
-  util_inplace_forward_seconds(&timeout_time , timeout_seconds );
+  util_inplace_forward_seconds_utc(&timeout_time , timeout_seconds );
   ts.tv_sec = timeout_time;
   ts.tv_nsec = 0;
 

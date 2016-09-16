@@ -599,7 +599,7 @@ int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, ti
 
 int sched_file_get_restart_nr_from_days(const sched_file_type * sched_file , double days) {
   time_t time = sched_file_iget_block_start_time(sched_file, 0);
-  util_inplace_forward_days( &time , days);
+  util_inplace_forward_days_utc( &time , days);
   return sched_file_get_restart_nr_from_time_t(sched_file , time);
 }
 

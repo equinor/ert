@@ -139,7 +139,7 @@ time_t sched_kw_tstep_get_new_time(const sched_kw_tstep_type *kw, time_t curr_ti
 {
   double step_days = sched_kw_tstep_iget_step(kw , 0);
   time_t new_time  = curr_time;
-  util_inplace_forward_days(&new_time, step_days);
+  util_inplace_forward_days_utc(&new_time, step_days);
   return new_time;
 }
 

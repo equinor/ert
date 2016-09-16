@@ -505,7 +505,7 @@ int time_map_lookup_days( time_map_type * map , double sim_days) {
   {
     if (time_t_vector_size( map->map ) > 0) {
       time_t time = time_map_iget__(map , 0 );
-      util_inplace_forward_days( &time , sim_days );
+      util_inplace_forward_days_utc( &time , sim_days );
       index = time_map_lookup_time( map , time );
     }
   }

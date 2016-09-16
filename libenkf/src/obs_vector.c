@@ -107,12 +107,12 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
         obs_vector_prefer_RESTART_warning();
     } else if (conf_instance_has_item(conf_instance, "DAYS")) {
       double days = conf_instance_get_item_value_double(conf_instance, "DAYS");
-      util_inplace_forward_days( &obs_time , days );
+      util_inplace_forward_days_utc( &obs_time , days );
       if (prefer_restart)
         obs_vector_prefer_RESTART_warning();
     } else if (conf_instance_has_item(conf_instance, "HOURS")) {
       double hours = conf_instance_get_item_value_double(conf_instance, "HOURS");
-      util_inplace_forward_seconds( &obs_time , hours * 3600 );
+      util_inplace_forward_seconds_utc( &obs_time , hours * 3600 );
       if (prefer_restart)
         obs_vector_prefer_RESTART_warning();
     } else
