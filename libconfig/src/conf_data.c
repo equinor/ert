@@ -159,7 +159,7 @@ bool conf_data_validate_string_as_dt_value(
     case(DT_DATE):
     {
       time_t date;
-      return util_sscanf_date(str, &date);
+      return util_sscanf_date_utc(str, &date);
     }
     default:
       util_abort("%s: Internal error.\n", __func__);
@@ -243,7 +243,7 @@ time_t conf_data_get_time_t_from_string(
   switch(dt)
   {
     case(DT_DATE):
-      ok = util_sscanf_date(str, &value);
+      ok = util_sscanf_date_utc(str, &value);
       break;
     default:
       ok = false;

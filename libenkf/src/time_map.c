@@ -136,7 +136,7 @@ bool time_map_fscanf(time_map_type * map , const char * filename) {
         char date_string[128];
         if (fscanf(stream , "%s" , date_string) == 1) {
           time_t date;
-          if (util_sscanf_date(date_string , &date)) {
+          if (util_sscanf_date_utc(date_string , &date)) {
             if (date > last_date)
               time_t_vector_append( time_vector , date );
             else {
