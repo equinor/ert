@@ -52,6 +52,8 @@ extern "C" {
   int               enkf_fs_incref( enkf_fs_type * fs );
   int               enkf_fs_get_refcount( const enkf_fs_type * fs );
   enkf_fs_type    * enkf_fs_mount( const char * path );
+  bool              enkf_fs_update_disk_version(const char * mount_point , int src_version , int target_version);
+  int               enkf_fs_disk_version(const char * mount_point );
   int               enkf_fs_get_version104( const char * path );
   void              enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , buffer_type * buffer , const char * node_key, enkf_var_type var_type,  
                                         int report_step , int iens);

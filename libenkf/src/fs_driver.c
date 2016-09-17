@@ -90,13 +90,17 @@ void fs_driver_init_fstab( FILE * stream, fs_driver_impl driver_id) {
 
 */
 
+char * fs_driver_alloc_fstab_file( const char * path ) {
+  return util_alloc_filename( path , "ert_fstab" , NULL);
+}
+
+
 FILE * fs_driver_open_fstab( const char * path , bool create) {
   FILE * stream = NULL;
-  char * fstab_file = util_alloc_filename( path , "ert_fstab" , NULL);
+  char * fstab_file = fs_driver_alloc_fstab_file( path );
   if (create)
     util_make_path( path );
-  
-  
+
   if (util_file_exists( fstab_file ) != create) {
     if (create)
       stream = util_fopen( fstab_file , "w");
@@ -113,7 +117,6 @@ void fs_driver_assert_magic( FILE * stream ) {
   if (fs_magic != FS_MAGIC_ID)
     util_abort("%s: WTF - fstab magic marker incorrect \n",__func__);
 }
-
 
 
 
@@ -142,6 +145,16 @@ fs_driver_impl fs_driver_fread_type( FILE * stream ) {
   return impl;
 }
 
+
+int fs_driver_fread_version( FILE * stream ) {
+  long fs_magic = util_fread_long( stream );
+  if (fs_magic != FS_MAGIC_ID)
+    return -1;
+  else {
+    int file_version = util_fread_int( stream );
+    return file_version;
+  }
+}
 
 
 /*****************************************************************/

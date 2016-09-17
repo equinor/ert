@@ -618,8 +618,33 @@ static void enkf_fs_fwrite_misfit( enkf_fs_type * fs ) {
 
 
 
+int enkf_fs_disk_version(const char * mount_point ) {
+  int disk_version = -1;
+  FILE * stream = fs_driver_open_fstab( mount_point , false );
+  if (stream) {
+    disk_version = fs_driver_fread_version( stream );
+    fclose( stream );
+  }
+  return disk_version;
+}
 
 
+bool enkf_fs_update_disk_version(const char * mount_point , int src_version , int target_version) {
+  if (enkf_fs_disk_version( mount_point ) == src_version) {
+    char * fstab_file = fs_driver_alloc_fstab_file( mount_point );
+    FILE * stream = util_fopen( fstab_file , "r+");
+
+    fseek( stream , 0L, SEEK_SET );
+    fs_driver_assert_magic( stream );
+    util_fwrite_int( target_version , stream );
+
+    fclose( stream );
+    free( fstab_file );
+
+    return true;
+  }  else
+    return false;
+}
 
 
 enkf_fs_type * enkf_fs_mount( const char * mount_point ) {
