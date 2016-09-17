@@ -36,6 +36,10 @@ class TimeMap(BaseCClass):
             raise IOError(( errno.ENOENT , "File not found: %s" % filename))
 
 
+    def fwrite(self, filename):
+        TimeMap.cNamespace().save(self , filename)
+
+
     def fload(self , filename):
         """
         Will load a timemap as a formatted file consisting of a list of dates: DD/MM/YYYY
@@ -174,7 +178,11 @@ class TimeMap(BaseCClass):
     def getLastStep(self):
         return TimeMap.cNamespace().last_step(self)
 
-        
+
+    def upgrade107(self, refcase):
+        TimeMap.cNamespace().upgrade107(self, refcase)
+
+    
 ##################################################################
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("time_map", TimeMap)
@@ -189,6 +197,7 @@ TimeMap.cNamespace().free = cwrapper.prototype("void time_map_free( time_map )")
 TimeMap.cNamespace().fread_alloc_readonly = cwrapper.prototype("c_void_p time_map_fread_alloc_readonly(char*)")
 TimeMap.cNamespace().alloc = cwrapper.prototype("c_void_p time_map_alloc()")
 TimeMap.cNamespace().load = cwrapper.prototype("bool time_map_fread(time_map , char*)")
+TimeMap.cNamespace().save = cwrapper.prototype("void time_map_fwrite(time_map , char*)")
 TimeMap.cNamespace().fload = cwrapper.prototype("bool time_map_fscanf(time_map , char*)")
 TimeMap.cNamespace().iget_sim_days = cwrapper.prototype("double time_map_iget_sim_days(time_map, int)")
 TimeMap.cNamespace().iget = cwrapper.prototype("time_t time_map_iget(time_map, int)")
@@ -200,3 +209,4 @@ TimeMap.cNamespace().lookup_time = cwrapper.prototype("int time_map_lookup_time(
 TimeMap.cNamespace().lookup_time_with_tolerance = cwrapper.prototype("int time_map_lookup_time_with_tolerance( time_map , time_t , int , int)")
 TimeMap.cNamespace().lookup_days = cwrapper.prototype("int time_map_lookup_days( time_map , double)")
 TimeMap.cNamespace().last_step = cwrapper.prototype("int time_map_get_last_step( time_map )")
+TimeMap.cNamespace().upgrade107 = cwrapper.prototype("void time_map_summary_upgrade107( time_map , ecl_sum )")
