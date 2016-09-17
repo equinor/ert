@@ -543,6 +543,7 @@ void time_map_summary_upgrade107( time_map_type * map , const ecl_sum_type * ecl
       time_t_vector_iset( map->map , step , sim_time);
     }
   }
+  map->modified = true;
 }
 
 
