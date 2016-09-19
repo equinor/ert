@@ -13,7 +13,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-
+from __future__ import print_function
 import pwd
 import grp
 import os
@@ -26,7 +26,7 @@ import py_compile
 DEFAULT_DIR_MODE = 0755
 DEFAULT_EXE_MODE = 0755
 DEFAULT_REG_MODE = 0644
- 
+
 os.umask( 0 )
 
 
@@ -34,8 +34,8 @@ def msg( verbose , text , arg):
     text_width = 20
     if verbose:
         pad_text = text + (text_width - len( text)) * "." + ": "
-        print pad_text + arg
-        
+        print(pad_text + arg)
+
 
 def update_mode( path , mode , user , group):
     try:

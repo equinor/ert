@@ -31,7 +31,7 @@ class BaseCClass(object):
     @classmethod
     def cNamespace(cls):
         """ @rtype: CNamespace """
-        if not BaseCClass.namespaces.has_key(cls):
+        if cls not in BaseCClass.namespaces:
             BaseCClass.namespaces[cls] = CNamespace(cls.__name__)
         return BaseCClass.namespaces[cls]
 
@@ -96,6 +96,10 @@ class BaseCClass(object):
         else:
             return super(BaseCClass , self).__eq__(other)
 
+    def __hash__(self):
+        # Similar to last resort comparison; this returns the hash of the
+        # underlying C pointer.
+        return hash(self.__c_pointer)
 
     def free(self):
         raise NotImplementedError("A BaseCClass requires a free method implementation!")

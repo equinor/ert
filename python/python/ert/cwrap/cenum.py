@@ -17,6 +17,7 @@
 Convenience module for loading enum symbols and values.
 """
 
+from __future__ import print_function
 import ctypes
 import sys
 
@@ -95,7 +96,7 @@ def create_enum( lib, func_name, enum_name, name_space=None):
     and in additional return a dictionary with the same mapping:
 
       for enum_elm in file_enum.keys():
-          print "%s -> %d" % ( enum_elm , file_enum[ enum_elm ] )
+          print('%s -> %d' % ( enum_elm , file_enum[ enum_elm ] ))
     """
 
     try:

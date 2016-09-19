@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys
 import os
 import os.path
@@ -330,25 +331,24 @@ else:
         # the same name.
         if jobHash.has_key( job_name ):
             job = jobHash[job_name]
-            print "Running job: %s ... " % job_name,
+            print('Running job: %s ... ' % job_name, end='')
             sys.stdout.flush()
             (OK , exit_status, error_msg) = run_one( job )
             if OK:
-                print "OK"
+                print('OK')
             else:
-                print "failed ...."
-                print "-----------------------------------------------------------------"
+                print('failed ...')
+                print('-----------------------------------------------------------------')
                 if job.get("stderr"):
-                    print "Error:%s " % error_msg
+                    print('Error:%s ' % error_msg)
                     if os.path.exists(job["stderr"]):
                         fileH = open(job["stderr"],"r")
                         for line in fileH.readlines():
-                            print line,
+                            print(line, end='')
                         fileH.close()
-                print "-----------------------------------------------------------------"
+                print('-----------------------------------------------------------------')
                 sys.exit()
         else:
-            print "Job: %s does not exist. Available jobs:" % job_name
+            print('Job: %s does not exist. Available jobs:' % job_name)
             for j in jobs.jobList:
-                print "   %s" % j["name"]
-    
+                print('   %s' % j['name'])
