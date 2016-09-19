@@ -253,7 +253,7 @@ int history_get_restart_nr_from_time_t( const history_type * history , time_t ti
         return report_step;
       else {
         int mday,year,month;
-        util_set_date_values( time , &mday , &month , &year);
+        util_set_date_values_utc( time , &mday , &month , &year);
         util_abort("%s: Date: %02d/%02d/%04d  does not cooincide with any report time. Aborting.\n", __func__ , mday , month , year);
         return -1;
       }

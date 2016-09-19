@@ -107,12 +107,12 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
         obs_vector_prefer_RESTART_warning();
     } else if (conf_instance_has_item(conf_instance, "DAYS")) {
       double days = conf_instance_get_item_value_double(conf_instance, "DAYS");
-      util_inplace_forward_days( &obs_time , days );
+      util_inplace_forward_days_utc( &obs_time , days );
       if (prefer_restart)
         obs_vector_prefer_RESTART_warning();
     } else if (conf_instance_has_item(conf_instance, "HOURS")) {
       double hours = conf_instance_get_item_value_double(conf_instance, "HOURS");
-      util_inplace_forward_seconds( &obs_time , hours * 3600 );
+      util_inplace_forward_seconds_utc( &obs_time , hours * 3600 );
       if (prefer_restart)
         obs_vector_prefer_RESTART_warning();
     } else
@@ -431,7 +431,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
     if (obs_restart_nr == 0) {
       int day,month,year;
       time_t start_time = time_map_iget( obs_time , 0 );
-      util_set_date_values( start_time , &day , &month , &year);
+      util_set_date_values_utc( start_time , &day , &month , &year);
 
       fprintf(stderr,"** ERROR: It is unfortunately not possible to use summary observations from the\n");
       fprintf(stderr,"          start of the simulation. Problem with observation:%s at %02d/%02d/%4d\n",obs_key , day,month,year);

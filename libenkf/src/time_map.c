@@ -136,7 +136,7 @@ bool time_map_fscanf(time_map_type * map , const char * filename) {
         char date_string[128];
         if (fscanf(stream , "%s" , date_string) == 1) {
           time_t date;
-          if (util_sscanf_date(date_string , &date)) {
+          if (util_sscanf_date_utc(date_string , &date)) {
             if (date > last_date)
               time_t_vector_append( time_vector , date );
             else {
@@ -505,7 +505,7 @@ int time_map_lookup_days( time_map_type * map , double sim_days) {
   {
     if (time_t_vector_size( map->map ) > 0) {
       time_t time = time_map_iget__(map , 0 );
-      util_inplace_forward_days( &time , sim_days );
+      util_inplace_forward_days_utc( &time , sim_days );
       index = time_map_lookup_time( map , time );
     }
   }
@@ -524,6 +524,29 @@ void time_map_clear( time_map_type * map ) {
   pthread_rwlock_unlock( &map->rw_lock );
 }
 
+
+/*
+  This is a function specifically written to upgrade an on-disk
+  time_map which is using localtime (fs_version <= 106) to a utc based
+  time_map (fs_version >= 107).
+*/
+
+void time_map_summary_upgrade107( time_map_type * map , const ecl_sum_type * ecl_sum) {
+  int first_step = ecl_sum_get_first_report_step( ecl_sum );
+  int last_step  = ecl_sum_get_last_report_step( ecl_sum );
+
+  time_t_vector_resize( map->map , last_step + 1);
+  time_t_vector_iset_block( map->map , 0 , first_step , DEFAULT_TIME);
+  for (int step=first_step; step <= last_step; step++) {
+    if (ecl_sum_has_report_step(ecl_sum , step)) {
+      time_t sim_time = ecl_sum_get_report_time( ecl_sum , step );
+      time_t_vector_iset( map->map , step , sim_time);
+    }
+  }
+  map->modified = true;
+}
+
+
 /*****************************************************************/
 
 static void time_map_update_abort( time_map_type * map , int step , time_t time) {
@@ -531,8 +554,8 @@ static void time_map_update_abort( time_map_type * map , int step , time_t time)
   int current[3];
   int new[3];
 
-  util_set_date_values( current_time , &current[0] , &current[1] , &current[2]);
-  util_set_date_values( time , &new[0] , &new[1] , &new[2]);
+  util_set_date_values_utc( current_time , &current[0] , &current[1] , &current[2]);
+  util_set_date_values_utc( time , &new[0] , &new[1] , &new[2]);
 
   util_abort("%s: time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",__func__ , step ,
              new[0]     , new[1]     , new[2] ,
@@ -561,8 +584,8 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
             int ref[3];
             int new[3];
 
-            util_set_date_values( time , &new[0] , &new[1] , &new[2]);
-            util_set_date_values( ref_time , &ref[0] , &ref[1] , &ref[2]);
+            util_set_date_values_utc( time , &new[0] , &new[1] , &new[2]);
+            util_set_date_values_utc( ref_time , &ref[0] , &ref[1] , &ref[2]);
 
             fprintf(stderr," Time mismatch for step:%d  New: %02d/%02d/%04d   refcase: %02d/%02d/%04d \n", step ,
                     new[0] , new[1] , new[2] ,
@@ -576,8 +599,8 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
           int current[3];
           int new[3];
 
-          util_set_date_values( current_time , &current[0] , &current[1] , &current[2]);
-          util_set_date_values( time , &new[0] , &new[1] , &new[2]);
+          util_set_date_values_utc( current_time , &current[0] , &current[1] , &current[2]);
+          util_set_date_values_utc( time , &new[0] , &new[1] , &new[2]);
 
           fprintf(stderr,"Time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",step ,
                   new[0] , new[1] , new[2] ,
@@ -656,7 +679,7 @@ int_vector_type * time_map_alloc_index_map( time_map_type * map , const ecl_sum_
 
           if (sum_time > map_time) {
             int day,month,year;
-            util_set_date_values( map_time , &day , &month , &year);
+            util_set_date_values_utc( map_time , &day , &month , &year);
             util_abort("%s: The eclipse summary cases is missing data for date:%02d/%02d/%4d - aborting\n", __func__ , day , month , year);
           } else if (sum_time < map_time) {
             sum_index++;

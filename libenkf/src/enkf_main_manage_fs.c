@@ -372,7 +372,7 @@ static void update_case_log(enkf_main_type * enkf_main , const char * case_path)
       int year,month,day,hour,minute,second;
       time_t now = time( NULL );
 
-      util_set_datetime_values( now , &second , &minute , &hour , &day , &month , &year );
+      util_set_datetime_values_utc( now , &second , &minute , &hour , &day , &month , &year );
 
       fprintf(stream , "TIME:%02d/%02d/%4d-%02d.%02d.%02d\n" , day , month ,  year , hour , minute , second);
     }

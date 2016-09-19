@@ -273,68 +273,6 @@ local_updatestep_type * local_config_get_updatestep( const local_config_type * l
   return updatestep;
 }
 
-static int read_int(FILE * stream , bool binary ) {
-  if (binary)
-    return util_fread_int( stream );
-  else {
-    int value;
-    fscanf(stream , "%d" , &value);
-    return value;
-  }
-}
-
-
-static double read_double(FILE * stream , bool binary) {
-  if (binary)
-    return util_fread_double( stream );
-  else {
-    double value;
-    fscanf(stream , "%lg" , &value);
-    return value;
-  }
-}
-
-static void read_int_vector(FILE * stream , bool binary , int_vector_type * vector) {
-  if (binary) {
-    int size = util_fread_int( stream );
-    int_vector_fread_data( vector , size , stream );
-  } else {
-    int size,value,i;
-    int_vector_reset( vector );
-    fscanf(stream , "%d" , &size);
-    for (i=0; i < size; i++) {
-      if (fscanf(stream , "%d", &value) == 1)
-        int_vector_append(vector , value);
-      else
-        util_abort("%s: premature end of indices when reading local configuraton - malformed file.\n",__func__);
-    }
-  }
-}
-
-
-static char * read_alloc_string(FILE * stream , bool binary) {
-  if (binary)
-    return util_fread_alloc_string( stream );
-  else {
-    char * string = util_calloc(256 , sizeof * string ); /* 256 - outht to be enough for everyone ... */
-    fscanf(stream , "%s" , string);
-    return string;
-  }
-}
-
-
-static bool read_bool(FILE * stream , bool binary) {
-  if (binary)
-    return util_fread_bool( stream );
-  else {
-    bool value;
-    char * s = read_alloc_string( stream , binary );
-    if (!util_sscanf_bool( s , &value))
-      util_abort("%s: failed to interpret:\'%s\' as boolean true / false\n",__func__ , s );
-    free( s );
-    return value;
-  }
-}
 
 void local_config_summary_fprintf( const local_config_type * local_config , const char * config_file) {
 

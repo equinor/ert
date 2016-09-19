@@ -29,7 +29,7 @@ extern "C" {
 
 #define FS_MAGIC_ID              123998L
 #define FSTAB_FILE              "ert_fstab"
-#define CURRENT_FS_VERSION       106
+#define CURRENT_FS_VERSION       107
 #define MIN_SUPPORTED_FS_VERSION 105
   
 /**
@@ -49,7 +49,8 @@ extern "C" {
                                   |   2140: block_fs_index added
                                   |   2190: started to distribute ert binary internally
    105                            |   3918                |
-   106                            |   Git ~ Desember 2015 
+   106                            |   Git ~ Desember 2015
+   107                            |   Git ~ September 2017
    -------------------------------------------------------------------------
 
 
@@ -139,6 +140,19 @@ extern "C" {
    reading the mount map. An older version of ert - with
    CURRENT_VERSION == 105 can also read a VERSION == 106 filesystem
    with a minor backport and some default heuristics.
+
+
+   Version: 107
+   ------------
+
+   Using UTC instead of localtime throughout the code. This implies
+   that the timemaps written to disk with old versions have time_t
+   values corresponding to localtime, whereas everything now is
+   expected to be in utc.
+
+   If we detect a filesystem with version below 107 we stop the
+   program. If a refcase is supplied the user is given a suggested
+   commandline to perform an inplace upgrade.
 */
 
 
@@ -213,10 +227,12 @@ struct fs_driver_struct {
   fs_driver_type           * fs_driver_safe_cast(void * );
   
   void                       fs_driver_init_fstab( FILE * stream, fs_driver_impl driver_id );
+  char                     * fs_driver_alloc_fstab_file( const char * path );
   FILE                     * fs_driver_open_fstab( const char * path , bool create);
   fs_driver_impl             fs_driver_fread_type( FILE * stream ); 
   void                       fs_driver_assert_magic( FILE * stream );
   void                       fs_driver_assert_version( FILE * stream , const char * mount_point);
+  int                        fs_driver_fread_version( FILE * stream );
 
 
 #ifdef __cplusplus

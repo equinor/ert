@@ -86,7 +86,7 @@ static time_t parse_time_t(const char * day_string , const char * month_string ,
     util_abort("%s: failed to interpret:%s a month name \n",__func__ , month_string );
 
   if (util_sscanf_int(day_string , &mday) && util_sscanf_int(year_string , &year))
-    time = util_make_date(mday , month , year);
+    time = util_make_date_utc(mday , month , year);
   else 
     util_abort("%s: fatal error when extracting date from:%s %s %s \n", __func__, day_string , month_string , year_string);
 
@@ -143,7 +143,7 @@ void sched_kw_dates_fprintf(const sched_kw_dates_type *kw , FILE *stream) {
       if (sched_time_get_type( time_node ) == DATES_TIME) {
         time_t date          = sched_time_get_date( time_node );
         int day, month, year;
-        util_set_date_values(date, &day, &month, &year);
+        util_set_date_values_utc(date, &day, &month, &year);
         fprintf(stream , DATES_FMT , day, get_month_string_from_int(month), year );
       } else 
         util_abort("%s: internal type fuckup \n",__func__);

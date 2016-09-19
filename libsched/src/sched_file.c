@@ -576,7 +576,7 @@ int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, ti
 
     if (block_end_time > time) {
       int mday,year,month;
-      util_set_date_values( time , &mday , &month , &year);
+      util_set_date_values_utc( time , &mday , &month , &year);
       util_abort("%s: Date: %02d/%02d/%04d  does not cooincide with any report time. Aborting.\n", __func__ , mday , month , year);
     } else if (block_end_time == time)
       return i; 
@@ -585,7 +585,7 @@ int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, ti
   // If we are here, time did'nt correspond a restart file. Abort.
   {
     int mday,year,month;
-    util_set_date_values( time , &mday , &month , &year);
+    util_set_date_values_utc( time , &mday , &month , &year);
     util_abort("%s: Date: %02d/%02d/%04d  does not cooincide with any report time. Aborting.\n", __func__ , mday , month , year);
   }
   return 0;
@@ -599,7 +599,7 @@ int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, ti
 
 int sched_file_get_restart_nr_from_days(const sched_file_type * sched_file , double days) {
   time_t time = sched_file_iget_block_start_time(sched_file, 0);
-  util_inplace_forward_days( &time , days);
+  util_inplace_forward_days_utc( &time , days);
   return sched_file_get_restart_nr_from_time_t(sched_file , time);
 }
 
@@ -672,7 +672,7 @@ static void __sched_file_summarize_line(int restart_nr , time_t start_time , tim
   double days    = util_difftime( start_time , t , NULL , NULL , NULL , NULL) / (24 * 3600);
   int mday , month , year;
   
-  util_set_date_values(t , &mday , &month , &year);
+  util_set_date_values_utc(t , &mday , &month , &year);
   fprintf(stream , "%02d/%02d/%04d   %7.1f days     %04d \n", mday , month , year , days , restart_nr);
 }
 

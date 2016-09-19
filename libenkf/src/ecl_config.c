@@ -656,7 +656,7 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
   {
     const char * date_string = config_content_get_value(config, END_DATE_KEY);
     time_t end_date;
-    if (util_sscanf_date(date_string, &end_date))
+    if (util_sscanf_date_utc(date_string, &end_date))
       ecl_config_set_end_date(ecl_config, end_date);
     else
       fprintf(stderr, "** WARNING **: Failed to parse %s as a date - should be in format dd/mm/yyyy \n", date_string);

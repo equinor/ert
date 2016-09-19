@@ -103,8 +103,8 @@ static void forward_load_context_load_ecl_sum(forward_load_context_type * load_c
               int end_day,end_month,end_year;
               int sum_day,sum_month,sum_year;
 
-              util_set_date_values( end_time , &end_day , &end_month , &end_year );
-              util_set_date_values( ecl_sum_get_end_time( summary ) , &sum_day , &sum_month , &sum_year );
+              util_set_date_values_utc( end_time , &end_day , &end_month , &end_year );
+              util_set_date_values_utc( ecl_sum_get_end_time( summary ) , &sum_day , &sum_month , &sum_year );
               {
                 char * msg = util_alloc_sprintf("Summary ended at %02d/%02d/%4d - expected at least END_DATE: %02d/%02d/%4d" ,
                                                 sum_day , sum_month , sum_year ,

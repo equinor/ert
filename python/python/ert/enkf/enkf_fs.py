@@ -81,6 +81,19 @@ class EnkfFs(BaseCClass):
         return cls.cNamespace().exists(path)
 
     @classmethod
+    def diskVersion(cls, path):
+        disk_version = cls.cNamespace().disk_version(path)
+        if disk_version < 0:
+            raise IOError("No such filesystem: %s" % path)
+        return disk_version
+
+
+    @classmethod
+    def updateVersion(cls, path, src_version , target_version):
+        return cls.cNamespace().update_disk_version(path , src_version  ,target_version)
+
+    
+    @classmethod
     def createFileSystem(cls, path, fs_type, arg=None , mount = False):
         assert isinstance(path, str)
         assert isinstance(fs_type, EnKFFSType)
@@ -127,6 +140,9 @@ cwrapper.registerObjectType("enkf_fs", EnkfFs)
 
 EnkfFs.cNamespace().mount = cwrapper.prototype("c_void_p enkf_fs_mount(char* )")
 EnkfFs.cNamespace().create = cwrapper.prototype("enkf_fs_ref enkf_fs_create_fs(char* , enkf_fs_type_enum , c_void_p , bool)")
+EnkfFs.cNamespace().exists = cwrapper.prototype("bool enkf_fs_exists(char*)")
+EnkfFs.cNamespace().disk_version = cwrapper.prototype("int enkf_fs_disk_version(char*)")
+EnkfFs.cNamespace().update_disk_version = cwrapper.prototype("bool enkf_fs_update_disk_version(char*, int, int)")
 EnkfFs.cNamespace().decref = cwrapper.prototype("int enkf_fs_decref(enkf_fs)")
 EnkfFs.cNamespace().get_refcount = cwrapper.prototype("int enkf_fs_get_refcount(enkf_fs)")
 EnkfFs.cNamespace().has_node = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, c_uint, int, int, c_uint)")
@@ -135,7 +151,6 @@ EnkfFs.cNamespace().fread_node = cwrapper.prototype("void enkf_fs_fread_node(enk
 EnkfFs.cNamespace().fread_vector = cwrapper.prototype("void enkf_fs_fread_vector(enkf_fs, buffer, char*, c_uint, int, c_uint)")
 EnkfFs.cNamespace().get_time_map = cwrapper.prototype("time_map_ref enkf_fs_get_time_map(enkf_fs)")
 EnkfFs.cNamespace().get_state_map = cwrapper.prototype("state_map_ref enkf_fs_get_state_map(enkf_fs)")
-EnkfFs.cNamespace().exists = cwrapper.prototype("bool enkf_fs_exists(char*)")
 EnkfFs.cNamespace().get_case_name = cwrapper.prototype("char* enkf_fs_get_case_name(enkf_fs)")
 EnkfFs.cNamespace().is_read_only = cwrapper.prototype("bool enkf_fs_is_read_only(enkf_fs)")
 EnkfFs.cNamespace().get_writecount = cwrapper.prototype("int enkf_fs_get_write_count(enkf_fs)")
