@@ -1,3 +1,4 @@
+from __future__ import print_function
 from ert.util import IntVector
 from ert.enkf.enums import ErtImplType
 from ert.enkf.data import EnkfNode
@@ -57,7 +58,7 @@ class Export(ErtShellCollection):
                 fs = fs_manager.getCurrentFileSystem()
                 init_file = self.ert().fieldInitFile(config_node)
                 if init_file:
-                    print "Using init file: %s" % init_file
+                    print('Using init file: %s' % init_file)
 
                 EnkfNode.exportMany(config_node, path_fmt, fs, iens_list, arg=init_file)
             else:

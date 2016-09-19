@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from ert.enkf.export import GenKwCollector
 from ert.test.extended_testcase import ExtendedTestCase
@@ -9,7 +10,7 @@ class ErtShellSmootherTest(ExtendedTestCase):
         test_config = self.createTestPath("local/custom_kw/mini_config")
     
         with ErtShellTestContext("python/ertshell/smoother", test_config) as shell:
-            print os.getcwd()
+            print(os.getcwd())
             shell.invokeCommand("case select test_run")
     
             self.assertTrue(shell.invokeCommand("smoother update test_run_update"))
