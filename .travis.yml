@@ -49,7 +49,7 @@ install:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-    - conda install pyqt scipy=0.16.1 numpy pandas matplotlib
+    - conda install pyqt=4 scipy=0.16.1 numpy pandas matplotlib
 
 env:
   global:
