@@ -2,6 +2,7 @@ if (BUILD_ERT)
    set(application_list
         ert_tcp_server
         ertshell
+        ert_upgrade_fs107
    )
    foreach(prog ${application_list} )
       file(COPY ${prog} DESTINATION ${EXECUTABLE_OUTPUT_PATH})             
