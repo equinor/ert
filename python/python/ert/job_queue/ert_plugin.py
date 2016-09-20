@@ -29,7 +29,7 @@ class ErtPlugin(ErtScript):
         runFunction.return_value = None
 
         def runFunctionWrapper():
-            runFuntion.return_value = runFunction()
+            runFunction.return_value = runFunction()
 
         thread = Thread()
         thread.run = runFunctionWrapper
