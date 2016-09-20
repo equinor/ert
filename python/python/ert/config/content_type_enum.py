@@ -27,6 +27,7 @@ class ContentTypeEnum(BaseCEnum):
     CONFIG_CONFIG        = None
     CONFIG_BYTESIZE      = None
     CONFIG_EXECUTABLE    = None
+    CONFIG_ISODATE       = None
     CONFIG_INVALID       = None
 
 ContentTypeEnum.addEnum("CONFIG_STRING", 1)
@@ -38,4 +39,5 @@ ContentTypeEnum.addEnum("CONFIG_BOOL", 32)
 ContentTypeEnum.addEnum("CONFIG_CONFIG", 64)
 ContentTypeEnum.addEnum("CONFIG_BYTESIZE", 128)
 ContentTypeEnum.addEnum("CONFIG_EXECUTABLE", 256)
-ContentTypeEnum.addEnum("CONFIG_INVALID", 512)
+ContentTypeEnum.addEnum("CONFIG_ISODATE", 512)
+ContentTypeEnum.addEnum("CONFIG_INVALID", 1024)
