@@ -123,6 +123,22 @@ class ConfigTest(ExtendedTestCase):
             conf.parse("DoesNotExits")
             
 
+    def test_parse_invalid(self):
+        conf = ConfigParser()
+        conf.add("INT", value_type = ContentTypeEnum.CONFIG_INT )
+        with TestAreaContext("config/parse2"):
+            with open("config","w") as fileH:
+                fileH.write("INT xx\n")
+
+            with self.assertRaises(ValueError):
+                conf.parse("config")
+
+            content = conf.parse("config" , validate = False )
+            self.assertFalse( content.isValid() )
+            self.assertEqual( len(content.getErrors()) , 1 )
+
+            
+            
     def test_parser_content(self):
         conf = ConfigParser()
         conf.add("KEY2", False)

@@ -97,14 +97,16 @@ class ConfigParser(BaseCClass):
         
         if os.path.exists(config_file):
             config_content = self._parse(config_file, comment_string, include_kw, define_kw, pre_defined_kw_map, unrecognized, validate)
-            if config_content.isValid():
-                return config_content
-            else:
-                sys.stderr.write("Errors parsing:%s \n" % config_file)
-                for count, error in enumerate(config_content.getErrors()):
-                    sys.stderr.write("  %02d:%s\n" % (count , error))
+
+            if not config_content.isValid():
+                if validate:
+                    sys.stderr.write("Errors parsing:%s \n" % config_file)
+                    for count, error in enumerate(config_content.getErrors()):
+                        sys.stderr.write("  %02d:%s\n" % (count , error))
                     
-                raise Exception("Parsing:%s failed" % config_file)
+                    raise ValueError("Parsing:%s failed" % config_file)
+
+            return config_content
         else:
             raise IOError("File: %s does not exists" % config_file)
 
