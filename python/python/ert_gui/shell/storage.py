@@ -1,3 +1,4 @@
+import ert
 from ert_gui.shell import ErtShellCollection
 from ert_gui.shell.libshell import splitArguments, getPossibleFilenameCompletions, extractFullArgument
 
@@ -10,7 +11,7 @@ STRING_SORT = 1
 OFFSET_SORT = 2
 
 import ert.cwrap.clib as clib
-UTIL_LIB = clib.ert_load("libert_util")
+UTIL_LIB = ert.load("libert_util")
 
 UTIL_LIB.block_fs_is_mount.restype = ctypes.c_bool
 UTIL_LIB.block_fs_mount.restype = ctypes.c_void_p

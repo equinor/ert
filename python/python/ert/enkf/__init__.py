@@ -15,7 +15,7 @@
 #  for more details.
 
 
-import ert.cwrap.clib as clib
+import ert
 from ert.cwrap.metacwrap import Prototype
 import ert.util
 import ert.geo
@@ -27,14 +27,14 @@ import ert.config
 import ert.job_queue
 
 class EnkfPrototype(Prototype):
-    lib = clib.ert_load("libenkf")
+    lib = ert.load("libenkf")
 
     def __init__(self, prototype, bind=True):
         super(EnkfPrototype, self).__init__(EnkfPrototype.lib, prototype, bind=bind)
 
         
 
-ENKF_LIB = clib.ert_load("libenkf")
+ENKF_LIB = ert.load("libenkf")
 
 from .enums import *
 

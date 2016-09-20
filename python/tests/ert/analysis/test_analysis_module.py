@@ -14,17 +14,17 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import ert
 from ert.test import ExtendedTestCase
 from ert.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 
 from ert.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ert.util.rng import RandomNumberGenerator
-import ert.cwrap.clib as clib
 
 
 class AnalysisModuleTest(ExtendedTestCase):
     def setUp(self):
-        self.libname = clib.ert_lib_path + "/rml_enkf.so"
+        self.libname = ert.ert_lib_path + "/rml_enkf.so"
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 
     def createAnalysisModule(self):

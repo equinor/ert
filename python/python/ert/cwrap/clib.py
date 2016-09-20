@@ -23,7 +23,7 @@ libert_util.so library file is loaded we should manually load that
 first as:
 
    import ert.util
-   GEO_LIB = clib.ert_load("libert_geometry")
+   GEO_LIB = ert.load("libert_geometry")
 
 Otherwise the standard operating system dependency resolve code will
 be invoked when loading libert_geometry, and that could in principle
@@ -40,29 +40,6 @@ so_extension = {"linux"  : "so",
                 "win32"  : "dll",
                 "win64"  : "dll",
                 "darwin" : "dylib" }
-
-
-# The variables ert_lib_path and ert_so_version will be set by the build
-# system. The system works like this:
-#
-#  1. There is a CMake configure command which creates a module
-#     __ert_lib_info.py; that module has the two elements
-#     'ert_lib_path' and 'ert_so_version' which are inferred by the
-#     build system.
-#
-#  2. The root package ert/__init__py will try to import thel
-#     __ert_lib_info module; if that import succeeds the attributes
-#     ert_lib_path and ert_so_version OF THIS MODULE will be updated.
-# 
-#     If the import fails this module will continue with the default
-#     values. The default values will work if the shared libraries are
-#     in the default library load path, with unversioned named/links.
-
-
-ert_lib_path = None           # Warning: Will be updated from ert/__init__.py
-ert_so_version = ""           #  
-
-
 
 
 # Passing None to the CDLL() function means to open a lib handle to
@@ -88,40 +65,28 @@ def lib_name(lib , path = None , so_version = ""):
 
 
 
-def __load( lib_list, ert_prefix):
-    """
-    Thin wrapper around the ctypes.CDLL function for loading shared library.
-    
-    The shared libraries typically exist under several different
-    names, with different level of version detail. Unfortunately the
-    same library can exist under different names on different
-    computers, to support this the load function can get several
-    arguments like:
-    
-       load("libz.so" , "libz.so.1" , "libz.so.1.2.1.2" , "libZ-fucker.so")
-    
-    Will return a handle to the first successfull load, and raise
-    ImportError if none of the loads succeed.
+def load( lib, so_version = None, path = None):
+    """Thin wrapper around the ctypes.CDLL function for loading shared
+    library. 
+
+    If the path argument is non Null the function will first try to
+    load with full path. If that fails it wil also try to load without
+    a path component, invoking normal dlopen() semantics.
     """
 
-    error_list = {}
     dll = None
-    for lib in lib_list:
-        if ert_prefix:
-            lib_file = lib_name( lib , path = ert_lib_path , so_version = ert_so_version)
-        else:
-            lib_file = lib_name( lib , so_version = ert_so_version)
+    lib_files = [ lib_name( lib , path = path , so_version = so_version) ]
+    if path:
+        lib_files.append( lib_name( lib , path = None , so_version = so_version) )
 
+    for lib_file in lib_files:
         try:
             dll = ctypes.CDLL(lib_file , ctypes.RTLD_GLOBAL)
             return dll
         except Exception, exc:
-            error_list[lib] = exc
+            error = exc
 
-    error_msg = "\nFailed to load shared library:%s\n\ndlopen() error:\n" % lib_list[0]
-    for lib in error_list.keys():
-        error_msg += "   %16s : %s\n" % (lib, error_list[lib])
-    error_msg += "\n"
+    error_msg = "\nFailed to load shared library:%s\n\ndlopen() error: %s\n" % (lib , error)
 
     LD_LIBRARY_PATH = os.getenv("LD_LIBRARY_PATH")
     if not LD_LIBRARY_PATH:
@@ -138,32 +103,9 @@ You might need to update this variable?
 """ % LD_LIBRARY_PATH
     raise ImportError(error_msg)
 
-#################################################################
 
 
-def load( *lib_list ):
-    """
-    Will try to load shared library with normal load semantics.
-    """
-    return __load(lib_list , False)
 
-
-def ert_load( *lib_list ):
-    """
-    Iff the ert_lib_path module variable has been set it will try to
-    load shared library from that path; if that fails the loader will
-    try again without imposing any path restrictions.
-    """
-
-    if ert_lib_path:
-        try:
-            return __load(lib_list , True)
-        except ImportError:
-            # Try again - ignoring the ert_lib_path setting.
-            return load(*lib_list)
-    else:
-        # The ert_lib_path variable has not been set; just try a normal load.
-        return load(*lib_list)
 
 
 

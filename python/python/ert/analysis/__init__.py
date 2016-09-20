@@ -15,19 +15,19 @@
 #  for more details. 
 
 
-import ert.cwrap.clib as clib
+import ert
 from ert.cwrap.metacwrap import Prototype
 import ert.util
 
 class AnalysisPrototype(Prototype):
-    lib = clib.ert_load("libanalysis")
+    lib = ert.load("libanalysis")
 
     def __init__(self, prototype, bind=True):
         super(AnalysisPrototype, self).__init__(AnalysisPrototype.lib, prototype, bind=bind)
 
 
 
-ANALYSIS_LIB = clib.ert_load("libanalysis")
+ANALYSIS_LIB = ert.load("libanalysis")
 
 from .enums import AnalysisModuleOptionsEnum, AnalysisModuleLoadStatusEnum
 

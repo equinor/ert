@@ -54,9 +54,9 @@ external commands.
 
 
 import os
+import ert
 import ert.util
 import ert.config
-import ert.cwrap.clib as clib
 from ert.cwrap.metacwrap import Prototype
 
 def setenv( var, value):
@@ -72,10 +72,10 @@ if LSF_HOME:
     setenv("LSF_SERVERDIR", "%s/etc" % LSF_HOME)
     setenv("LSF_ENVDIR", "%s/conf" % LSF_HOME)   # This is wrong: Statoil: /prog/LSF/conf
 
-JOB_QUEUE_LIB = clib.ert_load("libjob_queue")
+JOB_QUEUE_LIB = ert.load("libjob_queue")
 
 class QueuePrototype(Prototype):
-    lib = clib.ert_load("libjob_queue")
+    lib = ert.load("libjob_queue")
 
     def __init__(self, prototype, bind=True):
         super(QueuePrototype, self).__init__(QueuePrototype.lib, prototype, bind=bind)

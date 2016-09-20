@@ -16,13 +16,14 @@
 
 import random
 
+import ert
 from ert.test import ExtendedTestCase, ErtTestContext
 from ert.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ert.util import Matrix, BoolVector , RandomNumberGenerator
 from ert.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from ert.enkf import MeasData , ObsData , LocalObsdata
 
-import ert.cwrap.clib as clib
+
 
 
 def update(rng , mask , module , ert , meas_data , obs_data , state_size):
@@ -44,7 +45,7 @@ def update(rng , mask , module , ert , meas_data , obs_data , state_size):
 
 class UpdateTest(ExtendedTestCase):
     def setUp(self):
-        self.libname = clib.ert_lib_path + "/rml_enkf.so"
+        self.libname = ert.ert_lib_path + "/rml_enkf.so"
         self.config_file = self.createTestPath("Statoil/config/obs_testing2/config")
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 

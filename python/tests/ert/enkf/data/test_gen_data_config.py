@@ -1,3 +1,4 @@
+import ert
 from ert.cwrap import clib, CWrapper
 from ert.enkf.data import EnkfNode
 from ert.enkf.config import GenDataConfig
@@ -6,7 +7,7 @@ from ert.enkf import ForwardLoadContext
 from ert.test import ErtTestContext, ExtendedTestCase
 from ert.util import BoolVector
 
-test_lib  = clib.ert_load("libenkf")
+test_lib  = ert.load("libenkf")
 cwrapper =  CWrapper(test_lib)
 
 get_active_mask = cwrapper.prototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )")

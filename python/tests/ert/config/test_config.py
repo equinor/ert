@@ -16,13 +16,14 @@
 #  for more details. 
 import os
 
+import ert
 from ert.config import ContentTypeEnum, UnrecognizedEnum, SchemaItem, ContentItem, ContentNode, ConfigParser, ConfigContent
 from ert.cwrap import Prototype, clib
 from ert.test import ExtendedTestCase, TestAreaContext
 
 
 class TestConfigPrototype(Prototype):
-    lib = clib.ert_load("libconfig")
+    lib = ert.load("libconfig")
 
     def __init__(self, prototype, bind=False):
         super(TestConfigPrototype, self).__init__(TestConfigPrototype.lib, prototype, bind=bind)
