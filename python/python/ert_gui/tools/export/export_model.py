@@ -14,8 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from __future__ import print_function
 import os.path
-from ert.enkf import EnkfConfigNode, GenKw, EnkfNode, NodeId, EnkfFieldFileFormatEnum, ErtImplType, GenData, GenDataFileType
+from ert.enkf import EnkfConfigNode, EnkfNode, EnkfFieldFileFormatEnum, ErtImplType
+from ert.enkf import GenKw, GenDataFileType, GenData, NodeId
 from ert_gui import ERT
 
 
@@ -44,7 +46,7 @@ class ExportModel(object):
         config_node = ERT.ert.ensembleConfig()[keyword]
         init_file = ERT.ert.fieldInitFile(config_node)
         if init_file:
-            print "Using init file:%s" % init_file
+            print('Using init file:%s' % init_file)
         EnkfNode.exportMany(config_node, path_fmt, fs, iens_list, file_type=file_type, arg=init_file)
         return True
 
