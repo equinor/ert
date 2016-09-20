@@ -20,6 +20,7 @@ The prototype_pattern is a major regexp which is used to set the
 correct restype and argtypes attributes of the function objects.
 """
 
+from __future__ import print_function
 import ctypes
 import re
 import sys
@@ -204,7 +205,7 @@ class CWrapper:
 
     def printTypes(self):
         for ctype in self.registered_types.keys():
-            print "%16s -> %s" % (ctype, self.registered_types[ctype])
+            print('%16s -> %s' % (ctype, self.registered_types[ctype]))
 
 
 class CWrapperNameSpace:

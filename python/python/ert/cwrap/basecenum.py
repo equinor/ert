@@ -41,7 +41,7 @@ class BaseCEnum(object):
 
         setattr(cls, name, enum)
 
-        if not cls.enum_namespace.has_key(cls):
+        if cls not in cls.enum_namespace:
             cls.enum_namespace[cls] = []
 
         cls.enum_namespace[cls].append(enum)
@@ -58,6 +58,9 @@ class BaseCEnum(object):
             return self.value == other
 
         return False
+
+    def __hash__(self):
+        return hash(self.value)
 
     def __str__(self):
         return self.name
@@ -142,7 +145,3 @@ class BaseCEnum(object):
     def registerEnum(cls, library, enum_name):
         cwrapper = CWrapper(library)
         cwrapper.registerType(enum_name, cls)
-
-
-
-

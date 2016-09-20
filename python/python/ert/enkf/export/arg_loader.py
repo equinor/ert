@@ -1,3 +1,4 @@
+from __future__ import print_function
 import math
 from pandas import DataFrame, MultiIndex
 import numpy
@@ -7,8 +8,7 @@ from ert.util import BoolVector
 
 
 class ArgLoader(object):
-    
-    
+
     @staticmethod
     def load(filename , column_names = None):
         rows = 0
@@ -31,7 +31,7 @@ class ArgLoader(object):
         with open(filename) as fileH:
             for line in fileH.readlines():
                 tmp = line.split( )
-                print tmp
+                print(tmp)
                 for column in range(columns):
                     data[row][column] = float(tmp[column])
                 row += 1
