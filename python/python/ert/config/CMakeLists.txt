@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    schema_item.py
     config_error.py
     config_parser.py
     config_content.py

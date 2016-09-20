@@ -147,6 +147,8 @@ class ConfigTest(ExtendedTestCase):
         schema_item.iset_type(3 , ContentTypeEnum.CONFIG_BOOL )
         schema_item.iset_type(4 , ContentTypeEnum.CONFIG_FLOAT )
         schema_item.iset_type(5 , ContentTypeEnum.CONFIG_PATH )
+        schema_item = conf.add("NOT_IN_CONTENT", False)
+        
         
         with TestAreaContext("config/parse2"):
             with open("config","w") as fileH:
@@ -160,6 +162,10 @@ class ConfigTest(ExtendedTestCase):
             self.assertTrue( "KEY" in content )
             self.assertFalse( "NOKEY" in content )
 
+            self.assertFalse( "NOT_IN_CONTENT" in content )
+            item = content["NOT_IN_CONTENT"]
+            self.assertEqual( len(item) , 0 )
+            
             with self.assertRaises(KeyError):
                 content["Nokey"]
                 
