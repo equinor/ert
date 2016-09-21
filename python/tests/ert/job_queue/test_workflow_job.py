@@ -1,9 +1,10 @@
-from ert.cwrap import clib, CWrapper
+import ert
+from ert.cwrap import CWrapper
 from ert.job_queue import WorkflowJob
 from ert.test import TestAreaContext, ExtendedTestCase
 from .workflow_common import WorkflowCommon
 
-test_lib  = clib.ert_load("libjob_queue") # create a local namespace
+test_lib  = ert.load("libjob_queue") # create a local namespace
 cwrapper =  CWrapper(test_lib)
 
 alloc_config = cwrapper.prototype("c_void_p workflow_job_alloc_config()")

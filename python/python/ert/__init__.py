@@ -37,9 +37,7 @@ Python code should be able to locate the shared libraries without
 (necessarily) using the LD_LIBRARY_PATH variable. The default
 behaviour is to try to load from the library ../../lib64, but by using
 the enviornment variable ERT_LIBRARY_PATH you can alter how ert looks
-for shared libraries. This module will set the ert_lib_path of the
-ert.cwrap.clib module; the actual loading will take place in that
-module.
+for shared libraries. 
 
    1. By default the code will try to load the shared libraries from
       '../../lib64' relative to the location of this file.
@@ -58,10 +56,9 @@ alternative fails, the loader will try the default load behaviour
 before giving up completely.
 """
 import os.path
-import cwrap.clib
 import sys
 import warnings
-
+import cwrap.clib
 
 
 try:
@@ -107,23 +104,26 @@ if env_lib_path:
 # Check that the final ert_lib_path setting corresponds to an existing
 # directory.
 if ert_lib_path:
-    if not os.path.exists( ert_lib_path ):
+    if not os.path.isdir( ert_lib_path ):
         ert_lib_path = None
         
-
-
-# Set the module variables ert_lib_path and so_version of the
-# ert.cwrap.clib module; this is where the actual loading will be
-# performed.
-cwrap.clib.ert_lib_path   = ert_lib_path
-cwrap.clib.ert_so_version = ert_so_version
 
 if sys.hexversion < required_version_hex:
     raise Exception("ERT Python requires at least version 2.6 of Python")
 
+# This load() function is *the* function actually loading shared
+# libraries.
+
+def load(name):
+    return cwrap.clib.load( name , path = ert_lib_path , so_version = ert_so_version)
 
 
 from ert.util import Version
 from ert.util import updateAbortSignals
 
 updateAbortSignals( )
+
+#-----------------------------------------------------------------
+
+    
+

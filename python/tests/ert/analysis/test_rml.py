@@ -22,7 +22,7 @@ from ert.util import Matrix, BoolVector , RandomNumberGenerator
 from ert.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from ert.enkf import MeasData , ObsData
 
-import ert.cwrap.clib as clib
+import ert
 
 
 def forward_model(params , model_error = False):
@@ -78,7 +78,7 @@ def init_matrices(ens , mask , obs , rng):
 
 class RMLTest(ExtendedTestCase):
     def setUp(self):
-        self.libname = clib.ert_lib_path + "/rml_enkf.so"
+        self.libname = ert.ert_lib_path + "/rml_enkf.so"
         self.user    = "TEST"
 
     def createAnalysisModule(self):

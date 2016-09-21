@@ -1,4 +1,5 @@
-from ert.cwrap import clib, CWrapper
+import ert as ert_module
+from ert.cwrap import CWrapper
 from ert.job_queue import ErtScript
 from ert.util.stringlist import StringList
 
@@ -8,7 +9,7 @@ class FunctionErtScript(ErtScript):
     def __init__(self, ert, function_name, argument_types, argument_count):
         super(FunctionErtScript, self).__init__(ert)
 
-        lib = clib.ert_load(None)
+        lib = ert_module.load(None)
         wrapper = CWrapper(lib)
 
         parsed_argument_types = []

@@ -13,13 +13,12 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert.cwrap import clib
-
+import ert
 import ert.ecl
 import ert.util
 import ert.geo
 
-SCHED_LIB = clib.ert_load("libsched")
+SCHED_LIB = ert.load("libsched")
 
 
 from .sched_file import SchedFile
