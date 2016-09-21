@@ -26,7 +26,8 @@ class SchemaItem(BaseCClass):
     _iget_type = ConfigPrototype("config_content_type_enum config_schema_item_iget_type( schema_item, int)")
     _iset_type = ConfigPrototype("void config_schema_item_iset_type( schema_item , int , config_content_type_enum)")
     _set_argc_minmax = ConfigPrototype("void config_schema_item_set_argc_minmax( schema_item , int , int)")
-
+    _add_alternative = ConfigPrototype("void config_schema_item_add_indexed_alternative(schema_item , int , char*)")
+    
     def __init__(self, keyword, required=False):
         c_ptr = self._alloc(keyword, required)
         super(SchemaItem, self).__init__(c_ptr)
@@ -46,6 +47,16 @@ class SchemaItem(BaseCClass):
     def set_argc_minmax(self, minimum, maximum):
         self._set_argc_minmax(minimum, maximum)
 
+
+    def initSelection(self , index , alternatives):
+        for alt in alternatives:
+            self.addAlternative( index , alt )
+
+            
+    def addAlternative(self , index , alt):
+        self._add_alternative( index , alt )
+
+        
     def free(self):
         self._free()
 

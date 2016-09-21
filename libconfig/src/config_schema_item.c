@@ -74,10 +74,10 @@ struct validate_struct {
   int                  argc_min;                /* The minimum number of arguments: -1 means no lower limit. */
   int                  argc_max;                /* The maximum number of arguments: -1 means no upper limit. */
   set_type          *  common_selection_set;    /* A selection set which will apply uniformly to all the arguments. */
-  set_type          ** indexed_selection_set;   /* A selection set which will apply for specifi (indexed) arguments. */
   int_vector_type   *  type_map;                /* A list of types for the items. Set along with argc_minmax(); */
   stringlist_type   *  required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
   hash_type         *  required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
+  vector_type       *  indexed_selection_set;   /* A vector of set_type instances which will apply for specific (indexed) arguments. */
 };
 
 
@@ -111,7 +111,7 @@ static validate_type * validate_alloc() {
   validate->argc_min                = CONFIG_DEFAULT_ARG_MIN;
   validate->argc_max                = CONFIG_DEFAULT_ARG_MAX;
   validate->common_selection_set    = NULL;
-  validate->indexed_selection_set   = NULL;
+  validate->indexed_selection_set   = vector_alloc_new();
   validate->required_children       = NULL;
   validate->required_children_value = NULL;
   validate->type_map                = int_vector_alloc(0 , 0);
@@ -122,13 +122,8 @@ static validate_type * validate_alloc() {
 
 static void validate_free(validate_type * validate) {
   if (validate->common_selection_set != NULL) set_free(validate->common_selection_set);
-  if (validate->indexed_selection_set != NULL) {
-    for (int i = 0; i < validate->argc_max; i++)
-      if (validate->indexed_selection_set[i] != NULL)
-        set_free(validate->indexed_selection_set[i]);
-    free(validate->indexed_selection_set);
-  }
 
+  vector_free( validate->indexed_selection_set );
   int_vector_free( validate->type_map );
   if (validate->required_children != NULL) stringlist_free(validate->required_children);
   if (validate->required_children_value != NULL) hash_free(validate->required_children_value);
@@ -166,13 +161,8 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
       internal_type_size = argc_max;
     else
       internal_type_size = argc_min;
-
-    if (internal_type_size > 0) {
-      validate->indexed_selection_set = util_calloc( internal_type_size , sizeof * validate->indexed_selection_set );
-      for (int iarg=0; iarg < internal_type_size; iarg++)
-        validate->indexed_selection_set[iarg] = NULL;
-    }
   }
+
 }
 
 
@@ -184,6 +174,23 @@ static void validate_set_common_selection_set(validate_type * validate , int arg
 }
 
 
+static set_type * validate_iget_selection_set( validate_type * validate , int index) {
+  return vector_safe_iget( validate->indexed_selection_set , index);
+}
+
+static void validate_add_indexed_alternative(validate_type * validate , int index , const char * value) {
+  set_type * set = validate_iget_selection_set( validate , index );
+
+  if (!set) {
+    vector_safe_iset_owned_ref( validate->indexed_selection_set , index , set_alloc(0,NULL) , set_free__ );
+    set = vector_safe_iget( validate->indexed_selection_set , index);
+  }
+
+  set_add_key( set , value );
+}
+
+
+
 static void validate_set_indexed_selection_set(validate_type * validate , int index , int argc , const char ** argv) {
 
   if (validate->indexed_selection_set == NULL)
@@ -192,10 +199,7 @@ static void validate_set_indexed_selection_set(validate_type * validate , int in
   if (index >= validate->argc_min)
     util_abort("%s: When not not setting argc_max selection set can only be applied to indices up to argc_min\n",__func__);
 
-  if (validate->indexed_selection_set[index] != NULL)
-    set_free(validate->indexed_selection_set[index]);
-
-  validate->indexed_selection_set[index] = set_alloc(argc , argv);
+  vector_safe_iset_owned_ref( validate->indexed_selection_set , index , set_alloc(argc,argv) , set_free__ );
 }
 
 
@@ -293,8 +297,9 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
     } else if (item->validate->indexed_selection_set != NULL) {
       for (int iarg = 0; iarg < argc; iarg++) {
         if ((item->validate->argc_max > 0) || (iarg < item->validate->argc_min)) {  /* Without this test we might go out of range on the indexed selection set. */
-          if (item->validate->indexed_selection_set[iarg] != NULL) {
-            if (!set_has_key(item->validate->indexed_selection_set[iarg] , stringlist_iget( token_list , iarg + 1))) {
+          const set_type * selection_set = validate_iget_selection_set( item->validate , iarg);
+          if (selection_set) {
+            if (!set_has_key( selection_set, stringlist_iget( token_list , iarg + 1))) {
               config_error_add( error_list , util_alloc_sprintf("%s: is not a valid value for item %d of \'%s\'.",stringlist_iget( token_list , iarg + 1) , iarg + 1 , item->kw));
               OK = false;
             }
@@ -460,6 +465,11 @@ void config_schema_item_set_common_selection_set(config_schema_item_type * item 
 void config_schema_item_set_indexed_selection_set(config_schema_item_type * item , int index , int argc , const char ** argv) {
   validate_set_indexed_selection_set(item->validate , index , argc , argv);
 }
+
+void config_schema_item_add_indexed_alternative(config_schema_item_type * item , int index , const char * value) {
+  validate_add_indexed_alternative(item->validate , index , value);
+}
+
 
 
 void config_schema_item_set_required_children(config_schema_item_type * item , stringlist_type * stringlist) {
