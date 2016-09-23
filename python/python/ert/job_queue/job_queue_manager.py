@@ -32,9 +32,12 @@ class JobQueueManager(BaseCClass):
     _is_running      = QueuePrototype("bool job_queue_manager_is_running( job_queue_manager )")
     _job_complete    = QueuePrototype("bool job_queue_manager_job_complete( job_queue_manager , int)")
     _job_running     = QueuePrototype("bool job_queue_manager_job_running( job_queue_manager , int)")
-    _job_failed      = QueuePrototype("bool job_queue_manager_job_failed( job_queue_manager , int)")
+    
+    # Note, even if all realizations have finished, they need not all be failed or successes. 
+    # That is how Ert report things. They can be "killed", which is neither success nor failure.
+    _job_failed      = QueuePrototype("bool job_queue_manager_job_failed( job_queue_manager , int)") 
     _job_waiting     = QueuePrototype("bool job_queue_manager_job_waiting( job_queue_manager , int)")
-    _job_success     = QueuePrototype("bool job_queue_manager_job_success( job_queue_manager , int)")
+    _job_success     = QueuePrototype("bool job_queue_manager_job_success( job_queue_manager , int)") 
 
     # The return type of the job_queue_manager_iget_job_status should
     # really be the enum job_status_type_enum, but I just did not

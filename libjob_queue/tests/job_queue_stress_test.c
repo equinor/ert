@@ -202,7 +202,7 @@ void * status_job__( void * arg ) {
           bool status_true = (status == JOB_QUEUE_RUNNING) || (status == JOB_QUEUE_SUBMITTED || (status == JOB_QUEUE_RUNNING_CALLBACK) || (status == JOB_QUEUE_DONE));
           if (!status_true) {
             if (user_exit)
-              status_true = (status == JOB_QUEUE_USER_EXIT) || (status == JOB_QUEUE_USER_KILLED || (status == JOB_QUEUE_RUNNING_CALLBACK));
+              status_true = (status == JOB_QUEUE_DO_KILL) || (status == JOB_QUEUE_IS_KILLED || (status == JOB_QUEUE_RUNNING_CALLBACK));
           }
           if (!status_true)
             fprintf(stderr," Invalid status:%d for job:%d \n",status , job->queue_index );
@@ -210,7 +210,7 @@ void * status_job__( void * arg ) {
         }
       }
       status = job_queue_iget_job_status(queue, job->queue_index);
-      if ((status == JOB_QUEUE_SUCCESS) || (status == JOB_QUEUE_USER_KILLED))
+      if ((status == JOB_QUEUE_SUCCESS) || (status == JOB_QUEUE_IS_KILLED))
         break;
     } else {
       if (!job_queue_accept_jobs(queue))
