@@ -124,6 +124,7 @@ struct lsf_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
   char              * queue_name;
   char              * resource_request;
+  stringlist_type   * exclude_hosts;
   char              * login_shell;
   pthread_mutex_t     submit_lock;
 
@@ -325,6 +326,13 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
     stringlist_append_ref( argv , driver->login_shell );
   }
 
+  if (driver->exclude_hosts != NULL) {
+    for (int i = 0; i < stringlist_get_size(driver->exclude_hosts); i++) {
+      char * exclude_host  = util_alloc_sprintf("!hname=%s", stringlist_iget(driver->exclude_hosts, i));
+      stringlist_append_owned_ref(argv, exclude_host);
+    }
+  }
+
   stringlist_append_ref( argv , submit_cmd);
   {
     int iarg;
@@ -337,6 +345,13 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
 }
 
 
+/**
+ * Submit internal job (LSF_SUBMIT_INTERNAL) using system calls instead of
+ * invoking shell commands.  This method only works when actually called from
+ * an LSF node.
+ *
+ * Note that this method does not support the EXCLUDE_HOST configuration option.
+ */
 static int lsf_driver_submit_internal_job( lsf_driver_type * driver ,
                                            const char *  lsf_stdout ,
                                            const char *  job_name   ,
@@ -711,6 +726,8 @@ void * lsf_driver_submit_job(void * __driver ,
         printf("LSF DRIVER submitting using method:%d \n",submit_method);
 
       if (submit_method == LSF_SUBMIT_INTERNAL) {
+        if (stringlist_get_size(driver->exclude_hosts) > 0)
+          printf("WARNING:  EXCLUDE_HOST is not supported with submit method LSF_SUBMIT_INTERNAL");
         job->lsf_jobnr = lsf_driver_submit_internal_job( driver , lsf_stdout , job_name , submit_cmd , num_cpu , argc, argv);
       } else {
         job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , lsf_stdout , job_name , submit_cmd , num_cpu , argc, argv);
@@ -752,6 +769,7 @@ void lsf_driver_free(lsf_driver_type * driver ) {
   util_safe_free(driver->resource_request );
   util_safe_free(driver->remote_lsf_server );
   util_safe_free(driver->rsh_cmd );
+  stringlist_free(driver->exclude_hosts);
   free( driver->bkill_cmd );
   free( driver->bjobs_cmd );
   free( driver->bsub_cmd );
@@ -839,7 +857,14 @@ static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char 
   }
 }
 
-
+void lsf_driver_add_exclude_hosts(lsf_driver_type * driver, const char * excluded) {
+  stringlist_type * host_list = stringlist_alloc_from_split(excluded, ", ");
+  for (int i = 0; i < stringlist_get_size(host_list); i++) {
+    const char * excluded = stringlist_iget(host_list, i);
+    if (!stringlist_contains(driver->exclude_hosts, excluded))
+      stringlist_append_copy(driver->exclude_hosts, excluded);
+  }
+}
 
 lsf_submit_method_enum lsf_driver_get_submit_method( const lsf_driver_type * driver ) {
   return driver->submit_method;
@@ -899,6 +924,8 @@ bool lsf_driver_set_option( void * __driver , const char * option_key , const vo
       lsf_driver_set_debug_output( driver , value );
     else if (strcmp( LSF_SUBMIT_SLEEP , option_key) == 0)
       lsf_driver_set_submit_sleep( driver , value );
+    else if (strcmp( LSF_EXCLUDE_HOST , option_key) == 0)
+      lsf_driver_add_exclude_hosts( driver , value );
     else
       has_option = false;
   }
@@ -1027,6 +1054,7 @@ void * lsf_driver_alloc( ) {
   lsf_driver->error_count          = 0;
   lsf_driver->max_error_count      = MAX_ERROR_COUNT;
   lsf_driver->submit_error_sleep   = SUBMIT_ERROR_SLEEP * 1000000;
+  lsf_driver->exclude_hosts        = stringlist_alloc_new();
   lsf_driver_set_bjobs_refresh_interval( lsf_driver , BJOBS_REFRESH_TIME );
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
 

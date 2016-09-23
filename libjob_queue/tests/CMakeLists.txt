@@ -6,7 +6,7 @@ add_executable( job_list_test job_list_test.c )
 add_executable( create_file create_file.c )
 add_executable( job_workflow_test job_workflow_test.c )
 add_executable( job_lsf_parse_bsub_stdout job_lsf_parse_bsub_stdout.c )
-
+add_executable( job_lsf_exclude_hosts_test job_lsf_exclude_hosts_test.c )
 
 target_link_libraries( job_status_test job_queue test_util )
 target_link_libraries( job_workflow_test job_queue test_util )
@@ -16,6 +16,7 @@ target_link_libraries( job_loadFail job_queue  test_util )
 target_link_libraries( job_lsf_parse_bsub_stdout job_queue test_util)
 target_link_libraries( job_node_test job_queue test_util)
 target_link_libraries( job_list_test job_queue test_util)
+target_link_libraries( job_lsf_exclude_hosts_test job_queue util )
 
 add_test( job_status_test ${EXECUTABLE_OUTPUT_PATH}/job_status_test)
 add_test( job_lsf_parse_bsub_stdout ${EXECUTABLE_OUTPUT_PATH}/job_lsf_parse_bsub_stdout )
@@ -32,7 +33,7 @@ add_test( job_loadFail3 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_S
 
 add_test( job_node_test ${EXECUTABLE_OUTPUT_PATH}/job_node_test)
 add_test( job_list_test valgrind --leak-check=full --error-exitcode=1 ${EXECUTABLE_OUTPUT_PATH}/job_list_test)
-
+add_test( job_lsf_exclude_hosts_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_exclude_hosts_test ${EXECUTABLE_OUTPUT_PATH}/job_program NULL LOCAL)
 
 add_executable( job_program_output job_program_output.c )
 target_link_libraries( job_program_output ert_util test_util)
