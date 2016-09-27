@@ -39,6 +39,7 @@ extern "C" {
 #define LSF_BKILL_CMD    "BKILL_CMD"
 #define LSF_DEBUG_OUTPUT "DEBUG_OUTPUT"
 #define LSF_SUBMIT_SLEEP "SUBMIT_SLEEP"
+#define LSF_EXCLUDE_HOST "EXCLUDE_HOST"
 
 #define LOCAL_LSF_SERVER "LOCAL"
 #define NULL_LSF_SERVER  "NULL"
@@ -85,6 +86,7 @@ typedef struct lsf_job_struct    lsf_job_type;
   void            lsf_driver_display_info( void * __driver , void * __job);
   void            lsf_driver_set_bjobs_refresh_interval( lsf_driver_type * driver , int refresh_interval);
 
+  void lsf_driver_add_exclude_hosts( lsf_driver_type * driver , const char * excluded);
   lsf_submit_method_enum lsf_driver_get_submit_method( const lsf_driver_type * driver );
 
   bool            lsf_driver_has_option( const void * __driver , const char * option_key);
