@@ -30,7 +30,7 @@
 
 void call_get_status( void * arg ) {
   job_queue_status_type * job_status = job_queue_status_safe_cast( arg );
-  job_queue_status_get_count( job_status , JOB_QUEUE_DONE + JOB_QUEUE_USER_EXIT);
+  job_queue_status_get_count( job_status , JOB_QUEUE_DONE + JOB_QUEUE_DO_KILL);
 }
 
 
@@ -53,7 +53,7 @@ void * add_sim( void * arg ) {
 
 void * user_exit( void * arg ) {
    job_queue_status_type * job_status = job_queue_status_safe_cast( arg );
-   job_queue_status_transition( job_status , JOB_QUEUE_WAITING  , JOB_QUEUE_USER_EXIT);
+   job_queue_status_transition( job_status , JOB_QUEUE_WAITING  , JOB_QUEUE_DO_KILL);
    return NULL;
 }
 
@@ -111,7 +111,7 @@ void test_update() {
     pthread_join( thread_list[i] , NULL );
 
   test_assert_int_equal( 2*N - num_done_threads - num_exit_threads , job_queue_status_get_count( status , JOB_QUEUE_WAITING ));
-  test_assert_int_equal( num_exit_threads , job_queue_status_get_count( status , JOB_QUEUE_USER_EXIT ));
+  test_assert_int_equal( num_exit_threads , job_queue_status_get_count( status , JOB_QUEUE_DO_KILL ));
   test_assert_int_equal( num_done_threads , job_queue_status_get_count( status , JOB_QUEUE_DONE ));
 
   test_assert_int_equal( 2*N , job_queue_status_get_total_count( status ));

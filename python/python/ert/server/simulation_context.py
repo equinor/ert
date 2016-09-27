@@ -10,8 +10,12 @@ class SimulationContext(object):
         self._ert = ert
         """ :type: ert.enkf.EnKFMain """
         self._size = size
+        
+        max_runtime = ert.analysisConfig().get_max_runtime()
+        job_queue = ert.siteConfig().getJobQueue()
+        job_queue.set_max_job_duration(max_runtime)
 
-        self._queue_manager = JobQueueManager(ert.siteConfig().getJobQueue())
+        self._queue_manager = JobQueueManager(job_queue)
         self._queue_manager.startQueue(size, verbose=verbose)
         self._run_args = {}
         """ :type: dict[int, RunArg] """
@@ -63,8 +67,8 @@ class SimulationContext(object):
 
 
     def didRealizationFail(self, iens):
-        queue_index = self._run_args[iens].getQueueIndex()
-        return self._queue_manager.didJobFail(queue_index)
+	# For the purposes of this class, a failure should be anything (killed job, etc) that is not an explicit success.
+        return not self.didRealizationSucceed(iens)
 
 
     def isRealizationQueued(self, iens):

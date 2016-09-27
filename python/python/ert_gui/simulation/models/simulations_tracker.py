@@ -55,7 +55,7 @@ class SimulationsTracker(object):
         running_state = SimulationStateStatus("Running", JobStatusType.JOB_QUEUE_RUNNING | JobStatusType.JOB_QUEUE_EXIT | JobStatusType.JOB_QUEUE_RUNNING_CALLBACK, SimulationStateStatus.COLOR_RUNNING)
 
         # Failed also includes simulations which have been killed by the MAX_RUNTIME system.
-        failed_state = SimulationStateStatus("Failed", JobStatusType.JOB_QUEUE_USER_KILLED | JobStatusType.JOB_QUEUE_USER_EXIT | JobStatusType.JOB_QUEUE_FAILED, SimulationStateStatus.COLOR_FAILED)
+        failed_state = SimulationStateStatus("Failed", JobStatusType.JOB_QUEUE_IS_KILLED | JobStatusType.JOB_QUEUE_DO_KILL | JobStatusType.JOB_QUEUE_FAILED, SimulationStateStatus.COLOR_FAILED)
         done_state = SimulationStateStatus("Finished", JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS, SimulationStateStatus.COLOR_FINISHED)
 
         self.states = [waiting_state, pending_state, running_state, failed_state, done_state]

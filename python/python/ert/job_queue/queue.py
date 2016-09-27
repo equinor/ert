@@ -28,12 +28,6 @@ from ert.job_queue import QueuePrototype
 from ert.job_queue import Job, JobStatusType
 
 
-
-
-
-
-
-
 class JobQueue(BaseCClass):
     # If the queue is created with size == 0 that means that it will
     # just grow as needed; for the queue layer to know when to exit
@@ -44,33 +38,35 @@ class JobQueue(BaseCClass):
     # queue with a finite value for size, in that case it is not
     # necessary to explitly inform the queue layer when all jobs have
     # been submitted.
-    TYPE_NAME        = "job_queue"
-    _alloc           = QueuePrototype("void* job_queue_alloc( int , char* , char* , char* )" , bind = False)
-    _start_user_exit = QueuePrototype("bool job_queue_start_user_exit( job_queue )")
-    _get_user_exit   = QueuePrototype("bool job_queue_get_user_exit( job_queue )")
-    _free            = QueuePrototype("void job_queue_free( job_queue )")
-    _set_max_running = QueuePrototype("void job_queue_set_max_running( job_queue , int)")
-    _get_max_running = QueuePrototype("int  job_queue_get_max_running( job_queue )")
-    _set_driver      = QueuePrototype("void job_queue_set_driver( job_queue , void* )")
-    _add_job         = QueuePrototype("int  job_queue_add_job( job_queue , char* , void* , void* , void* , void* , int , char* , char* , int , char**)")
-    _kill_job        = QueuePrototype("bool job_queue_kill_job( job_queue , int )")
-    _start_queue     = QueuePrototype("void job_queue_run_jobs( job_queue , int , bool)")
-    _run_jobs        = QueuePrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
-    _sim_start       = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
-    _iget_driver_data= QueuePrototype("void* job_queue_iget_driver_data( job_queue , int)")
+    TYPE_NAME             = "job_queue"
+    _alloc                = QueuePrototype("void* job_queue_alloc( int , char* , char* , char* )" , bind      = False)
+    _start_user_exit      = QueuePrototype("bool job_queue_start_user_exit( job_queue )")
+    _get_user_exit        = QueuePrototype("bool job_queue_get_user_exit( job_queue )")
+    _free                 = QueuePrototype("void job_queue_free( job_queue )")
+    _set_max_running      = QueuePrototype("void job_queue_set_max_running( job_queue , int)")
+    _get_max_running      = QueuePrototype("int  job_queue_get_max_running( job_queue )")
+    _set_max_job_duration = QueuePrototype("void job_queue_set_max_job_duration( job_queue , int)")
+    _get_max_job_duration = QueuePrototype("int  job_queue_get_max_job_duration( job_queue )")
+    _set_driver           = QueuePrototype("void job_queue_set_driver( job_queue , void* )")
+    _add_job              = QueuePrototype("int  job_queue_add_job( job_queue , char* , void* , void* , void* , void* , int , char* , char* , int , char**)")
+    _kill_job             = QueuePrototype("bool job_queue_kill_job( job_queue , int )")
+    _start_queue          = QueuePrototype("void job_queue_run_jobs( job_queue , int , bool)")
+    _run_jobs             = QueuePrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
+    _sim_start            = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
+    _iget_driver_data     = QueuePrototype("void* job_queue_iget_driver_data( job_queue , int)")
     
-    _num_running     = QueuePrototype("int  job_queue_get_num_running( job_queue )")
-    _num_complete    = QueuePrototype("int  job_queue_get_num_complete( job_queue )")
-    _num_waiting     = QueuePrototype("int  job_queue_get_num_waiting( job_queue )")
-    _num_pending     = QueuePrototype("int  job_queue_get_num_pending( job_queue )")
+    _num_running          = QueuePrototype("int  job_queue_get_num_running( job_queue )")
+    _num_complete         = QueuePrototype("int  job_queue_get_num_complete( job_queue )")
+    _num_waiting          = QueuePrototype("int  job_queue_get_num_waiting( job_queue )")
+    _num_pending          = QueuePrototype("int  job_queue_get_num_pending( job_queue )")
 
-    _is_running      = QueuePrototype("bool job_queue_is_running( job_queue )")
-    _submit_complete = QueuePrototype("void job_queue_submit_complete( job_queue )")
-    _iget_sim_start  = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
-    _get_active_size = QueuePrototype("int  job_queue_get_active_size( job_queue )")
-    _get_pause       = QueuePrototype("bool job_queue_get_pause(job_queue)")
-    _set_pause_on    = QueuePrototype("void job_queue_set_pause_on(job_queue)")
-    _set_pause_off   = QueuePrototype("void job_queue_set_pause_off(job_queue)")
+    _is_running           = QueuePrototype("bool job_queue_is_running( job_queue )")
+    _submit_complete      = QueuePrototype("void job_queue_submit_complete( job_queue )")
+    _iget_sim_start       = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
+    _get_active_size      = QueuePrototype("int  job_queue_get_active_size( job_queue )")
+    _get_pause            = QueuePrototype("bool job_queue_get_pause(job_queue)")
+    _set_pause_on         = QueuePrototype("void job_queue_set_pause_on(job_queue)")
+    _set_pause_off        = QueuePrototype("void job_queue_set_pause_off(job_queue)")
 
     # The return type of the job_queue_iget_job_status should really
     # be the enum job_status_type_enum, but I just did not manage to
@@ -209,6 +205,12 @@ class JobQueue(BaseCClass):
 
     def set_max_running( self, max_running ):
         self.driver.set_max_running(max_running)
+
+    def get_max_job_duration(self):
+        return self._get_max_job_duration()
+
+    def set_max_job_duration(self, max_duration):
+        self._set_max_job_duration(max_duration)
 
     def killAllJobs(self):
         # The queue will not set the user_exit flag before the

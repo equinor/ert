@@ -38,8 +38,8 @@ static const int status_index[] = {  JOB_QUEUE_NOT_ACTIVE ,  // Initial, allocat
                                      JOB_QUEUE_RUNNING    ,  // Job is executing                                                           - controlled by queue_driver
                                      JOB_QUEUE_DONE       ,  // Job is done (successful or not), temporary state                            - controlled/returned by by queue_driver
                                      JOB_QUEUE_EXIT       ,  // Job is done, with exit status != 0, temporary state                        - controlled/returned by by queue_driver
-                                     JOB_QUEUE_USER_EXIT  ,  // User / queue system has requested killing of job                           - controlled by job_queue / external scope
-                                     JOB_QUEUE_USER_KILLED,  // Job has been killed, due to JOB_QUEUE_USER_EXIT, FINAL STATE               - controlled by job_queue
+                                     JOB_QUEUE_DO_KILL  ,  // User / queue system has requested killing of job                           - controlled by job_queue / external scope
+                                     JOB_QUEUE_IS_KILLED,  // Job has been killed, due to JOB_QUEUE_DO_KILL, FINAL STATE               - controlled by job_queue
                                      JOB_QUEUE_SUCCESS    ,  // All good, comes after JOB_QUEUE_DONE, with additional checks, FINAL STATE  - controlled by job_queue
                                      JOB_QUEUE_RUNNING_CALLBACK, // Temporary state, while running requested callbacks after an ended job  - controlled by job_queue
                                      JOB_QUEUE_FAILED };     // Job has failed, no more retries, FINAL STATE
@@ -51,8 +51,8 @@ static const char* status_name[] = { "JOB_QUEUE_NOT_ACTIVE" ,
                                      "JOB_QUEUE_RUNNING"    ,
                                      "JOB_QUEUE_DONE"       ,
                                      "JOB_QUEUE_EXIT"       ,
-                                     "JOB_QUEUE_USER_KILLED" ,
-                                     "JOB_QUEUE_USER_EXIT"   ,
+                                     "JOB_QUEUE_IS_KILLED" ,
+                                     "JOB_QUEUE_DO_KILL"   ,
                                      "JOB_QUEUE_SUCCESS"    ,
                                      "JOB_QUEUE_RUNNING_CALLBACK",
                                      "JOB_QUEUE_FAILED" };

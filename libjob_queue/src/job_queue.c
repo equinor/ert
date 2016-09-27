@@ -358,7 +358,7 @@ int job_queue_get_num_failed( const job_queue_type * queue) {
 }
 
 int job_queue_get_num_killed( const job_queue_type * queue) {
-  return job_queue_iget_status_summary( queue , JOB_QUEUE_USER_KILLED );
+  return job_queue_iget_status_summary( queue , JOB_QUEUE_IS_KILLED );
 }
 
 int job_queue_get_active_size( const job_queue_type * queue ) {
@@ -402,7 +402,7 @@ void job_queue_set_auto_job_stop_time(job_queue_type * queue) {
 /**
    Observe that jobs with status JOB_QUEUE_WAITING can also be killed; for those
    jobs the kill should be interpreted as "Forget about this job for now and set
-   the status JOB_QUEUE_USER_KILLED", however it is important that we not call
+   the status JOB_QUEUE_IS_KILLED", however it is important that we not call
    the driver->kill() function on it because the job slot will have no data
    (i.e. LSF jobnr), and the driver->kill() function will fail if presented with
    such a job.
@@ -653,7 +653,7 @@ static void job_queue_user_exit__( job_queue_type * queue ) {
     job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
 
     if (JOB_QUEUE_CAN_KILL & job_queue_node_get_status(node))
-      job_queue_node_status_transition(node,queue->status,JOB_QUEUE_USER_EXIT);
+      job_queue_node_status_transition(node,queue->status,JOB_QUEUE_DO_KILL);
   }
 }
 
@@ -760,7 +760,7 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
 }
 
 
-static void * job_queue_run_USER_EXIT_callback( void * arg ) {
+static void * job_queue_run_DO_KILL_callback( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   job_queue_type * job_queue = arg_pack_iget_ptr( arg_pack , 0 );
   int queue_index = arg_pack_iget_int( arg_pack , 1 );
@@ -772,7 +772,7 @@ static void * job_queue_run_USER_EXIT_callback( void * arg ) {
 
     // It's time to call it a day
     job_queue_node_run_EXIT_callback( node );
-    job_queue_change_node_status(job_queue, node, JOB_QUEUE_USER_KILLED);
+    job_queue_change_node_status(job_queue, node, JOB_QUEUE_IS_KILLED);
   }
   job_list_unlock(job_queue->job_list );
   arg_pack_free( arg_pack );
@@ -782,14 +782,14 @@ static void * job_queue_run_USER_EXIT_callback( void * arg ) {
 
 
 
-static void job_queue_handle_USER_EXIT( job_queue_type * queue , job_queue_node_type * node) {
+static void job_queue_handle_DO_KILL( job_queue_type * queue , job_queue_node_type * node) {
   job_queue_kill_job_node(queue, node);
   job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
   {
     arg_pack_type * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , queue );
     arg_pack_append_int( arg_pack , job_queue_node_get_queue_index(node));
-    thread_pool_add_job( queue->work_pool , job_queue_run_USER_EXIT_callback , arg_pack );
+    thread_pool_add_job( queue->work_pool , job_queue_run_DO_KILL_callback , arg_pack );
   }
 }
 
@@ -819,11 +819,11 @@ static void job_queue_check_expired(job_queue_type * queue) {
       if ( job_queue_get_max_job_duration(queue) > 0) {
         double elapsed = difftime(now, job_queue_node_get_sim_start( node ));
         if (elapsed > job_queue_get_max_job_duration(queue))
-          job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
+          job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
       }
       if (job_queue_get_job_stop_time(queue) > 0) {
         if (now >= job_queue_get_job_stop_time(queue))
-          job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
+          job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
       }
     }
   }
@@ -913,7 +913,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
           {
             int num_complete = job_queue_status_get_count(queue->status, JOB_QUEUE_SUCCESS) +
                                job_queue_status_get_count(queue->status, JOB_QUEUE_FAILED) +
-                               job_queue_status_get_count(queue->status, JOB_QUEUE_USER_KILLED);
+                               job_queue_status_get_count(queue->status, JOB_QUEUE_IS_KILLED);
 
             if ((num_total_run > 0) && (num_total_run == num_complete))
               /* The number of jobs completed is equal to the number
@@ -999,8 +999,8 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                   case(JOB_QUEUE_EXIT):
                     job_queue_handle_EXIT(queue, node);
                     break;
-                  case(JOB_QUEUE_USER_EXIT):
-                    job_queue_handle_USER_EXIT(queue, node);
+                  case(JOB_QUEUE_DO_KILL):
+                    job_queue_handle_DO_KILL(queue, node);
                     break;
                   default:
                     break;
