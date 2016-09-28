@@ -14,19 +14,19 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import ert
 from ert.test import ExtendedTestCase
 from ert.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from ert.analysis import AnalysisPrototype
 from ert.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ert.util.rng import RandomNumberGenerator
-import ert.cwrap.clib as clib
 
 
 class StdEnKFDebugTest(ExtendedTestCase):
 
     def setUp(self):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
-        self.libname = clib.ert_lib_path + "/std_enkf_debug.so"
+        self.libname = ert.ert_lib_path + "/std_enkf_debug.so"
         self.module = AnalysisModule( self.rng , lib_name = self.libname )
 
         
