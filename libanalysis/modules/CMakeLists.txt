@@ -8,14 +8,17 @@ set( RML_SOURCE_FILES
 
 set( header_files analysis_module.h enkf_linalg.h analysis_table.h std_enkf.h rml_enkf_common.h)
 add_library( rml_enkf  SHARED ${RML_SOURCE_FILES} )
+add_library( std_enkf_debug SHARED std_enkf_debug.c )
 
 set_target_properties( rml_enkf PROPERTIES VERSION 1.0 SOVERSION 1.0 PREFIX "")
+set_target_properties( std_enkf_debug PROPERTIES VERSION 1.0 SOVERSION 1.0 PREFIX "")
 
-target_link_libraries( rml_enkf analysis )
-target_link_libraries( rml_enkf dl )
+target_link_libraries( rml_enkf analysis dl )
+target_link_libraries( std_enkf_debug analysis dl )
 
 if (USE_RUNPATH)
    add_runpath( rml_enkf )
+   add_runpath( std_enkf_debug )
 endif()
 
 if (BUILD_TESTS)
@@ -24,6 +27,7 @@ endif()
 
 if (INSTALL_ERT)
    install(TARGETS rml_enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
+   install(TARGETS std_enkf_debug DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 

@@ -616,12 +616,12 @@ void enkf_linalg_checkX(const matrix_type * X , bool bootstrap) {
 /*****************************************************************/
 
 int enkf_linalg_get_PC( const matrix_type * S0,
-                         const matrix_type * dObs ,
-                         double truncation,
-                         int ncomp,
-                         matrix_type * PC,
-                         matrix_type * PC_obs,
-                         double_vector_type * singular_values) {
+                        const matrix_type * dObs ,
+                        double truncation,
+                        int ncomp,
+                        matrix_type * PC,
+                        matrix_type * PC_obs,
+                        double_vector_type * singular_values) {
 
   const int nrobs   = matrix_get_rows( S0 );
   const int nrens   = matrix_get_columns( S0 );
@@ -658,7 +658,7 @@ int enkf_linalg_get_PC( const matrix_type * S0,
     /* The observer projections. */
     {
       matrix_scale( S_mean , -1.0);
-      matrix_inplace_add( S_mean , dObs );
+      matrix_inplace_add_column( S_mean , dObs , 0 , 0 );
       matrix_resize( PC_obs , num_PC , 1 , false );
       matrix_dgemm( PC_obs , U0 , S_mean , true , false , 1.0 , 0.0 );
     }

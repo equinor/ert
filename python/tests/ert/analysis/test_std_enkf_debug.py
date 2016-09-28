@@ -16,17 +16,20 @@
 
 from ert.test import ExtendedTestCase
 from ert.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
-
+from ert.analysis import AnalysisPrototype
 from ert.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ert.util.rng import RandomNumberGenerator
+import ert.cwrap.clib as clib
 
 
-class StdEnKFTest(ExtendedTestCase):
+class StdEnKFDebugTest(ExtendedTestCase):
 
     def setUp(self):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
-        self.module = AnalysisModule( self.rng , name = "STD_ENKF" )
+        self.libname = clib.ert_lib_path + "/std_enkf_debug.so"
+        self.module = AnalysisModule( self.rng , lib_name = self.libname )
 
+        
     def toggleKey(self, key):
         self.assertTrue( self.module.hasVar( key ))
 
@@ -41,8 +44,10 @@ class StdEnKFTest(ExtendedTestCase):
     def test_EE_option(self):
         self.toggleKey( 'USE_EE' )
 
+    
     def test_scaledata_option(self):
         self.toggleKey( 'ANALYSIS_SCALE_DATA' )
 
-
-    
+    def test_prefix(self):
+        self.assertTrue( self.module.hasVar("PREFIX"))
+        self.assertTrue( self.module.setVar( "PREFIX" , "Path") )

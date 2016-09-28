@@ -237,6 +237,7 @@ static void obs_block_initdObs( const obs_block_type * obs_block , matrix_type *
   for (iobs =0; iobs < obs_block->size; iobs++) {
     if (obs_block->active_mode[iobs] == ACTIVE) {
       matrix_iset( dObs , obs_offset , 0 , obs_block->value[ iobs ]);
+      matrix_iset( dObs , obs_offset , 1 , obs_block->std[ iobs ]);
       obs_offset++;
     }
   }
@@ -544,7 +545,7 @@ matrix_type * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_d
 
 matrix_type * obs_data_allocdObs(const obs_data_type * obs_data ) {
   int active_size = obs_data_get_active_size( obs_data );
-  matrix_type * dObs = matrix_alloc( active_size , 1 );
+  matrix_type * dObs = matrix_alloc( active_size , 2 );
   {
     int obs_offset = 0;
     for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
