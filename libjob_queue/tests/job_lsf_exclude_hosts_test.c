@@ -47,9 +47,38 @@ void test_submit(lsf_driver_type * driver, const char * cmd) {
   }
 }
 
+void test_bjobs_parse_hosts() {
+  const char* hostnames = "hname1:hname2:hname3";
+  stringlist_type * expected = stringlist_alloc_from_split(hostnames,":");
+  if (stringlist_get_size(expected) != 3) {
+    printf("Even expected has wrong size.\n");
+    exit(1);
+  }
+
+  const char * fname = util_alloc_tmp_file("/tmp", "ert_job_exec_host", true);
+
+  FILE * fptr;
+  fptr = fopen(fname, "w");
+  fprintf(fptr, hostnames); // : is std bjobs delimiter
+  fclose(fptr);
+
+  stringlist_type * hosts = lsf_job_parse_bjobs_file(fname);
+
+  if (!stringlist_equal(expected, hosts)) {
+    printf("hosts differ: expected [%s] got [%s]\n",
+            stringlist_alloc_joined_string(expected, ":"),
+            stringlist_alloc_joined_string(hosts,    ":"));
+    exit(1);
+  }
+
+  util_unlink_existing(fname);
+  free(fname);
+}
+
 int main(int argc, char ** argv) {
   lsf_driver_type * driver = lsf_driver_alloc();
   test_submit(driver, argv[1]);
   lsf_driver_free(driver);
+  test_bjobs_parse_hosts();
   exit(0);
 }
