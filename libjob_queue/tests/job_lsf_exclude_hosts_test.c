@@ -48,9 +48,10 @@ void test_submit(lsf_driver_type * driver, const char * cmd) {
 }
 
 void test_bjobs_parse_hosts() {
-  const char* hostnames = "hname1:hname2:hname3";
+  const char* full_hostnames = "hname1:4*hname2:13*hname3:1*hname4:hname5\n";
+  const char* hostnames = "hname1:hname2:hname3:hname4:hname5";
   stringlist_type * expected = stringlist_alloc_from_split(hostnames,":");
-  if (stringlist_get_size(expected) != 3) {
+  if (stringlist_get_size(expected) != 5) {
     printf("Even expected has wrong size.\n");
     exit(1);
   }
@@ -59,10 +60,10 @@ void test_bjobs_parse_hosts() {
 
   FILE * fptr;
   fptr = fopen(fname, "w");
-  fprintf(fptr, hostnames); // : is std bjobs delimiter
+  fprintf(fptr, full_hostnames); // : is std bjobs delimiter
   fclose(fptr);
 
-  stringlist_type * hosts = lsf_job_parse_bjobs_file(fname);
+  stringlist_type * hosts = lsf_job_alloc_parse_hostnames(fname);
 
   if (!stringlist_equal(expected, hosts)) {
     printf("hosts differ: expected [%s] got [%s]\n",
@@ -73,6 +74,7 @@ void test_bjobs_parse_hosts() {
 
   util_unlink_existing(fname);
   free(fname);
+  stringlist_free( hosts );
 }
 
 int main(int argc, char ** argv) {
