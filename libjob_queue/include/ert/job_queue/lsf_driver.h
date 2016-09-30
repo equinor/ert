@@ -94,6 +94,9 @@ typedef struct lsf_job_struct    lsf_job_type;
   bool            lsf_driver_set_option( void * __driver , const char * option_key , const void * value);
   void            lsf_driver_init_option_list(stringlist_type * option_list);
   int             lsf_job_parse_bsub_stdout(const char * bsub_cmd, const char * stdout_file);
+  const char    * lsf_job_write_bjobs_to_file(const char * bjobs_cmd, lsf_driver_type * driver, const size_t jobid);
+
+  stringlist_type * lsf_job_alloc_parse_hostnames(const char* fname);
   UTIL_SAFE_CAST_HEADER( lsf_driver );
 
 

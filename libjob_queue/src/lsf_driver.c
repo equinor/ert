@@ -228,6 +228,57 @@ int lsf_job_parse_bsub_stdout(const char * bsub_cmd, const char * stdout_file) {
   return jobid;
 }
 
+/**
+ * Assumes fname points to a file with content "hname1:hname2:hname3" as written by lsf_job_write_bjobs_to_file
+ */
+stringlist_type * lsf_job_alloc_parse_hostnames(const char* fname) {
+  FILE *stream = util_fopen(fname, "r");
+
+  bool at_eof = false;
+  while (!at_eof) {
+    char * line = util_fscanf_alloc_line(stream, &at_eof);
+    if (line != NULL) {
+      stringlist_type * hosts = stringlist_alloc_from_split(line, ":"); // bjobs uses : as std. delimiter
+
+      for (int i = 0; i < stringlist_get_size(hosts); i++) {
+        const char * host = stringlist_iget(hosts, i);
+        stringlist_type * h = stringlist_alloc_from_split(host, "*");
+        stringlist_iset_copy(hosts, i, stringlist_iget(h, stringlist_get_size(h) - 1)); // hostname 4*be-lsf01 -> be-lsf01
+        stringlist_free(h);
+      }
+
+      free(line);
+      fclose(stream);
+      return hosts;
+    }
+  }
+  fclose(stream);
+  return stringlist_alloc_new();
+}
+
+const char* lsf_job_write_bjobs_to_file(const char * bjobs_cmd, lsf_driver_type * driver, const size_t jobid) {
+  // will typically run "bjobs -noheader -o 'EXEC_HOST' jobid"
+
+  const char * noheader = "-noheader";
+  const char * fields = "EXEC_HOST";
+  const char * cmd = util_alloc_sprintf("%s %s -o '%s' %d", bjobs_cmd, noheader, fields, jobid);
+
+  const char * tmp_file = util_alloc_tmp_file("/tmp", "ert_job_exec_host", true);
+
+  if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
+    char ** argv = util_calloc(2, sizeof *argv);
+    argv[0] = driver->remote_lsf_server;
+    argv[1] = cmd;
+    util_spawn_blocking(driver->rsh_cmd, 2, (const char **) argv, tmp_file, NULL);
+    free(argv);
+  } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
+    char ** argv = util_calloc(1, sizeof *argv);
+    argv[0] = "";
+    util_spawn_blocking(cmd, 1, (const char **) argv, tmp_file, NULL);
+  }
+  free(cmd);
+  return tmp_file;
+}
 
 
 static void lsf_driver_internal_error( const lsf_driver_type * driver ) {
