@@ -15,7 +15,7 @@
 #  for more details.
 
 from ert.enkf import EnkfPrototype
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 
 
 # The Python wrapping of the forward_load_context is extremely

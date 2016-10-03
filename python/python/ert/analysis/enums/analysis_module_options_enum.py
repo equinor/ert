@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert.cwrap import BaseCEnum
+from cwrap import BaseCEnum
 from ert.analysis import ANALYSIS_LIB
 
 

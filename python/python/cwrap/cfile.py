@@ -16,9 +16,8 @@
 
 
 import ctypes
-
-from ert.cwrap import BaseCClass, Prototype
-
+from .prototype import Prototype
+from .basecclass import BaseCClass
 
 class CFILE(BaseCClass):
     """

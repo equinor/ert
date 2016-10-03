@@ -1,4 +1,4 @@
-from ert.cwrap import CWrapper, BaseCClass
+from cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB, EnkfFs, EnkfPrototype
 from ert.enkf import EnkfPrototype
 from ert.enkf.enums import EnkfInitModeEnum

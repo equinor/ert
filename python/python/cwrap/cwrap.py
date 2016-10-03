@@ -24,8 +24,12 @@ from __future__ import print_function
 import ctypes
 import re
 import sys
-from ert.cwrap import BaseCClass, BaseCValue, REGISTERED_TYPES
 import inspect
+
+from .basecclass import BaseCClass
+from .basecvalue import BaseCValue
+from .prototype import REGISTERED_TYPES
+
 
 
 prototype_pattern = "(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]"

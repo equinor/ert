@@ -1,6 +1,6 @@
 import os
 import sys
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 
 class HookManager(BaseCClass):

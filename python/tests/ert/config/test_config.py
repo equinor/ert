@@ -18,7 +18,7 @@ import os
 
 import ert
 from ert.config import ContentTypeEnum, UnrecognizedEnum, SchemaItem, ContentItem, ContentNode, ConfigParser, ConfigContent
-from ert.cwrap import Prototype, clib
+from cwrap import Prototype, clib
 from ert.test import ExtendedTestCase, TestAreaContext
 
 

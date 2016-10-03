@@ -15,7 +15,7 @@
 #  for more details.
 import os.path
 
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.job_queue import QueuePrototype
 
 

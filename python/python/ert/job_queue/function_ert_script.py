@@ -1,5 +1,5 @@
 import ert as ert_module
-from ert.cwrap import CWrapper
+from cwrap import CWrapper
 from ert.job_queue import ErtScript
 from ert.util.stringlist import StringList
 

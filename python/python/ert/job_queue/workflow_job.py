@@ -1,6 +1,6 @@
 import os
 
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.job_queue import QueuePrototype, ErtScript, FunctionErtScript, ErtPlugin, ExternalErtScript
 from ert.config import ContentTypeEnum
 

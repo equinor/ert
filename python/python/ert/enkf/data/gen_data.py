@@ -1,4 +1,4 @@
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.util import DoubleVector
 from ert.enkf import ENKF_LIB
 

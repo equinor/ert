@@ -13,7 +13,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-from ert.cwrap import CWrapper, BaseCClass
+from cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB
 
 

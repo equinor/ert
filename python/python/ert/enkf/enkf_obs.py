@@ -15,7 +15,7 @@
 #  for more details.
 import os.path
 
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.util import StringList, IntVector
 from ert.sched import History
 from ert.ecl import EclSum , EclGrid

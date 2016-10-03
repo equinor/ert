@@ -1,7 +1,7 @@
 import re
 from types import MethodType
 
-from ert.cwrap.prototype import registerType, Prototype
+from .prototype import registerType, Prototype
 
 
 def snakeCase(name):

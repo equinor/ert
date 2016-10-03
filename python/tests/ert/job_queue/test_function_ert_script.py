@@ -1,5 +1,5 @@
 import ctypes
-from ert.cwrap import clib, CWrapper
+from cwrap import clib, CWrapper
 from ert.test import ExtendedTestCase, TestAreaContext
 from ert.job_queue import WorkflowJob
 from .workflow_common import WorkflowCommon

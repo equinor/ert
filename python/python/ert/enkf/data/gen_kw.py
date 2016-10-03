@@ -15,7 +15,7 @@
 #  for more details.
 import os.path
 
-from ert.cwrap import BaseCClass, CWrapper, CFILE
+from cwrap import BaseCClass, CWrapper, CFILE
 
 from ert.util import DoubleVector
 

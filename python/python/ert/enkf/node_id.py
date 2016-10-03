@@ -1,5 +1,5 @@
 from ctypes import Structure, c_int
-from ert.cwrap import CWrapper
+from cwrap import CWrapper
 
 class NodeId(Structure):
     """

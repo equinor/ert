@@ -1,4 +1,4 @@
-from ert.cwrap import BaseCEnum
+from cwrap import BaseCEnum
 from ert.sched import SCHED_LIB
 
 

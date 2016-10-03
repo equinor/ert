@@ -15,7 +15,7 @@
 #  for more details.
 import os.path
 
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 from ert.util import UtilPrototype
 
 

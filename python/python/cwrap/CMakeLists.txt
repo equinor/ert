@@ -13,5 +13,4 @@ set(PYTHON_SOURCES
     prototype.py
 )
 
-add_python_package("python.ert.cwrap"  ${PYTHON_INSTALL_PREFIX}/ert/cwrap "${PYTHON_SOURCES}" True)
-
+add_python_package("cwrap"  ${PYTHON_INSTALL_PREFIX}/cwrap "${PYTHON_SOURCES}" True)

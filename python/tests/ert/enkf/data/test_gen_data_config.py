@@ -1,5 +1,5 @@
 import ert
-from ert.cwrap import clib, CWrapper
+from cwrap import clib, CWrapper
 from ert.enkf.data import EnkfNode
 from ert.enkf.config import GenDataConfig
 from ert.enkf import NodeId

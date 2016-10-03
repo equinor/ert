@@ -1,4 +1,4 @@
-from ert.cwrap import CWrapper, CNamespace
+from cwrap import CWrapper, CNamespace
 from ert.enkf import ENKF_LIB
 from ert.util import Matrix , DoubleVector
 

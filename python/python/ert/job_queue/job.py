@@ -17,7 +17,7 @@
 
 import time
 import datetime
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 from ert.job_queue import JobStatusType
 
 # This class and the interplay between this class and the Driver and

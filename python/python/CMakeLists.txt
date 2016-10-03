@@ -1,3 +1,4 @@
+add_subdirectory(cwrap)
 add_subdirectory( ert )
 if (BUILD_ERT)
    if (ERT_BUILD_GUI)

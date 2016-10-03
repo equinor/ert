@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ert.cwrap import BaseCEnum
+from cwrap import BaseCEnum
 
 class ContentTypeEnum(BaseCEnum):
     TYPE_NAME = "config_content_type_enum"

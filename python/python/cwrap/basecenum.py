@@ -1,5 +1,6 @@
 import ctypes
-from ert.cwrap import MetaCWrap, CWrapper
+from .metacwrap import MetaCWrap
+from .cwrap import CWrapper
 
 
 class BaseCEnum(object):

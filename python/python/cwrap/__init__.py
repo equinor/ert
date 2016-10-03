@@ -44,6 +44,7 @@ from .metacwrap import MetaCWrap
 
 from .cnamespace import CNamespace
 from .basecclass import BaseCClass
+from .basecenum import BaseCEnum
 from .basecvalue import BaseCValue
 
 from .cclass import CClass
@@ -52,6 +53,9 @@ from .cfile import CFILE
 from .clib import load
 from .cwrap import CWrapper, CWrapperNameSpace,CWrapError
 
+from .cnamespace import CNamespace
 
 from .basecenum import BaseCEnum
 
+from .metacwrap import MetaCWrap
+from .prototype import REGISTERED_TYPES, Prototype, PrototypeError

@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 from ert.analysis import AnalysisPrototype
 
 

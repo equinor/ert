@@ -1,5 +1,5 @@
 from collections import namedtuple
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 
 RunpathNode = namedtuple("RunpathNode", ["realization", "iteration", "runpath", "basename"])

@@ -17,7 +17,7 @@
 import os.path
 
 from ert.config import UnrecognizedEnum, ContentTypeEnum, ConfigError, ConfigPrototype, SchemaItem
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 
 
 class ContentNode(BaseCClass):

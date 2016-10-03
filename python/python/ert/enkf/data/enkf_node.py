@@ -15,7 +15,7 @@
 #  for more details.
 import sys
 from ert.enkf.enums import ErtImplType
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, EnkfFs, NodeId
 from ert.enkf.data import GenKw, GenData, CustomKW, Field
 

@@ -1,6 +1,6 @@
 import time
 from ert.config import ConfigError
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.job_queue import QueuePrototype, WorkflowJoblist, WorkflowJob
 from ert.util import SubstitutionList
 

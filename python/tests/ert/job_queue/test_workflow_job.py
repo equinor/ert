@@ -1,5 +1,5 @@
 import ert
-from ert.cwrap import CWrapper
+from cwrap import CWrapper
 from ert.job_queue import WorkflowJob
 from ert.test import TestAreaContext, ExtendedTestCase
 from .workflow_common import WorkflowCommon
