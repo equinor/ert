@@ -65,5 +65,6 @@ from .cwrap import CWrapper, CWrapperNameSpace, CWrapError
 from .metacwrap import MetaCWrap
 from .prototype import REGISTERED_TYPES, Prototype, PrototypeError
 
-__all__ = [BaseCClass, BaseCEnum, BaseCValue, CClass, CFILE, CNamespace,
-           CWrapper, CWrapperNameSpace, CWrapError, MetaCWrap, Prototype]
+__all__ = ['BaseCClass', 'BaseCEnum', 'BaseCValue', 'CClass', 'CFILE',
+           'CNamespace', 'CWrapper', 'CWrapperNameSpace', 'CWrapError',
+           'MetaCWrap', 'Prototype', 'load', 'lib_name']

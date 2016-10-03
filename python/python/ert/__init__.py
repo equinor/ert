@@ -60,7 +60,6 @@ import sys
 import warnings
 from cwrap import load as cwrapload
 
-
 try:
     import ert_site_init
 except ImportError:
@@ -124,6 +123,3 @@ from ert.util import updateAbortSignals
 updateAbortSignals( )
 
 #-----------------------------------------------------------------
-
-    
-
