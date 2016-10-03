@@ -57,7 +57,7 @@ import os
 import ert
 import ert.util
 import ert.config
-from cwrap.metacwrap import Prototype
+from cwrap import Prototype
 
 def setenv( var, value):
     if not os.getenv(var):

@@ -58,7 +58,7 @@ before giving up completely.
 import os.path
 import sys
 import warnings
-import cwrap.clib
+from cwrap import load as cwrapload
 
 
 try:
@@ -115,7 +115,7 @@ if sys.hexversion < required_version_hex:
 # libraries.
 
 def load(name):
-    return cwrap.clib.load( name , path = ert_lib_path , so_version = ert_so_version)
+    return cwrapload( name , path = ert_lib_path , so_version = ert_so_version)
 
 
 from ert.util import Version

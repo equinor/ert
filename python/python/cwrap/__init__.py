@@ -1,18 +1,19 @@
-#  Copyright (C) 2011  Statoil ASA, Norway. 
-#   
-#  The file '__init__.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+#  Copyright (C) 2016  Statoil ASA, Norway.
+#
+#  This file is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+#  for more details.
+
 """
 The cwrap package contains several small utility modules to simplify
 the process of interacting with a C library:
@@ -39,10 +40,15 @@ the process of interacting with a C library:
      FILE pointer.
 """
 
-from .prototype import REGISTERED_TYPES, Prototype, PrototypeError
-from .metacwrap import MetaCWrap
+__author__ = 'Jean-Paul Balabanian, Joakim Hove, and PG Drange'
+__copyright__ = 'Copyright 2016, Statoil ASA'
+__credits__ = __author__
+__license__ = 'GPL'
+__version__ = '0.0.1'
+__maintainer__ = __author__
+__email__ = __author__
+__status__ = 'Prototype'
 
-from .cnamespace import CNamespace
 from .basecclass import BaseCClass
 from .basecenum import BaseCEnum
 from .basecvalue import BaseCValue
@@ -50,12 +56,14 @@ from .basecvalue import BaseCValue
 from .cclass import CClass
 from .cenum import create_enum
 from .cfile import CFILE
-from .clib import load
-from .cwrap import CWrapper, CWrapperNameSpace,CWrapError
+from .clib import load, lib_name
 
 from .cnamespace import CNamespace
 
-from .basecenum import BaseCEnum
+from .cwrap import CWrapper, CWrapperNameSpace, CWrapError
 
 from .metacwrap import MetaCWrap
 from .prototype import REGISTERED_TYPES, Prototype, PrototypeError
+
+__all__ = [BaseCClass, BaseCEnum, BaseCValue, CClass, CFILE, CNamespace,
+           CWrapper, CWrapperNameSpace, CWrapError, MetaCWrap, Prototype]

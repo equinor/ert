@@ -16,7 +16,7 @@
 
 
 import ert
-from cwrap.metacwrap import Prototype
+from cwrap import Prototype
 import ert.util
 
 class AnalysisPrototype(Prototype):
