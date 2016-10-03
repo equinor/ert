@@ -321,6 +321,10 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
         switch (validate_iget_type( item->validate , iarg)) {
         case(CONFIG_STRING): /* This never fails ... */
           break;
+        case(CONFIG_ISODATE):
+          if (!util_sscanf_isodate( value , NULL ))
+            config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as an ISO date: YYYY-MM-DD.",value));
+          break;
         case(CONFIG_INT):
           if (!util_sscanf_int( value , NULL ))
             config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as an integer.",value));

@@ -34,6 +34,7 @@ class ContentNode(BaseCClass):
     _iget_as_double = ConfigPrototype("double config_content_node_iget_as_double( content_node , int)")
     _iget_as_path = ConfigPrototype("char* config_content_node_iget_as_path( content_node , int)")
     _iget_as_bool = ConfigPrototype("bool config_content_node_iget_as_bool( content_node , int)")
+    _iget_as_isodate = ConfigPrototype("time_t config_content_node_iget_as_isodate( content_node , int)")
 
     typed_get = {
         ContentTypeEnum.CONFIG_STRING: _iget_as_string,
@@ -41,7 +42,8 @@ class ContentNode(BaseCClass):
         ContentTypeEnum.CONFIG_FLOAT: _iget_as_double,
         ContentTypeEnum.CONFIG_PATH: _iget_as_path,
         ContentTypeEnum.CONFIG_EXISTING_PATH: _iget_as_path,
-        ContentTypeEnum.CONFIG_BOOL: _iget_as_bool
+        ContentTypeEnum.CONFIG_BOOL: _iget_as_bool,
+        ContentTypeEnum.CONFIG_ISODATE: _iget_as_isodate
     }
 
 

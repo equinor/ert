@@ -42,7 +42,8 @@ typedef enum {
     CONFIG_CONFIG = 64,
     CONFIG_BYTESIZE = 128,
     CONFIG_EXECUTABLE = 256,
-    CONFIG_INVALID = 512
+    CONFIG_ISODATE = 512,
+    CONFIG_INVALID = 1024
 } config_item_types;
 
 

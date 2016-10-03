@@ -116,6 +116,14 @@ config_item_types config_content_node_iget_type( const config_content_node_type 
 }
 
 
+time_t config_content_node_iget_as_isodate(const config_content_node_type * node , int index) {
+  time_t value;
+  config_schema_item_assure_type(node->schema , index , CONFIG_ISODATE);
+  util_sscanf_isodate( config_content_node_iget(node , index) , &value );
+  return value;
+}
+
+
 bool config_content_node_iget_as_bool(const config_content_node_type * node , int index) {
   bool value;
   config_schema_item_assure_type(node->schema , index , CONFIG_BOOL);
