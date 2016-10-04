@@ -606,7 +606,8 @@ static void job_queue_print_summary(job_queue_type *queue, bool status_change ) 
                      job_queue_status_get_count( queue->status , JOB_QUEUE_DONE ) +
                      job_queue_status_get_count( queue->status , JOB_QUEUE_EXIT );
       int complete = job_queue_status_get_count( queue->status , JOB_QUEUE_SUCCESS );
-      int failed   = job_queue_status_get_count( queue->status , JOB_QUEUE_FAILED );
+      int failed   = job_queue_status_get_count( queue->status , JOB_QUEUE_FAILED ) +
+                     job_queue_status_get_count( queue->status , JOB_QUEUE_IS_KILLED );
       int loading  = job_queue_status_get_count( queue->status , JOB_QUEUE_RUNNING_CALLBACK );
 
       printf(status_fmt , waiting , pending , running , loading , failed , complete);
