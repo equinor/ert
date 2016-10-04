@@ -346,33 +346,37 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
     quoting.
   */
 
-  stringlist_type * excludes = stringlist_alloc_new();
-  char * select = NULL;
-  if (driver->exclude_hosts != NULL) {
-    for (int i = 0; i < stringlist_get_size(driver->exclude_hosts); i++) {
-      char * exclude_host = util_alloc_sprintf("hname!='%s'", stringlist_iget(driver->exclude_hosts, i));
-      stringlist_append_owned_ref(excludes, exclude_host);
+  {
+    stringlist_type * excludes = stringlist_alloc_new();
+    char * select = NULL;
+    if (driver->exclude_hosts != NULL) {
+      for (int i = 0; i < stringlist_get_size(driver->exclude_hosts); i++) {
+        char * exclude_host = util_alloc_sprintf("hname!='%s'", stringlist_iget(driver->exclude_hosts, i));
+        stringlist_append_owned_ref(excludes, exclude_host);
+      }
+      const char * excludes_string = stringlist_alloc_joined_string(excludes, " && ");
+      select = util_alloc_sprintf("select[%s]", excludes_string);
     }
-    const char * excludes_string = stringlist_alloc_joined_string(excludes, " && ");
-    select = util_alloc_sprintf("select[%s]", excludes_string);
+
+    stringlist_type * qrr = stringlist_alloc_new();
+    if (select) {
+      stringlist_append_copy(qrr, select);
+      util_free(select);
+    }
+
+    if (driver->resource_request != NULL)
+      stringlist_append_copy(qrr, driver->resource_request);
+
+    const char* req = stringlist_alloc_joined_string(qrr, " ");
+
+    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
+      quoted_resource_request = util_alloc_sprintf("\"%s\"", req);
+    else
+      quoted_resource_request = util_alloc_string_copy(req);
+
+    stringlist_free( qrr );
+    stringlist_free( excludes );
   }
-
-  stringlist_type * qrr = stringlist_alloc_new();
-  if (select) {
-    stringlist_append_copy(qrr, select);
-    util_free(select);
-  }
-
-  if (driver->resource_request != NULL)
-    stringlist_append_copy(qrr, driver->resource_request);
-
-  const char* req = stringlist_alloc_joined_string(qrr, " ");
-
-  if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
-    quoted_resource_request = util_alloc_sprintf("\"%s\"", req);
-  else
-    quoted_resource_request = util_alloc_string_copy(req);
-
 
   if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
     stringlist_append_ref( argv , driver->bsub_cmd);
@@ -406,7 +410,6 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
   }
   free( num_cpu_string );
   util_safe_free( quoted_resource_request );
-  stringlist_free( qrr );
   return argv;
 }
 
