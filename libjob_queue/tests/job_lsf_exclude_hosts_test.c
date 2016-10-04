@@ -30,26 +30,30 @@ void test_submit(lsf_driver_type * driver, const char * cmd) {
   {
     char * node1 = "enern";
     char * node2 = "toern";
-    char * black1 = "!hname=enern";
-    char * black2 = "!hname=toern";
+    char * node3 = "tre-ern.statoil.org";
+    char * black1 = util_alloc_sprintf("hname!='%s'", node1);
+    char * black2 = util_alloc_sprintf("hname!='%s'", node2);
+    char * black3 = util_alloc_sprintf("hname!='%s'", node3);
+    char * select = util_alloc_sprintf("select[%s && %s && %s]", black1, black2, black3);
 
     lsf_driver_add_exclude_hosts(driver, node1);
     lsf_driver_add_exclude_hosts(driver, node2);
+    lsf_driver_add_exclude_hosts(driver, node3);
 
     {
       stringlist_type * argv = lsf_driver_alloc_cmd(driver, "", "NAME", "bsub", 1, 0, NULL);
-      if (!stringlist_contains(argv, black1))
+      if (!stringlist_contains(argv, select)) {
+        printf("%s lsf_driver_alloc_cmd argv does not contain %s\n", __func__, select);
+        printf("%s lsf_driver_alloc_cmd was %s\n", __func__, stringlist_alloc_joined_string(argv, " "));
         exit(1);
-
-      if (!stringlist_contains(argv, black2))
-        exit(1);
+      }
     }
   }
 }
 
 void test_bjobs_parse_hosts() {
-  const char* full_hostnames = "hname1:4*hname2:13*hname3:1*hname4:hname5\n";
-  const char* hostnames = "hname1:hname2:hname3:hname4:hname5";
+  const char* full_hostnames = "hname1:4*hname2:13*st-rst666-01-42.st.example.org:1*hname4:hname5\n";
+  const char* hostnames = "hname1:hname2:st-rst666-01-42.st.example.org:hname4:hname5";
   stringlist_type * expected = stringlist_alloc_from_split(hostnames,":");
   if (stringlist_get_size(expected) != 5) {
     printf("Even expected has wrong size.\n");
