@@ -15,7 +15,7 @@
 #  for more details.
 
 from ert.config import ContentTypeEnum , ConfigPrototype
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 
 
 class SchemaItem(BaseCClass):

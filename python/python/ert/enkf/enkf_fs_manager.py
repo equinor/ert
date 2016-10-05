@@ -1,5 +1,5 @@
 import os.path
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 from ert.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfInitModeEnum, EnkfPrototype
 from ert.util import StringList, BoolVector
 

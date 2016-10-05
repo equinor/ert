@@ -15,7 +15,7 @@
 #  for more details.
 import os.path 
 
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.util import IntVector
 from ert.enkf import ENKF_LIB
 

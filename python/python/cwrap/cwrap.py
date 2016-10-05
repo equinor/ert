@@ -1,21 +1,21 @@
-#  Copyright (C) 2011  Statoil ASA, Norway. 
-#   
-#  The file 'cwrap.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+#  Copyright (C) 2016  Statoil ASA, Norway.
+#
+#  This file is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+#  for more details.
+
 """
 Module implementing type map between C types and Python classes.
-
 The prototype_pattern is a major regexp which is used to set the
 correct restype and argtypes attributes of the function objects.
 """
@@ -24,8 +24,12 @@ from __future__ import print_function
 import ctypes
 import re
 import sys
-from ert.cwrap import BaseCClass, BaseCValue, REGISTERED_TYPES
 import inspect
+
+from .basecclass import BaseCClass
+from .basecvalue import BaseCValue
+from .prototype import REGISTERED_TYPES
+
 
 
 prototype_pattern = "(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]"
@@ -64,7 +68,6 @@ class CWrapper:
             string_list -> StringList
             string_list_ref -> StringList.createCReference
             string_list_obj -> StringList.createPythonObject
-
         @type type_name: str
         @type base_c_class: BaseCClass
         """
@@ -116,11 +119,8 @@ class CWrapper:
     def prototype(self, prototype, lib=None):
         """
         Defines the return type and arguments for a C-function
-
         prototype expects a string formatted like this:
-
             "type functionName(type, ... ,type)"
-
         where type is a type available to ctypes
         Some type are automatically converted:
             int  -> c_int
@@ -130,19 +130,16 @@ class CWrapper:
             void -> None
             double -> c_double
             float  -> c_float
-
         There are also pointer versions of these:
             long* -> POINTER(c_long)
             bool* -> POINTER(c_int)
             double* -> POINTER(c_double)
             char* -> c_char_p
             ...
-
         In addition, user register types are recognized and any type
         registered as a reference to BaseCClass createCReference and
         createPythonObject are treated as pointers and converted
         automatically.
-
         """
 
         match = re.match(CWrapper.pattern, prototype)

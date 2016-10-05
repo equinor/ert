@@ -16,7 +16,7 @@
 import os
 import errno 
 
-from ert.cwrap import CWrapper, BaseCClass
+from cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB
 from ert.util import CTime
 

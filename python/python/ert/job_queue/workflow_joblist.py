@@ -1,5 +1,5 @@
 import os
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 from ert.job_queue import QueuePrototype, WorkflowJob
 
 

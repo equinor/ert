@@ -18,7 +18,7 @@ import sys
 import os.path
 
 from ert.config import UnrecognizedEnum, ContentTypeEnum , ConfigContent, ConfigPrototype
-from ert.cwrap import BaseCClass
+from cwrap import BaseCClass
 
 
 class ConfigParser(BaseCClass):

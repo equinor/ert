@@ -3,7 +3,6 @@ set(PYTHON_SOURCES
 )
 add_python_package("python.ert"  ${PYTHON_INSTALL_PREFIX}/ert "${PYTHON_SOURCES}" True)
 
-add_subdirectory(cwrap)
 add_subdirectory(ecl)
 add_subdirectory(geo)
 add_subdirectory(test)

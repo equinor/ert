@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert.cwrap import BaseCEnum
+from cwrap import BaseCEnum
 from ert.job_queue import JOB_QUEUE_LIB
 
 

@@ -1,5 +1,5 @@
 import ert.util
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB, LocalObsdata, LocalObsdataNode, LocalDataset
 
 class LocalMinistep(BaseCClass):

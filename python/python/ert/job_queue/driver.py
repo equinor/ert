@@ -16,7 +16,7 @@
 
 
 import ctypes
-from ert.cwrap import BaseCClass, BaseCEnum
+from cwrap import BaseCClass, BaseCEnum
 from ert.job_queue import JOB_QUEUE_LIB, QueuePrototype
 from ert.job_queue import Job
 

@@ -1,5 +1,5 @@
 import ert
-from ert.cwrap import clib, CWrapper
+from cwrap import clib, CWrapper
 from ert.enkf.data.enkf_node import EnkfNode
 from ert.enkf.node_id import NodeId
 from ert.test import ErtTestContext

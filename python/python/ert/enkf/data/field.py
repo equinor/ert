@@ -15,7 +15,7 @@
 #  for more details.
 import sys
 
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf.config import FieldConfig
 

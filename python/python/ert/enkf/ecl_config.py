@@ -15,7 +15,7 @@
 #  for more details.
 from warnings import warn
 
-from ert.cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.util import StringList
 from ert.ecl import EclSum

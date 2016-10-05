@@ -22,7 +22,7 @@ from types import StringType, IntType
 import time
 import ctypes
 
-from ert.cwrap import BaseCClass,BaseCEnum
+from cwrap import BaseCClass,BaseCEnum
 
 from ert.job_queue import QueuePrototype
 from ert.job_queue import Job, JobStatusType

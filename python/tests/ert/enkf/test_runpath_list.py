@@ -1,7 +1,7 @@
 from os import path, symlink, remove
 
 import ert
-from ert.cwrap import CWrapper
+from cwrap import CWrapper
 from ert.test import ExtendedTestCase, TestAreaContext,ErtTestContext
 from ert.enkf import RunpathList, RunpathNode
 from ert.util import BoolVector
