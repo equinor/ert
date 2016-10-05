@@ -256,7 +256,7 @@ stringlist_type * lsf_job_alloc_parse_hostnames(const char* fname) {
   return stringlist_alloc_new();
 }
 
-const char* lsf_job_write_bjobs_to_file(const char * bjobs_cmd, lsf_driver_type * driver, const size_t jobid) {
+const char* lsf_job_write_bjobs_to_file(const char * bjobs_cmd, lsf_driver_type * driver, const long jobid) {
   // will typically run "bjobs -noheader -o 'EXEC_HOST' jobid"
 
   const char * noheader = "-noheader";
@@ -741,19 +741,43 @@ void lsf_driver_free_job(void * __job) {
   lsf_job_free(job);
 }
 
+static void lsf_driver_node_failure(lsf_driver_type * driver, long lsf_job_id) {
+  fprintf(stderr, "%s attempting to blacklist nodes for job id %d.\n", __func__, lsf_job_id);
+
+  {
+    const char * fname = lsf_job_write_bjobs_to_file(driver->bsub_cmd, driver, lsf_job_id);
+    stringlist_type * hosts = lsf_job_alloc_parse_hostnames(fname);
+    const char* hostnames = stringlist_alloc_joined_string(hosts, ", ");
+    fprintf(stderr, "%s blacklisting nodes %s.\n", __func__, hostnames);
+
+    lsf_driver_add_exclude_hosts(driver, hostnames);
+
+    util_free(hostnames);
+    stringlist_free(hosts);
+    util_free(fname);
+  }
+
+}
+
+void lsf_driver_blacklist_node(void * __driver, void * __job) {
+  lsf_driver_type * driver = lsf_driver_safe_cast(__driver);
+  lsf_job_type * job = lsf_job_safe_cast(__job);
+  long lsf_job_id = lsf_job_get_jobnr(job);
+  lsf_driver_node_failure(driver, lsf_job_id);
+}
 
 
-void lsf_driver_kill_job(void * __driver , void * __job, bool blacklist) {
+void lsf_driver_kill_job(void * __driver , void * __job) {
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
   {
-    if (driver->submit_method == LSF_SUBMIT_INTERNAL)
+    if (driver->submit_method == LSF_SUBMIT_INTERNAL) {
 #ifdef HAVE_LSF_LIBRARY
       lsb_killjob( driver->lsb , job->lsf_jobnr);
 #else
-    lsf_driver_internal_error( driver );
+      lsf_driver_internal_error( driver );
 #endif
-    else {
+    } else {
       if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         char ** argv = util_calloc( 2, sizeof * argv );
         argv[0] = driver->remote_lsf_server;
@@ -763,24 +787,10 @@ void lsf_driver_kill_job(void * __driver , void * __job, bool blacklist) {
 
         free( argv[1] );
         free( argv );
-      } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL)
+      } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
         util_spawn_blocking(driver->bkill_cmd, 1, (const char **) &job->lsf_jobnr_char, NULL, NULL);
+      }
     }
-  }
-  if (blacklist) {
-    long lsf_job_id = lsf_job_get_jobnr(job);
-    printf("%s blacklisting nodes for job id %d.\n", __func__, lsf_job_id);
-
-    const char * fname = lsf_job_write_bjobs_to_file(driver->bsub_cmd, driver, lsf_job_id);
-    stringlist_type * hosts = lsf_job_alloc_parse_hostnames(fname);
-    const char* hostnames = stringlist_alloc_joined_string(hosts, ", ");
-    printf("%s blacklisting nodes %s.\n", __func__, hostnames);
-
-    lsf_driver_add_exclude_hosts(driver, hostnames);
-
-    stringlist_free( hosts );
-    util_free( hostnames );
-    util_free( fname );
   }
 }
 

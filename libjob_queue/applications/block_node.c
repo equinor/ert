@@ -192,7 +192,7 @@ void block_node_exit( int signal ) {
       stringlist_fprintf( job->hostlist , " " , stdout );
       printf("\n");
     } else
-      lsf_driver_kill_job( lsf_driver , job->lsf_job , false );
+      lsf_driver_kill_job( lsf_driver , job->lsf_job );
     
     block_job_free( job );
   }

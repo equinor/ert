@@ -100,7 +100,7 @@ void local_driver_kill_job( void * __driver , void * __job) {
   }
   
   kill( job->child_process , SIGTERM );
-  }
+}
 
 
 void * submit_job_thread__(void * __arg) {

@@ -513,7 +513,7 @@ bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status
         double runtime = job_queue_node_time_since_sim_start(node);
         if (runtime >= node->max_confirm_wait) {
           // max_confirm_wait has passed since sim_start without success; the job is dead
-          job_status_type new_status = JOB_QUEUE_EXIT;
+          job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
           status_change = job_queue_status_transition(status, current_status, new_status);
           job_queue_node_set_status(node, new_status);
         }
@@ -547,7 +547,6 @@ bool job_queue_node_status_transition( job_queue_node_type * node , job_queue_st
 void job_queue_node_set_max_confirmation_wait_time(job_queue_node_type * node, time_t time) {
   node->max_confirm_wait = time;
 }
-
 
 
 bool job_queue_node_status_confirmed_running(job_queue_node_type * node) {

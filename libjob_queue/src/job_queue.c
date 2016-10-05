@@ -780,8 +780,10 @@ static void * job_queue_run_DO_KILL_callback( void * arg ) {
   return NULL;
 }
 
-
-
+static void job_queue_handle_DO_KILL_NODE_FAILURE(job_queue_type * queue, job_queue_node_type * node) {
+  queue_driver_blacklist_node( queue->driver, node );
+  job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
+}
 
 static void job_queue_handle_DO_KILL( job_queue_type * queue , job_queue_node_type * node) {
   job_queue_kill_job_node(queue, node);
@@ -999,6 +1001,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                     break;
                   case(JOB_QUEUE_EXIT):
                     job_queue_handle_EXIT(queue, node);
+                    break;
+                  case(JOB_QUEUE_DO_KILL_NODE_FAILURE):
+                    job_queue_handle_DO_KILL_NODE_FAILURE(queue, node);
                     break;
                   case(JOB_QUEUE_DO_KILL):
                     job_queue_handle_DO_KILL(queue, node);
