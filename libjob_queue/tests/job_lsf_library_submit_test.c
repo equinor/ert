@@ -40,7 +40,7 @@ void test_submit(lsf_driver_type * driver, const char * cmd) {
         assert( (lsf_status == JOB_STAT_RUN) || (lsf_status == JOB_STAT_PEND) );
       }
 
-      lsf_driver_kill_job( driver , job );
+      lsf_driver_kill_job( driver , job , false );
       lsf_driver_set_bjobs_refresh_interval( driver , 0 );
       sleep(1);
 

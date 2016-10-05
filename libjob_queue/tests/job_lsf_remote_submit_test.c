@@ -50,7 +50,7 @@ void test_submit(lsf_driver_type * driver , const char * server , const char * b
           test_error_exit("Got lsf_status:%d expected: %d or %d \n",lsf_status , JOB_STAT_RUN , JOB_STAT_PEND);
       }
       
-      lsf_driver_kill_job( driver , job );
+      lsf_driver_kill_job( driver , job , false );
       lsf_driver_set_bjobs_refresh_interval( driver , 0 );
       sleep(2);
 
