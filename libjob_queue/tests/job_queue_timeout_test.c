@@ -136,8 +136,8 @@ int main(int argc, char ** argv) {
     usleep(1 * sec); // 1.0 sec
     int job_status = job_queue_iget_job_status(queue, 0);
 
-    if (job_status != JOB_QUEUE_FAILED) {
-      util_exit("Job should have failed, had status %d != %d\n", job_status, JOB_QUEUE_FAILED);
+    if (job_status != JOB_QUEUE_IS_KILLED) {
+      util_exit("Job should have been killed, had status %d != %d\n", job_status, JOB_QUEUE_IS_KILLED);
     }
   }
   if (!job_queue_manager_try_wait(queue_manager, 5 * sec))

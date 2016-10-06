@@ -30,6 +30,8 @@ class JobStatusType(BaseCEnum):
     JOB_QUEUE_SUCCESS = None
     JOB_QUEUE_RUNNING_CALLBACK = None
     JOB_QUEUE_FAILED = None
+    JOB_QUEUE_DO_KILL_NODE_FAILURE = None
+
 
 JobStatusType.addEnum("JOB_QUEUE_NOT_ACTIVE", 1)
 JobStatusType.addEnum("JOB_QUEUE_WAITING", 4)
@@ -43,8 +45,5 @@ JobStatusType.addEnum("JOB_QUEUE_DO_KILL", 8192)
 JobStatusType.addEnum("JOB_QUEUE_SUCCESS", 16384)
 JobStatusType.addEnum("JOB_QUEUE_RUNNING_CALLBACK", 32768)
 JobStatusType.addEnum("JOB_QUEUE_FAILED", 65536)
+JobStatusType.addEnum("JOB_QUEUE_DO_KILL_NODE_FAILURE", 131072)
 JobStatusType.registerEnum(JOB_QUEUE_LIB, "job_status_type_enum")
-
-
-
-

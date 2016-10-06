@@ -64,6 +64,7 @@ struct queue_driver_struct {
   submit_job_ftype * submit;
   free_job_ftype * free_job;
   kill_job_ftype * kill_job;
+  blacklist_node_ftype * blacklist_node;
   get_status_ftype * get_status;
   free_queue_driver_ftype * free_driver;
   set_option_ftype * set_option;
@@ -207,6 +208,7 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
     case LSF_DRIVER:
       driver->submit = lsf_driver_submit_job;
       driver->get_status = lsf_driver_get_job_status;
+      driver->blacklist_node = lsf_driver_blacklist_node;
       driver->kill_job = lsf_driver_kill_job;
       driver->free_job = lsf_driver_free_job;
       driver->free_driver = lsf_driver_free__;
@@ -220,6 +222,7 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
     case LOCAL_DRIVER:
       driver->submit = local_driver_submit_job;
       driver->get_status = local_driver_get_job_status;
+      driver->blacklist_node = NULL;
       driver->kill_job = local_driver_kill_job;
       driver->free_job = local_driver_free_job;
       driver->free_driver = local_driver_free__;
@@ -230,6 +233,7 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
     case RSH_DRIVER:
       driver->submit = rsh_driver_submit_job;
       driver->get_status = rsh_driver_get_job_status;
+      driver->blacklist_node = NULL;
       driver->kill_job = rsh_driver_kill_job;
       driver->free_job = rsh_driver_free_job;
       driver->free_driver = rsh_driver_free__;
@@ -242,6 +246,7 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
     case TORQUE_DRIVER:
       driver->submit = torque_driver_submit_job;
       driver->get_status = torque_driver_get_job_status;
+      driver->blacklist_node = NULL;
       driver->kill_job = torque_driver_kill_job;
       driver->free_job = torque_driver_free_job;
       driver->free_driver = torque_driver_free__;
@@ -338,6 +343,11 @@ void * queue_driver_submit_job(queue_driver_type * driver, const char * run_cmd,
 
 void queue_driver_free_job(queue_driver_type * driver, void * job_data) {
   driver->free_job(job_data);
+}
+
+void queue_driver_blacklist_node(queue_driver_type * driver, void * job_data) {
+  if (driver->driver_type == LSF_DRIVER)
+    driver->blacklist_node(driver->data, job_data);
 }
 
 void queue_driver_kill_job(queue_driver_type * driver, void * job_data) {

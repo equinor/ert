@@ -119,19 +119,8 @@ void test_update() {
 }
 
 
-void test_name() {
-  test_assert_string_equal( job_queue_status_name( JOB_QUEUE_NOT_ACTIVE ) ,
-                            "JOB_QUEUE_NOT_ACTIVE" );
-  test_assert_string_equal( job_queue_status_name( JOB_QUEUE_EXIT ) ,
-                            "JOB_QUEUE_EXIT" );
-  test_assert_string_equal( job_queue_status_name( JOB_QUEUE_FAILED ) ,
-                            "JOB_QUEUE_FAILED" );
-}
-
-
 int main( int argc , char ** argv) {
   util_install_signals();
   test_create();
   test_update();
-  test_name();
 }
