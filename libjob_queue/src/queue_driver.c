@@ -346,7 +346,8 @@ void queue_driver_free_job(queue_driver_type * driver, void * job_data) {
 }
 
 void queue_driver_blacklist_node(queue_driver_type * driver, void * job_data) {
-  driver->blacklist_node(driver->data, job_data);
+  if (driver->driver_type == LSF_DRIVER)
+    driver->blacklist_node(driver->data, job_data);
 }
 
 void queue_driver_kill_job(queue_driver_type * driver, void * job_data) {
