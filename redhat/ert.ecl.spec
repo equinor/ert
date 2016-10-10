@@ -14,7 +14,7 @@ Url:            http://ert.nr.no
 Source0:        https://github.com/OPM/%{name}/archive/release/%{version}/%{tag}.tar.gz#/%{name}-%{version}.tar.gz
 BuildRequires:  lapack-devel zlib-devel iputils
 BuildRequires:  gcc
-%{?!el6:BuildRequires: python-devel}
+%{?!el6:BuildRequires: python-devel numpy}
 %{?el6:BuildRequires:  cmake28 devtoolset-2}
 %{?!el6:BuildRequires:  cmake}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
