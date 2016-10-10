@@ -34,13 +34,20 @@ Group:          System/Libraries
 %package -n python-ert.ecl
 Summary:        ERT - Ensemble based Reservoir Tool - Python bindings
 Group:          Python/Libraries
-Requires:       libert.ecl1
+Requires:       libert.ecl1 python-cwrap
 
 %description -n python-ert.ecl
 ERT - Ensemble based Reservoir Tool is a tool for managing en ensemble
 of reservoir models. The initial motivation for creating ERT was a as
 tool to do assisted history matching with Ensemble Kalman Filter
 (EnKF). This package contains the Python bindings.
+
+%package -n python-cwrap
+Summary:        Simplify ctypes based wrapping of C code.
+Group:          Python/Libraries
+
+%description -n python-cwrap
+Package to simplify ctypes based wrapping of C code.
 }
 
 %description -n libert.ecl1
@@ -64,7 +71,7 @@ This package contains the development and header files for ert.ecl
 
 %build
 %{?el6:scl enable devtoolset-2 bash}
-DESTDIR=${RPM_BUILD_ROOT} %{?el6:cmake28} %{?!el6:cmake} -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{_prefix} -DBUILD_ECL_SUMMARY=1 %{?el6:-DBUILD_PYTHON=0} %{?el6:-DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-2/root/usr/bin/g++ -DCMAKE_C_COMPILER=/opt/rh/devtoolset-2/root/usr/bin/gcc -DCMAKE_Fortran_COMPILER=/opt/rh/devtoolset-2/root/usr/bin/gfortran}
+DESTDIR=${RPM_BUILD_ROOT} %{?el6:cmake28} %{?!el6:cmake} -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=%{?el6:Debug}%{?!el6:Release} -DCMAKE_INSTALL_PREFIX=%{_prefix} -DBUILD_ECL_SUMMARY=1 %{?el6:-DBUILD_PYTHON=0} %{?el6:-DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-2/root/usr/bin/g++ -DCMAKE_C_COMPILER=/opt/rh/devtoolset-2/root/usr/bin/gcc -DCMAKE_Fortran_COMPILER=/opt/rh/devtoolset-2/root/usr/bin/gfortran}
 make
 
 %install
@@ -94,4 +101,8 @@ rm -rf %{buildroot}
 %files -n python-ert.ecl
 %defattr(-,root,root,-)
 /usr/lib/python2.7/site-packages/ert/*
+
+%files -n python-cwrap
+%defattr(-,root,root,-)
+/usr/lib/python2.7/site-packages/cwrap/*
 }
