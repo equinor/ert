@@ -75,7 +75,7 @@ endif()
 # Treat warnings as errors if not on Windows
 if (NOT ERT_WINDOWS)
    set( CMAKE_C_FLAGS   "-std=gnu99 -Wall -Wno-unknown-pragmas ")
-   set( CMAKE_CXX_FLAGS "-Wall " )
+   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall " )
 endif()
 
 if (MSVC)
@@ -105,8 +105,8 @@ set( CMAKE_C_FLAGS_main ${CMAKE_C_FLAGS} )
 set( CMAKE_CXX_FLAGS_main ${CMAKE_CXX_FLAGS} )
 
 if (NOT ERT_WINDOWS)
-  set( CMAKE_C_FLAGS "-std=gnu99" )
-  set( CMAKE_CXX_FLAGS "-std=c+11")
+  set( CMAKE_C_FLAGS_main "${CMAKE_C_FLAGS} -std=gnu99" )
+  set( CMAKE_CXX_FLAGS_main "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
 set( ERT_EXTERNAL_UTIL_LIBS "" )
