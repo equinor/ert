@@ -50,13 +50,22 @@ class SimulationsTracker(object):
     def __init__(self):
         super(SimulationsTracker, self).__init__()
 
-        waiting_state = SimulationStateStatus("Waiting", JobStatusType.JOB_QUEUE_NOT_ACTIVE | JobStatusType.JOB_QUEUE_WAITING | JobStatusType.JOB_QUEUE_SUBMITTED, SimulationStateStatus.COLOR_WAITING)
-        pending_state = SimulationStateStatus("Pending", JobStatusType.JOB_QUEUE_PENDING, SimulationStateStatus.COLOR_PENDING)
-        running_state = SimulationStateStatus("Running", JobStatusType.JOB_QUEUE_RUNNING | JobStatusType.JOB_QUEUE_EXIT | JobStatusType.JOB_QUEUE_RUNNING_CALLBACK, SimulationStateStatus.COLOR_RUNNING)
+        waiting_flag  = JobStatusType.JOB_QUEUE_NOT_ACTIVE | JobStatusType.JOB_QUEUE_WAITING | JobStatusType.JOB_QUEUE_SUBMITTED
+        waiting_state = SimulationStateStatus("Waiting", waiting_flag, SimulationStateStatus.COLOR_WAITING)
+
+        pending_flag  = JobStatusType.JOB_QUEUE_PENDING
+        pending_state = SimulationStateStatus("Pending", pending_flag, SimulationStateStatus.COLOR_PENDING)
+
+        running_flag  = JobStatusType.JOB_QUEUE_RUNNING | JobStatusType.JOB_QUEUE_EXIT | JobStatusType.JOB_QUEUE_RUNNING_CALLBACK
+        running_state = SimulationStateStatus("Running", running_flag, SimulationStateStatus.COLOR_RUNNING)
 
         # Failed also includes simulations which have been killed by the MAX_RUNTIME system.
-        failed_state = SimulationStateStatus("Failed", JobStatusType.JOB_QUEUE_IS_KILLED | JobStatusType.JOB_QUEUE_DO_KILL | JobStatusType.JOB_QUEUE_FAILED, SimulationStateStatus.COLOR_FAILED)
-        done_state = SimulationStateStatus("Finished", JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS, SimulationStateStatus.COLOR_FINISHED)
+        failed_flag  = JobStatusType.JOB_QUEUE_IS_KILLED | JobStatusType.JOB_QUEUE_DO_KILL
+        failed_flag |= JobStatusType.JOB_QUEUE_FAILED    | JobStatusType.JOB_QUEUE_DO_KILL_NODE_FAILURE
+        failed_state = SimulationStateStatus("Failed", failed_flag, SimulationStateStatus.COLOR_FAILED)
+
+        done_flag  = JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS
+        done_state = SimulationStateStatus("Finished", done_flag, SimulationStateStatus.COLOR_FINISHED)
 
         self.states = [waiting_state, pending_state, running_state, failed_state, done_state]
         self.custom_states = [waiting_state, pending_state, running_state, failed_state, done_state]
@@ -76,10 +85,3 @@ class SimulationsTracker(object):
 
             if not used:
                 raise AssertionError("Enum identifier '%s' not used!" % enum)
-
-
-
-
-
-
-
