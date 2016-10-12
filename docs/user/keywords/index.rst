@@ -73,7 +73,7 @@ Keyword name                                                        	Required by
 :ref:`GEN_KW_TAG_FORMAT <gen_kw_tag_format>`                        	NO                    			<%s>                  		Format used to add keys in the GEN_KW template files.
 :ref:`GEN_KW_EXPORT_FILE <gen_kw_export_file>`                      	NO                    			parameter.txt         		Name of file to export GEN_KW parameters to. 
 :ref:`GEN_PARAM <gen_param>`                                        	NO                                          				Add a general parameter. 
-:ref:`GRID <grid>`                                                  	YES                                         				Provide an ECLIPSE grid for the reservoir model. 
+:ref:`GRID <grid>`                                                  	NO                                         				Provide an ECLIPSE grid for the reservoir model. 
 :ref:`HISTORY_SOURCE <history_source>`                              	NO                    			REFCASE_HISTORY     	  	Source used for historical values.
 :ref:`HOOK_WORKFLOW <hook_workflow>` 					NO 									Install a workflow to be run automatically.
 :ref:`HOST_TYPE <host_type>`                                        	NO                                          
@@ -116,7 +116,6 @@ Keyword name                                                        	Required by
 :ref:`PLOT_REFCASE_LIST <plot_refcase_list>` 				NO 									Deprecated. Use REFCASE_LIST instead. 
 :ref:`PLOT_WIDTH <plot_width>` 						NO 					1024 				Pixel width of the plots. 
 :ref:`PRE_CLEAR_RUNPATH <pre_clear_runpath>` 				NO 					FALSE 				Should the runpath be cleared before initializing? 
-:ref:`QC_PATH <qc_path>` 						NO 					QC 				... 
 :ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs. 
 :ref:`REFCASE <refcase>` 						NO (see HISTORY_SOURCE and SUMMARY) 					Reference case used for observations and plotting. 
 :ref:`REFCASE_LIST <refcase_list>` 					NO 									Full path to Eclipse .DATA files containing completed runs (which you can add to plots) 
