@@ -19,7 +19,7 @@ class MeasData(BaseCClass):
             return MeasData.cNamespace().has_block( self , index)
         else:
             raise TypeError("The in operator expects a string argument")
-            
+
 
     def __getitem__(self , index):
         if isinstance(index , str):
