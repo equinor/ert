@@ -1150,7 +1150,7 @@ static FILE * enkf_main_log_step_list(enkf_main_type * enkf_main, const int_vect
 /**
  * This is THE ENKF update function.  It should only be called from enkf_main_UPDATE.
  */
-void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type * step_list, enkf_fs_type * source_fs,
+static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type * step_list, enkf_fs_type * source_fs,
         enkf_fs_type * target_fs, int target_step, run_mode_type run_mode, state_map_type * source_state_map,
         const analysis_config_type * analysis_config, const local_updatestep_type * updatestep,
         const int total_ens_size)
