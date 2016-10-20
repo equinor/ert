@@ -24,3 +24,12 @@ INSTALL( DIRECTORY ${PROJECT_BINARY_DIR}/tmp_doc/_build/ DESTINATION ${CMAKE_INS
 if (ERT_DOC_INSTALL_PATH)
    INSTALL( DIRECTORY ${PROJECT_BINARY_DIR}/tmp_doc/_build/ DESTINATION ${ERT_DOC_INSTALL_PATH} )
 endif()
+
+find_package(Doxygen)
+if (DOXYGEN_FOUND)
+  configure_file( doxygen.cfg.in ${PROJECT_BINARY_DIR}/doxygen.cfg)
+  add_custom_target(doxy
+    COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doxygen.cfg
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../
+    COMMENT "Generating doxygen documentation")
+endif()
