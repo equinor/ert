@@ -5,7 +5,7 @@ PROJECT_NAME           = "Ert"
 PROJECT_NUMBER         = ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR}
 PROJECT_BRIEF          = "ERT is a software initially developed by Statoil which main feature is to handle several ECLIPSE simulations in an Ensemble setting. --- http://ert.nr.no/ert"
 PROJECT_LOGO           =
-OUTPUT_DIRECTORY       = doxy
+OUTPUT_DIRECTORY       = ${PROJECT_BINARY_DIR}/doxy
 CREATE_SUBDIRS         = NO
 STRIP_FROM_PATH        =
 STRIP_FROM_INC_PATH    =
@@ -35,7 +35,7 @@ DOT_GRAPH_MAX_NODES = 1000
 GENERATE_HTML     = YES
 CLASS_DIAGRAMS    = YES
 INCLUDE_GRAPH     = YES
-INCLUDED_BY_GRAPH = NO  # set to NO if we only want INCLUDE
+INCLUDED_BY_GRAPH = NO
 CALL_GRAPH        = YES
 
 DOT_IMAGE_FORMAT  = png
