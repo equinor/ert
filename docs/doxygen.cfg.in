@@ -30,7 +30,7 @@ INPUT = ${PROJECT_SOURCE_DIR}/libanalysis ${PROJECT_SOURCE_DIR}/libconfig ${PROJ
 RECURSIVE         = YES
 EXCLUDE_PATTERNS  = */test/* */build/* */test-data/* */docs/* */python*/
 
-HAVE_DOT          = YES
+HAVE_DOT          = ${DOXYGEN_HAVE_DOT}
 DOT_GRAPH_MAX_NODES = 1000
 GENERATE_HTML     = YES
 CLASS_DIAGRAMS    = YES
