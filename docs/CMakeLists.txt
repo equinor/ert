@@ -28,6 +28,15 @@ endif()
 
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
+  message(STATUS "Creating doxygen target")
+  if (DOXYGEN_DOT_FOUND)
+    message(STATUS "Found graphviz, will run doxygen with graphics")
+    set( DOXYGEN_HAVE_DOT "YES" )
+  else()
+    message(STATUS "Graphviz not found, disabling dot")
+    set( DOXYGEN_HAVE_DOT "NO" )
+  endif()
+
   configure_file(doxygen.cfg.in ${PROJECT_BINARY_DIR}/doxygen.cfg)
   add_custom_target(doxy
     COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doxygen.cfg
