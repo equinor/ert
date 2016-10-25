@@ -33,9 +33,18 @@ class Simulations(ErtShellCollection):
         simulation_runner = EnkfSimulationRunner(self.ert())
 
         now = time.time()
-
         print("Ensemble Experiment started at: %s" % datetime.now().isoformat(sep=" "))
 
+        print("Create the run path!")
+        iteration_count = self.ert().analysisConfig().getAnalysisIterConfig().getNumIterations()
+        active_realization_mask = BoolVector.createActiveMask("0-%d" % self.ert().getEnsembleSize())
+        # Note that 0(zero) is used and not iteration_count
+        simulation_runner.createRunPath(active_realization_mask, 0)
+
+        print("Ensemble Experiment pre processing!")
+        simulation_runner.runWorkflows(HookRuntime.PRE_SIMULATION)
+
+        print("Start simulations!")
         num_successful_realizations = simulation_runner.runEnsembleExperiment()
 
         success = self.ert().analysisConfig().haveEnoughRealisations(num_successful_realizations, self.ert().getEnsembleSize())
