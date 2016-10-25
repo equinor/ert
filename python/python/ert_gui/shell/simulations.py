@@ -35,13 +35,10 @@ class Simulations(ErtShellCollection):
         now = time.time()
         print("Ensemble Experiment started at: %s" % datetime.now().isoformat(sep=" "))
 
-        print("Create the run path!")
-        iteration_count = self.ert().analysisConfig().getAnalysisIterConfig().getNumIterations()
-        active_realization_mask = BoolVector.createActiveMask("0-%d" % self.ert().getEnsembleSize())
-        # Note that 0(zero) is used and not iteration_count
-        simulation_runner.createRunPath(active_realization_mask, 0)
+        iteration_count = 0
+        active_realization_mask = BoolVector(default_value = True, initial_size = self.ert().getEnsembleSize())
+        simulation_runner.createRunPath(active_realization_mask, iteration_count)
 
-        print("Ensemble Experiment pre processing!")
         simulation_runner.runWorkflows(HookRuntime.PRE_SIMULATION)
 
         print("Start simulations!")
