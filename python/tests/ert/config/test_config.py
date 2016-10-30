@@ -137,6 +137,24 @@ class ConfigTest(ExtendedTestCase):
             self.assertFalse( content.isValid() )
             self.assertEqual( len(content.getErrors()) , 1 )
 
+
+    def test_parse_deprecated(self):
+        conf = ConfigParser()
+        item = conf.add("INT", value_type = ContentTypeEnum.CONFIG_INT )
+        msg = "ITEM INT IS DEPRECATED"
+        item.setDeprecated( msg )
+        with TestAreaContext("config/parse2"):
+            with open("config","w") as fileH:
+                fileH.write("INT 100\n")
+
+            content = conf.parse("config"  )
+            self.assertTrue( content.isValid() )
+
+            warnings = content.getWarnings()
+            self.assertEqual( len(warnings) , 1 )
+            self.assertEqual( warnings[0] , msg )
+
+
             
             
     def test_parser_content(self):

@@ -97,7 +97,9 @@ typedef enum {
   void                      config_schema_item_iset_type( config_schema_item_type * item , int index , config_item_types type);
   config_item_types         config_schema_item_iget_type(const config_schema_item_type * item , int index );
   void                      config_schema_item_set_default_type( config_schema_item_type * item , config_item_types type);
-
+  bool                      config_schema_item_is_deprecated( const config_schema_item_type * item);
+  const char              * config_schema_item_get_deprecate_msg( const config_schema_item_type * item);
+  void                      config_schema_item_set_deprecated( config_schema_item_type * item , const char * msg);
 
 #ifdef __cplusplus
 }
