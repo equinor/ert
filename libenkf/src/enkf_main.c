@@ -1966,6 +1966,12 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 }
 
 
+static void enkf_main_user_config_deprecate( config_parser_type * config )
+{
+  config_parser_deprecate( config , "MAX_RUNNING_LSF" , "MAX_RUNNING_LSF is deprecated. Use the general QUEUE_OPTION LSF MAX_RUNNING instead.");
+  config_parser_deprecate( config , "MAX_RUNNING_LOCAL" , "MAX_RUNNING_LOCAL is deprecated. Use the general QUEUE_OPTION LOCAL MAX_RUNNING instead.");
+  config_parser_deprecate( config , "MAX_RUNNING_RSH" , "MAX_RUNNING_RSH is deprecated. Use the general QUEUE_OPTION RSH MAX_RUNNING instead.");
+}
 
 
 static void enkf_main_init_user_config( const enkf_main_type * enkf_main , config_parser_type * config ) {
@@ -2632,6 +2638,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
       enkf_main_init_user_config( enkf_main , config );
       site_config_add_config_items( config , false );
       site_config_init_user_mode( enkf_main->site_config );
+      enkf_main_user_config_deprecate( config );
 
       {
         hash_type *pre_defined_kw_map = __enkf_main_alloc_predefined_kw_map(enkf_main);
@@ -2639,6 +2646,15 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
         hash_free(pre_defined_kw_map);
       }
 
+      {
+        const stringlist_type * warnings = config_content_get_warnings( content );
+        if (stringlist_get_size( warnings ) > 0) {
+          fprintf(stderr," ** There were warnings when parsing the configuration file: %s" , model_config );
+          for (int i=0; i < stringlist_get_size( warnings ); i++)
+            fprintf(stderr, " %02d : %s \n",i , stringlist_iget( warnings , i ));
+        }
+      }
+      
       if (!config_content_is_valid( content )) {
 	config_error_type * errors = config_content_get_errors( content );
 	config_error_fprintf( errors , true , stderr );
