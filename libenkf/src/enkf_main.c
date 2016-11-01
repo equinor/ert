@@ -1151,7 +1151,7 @@ static FILE * enkf_main_log_step_list(enkf_main_type * enkf_main, const int_vect
  * This is THE ENKF update function.  It should only be called from enkf_main_UPDATE.
  */
 static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type * step_list, enkf_fs_type * source_fs,
-        enkf_fs_type * target_fs, int target_step, run_mode_type run_mode, state_map_type * source_state_map,
+        enkf_fs_type * target_fs, int target_step, run_mode_type run_mode, 
         const analysis_config_type * analysis_config, const local_updatestep_type * updatestep,
         const int total_ens_size)
 {
@@ -1163,108 +1163,114 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
    The reason for going via these temporary structures is to support
    deactivating observations which should not be used in the update
    process.
-   */
+  */
   bool_vector_type * ens_mask = bool_vector_alloc(total_ens_size, false);
+  state_map_type * source_state_map = enkf_fs_get_state_map( source_fs );
+  
   state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA);
-
-  double global_std_scaling = analysis_config_get_global_std_scaling(analysis_config);
-  obs_data_type * obs_data = obs_data_alloc(global_std_scaling);
-  meas_data_type * meas_data = meas_data_alloc(ens_mask);
-
-
-  int_vector_type * ens_active_list = bool_vector_alloc_active_list(ens_mask);
-
-  /* Copy all the parameter nodes from source case to target case;
-   nodes which are updated will be fetched from the new target
-   case, and nodes which are not updated will be manually copied
-   over there.
-   */
-  if (target_fs != source_fs) {
-    stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER);
-    for (int i = 0; i < stringlist_get_size(param_keys); i++) {
-      const char * key = stringlist_iget(param_keys, i);
-      enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config, key);
-      enkf_node_type * data_node = enkf_node_alloc(config_node);
-      for (int j = 0; j < int_vector_size(ens_active_list); j++) {
-        node_id_type node_id = { .iens = int_vector_iget(ens_active_list, j), .report_step = 0 };
-        enkf_node_load(data_node, source_fs, node_id);
-        enkf_node_store(data_node, target_fs, false, node_id);
+  {
+    FILE * log_stream = enkf_main_log_step_list(enkf_main, step_list);
+    double global_std_scaling = analysis_config_get_global_std_scaling(analysis_config);
+    meas_data_type * meas_data = meas_data_alloc(ens_mask);
+    obs_data_type * obs_data = obs_data_alloc(global_std_scaling);
+    int_vector_type * ens_active_list = bool_vector_alloc_active_list(ens_mask);
+    
+    /* 
+       Copy all the parameter nodes from source case to target case;
+       nodes which are updated will be fetched from the new target
+       case, and nodes which are not updated will be manually copied
+       over there.
+    */
+    if (target_fs != source_fs) {
+      stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER);
+      for (int i = 0; i < stringlist_get_size(param_keys); i++) {
+	const char * key = stringlist_iget(param_keys, i);
+	enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config, key);
+	enkf_node_type * data_node = enkf_node_alloc(config_node);
+	for (int j = 0; j < int_vector_size(ens_active_list); j++) {
+	  node_id_type node_id = { .iens = int_vector_iget(ens_active_list, j), .report_step = 0 };
+	  enkf_node_load(data_node, source_fs, node_id);
+	  enkf_node_store(data_node, target_fs, false, node_id);
+	}
+	enkf_node_free(data_node);
       }
-      enkf_node_free(data_node);
+      stringlist_free(param_keys);
     }
-    stringlist_free(param_keys);
-  }
+    
+    {
+      hash_type * use_count = hash_alloc();
+      int current_step = int_vector_get_last(step_list);
 
-  FILE * log_stream = enkf_main_log_step_list(enkf_main, step_list);
+      
+      /* Looping over local analysis ministep */
+      for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep(updatestep); ministep_nr++) {
+	local_ministep_type * ministep = local_updatestep_iget_ministep(updatestep, ministep_nr);
+	local_obsdata_type * obsdata = local_ministep_get_obsdata(ministep);
+      
+	obs_data_reset(obs_data);
+	meas_data_reset(meas_data);
+	
+	/*
+	  Temporarily we will just force the timestep from the input
+	  argument onto the obsdata instance; in the future the
+	  obsdata should hold it's own here.
+	*/
+	local_obsdata_reset_tstep_list(obsdata, step_list);
+      
+	if (analysis_config_get_std_scale_correlated_obs(enkf_main->analysis_config)) {
+	  double scale_factor = enkf_obs_scale_correlated_std(enkf_main->obs, source_fs, ens_active_list, obsdata);
+	  ert_log_add_fmt_message(1, NULL, "Scaling standard deviation in obdsata set:%s with %g",
+				  local_obsdata_get_name(obsdata), scale_factor);
+	}
+	enkf_obs_get_obs_and_measure_data(enkf_main->obs, source_fs, obsdata, ens_active_list, meas_data, obs_data);
+      
+      
+      
+	double alpha = analysis_config_get_alpha(enkf_main->analysis_config);
+	double std_cutoff = analysis_config_get_std_cutoff(enkf_main->analysis_config);
+	enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha, enkf_main->verbose);
+      
+	if (enkf_main->verbose)
+	  enkf_analysis_fprintf_obs_summary(obs_data, meas_data, step_list, local_ministep_get_name(ministep), stdout);
+	enkf_analysis_fprintf_obs_summary(obs_data, meas_data, step_list, local_ministep_get_name(ministep), log_stream);
+	
+	if ((obs_data_get_active_size(obs_data) > 0) && (meas_data_get_active_obs_size(meas_data) > 0))
+	  enkf_main_analysis_update(enkf_main,
+				    target_fs,
+				    ens_mask,
+				    target_step,
+				    use_count,
+				    run_mode,
+				    int_vector_get_first(step_list),
+				    current_step,
+				    ministep,
+				    meas_data,
+				    obs_data);
+	else if (target_fs != source_fs)
+	  ert_log_add_fmt_message(1, stderr, "No active observations/parameters for MINISTEP: %s.",
+				  local_ministep_get_name(ministep));
+      }
 
-  int current_step = int_vector_get_last(step_list);
-  hash_type * use_count = hash_alloc();
-
-  /* Looping over local analysis ministep */
-  for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep(updatestep); ministep_nr++) {
-    local_ministep_type * ministep = local_updatestep_iget_ministep(updatestep, ministep_nr);
-    local_obsdata_type * obsdata = local_ministep_get_obsdata(ministep);
-
-    obs_data_reset(obs_data);
-    meas_data_reset(meas_data);
-
-    /*
-     Temporarily we will just force the timestep from the input
-     argument onto the obsdata instance; in the future the
-     obsdata should hold it's own here.
-     */
-    local_obsdata_reset_tstep_list(obsdata, step_list);
-
-    if (analysis_config_get_std_scale_correlated_obs(enkf_main->analysis_config)) {
-      double scale_factor = enkf_obs_scale_correlated_std(enkf_main->obs, source_fs, ens_active_list, obsdata);
-      ert_log_add_fmt_message(1, NULL, "Scaling standard deviation in obdsata set:%s with %g",
-              local_obsdata_get_name(obsdata), scale_factor);
+      enkf_main_inflate(enkf_main, source_fs, target_fs, current_step, use_count);
+      hash_free(use_count);
     }
 
-    enkf_obs_get_obs_and_measure_data(enkf_main->obs, source_fs, obsdata, ens_active_list, meas_data, obs_data);
+
+    {
+      state_map_type * target_state_map = enkf_fs_get_state_map(target_fs);
+    
+      if (target_state_map != source_state_map) {
+	state_map_set_from_inverted_mask(target_state_map, ens_mask, STATE_PARENT_FAILURE);
+	state_map_set_from_mask(target_state_map, ens_mask, STATE_INITIALIZED);
+	enkf_fs_fsync(target_fs);
+      }
+    }
+
     int_vector_free(ens_active_list);
-
-
-    double alpha = analysis_config_get_alpha(enkf_main->analysis_config);
-    double std_cutoff = analysis_config_get_std_cutoff(enkf_main->analysis_config);
-    enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha, enkf_main->verbose);
-
-    if (enkf_main->verbose)
-      enkf_analysis_fprintf_obs_summary(obs_data, meas_data, step_list, local_ministep_get_name(ministep), stdout);
-    enkf_analysis_fprintf_obs_summary(obs_data, meas_data, step_list, local_ministep_get_name(ministep), log_stream);
-
-    if ((obs_data_get_active_size(obs_data) > 0) && (meas_data_get_active_obs_size(meas_data) > 0))
-      enkf_main_analysis_update(enkf_main,
-                                target_fs,
-                                ens_mask,
-                                target_step,
-                                use_count,
-                                run_mode,
-                                int_vector_get_first(step_list),
-                                current_step,
-                                ministep,
-                                meas_data,
-                                obs_data);
-    else if (target_fs != source_fs)
-      ert_log_add_fmt_message(1, stderr, "No active observations/parameters for MINISTEP: %s.",
-              local_ministep_get_name(ministep));
+    obs_data_free(obs_data);
+    meas_data_free(meas_data);
+    fclose(log_stream);
   }
-  fclose(log_stream);
-
-  obs_data_free(obs_data);
-  meas_data_free(meas_data);
-
-  enkf_main_inflate(enkf_main, source_fs, target_fs, current_step, use_count);
-  hash_free(use_count);
-
-  state_map_type * target_state_map = enkf_fs_get_state_map(target_fs);
-
-  if (target_state_map != source_state_map) {
-    state_map_set_from_inverted_mask(target_state_map, ens_mask, STATE_PARENT_FAILURE);
-    state_map_set_from_mask(target_state_map, ens_mask, STATE_INITIALIZED);
-    enkf_fs_fsync(target_fs);
-  }
-
   bool_vector_free( ens_mask);
 }
 
@@ -1306,7 +1312,6 @@ bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
                      target_fs,
                      target_step,
                      run_mode,
-                     source_state_map,
                      analysis_config,
                      updatestep,
                      total_ens_size);
