@@ -215,6 +215,7 @@ if (BUILD_PYTHON)
    else()
       include(cmake/python.cmake2)
       add_subdirectory( python )
+
       if(ERT_DOC)
          add_subdirectory( docs )
       endif()
@@ -223,7 +224,9 @@ if (BUILD_PYTHON)
       include(GNUInstallDirs)
       install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/ecl_summary.1
          DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-
    endif()
 endif()
 
+if(ERT_DOC)
+   add_subdirectory( docs )
+endif()
