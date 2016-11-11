@@ -95,6 +95,8 @@ struct config_schema_item_struct {
   hash_type                   * required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) */
   validate_type               * validate;                /* Information need during validation. */
   bool                          expand_envvar;           /* Should environment variables like $HOME be expanded?*/
+  bool                          deprecated;
+  char                        * deprecate_msg;
 };
 
 
@@ -225,6 +227,8 @@ config_schema_item_type * config_schema_item_alloc(const char * kw , bool requir
   item->kw         = util_alloc_string_copy(kw);
 
   item->required_set            = required;
+  item->deprecated             = false;
+  item->deprecate_msg           = NULL;
   item->required_children       = NULL;
   item->required_children_value = NULL;
   item->expand_envvar           = true;  /* Default is to expand $VAR expressions; can be turned off with
@@ -401,6 +405,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
 
 void config_schema_item_free( config_schema_item_type * item) {
   free(item->kw);
+  free( item->deprecate_msg );
   if (item->required_children       != NULL) stringlist_free(item->required_children);
   if (item->required_children_value != NULL) hash_free(item->required_children_value);
   validate_free(item->validate);
@@ -534,6 +539,19 @@ bool config_schema_item_has_required_children_value( const config_schema_item_ty
 
 stringlist_type * config_schema_item_get_required_children_value(const config_schema_item_type * item , const char * value) {
   return hash_safe_get( item->required_children_value , value );
+}
+
+bool config_schema_item_is_deprecated( const config_schema_item_type * item) {
+  return item->deprecated;
+}
+
+const char * config_schema_item_get_deprecate_msg( const config_schema_item_type * item) {
+  return item->deprecate_msg;
+}
+
+void config_schema_item_set_deprecated( config_schema_item_type * item , const char * msg) {
+  item->deprecated = true;
+  item->deprecate_msg = util_realloc_string_copy(item->deprecate_msg, msg);
 }
 
 

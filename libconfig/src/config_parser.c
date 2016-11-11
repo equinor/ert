@@ -709,6 +709,13 @@ void config_install_message(config_parser_type * config , const char * kw, const
 }
 
 
+void config_parser_deprecate(config_parser_type * config , const char * kw, const char * msg) {
+  if (config_has_schema_item(config , kw)) {
+    config_schema_item_type * item = config_get_schema_item(config , kw);
+    config_schema_item_set_deprecated(item , msg);
+  } else
+    util_abort("%s: item:%s not recognized \n",__func__ , kw);
+}
 
 
 #include "config_get.c"
