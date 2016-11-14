@@ -61,7 +61,8 @@ if (ERT_DOXY_DOC)
     add_custom_target(doxy ALL
       COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doxygen.cfg
       WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/../
-      COMMENT "Generating doxygen documentation")
+      COMMENT "Generating doxygen documentation"
+      DEPENDS enkf)
 
   endif()
 endif()
