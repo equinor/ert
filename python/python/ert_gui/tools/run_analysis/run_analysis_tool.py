@@ -41,21 +41,22 @@ class RunAnalysisTool(Tool):
         self._dialog.exec_()
 
     def run(self):
-        case_name = self._run_widget.case()
+        target = self._run_widget.target_case()
+        source = self._run_widget.source_case()
 
         ert = ERT.ert
         fs_manager = ert.getEnkfFsManager() 
         es_update = ESUpdate(ert)
 
-        target_fs = fs_manager.getFileSystem(case_name)
-        source_fs = fs_manager.getCurrentFileSystem()
+        target_fs = fs_manager.getFileSystem(target)
+        source_fs = fs_manager.getFileSystem(source)
         success = es_update.smootherUpdate( source_fs , target_fs )
 
         if not success:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
             msg.setWindowTitle("Run Analysis")
-            msg.setText("Unable to run analysis.")
+            msg.setText("Unable to run analysis for case '%s'." % source)
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec_()
             return
