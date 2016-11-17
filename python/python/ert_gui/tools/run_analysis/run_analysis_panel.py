@@ -16,6 +16,7 @@
 from PyQt4.QtGui import QWidget, QFormLayout, QLineEdit
 
 from ert_gui.ertwidgets.analysismoduleselector import AnalysisModuleSelector
+from ert_gui.ertwidgets.caseselector import CaseSelector
 
 
 class RunAnalysisPanel(QWidget):
@@ -26,16 +27,21 @@ class RunAnalysisPanel(QWidget):
         self.setWindowTitle("Run Analysis")
         self.activateWindow()
 
-        self.case_name_text = QLineEdit()
         self.analysis_module = AnalysisModuleSelector(help_link="config/analysis/analysis_module")
+        self.target_case_text = QLineEdit()
+        self.source_case_selector = CaseSelector(update_ert = False)
 
         layout = QFormLayout()
         layout.addRow("Analysis", self.analysis_module)
-        layout.addRow("Target case", self.case_name_text)
+        layout.addRow("Target case", self.target_case_text)
+        layout.addRow("Source case", self.source_case_selector)
         self.setLayout(layout)
 
-    def case(self):
-        return str(self.case_name_text.text())
+    def target_case(self):
+        return str(self.target_case_text.text())
+
+    def source_case(self):
+        return str(self.source_case_selector.currentText())
 
     def module(self):
         return self.analysis_module.getSelectedAnalysisModuleName()
