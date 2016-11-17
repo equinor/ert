@@ -27,21 +27,21 @@ from ert_gui.tools.run_analysis import RunAnalysisPanel
 class RunAnalysisTool(Tool):
     def __init__(self):
         super(RunAnalysisTool, self).__init__("Run Analysis", "tools/run_analysis", resourceIcon("ide/table_import"))
-        self.__run_widget = None
-        self.__dialog = None
+        self._run_widget = None
+        self._dialog = None
         self._selected_case_name = None
         self.setVisible(False)
 
 
     def trigger(self):
-        if self.__run_widget is None:
-            self.__run_widget = RunAnalysisPanel()
-        self.__dialog = ClosableDialog("Run Analysis", self.__run_widget, self.parent())
-        self.__dialog.addButton("Run", self.run)
-        self.__dialog.exec_()
+        if self._run_widget is None:
+            self._run_widget = RunAnalysisPanel()
+        self._dialog = ClosableDialog("Run Analysis", self._run_widget, self.parent())
+        self._dialog.addButton("Run", self.run)
+        self._dialog.exec_()
 
     def run(self):
-        case_name = self.__run_widget.case()
+        case_name = self._run_widget.case()
 
         ert = ERT.ert
         fs_manager = ert.getEnkfFsManager() 
@@ -61,7 +61,7 @@ class RunAnalysisTool(Tool):
             return
 
         ERT.ertChanged.emit()
-        self.__dialog.accept()
+        self._dialog.accept()
 
     def toggleAdvancedMode(self, advanced_mode):
         self.setVisible(advanced_mode)
