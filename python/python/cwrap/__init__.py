@@ -18,13 +18,6 @@
 The cwrap package contains several small utility modules to simplify
 the process of interacting with a C library:
 
-  cenum: This module contains a function 'create_enum()' which can
-     internalize enum symbols with the corresponding values in the
-     calling scope. The enum symbols are not part of the shared
-     library as such, and the working of create_enum() requires a
-     special function for 'enum-introspection' to be available in the
-     shared library.
-
   clib: This module contains the function load() which will load a
      shared library using the ctypes.CDLL(); the function has
      facilities for trying several different names when loading the
@@ -54,7 +47,6 @@ from .basecenum import BaseCEnum
 from .basecvalue import BaseCValue
 
 from .cclass import CClass
-from .cenum import create_enum
 from .cfile import CFILE
 from .clib import load, lib_name
 
