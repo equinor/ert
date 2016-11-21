@@ -46,7 +46,6 @@ from .basecclass import BaseCClass
 from .basecenum import BaseCEnum
 from .basecvalue import BaseCValue
 
-from .cclass import CClass
 from .cfile import CFILE
 from .clib import load, lib_name
 
@@ -57,6 +56,6 @@ from .cwrap import CWrapper, CWrapperNameSpace, CWrapError
 from .metacwrap import MetaCWrap
 from .prototype import REGISTERED_TYPES, Prototype, PrototypeError
 
-__all__ = ['BaseCClass', 'BaseCEnum', 'BaseCValue', 'CClass', 'CFILE',
+__all__ = ['BaseCClass', 'BaseCEnum', 'BaseCValue', 'CFILE',
            'CNamespace', 'CWrapper', 'CWrapperNameSpace', 'CWrapError',
            'MetaCWrap', 'Prototype', 'load', 'lib_name']
