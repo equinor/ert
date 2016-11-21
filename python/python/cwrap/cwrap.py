@@ -200,11 +200,6 @@ class CWrapper:
 
         func.errcheck = returnFunction
 
-    def printTypes(self):
-        for ctype in self.registered_types.keys():
-            print('%16s -> %s' % (ctype, self.registered_types[ctype]))
-
-
 class CWrapperNameSpace:
     def __init__( self, name ):
         self.name = name
