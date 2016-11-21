@@ -3,7 +3,6 @@ set(PYTHON_SOURCES
     basecclass.py
     basecenum.py
     basecvalue.py
-    cclass.py
     cfile.py
     clib.py
     cnamespace.py
