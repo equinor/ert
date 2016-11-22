@@ -15,6 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
+from ert.enkf.enums import EnkfInitModeEnum, EnkfVarType
 from ert.job_queue import JobStatusType
 
 
@@ -25,8 +26,8 @@ class EnKFState(BaseCClass):
     _get_node       = EnkfPrototype("enkf_node_ref  enkf_state_has_node( enkf_state , char* )")
     _add_subst_kw   = EnkfPrototype("void enkf_state_add_subst_kw( enkf_state , char* , char* , char*)")
     _get_subst_list = EnkfPrototype("subst_list_ref enkf_state_get_subst_list( enkf_state )")
-
-    _get_ens_config = EnkfPrototype("ensemble_config enkf_state_get_ensemble_config( enkf_state )")
+    _get_ens_config = EnkfPrototype("ens_config_ref enkf_state_get_ensemble_config( enkf_state )")
+    _initialize     = EnkfPrototype("void enkf_state_initialize( enkf_state , enkf_fs , stringlist , enkf_init_mode_enum)")
     
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -81,9 +82,12 @@ class EnKFState(BaseCClass):
         """
         return self._get_subst_list( )
 
-    
-        
 
     def ensembleConfig(self):
         """ @rtype: EnsembleConfig """
         return self._get_ens_config( )
+    def initialize( self , fs , param_list = None , init_mode = EnkfInitModeEnum.INIT_CONDITIONAL):
+        if param_list is None:
+            ens_config = self.ensembleConfig( )
+            param_list = ens_config.getKeylistFromVarType( EnkfVarType.PARAMETER )
+        self._initialize( fs , param_list , init_mode )
