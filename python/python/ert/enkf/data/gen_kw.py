@@ -15,17 +15,16 @@
 #  for more details.
 import os.path
 
-from cwrap import BaseCClass, CWrapper, CFILE
+from cwrap import BaseCClass, CFILE
 
 from ert.util import DoubleVector
-
 from ert.enkf import EnkfPrototype
 from ert.enkf.config import GenKwConfig
 
 
 class GenKw(BaseCClass):
     TYPE_NAME = "gen_kw"
-    _free              = EnkfPrototype("void   gen_kw_free(gen_kw_config)",  bind = False)
+    _free              = EnkfPrototype("void   gen_kw_free(gen_kw_config)")
     _alloc             = EnkfPrototype("void*  gen_kw_alloc(gen_kw_config)", bind = False)
     _export_parameters = EnkfPrototype("void   gen_kw_write_export_file(gen_kw , FILE)")
     _export_template   = EnkfPrototype("void   gen_kw_ecl_write_template(gen_kw , char* )")
@@ -37,18 +36,21 @@ class GenKw(BaseCClass):
     _size              = EnkfPrototype("int    gen_kw_data_size(gen_kw)")
     _has_key           = EnkfPrototype("bool   gen_kw_data_has_key(gen_kw, char*)")
     _ecl_write         = EnkfPrototype("void   gen_kw_ecl_write(gen_kw,    char* , char* , FILE)")
-
+    _iget_key          = EnkfPrototype("char*  gen_kw_get_name(gen_kw, int)")
+    
 
     def __init__(self, gen_kw_config):
         """
          @type gen_kw_config: GenKwConfig
         """
         c_ptr = self._alloc(gen_kw_config)
+
         if c_ptr:
             super(GenKw, self).__init__(c_ptr)
+            self.__str__ = self.__repr__
         else:
             raise ValueError('Cannot issue a GenKw from the given keyword config: %s.' % str(gen_kw_config))
-        self.__str__ = self.__repr__
+    
 
     def exportParameters(self, file_name):
         """ @type: str """
@@ -125,8 +127,9 @@ class GenKw(BaseCClass):
 
     def __len__(self):
         """ @rtype: int """
-        return self._size()
+        return self._size( )
 
+    
     def __contains__(self, item):
         return self._has_key(item)
 
@@ -136,3 +139,5 @@ class GenKw(BaseCClass):
 
     def __repr__(self):
         return 'GenKw(len = %d) at 0x%x' % (len(self), self._address())
+
+
