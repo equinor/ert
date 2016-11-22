@@ -24,8 +24,8 @@ from ert.enkf.config import GenKwConfig
 
 class GenKw(BaseCClass):
     TYPE_NAME = "gen_kw"
-    _free              = EnkfPrototype("void   gen_kw_free(gen_kw_config)")
     _alloc             = EnkfPrototype("void*  gen_kw_alloc(gen_kw_config)", bind = False)
+    _free              = EnkfPrototype("void   gen_kw_free(gen_kw_config)")
     _export_parameters = EnkfPrototype("void   gen_kw_write_export_file(gen_kw , FILE)")
     _export_template   = EnkfPrototype("void   gen_kw_ecl_write_template(gen_kw , char* )")
     _data_iget         = EnkfPrototype("double gen_kw_data_iget(gen_kw, int, bool)")
@@ -99,6 +99,15 @@ class GenKw(BaseCClass):
             raise TypeError("Illegal type for indexing, must be int or str, got: %s" % (key))
 
 
+    def items(self):
+        do_transform = False
+        v = []
+        for index in range(len(self)):
+            v.append( ( self._iget_key( index ) ,
+                        self._data_iget(index, do_transform)) )
+        return v
+
+        
     def eclWrite(self , path , filename , export_file = None):
         if not path is None:
             if not os.path.isdir(path):
