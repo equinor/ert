@@ -26,6 +26,7 @@ class EnKFState(BaseCClass):
     _add_subst_kw   = EnkfPrototype("void enkf_state_add_subst_kw( enkf_state , char* , char* , char*)")
     _get_subst_list = EnkfPrototype("subst_list_ref enkf_state_get_subst_list( enkf_state )")
 
+    _get_ens_config = EnkfPrototype("ensemble_config enkf_state_get_ensemble_config( enkf_state )")
     
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -83,3 +84,6 @@ class EnKFState(BaseCClass):
     
         
 
+    def ensembleConfig(self):
+        """ @rtype: EnsembleConfig """
+        return self._get_ens_config( )
