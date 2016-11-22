@@ -13,12 +13,20 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-from cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB
+from cwrap import BaseCClass
+from ert.enkf import EnkfPrototype
 from ert.job_queue import JobStatusType
 
 
 class EnKFState(BaseCClass):
+    TYPE_NAME       = "enkf_state"
+    _free           = EnkfPrototype("void* enkf_state_free( enkf_state )")
+    _has_key        = EnkfPrototype("bool  enkf_state_has_node( enkf_state , char* )")
+    _get_node       = EnkfPrototype("enkf_node_ref  enkf_state_has_node( enkf_state , char* )")
+    _add_subst_kw   = EnkfPrototype("void enkf_state_add_subst_kw( enkf_state , char* , char* , char*)")
+    _get_subst_list = EnkfPrototype("subst_list_ref enkf_state_get_subst_list( enkf_state )")
+
+    
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
         
@@ -27,7 +35,7 @@ class EnKFState(BaseCClass):
         """ @rtype: ert.enkf.data.enkf_node.EnkfNode """
         if isinstance(kw , str):
             if kw in self:
-                node = EnKFState.cNamespace().get_node( self , kw )
+                node = self._get_node( kw )
                 node.setParent( self )
                 return node
             else:
@@ -37,7 +45,7 @@ class EnKFState(BaseCClass):
 
 
     def __contains__(self , kw):
-        return EnKFState.cNamespace().has_key( self , kw )
+        return self._has_key( kw )
 
 
     def hasKey(self , kw):
@@ -51,7 +59,7 @@ class EnKFState(BaseCClass):
 
 
     def free(self):
-        EnKFState.cNamespace().free(self)
+        self._free( )
 
 
     def addSubstKeyword(self , key , value):
@@ -62,7 +70,7 @@ class EnKFState(BaseCClass):
         """
         doc_string = None
         if isinstance(value , str):
-            EnKFState.cNamespace().add_subst_kw( self , key , value , doc_string )
+            self._add_subst_kw( key , value , doc_string )
         else:
             raise TypeError("The value argument must be a string")
 
@@ -70,19 +78,8 @@ class EnKFState(BaseCClass):
         """
         Will return the substitution map for this realisation.
         """
-        return EnKFState.cNamespace().get_subst_list( self )
+        return self._get_subst_list( )
 
-
+    
         
 
-cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("enkf_state", EnKFState)
-cwrapper.registerType("enkf_state_obj", EnKFState.createPythonObject)
-cwrapper.registerType("enkf_state_ref", EnKFState.createCReference)
-
-
-EnKFState.cNamespace().free     = cwrapper.prototype("void enkf_state_free( enkf_state )")
-EnKFState.cNamespace().has_key  = cwrapper.prototype("bool enkf_state_has_node( enkf_state , char* )")
-EnKFState.cNamespace().get_node = cwrapper.prototype("enkf_node_ref enkf_state_get_node( enkf_state , char* )")
-EnKFState.cNamespace().add_subst_kw = cwrapper.prototype("void enkf_state_add_subst_kw( enkf_state , char* , char* , char*)")
-EnKFState.cNamespace().get_subst_list  = cwrapper.prototype("subst_list_ref enkf_state_get_subst_list( enkf_state )")
