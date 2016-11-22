@@ -18,6 +18,7 @@ from ert.enkf import ENKF_LIB
 
 
 class EnkfInitModeEnum(BaseCEnum):
+    TYPE_NAME = "enkf_init_mode_enum"
     INIT_NONE = None
     INIT_CONDITIONAL = None
     INIT_FORCE = None
