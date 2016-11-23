@@ -42,6 +42,8 @@ class BaseCClass(object):
 
         return obj
 
+    def _address(self):
+        return self.__c_pointer
 
     @classmethod
     def cNamespace(cls):
