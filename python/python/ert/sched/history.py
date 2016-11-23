@@ -14,15 +14,37 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from cwrap import CWrapper, BaseCClass
-from ert.sched import SCHED_LIB, SchedFile, HistorySourceEnum
+from cwrap import BaseCClass
+from ert.sched import SchedFile, HistorySourceEnum, SchedulePrototype
 from ert.ecl import EclSum
 
-
-
 class History(BaseCClass):
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    TYPE_NAME = "history"
+    # cwrapper.registerType("history_obj", History.createPythonObject)
+    # cwrapper.registerType("history_ref", History.createCReference)
+
+    _alloc_from_refcase    = SchedulePrototype("void* history_alloc_from_refcase(ecl_sum, bool)", bind = False)
+    _alloc_from_sched_file = SchedulePrototype("void* history_alloc_from_sched_file(char*, sched_file)", bind = False)
+    _get_source_string     = SchedulePrototype("char* history_get_source_string(history_source_enum)", bind = False)
+    _free                  = SchedulePrototype("void  history_free( history )")
+    # _history_get_source_type = SchedulePrototype("history_source_type_enum history_get_source_type(char*)", bind = False)
+
+    def __init__(self, refcase = None, use_history = False, sched_file = None):
+        """
+        @type refcase: EclSum
+        @type use_history: bool
+        @rtype: HistoryType
+        """
+        if sched_file is not None:
+            c_ptr = self._alloc_from_sched_file(refcase, use_history)
+        else:
+            c_ptr = self._alloc_from_refcase(refcase, use_history)
+        if c_ptr:
+            super(History, self).__init__(c_ptr)
+        else:
+            if sched_file is None and refcase is None:
+                raise ValueError('Need to specify either sched_file or refcase.')
+            raise ValueError('Invalid input.  Failed to create History.')
 
     @staticmethod
     def get_source_string(history_source_type):
@@ -30,38 +52,7 @@ class History(BaseCClass):
         @type history_source_type: HistorySourceEnum
         @rtype: str
         """
-        return History.cNamespace().get_source_string(history_source_type)
-
-    #todo: change this to __init__?
-    @staticmethod
-    def alloc_from_refcase(refcase, use_history):
-        """
-        @type refcase: EclSum
-        @type use_history: bool
-        @rtype: HistoryType
-        """
-        return History.cNamespace().alloc_from_refcase(refcase, use_history)
-
-    @staticmethod
-    def alloc_from_sched_file(sched_file):
-        """ @rtype: HistoryType """
-        assert isinstance(sched_file, SchedFile)
-        return History.cNamespace().alloc_from_sched_file(":", sched_file)
+        return self._get_source_string(history_source_type)
 
     def free(self):
-        History.cNamespace().free(self)
-
-
-cwrapper = CWrapper(SCHED_LIB)
-cwrapper.registerType("history", History)
-cwrapper.registerType("history_obj", History.createPythonObject)
-cwrapper.registerType("history_ref", History.createCReference)
-
-
-
-History.cNamespace().free = cwrapper.prototype("void history_free( history )")
-History.cNamespace().get_source_string = cwrapper.prototype("char* history_get_source_string(history_source_enum)")
-History.cNamespace().alloc_from_refcase = cwrapper.prototype("history_obj history_alloc_from_refcase(ecl_sum, bool)")
-History.cNamespace().alloc_from_sched_file = cwrapper.prototype("history_obj history_alloc_from_sched_file(char*, sched_file)")
-
-# History.cNamespace().history_get_source_type = cwrapper.prototype("history_source_type_enum history_get_source_type(char*)")
+        self._free( self )
