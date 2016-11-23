@@ -15,37 +15,36 @@
 #  for more details.
 import os.path
 
-from cwrap import BaseCClass, CWrapper
-from ert.sched import SCHED_LIB
+from cwrap import BaseCClass
+from ert.sched import SCHED_LIB, SchedulePrototype
 from ert.util import CTime
 
 
 class SchedFile(BaseCClass):
+    TYPE_NAME = "sched_file"
+
+    _parse  = SchedulePrototype("void* sched_file_parse_alloc( char*, time_t )", bind = False)
+    _write  = SchedulePrototype("void  sched_file_fprintf_i( sched_file , int , char* , bool)")
+    _length = SchedulePrototype("int   sched_file_get_num_restart_files( sched_file )")
+    _free   = SchedulePrototype("void  sched_file_free( sched_file )")
+
     def __init__(self, filename, start_time):
         if os.path.isfile(filename):
-            c_ptr = SchedFile.cNamespace().parse(filename, CTime(start_time))
+            c_ptr = self._parse(filename, CTime(start_time))
             super(SchedFile, self).__init__(c_ptr)
+            if not c_ptr:
+                err_msg = 'start_time = "%s", filename = "%s"' % (str(start_time), str(filename))
+                raise ValueError('Unable to construct SchedFile with %s.' % err_msg)
         else:
-            raise IOError("No such file: %s" % filename)
+            raise IOError('No such file "%s"' % filename)
 
     @property
     def length(self):
         """ @rtype: int """
-        return SchedFile.cNamespace().length(self)
+        return self._length()
 
     def write(self, filename, num_dates, add_end=True):
-        SchedFile.cNamespace().write(self, num_dates, filename, add_end)
+        self._write( num_dates, filename, add_end )
 
     def free(self):
-        SchedFile.cNamespace().free(self)
-
-
-cwrapper = CWrapper(SCHED_LIB)
-cwrapper.registerType("sched_file", SchedFile)
-cwrapper.registerType("sched_file_obj", SchedFile.createPythonObject)
-cwrapper.registerType("sched_file_ref", SchedFile.createCReference)
-
-SchedFile.cNamespace().parse = cwrapper.prototype("c_void_p sched_file_parse_alloc( char*, time_t )")
-SchedFile.cNamespace().write = cwrapper.prototype("void sched_file_fprintf_i( sched_file , int , char* , bool)")
-SchedFile.cNamespace().length = cwrapper.prototype("int sched_file_get_num_restart_files( sched_file )")
-SchedFile.cNamespace().free = cwrapper.prototype("void sched_file_free( sched_file )")
+        self._free( )
