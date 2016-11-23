@@ -1,5 +1,6 @@
 from ctypes import Structure, c_int
 from cwrap import CWrapper
+from cwrap.prototype import registerType
 
 class NodeId(Structure):
     """
@@ -17,4 +18,4 @@ class NodeId(Structure):
 
 
 CWrapper.registerType("node_id", NodeId)
-
+registerType( "node_id" , NodeId ) 
