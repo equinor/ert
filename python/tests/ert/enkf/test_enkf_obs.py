@@ -168,7 +168,7 @@ class EnKFObsTest(ExtendedTestCase):
         grid = EclGrid(self.grid)
         refcase = EclSum(self.refcase)
 
-        history = History.alloc_from_refcase( refcase , False )
+        history = History( refcase , False )
         obs = EnkfObs( ensemble_config , grid = grid , history = history )
         with self.assertRaises(IOError):
             obs.load("/does/not/exist")
