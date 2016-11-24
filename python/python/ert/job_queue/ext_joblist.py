@@ -41,6 +41,20 @@ class ExtJoblist(BaseCClass):
     def __len__(self):
         return self._size( )
 
+    def __contains__(self , job):
+        return self._has_job(job)
+
+    def __iter__(self):
+        names = self.getAvailableJobNames()
+        for job in names:
+            yield self[job]
+
+
+    def __getitem__(self, job):
+        if job in self:
+            return self._get_job(job).setParent(self)
+    
+    
     def getAvailableJobNames(self):
         """ @rtype: StringList """
         return self._alloc_list( ).setParent(self)
@@ -49,11 +63,11 @@ class ExtJoblist(BaseCClass):
         return self._del_job(job)
 
     def has_job(self, job):
-        return self._has_job(job)
+        return job in self
 
     def get_job(self, job):
         """ @rtype: ExtJob """
-        return self._.get_job(job).setParent(self)
+        return self[job]
 
     def add_job(self, job_name, new_job):
         self._add_job(job_name, new_job)
