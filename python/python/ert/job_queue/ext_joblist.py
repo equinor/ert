@@ -1,17 +1,17 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'ext_joblist.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
+#  The file 'ext_joblist.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
 from ert.job_queue import QueuePrototype, ExtJob
@@ -27,6 +27,7 @@ class ExtJoblist(BaseCClass):
     _has_job    = QueuePrototype("int ext_joblist_has_job(ext_joblist, char*)")
     _add_job    = QueuePrototype("void ext_joblist_add_job(ext_joblist, char*, ext_joblist)")
     _get_jobs   = QueuePrototype("hash_ref ext_joblist_get_jobs(ext_joblist)")
+    _size       = QueuePrototype("int ext_joblist_get_size(ext_joblist)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -36,6 +37,9 @@ class ExtJoblist(BaseCClass):
         jobs = self._get_jobs( )
         jobs.setParent(self)
         return jobs
+
+    def __len__(self):
+        return self._size( )
 
     def getAvailableJobNames(self):
         """ @rtype: StringList """
@@ -56,5 +60,5 @@ class ExtJoblist(BaseCClass):
 
     def free(self):
         self._free( )
-        
-        
+
+
