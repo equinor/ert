@@ -56,7 +56,7 @@ class SiteConfig(BaseCClass):
     _get_job_queue         = EnkfPrototype("job_queue_ref site_config_get_job_queue(site_config)")
     _queue_is_running      = EnkfPrototype("bool site_config_queue_is_running(site_config)")
     _get_location          = EnkfPrototype("char* site_config_get_location(site_config)")
-
+    _has_driver            = EnkfPrototype("bool site_config_has_queue_driver(site_config, char*)")
 
 
     
@@ -71,7 +71,10 @@ class SiteConfig(BaseCClass):
         raise Exception("The function setJobQueue() is not properly implemented")
 
 
+    def hasDriver(self, driver_name):
+        return self._has_driver( driver_name )
 
+    
     def getLsfQueue(self):
         """ @rtype: str """
         return self._get_lsf_queue( )
