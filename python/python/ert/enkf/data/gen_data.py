@@ -24,9 +24,11 @@ class GenData(BaseCClass):
         """ @rtype: int """
         return self._size()
 
+    
     def free(self):
         self._free( )
 
+        
     def export(self, file_name, file_format_type, fortio):
         """
         @type: str
@@ -35,6 +37,7 @@ class GenData(BaseCClass):
         """
         self._export(file_name, file_format_type, fortio)
 
+        
     def getData(self):
         data = DoubleVector()
         self._export_data( data )
@@ -42,7 +45,6 @@ class GenData(BaseCClass):
 
     def __getitem__( self, idx ):
         """Returns an item, or a list if idx is a slice.
-
         Note: When idx is a slice it does not return a new GenData!
         """
         ls = len(self)
