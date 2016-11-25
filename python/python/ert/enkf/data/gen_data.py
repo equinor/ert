@@ -30,6 +30,18 @@ class GenData(BaseCClass):
         GenData.cNamespace().export_data( self , data )
         return data
 
+    def __getitem__( self, idx ):
+        ls = len(self)
+        if isinstance( idx, int ):
+            if idx < 0:
+                idx += ls
+            if 0 <= idx < ls:
+                return self.getData()[idx]
+            raise IndexError('List index out of range.')
+        if isinstance( idx, slice ):
+            vec = self.getData()
+            return [vec[i] for i in range(*idx.indices(ls))]
+        raise TypeError('List indices must be integers, not %s.' % str(type(idx)))
 
 
 cwrapper = CWrapper(ENKF_LIB)
