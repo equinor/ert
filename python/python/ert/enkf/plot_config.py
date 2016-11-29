@@ -13,30 +13,27 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB
-
+from cwrap import BaseCClass
+from ert.enkf import EnkfPrototype
 
 class PlotConfig(BaseCClass):
+    TYPE_NAME = "plot_config"
+    #cwrapper.registerType("plot_config_obj", PlotConfig.createPythonObject)
+    #cwrapper.registerType("plot_config_ref", PlotConfig.createCReference)
+
+    _free     = EnkfPrototype("void  plot_config_free( plot_config )")
+    _get_path = EnkfPrototype("char* plot_config_get_path(plot_config)")
+    _set_path = EnkfPrototype("void  plot_config_set_path(plot_config, char*)")
+
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def getPath(self):
         """ @rtype: str """
-        return PlotConfig.cNamespace().get_path(self)
+        return self._get_path()
 
     def setPath(self, path):
-        PlotConfig.cNamespace().set_path(self, path)
+        self._set_path(path)
 
     def free(self):
-        PlotConfig.cNamespace().free(self)
-
-
-cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("plot_config", PlotConfig)
-cwrapper.registerType("plot_config_obj", PlotConfig.createPythonObject)
-cwrapper.registerType("plot_config_ref", PlotConfig.createCReference)
-
-PlotConfig.cNamespace().free = cwrapper.prototype("void plot_config_free( plot_config )")
-PlotConfig.cNamespace().get_path = cwrapper.prototype("char* plot_config_get_path(plot_config)")
-PlotConfig.cNamespace().set_path = cwrapper.prototype("void plot_config_set_path(plot_config, char*)")
+        self._free()
