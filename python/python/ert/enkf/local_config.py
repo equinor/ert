@@ -13,9 +13,9 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from cwrap import BaseCClass, CWrapper
-from ert.enkf import LocalUpdateStep
+from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
+from ert.enkf import LocalUpdateStep
 from ert.enkf.local_ministep import LocalMinistep
 from ert.analysis import AnalysisModule
 
