@@ -53,7 +53,7 @@ struct config_content_struct {
 
 UTIL_IS_INSTANCE_FUNCTION( config_content , CONFIG_CONTENT_TYPE_ID )
 
-config_content_type * config_content_alloc() {
+config_content_type * config_content_alloc(const char * filename) {
   config_content_type * content = util_malloc( sizeof * content );
   UTIL_TYPE_ID_INIT( content , CONFIG_CONTENT_TYPE_ID );
   content->valid = false;
@@ -67,9 +67,15 @@ config_content_type * config_content_alloc() {
   content->path_elm_storage  = vector_alloc_new();
   content->path_elm_stack    = vector_alloc_new();
 
-  content->invoke_path = NULL;
-  content->config_file = NULL;
-  content->abs_path = NULL;
+  content->config_file = util_alloc_string_copy( filename );
+  content->abs_path = util_alloc_abs_path( filename );
+  {
+    char * path = util_split_alloc_dirname( filename );
+    content->invoke_path = config_root_path_alloc( NULL );
+    free( path );
+  }
+
+
   return content;
 }
 
@@ -145,11 +151,6 @@ config_root_path_type * config_content_get_invoke_path( config_content_type * co
 }
 
 
-void config_content_set_invoke_path( config_content_type * content) {
-  if (content->invoke_path != NULL)
-    config_root_path_free( content->invoke_path );
-  content->invoke_path = config_root_path_alloc( NULL );
-}
 
 
 
@@ -378,12 +379,6 @@ subst_list_type * config_content_get_define_list( config_content_type * content 
 
 /*****************************************************************/
 
-void config_content_set_config_file( config_content_type * content , const char * config_file ) {
-  content->config_file = util_realloc_string_copy( content->config_file , config_file );
-
-  util_safe_free(content->abs_path);
-  content->abs_path = util_alloc_abs_path( config_file );
-}
 
 
 
