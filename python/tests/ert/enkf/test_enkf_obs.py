@@ -90,9 +90,12 @@ class EnKFObsTest(ExtendedTestCase):
             for v in obs:
                 self.assertTrue(isinstance(v, ObsVector))
 
-            with self.assertRaises(IndexError):
-                v = obs[-1]
+            self.assertEqual(obs[-1].getKey(),    1)
+            self.assertEqual(obs[-1].getDataKey(), 1)
+            self.assertEqual(obs[-1].getObsKey(), 1)
 
+            with self.assertRaises(IndexError):
+                v = obs[-40]
             with self.assertRaises(IndexError):
                 v = obs[40]
 
