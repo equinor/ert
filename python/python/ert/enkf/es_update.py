@@ -1,4 +1,4 @@
-from cwrap import CWrapper, BaseCClass
+from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 
 class ESUpdate(BaseCClass):
