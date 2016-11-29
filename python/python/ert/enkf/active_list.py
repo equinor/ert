@@ -14,32 +14,29 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB
+from cwrap import BaseCClass
+from ert.enkf import EnkfPrototype
 
 class ActiveList(BaseCClass):
+    TYPE_NAME = "active_list"
+
+    _alloc     = EnkfPrototype("void* active_list_alloc()", bind = False)
+    _free      = EnkfPrototype("void  active_list_free(active_list)")
+    _add_index = EnkfPrototype("void  active_list_add_index(active_list , int)")
+    _get_mode  = EnkfPrototype("active_mode_enum active_list_get_mode(active_list)")
+
     def __init__(self):
-        c_ptr = ActiveList.cNamespace().alloc()
+        c_ptr = self._alloc()
         super(ActiveList, self).__init__(c_ptr)
 
-
     def getMode(self):
-        return ActiveList.cNamespace().get_mode(self)
+        return self._get_mode()
 
     def addActiveIndex(self, index):
-        ActiveList.cNamespace().add_index(self , index)
-
+        self._add_index(index)
 
     def free(self):
-        ActiveList.cNamespace().free(self)
+        self._free()
 
-
-
-cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerObjectType("active_list", ActiveList)
-
-
-ActiveList.cNamespace().alloc     = cwrapper.prototype("c_void_p active_list_alloc()")
-ActiveList.cNamespace().free      = cwrapper.prototype("void     active_list_free(active_list)")
-ActiveList.cNamespace().get_mode  = cwrapper.prototype("active_mode_enum active_list_get_mode(active_list)")
-ActiveList.cNamespace().add_index = cwrapper.prototype("void active_list_add_index(active_list , int)")
+    def __repr__(self):
+        return 'ActiveList(mode = %s) at 0x%x' % (str(self.getMode()), self._address())
