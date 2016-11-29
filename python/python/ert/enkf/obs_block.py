@@ -6,7 +6,7 @@ from ert.util import Matrix
 class ObsBlock(BaseCClass):
 
     def __init__(self , obs_key , obs_size , global_std_scaling=1.0):
-        error_covar = None 
+        error_covar = None
         error_covar_owner = False
         c_pointer = ObsBlock.cNamespace().alloc(obs_key , obs_size , error_covar , error_covar_owner, global_std_scaling)
         super(ObsBlock, self).__init__(c_pointer)

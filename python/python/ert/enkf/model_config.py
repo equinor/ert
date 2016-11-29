@@ -13,9 +13,9 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from cwrap import CWrapper, BaseCClass
+from cwrap import BaseCClass
 from ert.ecl import EclSum
-from ert.enkf import ENKF_LIB
+from ert.enkf import EnkfPrototype
 from ert.sched import HistorySourceEnum, SchedFile
 from ert.job_queue import ForwardModel
 from ert.util import PathFormat
