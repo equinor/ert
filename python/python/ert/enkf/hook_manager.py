@@ -23,10 +23,12 @@ class HookManager(BaseCClass):
     def __getitem__(self, index):
         """ @rtype: Hook workflow """
         assert isinstance(index, int)
-        if index < len(self):
+        if index < 0:
+            index += len(self)
+        if 0 <= index < len(self):
             return self._iget_hook_workflow(index)
         else:
-            raise IndexError("Invalid index")
+            raise IndexError("Invalid index.  Valid range: [0, %d)." % len(self))
 
     def checkRunpathListFile(self):
         """ @rtype: bool """
@@ -37,7 +39,7 @@ class HookManager(BaseCClass):
 
     def getRunpathList(self):
         """ @rtype: RunpathList """
-        return HookManager.cNamespace().get_runpath_list(self)
+        return self._get_runpath_list()
 
     def runWorkflows(self , run_time , ert_self):
 
