@@ -14,12 +14,34 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, LocalUpdateStep
+from ert.enkf import LocalUpdateStep
+from ert.enkf import EnkfPrototype
 from ert.enkf.local_ministep import LocalMinistep
 from ert.analysis import AnalysisModule
 
 
 class LocalConfig(BaseCClass):
+    TYPE_NAME = "local_config"
+
+    _free            = EnkfPrototype("void local_config_free( local_config )")
+    _clear           = EnkfPrototype("void local_config_clear( local_config )")
+    _get_updatestep  = EnkfPrototype("local_updatestep_ref local_config_get_updatestep( local_config )")
+    _get_ministep    = EnkfPrototype("local_ministep_ref local_config_get_ministep( local_config, char*)")
+    _create_ministep = EnkfPrototype("void local_config_alloc_ministep( local_config, char*, analysis_module)")
+    _attach_ministep = EnkfPrototype("void local_updatestep_add_ministep( local_updatestep, local_ministep)", bind = False)
+    _get_obsdata     = EnkfPrototype("local_obsdata_ref local_config_get_obsdata( local_config, char*)")
+    _create_obsdata  = EnkfPrototype("void local_config_alloc_obsdata( local_config, char*)")
+    _copy_obsdata    = EnkfPrototype("local_obsdata_ref local_config_alloc_obsdata_copy( local_config, char*, char*)")
+    _has_obsdata     = EnkfPrototype("bool local_config_has_obsdata( local_config, char*)")
+    _get_dataset     = EnkfPrototype("local_dataset_ref local_config_get_dataset( local_config, char*)")
+    _create_dataset  = EnkfPrototype("void local_config_alloc_dataset( local_config, char*)")
+    _copy_dataset    = EnkfPrototype("local_dataset_ref local_config_alloc_dataset_copy( local_config, char*, char*)")
+    _has_dataset     = EnkfPrototype("bool local_config_has_dataset( local_config, char*)")
+    _write_local_config_summary_file = EnkfPrototype("void local_config_summary_fprintf( local_config, char*)")
+
+
+
+
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -54,26 +76,26 @@ class LocalConfig(BaseCClass):
 
     
     def free(self):
-        LocalConfig.cNamespace().free(self)
+        self._free()
 
     def clear(self):
-        LocalConfig.cNamespace().clear(self)
+        self._clear()
 
     def createMinistep(self, mini_step_key, analysis_module = None):
         """ @rtype: Ministep """
         assert isinstance(mini_step_key, str)
         if analysis_module:
             assert isinstance(analysis_module, AnalysisModule)
-        LocalConfig.cNamespace().create_ministep(self, mini_step_key, analysis_module)         
+        self._create_ministep(mini_step_key, analysis_module)
         return self.getMinistep(mini_step_key)  
     
     def createObsdata(self, obsdata_key):
         """ @rtype: Obsdata """
         assert isinstance(obsdata_key, str)
-        if LocalConfig.cNamespace().has_obsdata(self, obsdata_key):
+        if self._has_obsdata(obsdata_key):
             raise ValueError("Tried to add existing observation key:%s " % obsdata_key)
         
-        LocalConfig.cNamespace().create_obsdata(self, obsdata_key)  
+        self._create_obsdata(obsdata_key)
         obsdata = self.getObsdata(obsdata_key)
         obsdata.initObservations( self.__getObservations() )
         return obsdata
@@ -83,7 +105,7 @@ class LocalConfig(BaseCClass):
         """ @rtype: Obsdata """
         assert isinstance(src_key, str)
         assert isinstance(target_key, str)
-        obsdata = LocalConfig.cNamespace().copy_obsdata(self, src_key, target_key)
+        obsdata = self._copy_obsdata(src_key, target_key)
         obsdata.initObservations( self.__getObservations() )
         return obsdata
 
@@ -91,10 +113,10 @@ class LocalConfig(BaseCClass):
     def createDataset(self, dataset_key):
         """ @rtype: Dataset """
         assert isinstance(dataset_key, str)
-        if LocalConfig.cNamespace().has_dataset(self, dataset_key):
+        if self._has_dataset(dataset_key):
             raise ValueError("Tried to add existing data key:%s " % dataset_key)
         
-        LocalConfig.cNamespace().create_dataset(self, dataset_key)  
+        self._create_dataset(dataset_key)
         data = self.getDataset(dataset_key)
         data.initEnsembleConfig( self.__getEnsembleConfig() )
         return data
@@ -104,36 +126,36 @@ class LocalConfig(BaseCClass):
         """ @rtype: Dataset """
         assert isinstance(src_key, str)
         assert isinstance(target_key, str)
-        data = LocalConfig.cNamespace().copy_dataset(self, src_key, target_key)  
+        data = self._copy_dataset(src_key, target_key)
         data.initEnsembleConfig( self.__getEnsembleConfig() )
         return data
 
     
     def getUpdatestep(self):
         """ @rtype: UpdateStep """
-        return LocalConfig.cNamespace().get_updatestep(self)  
+        return self._get_updatestep()
 
 
     def getMinistep(self, mini_step_key):
         """ @rtype: Ministep """
         assert isinstance(mini_step_key, str)                
-        return LocalConfig.cNamespace().get_ministep(self, mini_step_key)  
+        return self._get_ministep(mini_step_key)  
     
     def getObsdata(self, obsdata_key):
         """ @rtype: Obsdata """
         assert isinstance(obsdata_key, str)          
-        return LocalConfig.cNamespace().get_obsdata(self, obsdata_key)    
+        return self._get_obsdata(obsdata_key)
     
     def getDataset(self, dataset_key):
         """ @rtype: Dataset """
         assert isinstance(dataset_key, str)
-        return LocalConfig.cNamespace().get_dataset(self, dataset_key)
+        return self._get_dataset(dataset_key)
     
         
     def attachMinistep(self, update_step, mini_step):
         assert isinstance(mini_step, LocalMinistep)
         assert isinstance(update_step, LocalUpdateStep)
-        LocalConfig.cNamespace().attach_ministep(update_step, mini_step)
+        self._attach_ministep(update_step, mini_step)
         
 
     def writeSummaryFile(self, filename):                                                                                                                          
@@ -143,29 +165,4 @@ class LocalConfig(BaseCClass):
         number of observations and the Datasets with the number of active indices                                                                              
         """                                                                                                                                                    
         assert isinstance(filename, str)                                                                                                                       
-        LocalConfig.cNamespace().write_local_config_summary_file(self, filename)                    
-        
-
-cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerObjectType("local_config", LocalConfig)
-
-LocalConfig.cNamespace().free                            = cwrapper.prototype("void local_config_free( local_config )")
-LocalConfig.cNamespace().clear                           = cwrapper.prototype("void local_config_clear( local_config )")
-LocalConfig.cNamespace().get_updatestep                  = cwrapper.prototype("local_updatestep_ref local_config_get_updatestep( local_config )")
-LocalConfig.cNamespace().get_ministep                    = cwrapper.prototype("local_ministep_ref local_config_get_ministep( local_config, char*)")
-LocalConfig.cNamespace().create_ministep                 = cwrapper.prototype("void local_config_alloc_ministep( local_config, char*, analysis_module)")
-LocalConfig.cNamespace().attach_ministep                 = cwrapper.prototype("void local_updatestep_add_ministep( local_updatestep, local_ministep)")
-LocalConfig.cNamespace().get_obsdata                     = cwrapper.prototype("local_obsdata_ref local_config_get_obsdata( local_config, char*)")
-LocalConfig.cNamespace().create_obsdata                  = cwrapper.prototype("void local_config_alloc_obsdata( local_config, char*)")
-LocalConfig.cNamespace().copy_obsdata                    = cwrapper.prototype("local_obsdata_ref local_config_alloc_obsdata_copy( local_config, char*, char*)")
-LocalConfig.cNamespace().has_obsdata                     = cwrapper.prototype("bool local_config_has_obsdata( local_config, char*)")
-LocalConfig.cNamespace().get_dataset                     = cwrapper.prototype("local_dataset_ref local_config_get_dataset( local_config, char*)")
-LocalConfig.cNamespace().create_dataset                  = cwrapper.prototype("void local_config_alloc_dataset( local_config, char*)")
-LocalConfig.cNamespace().copy_dataset                    = cwrapper.prototype("local_dataset_ref local_config_alloc_dataset_copy( local_config, char*, char*)")
-LocalConfig.cNamespace().has_dataset                     = cwrapper.prototype("bool local_config_has_dataset( local_config, char*)")
-
-LocalConfig.cNamespace().write_local_config_summary_file = cwrapper.prototype("void local_config_summary_fprintf( local_config, char*)")
-
-
-
-
+        self._write_local_config_summary_file(filename)
