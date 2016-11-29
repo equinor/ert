@@ -12,7 +12,7 @@ class HookManager(BaseCClass):
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
-    
+
     def __len__(self):
         """ @rtype: int """
         return self._size()
@@ -34,18 +34,18 @@ class HookManager(BaseCClass):
 
         if not os.path.exists(runpath_list_file):
             sys.stderr.write("** Warning: the file: %s with a list of runpath directories was not found - hook workflow will probably fail.\n" % runpath_list_file)
-    
+
     def getRunpathList(self):
         """ @rtype: RunpathList """
         return HookManager.cNamespace().get_runpath_list(self)
-        
+
     def runWorkflows(self , run_time , ert_self):
-        
+
         workflow_list = ert_self.getWorkflowList()
         for hook_workflow in self:
-            
+
             if (hook_workflow.getRunMode() is not run_time):
                 continue
-            
-            workflow = hook_workflow.getWorkflow()            
-            workflow.run(ert_self, context=workflow_list.getContext())       
+
+            workflow = hook_workflow.getWorkflow()
+            workflow.run(ert_self, context=workflow_list.getContext())

@@ -1,17 +1,17 @@
 # Copyright (C) 2012  Statoil ASA, Norway.
-#   
-#  The file 'enkf_obs.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#
+#  The file 'enkf_obs.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os.path
 
@@ -30,7 +30,7 @@ class EnkfObs(BaseCClass):
         c_ptr = EnkfObs.cNamespace().alloc( history , external_time_map , grid , refcase , ensemble_config )
         super(EnkfObs, self).__init__(c_ptr)
 
-        
+
     def __len__(self):
         return EnkfObs.cNamespace().get_size(self)
 
@@ -65,12 +65,12 @@ class EnkfObs(BaseCClass):
     def createLocalObsdata(self , key , add_active_steps = True):
         # Use getAllActiveLocalObsdata()
         raise NotImplementedError("Hmmm C function: enkf_obs_alloc_all_active_local_obs() removed")
-    
+
 
 
     def getAllActiveLocalObsdata(self , key = "ALL-OBS"):
         return EnkfObs.cNamespace().create_all_active_obs( self , key )
-        
+
 
 
     def getTypedKeylist(self, observation_implementation_type):
@@ -85,7 +85,7 @@ class EnkfObs(BaseCClass):
             return EnkfObs.cNamespace().obs_type( self , key)
         else:
             raise KeyError("Unknown observation key:%s" % key)
-            
+
 
     def getMatchingKeys(self , pattern , obs_type = None):
         """
@@ -101,7 +101,7 @@ class EnkfObs(BaseCClass):
             return new_key_list
         else:
             return key_list
-        
+
 
     def hasKey(self, key):
 
@@ -133,7 +133,7 @@ class EnkfObs(BaseCClass):
 
     def scaleCorrelatedStd( self , fs , local_obsdata , active_list):
         return EnkfObs.cNamespace().scale_correlated_std( self , fs , active_list , local_obsdata )
-    
+
     def localScaleStd( self , local_obsdata , scale_factor):
         return EnkfObs.cNamespace().local_scale_std( self , local_obsdata, scale_factor)
 
@@ -172,5 +172,3 @@ EnkfObs.cNamespace().get_obs_and_measure_data = cwrapper.prototype("void enkf_ob
 EnkfObs.cNamespace().create_all_active_obs       = cwrapper.prototype("local_obsdata_obj enkf_obs_alloc_all_active_local_obs( enkf_obs , char*)");
 EnkfObs.cNamespace().scale_correlated_std        = cwrapper.prototype("double  enkf_obs_scale_correlated_std( enkf_obs , enkf_fs , int_vector , local_obsdata)");
 EnkfObs.cNamespace().local_scale_std             = cwrapper.prototype("void  enkf_obs_local_scale_std( enkf_obs , local_obsdata , double)");
-
-

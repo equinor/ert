@@ -17,7 +17,7 @@ class LocalObsdataNode(BaseCClass):
         assert isinstance(step_2, int)
         LocalObsdataNode.cNamespace().add_range(self, step_1, step_2)
 
-    
+
     def addTimeStep(self , step):
         LocalObsdataNode.cNamespace().add_step(self, step )
 
@@ -50,5 +50,3 @@ LocalObsdataNode.cNamespace().tstep_active     = cwrapper.prototype("bool local_
 LocalObsdataNode.cNamespace().get_active_list  = cwrapper.prototype("active_list_ref local_obsdata_node_get_active_list(local_obsdata_node)")
 LocalObsdataNode.cNamespace().all_timestep_active  = cwrapper.prototype("bool local_obsdata_node_all_timestep_active(local_obsdata_node)")
 LocalObsdataNode.cNamespace().set_all_timestep_active  = cwrapper.prototype("void local_obsdata_node_set_all_timestep_active(local_obsdata_node, bool)")
-
-

@@ -24,7 +24,7 @@ class ObsBlock(BaseCClass):
                 if len(value) == 2:
                     d = value[0]
                     std = value[1]
-                    
+
                     ObsBlock.cNamespace().iset(self , index , d , std)
                 else:
                     raise TypeError("The value argument must be a two element tuple: (value , std)")
@@ -39,7 +39,7 @@ class ObsBlock(BaseCClass):
             if 0 <= index < self.totalSize():
                 value = ObsBlock.cNamespace().iget_value(self , index)
                 std = ObsBlock.cNamespace().iget_std(self , index)
-                
+
                 return (value,std)
             else:
                 raise IndexError("Invalid index:%d - valid range: [0,%d)" % (index , self.totalSize()))
@@ -63,5 +63,3 @@ ObsBlock.cNamespace().active_size  = cwrapper.prototype("int obs_block_get_activ
 ObsBlock.cNamespace().iset       = cwrapper.prototype("void obs_block_iset( obs_block , int , double , double)")
 ObsBlock.cNamespace().iget_value = cwrapper.prototype("double obs_block_iget_value( obs_block , int)")
 ObsBlock.cNamespace().iget_std   = cwrapper.prototype("double obs_block_iget_std( obs_block , int)")
-
-

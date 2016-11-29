@@ -1,5 +1,5 @@
 from cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, LocalObsdataNode 
+from ert.enkf import ENKF_LIB, LocalObsdataNode
 
 
 class LocalObsdata(BaseCClass):
@@ -24,15 +24,15 @@ object as:
             raise Exception( msg )
 
         assert isinstance(name, str)
-        
+
         c_pointer = LocalObsdata.cNamespace().alloc(name)
         super(LocalObsdata, self).__init__(c_pointer)
         self.initObservations( obs )
 
-        
+
     def initObservations(self , obs):
         self.obs = obs
-        
+
     def __len__(self):
         """ @rtype: int """
         return LocalObsdata.cNamespace().size(self)
@@ -50,13 +50,13 @@ object as:
                 return LocalObsdata.cNamespace().get_node(self, key).setParent(self)
             else:
                 raise KeyError("Unknown key:%s" % key)
-        
+
     def __iter__(self):
         cur = 0
         while cur < len(self):
             yield self[cur]
             cur += 1
-                    
+
     def __contains__(self, item):
         """ @rtype: bool """
         if isinstance(item, str):
@@ -65,19 +65,19 @@ object as:
             return LocalObsdata.cNamespace().has_node(self, item.getKey())
 
         return False
-    
+
     def __delitem__(self, key):
         assert isinstance(key, str)
         if key in self:
-            LocalObsdata.cNamespace().del_node(self, key)  
+            LocalObsdata.cNamespace().del_node(self, key)
         else:
-            raise KeyError("Unknown key:%s" % key)                
-    
+            raise KeyError("Unknown key:%s" % key)
+
     def addNode(self, key, add_all_timesteps = True):
-        """ @rtype: LocalObsdataNode """           
+        """ @rtype: LocalObsdataNode """
         assert isinstance(key, str)
         if key in self.obs:
-            node = LocalObsdataNode(key , add_all_timesteps) 
+            node = LocalObsdataNode(key , add_all_timesteps)
             if node not in self:
                 node.convertToCReference(self)
                 LocalObsdata.cNamespace().add_node(self, node)
@@ -89,34 +89,34 @@ object as:
 
 
     def addNodeAndRange(self, key, step_1, step_2):
-        """ @rtype: LocalObsdataNode """        
+        """ @rtype: LocalObsdataNode """
         """ The time range will be removed in the future... """
         assert isinstance(key, str)
         assert isinstance(step_1, int)
-        assert isinstance(step_2, int)                     
+        assert isinstance(step_2, int)
         node = self.addNode( key )
         node.addRange(step_1, step_2)
         return node
 
-    
-    def clear(self):        
-        LocalObsdata.cNamespace().clear(self)        
 
-        
+    def clear(self):
+        LocalObsdata.cNamespace().clear(self)
+
+
     def addObsVector(self , obs_vector):
         self.addNode( obs_vector.getObservationKey() )
 
-        
+
     def getName(self):
         """ @rtype: str """
         return LocalObsdata.cNamespace().name(self)
-    
+
     def getActiveList(self, key):
         """ @rtype: ActiveList """
         if key in self:
             return LocalObsdata.cNamespace().active_list(self , key)
         else:
-            raise KeyError("Local key:%s not recognized" % key)      
+            raise KeyError("Local key:%s not recognized" % key)
 
     def free(self):
         LocalObsdata.cNamespace().free(self)
@@ -137,6 +137,3 @@ LocalObsdata.cNamespace().iget_node = cwrapper.prototype("local_obsdata_node_ref
 LocalObsdata.cNamespace().get_node  = cwrapper.prototype("local_obsdata_node_ref local_obsdata_get(local_obsdata, char*)")
 LocalObsdata.cNamespace().name      = cwrapper.prototype("char* local_obsdata_get_name(local_obsdata)")
 LocalObsdata.cNamespace().active_list    = cwrapper.prototype("active_list_ref local_obsdata_get_node_active_list(local_obsdata, char*)")
-
-
-

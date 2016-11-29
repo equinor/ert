@@ -5,11 +5,11 @@ class LocalUpdateStep(BaseCClass):
 
     def __init__(self, updatestep_key):
         raise NotImplementedError("Class can not be instantiated directly!")
-    
+
     def __len__(self):
         """ @rtype: int """
         return LocalUpdateStep.cNamespace().size(self)
-    
+
     def __getitem__(self, index):
         """ @rtype: LocalMinistep """
         assert isinstance(index, int)
@@ -17,17 +17,17 @@ class LocalUpdateStep(BaseCClass):
             return LocalUpdateStep.cNamespace().iget_ministep(self, index)
         else:
             raise IndexError("Invalid index")
-        
+
     def attachMinistep(self, ministep):
         assert isinstance(ministep, LocalMinistep)
         LocalUpdateStep.cNamespace().attach_ministep(self,ministep)
-                    
+
     def getName(self):
         """ @rtype: str """
         return LocalUpdateStep.cNamespace().name(self)
-                       
+
     def free(self):
-        LocalUpdateStep.cNamespace().free(self) 
+        LocalUpdateStep.cNamespace().free(self)
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerObjectType("local_updatestep", LocalUpdateStep)
@@ -38,5 +38,3 @@ LocalUpdateStep.cNamespace().iget_ministep       = cwrapper.prototype("local_min
 LocalUpdateStep.cNamespace().free                = cwrapper.prototype("void local_updatestep_free(local_updatestep)")
 LocalUpdateStep.cNamespace().attach_ministep     = cwrapper.prototype("void local_updatestep_add_ministep(local_updatestep,local_ministep)")
 LocalUpdateStep.cNamespace().name                = cwrapper.prototype("char* local_updatestep_get_name(local_updatestep)")
-
-

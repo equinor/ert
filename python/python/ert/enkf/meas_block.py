@@ -20,7 +20,7 @@ class MeasBlock(BaseCClass):
                     s += "%6.3g " % self[iobs,iens]
                 else:
                     s += "   X   "
-                    
+
             s += "]\n"
         return s
 
@@ -35,13 +35,13 @@ class MeasBlock(BaseCClass):
     def getTotalEnsSize(self):
         return MeasBlock.cNamespace().get_total_ens_size(self)
 
-        
+
     def __assert_index(self , index):
         if isinstance(index , tuple):
             iobs,iens = index
             if not 0 <= iobs < self.getObsSize():
                 raise IndexError("Invalid iobs value:%d  Valid range: [0,%d)" % (iobs , self.getObsSize()))
-                
+
             if not 0 <= iens < self.getTotalEnsSize():
                 raise IndexError("Invalid iens value:%d  Valid range: [0,%d)" % (iobs , self.getTotalEnsSize()))
 
@@ -61,7 +61,7 @@ class MeasBlock(BaseCClass):
     def __getitem__(self, index):
         iobs,iens = self.__assert_index(index)
         return MeasBlock.cNamespace().iget_value( self , iens , iobs )
-        
+
     def iensActive(self , iens):
         return MeasBlock.cNamespace().iens_active( self , iens )
 
@@ -97,8 +97,3 @@ MeasBlock.cNamespace().iset_value = cwrapper.prototype("void meas_block_iset( me
 MeasBlock.cNamespace().iget_mean = cwrapper.prototype("double meas_block_iget_ens_mean( meas_block , int )")
 MeasBlock.cNamespace().iget_std = cwrapper.prototype("double meas_block_iget_ens_std( meas_block , int )")
 MeasBlock.cNamespace().iens_active = cwrapper.prototype("bool meas_block_iens_active( meas_block , int )")
-
-
-    
-
-
