@@ -20,6 +20,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
+#include <omp.h>
 
 #include <ert/util/type_macros.h>
 #include <ert/util/util.h>
@@ -43,7 +44,7 @@
 
 #define DEFAULT_NFOLDS              5
 #define DEFAULT_R2_LIMIT            0.99
-#define DEFAULT_NUM_THREADS         1
+#define DEFAULT_NUM_THREADS         -1
 
 #define NFOLDS_KEY                  "CV_NFOLDS"
 #define R2_LIMIT_KEY                "FWD_STEP_R2_LIMIT"
@@ -258,11 +259,18 @@ void fwd_step_enkf_updateA(void * module_data ,
     int nx          = matrix_get_rows( A );
     int nd          = matrix_get_rows( S );
     int nfolds      = fwd_step_data->nfolds;
-    int n_threads   = fwd_step_data->num_threads;
     double r2_limit = fwd_step_data->r2_limit;
     bool verbose    = fwd_step_data->verbose;
     int num_kw     =  module_data_block_vector_get_size(data_block_vector);
 
+#if defined(_OPENMP)
+    #pragma omp parallel
+    #pragma omp master
+    if (fwd_step_data->num_threads == DEFAULT_NUM_THREADS)
+     fwd_step_data->num_threads = omp_get_num_threads();
+#else
+    fwd_step_data->num_threads = 1;
+#endif
 
     if ( ens_size <= nfolds)
       util_abort("%s: The number of ensembles must be larger than the CV fold - aborting\n", __func__);
@@ -303,7 +311,7 @@ void fwd_step_enkf_updateA(void * module_data ,
 
 
       // =============================================
-      #pragma omp parallel for schedule(dynamic, chunk_size) num_threads(n_threads)
+      #pragma omp parallel for schedule(dynamic, chunk_size) num_threads(fwd_step_data->num_threads)
       for (i = 0; i < nx; i++) {
         int kw_ind = int_vector_iget(kw_list, i);
         module_data_block_type * data_block = module_data_block_vector_iget_module_data_block(data_block_vector, kw_ind);
