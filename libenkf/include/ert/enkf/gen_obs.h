@@ -41,7 +41,7 @@ void           gen_obs_set_scalar( gen_obs_type * gen_obs , double scalar_value 
 void 	       gen_obs_attach_data_index( gen_obs_type * gen_obs , const int_vector_type * data_index );
 void 	       gen_obs_load_data_index( gen_obs_type * obs , const char * data_index_file);
 void 	       gen_obs_parse_data_index( gen_obs_type * obs , const char * data_index_string);
-
+void           gen_obs_free(gen_obs_type * gen_obs);
 
 
 
