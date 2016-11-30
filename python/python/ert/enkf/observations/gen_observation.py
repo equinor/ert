@@ -13,17 +13,18 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os.path 
+import os.path
 
 from cwrap import BaseCClass
 from ert.util import IntVector
 from ert.enkf import EnkfPrototype
+from ert.enkf import GenDataConfig
 
 
 class GenObservation(BaseCClass):
     TYPE_NAME = "gen_obs"
 
-    _alloc              = EnkfPrototype("void   gen_obs_alloc__(gen_data_config , char*)", bind = False)
+    _alloc              = EnkfPrototype("void*  gen_obs_alloc__(gen_data_config , char*)", bind = False)
     _free               = EnkfPrototype("void   gen_obs_free(gen_obs)")
     _load               = EnkfPrototype("void   gen_obs_load_observation(gen_obs , char*)")
     _scalar_set         = EnkfPrototype("void   gen_obs_set_scalar(gen_obs , double , double)")
