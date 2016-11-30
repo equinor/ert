@@ -38,8 +38,11 @@ class GenObservation(BaseCClass):
     _update_std_scaling = EnkfPrototype("void   gen_obs_update_std_scale(gen_obs , double , active_list)")
 
     def __init__(self , obs_key , data_config , scalar_value = None , obs_file = None , data_index = None):
-        c_pointer = self._alloc( data_config , obs_key )
-        super(GenObservation, self).__init__(c_pointer)
+        c_ptr = self._alloc( data_config , obs_key )
+        if c_ptr:
+            super(GenObservation, self).__init__(c_ptr)
+        else:
+            raise ValueError('Unable to construct GenObservation with given obs_key and data_config!')
 
         if scalar_value is None and obs_file is None:
             raise ValueError("Exactly one the scalar_value and obs_file arguments must be present")

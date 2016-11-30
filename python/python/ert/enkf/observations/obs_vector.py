@@ -24,19 +24,19 @@ class ObsVector(BaseCClass):
     TYPE_NAME = "obs_vector"
 
     _alloc                = EnkfPrototype("void* obs_vector_alloc(enkf_obs_impl_type, char*, enkf_config_node, int)", bind = False)
-    _free                 = EnkfPrototype("void obs_vector_free( obs_vector )")
+    _free                 = EnkfPrototype("void  obs_vector_free( obs_vector )")
     _get_state_kw         = EnkfPrototype("char* obs_vector_get_state_kw( obs_vector )")
-    _get_observation_key  = EnkfPrototype("char* obs_vector_get_key( obs_vector )")
-    _iget_node            = EnkfPrototype("void obs_vector_iget_node( obs_vector, int)")
-    _get_num_active       = EnkfPrototype("int obs_vector_get_num_active( obs_vector )")
-    _iget_active          = EnkfPrototype("bool obs_vector_iget_active( obs_vector, int)")
+    _get_key              = EnkfPrototype("char* obs_vector_get_key( obs_vector )")
+    _iget_node            = EnkfPrototype("void* obs_vector_iget_node( obs_vector, int)")
+    _get_num_active       = EnkfPrototype("int   obs_vector_get_num_active( obs_vector )")
+    _iget_active          = EnkfPrototype("bool  obs_vector_iget_active( obs_vector, int)")
     _get_impl_type        = EnkfPrototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
-    _install_node         = EnkfPrototype("void obs_vector_install_node(obs_vector, int, void*)")
-    _get_next_active_step = EnkfPrototype("int obs_vector_get_next_active_step(obs_vector, int)")
-    _has_data             = EnkfPrototype("bool obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
+    _install_node         = EnkfPrototype("void  obs_vector_install_node(obs_vector, int, void*)")
+    _get_next_active_step = EnkfPrototype("int   obs_vector_get_next_active_step(obs_vector, int)")
+    _has_data             = EnkfPrototype("bool  obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
     _get_config_node      = EnkfPrototype("enkf_config_node_ref obs_vector_get_config_node(obs_vector)")
     _get_total_chi2       = EnkfPrototype("double obs_vector_total_chi2(obs_vector, enkf_fs, int)")
-    _get_obs_key          = EnkfPrototype("char* obs_vector_get_obs_key(obs_vector)")
+    _get_obs_key          = EnkfPrototype("char*  obs_vector_get_obs_key(obs_vector)")
     _get_step_list        = EnkfPrototype("int_vector_ref obs_vector_get_step_list(obs_vector)")
     _create_local_node    = EnkfPrototype("local_obsdata_node_obj obs_vector_alloc_local_node(obs_vector)")
 
@@ -61,7 +61,13 @@ class ObsVector(BaseCClass):
 
     def getObservationKey(self):
         """ @rtype: str """
-        return self._get_observation_key()
+        return self.getKey()
+
+    def getKey(self):
+        return self._get_key()
+
+    def getObsKey(self):
+        return self._get_obs_key()
 
 
     def getNode(self, index):
@@ -109,6 +115,8 @@ class ObsVector(BaseCClass):
 
     def getActiveCount(self):
         """ @rtype: int """
+        return len(self)
+    def __len__(self):
         return self._get_num_active()
 
     def isActive(self, index):
@@ -146,6 +154,13 @@ class ObsVector(BaseCClass):
 
     def free(self):
         self._free()
+
+    def __repr__(self):
+        dk = 'data_key = %s'   % self.getDataKey()
+        kk = 'key = %s'        % self.getKey()
+        ok = 'obs_key = %s'    % self.getObsKey()
+        na = 'num_active = %d' % len(self)
+        return 'ObsVector(%s, %s, %s, %s) %s' % (na, kk, ok, dk, self._ad_str())
 
     def getTotalChi2(self, fs, realization_number):
         """ @rtype: float """
