@@ -13,29 +13,10 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from cwrap import BaseCClass, CWrapper
-from ert.enkf import ENKF_LIB, NodeId, FieldConfig
+from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
-
-class BlockDataConfig(object):
-    @classmethod
-    def from_param(cls , instance):
-        if instance is None:
-            return ctypes.c_void_p()
-        elif isinstance(instance , FieldConfig):
-            return FieldConfig.from_param( instance )
-
-        # The Container class which is used to support summary based
-        # source in the BLOCK_OBS configuration is not yet supported
-        # in Python.
-
-        #elif isinstance(instance , ContainerConfig):
-        #    return ContainerConfig.from_param( instance )
-        else:
-            raise ValueError("Currently ONLY field data is supported")
-
-cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("block_data_config", BlockDataConfig)
+from ert.enkf import NodeId, FieldConfig
+from ert.enkf.observations import BlockDataConfig
 
 
 class BlockObservation(BaseCClass):
