@@ -142,7 +142,7 @@ static void site_config_add_queue_driver(site_config_type * site_config, const c
   hash_insert_hash_owned_ref(site_config->queue_drivers, driver_name, driver, queue_driver_free__);
 }
 
-static bool site_config_has_queue_driver(const site_config_type * site_config, const char * driver_name) {
+bool site_config_has_queue_driver(const site_config_type * site_config, const char * driver_name) {
   return hash_has_key(site_config->queue_drivers, driver_name);
 }
 

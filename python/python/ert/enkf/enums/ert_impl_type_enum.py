@@ -18,6 +18,7 @@ from ert.enkf import ENKF_LIB
 
 
 class ErtImplType(BaseCEnum):
+    TYPE_NAME        = "ert_impl_type_enum"
     INVALID          = None
     IMPL_TYPE_OFFSET = None
     STATIC           = None       # MULTZ has been removed & MULTFLT

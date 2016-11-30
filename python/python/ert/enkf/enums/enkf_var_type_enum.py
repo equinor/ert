@@ -18,6 +18,7 @@ from ert.enkf import ENKF_LIB
 
 
 class EnkfVarType(BaseCEnum):
+    TYPE_NAME        = "enkf_var_type_enum"
     INVALID_VAR = None
     PARAMETER = None
     DYNAMIC_STATE = None
