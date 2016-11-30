@@ -44,6 +44,8 @@ class BaseCClass(object):
 
     def _address(self):
         return self.__c_pointer
+    def _ad_str(self):
+        return 'at 0x%x' % self._address()
 
     @classmethod
     def cNamespace(cls):
