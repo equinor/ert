@@ -20,8 +20,6 @@ from ert.ecl import EclSum
 
 class History(BaseCClass):
     TYPE_NAME = "history"
-    # cwrapper.registerType("history_obj", History.createPythonObject)
-    # cwrapper.registerType("history_ref", History.createCReference)
 
     _alloc_from_refcase    = SchedulePrototype("void* history_alloc_from_refcase(ecl_sum, bool)", bind = False)
     _alloc_from_sched_file = SchedulePrototype("void* history_alloc_from_sched_file(char*, sched_file)", bind = False)
@@ -35,15 +33,21 @@ class History(BaseCClass):
         @type use_history: bool
         @rtype: HistoryType
         """
+        self._init_from = ''
+        self._init_val  = ''
         if sched_file is not None:
-            c_ptr = self._alloc_from_sched_file(refcase, use_history)
+            self._init_from = 'sched_file'
+            self._init_val  = str(sched_file)
+            c_ptr = self._alloc_from_sched_file(sched_file, use_history)
         else:
+            self._init_from = 'refcase'
+            self._init_val  = str(refcase)
             c_ptr = self._alloc_from_refcase(refcase, use_history)
         if c_ptr:
             super(History, self).__init__(c_ptr)
         else:
             if sched_file is None and refcase is None:
-                raise ValueError('Need to specify either sched_file or refcase.')
+                raise ArgumentError('Need to specify either sched_file or refcase.')
             raise ValueError('Invalid input.  Failed to create History.')
 
     @staticmethod
@@ -56,3 +60,9 @@ class History(BaseCClass):
 
     def free(self):
         self._free( self )
+
+    def __repr__(self):
+        fr = self._init_from
+        va = self._init_val
+        ad = self._ad_str()
+        return 'History(init_from = %s: %s) %s' % (fr,va,ad)

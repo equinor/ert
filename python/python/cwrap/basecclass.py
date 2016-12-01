@@ -44,6 +44,8 @@ class BaseCClass(object):
 
     def _address(self):
         return self.__c_pointer
+    def _ad_str(self):
+        return 'at 0x%x' % self._address()
 
     @classmethod
     def cNamespace(cls):
@@ -111,7 +113,7 @@ class BaseCClass(object):
         if isinstance(other, BaseCClass):
             return self.__c_pointer == other.__c_pointer
         else:
-            return super(BaseCClass , self).__eq__(other)
+            return super(BaseCClass , self) == other
 
     def __hash__(self):
         # Similar to last resort comparison; this returns the hash of the
