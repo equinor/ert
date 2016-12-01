@@ -57,7 +57,7 @@ class CaseSelectionWidget(QWidget):
 
     def checkCaseCount(self):
         state = True
-        if len(self.__case_selectors_order) == 12:
+        if len(self.__case_selectors_order) == 5:
             state = False
 
         self.__add_case_button.setEnabled(state)
