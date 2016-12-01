@@ -591,7 +591,26 @@ The keywords in this section are used to define a parametrization of the ECLIPSE
 
 	Here ID is again an arbitrary string, ECLIPSE_FILE is the name of the file the enkf will export this field to when running simulations. Note that there should be an IMPORT statement in the ECLIPSE data file corresponding to the name given with ECLIPSE_FILE. INIT_FILES is a filename (with an embedded %d) to load the initial field from. Can be RMS ROFF format, ECLIPSE restart format or ECLIPSE GRDECL format.
 
-	The options MIN, MAX, INIT_TRANSFORM and OUTPUT_TRANSFORM are all optional. MIN and MAX are as for dynamic fields. OUTPUT_TRANSFORM is the name of a mathematical function which will be applied to the field before it is exported, and INIT_TRANSFORM is the name of a function which will be applied to the fields when they are loaded. [Just use INIT_TRANSFORM:XXX to get a list of available functions.]
+	The input arguments MIN, MAX, INIT_TRANSFORM and OUTPUT_TRANSFORM are all optional. MIN and MAX are as for dynamic fields. 
+	
+	For Assisted history matching, the variables in ERT should be normally distributed internally - the purpose of the transformations is to enable working with normally distributed variables internally in ERT. Thus, the optional arguments INIT_TRANSFORM:FUNC and OUTPUT_TRANSFORM:FUNC are used to transform the user input of parameter distribution. INIT_TRANSFORM:FUNC is a function which will be applied when they are loaded to ERT. OUTPUT_TRANSFORM:FUNC is a function which will be applied to the field when it is exported from ERT, and  FUNC is the name of a transformation function to be applied. The avaialble functions are listed below:
+	
+	"POW10"       : This function will raise x to the power of 10: y = 10^x.
+	"TRUNC_POW10" : This function will raise x to the power of 10 - and truncate lower values at 0.001.
+	"LOG"         : This function will take the NATURAL logarithm of x: y = ln(x).
+	"LN"          : This function will take the NATURAL logarithm of x: y = ln(x).
+ 	"LOG10"       : This function will take the log10 logarithm of x: y = log10(x). 
+ 	"EXP"         : This function will calculate y = exp(x).  
+ 	"LN0"         : This function will calculate y = ln(x + 0.000001
+ 	"EXP0"        : This function will calculate y = exp(x) - 0.000001
+
+	For example, the most common scenario is that underlying log-normal distributed permeability in RMS are transformed to normally distributted in ERT, then you do:
+
+	INIT_TRANSFORM:LOG To ensure that the variables which were initially log-normal distributed are transformed to normal distribution when they are loaded into ert.
+
+	OUTPUT_TRANSFORM:EXP To ensure that the variables are reexponentiated to be log-normal distributed before going out to Eclipse.
+
+	If users specify the wrong function name (e.g INIT_TRANSFORM:I_DONT_KNOW), ERT will stop and print all the valid function names.
 
 	Regarding format of ECLIPSE_FILE: The default format for the parameter fields is binary format of the same type as used in the ECLIPSE restart files. This requires that the ECLIPSE datafile contains an IMPORT statement. The advantage with using a binary format is that the files are smaller, and reading/writing is faster than for plain text files. If you give the ECLIPSE_FILE with the extension .grdecl (arbitrary case), enkf will produce ordinary .grdecl files, which are loaded with an INCLUDE statement. This is probably what most users are used to beforehand - but we recomend the IMPORT form.
 
