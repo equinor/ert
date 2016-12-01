@@ -21,11 +21,10 @@ from ert.util import StringList
 from ert.ecl import EclSum
 from ert.ecl import EclGrid
 from ert.util import UIReturn
+from ert.sched import SchedFile
 
 class EclConfig(BaseCClass):
     TYPE_NAME = "ecl_config"
-    #cwrapper.registerType("ecl_config_obj", EclConfig.createPythonObject)
-    #cwrapper.registerType("ecl_config_ref", EclConfig.createCReference)
 
     _alloc                  = EnkfPrototype("void* ecl_config_alloc( )", bind = False)
     _free                   = EnkfPrototype("void  ecl_config_free( ecl_config )")
@@ -58,8 +57,11 @@ class EclConfig(BaseCClass):
     _get_pressure_unit      = EnkfPrototype("char* ecl_config_get_pressure_unit(ecl_config)")
 
     def __init__(self):
-        c_pointer = self._alloc()
-        super(EclConfig, self).__init__(c_pointer)
+        c_ptr = self._alloc()
+        if c_ptr:
+            super(EclConfig, self).__init__(c_ptr)
+        else:
+            raise RuntimeError('Internal error: Failed constructing EclConfig!')
 
     def free(self):
         self._free()

@@ -16,7 +16,7 @@
 import os.path
 
 from cwrap import BaseCClass
-from ert.sched import SCHED_LIB, SchedulePrototype
+from ert.sched import SchedulePrototype
 from ert.util import CTime
 
 
@@ -41,6 +41,9 @@ class SchedFile(BaseCClass):
     @property
     def length(self):
         """ @rtype: int """
+        return len(self)
+
+    def __len__(self):
         return self._length()
 
     def write(self, filename, num_dates, add_end=True):
@@ -48,3 +51,6 @@ class SchedFile(BaseCClass):
 
     def free(self):
         self._free( )
+
+    def __repr__(self):
+        return 'SchedFile(len = %d) %s' % (len(self), self._ad_str())

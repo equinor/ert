@@ -20,8 +20,6 @@ from ert.ecl import EclSum
 
 class History(BaseCClass):
     TYPE_NAME = "history"
-    # cwrapper.registerType("history_obj", History.createPythonObject)
-    # cwrapper.registerType("history_ref", History.createCReference)
 
     _alloc_from_refcase    = SchedulePrototype("void* history_alloc_from_refcase(ecl_sum, bool)", bind = False)
     _alloc_from_sched_file = SchedulePrototype("void* history_alloc_from_sched_file(char*, sched_file)", bind = False)
