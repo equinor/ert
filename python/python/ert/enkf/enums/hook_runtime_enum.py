@@ -27,5 +27,3 @@ HookRuntime.addEnum("PRE_SIMULATION"  , 0)
 HookRuntime.addEnum("POST_SIMULATION" , 1)
 HookRuntime.addEnum("PRE_UPDATE"      , 2)
 HookRuntime.addEnum("POST_UPDATE"     , 3)
-
-HookRuntime.registerEnum(ENKF_LIB, "hook_runtime_enum")
