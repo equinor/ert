@@ -155,6 +155,31 @@ class ConfigTest(ExtendedTestCase):
             self.assertEqual( warnings[0] , msg )
 
 
+    def test_parse_dotdot_relative(self):
+        conf = ConfigParser()
+        schema_item = conf.add("EXECUTABLE", False)
+        schema_item.iset_type(0 , ContentTypeEnum.CONFIG_PATH )
+        
+        
+        with TestAreaContext("config/parse_dotdot"):
+            os.makedirs("cwd/jobs")
+            os.makedirs("eclipse/bin")
+            script_path = os.path.join( os.getcwd() , "eclipse/bin/script.sh")
+            with open(script_path,"w") as f:
+                f.write("This is a test script")
+
+            with open("cwd/jobs/JOB","w") as fileH:
+                fileH.write("EXECUTABLE ../../eclipse/bin/script.sh\n")
+
+            os.makedirs("cwd/ert")
+            os.chdir("cwd/ert")
+            content = conf.parse("../jobs/JOB")
+            item = content["EXECUTABLE"]
+            node = item[0]
+            self.assertEqual( script_path , node.getPath( ))
+            
+
+
             
             
     def test_parser_content(self):
@@ -255,3 +280,4 @@ class ConfigTest(ExtendedTestCase):
 
 
             
+
