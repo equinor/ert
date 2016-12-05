@@ -24,7 +24,7 @@ option( BUILD_PYTHON        "Run py_compile on the python wrappers"             
 option( BUILD_SHARED_LIBS   "Build shared libraries"                                  ON )
 option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON )
 option( ERT_BUILD_GUI       "Should the PyQt based GUI be compiled and installed"     OFF)
-option( ERT_USE_OPENMP      "Use OpenMP"                                              ON )
+option( ERT_USE_OPENMP      "Use OpenMP"                                              OFF )
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)
 
