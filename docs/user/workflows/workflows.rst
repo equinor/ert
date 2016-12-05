@@ -324,7 +324,8 @@ Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW`
 keyword.
 
-
+Currently, :code:`PRE_UPDATE` and :code:`POST_UPDATE` are only
+available from python.
 
 Locating the realisations: <RUNPATH_FILE>
 -----------------------------------------
