@@ -13,6 +13,7 @@ class PlotConfig(object):
         self._line_color_cycle = itertools.cycle(self._line_color_cycle_colors) #Black
         # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown
         self.setLineColorCycle(["#386CB0", "#7FC97F", "#FDC086", "#F0027F", "#BF5B17"])
+#        self.setLineColorCycle(["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf" ,"#386CB0", "#7FC97F", "#FDC086", "#F0027F", "#BF5B17"])
 
         self._legend_items = []
         self._legend_labels = []
