@@ -24,7 +24,7 @@ option( BUILD_PYTHON        "Run py_compile on the python wrappers"             
 option( BUILD_SHARED_LIBS   "Build shared libraries"                                  ON )
 option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON )
 option( ERT_BUILD_GUI       "Should the PyQt based GUI be compiled and installed"     OFF)
-option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid"                  OFF)
+option( ERT_USE_OPENMP      "Use OpenMP"                                              ON )
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)
 
@@ -50,18 +50,21 @@ include( CheckTypeSize )
 ENABLE_TESTING()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+   message(STATUS "Found Linux")
    set(ERT_LINUX TRUE )
    add_definitions( -DERT_LINUX )
    set( ERT_BINARY_POSTFIX .${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+   message(STATUS "Found Darwin")
    set(ERT_LINUX TRUE )
    set(ERT_MAC TRUE)
    add_definitions( -DERT_LINUX )
    set( ERT_BINARY_POSTFIX .${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+   message(STATUS "Found Windows")
    set(ERT_WINDOWS TRUE)
    add_definitions( -DERT_WINDOWS )
-endif()    
+endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
    message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
@@ -82,19 +85,21 @@ if (MSVC)
     add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4996" )
 endif()
 
+
+if (ERT_USE_OPENMP)
+  find_package(OpenMP)
+  if (OPENMP_FOUND) 
+     message(STATUS "Enabling OpenMP support")
+     # The actual use of OpenMP is only in the libecl library - the compile flags is only applied there.
+  else()
+     set( ERT_USE_OPENMP OFF )
+     message(STATUS "OpenMP package not found - OpenMP disabled")
+  endif()
+endif()
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 find_package(CXX11Features)
 
-if (ERT_USE_OPENMP)
-   find_package(OpenMP)
-   if (OPENMP_FOUND) 
-       message(STATUS "Enabling OpenMP support")
-       # The actual use of OpenMP is only in the libecl library - the compile flags is only applied there.
-   else()
-       set( ERT_USE_OPENMP OFF )
-       message(STATUS "OpenMP package not found - OpenMP disabled")
-   endif()
-endif()
 
 
 #-----------------------------------------------------------------
