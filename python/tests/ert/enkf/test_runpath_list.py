@@ -1,21 +1,25 @@
 from os import path, symlink, remove
 
 import ert
-from cwrap import CWrapper
+
 from ert.test import ExtendedTestCase, TestAreaContext,ErtTestContext
 from ert.enkf import RunpathList, RunpathNode
 from ert.util import BoolVector
 
-test_lib  = ert.load("libenkf") # create a local namespace
-cwrapper =  CWrapper(test_lib)
+from cwrap import Prototype
 
-runpath_list_alloc = cwrapper.prototype("runpath_list_obj runpath_list_alloc(char*)")
+class _TestRunpathListPrototype(Prototype):
+    lib = ert.load('libenkf')
+
+    def __init__(self, prototype, bind=True):
+        super(_TestRunpathListPrototype, self).__init__(_TestRunpathListPrototype.lib, prototype, bind=bind)
 
 class RunpathListTest(ExtendedTestCase):
 
+    _runpath_list_alloc = _TestRunpathListPrototype("runpath_list_obj runpath_list_alloc(char*)", bind = False)
+
     def test_runpath_list(self):
-        runpath_list = runpath_list_alloc("")
-        """ @type runpath_list: RunpathList """
+        runpath_list = self._runpath_list_alloc("")
 
         self.assertEqual(len(runpath_list), 0)
 
