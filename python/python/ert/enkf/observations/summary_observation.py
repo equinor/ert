@@ -41,7 +41,10 @@ class SummaryObservation(BaseCClass):
 
         assert isinstance(auto_corrf_param, float)
         c_ptr = self._alloc(summary_key, observation_key, value, std, auto_corrf_name, auto_corrf_param)
-        super(SummaryObservation, self).__init__(c_ptr)
+        if c_ptr:
+            super(SummaryObservation, self).__init__(c_ptr)
+        else:
+            raise ValueError('Unable to construct SummaryObservation with given configuration!')
 
     def getValue(self):
         """ @rtype: float """

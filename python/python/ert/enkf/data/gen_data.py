@@ -1,4 +1,4 @@
-from cwrap import BaseCClass, CWrapper
+from cwrap import BaseCClass
 from ert.util import DoubleVector
 from ert.enkf import EnkfPrototype
 
@@ -28,7 +28,9 @@ class GenData(BaseCClass):
     def free(self):
         self._free( )
 
-        
+    def __repr__(self):
+        return 'GenData(len = %d) %s' % (len(self), self._ad_str())
+
     def export(self, file_name, file_format_type, fortio):
         """
         @type: str

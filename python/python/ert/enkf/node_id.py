@@ -1,5 +1,4 @@
 from ctypes import Structure, c_int
-from cwrap import CWrapper
 from cwrap.prototype import registerType
 
 class NodeId(Structure):
@@ -16,6 +15,4 @@ class NodeId(Structure):
         """
         super(NodeId, self).__init__(report_step, realization_number)
 
-
-CWrapper.registerType("node_id", NodeId)
-registerType( "node_id" , NodeId ) 
+registerType( "node_id" , NodeId )
