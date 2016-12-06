@@ -80,7 +80,7 @@
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_serialize.h>
-#include <ert/enkf/plot_config.h>
+#include <ert/enkf/plot_settings.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/model_config.h>
 #include <ert/enkf/hook_manager.h>
@@ -153,7 +153,7 @@ struct enkf_main_struct {
   analysis_config_type * analysis_config;
   local_config_type    * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type   * templates;          /* Run time templates */
-  plot_config_type     * plot_config;        /* Information about plotting. */
+  plot_settings_type   * plot_config;        /* Information about plotting. */
   rng_config_type      * rng_config;
   rng_type             * rng;
   ert_workflow_list_type * workflow_list;
@@ -290,7 +290,7 @@ model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main
   return enkf_main->model_config;
 }
 
-plot_config_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
+plot_settings_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
   return enkf_main->plot_config;
 }
 
@@ -419,7 +419,7 @@ void enkf_main_free(enkf_main_type * enkf_main){
 
 
   int_vector_free( enkf_main->keep_runpath );
-  plot_config_free( enkf_main->plot_config );
+  plot_settings_free( enkf_main->plot_config );
   ert_templates_free( enkf_main->templates );
 
   subst_func_pool_free( enkf_main->subst_func_pool );
@@ -1984,7 +1984,7 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   /*****************************************************************/
 
   ert_workflow_list_add_config_items( config );
-  plot_config_add_config_items( config );
+  plot_settings_add_config_items( config );
   analysis_config_add_config_items( config );
   ensemble_config_add_config_items( config );
   ecl_config_add_config_items( config );
@@ -2214,7 +2214,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->site_config        = site_config_alloc_empty();
   enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
-  enkf_main->plot_config        = plot_config_alloc_default();
+  enkf_main->plot_config        = plot_settings_alloc_default();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = NULL;
   enkf_main->model_config       = model_config_alloc( );
@@ -2700,7 +2700,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
       analysis_config_load_internal_modules( enkf_main->analysis_config );
       analysis_config_init( enkf_main->analysis_config , content );
       ecl_config_init( enkf_main->ecl_config , content );
-      plot_config_init( enkf_main->plot_config , content );
+      plot_settings_init( enkf_main->plot_config , content );
 
       ensemble_config_init( enkf_main->ensemble_config , content , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
 
