@@ -1,5 +1,5 @@
 from ctypes import Structure, c_int
-from cwrap.prototype import registerType
+from cwrap import Prototype
 
 class NodeId(Structure):
     """
@@ -15,4 +15,4 @@ class NodeId(Structure):
         """
         super(NodeId, self).__init__(report_step, realization_number)
 
-registerType( "node_id" , NodeId )
+Prototype.registerType( "node_id" , NodeId )
