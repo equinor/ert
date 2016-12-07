@@ -112,4 +112,5 @@ class GenObservation(BaseCClass):
 
     def __repr__(self):
         si = len(self)
-        return 'GenObservation(size = %d) %s' (si, self._ad_str())
+        ad = self._ad_str()
+        return 'GenObservation(size = %d) %s' % (si, ad)
