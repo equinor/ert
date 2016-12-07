@@ -16,7 +16,6 @@
 
 import ctypes
 from .metacwrap import MetaCWrap
-from .cnamespace import CNamespace
 
 class BaseCClass(object):
     __metaclass__ = MetaCWrap

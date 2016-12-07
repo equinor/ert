@@ -5,8 +5,6 @@ set(PYTHON_SOURCES
     basecvalue.py
     cfile.py
     clib.py
-    cnamespace.py
-    cwrap.py
     metacwrap.py
     prototype.py
 )

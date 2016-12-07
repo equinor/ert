@@ -16,7 +16,6 @@
 
 import ctypes
 from .metacwrap import MetaCWrap
-from .cwrap import CWrapper
 
 
 class BaseCEnum(object):
@@ -158,7 +157,3 @@ class BaseCEnum(object):
             else:
                 break
 
-    @classmethod
-    def registerEnum(cls, library, enum_name):
-        cwrapper = CWrapper(library)
-        cwrapper.registerType(enum_name, cls)
