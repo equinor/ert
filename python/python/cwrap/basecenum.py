@@ -21,9 +21,8 @@ import six
 import ctypes
 from .metacwrap import MetaCWrap
 
-# @six.add_metaclass(MetaCWrap) # For Python2/3 compatibility
+@six.add_metaclass(MetaCWrap)
 class BaseCEnum(object):
-    __metaclass__ = MetaCWrap
     enum_namespace = {}
 
     def __init__(self, *args, **kwargs):
