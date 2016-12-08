@@ -1,7 +1,13 @@
 import os
-from SimpleXMLRPCServer import SimpleXMLRPCServer
 from threading import Lock
-from xmlrpclib import Fault
+
+try:
+    from SimpleXMLRPCServer import SimpleXMLRPCServer
+    from xmlrpclib import Fault
+except ImportError:
+    from xmlrpc.server import SimpleXMLRPCServer
+    from xmlrpc.client import Fault
+
 
 from ert import Version
 from ert.enkf import EnKFMain, NodeId
