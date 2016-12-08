@@ -23,10 +23,6 @@ the process of interacting with a C library:
      facilities for trying several different names when loading the
      library.
 
-  cwrap: This module contains support for a Python <-> C type map. The
-     whole type mapping in the ert python bindings is based on this
-     module.
-
   cfile: This module implemenets the class CFILE which can be used to
      extract the underlying FILE pointer from a Python filehandle, to
      facilitate use of Python filehandles for functions expecting a
@@ -49,13 +45,8 @@ from .basecvalue import BaseCValue
 from .cfile import CFILE
 from .clib import load, lib_name
 
-from .cnamespace import CNamespace
-
-from .cwrap import CWrapper, CWrapperNameSpace, CWrapError
-
 from .metacwrap import MetaCWrap
 from .prototype import REGISTERED_TYPES, Prototype, PrototypeError
 
 __all__ = ['BaseCClass', 'BaseCEnum', 'BaseCValue', 'CFILE',
-           'CNamespace', 'CWrapper', 'CWrapperNameSpace', 'CWrapError',
            'MetaCWrap', 'Prototype', 'load', 'lib_name']
