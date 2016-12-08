@@ -33,8 +33,7 @@ class Session:
         self.batch_number = 0
         self.lock = Lock()
 
-
-INVERSE_FAULT_CODES = {value:key for key, value in FAULT_CODES.iteritems()}
+INVERSE_FAULT_CODES = {value:key for key, value in FAULT_CODES.items()}
 
 def createFault(error, message):
     error_code = INVERSE_FAULT_CODES[error]
@@ -183,7 +182,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 data_node.load(self._getInitializationCase(), init_id)
                 data_node.save(target_fs, run_id)
 
-        for key, value in keywords.iteritems():
+        for key, value in keywords.items():
             config_node = ens_config[kw]
             data_node = EnkfNode( config_node )
 
@@ -295,7 +294,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
             raise createFault(UserWarning, "The CustomKW with group name: '%s' already exist!" % group_name)
 
         converted_definition = {}
-        for key, value in storage_definition.iteritems():
+        for key, value in storage_definition.items():
             if value == "str":
                 converted_definition[key] = str
             elif value == "float":
