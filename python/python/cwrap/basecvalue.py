@@ -24,10 +24,8 @@ from ctypes import (pointer, c_long, c_int, c_bool, c_float, c_double, c_byte,
 
 from .metacwrap import MetaCWrap
 
-# @six.add_metaclass(MetaCWrap) # For Python2/3 compatibility
+@six.add_metaclass(MetaCWrap)
 class BaseCValue(object):
-    __metaclass__ = MetaCWrap
-
     DATA_TYPE = None
     LEGAL_TYPES = [c_byte, c_ubyte, c_short, c_ushort, c_int, c_uint, c_long, c_ulong, c_bool, c_char, c_float, c_double]
 

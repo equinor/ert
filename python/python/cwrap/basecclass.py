@@ -22,9 +22,8 @@ import six
 import ctypes
 from .metacwrap import MetaCWrap
 
-#@six.add_metaclass(MetaCWrap) # For Python2/3 compatibility
+@six.add_metaclass(MetaCWrap)
 class BaseCClass(object):
-    __metaclass__ = MetaCWrap
     namespaces = {}
 
     def __init__(self, c_pointer, parent=None, is_reference=False):
