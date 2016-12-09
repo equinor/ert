@@ -24,7 +24,7 @@ import sys
 import time
 import ctypes
 
-from cwrap import BaseCClass,BaseCEnum
+from cwrap import BaseCClass
 
 from ert.job_queue import QueuePrototype
 from ert.job_queue import Job, JobStatusType
