@@ -20,18 +20,4 @@ from ert.test import ErtTestContext, ExtendedTestCase
 
 
 class DeprecationTest(ExtendedTestCase):
-    def setUp(self):
-        self.config_file = self.createTestPath("local/simple_config/minimum_config")
-        self.obs_file    = self.createTestPath("local/simple_config/minimum_config")
-
-        
-    # Added in 1.10 development
-    def test(self):
-        with ErtTestContext("enkf_deprecation", self.config_file) as test_context:
-            ert = test_context.getErt()
-
-            ecl_config = ert.eclConfig()
-            with warnings.catch_warnings():
-                ecl_config.get_grid( )
-                
-    
+    pass

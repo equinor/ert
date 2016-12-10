@@ -13,14 +13,11 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from warnings import warn
 
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
-from ert.util import StringList
-from ert.ecl import EclSum
-from ert.ecl import EclGrid
-from ert.util import UIReturn
+from ert.ecl import EclSum, EclGrid
+from ert.util import StringList, UIReturn
 from ert.sched import SchedFile
 
 class EclConfig(BaseCClass):
@@ -102,11 +99,6 @@ class EclConfig(BaseCClass):
 
     def validateGridFile(self , gridfile):
         return self._validate_gridfile(gridfile)
-
-    def get_grid(self):
-        warning_message = "The method get_grid() is deprecated. Use getGrid() instead"
-        warn(warning_message)
-        return self.getGrid( )
 
     def getGrid(self):
         return self._get_grid()
