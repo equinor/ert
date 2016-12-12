@@ -134,7 +134,6 @@
 /* Default directories. */
 #define DEFAULT_QC_PATH          "QC"
 #define DEFAULT_REPORT_PATH      "reports" 
-#define DEFAULT_PLOT_PATH        "plots"
 #define DEFAULT_RUNPATH          "simulations/realization%d"
 #define DEFAULT_ENSPATH          "storage"
 #define DEFAULT_RFTPATH          "rft"
