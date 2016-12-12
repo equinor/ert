@@ -1,5 +1,4 @@
 import sys
-import warnings
 
 REQUIRED_VERSION_HEX = 0x02070000
 
