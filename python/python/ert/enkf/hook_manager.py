@@ -7,6 +7,7 @@ class HookManager(BaseCClass):
     TYPE_NAME = "hook_manager"
 
     _get_runpath_list_file = EnkfPrototype("char* hook_manager_get_runpath_list_file(hook_manager)")
+    _get_runpath_list      = EnkfPrototype("runpath_list_ref  hook_manager_get_runpath_list(hook_manager)")
     _iget_hook_workflow    = EnkfPrototype("hook_workflow_ref hook_manager_iget_hook_workflow(hook_manager, int)")
     _size                  = EnkfPrototype("int hook_manager_get_size(hook_manager)")
 
@@ -18,7 +19,7 @@ class HookManager(BaseCClass):
         return self._size()
 
     def __repr__(self):
-        return 'HookManager(len = %d) at 0x%x' % (len(self), self._address())
+        return 'HookManager(size = %d) %s' % (len(self), self._ad_str())
 
     def __getitem__(self, index):
         """ @rtype: Hook workflow """
