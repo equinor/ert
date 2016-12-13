@@ -191,9 +191,6 @@ class EnKFObsTest(ExtendedTestCase):
     def test_hookmanager_runpathlist(self):
         with ErtTestContext("obs_test", self.config_file) as test_context:
             ert = test_context.getErt()
-            pfx = 'EnKFMain('
-            self.assertEqual(repr(ert)[:len(pfx)], pfx)
-
             hm = ert.getHookManager()
             pfx = 'HookManager(size = '
             self.assertEqual(repr(hm)[:len(pfx)], pfx)
