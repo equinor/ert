@@ -325,7 +325,7 @@ bool std_enkf_get_bool( const void * arg, const char * var_name) {
       return module_data->use_EE;
     else if (strcmp(var_name , USE_GE_KEY_) == 0)
       return module_data->use_GE;
-    if (strcmp(var_name , ANALYSIS_SCALE_DATA_KEY_) == 0)
+    else if (strcmp(var_name , ANALYSIS_SCALE_DATA_KEY_) == 0)
       return module_data->analysis_scale_data;
     else
       return false;
