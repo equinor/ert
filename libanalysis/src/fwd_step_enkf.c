@@ -294,8 +294,7 @@ void fwd_step_enkf_updateA(void * module_data ,
       }
 
       int kw,i;
-      int  chunk_size = 1;
-
+      
       /* This is to avoid a global-to-block search function since the number of parameters could be very large*/
       int_vector_type * kw_list = int_vector_alloc(nx, -1);
       int_vector_type * local_index_list = int_vector_alloc(nx, -1);
@@ -311,7 +310,7 @@ void fwd_step_enkf_updateA(void * module_data ,
 
 
       // =============================================
-      #pragma omp parallel for schedule(dynamic, chunk_size) num_threads(fwd_step_data->num_threads)
+      #pragma omp parallel for schedule(dynamic, 1) num_threads(fwd_step_data->num_threads)
       for (i = 0; i < nx; i++) {
         int kw_ind = int_vector_iget(kw_list, i);
         module_data_block_type * data_block = module_data_block_vector_iget_module_data_block(data_block_vector, kw_ind);
