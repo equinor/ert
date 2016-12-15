@@ -2,7 +2,7 @@ from ert.enkf import ENKF_LIB
 from ert.enkf.ert_run_context import ErtRunContext
 from ert.enkf.run_arg import RunArg
 from ert.job_queue import JobQueueManager
-from ert.util import BoolVector, ArgPack, CThreadPool
+from ert.util import ArgPack, CThreadPool
 
 
 class SimulationContext(object):
