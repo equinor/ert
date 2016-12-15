@@ -21,22 +21,27 @@ from ert.enkf.data import GenKw, GenData, CustomKW, Field
 
 class EnkfNode(BaseCClass):
     TYPE_NAME = "enkf_node"
-    _alloc = EnkfPrototype("void* enkf_node_alloc(enkf_config_node)", bind = False)
+    _alloc         = EnkfPrototype("void* enkf_node_alloc(enkf_config_node)", bind = False)
     _alloc_private = EnkfPrototype("void* enkf_node_alloc_private_container(enkf_config_node)", bind = False)
-    _free = EnkfPrototype("void enkf_node_free(enkf_node)")
-    _get_name = EnkfPrototype("char* enkf_node_get_key(enkf_node)")
-    _value_ptr = EnkfPrototype("void* enkf_node_value_ptr(enkf_node)")
-    _try_load = EnkfPrototype("bool enkf_node_try_load(enkf_node, enkf_fs, node_id)")
+    _free          = EnkfPrototype("void  enkf_node_free(enkf_node)")
+    _get_name      = EnkfPrototype("char* enkf_node_get_key(enkf_node)")
+    _value_ptr     = EnkfPrototype("void* enkf_node_value_ptr(enkf_node)")
+    _try_load      = EnkfPrototype("bool  enkf_node_try_load(enkf_node, enkf_fs, node_id)")
+    _store         = EnkfPrototype("bool  enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
     _get_impl_type = EnkfPrototype("ert_impl_type_enum enkf_node_get_impl_type(enkf_node)")
-    _store = EnkfPrototype("bool enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
 
     def __init__(self, config_node, private=False):
+        self._private = private
         if private:
             c_pointer = self._alloc_private(config_node)
         else:
             c_pointer = self._alloc(config_node)
 
-        super(EnkfNode, self).__init__(c_pointer, config_node, True)
+        if c_pointer:
+            super(EnkfNode, self).__init__(c_pointer, config_node, True)
+        else:
+            p_err = 'private ' if private else ''
+            raise ValueError('Unable to create %sEnkfNode from given config node.' % p_err)
 
     @classmethod
     def exportMany(cls , config_node , file_format , fs , iens_list  , report_step = 0 , file_type = None , arg = None):
@@ -126,4 +131,6 @@ class EnkfNode(BaseCClass):
     def free(self):
         self._free( )
 
-
+    def __repr__(self):
+        pp = ', private' if self._private else ''
+        return 'EnkfNode(name = "%s"%s) %s' % (self.name(), pp, self._ad_str())
