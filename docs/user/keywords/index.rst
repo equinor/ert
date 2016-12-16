@@ -107,14 +107,8 @@ Keyword name                                                        	Required by
 :ref:`MIN_REALIZATIONS <min_realizations>` 				NO 					0 				Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set. 
 :ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use. 
 :ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties. 
-:ref:`PLOT_DRIVER <plot_driver>` 					NO 					PLPLOT 				Which plotting system should be used.
-:ref:`PLOT_ERRORBAR <plot_errorbar>` 					NO 					FALSE 				Should errorbars on observations be plotted? 
-:ref:`PLOT_ERRORBAR_MAX <plot_errorbar_max>` 				NO 					25 				Show error bars if less than this number of observations. 
-:ref:`PLOT_HEIGHT <plot_height>` 					NO 					768 				Pixel height of the plots. 
+:ref:`PLOT_SETTINGS <plot_driver>` 					NO 					  				Possibility to configure some aspects of plotting.
 :ref:`PLOT_PATH  <plot_path>`						NO 					plots 				Path to where the plots are stored. 
-:ref:`PLOT_REFCASE <plot_refcase>` 					NO 					TRUE 				TRUE (IF you want to plot the listed reference cases) FALSE if not. 
-:ref:`PLOT_REFCASE_LIST <plot_refcase_list>` 				NO 									Deprecated. Use REFCASE_LIST instead. 
-:ref:`PLOT_WIDTH <plot_width>` 						NO 					1024 				Pixel width of the plots. 
 :ref:`PRE_CLEAR_RUNPATH <pre_clear_runpath>` 				NO 					FALSE 				Should the runpath be cleared before initializing? 
 :ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs. 
 :ref:`REFCASE <refcase>` 						NO (see HISTORY_SOURCE and SUMMARY) 					Reference case used for observations and plotting. 
@@ -1752,22 +1746,36 @@ Keywords related to plotting
 
 
 
+
+
 .. _plot_path:
 .. topic:: PLOT_PATH
 
-	The plotting engine creates 'files' with plots, they are stored in a directory. You can tell what that directory should be. Observe that the current 'casename' will automatically be appended to the plot path.
+	This is deprecated, see the more general PLOT_SETTINGS option.
 
 
-.. plot_width:
-.. topic:: PLOT_WIDTH
+.. _plot_settings:
+.. topic:: PLOT_SETTINGS
 
-	When the PLPLOT driver creates a plot file, it will have the width (in pixels) given by the PLOT_WIDTH keyword. The default value for PLOT_WIDTH is 1024 pixels. To create plots of half the size you use:
+        The :code:`PLOT_SETTINGS` keyword is a "master keyword" which
+        can be used to configure some aspects of the plotting. These
+        settings will affect the default behaviour when you create a
+        new plot, you can still changes these settings interactively.
 
-	::
+        When using the :code:`PLOT_SETTINGS` keyword you supply a
+        secondary keyword and a values as the tow arguments:
 
-		PLOT_HEIGHT   384
-		PLOT_WIDTH    512
+        ::
 
+           PLOT_SETTINGS SHOW_REFCASE False
+
+        Will make sure that your plots are created without the refcase
+        plotted as default. The available secondary keys are:
+
+        SHOW_REFCASE : Default True
+        SHOW_HISTORY : Default True
+        
+        
 
 
 .. _rft_config:
