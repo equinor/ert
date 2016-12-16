@@ -19,7 +19,7 @@ from ert.enkf import EnkfPrototype
 
 class PlotSettings(BaseCClass):
     TYPE_NAME    = "plot_settings"
-    _alloc       = EnkfPrototype("void*  plot_settings_alloc( )", bind = False)
+    _alloc       = EnkfPrototype("void* plot_settings_alloc( )", bind = False)
     _free        = EnkfPrototype("void  plot_settings_free( plot_settings )")
     _get_path    = EnkfPrototype("char* plot_settings_get_path(plot_settings)")
     _set_path    = EnkfPrototype("void  plot_settings_set_path(plot_settings, char*)")
