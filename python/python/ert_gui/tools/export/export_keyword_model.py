@@ -90,25 +90,25 @@ class ExportKeywordModel(object):
 
     def isGenKw(self, key):
         if self.__gen_kw is None:
-            return False
+            self.getGenKwKeyWords()
 
         return key in self.__gen_kw
 
     def isFieldKw(self, key):
         if self.__field_kw is None:
-            return False
+            self.getFieldKeyWords()
 
         return key in self.__field_kw
 
     def isGenDataKw(self, key):
         if self.__gen_data is None:
-            return False
+            self.getGenDataKeyWords()
 
         return key in self.__gen_data
 
     def isGenParamKw(self, key):
         if self.__gen_param is None:
-            return False
+            self.getGenDataKeyWords()
 
         return key in self.__gen_param
 
