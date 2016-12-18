@@ -1,14 +1,17 @@
 import os
 import itertools
+from ert.enkf import PlotSettings
 from ert_gui.plottery import PlotStyle, PlotLimits
 
 
 class PlotConfig(object):
 
-    def __init__(self, title="Unnamed", x_label=None, y_label=None):
-        super(PlotConfig, self).__init__()
+    # The plot_settings input argument is an internalisation of the (quite few) plot
+    # policy settings which can be set in the configuration file.
+    
+    def __init__(self, plot_settings, title="Unnamed", x_label=None, y_label=None):
         self._title = title
-
+        self._plot_settings = plot_settings
         self._line_color_cycle_colors = ["#000000"]
         self._line_color_cycle = itertools.cycle(self._line_color_cycle_colors) #Black
         # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown
@@ -24,14 +27,8 @@ class PlotConfig(object):
         self._limits = PlotLimits()
 
         self._default_style = PlotStyle(name="Default", color=None, alpha=0.8)
-        self._refcase_style = PlotStyle(name="Refcase", alpha=0.8, marker="x", width=2.0)
-        self._history_style = PlotStyle(name="History", alpha=0.8, marker="D", width=2.0)
-
-        # Insanely ugly implementation of user preferences.
-        if os.getenv("ERT_SHOW_HISTORY_VECTORS"):
-            self._history_style.setEnabled(True)
-        else:
-            self._history_style.setEnabled(False)
+        self._refcase_style = PlotStyle(name="Refcase", alpha=0.8, marker="x", width=2.0 , enabled = self._plot_settings["SHOW_REFCASE"])
+        self._history_style = PlotStyle(name="History", alpha=0.8, marker="D", width=2.0 , enabled = self._plot_settings["SHOW_HISTORY"])
 
         self._observation_style = PlotStyle(name="Observations")
         self._histogram_style = PlotStyle(name="Histogram", width=2.0)
@@ -283,6 +280,6 @@ class PlotConfig(object):
 
     @classmethod
     def createCopy(cls, other):
-        copy = PlotConfig(None)
+        copy = PlotConfig(other._plot_settings )
         copy.copyConfigFrom(other)
         return copy
