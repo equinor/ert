@@ -276,6 +276,14 @@ class ConfigTest(ExtendedTestCase):
         self.assertEqual(schema_item.iget_type(0), ContentTypeEnum.CONFIG_INT)
         schema_item.set_argc_minmax(3, 6)
 
+        self.assertTrue( SchemaItem.validString( ContentTypeEnum.CONFIG_INT , "100") )
+        self.assertFalse( SchemaItem.validString( ContentTypeEnum.CONFIG_INT , "100.99") )
+        self.assertTrue( SchemaItem.validString( ContentTypeEnum.CONFIG_FLOAT , "100.99") )
+        self.assertFalse( SchemaItem.validString( ContentTypeEnum.CONFIG_FLOAT , "100.99X") )
+        self.assertTrue( SchemaItem.validString( ContentTypeEnum.CONFIG_STRING , "100.99XX") )
+        self.assertTrue( SchemaItem.validString( ContentTypeEnum.CONFIG_PATH , "100.99XX") )
+        
+        
         del schema_item
 
 

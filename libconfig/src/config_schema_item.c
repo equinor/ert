@@ -250,6 +250,29 @@ static char * __alloc_relocated__(const config_path_elm_type * path_elm , const 
   return file;
 }
 
+bool config_schema_item_valid_string(config_item_types value_type , const char * value)
+{
+  switch(value_type) {
+  case(CONFIG_ISODATE):
+    return util_sscanf_isodate( value , NULL );
+    break;
+  case(CONFIG_INT):
+    return util_sscanf_int( value , NULL );
+    break;
+  case(CONFIG_FLOAT):
+    return util_sscanf_double( value , NULL );
+    break;
+  case(CONFIG_BOOL):
+    return util_sscanf_bool( value , NULL );
+    break;
+  case(CONFIG_BYTESIZE):
+    return util_sscanf_bytesize( value , NULL);
+    break;
+  default:
+    return true;
+  }
+}
+
 
 bool config_schema_item_validate_set(const config_schema_item_type * item , stringlist_type * token_list , const char * config_file, const config_path_elm_type * path_elm , config_error_type * error_list) {
   bool OK = true;
