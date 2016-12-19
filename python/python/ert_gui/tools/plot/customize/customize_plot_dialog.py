@@ -10,12 +10,12 @@ class PlotCustomizer(QObject):
 
     settingsChanged = pyqtSignal()
 
-    def __init__(self, parent):
+    def __init__(self, parent, default_plot_settings):
         super(PlotCustomizer, self).__init__()
 
         self._plot_config_key = None
         self._previous_key = None
-        self._plot_configs = {None: PlotConfigHistory("No_Key_Selected", PlotConfig(None))}
+        self._plot_configs = {None: PlotConfigHistory("No_Key_Selected", PlotConfig(default_plot_settings, title = None))}
 
         self._plotConfigCreator = self._defaultPlotConfigCreator
 
