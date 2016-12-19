@@ -64,7 +64,7 @@ class EnKFMain(BaseCClass):
     _get_mount_point = EnkfPrototype("char* enkf_main_get_mount_root( enkf_main )")
     _export_field = EnkfPrototype("bool enkf_main_export_field(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int)")
     _export_field_with_fs = EnkfPrototype("bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_fs_manager)")
-    _load_from_forward_model = EnkfPrototype("void enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)")
+    _load_from_forward_model = EnkfPrototype("int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)")
     _create_run_path = EnkfPrototype("void enkf_main_icreate_run_path(enkf_main , run_arg)")
     _submit_simulation = EnkfPrototype("void enkf_main_isubmit_job(enkf_main , run_arg)")
     _alloc_run_context_ENSEMBLE_EXPERIMENT= EnkfPrototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , enkf_init_mode_enum , int)")
