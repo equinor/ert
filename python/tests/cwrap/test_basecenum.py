@@ -74,5 +74,18 @@ class BaseCEnumTest(ExtendedTestCase):
         self.assertIn(PowerOf2.ONE, three)
         self.assertNotIn(PowerOf2.FOUR, three)
 
+    def test_repr_and_str(self):
+        class MyLonelyEnum(BaseCEnum):
+            pass
 
+        MyLonelyEnum.addEnum("ONE", 1)
+        MyLonelyEnum.addEnum("TWO", 2)
+        MyLonelyEnum.addEnum("THREE", 3)
+        MyLonelyEnum.addEnum("FOUR", 4)
 
+        tri = MyLonelyEnum.THREE
+
+        self.assertEqual(repr(tri), 'MyLonelyEnum(name = "THREE", value = 3)')
+        self.assertEqual(str(tri), 'THREE')
+        self.assertEqual(tri.name, 'THREE')
+        self.assertEqual(tri.value, 3)
