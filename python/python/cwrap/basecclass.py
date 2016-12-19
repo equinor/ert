@@ -43,6 +43,7 @@ class BaseCClass(object):
 
     def _address(self):
         return self.__c_pointer
+
     def _ad_str(self):
         return 'at 0x%x' % self._address()
 
@@ -122,6 +123,13 @@ class BaseCClass(object):
     def free(self):
         raise NotImplementedError("A BaseCClass requires a free method implementation!")
 
+    def _create_repr(self, args = ''):
+        """Representation on the form (e.g.) 'EclFile(...) at 0x1729'."""
+        return "{0}({1}) {2}".format(self.__class__.__name__, args, self._ad_str())
+
+    def __repr__(self):
+        """Representation on the form (e.g.) 'EclFile(...) at 0x1729'."""
+        return self._create_repr()
 
     def __del__(self):
         if self.free is not None:
