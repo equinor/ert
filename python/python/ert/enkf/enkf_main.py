@@ -296,7 +296,8 @@ class EnKFMain(BaseCClass):
         return self._export_field_with_fs(keyword, path, iactive, file_type, report_step, state, enkfFs)
 
     def loadFromForwardModel(self, realization, iteration, fs):
-        self._load_from_forward_model(iteration, realization, fs)
+        """Returns the number of loaded realizations"""
+        return self._load_from_forward_model(iteration, realization, fs)
 
     def createRunPath(self , run_arg):
         self._create_run_path( run_arg)
