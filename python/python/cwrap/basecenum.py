@@ -81,6 +81,12 @@ class BaseCEnum(object):
     def __str__(self):
         return self.name
 
+    def __repr__(self):
+        cn = self.__class__.__name__
+        na = self.name
+        va = self.value
+        return '%s(name = "%s", value = %s)' % (cn, na, va)
+
     def __add__(self, other):
         self.__assertOtherIsSameType(other)
         value = self.value + other.value

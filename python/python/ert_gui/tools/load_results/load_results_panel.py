@@ -89,8 +89,12 @@ class LoadResultsPanel(QWidget):
         except ValueError as e:
             print('Expected a (whole) number in iteration field, got "%s". Error message: %s.'  % (iteration, e))
             return False
-        LoadResultsModel.loadResults(selected_case, realizations, iteration)
-        return True
+        loaded = LoadResultsModel.loadResults(selected_case, realizations, iteration)
+        if loaded > 0:
+            print('Successfully loaded %d realisations.' % loaded)
+        else:
+            print('No realisations loaded.')
+        return loaded
 
     def setCurrectCase(self):
         current_case = getCurrentCaseName()
