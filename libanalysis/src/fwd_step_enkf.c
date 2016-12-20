@@ -20,7 +20,10 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
+
+#if defined(_OPENMP)
 #include <omp.h>
+#endif
 
 #include <ert/util/type_macros.h>
 #include <ert/util/util.h>
