@@ -3077,28 +3077,29 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 }
 
 
-void enkf_main_load_from_forward_model_from_gui(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, enkf_fs_type * fs){
+int enkf_main_load_from_forward_model_from_gui(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, enkf_fs_type * fs){
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   stringlist_type ** realizations_msg_list = util_calloc( ens_size , sizeof * realizations_msg_list );
   for (int iens = 0; iens < ens_size; ++iens)
     realizations_msg_list[iens] = stringlist_alloc_new();
 
-  enkf_main_load_from_forward_model_with_fs(enkf_main, iter , iactive, realizations_msg_list, fs);
+  int loaded = enkf_main_load_from_forward_model_with_fs(enkf_main, iter , iactive, realizations_msg_list, fs);
 
   for (int iens = 0; iens < ens_size; ++iens)
     stringlist_free( realizations_msg_list[iens] );
 
   free(realizations_msg_list);
+  return loaded;
 }
 
-void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list){
+int enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list){
   enkf_fs_type * fs         = enkf_main_get_fs( enkf_main );
-  enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive, realizations_msg_list, fs);
+  return enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive, realizations_msg_list, fs);
 }
 
 
-void enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list, enkf_fs_type * fs) {
-
+int enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list, enkf_fs_type * fs) {
+  printf("Loading from forward model\n");
   const int ens_size        = enkf_main_get_ensemble_size( enkf_main );
   int result[ens_size];
   model_config_type * model_config = enkf_main->model_config;
@@ -3109,11 +3110,13 @@ void enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int i
 
   int iens = 0;
   for (; iens < ens_size; ++iens) {
+    printf("\tloading %d (realization %d/%d) ", iens, (1+iens), ens_size);
     result[iens] = 0;
     arg_pack_type * arg_pack = arg_pack_alloc();
     arg_list[iens] = arg_pack;
 
     if (bool_vector_iget(iactive, iens)) {
+      printf("... ");
       enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
       arg_pack_append_ptr( arg_pack , enkf_state);                                         /* 0: enkf_state*/
       arg_pack_append_ptr( arg_pack , ert_run_context_iens_get_arg( run_context , iens )); /* 1: run_arg */
@@ -3122,23 +3125,28 @@ void enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int i
       arg_pack_append_ptr(arg_pack, &result[iens]);                                        /* 4: Result */
       thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
     }
+    printf("done\n");
   }
 
   thread_pool_join( tp );
   thread_pool_free( tp );
   printf("\n");
 
+  int loaded = 0;
   for (iens = 0; iens < ens_size; ++iens) {
     if (bool_vector_iget(iactive, iens)) {
       if (result[iens] & LOAD_FAILURE)
         fprintf(stderr, "** Warning: Function %s: Realization %d load failure\n", __func__, iens);
       else if (result[iens] & REPORT_STEP_INCOMPATIBLE)
-        fprintf(stderr, "** Warning: Function %s: Reliazation %d report step incompatible\n", __func__, iens);
+        fprintf(stderr, "** Warning: Function %s: Realization %d report step incompatible\n", __func__, iens);
+      else
+        loaded++;
     }
     arg_pack_free(arg_list[iens]);
   }
   free( arg_list );
   ert_run_context_free( run_context );
+  return loaded;
 }
 
 
