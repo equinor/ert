@@ -17,7 +17,7 @@ STYLESET_TOGGLE = 'toggle_only'
 STYLES = {
     STYLESET_DEFAULT:  [STYLE_OFF, STYLE_SOLID, STYLE_DASHED, STYLE_DOTTED, STYLE_DASH_DOTTED],
     STYLESET_AREA:     [STYLE_OFF, STYLE_AREA, STYLE_SOLID, STYLE_DASHED, STYLE_DOTTED, STYLE_DASH_DOTTED],
-    STYLESET_TOGGLE: [STYLE_SOLID, STYLE_OFF]
+    STYLESET_TOGGLE:   [STYLE_OFF, STYLE_SOLID]
 }
 
 MARKER_OFF = ("Off", None)
@@ -78,13 +78,9 @@ class StyleChooser(QWidget):
 
         # the text content of the spinner varies, but shouldn't push the control out of boundaries
         self.line_chooser.setMinimumWidth(110)
-
         layout.addWidget(self.line_chooser)
-        layout.addStretch(1)
         layout.addWidget(self.thickness_spinner)
-        layout.addStretch(0)
         layout.addWidget(self.marker_chooser)
-        layout.addStretch(0)
         layout.addWidget(self.size_spinner)
 
         self.setLayout(layout)
