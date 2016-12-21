@@ -38,12 +38,15 @@ if (ERT_RST_DOC)
        EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_SOURCE_DIR}/code" "${PROJECT_BINARY_DIR}/doc-src/code")
        add_custom_target(api-doc ALL
          COMMAND sphinx-apidoc -e -o doc-src/API/python ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}
-         DEPENDS enkf)
+         DEPENDS enkf
+         WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
     endif()     
 
     add_custom_target(rst-doc ALL
-      COMMAND sphinx-build -b html -d doc-src/doctrees doc-src documentation/rst 
-      WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+      COMMAND sphinx-build -b html -d doc-src/doctrees doc-src documentation/rst
+      WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+      DEPENDS api-doc
+      )
 
   else()
     message(STATUS "Sphinx documentation tool not found - documentation not generated")
