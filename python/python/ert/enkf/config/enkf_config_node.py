@@ -111,7 +111,11 @@ class EnkfConfigNode(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return 'EnkfConfigNode(key = %s) %s' % (self.getKey(), self._ad_str())
+        key = self.getKey()
+        vt  = self.getVariableType()
+        imp = self.getImplementationType()
+        content = 'key = %s, var_type = %s, implementation = %s' % (key, vt, imp)
+        return self._create_repr(content)
 
     def getModelConfig(self):
         implementation_type = self.getImplementationType()

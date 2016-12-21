@@ -144,7 +144,7 @@ class ExportPanel(QWidget):
             lst = self._gen_data_report_step_model
             idx = self._gen_data_report_step.currentIndex()
             if lst and len(lst) > idx:
-                reprt_step = lst[idx]
+                report_step = lst[idx]
             else:
                 raise IndexError('No such model step: %d.  Valid range: [0, %d)' % (idx, len(lst)))
 

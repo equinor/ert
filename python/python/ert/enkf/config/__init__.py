@@ -9,4 +9,5 @@ __all__ = ["FieldConfig",
            "CustomKWConfig",
            "GenKwConfig",
            "GenDataConfig",
-           "EnkfConfigNode",]
+           "EnkfConfigNode",
+           "SummaryConfig"]
