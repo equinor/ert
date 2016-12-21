@@ -117,7 +117,7 @@ class ExportKeywordModel(object):
         obs_keys = ERT.ert.ensembleConfig().getNode(key).getObservationKeys()
         for obs_key in obs_keys:
             obs_vector = ERT.ert.getObservations()[obs_key]
-            for report_step in obs_vector:
+            for report_step in obs_vector.getStepList():
                 gen_data_list.append(str(report_step))
 
         return gen_data_list
