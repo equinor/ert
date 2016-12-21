@@ -15,4 +15,9 @@ class NodeId(Structure):
         """
         super(NodeId, self).__init__(report_step, realization_number)
 
+    def __repr__(self):
+        rs = self.report_step
+        ie = self.iens
+        return 'NodeId(report_step = %d, iens = %d)' % (rs, ie)
+
 Prototype.registerType( "node_id" , NodeId )
