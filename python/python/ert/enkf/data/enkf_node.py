@@ -109,8 +109,10 @@ class EnkfNode(BaseCClass):
         @type node_id: NodeId
         @rtype: bool
         """
-        assert isinstance(fs, EnkfFs)
-        assert isinstance(node_id, NodeId)
+        if not isinstance(fs, EnkfFs):
+            raise TypeError('fs must be an EnkfFs, not %s' % type(fs))
+        if not isinstance(node_id, NodeId):
+            raise TypeError('node_id must be a NodeId, not %s' % type(node_id))
 
         return self._try_load(fs, node_id)
 

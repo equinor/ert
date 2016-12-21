@@ -29,14 +29,8 @@ class ExportKeywordModel(object):
         return sorted(ERT.ert.ensembleConfig().getKeylistFromImplType(ert_impl_type))
 
     def isDynamicPlot(self, key):
-        variable_type = self.getVarType(key)
-        return_value = False
-        if variable_type == EnkfVarType.DYNAMIC_STATE:
-            return_value = True
-        elif variable_type == EnkfVarType.DYNAMIC_RESULT:
-            return_value = True
-
-        return return_value
+        vtype = self.getVarType(key)
+        return vtype in [EnkfVarType.DYNAMIC_STATE, EnkfVarType.DYNAMIC_RESULT]
 
     def isDynamicField(self, key):
         return self.getVarType(key) == EnkfVarType.DYNAMIC_STATE
@@ -82,11 +76,7 @@ class ExportKeywordModel(object):
         return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords() + self.getGenDataKeyWords())
 
     def hasKeywords(self):
-        keys = self.getKeyWords()
-        if keys.count > 0:
-            return True
-        else:
-            return False
+        return self.getKeyWords().count > 0
 
     def isGenKw(self, key):
         if self.__gen_kw is None:
