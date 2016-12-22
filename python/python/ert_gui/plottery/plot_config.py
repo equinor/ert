@@ -30,14 +30,14 @@ class PlotConfig(object):
 
         self._default_style = PlotStyle(name="Default", color=None, alpha=0.8)
 
-        self._refcase_style = PlotStyle(name="Refcase", alpha=0.8, marker="x", width=2.0,
+        self._refcase_style = PlotStyle(name="Refcase", alpha=0.8, line_style="--", marker="", width=2.0,
                                         enabled=self._plot_settings["SHOW_REFCASE"])
 
-        self._history_style = PlotStyle(name="History", alpha=0.8, marker="D", width=2.0,
+        self._history_style = PlotStyle(name="History", alpha=0.8, marker=".", width=2.0,
                                         enabled=self._plot_settings["SHOW_HISTORY"])
 
         self._observs_style = PlotStyle(name="Observations", line_style="-", alpha=0.8,
-                                        marker="", width=1.0, color="#000000")
+                                        marker=".", width=1.0, color="#000000")
 
         self._histogram_style = PlotStyle(name="Histogram", width=2.0)
         self._distribution_style = PlotStyle(name="Distribution", line_style="", marker="o", alpha=0.5, size=10.0)
