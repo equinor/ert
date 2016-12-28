@@ -133,6 +133,13 @@ class EnKFMain(BaseCClass):
         self.umount()
         self._free( )
 
+    def __repr__(self):
+        ens = self.getEnsembleSize()
+        his = self.getHistoryLength()
+        cfg = self.get_site_config_file()
+        cnt = 'ensemble_size = %d, history_length = %d, config_file = %s' % (ens,his,cfg)
+        return self._create_repr(cnt)
+
     def getEnsembleSize(self):
         """ @rtype: int """
         return self._get_ensemble_size( )
