@@ -68,7 +68,6 @@ class EnKFMain(BaseCClass):
     _create_run_path = EnkfPrototype("void enkf_main_icreate_run_path(enkf_main , run_arg)")
     _submit_simulation = EnkfPrototype("void enkf_main_isubmit_job(enkf_main , run_arg)")
     _alloc_run_context_ENSEMBLE_EXPERIMENT= EnkfPrototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , enkf_init_mode_enum , int)")
-    _alloc_field_init_file = EnkfPrototype("cstring_obj enkf_main_alloc_abs_path_to_init_file(enkf_main, enkf_config_node)")
     _get_runpath_list = EnkfPrototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
     _add_node = EnkfPrototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
 
@@ -135,9 +134,8 @@ class EnKFMain(BaseCClass):
 
     def __repr__(self):
         ens = self.getEnsembleSize()
-        his = self.getHistoryLength()
-        cfg = self.get_site_config_file()
-        cnt = 'ensemble_size = %d, history_length = %d, config_file = %s' % (ens,his,cfg)
+        cfg = self.getUserConfigFile()
+        cnt = 'ensemble_size = %d, config_file = %s' % (ens,cfg)
         return self._create_repr(cnt)
 
     def getEnsembleSize(self):
@@ -237,8 +235,7 @@ class EnKFMain(BaseCClass):
         return self._get_templates( ).setParent(self)
 
     def get_site_config_file(self):
-        site_conf_file = self._get_site_config_file( )
-        return site_conf_file
+        return self._get_site_config_file( )
 
     def getUserConfigFile(self):
         """ @rtype: str """
@@ -284,11 +281,6 @@ class EnKFMain(BaseCClass):
         """ @rtype: HookManager """
         return self._get_hook_manager( )
 
-
-    def fieldInitFile(self , config_node):
-        return self._alloc_field_init_file( config_node )
-
-
     def exportField(self, keyword, path, iactive, file_type, report_step, state, enkfFs):
         """
         @type keyword: str
@@ -322,5 +314,3 @@ class EnKFMain(BaseCClass):
 
     def addNode(self, enkf_config_node):
         self._add_node(enkf_config_node)
-
-

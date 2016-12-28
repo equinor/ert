@@ -34,8 +34,11 @@ class EnKFTest(ExtendedTestCase):
 
     def test_repr( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
+            work_area.copy_directory(self.case_directory)
+            main = EnKFMain("simple_config/minimum_config")
             pfx = 'EnKFMain(ensemble_size'
             self.assertEqual(pfx, repr(main)[:len(pfx)])
+            main.free()
 
     def test_bootstrap( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
