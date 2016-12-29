@@ -4,7 +4,7 @@ from ert.util import IntVector
 
 from ert.ecl import EclGrid
 
-from ert.enkf.config import FieldConfig
+from ert.enkf.config import FieldTypeEnum, FieldConfig
 from ert.enkf.data import EnkfNode
 from ert.enkf.enums import EnkfFieldFileFormatEnum
 from ert.enkf import NodeId
@@ -17,10 +17,18 @@ class FieldExportTest(ExtendedTestCase):
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/obs_testing/config")
 
-        
+    def test_field_type_enum(self):
+        with ErtTestContext("export_test", self.config_file) as test_context:
+            ert = test_context.getErt()
+            ens_config = ert.ensembleConfig()
+            fc = ens_config["PERMX"].getFieldModelConfig()
+            self.assertEqual(2, fc.get_type())
+
     def test_export_format(self):
-        self.assertEqual( FieldConfig.exportFormat("file.grdecl") , EnkfFieldFileFormatEnum.ECL_GRDECL_FILE ) 
-        self.assertEqual( FieldConfig.exportFormat("file.roFF") , EnkfFieldFileFormatEnum.RMS_ROFF_FILE ) 
+        self.assertEqual(FieldConfig.exportFormat("file.grdecl"),     EnkfFieldFileFormatEnum.ECL_GRDECL_FILE)
+        self.assertEqual(FieldConfig.exportFormat("file.xyz.grdecl"), EnkfFieldFileFormatEnum.ECL_GRDECL_FILE)
+        self.assertEqual(FieldConfig.exportFormat("file.roFF"),       EnkfFieldFileFormatEnum.RMS_ROFF_FILE)
+        self.assertEqual(FieldConfig.exportFormat("file.xyz.roFF"),   EnkfFieldFileFormatEnum.RMS_ROFF_FILE)
 
         with self.assertRaises(ValueError):
             FieldConfig.exportFormat("file.xyz")
@@ -28,8 +36,15 @@ class FieldExportTest(ExtendedTestCase):
         with self.assertRaises(ValueError):
             FieldConfig.exportFormat("file.xyz")
 
-            
-            
+    def test_field_repr(self):
+        with ErtTestContext("export_test", self.config_file) as test_context:
+            ert = test_context.getErt()
+            ens_config = ert.ensembleConfig()
+            config_node = ens_config["PERMX"]
+            pfx = 'FieldExport(type'
+            rep = repr(config_node)
+            self.assertEqual(pfx, rep[:len(pfx)])
+
     def test_field_export(self):
         with ErtTestContext("export_test", self.config_file) as test_context:
             ert = test_context.getErt()

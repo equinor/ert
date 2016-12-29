@@ -18,13 +18,14 @@ from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.enkf.enums import EnkfFieldFileFormatEnum
 from ert.ecl import EclGrid
+from .field_type_enum import FieldTypeEnum
 
 class FieldConfig(BaseCClass):
     TYPE_NAME = "field_config"
 
     _alloc                     = EnkfPrototype("void*  field_config_alloc_empty(char* , ecl_grid , void* , bool)", bind = False)
     _free                      = EnkfPrototype("void   field_config_free( field_config )")
-    _get_type                  = EnkfPrototype("int    field_config_get_type(field_config)")
+    _get_type                  = EnkfPrototype("field_type_enum field_config_get_type(field_config)")
     _get_truncation_mode       = EnkfPrototype("int    field_config_get_truncation_mode(field_config)")
     _get_truncation_min        = EnkfPrototype("double field_config_get_truncation_min(field_config)")
     _get_truncation_max        = EnkfPrototype("double field_config_get_truncation_max(field_config)")
@@ -86,6 +87,5 @@ class FieldConfig(BaseCClass):
     def __repr__(self):
         tp = self.get_type()
         nx,ny,nz = self.get_nx(),self.get_ny(),self.get_nz()
-        ad = self._ad_str()
-        fmt = 'FieldConfig(type = %d, nx = %d, ny = %d, nz = %d) %s'
-        return fmt % (tp, nx,ny,nz, ad)
+        cnt = 'type = %s, nx = %d, ny = %d, nz = %d' % (tp, nx,ny,nz)
+        return self._create_repr(cnt)

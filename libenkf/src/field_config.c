@@ -431,6 +431,7 @@ field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_gri
   config->__enkf_mode         = true;
   config->grid                = NULL;
   config->write_compressed    = true;
+  config->type                = UNKNOWN_FIELD_TYPE;
 
   config->output_transform      = NULL;
   config->input_transform       = NULL;
