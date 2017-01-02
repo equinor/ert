@@ -37,7 +37,7 @@ class FieldConfig(BaseCClass):
     _get_nz                    = EnkfPrototype("int    field_config_get_nz(field_config)")
     _get_grid                  = EnkfPrototype("ecl_grid_ref field_config_get_grid(field_config)")
     _export_format             = EnkfPrototype("enkf_field_file_format_enum field_config_default_export_format(char*)", bind = False)
-
+    _guess_filetype            = EnkfPrototype("enkf_field_file_format_enum field_config_guess_file_type(char*)", bind = False)
 
     def __init__(self , kw , grid):
         c_ptr = self._alloc( kw , grid , None , False )
@@ -50,6 +50,10 @@ class FieldConfig(BaseCClass):
             return export_format
         else:
             raise ValueError("Could not determine grdecl / roff format from:%s" % filename)
+
+    @classmethod
+    def guessFiletype(cls, filename):
+        return cls._guess_filetype(filename)
 
     def get_type(self):
         return self._get_type()
