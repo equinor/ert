@@ -18,6 +18,7 @@ from ert.enkf import EnkfPrototype
 from ert.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig
 from ert.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
 from ert.ecl import EclGrid
+from ert.util import PathFormat
 
 class EnkfConfigNode(BaseCClass):
     TYPE_NAME = "enkf_config_node"
@@ -29,6 +30,7 @@ class EnkfConfigNode(BaseCClass):
     _get_enkf_outfile   = EnkfPrototype("char* enkf_config_node_get_enkf_outfile(enkf_config_node)")
     _get_min_std_file   = EnkfPrototype("char* enkf_config_node_get_min_std_file(enkf_config_node)")
     _get_enkf_infile    = EnkfPrototype("char* enkf_config_node_get_enkf_infile(enkf_config_node)")
+    _get_init_file      = EnkfPrototype("char* enkf_config_node_get_FIELD_fill_file(enkf_config_node, path_fmt)")
     _get_init_file_fmt  = EnkfPrototype("char* enkf_config_node_get_init_file_fmt(enkf_config_node)")
     _get_var_type       = EnkfPrototype("enkf_var_type_enum enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
     _get_key            = EnkfPrototype("char* enkf_config_node_get_key(enkf_config_node)")
@@ -48,6 +50,9 @@ class EnkfConfigNode(BaseCClass):
 
     def getPointerReference(self):
         return self._get_ref()
+
+    def getInitFile(self, model_config):
+        return self._enkf_config_node_get_init_file(model_config.getRunpathFormat())
 
     # def get_min_std_file(self):
     #     return self._get_min_std_file()
