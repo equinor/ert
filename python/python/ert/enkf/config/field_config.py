@@ -1,30 +1,31 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'field_config.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details.
+# Copyright (C) 2012  Statoil ASA, Norway.
+#
+# This file is part of ERT - Ensemble based Reservoir Tool.
+#
+# ERT is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.
+#
+# See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+# for more details.
 from cwrap import BaseCClass
 
 from ert.enkf import EnkfPrototype
 from ert.enkf.enums import EnkfFieldFileFormatEnum
 from ert.ecl import EclGrid
+from .field_type_enum import FieldTypeEnum
 
 class FieldConfig(BaseCClass):
     TYPE_NAME = "field_config"
 
     _alloc                     = EnkfPrototype("void*  field_config_alloc_empty(char* , ecl_grid , void* , bool)", bind = False)
     _free                      = EnkfPrototype("void   field_config_free( field_config )")
-    _get_type                  = EnkfPrototype("int    field_config_get_type(field_config)")
+    _get_type                  = EnkfPrototype("field_type_enum field_config_get_type(field_config)")
     _get_truncation_mode       = EnkfPrototype("int    field_config_get_truncation_mode(field_config)")
     _get_truncation_min        = EnkfPrototype("double field_config_get_truncation_min(field_config)")
     _get_truncation_max        = EnkfPrototype("double field_config_get_truncation_max(field_config)")
@@ -36,7 +37,7 @@ class FieldConfig(BaseCClass):
     _get_nz                    = EnkfPrototype("int    field_config_get_nz(field_config)")
     _get_grid                  = EnkfPrototype("ecl_grid_ref field_config_get_grid(field_config)")
     _export_format             = EnkfPrototype("enkf_field_file_format_enum field_config_default_export_format(char*)", bind = False)
-
+    _guess_filetype            = EnkfPrototype("enkf_field_file_format_enum field_config_guess_file_type(char*)", bind = False)
 
     def __init__(self , kw , grid):
         c_ptr = self._alloc( kw , grid , None , False )
@@ -49,6 +50,10 @@ class FieldConfig(BaseCClass):
             return export_format
         else:
             raise ValueError("Could not determine grdecl / roff format from:%s" % filename)
+
+    @classmethod
+    def guessFiletype(cls, filename):
+        return cls._guess_filetype(filename)
 
     def get_type(self):
         return self._get_type()
@@ -77,6 +82,9 @@ class FieldConfig(BaseCClass):
     def get_nz(self):
         return self._get_nz()
 
+    def get_grid(self):
+        return self._get_grid()
+
     def ijk_active(self, i, j, k):
         return self._ijk_active(i, j, k)
 
@@ -86,6 +94,5 @@ class FieldConfig(BaseCClass):
     def __repr__(self):
         tp = self.get_type()
         nx,ny,nz = self.get_nx(),self.get_ny(),self.get_nz()
-        ad = self._ad_str()
-        fmt = 'FieldConfig(type = %d, nx = %d, ny = %d, nz = %d) %s'
-        return fmt % (tp, nx,ny,nz, ad)
+        cnt = 'type = %s, nx = %d, ny = %d, nz = %d' % (tp, nx,ny,nz)
+        return self._create_repr(cnt)
