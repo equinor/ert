@@ -148,15 +148,15 @@ int main(int argc , char ** argv) {
   const char * key         = "PORO";
   int iens                 = 0;
 
-  ert_test_context_type * test_context         = ert_test_context_alloc("ExportInactiveCellsTest" , config_file);
-  enkf_main_type * enkf_main                   = ert_test_context_get_main(test_context);
-  enkf_fs_type * fs                            = enkf_main_get_fs(enkf_main);
+  ert_test_context_type      * test_context    = ert_test_context_alloc("ExportInactiveCellsTest" , config_file);
+  enkf_main_type             * enkf_main       = ert_test_context_get_main(test_context);
+  enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const enkf_config_node_type * config_node    = ensemble_config_get_node(ensemble_config , key);
-  const field_config_type * field_config       = enkf_config_node_get_ref( config_node );
-  enkf_state_type * state                      = enkf_main_iget_state( enkf_main , iens );
-  enkf_node_type * field_node                  = enkf_state_get_node( state , key );
-  field_type * field                           = enkf_node_value_ptr(field_node);
+  enkf_config_node_type      * config_node     = ensemble_config_get_node(ensemble_config , key);
+  const field_config_type    * field_config    = enkf_config_node_get_ref( config_node );
+  enkf_state_type            * state           = enkf_main_iget_state( enkf_main , iens );
+  enkf_node_type             * field_node      = enkf_state_get_node( state , key );
+  field_type                 * field           = enkf_node_value_ptr(field_node);
 
   {
     forward_initialize_node(enkf_main, init_file, field_node);
