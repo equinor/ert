@@ -135,6 +135,8 @@ void active_list_reset(active_list_type * active_list) {
    setting the mode to PARTLY_ACTIVE.
 */
 void active_list_add_index(active_list_type * active_list, int new_index) {
+  if (int_vector_contains(active_list->index_list , new_index ))
+    return;
   active_list->mode = PARTLY_ACTIVE;
   int_vector_append( active_list->index_list , new_index );
 }
