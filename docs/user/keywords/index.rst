@@ -33,7 +33,6 @@ List of keywords
 Keyword name                                                        	Required by user?     			Default value         		Purpose
 =====================================================================	======================================	============================== 	==============================================================================================================================================
 :ref:`ADD_FIXED_LENGTH_SCHEDULE_KW <add_fixed_length_schedule_kw>`  	NO                                          				Supporting unknown SCHEDULE keywords.
-:ref:`ADD_STATIC_KW <add_Static_kw>`                                	NO                                          				Add static ECLIPSE keyword that should be stored
 :ref:`ANALYSIS_COPY <analysis_copy>`                                	NO                                          				Create new instance of analysis module
 :ref:`ANALYSIS_LOAD <analysis_load>`                                	NO                                          				Load analysis module
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                          	NO                                          				Set analysis module internal state variable
@@ -53,8 +52,6 @@ Keyword name                                                        	Required by
 :ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                          	...
 :ref:`ENKF_CV_FOLDS <enkf_cv_folds>`                                	NO                    			10                    		Number of folds used in the Cross-Validation scheme
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                          	NO                    			FALSE                 		Should we want to use a spesific subspace dimension
-:ref:`ENKF_KERNEL_REGRESSION <enkf_kernel_regression>`              	NO                    			FALSE
-:ref:`ENKF_KERNEL_FUNCTION <enkf_kernel_function>`                  	NO                    			1
 :ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                        	NO                    			1
 :ref:`ENKF_LOCAL_CV <enkf_local_cv>`                                	NO                    			FALSE                 		Should we estimate the subspace dimenseion using Cross-Validation
 :ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`            	NO                    			FALSE                 		Should observations from many times be merged together
@@ -64,8 +61,7 @@ Keyword name                                                        	Required by
 :ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update. 
 :ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Do we want to normalize the data ensemble to have unit variance? 
 :ref:`ENKF_TRUNCATION <enfk_truncation>`                            	NO                    			0.99        	          	Cutoff used on singular value spectrum. 
-:ref:`ENSPATH <enspath>`                                            	NO                    			storage     	          	Folder used for storage of simulation results. 
-:ref:`EQUIL_INIT_FILE <equil_init_file>`                            	NO                                          				Use INIT_SECTION instead 
+:ref:`ENSPATH <enspath>`                                            	NO                    			storage     	          	Folder used for storage of simulation results.
 :ref:`FIELD <field>`                                                	NO                                          				Ads grid parameters
 :ref:`FORWARD_MODEL <forward_model>`                                	NO                                          				Add the running of a job to the simulation forward model. 
 :ref:`GEN_DATA <gen_data>`                                          	NO                                          				Specify a general type of data created/updated by the forward model.
@@ -76,11 +72,7 @@ Keyword name                                                        	Required by
 :ref:`GRID <grid>`                                                  	NO                                         				Provide an ECLIPSE grid for the reservoir model. 
 :ref:`HISTORY_SOURCE <history_source>`                              	NO                    			REFCASE_HISTORY     	  	Source used for historical values.
 :ref:`HOOK_WORKFLOW <hook_workflow>` 					NO 									Install a workflow to be run automatically.
-:ref:`HOST_TYPE <host_type>`                                        	NO                                          
-:ref:`IGNORE_SCHEDULE <ignore_schedule>`                            	NO                                          
-:ref:`IMAGE_TYPE <image_type>`                                      	NO                    			png                   		The type of the images created when plotting.
-:ref:`IMAGE_VIEWER <image_viewer>`                                  	NO                    			/usr/bin/display      		External program spawned to view images.
-:ref:`INIT_SECTION <init_section>`                                  	NO                                         				Initialization code for the reservoir model.
+:ref:`IGNORE_SCHEDULE <ignore_schedule>`                            	NO
 :ref:`INSTALL_JOB <install_jobb>`                                   	NO                                          				Install a job for use in a forward model. 
 :ref:`ITER_CASE <iter_Case>`                                        	NO                    			IES%d         	        	Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother 
@@ -108,7 +100,6 @@ Keyword name                                                        	Required by
 :ref:`NUM_REALIZATIONS <num_realizations>` 				YES 									Set the number of reservoir realizations to use. 
 :ref:`OBS_CONFIG <obs_config>` 						NO 									File specifying observations with uncertainties. 
 :ref:`PLOT_SETTINGS <plot_driver>` 					NO 					  				Possibility to configure some aspects of plotting.
-:ref:`PLOT_PATH  <plot_path>`						NO 					plots 				Path to where the plots are stored. 
 :ref:`PRE_CLEAR_RUNPATH <pre_clear_runpath>` 				NO 					FALSE 				Should the runpath be cleared before initializing? 
 :ref:`QUEUE_SYSTEM <queue_system>` 					NO 									System used for running simulation jobs. 
 :ref:`REFCASE <refcase>` 						NO (see HISTORY_SOURCE and SUMMARY) 					Reference case used for observations and plotting. 
@@ -199,29 +190,6 @@ These keywords must be set to make the enkf function properly.
 	
 		-- Load the .EGRID file called MY_GRID.EGRID
   		GRID MY_GRID.EGRID
-
-
-.. _init_section:
-.. topic:: INIT_SECTION
-
-	The INIT_SECTION keyword is used to handle initialization of the ECLIPSE run. See the documentation of the Initialization for more details on why this has to be done. The keyword can be used in two different ways:
-
-	* If it is set to the name of an existing file, the contents of this file will be used for the initialization.
-	* If it is set to the name of a non-existing file, it will be assumed that a file with this name in the simulation folder will be generated when simulations are submitted, either by the enkf application itself, or by some job installed by the user (see INSTALL_JOB). This generated file will then be used by ECLIPSE for initialization. 
-
-	*Example A:*
-
-	::
-  	
-		-- Use the contents of the file parameters/EQUIL.INC for initialization
-  		INIT_SECTION params/EQUIL.INC
-
-	*Example B:*
-
-	::
-
-	  	-- Use a generated file for the initialization
-	  	INIT_SECTION MY_GENERATED_EQUIL_KEYWORD.INC
 
 
 .. _num_realizations:
@@ -1232,27 +1200,6 @@ The keywords in this section, controls advanced features of the enkf application
 	Real low level fix for some SCHEDULE parsing problems.
 
 
-.. _add_static_kw:
-.. topic:: ADD_STATIC_KW
-
-	The restart files from ECLIPSE are organized by keywords, which are of three different types:
-
-	#. Keywords containing the dynamic solution, e.g. pressure and saturations.
-	#. Keywords containing various types of header information which is needed for a restart.
-	#. Keywords containing various types of diagnostic information which is not needed for a restart.
-
-	Keywords in category 2 and 3 are referred to as static keywords. To be able to restart ECLIPSE, the enkf application has to store the keywords in category 2, whereas keywords in category 3 can safely be dropped. To determine whether a particular keyword is in category 2 or 3 the enkf considers an internal list of keywords. The current list contains the keywords:
-
-	::
-
-		INTEHEAD LOGIHEAD DOUBHEAD IGRP SGRP XGRP ZGRP IWEL SWEL XWEL ZWEL 
-		ICON SCON XCON HIDDEN STARTSOL PRESSURE SWAT SGAS RS RV ENDSOL ICAQNUM ICAQ IAAQ
-		SCAQNUM SCAQ SAAQ ACAQNUM ACAQ XAAQ
-		ISEG ILBS ILBR RSEG ISTHW ISTHG
-
-	By using ADD_STATIC_KW you can dynamically add to this list. The magic string __ALL__ will add all static keywords. Use of the __ALL__ option is strongly discouraged, as it wastes a lot disk space.
-
-
 .. _define:
 .. topic:: DEFINE
 
@@ -1674,24 +1621,6 @@ Keywords related to plotting
 .. _keywords_related_to_plotting:
 
 
-.. _image_viewer:
-.. topic:: IMAGE_VIEWER
-
-	The enkf application has some limited plotting capabilities. The plotting is based on creating a graphics file (currently a png file) and then viewing that file with an external application. The current default image viewer is a program called /usr/bin/display, but you can set IMAGE_VIEWER to point to another binary if that is desired. In particular it can be interesting to set as
-
-	::
-
-		IMAGE_VIEWER  /d/proj/bg/enkf/bin/noplot.sh
-
-	then the plot files will be created, but they will not be flashing in your face (which can be a bit annoying).
-
-
-.. _image_type:
-.. topic:: IMAGE_TYPE
-
-	This switch control the type of the plot figures/images created by the PLPLOT plot driver. It is by default set to png which works fine, but you can probably(??) use other popular graphics formats like gif and jpg as well.
-
-
 .. _plot_driver:
 .. topic:: PLOT_DRIVER
 
@@ -1747,11 +1676,6 @@ Keywords related to plotting
 
 
 
-
-.. _plot_path:
-.. topic:: PLOT_PATH
-
-	This is deprecated, see the more general PLOT_SETTINGS option.
 
 
 .. _plot_settings:
@@ -1953,6 +1877,3 @@ The two keywords SETENV and UPDATE_PATH can be used to manipulate the Unix envir
          - Owner(7) can execute(1), write(2) and read(4).
          - Group(5) can execute(1) and read(4).
          - Others(2) can read(4)
-
-           
-        
