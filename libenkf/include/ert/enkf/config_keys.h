@@ -67,8 +67,6 @@ extern "C" {
 #define  ENKF_ALPHA_KEY                    "ENKF_ALPHA"
 #define  ENKF_CROSS_VALIDATION_KEY         "ENKF_CROSS_VALIDATION"
 #define  ENKF_CV_FOLDS_KEY                 "ENKF_CV_FOLDS"
-#define  ENKF_FORCE_NCOMP_KEY              "ENKF_FORCE_NCOMP"
-#define  ENKF_NCOMP_KEY                    "ENKF_NCOMP"
 #define  ENKF_SCALING_KEY                  "ENKF_SCALING"
 #define  ENKF_KERNEL_REG_KEY               "ENKF_KERNEL_REGRESSION"
 #define  ENKF_KERNEL_FUNC_KEY              "ENKF_KERNEL_FUNCTION"
