@@ -91,8 +91,6 @@ Keyword name                                                        	Required by
 :ref:`LSF_SERVER <lsf_server>` 					    	NO 									Set server used when submitting LSF jobs. 
 :ref:`MAX_ITER_COUNT <max_iter_count>` 				    	NO 									Maximal number of iterations - iterated ensemble smoother. 
 :ref:`MAX_RESAMPLE <max_resample>`				    	NO 					1		 		How many times should ert resample & retry a simulation.
-:ref:`MAX_RUNNING_LOCAL <max_running_local>` 				NO 									The maximum number of running jobs when running locally. 
-:ref:`MAX_RUNNING_LSF <max_running_lsf>` 				NO 									The maximum number of simultaneous jobs submitted to LSF. 
 :ref:`MAX_RUNNING_RSH <max_running_rsh>` 				NO 									The maximum number of running jobs when using RSH queue system. 
 :ref:`MAX_RUNTIME <max_runtime>` 					NO 					0 				Set the maximum runtime in seconds for a realization. 
 :ref:`MAX_SUBMIT <max_submit>` 						NO 					2 				How many times should the queue system retry a simulation. 
@@ -1416,24 +1414,6 @@ option.
 	The name of the LSF queue you are running ECLIPSE simulations in.
 
 
-.. _max_running_lsf:
-.. topic:: MAX_RUNNING_LSF
-
-	The keyword MAX_RUNNING_LSF controls the maximum number of
-	simultaneous jobs submitted to the LSF (Load Sharing Facility)
-	queue when using the LSF option in QUEUE_SYSTEM.
-
-	*Example:*
-
-	::
-
-		-- Submit no more than 30 simultaneous jobs
-		-- to the LSF cluster.
-		MAX_RUNNING_LSF 30
-
-
-
-
 Configuring TORQUE access
 -------------------------
 .. _configuring_torque_access:
@@ -1557,25 +1537,6 @@ option DEBUG_OUTPUT:
 ::
    
    QUEUE_OPTION TORQUE DEBUG_OUTPUT torque_log.txt
-
-
-
-Configuring the LOCAL queue
----------------------------
-.. _configuring_the_local_queue:
-
-
-.. _max_running_local:
-.. topic:: MAX_RUNNING_LOCAL
-
-	The keyword MAX_RUNNING_LOCAL controls the maximum number of simultaneous jobs running when using the LOCAL option in QUEUE_SYSTEM. It is strongly recommended to not let MAX_RUNNING_LOCAL exceed the number of processors on the workstation used.
-
-	*Example:*
-
-	::
-
-		-- No more than 3 simultaneous jobs
-		MAX_RUNNING_LOCAL 3
 
 
 Configuring the RSH queue
