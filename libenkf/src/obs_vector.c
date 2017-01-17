@@ -893,23 +893,18 @@ static bool obs_vector_has_data_at_report_step( const obs_vector_type * obs_vect
 */
 
 static bool obs_vector_has_vector_data( const obs_vector_type * obs_vector , const bool_vector_type * active_mask , enkf_fs_type * fs) {
-  bool has_data = true;
-  int iens = 0;
+  int vec_size = bool_vector_size( active_mask );
 
-  while (true) {
+  for (int iens = 0; iens < vec_size; iens++) {
     const enkf_config_node_type * data_config = obs_vector->config_node;
     if (bool_vector_iget( active_mask , iens )) {
       if (!enkf_config_node_has_vector(data_config , fs , iens)) {
-        has_data = false;
-        break;
+        return false;
       }
     }
-    iens++;
-    if (iens >= bool_vector_size( active_mask ))
-      break;
   }
 
-  return has_data;
+  return true;
 }
 
 
