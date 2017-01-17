@@ -334,8 +334,8 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
                                                  obs_vector_type          * obs_vector ,
                                                  enkf_fs_type             * fs,
                                                  const local_obsdata_node_type * obs_node ,
-                                                 const int_vector_type     * ens_active_list ,
-                                                 meas_data_type             *   meas_data,
+                                                 const int_vector_type      * ens_active_list ,
+                                                 meas_data_type             * meas_data,
                                                  obs_data_type              * obs_data,
                                                  double_vector_type         * obs_value ,
                                                  double_vector_type         * obs_std) {
@@ -1182,13 +1182,17 @@ void enkf_obs_local_scale_std( const enkf_obs_type * enkf_obs , const local_obsd
 }
 
 
-double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs , enkf_fs_type * fs , const int_vector_type * ens_active_list , const local_obsdata_type * local_obsdata) {
+double enkf_obs_scale_correlated_std(const enkf_obs_type * enkf_obs,
+                                     enkf_fs_type * fs,
+                                     const int_vector_type * ens_active_list,
+                                     const local_obsdata_type * local_obsdata) {
   bool_vector_type * ens_mask = int_vector_alloc_mask( ens_active_list );
   meas_data_type * meas_data = meas_data_alloc( ens_mask );
   obs_data_type * obs_data = obs_data_alloc( 1.0 );
   double scale_factor = 1.0;
 
-  enkf_obs_get_obs_and_measure_data( enkf_obs , fs , local_obsdata , ens_active_list , meas_data , obs_data );
+  enkf_obs_get_obs_and_measure_data( enkf_obs , fs , local_obsdata , ens_active_list,
+                                     meas_data , obs_data );
   {
     matrix_type * S      = meas_data_allocS( meas_data );
     if (S) {
@@ -1242,7 +1246,3 @@ local_obsdata_type * enkf_obs_alloc_all_active_local_obs( const enkf_obs_type * 
   }
   return local_obs;
 }
-
-
-
-
