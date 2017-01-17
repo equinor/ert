@@ -454,7 +454,8 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
   obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , obs_key );
   obs_impl_type obs_type       = obs_vector_get_impl_type( obs_vector );
 
-  if ((obs_type == SUMMARY_OBS))  { //&& ((end_step - start_step) > 1))
+  if (obs_type == SUMMARY_OBS)  {
+    // this if also used to test: (end_step >= start_step+2)
     double_vector_type * work_value  = double_vector_alloc( 0 , -1 );
     double_vector_type * work_std    = double_vector_alloc( 0 , -1 );
 
@@ -468,26 +469,29 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
                                           work_value,
                                           work_std);
 
-    double_vector_free( work_value );
     double_vector_free( work_std   );
-  } else {
-    int report_step = -1;
-    while (true) {
-      report_step = obs_vector_get_next_active_step( obs_vector , report_step );
-      if (report_step < 0)
-        break;
+    double_vector_free( work_value );
+    return;
+  }
 
-      if (local_obsdata_node_tstep_active(obs_node, report_step)) {
-        if (obs_vector_iget_active(obs_vector , report_step)) {                             /* The observation is active for this report step.     */
-          const active_list_type * active_list = local_obsdata_node_get_active_list( obs_node );
-          obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list, fs);  /* Collect the observed data in the obs_data instance. */
-          obs_vector_measure(obs_vector , fs , report_step , ens_active_list , meas_data , active_list);
-        }
-      }
+
+  // obs_type is GEN_OBS or BLOCK_OBS
+  int report_step = -1;
+  while (true) {
+    report_step = obs_vector_get_next_active_step( obs_vector , report_step );
+    if (report_step < 0)
+      return;
+
+    if (local_obsdata_node_tstep_active(obs_node, report_step)
+        && (obs_vector_iget_active(obs_vector , report_step))) {
+      /* The observation is active for this report step. */
+      const active_list_type * active_list = local_obsdata_node_get_active_list( obs_node );
+      /* Collect the observed data in the obs_data instance. */
+      obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list, fs);
+      obs_vector_measure(obs_vector , fs , report_step , ens_active_list , meas_data , active_list);
     }
   }
 }
-
 
 
 /*
@@ -1022,36 +1026,33 @@ obs_impl_type enkf_obs_get_type(const enkf_obs_type * enkf_obs , const char * ke
 /**
  */
 
-stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string) {
-  stringlist_type  *  obs_keys      = hash_alloc_stringlist( enkf_obs->obs_hash );
+stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs,
+                                                  const char * input_string) {
 
-  if (input_string) {
-    stringlist_type  *  matching_keys = stringlist_alloc_new();
-    char             ** input_keys;
-    int                 num_keys;
+  stringlist_type * obs_keys = hash_alloc_stringlist( enkf_obs->obs_hash );
 
+  if (!input_string)
+      return obs_keys;
 
-    util_split_string( input_string , " " , &num_keys , &input_keys);
-    for (int i=0; i < num_keys; i++) {
-      bool key_found = false;
+  stringlist_type  *  matching_keys = stringlist_alloc_new();
+  char             ** input_keys;
+  int                 num_keys;
+  int                 obs_keys_count = stringlist_get_size( obs_keys );
 
-      const char * input_key = input_keys[i];
-      for (int j = 0; j < stringlist_get_size( obs_keys ); j++) {
-        const char * obs_key = stringlist_iget( obs_keys , j);
+  util_split_string( input_string , " " , &num_keys , &input_keys);
+  for (int i = 0; i < num_keys; i++) {
+    const char * input_key = input_keys[i];
+    for (int j = 0; j < obs_keys_count; j++) {
+      const char * obs_key = stringlist_iget( obs_keys , j);
 
-        if (util_string_match( obs_key , input_key)) {
-          if (!stringlist_contains( matching_keys , obs_key ))
-            stringlist_append_copy( matching_keys , obs_key);
-          key_found = true;
-        }
-      }
+      if (util_string_match( obs_key , input_key)
+          && !stringlist_contains( matching_keys , obs_key ))
+        stringlist_append_copy( matching_keys , obs_key);
     }
-    util_free_stringlist( input_keys , num_keys );
-    stringlist_free( obs_keys );
-    return matching_keys;
-  } else {
-    return obs_keys;
   }
+  util_free_stringlist( input_keys , num_keys );
+  stringlist_free( obs_keys );
+  return matching_keys;
 }
 
 
