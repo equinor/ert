@@ -174,6 +174,9 @@ void summary_deserialize(summary_type * summary , node_id_type node_id , const a
   SUMMARY_SET_VALUE( summary , node_id.report_step , value );
 }
 
+int summary_length(const summary_type * summary) {
+  return double_vector_size(summary->data_vector);
+}
 
 double summary_get(const summary_type * summary, int report_step) {
   return SUMMARY_GET_VALUE( summary , report_step );

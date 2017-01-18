@@ -329,6 +329,38 @@ int enkf_obs_get_size( const enkf_obs_type * obs ) {
 }
 
 
+static matrix_type * estimate_covar_alloc_matrix(const enkf_obs_type * enkf_obs,
+                                                 obs_vector_type     * obs_vector,
+                                                 double_vector_type  * obs_std,
+                                                 int step, int size) {
+  matrix_type * error_covar = NULL;
+  auto_corrf_ftype * auto_corrf;
+  double auto_corrf_param;
+  {
+    const summary_obs_type * summary_obs = obs_vector_iget_node( obs_vector , step );
+    auto_corrf       = summary_obs_get_auto_corrf( summary_obs );
+    auto_corrf_param = summary_obs_get_auto_corrf_param( summary_obs );
+  }
+
+  if (size <= 1 || auto_corrf == NULL)
+    return NULL;
+
+  int i,j;
+  error_covar = matrix_alloc( size, size );
+  for (i = 0; i < size; i++) {
+    for (j=0; j <= i; j++) {
+      double covar = sqrt( double_vector_iget( obs_std , i ) * double_vector_iget( obs_std , j ));
+      double delta_t = enkf_obs_iget_obs_time( enkf_obs , i ) - enkf_obs_iget_obs_time( enkf_obs , j );
+      double corr  = auto_corrf(delta_t / (24.00 * 3600) , auto_corrf_param );
+
+      matrix_iset(error_covar , i , j  , covar * corr );
+      if (i != j)
+        matrix_iset(error_covar , j , i  , covar * corr );
+    }
+  }
+  return error_covar;
+}
+
 
 static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
                                                  obs_vector_type          * obs_vector ,
@@ -356,92 +388,83 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
     if (step < 0)
       break;
 
-    if (local_obsdata_node_tstep_active(obs_node, step)) {
-      if (obs_vector_iget_active( obs_vector , step ) && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
-        {
-          const summary_obs_type * summary_obs = obs_vector_iget_node( obs_vector , step );
-          double_vector_iset( obs_std   , active_count , summary_obs_get_std( summary_obs ) * summary_obs_get_std_scaling( summary_obs ));
-          double_vector_iset( obs_value , active_count , summary_obs_get_value( summary_obs ));
-          last_step = step;
+    if (local_obsdata_node_tstep_active(obs_node, step)
+        && obs_vector_iget_active( obs_vector , step )
+        && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
+      const summary_obs_type * summary_obs = obs_vector_iget_node( obs_vector , step );
+      double_vector_iset( obs_std   , active_count , summary_obs_get_std( summary_obs ) * summary_obs_get_std_scaling( summary_obs ));
+      double_vector_iset( obs_value , active_count , summary_obs_get_value( summary_obs ));
+      last_step = step;
+      active_count++;
+    }
+  }
+
+  if (active_count <= 0)
+    return;
+
+  /*
+    2: Estimate a covariance matrix.
+    Will be owned by the obs_block instance.
+  */
+  error_covar = estimate_covar_alloc_matrix(enkf_obs, obs_vector, obs_std,
+                                            last_step, active_count);
+
+  /*
+    3: Fill up the obs_block and meas_block structures with this
+    time-aggregated summary observation.  Passing in the error_covar
+    matrix (which can be NULL) to the obs_block instance.
+  */
+
+  {
+    obs_block_type  * obs_block  = obs_data_add_block( obs_data , obs_vector_get_obs_key( obs_vector ) , active_count , error_covar , true);
+    meas_block_type * meas_block = meas_data_add_block( meas_data, obs_vector_get_obs_key( obs_vector ) , last_step , active_count );
+
+    enkf_node_type  * work_node  = enkf_node_alloc( obs_vector_get_config_node( obs_vector ));
+
+    for (int i=0; i < active_count; i++)
+      obs_block_iset( obs_block , i , double_vector_iget( obs_value , i) , double_vector_iget( obs_std , i ));
+
+    int active_size = int_vector_size( ens_active_list );
+    active_count = 0;
+    step = -1;
+    while (true) {
+      step = obs_vector_get_next_active_step( obs_vector , step );
+      if (step < 0)
+        break;
+
+      if (local_obsdata_node_tstep_active(obs_node, step)
+          && obs_vector_iget_active( obs_vector , step )
+          && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
+        for (int iens_index = 0; iens_index < active_size; iens_index++) {
+          const int iens = int_vector_iget( ens_active_list , iens_index );
+          node_id_type node_id = {.report_step = step,
+                                  .iens        = iens};
+          enkf_node_load( work_node , fs , node_id );
+
+          int smlength   = summary_length( enkf_node_value_ptr( work_node ) );
+          if (step >= smlength) {
+            // if obs vector and sim vector have different length
+            // deactivate and continue to next
+            char msg [100];
+            snprintf(msg, 100, "length of observation vector and simulated "
+                     "vector differ: %d vs. %d.",
+                     step, smlength);
+            meas_block_deactivate(meas_block , active_count);
+            obs_block_deactivate(obs_block , active_count, true, msg);
+            break;
+          } else {
+            meas_block_iset(meas_block , iens , active_count ,
+                            summary_get( enkf_node_value_ptr( work_node ),
+                                         node_id.report_step ));
+          }
         }
         active_count++;
       }
     }
-  }
-
-
-  if (active_count > 0) {
-    /*2: Estimate a covariance matrix. */
-    auto_corrf_ftype * auto_corrf;
-    double auto_corrf_param;
-    {
-      const summary_obs_type * summary_obs = obs_vector_iget_node( obs_vector , last_step );
-      auto_corrf       = summary_obs_get_auto_corrf( summary_obs );
-      auto_corrf_param = summary_obs_get_auto_corrf_param( summary_obs );
-    }
-
-    if ((active_count > 1) && (auto_corrf != NULL)) {
-      int i,j;
-      error_covar = matrix_alloc( active_count , active_count ); /* Will be freed by the obs_block instance. */
-      for (i = 0; i < active_count; i++) {
-        for (j=0; j <= i; j++) {
-          double covar = sqrt( double_vector_iget( obs_std , i ) * double_vector_iget( obs_std , j ));
-          double delta_t = enkf_obs_iget_obs_time( enkf_obs , i ) - enkf_obs_iget_obs_time( enkf_obs , j );
-          double corr  = auto_corrf(delta_t / (24.00 * 3600) , auto_corrf_param );
-
-          matrix_iset(error_covar , i , j  , covar * corr );
-          if (i != j)
-            matrix_iset(error_covar , j , i  , covar * corr );
-        }
-      }
-
-    }
-
-
-    /*
-      3: Fill up the obs_block and meas_block structures with this
-      time-aggregated summary observation.  Passing in the error_covar
-      matrix (which can be NULL) to the obs_block instance.
-    */
-
-    {
-      obs_block_type  * obs_block  = obs_data_add_block( obs_data , obs_vector_get_obs_key( obs_vector ) , active_count , error_covar , true);
-      meas_block_type * meas_block = meas_data_add_block( meas_data, obs_vector_get_obs_key( obs_vector ) , last_step , active_count );
-      enkf_node_type * work_node = enkf_node_alloc( obs_vector_get_config_node( obs_vector ));
-
-      for (int i=0; i < active_count; i++)
-        obs_block_iset( obs_block , i , double_vector_iget( obs_value , i) , double_vector_iget( obs_std , i ));
-
-      active_count = 0;
-      step = -1;
-      while (true) {
-        step = obs_vector_get_next_active_step( obs_vector , step );
-        if (step < 0)
-          break;
-
-        if (local_obsdata_node_tstep_active(obs_node, step)) {
-          if (obs_vector_iget_active( obs_vector , step ) && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
-            for (int iens_index = 0; iens_index < int_vector_size( ens_active_list ); iens_index++) {
-
-              const int iens = int_vector_iget( ens_active_list , iens_index );
-              node_id_type node_id = {.report_step = step,
-                                      .iens        = iens};
-
-              enkf_node_load( work_node , fs , node_id );
-
-              meas_block_iset(meas_block ,
-                              iens , active_count ,
-                              summary_get( enkf_node_value_ptr( work_node ) , node_id.report_step ));
-
-            }
-            active_count++;
-          }
-        }
-      }
-      enkf_node_free( work_node );
-    }
+    enkf_node_free( work_node );
   }
 }
+
 
 void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
                                         enkf_fs_type             * fs,
