@@ -185,8 +185,11 @@ class TimeMap(BaseCClass):
         self._free()
 
     def __repr__(self):
-        strict_ = 'strict' if self.isStrict() else 'not strict'
-        return 'TimeMap(%s, size = %d) %s' % (strict_, len(self), self._ad_str())
+        ls = len(self)
+        la = self.getLastStep()
+        st = 'strict' if self.isStrict() else 'not strict'
+        cnt = 'size = %d, last_step = %d, %s' % (ls, la, st)
+        return self._create_repr(cnt)
 
     def dump(self):
         """ 
