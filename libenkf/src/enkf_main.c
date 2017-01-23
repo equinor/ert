@@ -153,7 +153,7 @@ struct enkf_main_struct {
   analysis_config_type * analysis_config;
   local_config_type    * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type   * templates;          /* Run time templates */
-  plot_settings_type   * plot_config;        /* Information about plotting. */
+  config_settings_type * plot_config;        /* Information about plotting. */
   rng_config_type      * rng_config;
   rng_type             * rng;
   ert_workflow_list_type * workflow_list;
@@ -290,7 +290,7 @@ model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main
   return enkf_main->model_config;
 }
 
-plot_settings_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
+config_settings_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
   return enkf_main->plot_config;
 }
 
@@ -419,7 +419,7 @@ void enkf_main_free(enkf_main_type * enkf_main){
 
 
   int_vector_free( enkf_main->keep_runpath );
-  plot_settings_free( enkf_main->plot_config );
+  config_settings_free( enkf_main->plot_config );
   ert_templates_free( enkf_main->templates );
 
   subst_func_pool_free( enkf_main->subst_func_pool );
@@ -2214,11 +2214,13 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->site_config        = site_config_alloc_empty();
   enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
-  enkf_main->plot_config        = plot_settings_alloc( );
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = NULL;
   enkf_main->model_config       = model_config_alloc( );
   enkf_main->local_config       = local_config_alloc( );
+
+  enkf_main->plot_config        = config_settings_alloc( PLOT_SETTING_KEY );
+  plot_settings_init( enkf_main->plot_config );
 
   enkf_main_rng_init( enkf_main );
   enkf_main->subst_func_pool    = subst_func_pool_alloc(  );
@@ -2700,7 +2702,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
       analysis_config_load_internal_modules( enkf_main->analysis_config );
       analysis_config_init( enkf_main->analysis_config , content );
       ecl_config_init( enkf_main->ecl_config , content );
-      plot_settings_init( enkf_main->plot_config , content );
+      config_settings_apply( enkf_main->plot_config , content );
 
       ensemble_config_init( enkf_main->ensemble_config , content , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
 

@@ -3,7 +3,7 @@ from ert.config import *
 from ert.enkf import PlotSettings
 from ert.enkf import EnkfPrototype
 
-_plot_settings_init = EnkfPrototype("void plot_settings_init( plot_settings, config_content)", bind = False)
+#_plot_settings_init = EnkfPrototype("void plot_settings_init( plot_settings, config_content)", bind = False)
 _plot_settings_config = EnkfPrototype("void plot_settings_add_config_items( config_parser)", bind = False)
 
 
@@ -50,6 +50,7 @@ class PlotSettingsTest(ExtendedTestCase):
                 f.write("PLOT_SETTING SHOW_REFCASE False\n")
                 f.write("PLOT_SETTING UnknownKey Value\n")
 
-            _plot_settings_config( parser )
+            #_plot_settings_config( parser )
             content = parser.parse( "config_file" )
-            _plot_settings_init( ps , content )
+            ps.apply( content )
+            #_plot_settings_init( ps , content )

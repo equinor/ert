@@ -51,12 +51,10 @@ Keyword name                                                        	Required by
 :ref:`ENKF_BOOTSTRAP <enkf_bootstrap>`                              	NO                    			FALSE                 		Should we bootstrap the Kalman gain estimate
 :ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                	NO                                          	...
 :ref:`ENKF_CV_FOLDS <enkf_cv_folds>`                                	NO                    			10                    		Number of folds used in the Cross-Validation scheme
-:ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                          	NO                    			FALSE                 		Should we want to use a spesific subspace dimension
 :ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                        	NO                    			1
 :ref:`ENKF_LOCAL_CV <enkf_local_cv>`                                	NO                    			FALSE                 		Should we estimate the subspace dimenseion using Cross-Validation
 :ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`            	NO                    			FALSE                 		Should observations from many times be merged together
 :ref:`ENKF_MODE <enkf_mode>`                                        	NO                    			STANDARD              		Which EnKF should be used
-:ref:`ENKF_NCOMP <enkf_ncomp>`                                       	NO                    			1                     		Dimension of the reduced order subspace (If ENKF_FORCE_NCOMP = TRUE)
 :ref:`ENKF_PEN_PRESS <enkf_pen_press>`                              	NO                    			FALSE                 		Should we want to use a penalised PRESS statistic in model selection? 
 :ref:`ENKF_RERUN <enkf_rerun>`                                      	NO                    			FALSE                 		Should the simulations be restarted from time zero after each update. 
 :ref:`ENKF_SCALING <enkf_scaling>`                                  	NO                    			TRUE           		       	Do we want to normalize the data ensemble to have unit variance? 
@@ -115,7 +113,6 @@ Keyword name                                                        	Required by
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`  		NO 									Schedule prediction file. 
 :ref:`SETENV <setenv>`  						NO 									You can modify the UNIX environment with SETENV calls. 
 :ref:`SINGLE_NODE_UPDATE <single_node_update>`  			NO 					FALSE 				... 
-:ref:`STD_CUTOFF <std_cutoff>`  					NO 					1e-6 				... 
 :ref:`STOP_LONG_RUNNING <stop_long_running>`  				NO 					FALSE 				Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run. 
 :ref:`STORE_SEED  <store_seed>` 					NO 									File where the random seed used is stored. 
 :ref:`SUMMARY  <summary>` 						NO 									Add summary variables for internalization. 
@@ -124,7 +121,8 @@ Keyword name                                                        	Required by
 :ref:`TIME_MAP  <time_map>`       					NO 									Ability to manually enter a list of dates to establish report step <-> dates mapping.
 :ref:`UMASK <umask>`  							NO 									Control the permissions on files created by ERT. 
 :ref:`UPDATE_LOG_PATH  <update_log_path>` 				NO 					update_log 			Summary of the EnKF update steps are stored in this directory. 
-:ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH. 
+:ref:`UPDATE_PATH  <update_path>` 					NO 									Modify a UNIX path variable like LD_LIBRARY_PATH.
+:ref:`UPDATE_SETTINGS <update_settings>` 				NO 					  				Possibility to configure some common aspects of the Smoother update.|
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>` 		NO 									Directory containing workflow jobs. 
 =====================================================================	======================================	============================== 	==============================================================================================================================================
 
@@ -938,18 +936,8 @@ Keywords controlling the ES algorithm
 .. _enkf_alpha:
 .. topic:: ENKF_ALPHA 
 
-	ENKF_ALPHA has some latex letters - need to be handled!!
-	Scaling factor (double) used in outlier detection. Increasing this factor means that more observations will potentially be included in the assimilation. The default value is 1.50.
-
-	Including outliers in the EnKF algorithm can dramatically increase the coupling between the ensemble members. It is therefore important to filter out these outlier data prior to data assimilation. An observation, \textstyle d^o_i, will be classified as an outlier if
-
-	::
-
-		|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right), 
-
-	where \textstyle\boldsymbol{d}^o is the vector of observed data, \textstyle\boldsymbol{\bar{d}} is the average of the forcasted data ensemble, \textstyle\boldsymbol{s_{d}} is the vector of estimated standard deviations for the forcasted data ensemble, and \textstyle\boldsymbol{s_{d}^o} is the vector standard deviations for the observation error (specified a priori). 
-
-
+See the sub keyword :code:`OVERLAP_LIMIT` under the :code:`UPDATE_SETTINGS`keyword.           
+	
 .. _enkf_bootstrap:
 .. topic:: ENKF_BOOTSTRAP
 
@@ -1783,6 +1771,47 @@ The two keywords SETENV and UPDATE_PATH can be used to manipulate the Unix envir
 
 	The whole thing is just a workaround because we can not use $PATH.
 
+.. _update_settings:
+.. topic:: UPDATE_SETTINGS
+
+The :code:`UPDATE_SETTINGS` keyword is a *super-keyword* which can be
+used to control parameters which apply to the Ensemble Smoother update
+algorithm. The :code:`UPDATE_SETTINGS`currently supports the two
+subkeywords:
+
+   OVERLAP_LIMIT
+        Scaling factor used when detecting outliers. Increasing
+      	this factor means that more observations will potentially be
+      	included in the assimilation. The default value is 3.00..
+
+	Including outliers in the Smoother algorithm can dramatically
+	increase the coupling between the ensemble members. It is
+	therefore important to filter out these outlier data prior to
+	data assimilation. An observation, \textstyle d^o_i, will be
+	classified as an outlier if
+
+	::
+
+		|d^o_i - \bar{d}_i| > \mathrm{ENKF\_ALPHA} \left(s_{d_i} + \sigma_{d^o_i}\right), 
+
+	where \textstyle\boldsymbol{d}^o is the vector of observed
+	data, \textstyle\boldsymbol{\bar{d}} is the average of the
+	forcasted data ensemble, \textstyle\boldsymbol{s_{d}} is the
+	vector of estimated standard deviations for the forcasted data
+	ensemble, and \textstyle\boldsymbol{s_{d}^o} is the vector
+	standard deviations for the observation error (specified a
+	priori).
+
+        
+   STD_CUTOFF
+        If the ensemble variation for one particular measurment is
+        below this limit the observation will be deactivated. he
+        default value for this cutoff is 1e-6.
+      
+Observe that for the updates many settings should be applied on the
+analysis module in question.
+   
+           
 .. _umask:
 .. topic:: UMASK
 
