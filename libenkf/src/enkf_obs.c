@@ -445,12 +445,10 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
           if (step >= smlength) {
             // if obs vector and sim vector have different length
             // deactivate and continue to next
-            char msg [100];
-            snprintf(msg, 100, "length of observation vector and simulated "
-                     "vector differ: %d vs. %d.",
-                     step, smlength);
+            char * msg = util_alloc_sprintf("length of observation vector and simulated differ: %d vs. %d ", step, smlength);
             meas_block_deactivate(meas_block , active_count);
             obs_block_deactivate(obs_block , active_count, true, msg);
+            free( msg );
             break;
           } else {
             meas_block_iset(meas_block , iens , active_count ,
