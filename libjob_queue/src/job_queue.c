@@ -781,7 +781,7 @@ static void * job_queue_run_DO_KILL_callback( void * arg ) {
 }
 
 static void job_queue_handle_DO_KILL_NODE_FAILURE(job_queue_type * queue, job_queue_node_type * node) {
-  queue_driver_blacklist_node( queue->driver, node );
+  queue_driver_blacklist_node( queue->driver, job_queue_node_get_driver_data(node) );
   job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
 }
 
