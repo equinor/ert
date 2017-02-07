@@ -501,7 +501,8 @@ job_status_type torque_driver_get_job_status(void * __driver, void * __job) {
   } else if (strcmp(status, "Q") == 0) {
     result = JOB_QUEUE_PENDING;
   } else {
-    util_abort("%s: Unknown status found (%s), expecting one of R, E, C and Q.\n", __func__, status);
+    fprintf(stderr, "%s: Unknown status found (%s), expecting one of R, E, C and Q.\n", __func__, status);
+    result = JOB_QUEUE_STATUS_FAILURE;
   }
   free(status);
 
