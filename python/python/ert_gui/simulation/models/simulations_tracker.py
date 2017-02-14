@@ -78,6 +78,12 @@ class SimulationsTracker(object):
 
     def __checkForUnusedEnums(self):
         for enum in JobStatusType.enums():
+            # The status check routines can return this status; if e.g. the bjobs call fails,
+            # but a job will never get this status.
+            if enum == JobStatusType.JOB_QUEUE_STATUS_FAILURE:
+                continue
+                
+                
             used = False
             for state in self.states:
                 if enum in state.state:
