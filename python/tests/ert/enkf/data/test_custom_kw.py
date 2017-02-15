@@ -8,7 +8,7 @@ from ert.test.ert_test_context import ErtTestContext
 from ert.test.extended_testcase import ExtendedTestCase
 from ert.test.test_area import TestAreaContext
 from ert.util import StringList
-
+from ert.util import BoolVector
 
 class CustomKWTest(ExtendedTestCase):
 
@@ -90,6 +90,9 @@ class CustomKWTest(ExtendedTestCase):
             self.assertEqual(len(config.getKeys()), 0)
 
             simulation_runner = EnkfSimulationRunner(ert)
+            iteration_count = 0
+            active = BoolVector(default_value = True, initial_size = ert.getEnsembleSize())
+            simulation_runner.createRunPath(active, iteration_count)
             simulation_runner.runEnsembleExperiment()
 
             config = ensemble_config.getNode("AGGREGATED").getCustomKeywordModelConfig()
