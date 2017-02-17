@@ -587,16 +587,19 @@ static void __fprintf_string(FILE * stream , const char * s , const subst_list_t
 
 
 static void __fprintf_python_string(FILE * stream ,
-                                    const char * id ,
+                                    const char * prefix,
+                                    const char * id,
                                     const char * value,
+                                    const char * suffix,
                                     const subst_list_type * private_args,
                                     const subst_list_type * global_args,
                                     const char * null_value) {
-  fprintf(stream , "\"%s\" : " , id);
+  fprintf(stream , "%s\"%s\" : " , prefix, id);
   if (value == NULL)
     fprintf(stream, null_value);
   else
     __fprintf_string(stream , value , private_args , global_args);
+  fprintf(stream, suffix);
 }
 
 
@@ -614,12 +617,14 @@ static void   __fprintf_close_python_list( FILE * stream ) {
 
 
 static void __fprintf_python_hash(FILE * stream,
+                                  const char * prefix,
                                   const char * id,
                                   hash_type * hash,
+                                  const char * suffix,
                                   const subst_list_type * private_args,
                                   const subst_list_type * global_args,
                                   const char * null_value) {
-  fprintf(stream , "\"%s\" : " , id);
+  fprintf(stream , "%s\"%s\" : " , prefix, id);
   int   hash_size = hash_get_size(hash);
   if (hash_size > 0) {
     int   counter   = 0;
@@ -640,17 +645,22 @@ static void __fprintf_python_hash(FILE * stream,
     fprintf(stream,"}");
   } else
     fprintf(stream , null_value);
+  fprintf(stream, suffix);
 }
 
 
 static void __fprintf_python_int(FILE * stream,
+        const char * prefix,
         const char * key,
         int value,
+        const char * suffix,
         const char * null_value) {
+  fprintf(stream, prefix);
   if (value > 0)
     fprintf(stream , "\"%s\" : %d" , key , value);
   else
     fprintf(stream , "\"%s\" : %s" , key, null_value);
+  fprintf(stream, suffix);
 }
 
 
@@ -665,12 +675,16 @@ static void __indent(FILE * stream, int indent) {
     fprintf(stream," ");
 }
 
-
 /*
    This is special cased to support the default mapping.
 */
 
-static void ext_job_fprintf_python_argList( const ext_job_type * ext_job , FILE * stream , const subst_list_type * global_args) {
+static void __fprintf_python_argList(FILE * stream,
+                                     const char * prefix,
+                                     const ext_job_type * ext_job,
+                                     const char * suffix,
+                                     const subst_list_type * global_args) {
+  fprintf(stream, prefix);
   __fprintf_init_python_list( stream , "argList" );
   {
     for (int index = 0; index < stringlist_get_size( ext_job->argv ); index++) {
@@ -687,63 +701,26 @@ static void ext_job_fprintf_python_argList( const ext_job_type * ext_job , FILE 
     }
   }
   __fprintf_close_python_list( stream );
+  fprintf(stream, suffix);
 }
 
 void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
   const char * null_value = "None";
   fprintf(stream," {");
   {
-    __indent(stream, 0);
-    __fprintf_python_string(stream, "name", ext_job->name, ext_job->private_args, NULL, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_string(stream, "executable", ext_job->executable, ext_job->private_args, global_args, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_string(stream, "target_file", ext_job->target_file, ext_job->private_args, global_args, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_string(stream, "error_file", ext_job->error_file, ext_job->private_args, global_args, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_string(stream, "start_file", ext_job->start_file, ext_job->private_args, global_args, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_string(stream, "stdout", ext_job->stdout_file, ext_job->private_args, global_args, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_string(stream, "stderr", ext_job->stderr_file, ext_job->private_args, global_args, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_string(stream, "stdin", ext_job->stdin_file, ext_job->private_args, global_args, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    ext_job_fprintf_python_argList(ext_job , stream , global_args);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_hash(stream, "environment", ext_job->environment, ext_job->private_args, global_args, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_string(stream, "license_path", ext_job->license_path, ext_job->private_args, global_args, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_int(stream, "max_running_minutes" , ext_job->max_running_minutes, null_value);
-    __end_line(stream);
-
-    __indent(stream, 2);
-    __fprintf_python_int(stream, "max_running", ext_job->max_running, null_value);
-    __end_line(stream);
+    __fprintf_python_string(  stream, "",   "name",                ext_job->name,                ",\n", ext_job->private_args, NULL,        null_value);
+    __fprintf_python_string(  stream, "  ", "executable",          ext_job->executable,          ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_string(  stream, "  ", "target_file",         ext_job->target_file,         ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_string(  stream, "  ", "error_file",          ext_job->error_file,          ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_string(  stream, "  ", "start_file",          ext_job->start_file,          ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_string(  stream, "  ", "stdout",              ext_job->stdout_file,         ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_string(  stream, "  ", "stderr",              ext_job->stderr_file,         ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_string(  stream, "  ", "stdin",               ext_job->stdin_file,          ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_argList( stream, "  ",                        ext_job,                      ",\n",                        global_args            );
+    __fprintf_python_hash(    stream, "  ", "environment",         ext_job->environment,         ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_string(  stream, "  ", "license_path",        ext_job->license_path,        ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_int(     stream, "  ", "max_running_minutes", ext_job->max_running_minutes, ",\n",                                     null_value);
+    __fprintf_python_int(     stream, "  ", "max_running",         ext_job->max_running,         ",\n",                                     null_value);
   }
   fprintf(stream,"}");
 }
