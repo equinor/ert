@@ -40,6 +40,7 @@ struct forward_model_struct {
   const ext_joblist_type    * ext_joblist;  /* This is the list of external jobs which have been installed - which we can choose from. */
 };
 
+#define DEFAULT_JOB_JSON     "jobs.json"
 #define DEFAULT_JOB_MODULE   "jobs.py"
 #define DEFAULT_JOBLIST_NAME "jobList"
 
@@ -214,6 +215,21 @@ void forward_model_python_fprintf(const forward_model_type * forward_model ,
   free(module_file);
 }
 
+void forward_model_python_fprintf_json(const forward_model_type * forward_model,
+                                       const char * path,
+                                       const subst_list_type * global_args,
+                                       mode_t unmask) {
+    char * json_file = util_alloc_filename(path , DEFAULT_JOB_MODULE , NULL);
+    FILE * stream    = util_fopen(json_file, "w");
+    int i;
+
+    fprintf(stream, "[");
+
+    // TODO: Finish this function
+
+}
+
+#undef DEFAULT_JOB_JSON
 #undef DEFAULT_JOB_MODULE
 #undef DEFAULT_JOBLIST_NAME
 
