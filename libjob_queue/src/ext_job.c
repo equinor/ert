@@ -717,12 +717,6 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const s
   fprintf(stream,"}");
 }
 
-/**
- *
- * TODO: The goal is to remove ext_job_python_fprintf above and only support json!
- * - Markus Dregi (17.02.2017)
- *
- */
 void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
   const char * null_value = "null";
   fprintf(stream," {");

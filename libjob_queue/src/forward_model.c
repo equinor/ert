@@ -215,12 +215,6 @@ static void forward_model_python_fprintf(const forward_model_type * forward_mode
   free(module_file);
 }
 
-/**
- *
- * TODO: The goal is to remove forward_model_python_fprintf above and only support json!
- * - Markus Dregi (17.02.2017)
- *
- */
 static void forward_model_json_fprintf(const forward_model_type * forward_model,
                                   const char * path,
                                   const subst_list_type * global_args,
