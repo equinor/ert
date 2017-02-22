@@ -493,6 +493,10 @@ const char * ext_job_get_start_file(const ext_job_type * ext_job) {
   return ext_job->start_file;
 }
 
+const char * ext_job_get_license_path(const ext_job_type * ext_job) {
+  return ext_job->license_path;
+}
+
 void ext_job_set_name(ext_job_type * ext_job, const char * name) {
   ext_job->name = util_realloc_string_copy(ext_job->name , name);
 }
@@ -596,10 +600,10 @@ static void __fprintf_python_string(FILE * stream ,
                                     const char * null_value) {
   fprintf(stream , "%s\"%s\" : " , prefix, id);
   if (value == NULL)
-    fprintf(stream, null_value);
+    fprintf(stream, "%s", null_value);
   else
     __fprintf_string(stream , value , private_args , global_args);
-  fprintf(stream, suffix);
+  fprintf(stream, "%s", suffix);
 }
 
 
@@ -644,8 +648,8 @@ static void __fprintf_python_hash(FILE * stream,
     }
     fprintf(stream,"}");
   } else
-    fprintf(stream , null_value);
-  fprintf(stream, suffix);
+    fprintf(stream, "%s", null_value);
+  fprintf(stream, "%s", suffix);
 }
 
 
@@ -655,12 +659,12 @@ static void __fprintf_python_int(FILE * stream,
         int value,
         const char * suffix,
         const char * null_value) {
-  fprintf(stream, prefix);
+  fprintf(stream, "%s", prefix);
   if (value > 0)
     fprintf(stream , "\"%s\" : %d" , key , value);
   else
     fprintf(stream , "\"%s\" : %s" , key, null_value);
-  fprintf(stream, suffix);
+  fprintf(stream, "%s", suffix);
 }
 
 /*
@@ -672,7 +676,7 @@ static void __fprintf_python_argList(FILE * stream,
                                      const ext_job_type * ext_job,
                                      const char * suffix,
                                      const subst_list_type * global_args) {
-  fprintf(stream, prefix);
+  fprintf(stream, "%s", prefix);
   __fprintf_init_python_list( stream , "argList" );
   {
     for (int index = 0; index < stringlist_get_size( ext_job->argv ); index++) {
@@ -689,7 +693,7 @@ static void __fprintf_python_argList(FILE * stream,
     }
   }
   __fprintf_close_python_list( stream );
-  fprintf(stream, suffix);
+  fprintf(stream, "%s", suffix);
 }
 
 void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {

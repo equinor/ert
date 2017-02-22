@@ -5,6 +5,7 @@ set(TEST_SOURCES
     test_ext_job.py
     test_function_ert_script.py
     test_job_queue.py
+    test_forward_model_formatted_print.py
     test_workflow.py
     test_workflow_job.py
     test_workflow_joblist.py
@@ -13,6 +14,9 @@ set(TEST_SOURCES
 )
 
 add_python_package("python.tests.ert.job_queue" ${PYTHON_INSTALL_PREFIX}/tests/ert/job_queue "${TEST_SOURCES}" False)
+
+addPythonTest(ert.job_queue.forward_model_formatted_print
+    tests.ert.job_queue.test_forward_model_formatted_print.ForwardModelFormattedPrintTest)
 
 addPythonTest(ert.job_queue.job_status_type_enum tests.ert.job_queue.test_job_queue.JobQueueTest)
 addPythonTest(ert.job_queue.workflow_job tests.ert.job_queue.test_workflow_job.WorkflowJobTest)

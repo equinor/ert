@@ -194,7 +194,7 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
   used when running the remote jobs.
 */
 
-static void __forward_model_python_fprintf(const forward_model_type * forward_model ,
+static void forward_model_python_fprintf(const forward_model_type * forward_model ,
                                     const char * path,
                                     const subst_list_type * global_args,
                                     mode_t umask) {
@@ -221,7 +221,7 @@ static void __forward_model_python_fprintf(const forward_model_type * forward_mo
  * - Markus Dregi (17.02.2017)
  *
  */
-static void __forward_model_json_fprintf(const forward_model_type * forward_model,
+static void forward_model_json_fprintf(const forward_model_type * forward_model,
                                   const char * path,
                                   const subst_list_type * global_args,
                                   mode_t umask) {
@@ -229,15 +229,17 @@ static void __forward_model_json_fprintf(const forward_model_type * forward_mode
   FILE * stream    = util_fopen(json_file, "w");
   int i;
 
-  fprintf(stream, "[");
+  fprintf(stream, "{\n");
+  fprintf(stream, "\"umask\" : \"%04o\",\n", umask);
+  fprintf(stream, "\"jobList\" : [");
   for (i=0; i < vector_get_size(forward_model->jobs); i++) {
     const ext_job_type * job = vector_iget_const(forward_model->jobs , i);
     ext_job_json_fprintf(job , stream , global_args);
     if (i < (vector_get_size( forward_model->jobs ) - 1))
       fprintf(stream,",\n");
   }
-  fprintf(stream , "]\n");
-  fprintf(stream, "umask = %04o\n", umask);
+  fprintf(stream, "]\n");
+  fprintf(stream, "}\n");
   fclose(stream);
   free(json_file);
 }
@@ -246,8 +248,8 @@ void forward_model_formatted_fprintf(const forward_model_type * forward_model ,
                                     const char * path,
                                     const subst_list_type * global_args,
                                     mode_t umask) {
-  __forward_model_python_fprintf( forward_model, path, global_args, umask);
-  __forward_model_json_fprintf(   forward_model, path, global_args, umask);
+  forward_model_python_fprintf( forward_model, path, global_args, umask);
+  forward_model_json_fprintf(   forward_model, path, global_args, umask);
 }
 
 #undef DEFAULT_JOB_JSON

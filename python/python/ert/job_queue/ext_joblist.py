@@ -20,17 +20,19 @@ from ert.util import StringList
 
 class ExtJoblist(BaseCClass):
     TYPE_NAME = "ext_joblist"
+    _alloc      = QueuePrototype("void* ext_joblist_alloc( )", bind=False)
     _free       = QueuePrototype("void ext_joblist_free( ext_joblist )")
     _alloc_list = QueuePrototype("stringlist_ref ext_joblist_alloc_list(ext_joblist)")
     _get_job    = QueuePrototype("ext_job_ref ext_joblist_get_job(ext_joblist, char*)")
     _del_job    = QueuePrototype("int ext_joblist_del_job(ext_joblist, char*)")
     _has_job    = QueuePrototype("int ext_joblist_has_job(ext_joblist, char*)")
-    _add_job    = QueuePrototype("void ext_joblist_add_job(ext_joblist, char*, ext_joblist)")
+    _add_job    = QueuePrototype("void ext_joblist_add_job(ext_joblist, char*, ext_job)")
     _get_jobs   = QueuePrototype("hash_ref ext_joblist_get_jobs(ext_joblist)")
     _size       = QueuePrototype("int ext_joblist_get_size(ext_joblist)")
 
     def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+        c_ptr = self._alloc()
+        super(ExtJoblist, self).__init__(c_ptr)
 
     def get_jobs(self):
         """ @rtype: Hash """
@@ -70,6 +72,9 @@ class ExtJoblist(BaseCClass):
         return self[job]
 
     def add_job(self, job_name, new_job):
+        if not new_job.isReference():
+            new_job.convertToCReference(self)
+
         self._add_job(job_name, new_job)
 
     def free(self):
