@@ -40,6 +40,7 @@ struct forward_model_struct {
   const ext_joblist_type    * ext_joblist;  /* This is the list of external jobs which have been installed - which we can choose from. */
 };
 
+#define DEFAULT_JOB_JSON     "jobs.json"
 #define DEFAULT_JOB_MODULE   "jobs.py"
 #define DEFAULT_JOBLIST_NAME "jobList"
 
@@ -193,10 +194,10 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
   used when running the remote jobs.
 */
 
-void forward_model_python_fprintf(const forward_model_type * forward_model ,
-                                  const char * path,
-                                  const subst_list_type * global_args,
-                                  mode_t umask) {
+static void forward_model_python_fprintf(const forward_model_type * forward_model ,
+                                    const char * path,
+                                    const subst_list_type * global_args,
+                                    mode_t umask) {
   char * module_file = util_alloc_filename(path , DEFAULT_JOB_MODULE , NULL);
   FILE * stream      = util_fopen(module_file , "w");
   int i;
@@ -214,6 +215,38 @@ void forward_model_python_fprintf(const forward_model_type * forward_model ,
   free(module_file);
 }
 
+static void forward_model_json_fprintf(const forward_model_type * forward_model,
+                                  const char * path,
+                                  const subst_list_type * global_args,
+                                  mode_t umask) {
+  char * json_file = util_alloc_filename(path , DEFAULT_JOB_JSON, NULL);
+  FILE * stream    = util_fopen(json_file, "w");
+  int i;
+
+  fprintf(stream, "{\n");
+  fprintf(stream, "\"umask\" : \"%04o\",\n", umask);
+  fprintf(stream, "\"jobList\" : [");
+  for (i=0; i < vector_get_size(forward_model->jobs); i++) {
+    const ext_job_type * job = vector_iget_const(forward_model->jobs , i);
+    ext_job_json_fprintf(job , stream , global_args);
+    if (i < (vector_get_size( forward_model->jobs ) - 1))
+      fprintf(stream,",\n");
+  }
+  fprintf(stream, "]\n");
+  fprintf(stream, "}\n");
+  fclose(stream);
+  free(json_file);
+}
+
+void forward_model_formatted_fprintf(const forward_model_type * forward_model ,
+                                    const char * path,
+                                    const subst_list_type * global_args,
+                                    mode_t umask) {
+  forward_model_python_fprintf( forward_model, path, global_args, umask);
+  forward_model_json_fprintf(   forward_model, path, global_args, umask);
+}
+
+#undef DEFAULT_JOB_JSON
 #undef DEFAULT_JOB_MODULE
 #undef DEFAULT_JOBLIST_NAME
 

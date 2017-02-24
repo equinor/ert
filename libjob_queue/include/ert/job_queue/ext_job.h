@@ -46,6 +46,7 @@ void                    ext_job_set_private_arg(ext_job_type * , const char *  ,
 
 void                    ext_job_set_argc(ext_job_type *   , const char ** , int);
 void                    ext_job_python_fprintf(const ext_job_type * , FILE * , const subst_list_type *);
+void                    ext_job_json_fprintf(const ext_job_type*, FILE*, const subst_list_type*);
 ext_job_type          * ext_job_fscanf_alloc(const char * , const char * , bool private_job , const char *, bool search_path);
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job );
 bool                    ext_job_is_shared( const ext_job_type * ext_job );
@@ -81,6 +82,7 @@ void                    ext_job_clear_environment( ext_job_type * ext_job );
 hash_type             * ext_job_get_environment( ext_job_type * ext_job );
 int                     ext_job_set_private_args_from_string( ext_job_type * ext_job , const char * arg_string );
 const char            * ext_job_get_private_args_as_string( ext_job_type * ext_job ); 
+const char *            ext_job_get_license_path(const ext_job_type*);
 //const char            * ext_job_get_arglist_as_string( ext_job_type * ext_job );
 //void                    ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string );
 

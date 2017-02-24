@@ -17,11 +17,11 @@ import os.path
 
 from cwrap import BaseCClass
 from ert.job_queue import QueuePrototype
-
+from ert.util import StringList, Hash
 
 class ExtJob(BaseCClass):
     TYPE_NAME                   = "ext_job"
-    _alloc                      = QueuePrototype("void* ext_job_alloc(char*, char*, int)", bind = False)
+    _alloc                      = QueuePrototype("void* ext_job_alloc(char*,char*, bool)", bind = False)
     _fscanf_alloc               = QueuePrototype("void* ext_job_fscanf_alloc(char*, char*, bool, char* , bool)", bind = False)
     _free                       = QueuePrototype("void ext_job_free( ext_job )")
     _get_help_text              = QueuePrototype("char* ext_job_get_help_text(ext_job)")
@@ -41,15 +41,18 @@ class ExtJob(BaseCClass):
     _set_target_file            = QueuePrototype("void ext_job_set_target_file(ext_job, char*)")
     _get_executable             = QueuePrototype("char* ext_job_get_executable(ext_job)")
     _set_executable             = QueuePrototype("void ext_job_set_executable(ext_job, char*)")
+    _get_error_file             = QueuePrototype("char* ext_job_get_error_file(ext_job)")
+    _get_start_file             = QueuePrototype("char* ext_job_get_start_file(ext_job)")
     _get_max_running            = QueuePrototype("int ext_job_get_max_running(ext_job)")
     _set_max_running            = QueuePrototype("void ext_job_set_max_running(ext_job, int)")
     _get_max_running_minutes    = QueuePrototype("int ext_job_get_max_running_minutes(ext_job)")
     _set_max_running_minutes    = QueuePrototype("void ext_job_set_max_running_minutes(ext_job, int)")
-    _get_environment            = QueuePrototype("void* ext_job_get_environment(ext_job)")
+    _get_environment            = QueuePrototype("string_hash_ref ext_job_get_environment(ext_job)")
     _set_environment            = QueuePrototype("void ext_job_add_environment(ext_job, char*, char*)")
+    _get_license_path           = QueuePrototype("char* ext_job_get_license_path(ext_job)")
+    _get_arglist                = QueuePrototype("stringlist_ref ext_job_get_arglist(ext_job)") 
     _clear_environment          = QueuePrototype("void ext_job_clear_environment(ext_job)")
     _save                       = QueuePrototype("void ext_job_save(ext_job)")
-
 
     def __init__(self, config_file, private, name = None , license_root_path = None , search_PATH = True):
         if os.path.isfile( config_file ):
@@ -119,6 +122,12 @@ class ExtJob(BaseCClass):
     def set_max_running(self, max_running):
         self._set_max_running( max_running)
 
+    def get_error_file(self):
+        return self._get_error_file()
+
+    def get_start_file(self):
+        return self._get_start_file()
+
     def get_max_running_minutes(self):
         return self._get_max_running_minutes( )
 
@@ -126,10 +135,16 @@ class ExtJob(BaseCClass):
         self._set_max_running_minutes(min_value)
 
     def get_environment(self):
-        return self._get_environment( ) #warn: fix return type
+        return self._get_environment( )
 
     def set_environment(self, key, value):
         self._set_environment( key, value)
+
+    def get_license_path(self):
+        return self._get_license_path()
+
+    def get_arglist(self):
+        return self._get_arglist()
 
     def clear_environment(self):
         self._clear_environment( )
