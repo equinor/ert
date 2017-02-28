@@ -2,7 +2,7 @@ import os.path
 import json
 
 from ert.test import TestAreaContext, ExtendedTestCase
-from ert.util import SubstitutionList
+from ert.util import SubstitutionList, Version
 from ert.job_queue.forward_model import ForwardModel
 from ert.job_queue.ext_job import ExtJob
 from ert.job_queue.ext_joblist import ExtJoblist
@@ -308,6 +308,10 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
 
         self.assertEqual(umask, int(config["umask"], 8))
         self.assertEqual(len(selected_jobs), len(config["jobList"]))
+
+        ert_version = config["ert_version"]
+        loaded_version = Version(ert_version[0], ert_version[1], ert_version[2])
+        self.assertEqual(Version.currentVersion(), loaded_version)
         
         for i in range(len(selected_jobs)):
             job = joblist[selected_jobs[i]]
