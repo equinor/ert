@@ -1,5 +1,8 @@
 import socket
-from xmlrpclib import ServerProxy, Fault
+try:
+    from xmlrpclib import ServerProxy, Fault
+except ImportError:
+    from xmlrpc.client import ServerProxy, Fault
 
 FAULT_CODES = {1: UserWarning,
                2: KeyError,
