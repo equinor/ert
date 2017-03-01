@@ -54,7 +54,7 @@ class LocalMinistep(BaseCClass):
     def name(self):
         return self._name()
     def getName(self):
-        """ deprecated. @rtype: str """
+        """ @rtype: str """
         return self.name()
 
     def free(self):

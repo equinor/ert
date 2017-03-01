@@ -40,7 +40,7 @@ class LocalDataset(BaseCClass):
     def name(self):
         return self._name()
     def getName(self):
-        """ deprecated. @rtype: str """
+        """ @rtype: str """
         return self.name()
 
     def addNode(self, key):

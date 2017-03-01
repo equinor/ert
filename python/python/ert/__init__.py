@@ -57,7 +57,6 @@ before giving up completely.
 """
 import os.path
 import sys
-import warnings
 from cwrap import load as cwrapload
 
 try:
