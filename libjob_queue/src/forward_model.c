@@ -30,6 +30,8 @@
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/forward_model.h>
 
+#include <ert/util/ert_version.h>
+
 
 /**
    This file implements a 'forward-model' object. I
@@ -224,7 +226,9 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
   int i;
 
   fprintf(stream, "{\n");
+
   fprintf(stream, "\"umask\" : \"%04o\",\n", umask);
+
   fprintf(stream, "\"jobList\" : [");
   for (i=0; i < vector_get_size(forward_model->jobs); i++) {
     const ext_job_type * job = vector_iget_const(forward_model->jobs , i);
@@ -232,7 +236,10 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
     if (i < (vector_get_size( forward_model->jobs ) - 1))
       fprintf(stream,",\n");
   }
-  fprintf(stream, "]\n");
+  fprintf(stream, "],\n");
+
+  fprintf(stream, "\"ert_version\" : [%d, %d, \"%s\"]\n", version_get_major_ert_version(), version_get_minor_ert_version(), version_get_micro_ert_version());
+
   fprintf(stream, "}\n");
   fclose(stream);
   free(json_file);
