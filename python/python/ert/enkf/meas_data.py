@@ -58,9 +58,9 @@ class MeasData(BaseCClass):
 
 
     def __repr__(self):
-        fmt = 'MeasData(len = %d, total ens = %d, active obs = %d, active ens = %d) at 0x%x'
-        return fmt % (len(self), self.getTotalEnsSize(),
-                      self.getActiveObsSize(), self.getActiveEnsSize(), self._address())
+        fmt = 'len = %d, total ens = %d, active obs = %d, active ens = %d'
+        return self._create_repr(fmt % (len(self), self.getTotalEnsSize(),
+                                        self.activeObsSize(), self.getActiveEnsSize()))
 
     def __str__(self):
         return '\n'.join([str(block) for block in self])

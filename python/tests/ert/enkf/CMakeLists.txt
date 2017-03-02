@@ -18,7 +18,6 @@ set(TEST_SOURCES
     test_ert_log.py
     test_gen_obs.py
     test_labscale.py
-    test_linalg.py
     test_local_obsdata_node.py
     test_local_config.py
     test_meas_block.py

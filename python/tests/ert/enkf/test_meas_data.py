@@ -69,7 +69,6 @@ class MeasDataTest(ExtendedTestCase):
             self.assertEqual( S[0,iens] , 5 )
             self.assertEqual( S[1,iens] , 10 )
             self.assertEqual( S[2,iens] , 15 )
-            
 
-    
-            
+        pfx = 'MeasData(len = '
+        self.assertEqual(pfx, repr(data)[:len(pfx)])
