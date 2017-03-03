@@ -157,10 +157,6 @@ class EnKFMain(BaseCClass):
         """ @rtype: ModelConfig """
         return self._get_model_config( ).setParent(self)
 
-    def logh(self):
-        """ @rtype: Log """
-        return self._get_logh( ).setParent(self)
-
     def getLocalConfig(self):
         """ @rtype: LocalConfig """
         config = self._get_local_config( ).setParent(self)

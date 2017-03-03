@@ -43,15 +43,17 @@ class ExtJobTest(ExtendedTestCase):
             create_valid_config("CONFIG")
             job = ExtJob("CONFIG" , True)
             self.assertEqual( job.name() , "CONFIG")
-            
+
             self.assertEqual( job.get_executable() , os.path.join( os.getcwd() , "script.sh"))
             self.assertTrue( os.access( job.get_executable() , os.X_OK ))
-        
+
 
             job = ExtJob("CONFIG" , True , name = "Job")
             self.assertEqual( job.name() , "Job")
+            pfx = 'ExtJob('
+            self.assertEqual(pfx, repr(job)[:len(pfx)])
 
-            
+
         with TestAreaContext("python/job_queue/forward_model2"):
             create_config_missing_executable( "CONFIG" )
             with self.assertRaises(ValueError):

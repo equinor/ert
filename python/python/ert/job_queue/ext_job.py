@@ -60,13 +60,16 @@ class ExtJob(BaseCClass):
                 name = os.path.basename( config_file )
 
             c_ptr = self._fscanf_alloc(name, license_root_path, private, config_file , search_PATH)
-            super(ExtJob, self).__init__(c_ptr)
+            if c_ptr:
+                super(ExtJob, self).__init__(c_ptr)
+            else:
+                raise ValueError('Unable to construct ExtJob(name=%s, config_file=%s, private=%s)' %
+                                 (name, config_file, private))
         else:
-            raise IOError("No such file:%s" % config_file)
+            raise IOError('No such config file "%s".' % config_file)
 
-    def __str__(self):
-        return "ExtJob(%s, config_file = %s)" % (self.name() , self.get_config_file())
-        
+    def __repr__(self):
+        return self._create_repr('%s, config_file = %s' % (self.name() , self.get_config_file()))
 
     def get_private_args_as_string(self):
         return self._get_private_args_as_string( )

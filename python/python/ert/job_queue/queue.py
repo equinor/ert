@@ -187,7 +187,7 @@ class JobQueue(BaseCClass):
         return self._num_running( )
 
     def num_pending( self ):
-        return self._.num_pending( )
+        return self._num_pending( )
 
     def num_waiting( self ):
         return self._num_waiting( )
@@ -195,12 +195,18 @@ class JobQueue(BaseCClass):
     def num_complete( self ):
         return self._num_complete( )
 
+    def __getitem__(self, index):
+        idx = index
+        ls = len(self)
+        if idx < 0:
+            idx += ls
+        if 0 <= idx < ls:
+            return self._iget_driver_data(idx)
+        raise IndexError('index out of range, was: %d should be in [0, %d)' %
+                         (index, ls))
+
     def exists(self, index):
-        job = self.__getitem__(index)
-        if job:
-            return True
-        else:
-            return False
+        return self[index]
 
     def get_max_running( self ):
         return self.driver.get_max_running()
