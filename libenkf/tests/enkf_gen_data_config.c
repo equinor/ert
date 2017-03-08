@@ -27,7 +27,6 @@
 
 #include <ert/util/test_work_area.h>
 #include <ert/util/test_util.h>
-#include <ert/util/test_util_abort.h>
 #include <ert/enkf/gen_data.h>
 #include <ert/enkf/gen_data_config.h>
 #include <ert/enkf/enkf_fs.h>
