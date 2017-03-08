@@ -18,8 +18,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "ert/util/build_config.h"
-
 #include <ert/util/test_util.h>
 #include <ert/job_queue/job_node.h>
 

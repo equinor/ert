@@ -20,8 +20,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "ert/util/build_config.h"
-
 #include <ert/util/test_work_area.h>
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
