@@ -23,7 +23,6 @@
 #include "ert/util/build_config.h"
 
 #include <ert/util/test_util.h>
-#include <ert/util/test_util_abort.h>
 #include <ert/enkf/ert_test_context.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
