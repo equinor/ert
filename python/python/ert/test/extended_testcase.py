@@ -117,7 +117,7 @@ class ExtendedTestCase(TestCase):
         return buffer1 == buffer2
 
     def assertEnumIsFullyDefined(self, enum_class, enum_name, source_path, verbose=False):
-        enum_values = SourceEnumerator.findEnumerators(enum_name, source_path)
+        enum_values = SourceEnumerator.findEnumerators(enum_name, os.path.join( SOURCE_ROOT , source_path))
 
         for identifier, value in enum_values:
             if verbose:
