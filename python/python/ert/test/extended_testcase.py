@@ -13,10 +13,16 @@ from .source_enumerator import SourceEnumerator
 from ert.util import installAbortSignals
 from ert.util import Version
 
+TESTDATA_ROOT = None
+SHARE_ROOT = None
 SOURCE_ROOT = None
 BUILD_ROOT = None
 try:
     from test_env import *
+    assert( os.path.isdir( TESTDATA_ROOT ))
+    assert( os.path.isdir( SHARE_ROOT ))
+    assert( os.path.isdir( SOURCE_ROOT ))
+    assert( os.path.isdir( BUILD_ROOT ))
 except ImportError:
     sys.stderr.write("Warning: could not import file test_env.py - this might lead to test failures.")
 
@@ -128,55 +134,10 @@ class ExtendedTestCase(TestCase):
             self.assertEqual(class_value, value, "Enum value for identifier: %s does not match: %s != %s" % (identifier, class_value, value))
 
 
-
-    def setShareRoot(self, share_root):
-        self.__share_root = share_root
-        if not os.path.exists(self.__share_root):
-            raise IOError("Path: %s not found" % self.__share_root)
-
-<<<<<<< HEAD
-    def createTestPath(self, path):
-        full_path = os.path.realpath(os.path.join(TESTDATA_ROOT , path))
-        if os.path.exists( full_path ):
-            return full_path
-        else:
-            raise IOError("No such file or directory: %s" % full_path)
-
-
-    def createSharePath(self, path, share_root=None):
-        if share_root is None and self.__share_root is None:
-            self.setShareRoot(ExtendedTestCase.findShareRoot())
-
-        root_path = self.__share_root
-        if share_root is not None:
-            if not os.path.exists(share_root):
-                raise IOError("Path: %s not found" % share_root)
-
-            root_path = share_root
-
-        return os.path.realpath(os.path.join(root_path , path))
-
-
     @staticmethod
-    def findShareRoot():
-        file_path = os.path.realpath(__file__)
-        build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../share/"))
-        site_packages_build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../../../share/"))
-        src_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../share/"))
-        env_root = os.getenv("ERT_SHARE_PATH")
-
-        if env_root is not None and os.path.exists(env_root):
-            root = os.path.realpath(env_root)
-        elif os.path.exists(build_root):
-            root = os.path.realpath(build_root)
-        elif os.path.exists(site_packages_build_root):
-            root = os.path.realpath(site_packages_build_root)
-        elif os.path.exists(src_root):
-            root = os.path.realpath(src_root)
-        else:
-            root = None
-
-        return root
+    def createSharePath(path):
+        return os.path.realpath(os.path.join(SHARE_ROOT , path))
+    
 
     @staticmethod
     def createTestPath(path):
