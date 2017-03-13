@@ -2,6 +2,7 @@ import numbers
 import os
 import os.path
 import traceback
+import sys
 
 try:
     from unittest2 import TestCase
@@ -12,6 +13,14 @@ from .source_enumerator import SourceEnumerator
 from ert.util import installAbortSignals
 from ert.util import Version
 
+SOURCE_ROOT = None
+BUILD_ROOT = None
+try:
+    from test_env import *
+except ImportError:
+    sys.stderr.write("Warning: could not import file test_env.py - this might lead to test failures.")
+
+    
 class _AssertNotRaisesContext(object):
 
     def __init__(self, test_class):
