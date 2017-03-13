@@ -128,46 +128,19 @@ class ExtendedTestCase(TestCase):
             self.assertEqual(class_value, value, "Enum value for identifier: %s does not match: %s != %s" % (identifier, class_value, value))
 
 
-    def setTestDataRoot(self, testdata_root):
-        self.__testdata_root = testdata_root
-        if not os.path.exists(self.__testdata_root):
-            raise IOError("Path:%s not found" % self.__testdata_root)
 
     def setShareRoot(self, share_root):
         self.__share_root = share_root
         if not os.path.exists(self.__share_root):
             raise IOError("Path: %s not found" % self.__share_root)
 
-
-    def createTestPath(self, path, testdata_root=None):
-        if testdata_root is None and self.__testdata_root is None:
-            file_path = os.path.realpath(__file__)
-            build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../test-data/"))
-            site_packages_build_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../../../test-data/"))
-            src_root = os.path.realpath(os.path.join(os.path.dirname(file_path), "../../../../test-data/"))
-            env_root = os.getenv("ERT_TEST_ROOT_PATH")
-
-            if env_root is not None and os.path.exists(env_root):
-                root = os.path.realpath(env_root)
-            elif os.path.exists(build_root):
-                root = os.path.realpath(build_root)
-            elif os.path.exists(site_packages_build_root):
-                root = os.path.realpath(site_packages_build_root)
-            elif os.path.exists(src_root):
-                root = os.path.realpath(src_root)
-            else:
-                root = None
-
-            self.setTestDataRoot(root)
-
-        root_path = self.__testdata_root 
-        if testdata_root is not None:
-            if not os.path.exists(testdata_root):
-                raise IOError("Path: %s not found" % testdata_root)
-
-            root_path = testdata_root
-
-        return os.path.realpath(os.path.join(root_path , path))
+<<<<<<< HEAD
+    def createTestPath(self, path):
+        full_path = os.path.realpath(os.path.join(TESTDATA_ROOT , path))
+        if os.path.exists( full_path ):
+            return full_path
+        else:
+            raise IOError("No such file or directory: %s" % full_path)
 
 
     def createSharePath(self, path, share_root=None):
@@ -204,6 +177,11 @@ class ExtendedTestCase(TestCase):
             root = None
 
         return root
+
+    @staticmethod
+    def createTestPath(path):
+        return os.path.realpath(os.path.join(TESTDATA_ROOT , path))
+
 
     def assertNotRaises(self, func=None):
 
