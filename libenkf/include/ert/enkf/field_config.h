@@ -30,6 +30,7 @@ extern "C" {
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_type.h>
 
 #include <ert/rms/rms_file.h>
 
@@ -127,6 +128,7 @@ bool                    field_config_write_compressed(const field_config_type * 
 field_file_format_type  field_config_guess_file_type(const char * );
 field_file_format_type  field_config_manual_file_type(const char * , bool);
 ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
+ecl_data_type           field_config_get_ecl_data_type(const field_config_type *);
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
 int                     field_config_get_nx(const field_config_type * config );

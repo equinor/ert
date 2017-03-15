@@ -27,6 +27,7 @@
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_endian_flip.h>
+#include <ert/ecl/ecl_type.h>
 
 #include <ert/rms/rms_file.h>
 #include <ert/rms/rms_util.h>
@@ -706,7 +707,9 @@ ecl_type_enum field_config_get_ecl_type(const field_config_type * config) {
   return config->internal_ecl_type;
 }
 
-
+ecl_data_type field_config_get_ecl_data_type(const field_config_type * config) {
+  return ecl_type_create_data_type_from_type(config->internal_ecl_type);
+}
 
 int field_config_get_data_size_from_grid(const field_config_type * config) {
   return config->keep_inactive_cells ? ecl_grid_get_global_size(config->grid) : ecl_grid_get_active_size(config->grid);

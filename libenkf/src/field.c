@@ -29,6 +29,7 @@
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_endian_flip.h>
+#include <ert/ecl/ecl_type.h>
 
 #include <ert/rms/rms_file.h>
 #include <ert/rms/rms_tagkey.h>
@@ -562,7 +563,7 @@ void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio, c
 
 static ecl_kw_type * field_alloc_ecl_kw_wrapper__(const field_type * field, void * data) {
   const int data_size             = field_config_get_volume(field->config);
-  const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
+  const ecl_data_type target_type = field_config_get_ecl_data_type(field->config); /* Could/should in principle be input */
 
   ecl_kw_type            * ecl_kw = ecl_kw_alloc_new_shared(field_config_get_ecl_kw_name(field->config) , data_size , target_type , data);
 
