@@ -62,7 +62,7 @@ void test_load_restart1() {
 
 void make_restart_mock( const char * path , const char * eclbase , int report_step) {
   char * filename = ecl_util_alloc_filename( path , eclbase , ECL_RESTART_FILE , false , report_step );
-  ecl_kw_type * kw = ecl_kw_alloc( "KW" , 100 , ECL_FLOAT_TYPE);
+  ecl_kw_type * kw = ecl_kw_alloc( "KW" , 100 , ECL_FLOAT);
   fortio_type * f = fortio_open_writer( filename , false , true );
   ecl_kw_fwrite( kw , f );
   fortio_fclose( f );
