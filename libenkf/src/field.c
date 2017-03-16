@@ -544,9 +544,9 @@ bool field_write_to_buffer(const field_type * field , buffer_type * buffer , int
 
 void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio) {
   const int data_size = field_config_get_data_size(field->config );
-  const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+  const ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
 
-  ecl_kw_fwrite_param_fortio(fortio , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , field->data);
+  ecl_kw_fwrite_param_fortio(fortio , field_config_get_ecl_kw_name(field->config), data_type , data_size , field->data);
 }
 
 
@@ -554,9 +554,10 @@ void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio, c
   const int data_size             = field_config_get_volume(field->config);
   const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
   const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
-  void *data = __field_alloc_3D_data(field , data_size , false ,ecl_type , target_type, init_file);
+  const ecl_data_type data_type   = field_config_get_ecl_data_type(field->config);
+  void *data = __field_alloc_3D_data(field , data_size , false , ecl_type , target_type, init_file);
 
-  ecl_kw_fwrite_param_fortio(fortio , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , data);
+  ecl_kw_fwrite_param_fortio(fortio , field_config_get_ecl_kw_name(field->config), data_type , data_size , data);
   free(data);
 }
 

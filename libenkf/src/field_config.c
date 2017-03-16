@@ -124,6 +124,7 @@ _______________/                     \___________/       |  with EnKF.          
 
 #define FIELD_CONFIG_ID 78269
 
+// TODO: Use ecl_data_type
 struct field_config_struct {
   UTIL_TYPE_ID_DECLARATION;
 
