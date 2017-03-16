@@ -24,14 +24,14 @@ class EclDataTypeTest(ExtendedTestCase):
     def test_alloc_from_type(self):
         for (ecl_type, element_size) in zip(EclTypeEnum.enums(), self.ELEMENT_SIZE):
             data_type = EclDataType(ecl_type)
-            self.assertEqual(ecl_type, data_type.get_type())
-            self.assertEqual(element_size, data_type.get_element_size())
+            self.assertEqual(ecl_type, data_type.type)
+            self.assertEqual(element_size, data_type.element_size)
 
     def test_alloc(self):
         for (ecl_type, element_size) in zip(EclTypeEnum.enums(), self.ELEMENT_SIZE):
             data_type = EclDataType(ecl_type, element_size)
-            self.assertEqual(ecl_type, data_type.get_type())
-            self.assertEqual(element_size, data_type.get_element_size())
+            self.assertEqual(ecl_type, data_type.type)
+            self.assertEqual(element_size, data_type.element_size)
     
     def test_type_verifiers(self):
         for (ecl_type, verifier) in zip(EclTypeEnum.enums(), self.VERIFIERS):
@@ -40,7 +40,7 @@ class EclDataTypeTest(ExtendedTestCase):
 
     def test_get_type_name(self):
         for (ecl_type, type_name) in zip(EclTypeEnum.enums(), self.TYPE_NAMES):
-            self.assertEqual(type_name, EclDataType(ecl_type).get_type_name())
+            self.assertEqual(type_name, EclDataType(ecl_type).type_name)
 
     def test_initialization_validation(self):
         invalid_args = [
@@ -57,7 +57,7 @@ class EclDataTypeTest(ExtendedTestCase):
 
     def test_create_from_type_name(self):
         for (ecl_type, type_name) in zip(EclTypeEnum.enums(), self.TYPE_NAMES):
-            self.assertEqual(ecl_type, EclDataType.create_from_type_name(type_name).get_type())
+            self.assertEqual(ecl_type, EclDataType.create_from_type_name(type_name).type)
 
     def test_is_numeric(self):
         numeric_types = [
@@ -75,6 +75,19 @@ class EclDataTypeTest(ExtendedTestCase):
     def test_equals(self):
         for ecl_type in EclTypeEnum.enums():
             self.assertTrue( EclDataType(ecl_type).is_equal(EclDataType(ecl_type)) )
+            self.assertEqual( EclDataType(ecl_type), EclDataType(ecl_type) )
 
             for other in set(EclTypeEnum.enums())-set([ecl_type]):
                 self.assertFalse( EclDataType(ecl_type).is_equal(EclDataType(other)) )
+                self.assertNotEqual( EclDataType(ecl_type), EclDataType(other) )
+
+    def test_hash(self):
+        all_types = set()
+
+        for index, ecl_type in enumerate(EclTypeEnum.enums()):
+            all_types.add(EclDataType(ecl_type))
+            self.assertEqual(index+1, len(all_types))
+
+        for index, ecl_type in enumerate(EclTypeEnum.enums()):
+            all_types.add(EclDataType(ecl_type))
+        self.assertEqual(len(EclTypeEnum.enums()), len(all_types))
