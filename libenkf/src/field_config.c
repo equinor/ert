@@ -173,7 +173,7 @@ void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_
 
 void field_config_set_ecl_type(field_config_type * config , ecl_type_enum ecl_type) {
   config->internal_ecl_type     = ecl_type;
-  config->sizeof_ctype = ecl_util_get_sizeof_ctype(ecl_type);
+  config->sizeof_ctype = ecl_type_get_sizeof_ctype(field_config_get_ecl_data_type(config));
 }
 
 

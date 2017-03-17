@@ -158,8 +158,9 @@ void rms_util_fwrite_newline(FILE *stream) {
 
 
 rms_type_enum rms_util_convert_ecl_type(ecl_type_enum ecl_type) {
+  ecl_data_type data_type = ecl_type_create_data_type_from_type(ecl_type);
   rms_type_enum rms_type = rms_int_type;  /* Shut up the compiler */
-  switch (ecl_type) {
+  switch (ecl_type_get_type(data_type)) {
   case(ECL_INT_TYPE):
     rms_type = rms_int_type;
     break;
@@ -170,7 +171,7 @@ rms_type_enum rms_util_convert_ecl_type(ecl_type_enum ecl_type) {
     rms_type = rms_double_type;
     break;
   default:
-    util_abort("%s: Conversion ecl_type -> rms_type not supported for ecl_type:%s \n",__func__ , ecl_util_get_type_name(ecl_type));
+    util_abort("%s: Conversion ecl_type -> rms_type not supported for ecl_type:%s \n",__func__ , ecl_type_get_type_name(data_type));
   }
   return rms_type;
 }

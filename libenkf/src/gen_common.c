@@ -35,8 +35,9 @@
 
 
 void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int * size) {
+  ecl_data_type data_type = ecl_type_create_data_type_from_type(load_type);
   FILE * stream           = util_fopen(file , "r");
-  int sizeof_ctype        = ecl_util_get_sizeof_ctype(load_type);
+  int sizeof_ctype        = ecl_type_get_sizeof_ctype(data_type);
   int buffer_elements     = *size;
   int current_size        = 0;
   int fscanf_return       = 1; /* To keep the compiler happy .*/
@@ -80,9 +81,10 @@ void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int
 
 
 void * gen_common_fread_alloc(const char * file , ecl_type_enum load_type , int * size) {
+  ecl_data_type load_data_type = ecl_type_create_data_type_from_type(load_type);
   const int max_read_size = 100000;
   FILE * stream           = util_fopen(file , "r");
-  int sizeof_ctype        = ecl_util_get_sizeof_ctype(load_type);
+  int sizeof_ctype        = ecl_type_get_sizeof_ctype(load_data_type);
   int read_size           = 4096; /* Shot in the wild */
   int current_size        = 0;
   int buffer_elements;

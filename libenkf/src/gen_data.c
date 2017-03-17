@@ -166,7 +166,7 @@ void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer ,
   size = buffer_fread_int(buffer);
   buffer_fskip_int( buffer );  /* Skipping report_step from the buffer - was a mistake to store it - I think ... */
   {
-    size_t byte_size       = size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
+    size_t byte_size       = size * ecl_type_get_sizeof_ctype( gen_data_config_get_internal_data_type ( gen_data->config ));
     size_t compressed_size = buffer_get_remaining_size( buffer );
     gen_data->data         = util_realloc( gen_data->data , byte_size );
     buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size );
@@ -213,6 +213,7 @@ void gen_data_deserialize(gen_data_type * gen_data , node_id_type node_id , cons
 */
 
 static void gen_data_set_data__(gen_data_type * gen_data , int size, const forward_load_context_type * load_context, ecl_type_enum load_type , const void * data) {
+  ecl_data_type load_data_type = ecl_type_create_data_type_from_type(load_type);
   gen_data_assert_size(gen_data , size, forward_load_context_get_load_step( load_context ));
   if (gen_data_config_is_dynamic( gen_data->config ))
     gen_data_config_update_active( gen_data->config ,  load_context , gen_data->active_mask);
@@ -220,13 +221,13 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, const forwa
   gen_data_realloc_data(gen_data);
 
   if (size > 0) {
-    ecl_type_enum internal_type = gen_data_config_get_internal_type( gen_data->config );
-    int byte_size = ecl_util_get_sizeof_ctype( internal_type ) * size ;
+    ecl_data_type internal_type = gen_data_config_get_internal_data_type( gen_data->config );
+    int byte_size = ecl_type_get_sizeof_ctype( internal_type ) * size ;
 
-    if (load_type == internal_type)
+    if (ecl_type_is_equal(load_data_type, internal_type))
       memcpy(gen_data->data , data , byte_size );
     else {
-      if (load_type == ECL_FLOAT_TYPE)
+      if (ecl_type_is_float(load_data_type))
         util_float_to_double((double *) gen_data->data , data , size);
       else
         util_double_to_float((float *) gen_data->data , data , size);
@@ -398,8 +399,9 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
 
 
 static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const char * file , ecl_type_enum export_type) {
+  ecl_data_type data_type = ecl_type_create_data_type_from_type(export_type);
   FILE * stream    = util_fopen(file , "w");
-  int sizeof_ctype = ecl_util_get_sizeof_ctype( export_type );
+  int sizeof_ctype = ecl_type_get_sizeof_ctype( data_type );
   util_fwrite( gen_data->data , sizeof_ctype , gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step) , stream , __func__);
   fclose(stream);
 }

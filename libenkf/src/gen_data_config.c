@@ -97,6 +97,10 @@ ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * con
   return config->internal_type;
 }
 
+ecl_data_type gen_data_config_get_internal_data_type(const gen_data_config_type * config) {
+  return ecl_type_create_data_type_from_type(config->internal_type);
+}
+
 
 /**
    If current_size as queried from config->data_size_vector == -1
@@ -128,7 +132,7 @@ int gen_data_config_get_initial_size( const gen_data_config_type * config ) {
 
 
 int gen_data_config_get_byte_size( const gen_data_config_type * config , int report_step) {
-  int byte_size = gen_data_config_get_data_size( config , report_step ) * ecl_util_get_sizeof_ctype( config->internal_type );
+  int byte_size = gen_data_config_get_data_size( config , report_step ) * ecl_type_get_sizeof_ctype( gen_data_config_get_internal_data_type(config) );
   return byte_size;
 }
 

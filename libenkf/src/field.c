@@ -119,10 +119,10 @@ void field_export3D(const field_type * field ,
                     ecl_type_enum target_type ,
                     void *fill_value,
                     const char * init_file) {
-
+  ecl_data_type target_data_type = ecl_type_create_data_type_from_type(target_type);
   const field_config_type * config = field->config;
   ecl_type_enum ecl_type = field_config_get_ecl_type( config );
-  int   sizeof_ctype_target = ecl_util_get_sizeof_ctype(target_type);
+  int   sizeof_ctype_target = ecl_type_get_sizeof_ctype(target_data_type);
 
   field_type * initial_field               = NULL;
   field_config_type * initial_field_config = NULL;
@@ -404,7 +404,8 @@ static void * __field_alloc_3D_data(const field_type * field ,
                                     ecl_type_enum ecl_type ,
                                     ecl_type_enum target_type,
                                     const char * init_file) {
-  void * data = util_calloc(data_size , ecl_util_get_sizeof_ctype(target_type) );
+  ecl_data_type data_type = ecl_type_create_data_type_from_type(target_type);
+  void * data = util_calloc(data_size , ecl_type_get_sizeof_ctype(data_type) );
   if (ecl_type == ECL_DOUBLE_TYPE) {
     double fill;
     if (rms_index_order)
@@ -1051,7 +1052,7 @@ int field_get_global_index(const field_type * field , int i , int j  , int k) {
 void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
   const field_config_type * config = field->config;
   const int data_size              = field_config_get_data_size(config );
-  ecl_type_enum field_type         = field_config_get_ecl_type(field->config);
+  ecl_data_type field_type         = field_config_get_ecl_data_type(field->config);
   ecl_data_type kw_type            = ecl_kw_get_data_type(ecl_kw);
 
   if (data_size != ecl_kw_get_size(ecl_kw)) {
@@ -1063,7 +1064,7 @@ void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
     util_abort("%s: Aborting \n",__func__ );
   }
 
-  ecl_util_memcpy_typed_data(field->data , ecl_kw_get_void_ptr(ecl_kw) , field_type , ecl_type_get_type(kw_type) , ecl_kw_get_size(ecl_kw));
+  ecl_util_memcpy_typed_data(field->data , ecl_kw_get_void_ptr(ecl_kw) , field_type , kw_type, ecl_kw_get_size(ecl_kw));
 }
 
 
