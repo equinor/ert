@@ -1052,7 +1052,7 @@ void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
   const field_config_type * config = field->config;
   const int data_size              = field_config_get_data_size(config );
   ecl_type_enum field_type         = field_config_get_ecl_type(field->config);
-  ecl_type_enum kw_type            = ecl_kw_get_type(ecl_kw);
+  ecl_data_type kw_type            = ecl_kw_get_data_type(ecl_kw);
 
   if (data_size != ecl_kw_get_size(ecl_kw)) {
     fprintf(stderr,"\n");
@@ -1063,7 +1063,7 @@ void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
     util_abort("%s: Aborting \n",__func__ );
   }
 
-  ecl_util_memcpy_typed_data(field->data , ecl_kw_get_void_ptr(ecl_kw) , field_type , kw_type , ecl_kw_get_size(ecl_kw));
+  ecl_util_memcpy_typed_data(field->data , ecl_kw_get_void_ptr(ecl_kw) , field_type , ecl_type_get_type(kw_type) , ecl_kw_get_size(ecl_kw));
 }
 
 
