@@ -1149,13 +1149,13 @@ static bool field_fload_ecl_kw(field_type * field , const char * filename, bool 
 static bool field_fload_ecl_grdecl(field_type * field , const char * filename, bool keep_inactive ) {
   const char * key = field_config_get_ecl_kw_name(field->config);
   int size = field_config_get_volume(field->config);
-  ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+  ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
   ecl_kw_type * ecl_kw   = NULL;
   {
     FILE * stream = util_fopen__(filename , "r");
     if (stream) {
       if (ecl_kw_grdecl_fseek_kw(key , false , stream))
-        ecl_kw = ecl_kw_fscanf_alloc_grdecl_data(stream , size , ecl_type);
+        ecl_kw = ecl_kw_fscanf_alloc_grdecl_data(stream , size , data_type);
       else
         util_exit("%s: Can not locate %s keyword in %s \n",__func__ , key , filename);
       fclose(stream);
