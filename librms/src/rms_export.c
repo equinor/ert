@@ -79,7 +79,7 @@ void rms_export_roff_from_keyword(const char *filename, ecl_grid_type *ecl_grid,
     }
 
     data_key = rms_tagkey_alloc_complete("data", global_size, 
-        rms_util_convert_ecl_type(ecl_kw_get_type(ecl_kw[n])), target_data, true);
+        rms_util_convert_ecl_type(ecl_type_get_type(ecl_kw_get_data_type(ecl_kw[n]))), target_data, true);
     rms_tag_fwrite_parameter(ecl_kw_get_header8(ecl_kw[n]), data_key, 
         rms_file_get_FILE(rms_file));
     rms_tagkey_free(data_key);

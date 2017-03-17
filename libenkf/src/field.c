@@ -1128,7 +1128,7 @@ static bool field_fload_ecl_kw(field_type * field , const char * filename, bool 
         fortio_fclose(fortio);
 
         if (field_config_get_volume(field->config) == ecl_kw_get_size(ecl_kw))
-          field_import3D(field , ecl_kw_get_void_ptr(ecl_kw) , false , keep_inactive, ecl_kw_get_type(ecl_kw));
+          field_import3D(field , ecl_kw_get_void_ptr(ecl_kw) , false , keep_inactive, ecl_type_get_type(ecl_kw_get_data_type(ecl_kw)));
         else
           /* Keyword is already packed - e.g. from a restart file. Size is
              verified in the _copy function.*/
@@ -1160,7 +1160,7 @@ static bool field_fload_ecl_grdecl(field_type * field , const char * filename, b
         util_exit("%s: Can not locate %s keyword in %s \n",__func__ , key , filename);
       fclose(stream);
 
-      field_import3D(field , ecl_kw_get_void_ptr(ecl_kw) , false , keep_inactive, ecl_kw_get_type(ecl_kw));
+      field_import3D(field , ecl_kw_get_void_ptr(ecl_kw) , false , keep_inactive, ecl_type_get_type(ecl_kw_get_data_type(ecl_kw)));
       ecl_kw_free(ecl_kw);
       return true;
     }
