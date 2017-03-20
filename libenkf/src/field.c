@@ -479,7 +479,7 @@ static void field_ROFF_export__(const field_type * field , rms_file_type * rms_f
   const ecl_data_type data_type    = field_config_get_ecl_data_type(field->config);
 
   void *data  = __field_alloc_3D_data(field , data_size , true , data_type , target_type, init_file);
-  rms_tagkey_type * data_key = rms_tagkey_alloc_complete("data" , data_size , rms_util_convert_ecl_type(target_type.type) , data , true);
+  rms_tagkey_type * data_key = rms_tagkey_alloc_complete("data" , data_size , rms_util_convert_ecl_type(target_type) , data , true);
   rms_tag_fwrite_parameter(field_config_get_ecl_kw_name(field->config) , data_key , rms_file_get_FILE(rms_file));
   rms_tagkey_free(data_key);
   free(data);

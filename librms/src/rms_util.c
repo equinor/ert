@@ -157,8 +157,7 @@ void rms_util_fwrite_newline(FILE *stream) {
 }
 
 
-rms_type_enum rms_util_convert_ecl_type(ecl_type_enum ecl_type) {
-  ecl_data_type data_type = ecl_type_create_data_type_from_type(ecl_type);
+rms_type_enum rms_util_convert_ecl_type(ecl_data_type data_type) {
   rms_type_enum rms_type = rms_int_type;  /* Shut up the compiler */
   switch (ecl_type_get_type(data_type)) {
   case(ECL_INT_TYPE):

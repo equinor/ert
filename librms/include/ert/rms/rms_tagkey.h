@@ -40,7 +40,6 @@ rms_tagkey_type * rms_tagkey_alloc_empty(bool);
 rms_tagkey_type * rms_tagkey_alloc_complete(const char * , int , rms_type_enum , const void * , bool);
 const char      * rms_tagkey_get_name(const rms_tagkey_type *);
 rms_type_enum     rms_tagkey_get_rms_type(const rms_tagkey_type * );
-ecl_type_enum     rms_tagkey_get_ecl_type(const rms_tagkey_type * );
 ecl_data_type     rms_tagkey_get_ecl_data_type(const rms_tagkey_type *);
 void              rms_tagkey_manual_realloc_data(rms_tagkey_type * , int );
 void              rms_tagkey_set_data(rms_tagkey_type * , const void * );

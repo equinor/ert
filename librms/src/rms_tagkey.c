@@ -609,28 +609,18 @@ rms_type_enum rms_tagkey_get_rms_type(const rms_tagkey_type * key) {
   return key->rms_type;
 }
 
-
-ecl_type_enum rms_tagkey_get_ecl_type(const rms_tagkey_type * key) {
-  ecl_type_enum ecl_type;
+ecl_data_type rms_tagkey_get_ecl_data_type(const rms_tagkey_type * key) {
   switch (key->rms_type) {
   case(rms_float_type):
-    ecl_type = ECL_FLOAT_TYPE;
-    break;
+    return ECL_FLOAT;
   case(rms_double_type):
-    ecl_type = ECL_DOUBLE_TYPE;
-    break;
+    return ECL_DOUBLE;
   case(rms_int_type):
-    ecl_type = ECL_INT_TYPE;
-    break;
+    return ECL_INT;
   default:
-    fprintf(stderr,"%s: sorry rms_type: %d not implemented - aborting \n",__func__ , key->rms_type);
-    abort();
+    util_abort("%s: sorry rms_type: %d not implemented - aborting \n",__func__ , key->rms_type);
+    return ECL_INT; /* Dummy */
   }
-  return ecl_type;
-}
-
-ecl_data_type rms_tagkey_get_ecl_data_type(const rms_tagkey_type * key) {
-    return ecl_type_create_data_type_from_type(rms_tagkey_get_ecl_type(key));
 }
 
 

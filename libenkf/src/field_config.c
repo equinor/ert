@@ -694,7 +694,7 @@ int field_config_get_volume(const field_config_type * config) {
 
 
 rms_type_enum field_config_get_rms_type(const field_config_type * config) {
-  return rms_util_convert_ecl_type(config->internal_data_type.type);
+  return rms_util_convert_ecl_type(config->internal_data_type);
 }
 
 
