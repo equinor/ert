@@ -127,7 +127,6 @@ const char            * field_config_default_extension(field_file_format_type , 
 bool                    field_config_write_compressed(const field_config_type * );
 field_file_format_type  field_config_guess_file_type(const char * );
 field_file_format_type  field_config_manual_file_type(const char * , bool);
-ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
 ecl_data_type           field_config_get_ecl_data_type(const field_config_type *);
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
@@ -138,7 +137,7 @@ void                    field_config_free(field_config_type *);
 int                     field_config_get_volume(const field_config_type * );
 int                     field_config_get_data_size_from_grid(const field_config_type * config);
 void                    field_config_set_ecl_kw_name(field_config_type * , const char * );
-void                    field_config_set_ecl_type(field_config_type *  , ecl_type_enum );
+void                    field_config_set_ecl_data_type(field_config_type *  , ecl_data_type );
 void                    field_config_set_eclfile(field_config_type * , const char * );
 const bool            * field_config_get_iactive(const field_config_type * );
 int                     field_config_get_byte_size(const field_config_type * );

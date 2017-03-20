@@ -121,7 +121,7 @@ void field_export3D(const field_type * field ,
                     const char * init_file) {
   ecl_data_type target_data_type = ecl_type_create_data_type_from_type(target_type);
   const field_config_type * config = field->config;
-  ecl_type_enum ecl_type = field_config_get_ecl_type( config );
+  ecl_data_type data_type = field_config_get_ecl_data_type( config );
   int   sizeof_ctype_target = ecl_type_get_sizeof_ctype(target_data_type);
 
   field_type * initial_field               = NULL;
@@ -135,7 +135,7 @@ void field_export3D(const field_type * field ,
     field_fload_keep_inactive(initial_field, init_file);
   }
 
-  switch(ecl_type) {
+  switch(ecl_type_get_type(data_type)) {
   case(ECL_DOUBLE_TYPE):
     {
       const double * src_data         = (const double *) field->data;
@@ -254,9 +254,9 @@ static void field_import3D(field_type * field ,
                            bool keep_inactive_cells,
                            ecl_type_enum src_type) {
   const field_config_type * config = field->config;
-  ecl_type_enum ecl_type = field_config_get_ecl_type(config);
+  ecl_data_type data_type = field_config_get_ecl_data_type(config);
 
-  switch(ecl_type) {
+  switch(ecl_type_get_type(data_type)) {
   case(ECL_DOUBLE_TYPE):
     {
       double * target_data = (double *) field->data;
@@ -317,10 +317,10 @@ static void field_import3D(field_type * field ,
 
 #define CLEAR_MACRO(d,s) { int k; for (k=0; k < (s); k++) (d)[k] = 0; }
 void field_clear(field_type * field) {
-  const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-  const int data_size          = field_config_get_data_size(field->config );
+  const ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
+  const int data_size           = field_config_get_data_size(field->config );
 
-  switch (ecl_type) {
+  switch (data_type.type) {
   case(ECL_DOUBLE_TYPE):
     {
       double * data = (double *) field->data;
@@ -340,7 +340,7 @@ void field_clear(field_type * field) {
       break;
     }
   default:
-    util_abort("%s: not implemeneted for data_type: %d \n",__func__ , ecl_type);
+    util_abort("%s: not implemeneted for data_type: %d \n",__func__ , data_type.type);
   }
 }
 #undef CLEAR_MACRO
@@ -478,11 +478,11 @@ static void * __field_alloc_3D_data(const field_type * field ,
 
 static void field_ROFF_export__(const field_type * field , rms_file_type * rms_file, const char * init_file) {
   const int data_size             = field_config_get_volume(field->config);
-  const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
-  const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
+  const ecl_data_type target_type = field_config_get_ecl_data_type(field->config); /* Could/should in principle be input */
+  const ecl_data_type data_type    = field_config_get_ecl_data_type(field->config);
 
-  void *data  = __field_alloc_3D_data(field , data_size , true , ecl_type , target_type, init_file);
-  rms_tagkey_type * data_key = rms_tagkey_alloc_complete("data" , data_size , rms_util_convert_ecl_type(target_type) , data , true);
+  void *data  = __field_alloc_3D_data(field , data_size , true , data_type.type , target_type.type, init_file);
+  rms_tagkey_type * data_key = rms_tagkey_alloc_complete("data" , data_size , rms_util_convert_ecl_type(target_type.type) , data , true);
   rms_tag_fwrite_parameter(field_config_get_ecl_kw_name(field->config) , data_key , rms_file_get_FILE(rms_file));
   rms_tagkey_free(data_key);
   free(data);
@@ -553,10 +553,9 @@ void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio) {
 
 void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio, const char * init_file ) {
   const int data_size             = field_config_get_volume(field->config);
-  const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
-  const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
+  const ecl_data_type target_type = field_config_get_ecl_data_type(field->config); /* Could/should in principle be input */
   const ecl_data_type data_type   = field_config_get_ecl_data_type(field->config);
-  void *data = __field_alloc_3D_data(field , data_size , false , ecl_type , target_type, init_file);
+  void *data = __field_alloc_3D_data(field , data_size , false , data_type.type , target_type.type, init_file);
 
   ecl_kw_fwrite_param_fortio(fortio , field_config_get_ecl_kw_name(field->config), data_type , data_size , data);
   free(data);
@@ -575,9 +574,9 @@ static ecl_kw_type * field_alloc_ecl_kw_wrapper__(const field_type * field, void
 
 void field_ecl_grdecl_export(const field_type * field , FILE * stream, const char * init_file) {
   const int data_size             = field_config_get_volume(field->config);
-  const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
-  const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
-  void *data                      = __field_alloc_3D_data(field , data_size , false , ecl_type , target_type, init_file );
+  const ecl_data_type target_type = field_config_get_ecl_data_type(field->config); /* Could/should in principle be input */
+  const ecl_data_type data_type   = field_config_get_ecl_data_type(field->config);
+  void *data                      = __field_alloc_3D_data(field , data_size , false , data_type.type , target_type.type, init_file );
   ecl_kw_type * ecl_kw = field_alloc_ecl_kw_wrapper__(field , data);
   ecl_kw_fprintf_grdecl(ecl_kw , stream);
   ecl_kw_free(ecl_kw);
@@ -604,13 +603,13 @@ static void field_apply(field_type * field , field_func_type * func) {
   field_config_assert_unary(field->config , __func__);
   {
     const int data_size          = field_config_get_data_size( field->config );
-    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+    const ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
 
-    if (ecl_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(data_type)) {
       float * data = (float *) field->data;
       for (int i=0; i < data_size; i++)
         data[i] = func(data[i]);
-    } else if (ecl_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(data_type)) {
       double * data = (double *) field->data;
       for (int i=0; i < data_size; i++)
         data[i] = func(data[i]);
@@ -620,16 +619,16 @@ static void field_apply(field_type * field , field_func_type * func) {
 
 
 static bool field_check_finite( const field_type * field) {
-  const int data_size          = field_config_get_data_size( field->config );
-  const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+  const int data_size           = field_config_get_data_size( field->config );
+  const ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
   bool  ok = true;
 
-  if (ecl_type == ECL_FLOAT_TYPE) {
+  if (ecl_type_is_float(data_type)) {
     float * data = (float *) field->data;
     for (int i=0; i < data_size; i++)
       if (!isfinite( data[i] ))
         ok = false;
-  } else if (ecl_type == ECL_DOUBLE_TYPE) {
+  } else if (ecl_type_is_double(data_type)) {
     double * data = (double *) field->data;
     for (int i=0; i < data_size; i++)
       if (!isfinite( data[i] ))
@@ -665,12 +664,12 @@ static void field_apply_truncation(field_type * field) {
     double min_value = field_config_get_truncation_min( field->config );
     double max_value = field_config_get_truncation_max( field->config );
 
-    const int data_size          = field_config_get_data_size(field->config );
-    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-    if (ecl_type == ECL_FLOAT_TYPE) {
+    const int data_size           = field_config_get_data_size(field->config );
+    const ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
+    if (ecl_type_is_float(data_type)) {
       float * data = (float *) field->data;
       TRUNCATE_MACRO(data_size , data , truncation , min_value , max_value);
-    } else if (ecl_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(data_type)) {
       double * data = (double *) field->data;
       TRUNCATE_MACRO(data_size , data , truncation , min_value , max_value);
     } else
@@ -829,18 +828,18 @@ void field_free(field_type *field) {
 void field_serialize(const field_type * field , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config );
-  ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
+  ecl_data_type data_type              = field_config_get_ecl_data_type(config);
 
-  enkf_matrix_serialize( field->data , data_size , ecl_type , active_list , A , row_offset , column);
+  enkf_matrix_serialize( field->data , data_size , data_type.type , active_list , A , row_offset , column);
 }
 
 
 void field_deserialize(field_type * field , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config );
-  ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
+  ecl_data_type data_type              = field_config_get_ecl_data_type(config);
 
-  enkf_matrix_deserialize( field->data , data_size , ecl_type , active_list , A , row_offset , column);
+  enkf_matrix_deserialize( field->data , data_size , data_type.type , active_list , A , row_offset , column);
 }
 
 static int __get_index(const field_type * field, int i, int j, int k) {
@@ -872,13 +871,13 @@ float field_ijk_get_float(const field_type * field, int i , int j , int k) {
    Takes an active or global index as input, and returns a double.
 */
 double field_iget_double(const field_type * field , int index) {
-  ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-  int sizeof_ctype       = field_config_get_sizeof_ctype(field->config);
+  ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
+  int sizeof_ctype        = field_config_get_sizeof_ctype(field->config);
   char buffer[8]; /* Enough to hold one double */
   memcpy(buffer , &field->data[index * sizeof_ctype] , sizeof_ctype);
-  if ( ecl_type == ECL_DOUBLE_TYPE )
+  if ( ecl_type_is_double(data_type) )
     return *((double *) buffer);
-  else if (ecl_type == ECL_FLOAT_TYPE) {
+  else if (ecl_type_is_float(data_type) ) {
     double double_value;
     float  float_value;
 
@@ -897,13 +896,13 @@ double field_iget_double(const field_type * field , int index) {
    Takes an active or global index as input, and returns a double.
 */
 float field_iget_float(const field_type * field , int index) {
-  ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-  int sizeof_ctype       = field_config_get_sizeof_ctype(field->config);
+  ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
+  int sizeof_ctype        = field_config_get_sizeof_ctype(field->config);
   char buffer[8];          /* Enough to hold one double */
   memcpy(buffer , &field->data[index * sizeof_ctype] , sizeof_ctype);
-  if ( ecl_type == ECL_FLOAT_TYPE )
+  if ( ecl_type_is_float(data_type) )
     return *((float *) buffer);
-  else if (ecl_type == ECL_DOUBLE_TYPE) {
+  else if (ecl_type_is_double(data_type)) {
     double double_value;
     float  float_value;
 
@@ -947,9 +946,9 @@ void field_ijk_set(field_type * field , int i , int j , int k , const void * val
 
 
 static void field_indexed_update(field_type * field, ecl_type_enum src_type , int len , const int * index_list , const void * value , bool add) {
-  ecl_type_enum target_type = field_config_get_ecl_type(field->config);
+  ecl_data_type target_type = field_config_get_ecl_data_type(field->config);
 
-  switch (target_type) {
+  switch (target_type.type) {
   case(ECL_FLOAT_TYPE):
     {
       float * field_data = (float *) field->data;
@@ -996,14 +995,14 @@ void field_indexed_add(field_type * field, ecl_type_enum src_type , int len , co
 double * field_indexed_get_alloc(const field_type * field, int len, const int * index_list)
 {
   double * export_data = util_calloc(len , sizeof * export_data);
-  ecl_type_enum src_type = field_config_get_ecl_type(field->config);
+  ecl_data_type src_type = field_config_get_ecl_data_type(field->config);
 
-  if(src_type == ECL_DOUBLE_TYPE) {
+  if(ecl_type_is_double(src_type)) {
     /* double -> double */
     double * field_data = (double *) field->data;
     for (int i=0; i<len; i++)
       export_data[i] = field_data[index_list[i]];
-  } else if (src_type == ECL_FLOAT_TYPE) {
+  } else if (ecl_type_is_float(src_type)) {
     /* float -> double */
     float * field_data = (float *) field->data;
     for (int i=0; i<len; i++)
@@ -1308,16 +1307,16 @@ void field_get_dims(const field_type * field, int *nx, int *ny , int *nz) {
 void field_iadd(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__);
   {
-    const int data_size          = field_config_get_data_size( field1->config );
-    const ecl_type_enum ecl_type = field_config_get_ecl_type( field1->config );
+    const int data_size           = field_config_get_data_size( field1->config );
+    const ecl_data_type data_type = field_config_get_ecl_data_type( field1->config );
     int i;
 
-    if (ecl_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(data_type)) {
       float * data1       = (float *) field1->data;
       const float * data2 = (const float *) field2->data;
       for (i = 0; i < data_size; i++)
         data1[i] += data2[i];
-    } else if (ecl_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(data_type)) {
       double * data1       = (double *) field1->data;
       const double * data2 = (const double *) field2->data;
       for (i = 0; i < data_size; i++)
@@ -1330,16 +1329,16 @@ void field_iadd(field_type * field1, const field_type * field2) {
 void field_imul(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__);
   {
-    const int data_size          = field_config_get_data_size(field1->config );
-    const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
+    const int data_size           = field_config_get_data_size(field1->config );
+    const ecl_data_type data_type = field_config_get_ecl_data_type(field1->config);
     int i;
 
-    if (ecl_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(data_type)) {
       float * data1       = (float *) field1->data;
       const float * data2 = (const float *) field2->data;
       for (i = 0; i < data_size; i++)
         data1[i] *= data2[i];
-    } else if (ecl_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(data_type)) {
       double * data1       = (double *) field1->data;
       const double * data2 = (const double *) field2->data;
       for (i = 0; i < data_size; i++)
@@ -1352,16 +1351,16 @@ void field_imul(field_type * field1, const field_type * field2) {
 void field_iaddsqr(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__);
   {
-    const int data_size          = field_config_get_data_size(field1->config );
-    const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
+    const int data_size           = field_config_get_data_size(field1->config );
+    const ecl_data_type data_type = field_config_get_ecl_data_type(field1->config);
     int i;
 
-    if (ecl_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(data_type)) {
       float * data1       = (float *) field1->data;
       const float * data2 = (const float *) field2->data;
       for (i = 0; i < data_size; i++)
         data1[i] += data2[i] * data2[i];
-    } else if (ecl_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(data_type)) {
       double * data1       = (double *) field1->data;
       const double * data2 = (const double *) field2->data;
       for (i = 0; i < data_size; i++)
@@ -1374,15 +1373,15 @@ void field_iaddsqr(field_type * field1, const field_type * field2) {
 void field_scale(field_type * field, double scale_factor) {
   field_config_assert_unary(field->config, __func__);
   {
-    const int data_size          = field_config_get_data_size(field->config );
-    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+    const int data_size           = field_config_get_data_size(field->config );
+    const ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
     int i;
 
-    if (ecl_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(data_type)) {
       float * data       = (float *) field->data;
       for (i = 0; i < data_size; i++)
         data[i] *= scale_factor;
-    } else if (ecl_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(data_type)) {
       double * data       = (double *) field->data;
       for (i = 0; i < data_size; i++)
         data[i] *= scale_factor;
@@ -1405,16 +1404,16 @@ void field_isqrt(field_type * field) {
 void field_imul_add(field_type * field1 , double factor , const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__);
   {
-    const int data_size          = field_config_get_data_size(field1->config );
-    const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
+    const int data_size           = field_config_get_data_size(field1->config );
+    const ecl_data_type data_type = field_config_get_ecl_data_type(field1->config);
     int i;
 
-    if (ecl_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(data_type)) {
       float * data1       = (float *) field1->data;
       const float * data2 = (const float *) field2->data;
       for (i = 0; i < data_size; i++)
         data1[i] += factor * data2[i];
-    } else if (ecl_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(data_type)) {
       double * data1       = (double *) field1->data;
       const double * data2 = (const double *) field2->data;
       for (i = 0; i < data_size; i++)
@@ -1427,11 +1426,11 @@ void field_imul_add(field_type * field1 , double factor , const field_type * fie
 void field_update_sum(field_type * sum , field_type * field , double lower_limit , double upper_limit) {
   field_output_transform( field );
   {
-    const int data_size          = field_config_get_data_size(field->config );
-    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+    const int data_size           = field_config_get_data_size(field->config );
+    const ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
     int i;
 
-    if (ecl_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(data_type)) {
       float * data       = (float *) field->data;
       float * sum_data   = (float *) sum->data;
       for (i = 0; i < data_size; i++) {
@@ -1439,7 +1438,7 @@ void field_update_sum(field_type * sum , field_type * field , double lower_limit
           if (data[i] < upper_limit)
             sum_data[i] += 1;
       }
-    } else if (ecl_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(data_type)) {
         double * data       = (double *) field->data;
         double * sum_data   = (double *) sum->data;
         for (i = 0; i < data_size; i++) {
@@ -1511,17 +1510,17 @@ bool field_user_get(const field_type * field, const char * index_key, int report
 
 void field_set_inflation(field_type * inflation , const field_type * std , const field_type * min_std) {
   const field_config_type * config = inflation->config;
-  ecl_type_enum ecl_type           = field_config_get_ecl_type( config );
+  ecl_data_type data_type          = field_config_get_ecl_data_type( config );
   const int data_size              = field_config_get_data_size( config );
 
-  if (ecl_type == ECL_FLOAT_TYPE) {
+  if (ecl_type_is_float(data_type)) {
     float       * inflation_data = (float *)       inflation->data;
     const float * std_data       = (const float *) std->data;
     const float * min_std_data   = (const float *) min_std->data;
 
     INFLATE(inflation_data , std_data , min_std_data );
 
-  } else if (ecl_type == ECL_DOUBLE_TYPE) {
+  } else if (ecl_type_is_double(data_type)) {
     double       * inflation_data = (double *)       inflation->data;
     const double * std_data       = (const double *) std->data;
     const double * min_std_data   = (const double *) min_std->data;

@@ -124,7 +124,6 @@ _______________/                     \___________/       |  with EnKF.          
 
 #define FIELD_CONFIG_ID 78269
 
-// TODO: Use ecl_data_type
 struct field_config_struct {
   UTIL_TYPE_ID_DECLARATION;
 
@@ -140,9 +139,7 @@ struct field_config_struct {
 
   field_file_format_type  export_format;
   field_file_format_type  import_format;
-  int                     sizeof_ctype;
-  ecl_type_enum           internal_ecl_type;
-  ecl_type_enum           export_ecl_type;
+  ecl_data_type           internal_data_type;
   bool                    __enkf_mode;          /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool                    write_compressed;
 
@@ -164,6 +161,7 @@ UTIL_IS_INSTANCE_FUNCTION(field_config , FIELD_CONFIG_ID)
 
 /*****************************************************************/
 
+ecl_type_enum field_config_get_ecl_type(const field_config_type * );
 
 void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_kw_name) {
   config->ecl_kw_name = util_realloc_string_copy(config->ecl_kw_name , ecl_kw_name);
@@ -171,9 +169,8 @@ void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_
 
 
 
-void field_config_set_ecl_type(field_config_type * config , ecl_type_enum ecl_type) {
-  config->internal_ecl_type     = ecl_type;
-  config->sizeof_ctype = ecl_type_get_sizeof_ctype(field_config_get_ecl_data_type(config));
+void field_config_set_ecl_data_type(field_config_type * config , ecl_data_type data_type) {
+  memcpy(&config->internal_data_type, &data_type, sizeof data_type);
 }
 
 
@@ -447,7 +444,7 @@ field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_gri
   config->trans_table      = trans_table;
 
   field_config_set_grid(config , ecl_grid , false);       /* The grid is (currently) set on allocation and can NOT be updated afterwards. */
-  field_config_set_ecl_type( config , ECL_FLOAT_TYPE );   /* This is the internal type - currently not exported any API to change it. */
+  field_config_set_ecl_data_type( config , ECL_FLOAT );   /* This is the internal type - currently not exported any API to change it. */
   return config;
 }
 
@@ -699,17 +696,17 @@ int field_config_get_volume(const field_config_type * config) {
 
 
 rms_type_enum field_config_get_rms_type(const field_config_type * config) {
-  return rms_util_convert_ecl_type(config->internal_ecl_type);
+  return rms_util_convert_ecl_type(config->internal_data_type.type);
 }
 
 
 
 ecl_type_enum field_config_get_ecl_type(const field_config_type * config) {
-  return config->internal_ecl_type;
+  return config->internal_data_type.type;
 }
 
 ecl_data_type field_config_get_ecl_data_type(const field_config_type * config) {
-  return ecl_type_create_data_type_from_type(config->internal_ecl_type);
+  return config->internal_data_type;
 }
 
 int field_config_get_data_size_from_grid(const field_config_type * config) {
@@ -718,11 +715,13 @@ int field_config_get_data_size_from_grid(const field_config_type * config) {
 
 int field_config_get_byte_size(const field_config_type * config) {
   int num_cells = field_config_get_data_size_from_grid(config);
-  return num_cells * config->sizeof_ctype;
+  return num_cells * field_config_get_sizeof_ctype(config);
 }
 
 
-int field_config_get_sizeof_ctype(const field_config_type * config) { return config->sizeof_ctype; }
+int field_config_get_sizeof_ctype(const field_config_type * config) {
+  return ecl_type_get_sizeof_ctype(config->internal_data_type);
+}
 
 
 
@@ -924,14 +923,12 @@ void field_config_assert_unary( const field_config_type * field_config , const c
 */
 void field_config_assert_binary( const field_config_type * config1 , const field_config_type * config2 , const char * caller) {
   field_config_assert_unary(config1 , caller);
-  const ecl_type_enum ecl_type1 = config1->internal_ecl_type;
-  const ecl_type_enum ecl_type2 = config2->internal_ecl_type;
+  const ecl_data_type data_type1 = config1->internal_data_type;
+  const ecl_data_type data_type2 = config2->internal_data_type;
   const int size1               = config1->data_size;
   const int size2               = config2->data_size;
 
-  if ((ecl_type1 == ecl_type2) && (size1 == size2))
-    return;
-  else
+  if (!ecl_type_is_equal(data_type1, data_type2) || size1 != size2)
     util_abort("%s: fields not equal enough - failure in:%s \n",__func__ , caller);
 }
 
