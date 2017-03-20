@@ -212,8 +212,7 @@ void gen_data_deserialize(gen_data_type * gen_data , node_id_type node_id , cons
   data has been loaded from file.
 */
 
-static void gen_data_set_data__(gen_data_type * gen_data , int size, const forward_load_context_type * load_context, ecl_type_enum load_type , const void * data) {
-  ecl_data_type load_data_type = ecl_type_create_data_type_from_type(load_type);
+static void gen_data_set_data__(gen_data_type * gen_data , int size, const forward_load_context_type * load_context, ecl_data_type load_data_type , const void * data) {
   gen_data_assert_size(gen_data , size, forward_load_context_get_load_step( load_context ));
   if (gen_data_config_is_dynamic( gen_data->config ))
     gen_data_config_update_active( gen_data->config ,  load_context , gen_data->active_mask);
@@ -300,13 +299,13 @@ static bool gen_data_fload_active__(gen_data_type * gen_data, const char * filen
 bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * filename , const forward_load_context_type * load_context) {
   bool   file_exists  = util_file_exists(filename);
   void * buffer   = NULL;
-  ecl_type_enum load_type;
+  ecl_data_type load_type;
 
   if ( file_exists ) {
     ecl_data_type internal_type            = gen_data_config_get_internal_data_type(gen_data->config);
     gen_data_file_format_type input_format = gen_data_config_get_input_format( gen_data->config );
     int    size     = 0;
-    buffer = gen_common_fload_alloc( filename , input_format , ecl_type_get_type(internal_type) , &load_type , &size);
+    buffer = gen_common_fload_alloc( filename , input_format , internal_type , &load_type , &size);
     if (size > 0) {
       gen_data_fload_active__(gen_data, filename, size);
     } else {
@@ -398,10 +397,9 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
 
 
 
-static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const char * file , ecl_type_enum export_type) {
-  ecl_data_type data_type = ecl_type_create_data_type_from_type(export_type);
+static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const char * file , ecl_data_type export_type) {
   FILE * stream    = util_fopen(file , "w");
-  int sizeof_ctype = ecl_type_get_sizeof_ctype( data_type );
+  int sizeof_ctype = ecl_type_get_sizeof_ctype( export_type );
   util_fwrite( gen_data->data , sizeof_ctype , gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step) , stream , __func__);
   fclose(stream);
 }
@@ -427,10 +425,10 @@ void gen_data_export(const gen_data_type * gen_data , const char * full_path , g
     gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
     break;
   case(BINARY_DOUBLE):
-    gen_data_ecl_write_binary(gen_data , full_path , ECL_DOUBLE_TYPE);
+    gen_data_ecl_write_binary(gen_data , full_path , ECL_DOUBLE);
     break;
   case(BINARY_FLOAT):
-    gen_data_ecl_write_binary(gen_data , full_path , ECL_FLOAT_TYPE);
+    gen_data_ecl_write_binary(gen_data , full_path , ECL_FLOAT);
     break;
   default:
     util_abort("%s: internal error - export type is not set.\n",__func__);

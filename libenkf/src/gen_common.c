@@ -23,7 +23,8 @@
 #include <ert/util/util.h>
 
 #include <ert/ecl/fortio.h>
-#include <ert/ecl/ecl_util.h>
+#include <ert/ecl/ecl_util.h> // TODO: remove
+#include <ert/ecl/ecl_type.h>
 
 #include <ert/enkf/gen_data_config.h>
 #include <ert/enkf/gen_common.h>
@@ -34,10 +35,9 @@
 */
 
 
-void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int * size) {
-  ecl_data_type data_type = ecl_type_create_data_type_from_type(load_type);
+void * gen_common_fscanf_alloc(const char * file , ecl_data_type load_data_type , int * size) {
   FILE * stream           = util_fopen(file , "r");
-  int sizeof_ctype        = ecl_type_get_sizeof_ctype(data_type);
+  int sizeof_ctype        = ecl_type_get_sizeof_ctype(load_data_type);
   int buffer_elements     = *size;
   int current_size        = 0;
   int fscanf_return       = 1; /* To keep the compiler happy .*/
@@ -49,13 +49,13 @@ void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int
   buffer = util_calloc( buffer_elements , sizeof_ctype );
   {
     do {
-      if (load_type == ECL_FLOAT_TYPE) {
+      if (ecl_type_is_float(load_data_type)) {
         float  * float_buffer = (float *) buffer;
         fscanf_return = fscanf(stream , "%g" , &float_buffer[current_size]);
-      } else if (load_type == ECL_DOUBLE_TYPE) {
+      } else if (ecl_type_is_double(load_data_type)) {
         double  * double_buffer = (double *) buffer;
         fscanf_return = fscanf(stream , "%lg" , &double_buffer[current_size]);
-      } else if (load_type == ECL_INT_TYPE) {
+      } else if (ecl_type_is_int(load_data_type)) {
         int * int_buffer = (int *) buffer;
         fscanf_return = fscanf(stream , "%d" , &int_buffer[current_size]);
       }  else 
@@ -80,8 +80,7 @@ void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int
 
 
 
-void * gen_common_fread_alloc(const char * file , ecl_type_enum load_type , int * size) {
-  ecl_data_type load_data_type = ecl_type_create_data_type_from_type(load_type);
+void * gen_common_fread_alloc(const char * file , ecl_data_type load_data_type , int * size) {
   const int max_read_size = 100000;
   FILE * stream           = util_fopen(file , "r");
   int sizeof_ctype        = ecl_type_get_sizeof_ctype(load_data_type);
@@ -122,20 +121,22 @@ void * gen_common_fread_alloc(const char * file , ecl_type_enum load_type , int 
   on what was actually used when the data was loaded.
 */
 
-void * gen_common_fload_alloc(const char * file , gen_data_file_format_type load_format , ecl_type_enum ASCII_type , ecl_type_enum * load_type , int * size) { 
+void * gen_common_fload_alloc(const char * file , gen_data_file_format_type load_format , ecl_data_type ASCII_data_type , ecl_data_type * load_data_type , int * size) {
   void * buffer = NULL;
-  
+
+  ecl_data_type * load_type;
   if (load_format == ASCII) {
-    *load_type = ASCII_type;
-    buffer =  gen_common_fscanf_alloc(file , ASCII_type , size);
+    load_type = &ASCII_data_type;
+    buffer =  gen_common_fscanf_alloc(file , ASCII_data_type , size);
   } else if (load_format == BINARY_FLOAT) {
-    *load_type = ECL_FLOAT_TYPE;
-    buffer = gen_common_fread_alloc(file , ECL_FLOAT_TYPE , size);
+    load_type = &ECL_FLOAT;
+    buffer = gen_common_fread_alloc(file , ECL_FLOAT , size);
   } else if (load_format == BINARY_DOUBLE) {
-    *load_type = ECL_DOUBLE_TYPE;
-    buffer = gen_common_fread_alloc(file , ECL_DOUBLE_TYPE , size);
+    load_type = &ECL_DOUBLE;
+    buffer = gen_common_fread_alloc(file , ECL_DOUBLE , size);
   } else 
     util_abort("%s: trying to load with unsupported format:%s... \n" , load_format);
-  
+
+  memcpy(load_data_type, load_type, sizeof * load_type);
   return buffer;
 }

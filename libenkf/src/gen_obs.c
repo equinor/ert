@@ -38,6 +38,8 @@
 #include <ert/enkf/gen_common.h>
 #include <ert/enkf/active_list.h>
 
+#include <ert/ecl/ecl_type.h>
+
 
 /**
    This file implemenets a structure for general observations. A
@@ -140,13 +142,13 @@ static void gen_obs_set_data(gen_obs_type * gen_obs, int buffer_size , const dou
 
 
 void gen_obs_load_observation(gen_obs_type * gen_obs, const char * obs_file) {
-  ecl_type_enum load_type;
+  ecl_data_type load_type;
   void * buffer;
   int buffer_size = 0;
-  buffer = gen_common_fload_alloc(obs_file , gen_obs->obs_format , ECL_DOUBLE_TYPE , &load_type , &buffer_size);
+  buffer = gen_common_fload_alloc(obs_file , gen_obs->obs_format , ECL_DOUBLE , &load_type , &buffer_size);
   
   /** Ensure that the data is of type double. */
-  if (load_type == ECL_FLOAT_TYPE) {
+  if (ecl_type_is_float(load_type)) {
     double * double_data = util_calloc(gen_obs->obs_size , sizeof * double_data );
     util_float_to_double(double_data , (const float *) buffer , buffer_size);
     free(buffer);
@@ -174,7 +176,7 @@ void gen_obs_attach_data_index( gen_obs_type * obs , const int_vector_type * dat
 void gen_obs_load_data_index( gen_obs_type * obs , const char * data_index_file) {
   /* Parsing an a file with integers. */
   util_safe_free( obs->data_index_list );
-  obs->data_index_list = gen_common_fscanf_alloc( data_index_file , ECL_INT_TYPE , &obs->obs_size);
+  obs->data_index_list = gen_common_fscanf_alloc( data_index_file , ECL_INT , &obs->obs_size);
   obs->observe_all_data = false;
 }  
 
