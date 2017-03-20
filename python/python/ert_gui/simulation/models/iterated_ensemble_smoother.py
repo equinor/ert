@@ -43,7 +43,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
-        EnkfSimulationRunner(ert).runWorkflows(HookRuntime.PRE_UPDATE)
+        self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.PRE_UPDATE)
         es_update = self.ert().getESUpdate()
 
         success = es_update.smootherUpdate(source_fs, target_fs)
@@ -51,7 +51,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             raise ErtRunError("Analysis of simulation failed!")
 
         self.setPhaseName("Post processing update...", indeterminate=True)
-        EnkfSimulationRunner(ert).runWorkflows(HookRuntime.POST_UPDATE)
+        self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_UPDATE)
 
     def runSimulations(self, arguments):
         phase_count = getNumberOfIterations() + 1
