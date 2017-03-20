@@ -36,7 +36,7 @@ extern "C" {
 
 void enkf_matrix_serialize(const void * __node_data               , 
                            int node_size                          ,      
-                           ecl_type_enum node_type                ,           
+                           ecl_data_type node_type                ,
                            const active_list_type * __active_list , 
                            matrix_type * A,
                            int row_offset, 
@@ -45,7 +45,7 @@ void enkf_matrix_serialize(const void * __node_data               ,
 
 void enkf_matrix_deserialize(void * __node_data                 , 
                              int node_size                      ,      
-                             ecl_type_enum node_type            ,           
+                             ecl_data_type node_type            ,
                              const active_list_type * __active_list , 
                              const matrix_type * A,
                              int row_offset,

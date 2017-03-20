@@ -827,7 +827,7 @@ void field_serialize(const field_type * field , node_id_type node_id , const act
   const int                data_size   = field_config_get_data_size(config );
   ecl_data_type data_type              = field_config_get_ecl_data_type(config);
 
-  enkf_matrix_serialize( field->data , data_size , data_type.type , active_list , A , row_offset , column);
+  enkf_matrix_serialize( field->data , data_size , data_type , active_list , A , row_offset , column);
 }
 
 
@@ -836,7 +836,7 @@ void field_deserialize(field_type * field , node_id_type node_id , const active_
   const int                data_size   = field_config_get_data_size(config );
   ecl_data_type data_type              = field_config_get_ecl_data_type(config);
 
-  enkf_matrix_deserialize( field->data , data_size , data_type.type , active_list , A , row_offset , column);
+  enkf_matrix_deserialize( field->data , data_size , data_type , active_list , A , row_offset , column);
 }
 
 static int __get_index(const field_type * field, int i, int j, int k) {
@@ -1096,8 +1096,7 @@ bool field_fload_rms(field_type * field , const char * filename, bool keep_inact
       rms_tag_free(rms_tag);
     }
 
-    ecl_type_enum ecl_type = rms_tagkey_get_ecl_type(data_tag);
-    ecl_data_type data_type = ecl_type_create_data_type_from_type(ecl_type);
+    ecl_data_type data_type = rms_tagkey_get_ecl_data_type(data_tag);
     if (rms_tagkey_get_size(data_tag) != field_config_get_volume(field->config))
       util_abort("%s: trying to import rms_data_tag from:%s with wrong size - aborting \n",__func__ , filename);
 

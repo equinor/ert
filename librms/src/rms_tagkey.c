@@ -629,7 +629,9 @@ ecl_type_enum rms_tagkey_get_ecl_type(const rms_tagkey_type * key) {
   return ecl_type;
 }
 
-
+ecl_data_type rms_tagkey_get_ecl_data_type(const rms_tagkey_type * key) {
+    return ecl_type_create_data_type_from_type(rms_tagkey_get_ecl_type(key));
+}
 
 
 void rms_tagkey_free(rms_tagkey_type *tagkey) {

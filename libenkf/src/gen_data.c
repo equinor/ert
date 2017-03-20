@@ -190,7 +190,7 @@ void gen_data_serialize(const gen_data_type * gen_data , node_id_type node_id , 
   const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
   ecl_data_type data_type              = gen_data_config_get_internal_data_type( config );
 
-  enkf_matrix_serialize( gen_data->data , data_size , ecl_type_get_type(data_type) , active_list , A , row_offset , column );
+  enkf_matrix_serialize( gen_data->data , data_size , data_type , active_list , A , row_offset , column );
 }
 
 
@@ -200,7 +200,7 @@ void gen_data_deserialize(gen_data_type * gen_data , node_id_type node_id , cons
     const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
     ecl_data_type data_type              = gen_data_config_get_internal_data_type(config);
 
-    enkf_matrix_deserialize( gen_data->data , data_size , ecl_type_get_type(data_type) , active_list , A , row_offset , column);
+    enkf_matrix_deserialize( gen_data->data , data_size , data_type , active_list , A , row_offset , column);
   }
 }
 

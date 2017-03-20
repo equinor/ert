@@ -186,18 +186,16 @@ vector (marked with X2 above)). Now - that was clear ehhh?
 
 void enkf_matrix_serialize(const void * __node_data               , 
                            int node_size                          ,      
-                           ecl_type_enum node_type                ,           
+                           ecl_data_type node_type                ,
                            const active_list_type * __active_list , 
                            matrix_type * A                        ,
                            int row_offset,
                            int column) {
-  ecl_data_type data_type = ecl_type_create_data_type_from_type(node_type);
-  
   int active_size;
   const int   * active_list    = active_list_get_active( __active_list ); 
   active_size = active_list_get_active_size( __active_list , node_size);
 
-  if (node_type == ECL_DOUBLE_TYPE) {
+  if (ecl_type_is_double(node_type)) {
     const double * node_data = (const double *) __node_data;
     if (active_size == node_size) /** All elements active */
       matrix_set_many_on_column( A , row_offset , node_size , node_data , column);
@@ -209,7 +207,7 @@ void enkf_matrix_serialize(const void * __node_data               ,
         matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
       }
     }
-  } else if (node_type == ECL_FLOAT_TYPE) {
+  } else if (ecl_type_is_float(node_type)) {
     const float * node_data = (const float *) __node_data;
     int row_index;
     if (active_size == node_size) {/** All elements active */
@@ -224,24 +222,22 @@ void enkf_matrix_serialize(const void * __node_data               ,
       }
     }      
   } else 
-      util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_get_type_name( data_type ));
+      util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_get_type_name( node_type ));
 }
 
 
 void enkf_matrix_deserialize(void * __node_data                 , 
                              int node_size                      ,      
-                             ecl_type_enum node_type            ,           
+                             ecl_data_type node_type            ,
                              const active_list_type * __active_list , 
                              const matrix_type * A,
                              int row_offset,
                              int column) {
-  ecl_data_type data_type = ecl_type_create_data_type_from_type(node_type);
-  
   int active_size;
   const int   * active_list    = active_list_get_active( __active_list ); 
   active_size = active_list_get_active_size( __active_list , node_size );
     
-  if (node_type == ECL_DOUBLE_TYPE) {
+  if (ecl_type_is_double(node_type)) {
     double * node_data = (double *) __node_data;
 
     if (active_size == node_size) { /** All elements active */
@@ -257,7 +253,7 @@ void enkf_matrix_deserialize(void * __node_data                 ,
       }
     }
     
-  } else if (node_type == ECL_FLOAT_TYPE) {
+  } else if (ecl_type_is_float(node_type)) {
     float * node_data = (float *) __node_data;
     
     if (active_size == node_size) { /** All elements active */
@@ -273,6 +269,6 @@ void enkf_matrix_deserialize(void * __node_data                 ,
       }
     }
   } else 
-    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_get_type_name( data_type ));
+    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_get_type_name( node_type ));
 }
                            

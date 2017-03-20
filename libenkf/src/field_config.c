@@ -161,8 +161,6 @@ UTIL_IS_INSTANCE_FUNCTION(field_config , FIELD_CONFIG_ID)
 
 /*****************************************************************/
 
-ecl_type_enum field_config_get_ecl_type(const field_config_type * );
-
 void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_kw_name) {
   config->ecl_kw_name = util_realloc_string_copy(config->ecl_kw_name , ecl_kw_name);
 }
@@ -700,11 +698,6 @@ rms_type_enum field_config_get_rms_type(const field_config_type * config) {
 }
 
 
-
-ecl_type_enum field_config_get_ecl_type(const field_config_type * config) {
-  return config->internal_data_type.type;
-}
-
 ecl_data_type field_config_get_ecl_data_type(const field_config_type * config) {
   return config->internal_data_type;
 }
@@ -910,8 +903,8 @@ field_func_type * field_config_get_init_transform(const field_config_type * conf
   to the field - i.e. that the underlying data_type is ecl_float or ecl_double.
 */
 void field_config_assert_unary( const field_config_type * field_config , const char * caller) {
-  const ecl_type_enum ecl_type = field_config_get_ecl_type(field_config);
-  if (ecl_type == ECL_FLOAT_TYPE || ecl_type == ECL_DOUBLE_TYPE)
+  const ecl_data_type data_type = field_config_get_ecl_data_type(field_config);
+  if (ecl_type_is_float(data_type) || ecl_type_is_double(data_type))
     return;
   else
     util_abort("%s: error in:%s unary functions can only be applied on fields of type ecl_float / ecl_double \n",__func__ , caller);
