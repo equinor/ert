@@ -57,7 +57,7 @@
 struct gen_data_config_struct {
   UTIL_TYPE_ID_DECLARATION;
   char                         * key;                   /* The key this gen_data instance is known under - needed for debugging. */
-  ecl_type_enum                  internal_type;         /* The underlying type (float | double) of the data in the corresponding gen_data instances. */
+  ecl_data_type                  internal_type;         /* The underlying type (float | double) of the data in the corresponding gen_data instances. */
   char                         * template_file;
   char                         * template_buffer;       /* Buffer containing the content of the template - read and internalized at boot time. */
   char                         * template_key;
@@ -93,12 +93,9 @@ gen_data_file_format_type gen_data_config_get_input_format ( const gen_data_conf
 gen_data_file_format_type gen_data_config_get_output_format( const gen_data_config_type * config) { return config->output_format; }
 
 
-ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * config) {
-  return config->internal_type;
-}
 
 ecl_data_type gen_data_config_get_internal_data_type(const gen_data_config_type * config) {
-  return ecl_type_create_data_type_from_type(config->internal_type);
+  return config->internal_type;
 }
 
 
@@ -164,7 +161,8 @@ static gen_data_config_type * gen_data_config_alloc( const char * key , bool dyn
   config->template_buffer      = NULL;
   gen_data_config_reset_template( config );
 
-  config->internal_type      = ECL_DOUBLE_TYPE;
+  ecl_data_type data_type    = ECL_DOUBLE;
+  memcpy(&config->internal_type, &data_type, sizeof data_type);
   config->input_format       = GEN_DATA_UNDEFINED;
   config->output_format      = GEN_DATA_UNDEFINED;
   config->data_size_vector   = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
