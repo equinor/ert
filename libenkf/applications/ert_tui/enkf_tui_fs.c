@@ -205,13 +205,9 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
 {
   int prompt_len =50;
   char * source_case;
-  int ens_size;
   int last_report;
   int src_step;
   enkf_main_type   * enkf_main = enkf_main_safe_cast( arg );
-
-  ens_size = enkf_main_get_ensemble_size( enkf_main );
-
 
   last_report  = enkf_main_get_history_length( enkf_main );
 
