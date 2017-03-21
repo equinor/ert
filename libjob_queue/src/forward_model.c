@@ -142,13 +142,11 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
   while (true) {
     ext_job_type *  current_job;
     char         * job_name;
-    int            job_index;
     {
       int job_length  = strcspn(p1 , " (");  /* scanning until we meet ' ' or '(' */
       job_name = util_alloc_substring_copy(p1 , 0 , job_length);
       p1 += job_length;
     }
-    job_index = vector_get_size( forward_model->jobs );
     current_job = forward_model_add_job(forward_model , job_name);
 
     if (*p1 == '(') {  /* the function has arguments. */

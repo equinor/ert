@@ -155,16 +155,6 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
 
   if ((argc_max != CONFIG_DEFAULT_ARG_MAX) && (argc_max < argc_min))
     util_abort("%s invalid arg min/max values. argc_min:%d  argc_max:%d \n",__func__ , argc_min , argc_max);
-
-  {
-    int internal_type_size = 0;  /* Should end up in the range [argc_min,argc_max] */
-
-    if (argc_max > 0)
-      internal_type_size = argc_max;
-    else
-      internal_type_size = argc_min;
-  }
-
 }
 
 
