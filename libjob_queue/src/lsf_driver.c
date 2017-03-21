@@ -860,8 +860,8 @@ static void lsf_driver_node_failure(lsf_driver_type * driver, long lsf_job_id) {
     fprintf(stderr, "%s blacklisting nodes %s.\n", __func__, hostnames);
 
     fprintf(stderr,
-            "%s Realization %ld seems to have failed as a result of LSF node failure.\n",
-            __func__, lsf_job_id
+            "Realization %ld seems to have failed as a result of LSF node failure.\n",
+            lsf_job_id
             );
     fprintf(stderr,
             "This job will be re-submitted to a different node according to the "
