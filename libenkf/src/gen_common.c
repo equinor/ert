@@ -23,7 +23,6 @@
 #include <ert/util/util.h>
 
 #include <ert/ecl/fortio.h>
-#include <ert/ecl/ecl_util.h> // TODO: remove
 #include <ert/ecl/ecl_type.h>
 
 #include <ert/enkf/gen_data_config.h>
