@@ -283,7 +283,7 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
   return argv;
 }
 
-static void torque_debug(torque_driver_type * driver , const char * fmt , ...) {
+static void torque_debug(const torque_driver_type * driver , const char * fmt , ...) {
   if (driver->debug_stream) {
     {
       va_list ap;

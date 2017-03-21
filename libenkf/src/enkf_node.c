@@ -239,8 +239,6 @@ bool enkf_node_vector_storage( const enkf_node_type * node ) {
   return node->vector_storage;
 }
 
-static UTIL_IS_INSTANCE_FUNCTION( enkf_node , ENKF_NODE_TYPE_ID )
-
 
 /*****************************************************************/
 

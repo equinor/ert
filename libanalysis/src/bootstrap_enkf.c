@@ -154,7 +154,6 @@ void bootstrap_enkf_updateA(void * module_data ,
     {
       int ensemble_members_loop;
       for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) {
-        int unique_bootstrap_components;
         int ensemble_counter;
         /* Resample A and meas_data. Here we are careful to resample the working copy.*/
         {
@@ -167,7 +166,6 @@ void bootstrap_enkf_updateA(void * module_data ,
               matrix_copy_column( S_resampled , S  , ensemble_counter , random_column );
             }
             int_vector_select_unique( bootstrap_components );
-            unique_bootstrap_components = int_vector_size( bootstrap_components );
             int_vector_free( bootstrap_components );
           }
 

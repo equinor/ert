@@ -116,7 +116,6 @@ static void setting_node_set_double_value( setting_node_type * node, double valu
 
 
 static void setting_node_set_bool_value( setting_node_type * node, bool value) {
-  bool bool_value;
   setting_node_assert_type( node , CONFIG_BOOL );
   if (value)
     setting_node_set_value( node , "True");

@@ -116,7 +116,6 @@ void enkf_tui_export_gen_data(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
-    enkf_var_type var_type;
     int report_step;
     int iens1 , iens2;
     const int last_report = enkf_main_get_history_length( enkf_main );
@@ -125,7 +124,6 @@ void enkf_tui_export_gen_data(void * arg) {
     path_fmt_type * file_fmt;
 
     config_node    = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN ,  GEN_DATA , INVALID_VAR);
-    var_type       = enkf_config_node_get_var_type(config_node);
     
     
     report_step = util_scanf_int_with_limits("Report step: ", PROMPT_LEN , 0 , last_report);
