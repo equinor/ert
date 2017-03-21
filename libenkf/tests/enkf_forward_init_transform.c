@@ -47,11 +47,11 @@ void create_runpath(enkf_main_type * enkf_main, int iter ) {
 
 bool check_original_exported_data_equal(const enkf_node_type * field_node) {
   FILE * original_stream = util_fopen( "petro.grdecl" , "r");
-  ecl_kw_type * kw_original = ecl_kw_fscanf_alloc_grdecl_dynamic( original_stream , "PORO" , ECL_DOUBLE_TYPE );
+  ecl_kw_type * kw_original = ecl_kw_fscanf_alloc_grdecl_dynamic( original_stream , "PORO" , ECL_DOUBLE );
 
   enkf_node_ecl_write(field_node, "tmp", NULL, 0);
   FILE * exported_stream = util_fopen( "tmp/PORO.grdecl" , "r");
-  ecl_kw_type * kw_exported = ecl_kw_fscanf_alloc_grdecl_dynamic( exported_stream , "PORO" , ECL_DOUBLE_TYPE );
+  ecl_kw_type * kw_exported = ecl_kw_fscanf_alloc_grdecl_dynamic( exported_stream , "PORO" , ECL_DOUBLE );
 
   bool ret = ecl_kw_numeric_equal(kw_original, kw_exported, 1e-5 , 1e-5);
 

@@ -56,12 +56,12 @@ void check_exported_data(const char * exported_file,
   {
     if (init_file) {
       original_stream = util_fopen( init_file , "r");
-      kw_original = ecl_kw_fscanf_alloc_grdecl_dynamic( original_stream , field_config_get_key(field_config) , ECL_DOUBLE_TYPE );
+      kw_original = ecl_kw_fscanf_alloc_grdecl_dynamic( original_stream , field_config_get_key(field_config) , ECL_DOUBLE );
     }
 
     if (ECL_GRDECL_FILE == file_type) {
       exported_stream = util_fopen( exported_file , "r");
-      kw_exported     = ecl_kw_fscanf_alloc_grdecl_dynamic( exported_stream , field_config_get_key(field_config) , ECL_DOUBLE_TYPE );
+      kw_exported     = ecl_kw_fscanf_alloc_grdecl_dynamic( exported_stream , field_config_get_key(field_config) , ECL_DOUBLE );
     } else if (RMS_ROFF_FILE == file_type) {
       ecl_grid_type * grid  = field_config_get_grid(field_config);
       exported_field_config = field_config_alloc_empty(field_config_get_key(field_config), grid, NULL, true);
