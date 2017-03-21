@@ -859,6 +859,15 @@ static void lsf_driver_node_failure(lsf_driver_type * driver, long lsf_job_id) {
     char* hostnames = stringlist_alloc_joined_string(hosts, ", ");
     fprintf(stderr, "%s blacklisting nodes %s.\n", __func__, hostnames);
 
+    fprintf(stderr,
+            "Realization %ld seems to have failed as a result of LSF node failure.\n",
+            lsf_job_id
+            );
+    fprintf(stderr,
+            "This job will be re-submitted to a different node according to the "
+            "number of re-submit specified in MAX_SUBMIT in the ert config file.\n"
+            );
+
     lsf_driver_add_exclude_hosts(driver, hostnames);
 
     util_free(hostnames);
