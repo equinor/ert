@@ -222,7 +222,7 @@ void enkf_matrix_serialize(const void * __node_data               ,
       }
     }      
   } else 
-      util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_get_type_name( node_type ));
+      util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_get_name( node_type ));
 }
 
 
@@ -269,6 +269,6 @@ void enkf_matrix_deserialize(void * __node_data                 ,
       }
     }
   } else 
-    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_get_type_name( node_type ));
+    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_type_get_name( node_type ));
 }
                            
