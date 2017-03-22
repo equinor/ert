@@ -119,11 +119,29 @@ void create_submit_script_script_according_to_input() {
 }
 
 
+
+void test_parse_invalid( ) {
+  test_assert_int_equal( torque_driver_parse_status( "/file/does/not/exist" , NULL) , JOB_QUEUE_STATUS_FAILURE);
+  {
+    test_work_area_type * work_area = test_work_area_alloc("job_torque_test");
+    {
+      FILE * stream = util_fopen("qstat.stdout", "w");
+      fclose( stream );
+    }
+    test_assert_int_equal( torque_driver_parse_status( "qstat.stdout" , "a2345") , JOB_QUEUE_STATUS_FAILURE);
+    
+
+    test_work_area_free( work_area );
+  }
+}
+
+
 int main(int argc, char ** argv) {
   getoption_nooptionsset_defaultoptionsreturned();
   setoption_setalloptions_optionsset();
 
   setoption_set_typed_options_wrong_format_returns_false();
   create_submit_script_script_according_to_input();
+  test_parse_invalid( );
   exit(0);
 }
