@@ -447,67 +447,103 @@ void * torque_driver_submit_job(void * __driver,
   }
 }
 
-static char* torque_driver_get_qstat_status(torque_driver_type * driver, char * jobnr_char) {
-  char * status = util_malloc(sizeof (char)*2);
+/**
+   Will return NULL if "something" fails; that again will be
+   translated to JOB_QUEUE_STATUS_FAILURE - which the queue layer will
+   just interpret as "No change in status". Possible failures are:
+
+    1. The file capturing stdout is not created.
+    2. Can not extract the correct status string from the stdout file.
+
+*/
+
+static job_status_type torque_driver_get_qstat_status(torque_driver_type * driver, const char * jobnr_char) {
   char * tmp_file = util_alloc_tmp_file("/tmp", "enkf-qstat", true);
+  job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
   {
-    char ** argv = util_calloc(1, sizeof * argv);
+    const char ** argv = util_calloc(1, sizeof * argv);
     argv[0] = jobnr_char;
 
     util_spawn_blocking(driver->qstat_cmd, 1, (const char **) argv, tmp_file, NULL);
     free(argv);
   }
 
-  FILE *stream = util_fopen(tmp_file, "r");
-  bool at_eof = false;
-  util_fskip_lines(stream, 2);
-  char * line = util_fscanf_alloc_line(stream, &at_eof);
-  fclose(stream);
+  if (util_file_exists( tmp_file )) {
+    status = torque_driver_parse_status( tmp_file , jobnr_char);
+    unlink(tmp_file);
+  } else
+    fprintf(stderr, "No such file: %s - reading qstat status failed \n", tmp_file );
 
-  if (line != NULL) {
-    char job_id_full_string[32];
-    if (sscanf(line, "%s %*s %*s %*s %s %*s", job_id_full_string, status) == 2) {
-      char *dotPtr = strchr(job_id_full_string, '.');
-      int dotPosition = dotPtr - job_id_full_string;
-      char* job_id_as_char_ptr = util_alloc_substring_copy(job_id_full_string, 0, dotPosition);
-      if (strcmp(job_id_as_char_ptr, jobnr_char) != 0) {
-        util_abort("%s: Job id input (%d) does not match the one found by qstat (%d)\n", __func__, jobnr_char, job_id_as_char_ptr);
-      }
-      free(job_id_as_char_ptr);
-    }
-    free(line);
-  } else {
-    util_abort("%s: Unable to read qstat's output line number 3 from file: %s", __func__, tmp_file);
-  }
-
-  util_unlink_existing(tmp_file);
   free(tmp_file);
 
   return status;
 }
 
+job_status_type torque_driver_parse_status(const char * qstat_file, const char * jobnr_char) {
+  int status = JOB_QUEUE_STATUS_FAILURE;
+
+  if (util_file_exists(qstat_file)) {
+    char * line = NULL;
+    {
+      FILE *stream = util_fopen(qstat_file, "r");
+      bool at_eof = false;
+      util_fskip_lines(stream, 2);
+      line = util_fscanf_alloc_line(stream, &at_eof);
+      fclose(stream);
+    }
+
+    if (line) {
+      char job_id_full_string[32];
+      char   string_status[2];
+
+      if (sscanf(line, "%s %*s %*s %*s %s %*s", job_id_full_string, string_status) == 2) {
+        const char *dotPtr = strchr(job_id_full_string, '.');
+        int dotPosition = dotPtr - job_id_full_string;
+
+        {
+          char* job_id_as_char_ptr = util_alloc_substring_copy(job_id_full_string, 0, dotPosition);
+          if (util_string_equal(job_id_as_char_ptr, jobnr_char)) {
+
+            switch( string_status[0] ) {
+            case 'R':
+              status = JOB_QUEUE_RUNNING;
+              break;
+
+            case 'E':
+              status = JOB_QUEUE_DONE;
+              break;
+
+            case 'C':
+              status = JOB_QUEUE_DONE;
+              break;
+
+            case 'Q':
+              status = JOB_QUEUE_PENDING;
+              break;
+            }
+
+            free(job_id_as_char_ptr);
+          }
+        }
+      }
+      free(line);
+    }
+  }
+  if (status == JOB_QUEUE_STATUS_FAILURE)
+    fprintf(stderr,"** Warning: failed to get job status for job:%s from file:%s\n",jobnr_char , qstat_file );
+
+  return status;
+}
+
+
+
 job_status_type torque_driver_get_job_status(void * __driver, void * __job) {
   torque_driver_type * driver = torque_driver_safe_cast(__driver);
   torque_job_type * job = torque_job_safe_cast(__job);
-  char * status = torque_driver_get_qstat_status(driver, job->torque_jobnr_char);
-  int result = JOB_QUEUE_FAILED;
-  if (strcmp(status, "R") == 0) {
-    result = JOB_QUEUE_RUNNING;
-  } else if (strcmp(status, "E") == 0) {
-    result = JOB_QUEUE_DONE;
-  } else if (strcmp(status, "C") == 0) {
-    result = JOB_QUEUE_DONE;
-  } else if (strcmp(status, "Q") == 0) {
-    result = JOB_QUEUE_PENDING;
-  } else {
-    fprintf(stderr, "%s: Unknown status found (%s), expecting one of R, E, C and Q.\n", __func__, status);
-    result = JOB_QUEUE_STATUS_FAILURE;
-  }
-  free(status);
-
-  return result;
+  return torque_driver_get_qstat_status(driver, job->torque_jobnr_char);
 }
+
 
 void torque_driver_kill_job(void * __driver, void * __job) {
 
