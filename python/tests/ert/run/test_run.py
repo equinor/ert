@@ -1,17 +1,24 @@
+import os.path
+import random
 from ert.test import TestRun , path_exists , ExtendedTestCase
     
 
 
 class RunTest(ExtendedTestCase):
     def setUp(self):
-        self.testConfig = self.createTestPath("local/run/config.txt")
+        # Slightly weird - tests need existing file,
+        # but it can be empty ....
+        self.testConfig = "/tmp/config-%06d" % random.randint( 100000 , 999999 )
+        with open(self.testConfig , "w") as f:
+            pass
+
 
     def test_init(self):
         with self.assertRaises(IOError):
             TestRun("Does/notExist")
             
         tr = TestRun(self.testConfig)
-        self.assertEqual( tr.config_file , "config.txt")
+        self.assertEqual( tr.config_file , os.path.split( self.testConfig)[1])
         self.assertEqual(tr.ert_version , "stable")
 
 
