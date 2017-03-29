@@ -16,6 +16,8 @@ endif()
 find_library( LAPACK_LIBRARY NAMES lapack)
 if (LAPACK_LIBRARY)
    set(ERT_HAVE_LAPACK ON)
+else()
+   set(ERT_HAVE_LAPACK OFF)
 endif()
 
 #-----------------------------------------------------------------
