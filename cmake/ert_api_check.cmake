@@ -25,9 +25,13 @@ find_path( ZLIB_HEADER zlib.h /usr/include )
 if (ZLIB_LIBRARY AND ZLIB_HEADER)
    set( ERT_HAVE_ZLIB ON )
 else()
-   message("ZLib not found - zlib support will not be included." )       
+   if(NOT DEFINED ZLIB_LIBRARY)
+      message(STATUS "ZLib library not found - zlib support will not be included." )       
+   endif()
+   if(NOT DEFINED ZLIB_HEADER)
+      message(STATUS "zlib.h not found - zlib support will not be included.")
+   endif()
 endif()
-
 #-----------------------------------------------------------------
 
 try_compile( ERT_HAVE_ISFINITE ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_isfinite.c )
