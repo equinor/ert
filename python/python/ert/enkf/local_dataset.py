@@ -1,12 +1,13 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.ecl import EclRegion
+from ert.geo import GeoRegion
 
 class LocalDataset(BaseCClass):
     TYPE_NAME = "local_dataset"
 
     _alloc       = EnkfPrototype("void* local_dataset_alloc(char*)", bind = False)
-    _size        = EnkfPrototype("void* local_dataset_get_size(local_dataset)")
+    _size        = EnkfPrototype("int   local_dataset_get_size(local_dataset)")
     _has_key     = EnkfPrototype("bool  local_dataset_has_key(local_dataset, char*)")
     _free        = EnkfPrototype("void  local_dataset_free(local_dataset)")
     _name        = EnkfPrototype("char* local_dataset_get_name(local_dataset)")
