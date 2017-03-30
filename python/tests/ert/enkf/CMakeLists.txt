@@ -20,6 +20,7 @@ set(TEST_SOURCES
     test_labscale.py
     test_local_obsdata_node.py
     test_local_config.py
+    test_local_dataset.py
     test_meas_block.py
     test_meas_data.py
     test_obs_block.py
@@ -60,6 +61,7 @@ addPythonTest(ert.enkf.time_map tests.ert.enkf.test_time_map.TimeMapTest)
 addPythonTest(ert.enkf.active_list tests.ert.enkf.test_active_list.ActiveListTest)
 addPythonTest(ert.enkf.local_obsdata_node tests.ert.enkf.test_local_obsdata_node.LocalObsdataNodeTest)
 addPythonTest(ert.enkf.local_config tests.ert.enkf.test_local_config.LocalConfigTest)
+addPythonTest(ert.enkf.local_dataset tests.ert.enkf.test_local_dataset.LocalDatasetTest)
 addPythonTest(ert.enkf.ensemble_config tests.ert.enkf.test_ensemble_config.EnsembleConfigTest)
 addPythonTest(ert.enkf.hook_workflow tests.ert.enkf.test_hook_workflow.HookWorkFlowTest)
 addPythonTest(ert.enkf.runpath_list tests.ert.enkf.test_runpath_list.RunpathListTest)

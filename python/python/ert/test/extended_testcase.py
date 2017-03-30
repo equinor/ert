@@ -62,9 +62,10 @@ class ExtendedTestCase(TestCase):
         try:
             f_first, f_second = float(first), float(second)
             diff = abs(f_first - f_second)
+            scale = max(1, abs(first) + abs(second))
             if msg is None:
                 msg = "Floats not equal: |%f - %f| > %g" % (f_first, f_second, tolerance)
-            self.assertTrue(diff < tolerance, msg=msg)
+            self.assertTrue(diff < tolerance * scale, msg=msg)
         except TypeError:
             self.fail("Cannot compare as floats: %s (%s) and %s (%s)" %
                       (first, type(first), second, type(second)))
