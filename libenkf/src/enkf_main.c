@@ -212,16 +212,6 @@ ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , 
 }
 
 
-ui_return_type * enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt) {
-  ui_return_type * ui_return = ecl_config_validate_eclbase( enkf_main->ecl_config , eclbase_fmt);
-  if (ui_return_get_status(ui_return) == UI_RETURN_OK) {
-    ecl_config_set_eclbase( enkf_main->ecl_config , eclbase_fmt );
-    for (int iens = 0; iens < enkf_main->ens_size; iens++)
-      enkf_state_update_eclbase(enkf_main->ensemble[iens]);
-  }
-  return ui_return;
-}
-
 void enkf_main_init_jobname( enkf_main_type * enkf_main) {
   for (int iens = 0; iens < enkf_main->ens_size; iens++)
     enkf_state_update_jobname( enkf_main->ensemble[iens] );

@@ -38,7 +38,6 @@ class EnKFMain(BaseCClass):
     _get_site_config = EnkfPrototype("site_config_ref enkf_main_get_site_config( enkf_main)")
     _get_ecl_config = EnkfPrototype("ecl_config_ref enkf_main_get_ecl_config( enkf_main)")
     _get_plot_config = EnkfPrototype("plot_settings_ref enkf_main_get_plot_config( enkf_main)")
-    _set_eclbase = EnkfPrototype("ui_return_obj enkf_main_set_eclbase( enkf_main, char*)")
     _set_datafile = EnkfPrototype("void enkf_main_set_data_file( enkf_main, char*)")
     _get_schedule_prediction_file = EnkfPrototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
     _set_schedule_prediction_file = EnkfPrototype("void enkf_main_set_schedule_prediction_file( enkf_main , char*)")
@@ -123,10 +122,6 @@ class EnKFMain(BaseCClass):
             return self._iget_state(iens).setParent(self)
         else:
             raise IndexError("iens value:%d invalid Valid range: [0,%d)" % (iens , self.getEnsembleSize()))
-
-
-    def set_eclbase(self, eclbase):
-        self._set_eclbase(eclbase)
 
     def umount(self):
         if not self.__fs_manager is None:
