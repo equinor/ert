@@ -211,17 +211,11 @@ ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , 
   return ecl_config_validate_refcase( enkf_main->ecl_config , refcase_path );
 }
 
-
 void enkf_main_init_jobname( enkf_main_type * enkf_main) {
   for (int iens = 0; iens < enkf_main->ens_size; iens++)
     enkf_state_update_jobname( enkf_main->ensemble[iens] );
 }
 
-
-void enkf_main_set_jobname( enkf_main_type * enkf_main , const char * jobname_fmt) {
-  model_config_set_jobname_fmt( enkf_main->model_config , jobname_fmt );
-  enkf_main_init_jobname( enkf_main );
-}
 
 void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file ) {
   enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
