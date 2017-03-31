@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import ctypes
+from os.path import isfile
 from cwrap import BaseCClass
 
 from ert.enkf import EnkfPrototype, AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsembleConfig, PlotSettings, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, HookManager, HookWorkflow, ESUpdate
@@ -73,9 +74,14 @@ class EnKFMain(BaseCClass):
 
 
 
-    def __init__(self, model_config, strict = True, verbose = True):
+    def __init__(self, model_config, strict=True, verbose=True):
+        if model_config is not None and not isfile(model_config):
+            raise IOError('No such configuration file "%s".' % model_config)
         c_ptr = self._alloc(model_config, strict, verbose)
-        super(EnKFMain, self).__init__(c_ptr)
+        if c_ptr:
+            super(EnKFMain, self).__init__(c_ptr)
+        else:
+            raise ValueError('Failed to construct EnKFMain instance from config %s.' % model_config)
 
         # The model_config argument can be None; the only reason to
         # allow that possibility is to be able to test that the

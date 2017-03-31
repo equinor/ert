@@ -1,12 +1,13 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.ecl import EclRegion
+from ert.geo import GeoRegion
 
 class LocalDataset(BaseCClass):
     TYPE_NAME = "local_dataset"
 
     _alloc       = EnkfPrototype("void* local_dataset_alloc(char*)", bind = False)
-    _size        = EnkfPrototype("void* local_dataset_get_size(local_dataset)")
+    _size        = EnkfPrototype("int   local_dataset_get_size(local_dataset)")
     _has_key     = EnkfPrototype("bool  local_dataset_has_key(local_dataset, char*)")
     _free        = EnkfPrototype("void  local_dataset_free(local_dataset)")
     _name        = EnkfPrototype("char* local_dataset_get_name(local_dataset)")
@@ -58,21 +59,25 @@ class LocalDataset(BaseCClass):
         assert isinstance(key, str)
         assert isinstance(index, int)
 
-        self.addNode( key )
+        self.addNode(key)
         active_list = self.getActiveList(key)
         active_list.addActiveIndex(index)
 
-
-    def addField(self, key, ecl_region):
+    def addRegion(self, key, region):
         assert isinstance(key, str)
-        assert isinstance(ecl_region, EclRegion)
-
-        self.addNode( key )
+        self.addNode(key)
         active_list = self.getActiveList(key)
-        active_region = ecl_region.getActiveList()
+        active_region = region.getActiveList()
         for i in active_region:
             active_list.addActiveIndex(i)
 
+    def addField(self, key, ecl_region):
+        assert isinstance(ecl_region, EclRegion)
+        self.addRegion(str(key), ecl_region)
+
+    def addSurface(self, key, geo_region):
+        assert isinstance(geo_region, GeoRegion)
+        self.addRegion(str(key), geo_region)
 
     def getActiveList(self, key):
         """ @rtype: ActiveList """
@@ -85,4 +90,4 @@ class LocalDataset(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return 'LocalDataset(name = %s, len = %d) at 0x%x' % (self.name(), len(self), self._address())
+        return self._create_repr('name=%s, size=%d' % (self.name(), len(self)))

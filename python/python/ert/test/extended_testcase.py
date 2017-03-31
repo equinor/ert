@@ -58,19 +58,17 @@ class ExtendedTestCase(TestCase):
         super(ExtendedTestCase , self).__init__(*args , **kwargs)
 
 
-    def assertFloatEqual(self, first, second, msg=None):
-
-        if msg is None:
-            msg = "Value %f and %f are not almost equal!" % (first, second)
-
-        if isinstance(first, numbers.Number) and isinstance(second, numbers.Number):
-            tolerance = 1e-6
-            diff = abs(first - second)
+    def assertFloatEqual(self, first, second, msg=None, tolerance=1e-6):
+        try:
+            f_first, f_second = float(first), float(second)
+            diff = abs(f_first - f_second)
             scale = max(1, abs(first) + abs(second))
-
+            if msg is None:
+                msg = "Floats not equal: |%f - %f| > %g" % (f_first, f_second, tolerance)
             self.assertTrue(diff < tolerance * scale, msg=msg)
-        else:
-            self.fail("Elements not comparable as float: %s and %s" % (first, second))
+        except TypeError:
+            self.fail("Cannot compare as floats: %s (%s) and %s (%s)" %
+                      (first, type(first), second, type(second)))
 
 
     def assertAlmostEqualList(self, first, second, msg=None):
