@@ -179,7 +179,7 @@ class EnKFMain(BaseCClass):
     def set_datafile(self, datafile):
         self._set_datafile(datafile)
 
-        
+
     def get_schedule_prediction_file(self):
         schedule_prediction_file = self._get_schedule_prediction_file( )
         return schedule_prediction_file
