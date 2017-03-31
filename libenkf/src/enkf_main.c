@@ -419,37 +419,37 @@ void enkf_main_exit(enkf_main_type * enkf_main) {
    This function returns a (enkf_node_type ** ) pointer, which points
    to all the instances with the same keyword, i.e.
 
-   enkf_main_get_node_ensemble(enkf_main , "PRESSURE");
+   enkf_main_alloc_node_ensemble(enkf_main , "PRESSURE");
 
-   Will return an ensemble of pressure nodes. Observe that apart from
-   the list of pointers, *now new storage* is allocated, all the
-   pointers point in to the underlying enkf_node instances under the
-   enkf_main / enkf_state objects. Consequently there is no designated
-   free() function to match this, just free() the result.
+   Will return an ensemble of pressure nodes. The enkf_node instances
+   must be free'd with enkf_node_free( ) afterwards.
 
    Example:
 
-   enkf_node_type ** pressure_nodes = enkf_main_get_node_ensemble(enkf_main , "PRESSURE");
+   vector_type * pressure_nodes = enkf_main_alloc_node_ensemble(enkf_main , "PRESSURE");
 
-   Do something with the pressure nodes ...
+   // Do something with the pressure nodes ...
 
    free(pressure_nodes);
 
 */
 
-enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , enkf_fs_type * src_fs, const char * key , int report_step) {
+static vector_type * enkf_main_alloc_node_ensemble(const enkf_main_type * enkf_main , enkf_fs_type * src_fs, const char * key , int report_step) {
   const int ens_size              = enkf_main_get_ensemble_size( enkf_main );
-  enkf_node_type ** node_ensemble = util_calloc(ens_size , sizeof * node_ensemble );
+  vector_type * node_ensemble = vector_alloc_new( );
+  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
   node_id_type node_id = {.report_step = report_step ,
                           .iens        = -1 };
   int iens;
 
 
   for (iens = 0; iens < ens_size; iens++) {
-    node_ensemble[iens] = enkf_state_get_node(enkf_main->ensemble[iens] , key);
+    enkf_node_type * node = enkf_node_alloc( config_node );
     node_id.iens = iens;
-    enkf_node_load( node_ensemble[iens] , src_fs , node_id);
+    enkf_node_load( node , src_fs , node_id);
+    vector_append_owned_ref( node_ensemble , node , enkf_node_free__ );
   }
+
   return node_ensemble;
 }
 
@@ -469,13 +469,17 @@ member_config_type * enkf_main_iget_member_config(const enkf_main_type * enkf_ma
 
 
 
-void enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean ) {
-  int iens;
-  enkf_node_clear( mean );
-  for (iens = 0; iens < ens_size; iens++)
-    enkf_node_iadd( mean , ensemble[iens] );
+static void enkf_main_node_mean( const vector_type * ensemble , enkf_node_type * mean ) {
+  if (vector_get_size( ensemble ) == 0)
+    util_abort("%s: internal error - calculation average of empty list\n",__func__);
+  {
+    int iens;
+    enkf_node_clear( mean );
+    for (iens = 0; iens < vector_get_size( ensemble ); iens++)
+      enkf_node_iadd( mean , vector_iget_const( ensemble , iens) );
 
-  enkf_node_scale( mean , 1.0 / ens_size );
+    enkf_node_scale( mean , 1.0 / vector_get_size( ensemble ) );
+  }
 }
 
 
@@ -486,35 +490,40 @@ void enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf
 */
 
 
-void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const enkf_node_type * mean , enkf_node_type * std) {
-  int iens;
-  enkf_node_clear( std );
-  for (iens = 0; iens < ens_size; iens++)
-    enkf_node_iaddsqr( std , ensemble[iens] );
-  enkf_node_scale(std , 1.0 / ens_size );
+static void enkf_main_node_std( const vector_type * ensemble , const enkf_node_type * mean , enkf_node_type * std) {
+  if (vector_get_size( ensemble ) == 0)
+    util_abort("%s: internal error - calculation std of empty list\n",__func__);
+  {
+    int iens;
+    enkf_node_clear( std );
+    for (iens = 0; iens < vector_get_size( ensemble ); iens++)
+      enkf_node_iaddsqr( std , vector_iget_const( ensemble, iens) );
+    enkf_node_scale(std , 1.0 / vector_get_size( ensemble ));
 
-  if (mean != NULL) {
-    enkf_node_scale( std , -1 );
-    enkf_node_iaddsqr( std , mean );
-    enkf_node_scale( std , -1 );
+    if (mean != NULL) {
+      enkf_node_scale( std , -1 );
+      enkf_node_iaddsqr( std , mean );
+      enkf_node_scale( std , -1 );
+    }
+
+    enkf_node_sqrt( std );
   }
-
-  enkf_node_sqrt( std );
 }
 
 
 void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs , enkf_fs_type * target_fs , int report_step , const char * key , const enkf_node_type * min_std) {
   int ens_size                              = enkf_main_get_ensemble_size(enkf_main);
-  enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , src_fs , key , report_step );  // Was ANALYZED
-  enkf_node_type * mean                     = enkf_node_copyc( ensemble[0] );
-  enkf_node_type * std                      = enkf_node_copyc( ensemble[0] );
+  vector_type * ensemble                    = enkf_main_alloc_node_ensemble( enkf_main , src_fs , key , report_step );  // Was ANALYZED
+  enkf_node_type * mean                     = enkf_node_copyc( vector_iget_const( ensemble, 0) );
+  enkf_node_type * std                      = enkf_node_copyc( mean );
   int iens;
 
   /* Shifting away the mean */
-  enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
+  enkf_main_node_mean( ensemble , mean );
+  enkf_main_node_std( ensemble , mean , std);
   enkf_node_scale( mean , -1 );
   for (iens = 0; iens < ens_size; iens++)
-    enkf_node_iadd( ensemble[iens] , mean );
+    enkf_node_iadd( vector_iget(ensemble,iens), mean );
   enkf_node_scale( mean , -1 );
 
   /*****************************************************************/
@@ -524,25 +533,26 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs ,
     doing the inflation.
   */
   {
-    enkf_node_type * inflation = enkf_node_copyc( ensemble[0] );
+    enkf_node_type * inflation = enkf_node_copyc( mean );
     enkf_node_set_inflation( inflation , std , min_std  );
 
-    for (iens = 0; iens < ens_size; iens++)
-      enkf_node_imul( ensemble[iens] , inflation );
+    for (iens = 0; iens < vector_get_size( ensemble ); iens++)
+      enkf_node_imul( vector_iget( ensemble, iens) , inflation );
 
     enkf_node_free( inflation );
   }
 
+
   /* Add the mean back in - and store the updated node to disk.*/
   for (iens = 0; iens < ens_size; iens++) {
     node_id_type node_id = {.report_step = report_step , .iens = iens };
-    enkf_node_iadd( ensemble[iens] , mean );
-    enkf_node_store( ensemble[iens] , target_fs , true , node_id);
+    enkf_node_iadd( vector_iget( ensemble, iens) , mean );
+    enkf_node_store( vector_iget( ensemble, iens) , target_fs , true , node_id);
   }
 
   enkf_node_free( mean );
   enkf_node_free( std );
-  free( ensemble );
+  vector_free( ensemble );
 }
 
 
@@ -3120,34 +3130,26 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
 
 
 bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
-                            const char * kw,
-                            const char * path,
-                            bool_vector_type * iactive,
-                            field_file_format_type file_type,
-                            int report_step,
-                            enkf_fs_type * fs) {
-
-  bool ret = false;
-  if (util_int_format_count(path) < 1) {
-    printf("EXPORT FIELD: There must be a %%d in the file name\n");
-    return ret;
-  }
+                                    const char * kw,
+                                    const char * path,
+                                    bool_vector_type * iactive,
+                                    field_file_format_type file_type,
+                                    int report_step,
+                                    enkf_fs_type * fs) {
 
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  enkf_config_node_type * config_node = NULL;
-  bool node_found = false;
+  if (!ensemble_config_has_key(ensemble_config, kw))
+    return false;
 
-  if (ensemble_config_has_key(ensemble_config, kw)) {
-    config_node = ensemble_config_get_node(ensemble_config, kw);
-    if (config_node && enkf_config_node_get_impl_type(config_node) == FIELD) {
-      node_found = true;
-    } else
-      printf("Did not find a FIELD %s node\n", kw);
-  } else
-      printf("Ensemble config does not have key %s\n", kw);
+  enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config, kw);
+  if (enkf_config_node_get_impl_type(config_node) != FIELD)
+    return false;
 
-  if (node_found) {
-    enkf_node_type * node = NULL;
+  if (util_int_format_count(path) < 1)
+    return false;
+
+  {
+    enkf_node_type * node = enkf_node_alloc( config_node );
     model_config_type * mc = enkf_main_get_model_config(enkf_main);
     path_fmt_type * runpath_fmt = model_config_get_runpath_fmt(mc);
     const char * init_file = enkf_config_node_get_FIELD_fill_file(config_node, runpath_fmt);
@@ -3160,44 +3162,33 @@ bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
     for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
       if (bool_vector_iget(iactive, iens)) {
         node_id_type node_id = {.report_step = report_step , .iens = iens };
-        node = enkf_state_get_node(enkf_main->ensemble[iens] , kw);
-        if (node) {
-          if (enkf_node_try_load(node , fs , node_id)) {
-            path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
-            char * filename = path_fmt_alloc_path( export_path , false , iens);
-            path_fmt_free(export_path);
+        if (enkf_node_try_load(node , fs , node_id)) {
+          path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
+          char * filename = path_fmt_alloc_path( export_path , false , iens);
+          path_fmt_free(export_path);
 
-            {
-              char * path;
-              util_alloc_file_components(filename , &path , NULL , NULL);
-              if (path != NULL) {
-                util_make_path( path );
-                free( path );
-              }
+          {
+            char * path;
+            util_alloc_file_components(filename , &path , NULL , NULL);
+            if (path) {
+              util_make_path( path );
+              free( path );
             }
+          }
 
-            {
-              const field_type * field = enkf_node_value_ptr(node);
-              const bool output_transform = true;
-              field_export(field , filename , NULL , file_type , output_transform, init_file);
-              ret = true;
-            }
-            free(filename);
-          } else
-            printf("%s : enkf_node_try_load returned returned false \n", __func__);
-        } else
-            printf("%s : enkf_state_get_node returned NULL for parameters  %d, %s \n", __func__, iens, kw);
-       }
+          {
+            const field_type * field = enkf_node_value_ptr(node);
+            const bool output_transform = true;
+            field_export(field , filename , NULL , file_type , output_transform, init_file);
+          }
+          free(filename);
+        }
+      }
     }
+    enkf_node_free( node );
   }
 
-
-  if (ret)
-    printf("Successful export of FIELD %s\n", kw);
-  else
-    printf("Errors during export of FIELD %s\n", kw);
-
-  return ret;
+  return true;
 }
 
 

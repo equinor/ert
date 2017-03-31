@@ -585,77 +585,6 @@ void enkf_tui_export_scalar2csv(void * arg) {
 
 /*****************************************************************/
 
-void enkf_tui_export_stat(void * arg) {
-  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  {
-    const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-    const enkf_config_node_type * config_node;
-    const int ens_size = enkf_main_get_ensemble_size( enkf_main );
-    const int  last_report = enkf_main_get_history_length( enkf_main );
-    int        report_step;
-    
-    config_node    = enkf_tui_util_scanf_key( ensemble_config , PROMPT_LEN ,  INVALID , INVALID_VAR );
-    report_step    = util_scanf_int_with_limits("Report step: ", PROMPT_LEN , 0 , last_report);
-    {
-      char * mean_file , * mean_path;
-      char * std_file  , * std_path;
-      
-      util_printf_prompt("Filename to store mean in " , PROMPT_LEN , '=' , "=> ");
-      {
-        char * tmp = util_alloc_stdin_line();
-        char * mean_base , * mean_ext;
-        util_alloc_file_components( tmp , &mean_path , &mean_base , &mean_ext );
-        if (mean_path != NULL)
-          util_make_path( mean_path );
-        mean_file = util_alloc_filename( NULL , mean_base , mean_ext );
-        util_safe_free( mean_base );
-        util_safe_free( mean_ext );
-        free( tmp );
-      }
-      
-      util_printf_prompt("Filename to store std in " , PROMPT_LEN , '=' , "=> ");
-      {
-        char * tmp = util_alloc_stdin_line();
-        char * std_base , * std_ext;
-        util_alloc_file_components( tmp , &std_path , &std_base , &std_ext );
-        if (std_path != NULL)
-          util_make_path( std_path );
-        std_file = util_alloc_filename( NULL , std_base , std_ext );
-        util_safe_free( std_base );
-        util_safe_free( std_ext );
-        free( tmp );
-      }
-      
-      {
-        enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , 
-										 enkf_main_tui_get_fs( enkf_main ) , 
-										 enkf_config_node_get_key( config_node ) , 
-										 report_step );
-        enkf_node_type * mean                     = enkf_node_copyc( ensemble[0] );
-        enkf_node_type * std                      = enkf_node_copyc( ensemble[0] );
-        
-        /* Calculating */
-        enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
-        enkf_main_node_std( (const enkf_node_type **) ensemble , ens_size , mean , std );
-        
-        {
-          ecl_write_ftype * ecl_write_func = enkf_node_get_func_pointer( mean );
-          ecl_write_func( enkf_node_value_ptr( mean ) , mean_path , mean_file , NULL );
-          ecl_write_func( enkf_node_value_ptr( std )  , std_path  , std_file  , NULL );
-        }
-        
-        free( ensemble );
-        util_safe_free( std_file );
-        util_safe_free( std_path );
-        util_safe_free( mean_file );
-        util_safe_free( mean_path );
-        enkf_node_free( mean );
-        enkf_node_free( std );
-      }
-    }
-  }
-}
-
 
 
 
@@ -678,7 +607,6 @@ void enkf_tui_export_menu(void * arg) {
   menu_add_separator(menu);
   menu_add_item(menu , "Export GEN_DATA/GEN_PARAM to file"                      , "dD" , enkf_tui_export_gen_data , enkf_main , NULL);
   menu_add_separator( menu );
-  menu_add_item(menu , "EclWrite mean and std"                                  , "mM" , enkf_tui_export_stat , enkf_main , NULL );
   menu_add_item(menu , "Help"                                  , "hH" , enkf_tui_help_menu_export , enkf_main , NULL );
   menu_run(menu);
   menu_free(menu);
