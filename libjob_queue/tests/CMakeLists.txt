@@ -32,7 +32,11 @@ add_test( job_loadFail2 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_S
 add_test( job_loadFail3 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_SOURCE_DIR}/data/internalFail ${CMAKE_CURRENT_SOURCE_DIR}/data/externalFail)
 
 add_test( job_node_test ${EXECUTABLE_OUTPUT_PATH}/job_node_test)
-add_test( job_list_test valgrind --leak-check=full --error-exitcode=1 ${EXECUTABLE_OUTPUT_PATH}/job_list_test)
+if (ERT_HAVE_VALGRIND)
+    add_test( job_list_test valgrind --leak-check=full --error-exitcode=1 ${EXECUTABLE_OUTPUT_PATH}/job_list_test)
+else()
+    add_test( job_list_test ${EXECUTABLE_OUTPUT_PATH}/job_list_test)
+endif()
 add_test( job_lsf_exclude_hosts_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_exclude_hosts_test ${EXECUTABLE_OUTPUT_PATH}/job_program NULL LOCAL)
 
 add_executable( job_program_output job_program_output.c )
