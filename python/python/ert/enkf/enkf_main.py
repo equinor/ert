@@ -49,8 +49,6 @@ class EnKFMain(BaseCClass):
     _del_node = EnkfPrototype("void enkf_main_del_node(enkf_main, char*)")
     _get_obs = EnkfPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _load_obs = EnkfPrototype("void enkf_main_load_obs(enkf_main, char* , bool)")
-    _get_pre_clear_runpath = EnkfPrototype("bool enkf_main_get_pre_clear_runpath(enkf_main)")
-    _set_pre_clear_runpath = EnkfPrototype("void enkf_main_set_pre_clear_runpath(enkf_main, bool)")
     _iget_keep_runpath = EnkfPrototype("int enkf_main_iget_keep_runpath(enkf_main, int)")
     _iset_keep_runpath = EnkfPrototype("void enkf_main_iset_keep_runpath(enkf_main, int, int_vector)")
     _get_templates = EnkfPrototype("ert_templates_ref enkf_main_get_templates(enkf_main)")
@@ -218,13 +216,6 @@ class EnKFMain(BaseCClass):
     def loadObservations(self , obs_config_file , clear = True):
         self._load_obs(obs_config_file , clear)
 
-
-    def get_pre_clear_runpath(self):
-        pre_clear = self._get_pre_clear_runpath( )
-        return pre_clear
-
-    def set_pre_clear_runpath(self, value):
-        self._set_pre_clear_runpath(value)
 
     def iget_keep_runpath(self, iens):
         ikeep = self._iget_keep_runpath(iens)

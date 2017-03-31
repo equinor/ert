@@ -171,6 +171,7 @@ struct enkf_main_struct {
   char                 * user_config_file;
   char                 * rft_config_file;       /* File giving the configuration to the RFTwells*/
   enkf_obs_type        * obs;
+
   enkf_state_type     ** ensemble;         /* The ensemble ... */
   int                    ens_size;         /* The size of the ensemble */
   bool                   verbose;
@@ -195,18 +196,6 @@ UTIL_IS_INSTANCE_FUNCTION(enkf_main , ENKF_MAIN_ID)
 analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
   return enkf_main->analysis_config;
 }
-
-bool enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main ) {
-  return enkf_state_get_pre_clear_runpath( enkf_main->ensemble[0] );
-}
-
-void enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath) {
-  const int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  int iens;
-  for (iens = 0; iens < ens_size; iens++)
-    enkf_state_set_pre_clear_runpath( enkf_main->ensemble[iens] , pre_clear_runpath );
-}
-
 
 bool enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
   bool set_refcase = ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
@@ -3031,30 +3020,6 @@ ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
 /*****************************************************************/
 
 
-void enkf_main_fprintf_runpath_config( const enkf_main_type * enkf_main , FILE * stream ) {
-  fprintf(stream , CONFIG_KEY_FORMAT      , PRE_CLEAR_RUNPATH_KEY );
-  fprintf(stream , CONFIG_ENDVALUE_FORMAT , CONFIG_BOOL_STRING( enkf_state_get_pre_clear_runpath( enkf_main->ensemble[0] )));
-
-  {
-    bool del_comma  = false;
-
-
-    for (int iens = 0; iens < enkf_main->ens_size; iens++) {
-      keep_runpath_type keep_runpath = enkf_main_iget_keep_runpath( enkf_main , iens );
-      if (keep_runpath == EXPLICIT_DELETE) {
-        if (!del_comma) {
-          fprintf(stream , CONFIG_KEY_FORMAT , DELETE_RUNPATH_KEY );
-          fprintf(stream , CONFIG_INT_FORMAT , iens);
-          del_comma = true;
-        } else {
-          fprintf(stream , ",");
-          fprintf(stream , CONFIG_INT_FORMAT , iens);
-        }
-      }
-    }
-    fprintf(stream , "\n");
-  }
-}
 
 
 
