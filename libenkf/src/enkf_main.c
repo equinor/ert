@@ -2373,14 +2373,12 @@ void enkf_main_update_node( enkf_main_type * enkf_main , const char * key ) {
 
 */
 
+/*
+  This function can only be called once in program life-time.
+*/
 
 void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , const char * template_file , const char * parameters , const char * min_std , const char * init_file_fmt) {
   const char * key = "PRED";
-  /*
-    First remove/delete existing PRED node if it is already installed.
-  */
-  if (ensemble_config_has_key( enkf_main->ensemble_config , key))
-    enkf_main_del_node( enkf_main , key );
 
   if (template_file != NULL) {
     char * target_file;
@@ -2826,19 +2824,6 @@ void enkf_main_create_new_config( const char * config_file , const char * storag
 
 
 
-
-
-/**
-   First deleting all the nodes - then the configuration.
-*/
-
-void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
-  const int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  int iens;
-  for (iens = 0; iens < ens_size; iens++)
-    enkf_state_del_node(enkf_main->ensemble[iens] , key);
-  ensemble_config_del_node(enkf_main->ensemble_config , key);
-}
 
 
 

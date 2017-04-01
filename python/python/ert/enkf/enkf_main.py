@@ -45,7 +45,6 @@ class EnKFMain(BaseCClass):
     _clear_data_kw = EnkfPrototype("void enkf_main_clear_data_kw(enkf_main)")
     _add_data_kw = EnkfPrototype("void enkf_main_add_data_kw(enkf_main, char*, char*)")
     _resize_ensemble = EnkfPrototype("void enkf_main_resize_ensemble(enkf_main, int)")
-    _del_node = EnkfPrototype("void enkf_main_del_node(enkf_main, char*)")
     _get_obs = EnkfPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _load_obs = EnkfPrototype("void enkf_main_load_obs(enkf_main, char* , bool)")
     _iget_keep_runpath = EnkfPrototype("int enkf_main_iget_keep_runpath(enkf_main, int)")
@@ -200,9 +199,6 @@ class EnKFMain(BaseCClass):
     def getMountPoint(self):
         return self._get_mount_point( )
 
-
-    def del_node(self, key):
-        self._del_node(key)
 
     def getObservations(self):
         """ @rtype: EnkfObs """
