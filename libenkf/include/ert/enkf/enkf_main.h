@@ -173,7 +173,6 @@ extern "C" {
   const                char * enkf_main_get_SVN_VERSION( void );
   const                char * enkf_main_get_COMPILE_TIME( void );
   void                        enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf_config_node);
-  void                        enkf_main_update_node( enkf_main_type * enkf_main , const char * key );
   int_vector_type           * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride);
 
   hook_manager_type         * enkf_main_get_hook_manager( const enkf_main_type * enkf_main );

@@ -448,18 +448,6 @@ enkf_node_type * enkf_state_get_or_create_node(enkf_state_type * enkf_state, con
 
 
 
-void enkf_state_update_node( enkf_state_type * enkf_state , const char * node_key ) {
-  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_state->ensemble_config , node_key );
-  if (!enkf_state_has_node( enkf_state , node_key))
-    enkf_state_add_node( enkf_state , node_key , config_node );  /* Add a new node */
-  else {
-    bool modified = true;   /* ehhhh? */
-
-    if (modified)
-      enkf_state_add_node( enkf_state , node_key , config_node );
-  }
-}
-
 
 const char * enkf_state_get_eclbase( const enkf_state_type * enkf_state ) {
   return member_config_get_eclbase( enkf_state->my_config );

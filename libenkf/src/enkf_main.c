@@ -2337,12 +2337,6 @@ void enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf
 
 
 
-void enkf_main_update_node( enkf_main_type * enkf_main , const char * key ) {
-  int iens;
-  for (iens = 0; iens < enkf_main->ens_size; iens++)
-    enkf_state_update_node( enkf_main->ensemble[iens] , key );
-}
-
 
 
 
