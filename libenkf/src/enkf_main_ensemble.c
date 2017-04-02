@@ -22,10 +22,6 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 }
 
 
-member_config_type * enkf_main_iget_member_config(const enkf_main_type * enkf_main , int iens) {
-  return enkf_state_get_member_config( enkf_main->ensemble[iens] );
-}
-
 enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
   return enkf_main->ensemble;
 }

@@ -83,7 +83,6 @@ extern "C" {
   void                          enkf_main_set_log_level( enkf_main_type * enkf_main , int log_level );
   int                           enkf_main_get_log_level( const enkf_main_type * enkf_main );
 
-  member_config_type          * enkf_main_iget_member_config(const enkf_main_type * enkf_main , int iens);
   void                          enkf_main_del_unused_static(enkf_main_type * , int );
   const char                  * enkf_main_get_data_file(const enkf_main_type * );
   const char                 ** enkf_main_get_well_list_ref(const enkf_main_type * , int *);
