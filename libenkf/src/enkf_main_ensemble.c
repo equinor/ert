@@ -23,9 +23,6 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 
 
 
-const enkf_state_type ** enkf_main_get_ensemble_const( const enkf_main_type * enkf_main) {
-  return (const enkf_state_type **) enkf_main->ensemble;
-}
 
 /**
    This function will resize the enkf_main->ensemble vector,

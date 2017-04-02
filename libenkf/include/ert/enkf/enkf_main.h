@@ -125,7 +125,6 @@ extern "C" {
 
   ert_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
   enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );
-  const enkf_state_type      ** enkf_main_get_ensemble_const( const enkf_main_type * enkf_main);
 
   const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);
   const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
