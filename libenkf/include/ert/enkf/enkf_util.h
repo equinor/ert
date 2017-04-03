@@ -29,6 +29,7 @@ extern "C" {
 #include <ert/util/rng.h>
 
 #include <ert/ecl/ecl_util.h>
+#include <ert/ecl/ecl_type.h>
 
 #include <ert/enkf/enkf_types.h>
 
@@ -322,7 +323,7 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
 
 
 
-void    enkf_util_truncate(void *  , int  , ecl_type_enum  , void *  , void *);
+void    enkf_util_truncate(void *  , int  , ecl_data_type , void *  , void *);
 void    enkf_util_rand_stdnormal_vector(int  , double *, rng_type * rng);
 double  enkf_util_rand_normal(double , double , rng_type * rng);
 void    enkf_util_fwrite_target_type(FILE * , ert_impl_type);

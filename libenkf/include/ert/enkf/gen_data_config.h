@@ -57,7 +57,7 @@ typedef enum { GEN_DATA_UNDEFINED = 0,
   void                         gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size );
   gen_data_file_format_type    gen_data_config_get_input_format ( const gen_data_config_type * );
   gen_data_file_format_type    gen_data_config_get_output_format ( const gen_data_config_type * );
-  ecl_type_enum                gen_data_config_get_internal_type(const gen_data_config_type * );
+  ecl_data_type                gen_data_config_get_internal_data_type(const gen_data_config_type *);
   gen_data_config_type       * gen_data_config_alloc_with_options(const char * key , bool , const stringlist_type *);
   void                         gen_data_config_free(gen_data_config_type * );
   int                          gen_data_config_get_initial_size( const gen_data_config_type * config );

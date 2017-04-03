@@ -25,6 +25,7 @@ extern "C" {
 
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/ecl_type.h>
 
 #include <ert/enkf/enkf_macros.h>
 #include <ert/enkf/enkf_util.h>
@@ -37,8 +38,8 @@ extern "C" {
   void         field_scale(field_type * field, double scale_factor);
   int          field_get_global_index(const field_type * , int  , int  , int );
   void         field_ijk_set(field_type * , int  , int  , int  , const void * );
-  void         field_indexed_set(field_type * field, ecl_type_enum , int , const int * , const void * );
-  void         field_indexed_add(field_type * field, ecl_type_enum , int , const int * , const void * );
+  void         field_indexed_set(field_type * field, ecl_data_type , int , const int * , const void * );
+  void         field_indexed_add(field_type * field, ecl_data_type , int , const int * , const void * );
   double       field_iget_double(const field_type * , int );
   double       field_ijk_get_double(const field_type * field, int  , int  , int );
   float        field_iget_float(const field_type * , int );
@@ -56,7 +57,7 @@ extern "C" {
   bool         field_fload_keep_inactive(field_type * field , const char * filename);
   bool         field_fload_auto(field_type * , const char * , bool);
   bool         field_fload_rms(field_type * field , const char * filename, bool keep_inactive);
-  void         field_export3D(const field_type * , void *, bool, ecl_type_enum , void *, const char *);
+  void         field_export3D(const field_type * , void *, bool, ecl_data_type , void *, const char *);
   void         field_export(const field_type * , const char * , fortio_type * , field_file_format_type , bool, const char *);
   field_type * field_copyc(const field_type *);
   bool         field_cmp(const field_type *  , const field_type * );

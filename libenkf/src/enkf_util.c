@@ -84,12 +84,12 @@ void enkf_util_randperm( int * P , int size , rng_type * rng) {
    }                                       \
 }  
 
-void enkf_util_truncate(void * void_data , int size , ecl_type_enum ecl_type , void * min_ptr , void *max_ptr) {
-  if (ecl_type == ECL_DOUBLE_TYPE) 
+void enkf_util_truncate(void * void_data , int size , ecl_data_type data_type , void * min_ptr , void *max_ptr) {
+  if (ecl_type_is_double(data_type))
      TRUNCATE(double , void_data , size , min_ptr , max_ptr)
-  else if (ecl_type == ECL_FLOAT_TYPE)
+  else if (ecl_type_is_float(data_type))
      TRUNCATE(float , void_data , size , min_ptr , max_ptr)
-  else if (ecl_type == ECL_INT_TYPE)
+  else if (ecl_type_is_int(data_type))
      TRUNCATE(int , void_data , size , min_ptr , max_ptr)
   else 
      util_abort("%s: unrecognized type - aborting \n",__func__);

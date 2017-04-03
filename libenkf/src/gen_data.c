@@ -166,7 +166,7 @@ void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer ,
   size = buffer_fread_int(buffer);
   buffer_fskip_int( buffer );  /* Skipping report_step from the buffer - was a mistake to store it - I think ... */
   {
-    size_t byte_size       = size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
+    size_t byte_size       = size * ecl_type_get_sizeof_ctype( gen_data_config_get_internal_data_type ( gen_data->config ));
     size_t compressed_size = buffer_get_remaining_size( buffer );
     gen_data->data         = util_realloc( gen_data->data , byte_size );
     buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size );
@@ -188,9 +188,9 @@ void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer ,
 void gen_data_serialize(const gen_data_type * gen_data , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const gen_data_config_type *config   = gen_data->config;
   const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
-  ecl_type_enum ecl_type               = gen_data_config_get_internal_type( config );
+  ecl_data_type data_type              = gen_data_config_get_internal_data_type( config );
 
-  enkf_matrix_serialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column );
+  enkf_matrix_serialize( gen_data->data , data_size , data_type , active_list , A , row_offset , column );
 }
 
 
@@ -198,9 +198,9 @@ void gen_data_deserialize(gen_data_type * gen_data , node_id_type node_id , cons
   {
     const gen_data_config_type *config   = gen_data->config;
     const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
-    ecl_type_enum ecl_type               = gen_data_config_get_internal_type(config);
+    ecl_data_type data_type              = gen_data_config_get_internal_data_type(config);
 
-    enkf_matrix_deserialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column);
+    enkf_matrix_deserialize( gen_data->data , data_size , data_type , active_list , A , row_offset , column);
   }
 }
 
@@ -212,7 +212,7 @@ void gen_data_deserialize(gen_data_type * gen_data , node_id_type node_id , cons
   data has been loaded from file.
 */
 
-static void gen_data_set_data__(gen_data_type * gen_data , int size, const forward_load_context_type * load_context, ecl_type_enum load_type , const void * data) {
+static void gen_data_set_data__(gen_data_type * gen_data , int size, const forward_load_context_type * load_context, ecl_data_type load_data_type , const void * data) {
   gen_data_assert_size(gen_data , size, forward_load_context_get_load_step( load_context ));
   if (gen_data_config_is_dynamic( gen_data->config ))
     gen_data_config_update_active( gen_data->config ,  load_context , gen_data->active_mask);
@@ -220,13 +220,13 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, const forwa
   gen_data_realloc_data(gen_data);
 
   if (size > 0) {
-    ecl_type_enum internal_type = gen_data_config_get_internal_type( gen_data->config );
-    int byte_size = ecl_util_get_sizeof_ctype( internal_type ) * size ;
+    ecl_data_type internal_type = gen_data_config_get_internal_data_type( gen_data->config );
+    int byte_size = ecl_type_get_sizeof_ctype( internal_type ) * size ;
 
-    if (load_type == internal_type)
+    if (ecl_type_is_equal(load_data_type, internal_type))
       memcpy(gen_data->data , data , byte_size );
     else {
-      if (load_type == ECL_FLOAT_TYPE)
+      if (ecl_type_is_float(load_data_type))
         util_float_to_double((double *) gen_data->data , data , size);
       else
         util_double_to_float((float *) gen_data->data , data , size);
@@ -299,10 +299,10 @@ static bool gen_data_fload_active__(gen_data_type * gen_data, const char * filen
 bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * filename , const forward_load_context_type * load_context) {
   bool   file_exists  = util_file_exists(filename);
   void * buffer   = NULL;
-  ecl_type_enum load_type;
+  ecl_data_type load_type;
 
   if ( file_exists ) {
-    ecl_type_enum internal_type            = gen_data_config_get_internal_type(gen_data->config);
+    ecl_data_type internal_type            = gen_data_config_get_internal_data_type(gen_data->config);
     gen_data_file_format_type input_format = gen_data_config_get_input_format( gen_data->config );
     int    size     = 0;
     buffer = gen_common_fload_alloc( filename , input_format , internal_type , &load_type , &size);
@@ -373,14 +373,14 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
   }
 
   {
-    ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+    ecl_data_type internal_type = gen_data_config_get_internal_data_type(gen_data->config);
     const int size              = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
     int i;
-    if (internal_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(internal_type)) {
       float * float_data = (float *) gen_data->data;
       for (i=0; i < size; i++)
         fprintf(stream , "%g\n",float_data[i]);
-    } else if (internal_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(internal_type)) {
       double * double_data = (double *) gen_data->data;
       for (i=0; i < size; i++)
         fprintf(stream , "%lg\n",double_data[i]);
@@ -397,9 +397,9 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
 
 
 
-static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const char * file , ecl_type_enum export_type) {
+static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const char * file , ecl_data_type export_type) {
   FILE * stream    = util_fopen(file , "w");
-  int sizeof_ctype = ecl_util_get_sizeof_ctype( export_type );
+  int sizeof_ctype = ecl_type_get_sizeof_ctype( export_type );
   util_fwrite( gen_data->data , sizeof_ctype , gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step) , stream , __func__);
   fclose(stream);
 }
@@ -425,10 +425,10 @@ void gen_data_export(const gen_data_type * gen_data , const char * full_path , g
     gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
     break;
   case(BINARY_DOUBLE):
-    gen_data_ecl_write_binary(gen_data , full_path , ECL_DOUBLE_TYPE);
+    gen_data_ecl_write_binary(gen_data , full_path , ECL_DOUBLE);
     break;
   case(BINARY_FLOAT):
-    gen_data_ecl_write_binary(gen_data , full_path , ECL_FLOAT_TYPE);
+    gen_data_ecl_write_binary(gen_data , full_path , ECL_FLOAT);
     break;
   default:
     util_abort("%s: internal error - export type is not set.\n",__func__);
@@ -464,8 +464,8 @@ static void gen_data_assert_index(const gen_data_type * gen_data, int index) {
 double gen_data_iget_double(const gen_data_type * gen_data, int index) {
   gen_data_assert_index(gen_data , index);
   {
-    ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
-    if (internal_type == ECL_DOUBLE_TYPE) {
+    ecl_data_type internal_type = gen_data_config_get_internal_data_type(gen_data->config);
+    if (ecl_type_is_double(internal_type)) {
       double * data = (double *) gen_data->data;
       return data[index];
     } else {
@@ -480,8 +480,8 @@ double gen_data_iget_double(const gen_data_type * gen_data, int index) {
 void gen_data_iset_double(gen_data_type * gen_data, int index, double value) {
   gen_data_assert_index(gen_data , index);
   {
-    ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
-    if (internal_type == ECL_DOUBLE_TYPE) {
+    ecl_data_type internal_type = gen_data_config_get_internal_data_type(gen_data->config);
+    if (ecl_type_is_double(internal_type)) {
       double * data = (double *) gen_data->data;
       data[index] = value;
     } else {
@@ -494,8 +494,8 @@ void gen_data_iset_double(gen_data_type * gen_data, int index, double value) {
 
 
 void gen_data_export_data(const gen_data_type * gen_data , double_vector_type * export_data) {
-  ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
-  if (internal_type == ECL_DOUBLE_TYPE)
+  ecl_data_type internal_type = gen_data_config_get_internal_data_type(gen_data->config);
+  if (ecl_type_is_double(internal_type))
     double_vector_memcpy_from_data( export_data , (const double *) gen_data->data , gen_data_get_size( gen_data ));
   else {
     double_vector_reset( export_data );
@@ -539,14 +539,14 @@ const char * gen_data_get_key( const gen_data_type * gen_data) {
 
 void gen_data_clear( gen_data_type * gen_data ) {
   const gen_data_config_type * config = gen_data->config;
-  ecl_type_enum internal_type         = gen_data_config_get_internal_type( config );
+  ecl_data_type internal_type         = gen_data_config_get_internal_data_type( config );
   const int data_size                 = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
 
-  if (internal_type == ECL_FLOAT_TYPE) {
+  if (ecl_type_is_float(internal_type)) {
     float * data = (float * ) gen_data->data;
     for (int i = 0; i < data_size; i++)
       data[i] = 0;
-  } else if (internal_type == ECL_DOUBLE_TYPE) {
+  } else if (ecl_type_is_double(internal_type)) {
     double * data = (double * ) gen_data->data;
     for (int i = 0; i < data_size; i++)
       data[i] = 0;
@@ -557,13 +557,13 @@ void gen_data_clear( gen_data_type * gen_data ) {
 
 void gen_data_isqrt(gen_data_type * gen_data) {
   const int data_size                 = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
-  const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+  const ecl_data_type internal_type   = gen_data_config_get_internal_data_type(gen_data->config);
 
-  if (internal_type == ECL_FLOAT_TYPE) {
+  if (ecl_type_is_float(internal_type)) {
     float * data = (float *) gen_data->data;
     for (int i=0; i < data_size; i++)
       data[i] = sqrtf( data[i] );
-  } else if (internal_type == ECL_DOUBLE_TYPE) {
+  } else if (ecl_type_is_double(internal_type)) {
     double * data = (double *) gen_data->data;
     for (int i=0; i < data_size; i++)
       data[i] = sqrt( data[i] );
@@ -577,15 +577,15 @@ void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__);
   {
     const int data_size                 = gen_data_config_get_data_size( gen_data1->config , gen_data1->current_report_step );
-    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
+    const ecl_data_type internal_type   = gen_data_config_get_internal_data_type(gen_data1->config);
     int i;
 
-    if (internal_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(internal_type)) {
       float * data1       = (float *) gen_data1->data;
       const float * data2 = (const float *) gen_data2->data;
       for (i = 0; i < data_size; i++)
         data1[i] += data2[i];
-    } else if (internal_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(internal_type)) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
       for (i = 0; i < data_size; i++) {
@@ -600,15 +600,15 @@ void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__);
   {
     const int data_size               = gen_data_config_get_data_size( gen_data1->config , gen_data1->current_report_step );
-    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
+    const ecl_data_type internal_type = gen_data_config_get_internal_data_type(gen_data1->config);
     int i;
 
-    if (internal_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(internal_type)) {
       float * data1       = (float *) gen_data1->data;
       const float * data2 = (const float *) gen_data2->data;
       for (i = 0; i < data_size; i++)
         data1[i] *= data2[i];
-    } else if (internal_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(internal_type)) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
       for (i = 0; i < data_size; i++)
@@ -622,15 +622,15 @@ void gen_data_iaddsqr(gen_data_type * gen_data1, const gen_data_type * gen_data2
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__);
   {
     const int data_size               = gen_data_config_get_data_size( gen_data1->config , gen_data1->current_report_step );
-    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
+    const ecl_data_type internal_type = gen_data_config_get_internal_data_type(gen_data1->config);
     int i;
 
-    if (internal_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(internal_type)) {
       float * data1       = (float *) gen_data1->data;
       const float * data2 = (const float *) gen_data2->data;
       for (i = 0; i < data_size; i++)
         data1[i] += data2[i] * data2[i];
-    } else if (internal_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(internal_type)) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
       for (i = 0; i < data_size; i++)
@@ -644,14 +644,14 @@ void gen_data_scale(gen_data_type * gen_data, double scale_factor) {
   //gen_data_config_assert_unary(gen_data->config, __func__);
   {
     const int data_size                 = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
-    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+    const ecl_data_type internal_type   = gen_data_config_get_internal_data_type(gen_data->config);
     int i;
 
-    if (internal_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(internal_type)) {
       float * data       = (float *) gen_data->data;
       for (i = 0; i < data_size; i++)
         data[i] *= scale_factor;
-    } else if (internal_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(internal_type)) {
       double * data       = (double *) gen_data->data;
       for (i = 0; i < data_size; i++)
         data[i] *= scale_factor;
@@ -665,15 +665,15 @@ const bool_vector_type * gen_data_get_forward_mask( const gen_data_type * gen_da
 }
 
 void gen_data_copy_to_double_vector(const gen_data_type * gen_data , double_vector_type * vector){
-    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+    const ecl_data_type internal_type = gen_data_config_get_internal_data_type(gen_data->config);
     int size = gen_data_get_size( gen_data );
-    if (internal_type == ECL_FLOAT_TYPE) {
+    if (ecl_type_is_float(internal_type)) {
       float * data       = (float *) gen_data->data;
       double_vector_reset(vector);
       for (int i = 0; i < size; i++){
         double_vector_append(vector , data[i]);
       }
-    } else if (internal_type == ECL_DOUBLE_TYPE) {
+    } else if (ecl_type_is_double(internal_type)) {
       double * data       = (double *) gen_data->data;
       double_vector_memcpy_from_data( vector , data , size );
     }
@@ -699,10 +699,10 @@ void gen_data_copy_to_double_vector(const gen_data_type * gen_data , double_vect
 
 void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * std , const gen_data_type * min_std) {
   const gen_data_config_type * config = inflation->config;
-  ecl_type_enum ecl_type              = gen_data_config_get_internal_type( config );
+  ecl_data_type data_type              = gen_data_config_get_internal_data_type( config );
   const int data_size                 = gen_data_config_get_data_size( std->config , std->current_report_step );
 
-  if (ecl_type == ECL_FLOAT_TYPE) {
+  if (ecl_type_is_float(data_type)) {
     float       * inflation_data = (float *)       inflation->data;
     const float * std_data       = (const float *) std->data;
     const float * min_std_data   = (const float *) min_std->data;

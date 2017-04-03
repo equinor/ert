@@ -124,7 +124,7 @@ void surface_serialize(const surface_type * surface , node_id_type node_id , con
   const surface_config_type *config  = surface->config;
   const int                data_size = surface_config_get_data_size(config );
   
-  enkf_matrix_serialize( surface->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
+  enkf_matrix_serialize( surface->data , data_size , ECL_DOUBLE , active_list , A , row_offset , column);
 }
 
 
@@ -133,7 +133,7 @@ void surface_deserialize(surface_type * surface , node_id_type node_id , const a
   const surface_config_type *config  = surface->config;
   const int                data_size = surface_config_get_data_size(config );
   
-  enkf_matrix_deserialize( surface->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
+  enkf_matrix_deserialize( surface->data , data_size , ECL_DOUBLE , active_list , A , row_offset , column);
 }
 
 

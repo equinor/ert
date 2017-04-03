@@ -129,13 +129,13 @@ void summary_free(summary_type *summary) {
 
 void summary_serialize(const summary_type * summary , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   double value = SUMMARY_GET_VALUE( summary , node_id.report_step );
-  enkf_matrix_serialize( &value , 1 , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
+  enkf_matrix_serialize( &value , 1 , ECL_DOUBLE , active_list , A , row_offset , column);
 }
 
 
 void summary_deserialize(summary_type * summary , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   double value;
-  enkf_matrix_deserialize( &value , 1 , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
+  enkf_matrix_deserialize( &value , 1 , ECL_DOUBLE , active_list , A , row_offset , column);
   SUMMARY_SET_VALUE( summary , node_id.report_step , value );
 }
 
