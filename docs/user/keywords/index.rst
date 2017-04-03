@@ -455,9 +455,13 @@ Keywords controlling the simulations
 .. _min_realizations:
 .. topic:: MIN_REALIZATIONS
 
-	MIN_REALIZATIONS is the minimum number of realizations that must have succeeded for the simulation to be regarded as a success.
+	MIN_REALIZATIONS is the minimum number of realizations that
+	must have succeeded for the simulation to be regarded as a
+	success.
 
-	MIN_REALIZATIONS can also be used in combination with STOP_LONG_RUNNING, see the documentation for STOP_LONG_RUNNING for a description of this.
+	MIN_REALIZATIONS can also be used in combination with
+	STOP_LONG_RUNNING, see the documentation for STOP_LONG_RUNNING
+	for a description of this.
 
 	*Example:*
 	
@@ -465,13 +469,15 @@ Keywords controlling the simulations
 
 		MIN_REALIZATIONS  20
 
-	The MIN_REALIZATIONS key can also be set as a percentage of NUM_REALIZATIONS
+	The MIN_REALIZATIONS key can also be set as a percentage of
+	NUM_REALIZATIONS
 
 	::
 
 		MIN_REALIZATIONS  10%
 
-	The MIN_REALIZATIONS key is optional.
+        The MIN_REALIZATIONS key is optional, but if it has not been
+        set *all* the realisations must succeed.
 
 
 .. _stop_long_running:
