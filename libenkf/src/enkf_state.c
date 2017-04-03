@@ -1292,4 +1292,59 @@ const ensemble_config_type * enkf_state_get_ensemble_config( const enkf_state_ty
 }
 
 
+/**
+  This function writes out all the files needed by an ECLIPSE simulation, this
+  includes the restart file, and the various INCLUDE files corresponding to
+  parameteres estimated by EnKF.
+
+  The writing of restart file is delegated to enkf_state_write_restart_file().
+*/
+
+void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run_arg , enkf_fs_type * fs) {
+  /**
+     This iteration manipulates the hash (thorugh the enkf_state_del_node() call)
+
+     -----------------------------------------------------------------------------------------
+     T H I S  W I L L  D E A D L O C K  I F  T H E   H A S H _ I T E R  A P I   I S   U S E D.
+     -----------------------------------------------------------------------------------------
+  */
+
+  const shared_info_type * shared_info   = enkf_state->shared_info;
+  const model_config_type * model_config = shared_info->model_config;
+  int iens                               = enkf_state_get_iens( enkf_state );
+  const char * base_name                 = model_config_get_gen_kw_export_file(model_config);
+  char * export_file_name                = util_alloc_filename( run_arg_get_runpath( run_arg ) , base_name  , NULL);
+  FILE * export_file                     = util_mkdir_fopen(export_file_name, "w");
+
+
+  stringlist_type * key_list = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , PARAMETER );
+  int ikey;
+
+  for (ikey = 0; ikey < stringlist_get_size( key_list ); ikey++) {
+    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_state->ensemble_config, stringlist_iget( key_list , ikey));
+    enkf_node_type * enkf_node = enkf_node_alloc( config_node );
+    bool forward_init = enkf_node_use_forward_init( enkf_node );
+    node_id_type node_id = {.report_step = run_arg_get_step1(run_arg),
+                            .iens = iens };
+
+    if ((run_arg_get_step1(run_arg) == 0) && (forward_init)) {
+
+      if (enkf_node_has_data( enkf_node , fs , node_id))
+        enkf_node_load(enkf_node, fs, node_id);
+      else
+        continue;
+
+    } else
+      enkf_node_load(enkf_node, fs, node_id);
+
+    enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export_file , run_arg_get_step1(run_arg));
+  }
+  stringlist_free( key_list );
+
+  fclose(export_file);
+  free(export_file_name);
+}
+
+
+
 #include "enkf_state_nodes.c"

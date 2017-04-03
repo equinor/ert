@@ -166,58 +166,6 @@ int enkf_state_forward_init(enkf_state_type * enkf_state ,
 
 
 
-/**
-  This function writes out all the files needed by an ECLIPSE simulation, this
-  includes the restart file, and the various INCLUDE files corresponding to
-  parameteres estimated by EnKF.
-
-  The writing of restart file is delegated to enkf_state_write_restart_file().
-*/
-
-void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run_arg , enkf_fs_type * fs) {
-  {
-    /**
-        This iteration manipulates the hash (thorugh the enkf_state_del_node() call)
-
-        -----------------------------------------------------------------------------------------
-        T H I S  W I L L  D E A D L O C K  I F  T H E   H A S H _ I T E R  A P I   I S   U S E D.
-        -----------------------------------------------------------------------------------------
-    */
-
-    const shared_info_type * shared_info   = enkf_state->shared_info;
-    const model_config_type * model_config = shared_info->model_config;
-    int iens                               = enkf_state_get_iens( enkf_state );
-    const char * base_name                 = model_config_get_gen_kw_export_file(model_config);
-    char * export_file_name                = util_alloc_filename( run_arg_get_runpath( run_arg ) , base_name  , NULL);
-    FILE * export_file                     = util_mkdir_fopen(export_file_name, "w");
-
-
-    const int num_keys = hash_get_size(enkf_state->node_hash);
-    char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
-    int ikey;
-
-    for (ikey = 0; ikey < num_keys; ikey++) {
-      if (true) {
-        enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-        bool forward_init = enkf_node_use_forward_init( enkf_node );
-
-        if ((run_arg_get_step1(run_arg) == 0) && (forward_init)) {
-          node_id_type node_id = {.report_step = 0,
-                                  .iens = iens };
-
-          if (enkf_node_has_data( enkf_node , fs , node_id))
-            enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export_file , run_arg_get_step1(run_arg));
-        } else
-          enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export_file , run_arg_get_step1(run_arg));
-      }
-    }
-    util_free_stringlist(key_list , num_keys);
-
-    fclose(export_file);
-    free(export_file_name);
-  }
-}
-
 
 /**
   This function takes a report_step and a analyzed|forecast state as
