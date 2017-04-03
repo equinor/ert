@@ -116,12 +116,10 @@ class TimeMap(BaseCClass):
                 raise Exception("Tried to update with inconsistent value")
             else:
                 return False
-            
 
 
     def __iter__(self):
         cur = 0
-
         while cur < len(self):
             yield self[cur]
             cur += 1

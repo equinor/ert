@@ -38,13 +38,12 @@ GEN_DATA SNAKE_OIL_GPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_gpr_diff_%d
 
 
 -- Observe that the snake_oil simulator does not really take these
--- field parameters into account, they are mainly here to create a
--- test case with field parameters.
+-- surface parameters into account, they are mainly here to create a
+-- test case with surface parameters.
 
-FIELD PERMX PARAMETER  permx.grdcel  INIT_FILES:fields/permx%d.grdecl
-FIELD PORO  PARAMETER  poro.grdcel   INIT_FILES:fields/poro%d.grdecl
+SURFACE TOP INIT_FILES:surface/small.irap OUTPUT_FILE:surface/small_out.irap BASE_SURFACE:surface/small.irap
 
 
 LOG_LEVEL 3
-LOG_FILE log/log_snake_oil.ert.txt
+LOG_FILE log/log_snake_oil_surface.ert.txt
 UPDATE_LOG_PATH log/update

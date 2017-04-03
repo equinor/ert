@@ -1,4 +1,4 @@
-import datetime 
+import datetime
 
 from ert.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert.enkf import TimeMap
@@ -12,7 +12,7 @@ class TimeMapTest(ExtendedTestCase):
         with self.assertRaises(IOError):
             TimeMap("Does/not/exist")
 
-    
+
         tm = TimeMap()
         with self.assertRaises(IndexError):
             t = tm[10]
@@ -24,10 +24,10 @@ class TimeMapTest(ExtendedTestCase):
 
         self.assertTrue( tm.update(0 , datetime.date(2000 , 1, 1)))
         self.assertEqual( tm[0] , datetime.date(2000 , 1, 1))
-        
+
         self.assertTrue( tm.isStrict() )
         with self.assertRaises(Exception):
-            tm.update(tm.update(0 , datetime.date(2000 , 1, 2)))
+            tm.update(0 , datetime.date(2000 , 1, 2))
 
         tm.setStrict( False )
         self.assertFalse(tm.update(0 , datetime.date(2000 , 1, 2)))
@@ -37,11 +37,11 @@ class TimeMapTest(ExtendedTestCase):
         d = tm.dump()
         self.assertEqual( d , [(0 , datetime.date(2000,1,1) , 0),
                                (1 , datetime.date(2000,1,2) , 1)])
-        
+
 
     def test_fscanf(self):
         tm = TimeMap()
-    
+
         with self.assertRaises(IOError):
             tm.fload( "Does/not/exist" )
 
@@ -51,7 +51,7 @@ class TimeMapTest(ExtendedTestCase):
                 fileH.write("12/10/2000\n")
                 fileH.write("14/10/2000\n")
                 fileH.write("16/10/2000\n")
-            
+
             tm.fload("map.txt")
             self.assertEqual( 4 , len(tm) )
             self.assertEqual( datetime.date(2000,10,10) , tm[0])
@@ -61,7 +61,7 @@ class TimeMapTest(ExtendedTestCase):
             with open("map.txt","w") as fileH:
                 fileH.write("10/10/200X\n")
 
-            with self.assertRaises(Exception):    
+            with self.assertRaises(Exception):
                 tm.fload("map.txt")
 
             self.assertEqual( 4 , len(tm) )
@@ -74,14 +74,14 @@ class TimeMapTest(ExtendedTestCase):
                 fileH.write("12/10/2000\n")
                 fileH.write("10/10/2000\n")
 
-            with self.assertRaises(Exception):    
+            with self.assertRaises(Exception):
                 tm.fload("map.txt")
 
             self.assertEqual( 4 , len(tm) )
             self.assertEqual( datetime.date(2000,10,10) , tm[0])
             self.assertEqual( datetime.date(2000,10,16) , tm[3])
 
-                
+
     def test_setitem(self):
         tm = TimeMap()
         tm[0] = datetime.date(2000,1,1)
@@ -105,7 +105,7 @@ class TimeMapTest(ExtendedTestCase):
         self.assertFalse( datetime.date(2001,1,3) in tm )
         self.assertFalse( datetime.date(1999,1,3) in tm )
 
-        
+
     def test_lookupDate(self):
         tm = TimeMap()
         tm[0] = datetime.date(2000,1,1)
@@ -117,7 +117,7 @@ class TimeMapTest(ExtendedTestCase):
 
         self.assertEqual( 2 , tm.lookupTime( datetime.date(2000,1,3)))
         self.assertEqual( 2 , tm.lookupTime( datetime.datetime(2000,1,3,0,0,0)))
-        
+
         with self.assertRaises(ValueError):
             tm.lookupTime( datetime.date(1999,10,10))
 
@@ -128,7 +128,7 @@ class TimeMapTest(ExtendedTestCase):
 
         with self.assertRaises(ValueError):
             tm.lookupDays( 0  )
-        
+
         tm[0] = datetime.date(2000,1,1)
         tm[1] = datetime.date(2000,1,2)
         tm[2] = datetime.date(2000,1,3)
@@ -145,9 +145,9 @@ class TimeMapTest(ExtendedTestCase):
 
         with self.assertRaises(ValueError):
             tm.lookupDays( 3  )
-            
 
-            
+
+
     def test_nearest_date_lookup(self):
         tm = TimeMap()
         with self.assertRaises(ValueError):

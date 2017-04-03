@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.enkf import LocalUpdateStep
@@ -21,39 +22,38 @@ from ert.analysis import AnalysisModule
 
 
 class LocalConfig(BaseCClass):
+    """The LocalConfig class is created as a reference to an existing underlying C
+    structure by the method EnkFMain.local_config(). When the pointer to the C
+    local_config_type object has been properly wrapped we 'decorate' the Python
+    object with references to the ensemble_config , observations and grid.
+
+    This implies that the Python object LocalConfig is richer than the
+    underlying C object local_config_type; the extra attributes are only used
+    for validation.
+
+    """
     TYPE_NAME = "local_config"
 
-    _free            = EnkfPrototype("void local_config_free( local_config )")
-    _clear           = EnkfPrototype("void local_config_clear( local_config )")
-    _get_updatestep  = EnkfPrototype("local_updatestep_ref local_config_get_updatestep( local_config )")
-    _get_ministep    = EnkfPrototype("local_ministep_ref local_config_get_ministep( local_config, char*)")
-    _create_ministep = EnkfPrototype("void local_config_alloc_ministep( local_config, char*, analysis_module)")
-    _attach_ministep = EnkfPrototype("void local_updatestep_add_ministep( local_updatestep, local_ministep)", bind = False)
-    _get_obsdata     = EnkfPrototype("local_obsdata_ref local_config_get_obsdata( local_config, char*)")
-    _create_obsdata  = EnkfPrototype("void local_config_alloc_obsdata( local_config, char*)")
-    _copy_obsdata    = EnkfPrototype("local_obsdata_ref local_config_alloc_obsdata_copy( local_config, char*, char*)")
-    _has_obsdata     = EnkfPrototype("bool local_config_has_obsdata( local_config, char*)")
-    _get_dataset     = EnkfPrototype("local_dataset_ref local_config_get_dataset( local_config, char*)")
-    _create_dataset  = EnkfPrototype("void local_config_alloc_dataset( local_config, char*)")
-    _copy_dataset    = EnkfPrototype("local_dataset_ref local_config_alloc_dataset_copy( local_config, char*, char*)")
-    _has_dataset     = EnkfPrototype("bool local_config_has_dataset( local_config, char*)")
-    _write_local_config_summary_file = EnkfPrototype("void local_config_summary_fprintf( local_config, char*)")
+    _free            = EnkfPrototype("void   local_config_free(local_config)")
+    _clear           = EnkfPrototype("void   local_config_clear(local_config)")
+    _create_ministep = EnkfPrototype("void   local_config_alloc_ministep(local_config, char*, analysis_module)")
+    _attach_ministep = EnkfPrototype("void   local_updatestep_add_ministep(local_updatestep, local_ministep)", bind=False)
+    _create_obsdata  = EnkfPrototype("void   local_config_alloc_obsdata(local_config, char*)")
+    _create_dataset  = EnkfPrototype("void   local_config_alloc_dataset(local_config, char*)")
+    _has_obsdata     = EnkfPrototype("bool   local_config_has_obsdata(local_config, char*)")
+    _has_dataset     = EnkfPrototype("bool   local_config_has_dataset(local_config, char*)")
+
+    _get_updatestep  = EnkfPrototype("local_updatestep_ref local_config_get_updatestep(local_config)")
+    _get_ministep    = EnkfPrototype("local_ministep_ref   local_config_get_ministep(local_config, char*)")
+    _get_obsdata     = EnkfPrototype("local_obsdata_ref    local_config_get_obsdata(local_config, char*)")
+    _copy_obsdata    = EnkfPrototype("local_obsdata_ref    local_config_alloc_obsdata_copy(local_config, char*, char*)")
+    _get_dataset     = EnkfPrototype("local_dataset_ref    local_config_get_dataset(local_config, char*)")
+    _copy_dataset    = EnkfPrototype("local_dataset_ref    local_config_alloc_dataset_copy(local_config, char*, char*)")
+    _smry_fprintf    = EnkfPrototype("void local_config_summary_fprintf(local_config, char*)")
 
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
-
-
-    # The LocalConfig class is created as a reference to an existing
-    # underlying C structure by the method
-    # EnkFMain.local_config(). When the pointer to the C
-    # local_config_type object has been properly wrapped we 'decorate'
-    # the Python object with references to the ensemble_config ,
-    # observations and grid.
-    #
-    # This implies that the Python object LocalConfig is richer than
-    # the underlying C object local_config_type; the extra attributes
-    # are only used for validation.
 
     def initAttributes(self , ensemble_config , obs , grid):
         self.ensemble_config = ensemble_config
@@ -161,4 +161,7 @@ class LocalConfig(BaseCClass):
         number of observations and the Datasets with the number of active indices
         """
         assert isinstance(filename, str)
-        self._write_local_config_summary_file(filename)
+        self._smry_fprintf(filename)
+
+    def __repr__(self):
+        return self._create_repr()
