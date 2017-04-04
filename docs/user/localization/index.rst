@@ -6,8 +6,8 @@ Keywords for the local configuration file
 General overview
 ----------------
 
-To create a configuration for localization you must "program" your own
-local config commands by writing a Python script, and invoking it from a workflow.
+To create a configuration for localization you must *"program"* your own local
+config commands by writing a Python script, and invoking it from a workflow.
 
 
 **Local config python script example:**
@@ -31,14 +31,15 @@ local config commands by writing a Python script, and invoking it from a workflo
          # Get local config object
          local_config = ert.getLocalConfig()
 
-         # Reset internal local config structure. From now you need to specify what to localize
+         # Reset internal local config structure.  From now you need to
+         # specify what to localize
          local_config.clear()
 
          # There is only one update step
          updatestep = local_config.getUpdatestep()
 
          # A ministep
-         ministep   = local_config.createMinistep("MINISTEP" )
+         ministep = local_config.createMinistep("MINISTEP" )
 
          # Add some dataset you want to localize here.
          dataset_multflt = local_config.createDataset("DATASET_MULTFLT")
@@ -47,7 +48,7 @@ local config commands by writing a Python script, and invoking it from a workflo
          data_poro = local_config.createDataset("DATA_PORO")
          ecl_grid = local_config.getGrid()
          ecl_region = EclRegion(ecl_grid, False)
-         ecl_region.select_box((0,0,0),(3,3,3))
+         ecl_region.select_box((0,0,0), (3,3,3))
          data_poro.addField("PORO", ecl_region)
 
 
@@ -56,11 +57,12 @@ local config commands by writing a Python script, and invoking it from a workflo
          active_list = dataset_multflt.getActiveList("MULTFLT")
          active_list.addActiveIndex(0)
 
-         # Add existing observations from WOPR:OP_1. Alternatively, use getObservations
-         # and filter the observations you want to use for this ministep.
+         # Add existing observations from WOPR:OP_1.  Alternatively, use
+         # getObservations  and filter the observations you want to use
+         # for this ministep.
          obsdata_wopr = local_config.createObsdata("WOPR:OP_1_10")
-         for i in range(1,10):
-             obsdata_wopr.addNode("OBS"+str(i))
+         for i in range(1, 10):
+             obsdata_wopr.addNode("OBS" + str(i))
 
          # Attach the created dataset and obsset to the ministep
          ministep.attachDataset(dataset_multflt)
@@ -69,7 +71,7 @@ local config commands by writing a Python script, and invoking it from a workflo
          # Then attach the ministep to the update step
          updatestep.attachMinistep(ministep)
 
-         # Write a .csv file for debugging. The generated file can be imported
+         # Write a .csv file for debugging.  The generated file can be imported
          # into Excel for better tabulation of the setup
          local_config.writeSummaryFile("tmp/summary_local_config.csv")
 
@@ -107,6 +109,8 @@ ERT script function                                                        Purpo
 :ref:`select_inside_polygon            <eclregion_select_in_polygon>`      Selects or deselects cells in region inside polygon
 :ref:`Example create polygon           <create_polygon>`                   Creates a geo-polygon based on coordinate list
 :ref:`Example load polygon             <load_polygon>`                     Loads polygon in Irap RMS format from file
+:ref:`Select polygon from surface      <geo_region__select_polygon>`       Selects the inside of a polygon from a surface
+:ref:`Select halfspace from surface    <geo_region__select_halfspace>`     Selects above or below a line from a surface
 
 =========================================================================  ===================================================================================
 
@@ -115,7 +119,7 @@ ERT script function                                                        Purpo
 .. _create_updatestep:
 .. topic:: getUpdatestep
 
-   This function will create the default updatestep.
+   This function will create the default ``updatestep``.
 
    Observe that you must get, otherwise it will not be able to do anything.
 
@@ -156,13 +160,13 @@ ERT script function                                                        Purpo
 .. _create_ministep:
 .. topic:: createMinistep
 
-   This function will create a new ministep with a given name and an optional
-   analysis module. The default analysis module for this ministep is ERT's
-   current analysis module.
+   This function will create a new ``ministep`` with a given name and an
+   optional analysis module.  The default analysis module for this ``ministep``
+   is ERT's current analysis module.
 
-   A given observation set can be attached to a given ministep with
-   ``attachObsset``.  The ministep is then ready for adding data. Before the
-   ministep can be used you must attach it to an updatestep with the
+   A given observation set can be attached to a given ``ministep`` with
+   ``attachObsset``.  The ``ministep`` is then ready for adding data.  Before
+   the ``ministep`` can be used you must attach it to an ``updatestep`` with the
    ``attachMinistep`` command
 
    *Example:*
@@ -184,9 +188,10 @@ ERT script function                                                        Purpo
 .. _create_dataset:
 .. topic:: createDataset
 
-   This function will create a new dataset with a given name, i.e. a collection
-   of enkf_nodes which should be updated together. Before you can actually use a
-   dataset you must attach it to a ministep with the ``attachDataset`` command.
+   This function will create a new ``dataset`` with a given name, i.e., a
+   collection of ``enkf_nodes`` which should be updated together.  Before you
+   can actually use a ``dataset`` you must attach it to a ``ministep`` with the
+   ``attachDataset`` command.
 
 
    *Example:*
@@ -201,7 +206,7 @@ ERT script function                                                        Purpo
 .. topic:: copyDataset
 
    Will create a new ``local_obsset`` instance which is a copy of the source
-   dataset; this is a deep copy where also the lowest level active_list
+   ``dataset``; this is a deep copy where also the lowest level active_list
    instances are copied, and can then subsequently be updated independently of
    each other.
 
@@ -218,10 +223,10 @@ ERT script function                                                        Purpo
 .. _create_obsset:
 .. topic:: createObsdata
 
-   This function will create an observation set, i.e. a collection of
-   observation keys which will be used as the observations in one ministep.
-   Before the ``obsset`` can be used it must be attached to a ministep with the
-   ``attachDataset`` command.
+   This function will create an observation set, i.e., a collection of
+   observation keys which will be used as the observations in one ``ministep``.
+   Before the ``obsset`` can be used it must be attached to a ``ministep`` with
+   the ``attachDataset`` command.
 
 
    *Example:*
@@ -236,7 +241,7 @@ ERT script function                                                        Purpo
 .. topic:: copyObsdata
 
    Will create a new ``local_obsset`` instance which is a copy of the source
-   dataset; this is a deep copy where also the lowest level active_list
+   ``dataset``; this is a deep copy where also the lowest level ``active_list``
    instances are copied, and can then subsequently be updated independently of
    each other.
 
@@ -252,7 +257,7 @@ ERT script function                                                        Purpo
 .. _attach_ministep:
 .. topic:: attachMinistep
 
-   This function will attach the ministep to the default updatestep.
+   This function will attach the ``ministep`` to the default ``updatestep``.
 
    *Example:*
 
@@ -265,7 +270,7 @@ ERT script function                                                        Purpo
 .. _attach_dataset:
 .. topic:: attachDataset
 
-   Will attach the given dataset to the ministep.
+   Will attach the given ``dataset`` to the ``ministep``.
 
 
    *Example:*
@@ -294,7 +299,7 @@ ERT script function                                                        Purpo
 
    This function will add the data ``KEY`` as one *enkf* node which should be
    updated in this dataset.  If you do not manipulate the ``KEY`` further with
-   ``addActiveIndex``, the ``KEY`` will be added as ``ALL_ACTIVE``, i.e. all
+   ``addActiveIndex``, the ``KEY`` will be added as ``ALL_ACTIVE``, i.e., all
    elements will be updated.
 
 
@@ -341,7 +346,7 @@ ERT script function                                                        Purpo
 .. _del_obs:
 .. topic:: del (obs)
 
-   This function will delete the obs ``OBS_KEY`` from the obsset
+   This function will delete the obs ``OBS_KEY`` from the ``obsset``
    ``NAME_OF_OBSSET``.
 
 
@@ -356,7 +361,7 @@ ERT script function                                                        Purpo
 .. _dataset_del_all_data:
 .. topic:: clear
 
-   This function will delete all the data keys from the dataset.
+   This function will delete all the data keys from the ``dataset``.
 
    *Example:*
 
@@ -369,8 +374,8 @@ ERT script function                                                        Purpo
 .. _active_list_add_data_index:
 .. topic:: addActiveIndex (data)
 
-   This function will say that the data with name ``DATA_KEY`` in dataset with
-   name ``DATASTEP_NAME`` should have the index ``INDEX`` active.
+   This function will say that the data with name ``DATA_KEY`` in ``dataset``
+   with name ``DATASTEP_NAME`` should have the index ``INDEX`` active.
 
 
    *Example:*
@@ -385,8 +390,8 @@ ERT script function                                                        Purpo
 .. _active_list_add_obs_index:
 .. topic:: addActiveIndex (obs)
 
-   This function will say that the observation with name ``OBS_KEY`` in obsset
-   with name ``OBSSET_NAME`` should have the index ``INDEX`` active.
+   This function will say that the observation with name ``OBS_KEY`` in
+   ``obsset`` with name ``OBSSET_NAME`` should have the index ``INDEX`` active.
 
    *Example:*
 
@@ -401,10 +406,11 @@ ERT script function                                                        Purpo
 .. _add_field:
 .. topic:: addField
 
-   This function will install the node with name ``FIELD_NAME`` in the dataset
-   ``DATASET_NAME``.  It will in addition select all the (currently) active
-   cells in the region ``ECLREGION_NAME`` as active for this field/ministep
-   combination.  The ``ADD_FIELD`` command is actually a shortcut of:
+   This function will install the node with name ``FIELD_NAME`` in the
+   ``dataset`` ``DATASET_NAME``.  It will in addition select all the (currently)
+   active cells in the region ``ECLREGION_NAME`` as active for this
+   ``field``/``ministep`` combination.  The ``ADD_FIELD`` command is actually a
+   shortcut of:
 
    ``ADD_DATA DATASET FIELD_NAME``;
 
@@ -435,10 +441,11 @@ ERT script function                                                        Purpo
 .. _load_file:
 .. topic:: EclGrid, EclInitFile
 
-   This function will load an ECLIPSE file in restart format (i.e. restart file
-   or INIT file), the keywords in this file can then subsequently be used in
-   ``ECLREGION_SELECT_VALUE_XXX`` commands below.  The ``KEY`` argument is a
-   string which will be used later when we refer to the content of this file.
+   This function will load an ECLIPSE file in restart format (i.e., *restart
+   file* or *INIT file*), the keywords in this file can then subsequently be
+   used in ``ECLREGION_SELECT_VALUE_XXX`` commands below.  The ``KEY`` argument
+   is a string which will be used later when we refer to the content of this
+   file.
 
    *Example:*
 
@@ -471,7 +478,7 @@ ERT script function                                                        Purpo
 .. _eclregion_select_all:
 .. topic:: select_active
 
-   Will select all the cells in the region (or deselect if ``SELECT == False``).
+   Will select (or deselect) all the cells in the region.
 
 
    *Example:*
@@ -479,6 +486,7 @@ ERT script function                                                        Purpo
    ::
 
       eclreg_poro.select_active()
+      eclreg_poro.deselect_active()
 
 
 .. #####################################################################
@@ -516,8 +524,8 @@ ERT script function                                                        Purpo
 
    This function will compare an ``ecl_kw`` instance loaded from disc with a
    numerical value, and select all cells which have numerical below the limiting
-   value.  The ``ecl_kw`` value should be a floating point value like
-   e.g. PRESSURE or PORO.  The arguments are just as for
+   value.  The ``ecl_kw`` value should be a floating point value like e.g.,
+   ``PRESSURE`` or ``PORO``.  The arguments are just as for
    ``ECLREGION_SELECT_VALUE_EQUAL``.
 
    *Example:*
@@ -533,8 +541,8 @@ ERT script function                                                        Purpo
 
    This function will compare an ``ecl_kw`` instance loaded from disc with a
    numerical value, and select all cells which have numerical above the limiting
-   value.  The ``ecl_kw`` value should be a floating point value like
-   e.g. PRESSURE or PORO. The arguments are just as for
+   value.  The ``ecl_kw`` value should be a floating point value like e.g.,
+   ``PRESSURE`` or ``PORO``.  The arguments are just as for
    ``ECLREGION_SELECT_VALUE_EQUAL``.
 
 
@@ -621,7 +629,7 @@ ERT script function                                                        Purpo
 
    Will create a ``geo_polygon`` instance based on the coordinate list:
 
-   ``(x1,y1), (x2,y2), (x3,y3), ...``
+   ``[(x1,y1), (x2,y2), (x3,y3), ..., (xn,yn)]``
 
    The polygon should not be explicitly closed --- i.e., you should in general
    have
@@ -646,7 +654,7 @@ ERT script function                                                        Purpo
    Will load a polygon instance from the file ``FILENAME`` --- the file should
    be in *irap RMS* format.  The polygon will be stored under the name
    ``POLYGON_NAME`` which can then later be used to refer to the polygon for
-   e.g. select operations.
+   e.g., select operations.
 
 
    *Example:*
@@ -658,3 +666,59 @@ ERT script function                                                        Purpo
           for line in ply_file:
               xs, ys = map(float, line.split())
               polygon.append(xs, ys)
+
+
+.. #####################################################################
+.. _geo_region__select_polygon:
+.. topic:: Select polygon from surface
+
+   Will select or deselect all points from a surface contained inside a given
+   polygon.
+
+
+   *Example:*
+
+   ::
+
+      nx,ny = 12, 12
+      xinc,yinc = 1, 1
+      xstart,ystart = -1, -1
+      angle = 0.0
+      s_args = (None, nx, ny, xinc, yinc, xstart, ystart, angle)
+      surface = Surface(*s_args)  # an irap surface
+      pointset = GeoPointset.fromSurface(surface)
+      georegion = GeoRegion(pointset)
+      points = [(-0.1,2.0), (1.9,8.1), (6.1,8.1), (9.1,5), (7.1,0.9)]
+      polygon = CPolyline(name='test_polygon', init_points=points)
+
+      georegion.select_inside(polygon)
+      georegion.select_outside(polygon)
+      georegion.deselect_inside(polygon)
+      georegion.select_polygon(polygon, inside=False, select=False)  # deselect outside
+
+
+.. #####################################################################
+.. _geo_region__select_halfspace:
+.. topic:: Select halfspace from surface
+
+   Will select or deselect all points from a surface above or below a line.
+
+
+   *Example:*
+
+   ::
+
+      nx,ny = 12, 12
+      xinc,yinc = 1, 1
+      xstart,ystart = -1, -1
+      angle = 0.0
+      s_args = (None, nx, ny, xinc, yinc, xstart, ystart, angle)
+      surface = Surface(*s_args)  # an irap surface
+      pointset = GeoPointset.fromSurface(surface)
+      georegion = GeoRegion(pointset)
+      line = [(-0.1,2.0), (1.9,8.1)]
+
+      georegion.select_above(line)
+      georegion.deselect_above(line)
+      georegion.select_below(line)
+      georegion.select_halfspace(line, above=False, select=False)  # deselect below
