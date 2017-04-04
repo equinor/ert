@@ -182,12 +182,12 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 data_node.load(self._getInitializationCase(), init_id)
                 data_node.save(target_fs, run_id)
 
-        for key, value in keywords.items():
-            config_node = ens_config[kw]
+        for key, values in keywords.items():
+            config_node = ens_config[key]
             data_node = EnkfNode( config_node )
 
             gen_kw = data_node.asGenKw()
-            gen_kw.setValues(value)
+            gen_kw.setValues(values)
 
             run_id = NodeId(0, iens)
             data_node.save(target_fs, run_id)
