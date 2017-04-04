@@ -123,7 +123,7 @@ ERT script function                                                        Purpo
 
    ::
 
-   updatestep = local_config.getUpdatestep()
+      updatestep = local_config.getUpdatestep()
 
 
 .. #####################################################################
@@ -161,9 +161,9 @@ ERT script function                                                        Purpo
    current analysis module.
 
    A given observation set can be attached to a given ministep with
-   attachObsset.The ministep is then ready for adding data. Before the ministep
-   can be used you must attach it to an updatestep with the attachMinistep
-   command
+   ``attachObsset``.  The ministep is then ready for adding data. Before the
+   ministep can be used you must attach it to an updatestep with the
+   ``attachMinistep`` command
 
    *Example:*
 
@@ -186,7 +186,7 @@ ERT script function                                                        Purpo
 
    This function will create a new dataset with a given name, i.e. a collection
    of enkf_nodes which should be updated together. Before you can actually use a
-   dataset you must attach it to a ministep with the attachDataset command.
+   dataset you must attach it to a ministep with the ``attachDataset`` command.
 
 
    *Example:*
@@ -200,7 +200,7 @@ ERT script function                                                        Purpo
 .. _copy_dataset:
 .. topic:: copyDataset
 
-   Will create a new local_obsset instance which is a copy of the source
+   Will create a new ``local_obsset`` instance which is a copy of the source
    dataset; this is a deep copy where also the lowest level active_list
    instances are copied, and can then subsequently be updated independently of
    each other.
@@ -210,7 +210,8 @@ ERT script function                                                        Purpo
 
    ::
 
-      dataset_multflt_copy = local_config.copyDataset("DATASET_MULTFLT","DATASET_MULTFLT_COPY")
+      dataset_multflt_copy = local_config.copyDataset("DATASET_MULTFLT",
+                                                      "DATASET_MULTFLT_COPY")
 
 
 .. #####################################################################
@@ -218,9 +219,9 @@ ERT script function                                                        Purpo
 .. topic:: createObsdata
 
    This function will create an observation set, i.e. a collection of
-   observation keys which will be used as the observations in one
-   ministep. Before the obsset can be used it must be attached to a ministep
-   with the attachDataset command.
+   observation keys which will be used as the observations in one ministep.
+   Before the ``obsset`` can be used it must be attached to a ministep with the
+   ``attachDataset`` command.
 
 
    *Example:*
@@ -234,7 +235,7 @@ ERT script function                                                        Purpo
 .. _copy_obsset:
 .. topic:: copyObsdata
 
-   Will create a new local_obsset instance which is a copy of the source
+   Will create a new ``local_obsset`` instance which is a copy of the source
    dataset; this is a deep copy where also the lowest level active_list
    instances are copied, and can then subsequently be updated independently of
    each other.
@@ -278,7 +279,7 @@ ERT script function                                                        Purpo
 .. _attach_obsset:
 .. topic:: attachObsset
 
-   Will attach the given obsset to the ministep.
+   Will attach the given ``obsset`` to the ``ministep``.
 
    *Example:*
 
@@ -323,7 +324,7 @@ ERT script function                                                        Purpo
 .. topic:: addNode
 
    This function will install the observation ``OBS_KEY`` as an observation for
-   this ``obsset`` - similarly to the ``addNode`` function.
+   this ``obsset`` --- similarly to the ``addNode`` function.
 
    *Example:*
 
@@ -434,10 +435,10 @@ ERT script function                                                        Purpo
 .. _load_file:
 .. topic:: EclGrid, EclInitFile
 
-   This function will load an ECLIPSE file in restart format (i.e. restart file or
-   INIT file), the keywords in this file can then subsequently be used in
-   ``ECLREGION_SELECT_VALUE_XXX`` commands below.  The ``KEY`` argument is a string
-   which will be used later when we refer to the content of this file.
+   This function will load an ECLIPSE file in restart format (i.e. restart file
+   or INIT file), the keywords in this file can then subsequently be used in
+   ``ECLREGION_SELECT_VALUE_XXX`` commands below.  The ``KEY`` argument is a
+   string which will be used later when we refer to the content of this file.
 
    *Example:*
 
@@ -470,7 +471,7 @@ ERT script function                                                        Purpo
 .. _eclregion_select_all:
 .. topic:: select_active
 
-   Will select all the cells in the region (or deselect if ``SELECT == FALSE``).
+   Will select all the cells in the region (or deselect if ``SELECT == False``).
 
 
    *Example:*
@@ -532,7 +533,7 @@ ERT script function                                                        Purpo
 
    This function will compare an ``ecl_kw`` instance loaded from disc with a
    numerical value, and select all cells which have numerical above the limiting
-   value. The ``ecl_kw`` value should be a floating point value like
+   value.  The ``ecl_kw`` value should be a floating point value like
    e.g. PRESSURE or PORO. The arguments are just as for
    ``ECLREGION_SELECT_VALUE_EQUAL``.
 
@@ -549,8 +550,8 @@ ERT script function                                                        Purpo
 .. topic:: select_box
 
    This function will select (or deselect) all the cells in the box defined by
-   the six coordinates ``i1 i2 j1 j2 k1 k2``. The coordinates are inclusive, and
-   the counting starts at 1.
+   the six coordinates ``i1 i2 j1 j2 k1 k2``.  The coordinates are inclusive,
+   and the counting starts at 1.
 
 
    *Example:*
@@ -565,11 +566,13 @@ ERT script function                                                        Purpo
 .. topic:: select_islice, _jslice,_kslice
 
    This function will select a slice in the direction given by ``dir``', which
-   can ``x``, ``y``, or ``z``. Depending on the value of ``dir`` the numbers
+   can ``x``, ``y``, or ``z``.  Depending on the value of ``dir`` the numbers
    ``n1`` and ``n2`` are interpreted as ``(i1 i2)``, ``(j1 j2)``, or ``(k1
-   k2)``, respectively.  The numbers ``n1`` and ``n2`` are inclusive and the
-   counting starts at 1.  It is OK to use very high/low values to imply *"the
-   rest of the cells"* in one direction.
+   k2)``, respectively.
+
+   The numbers ``n1`` and ``n2`` are inclusive and the counting starts at 1.  It
+   is OK to use very high/low values to imply *"the rest of the cells"* in one
+   direction.
 
 
    *Example:*
@@ -592,7 +595,7 @@ ERT script function                                                        Purpo
 
    ::
 
-      eclreg_poro.select_below_plane((1,1,1),(0,0,0))
+      eclreg_poro.select_below_plane((1,1,1), (0,0,0))
 
 
 .. #####################################################################
@@ -600,7 +603,7 @@ ERT script function                                                        Purpo
 .. topic:: select_inside_polygon
 
    Well select all the points which are inside the polygon with name
-   ``POLYGON_NAME``. The polygon should have been created with command
+   ``POLYGON_NAME``.  The polygon should have been created with command
    ``CREATE_POLYGON`` or loaded with command ``LOAD_POLYGON`` first.
 
 
@@ -608,7 +611,7 @@ ERT script function                                                        Purpo
 
    ::
 
-      polygon = [(0,0) , (0,1) , (1,0)]
+      polygon = [(0,0), (0,1), (1,0)]
       eclreg_poro.select_inside_polygon(polygon)
 
 
@@ -620,11 +623,12 @@ ERT script function                                                        Purpo
 
    ``(x1,y1), (x2,y2), (x3,y3), ...``
 
-   The polygon should not be explicitly closed - i.e. you should in general have
+   The polygon should not be explicitly closed --- i.e., you should in general
+   have
 
    ``(x1,y1) != (xn,yn).``
 
-   The polygon will be stored under the name ``POLYGON_NAME`` - which should
+   The polygon will be stored under the name ``POLYGON_NAME`` --- which should
    later be used when referring to the polygon in region select operations.
 
 
@@ -632,15 +636,15 @@ ERT script function                                                        Purpo
 
    ::
 
-      polygon = [(0,0) , (0,1) , (1,0)]
+      polygon = [(0,0), (0,1), (1,0)]
 
 
 .. #####################################################################
 .. _load_polygon:
 .. topic:: Example load polygon
 
-   Will load a polygon instance from the file ``FILENAME`` - the file should be
-   in irap RMS format.  The polygon will be stored under the name
+   Will load a polygon instance from the file ``FILENAME`` --- the file should
+   be in *irap RMS* format.  The polygon will be stored under the name
    ``POLYGON_NAME`` which can then later be used to refer to the polygon for
    e.g. select operations.
 
@@ -651,6 +655,6 @@ ERT script function                                                        Purpo
 
       polygon = []
       with open("polygon.ply", "r") as ply_file:
-          for line in ply_file.readlines():
+          for line in ply_file:
               xs, ys = map(float, line.split())
               polygon.append(xs, ys)
