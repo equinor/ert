@@ -109,9 +109,10 @@ ERT script function                                                        Purpo
 :ref:`select_inside_polygon            <eclregion_select_in_polygon>`      Selects or deselects cells in region inside polygon
 :ref:`Example create polygon           <create_polygon>`                   Creates a geo-polygon based on coordinate list
 :ref:`Example load polygon             <load_polygon>`                     Loads polygon in Irap RMS format from file
+:ref:`Load surface from IRAP file      <surface__init>`                    Create a polygon from IRAP file
 :ref:`Select polygon from surface      <geo_region__select_polygon>`       Selects the inside of a polygon from a surface
 :ref:`Select halfspace from surface    <geo_region__select_halfspace>`     Selects above or below a line from a surface
-
+:ref:`Add a surface to dataset         <local_dataset__add_surface>`       Add a surface node to a dataset
 =========================================================================  ===================================================================================
 
 
@@ -669,6 +670,36 @@ ERT script function                                                        Purpo
 
 
 .. #####################################################################
+.. _surface__init:
+.. topic:: Load surface from IRAP file
+
+   Will load a surface from an *IRAP file*.  We can also create a surface
+   programmatically.  It is also possible to obtain the underlying pointset.
+
+
+   *Example for creating programmatically:*
+
+   ::
+
+      # values copied from irap surface_small
+      nx, ny = 30,20
+      xinc, yinc = 50.0, 50.0
+      xstart, ystart = 463325.5625, 7336963.5
+      angle = -65.0
+      s_args = (None, nx, ny, xinc, yinc, xstart, ystart, angle)
+      s = Surface(*s_args)
+
+   *Example loading from file:*
+
+   ::
+
+      surface = Surface('path/to/surface.irap')
+      # we can also obtain the underlying pointset
+      pointset = GeoPointset.fromSurface(surface)
+      georegion = GeoRegion(pointset)
+
+
+.. #####################################################################
 .. _geo_region__select_polygon:
 .. topic:: Select polygon from surface
 
@@ -708,12 +739,7 @@ ERT script function                                                        Purpo
 
    ::
 
-      nx,ny = 12, 12
-      xinc,yinc = 1, 1
-      xstart,ystart = -1, -1
-      angle = 0.0
-      s_args = (None, nx, ny, xinc, yinc, xstart, ystart, angle)
-      surface = Surface(*s_args)  # an irap surface
+      surface = Surface(...)  # an irap surface, see above
       pointset = GeoPointset.fromSurface(surface)
       georegion = GeoRegion(pointset)
       line = [(-0.1,2.0), (1.9,8.1)]
@@ -722,3 +748,32 @@ ERT script function                                                        Purpo
       georegion.deselect_above(line)
       georegion.select_below(line)
       georegion.select_halfspace(line, above=False, select=False)  # deselect below
+
+
+.. #####################################################################
+.. _local_dataset__add_surface:
+.. topic:: Add a surface to dataset
+
+   Adds a surface to a local dataset just as one can add a field node to a
+   dataset (see add_field_).
+
+
+   *Example:*
+
+   ::
+
+      main = test_context.getErt()
+      local_config = main.getLocalConfig()
+
+      # Creating dataset
+      data_scale = local_config.createDataset('DATA_SCALE')
+      surface = Surface(...)  # an irap surface, see above
+      pointset = surface.getPointset()
+      georegion = GeoRegion(pointset)
+      data_scale.addSurface('TOP', georegion)
+
+      # similar use to
+      grid = local_config.getGrid()
+      eclregion = EclRegion(grid, False)
+      eclregion.select_islice(10, 20)
+      data_scale.addField('PERMX', eclregion)
