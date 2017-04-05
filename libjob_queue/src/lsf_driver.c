@@ -854,7 +854,7 @@ static void lsf_driver_node_failure(lsf_driver_type * driver, long lsf_job_id) {
   fprintf(stderr, "%s attempting to blacklist nodes for job id %ld.\n", __func__, lsf_job_id);
 
   {
-    char * fname = lsf_job_write_bjobs_to_file(driver->bsub_cmd, driver, lsf_job_id);
+    char * fname = lsf_job_write_bjobs_to_file(driver->bjobs_cmd, driver, lsf_job_id);
     stringlist_type * hosts = lsf_job_alloc_parse_hostnames(fname);
     char* hostnames = stringlist_alloc_joined_string(hosts, ", ");
     fprintf(stderr, "%s blacklisting nodes %s.\n", __func__, hostnames);
