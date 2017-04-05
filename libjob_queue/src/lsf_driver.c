@@ -849,31 +849,18 @@ void lsf_driver_free_job(void * __job) {
 }
 
 static void lsf_driver_node_failure(lsf_driver_type * driver, long lsf_job_id) {
-  fprintf(stderr, "%s attempting to blacklist nodes for job id %ld.\n", __func__, lsf_job_id);
+  char * fname = lsf_job_write_bjobs_to_file(driver->bjobs_cmd, driver, lsf_job_id);
+  stringlist_type * hosts = lsf_job_alloc_parse_hostnames(fname);
+  char* hostnames = stringlist_alloc_joined_string(hosts, ", ");
 
-  {
-    char * fname = lsf_job_write_bjobs_to_file(driver->bjobs_cmd, driver, lsf_job_id);
-    stringlist_type * hosts = lsf_job_alloc_parse_hostnames(fname);
-    char* hostnames = stringlist_alloc_joined_string(hosts, ", ");
-    fprintf(stderr, "%s blacklisting nodes %s.\n", __func__, hostnames);
+  fprintf(stderr, "The job:%ld never started - the nodes: %s will be excluded, the job will be resubmitted to LSF.\n", lsf_job_id , hostnames);
+  lsf_driver_add_exclude_hosts(driver, hostnames);
 
-    fprintf(stderr,
-            "Realization %ld seems to have failed as a result of LSF node failure.\n",
-            lsf_job_id
-            );
-    fprintf(stderr,
-            "This job will be re-submitted to a different node according to the "
-            "number of re-submit specified in MAX_SUBMIT in the ert config file.\n"
-            );
-
-    lsf_driver_add_exclude_hosts(driver, hostnames);
-
-    util_free(hostnames);
-    stringlist_free(hosts);
-    util_free(fname);
-  }
-
+  util_free(hostnames);
+  stringlist_free(hosts);
+  util_free(fname);
 }
+
 
 void lsf_driver_blacklist_node(void * __driver, void * __job) {
   lsf_driver_type * driver = lsf_driver_safe_cast(__driver);
