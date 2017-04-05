@@ -273,11 +273,9 @@ char* lsf_job_write_bjobs_to_file(const char * bjobs_cmd, lsf_driver_type * driv
     argv[1] = cmd;
     util_spawn_blocking(driver->rsh_cmd, 2, (const char **) argv, tmp_file, NULL);
     free(argv);
-  } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-    char ** argv = util_calloc(1, sizeof *argv);
-    argv[0] = "";
-    util_spawn_blocking(cmd, 1, (const char **) argv, tmp_file, NULL);
-  }
+  } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL)
+    util_spawn_blocking(cmd, 0 , NULL , tmp_file, NULL);
+
   free(cmd);
 
   return tmp_file;
