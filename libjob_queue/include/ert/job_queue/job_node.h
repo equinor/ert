@@ -90,6 +90,7 @@ typedef struct job_queue_node_struct job_queue_node_type;
   const char * job_queue_node_get_name( const job_queue_node_type * node);
   int  job_queue_node_get_submit_attempt( const job_queue_node_type * node);
   void job_queue_node_reset_submit_attempt( job_queue_node_type * node);
+  void job_queue_node_dec_submit_attempt( job_queue_node_type * node);
   const char * job_queue_node_get_failed_job( const job_queue_node_type * node);
   const char * job_queue_node_get_error_reason( const job_queue_node_type * node);
   const char * job_queue_node_get_stderr_capture( const job_queue_node_type * node);
