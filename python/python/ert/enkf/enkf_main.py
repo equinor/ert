@@ -38,7 +38,6 @@ class EnKFMain(BaseCClass):
     _get_site_config = EnkfPrototype("site_config_ref enkf_main_get_site_config( enkf_main)")
     _get_ecl_config = EnkfPrototype("ecl_config_ref enkf_main_get_ecl_config( enkf_main)")
     _get_plot_config = EnkfPrototype("plot_settings_ref enkf_main_get_plot_config( enkf_main)")
-    _set_eclbase = EnkfPrototype("ui_return_obj enkf_main_set_eclbase( enkf_main, char*)")
     _set_datafile = EnkfPrototype("void enkf_main_set_data_file( enkf_main, char*)")
     _get_schedule_prediction_file = EnkfPrototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
     _set_schedule_prediction_file = EnkfPrototype("void enkf_main_set_schedule_prediction_file( enkf_main , char*)")
@@ -46,11 +45,8 @@ class EnKFMain(BaseCClass):
     _clear_data_kw = EnkfPrototype("void enkf_main_clear_data_kw(enkf_main)")
     _add_data_kw = EnkfPrototype("void enkf_main_add_data_kw(enkf_main, char*, char*)")
     _resize_ensemble = EnkfPrototype("void enkf_main_resize_ensemble(enkf_main, int)")
-    _del_node = EnkfPrototype("void enkf_main_del_node(enkf_main, char*)")
     _get_obs = EnkfPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _load_obs = EnkfPrototype("void enkf_main_load_obs(enkf_main, char* , bool)")
-    _get_pre_clear_runpath = EnkfPrototype("bool enkf_main_get_pre_clear_runpath(enkf_main)")
-    _set_pre_clear_runpath = EnkfPrototype("void enkf_main_set_pre_clear_runpath(enkf_main, bool)")
     _iget_keep_runpath = EnkfPrototype("int enkf_main_iget_keep_runpath(enkf_main, int)")
     _iset_keep_runpath = EnkfPrototype("void enkf_main_iset_keep_runpath(enkf_main, int, int_vector)")
     _get_templates = EnkfPrototype("ert_templates_ref enkf_main_get_templates(enkf_main)")
@@ -125,10 +121,6 @@ class EnKFMain(BaseCClass):
             return self._iget_state(iens).setParent(self)
         else:
             raise IndexError("iens value:%d invalid Valid range: [0,%d)" % (iens , self.getEnsembleSize()))
-
-
-    def set_eclbase(self, eclbase):
-        self._set_eclbase(eclbase)
 
     def umount(self):
         if not self.__fs_manager is None:
@@ -208,9 +200,6 @@ class EnKFMain(BaseCClass):
         return self._get_mount_point( )
 
 
-    def del_node(self, key):
-        self._del_node(key)
-
     def getObservations(self):
         """ @rtype: EnkfObs """
         return self._get_obs( ).setParent(self)
@@ -218,13 +207,6 @@ class EnKFMain(BaseCClass):
     def loadObservations(self , obs_config_file , clear = True):
         self._load_obs(obs_config_file , clear)
 
-
-    def get_pre_clear_runpath(self):
-        pre_clear = self._get_pre_clear_runpath( )
-        return pre_clear
-
-    def set_pre_clear_runpath(self, value):
-        self._set_pre_clear_runpath(value)
 
     def iget_keep_runpath(self, iens):
         ikeep = self._iget_keep_runpath(iens)

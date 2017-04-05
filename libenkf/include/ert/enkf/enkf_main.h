@@ -74,8 +74,6 @@ extern "C" {
   const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );
   void                          enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rft_config_file );
   const char                  * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main );
-  bool                          enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main );
-  void                          enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath);
   bool                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
   ui_return_type              * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path);
 
@@ -85,7 +83,6 @@ extern "C" {
   void                          enkf_main_set_log_level( enkf_main_type * enkf_main , int log_level );
   int                           enkf_main_get_log_level( const enkf_main_type * enkf_main );
 
-  member_config_type          * enkf_main_iget_member_config(const enkf_main_type * enkf_main , int iens);
   void                          enkf_main_del_unused_static(enkf_main_type * , int );
   const char                  * enkf_main_get_data_file(const enkf_main_type * );
   const char                 ** enkf_main_get_well_list_ref(const enkf_main_type * , int *);
@@ -125,14 +122,9 @@ extern "C" {
   enkf_main_type              * enkf_main_bootstrap(const char * model_config, bool strict, bool verbose);
   void                          enkf_main_create_new_config( const char * config_file , const char * storage_path , const char * dbase_type , int num_realizations);
 
-  enkf_node_type             ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , enkf_fs_type * src_fs , const char * key , int report_step);
-  void                          enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean );
-  void                          enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const enkf_node_type * mean , enkf_node_type * std);
 
   ert_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
   enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );
-  enkf_state_type            ** enkf_main_get_ensemble( enkf_main_type * enkf_main);
-  const enkf_state_type      ** enkf_main_get_ensemble_const( const enkf_main_type * enkf_main);
 
   const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);
   const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
@@ -177,9 +169,7 @@ extern "C" {
   void                        enkf_main_install_SIGNALS(void);
   const                char * enkf_main_get_SVN_VERSION( void );
   const                char * enkf_main_get_COMPILE_TIME( void );
-  void                        enkf_main_del_node(enkf_main_type * enkf_main , const char * key);
   void                        enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf_config_node);
-  void                        enkf_main_update_node( enkf_main_type * enkf_main , const char * key );
   int_vector_type           * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride);
 
   hook_manager_type         * enkf_main_get_hook_manager( const enkf_main_type * enkf_main );
