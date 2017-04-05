@@ -238,6 +238,10 @@ void job_queue_node_reset_submit_attempt( job_queue_node_type * node) {
   node->submit_attempt = 0;
 }
 
+void job_queue_node_dec_submit_attempt( job_queue_node_type * node) {
+  node->submit_attempt--;
+}
+
 int job_queue_node_get_submit_attempt( const job_queue_node_type * node) {
   return node->submit_attempt;
 }
