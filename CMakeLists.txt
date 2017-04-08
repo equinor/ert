@@ -16,7 +16,7 @@ set( ERT_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
 
 #-----------------------------------------------------------------
 
-option( BUILD_ERT           "Build the full ERT application - Linux only"             OFF)
+option( BUILD_ERT           "Build the full ERT application - Linux only"             ON)
 option( BUILD_TESTS         "Should the tests be built"                               OFF)
 option( BUILD_APPLICATIONS  "Should we build small utility applications"              OFF)
 option( BUILD_ECL_SUMMARY   "Build the commandline application ecl_summary"           OFF)
@@ -27,6 +27,21 @@ option( ERT_BUILD_GUI       "Should the PyQt based GUI be compiled and installed
 option( ERT_USE_OPENMP      "Use OpenMP"                                              OFF )
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)
+
+#-----------------------------------------------------------------
+# Very very basic functionality to find the eclipse related libraries,
+# unless they are actually installed in default locations the
+# CMAKE_PREFIX_PATH should be used to indicate where they can be found.
+
+
+find_path( LIBECL_PATH ert/ecl/ecl_grid.h )
+include_directories( ${LIBECL_PATH} )
+
+find_library( UTIL_LIBRARY NAMES ert_util )
+find_library( ECL_LIBRARY NAMES ecl )
+find_library( GEO_LIBRARY NAMES ert_geometry )
+
+#-----------------------------------------------------------------
 
 
 
@@ -139,8 +154,7 @@ else()
       message(FATAL_ERROR "The full ERT application must be built with shared libraries")
    endif()
    if (BUILD_PYTHON)
-      message(WARNING "The Python wrappers require shared libraries - Python will be disabled")
-      set( BUILD_PYTHON OFF )
+      message(FATAL_ERROR "The Python wrappers require shared libraries")
    endif()
 endif()
 
@@ -156,32 +170,6 @@ else()
    set( NEED_LIBM FALSE )
    set( LINK_STATIC TRUE )
 endif()
-
-include_directories( ${PROJECT_SOURCE_DIR}/libert_util/include )
-include_directories( ${PROJECT_BINARY_DIR}/libert_util/include )
-if (MSVC)
-  include_directories( ${PROJECT_BINARY_DIR}/libert_util/include/ert/util )
-endif()
-add_subdirectory( libert_util )
-
-
-include_directories( ${PROJECT_SOURCE_DIR}/libgeometry/include )
-add_subdirectory( libgeometry )
-
-include_directories( ${PROJECT_SOURCE_DIR}/libecl/include )
-add_subdirectory( libecl )
-
-if (ERT_BUILD_CXX)
-   include_directories( ${PROJECT_SOURCE_DIR}/libert_utilxx/include )
-   include_directories( ${PROJECT_SOURCE_DIR}/libeclxx/include )
-
-   add_subdirectory( libert_utilxx )
-   add_subdirectory( libeclxx )
-endif()
-
-include_directories( ${PROJECT_SOURCE_DIR}/libecl_well/include )
-add_subdirectory( libecl_well )
-
 
 #-----------------------------------------------------------------
 if (BUILD_ERT)

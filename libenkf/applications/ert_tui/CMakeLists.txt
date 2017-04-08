@@ -19,7 +19,7 @@ endif()
 set_source_files_properties( main.c PROPERTIES COMPILE_DEFINITIONS "COMPILE_TIME_STAMP=\"${BUILD_TIME}\";GIT_COMMIT=\"${GIT_COMMIT}\"")
 
 add_executable( ert_tui ${src_list} )
-target_link_libraries( ert_tui enkf sched rms ecl config job_queue analysis ert_util )
+target_link_libraries( ert_tui enkf sched rms config job_queue analysis ${ECL_LIBRARY} ${UTIL_LIBRARY} )
 if (USE_RUNPATH)
    add_runpath( ert_tui )
 endif()
