@@ -69,7 +69,13 @@ add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysi
 add_executable( enkf_analysis_config_analysis_load enkf_analysis_config_analysis_load.c )
 target_link_libraries( enkf_analysis_config_analysis_load enkf )
 add_test( enkf_analysis_config_analysis_load ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_analysis_load ${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_config)
-set_property( TEST enkf_analysis_config_analysis_load PROPERTY ENVIRONMENT "ERT_SITE_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_site_config" )
+
+
+# It seems necessary to set the LD_LIBRARY_PATH for the loading of the
+# rml_enkf module to work.  Do understand why!
+set_property( TEST enkf_analysis_config_analysis_load
+              PROPERTY ENVIRONMENT "ERT_SITE_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/data/config/analysis_load_site_config;LD_LIBRARY_PATH=${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}:$ENV{LD_LIBRARY_PATH}" )
+
 
 add_executable( enkf_local_obsdata_node enkf_local_obsdata_node.c )
 target_link_libraries( enkf_local_obsdata_node enkf )

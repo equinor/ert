@@ -15,7 +15,7 @@ endif()
 
 add_library( job_queue SHARED ${source_files} )
 set_target_properties( job_queue PROPERTIES VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} SOVERSION ${ERT_VERSION_MAJOR} )
-target_link_libraries( job_queue config ert_util )
+target_link_libraries( job_queue config ${UTIL_LIBRARY} )
 if (USE_RUNPATH)
    add_runpath( job_queue )
 endif()

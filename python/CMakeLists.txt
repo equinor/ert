@@ -14,12 +14,30 @@ if (NOT DEFINED PY_numpy)
    return()
 endif()
 
+#-----------------------------------------------------------------
+# Find an existing ert.ecl disribution
+
+python_package(ert 2.1.0)
+if (NOT DEFINED PY_ert)
+   message(SEND_ERROR "Existing ert installation not found") 
+endif()
+set( ERT_PYTHONPATH ${PY_ert_PATH} )
+
+set(ENV{PYTHONPATH} "${ERT_PYTHONPATH}:$ENV{PYTHONPATH}")
+execute_process(COMMAND "${PYTHON_EXECUTABLE}" "-c" "import ert; print ert.ert_lib_path"
+                  OUTPUT_VARIABLE ERT_SO_PATH
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(LD_PATH ${ERT_SO_PATH}:$ENV{LD_LIBRARY_PATH})
+set(ENV{LD_LIBRARY_PATH} ${LD_PATH})
+message(STATUS "Setting LD_LIBRARY_PATH: ${LD_PATH}")
+
+#-----------------------------------------------------------------
 
 if (ERT_BUILD_GUI)
    python_package(PyQt4 4.8.0)
    python_package( matplotlib 1.2.0  )
    python_package( pandas     0.15.1)
-   python_package( scipy      0.12.1 )
+   python_package( scipy      0.16.1 )
    if(NOT DEFINED PY_PyQt4 OR NOT DEFINED PY_matplotlib OR NOT DEFINED PY_scipy OR NOT DEFINED PY_pandas)
      message(SEND_ERROR "Cannot build GUI without PyQt4, matplotlib, scipy, and pandas")
    endif()

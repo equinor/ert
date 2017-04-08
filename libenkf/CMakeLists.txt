@@ -1,8 +1,10 @@
 add_subdirectory( src )
 add_subdirectory( applications/ert_tui )
 
-if (NOT ERT_HAVE_ZLIB)
-    message(SEND_ERROR " Package zlib-devel not installed." )
+set( CMAKE_REQUIRED_LIBRARIES ${UTIL_LIBRARY} )
+check_function_exists( buffer_fwrite_compressed HAVE_BUFFER_COMPRESS )
+if (NOT HAVE_BUFFER_COMPRESS)
+    message( SEND_ERROR "missing zlib support in buffer")
 endif()
 
 if (BUILD_TESTS)

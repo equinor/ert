@@ -16,7 +16,7 @@ target_link_libraries( job_loadFail job_queue   )
 target_link_libraries( job_lsf_parse_bsub_stdout job_queue )
 target_link_libraries( job_node_test job_queue )
 target_link_libraries( job_list_test job_queue )
-target_link_libraries( job_lsf_exclude_hosts_test job_queue util )
+target_link_libraries( job_lsf_exclude_hosts_test job_queue ${UTIL_LIBRARY} )
 
 add_test( job_status_test ${EXECUTABLE_OUTPUT_PATH}/job_status_test)
 add_test( job_lsf_parse_bsub_stdout ${EXECUTABLE_OUTPUT_PATH}/job_lsf_parse_bsub_stdout )
@@ -32,22 +32,18 @@ add_test( job_loadFail2 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_S
 add_test( job_loadFail3 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_SOURCE_DIR}/data/internalFail ${CMAKE_CURRENT_SOURCE_DIR}/data/externalFail)
 
 add_test( job_node_test ${EXECUTABLE_OUTPUT_PATH}/job_node_test)
-if (ERT_HAVE_VALGRIND)
-    add_test( job_list_test valgrind --leak-check=full --error-exitcode=1 ${EXECUTABLE_OUTPUT_PATH}/job_list_test)
-else()
-    add_test( job_list_test ${EXECUTABLE_OUTPUT_PATH}/job_list_test)
-endif()
+add_test( job_list_test valgrind --leak-check=full --error-exitcode=1 ${EXECUTABLE_OUTPUT_PATH}/job_list_test)
 add_test( job_lsf_exclude_hosts_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_exclude_hosts_test ${EXECUTABLE_OUTPUT_PATH}/job_program NULL LOCAL)
 
 add_executable( job_program_output job_program_output.c )
-target_link_libraries( job_program_output ert_util )
+target_link_libraries( job_program_output ${UTIL_LIBRARY} )
 
 add_executable( job_queue_test job_job_queue_test.c )
 target_link_libraries( job_queue_test job_queue  )
 add_test( job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_program_output )
 
 add_executable( job_queue_stress_task job_queue_stress_task.c )
-target_link_libraries( job_queue_stress_task  ert_util )
+target_link_libraries( job_queue_stress_task  ${UTIL_LIBRARY} )
 
 add_executable( job_queue_stress_test job_queue_stress_test.c )
 target_link_libraries( job_queue_stress_test job_queue  )
@@ -69,17 +65,17 @@ endif()
 
 
 add_executable( job_torque_test job_torque_test.c )
-target_link_libraries( job_torque_test job_queue ert_util  )
+target_link_libraries( job_torque_test job_queue ${UTIL_LIBRARY}  )
 add_test( job_torque_test ${EXECUTABLE_OUTPUT_PATH}/job_torque_test )
 
 add_executable( job_queue_manager job_queue_manager.c )
-target_link_libraries( job_queue_manager job_queue ert_util  )
+target_link_libraries( job_queue_manager job_queue ${UTIL_LIBRARY}  )
 add_test( job_queue_manager ${EXECUTABLE_OUTPUT_PATH}/job_queue_manager )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/qsub_emulators/ DESTINATION ${EXECUTABLE_OUTPUT_PATH})
 
 add_executable( job_torque_submit_test job_torque_submit_test.c )
-target_link_libraries( job_torque_submit_test job_queue ert_util  )
+target_link_libraries( job_torque_submit_test job_queue ${UTIL_LIBRARY}  )
 add_test(NAME job_torque_submit_test WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH} COMMAND ${EXECUTABLE_OUTPUT_PATH}/job_torque_submit_test dummyparam)
 set_property(TEST job_torque_submit_test PROPERTY ENVIRONMENT “setenv PATH ${EXECUTABLE_OUTPUT_PATH}:$PATH”)
 

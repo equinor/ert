@@ -4,7 +4,7 @@ set( header_files config_parser.h config_content.h config_error.h config_schema_
 add_library( config ${LIBRARY_TYPE} ${source_files} )
 set_target_properties( config PROPERTIES VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} SOVERSION ${ERT_VERSION_MAJOR} )
 
-target_link_libraries( config ert_util )
+target_link_libraries( config ${UTIL_LIBRARY})
 if (USE_RUNPATH)
    add_runpath( config )
 endif()

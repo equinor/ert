@@ -3,7 +3,7 @@ set( header_files rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_st
 
 add_library( rms ${LIBRARY_TYPE} ${source_files} )
 set_target_properties( rms PROPERTIES VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} SOVERSION ${ERT_VERSION_MAJOR} )
-target_link_libraries( rms ecl ) 
+target_link_libraries( rms ${ECL_LIBRARY} )
 if (USE_RUNPATH)
    add_runpath( rms )
 endif()   

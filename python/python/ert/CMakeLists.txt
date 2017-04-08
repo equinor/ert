@@ -1,13 +1,17 @@
+EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/ert")
+set(PACKAGE_LIST test util ecl geo well)
+foreach (package ${PACKAGE_LIST})
+   set(LINK ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/ert/${package} )
+   set(TARGET ${ERT_PYTHONPATH}/ert/${package} )
+   EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${TARGET}" "${LINK}")
+   message(STATUS "Linking ecl package ${LINK} -> ${TARGET}")
+endforeach()
+
+
 set(PYTHON_SOURCES
     __init__.py
 )
 add_python_package("python.ert"  ${PYTHON_INSTALL_PREFIX}/ert "${PYTHON_SOURCES}" True)
-
-add_subdirectory(ecl)
-add_subdirectory(geo)
-add_subdirectory(test)
-add_subdirectory(util)
-add_subdirectory(well)
 
 IF (BUILD_ERT)
    set( ERT_SITE_INIT_TARGET  ""  CACHE FILE "Name of optional external site init module for top level ert package")
@@ -23,7 +27,6 @@ IF (BUILD_ERT)
    add_subdirectory(sched)
    add_subdirectory(server)
 ENDIF()
-
 
 configure_file(ert_lib_info_build.py.in   ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/ert/__ert_lib_info.py )
 configure_file(ert_lib_info_install.py.in ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/ert_lib_info_install.py )
