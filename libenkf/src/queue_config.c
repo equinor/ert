@@ -1,3 +1,21 @@
+/*
+   Copyright (C) 2017  Statoil ASA, Norway.
+
+   The file 'queue_config.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
+ */
+
 #include <stdlib.h>
 
 #include <ert/util/util.h>
@@ -42,9 +60,26 @@ void queue_config_free(queue_config_type * queue_config) {
   free(queue_config);
 }
 
-
 void queue_config_init_user_mode(queue_config_type * queue_config) {
   queue_config->user_mode = true;
+}
+
+
+
+const char * queue_config_get_queue_name(const queue_config_type * queue_config) {
+    switch(queue_config->driver_type) {
+        case LSF_DRIVER:
+            return LSF_DRIVER_NAME;
+        case RSH_DRIVER:
+            return RSH_DRIVER_NAME;
+        case LOCAL_DRIVER:
+            return LOCAL_DRIVER_NAME;
+        case TORQUE_DRIVER:
+            return TORQUE_DRIVER_NAME;
+        default:
+            return NULL;
+    }
+    return NULL;
 }
 
 
@@ -160,14 +195,19 @@ job_driver_type queue_config_get_driver_type(const queue_config_type * queue_con
     return queue_config->driver_type;
 }
 
+
+
 //This functions configures the parser (= filereader) object.
 void queue_config_add_queue_config_items(config_parser_type * parser, bool site_mode) {
     //Tells the parser to look for string QUEUE_SYSTEM_KEY in the config file.
     config_schema_item_type * item = config_add_schema_item(parser, QUEUE_SYSTEM_KEY, site_mode);    
     config_schema_item_set_argc_minmax(item, 1, 1);
+}
 
+//This functions configures the parser (= filereader) object.
+void queue_config_add_config_items(config_parser_type * parser, bool site_mode) {
     //Tells the parser to look for string QUEUE_OPTION_KEY in the config file.
-    item = config_add_schema_item(parser, QUEUE_OPTION_KEY, false);
+    config_schema_item_type * item = config_add_schema_item(parser, QUEUE_OPTION_KEY, false);
     config_schema_item_set_argc_minmax(item, 3, CONFIG_DEFAULT_ARG_MAX);
 
     //Tells the parser to look for string JOB_SCRIPT_KEY in the config file.

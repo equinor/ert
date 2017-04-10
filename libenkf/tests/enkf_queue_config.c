@@ -26,7 +26,9 @@ void test_parse() {
    test_work_area_type * work_area = test_work_area_alloc("queue_config");
    config_parser_type * parser = config_alloc( );
    
+
    queue_config_add_queue_config_items( parser, true ); // Legge til items QUEUE_SYSTEM_KEY og QUEUE_OPTION_KEY
+   queue_config_add_config_items( parser, true ); // Legge til items QUEUE_SYSTEM_KEY og QUEUE_OPTION_KEY
    {
         FILE* stream = util_fopen("queue_config.txt", "w");
         fprintf(stream, "QUEUE_SYSTEM LSF\n");
@@ -56,7 +58,8 @@ void test_parse() {
    char * str = queue_driver_get_option(lsf_driver, LSF_BJOBS_CMD);
    test_assert_string_equal(str, "the_path");   
 
-   test_assert_true(queue_config_has_job_script(queue_config));    
+   test_assert_true(queue_config_has_job_script(queue_config));
+   test_assert_string_equal(queue_config_get_queue_name(queue_config), LSF_DRIVER_NAME);
 
    //test for licence path
     

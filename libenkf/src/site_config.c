@@ -105,9 +105,13 @@ struct site_config_struct {
 
     //
    
-  queue_config_type * current_queue_config;    
+  queue_config_type * queue_config;    
 
-    // **** Variables to be removed
+  // **** Variables to be removed
+
+  job_driver_type driver_type;
+  char * job_script;
+  hash_type * queue_drivers;  
 
   //CHECKED OUT int max_running_lsf_site;  //comment: varable defined and set, but not used for anything
   //CHECKED OUT char * lsf_queue_name_site; //comment: variable defined and set, but not used for anything
@@ -118,18 +122,18 @@ struct site_config_struct {
 
   //CHECKED OUT int max_running_local_site; //comment: variable defined and set, but not used for anything
 
-  job_driver_type driver_type;
+  
   //CHECKED out job_driver_type driver_type_site; //Shall have no function
   //CHECKED out int max_submit;  //comment: variable defined and set, but not used for anything
   //CHECKED OUT int max_submit_site; //Shall have no function
-  char * job_script;
+ 
   //CHECKED OUT char * job_script_site; //Shall have no function
 
   char * manual_url;    //not this one
   char * default_browser;   //not this one
 
-  queue_driver_type * current_driver; //Shall die, do not move
-  hash_type * queue_drivers;
+  //queue_driver_type * current_driver; //Shall die, do not move
+  
 
     // **** Variables to be removed
 
@@ -183,8 +187,7 @@ static void site_config_set_queue_option(site_config_type * site_config, const c
 site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc(sizeof * site_config);
    
-  //allocate room for current_queue_config here
-  site_config->current_queue_config = queue_config_alloc();
+  site_config->queue_config = queue_config_alloc();
 
   site_config->joblist = ext_joblist_alloc();
   site_config->queue_drivers = hash_alloc();
@@ -254,7 +257,7 @@ void site_config_set_license_root_path(site_config_type * site_config, const cha
 }
 
 void site_config_init_user_mode(site_config_type * site_config) {
-  queue_config_init_user_mode(site_config->current_queue_config);
+  queue_config_init_user_mode(site_config->queue_config);
   site_config->user_mode = true;
 }
 
@@ -413,8 +416,8 @@ void site_config_update_pathvar(site_config_type * site_config, const char * pat
 
 static void site_config_select_job_driver(site_config_type * site_config, const char * driver_name) {
   queue_driver_type * driver = site_config_get_queue_driver(site_config, driver_name); 
-  site_config->current_driver = driver; 
-  job_queue_set_driver(site_config->job_queue, site_config->current_driver);
+  //site_config->current_driver = driver; 
+  job_queue_set_driver(site_config->job_queue, driver);
 }
 
 /**
@@ -564,7 +567,8 @@ const char * site_config_get_lsf_request(const site_config_type * site_config) {
 
 
 const char * site_config_get_queue_name(const site_config_type * site_config) {
-  return queue_driver_get_name(site_config->current_driver);
+  return queue_config_get_queue_name(site_config->queue_config); //based on driver_type
+  //return queue_driver_get_name(site_config->current_driver);
 }
 
 static void site_config_set_job_queue__(site_config_type * site_config, job_driver_type driver_type) {
@@ -587,8 +591,8 @@ static void site_config_set_job_queue__(site_config_type * site_config, job_driv
         util_abort("%s: internal error \n", __func__);
     }
   }
-  /*if (!site_config->user_mode)
-    site_config->driver_type_site = driver_type;*/
+  if (!site_config->user_mode)
+    site_config->driver_type = driver_type;
 }
 
 bool site_config_queue_is_running(const site_config_type * site_config) {
@@ -662,6 +666,10 @@ static void site_config_install_job_queue(site_config_type * site_config) {
      All the various driver options are set, unconditionally of which
      driver is actually selected in the end.
    */
+  /*job_driver_type driver = queue_config_get_driver_type(site_config->queue_config);
+  if (driver != NULL_DRIVER)
+    site_config_set_job_queue__(site_config, driver);*/
+
   if (site_config->driver_type != NULL_DRIVER)
     site_config_set_job_queue__(site_config, site_config->driver_type);
 }
@@ -706,6 +714,9 @@ void site_config_init_env(site_config_type * site_config, const config_content_t
 
 
 bool site_config_init(site_config_type * site_config, const config_content_type * config) {
+  
+  queue_config_init(site_config->queue_config, config);
+
   site_config_add_jobs(site_config, config);
   site_config_init_env(site_config, config);
 
@@ -713,7 +724,7 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
      When LSF is used several enviroment variables must be set (by the
      site wide file) - i.e.  the calls to SETENV must come first.
    */
-  queue_config_init(site_config->current_queue_config, config);
+  
 
   if (!site_config->user_mode)     
     site_config_create_queue_drivers(site_config); //REMOVE
@@ -871,6 +882,7 @@ void site_config_free(site_config_type * site_config) {
   //util_safe_free(site_config->rsh_command_site);
   //util_safe_free(site_config->lsf_queue_name_site);
   //util_safe_free(site_config->lsf_request_site);
+  queue_config_free(site_config->queue_config);
   free(site_config);
 }
 
@@ -890,15 +902,18 @@ void site_config_set_ens_size(site_config_type * site_config, int ens_size) {
 
 
 void site_config_add_queue_config_items(config_parser_type * config, bool site_mode) {
-  config_schema_item_type * item = config_add_schema_item(config, QUEUE_SYSTEM_KEY, site_mode);
-  config_schema_item_set_argc_minmax(item, 1, 1);
+  queue_config_add_queue_config_items(config, site_mode);
+  /*config_schema_item_type * item = config_add_schema_item(config, QUEUE_SYSTEM_KEY, site_mode);
+  config_schema_item_set_argc_minmax(item, 1, 1);*/
 
-  item = config_add_schema_item(config, MAX_SUBMIT_KEY, false);
+  config_schema_item_type * item = config_add_schema_item(config, MAX_SUBMIT_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_INT);
 }
 
 void site_config_add_config_items(config_parser_type * config, bool site_mode) {
+  queue_config_add_config_items(config, site_mode);
+
   config_schema_item_type * item;
   ert_workflow_list_add_config_items(config);
   site_config_add_queue_config_items(config, site_mode);
@@ -967,12 +982,12 @@ void site_config_add_config_items(config_parser_type * config, bool site_mode) {
 
 
   /*****************************************************************/
-  item = config_add_schema_item(config, QUEUE_OPTION_KEY, false);
+  /*item = config_add_schema_item(config, QUEUE_OPTION_KEY, false);
   config_schema_item_set_argc_minmax(item, 3, CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item(config, JOB_SCRIPT_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);*/
 
   item = config_add_schema_item(config, INSTALL_JOB_KEY, false);
   config_schema_item_set_argc_minmax(item, 2, 2);
