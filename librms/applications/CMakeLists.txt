@@ -7,7 +7,7 @@ add_executable( tag_list     tag_list.c    )
 
 set(program_list rms_extract rms_setname rms_stat rms_test tag_list)
 foreach(prog ${program_list})
-   target_link_libraries( ${prog} rms ecl util )
+   target_link_libraries( ${prog} rms ${ECL_LIBRARY} ${UTIL_LIBRARY} )
    if (USE_RUNPATH)
       add_runpath( ${prog} )
    endif()   
