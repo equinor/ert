@@ -53,11 +53,21 @@ install:
 
 env:
   global:
-     - ERT_SHOW_BACKTRACE=1 
+     - ERT_SHOW_BACKTRACE=1
 
 before_script:
+  - pushd ..
+  - git clone https://github.com/Statoil/libecl
+  - pushd libecl
   - mkdir build
-  - cd build
+  - pushd build
+  - cmake ..
+  - make
+  - popd
+  - popd
+  - popd
+  - mkdir build
+  - pushd build
   - cmake -DBUILD_ERT=ON -DERT_BUILD_GUI=ON -DBUILD_TESTS=ON -DBUILD_APPLICATIONS=ON -DBUILD_PYTHON=ON -DERT_USE_OPENMP=ON -DERT_DOC=OFF -DERT_BUILD_CXX=ON ..
 
 script:
