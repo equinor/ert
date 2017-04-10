@@ -54,22 +54,22 @@ install:
 env:
   global:
      - ERT_SHOW_BACKTRACE=1
+     
 
 before_script:
-  - pushd ..
-  - git clone https://github.com/Statoil/libecl
-  - pushd libecl
-  - mkdir build
-  - pushd build
-  - cmake ..
-  - make
-  - popd
-  - popd
+  - export LIBECL_BUILD_ROOT="/tmp/libecl/$TRAVIS_BUILD_ID"
+  - export LIBECL_INSTALL_ROOT="$TRAVIS_BUILD_DIR/../libecl/install"
+  - git clone https://github.com/Statoil/libecl $LIBECL_BUILD_ROOT
+  - mkdir $LIBECL_BUILD_ROOT/build
+  - pushd $LIBECL_BUILD_ROOT/build
+  - cmake .. -DCMAKE_INSTALL_PREFIX=$LIBECL_INSTALL_ROOT
+  - make install
   - popd
   - mkdir build
   - pushd build
-  - cmake -DBUILD_ERT=ON -DERT_BUILD_GUI=ON -DBUILD_TESTS=ON -DBUILD_APPLICATIONS=ON -DBUILD_PYTHON=ON -DERT_USE_OPENMP=ON -DERT_DOC=OFF -DERT_BUILD_CXX=ON ..
+  - export LD_LIBRARY_PATH="$LIBECL_INSTALL_ROOT/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+  - export PYTHONPATH="$LIBECL_INSTALL_ROOT/lib/python2.7/dist-packages:$PYTHONPATH"
+  - cmake -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT -DBUILD_ERT=ON -DERT_BUILD_GUI=ON -DBUILD_TESTS=ON -DBUILD_APPLICATIONS=ON -DBUILD_PYTHON=ON -DERT_USE_OPENMP=ON -DERT_DOC=OFF ..
 
 script:
-  - make
-  - ctest --output-on-failure
+  - make && ctest --output-on-failure

@@ -1,5 +1,5 @@
 add_executable( ert_module_test ert_module_test.c )
-target_link_libraries( ert_module_test analysis ert_util )
+target_link_libraries( ert_module_test analysis ${UTIL_LIBRARY} )
 
 if (USE_RUNPATH)
    add_runpath( ert_module_test )
