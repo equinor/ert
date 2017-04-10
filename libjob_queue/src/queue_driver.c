@@ -86,7 +86,7 @@ struct queue_driver_struct {
 
 };
 
-
+UTIL_IS_INSTANCE_FUNCTION( queue_driver, QUEUE_DRIVER_ID )
 
 /*****************************************************************/
 

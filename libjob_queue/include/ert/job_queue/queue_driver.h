@@ -136,6 +136,8 @@ extern "C" {
                 SUBMIT_QUEUE_CLOSED = 3 } /* The queue is currently not accepting more jobs - either (temporarilty)
                                              because of pause or it is going down. */   submit_status_type;
 
+  UTIL_IS_INSTANCE_HEADER( queue_driver );
+
 
 #ifdef __cplusplus
 }

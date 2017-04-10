@@ -29,6 +29,7 @@ set( source_files
      enkf_defaults.c
      ensemble_config.c
      model_config.c
+     queue_config.c
      site_config.c
      active_list.c
      obs_vector.c
@@ -127,7 +128,8 @@ set( header_files
      ecl_config.h
      ensemble_config.h
      model_config.h
-     site_config.h
+     queue_config.h
+     site_config.h     
      active_list.h
      obs_vector.h
      field_trans.h

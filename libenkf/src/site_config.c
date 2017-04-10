@@ -40,6 +40,7 @@
 #include <ert/config/config_schema_item.h>
 
 #include <ert/enkf/site_config.h>
+#include <ert/enkf/queue_config.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/ert_workflow_list.h>
@@ -81,10 +82,10 @@
    xxx_site counterpart are stored.
  */
 
-#define LSF_DRIVER_NAME    "LSF"
-#define LOCAL_DRIVER_NAME  "LOCAL"
-#define RSH_DRIVER_NAME    "RSH"
-#define TORQUE_DRIVER_NAME "TORQUE"
+#define LSF_DRIVER_NAME    "LSF"   //REMOVE
+#define LOCAL_DRIVER_NAME  "LOCAL"  //REMOVE
+#define RSH_DRIVER_NAME    "RSH"  //REMOVE
+#define TORQUE_DRIVER_NAME "TORQUE"  //REMOVE
 
 struct site_config_struct {
   ext_joblist_type * joblist; /* The list of external jobs which have been installed.
@@ -102,27 +103,35 @@ struct site_config_struct {
   stringlist_type * path_variables_user; /* We can update the same path variable several times - i.e. it can not be a hash table. */
   stringlist_type * path_values_user;
 
-  int max_running_lsf_site;
-  char * lsf_queue_name_site;
-  char * lsf_request_site;
+    //
+   
+  queue_config_type * current_queue_config;    
 
-  int max_running_rsh_site;
-  char * rsh_command_site;
+    // **** Variables to be removed
 
-  int max_running_local_site;
+  //CHECKED OUT int max_running_lsf_site;  //comment: varable defined and set, but not used for anything
+  //CHECKED OUT char * lsf_queue_name_site; //comment: variable defined and set, but not used for anything
+  //CHECKED OUT char * lsf_request_site; //comment: variable defined and set, but not used for anything
+
+  //CHECKED OUT int max_running_rsh_site; //comment: variable defined and set, but not used for anything
+  //CHECKED OUT char * rsh_command_site;  //comment: variable defined and set, but not used for anything
+
+  //CHECKED OUT int max_running_local_site; //comment: variable defined and set, but not used for anything
 
   job_driver_type driver_type;
-  job_driver_type driver_type_site;
-  int max_submit;
-  int max_submit_site;
+  //CHECKED out job_driver_type driver_type_site; //Shall have no function
+  //CHECKED out int max_submit;  //comment: variable defined and set, but not used for anything
+  //CHECKED OUT int max_submit_site; //Shall have no function
   char * job_script;
-  char * job_script_site;
+  //CHECKED OUT char * job_script_site; //Shall have no function
 
-  char * manual_url;
-  char * default_browser;
+  char * manual_url;    //not this one
+  char * default_browser;   //not this one
 
-  queue_driver_type * current_driver;
+  queue_driver_type * current_driver; //Shall die, do not move
   hash_type * queue_drivers;
+
+    // **** Variables to be removed
 
   job_queue_type * job_queue; /* The queue instance which will run the external jobs. */
   bool user_mode;
@@ -138,6 +147,7 @@ mode_t site_config_get_umask(const site_config_type * site_config) {
   return site_config->umask;
 }
 
+//REMOVE REDUNDANT. queue_drivers
 static void site_config_add_queue_driver(site_config_type * site_config, const char * driver_name, queue_driver_type * driver) {
   hash_insert_hash_owned_ref(site_config->queue_drivers, driver_name, driver, queue_driver_free__);
 }
@@ -147,9 +157,10 @@ bool site_config_has_queue_driver(const site_config_type * site_config, const ch
 }
 
 queue_driver_type * site_config_get_queue_driver(const site_config_type * site_config, const char * driver_name) {
-  return hash_get(site_config->queue_drivers, driver_name);
+  return hash_get(site_config->queue_drivers, driver_name); 
 }
 
+//REMOVE, redundant, queue drivers
 static void site_config_create_queue_drivers(site_config_type * site_config) {
   site_config_add_queue_driver(site_config, LSF_DRIVER_NAME, queue_driver_alloc_LSF(NULL, NULL, NULL));
   site_config_add_queue_driver(site_config, TORQUE_DRIVER_NAME, queue_driver_alloc_TORQUE());
@@ -171,18 +182,21 @@ static void site_config_set_queue_option(site_config_type * site_config, const c
  */
 site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc(sizeof * site_config);
+   
+  //allocate room for current_queue_config here
+  site_config->current_queue_config = queue_config_alloc();
 
   site_config->joblist = ext_joblist_alloc();
   site_config->queue_drivers = hash_alloc();
 
-  site_config->lsf_queue_name_site = NULL;
-  site_config->lsf_request_site = NULL;
-  site_config->rsh_command_site = NULL;
+  //site_config->lsf_queue_name_site = NULL;
+  //site_config->lsf_request_site = NULL;
+  //site_config->rsh_command_site = NULL;
   site_config->license_root_path = NULL;
   site_config->license_root_path_site = NULL;
   site_config->__license_root_path = NULL;
   site_config->job_script = NULL;
-  site_config->job_script_site = NULL;
+  //site_config->job_script_site = NULL;
   site_config->manual_url = NULL;
   site_config->default_browser = NULL;
   site_config->user_mode = false;
@@ -240,6 +254,7 @@ void site_config_set_license_root_path(site_config_type * site_config, const cha
 }
 
 void site_config_init_user_mode(site_config_type * site_config) {
+  queue_config_init_user_mode(site_config->current_queue_config);
   site_config->user_mode = true;
 }
 
@@ -397,8 +412,8 @@ void site_config_update_pathvar(site_config_type * site_config, const char * pat
 }
 
 static void site_config_select_job_driver(site_config_type * site_config, const char * driver_name) {
-  queue_driver_type * driver = site_config_get_queue_driver(site_config, driver_name);
-  site_config->current_driver = driver;
+  queue_driver_type * driver = site_config_get_queue_driver(site_config, driver_name); 
+  site_config->current_driver = driver; 
   job_queue_set_driver(site_config->job_queue, site_config->current_driver);
 }
 
@@ -443,8 +458,10 @@ static void site_config_set_queue_max_running_option(site_config_type * site_con
 
 void site_config_set_max_running_lsf(site_config_type * site_config, int max_running_lsf) {
   site_config_set_queue_max_running_option(site_config, LSF_DRIVER_NAME, max_running_lsf);
-  if (!site_config->user_mode)
-    site_config->max_running_lsf_site = max_running_lsf;
+  /*if (!site_config->user_mode) {
+    //REMOVE site_config->max_running_lsf_site = max_running_lsf;
+    //queue_config_set_max_running_lsf(site_config->current_queue_config, max_running_lsf);
+  }*/
 }
 
 int site_config_get_max_running_lsf(const site_config_type * site_config) {
@@ -455,8 +472,8 @@ int site_config_get_max_running_lsf(const site_config_type * site_config) {
 void site_config_set_max_running_rsh(site_config_type * site_config, int max_running_rsh) {
   site_config_set_queue_max_running_option(site_config, RSH_DRIVER_NAME, max_running_rsh);
 
-  if (!site_config->user_mode)
-    site_config->max_running_rsh_site = max_running_rsh;
+  /*if (!site_config->user_mode)
+    site_config->max_running_rsh_site = max_running_rsh;*/
 }
 
 int site_config_get_max_running_rsh(const site_config_type * site_config) {
@@ -467,8 +484,8 @@ int site_config_get_max_running_rsh(const site_config_type * site_config) {
 void site_config_set_max_running_local(site_config_type * site_config, int max_running_local) {
   site_config_set_queue_max_running_option(site_config, LOCAL_DRIVER_NAME, max_running_local);
 
-  if (!site_config->user_mode)
-    site_config->max_running_local_site = max_running_local;
+  /*if (!site_config->user_mode)
+    site_config->max_running_local_site = max_running_local;*/
 }
 
 int site_config_get_max_running_local(const site_config_type * site_config) {
@@ -515,8 +532,8 @@ const char * site_config_get_rsh_command(const site_config_type * site_config) {
 
 void site_config_set_lsf_queue(site_config_type * site_config, const char * lsf_queue) {
   queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
-  if (!site_config->user_mode)
-    site_config->lsf_queue_name_site = util_realloc_string_copy(site_config->lsf_queue_name_site, lsf_queue);
+  /*if (!site_config->user_mode)
+    site_config->lsf_queue_name_site = util_realloc_string_copy(site_config->lsf_queue_name_site, lsf_queue);*/
 
   queue_driver_set_option(lsf_driver, LSF_QUEUE, lsf_queue);
 }
@@ -534,8 +551,8 @@ void site_config_set_lsf_server(site_config_type * site_config, const char * lsf
 void site_config_set_lsf_request(site_config_type * site_config, const char * lsf_request) {
   queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
   queue_driver_set_option(lsf_driver, LSF_RESOURCE, lsf_request);
-  if (!site_config->user_mode)
-    site_config->lsf_request_site = util_realloc_string_copy(site_config->lsf_request_site, lsf_request);
+  /*if (!site_config->user_mode)
+    site_config->lsf_request_site = util_realloc_string_copy(site_config->lsf_request_site, lsf_request);*/
 }
 
 const char * site_config_get_lsf_request(const site_config_type * site_config) {
@@ -570,8 +587,8 @@ static void site_config_set_job_queue__(site_config_type * site_config, job_driv
         util_abort("%s: internal error \n", __func__);
     }
   }
-  if (!site_config->user_mode)
-    site_config->driver_type_site = driver_type;
+  /*if (!site_config->user_mode)
+    site_config->driver_type_site = driver_type;*/
 }
 
 bool site_config_queue_is_running(const site_config_type * site_config) {
@@ -588,8 +605,8 @@ bool site_config_set_job_script(site_config_type * site_config, const char * job
     char * job_script_full_path = util_alloc_realpath(job_script);
     {
       site_config->job_script = util_realloc_string_copy(site_config->job_script, job_script_full_path);
-      if (!site_config->user_mode)
-        site_config->job_script_site = util_realloc_string_copy(site_config->job_script_site, site_config->job_script);
+      /*if (!site_config->user_mode)
+        site_config->job_script_site = util_realloc_string_copy(site_config->job_script_site, site_config->job_script);*/
     }
     free(job_script_full_path);
     return true;
@@ -626,10 +643,13 @@ void site_config_set_default_browser(site_config_type * site_config, const char 
   site_config->default_browser = util_realloc_string_copy(site_config->default_browser, default_browser);
 }
 
-void site_config_set_max_submit(site_config_type * site_config, int max_submit) {
-  site_config->max_submit = max_submit;
-  if (!site_config->user_mode)
-    site_config->max_submit_site = max_submit;
+
+void site_config_set_max_submit(site_config_type * site_config, int max_submit) {  
+  //queue_config_set_max_submit(site_config->current_queue_config, max_submit);
+  //site_config->max_submit = max_submit; //REMOVE, max_submit
+  /*if (!site_config->user_mode) {  //REMOVE, max_submit
+    site_config->max_submit_site = max_submit; //REMOVE, max_submit
+  }  //REMOVE, max_submit*/
   job_queue_set_max_submit(site_config->job_queue, max_submit);
 }
 
@@ -693,8 +713,11 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
      When LSF is used several enviroment variables must be set (by the
      site wide file) - i.e.  the calls to SETENV must come first.
    */
-  if (!site_config->user_mode)
-    site_config_create_queue_drivers(site_config);
+  queue_config_init(site_config->current_queue_config, config);
+
+  if (!site_config->user_mode)     
+    site_config_create_queue_drivers(site_config); //REMOVE
+  
 
   /*
      Set the umask for all file creation. A value of '0' will ensure
@@ -716,8 +739,9 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
       util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n", __func__, string_mask);
   }
 
-  if (config_content_has_item(config, MAX_SUBMIT_KEY))
+  if (config_content_has_item(config, MAX_SUBMIT_KEY)) 
     site_config_set_max_submit(site_config, config_content_get_value_as_int(config, MAX_SUBMIT_KEY));
+  
 
 
   /* LSF options */
@@ -758,7 +782,7 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
     }
   }
 
-
+  /* Setting driver_type */
   if (config_content_has_item(config, QUEUE_SYSTEM_KEY)) {
     job_driver_type driver_type;
     {
@@ -843,10 +867,10 @@ void site_config_free(site_config_type * site_config) {
   util_safe_free(site_config->license_root_path_site);
   util_safe_free(site_config->__license_root_path);
   util_safe_free(site_config->job_script);
-  util_safe_free(site_config->job_script_site);
-  util_safe_free(site_config->rsh_command_site);
-  util_safe_free(site_config->lsf_queue_name_site);
-  util_safe_free(site_config->lsf_request_site);
+  //util_safe_free(site_config->job_script_site);
+  //util_safe_free(site_config->rsh_command_site);
+  //util_safe_free(site_config->lsf_queue_name_site);
+  //util_safe_free(site_config->lsf_request_site);
   free(site_config);
 }
 
