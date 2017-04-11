@@ -191,6 +191,7 @@ bool queue_config_init(queue_config_type * queue_config, const config_content_ty
 }
 
 
+
 job_driver_type queue_config_get_driver_type(const queue_config_type * queue_config) {
     return queue_config->driver_type;
 }

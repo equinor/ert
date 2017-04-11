@@ -14,6 +14,7 @@ extern "C" {
 #define RSH_DRIVER_NAME    "RSH"
 #define TORQUE_DRIVER_NAME "TORQUE"
 
+
 typedef struct queue_config_struct queue_config_type;
 
     queue_config_type * queue_config_alloc();
