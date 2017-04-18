@@ -41,6 +41,10 @@ find_library( UTIL_LIBRARY NAMES ert_util )
 find_library( ECL_LIBRARY NAMES ecl )
 find_library( GEO_LIBRARY NAMES ert_geometry )
 
+if (NOT UTIL_LIBRARY)
+   message( FATAL_ERROR "Need libraries from libecl - use CMAKE_PREFIX_PATH")
+endif()
+
 #-----------------------------------------------------------------
 
 
