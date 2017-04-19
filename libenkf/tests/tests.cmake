@@ -1,3 +1,7 @@
+add_executable( enkf_queue_config enkf_queue_config.c )
+target_link_libraries( enkf_queue_config enkf  )
+add_test( enkf_queue_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_queue_config )
+
 add_executable( enkf_runpath_list enkf_runpath_list.c )
 target_link_libraries( enkf_runpath_list enkf  )
 add_test( enkf_runpath_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_runpath_list ${CMAKE_CURRENT_SOURCE_DIR}/data/config/runpath_list/config )
