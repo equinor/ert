@@ -36,18 +36,18 @@
 #include <ert/enkf/queue_config.h>
 #include <ert/enkf/config_keys.h>
 
-struct queue_config_struct {    
-    job_driver_type driver_type;            
-    char * job_script;    
+struct queue_config_struct {
+    job_driver_type driver_type;
+    char * job_script;
     hash_type * queue_drivers;
     bool user_mode;
 };
 
 
 queue_config_type * queue_config_alloc() {
-    queue_config_type * queue_config = util_malloc(sizeof * queue_config);    
-    queue_config->queue_drivers = hash_alloc();                
-    queue_config->job_script = NULL;    
+    queue_config_type * queue_config = util_malloc(sizeof * queue_config);
+    queue_config->queue_drivers = hash_alloc();
+    queue_config->job_script = NULL;
     queue_config->driver_type = NULL_DRIVER;
     queue_config->user_mode = false;
     return queue_config;
@@ -98,11 +98,11 @@ bool queue_config_has_job_script( const queue_config_type * queue_config ) {
 
 bool queue_config_set_job_script(queue_config_type * queue_config, const char * job_script) {
   if (util_is_executable(job_script)) {
-    char * job_script_full_path = util_alloc_realpath(job_script);    
-    queue_config->job_script = util_realloc_string_copy(queue_config->job_script, job_script_full_path);         
+    char * job_script_full_path = util_alloc_realpath(job_script);
+    queue_config->job_script = util_realloc_string_copy(queue_config->job_script, job_script_full_path);
     free(job_script_full_path);
     return true;
-  } 
+  }
   else
     return false;
 }
@@ -124,7 +124,7 @@ static void queue_config_add_queue_driver(queue_config_type * queue_config, cons
 
 
 queue_driver_type * queue_config_get_queue_driver(const queue_config_type * queue_config, const char * driver_name) {
-  return hash_get(queue_config->queue_drivers, driver_name); 
+  return hash_get(queue_config->queue_drivers, driver_name);
 }
 
 
@@ -143,51 +143,45 @@ bool queue_config_has_queue_driver(const queue_config_type * queue_config, const
 
 bool queue_config_init(queue_config_type * queue_config, const config_content_type * config_content)
 {
-    if (!queue_config->user_mode)
-        queue_config_create_queue_drivers(queue_config);              
-    
-    /* Setting driver_type */
-    if (config_content_has_item(config_content, QUEUE_SYSTEM_KEY)) {
-    job_driver_type driver_type;
-    {
-      const char * queue_system = config_content_get_value(config_content, QUEUE_SYSTEM_KEY);
-      if (strcmp(queue_system, LSF_DRIVER_NAME) == 0) {
-        driver_type = LSF_DRIVER;
-      } else if (strcmp(queue_system, RSH_DRIVER_NAME) == 0)
-        driver_type = RSH_DRIVER;
-      else if (strcmp(queue_system, LOCAL_DRIVER_NAME) == 0)
-        driver_type = LOCAL_DRIVER;
-      else if (strcmp(queue_system, TORQUE_DRIVER_NAME) == 0)
-        driver_type = TORQUE_DRIVER;
-      else {
-        util_abort("%s: queue system :%s not recognized \n", __func__, queue_system);
-        driver_type = NULL_DRIVER;
-      }
-      queue_config->driver_type = driver_type;
-    }
+  if (!queue_config->user_mode)
+    queue_config_create_queue_drivers(queue_config);
 
-        
-    if (config_content_has_item(config_content, JOB_SCRIPT_KEY)) {        
-        queue_config_set_job_script(queue_config, config_content_get_value_as_abspath(config_content, JOB_SCRIPT_KEY));
-    }
+  if (config_content_has_item(config_content, QUEUE_SYSTEM_KEY)) {
+    const char * queue_system = config_content_get_value(config_content, QUEUE_SYSTEM_KEY);
 
-    /* Setting QUEUE_OPTIONS */
-    int i;
-    for (i = 0; i < config_content_get_occurences(config_content, QUEUE_OPTION_KEY); i++) {
-      const stringlist_type * tokens = config_content_iget_stringlist_ref(config_content, QUEUE_OPTION_KEY, i);
-      const char * driver_name = stringlist_iget(tokens, 0);
-      const char * option_key = stringlist_iget(tokens, 1);
-      char * option_value = stringlist_alloc_joined_substring(tokens, 2, stringlist_get_size(tokens), " ");
-         // If it is desirable to keep the exact number of spaces in the
-         // option_value, it should be quoted with "" in the configuration
-         // file.
-      queue_config_set_queue_option(queue_config, driver_name, option_key, option_value);
-      free( option_value );
+    if (strcmp(queue_system, LSF_DRIVER_NAME) == 0) {
+      queue_config->driver_type = LSF_DRIVER;
+    } else if (strcmp(queue_system, RSH_DRIVER_NAME) == 0)
+      queue_config->driver_type = RSH_DRIVER;
+    else if (strcmp(queue_system, LOCAL_DRIVER_NAME) == 0)
+      queue_config->driver_type = LOCAL_DRIVER;
+    else if (strcmp(queue_system, TORQUE_DRIVER_NAME) == 0)
+      queue_config->driver_type = TORQUE_DRIVER;
+    else {
+      util_abort("%s: queue system :%s not recognized \n", __func__, queue_system);
+      queue_config->driver_type = NULL_DRIVER;
     }
-  
   }
 
-   return true;
+
+  if (config_content_has_item(config_content, JOB_SCRIPT_KEY))
+    queue_config_set_job_script(queue_config, config_content_get_value_as_abspath(config_content, JOB_SCRIPT_KEY));
+
+  /* Setting QUEUE_OPTIONS */
+  for (int i = 0; i < config_content_get_occurences(config_content, QUEUE_OPTION_KEY); i++) {
+    const stringlist_type * tokens = config_content_iget_stringlist_ref(config_content, QUEUE_OPTION_KEY, i);
+    const char * driver_name = stringlist_iget(tokens, 0);
+    const char * option_key = stringlist_iget(tokens, 1);
+    char * option_value = stringlist_alloc_joined_substring(tokens, 2, stringlist_get_size(tokens), " ");
+
+    // If it is essential to keep the exact number of spaces in the
+    // option_value, it should be quoted with "" in the configuration
+    // file.
+    queue_config_set_queue_option(queue_config, driver_name, option_key, option_value);
+    free( option_value );
+  }
+
+  return true;
 }
 
 
@@ -196,25 +190,28 @@ job_driver_type queue_config_get_driver_type(const queue_config_type * queue_con
     return queue_config->driver_type;
 }
 
-
-
-//This functions configures the parser (= filereader) object.
 void queue_config_add_queue_config_items(config_parser_type * parser, bool site_mode) {
-    //Tells the parser to look for string QUEUE_SYSTEM_KEY in the config file.
-    config_schema_item_type * item = config_add_schema_item(parser, QUEUE_SYSTEM_KEY, site_mode);    
-    config_schema_item_set_argc_minmax(item, 1, 1);
+
 }
 
-//This functions configures the parser (= filereader) object.
+
+
 void queue_config_add_config_items(config_parser_type * parser, bool site_mode) {
-    //Tells the parser to look for string QUEUE_OPTION_KEY in the config file.
+  {
+    config_schema_item_type * item = config_add_schema_item(parser, QUEUE_SYSTEM_KEY, site_mode);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+  }
+
+  {
     config_schema_item_type * item = config_add_schema_item(parser, QUEUE_OPTION_KEY, false);
     config_schema_item_set_argc_minmax(item, 3, CONFIG_DEFAULT_ARG_MAX);
+  }
 
-    //Tells the parser to look for string JOB_SCRIPT_KEY in the config file.
-    item = config_add_schema_item(parser, JOB_SCRIPT_KEY, false);
+  {
+    config_schema_item_type * item = config_add_schema_item(parser, JOB_SCRIPT_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, 1);
     config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+  }
 }
 
 

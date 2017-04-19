@@ -756,7 +756,7 @@ void site_config_set_ens_size(site_config_type * site_config, int ens_size) {
 
 
 void site_config_add_queue_config_items(config_parser_type * config, bool site_mode) {
-  queue_config_add_queue_config_items(config, site_mode);
+  queue_config_add_config_items(config, site_mode);
 
   config_schema_item_type * item = config_add_schema_item(config, MAX_SUBMIT_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
