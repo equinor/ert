@@ -67,8 +67,6 @@ before_script:
   - popd
   - mkdir build
   - pushd build
-  - export LD_LIBRARY_PATH="$LIBECL_INSTALL_ROOT/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
-  - export PYTHONPATH="$LIBECL_INSTALL_ROOT/lib/python2.7/dist-packages:$PYTHONPATH"
   - cmake -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT -DBUILD_ERT=ON -DERT_BUILD_GUI=ON -DBUILD_TESTS=ON -DBUILD_APPLICATIONS=ON -DBUILD_PYTHON=ON -DERT_USE_OPENMP=ON -DERT_DOC=OFF ..
 
 script:
