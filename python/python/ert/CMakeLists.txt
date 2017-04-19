@@ -1,12 +1,27 @@
+# -----------------------------------------------------------------
+# Here is two blocks of code linking python packages and shared
+# libraries respectively from the buid directory to the location of
+# the libecl library, this is to ensure that the resulting build
+# directory can be used stand alone.
+
 EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/ert")
-set(PACKAGE_LIST test util ecl geo well)
+set(PACKAGE_LIST test util ecl geo)
 foreach (package ${PACKAGE_LIST})
    set(LINK ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/ert/${package} )
    set(TARGET ${ERT_PYTHONPATH}/ert/${package} )
+   message(STATUS "Linking package ${package}: ${LINK} -> ${TARGET}")
    EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${TARGET}" "${LINK}")
-   message(STATUS "Linking ecl package ${LINK} -> ${TARGET}")
 endforeach()
 
+EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+foreach (lib ${UTIL_LIBRARY} ${ECL_LIBRARY} ${GEO_LIBRARY})
+   get_filename_component( name ${lib} NAME )
+   set(LINK ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/${name})
+   message(STATUS "Linking library: ${LINK} -> ${lib}")
+   EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${lib}" "${LINK}")
+endforeach()
+
+# -----------------------------------------------------------------
 
 set(PYTHON_SOURCES
     __init__.py
