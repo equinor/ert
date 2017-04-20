@@ -182,7 +182,7 @@ def dump_config_to_terminal():
         print f.read()
 
     print "######################################"
- 
+
 def load_configs(config_file):
     with open(config_file, "r") as cf:
         jobs = json.load(cf)
@@ -285,11 +285,13 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
             get_license_root_path(ext_job_config["license_path"]),
             private
             );
-        
+
         self.validate_ext_job(ext_job, ext_job_config)
         return ext_job
 
-    def set_up_forward_model(self, selected_jobs=range(len(joblist))):
+    def set_up_forward_model(self, selected_jobs=None):
+        if selected_jobs is None:
+            selected_jobs = range(len(joblist))
         jobs = [self.generate_job_from_dict(job) for job in joblist]
 
         ext_joblist = ExtJoblist()
@@ -312,7 +314,7 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
         ert_version = config["ert_version"]
         loaded_version = Version(ert_version[0], ert_version[1], ert_version[2])
         self.assertEqual(Version.currentVersion(), loaded_version)
-        
+
         for i in range(len(selected_jobs)):
             job = joblist[selected_jobs[i]]
             loaded_job = config["jobList"][i]
@@ -342,6 +344,12 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
                     umask)
 
             self.verify_json_dump([], global_args, umask)
+
+
+    def test_repr(self):
+        with TestAreaContext("python/job_queue/forward_model_one_job"):
+            forward_model = self.set_up_forward_model()
+            self.assertTrue(repr(forward_model).startswith('ForwardModel'))
 
     def test_one_job(self):
         with TestAreaContext("python/job_queue/forward_model_one_job"):
@@ -381,12 +389,12 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
                     get_license_root_path(joblist[0]["license_path"]),
                     DEFAULT_NAME
                     )
-            
+
             self.run_all()
 
             joblist[0]["name"] = name_back_up
             joblist[0]["license_path"] = license_path_back_up
- 
+
     def test_various_null_fields(self):
         for key in [
             "target_file",
