@@ -8,7 +8,7 @@ add_executable( job_workflow_test job_workflow_test.c )
 add_executable( job_lsf_parse_bsub_stdout job_lsf_parse_bsub_stdout.c )
 add_executable( job_lsf_exclude_hosts_test job_lsf_exclude_hosts_test.c )
 
-target_link_libraries( job_status_test job_queue  )
+target_link_libraries( job_status_test job_queue pthread )
 target_link_libraries( job_workflow_test job_queue  )
 target_link_libraries( create_file job_queue   )
 target_link_libraries( job_loadOK job_queue   )

@@ -98,7 +98,7 @@ target_link_libraries( enkf_main enkf  )
 add_test( enkf_main  ${EXECUTABLE_OUTPUT_PATH}/enkf_main )
 
 add_executable( enkf_fs enkf_fs.c )
-target_link_libraries( enkf_fs enkf  )
+target_link_libraries( enkf_fs enkf pthread )
 add_test( enkf_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_fs )
 
 add_executable( enkf_workflow_job_test_version enkf_workflow_job_test_version.c )
