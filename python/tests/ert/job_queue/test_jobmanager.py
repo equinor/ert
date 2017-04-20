@@ -1,5 +1,4 @@
 import json
-import socket
 import os
 import os.path
 import stat
@@ -77,12 +76,6 @@ class JobManagerTest(TestCase):
 
     def setUp(self):
         self.dispatch_imp = None
-
-    def assert_ip_address(self, ip):
-        try:
-            socket.inet_aton(ip)
-        except Exception as err:
-            self.assertTrue(False, msg='On input %s: %s.' % (ip, err))  # noqa
 
     def assert_clean_slate(self):
         self.assertFalse(os.path.isfile("jobs.py"))
@@ -189,34 +182,6 @@ class JobManagerTest(TestCase):
             with self.assertRaises(IOError):
                 jobm = JobManager()
 
-
-    def test_fsInfo(self):
-        self.assertEqual(('?','?.?.?.?'), JobManager.mountPoint('/no/such/path/'))
-        for mnt_point in ('/project/res', '/prog/ecl'):
-            (file_server,ip) = JobManager.mountPoint(mnt_point)
-            self.assert_ip_address(ip)
-            (file_server, isilon_addr), _ = JobManager.fsInfo(path=mnt_point)
-            self.assertEqual(ip, isilon_addr)
-
-
-    def test_mountpoint(self):
-        with TestAreaContext("mount_test"):
-            os.makedirs("path/to/test/dir")
-            with self.assertRaises(ValueError):
-                JobManager.fsInfo("path/to/test/dir")
-
-            with self.assertRaises(ValueError):
-                JobManager.fsInfo("/path/does/not/exist")
-
-            with self.assertRaises(ValueError):
-                JobManager.fsInfo("/scratch")
-
-            (server,ip),fs_use = JobManager.fsInfo("/prog/ecl")
-            self.assert_ip_address(ip)
-
-            self.assertEqual(len(fs_use), 3)
-            for t in fs_use:
-                self.assertTrue(t[0].isdigit())
 
 
     def test_post_error(self):
