@@ -16,7 +16,7 @@ set(PYTHON_SOURCES
     workflow_job.py
     workflow_joblist.py
     workflow_runner.py
+    job_manager.py
 )
 
 add_python_package("python.ert.job_queue"  ${PYTHON_INSTALL_PREFIX}/ert/job_queue "${PYTHON_SOURCES}" True)
-

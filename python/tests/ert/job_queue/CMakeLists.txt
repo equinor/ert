@@ -10,6 +10,8 @@ set(TEST_SOURCES
     test_workflow_job.py
     test_workflow_joblist.py
     test_workflow_runner.py
+    test_jobmanager.py
+    test_statoil_jobmanager.py
     workflow_common.py
 )
 
@@ -27,3 +29,10 @@ addPythonTest(ert.job_queue.ert_script tests.ert.job_queue.test_ert_script.ErtSc
 addPythonTest(ert.job_queue.function_ert_script tests.ert.job_queue.test_function_ert_script.FunctionErtScriptTest)
 addPythonTest(ert.job_queue.workflow_runner tests.ert.job_queue.test_workflow_runner.WorkflowRunnerTest)
 addPythonTest(ert.job_queue.ext_job tests.ert.job_queue.test_ext_job.ExtJobTest)
+addPythonTest(ert.job_queue.jobmanager tests.ert.job_queue.test_jobmanager.JobManagerTest)
+
+if (STATOIL_TESTDATA_ROOT)
+    addPythonTest(ert.job_queue.jobmanager_statoil
+                  tests.ert.job_queue.test_statoil_jobmanager.JobManagerStatoilTest
+                  LABELS StatoilData)
+endif()

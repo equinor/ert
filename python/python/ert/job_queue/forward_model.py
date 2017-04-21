@@ -19,7 +19,8 @@ from ert.util import StringList, SubstitutionList
 
 
 class ForwardModel(BaseCClass):
-    TYPE_NAME      = "forward_model"    
+    TYPE_NAME      = "forward_model"
+
     _alloc         = QueuePrototype("void* forward_model_alloc(ext_joblist)", bind=False)
     _free          = QueuePrototype("void forward_model_free( forward_model )")
     _clear         = QueuePrototype("void forward_model_clear(forward_model)")
@@ -30,7 +31,10 @@ class ForwardModel(BaseCClass):
 
     def __init__(self, ext_joblist):
         c_ptr = self._alloc(ext_joblist)
-        super(ForwardModel, self).__init__(c_ptr)
+        if c_ptr:
+            super(ForwardModel, self).__init__(c_ptr)
+        else:
+            raise ValueError('Failed to construct forward model from provided ext_joblist %s' % ext_joblist)
 
     def joblist(self):
         """ @rtype: StringList """
@@ -53,3 +57,5 @@ class ForwardModel(BaseCClass):
     def formatted_fprintf(self, path, global_args, unmask):
         self._formatted_fprintf(path, global_args, unmask)
 
+    def __repr__(self):
+        return self._create_repr('joblist=%s' % self.joblist())

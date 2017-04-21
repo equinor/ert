@@ -55,8 +55,8 @@ class ExtJoblist(BaseCClass):
     def __getitem__(self, job):
         if job in self:
             return self._get_job(job).setParent(self)
-    
-    
+
+
     def getAvailableJobNames(self):
         """ @rtype: StringList """
         return self._alloc_list( ).setParent(self)
@@ -80,4 +80,5 @@ class ExtJoblist(BaseCClass):
     def free(self):
         self._free( )
 
-
+    def __repr__(self):
+        return self._create_repr('size=%d, joblist=%s' % (len(self), self.get_jobs()))
