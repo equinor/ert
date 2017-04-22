@@ -140,6 +140,8 @@ static enkf_node_type * enkf_state_get_or_create_node(enkf_state_type * enkf_sta
 
 static void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step );
 
+static enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const char * node_key);
+
 /*****************************************************************/
 
 static UTIL_SAFE_CAST_FUNCTION( enkf_state , ENKF_STATE_TYPE_ID )

@@ -280,8 +280,7 @@ static void enkf_state_fread_initial_state(enkf_state_type * enkf_state , enkf_f
 
 
 
-
-enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const char * node_key) {
+static enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const char * node_key) {
   if (hash_has_key(enkf_state->node_hash , node_key)) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , node_key);
     return enkf_node;

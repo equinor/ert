@@ -39,42 +39,32 @@
 
 void test_send_fortio_to_gen_kw_ecl_write(void * arg) {
   enkf_main_type * enkf_main = arg;
-  test_assert_not_NULL(enkf_main);
   fortio_type * fortio  = fortio_open_writer("my_new_file", false, ECL_ENDIAN_FLIP);
-  test_assert_not_NULL(fortio);
-
-  enkf_state_type * state  = enkf_main_iget_state( enkf_main , 0 );
-  test_assert_not_NULL(state);
-  enkf_node_type * enkf_node = enkf_state_get_node( state , "MULTFLT" );
-  test_assert_not_NULL(enkf_node);
-  const enkf_config_node_type * config_node = enkf_node_get_config(enkf_node);
-  test_assert_not_NULL(config_node);
+  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ), "MULTFLT");
+  enkf_node_type * enkf_node = enkf_node_alloc( config_node );
 
   if (GEN_KW == enkf_config_node_get_impl_type(config_node)) {
     const char * dummy_path = "dummy_path";
     enkf_node_ecl_write(enkf_node, dummy_path, fortio, 0);
   }
+
+  enkf_node_free( enkf_node );
+  fortio_fclose( fortio );
 }
 
 
 void test_write_gen_kw_export_file(enkf_main_type * enkf_main)
 {
-  test_assert_not_NULL(enkf_main);
-  enkf_fs_type * init_fs = enkf_main_get_fs( enkf_main );
-  enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
-  run_arg_type * run_arg = run_arg_alloc_INIT_ONLY( init_fs , 0 ,0 , "simulations/run0");
-  test_assert_not_NULL(state);
-  enkf_node_type * enkf_node = enkf_state_get_node( state , "MULTFLT" );
-
-  test_assert_not_NULL(enkf_node);
-  const enkf_config_node_type * config_node = enkf_node_get_config(enkf_node);
-  test_assert_not_NULL(config_node);
-
+  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ), "MULTFLT");
   if (GEN_KW == enkf_config_node_get_impl_type(config_node)) {
+    enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
+    enkf_fs_type * init_fs = enkf_main_get_fs( enkf_main );
+    run_arg_type * run_arg = run_arg_alloc_INIT_ONLY( init_fs , 0 ,0 , "simulations/run0");
     enkf_state_ecl_write(state, run_arg , init_fs);
     test_assert_true(util_file_exists("simulations/run0/parameters.txt"));
-  }
-  run_arg_free( run_arg );
+    run_arg_free( run_arg );
+  } else
+    util_exit("Test configuration error \n");
 }
 
 
