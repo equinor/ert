@@ -4,6 +4,14 @@ static bool enkf_state_has_node(const enkf_state_type * enkf_state , const char 
 }
 
 
+static void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
+  if (hash_has_key(enkf_state->node_hash , node_key))
+    hash_del(enkf_state->node_hash , node_key);
+  else
+    fprintf(stderr,"%s: tried to remove node:%s which is not in state - internal error?? \n",__func__ , node_key);
+}
+
+
 
 /**
    The enkf_state inserts a reference to the node object. The
@@ -323,9 +331,3 @@ enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const 
 
 
 
-void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
-  if (hash_has_key(enkf_state->node_hash , node_key))
-    hash_del(enkf_state->node_hash , node_key);
-  else
-    fprintf(stderr,"%s: tried to remove node:%s which is not in state - internal error?? \n",__func__ , node_key);
-}
