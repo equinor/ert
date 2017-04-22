@@ -175,29 +175,6 @@ int enkf_state_forward_init(enkf_state_type * enkf_state ,
 
 
 
-/**
-  This function takes a report_step and a analyzed|forecast state as
-  input; the enkf_state instance is set accordingly and written to
-  disk.
-*/
-
-
-void enkf_state_fwrite(const enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step ) {
-  const member_config_type * my_config = enkf_state->my_config;
-  const int num_keys = hash_get_size(enkf_state->node_hash);
-  char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
-  int ikey;
-
-  for (ikey = 0; ikey < num_keys; ikey++) {
-    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_include_type(enkf_node , mask)) {
-      node_id_type node_id = {.report_step = report_step , .iens = member_config_get_iens( my_config ) };
-      enkf_node_store( enkf_node, fs , true , node_id );
-    }
-  }
-  util_free_stringlist(key_list , num_keys);
-}
-
 
 void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step ) {
   const member_config_type * my_config = enkf_state->my_config;

@@ -98,7 +98,6 @@ typedef struct enkf_state_struct    enkf_state_type;
   void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
   void               enkf_state_load_ecl_restart(enkf_state_type * , bool , int );
   void               enkf_state_sample(enkf_state_type * , int);
-  void               enkf_state_fwrite(const enkf_state_type *  , enkf_fs_type * fs , int  , int  );
   void               enkf_state_ens_read(       enkf_state_type * , const char * , int);
   void               enkf_state_ecl_write(enkf_state_type *, const run_arg_type * run_arg , enkf_fs_type * fs);
   void               enkf_state_free(enkf_state_type * );
