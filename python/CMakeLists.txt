@@ -42,6 +42,20 @@ set(ENV{LD_LIBRARY_PATH} ${LD_PATH})
 message(STATUS "Setting LD_LIBRARY_PATH: ${LD_PATH}")
 
 #-----------------------------------------------------------------
+# Find an existing cwrap distribution
+
+foreach( PREFIX_PATH ${CMAKE_PREFIX_PATH} )
+   set(tmp_PYTHONPATH "${PREFIX_PATH}/${PYTHON_INSTALL_PREFIX}:$ENV{PYTHONPATH}")
+   set(ENV{PYTHONPATH} ${tmp_PYTHONPATH}) 
+   python_package(cwrap 0.0.0)
+   if (DEFINED PY_cwrap)
+      break()
+   endif()
+endforeach()
+
+set( CWRAP_PYTHONPATH ${PY_cwrap_PATH} )
+
+#-----------------------------------------------------------------
 
 python_package(numpy 1.7.1)
 if (NOT DEFINED PY_numpy)
