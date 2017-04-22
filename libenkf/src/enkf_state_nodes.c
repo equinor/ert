@@ -279,19 +279,6 @@ static void enkf_state_fread_initial_state(enkf_state_type * enkf_state , enkf_f
 }
 
 
-void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
-  const int num_keys = hash_get_size(enkf_state->node_hash);
-  char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
-  int ikey;
-
-  for (ikey = 0; ikey < num_keys; ikey++) {
-    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_include_type(enkf_node , mask))
-      enkf_state_del_node(enkf_state , enkf_node_get_key(enkf_node));
-  }
-  util_free_stringlist(key_list , num_keys);
-}
-
 
 
 enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const char * node_key) {
