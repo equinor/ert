@@ -64,7 +64,6 @@ typedef struct enkf_state_struct    enkf_state_type;
   //void             * enkf_state_complete_forward_model__(void * arg );
   void *             enkf_state_load_from_forward_model_mt( void * arg );
   void               enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs, const stringlist_type * param_list , init_mode_type init_mode);
-  void               enkf_state_fread(enkf_state_type *  , enkf_fs_type * fs , int  , int );
   void               enkf_state_swapout_node(const enkf_state_type * , const char *);
   void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
   void               enkf_state_iset_eclpath(enkf_state_type * , int , const char *);

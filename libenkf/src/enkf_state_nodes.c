@@ -176,7 +176,7 @@ int enkf_state_forward_init(enkf_state_type * enkf_state ,
 
 
 
-void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step ) {
+static void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step ) {
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
@@ -196,7 +196,6 @@ void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mas
   }
   util_free_stringlist(key_list , num_keys);
 }
-
 
 
 /**
