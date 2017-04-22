@@ -69,7 +69,6 @@ typedef struct enkf_state_struct    enkf_state_type;
   void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
   void               enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
   enkf_node_type   * enkf_state_get_node(const enkf_state_type * , const char * );
-  bool               enkf_state_has_node(const enkf_state_type * enkf_state , const char * node_key);
   void               enkf_state_del_node(enkf_state_type * , const char * );
   void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
   void             * enkf_state_run_eclipse__(void * );

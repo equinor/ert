@@ -1,7 +1,8 @@
-bool enkf_state_has_node(const enkf_state_type * enkf_state , const char * node_key) {
+static bool enkf_state_has_node(const enkf_state_type * enkf_state , const char * node_key) {
   bool has_node = hash_has_key(enkf_state->node_hash , node_key);
   return has_node;
 }
+
 
 
 /**
