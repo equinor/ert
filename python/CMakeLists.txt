@@ -34,13 +34,6 @@ if (NOT DEFINED PY_ert)
 endif()
 set( ERT_PYTHONPATH ${PY_ert_PATH} )
 
-execute_process(COMMAND "${PYTHON_EXECUTABLE}" "-c" "import ert; print ert.ert_lib_path"
-                  OUTPUT_VARIABLE ERT_SO_PATH
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(LD_PATH ${ERT_SO_PATH}:$ENV{LD_LIBRARY_PATH})
-set(ENV{LD_LIBRARY_PATH} ${LD_PATH})
-message(STATUS "Setting LD_LIBRARY_PATH: ${LD_PATH}")
-
 #-----------------------------------------------------------------
 # Find an existing cwrap distribution
 
