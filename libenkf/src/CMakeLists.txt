@@ -232,7 +232,7 @@ endif()
 if (INSTALL_ERT)
    install(TARGETS enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
    foreach(header ${header_files})
-       install(FILES ../include/ert/enkf/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/enkf)
+       install(FILES ../include/ert/enkf/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/enkf)
    endforeach()
 endif()
 
