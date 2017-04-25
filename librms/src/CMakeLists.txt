@@ -10,10 +10,9 @@ endif()
 
 
 #-----------------------------------------------------------------
-if (INSTALL_ERT)
-   install(TARGETS rms DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   foreach(header ${header_files})
-       install(FILES ../include/ert/rms/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/rms)
-   endforeach()
-endif()
+
+install(TARGETS rms DESTINATION ${CMAKE_INSTALL_LIBDIR})
+foreach(header ${header_files})
+    install(FILES ../include/ert/rms/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/rms)
+endforeach()
 
