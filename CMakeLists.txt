@@ -16,18 +16,14 @@ set( ERT_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
 
 #-----------------------------------------------------------------
 
-option( BUILD_ERT           "Build the full ERT application - Linux only"             ON)
 option( BUILD_TESTS         "Should the tests be built"                               OFF)
-option( BUILD_APPLICATIONS  "Should we build small utility applications"              OFF)
-option( BUILD_ECL_SUMMARY   "Build the commandline application ecl_summary"           OFF)
 option( BUILD_PYTHON        "Run py_compile on the python wrappers"                   ON )
-option( BUILD_SHARED_LIBS   "Build shared libraries"                                  ON )
-option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON )
 option( ERT_BUILD_GUI       "Should the PyQt based GUI be compiled and installed"     OFF)
 option( ERT_USE_OPENMP      "Use OpenMP"                                              OFF )
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)
 
+set( BUILD_SHARED_LIBS ON )
 #-----------------------------------------------------------------
 # Very very basic functionality to find the eclipse related libraries,
 # unless they are actually installed in default locations the
@@ -149,74 +145,49 @@ set(INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to i
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
-
-if (BUILD_SHARED_LIBS)
-   set( LIBRARY_TYPE SHARED )
-else()
-   set( LIBRARY_TYPE STATIC )
-   if (BUILD_ERT)
-      message(FATAL_ERROR "The full ERT application must be built with shared libraries")
-   endif()
-   if (BUILD_PYTHON)
-      message(FATAL_ERROR "The Python wrappers require shared libraries")
-   endif()
+if (NOT BUILD_SHARED_LIBS)
+   message(FATAL_ERROR "The libres library must be built as a shared library")
 endif()
 
-if (MSVC)
-   add_definitions( -D__func__="\\"????\\"")
+
+set( NEED_LIBM TRUE )
+set( LINK_STATIC FALSE )
+add_definitions( -DHAVE_PROC )
+
+if (BUILD_TESTS)
+   option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit" OFF)
 endif()
+add_subdirectory( bin )
 
-if (ERT_LINUX)
-   set( NEED_LIBM TRUE )
-   set( LINK_STATIC FALSE )
-   add_definitions( -DHAVE_PROC )
-else()
-   set( NEED_LIBM FALSE )
-   set( LINK_STATIC TRUE )
-endif()
+include(cmake/ert_module_name.cmake)
 
-#-----------------------------------------------------------------
-if (BUILD_ERT)
-#-----------------------------------------------------------------
-   if (BUILD_TESTS)
-      option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit" OFF)
-   endif()
-   add_subdirectory( bin )
+include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
+add_subdirectory( libconfig )
 
-   include(cmake/ert_module_name.cmake)
+include_directories( ${PROJECT_SOURCE_DIR}/libsched/include )
+add_subdirectory( libsched )
 
-   include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
-   add_subdirectory( libconfig )
+include_directories( ${PROJECT_SOURCE_DIR}/librms/include )
+add_subdirectory( librms )
 
-   include_directories( ${PROJECT_SOURCE_DIR}/libsched/include )
-   add_subdirectory( libsched )
+include_directories( ${PROJECT_SOURCE_DIR}/libanalysis/include )
+add_subdirectory( libanalysis )
 
-   include_directories( ${PROJECT_SOURCE_DIR}/librms/include )
-   add_subdirectory( librms )
+include_directories( ${PROJECT_SOURCE_DIR}/libjob_queue/include )
+add_subdirectory( libjob_queue )
 
-   include_directories( ${PROJECT_SOURCE_DIR}/libanalysis/include )
-   add_subdirectory( libanalysis )
+include_directories( ${PROJECT_SOURCE_DIR}/libenkf/include )
+add_subdirectory( libenkf )
 
-   include_directories( ${PROJECT_SOURCE_DIR}/libjob_queue/include )
-   add_subdirectory( libjob_queue )
-
-   include_directories( ${PROJECT_SOURCE_DIR}/libenkf/include )
-   add_subdirectory( libenkf )
-
-   install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX})
-endif()
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 
 if (BUILD_PYTHON)
-   if (ERT_WINDOWS)
-      message(STATUS "Python is not supported on Windows")
-   else()
-      include(cmake/python.cmake2)
-      add_subdirectory( python )
+   include(cmake/python.cmake2)
+   add_subdirectory( python )
 
-      if(ERT_DOC)
-         add_subdirectory( docs )
-      endif()
+   if(ERT_DOC)
+      add_subdirectory( docs )
    endif()
 endif()
 
