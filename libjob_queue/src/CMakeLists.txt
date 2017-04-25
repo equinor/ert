@@ -2,7 +2,9 @@
 
 
 set(source_files job_queue_status.c forward_model.c queue_driver.c job_queue.c job_node.c job_list.c local_driver.c rsh_driver.c torque_driver.c ext_job.c ext_joblist.c workflow_job.c workflow.c workflow_joblist.c job_queue_manager.c)
-set(header_files job_queue.h queue_driver.h local_driver.h job_node.h job_list.h rsh_driver.h torque_driver.h ext_job.h ext_joblist.h forward_model.h workflow_job.h workflow.h workflow_joblist.h job_queue_manager.h)
+
+set(header_files job_queue_status.h job_queue.h queue_driver.h local_driver.h job_node.h job_list.h rsh_driver.h torque_driver.h ext_job.h ext_joblist.h forward_model.h workflow_job.h workflow.h workflow_joblist.h job_queue_manager.h)
+
 set_property(SOURCE rsh_driver.c PROPERTY COMPILE_FLAGS "-Wno-error")
 
 list( APPEND source_files lsf_driver.c)
