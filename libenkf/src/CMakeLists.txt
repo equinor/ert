@@ -167,6 +167,7 @@ set( header_files
      enkf_plot_gen_kw.h
      enkf_plot_gen_kw_vector.h
      hook_manager.h
+     hook_workflow.h
      runpath_list.h
      ert_workflow_list.h
      analysis_iter_config.h
