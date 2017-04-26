@@ -42,6 +42,8 @@ struct queue_config_struct {
     char * job_script;
     hash_type * queue_drivers;
     bool user_mode;
+    int max_submit_key;
+    bool max_submit_key_set;
 };
 
 
@@ -62,7 +64,8 @@ job_queue_type * queue_config_alloc_job_queue(queue_config_type * queue_config) 
         queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
         job_queue_set_driver(job_queue, driver);
     }  
-    
+    if (queue_config->max_submit_key_set)
+        job_queue_set_max_submit(job_queue, queue_config->max_submit_key);
     return job_queue;
 }
 
@@ -94,6 +97,10 @@ const char * queue_config_get_queue_name(const queue_config_type * queue_config)
     return NULL;
 }
 
+
+int queue_config_get_max_submit_key(queue_config_type * queue_config) {
+    return queue_config->max_submit_key;
+}
 
 const char * queue_config_get_job_script(const queue_config_type * queue_config) {
   return queue_config->job_script;
@@ -191,6 +198,11 @@ bool queue_config_init(queue_config_type * queue_config, const config_content_ty
     // file.
     queue_config_set_queue_option(queue_config, driver_name, option_key, option_value);
     free( option_value );
+
+    if (config_content_has_item(config_content, MAX_SUBMIT_KEY)) {
+        queue_config->max_submit_key = config_content_get_value_as_int(config_content, MAX_SUBMIT_KEY);
+        queue_config->max_submit_key_set = true;
+     }
   }
 
   return true;
@@ -203,12 +215,19 @@ job_driver_type queue_config_get_driver_type(const queue_config_type * queue_con
 }
 
 void queue_config_add_queue_config_items(config_parser_type * parser, bool site_mode) {
-
+  
 }
 
 
 
 void queue_config_add_config_items(config_parser_type * parser, bool site_mode) {
+
+  {
+    config_schema_item_type * item = config_add_schema_item(parser, MAX_SUBMIT_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_INT);
+  }
+
   {
     config_schema_item_type * item = config_add_schema_item(parser, QUEUE_SYSTEM_KEY, site_mode);
     config_schema_item_set_argc_minmax(item, 1, 1);

@@ -43,6 +43,7 @@ void test_parse() {
      fprintf(stream, "LSF_SERVER    be-grid01\n");
      fprintf(stream, "QUEUE_OPTION  LSF     BJOBS_CMD   the_path\n");
      fprintf(stream, "JOB_SCRIPT  tiny_executable\n");
+     fprintf(stream, "MAX_SUBMIT   6\n");
      fclose(stream);
    }
 
@@ -51,12 +52,15 @@ void test_parse() {
    test_assert_true(config_content_has_item(config_content, QUEUE_SYSTEM_KEY));
 
    test_assert_true(config_content_has_item(config_content, QUEUE_OPTION_KEY));
+   test_assert_true(config_content_has_item(config_content, MAX_SUBMIT_KEY));
 
    queue_config_type * queue_config = queue_config_alloc();
    queue_config_init(queue_config, config_content);
 
    test_assert_true(queue_config_has_queue_driver(queue_config, "LSF"));
    test_assert_true(queue_config_get_driver_type(queue_config) == LSF_DRIVER);
+   
+   test_check_double_equal(queue_config_get_max_submit_key(queue_config), 6);
 
    {
      queue_driver_type * lsf_driver = queue_config_get_queue_driver(queue_config, LSF_DRIVER_NAME);
@@ -68,23 +72,25 @@ void test_parse() {
    test_assert_string_equal(queue_config_get_queue_name(queue_config), LSF_DRIVER_NAME);
 
    //test for licence path
+   job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
+   test_assert_double_equal(job_queue_get_max_submit(job_queue), 6);
+
+
+   job_queue_free(job_queue);
+    
 
    config_content_free(config_content);
    config_free( parser );
    test_work_area_free( work_area );
 }
 
-void test_get_job_queue() {
-    queue_config_type * queue_config = queue_config_alloc();
-    job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
-    job_queue_free(job_queue);
-    queue_config_free(queue_config);
-}
+
+
 
 
 int main() {
     util_install_signals();
-    test_get_job_queue();
+ 
     test_empty();
     test_parse();
     return 0;

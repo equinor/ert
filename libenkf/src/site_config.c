@@ -99,7 +99,7 @@ struct site_config_struct {
   stringlist_type * path_values_user;
    
   queue_config_type * queue_config;    
-  job_queue_type * job_queue; /* The queue instance which will run the external jobs. */
+  job_queue_type * job_queue; /* The quMue instance which will run the external jobs. */
 
   char * manual_url;    //not this one
   char * default_browser;   //not this one
@@ -164,7 +164,7 @@ site_config_type * site_config_alloc_empty() {
   site_config_set_umask(site_config, site_config->umask);
   site_config_set_manual_url(site_config, DEFAULT_MANUAL_URL);
   site_config_set_default_browser(site_config, DEFAULT_BROWSER);
-  site_config_set_max_submit(site_config, DEFAULT_MAX_SUBMIT);
+  
   site_config->search_path = false;
   return site_config;
 }
@@ -566,9 +566,7 @@ void site_config_set_default_browser(site_config_type * site_config, const char 
 }
 
 
-void site_config_set_max_submit(site_config_type * site_config, int max_submit) {  
-  job_queue_set_max_submit(site_config->job_queue, max_submit);
-}
+
 
 int site_config_get_max_submit(const site_config_type * site_config) {
   return job_queue_get_max_submit(site_config->job_queue);
@@ -657,8 +655,7 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
       util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n", __func__, string_mask);
   }
 
-  if (config_content_has_item(config, MAX_SUBMIT_KEY)) 
-    site_config_set_max_submit(site_config, config_content_get_value_as_int(config, MAX_SUBMIT_KEY));
+
   
 
 
