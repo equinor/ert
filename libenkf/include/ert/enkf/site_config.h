@@ -33,9 +33,12 @@ extern "C" {
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/forward_model.h>
 
+#include <ert/enkf/queue_config.h>
+
 
 typedef struct site_config_struct site_config_type;
 
+  queue_config_type *      site_config_get_queue_config(site_config_type * site_config);
   const char *             site_config_get_location();
 
   bool                     site_config_has_job_script( const site_config_type * site_config );

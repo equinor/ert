@@ -1357,6 +1357,7 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
         util_usleep(10000);
       }
     }
+    job_queue_free(job_queue);
   }
 }
 
@@ -1397,7 +1398,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
     run_arg_set_queue_index( run_arg , queue_index );
     run_arg_increase_submit_count( run_arg );
   }
-
+  job_queue_free(job_queue);
 }
 
 void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * run_arg){
