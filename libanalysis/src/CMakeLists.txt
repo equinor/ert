@@ -22,11 +22,9 @@ if (ERT_USE_OPENMP)
 endif()
 
 
-if (INSTALL_ERT)
-   install(TARGETS analysis DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   #install(TARGETS rml_enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   foreach(header ${header_files})
-       install(FILES ../include/ert/analysis/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/analysis)
-   endforeach()
-endif()
+install(TARGETS analysis DESTINATION ${CMAKE_INSTALL_LIBDIR})
+#install(TARGETS rml_enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
+foreach(header ${header_files})
+    install(FILES ../include/ert/analysis/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/analysis)
+endforeach()
 

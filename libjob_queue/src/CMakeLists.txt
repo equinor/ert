@@ -24,9 +24,7 @@ endif()
 
 target_link_libraries( job_queue dl )
 
-if (INSTALL_ERT)
-   install(TARGETS job_queue DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   foreach(header ${header_files})
-       install(FILES ../include/ert/job_queue/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/job_queue)
-   endforeach()
-endif()
+install(TARGETS job_queue DESTINATION ${CMAKE_INSTALL_LIBDIR})
+foreach(header ${header_files})
+    install(FILES ../include/ert/job_queue/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/job_queue)
+endforeach()

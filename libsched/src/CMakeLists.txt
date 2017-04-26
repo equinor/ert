@@ -13,12 +13,12 @@ target_link_libraries( sched ${ECL_LIBRARY} ${UTIL_LIBRARY})
 if (USE_RUNPATH)
    add_runpath( sched )
 endif()
+
 #-----------------------------------------------------------------
-if (INSTALL_ERT)
-   install(TARGETS sched DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   foreach(header ${header_files})
-       install(FILES ../include/ert/sched/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/sched)
-   endforeach()
-endif()
+
+install(TARGETS sched DESTINATION ${CMAKE_INSTALL_LIBDIR})
+foreach(header ${header_files})
+    install(FILES ../include/ert/sched/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/sched)
+endforeach()
 
 
