@@ -35,6 +35,7 @@
 
 #include <ert/enkf/queue_config.h>
 #include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 struct queue_config_struct {
     job_driver_type driver_type;
@@ -53,6 +54,9 @@ queue_config_type * queue_config_alloc() {
     return queue_config;
 }
 
+job_queue_type * queue_config_alloc_job_queue(queue_config_type * queue_config) {
+    return job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "STATUS", "ERROR");
+}
 
 void queue_config_free(queue_config_type * queue_config) {
   hash_free(queue_config->queue_drivers);

@@ -9,6 +9,8 @@ extern "C" {
 #include <ert/config/config_content_node.h>
 #include <ert/config/config_schema_item.h>
 
+#include <ert/job_queue/job_queue.h>
+
 #define LSF_DRIVER_NAME    "LSF"
 #define LOCAL_DRIVER_NAME  "LOCAL"
 #define RSH_DRIVER_NAME    "RSH"
@@ -34,6 +36,7 @@ typedef struct queue_config_struct queue_config_type;
 
     void queue_config_add_config_items(config_parser_type * parser, bool site_mode);
 
+    job_queue_type * queue_config_alloc_job_queue(queue_config_type * queue_config);
 
 #ifdef __cplusplus
 }

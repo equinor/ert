@@ -74,9 +74,17 @@ void test_parse() {
    test_work_area_free( work_area );
 }
 
+void test_get_job_queue() {
+    queue_config_type * queue_config = queue_config_alloc();
+    job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
+    job_queue_free(job_queue);
+    queue_config_free(queue_config);
+}
+
 
 int main() {
     util_install_signals();
+    test_get_job_queue();
     test_empty();
     test_parse();
     return 0;
