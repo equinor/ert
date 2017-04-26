@@ -745,7 +745,7 @@ ext_joblist_type * site_config_get_installed_jobs(const site_config_type * site_
 }
 
 job_queue_type * site_config_get_job_queue(const site_config_type * site_config) {
-  return site_config->job_queue;
+  return queue_config_alloc_job_queue(site_config->queue_config);
 }
 
 void site_config_set_ens_size(site_config_type * site_config, int ens_size) {

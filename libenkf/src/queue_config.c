@@ -55,7 +55,15 @@ queue_config_type * queue_config_alloc() {
 }
 
 job_queue_type * queue_config_alloc_job_queue(queue_config_type * queue_config) {
-    return job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "STATUS", "ERROR");
+    job_queue_type * job_queue = job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "STATUS", "ERROR");
+    const char * driver_name = queue_config_get_queue_name(queue_config);
+    if (driver_name != NULL) 
+    {
+        queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
+        job_queue_set_driver(job_queue, driver);
+    }  
+    
+    return job_queue;
 }
 
 void queue_config_free(queue_config_type * queue_config) {

@@ -1586,6 +1586,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
       job_queue_manager_wait( queue_manager );
       job_queue_manager_free( queue_manager );
+      job_queue_free(job_queue);
     }
 
 
