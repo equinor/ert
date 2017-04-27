@@ -119,7 +119,7 @@ from PyQt4.QtGui import QApplication, QFileDialog
 
 import ert_gui.ertwidgets
 from ert.enkf import EnKFMain
-from ert.util import Version
+from ecl.util import Version
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 from ert_gui.main_window import GertMainWindow

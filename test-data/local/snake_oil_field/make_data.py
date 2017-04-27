@@ -2,8 +2,8 @@
 import os
 import os.path
 
-from ert.ecl import EclGrid, EclKW, EclTypeEnum
-from ert.util import RandomNumberGenerator
+from ecl.ecl import EclGrid, EclKW, EclTypeEnum
+from ecl.util import RandomNumberGenerator
 
 # This little script is used as a one-shot operation to generate the
 # grid and the corresponding PERMX and PORO fields used for this test

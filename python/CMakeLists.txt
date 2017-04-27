@@ -22,17 +22,17 @@ set(PYTHON_INSTALL_PREFIX  "lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_M
 foreach( PREFIX_PATH ${CMAKE_PREFIX_PATH} )
    set(tmp_PYTHONPATH "${PREFIX_PATH}/${PYTHON_INSTALL_PREFIX}:$ENV{PYTHONPATH}")
    set(ENV{PYTHONPATH} ${tmp_PYTHONPATH}) 
-   python_package(ert 2.1.0)
-   if (DEFINED PY_ert)
+   python_package(ecl 2.1.0)
+   if (DEFINED PY_ecl)
       break()
    endif()
 endforeach()
 
 
-if (NOT DEFINED PY_ert)
+if (NOT DEFINED PY_ecl)
    message(SEND_ERROR "Existing ert installation not found") 
 endif()
-set( ERT_PYTHONPATH ${PY_ert_PATH} )
+set( ERT_PYTHONPATH ${PY_ecl_PATH} )
 
 #-----------------------------------------------------------------
 # Find an existing cwrap distribution
@@ -59,12 +59,12 @@ endif()
 #-----------------------------------------------------------------
 
 if (ERT_BUILD_GUI)
-   python_package(PyQt4 4.8.0)
-   python_package( matplotlib 1.2.0  )
-   python_package( pandas     0.15.1)
-   python_package( scipy      0.16.1 )
+   python_package(PyQt4      4.8.0)
+   python_package(matplotlib 1.2.0)
+   python_package(pandas     0.15.1)
+   python_package(scipy      0.12.1)
    if(NOT DEFINED PY_PyQt4 OR NOT DEFINED PY_matplotlib OR NOT DEFINED PY_scipy OR NOT DEFINED PY_pandas)
-     message(SEND_ERROR "Cannot build GUI without PyQt4, matplotlib, scipy, and pandas")
+     message(SEND_ERROR "Cannot build GUI without PyQt4, matplotlib, scipy, or pandas")
    endif()
 endif()
 

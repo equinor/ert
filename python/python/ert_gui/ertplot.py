@@ -4,7 +4,7 @@ import os
 from PyQt4.QtGui import QApplication
 import time
 from ert.enkf import EnKFMain
-from ert.util import Version
+from ecl.util import Version
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools.plot.plot_window import PlotWindow

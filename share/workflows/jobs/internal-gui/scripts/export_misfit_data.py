@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import os
 from ert.enkf import ErtScript, RealizationStateEnum
-from ert.util import BoolVector
+from ecl.util import BoolVector
 
 """
 This job exports misfit data into a chosen file or to the default gen_kw export file (parameters.txt)

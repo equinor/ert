@@ -16,7 +16,7 @@
 
 from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import  QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QFont
-from ert.util import Version
+from ecl.util import Version
 from ert_gui.ertwidgets import resourceImage
 
 

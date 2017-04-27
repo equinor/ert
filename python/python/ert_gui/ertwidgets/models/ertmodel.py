@@ -2,7 +2,7 @@ from ert.analysis.analysis_module import AnalysisModule
 from ert.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
 from ert.enkf import RealizationStateEnum, EnkfVarType
 from ert.job_queue import WorkflowRunner
-from ert.util import BoolVector, StringList
+from ecl.util import BoolVector, StringList
 from ert_gui import ERT
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
 

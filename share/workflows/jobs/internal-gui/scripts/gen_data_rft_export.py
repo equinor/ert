@@ -5,7 +5,7 @@ import numpy
 import pandas
 from PyQt4.QtGui import QCheckBox
 
-from ert.ecl.rft import WellTrajectory
+from ecl.ecl.rft import WellTrajectory
 from ert.enkf import ErtPlugin, CancelPluginException
 from ert.enkf import RealizationStateEnum
 from ert.enkf.enums import EnkfObservationImplementationType
