@@ -4,7 +4,7 @@ from ert.enkf.data.enkf_node import EnkfNode
 from ert.enkf.node_id import NodeId
 from ert.test import ErtTestContext
 from ert.test.extended_testcase import ExtendedTestCase
-from ert.util import BoolVector
+from ecl.util import BoolVector
 
 
 class GenDataTest(ExtendedTestCase):

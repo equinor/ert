@@ -15,10 +15,10 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from ert.util.rng import RandomNumberGenerator
+from ecl.util.rng import RandomNumberGenerator
 from ert.analysis import AnalysisPrototype
 
-from ert.util import Matrix
+from ecl.util import Matrix
 
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"

@@ -17,7 +17,7 @@ from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.enkf import AnalysisIterConfig
 from ert.analysis import AnalysisModule
-from ert.util import StringList
+from ecl.util import StringList
 
 
 class AnalysisConfig(BaseCClass):

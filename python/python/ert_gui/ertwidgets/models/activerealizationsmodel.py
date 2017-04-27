@@ -1,4 +1,4 @@
-from ert.util import BoolVector
+from ecl.util import BoolVector
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
 

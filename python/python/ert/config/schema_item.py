@@ -15,7 +15,7 @@
 #  for more details.
 import ctypes
 
-from ert.util import UtilPrototype
+from ecl.util import UtilPrototype
 from ert.config import ContentTypeEnum , ConfigPrototype
 from cwrap import BaseCClass
 

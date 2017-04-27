@@ -153,7 +153,7 @@ class EnkfFs(BaseCClass):
         """
         Will return list of realizations with state == the specified state.
         @type state: ert.enkf.enums.RealizationStateEnum
-        @rtype: ert.util.IntVector
+        @rtype: ecl.util.IntVector
         """
         state_map = self.getStateMap()
         return state_map.realizationList(state)

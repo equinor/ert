@@ -16,7 +16,7 @@
 
 import os
 import os.path
-from   ert.util import UtilPrototype
+from   ecl.util import UtilPrototype
 from . import TestArea
 
 class TempArea(TestArea):

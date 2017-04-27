@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from cwrap import BaseCClass
-from ert.util import StringList
+from ecl.util import StringList
 from ert.enkf import EnkfPrototype, SummaryKeyMatcher
 from ert.enkf.config import EnkfConfigNode, CustomKWConfig
 from ert.enkf.enums import EnkfVarType, ErtImplType

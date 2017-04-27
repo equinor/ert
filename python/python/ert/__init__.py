@@ -18,12 +18,12 @@ ert - Ensemble Reservoir Tool - a package for reservoir modeling.
 
 The ert package itself has no code, but contains several subpackages:
 
-ert.ecl: Package for working with ECLIPSE files. The far most mature
+ecl.ecl: Package for working with ECLIPSE files. The far most mature
    package in ert.
 
 ert.job_queue: 
 
-ert.util:
+ecl.util:
 
 The ert package is based on wrapping the libriaries from the ERT C
 code with ctypes; an essential part of ctypes approach is to load the
@@ -69,22 +69,22 @@ except ImportError:
     pass
 
 
-required_version_hex = 0x02060000
+required_version_hex = 0x02070000
 
-ert_lib_path = None
+res_lib_path = None
 ert_so_version = ""
 __version__ = "0.0.0"
 
 
-# 1. Try to load the __ert_lib_info module; this module has been
+# 1. Try to load the __res_lib_info module; this module has been
 #    configured by cmake during the build configuration process. The
 #    module should contain the variable lib_path pointing to the
 #    directory with shared object files.
 try:
-    import __ert_lib_info
-    ert_lib_path = __ert_lib_info.lib_path
-    ert_so_version = __ert_lib_info.so_version
-    __version__ = __ert_lib_info.__version__
+    import __res_lib_info
+    res_lib_path = __res_lib_info.lib_path
+    ert_so_version = __res_lib_info.so_version
+    __version__ = __res_lib_info.__version__
 except ImportError:
     pass
 except AttributeError:
@@ -98,30 +98,30 @@ except AttributeError:
 env_lib_path = os.getenv("ERT_LIBRARY_PATH")
 if env_lib_path:
     if os.path.isdir( env_lib_path ):
-        ert_lib_path = os.getenv("ERT_LIBRARY_PATH")
+        res_lib_path = os.getenv("ERT_LIBRARY_PATH")
     else:
         sys.stderr.write("Warning: Environment variable ERT_LIBRARY_PATH points to nonexisting directory:%s - ignored" % env_lib_path)
         
 
 # Check that the final ert_lib_path setting corresponds to an existing
 # directory.
-if ert_lib_path:
-    if not os.path.isdir( ert_lib_path ):
-        ert_lib_path = None
+if res_lib_path:
+    if not os.path.isdir( res_lib_path ):
+        res_lib_path = None
         
 
 if sys.hexversion < required_version_hex:
-    raise Exception("ERT Python requires at least version 2.6 of Python")
+    raise Exception("ERT Python requires Python 2.7")
 
 # This load() function is *the* function actually loading shared
 # libraries.
 
 def load(name):
-    return cwrapload( name , path = ert_lib_path , so_version = ert_so_version)
+    return cwrapload(name, path=res_lib_path, so_version=ert_so_version)
 
 
-from ert.util import Version
-from ert.util import updateAbortSignals
+from ecl.util import Version
+from ecl.util import updateAbortSignals
 
 updateAbortSignals( )
 

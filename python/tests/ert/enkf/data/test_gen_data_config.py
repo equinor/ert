@@ -6,7 +6,7 @@ from ert.enkf import EnkfPrototype
 from ert.enkf import NodeId
 from ert.enkf import ForwardLoadContext
 from ert.test import ErtTestContext, ExtendedTestCase
-from ert.util import BoolVector
+from ecl.util import BoolVector
 
 class GenDataConfigTest(ExtendedTestCase):
     _get_active_mask    = EnkfPrototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind = False)

@@ -2,7 +2,7 @@ import os
 import time
 from ert.job_queue import WorkflowJoblist, Workflow, WorkflowRunner
 from ert.test import TestAreaContext, ExtendedTestCase
-from ert.util.substitution_list import SubstitutionList
+from ecl.util.substitution_list import SubstitutionList
 from .workflow_common import WorkflowCommon
 
 

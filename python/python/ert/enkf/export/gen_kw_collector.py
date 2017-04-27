@@ -4,7 +4,7 @@ import numpy
 from ert.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
 from ert.enkf.key_manager import KeyManager
 from ert.enkf.plot_data import EnsemblePlotGenKW
-from ert.util import BoolVector
+from ecl.util import BoolVector
 
 
 class GenKwCollector(object):

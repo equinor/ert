@@ -1,7 +1,7 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
-from ert.ecl import EclRegion
-from ert.geo import GeoRegion
+from ecl.ecl import EclRegion
+from ecl.geo import GeoRegion
 
 class LocalDataset(BaseCClass):
     TYPE_NAME = "local_dataset"

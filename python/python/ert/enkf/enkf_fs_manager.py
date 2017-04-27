@@ -1,7 +1,7 @@
 import os.path
 from cwrap import BaseCClass
 from ert.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfInitModeEnum, EnkfPrototype
-from ert.util import StringList, BoolVector
+from ecl.util import StringList, BoolVector
 
 import re
 
@@ -213,8 +213,8 @@ class EnkfFsManager(BaseCClass):
         """
         @type source_case: str
         @type source_report_step: int
-        @type member_mask: ert.util.BoolVector 
-        @type node_list: ert.util.StringList
+        @type member_mask: ecl.util.BoolVector
+        @type node_list: ecl.util.StringList
         """
         source_case_fs = self.getFileSystem(source_case)
         self._custom_initialize_from_existing(source_case_fs, source_report_step, node_list, member_mask)
@@ -237,7 +237,7 @@ class EnkfFsManager(BaseCClass):
     def initializeCaseFromScratch(self, case, parameter_list, from_iens, to_iens, force_init=True):
         """
         @type case: EnkfFs
-        @type parameter_list: ert.util.StringList
+        @type parameter_list: ecl.util.StringList
         @type to_iens: int
         @type from_iens: int
         @type force_init: bool
@@ -257,7 +257,7 @@ class EnkfFsManager(BaseCClass):
         
     def initializeFromScratch(self, parameter_list, from_iens, to_iens, force_init=True):
         """
-        @type parameter_list: ert.util.StringList
+        @type parameter_list: ecl.util.StringList
         @type to_iens: int
         @type from_iens: int
         @type force_init: bool

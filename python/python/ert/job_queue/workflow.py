@@ -2,7 +2,7 @@ import time
 from ert.config import ConfigError
 from cwrap import BaseCClass
 from ert.job_queue import QueuePrototype, WorkflowJoblist, WorkflowJob
-from ert.util import SubstitutionList
+from ecl.util import SubstitutionList
 
 
 class Workflow(BaseCClass):

@@ -15,7 +15,7 @@
 #  for more details.
 from cwrap import Prototype
 import ert
-import ert.util
+import ecl.util
 
 class ConfigPrototype(Prototype):
     lib = ert.load("libconfig")

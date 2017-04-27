@@ -10,8 +10,8 @@ except ImportError:
     from unittest import TestCase
 
 from .source_enumerator import SourceEnumerator
-from ert.util import installAbortSignals
-from ert.util import Version
+from ecl.util import installAbortSignals
+from ecl.util import Version
 
 TESTDATA_ROOT = None
 SHARE_ROOT = None

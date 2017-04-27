@@ -1,4 +1,4 @@
-import ert.util
+import ecl.util
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype, LocalObsdata, LocalObsdataNode, LocalDataset
 

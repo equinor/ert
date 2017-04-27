@@ -1,6 +1,6 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
-from ert.util import CTime
+from ecl.util import CTime
 
 
 

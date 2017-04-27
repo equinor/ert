@@ -19,7 +19,7 @@ import os
 from ert.enkf import BlockObservation
 from ert.enkf import ActiveList, FieldConfig 
 from ert.test import ExtendedTestCase
-from ert.ecl import EclGrid
+from ecl.ecl import EclGrid
 
 
 class BlockObsTest(ExtendedTestCase):

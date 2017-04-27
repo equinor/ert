@@ -15,7 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 from ert.job_queue import QueuePrototype, ExtJob
-from ert.util import StringList
+from ecl.util import StringList
 
 
 class ExtJoblist(BaseCClass):

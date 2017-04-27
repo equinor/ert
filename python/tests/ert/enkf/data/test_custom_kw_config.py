@@ -1,7 +1,7 @@
 from ert.enkf.config.custom_kw_config import CustomKWConfig
 from ert.test.extended_testcase import ExtendedTestCase
 from ert.test.test_area import TestAreaContext
-from ert.util import StringList
+from ecl.util import StringList
 
 
 class CustomKWConfigTest(ExtendedTestCase):

@@ -16,7 +16,7 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.enkf.enums import RealizationStateEnum
-from ert.util import BoolVector
+from ecl.util import BoolVector
 
 
 class StateMap(BaseCClass):
@@ -119,7 +119,7 @@ class StateMap(BaseCClass):
         Will create a list of all realisations with state equal to state_value.
 
         @type state_value: RealizationStateEnum
-        @rtype: ert.util.IntVector
+        @rtype: ecl.util.IntVector
         """
         mask = BoolVector(False, len(self))
         self.selectMatching(mask, state_value)

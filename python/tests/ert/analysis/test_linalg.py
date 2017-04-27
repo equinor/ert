@@ -17,7 +17,7 @@
 
 
 from ert.enkf import ObsVector
-from ert.util import Matrix
+from ecl.util import Matrix
 from ert.analysis import Linalg
 from ert.test import ExtendedTestCase
 

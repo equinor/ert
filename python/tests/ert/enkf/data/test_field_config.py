@@ -19,7 +19,7 @@ import os
 from ert.enkf import FieldConfig
 from ert.enkf import ActiveList
 from ert.test import ExtendedTestCase
-from ert.ecl  import EclGrid
+from ecl.ecl  import EclGrid
 
 class FieldConfigTest(ExtendedTestCase):
 

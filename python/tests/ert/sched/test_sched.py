@@ -16,7 +16,7 @@
 #  for more details.
 import datetime
 import os
-from ert.sched import SchedFile
+from ecl.sched import SchedFile
 from ert.test import ExtendedTestCase
 
 

@@ -1,10 +1,10 @@
 from ert.test import ErtTestContext
 from ert.test import ExtendedTestCase
 
-from ert.ecl import EclGrid, EclSum
-from ert.sched import History
+from ecl.ecl import EclGrid, EclSum
+from ecl.sched import History
 
-from ert.util import BoolVector,IntVector
+from ecl.util import BoolVector,IntVector
 from ert.enkf import ActiveMode, EnsembleConfig
 from ert.enkf import ObsVector , LocalObsdata, EnkfObs, TimeMap, LocalObsdataNode , ObsData , MeasData, ActiveList
 

@@ -1,6 +1,6 @@
 import datetime 
 
-from ert.util import BoolVector , Matrix
+from ecl.util import BoolVector , Matrix
 from ert.test import TestAreaContext
 from ert.test import ExtendedTestCase
 from ert.enkf import ObsData , ObsBlock

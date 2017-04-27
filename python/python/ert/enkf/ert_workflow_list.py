@@ -1,6 +1,6 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
-from ert.util import StringList, SubstitutionList
+from ecl.util import StringList, SubstitutionList
 from ert.job_queue import Workflow, WorkflowJob
 
 

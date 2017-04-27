@@ -4,7 +4,7 @@ from pandas import DataFrame, MultiIndex
 import numpy
 from ert.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
 from ert.enkf.plot_data import EnsemblePlotGenData
-from ert.util import BoolVector
+from ecl.util import BoolVector
 
 
 class ArgLoader(object):

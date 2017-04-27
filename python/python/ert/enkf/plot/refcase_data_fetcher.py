@@ -1,4 +1,4 @@
-from ert.ecl import EclSum, EclSumVector, EclSumNode
+from ecl.ecl import EclSum, EclSumVector, EclSumNode
 from ert.enkf.enums import ErtImplType
 from ert.enkf.plot.data_fetcher import DataFetcher
 

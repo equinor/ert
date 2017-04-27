@@ -1,6 +1,6 @@
 from threading import Thread
 from ert.job_queue import Workflow
-from ert.util.substitution_list import SubstitutionList
+from ecl.util.substitution_list import SubstitutionList
 
 
 class WorkflowRunner(object):

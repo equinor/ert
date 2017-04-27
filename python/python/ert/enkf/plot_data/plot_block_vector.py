@@ -1,4 +1,4 @@
-from ert.util import DoubleVector
+from ecl.util import DoubleVector
 
 
 class PlotBlockVector(object):

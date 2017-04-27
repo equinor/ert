@@ -1,6 +1,6 @@
 from ert.job_queue import Workflow, WorkflowJoblist
 from ert.test import ExtendedTestCase, TestAreaContext
-from ert.util import SubstitutionList
+from ecl.util import SubstitutionList
 from .workflow_common import WorkflowCommon
 
 

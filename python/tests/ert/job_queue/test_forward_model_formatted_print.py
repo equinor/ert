@@ -2,7 +2,7 @@ import os.path
 import json
 
 from ert.test import TestAreaContext, ExtendedTestCase
-from ert.util import SubstitutionList, Version
+from ecl.util import SubstitutionList, Version
 from ert.job_queue.forward_model import ForwardModel
 from ert.job_queue.ext_job import ExtJob
 from ert.job_queue.ext_joblist import ExtJoblist

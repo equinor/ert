@@ -1,6 +1,6 @@
 import ert
-import ert.util
-import ert.geo
-import ert.ecl
+import ecl.util
+import ecl.geo
+import ecl.ecl
 
 RMS_LIB = ert.load("librms")

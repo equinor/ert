@@ -1,8 +1,8 @@
 import os
 
-from ert.util import IntVector
+from ecl.util import IntVector
 
-from ert.ecl import EclGrid
+from ecl.ecl import EclGrid
 
 from ert.enkf.config import FieldTypeEnum, FieldConfig
 from ert.enkf.data import EnkfNode

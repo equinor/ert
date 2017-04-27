@@ -14,9 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import ert
-import ert.ecl
-import ert.util
-import ert.geo
+import ecl.ecl
+import ecl.util
+import ecl.geo
 
 from cwrap import Prototype
 

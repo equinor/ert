@@ -1,6 +1,6 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
-from ert.util import StringList
+from ecl.util import StringList
 
 
 class SummaryKeySet(BaseCClass):

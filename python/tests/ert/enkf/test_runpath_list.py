@@ -4,7 +4,7 @@ import ert
 
 from ert.test import ExtendedTestCase, TestAreaContext,ErtTestContext
 from ert.enkf import RunpathList, RunpathNode
-from ert.util import BoolVector
+from ecl.util import BoolVector
 
 class RunpathListTest(ExtendedTestCase):
 

@@ -1,5 +1,5 @@
 from __future__ import print_function
-from ert.util import IntVector
+from ecl.util import IntVector
 from ert.enkf.enums import ErtImplType
 from ert.enkf.data import EnkfNode
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection

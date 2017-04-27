@@ -18,8 +18,8 @@
 import os.path
 from ert.enkf import EclConfig
 from ert.test import ExtendedTestCase
-from ert.util import UIReturn
-from ert.ecl  import EclSum
+from ecl.util import UIReturn
+from ecl.ecl  import EclSum
 
 EGRID_file    = "Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
 SMSPEC_file   = "Statoil/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"

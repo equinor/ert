@@ -21,8 +21,8 @@ from ert.test import ErtTestContext
 from ert.enkf.active_list import ActiveList
 from ert.enkf.local_dataset import LocalDataset
 
-from ert.ecl import EclRegion
-from ert.geo import Surface, GeoRegion
+from ecl.ecl import EclRegion
+from ecl.geo import Surface, GeoRegion
 
 class LocalDatasetTest(ExtendedTestCase):
 

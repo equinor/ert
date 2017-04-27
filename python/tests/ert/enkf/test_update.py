@@ -18,8 +18,8 @@ import random
 
 import ert
 from ert.test import ExtendedTestCase, ErtTestContext
-from ert.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ert.util import Matrix, BoolVector , RandomNumberGenerator
+from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
+from ecl.util import Matrix, BoolVector , RandomNumberGenerator
 from ert.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from ert.enkf import MeasData , ObsData , LocalObsdata
 

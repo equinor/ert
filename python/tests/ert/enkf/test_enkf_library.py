@@ -1,5 +1,5 @@
 import os
-from ert.ecl import EclSum
+from ecl.ecl import EclSum
 from ert.enkf import AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig, ObsVector
 from ert.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, EnsembleConfig
 from ert.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig

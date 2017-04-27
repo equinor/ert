@@ -19,7 +19,7 @@ from ert.enkf import EnkfPrototype
 from ert.enkf.config import EnkfConfigNode
 from ert.enkf.enkf_fs import EnkfFs
 from ert.enkf.enums.ert_impl_type_enum import ErtImplType
-from ert.util import BoolVector, DoubleVector
+from ecl.util import BoolVector, DoubleVector
 
 
 class EnsemblePlotGenData(BaseCClass):

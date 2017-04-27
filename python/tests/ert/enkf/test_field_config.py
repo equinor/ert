@@ -15,7 +15,7 @@
 # for more details.
 from os.path import abspath
 
-from ert.ecl import EclGrid
+from ecl.ecl import EclGrid
 from ert.enkf.config import FieldTypeEnum, FieldConfig
 from ert.enkf.enums import EnkfFieldFileFormatEnum
 from ert.test import ExtendedTestCase, TestAreaContext

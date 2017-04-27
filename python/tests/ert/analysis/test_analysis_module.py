@@ -18,10 +18,10 @@ import ert
 from ert.test import ExtendedTestCase
 from ert.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 
-from ert.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ert.util.rng import RandomNumberGenerator
+from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
+from ecl.util.rng import RandomNumberGenerator
 
-from ert.util import Matrix
+from ecl.util import Matrix
 
 class AnalysisModuleTest(ExtendedTestCase):
     def setUp(self):

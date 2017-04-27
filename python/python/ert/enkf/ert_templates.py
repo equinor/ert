@@ -15,7 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype, ErtTemplate
-from ert.util import StringList
+from ecl.util import StringList
 
 
 class ErtTemplates(BaseCClass):

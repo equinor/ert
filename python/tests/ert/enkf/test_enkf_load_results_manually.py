@@ -1,6 +1,6 @@
 from ert.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert.test import ErtTestContext, ExtendedTestCase
-from ert.util import BoolVector
+from ecl.util import BoolVector
 
 
 class LoadResultsManuallyTest(ExtendedTestCase):

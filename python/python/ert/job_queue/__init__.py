@@ -55,7 +55,7 @@ external commands.
 
 import os
 import ert
-import ert.util
+import ecl.util
 import ert.config
 from cwrap import Prototype
 

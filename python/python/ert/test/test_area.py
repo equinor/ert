@@ -16,7 +16,7 @@
 import os.path
 
 from cwrap import BaseCClass
-from ert.util import UtilPrototype
+from ecl.util import UtilPrototype
 
 
 class TestArea(BaseCClass):

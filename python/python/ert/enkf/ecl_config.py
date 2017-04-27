@@ -16,9 +16,9 @@
 
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
-from ert.ecl import EclSum, EclGrid
-from ert.util import StringList, UIReturn
-from ert.sched import SchedFile
+from ecl.ecl import EclSum, EclGrid
+from ecl.util import StringList, UIReturn
+from ecl.sched import SchedFile
 
 class EclConfig(BaseCClass):
     TYPE_NAME = "ecl_config"

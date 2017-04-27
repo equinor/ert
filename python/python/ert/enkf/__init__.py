@@ -17,12 +17,12 @@
 
 import ert
 from cwrap import Prototype
-import ert.util
-import ert.geo
-import ert.ecl
+import ecl.util
+import ecl.geo
+import ecl.ecl
 import ert.rms
 import ert.analysis
-import ert.sched
+import ecl.sched
 import ert.config
 import ert.job_queue
 

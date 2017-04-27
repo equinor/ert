@@ -17,8 +17,8 @@ from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig
 from ert.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
-from ert.ecl import EclGrid
-from ert.util import PathFormat
+from ecl.ecl import EclGrid
+from ecl.util import PathFormat
 
 class EnkfConfigNode(BaseCClass):
     TYPE_NAME = "enkf_config_node"

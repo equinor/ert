@@ -16,7 +16,7 @@
 
 import os
 
-from ert.util import BoolVector
+from ecl.util import BoolVector
 
 from ert.enkf import EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotSettings, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfVarType, ObsVector , RunArg
 from ert.enkf.config import EnkfConfigNode

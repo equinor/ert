@@ -16,7 +16,7 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.job_queue import JobQueue, ExtJoblist
-from ert.util import StringList, Hash
+from ecl.util import StringList, Hash
 
 
 class SiteConfig(BaseCClass):

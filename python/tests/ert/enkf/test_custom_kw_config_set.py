@@ -6,7 +6,7 @@ from ert.enkf.enkf_main import EnKFMain
 from ert.test import ExtendedTestCase
 from ert.test.ert_test_context import ErtTestContext
 from ert.test.test_area import TestAreaContext
-from ert.util.stringlist import StringList
+from ecl.util.stringlist import StringList
 
 
 class CustomKWConfigSetTest(ExtendedTestCase):

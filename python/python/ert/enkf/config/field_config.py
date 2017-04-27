@@ -17,7 +17,7 @@ from cwrap import BaseCClass
 
 from ert.enkf import EnkfPrototype
 from ert.enkf.enums import EnkfFieldFileFormatEnum
-from ert.ecl import EclGrid
+from ecl.ecl import EclGrid
 from .field_type_enum import FieldTypeEnum
 
 class FieldConfig(BaseCClass):

@@ -16,9 +16,9 @@
 import os.path
 
 from cwrap import BaseCClass
-from ert.util import StringList, IntVector
-from ert.sched import History
-from ert.ecl import EclSum , EclGrid
+from ecl.util import StringList, IntVector
+from ecl.sched import History
+from ecl.ecl import EclSum , EclGrid
 from ert.enkf import EnkfPrototype
 from ert.enkf import EnkfFs, LocalObsdataNode , LocalObsdata, MeasData, ObsData
 from ert.enkf.enums import EnkfObservationImplementationType

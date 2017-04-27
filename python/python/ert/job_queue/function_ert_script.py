@@ -2,7 +2,7 @@ import ert as ert_module
 from cwrap import Prototype
 
 from ert.job_queue import ErtScript
-from ert.util.stringlist import StringList
+from ecl.util.stringlist import StringList
 
 
 class _NonePrototype(Prototype):

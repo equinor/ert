@@ -20,7 +20,7 @@ from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype, AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsembleConfig, PlotSettings, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList, HookManager, HookWorkflow, ESUpdate
 from ert.enkf.enums import EnkfInitModeEnum
 from ert.enkf.key_manager import KeyManager
-from ert.util import SubstitutionList, Log
+from ecl.util import SubstitutionList, Log
 
 
 

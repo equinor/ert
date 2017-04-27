@@ -1,6 +1,6 @@
 import datetime 
 
-from ert.util import BoolVector
+from ecl.util import BoolVector
 from ert.test import TestAreaContext
 from ert.test import ExtendedTestCase
 from ert.enkf import MeasBlock,MeasData

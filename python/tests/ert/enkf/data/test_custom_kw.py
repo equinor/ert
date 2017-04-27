@@ -7,8 +7,8 @@ from ert.enkf.export.custom_kw_collector import CustomKWCollector
 from ert.test.ert_test_context import ErtTestContext
 from ert.test.extended_testcase import ExtendedTestCase
 from ert.test.test_area import TestAreaContext
-from ert.util import StringList
-from ert.util import BoolVector
+from ecl.util import StringList
+from ecl.util import BoolVector
 
 class CustomKWTest(ExtendedTestCase):
 

@@ -18,8 +18,8 @@ import ert
 from ert.test import ExtendedTestCase
 from ert.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from ert.analysis import AnalysisPrototype
-from ert.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ert.util.rng import RandomNumberGenerator
+from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
+from ecl.util.rng import RandomNumberGenerator
 
 
 class StdEnKFDebugTest(ExtendedTestCase):

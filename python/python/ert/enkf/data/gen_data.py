@@ -1,5 +1,5 @@
 from cwrap import BaseCClass
-from ert.util import DoubleVector
+from ecl.util import DoubleVector
 from ert.enkf import EnkfPrototype
 
 

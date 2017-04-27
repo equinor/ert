@@ -17,7 +17,7 @@ import os.path
 
 from cwrap import BaseCClass
 from ert.job_queue import QueuePrototype
-from ert.util import StringList, Hash
+from ecl.util import StringList, Hash
 
 class ExtJob(BaseCClass):
     TYPE_NAME                   = "ext_job"

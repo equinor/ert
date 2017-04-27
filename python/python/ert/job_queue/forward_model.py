@@ -15,7 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 from ert.job_queue import ExtJob, QueuePrototype, ExtJoblist
-from ert.util import StringList, SubstitutionList
+from ecl.util import StringList, SubstitutionList
 
 
 class ForwardModel(BaseCClass):

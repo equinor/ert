@@ -16,7 +16,7 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.enkf import TimeMap, StateMap, RunArg
-from ert.util import PathFormat, StringList
+from ecl.util import PathFormat, StringList
 
 class ErtRunContext(BaseCClass):
     TYPE_NAME = "ert_run_context"
@@ -61,7 +61,7 @@ class ErtRunContext(BaseCClass):
 
     @classmethod
     def createRunpathList(cls, mask, runpath_fmt, subst_list, iter=0):
-        """ @rtype: ert.util.stringlist.StringList """
+        """ @rtype: ecl.util.stringlist.StringList """
         return cls._alloc_runpath_list(mask, runpath_fmt, subst_list, iter)
 
 

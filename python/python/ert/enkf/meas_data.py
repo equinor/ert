@@ -1,7 +1,7 @@
 from cwrap import BaseCClass
 from ert.enkf import EnkfPrototype
 from ert.enkf.obs_data import ObsData
-from ert.util import Matrix, IntVector
+from ecl.util import Matrix, IntVector
 
 
 class MeasData(BaseCClass):

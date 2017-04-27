@@ -1,5 +1,5 @@
 from cwrap import BaseCEnum
-from ert.sched import SCHED_LIB
+from ecl.sched import SCHED_LIB
 
 
 class HistorySourceEnum(BaseCEnum):

@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 import sys
 
-from ert.ecl import EclSum, EclSumTStep
+from ecl.ecl import EclSum, EclSumTStep
 from ert.test import ExtendedTestCase
 
 try:

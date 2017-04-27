@@ -17,7 +17,7 @@ import os.path
 
 from cwrap import BaseCClass, CFILE
 
-from ert.util import DoubleVector
+from ecl.util import DoubleVector
 from ert.enkf import EnkfPrototype
 from ert.enkf.config import GenKwConfig
 

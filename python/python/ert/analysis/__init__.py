@@ -17,7 +17,7 @@
 
 import ert
 from cwrap import Prototype
-import ert.util
+import ecl.util
 
 class AnalysisPrototype(Prototype):
     lib = ert.load("libanalysis")
