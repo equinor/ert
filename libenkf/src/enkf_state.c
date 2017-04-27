@@ -144,9 +144,9 @@ static UTIL_SAFE_CAST_FUNCTION( enkf_state , ENKF_STATE_TYPE_ID )
 
 static shared_info_type * shared_info_alloc(const site_config_type * site_config , model_config_type * model_config, const ecl_config_type * ecl_config , ert_templates_type * templates) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info );
-
+  const queue_config_type * queue_config = site_config_get_queue_config(site_config);
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
-  shared_info->job_queue    = site_config_get_job_queue( site_config );
+  shared_info->job_queue    = queue_config_alloc_job_queue( queue_config );
   shared_info->site_config  = site_config;
   shared_info->model_config = model_config;
   shared_info->templates    = templates;

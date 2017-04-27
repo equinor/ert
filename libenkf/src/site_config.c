@@ -498,9 +498,7 @@ bool site_config_has_job_script( const site_config_type * site_config ) {
 }
 
 
-const char * site_config_get_job_script(const site_config_type * site_config) {
-  return queue_config_get_job_script(site_config->queue_config);
-}
+
 
 const char * site_config_get_manual_url(const site_config_type * site_config) {
   return site_config->manual_url;
@@ -688,9 +686,7 @@ ext_joblist_type * site_config_get_installed_jobs(const site_config_type * site_
   return site_config->joblist;
 }
 
-job_queue_type * site_config_get_job_queue(const site_config_type * site_config) {
-  return queue_config_alloc_job_queue(site_config->queue_config);
-}
+
 
 void site_config_set_ens_size(site_config_type * site_config, int ens_size) {
   //job_queue_set_size( site_config->job_queue , ens_size );

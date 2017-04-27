@@ -151,6 +151,7 @@ struct enkf_main_struct {
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
+  job_queue_type       * job_queue;          //allocated and freed in scope of enkf_main_run_step
   analysis_config_type * analysis_config;
   local_config_type    * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type   * templates;          /* Run time templates */
@@ -1569,6 +1570,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
     {
       const queue_config_type * queue_config = site_config_get_queue_config(enkf_main->site_config);
       job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
+      enkf_main->job_queue = job_queue;
       job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
       bool restart_queue = true;
 
