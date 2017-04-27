@@ -1330,12 +1330,12 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
   return update_done;
 }
 
-
-static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
+//jq1
+static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main, job_queue_type * job_queue) {
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (analysis_config_get_stop_long_running(analysis_config)) {
-    const queue_config_type * queue_config = site_config_get_queue_config(enkf_main->site_config);
-    job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
+    
+    
 
     bool cont = true;
     while (cont) {
@@ -1360,12 +1360,12 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
         util_usleep(10000);
       }
     }
-    job_queue_free(job_queue);
+    
   }
 }
 
 
-
+//jq2
 void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg ) {
   const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
   enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
@@ -1373,7 +1373,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   const site_config_type    * site_config   = enkf_main_get_site_config( enkf_main );
   const queue_config_type * queue_config    = site_config_get_queue_config(enkf_main->site_config);
   const char * job_script                   = queue_config_get_job_script( queue_config );
-  job_queue_type * job_queue                = queue_config_alloc_job_queue( queue_config );
+  job_queue_type * job_queue                = enkf_main->job_queue;
   const char * run_path                     = run_arg_get_runpath( run_arg );
 
   // The job_queue_node will take ownership of this arg_pack; and destroy it when
@@ -1402,7 +1402,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
     run_arg_set_queue_index( run_arg , queue_index );
     run_arg_increase_submit_count( run_arg );
   }
-  job_queue_free(job_queue);
+ 
 }
 
 void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * run_arg){
@@ -1581,7 +1581,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
         util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
 
 
-      enkf_main_submit_jobs( enkf_main , run_context );
+      enkf_main_submit_jobs( enkf_main , run_context);
 
 
       job_queue_submit_complete( job_queue );
@@ -1589,7 +1589,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
       int max_runtime = analysis_config_get_max_runtime(enkf_main_get_analysis_config( enkf_main ));
       job_queue_set_max_job_duration(job_queue, max_runtime);
-      enkf_main_monitor_job_queue( enkf_main );
+      enkf_main_monitor_job_queue( enkf_main, job_queue );
 
       job_queue_manager_wait( queue_manager );
       job_queue_manager_free( queue_manager );
