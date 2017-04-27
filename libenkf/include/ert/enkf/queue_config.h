@@ -1,3 +1,22 @@
+/*
+   Copyright (C) 2017  Statoil ASA, Norway.
+
+   The file 'queue_config.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
+ */
+
+
 #ifndef ERT_QUEUE_CONFIG_H
 #define ERT_QUEUE_CONFIG_H
 #ifdef __cplusplus
@@ -34,10 +53,11 @@ typedef struct queue_config_struct queue_config_type;
     bool queue_config_has_queue_driver(const queue_config_type * queue_config, const char * driver_name);
     void queue_config_create_queue_drivers(queue_config_type * queue_config);
     const char * queue_config_get_queue_name(const queue_config_type * queue_config);
+    const char * queue_config_get_job_script(const queue_config_type * queue_config);
 
     void queue_config_add_config_items(config_parser_type * parser, bool site_mode);
 
-    job_queue_type * queue_config_alloc_job_queue(queue_config_type * queue_config);
+    job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config);
 
 #ifdef __cplusplus
 }

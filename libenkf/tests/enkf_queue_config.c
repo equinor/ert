@@ -76,9 +76,9 @@ void test_parse() {
    test_assert_double_equal(job_queue_get_max_submit(job_queue), 6);
 
 
-   job_queue_free(job_queue);
-    
+ 
 
+   job_queue_free(job_queue);
    config_content_free(config_content);
    config_free( parser );
    test_work_area_free( work_area );

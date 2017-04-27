@@ -56,7 +56,7 @@ queue_config_type * queue_config_alloc() {
     return queue_config;
 }
 
-job_queue_type * queue_config_alloc_job_queue(queue_config_type * queue_config) {
+job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config) {
     job_queue_type * job_queue = job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "STATUS", "ERROR");
     const char * driver_name = queue_config_get_queue_name(queue_config);
     if (driver_name != NULL) 

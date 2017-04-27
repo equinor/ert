@@ -99,7 +99,7 @@ struct site_config_struct {
   stringlist_type * path_values_user;
    
   queue_config_type * queue_config;    
-  job_queue_type * job_queue; /* The quMue instance which will run the external jobs. */
+
 
   char * manual_url;    //not this one
   char * default_browser;   //not this one
@@ -151,7 +151,7 @@ site_config_type * site_config_alloc_empty() {
   site_config->default_browser = NULL;
   site_config->user_mode = false;  
 
-  site_config->job_queue = job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "STATUS", "ERROR");
+
   site_config->env_variables_user = hash_alloc();
   site_config->env_variables_site = hash_alloc();
 
@@ -365,31 +365,6 @@ void site_config_update_pathvar(site_config_type * site_config, const char * pat
   util_update_path_var(pathvar, value, false);
 }
 
-static void site_config_select_job_driver(site_config_type * site_config, const char * driver_name) {
-  queue_driver_type * driver = site_config_get_queue_driver(site_config, driver_name); 
-  job_queue_set_driver(site_config->job_queue, driver);
-}
-
-/**
-   These functions can be called repeatedly if you should want to
-   change driver characteristics run-time.
- */
-static void site_config_select_LOCAL_job_queue(site_config_type * site_config) {
-  site_config_select_job_driver(site_config, LOCAL_DRIVER_NAME);
-}
-
-static void site_config_select_RSH_job_queue(site_config_type * site_config) {
-  site_config_select_job_driver(site_config, RSH_DRIVER_NAME);
-}
-
-static void site_config_select_LSF_job_queue(site_config_type * site_config) {
-  site_config_select_job_driver(site_config, LSF_DRIVER_NAME);
-}
-
-static void site_config_select_TORQUE_job_queue(site_config_type * site_config) {
-  site_config_select_job_driver(site_config, TORQUE_DRIVER_NAME);
-}
-
 /*****************************************************************/
 
 /*****************************************************************/
@@ -505,30 +480,8 @@ const char * site_config_get_queue_name(const site_config_type * site_config) {
   return queue_config_get_queue_name(site_config->queue_config); //based on driver_type
 }
 
-static void site_config_set_job_queue__(site_config_type * site_config, job_driver_type driver_type) {
-  if (site_config->job_queue != NULL) {
-    switch (driver_type) {
-      case(LSF_DRIVER):
-        site_config_select_LSF_job_queue(site_config);
-        break;
-      case(TORQUE_DRIVER):
-        site_config_select_TORQUE_job_queue(site_config);
-        break;
-      case(RSH_DRIVER):
-        site_config_select_RSH_job_queue(site_config);
-        break;
-      case(LOCAL_DRIVER):
-        site_config_select_LOCAL_job_queue(site_config);
-        break;
-      default:
-        util_abort("%s: internal error \n", __func__);
-    }
-  }
-}
 
-bool site_config_queue_is_running(const site_config_type * site_config) {
-  return job_queue_is_running(site_config->job_queue);
-}
+
 
 /**
    The job_script might be a relative path, and the cwd changes during
@@ -568,19 +521,8 @@ void site_config_set_default_browser(site_config_type * site_config, const char 
 
 
 
-int site_config_get_max_submit(const site_config_type * site_config) {
-  return job_queue_get_max_submit(site_config->job_queue);
-}
 
-static void site_config_install_job_queue(site_config_type * site_config) {
-  /*
-     All the various driver options are set, unconditionally of which
-     driver is actually selected in the end.
-   */
-  job_driver_type driver = queue_config_get_driver_type(site_config->queue_config);
-  if (driver != NULL_DRIVER)
-    site_config_set_job_queue__(site_config, driver);
-}
+
 
 void site_config_init_env(site_config_type * site_config, const config_content_type * config) {
   {
@@ -680,13 +622,13 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
       }
     }
     //create a pointer to the driver_in_use
-    site_config_set_job_queue__(site_config, driver_type);
+    
   }
 
   if (config_content_has_item(config, LICENSE_PATH_KEY))
   site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
 
-  site_config_install_job_queue(site_config);
+  
 
   if (config_content_has_item(config, EXT_JOB_SEARCH_PATH_KEY)){
       site_config_set_ext_job_search_path(site_config, config_content_get_value_as_bool(config, EXT_JOB_SEARCH_PATH_KEY));
@@ -720,7 +662,7 @@ void site_config_set_ext_job_search_path(site_config_type * site_config, bool se
 
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free(site_config->joblist);
-  job_queue_free(site_config->job_queue);
+
 
   stringlist_free(site_config->path_variables_user);
   stringlist_free(site_config->path_values_user);

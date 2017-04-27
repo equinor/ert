@@ -85,6 +85,7 @@
 #include <ert/enkf/model_config.h>
 #include <ert/enkf/hook_manager.h>
 #include <ert/enkf/site_config.h>
+#include <ert/enkf/queue_config.h>
 #include <ert/enkf/active_config.h>
 #include <ert/enkf/enkf_analysis.h>
 #include <ert/enkf/local_ministep.h>
@@ -1332,7 +1333,8 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
 static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (analysis_config_get_stop_long_running(analysis_config)) {
-    job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+    const queue_config_type * queue_config = site_config_get_queue_config(enkf_main->site_config);
+    job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
 
     bool cont = true;
     while (cont) {
@@ -1368,8 +1370,9 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
   const member_config_type  * member_config = enkf_state_get_member_config( enkf_state );
   const site_config_type    * site_config   = enkf_main_get_site_config( enkf_main );
-  const char * job_script                   = site_config_get_job_script( site_config );
-  job_queue_type * job_queue                = site_config_get_job_queue( site_config );
+  const queue_config_type * queue_config    = site_config_get_queue_config(enkf_main->site_config);
+  const char * job_script                   = queue_config_get_job_script( queue_config );
+  job_queue_type * job_queue                = queue_config_alloc_job_queue( queue_config );
   const char * run_path                     = run_arg_get_runpath( run_arg );
 
   // The job_queue_node will take ownership of this arg_pack; and destroy it when
@@ -1564,7 +1567,8 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
     job_size = bool_vector_count_equal( ert_run_context_get_iactive(run_context) , true );
     {
-      job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+      const queue_config_type * queue_config = site_config_get_queue_config(enkf_main->site_config);
+      job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
       job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
       bool restart_queue = true;
 
