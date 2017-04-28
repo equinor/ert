@@ -493,9 +493,6 @@ bool site_config_set_job_script(site_config_type * site_config, const char * job
 }
 
 
-bool site_config_has_job_script( const site_config_type * site_config ) {
-  return queue_config_has_job_script(site_config->queue_config);
-}
 
 
 

@@ -1364,7 +1364,7 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main, job_
 }
 
 
-//jq2
+
 void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg , job_queue_type * job_queue) {
   const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
   enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
@@ -1384,12 +1384,13 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   */
   arg_pack_append_ptr( callback_arg , enkf_state );
   arg_pack_append_ptr( callback_arg , run_arg );
+  arg_pack_append_ptr( callback_arg , job_queue );
 
   {
     int queue_index = job_queue_add_job( job_queue ,
                                          job_script ,
                                          enkf_state_complete_forward_modelOK__ ,
-                                         enkf_state_complete_forward_modelRETRY__ ,
+                                         enkf_state_complete_forward_modelRETRY__,
                                          enkf_state_complete_forward_modelEXIT__,
                                          callback_arg ,
                                          ecl_config_get_num_cpu( ecl_config ),
@@ -1575,7 +1576,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
       bool restart_queue = true;
 
       /* Start the queue */
-      if (site_config_has_job_script( enkf_main->site_config ))
+      if (queue_config_has_job_script( queue_config ))
         job_queue_manager_start_queue( queue_manager , job_size , verbose_queue , restart_queue);
       else
         util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
