@@ -98,7 +98,6 @@
 typedef struct shared_info_struct {
   model_config_type           * model_config;      /* .... */
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
-  job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / TORQUE / rsh / local / ... )*/
   const site_config_type      * site_config;
   ert_templates_type          * templates;
   const ecl_config_type       * ecl_config;
@@ -144,9 +143,7 @@ static UTIL_SAFE_CAST_FUNCTION( enkf_state , ENKF_STATE_TYPE_ID )
 
 static shared_info_type * shared_info_alloc(const site_config_type * site_config , model_config_type * model_config, const ecl_config_type * ecl_config , ert_templates_type * templates) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info );
-  const queue_config_type * queue_config = site_config_get_queue_config(site_config);
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
-  shared_info->job_queue    = queue_config_alloc_job_queue( queue_config );
   shared_info->site_config  = site_config;
   shared_info->model_config = model_config;
   shared_info->templates    = templates;
@@ -1118,7 +1115,7 @@ static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_typ
     }
 
     enkf_state_init_eclipse( enkf_state , run_arg  );                                               /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
-    job_queue_iset_external_restart( shared_info->job_queue , run_arg_get_queue_index(run_arg) );   /* Here we inform the queue system that it should pick up this job and try again. */
+    //job_queue_iset_external_restart( shared_info->job_queue , run_arg_get_queue_index(run_arg) );   /* Here we inform the queue system that it should pick up this job and try again. */
     run_arg_increase_submit_count( run_arg );
   }
 }
