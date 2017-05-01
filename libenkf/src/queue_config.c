@@ -42,8 +42,8 @@ struct queue_config_struct {
     char * job_script;
     hash_type * queue_drivers;
     bool user_mode;
-    int max_submit_key;
-    bool max_submit_key_set;
+    int max_submit;
+    bool max_submit_set;
 };
 
 
@@ -64,8 +64,8 @@ job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_co
         queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
         job_queue_set_driver(job_queue, driver);
     }  
-    if (queue_config->max_submit_key_set)
-        job_queue_set_max_submit(job_queue, queue_config->max_submit_key);
+    if (queue_config->max_submit_set)
+        job_queue_set_max_submit(job_queue, queue_config->max_submit);
     return job_queue;
 }
 
@@ -98,8 +98,8 @@ const char * queue_config_get_queue_name(const queue_config_type * queue_config)
 }
 
 
-int queue_config_get_max_submit_key(queue_config_type * queue_config) {
-    return queue_config->max_submit_key;
+int queue_config_get_max_submit(queue_config_type * queue_config) {
+    return queue_config->max_submit;
 }
 
 const char * queue_config_get_job_script(const queue_config_type * queue_config) {
@@ -200,8 +200,8 @@ bool queue_config_init(queue_config_type * queue_config, const config_content_ty
     free( option_value );
 
     if (config_content_has_item(config_content, MAX_SUBMIT_KEY)) {
-        queue_config->max_submit_key = config_content_get_value_as_int(config_content, MAX_SUBMIT_KEY);
-        queue_config->max_submit_key_set = true;
+        queue_config->max_submit = config_content_get_value_as_int(config_content, MAX_SUBMIT_KEY);
+        queue_config->max_submit_set = true;
      }
   }
 

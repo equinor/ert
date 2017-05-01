@@ -60,7 +60,7 @@ void test_parse() {
    test_assert_true(queue_config_has_queue_driver(queue_config, "LSF"));
    test_assert_true(queue_config_get_driver_type(queue_config) == LSF_DRIVER);
    
-   test_check_double_equal(queue_config_get_max_submit_key(queue_config), 6);
+   test_check_double_equal(queue_config_get_max_submit(queue_config), 6);
 
    {
      queue_driver_type * lsf_driver = queue_config_get_queue_driver(queue_config, LSF_DRIVER_NAME);

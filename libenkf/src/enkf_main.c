@@ -1329,13 +1329,10 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
   return update_done;
 }
 
-//jq1
+
 static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main, job_queue_type * job_queue) {
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (analysis_config_get_stop_long_running(analysis_config)) {
-    
-    
-
     bool cont = true;
     while (cont) {
       //Check if minimum number of realizations have run, and if so, kill the rest after a certain time

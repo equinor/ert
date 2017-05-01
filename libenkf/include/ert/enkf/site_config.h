@@ -38,7 +38,7 @@ extern "C" {
 
 typedef struct site_config_struct site_config_type;
 
-  queue_config_type *      site_config_get_queue_config(site_config_type * site_config);
+  queue_config_type *      site_config_get_queue_config(const site_config_type * site_config);
   const char *             site_config_get_location();
 
   

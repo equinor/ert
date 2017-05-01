@@ -43,7 +43,7 @@ typedef struct queue_config_struct queue_config_type;
     void queue_config_init_user_mode(queue_config_type * queue_config);
     bool queue_config_init(queue_config_type * queue_config, const config_content_type * config);
 
-    int queue_config_get_max_submit_key(queue_config_type * queue_config);    
+    int queue_config_get_max_submit(queue_config_type * queue_config);    
     bool queue_config_has_job_script( const queue_config_type * queue_config );
     const char * queue_config_get_job_script(const queue_config_type * queue_config);
     bool queue_config_set_job_script(queue_config_type * queue_config, const char * job_script);

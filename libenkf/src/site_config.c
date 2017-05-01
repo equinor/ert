@@ -207,7 +207,7 @@ void site_config_init_user_mode(site_config_type * site_config) {
   site_config->user_mode = true;
 }
 
-queue_config_type * site_config_get_queue_config(site_config_type * site_config) {
+queue_config_type * site_config_get_queue_config(const site_config_type * site_config) {
     return site_config->queue_config;
 }
 
