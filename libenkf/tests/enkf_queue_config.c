@@ -16,6 +16,10 @@
 #include <ert/enkf/queue_config.h>
 
 
+bool some_function(void * param) {
+   return true;
+}
+
 void test_empty() {
    queue_config_type * queue_config = queue_config_alloc();
    queue_config_free(queue_config);
@@ -72,7 +76,7 @@ void test_parse() {
    test_assert_string_equal(queue_config_get_queue_name(queue_config), LSF_DRIVER_NAME);
 
    //test for licence path
-   job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
+   job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config, some_function, some_function, some_function);
    test_assert_double_equal(job_queue_get_max_submit(job_queue), 6);
 
 

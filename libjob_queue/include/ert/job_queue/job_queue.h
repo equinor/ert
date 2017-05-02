@@ -40,7 +40,22 @@ extern "C" {
   bool                job_queue_has_driver(const job_queue_type * queue );
   //void                job_queue_set_size( job_queue_type * job_queue , int size );
   void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
-  job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * status_file, const char * exit_file);
+  //job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * status_file, const char * exit_file);
+
+  job_queue_type * job_queue_alloc_w_callback(int  max_submit,
+                                              const char * ok_file ,
+                                              const char * status_file ,
+                                              const char * exit_file,
+                                              job_callback_ftype * done_callback,
+                                              job_callback_ftype * retry_callback,
+                                              job_callback_ftype * exit_callback);
+
+  job_queue_type * job_queue_alloc(int  max_submit,
+                                   const char * ok_file ,
+                                   const char * status_file ,
+                                   const char * exit_file);
+
+
   void                job_queue_free(job_queue_type *);
 
   int                 job_queue_add_job(job_queue_type * ,

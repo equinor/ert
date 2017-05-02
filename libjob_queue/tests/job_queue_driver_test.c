@@ -28,6 +28,7 @@
 #include <ert/job_queue/torque_driver.h>
 #include <ert/job_queue/rsh_driver.h>
 
+
 void job_queue_set_driver_(job_driver_type driver_type) {
   job_queue_type * queue = job_queue_alloc(10, "OK", "STATUS", "ERROR");
   queue_driver_type * driver = queue_driver_alloc(driver_type);

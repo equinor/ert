@@ -1208,12 +1208,21 @@ UTIL_SAFE_CAST_FUNCTION( job_queue , JOB_QUEUE_TYPE_ID)
    job_queue_set_driver() first.
 */
 
+job_queue_type * job_queue_alloc_w_callback(int  max_submit               ,
+                                            const char * ok_file ,
+                                            const char * status_file ,
+                                            const char * exit_file,
+                                            job_callback_ftype * done_callback,
+                                            job_callback_ftype * retry_callback,
+                                            job_callback_ftype * exit_callback) {
+   job_queue_type * job_queue = job_queue_alloc(max_submit, ok_file, status_file, exit_file);
+   return job_queue;
+}
+
 job_queue_type * job_queue_alloc(int  max_submit               ,
                                  const char * ok_file ,
                                  const char * status_file ,
-                                 const char * exit_file ) {
-
-
+                                 const char * exit_file) {
 
   job_queue_type * queue  = util_malloc(sizeof * queue );
   UTIL_TYPE_ID_INIT( queue , JOB_QUEUE_TYPE_ID);

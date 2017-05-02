@@ -48,8 +48,7 @@ typedef struct queue_config_struct queue_config_type;
     const char * queue_config_get_job_script(const queue_config_type * queue_config);
     bool queue_config_set_job_script(queue_config_type * queue_config, const char * job_script);
 
-    //job_driver_type queue_config_get_driver_type(const queue_config_type * queue_config);
-    job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config);
+    job_driver_type queue_config_get_driver_type(const queue_config_type * queue_config);
 
     queue_driver_type * queue_config_get_queue_driver(const queue_config_type * queue_config, const char * driver_name);
     bool queue_config_has_queue_driver(const queue_config_type * queue_config, const char * driver_name);
@@ -59,7 +58,11 @@ typedef struct queue_config_struct queue_config_type;
 
     void queue_config_add_config_items(config_parser_type * parser, bool site_mode);
 
-    job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config);
+    //job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config);
+    job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config, 
+                                              job_callback_ftype * done_callback,
+                                              job_callback_ftype * retry_callback,
+                                              job_callback_ftype * exit_callback);
 
 #ifdef __cplusplus
 }
