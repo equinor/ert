@@ -231,6 +231,9 @@ struct job_queue_struct {
   unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
   pthread_mutex_t            run_mutex;                         /* This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
   thread_pool_type         * work_pool;
+  job_callback_ftype *       done_callback;
+  job_callback_ftype *       retry_callback;
+  job_callback_ftype *       exit_callback;
 };
 
 
@@ -1340,6 +1343,9 @@ void job_queue_free(job_queue_type * queue) {
   util_safe_free( queue->exit_file );
   job_list_free( queue->job_list );
   job_queue_status_free( queue->status );
+  /*free(queue->done_callback);
+  free(queue->retry_callback);
+  free(queue->exit_callback);*/
   free(queue);
 }
 

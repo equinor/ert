@@ -30,6 +30,7 @@ extern "C" {
 #include <ert/job_queue/job_node.h>
 
 
+
   typedef struct job_queue_struct      job_queue_type;
 
 

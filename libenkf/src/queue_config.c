@@ -21,6 +21,7 @@
 #include <ert/util/util.h>
 
 #include <ert/job_queue/job_queue.h>
+#include <ert/job_queue/job_node.h>
 #include <ert/job_queue/ext_job.h>
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/lsf_driver.h>
