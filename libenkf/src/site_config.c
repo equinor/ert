@@ -565,14 +565,7 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
   site_config_add_jobs(site_config, config);
   site_config_init_env(site_config, config);
 
-  /*
-     When LSF is used several enviroment variables must be set (by the
-     site wide file) - i.e.  the calls to SETENV must come first.
-   */
-  
-
-
-  /*
+   /*
      Set the umask for all file creation. A value of '0' will ensure
      that all files and directories are created with 'equal rights'
      for everyone - might be handy if you are helping someone... The
@@ -591,62 +584,16 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
     else
       util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n", __func__, string_mask);
   }
-
-
   
-
-
-  
-
-  // Setting driver_type 
-  if (config_content_has_item(config, QUEUE_SYSTEM_KEY)) {
-    job_driver_type driver_type;
-    {
-      const char * queue_system = config_content_get_value(config, QUEUE_SYSTEM_KEY);
-      if (strcmp(queue_system, LSF_DRIVER_NAME) == 0) {
-        driver_type = LSF_DRIVER;
-      } else if (strcmp(queue_system, RSH_DRIVER_NAME) == 0)
-        driver_type = RSH_DRIVER;
-      else if (strcmp(queue_system, LOCAL_DRIVER_NAME) == 0)
-        driver_type = LOCAL_DRIVER;
-      else if (strcmp(queue_system, TORQUE_DRIVER_NAME) == 0)
-        driver_type = TORQUE_DRIVER;
-      else {
-        util_abort("%s: queue system :%s not recognized \n", __func__, queue_system);
-        driver_type = NULL_DRIVER;
-      }
-    }
-    //create a pointer to the driver_in_use
-    
-  }
-
   if (config_content_has_item(config, LICENSE_PATH_KEY))
   site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
 
   
-
   if (config_content_has_item(config, EXT_JOB_SEARCH_PATH_KEY)){
       site_config_set_ext_job_search_path(site_config, config_content_get_value_as_bool(config, EXT_JOB_SEARCH_PATH_KEY));
   }
 
 
-  /* Setting QUEUE_OPTIONS */
-  {
-    int i;
-    for (i = 0; i < config_content_get_occurences(config, QUEUE_OPTION_KEY); i++) {
-      const stringlist_type * tokens = config_content_iget_stringlist_ref(config, QUEUE_OPTION_KEY, i);
-      const char * driver_name = stringlist_iget(tokens, 0);
-      const char * option_key = stringlist_iget(tokens, 1);
-      char * option_value = stringlist_alloc_joined_substring(tokens, 2, stringlist_get_size(tokens), " ");
-      /*
-         If it is desirable to keep the exact number of spaces in the
-         option_value it should be quoted with "" in the configuration
-         file.
-       */
-      site_config_set_queue_option(site_config, driver_name, option_key, option_value);
-      free( option_value );
-    }
-  }
   return true;
 }
 

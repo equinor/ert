@@ -32,6 +32,7 @@
 
 #include <ert/job_queue/job_node.h>
 
+
 #define JOB_QUEUE_NODE_TYPE_ID 3315299
 #define INVALID_QUEUE_INDEX    -999
 
@@ -397,14 +398,29 @@ double job_queue_node_time_since_sim_start (const job_queue_node_type * node ) {
   return util_difftime_seconds( node->sim_start , time(NULL));
 }
 
-bool job_queue_node_run_DONE_callback( job_queue_node_type * node ) {
+void * job_queue_node_get_callback_arg(job_queue_node_type * node) {
+  return node->callback_arg;
+}
+
+job_callback_ftype * job_queue_node_get_DONE_callback(job_queue_node_type * node) {
+  return node->done_callback;
+}
+
+job_callback_ftype * job_queue_node_get_RETRY_callback(job_queue_node_type * node) {
+  return node->retry_callback;
+}
+
+job_callback_ftype * job_queue_node_get_EXIT_callback(job_queue_node_type * node) {
+  return node->exit_callback;
+}
+
+/*bool job_queue_node_run_DONE_callback( job_queue_node_type * node ) {
   bool OK = true;
   if (node->done_callback)
     OK = node->done_callback( node->callback_arg );
 
   return OK;
 }
-
 
 bool job_queue_node_run_RETRY_callback( job_queue_node_type * node ) {
   bool retry = false;
@@ -414,11 +430,10 @@ bool job_queue_node_run_RETRY_callback( job_queue_node_type * node ) {
   return retry;
 }
 
-
 void job_queue_node_run_EXIT_callback( job_queue_node_type * node ) {
   if (node->exit_callback)
     node->exit_callback( node->callback_arg );
-}
+}*/
 
 static void job_queue_node_set_status(job_queue_node_type * node , job_status_type new_status) {
   if (new_status != node->job_status) {

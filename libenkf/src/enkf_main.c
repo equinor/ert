@@ -1366,7 +1366,6 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
   enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
   const member_config_type  * member_config = enkf_state_get_member_config( enkf_state );
-  const site_config_type    * site_config   = enkf_main_get_site_config( enkf_main );
   const queue_config_type * queue_config    = site_config_get_queue_config(enkf_main->site_config);
   const char * job_script                   = queue_config_get_job_script( queue_config );
   

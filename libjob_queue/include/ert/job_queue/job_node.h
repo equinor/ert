@@ -28,6 +28,7 @@ extern "C" {
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/job_queue_status.h>
 
+
 /**
    This struct holds the job_queue information about one job. Observe
    the following:
@@ -113,6 +114,11 @@ typedef struct job_queue_node_struct job_queue_node_type;
   void job_queue_node_set_queue_index( job_queue_node_type * node , int queue_index);
 
   void * job_queue_node_get_driver_data( job_queue_node_type * node );
+
+  job_callback_ftype * job_queue_node_get_DONE_callback(job_queue_node_type * node);
+  job_callback_ftype * job_queue_node_get_RETRY_callback(job_queue_node_type * node);
+  job_callback_ftype * job_queue_node_get_EXIT_callback(job_queue_node_type * node);
+  void * job_queue_node_get_callback_arg(job_queue_node_type * node);
 
   UTIL_IS_INSTANCE_HEADER( job_queue_node );
   UTIL_SAFE_CAST_HEADER( job_queue_node );

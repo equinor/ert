@@ -1094,7 +1094,6 @@ bool enkf_state_complete_forward_modelRETRY__(void * arg );
 
 static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_type * run_arg , job_queue_type * job_queue , bool load_failure) {
   const member_config_type  * my_config   = enkf_state->my_config;
-  const shared_info_type    * shared_info = enkf_state->shared_info;
   const int iens                          = member_config_get_iens( my_config );
 
   if (load_failure)

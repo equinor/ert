@@ -691,6 +691,34 @@ static bool job_queue_check_node_status_files( const job_queue_type * job_queue 
 }
 
 
+static bool job_queue_run_DONE_callback__(job_queue_type * job_queue, job_queue_node_type * node) {
+   bool OK = true;
+   job_callback_ftype * callback_DONE = job_queue_node_get_DONE_callback( node );
+   void * callback_arg = job_queue_node_get_callback_arg( node );
+   if (callback_DONE)
+       OK = callback_DONE( callback_arg );
+
+   return OK;
+}
+
+static bool job_queue_run_RETRY_callback__(job_queue_type * job_queue, job_queue_node_type * node ) {
+  bool retry = false;
+  job_callback_ftype * callback_RETRY = job_queue_node_get_RETRY_callback( node );
+  void * callback_arg = job_queue_node_get_callback_arg( node );
+  if (callback_RETRY)
+    retry = callback_RETRY( callback_arg );
+
+  return retry;
+}
+
+static void job_queue_run_EXIT_callback__( job_queue_type * job_queue , job_queue_node_type * node ) {
+  job_callback_ftype * callback_EXIT = job_queue_node_get_EXIT_callback( node );
+  void * callback_arg = job_queue_node_get_callback_arg( node );
+  if (callback_EXIT)
+    callback_EXIT( callback_arg );
+}
+
+
 static void * job_queue_run_DONE_callback( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   job_queue_type * job_queue = arg_pack_iget_ptr( arg_pack , 0 );
@@ -700,8 +728,9 @@ static void * job_queue_run_DONE_callback( void * arg ) {
     job_queue_node_type * node = job_list_iget_job( job_queue->job_list , queue_index );
     bool OK = job_queue_check_node_status_files( job_queue , node );
 
-    if (OK)
-      OK = job_queue_node_run_DONE_callback( node );
+    if (OK) {
+      OK = job_queue_run_DONE_callback__(job_queue, node);
+    }
 
     if (OK)
       job_queue_change_node_status( job_queue , node , JOB_QUEUE_SUCCESS );
@@ -738,7 +767,7 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
     if (job_queue_node_get_submit_attempt( node ) < job_queue->max_submit)
       job_queue_change_node_status( job_queue , node , JOB_QUEUE_WAITING );  /* The job will be picked up for antother go. */
     else {
-      bool retry = job_queue_node_run_RETRY_callback( node );
+      bool retry = job_queue_run_RETRY_callback__(job_queue, node);
 
       if (retry) {
         /* OK - we have invoked the retry_callback() - and that has returned true;
@@ -747,8 +776,7 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
         job_queue_change_node_status(job_queue , node , JOB_QUEUE_WAITING);
       } else {
         // It's time to call it a day
-
-        job_queue_node_run_EXIT_callback( node );
+        job_queue_run_EXIT_callback__(job_queue , node);
         job_queue_change_node_status(job_queue , node , JOB_QUEUE_FAILED);
       }
     }
@@ -772,7 +800,7 @@ static void * job_queue_run_DO_KILL_callback( void * arg ) {
     job_queue_node_free_driver_data( node , job_queue->driver );
 
     // It's time to call it a day
-    job_queue_node_run_EXIT_callback( node );
+    job_queue_run_EXIT_callback__(job_queue, node);
     job_queue_change_node_status(job_queue, node, JOB_QUEUE_IS_KILLED);
   }
   job_list_unlock(job_queue->job_list );
