@@ -108,7 +108,7 @@ void * submit_job__( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   job_type * job = job_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ) );
   job_queue_type * queue = arg_pack_iget_ptr( arg_pack , 1 );
-  job->queue_index = job_queue_add_job( queue  , job->cmd , callback , NULL , NULL , job , 1 , job->run_path , job->run_path , job->argc , (const char **) job->argv );
+  job->queue_index = job_queue_add_job( queue  , job->cmd , job , 1 , job->run_path , job->run_path , job->argc , (const char **) job->argv );
 
   if (job->queue_index >= 0)
     usleep( job->submit_usleep );

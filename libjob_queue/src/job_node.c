@@ -260,7 +260,7 @@ job_queue_node_type * job_queue_node_alloc_simple( const char * job_name ,
                                                    const char * run_cmd ,
                                                    int argc ,
                                                    const char ** argv) {
-  return job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, NULL , NULL, NULL, NULL, NULL, NULL, NULL);
+  return job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, NULL , NULL, NULL, NULL);
 }
 
 
@@ -272,10 +272,7 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
                                             int num_cpu,
                                             const char * ok_file,
                                             const char * status_file,
-                                            const char * exit_file,
-                                            job_callback_ftype * done_callback,
-                                            job_callback_ftype * retry_callback,
-                                            job_callback_ftype * exit_callback,
+                                            const char * exit_file,                                            
                                             void * callback_arg) {
 
   if (util_is_directory( run_path )) {
@@ -310,11 +307,7 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
       if (exit_file)
         node->exit_file = util_alloc_filename(node->run_path , exit_file , NULL);
       else
-        node->exit_file = NULL;
-
-      node->exit_callback  = exit_callback;
-      node->retry_callback = retry_callback;
-      node->done_callback  = done_callback;
+        node->exit_file = NULL;      
       node->callback_arg   = callback_arg;
     }
     {

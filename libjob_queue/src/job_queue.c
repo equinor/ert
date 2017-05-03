@@ -1154,9 +1154,6 @@ void job_queue_run_jobs_threaded(job_queue_type * queue , int num_total_run, boo
 
 int job_queue_add_job(job_queue_type * queue ,
                       const char * run_cmd ,
-                      job_callback_ftype * done_callback,
-                      job_callback_ftype * retry_callback,
-                      job_callback_ftype * exit_callback,
                       void * callback_arg ,
                       int num_cpu ,
                       const char * run_path ,
@@ -1175,10 +1172,7 @@ int job_queue_add_job(job_queue_type * queue ,
                                                        num_cpu ,
                                                        queue->ok_file ,
                                                        queue->status_file ,
-                                                       queue->exit_file,
-                                                       done_callback ,
-                                                       retry_callback ,
-                                                       exit_callback ,
+                                                       queue->exit_file,                                                       
                                                        callback_arg );
     if (node) {
       job_list_get_wrlock( queue->job_list );

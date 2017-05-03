@@ -3,7 +3,7 @@
 
    The file 'job_node.h' is part of ERT - Ensemble based Reservoir Tool.
 
-   ERT is free software: you can redistribute it and/or modify
+   ERT is free software: you can redistribute illt and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
@@ -67,10 +67,7 @@ typedef struct job_queue_node_struct job_queue_node_type;
                                               int num_cpu ,
                                               const char * ok_file,
                                               const char * status_file,
-                                              const char * exit_file,
-                                              job_callback_ftype * done_callback,
-                                              job_callback_ftype * retry_callback,
-                                              job_callback_ftype * exit_callback,
+                                              const char * exit_file,                                              
                                               void * callback_arg);
 
 

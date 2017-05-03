@@ -60,9 +60,6 @@ extern "C" {
 
   int                 job_queue_add_job(job_queue_type * ,
                                         const char * run_cmd ,
-                                        job_callback_ftype * done_callback,
-                                        job_callback_ftype * retry_callback,
-                                        job_callback_ftype * exit_callback,
                                         void * callback_arg ,
                                         int num_cpu ,
                                         const char * ,

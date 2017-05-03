@@ -1384,10 +1384,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
 
   {
     int queue_index = job_queue_add_job( job_queue ,
-                                         job_script ,
-                                         enkf_state_complete_forward_modelOK__ ,
-                                         enkf_state_complete_forward_modelRETRY__,
-                                         enkf_state_complete_forward_modelEXIT__,
+                                         job_script ,                                         
                                          callback_arg ,
                                          ecl_config_get_num_cpu( ecl_config ),
                                          run_path ,
