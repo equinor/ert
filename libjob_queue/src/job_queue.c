@@ -696,17 +696,17 @@ static bool job_queue_check_node_status_files( const job_queue_type * job_queue 
 
 static bool job_queue_run_DONE_callback__(job_queue_type * job_queue, job_queue_node_type * node) {
    bool OK = true;
-   job_callback_ftype * callback_DONE = job_queue_node_get_DONE_callback( node );
+   job_callback_ftype * callback_DONE = job_queue->done_callback; 
    void * callback_arg = job_queue_node_get_callback_arg( node );
    if (callback_DONE)
        OK = callback_DONE( callback_arg );
-
+   
    return OK;
 }
 
 static bool job_queue_run_RETRY_callback__(job_queue_type * job_queue, job_queue_node_type * node ) {
   bool retry = false;
-  job_callback_ftype * callback_RETRY = job_queue_node_get_RETRY_callback( node );
+  job_callback_ftype * callback_RETRY = job_queue->retry_callback; 
   void * callback_arg = job_queue_node_get_callback_arg( node );
   if (callback_RETRY)
     retry = callback_RETRY( callback_arg );
@@ -715,7 +715,7 @@ static bool job_queue_run_RETRY_callback__(job_queue_type * job_queue, job_queue
 }
 
 static void job_queue_run_EXIT_callback__( job_queue_type * job_queue , job_queue_node_type * node ) {
-  job_callback_ftype * callback_EXIT = job_queue_node_get_EXIT_callback( node );
+  job_callback_ftype * callback_EXIT = job_queue->exit_callback; 
   void * callback_arg = job_queue_node_get_callback_arg( node );
   if (callback_EXIT)
     callback_EXIT( callback_arg );
@@ -1216,6 +1216,9 @@ job_queue_type * job_queue_alloc_w_callback(int  max_submit               ,
                                             job_callback_ftype * retry_callback,
                                             job_callback_ftype * exit_callback) {
    job_queue_type * job_queue = job_queue_alloc(max_submit, ok_file, status_file, exit_file);
+   job_queue->done_callback = done_callback;
+   job_queue->retry_callback = retry_callback;
+   job_queue->exit_callback = exit_callback;
    return job_queue;
 }
 
@@ -1243,6 +1246,9 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   queue->work_pool        = NULL;
   queue->job_list         = job_list_alloc(  );
   queue->status           = job_queue_status_alloc( );
+  queue->done_callback    = NULL;
+  queue->retry_callback   = NULL;
+  queue->exit_callback    = NULL;
 
   pthread_mutex_init( &queue->run_mutex    , NULL );
 
@@ -1352,9 +1358,6 @@ void job_queue_free(job_queue_type * queue) {
   util_safe_free( queue->exit_file );
   job_list_free( queue->job_list );
   job_queue_status_free( queue->status );
-  /*free(queue->done_callback);
-  free(queue->retry_callback);
-  free(queue->exit_callback);*/
   free(queue);
 }
 

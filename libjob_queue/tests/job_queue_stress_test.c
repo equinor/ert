@@ -274,7 +274,8 @@ int main(int argc , char ** argv) {
   test_work_area_type * work_area = test_work_area_alloc("job_queue");
   job_type **jobs = alloc_jobs( rng , number_of_jobs , job);
 
-  job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK", "STATUS", "ERROR");
+  //job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK", "STATUS", "ERROR");
+  job_queue_type * queue = job_queue_alloc_w_callback(number_of_jobs, "OK", "STATUS", "ERROR", callback, NULL, NULL);
   queue_driver_type * driver = queue_driver_alloc_local();
   job_queue_manager_type * queue_manager = job_queue_manager_alloc( queue );
 
