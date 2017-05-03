@@ -1380,7 +1380,6 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   */
   arg_pack_append_ptr( callback_arg , enkf_state );
   arg_pack_append_ptr( callback_arg , run_arg );
-  arg_pack_append_ptr( callback_arg , job_queue );
 
   {
     int queue_index = job_queue_add_job( job_queue ,

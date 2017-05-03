@@ -1240,23 +1240,22 @@ static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * e
   }
 }
 
-static bool enkf_state_complete_forward_model_EXIT_handler(void * arg, bool allow_retry ) {
+static bool enkf_state_complete_forward_model_EXIT_handler(job_queue_type * job_queue, void * arg, bool allow_retry ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
 
   enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ) );
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ) );
-  job_queue_type * job_queue = job_queue_safe_cast( arg_pack_iget_ptr( arg_pack , 2 ) );
 
   return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , run_arg , job_queue, allow_retry );
 }
 
 
 bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg ) {
-  return enkf_state_complete_forward_model_EXIT_handler(arg, false );
+  return enkf_state_complete_forward_model_EXIT_handler(job_queue, arg, false );
 }
 
 bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg ) {
-  return enkf_state_complete_forward_model_EXIT_handler(arg, true );
+  return enkf_state_complete_forward_model_EXIT_handler(job_queue, arg, true );
 }
 
 
