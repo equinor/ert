@@ -104,17 +104,10 @@ typedef struct job_queue_node_struct job_queue_node_type;
   const char * job_queue_node_get_status_file( const job_queue_node_type * node);
   const char * job_queue_node_get_exit_file( const job_queue_node_type * node);
 
-  bool job_queue_node_run_DONE_callback( job_queue_node_type * node );
-  bool job_queue_node_run_RETRY_callback( job_queue_node_type * node );
-  void job_queue_node_run_EXIT_callback( job_queue_node_type * node );
   int job_queue_node_get_queue_index( const job_queue_node_type * node );
   void job_queue_node_set_queue_index( job_queue_node_type * node , int queue_index);
 
   void * job_queue_node_get_driver_data( job_queue_node_type * node );
-
-  job_callback_ftype * job_queue_node_get_DONE_callback(job_queue_node_type * node);
-  job_callback_ftype * job_queue_node_get_RETRY_callback(job_queue_node_type * node);
-  job_callback_ftype * job_queue_node_get_EXIT_callback(job_queue_node_type * node);
   void * job_queue_node_get_callback_arg(job_queue_node_type * node);
 
   UTIL_IS_INSTANCE_HEADER( job_queue_node );

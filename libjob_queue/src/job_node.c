@@ -45,9 +45,6 @@ struct job_queue_node_struct {
   char                  *status_file;     /* The queue will look for this file to verify that the job is running or has run. */
   char                  *job_name;        /* The name of the job. */
   char                  *run_path;        /* Where the job is run - absolute path. */
-  job_callback_ftype    *done_callback;
-  job_callback_ftype    *retry_callback;  /* To determine if job can be retried */
-  job_callback_ftype    *exit_callback;   /* Callback to perform any cleanup */
   void                  *callback_arg;
   int                    argc;            /* The number of commandline arguments to pass when starting the job. */
   char                 **argv;            /* The commandline arguments. */
@@ -395,38 +392,6 @@ void * job_queue_node_get_callback_arg(job_queue_node_type * node) {
   return node->callback_arg;
 }
 
-job_callback_ftype * job_queue_node_get_DONE_callback(job_queue_node_type * node) {
-  return node->done_callback;
-}
-
-job_callback_ftype * job_queue_node_get_RETRY_callback(job_queue_node_type * node) {
-  return node->retry_callback;
-}
-
-job_callback_ftype * job_queue_node_get_EXIT_callback(job_queue_node_type * node) {
-  return node->exit_callback;
-}
-
-/*bool job_queue_node_run_DONE_callback( job_queue_node_type * node ) {
-  bool OK = true;
-  if (node->done_callback)
-    OK = node->done_callback( node->callback_arg );
-
-  return OK;
-}
-
-bool job_queue_node_run_RETRY_callback( job_queue_node_type * node ) {
-  bool retry = false;
-  if (node->retry_callback)
-    retry = node->retry_callback( node->callback_arg );
-
-  return retry;
-}
-
-void job_queue_node_run_EXIT_callback( job_queue_node_type * node ) {
-  if (node->exit_callback)
-    node->exit_callback( node->callback_arg );
-}*/
 
 static void job_queue_node_set_status(job_queue_node_type * node , job_status_type new_status) {
   if (new_status != node->job_status) {
