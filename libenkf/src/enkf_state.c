@@ -1072,9 +1072,9 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
 
 
 
-bool enkf_state_complete_forward_modelOK__(void * arg );
-bool enkf_state_complete_forward_modelEXIT__(void * arg );
-bool enkf_state_complete_forward_modelRETRY__(void * arg );
+bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg );
+bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg );
+bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg );
 
 
 /**
@@ -1201,7 +1201,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , r
 }
 
 
-bool enkf_state_complete_forward_modelOK__(void * arg ) {
+bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ));
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ));
@@ -1251,11 +1251,11 @@ static bool enkf_state_complete_forward_model_EXIT_handler(void * arg, bool allo
 }
 
 
-bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
+bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg ) {
   return enkf_state_complete_forward_model_EXIT_handler(arg, false );
 }
 
-bool enkf_state_complete_forward_modelRETRY__(void * arg ) {
+bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg ) {
   return enkf_state_complete_forward_model_EXIT_handler(arg, true );
 }
 

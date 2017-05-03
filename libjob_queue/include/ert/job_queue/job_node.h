@@ -47,7 +47,6 @@ extern "C" {
 
 */
 
-typedef bool (job_callback_ftype)   (void *);
 typedef struct job_queue_node_struct job_queue_node_type;
 
 

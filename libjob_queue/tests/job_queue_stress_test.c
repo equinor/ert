@@ -96,7 +96,7 @@ job_type ** alloc_jobs( rng_type * rng , int num_jobs , const char * cmd) {
 
 
 
-bool callback( void * arg ) {
+bool callback( job_queue_type * job_queue, void * arg ) {
   job_type * job = job_safe_cast( arg );
   usleep( job->callback_usleep );
   job->callback_run = true;
