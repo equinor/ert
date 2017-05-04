@@ -79,23 +79,23 @@ void test_job_script() {
   test_work_area_type * test_area = test_work_area_alloc("site-config");
   {
     site_config_type * site_config = site_config_alloc_empty();
-    test_assert_false( site_config_has_job_script( site_config ));
+   
 
     test_assert_false( site_config_set_job_script( site_config , "/does/not/exist" ));
-    test_assert_false( site_config_has_job_script( site_config ));
+    
 
     {
       FILE * job_script = util_fopen("Script.sh" , "w");
       fclose( job_script );
     }
     test_assert_false( site_config_set_job_script( site_config , "Script.sh" ));
-    test_assert_false( site_config_has_job_script( site_config ));
+    
     chmod("Script.sh" , S_IRWXU );
     test_assert_true( site_config_set_job_script( site_config , "Script.sh" ));
-    test_assert_true( site_config_has_job_script( site_config ));
+    
 
     test_assert_false( site_config_set_job_script( site_config , "DoesNotExits"));
-    test_assert_true( site_config_has_job_script( site_config ));
+    
     {
       char * full_path = util_alloc_realpath( "Script.sh" );
       test_assert_string_equal( full_path , site_config_get_job_script( site_config));

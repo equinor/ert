@@ -1,3 +1,22 @@
+/*
+   Copyright (C) 2017  Statoil ASA, Norway.
+
+   The file 'queue_config.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
+ */
+
+
 #ifndef ERT_QUEUE_CONFIG_H
 #define ERT_QUEUE_CONFIG_H
 #ifdef __cplusplus
@@ -8,6 +27,8 @@ extern "C" {
 #include <ert/config/config_content_item.h>
 #include <ert/config/config_content_node.h>
 #include <ert/config/config_schema_item.h>
+
+#include <ert/job_queue/job_queue.h>
 
 #define LSF_DRIVER_NAME    "LSF"
 #define LOCAL_DRIVER_NAME  "LOCAL"
@@ -22,18 +43,26 @@ typedef struct queue_config_struct queue_config_type;
     void queue_config_init_user_mode(queue_config_type * queue_config);
     bool queue_config_init(queue_config_type * queue_config, const config_content_type * config);
 
+    int queue_config_get_max_submit(queue_config_type * queue_config);    
     bool queue_config_has_job_script( const queue_config_type * queue_config );
     const char * queue_config_get_job_script(const queue_config_type * queue_config);
     bool queue_config_set_job_script(queue_config_type * queue_config, const char * job_script);
 
     job_driver_type queue_config_get_driver_type(const queue_config_type * queue_config);
+
     queue_driver_type * queue_config_get_queue_driver(const queue_config_type * queue_config, const char * driver_name);
     bool queue_config_has_queue_driver(const queue_config_type * queue_config, const char * driver_name);
     void queue_config_create_queue_drivers(queue_config_type * queue_config);
     const char * queue_config_get_queue_name(const queue_config_type * queue_config);
+    const char * queue_config_get_job_script(const queue_config_type * queue_config);
 
     void queue_config_add_config_items(config_parser_type * parser, bool site_mode);
 
+    //job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config);
+    job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config, 
+                                              job_callback_ftype * done_callback,
+                                              job_callback_ftype * retry_callback,
+                                              job_callback_ftype * exit_callback);
 
 #ifdef __cplusplus
 }

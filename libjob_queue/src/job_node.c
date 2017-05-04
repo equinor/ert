@@ -32,6 +32,7 @@
 
 #include <ert/job_queue/job_node.h>
 
+
 #define JOB_QUEUE_NODE_TYPE_ID 3315299
 #define INVALID_QUEUE_INDEX    -999
 
@@ -44,9 +45,6 @@ struct job_queue_node_struct {
   char                  *status_file;     /* The queue will look for this file to verify that the job is running or has run. */
   char                  *job_name;        /* The name of the job. */
   char                  *run_path;        /* Where the job is run - absolute path. */
-  job_callback_ftype    *done_callback;
-  job_callback_ftype    *retry_callback;  /* To determine if job can be retried */
-  job_callback_ftype    *exit_callback;   /* Callback to perform any cleanup */
   void                  *callback_arg;
   int                    argc;            /* The number of commandline arguments to pass when starting the job. */
   char                 **argv;            /* The commandline arguments. */
@@ -259,7 +257,7 @@ job_queue_node_type * job_queue_node_alloc_simple( const char * job_name ,
                                                    const char * run_cmd ,
                                                    int argc ,
                                                    const char ** argv) {
-  return job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, NULL , NULL, NULL, NULL, NULL, NULL, NULL);
+  return job_queue_node_alloc( job_name , run_path , run_cmd , argc , argv , 1, NULL , NULL, NULL, NULL);
 }
 
 
@@ -271,10 +269,7 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
                                             int num_cpu,
                                             const char * ok_file,
                                             const char * status_file,
-                                            const char * exit_file,
-                                            job_callback_ftype * done_callback,
-                                            job_callback_ftype * retry_callback,
-                                            job_callback_ftype * exit_callback,
+                                            const char * exit_file,                                            
                                             void * callback_arg) {
 
   if (util_is_directory( run_path )) {
@@ -309,11 +304,7 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
       if (exit_file)
         node->exit_file = util_alloc_filename(node->run_path , exit_file , NULL);
       else
-        node->exit_file = NULL;
-
-      node->exit_callback  = exit_callback;
-      node->retry_callback = retry_callback;
-      node->done_callback  = done_callback;
+        node->exit_file = NULL;      
       node->callback_arg   = callback_arg;
     }
     {
@@ -397,28 +388,10 @@ double job_queue_node_time_since_sim_start (const job_queue_node_type * node ) {
   return util_difftime_seconds( node->sim_start , time(NULL));
 }
 
-bool job_queue_node_run_DONE_callback( job_queue_node_type * node ) {
-  bool OK = true;
-  if (node->done_callback)
-    OK = node->done_callback( node->callback_arg );
-
-  return OK;
+void * job_queue_node_get_callback_arg(job_queue_node_type * node) {
+  return node->callback_arg;
 }
 
-
-bool job_queue_node_run_RETRY_callback( job_queue_node_type * node ) {
-  bool retry = false;
-  if (node->retry_callback)
-    retry = node->retry_callback( node->callback_arg );
-
-  return retry;
-}
-
-
-void job_queue_node_run_EXIT_callback( job_queue_node_type * node ) {
-  if (node->exit_callback)
-    node->exit_callback( node->callback_arg );
-}
 
 static void job_queue_node_set_status(job_queue_node_type * node , job_status_type new_status) {
   if (new_status != node->job_status) {

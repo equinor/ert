@@ -33,12 +33,15 @@ extern "C" {
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/forward_model.h>
 
+#include <ert/enkf/queue_config.h>
+
 
 typedef struct site_config_struct site_config_type;
 
+  queue_config_type *      site_config_get_queue_config(const site_config_type * site_config);
   const char *             site_config_get_location();
 
-  bool                     site_config_has_job_script( const site_config_type * site_config );
+  
   const char *             site_config_get_manual_url( const site_config_type * site_config );
   void                     site_config_set_manual_url( site_config_type * site_config , const char * manual_url );
   const char *             site_config_get_default_browser( const site_config_type * site_config );
@@ -53,7 +56,6 @@ typedef struct site_config_struct site_config_type;
   bool                     site_config_init(site_config_type * site_config , const config_content_type * config);
   void                     site_config_free(site_config_type *);
   ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );
-  job_queue_type         * site_config_get_job_queue( const site_config_type * );
   void                     site_config_set_ens_size( site_config_type * site_config , int ens_size );
 
   void                     site_config_set_max_running_lsf( site_config_type * site_config , int max_running_lsf);
@@ -87,7 +89,6 @@ typedef struct site_config_struct site_config_type;
 
 
   bool                     site_config_set_job_script( site_config_type * site_config , const char * job_script );
-  const char             * site_config_get_job_script( const site_config_type * site_config );
 
   void                     site_config_set_max_submit( site_config_type * site_config , int max_submit );
   int                      site_config_get_max_submit(const site_config_type * site_config );

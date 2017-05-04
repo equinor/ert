@@ -41,7 +41,7 @@ void submit_jobs_to_queue(job_queue_type * queue, test_work_area_type * work_are
       submitted_slowjobs++;
     }
 
-    job_queue_add_job(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {runpath, sleeptime});
+    job_queue_add_job(queue, executable_to_run, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {runpath, sleeptime});
     free(runpath);
   }
   test_assert_int_equal( number_of_jobs , job_queue_get_active_size(queue) );
@@ -115,7 +115,7 @@ void run_and_monitor_jobs(char * executable_to_run,
     char * sleeptime = util_alloc_sprintf("%d", job_run_time);
 
     util_make_path(runpath);
-    job_queue_add_job(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {runpath, sleeptime});
+    job_queue_add_job(queue, executable_to_run, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {runpath, sleeptime});
     job_run_time += interval_between_jobs;
 
     free(sleeptime);

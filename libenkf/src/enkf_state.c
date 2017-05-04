@@ -98,7 +98,6 @@
 typedef struct shared_info_struct {
   model_config_type           * model_config;      /* .... */
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
-  job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / TORQUE / rsh / local / ... )*/
   const site_config_type      * site_config;
   ert_templates_type          * templates;
   const ecl_config_type       * ecl_config;
@@ -144,9 +143,7 @@ static UTIL_SAFE_CAST_FUNCTION( enkf_state , ENKF_STATE_TYPE_ID )
 
 static shared_info_type * shared_info_alloc(const site_config_type * site_config , model_config_type * model_config, const ecl_config_type * ecl_config , ert_templates_type * templates) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info );
-
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
-  shared_info->job_queue    = site_config_get_job_queue( site_config );
   shared_info->site_config  = site_config;
   shared_info->model_config = model_config;
   shared_info->templates    = templates;
@@ -1075,9 +1072,9 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
 
 
 
-bool enkf_state_complete_forward_modelOK__(void * arg );
-bool enkf_state_complete_forward_modelEXIT__(void * arg );
-bool enkf_state_complete_forward_modelRETRY__(void * arg );
+bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg );
+bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg );
+bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg );
 
 
 /**
@@ -1095,9 +1092,8 @@ bool enkf_state_complete_forward_modelRETRY__(void * arg );
 
 
 
-static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_type * run_arg , bool load_failure) {
+static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_type * run_arg , job_queue_type * job_queue , bool load_failure) {
   const member_config_type  * my_config   = enkf_state->my_config;
-  const shared_info_type    * shared_info = enkf_state->shared_info;
   const int iens                          = member_config_get_iens( my_config );
 
   if (load_failure)
@@ -1118,7 +1114,7 @@ static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_typ
     }
 
     enkf_state_init_eclipse( enkf_state , run_arg  );                                               /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
-    job_queue_iset_external_restart( shared_info->job_queue , run_arg_get_queue_index(run_arg) );   /* Here we inform the queue system that it should pick up this job and try again. */
+    job_queue_iset_external_restart( job_queue , run_arg_get_queue_index(run_arg) );   /* Here we inform the queue system that it should pick up this job and try again. */
     run_arg_increase_submit_count( run_arg );
   }
 }
@@ -1205,7 +1201,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , r
 }
 
 
-bool enkf_state_complete_forward_modelOK__(void * arg ) {
+bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ));
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ));
@@ -1215,7 +1211,7 @@ bool enkf_state_complete_forward_modelOK__(void * arg ) {
 
 
 
-static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , run_arg_type * run_arg , bool is_retry) {
+static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , run_arg_type * run_arg , job_queue_type * job_queue , bool is_retry) {
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
   /*
@@ -1226,7 +1222,7 @@ static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * e
 
   if (is_retry) {
     if (run_arg_can_retry(run_arg)) {
-      enkf_state_internal_retry(enkf_state, run_arg , false);
+      enkf_state_internal_retry(enkf_state, run_arg , job_queue , false);
       return true;
     } else {
       return false;
@@ -1244,22 +1240,22 @@ static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * e
   }
 }
 
-static bool enkf_state_complete_forward_model_EXIT_handler(void * arg, bool allow_retry ) {
+static bool enkf_state_complete_forward_model_EXIT_handler(job_queue_type * job_queue, void * arg, bool allow_retry ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
 
   enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ) );
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ) );
 
-  return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , run_arg , allow_retry );
+  return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , run_arg , job_queue, allow_retry );
 }
 
 
-bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
-  return enkf_state_complete_forward_model_EXIT_handler(arg, false );
+bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg ) {
+  return enkf_state_complete_forward_model_EXIT_handler(job_queue, arg, false );
 }
 
-bool enkf_state_complete_forward_modelRETRY__(void * arg ) {
-  return enkf_state_complete_forward_model_EXIT_handler(arg, true );
+bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg ) {
+  return enkf_state_complete_forward_model_EXIT_handler(job_queue, arg, true );
 }
 
 

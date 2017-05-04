@@ -21,6 +21,7 @@
 #include <ert/util/util.h>
 
 #include <ert/job_queue/job_queue.h>
+#include <ert/job_queue/job_node.h>
 #include <ert/job_queue/ext_job.h>
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/lsf_driver.h>
@@ -35,12 +36,15 @@
 
 #include <ert/enkf/queue_config.h>
 #include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 struct queue_config_struct {
     job_driver_type driver_type;
     char * job_script;
     hash_type * queue_drivers;
     bool user_mode;
+    int max_submit;
+    bool max_submit_set;
 };
 
 
@@ -53,6 +57,24 @@ queue_config_type * queue_config_alloc() {
     return queue_config;
 }
 
+job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config, 
+                                              job_callback_ftype * done_callback,
+                                              job_callback_ftype * retry_callback,
+                                              job_callback_ftype * exit_callback) {
+    job_queue_type * job_queue = job_queue_alloc_w_callback(DEFAULT_MAX_SUBMIT, "OK", "STATUS", "ERROR", 
+                                                            done_callback,
+                                                            retry_callback,
+                                                            exit_callback);
+    const char * driver_name = queue_config_get_queue_name(queue_config);
+    if (driver_name != NULL) 
+    {
+        queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
+        job_queue_set_driver(job_queue, driver);
+    }  
+    if (queue_config->max_submit_set)
+        job_queue_set_max_submit(job_queue, queue_config->max_submit);
+    return job_queue;
+}
 
 void queue_config_free(queue_config_type * queue_config) {
   hash_free(queue_config->queue_drivers);
@@ -82,6 +104,10 @@ const char * queue_config_get_queue_name(const queue_config_type * queue_config)
     return NULL;
 }
 
+
+int queue_config_get_max_submit(queue_config_type * queue_config) {
+    return queue_config->max_submit;
+}
 
 const char * queue_config_get_job_script(const queue_config_type * queue_config) {
   return queue_config->job_script;
@@ -179,6 +205,11 @@ bool queue_config_init(queue_config_type * queue_config, const config_content_ty
     // file.
     queue_config_set_queue_option(queue_config, driver_name, option_key, option_value);
     free( option_value );
+
+    if (config_content_has_item(config_content, MAX_SUBMIT_KEY)) {
+        queue_config->max_submit = config_content_get_value_as_int(config_content, MAX_SUBMIT_KEY);
+        queue_config->max_submit_set = true;
+     }
   }
 
   return true;
@@ -191,12 +222,19 @@ job_driver_type queue_config_get_driver_type(const queue_config_type * queue_con
 }
 
 void queue_config_add_queue_config_items(config_parser_type * parser, bool site_mode) {
-
+  
 }
 
 
 
 void queue_config_add_config_items(config_parser_type * parser, bool site_mode) {
+
+  {
+    config_schema_item_type * item = config_add_schema_item(parser, MAX_SUBMIT_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_INT);
+  }
+
   {
     config_schema_item_type * item = config_add_schema_item(parser, QUEUE_SYSTEM_KEY, site_mode);
     config_schema_item_set_argc_minmax(item, 1, 1);

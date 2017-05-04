@@ -85,6 +85,7 @@
 #include <ert/enkf/model_config.h>
 #include <ert/enkf/hook_manager.h>
 #include <ert/enkf/site_config.h>
+#include <ert/enkf/queue_config.h>
 #include <ert/enkf/active_config.h>
 #include <ert/enkf/enkf_analysis.h>
 #include <ert/enkf/local_ministep.h>
@@ -1329,11 +1330,9 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
 }
 
 
-static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
+static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main, job_queue_type * job_queue) {
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (analysis_config_get_stop_long_running(analysis_config)) {
-    job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-
     bool cont = true;
     while (cont) {
       //Check if minimum number of realizations have run, and if so, kill the rest after a certain time
@@ -1357,18 +1356,19 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
         util_usleep(10000);
       }
     }
+    
   }
 }
 
 
 
-void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg ) {
+void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg , job_queue_type * job_queue) {
   const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
   enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
   const member_config_type  * member_config = enkf_state_get_member_config( enkf_state );
-  const site_config_type    * site_config   = enkf_main_get_site_config( enkf_main );
-  const char * job_script                   = site_config_get_job_script( site_config );
-  job_queue_type * job_queue                = site_config_get_job_queue( site_config );
+  const queue_config_type * queue_config    = site_config_get_queue_config(enkf_main->site_config);
+  const char * job_script                   = queue_config_get_job_script( queue_config );
+  
   const char * run_path                     = run_arg_get_runpath( run_arg );
 
   // The job_queue_node will take ownership of this arg_pack; and destroy it when
@@ -1383,10 +1383,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
 
   {
     int queue_index = job_queue_add_job( job_queue ,
-                                         job_script ,
-                                         enkf_state_complete_forward_modelOK__ ,
-                                         enkf_state_complete_forward_modelRETRY__ ,
-                                         enkf_state_complete_forward_modelEXIT__,
+                                         job_script ,                                         
                                          callback_arg ,
                                          ecl_config_get_num_cpu( ecl_config ),
                                          run_path ,
@@ -1397,7 +1394,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
     run_arg_set_queue_index( run_arg , queue_index );
     run_arg_increase_submit_count( run_arg );
   }
-
+ 
 }
 
 void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * run_arg){
@@ -1476,8 +1473,9 @@ void * enkf_main_isubmit_job__( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ));
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1));
+  job_queue_type * job_queue = job_queue_safe_cast( arg_pack_iget_ptr( arg_pack , 2));
 
-  enkf_main_isubmit_job( enkf_main , run_arg );
+  enkf_main_isubmit_job( enkf_main , run_arg , job_queue);
   return NULL;
 }
 
@@ -1488,7 +1486,7 @@ void * enkf_main_isubmit_job__( void * arg ) {
 static void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
                                      const ert_run_context_type * run_context ,
                                      thread_pool_type * submit_threads,
-                                     arg_pack_type ** arg_pack_list) {
+                                     arg_pack_type ** arg_pack_list, job_queue_type * job_queue) {
   {
     int iens;
     const bool_vector_type * iactive = ert_run_context_get_iactive( run_context );
@@ -1501,6 +1499,7 @@ static void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
 
         arg_pack_append_ptr( arg_pack , enkf_main );
         arg_pack_append_ptr( arg_pack , run_arg);
+        arg_pack_append_ptr( arg_pack , job_queue);
 
         run_arg_set_run_status( run_arg, JOB_SUBMITTED );
         thread_pool_add_job(submit_threads , enkf_main_isubmit_job__ , arg_pack);
@@ -1511,7 +1510,7 @@ static void enkf_main_submit_jobs__( enkf_main_type * enkf_main ,
 
 
 void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
-                            const ert_run_context_type * run_context) {
+                            const ert_run_context_type * run_context, job_queue_type * job_queue) {
 
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   arg_pack_type ** arg_pack_list = util_malloc( ens_size * sizeof * arg_pack_list );
@@ -1522,7 +1521,7 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
     arg_pack_list[iens] = arg_pack_alloc( );
 
   runpath_list_clear( runpath_list );
-  enkf_main_submit_jobs__(enkf_main , run_context , submit_threads , arg_pack_list);
+  enkf_main_submit_jobs__(enkf_main , run_context , submit_threads , arg_pack_list, job_queue);
 
   /*
     After this join all directories/files for the simulations
@@ -1563,18 +1562,22 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
     job_size = bool_vector_count_equal( ert_run_context_get_iactive(run_context) , true );
     {
-      job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+      const queue_config_type * queue_config = site_config_get_queue_config(enkf_main->site_config);
+      job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config,
+                                                                enkf_state_complete_forward_modelOK__,
+                                                                enkf_state_complete_forward_modelRETRY__,
+                                                                enkf_state_complete_forward_modelEXIT__ );
       job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
       bool restart_queue = true;
 
       /* Start the queue */
-      if (site_config_has_job_script( enkf_main->site_config ))
+      if (queue_config_has_job_script( queue_config ))
         job_queue_manager_start_queue( queue_manager , job_size , verbose_queue , restart_queue);
       else
         util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
 
 
-      enkf_main_submit_jobs( enkf_main , run_context );
+      enkf_main_submit_jobs( enkf_main , run_context, job_queue);
 
 
       job_queue_submit_complete( job_queue );
@@ -1582,10 +1585,11 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
       int max_runtime = analysis_config_get_max_runtime(enkf_main_get_analysis_config( enkf_main ));
       job_queue_set_max_job_duration(job_queue, max_runtime);
-      enkf_main_monitor_job_queue( enkf_main );
+      enkf_main_monitor_job_queue( enkf_main, job_queue );
 
       job_queue_manager_wait( queue_manager );
       job_queue_manager_free( queue_manager );
+      job_queue_free(job_queue);
     }
 
 
