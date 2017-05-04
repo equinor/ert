@@ -1473,7 +1473,7 @@ void * enkf_main_isubmit_job__( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ));
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1));
-  job_queue_type * job_queue = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 2));
+  job_queue_type * job_queue = job_queue_safe_cast( arg_pack_iget_ptr( arg_pack , 2));
 
   enkf_main_isubmit_job( enkf_main , run_arg , job_queue);
   return NULL;
