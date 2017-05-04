@@ -15,8 +15,8 @@
 #  for more details.
 
 
-import ecl
 from cwrap import Prototype
+import res
 import ecl.util
 import ecl.geo
 import ecl.ecl
@@ -27,14 +27,14 @@ import res.config
 import res.job_queue
 
 class EnkfPrototype(Prototype):
-    lib = ecl.load("libenkf")
+    lib = res.load("libenkf")
 
     def __init__(self, prototype, bind=True):
         super(EnkfPrototype, self).__init__(EnkfPrototype.lib, prototype, bind=bind)
 
         
 
-ENKF_LIB = ecl.load("libenkf")
+ENKF_LIB = res.load("libenkf")
 
 from .enums import *
 
