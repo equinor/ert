@@ -15,19 +15,19 @@
 #  for more details. 
 
 
-import ecl
+import res
 from cwrap import Prototype
 import ecl.util
 
 class AnalysisPrototype(Prototype):
-    lib = ecl.load("libanalysis")
+    lib = res.load("libanalysis")
 
     def __init__(self, prototype, bind=True):
         super(AnalysisPrototype, self).__init__(AnalysisPrototype.lib, prototype, bind=bind)
 
 
 
-ANALYSIS_LIB = ecl.load("libanalysis")
+ANALYSIS_LIB = res.load("libanalysis")
 
 from .enums import AnalysisModuleOptionsEnum, AnalysisModuleLoadStatusEnum
 
