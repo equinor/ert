@@ -54,10 +54,8 @@ external commands.
 
 
 import os
-import ecl
-import ecl.util
-import res.config
 from cwrap import Prototype
+import res
 
 def setenv( var, value):
     if not os.getenv(var):
@@ -72,10 +70,10 @@ if LSF_HOME:
     setenv("LSF_SERVERDIR", "%s/etc" % LSF_HOME)
     setenv("LSF_ENVDIR", "%s/conf" % LSF_HOME)   # This is wrong: Statoil: /prog/LSF/conf
 
-JOB_QUEUE_LIB = ecl.load("libjob_queue")
+JOB_QUEUE_LIB = res.load("libjob_queue")
 
 class QueuePrototype(Prototype):
-    lib = ecl.load("libjob_queue")
+    lib = res.load("libjob_queue")
 
     def __init__(self, prototype, bind=True):
         super(QueuePrototype, self).__init__(QueuePrototype.lib, prototype, bind=bind)

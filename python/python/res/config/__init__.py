@@ -14,11 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import Prototype
-import ecl
-import ecl.util
+import res
 
 class ConfigPrototype(Prototype):
-    lib = ecl.load("libconfig")
+    lib = res.load("libconfig")
 
     def __init__(self, prototype, bind=True):
         super(ConfigPrototype, self).__init__(ConfigPrototype.lib, prototype, bind=bind)
