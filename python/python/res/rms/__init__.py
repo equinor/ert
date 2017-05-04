@@ -1,6 +1,6 @@
-import ecl
+import res
 import ecl.util
 import ecl.geo
 import ecl.ecl
 
-RMS_LIB = ecl.load("librms")
+RMS_LIB = res.load("librms")
