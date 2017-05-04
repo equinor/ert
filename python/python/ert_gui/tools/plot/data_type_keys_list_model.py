@@ -11,7 +11,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
     def __init__(self, ert):
         """
-        @type ert: ert.enkf.EnKFMain
+        @type ert: res.enkf.EnKFMain
         """
         QAbstractItemModel.__init__(self)
         self.__ert = ert

@@ -1,4 +1,4 @@
-from ert.test.extended_testcase import ExtendedTestCase
+from ecl.test.extended_testcase import ExtendedTestCase
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
 
 

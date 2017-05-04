@@ -17,7 +17,7 @@ import os
 import sys
 from PyQt4.QtCore import QDir
 from PyQt4.QtGui import QMessageBox
-from ert.enkf import EnkfFieldFileFormatEnum
+from res.enkf import EnkfFieldFileFormatEnum
 from ert_gui.tools.export import ExportModel, ExportKeywordModel
 
 

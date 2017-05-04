@@ -23,10 +23,10 @@ class PlotWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         self._ert = ERT.ert
-        """:type: ert.enkf.enkf_main.EnKFMain"""
+        """:type: res.enkf.enkf_main.EnKFMain"""
 
         key_manager = self._ert.getKeyManager()
-        """:type: ert.enkf.key_manager.KeyManager """
+        """:type: res.enkf.key_manager.KeyManager """
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)

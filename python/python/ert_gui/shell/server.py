@@ -1,7 +1,7 @@
 import socket
 from threading import Thread
 
-from ert.server import ErtRPCServer
+from res.server import ErtRPCServer
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 
 

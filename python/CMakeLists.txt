@@ -1,68 +1,35 @@
 include(cmake/find_python_module.cmake)
 include(cmake/python_package_versions.cmake) # finds version
+LIST (APPEND CMAKE_MODULE_PATH ${CMAKE_PREFIX_PATH}/share/cmake/Modules)
+message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
+include(init_python)
 
-if (EXISTS "/etc/debian_version")
-   set( PYTHON_PACKAGE_PATH "dist-packages")
-else()
-   set( PYTHON_PACKAGE_PATH "site-packages")
-endif()
+init_python(2.7)
 
-set( PY_VERSION 2.7 )
-FIND_PACKAGE(PythonInterp ${PY_VERSION} EXACT)
-if (NOT DEFINED PYTHON_EXECUTABLE)
-   message(WARNING "Python${PY_VERSION} interpreter not found - Python wrappers not enabled")
-   return()
-endif()
-
-set(PYTHON_INSTALL_PREFIX  "lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/${PYTHON_PACKAGE_PATH}"  CACHE STRING "Subdirectory to install Python modules in")
+set(PYTHON_INSTALL_PREFIX
+    "lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/${PYTHON_PACKAGE_PATH}"
+    CACHE STRING "Subdirectory to install Python modules in")
 
 #-----------------------------------------------------------------
 # Find an existing ert.ecl disribution
 
-foreach( PREFIX_PATH ${CMAKE_PREFIX_PATH} )
-   set(tmp_PYTHONPATH "${PREFIX_PATH}/${PYTHON_INSTALL_PREFIX}:$ENV{PYTHONPATH}")
-   set(ENV{PYTHONPATH} ${tmp_PYTHONPATH}) 
-   python_package(ecl 2.1.0)
-   if (DEFINED PY_ecl)
-      break()
-   endif()
-endforeach()
+find_python_package(ecl 2.1.0 ${PYTHON_INSTALL_PREFIX})
+find_python_package(cwrap 0.0.0 ${PYTHON_INSTALL_PREFIX})
+find_python_package(numpy 1.7.1 ${PYTHON_INSTALL_PREFIX})
 
-
-if (NOT DEFINED PY_ecl)
-   message(SEND_ERROR "Existing ert installation not found") 
-endif()
-set( ERT_PYTHONPATH ${PY_ecl_PATH} )
-
-#-----------------------------------------------------------------
-# Find an existing cwrap distribution
-
-foreach( PREFIX_PATH ${CMAKE_PREFIX_PATH} )
-   set(tmp_PYTHONPATH "${PREFIX_PATH}/${PYTHON_INSTALL_PREFIX}:$ENV{PYTHONPATH}")
-   set(ENV{PYTHONPATH} ${tmp_PYTHONPATH}) 
-   python_package(cwrap 0.0.0)
-   if (DEFINED PY_cwrap)
-      break()
-   endif()
-endforeach()
-
-set( CWRAP_PYTHONPATH ${PY_cwrap_PATH} )
-
-#-----------------------------------------------------------------
-
-python_package(numpy 1.7.1)
-if (NOT DEFINED PY_numpy)
-   message(WARNING "numpy module not found - Python wrappers not enabled")
-   return()
+# libres python needs ecl, cwrap and numpy
+if (NOT DEFINED PY_ecl OR NOT DEFINED PY_cwrap OR NOT DEFINED PY_numpy)
+    message(WARNING "ecl, cwrap, or numpy module not found - Python wrappers not enabled")
+    return()
 endif()
 
 #-----------------------------------------------------------------
 
 if (ERT_BUILD_GUI)
-   python_package(PyQt4      4.8.0)
-   python_package(matplotlib 1.2.0)
-   python_package(pandas     0.15.1)
-   python_package(scipy      0.12.1)
+   find_python_package(PyQt4      4.8.0  ${PYTHON_INSTALL_PREFIX})
+   find_python_package(matplotlib 1.2.0  ${PYTHON_INSTALL_PREFIX})
+   find_python_package(pandas     0.15.1 ${PYTHON_INSTALL_PREFIX})
+   find_python_package(scipy      0.12.1 ${PYTHON_INSTALL_PREFIX})
    if(NOT DEFINED PY_PyQt4 OR NOT DEFINED PY_matplotlib OR NOT DEFINED PY_scipy OR NOT DEFINED PY_pandas)
      message(SEND_ERROR "Cannot build GUI without PyQt4, matplotlib, scipy, or pandas")
    endif()

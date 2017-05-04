@@ -1,4 +1,4 @@
-from ert.enkf.enums import EnkfInitModeEnum, HookRuntime
+from res.enkf.enums import EnkfInitModeEnum, HookRuntime
 from ert_gui.ertwidgets.models.ertmodel import getNumberOfIterations
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 

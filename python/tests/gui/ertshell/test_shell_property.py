@@ -1,4 +1,4 @@
-from ert.test.extended_testcase import ExtendedTestCase
+from ecl.test.extended_testcase import ExtendedTestCase
 from ert_gui.shell.libshell import ShellProperty, boolValidator, createListValidator, createFloatValidator
 
 

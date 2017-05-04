@@ -1,4 +1,4 @@
-from ert.job_queue import JobStatusType
+from res.job_queue import JobStatusType
 
 class SimulationStateStatus(object):
     COLOR_WAITING = (164, 164, 255)

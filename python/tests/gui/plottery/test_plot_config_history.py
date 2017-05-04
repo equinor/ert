@@ -1,5 +1,5 @@
-from ert.test import ExtendedTestCase
-from ert.enkf import PlotSettings
+from ecl.test import ExtendedTestCase
+from res.enkf import PlotSettings
 from ert_gui.plottery import PlotConfig, PlotConfigHistory
 
 

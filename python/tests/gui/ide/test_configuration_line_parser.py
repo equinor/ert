@@ -1,6 +1,6 @@
 from ert_gui.ide.keywords import ConfigurationLineParser
 from ert_gui.ide.keywords.data import Argument
-from ert.test import ExtendedTestCase
+from ecl.test import ExtendedTestCase
 
 
 class ConfigurationLineParserTest(ExtendedTestCase):

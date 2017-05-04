@@ -1,4 +1,4 @@
-from ert.test import ExtendedTestCase
+from ecl.test import ExtendedTestCase
 from ert_gui.shell.libshell import ShellFunction
 
 

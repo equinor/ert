@@ -8,7 +8,7 @@ message(STATUS "Linking Python package ${package}: ${LINK} -> ${TARGET}")
 EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${TARGET}" "${LINK}")
 
 
-add_subdirectory( ert )
+add_subdirectory( res )
 if (BUILD_ERT)
    if (ERT_BUILD_GUI)
       add_subdirectory( ert_gui )

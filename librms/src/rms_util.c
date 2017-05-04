@@ -170,7 +170,7 @@ rms_type_enum rms_util_convert_ecl_type(ecl_data_type data_type) {
     rms_type = rms_double_type;
     break;
   default:
-    util_abort("%s: Conversion ecl_type -> rms_type not supported for ecl_type:%s \n",__func__ , ecl_type_get_name(data_type));
+    util_abort("%s: Conversion ecl_type -> rms_type not supported for ecl_type:%s \n",__func__ , ecl_type_alloc_name(data_type));
   }
   return rms_type;
 }

@@ -1,9 +1,9 @@
-from ert.job_queue import ErtScript, ErtPlugin, WorkflowJob
+from res.job_queue import ErtScript, ErtPlugin, WorkflowJob
 
 class Plugin(object):
     def __init__(self, ert, workflow_job):
         """
-        @type ert: ert.enkf.EnKFMain
+        @type ert: res.enkf.EnKFMain
         @type workflow_job: WorkflowJob
         """
         self.__ert = ert
@@ -46,7 +46,7 @@ class Plugin(object):
         return self.__parent_window
 
     def ert(self):
-        """ @rtype: ert.enkf.enkf_main.EnKFMain """
+        """ @rtype: res.enkf.enkf_main.EnKFMain """
         return self.__ert
 
     def getWorkflowJob(self):

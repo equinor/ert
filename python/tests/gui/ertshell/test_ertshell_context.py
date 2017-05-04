@@ -1,5 +1,5 @@
 import os
-from ert.test import ExtendedTestCase
+from ecl.test import ExtendedTestCase
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext, ShellCapturing
 
 

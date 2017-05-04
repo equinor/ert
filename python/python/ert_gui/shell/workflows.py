@@ -1,4 +1,4 @@
-from ert.job_queue import WorkflowRunner
+from res.job_queue import WorkflowRunner
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import autoCompleteList
 

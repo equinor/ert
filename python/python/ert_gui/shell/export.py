@@ -1,7 +1,7 @@
 from __future__ import print_function
 from ecl.util import IntVector
-from ert.enkf.enums import ErtImplType
-from ert.enkf.data import EnkfNode
+from res.enkf.enums import ErtImplType
+from res.enkf.data import EnkfNode
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import autoCompleteList, splitArguments
 

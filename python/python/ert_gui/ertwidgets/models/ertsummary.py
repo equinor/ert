@@ -1,5 +1,5 @@
-from ert.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
-from ert.enkf.enums.enkf_var_type_enum import EnkfVarType
+from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
+from res.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert_gui import ERT
 
 class ErtSummary(object):

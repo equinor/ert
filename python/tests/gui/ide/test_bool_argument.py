@@ -1,5 +1,5 @@
 from ert_gui.ide.keywords.definitions import BoolArgument
-from ert.test import ExtendedTestCase
+from ecl.test import ExtendedTestCase
 
 
 class BoolArgumentTest(ExtendedTestCase):

@@ -1,7 +1,7 @@
-from ert.analysis.analysis_module import AnalysisModule
-from ert.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
-from ert.enkf import RealizationStateEnum, EnkfVarType
-from ert.job_queue import WorkflowRunner
+from res.analysis.analysis_module import AnalysisModule
+from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
+from res.enkf import RealizationStateEnum, EnkfVarType
+from res.job_queue import WorkflowRunner
 from ecl.util import BoolVector, StringList
 from ert_gui import ERT
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
@@ -80,7 +80,7 @@ def getAllCasesNotRunning():
 
 
 def getCaseRealizationStates(case_name):
-    """ @rtype: list[ert.enkf.enums.RealizationStateEnum] """
+    """ @rtype: list[res.enkf.enums.RealizationStateEnum] """
     state_map = ERT.ert.getEnkfFsManager().getStateMapForCase(case_name)
     return [state for state in state_map]
 

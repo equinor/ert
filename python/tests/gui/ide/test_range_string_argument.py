@@ -1,5 +1,5 @@
 from ert_gui.ide.keywords.definitions.range_string_argument import RangeStringArgument
-from ert.test import ExtendedTestCase
+from ecl.test import ExtendedTestCase
 
 
 class RangeStringArgumentTest(ExtendedTestCase):

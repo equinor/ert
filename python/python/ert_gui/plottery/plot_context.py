@@ -33,7 +33,7 @@ class PlotContext(object):
         return self._plot_config
 
     def ert(self):
-        """ :rtype: ert.enkf.EnKFMain"""
+        """ :rtype: res.enkf.EnKFMain"""
         return self._ert
 
     def cases(self):
