@@ -3,7 +3,7 @@ from cmd import Cmd
 import readline
 import os
 
-from ert.enkf import EnKFMain
+from res.enkf import EnKFMain
 import ert_gui
 from ert_gui.shell import PlotSettings
 

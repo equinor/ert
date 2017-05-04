@@ -32,7 +32,7 @@ if __name__ == '__main__':
     except IndexError:
         pass
 
-    from ert.test import ErtTestRunner
+    from ecl.test import ErtTestRunner
 
     tests = ErtTestRunner.getTestsFromTestClass(test_class_path, argv)
 

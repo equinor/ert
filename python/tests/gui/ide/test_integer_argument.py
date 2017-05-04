@@ -1,5 +1,5 @@
 from ert_gui.ide.keywords.definitions import IntegerArgument
-from ert.test import ExtendedTestCase
+from ecl.test import ExtendedTestCase
 
 
 class IntegerArgumentTest(ExtendedTestCase):

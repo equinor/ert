@@ -1,7 +1,7 @@
-from ert.enkf import ESUpdate
+from res.enkf import ESUpdate
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import splitArguments, createFloatValidator
-from ert.enkf.enums import HookRuntime
+from res.enkf.enums import HookRuntime
 
 class Smoother(ErtShellCollection):
     def __init__(self, parent):

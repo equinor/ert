@@ -1,7 +1,7 @@
 import time
-from ert.job_queue import JobStatusType
+from res.job_queue import JobStatusType
 from ert_gui import ERT
-from ert.enkf import ErtLog
+from res.enkf import ErtLog
 
 
 class ErtRunError(Exception):
@@ -26,7 +26,7 @@ class BaseRunModel(object):
 
 
     def ert(self):
-        """ @rtype: ert.enkf.EnKFMain"""
+        """ @rtype: res.enkf.EnKFMain"""
         return ERT.ert
 
     def reset(self):

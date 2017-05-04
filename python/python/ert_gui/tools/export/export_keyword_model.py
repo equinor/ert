@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert.enkf import EnkfVarType, ErtImplType
+from res.enkf import EnkfVarType, ErtImplType
 from ert_gui import ERT
 
 

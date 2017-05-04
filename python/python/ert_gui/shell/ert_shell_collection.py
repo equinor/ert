@@ -12,7 +12,7 @@ class ErtShellCollection(ShellCollection):
 
     @assertConfigLoaded
     def ert(self):
-        """ @rtype: ert.enkf.enkf_main.EnKFMain """
+        """ @rtype: res.enkf.enkf_main.EnKFMain """
         return self.shellContext().ert()
 
     def columnize(self, items, displaywidth=80):

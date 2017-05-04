@@ -1,6 +1,6 @@
 import inspect
 import time
-from ert.job_queue import ErtScript, CancelPluginException
+from res.job_queue import ErtScript, CancelPluginException
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import splitArguments, autoCompleteList
 

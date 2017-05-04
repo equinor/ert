@@ -1,5 +1,5 @@
-from ert.enkf.enkf_fs_manager import naturalSortKey
-from ert.enkf import PlotSettings as ErtPlotSettings
+from res.enkf.enkf_fs_manager import naturalSortKey
+from res.enkf import PlotSettings as ErtPlotSettings
 from ert_gui.plottery.plot_config import PlotConfig
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import autoCompleteList, boolValidator, pathCompleter, splitArguments

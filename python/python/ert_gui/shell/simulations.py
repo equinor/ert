@@ -1,8 +1,8 @@
 import time
 from datetime import datetime
 
-from ert.enkf import EnkfSimulationRunner
-from ert.enkf.enums import HookRuntime
+from res.enkf import EnkfSimulationRunner
+from res.enkf.enums import HookRuntime
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 
 

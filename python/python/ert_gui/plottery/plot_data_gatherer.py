@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from ert.enkf.export import GenKwCollector, SummaryCollector, GenDataCollector, SummaryObservationCollector, \
+from res.enkf.export import GenKwCollector, SummaryCollector, GenDataCollector, SummaryObservationCollector, \
     GenDataObservationCollector, CustomKWCollector
 
 

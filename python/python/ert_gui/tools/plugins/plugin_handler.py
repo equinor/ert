@@ -1,4 +1,4 @@
-from ert.job_queue import WorkflowJob
+from res.job_queue import WorkflowJob
 from .plugin import Plugin
 
 
@@ -18,7 +18,7 @@ class PluginHandler(object):
 
 
     def ert(self):
-        """ @rtype: ert.enkf.enkf_main.EnKFMain """
+        """ @rtype: res.enkf.enkf_main.EnKFMain """
         return self.__ert
 
     def __iter__(self):

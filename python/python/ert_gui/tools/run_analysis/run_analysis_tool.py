@@ -17,7 +17,7 @@
 from PyQt4.QtGui import QMessageBox
 
 from ert_gui import ERT
-from ert.enkf import ESUpdate
+from res.enkf import ESUpdate
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool

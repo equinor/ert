@@ -32,11 +32,11 @@ endfunction(addPythonTest)
 
 
 if(BUILD_ERT)
-    add_subdirectory(ert)
+    add_subdirectory(res)
 
-    add_test( NAME python.tests.ert.import
+    add_test( NAME python.tests.res.import
               WORKING_DIRECTORY ${INSTALL_DIRECTORY}
-              COMMAND tests/ctest_import.py ${INSTALL_DIRECTORY} "ert")
+              COMMAND tests/ctest_import.py ${INSTALL_DIRECTORY} "res")
 
     if (ERT_BUILD_GUI)
         add_subdirectory(gui)

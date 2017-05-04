@@ -3,7 +3,7 @@ import sys
 import os
 from PyQt4.QtGui import QApplication
 import time
-from ert.enkf import EnKFMain
+from res.enkf import EnKFMain
 from ecl.util import Version
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import resourceIcon

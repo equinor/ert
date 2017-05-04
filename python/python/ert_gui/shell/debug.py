@@ -1,4 +1,4 @@
-from ert import Version
+from ecl import Version
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 
 

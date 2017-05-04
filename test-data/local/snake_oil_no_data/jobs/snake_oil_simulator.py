@@ -4,7 +4,7 @@ import os
 import sys
 
 from ecl.ecl import EclSum, EclSumTStep
-from ert.test import ExtendedTestCase
+from ecl.test import ExtendedTestCase
 
 try:
     from synthesizer import OilSimulator

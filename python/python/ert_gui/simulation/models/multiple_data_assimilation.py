@@ -13,8 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert.enkf.enums import EnkfInitModeEnum
-from ert.enkf.enums import HookRuntime
+from res.enkf.enums import EnkfInitModeEnum
+from res.enkf.enums import HookRuntime
 
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 

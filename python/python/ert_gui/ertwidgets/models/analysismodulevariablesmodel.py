@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert.analysis.analysis_module import AnalysisModule
+from res.analysis.analysis_module import AnalysisModule
 from ert_gui import ERT
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
 

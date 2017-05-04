@@ -6,7 +6,7 @@ class PlotConfigFactory(object):
     @classmethod
     def createPlotConfigForKey(cls, ert, key):
         """
-        @type ert: ert.enkf.enkf_main.EnKFMain
+        @type ert: res.enkf.enkf_main.EnKFMain
         @param key: str
         @return: PlotConfig
         """
@@ -17,7 +17,7 @@ class PlotConfigFactory(object):
     @classmethod
     def updatePlotConfigForKey(cls, ert, key, plot_config):
         """
-        @type ert: ert.enkf.enkf_main.EnKFMain
+        @type ert: res.enkf.enkf_main.EnKFMain
         @param key: str
         @return: PlotConfig
         """

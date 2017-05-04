@@ -168,10 +168,10 @@ class CustomizePlotDialog(QDialog):
 
         self._ert = ERT.ert
 
-        """:type: ert.enkf.enkf_main.EnKFMain"""
+        """:type: res.enkf.enkf_main.EnKFMain"""
 
         self.key_manager = self._ert.getKeyManager()
-        """:type: ert.enkf.key_manager.KeyManager """
+        """:type: res.enkf.key_manager.KeyManager """
 
         self.current_key = key
 

@@ -54,20 +54,29 @@ install:
 env:
   global:
      - ERT_SHOW_BACKTRACE=1
-     
 
 before_script:
-  - export LIBECL_BUILD_ROOT="/tmp/libecl/$TRAVIS_BUILD_ID"
-  - export LIBECL_INSTALL_ROOT="$TRAVIS_BUILD_DIR/../libecl/install"
-  - git clone https://github.com/Statoil/libecl $LIBECL_BUILD_ROOT
-  - mkdir $LIBECL_BUILD_ROOT/build
-  - pushd $LIBECL_BUILD_ROOT/build
+  - pushd ..
+  - git clone https://github.com/Statoil/libecl
+  - mkdir libecl/build
+  - pushd libecl/build
+  - export LIBECL_INSTALL_ROOT=`pwd`/install
+  - echo $LIBECL_INSTALL_ROOT
   - cmake .. -DCMAKE_INSTALL_PREFIX=$LIBECL_INSTALL_ROOT
   - make install
+  - export PYTHONPATH=$LIBECL_INSTALL_ROOT/lib/python2.7/site-packages:$LIBECL_INSTALL_ROOT/lib/python2.7/dist-packages:$PYTHONPATH
+  - echo $PYTHONPATH
+  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LIBECL_INSTALL_ROOT/lib64
+  - echo $LD_LIBRARY_PATH
   - popd
+  - pwd
+  - popd
+  - pwd
   - mkdir build
   - pushd build
   - cmake -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT -DBUILD_ERT=ON -DERT_BUILD_GUI=ON -DBUILD_TESTS=ON -DBUILD_APPLICATIONS=ON -DBUILD_PYTHON=ON -DERT_USE_OPENMP=ON -DERT_DOC=OFF ..
+  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/lib64:`pwd`/lib/x86_64-linux-gnu/
+  - echo $LD_LIBRARY_PATH
 
 script:
   - make && ctest --output-on-failure

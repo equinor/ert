@@ -1,4 +1,4 @@
-from ert.enkf import EnkfVarType
+from res.enkf import EnkfVarType
 
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import autoCompleteList, splitArguments

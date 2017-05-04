@@ -17,7 +17,7 @@ class CopyStyleToDialog(QDialog):
         layout = QFormLayout(self)
 
         self._ert = ERT.ert
-        """:type: ert.enkf.enkf_main.EnKFMain"""
+        """:type: res.enkf.enkf_main.EnKFMain"""
 
         self.model = self._ert
 

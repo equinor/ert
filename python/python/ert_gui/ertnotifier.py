@@ -1,4 +1,4 @@
-from ert.enkf import EnKFMain
+from res.enkf import EnKFMain
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
 
 class ErtNotifier(QObject):

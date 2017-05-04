@@ -1,6 +1,6 @@
 from PyQt4.QtCore import Qt
 from ert_gui.ide.wizards import TreeItem, TreeModel
-from ert.test import ExtendedTestCase
+from ecl.test import ExtendedTestCase
 
 
 class TreeStructureTest(ExtendedTestCase):

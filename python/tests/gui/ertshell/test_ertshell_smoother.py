@@ -1,7 +1,7 @@
 from __future__ import print_function
 import os
-from ert.enkf.export import GenKwCollector
-from ert.test.extended_testcase import ExtendedTestCase
+from res.enkf.export import GenKwCollector
+from ecl.test.extended_testcase import ExtendedTestCase
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
 
 class ErtShellSmootherTest(ExtendedTestCase):
