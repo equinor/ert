@@ -23,7 +23,6 @@ class SiteConfig(BaseCClass):
     TYPE_NAME = "site_config"
 
     _free                  = EnkfPrototype("void site_config_free( site_config )")
-    #_get_queue_name        = EnkfPrototype("char* site_config_get_queue_name(site_config)")
     _get_lsf_queue         = EnkfPrototype("char* site_config_get_lsf_queue(site_config)")
     _set_lsf_queue         = EnkfPrototype("void site_config_set_lsf_queue(site_config, char*)")
     _get_max_running_lsf   = EnkfPrototype("int site_config_get_max_running_lsf(site_config)")
@@ -40,12 +39,8 @@ class SiteConfig(BaseCClass):
     _get_max_running_local = EnkfPrototype("int site_config_get_max_running_local(site_config)")
     _set_max_running_local = EnkfPrototype("void site_config_set_max_running_local(site_config, int)")
     _get_installed_jobs    = EnkfPrototype("ext_joblist_ref site_config_get_installed_jobs(site_config)")
-    #_get_max_submit        = EnkfPrototype("int site_config_get_max_submit(site_config)")
-    #_set_max_submit        = EnkfPrototype("void site_config_set_max_submit(site_config, int)")  also not exists in queue_config
     _get_license_root_path = EnkfPrototype("char* site_config_get_license_root_path(site_config)")
     _set_license_root_path = EnkfPrototype("void site_config_set_license_root_path(site_config, char*)")
-    #_get_job_script        = EnkfPrototype("char* site_config_get_job_script(site_config)")
-    #_set_job_script        = EnkfPrototype("void site_config_set_job_script(site_config, char*)")
     _get_env_hash          = EnkfPrototype("string_hash_ref site_config_get_env_hash(site_config)")
     _clear_env             = EnkfPrototype("void site_config_clear_env(site_config)")
     _setenv                = EnkfPrototype("void site_config_setenv(site_config, char*, char*)")
@@ -53,8 +48,6 @@ class SiteConfig(BaseCClass):
     _get_path_values       = EnkfPrototype("stringlist_ref site_config_get_path_values(site_config)")
     _clear_pathvar         = EnkfPrototype("void site_config_clear_pathvar(site_config)")
     _update_pathvar        = EnkfPrototype("void site_config_update_pathvar(site_config, char*, char*)")
-    #_get_job_queue         = EnkfPrototype("job_queue_ref site_config_get_job_queue(site_config)")
-    #_queue_is_running      = EnkfPrototype("bool site_config_queue_is_running(site_config)")
     _get_location          = EnkfPrototype("char* site_config_get_location(site_config)")
     _has_driver            = EnkfPrototype("bool site_config_has_queue_driver(site_config, char*)")
 
@@ -172,10 +165,6 @@ class SiteConfig(BaseCClass):
     def isQueueRunning(self):
         """ @rtype: bool """
         return self._queue_is_running( )
-
-    def getJobQueue(self):
-        """ @rtype: JobQueue """
-        return  self._get_job_queue().setParent(self)
 
     def getRshHostList(self):
         """ @rtype: IntegerHash """
