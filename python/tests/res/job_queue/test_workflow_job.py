@@ -8,7 +8,7 @@ from .workflow_common import WorkflowCommon
 from cwrap import Prototype
 
 class _TestWorkflowJobPrototype(Prototype):
-    lib = ecl.load('libjob_queue')
+    lib = res.load('libjob_queue')
 
     def __init__(self, prototype, bind=True):
         super(_TestWorkflowJobPrototype, self).__init__(_TestWorkflowJobPrototype.lib, prototype, bind=bind)

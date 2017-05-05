@@ -16,6 +16,7 @@
 #  for more details. 
 import os
 
+import res
 import ecl
 
 from res.config import (ContentTypeEnum, UnrecognizedEnum, SchemaItem,
@@ -27,7 +28,7 @@ from ecl.test import ExtendedTestCase, TestAreaContext
 
 
 class TestConfigPrototype(Prototype):
-    lib = ecl.load("libconfig")
+    lib = res.load("libconfig")
 
     def __init__(self, prototype, bind=False):
         super(TestConfigPrototype, self).__init__(TestConfigPrototype.lib, prototype, bind=bind)
