@@ -22,29 +22,12 @@ option( ERT_BUILD_GUI       "Should the PyQt based GUI be compiled and installed
 option( ERT_USE_OPENMP      "Use OpenMP"                                              OFF )
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)
+option( USE_RUNPATH         "Should we embed path to libraries"                       ON)
 
 set( BUILD_SHARED_LIBS ON )
-#-----------------------------------------------------------------
-# Very very basic functionality to find the eclipse related libraries,
-# unless they are actually installed in default locations the
-# CMAKE_PREFIX_PATH should be used to indicate where they can be found.
 
-
-find_path( LIBECL_PATH ert/ecl/ecl_grid.h )
-include_directories( ${LIBECL_PATH} )
-
-find_library( UTIL_LIBRARY NAMES ert_util )
-find_library( ECL_LIBRARY NAMES ecl )
-find_library( GEO_LIBRARY NAMES ert_geometry )
-
-if (NOT UTIL_LIBRARY)
-   message( FATAL_ERROR "Need libraries from libecl - use CMAKE_PREFIX_PATH")
-endif()
-
-#-----------------------------------------------------------------
-
-
-
+find_package( libecl REQUIRED )
+include_directories( ${libecl_INCLUDE_DIRS} )
 
 
 set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
@@ -183,7 +166,6 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX
 
 
 if (BUILD_PYTHON)
-   include(cmake/python.cmake2)
    add_subdirectory( python )
 
    if(ERT_DOC)
