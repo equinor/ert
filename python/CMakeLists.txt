@@ -1,14 +1,5 @@
-include(cmake/find_python_module.cmake)
-include(cmake/python_package_versions.cmake) # finds version
-LIST (APPEND CMAKE_MODULE_PATH ${CMAKE_PREFIX_PATH}/share/cmake/Modules)
-message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
 include(init_python)
-
 init_python(2.7)
-
-set(PYTHON_INSTALL_PREFIX
-    "lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/${PYTHON_PACKAGE_PATH}"
-    CACHE STRING "Subdirectory to install Python modules in")
 
 #-----------------------------------------------------------------
 # Find an existing ert.ecl disribution
