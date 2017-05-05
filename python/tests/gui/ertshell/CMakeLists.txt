@@ -15,13 +15,12 @@ set(TEST_SOURCES
 
 add_python_package("python.tests.gui.ertshell"  ${PYTHON_INSTALL_PREFIX}/tests/gui/ertshell "${TEST_SOURCES}" False)
 
-addPythonTest(gui.ertshell.analysis gui.ertshell.test_ertshell_analysis.ErtShellAnalysisModuleTest)
-addPythonTest(gui.ertshell.context gui.ertshell.test_ertshell_context.ErtShellContextTest)
-addPythonTest(gui.ertshell.observations gui.ertshell.test_ertshell_observations.ErtShellObservationsTest)
-addPythonTest(gui.ertshell.plot_settings gui.ertshell.test_ertshell_plot_settings.ErtShellPlotSettingsTest)
-addPythonTest(gui.ertshell.smoother gui.ertshell.test_ertshell_smoother.ErtShellSmootherTest)
-addPythonTest(gui.ertshell.server gui.ertshell.test_ertshell_server.ErtShellServerTest)
-
-addPythonTest(gui.ertshell.shell_function gui.ertshell.test_shell_function.ShellFunctionTest)
-addPythonTest(gui.ertshell.shell_property gui.ertshell.test_shell_property.ShellPropertyTest)
-addPythonTest(gui.ertshell.shell_collection gui.ertshell.test_shell_collection.ShellCollectionTest)
+addPythonTest(tests.gui.ertshell.test_ertshell_analysis.ErtShellAnalysisModuleTest)
+addPythonTest(tests.gui.ertshell.test_ertshell_context.ErtShellContextTest)
+addPythonTest(tests.gui.ertshell.test_ertshell_observations.ErtShellObservationsTest)
+addPythonTest(tests.gui.ertshell.test_ertshell_plot_settings.ErtShellPlotSettingsTest)
+addPythonTest(tests.gui.ertshell.test_ertshell_smoother.ErtShellSmootherTest)
+addPythonTest(tests.gui.ertshell.test_ertshell_server.ErtShellServerTest)
+addPythonTest(tests.gui.ertshell.test_shell_function.ShellFunctionTest)
+addPythonTest(tests.gui.ertshell.test_shell_property.ShellPropertyTest)
+addPythonTest(tests.gui.ertshell.test_shell_collection.ShellCollectionTest)

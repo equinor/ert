@@ -7,6 +7,6 @@ set(TEST_SOURCES
 
 add_python_package("python.tests.gui.plottery" ${PYTHON_INSTALL_PREFIX}/tests/gui/plottery "${TEST_SOURCES}" False)
 
-addPythonTest(gui.plottery.plot_style gui.plottery.test_plot_style.PlotStyleTest)
-addPythonTest(gui.plottery.plot_config_history gui.plottery.test_plot_config_history.PlotConfigHistoryTest)
-addPythonTest(gui.plottery.plot_limits gui.plottery.test_plot_limits.PlotLimitsTest)
+addPythonTest(tests.gui.plottery.test_plot_style.PlotStyleTest)
+addPythonTest(tests.gui.plottery.test_plot_config_history.PlotConfigHistoryTest)
+addPythonTest(tests.gui.plottery.test_plot_limits.PlotLimitsTest)
