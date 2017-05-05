@@ -12,10 +12,8 @@ class SimulationContext(object):
         self._size = size
         
         max_runtime = ert.analysisConfig().get_max_runtime()
-	raise Exception("Code has lost access to job_queue instance. Refactor required.");
-        
-       
-        job_queue = None;
+               
+        job_queue = ert.get_queue_config().alloc_job_queue()
         self._queue_manager = JobQueueManager(job_queue)
         self._queue_manager.startQueue(size, verbose=verbose)
         self._run_args = {}

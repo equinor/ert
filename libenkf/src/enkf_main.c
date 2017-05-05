@@ -3152,5 +3152,10 @@ void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_k
   ranking_table_fwrite_ranking(ranking_table, ranking_key, ranking_file);
 }
 
+
+queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main ) {
+  return site_config_get_queue_config( enkf_main->site_config );
+}
+
 #include "enkf_main_ensemble.c"
 #include "enkf_main_manage_fs.c"

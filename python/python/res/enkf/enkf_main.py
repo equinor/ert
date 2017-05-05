@@ -35,6 +35,7 @@ class EnKFMain(BaseCClass):
     _create_new_config = EnkfPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
 
     _free = EnkfPrototype("void enkf_main_free(enkf_main)")
+    _get_queue_config = EnkfPrototype("queue_config_ref enkf_main_get_queue_config ( enkf_main )")
     _get_ensemble_size = EnkfPrototype("int enkf_main_get_ensemble_size( enkf_main )")
     _get_ens_config = EnkfPrototype("ens_config_ref enkf_main_get_ensemble_config( enkf_main )")
     _get_model_config = EnkfPrototype("model_config_ref enkf_main_get_model_config( enkf_main )")
@@ -74,6 +75,9 @@ class EnKFMain(BaseCClass):
     _add_node = EnkfPrototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
 
 
+
+    def get_queue_config(self):
+        return self._get_queue_config()
 
     def __init__(self, model_config, strict=True, verbose=True):
         if model_config is not None and not isfile(model_config):

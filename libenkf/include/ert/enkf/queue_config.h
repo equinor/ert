@@ -64,6 +64,9 @@ typedef struct queue_config_struct queue_config_type;
                                               job_callback_ftype * retry_callback,
                                               job_callback_ftype * exit_callback);
 
+UTIL_SAFE_CAST_HEADER(queue_config);
+UTIL_IS_INSTANCE_HEADER(queue_config);
+
 #ifdef __cplusplus
 }
 #endif
