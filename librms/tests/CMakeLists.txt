@@ -1,7 +1,7 @@
 if (STATOIL_TESTDATA_ROOT)
 
    add_executable( rms_file_test rms_file_test.c )
-   target_link_libraries( rms_file_test rms  )
+   target_link_libraries( rms_file_test rms  ${libecl_LIBRARIES})
 
    add_test( rms_file_test
              ${EXECUTABLE_OUTPUT_PATH}/rms_file_test

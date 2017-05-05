@@ -1,7 +1,7 @@
 ert_module_name( VAR_RML rml_enkf ${LIBRARY_OUTPUT_PATH} )
 
 add_executable(analysis_test_external_module analysis_test_external_module.c )
-target_link_libraries( analysis_test_external_module analysis ${UTIL_LIBRARY} )
+target_link_libraries( analysis_test_external_module analysis ${libecl_LIBRARIES} )
 
 add_test( analysis_module_rml ${EXECUTABLE_OUTPUT_PATH}/analysis_test_external_module "RML_ENKF" ${VAR_RML} 41 
           ITER:45 
@@ -17,5 +17,5 @@ add_test( analysis_module_rml ${EXECUTABLE_OUTPUT_PATH}/analysis_test_external_m
 
 
 add_executable( analysis_test_module_info analysis_test_module_info.c )
-target_link_libraries( analysis_test_module_info analysis ${UTIL_LIBRARY})
+target_link_libraries( analysis_test_module_info analysis ${libecl_LIBRARIES})
 add_test( analysis_test_module_info ${EXECUTABLE_OUTPUT_PATH}/analysis_test_module_info )

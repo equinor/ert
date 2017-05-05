@@ -210,8 +210,7 @@ endif()
 
 set_source_files_properties( site_config.c PROPERTIES COMPILE_DEFINITIONS "SITE_CONFIG_FILE=\"${SITE_CONFIG_FILE}\"")
 
-target_link_libraries( enkf ${ECL_LIBRARY} ${UTIL_LIBRARY} sched analysis rms config job_queue )
-
+target_link_libraries( enkf sched analysis rms config job_queue ${libecl_LIBRARIES} )
 if (USE_RUNPATH)
    add_runpath( enkf )
 endif()
