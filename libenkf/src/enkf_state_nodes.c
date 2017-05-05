@@ -1,7 +1,16 @@
-bool enkf_state_has_node(const enkf_state_type * enkf_state , const char * node_key) {
+static bool enkf_state_has_node(const enkf_state_type * enkf_state , const char * node_key) {
   bool has_node = hash_has_key(enkf_state->node_hash , node_key);
   return has_node;
 }
+
+
+static void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
+  if (hash_has_key(enkf_state->node_hash , node_key))
+    hash_del(enkf_state->node_hash , node_key);
+  else
+    fprintf(stderr,"%s: tried to remove node:%s which is not in state - internal error?? \n",__func__ , node_key);
+}
+
 
 
 /**
@@ -34,14 +43,13 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
 }
 
 
-enkf_node_type * enkf_state_get_or_create_node(enkf_state_type * enkf_state, const enkf_config_node_type * config_node) {
+static enkf_node_type * enkf_state_get_or_create_node(enkf_state_type * enkf_state, const enkf_config_node_type * config_node) {
     const char * key = enkf_config_node_get_key(config_node);
     if(!enkf_state_has_node(enkf_state, key)) {
         enkf_state_add_node(enkf_state, key, config_node);
     }
     return enkf_state_get_node(enkf_state, key);
 }
-
 
 /**
    This function loads the STATE from a forward simulation. In ECLIPSE
@@ -167,31 +175,8 @@ int enkf_state_forward_init(enkf_state_type * enkf_state ,
 
 
 
-/**
-  This function takes a report_step and a analyzed|forecast state as
-  input; the enkf_state instance is set accordingly and written to
-  disk.
-*/
 
-
-void enkf_state_fwrite(const enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step ) {
-  const member_config_type * my_config = enkf_state->my_config;
-  const int num_keys = hash_get_size(enkf_state->node_hash);
-  char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
-  int ikey;
-
-  for (ikey = 0; ikey < num_keys; ikey++) {
-    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_include_type(enkf_node , mask)) {
-      node_id_type node_id = {.report_step = report_step , .iens = member_config_get_iens( my_config ) };
-      enkf_node_store( enkf_node, fs , true , node_id );
-    }
-  }
-  util_free_stringlist(key_list , num_keys);
-}
-
-
-void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step ) {
+static void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step ) {
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
@@ -211,7 +196,6 @@ void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mas
   }
   util_free_stringlist(key_list , num_keys);
 }
-
 
 
 /**
@@ -295,22 +279,8 @@ static void enkf_state_fread_initial_state(enkf_state_type * enkf_state , enkf_f
 }
 
 
-void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
-  const int num_keys = hash_get_size(enkf_state->node_hash);
-  char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
-  int ikey;
 
-  for (ikey = 0; ikey < num_keys; ikey++) {
-    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_include_type(enkf_node , mask))
-      enkf_state_del_node(enkf_state , enkf_node_get_key(enkf_node));
-  }
-  util_free_stringlist(key_list , num_keys);
-}
-
-
-
-enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const char * node_key) {
+static enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const char * node_key) {
   if (hash_has_key(enkf_state->node_hash , node_key)) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , node_key);
     return enkf_node;
@@ -322,9 +292,3 @@ enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const 
 
 
 
-void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
-  if (hash_has_key(enkf_state->node_hash , node_key))
-    hash_del(enkf_state->node_hash , node_key);
-  else
-    fprintf(stderr,"%s: tried to remove node:%s which is not in state - internal error?? \n",__func__ , node_key);
-}

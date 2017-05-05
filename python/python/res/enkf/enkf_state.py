@@ -22,8 +22,6 @@ from res.job_queue import JobStatusType
 class EnKFState(BaseCClass):
     TYPE_NAME       = "enkf_state"
     _free           = EnkfPrototype("void* enkf_state_free( enkf_state )")
-    _has_key        = EnkfPrototype("bool  enkf_state_has_node( enkf_state , char* )")
-    _get_node       = EnkfPrototype("enkf_node_ref  enkf_state_has_node( enkf_state , char* )")
     _add_subst_kw   = EnkfPrototype("void enkf_state_add_subst_kw( enkf_state , char* , char* , char*)")
     _get_subst_list = EnkfPrototype("subst_list_ref enkf_state_get_subst_list( enkf_state )")
     _get_ens_config = EnkfPrototype("ens_config_ref enkf_state_get_ensemble_config( enkf_state )")
@@ -33,32 +31,6 @@ class EnKFState(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
         
     
-    def __getitem__(self , kw):
-        """ @rtype: res.enkf.data.enkf_node.EnkfNode """
-        if isinstance(kw , str):
-            if kw in self:
-                node = self._get_node( kw )
-                node.setParent( self )
-                return node
-            else:
-                raise KeyError("The state object does not have node:%s" % kw)
-        else:
-            raise TypeError("The kw type must be string. Input:%s" % kw)
-
-
-    def __contains__(self , kw):
-        return self._has_key( kw )
-
-
-    def hasKey(self , kw):
-        """ @rtype: bool """
-        return kw in self
-
-
-    def getNode(self , kw):
-        """ @rtype: res.enkf.data.enkf_node.EnkfNode """
-        return self[kw]
-
 
     def free(self):
         self._free( )
