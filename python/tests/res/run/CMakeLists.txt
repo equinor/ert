@@ -5,4 +5,4 @@ set(TEST_SOURCES
 
 add_python_package("python.tests.res.run" ${PYTHON_INSTALL_PREFIX}/tests/res/run "${TEST_SOURCES}" False)
 
-addPythonTest(res.test_run tests.res.run.test_run.RunTest )
+addPythonTest(tests.res.run.test_run.RunTest )

@@ -166,7 +166,6 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX
 
 
 if (BUILD_PYTHON)
-   include(cmake/python.cmake2)
    add_subdirectory( python )
 
    if(ERT_DOC)

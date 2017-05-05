@@ -5,4 +5,4 @@ set(TEST_SOURCES
 
 add_python_package("python.tests.res.config" ${PYTHON_INSTALL_PREFIX}/tests/res/config "${TEST_SOURCES}" True)
 
-addPythonTest(res.config tests.res.config.test_config.ConfigTest)
+addPythonTest(tests.res.config.test_config.ConfigTest)
