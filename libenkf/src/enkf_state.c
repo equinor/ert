@@ -1078,11 +1078,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
 
 
 
-bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg );
-bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg );
-bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg );
-
-
 
 
 
@@ -1166,7 +1161,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , r
 }
 
 
-bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg ) {
+bool enkf_state_complete_forward_modelOK__(void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ));
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ));
@@ -1176,7 +1171,7 @@ bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * ar
 
 
 
-static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , run_arg_type * run_arg , job_queue_type * job_queue ) {
+static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , run_arg_type * run_arg) {
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
   ert_log_add_fmt_message( 1, NULL, "[%03d:%04d-%04d] FAILED COMPLETELY.", iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
@@ -1190,18 +1185,18 @@ static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * e
 }
 
 
-static bool enkf_state_complete_forward_model_EXIT_handler(job_queue_type * job_queue, void * arg) {
+static bool enkf_state_complete_forward_model_EXIT_handler(void * arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
 
   enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ) );
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ) );
 
-  return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , run_arg , job_queue);
+  return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , run_arg);
 }
 
 
-bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg ) {
-  return enkf_state_complete_forward_model_EXIT_handler(job_queue, arg);
+bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
+  return enkf_state_complete_forward_model_EXIT_handler(arg);
 }
 
 
@@ -1220,7 +1215,7 @@ bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * 
 
 
 
-static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_type * run_arg , job_queue_type * job_queue) {
+static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_type * run_arg) {
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
 
@@ -1243,13 +1238,13 @@ static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_typ
 }
 
 
-bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg ) {
+bool enkf_state_complete_forward_modelRETRY__(void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ) );
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ) );
 
   if (run_arg_can_retry(run_arg)) {
-    enkf_state_internal_retry(enkf_state, run_arg , job_queue );
+    enkf_state_internal_retry(enkf_state, run_arg);
     return true;
   } else {
     return false;

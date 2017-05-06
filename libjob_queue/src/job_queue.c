@@ -699,7 +699,7 @@ static bool job_queue_run_DONE_callback__(job_queue_type * job_queue, job_queue_
    job_callback_ftype * callback_DONE = job_queue->done_callback; 
    void * callback_arg = job_queue_node_get_callback_arg( node );
    if (callback_DONE)
-       OK = callback_DONE(job_queue, callback_arg );
+       OK = callback_DONE(callback_arg );
    
    return OK;
 }
@@ -709,7 +709,7 @@ static bool job_queue_run_RETRY_callback__(job_queue_type * job_queue, job_queue
   job_callback_ftype * callback_RETRY = job_queue->retry_callback; 
   void * callback_arg = job_queue_node_get_callback_arg( node );
   if (callback_RETRY)
-    retry = callback_RETRY(job_queue, callback_arg );
+    retry = callback_RETRY(callback_arg );
 
   return retry;
 }
@@ -718,7 +718,7 @@ static void job_queue_run_EXIT_callback__( job_queue_type * job_queue , job_queu
   job_callback_ftype * callback_EXIT = job_queue->exit_callback; 
   void * callback_arg = job_queue_node_get_callback_arg( node );
   if (callback_EXIT)
-    callback_EXIT(job_queue, callback_arg );
+    callback_EXIT(callback_arg );
 }
 
 

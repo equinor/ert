@@ -32,7 +32,7 @@ extern "C" {
 
   
   typedef struct job_queue_struct      job_queue_type;
-  typedef bool (job_callback_ftype)   (job_queue_type *, void *);
+  typedef bool (job_callback_ftype)    (void *);
 
   void                job_queue_submit_complete( job_queue_type * queue );
   job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );

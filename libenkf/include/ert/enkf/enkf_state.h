@@ -118,10 +118,10 @@ typedef struct enkf_state_struct    enkf_state_type;
 
 /******************************************************************/
 /* Forward model callbacks: */
+  bool enkf_state_complete_forward_modelOK__(void * arg );
+  bool enkf_state_complete_forward_modelRETRY__(void * arg );
+  bool enkf_state_complete_forward_modelEXIT__(void * arg );
 
-bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg );
-bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg );
-bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg );
 
 #ifdef __cplusplus
 }
