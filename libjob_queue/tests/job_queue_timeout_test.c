@@ -88,7 +88,7 @@ void submit_jobs(job_queue_type * queue, int num_jobs, job_type ** jobs) {
   for (int i = 0; i < num_jobs; i++) {
     job_type * job = jobs[i];
 
-    job->queue_index = job_queue_add_job(queue, job->cmd, job, 1, job->run_path, job->run_path,
+    job->queue_index = job_queue_add_job(queue, job->cmd, NULL, NULL, NULL, job, 1, job->run_path, job->run_path,
             job->argc, (const char **) job->argv);
   }
 }

@@ -1383,7 +1383,10 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
 
   {
     int queue_index = job_queue_add_job( job_queue ,
-                                         job_script ,                                         
+                                         job_script ,
+                                         enkf_state_complete_forward_modelOK__,
+                                         enkf_state_complete_forward_modelRETRY__,
+                                         enkf_state_complete_forward_modelEXIT__,
                                          callback_arg ,
                                          ecl_config_get_num_cpu( ecl_config ),
                                          run_path ,
@@ -1563,10 +1566,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
     job_size = bool_vector_count_equal( ert_run_context_get_iactive(run_context) , true );
     {
       const queue_config_type * queue_config = site_config_get_queue_config(enkf_main->site_config);
-      job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config,
-                                                                enkf_state_complete_forward_modelOK__,
-                                                                enkf_state_complete_forward_modelRETRY__,
-                                                                enkf_state_complete_forward_modelEXIT__ );
+      job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
       job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
       bool restart_queue = true;
 

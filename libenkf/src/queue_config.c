@@ -57,23 +57,18 @@ queue_config_type * queue_config_alloc() {
     return queue_config;
 }
 
-job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config, 
-                                              job_callback_ftype * done_callback,
-                                              job_callback_ftype * retry_callback,
-                                              job_callback_ftype * exit_callback) {
-    job_queue_type * job_queue = job_queue_alloc_w_callback(DEFAULT_MAX_SUBMIT, "OK", "STATUS", "ERROR", 
-                                                            done_callback,
-                                                            retry_callback,
-                                                            exit_callback);
-    const char * driver_name = queue_config_get_queue_name(queue_config);
-    if (driver_name != NULL) 
+job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config) {
+  job_queue_type * job_queue = job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "STATUS", "ERROR");
+  const char * driver_name = queue_config_get_queue_name(queue_config);
+  if (driver_name != NULL)
     {
         queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
         job_queue_set_driver(job_queue, driver);
-    }  
-    if (queue_config->max_submit_set)
-        job_queue_set_max_submit(job_queue, queue_config->max_submit);
-    return job_queue;
+    }
+
+  if (queue_config->max_submit_set)
+    job_queue_set_max_submit(job_queue, queue_config->max_submit);
+  return job_queue;
 }
 
 void queue_config_free(queue_config_type * queue_config) {

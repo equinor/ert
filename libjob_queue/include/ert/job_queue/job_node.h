@@ -3,7 +3,7 @@
 
    The file 'job_node.h' is part of ERT - Ensemble based Reservoir Tool.
 
-   ERT is free software: you can redistribute illt and/or modify
+   ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
@@ -28,7 +28,6 @@ extern "C" {
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/job_queue_status.h>
 
-
 /**
    This struct holds the job_queue information about one job. Observe
    the following:
@@ -47,6 +46,7 @@ extern "C" {
 
 */
 
+typedef bool (job_callback_ftype)   (void *);
 typedef struct job_queue_node_struct job_queue_node_type;
 
 
@@ -66,7 +66,10 @@ typedef struct job_queue_node_struct job_queue_node_type;
                                               int num_cpu ,
                                               const char * ok_file,
                                               const char * status_file,
-                                              const char * exit_file,                                              
+                                              const char * exit_file,
+                                              job_callback_ftype * done_callback,
+                                              job_callback_ftype * retry_callback,
+                                              job_callback_ftype * exit_callback,
                                               void * callback_arg);
 
 
@@ -103,11 +106,13 @@ typedef struct job_queue_node_struct job_queue_node_type;
   const char * job_queue_node_get_status_file( const job_queue_node_type * node);
   const char * job_queue_node_get_exit_file( const job_queue_node_type * node);
 
+  bool job_queue_node_run_DONE_callback( job_queue_node_type * node );
+  bool job_queue_node_run_RETRY_callback( job_queue_node_type * node );
+  void job_queue_node_run_EXIT_callback( job_queue_node_type * node );
   int job_queue_node_get_queue_index( const job_queue_node_type * node );
   void job_queue_node_set_queue_index( job_queue_node_type * node , int queue_index);
 
   void * job_queue_node_get_driver_data( job_queue_node_type * node );
-  void * job_queue_node_get_callback_arg(job_queue_node_type * node);
 
   UTIL_IS_INSTANCE_HEADER( job_queue_node );
   UTIL_SAFE_CAST_HEADER( job_queue_node );
