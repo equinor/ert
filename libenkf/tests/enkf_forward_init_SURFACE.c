@@ -25,6 +25,9 @@
 #include <ert/util/util.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
+#include <ert/util/rng.h>
+#include <ert/util/mzran.h>
+
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/run_arg.h>
@@ -60,34 +63,36 @@ int main(int argc , char ** argv) {
 
     util_clear_directory( "Storage" , true , true );
     enkf_main = enkf_main_bootstrap( config_file , strict , true );
+    ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
     {
-      enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
-      enkf_node_type * surface_node = enkf_state_get_node( state , "SURFACE" );
-      {
-        const enkf_config_node_type * surface_config_node = enkf_node_get_config( surface_node );
-        char * init_file1 = enkf_config_node_alloc_initfile( surface_config_node , NULL , 0);
-        char * init_file2 = enkf_config_node_alloc_initfile( surface_config_node , "/tmp", 0);
+      const enkf_config_node_type * surface_config_node = ensemble_config_get_node( ens_config , "SURFACE");
+      enkf_node_type * surface_node = enkf_node_alloc( surface_config_node );
+      char * init_file1 = enkf_config_node_alloc_initfile( surface_config_node , NULL , 0);
+      char * init_file2 = enkf_config_node_alloc_initfile( surface_config_node , "/tmp", 0);
 
-        test_assert_bool_equal( enkf_config_node_use_forward_init( surface_config_node ) , forward_init );
-        test_assert_string_equal( init_file1 , "Surface.irap");
-        test_assert_string_equal( init_file2 , "/tmp/Surface.irap");
+      test_assert_bool_equal( enkf_config_node_use_forward_init( surface_config_node ) , forward_init );
+      test_assert_string_equal( init_file1 , "Surface.irap");
+      test_assert_string_equal( init_file2 , "/tmp/Surface.irap");
 
-        free( init_file1 );
-        free( init_file2 );
-      }
+      free( init_file1 );
+      free( init_file2 );
 
+      rng_type * rng = rng_alloc( MZRAN, INIT_DEFAULT );
       test_assert_bool_equal( enkf_node_use_forward_init( surface_node ) , forward_init );
       if (forward_init)
-        test_assert_bool_not_equal( enkf_node_initialize( surface_node , 0 , enkf_state_get_rng( state )) , forward_init);
+        test_assert_bool_not_equal( enkf_node_initialize( surface_node , 0 , rng) , forward_init);
       // else hard_failure()
+      enkf_node_free( surface_node );
+      rng_free( rng );
     }
     test_assert_bool_equal( forward_init, ensemble_config_have_forward_init( enkf_main_get_ensemble_config( enkf_main )));
 
     if (forward_init) {
+      const enkf_config_node_type * config_node = ensemble_config_get_node( ens_config , "SURFACE");
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
       run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , 0 ,0 , "simulations/run0");
-      enkf_node_type * surface_node = enkf_state_get_node( state , "SURFACE" );
+      enkf_node_type * surface_node = enkf_node_alloc( config_node );
       node_id_type node_id = {.report_step = 0 ,
                               .iens = 0 };
 
