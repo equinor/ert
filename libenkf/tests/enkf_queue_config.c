@@ -72,7 +72,7 @@ void test_parse() {
    test_assert_string_equal(queue_config_get_queue_name(queue_config), LSF_DRIVER_NAME);
 
    //test for licence path
-   job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config, NULL, NULL, NULL);
+   job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
    test_assert_double_equal(job_queue_get_max_submit(job_queue), 6);
 
 

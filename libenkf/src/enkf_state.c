@@ -1078,52 +1078,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
 
 
 
-bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg );
-bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg );
-bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg );
-
-
-/**
-    This function is called when:
-
-     1. The external queue system has said that everything is OK; BUT
-        the ert layer failed to load all the data.
-
-     2. The external queue system has seen the job fail.
-
-    The parameter and state variables will be resampled before
-    retrying. And all random elements in templates+++ will be
-    resampled.
-*/
-
-
-
-static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_type * run_arg , job_queue_type * job_queue , bool load_failure) {
-  const member_config_type  * my_config   = enkf_state->my_config;
-  const int iens                          = member_config_get_iens( my_config );
-
-  if (load_failure)
-    ert_log_add_fmt_message( 1 , NULL , "[%03d:%04d - %04d] Failed to load all data.",iens , run_arg_get_step1(run_arg) , run_arg_get_step2(run_arg));
-  else
-    ert_log_add_fmt_message( 1 , NULL , "[%03d:%04d - %04d] Forward model failed.",iens, run_arg_get_step1(run_arg) , run_arg_get_step2(run_arg));
-
-  if (run_arg_can_retry( run_arg ) ) {
-    ert_log_add_fmt_message( 1 , NULL , "[%03d] Resampling and resubmitting realization." ,iens);
-    {
-      /* Reinitialization of the nodes */
-      stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
-      for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
-        enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
-        enkf_node_initialize( node , iens , enkf_state->rng );
-      }
-      stringlist_free( init_keys );
-    }
-
-    enkf_state_init_eclipse( enkf_state , run_arg  );                                               /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
-    job_queue_iset_external_restart( job_queue , run_arg_get_queue_index(run_arg) );   /* Here we inform the queue system that it should pick up this job and try again. */
-    run_arg_increase_submit_count( run_arg );
-  }
-}
 
 
 
@@ -1207,7 +1161,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , r
 }
 
 
-bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg ) {
+bool enkf_state_complete_forward_modelOK__(void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ));
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ));
@@ -1217,51 +1171,84 @@ bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * ar
 
 
 
-static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , run_arg_type * run_arg , job_queue_type * job_queue , bool is_retry) {
+static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , run_arg_type * run_arg) {
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
-  /*
-     The external queue system has said that the job failed - we
-     might give it another try from this scope, possibly involving a
-     resampling.
-   */
+  ert_log_add_fmt_message( 1, NULL, "[%03d:%04d-%04d] FAILED COMPLETELY.", iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
 
-  if (is_retry) {
-    if (run_arg_can_retry(run_arg)) {
-      enkf_state_internal_retry(enkf_state, run_arg , job_queue , false);
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    ert_log_add_fmt_message( 1, NULL, "[%03d:%04d-%04d] FAILED COMPLETELY.", iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
+  if (run_arg_get_run_status(run_arg) != JOB_LOAD_FAILURE)
+    run_arg_set_run_status( run_arg , JOB_RUN_FAILURE);
 
-    if (run_arg_get_run_status(run_arg) != JOB_LOAD_FAILURE)
-      run_arg_set_run_status( run_arg , JOB_RUN_FAILURE);
-
-    state_map_type * state_map = enkf_fs_get_state_map(run_arg_get_result_fs( run_arg ));
-    int iens = member_config_get_iens(enkf_state->my_config);
-    state_map_iset(state_map, iens, STATE_LOAD_FAILURE);
-    return false;
-  }
+  state_map_type * state_map = enkf_fs_get_state_map(run_arg_get_result_fs( run_arg ));
+  state_map_iset(state_map, iens, STATE_LOAD_FAILURE);
+  return false;
 }
 
-static bool enkf_state_complete_forward_model_EXIT_handler(job_queue_type * job_queue, void * arg, bool allow_retry ) {
+
+static bool enkf_state_complete_forward_model_EXIT_handler(void * arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
 
   enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ) );
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ) );
 
-  return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , run_arg , job_queue, allow_retry );
+  return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , run_arg);
 }
 
 
-bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg ) {
-  return enkf_state_complete_forward_model_EXIT_handler(job_queue, arg, false );
+bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
+  return enkf_state_complete_forward_model_EXIT_handler(arg);
 }
 
-bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg ) {
-  return enkf_state_complete_forward_model_EXIT_handler(job_queue, arg, true );
+
+/**
+    This function is called when:
+
+     1. The external queue system has said that everything is OK; BUT
+        the ert layer failed to load all the data.
+
+     2. The external queue system has seen the job fail.
+
+    The parameter and state variables will be resampled before
+    retrying. And all random elements in templates+++ will be
+    resampled.
+*/
+
+
+
+static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_type * run_arg) {
+  const member_config_type  * my_config   = enkf_state->my_config;
+  const int iens                          = member_config_get_iens( my_config );
+
+  ert_log_add_fmt_message( 1 , NULL , "[%03d:%04d - %04d] Forward model failed.",iens, run_arg_get_step1(run_arg) , run_arg_get_step2(run_arg));
+  if (run_arg_can_retry( run_arg ) ) {
+    ert_log_add_fmt_message( 1 , NULL , "[%03d] Resampling and resubmitting realization." ,iens);
+    {
+      /* Reinitialization of the nodes */
+      stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
+      for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
+        enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
+        enkf_node_initialize( node , iens , enkf_state->rng );
+      }
+      stringlist_free( init_keys );
+    }
+
+    enkf_state_init_eclipse( enkf_state , run_arg  );                                  /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
+    run_arg_increase_submit_count( run_arg );
+  }
+}
+
+
+bool enkf_state_complete_forward_modelRETRY__(void * arg ) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+  enkf_state_type * enkf_state = enkf_state_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ) );
+  run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1 ) );
+
+  if (run_arg_can_retry(run_arg)) {
+    enkf_state_internal_retry(enkf_state, run_arg);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 

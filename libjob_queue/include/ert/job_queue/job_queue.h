@@ -30,9 +30,8 @@ extern "C" {
 #include <ert/job_queue/job_node.h>
 
 
-  
   typedef struct job_queue_struct      job_queue_type;
-  typedef bool (job_callback_ftype)   (job_queue_type *, void *);
+
 
   void                job_queue_submit_complete( job_queue_type * queue );
   job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
@@ -40,26 +39,14 @@ extern "C" {
   bool                job_queue_has_driver(const job_queue_type * queue );
   //void                job_queue_set_size( job_queue_type * job_queue , int size );
   void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
-  //job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * status_file, const char * exit_file);
-
-  job_queue_type * job_queue_alloc_w_callback(int  max_submit,
-                                              const char * ok_file ,
-                                              const char * status_file ,
-                                              const char * exit_file,
-                                              job_callback_ftype * done_callback,
-                                              job_callback_ftype * retry_callback,
-                                              job_callback_ftype * exit_callback);
-
-  job_queue_type * job_queue_alloc(int  max_submit,
-                                   const char * ok_file ,
-                                   const char * status_file ,
-                                   const char * exit_file);
-
-
+  job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * status_file, const char * exit_file);
   void                job_queue_free(job_queue_type *);
 
   int                 job_queue_add_job(job_queue_type * ,
                                         const char * run_cmd ,
+                                        job_callback_ftype * done_callback,
+                                        job_callback_ftype * retry_callback,
+                                        job_callback_ftype * exit_callback,
                                         void * callback_arg ,
                                         int num_cpu ,
                                         const char * ,
@@ -118,7 +105,6 @@ extern "C" {
   bool                job_queue_has_driver(const job_queue_type * queue );
   job_queue_node_type * job_queue_iget_node(job_queue_type * queue , int job_index);
   int job_queue_get_max_running( const job_queue_type * queue );
-
 
   UTIL_SAFE_CAST_HEADER( job_queue );
 
