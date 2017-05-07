@@ -67,7 +67,7 @@ addPythonTest(tests.res.enkf.test_runpath_list.RunpathListTest)
 addPythonTest(tests.res.enkf.test_field_config.FieldConfigTest)
 
 if (STATOIL_TESTDATA_ROOT)
-  addPythonTest(res.enkf.enkf tests.res.enkf.test_enkf.EnKFTest LABELS StatoilData)
+  addPythonTest(tests.res.enkf.test_enkf.EnKFTest LABELS StatoilData)
   addPythonTest(tests.res.enkf.test_enkf_obs.EnKFObsTest LABELS StatoilData)
   addPythonTest(tests.res.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest LABELS StatoilData)
   addPythonTest(tests.res.enkf.test_enkf_fs.EnKFFSTest LABELS StatoilData)

@@ -98,7 +98,8 @@ void test_job_script() {
     
     {
       char * full_path = util_alloc_realpath( "Script.sh" );
-      test_assert_string_equal( full_path , site_config_get_job_script( site_config));
+      queue_config_type * queue_config = site_config_get_queue_config( site_config );
+      test_assert_string_equal( full_path , queue_config_get_job_script( queue_config));
       free( full_path );
     }
     site_config_free( site_config );

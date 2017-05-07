@@ -78,15 +78,15 @@ int main(int argc , char ** argv) {
 
   bool strict = true;
   enkf_main_type * enkf_main = enkf_main_bootstrap( config_file , strict , true );
+  ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
   enkf_fs_type * init_fs = enkf_main_get_fs(enkf_main);
-  enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
   run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( init_fs , 0 ,0 , "simulations/run0");
-  enkf_node_type * field_node = enkf_state_get_node( state , "PORO" );
+  enkf_config_node_type * config_node = ensemble_config_get_node( ens_config , "PORO");
+  enkf_node_type * field_node = enkf_node_alloc( config_node );
 
   bool forward_init;
   test_assert_true( util_sscanf_bool( forward_init_string , &forward_init));
   test_assert_bool_equal( enkf_node_use_forward_init( field_node ) , forward_init );
-  test_assert_bool_equal( forward_init, ensemble_config_have_forward_init( enkf_main_get_ensemble_config( enkf_main )));
 
   util_clear_directory( "Storage" , true , true );
 
@@ -97,6 +97,7 @@ int main(int argc , char ** argv) {
     util_copy_file( init_file , "simulations/run0/petro.grdecl");
 
   {
+    enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
     bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size(enkf_main) , true);
     int error;
     stringlist_type * msg_list = stringlist_alloc_new();

@@ -154,8 +154,7 @@ int main(int argc , char ** argv) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_config_node_type      * config_node     = ensemble_config_get_node(ensemble_config , key);
   const field_config_type    * field_config    = enkf_config_node_get_ref( config_node );
-  enkf_state_type            * state           = enkf_main_iget_state( enkf_main , iens );
-  enkf_node_type             * field_node      = enkf_state_get_node( state , key );
+  enkf_node_type             * field_node      = enkf_node_alloc( config_node );
   field_type                 * field           = enkf_node_value_ptr(field_node);
 
   {
