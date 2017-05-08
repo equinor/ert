@@ -14,3 +14,6 @@ add_subdirectory(global)
 add_subdirectory(res)
 
 
+if (INSTALL_ERT_LEGACY)
+   add_subdirectory(legacy)
+endif()
