@@ -42,7 +42,7 @@ set(TEST_SOURCES
 
 add_python_package("python.tests.res.enkf" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf "${TEST_SOURCES}" False)
 
-addPythonTest(res.enkf.es_update tests.res.enkf.test_es_update.ESUpdateTest)
+addPythonTest(tests.res.enkf.test_es_update.ESUpdateTest)
 addPythonTest(tests.res.enkf.test_forward_load_context.ForwardLoadContextTest)
 addPythonTest(tests.res.enkf.test_deprecation.DeprecationTest)
 addPythonTest(tests.res.enkf.test_meas_block.MeasBlockTest)
@@ -69,7 +69,7 @@ addPythonTest(tests.res.enkf.test_field_config.FieldConfigTest)
 addPythonTest(tests.res.enkf.test_queue_config.QueueConfigTest)
 
 if (STATOIL_TESTDATA_ROOT)
-  addPythonTest(res.enkf.enkf tests.res.enkf.test_enkf.EnKFTest LABELS StatoilData)
+  addPythonTest(tests.res.enkf.test_enkf.EnKFTest LABELS StatoilData)
   addPythonTest(tests.res.enkf.test_enkf_obs.EnKFObsTest LABELS StatoilData)
   addPythonTest(tests.res.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest LABELS StatoilData)
   addPythonTest(tests.res.enkf.test_enkf_fs.EnKFFSTest LABELS StatoilData)
