@@ -96,7 +96,7 @@ job_type ** alloc_jobs( rng_type * rng , int num_jobs , const char * cmd) {
 
 
 
-bool callback( job_queue_type * job_queue, void * arg ) {
+bool callback( void * arg ) {
   job_type * job = job_safe_cast( arg );
   usleep( job->callback_usleep );
   job->callback_run = true;
@@ -108,7 +108,7 @@ void * submit_job__( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   job_type * job = job_safe_cast( arg_pack_iget_ptr( arg_pack , 0 ) );
   job_queue_type * queue = arg_pack_iget_ptr( arg_pack , 1 );
-  job->queue_index = job_queue_add_job( queue  , job->cmd , job , 1 , job->run_path , job->run_path , job->argc , (const char **) job->argv );
+  job->queue_index = job_queue_add_job( queue  , job->cmd , callback , NULL , NULL , job , 1 , job->run_path , job->run_path , job->argc , (const char **) job->argv );
 
   if (job->queue_index >= 0)
     usleep( job->submit_usleep );
@@ -274,8 +274,7 @@ int main(int argc , char ** argv) {
   test_work_area_type * work_area = test_work_area_alloc("job_queue");
   job_type **jobs = alloc_jobs( rng , number_of_jobs , job);
 
-  //job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK", "STATUS", "ERROR");
-  job_queue_type * queue = job_queue_alloc_w_callback(number_of_jobs, "OK", "STATUS", "ERROR", callback, NULL, NULL);
+  job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK", "STATUS", "ERROR");
   queue_driver_type * driver = queue_driver_alloc_local();
   job_queue_manager_type * queue_manager = job_queue_manager_alloc( queue );
 

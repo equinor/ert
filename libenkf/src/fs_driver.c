@@ -132,10 +132,19 @@ void fs_driver_assert_version( FILE * stream , const char * mount_point) {
   if (file_version < CURRENT_FS_VERSION) {
     if ((file_version == 105) && (CURRENT_FS_VERSION == 106))
       fprintf(stderr,"%s: The file system you are accessing has been written with an older version of ert - STATIC information ignored. \n",__func__);
-    else
-      util_exit("%s: The file system you are trying to access has been created with an old version of ert - sorry.\n",__func__);
-  }
+    else {
+      fprintf(stderr,"-----------------------------------------------------------------------------------------------------\n");
+      fprintf(stderr,"  %s: The file system you are trying to access has been created with an old version of ert - sorry.\n",__func__);
+      fprintf(stderr,"  ert_fs_version: %d \n",CURRENT_FS_VERSION );
+      fprintf(stderr,"  %s version: %d \n",mount_point , file_version);
 
+      if ((file_version == 106) && (CURRENT_FS_VERSION == 107))
+        fprintf(stderr,"  The utility: ert_upgrade_fs107 can be used to upgrade storage version from 106 to 107\n\n");
+
+      util_exit("  EXIT\n");
+      fprintf(stderr,"-----------------------------------------------------------------------------------------------------\n");
+    }
+  }
   
 }
 

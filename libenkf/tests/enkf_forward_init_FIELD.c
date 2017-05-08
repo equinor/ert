@@ -25,6 +25,8 @@
 #include <ert/util/util.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
+#include <ert/util/rng.h>
+#include <ert/util/mzran.h>
 
 #include <ert/enkf/enkf_main.h>
 
@@ -59,10 +61,9 @@ int main(int argc , char ** argv) {
     util_clear_directory( "Storage" , true , true );
     enkf_main = enkf_main_bootstrap( config_file , strict , true );
     {
-      enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
-      enkf_node_type * field_node = enkf_state_get_node( state , "PORO" );
+      ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
+      enkf_config_node_type * field_config_node = ensemble_config_get_node( ens_config , "PORO" );
       {
-        const enkf_config_node_type * field_config_node = enkf_node_get_config( field_node );
         char * init_file1 = enkf_config_node_alloc_initfile( field_config_node , NULL , 0);
         char * init_file2 = enkf_config_node_alloc_initfile( field_config_node , "/tmp", 0);
 
@@ -73,18 +74,22 @@ int main(int argc , char ** argv) {
         free( init_file1 );
         free( init_file2 );
       }
-
+      rng_type * rng = rng_alloc(  MZRAN , INIT_DEFAULT );
+      enkf_node_type * field_node = enkf_node_alloc( field_config_node );
       test_assert_bool_equal( enkf_node_use_forward_init( field_node ) , forward_init );
       if (forward_init)
-        test_assert_bool_not_equal( enkf_node_initialize( field_node , 0 , enkf_state_get_rng( state )) , forward_init);
+        test_assert_bool_not_equal( enkf_node_initialize( field_node , 0 ,rng) , forward_init);
       // else hard_failure()
+      enkf_node_free( field_node );
+      rng_free( rng );
     }
     test_assert_bool_equal( forward_init, ensemble_config_have_forward_init( enkf_main_get_ensemble_config( enkf_main )));
 
     if (forward_init) {
-      enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
+      ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
+      const enkf_config_node_type * field_config_node = ensemble_config_get_node( ens_config , "PORO" );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-      enkf_node_type * field_node = enkf_state_get_node( state , "PORO" );
+      enkf_node_type * field_node = enkf_node_alloc( field_config_node );
       run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , 0 ,0 , "simulations/run0");
       node_id_type node_id = {.report_step = 0 ,
                               .iens = 0 };
@@ -102,6 +107,7 @@ int main(int argc , char ** argv) {
         util_unlink_existing( "simulations/run0/petro.grdecl" );
 
         test_assert_false(enkf_node_forward_init(field_node, "simulations/run0", 0));
+        enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
         result = enkf_state_forward_init(state, run_arg);
         test_assert_true(LOAD_FAILURE & result);
 
@@ -121,6 +127,7 @@ int main(int argc , char ** argv) {
       {
         int result;
         stringlist_type * msg_list = stringlist_alloc_new();
+        enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
 
         test_assert_true( enkf_node_forward_init( field_node , "simulations/run0" , 0));
         result = enkf_state_forward_init( state , run_arg);

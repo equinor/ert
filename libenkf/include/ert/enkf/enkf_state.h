@@ -64,13 +64,10 @@ typedef struct enkf_state_struct    enkf_state_type;
   //void             * enkf_state_complete_forward_model__(void * arg );
   void *             enkf_state_load_from_forward_model_mt( void * arg );
   void               enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs, const stringlist_type * param_list , init_mode_type init_mode);
-  void               enkf_state_fread(enkf_state_type *  , enkf_fs_type * fs , int  , int );
   void               enkf_state_swapout_node(const enkf_state_type * , const char *);
   void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
   void               enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
-  enkf_node_type   * enkf_state_get_node(const enkf_state_type * , const char * );
-  bool               enkf_state_has_node(const enkf_state_type * enkf_state , const char * node_key);
-  void               enkf_state_del_node(enkf_state_type * , const char * );
+  //enkf_node_type   * enkf_state_get_node(const enkf_state_type * , const char * );
   void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
   void             * enkf_state_run_eclipse__(void * );
   void             * enkf_state_start_forward_model__(void * );
@@ -98,10 +95,8 @@ typedef struct enkf_state_struct    enkf_state_type;
   void               enkf_state_update_jobname( enkf_state_type * enkf_state );
   void               enkf_state_update_eclbase( enkf_state_type * enkf_state );
   void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
-  enkf_node_type *   enkf_state_get_or_create_node(enkf_state_type * enkf_state, const enkf_config_node_type * config_node);
   void               enkf_state_load_ecl_restart(enkf_state_type * , bool , int );
   void               enkf_state_sample(enkf_state_type * , int);
-  void               enkf_state_fwrite(const enkf_state_type *  , enkf_fs_type * fs , int  , int  );
   void               enkf_state_ens_read(       enkf_state_type * , const char * , int);
   void               enkf_state_ecl_write(enkf_state_type *, const run_arg_type * run_arg , enkf_fs_type * fs);
   void               enkf_state_free(enkf_state_type * );
@@ -123,10 +118,10 @@ typedef struct enkf_state_struct    enkf_state_type;
 
 /******************************************************************/
 /* Forward model callbacks: */
+  bool enkf_state_complete_forward_modelOK__(void * arg );
+  bool enkf_state_complete_forward_modelRETRY__(void * arg );
+  bool enkf_state_complete_forward_modelEXIT__(void * arg );
 
-bool enkf_state_complete_forward_modelOK__(job_queue_type * job_queue, void * arg );
-bool enkf_state_complete_forward_modelRETRY__(job_queue_type * job_queue, void * arg );
-bool enkf_state_complete_forward_modelEXIT__(job_queue_type * job_queue, void * arg );
 
 #ifdef __cplusplus
 }

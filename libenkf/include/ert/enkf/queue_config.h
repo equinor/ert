@@ -43,7 +43,7 @@ typedef struct queue_config_struct queue_config_type;
     void queue_config_init_user_mode(queue_config_type * queue_config);
     bool queue_config_init(queue_config_type * queue_config, const config_content_type * config);
 
-    int queue_config_get_max_submit(queue_config_type * queue_config);    
+    int queue_config_get_max_submit(queue_config_type * queue_config);
     bool queue_config_has_job_script( const queue_config_type * queue_config );
     const char * queue_config_get_job_script(const queue_config_type * queue_config);
     bool queue_config_set_job_script(queue_config_type * queue_config, const char * job_script);
@@ -58,11 +58,7 @@ typedef struct queue_config_struct queue_config_type;
 
     void queue_config_add_config_items(config_parser_type * parser, bool site_mode);
 
-    //job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config);
-    job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config, 
-                                              job_callback_ftype * done_callback,
-                                              job_callback_ftype * retry_callback,
-                                              job_callback_ftype * exit_callback);
+    job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config);
 
 UTIL_SAFE_CAST_HEADER(queue_config);
 UTIL_IS_INSTANCE_HEADER(queue_config);

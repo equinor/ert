@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <ert/util/rng.h>
+#include <ert/util/mzran.h>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.h>
 #include <ert/util/util.h>
@@ -43,6 +45,7 @@ void create_runpath(enkf_main_type * enkf_main, int iter ) {
 
 int main(int argc , char ** argv) {
   enkf_main_install_SIGNALS();
+  rng_type * rng = rng_alloc( MZRAN , INIT_DEFAULT );
   const char * root_path = argv[1];
   const char * config_file = argv[2];
   const char * forward_init_string = argv[3];
@@ -58,8 +61,8 @@ int main(int argc , char ** argv) {
     util_clear_directory( "Storage" , true , true );
     enkf_main = enkf_main_bootstrap( config_file , strict , true );
     {
-      enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
-      enkf_node_type * gen_param_node = enkf_state_get_node( state , "PARAM" );
+      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ) , "PARAM" );
+      enkf_node_type * gen_param_node = enkf_node_alloc( config_node );
       {
         const enkf_config_node_type * gen_param_config_node = enkf_node_get_config( gen_param_node );
         char * init_file1 = enkf_config_node_alloc_initfile( gen_param_config_node , NULL , 0);
@@ -75,16 +78,19 @@ int main(int argc , char ** argv) {
 
       test_assert_bool_equal( enkf_node_use_forward_init( gen_param_node ) , forward_init );
       if (forward_init)
-        test_assert_bool_not_equal( enkf_node_initialize( gen_param_node , 0 , enkf_state_get_rng( state )) , forward_init);
+        test_assert_bool_not_equal( enkf_node_initialize( gen_param_node , 0 , rng), forward_init);
       // else hard_failure()
+      enkf_node_free( gen_param_node );
     }
     test_assert_bool_equal( forward_init, ensemble_config_have_forward_init( enkf_main_get_ensemble_config( enkf_main )));
 
     if (forward_init) {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
+      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ) , "PARAM" );
+      enkf_node_type * gen_param_node = enkf_node_alloc( config_node );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
       run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , 0 , 0 , "simulations/run0");
-      enkf_node_type * gen_param_node = enkf_state_get_node( state , "PARAM" );
+
       node_id_type node_id = {.report_step = 0 ,
                               .iens = 0};
 
@@ -146,9 +152,11 @@ int main(int argc , char ** argv) {
       }
       util_clear_directory( "simulations" , true , true );
       run_arg_free( run_arg );
+      enkf_node_free( gen_param_node );
     }
     enkf_main_free( enkf_main );
   }
   test_work_area_free( work_area );
+  rng_free( rng );
 }
 
