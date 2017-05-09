@@ -17,12 +17,8 @@ set( ERT_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
 #-----------------------------------------------------------------
 
 option( BUILD_TESTS         "Should the tests be built"                               OFF)
-option( ERT_USE_OPENMP      "Use OpenMP"                                              OFF )
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
-option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)
 option( USE_RUNPATH         "Should we embed path to libraries"                       ON)
-
-set( BUILD_SHARED_LIBS ON )
 
 find_package( libecl REQUIRED )
 find_package( libres REQUIRED )
