@@ -12,10 +12,8 @@ class SimulationContext(object):
         self._size = size
         
         max_runtime = ert.analysisConfig().get_max_runtime()
-	raise Exception("Code has lost access to job_queue instance. Refactor required.");
-        
-       
-        job_queue = None;
+               
+        job_queue = ert.get_queue_config().alloc_job_queue()
         self._queue_manager = JobQueueManager(job_queue)
         self._queue_manager.startQueue(size, verbose=verbose)
         self._run_args = {}
@@ -23,6 +21,7 @@ class SimulationContext(object):
 
         self._thread_pool = CThreadPool(8)
         self._thread_pool.addTaskFunction("submitJob", ENKF_LIB, "enkf_main_isubmit_job__")
+       
 
 
     def addSimulation(self, iens, target_fs):
@@ -38,9 +37,9 @@ class SimulationContext(object):
         run_arg = RunArg.createEnsembleExperimentRunArg(target_fs, iens, runpath)
 
         self._ert.createRunPath(run_arg)
-
+        queue = self._queue_manager.get_job_queue()
         self._run_args[iens] = run_arg
-        self._thread_pool.submitJob(ArgPack(self._ert, run_arg))
+        self._thread_pool.submitJob(ArgPack(self._ert, run_arg, queue))
 
 
     def isRunning(self):

@@ -37,6 +37,7 @@ set(TEST_SOURCES
     test_hook_workflow.py
     test_forward_load_context.py
     test_runpath_list.py
+    test_queue_config.py
 )
 
 add_python_package("python.tests.res.enkf" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf "${TEST_SOURCES}" False)
@@ -65,6 +66,7 @@ addPythonTest(tests.res.enkf.test_ensemble_config.EnsembleConfigTest)
 addPythonTest(tests.res.enkf.test_hook_workflow.HookWorkFlowTest)
 addPythonTest(tests.res.enkf.test_runpath_list.RunpathListTest)
 addPythonTest(tests.res.enkf.test_field_config.FieldConfigTest)
+addPythonTest(tests.res.enkf.test_queue_config.QueueConfigTest)
 
 if (STATOIL_TESTDATA_ROOT)
   addPythonTest(tests.res.enkf.test_enkf.EnKFTest LABELS StatoilData)

@@ -37,6 +37,7 @@ set(PYTHON_SOURCES
     run_arg.py
     runpath_list.py
     site_config.py
+    queue_config.py
     state_map.py
     summary_key_matcher.py
     summary_key_set.py
