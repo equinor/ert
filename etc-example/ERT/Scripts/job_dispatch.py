@@ -23,7 +23,6 @@ import socket
 import time
 import random
 
-
 OK_file     = "OK"
 EXIT_file   = "EXIT"
 STATUS_file = "STATUS"

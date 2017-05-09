@@ -58,9 +58,7 @@ void job_queue_manager_free( job_queue_manager_type * manager) {
 }
 
 
-void job_queue_manager_start_queue( job_queue_manager_type * manager , int num_total_run , bool verbose , bool reset_queue) {
-  if (reset_queue)
-    job_queue_reset( manager->job_queue );
+void job_queue_manager_start_queue( job_queue_manager_type * manager , int num_total_run , bool verbose) {
 
   job_queue_start_manager_thread( manager->job_queue , &manager->queue_thread , num_total_run , verbose );
 }

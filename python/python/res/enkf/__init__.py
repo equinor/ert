@@ -79,6 +79,7 @@ from .local_config import LocalConfig
 from .model_config import ModelConfig
 from .plot_settings import PlotSettings
 from .site_config import SiteConfig
+from .queue_config import QueueConfig
 from .runpath_list import RunpathList, RunpathNode
 from .hook_workflow import HookWorkflow
 from .hook_manager import HookManager

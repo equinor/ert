@@ -619,30 +619,6 @@ static void job_queue_print_summary(job_queue_type *queue, bool status_change ) 
 
 
 
-/**
-    This function goes through all the nodes and call finalize on
-    them. What about jobs which were NOT in a CAN_KILL state when the
-    killing was done, i.e. jobs which are in one of the intermediate
-    load like states?? They
-*/
-
-void job_queue_reset(job_queue_type * queue) {
-  job_list_get_wrlock( queue->job_list );
-  job_list_reset( queue->job_list );
-  job_list_unlock( queue->job_list );
-  job_queue_status_clear(queue->status);
-
-  /*
-      Be ready for the next run
-  */
-  queue->submit_complete = false;
-  queue->pause_on        = false;
-  queue->user_exit       = false;
-  queue->open            = true;
-  queue->stop_time       = 0;
-}
-
-
 bool job_queue_is_running( const job_queue_type * queue ) {
   return queue->running;
 }
@@ -832,6 +808,8 @@ static void job_queue_check_expired(job_queue_type * queue) {
     }
   }
 }
+
+
 
 bool job_queue_get_open(const job_queue_type * job_queue) {
   return job_queue->open;
@@ -1205,6 +1183,9 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   queue->status           = job_queue_status_alloc( );
 
   pthread_mutex_init( &queue->run_mutex    , NULL );
+
+
+  
 
   return queue;
 }

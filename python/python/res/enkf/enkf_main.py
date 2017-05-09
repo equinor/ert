@@ -35,6 +35,7 @@ class EnKFMain(BaseCClass):
     _create_new_config = EnkfPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
 
     _free = EnkfPrototype("void enkf_main_free(enkf_main)")
+    _get_queue_config = EnkfPrototype("queue_config_ref enkf_main_get_queue_config ( enkf_main )")
     _get_ensemble_size = EnkfPrototype("int enkf_main_get_ensemble_size( enkf_main )")
     _get_ens_config = EnkfPrototype("ens_config_ref enkf_main_get_ensemble_config( enkf_main )")
     _get_model_config = EnkfPrototype("model_config_ref enkf_main_get_model_config( enkf_main )")
@@ -68,12 +69,15 @@ class EnKFMain(BaseCClass):
     _export_field_with_fs = EnkfPrototype("bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_fs_manager)")
     _load_from_forward_model = EnkfPrototype("int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)")
     _create_run_path = EnkfPrototype("void enkf_main_icreate_run_path(enkf_main , run_arg)")
-    _submit_simulation = EnkfPrototype("void enkf_main_isubmit_job(enkf_main , run_arg)")
+    _submit_simulation = EnkfPrototype("void enkf_main_isubmit_job(enkf_main , run_arg, job_queue)")
     _alloc_run_context_ENSEMBLE_EXPERIMENT= EnkfPrototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , enkf_init_mode_enum , int)")
     _get_runpath_list = EnkfPrototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
     _add_node = EnkfPrototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
 
 
+
+    def get_queue_config(self):
+        return self._get_queue_config()
 
     def __init__(self, model_config, strict=True, verbose=True):
         if model_config is not None and not isfile(model_config):
@@ -290,8 +294,8 @@ class EnKFMain(BaseCClass):
     def createRunPath(self , run_arg):
         self._create_run_path( run_arg)
 
-    def submitSimulation(self , run_arg):
-        self._submit_simulation( run_arg)
+    def submitSimulation(self , run_arg, queue):
+        self._submit_simulation( run_arg, queue)
 
 
     def getRunContextENSEMPLE_EXPERIMENT(self , fs , iactive , init_mode = EnkfInitModeEnum.INIT_CONDITIONAL , iteration = 0):

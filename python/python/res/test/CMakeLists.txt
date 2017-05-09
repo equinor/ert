@@ -4,3 +4,4 @@ set(PYTHON_SOURCES
 )
 
 add_python_package("python.res.test"  ${PYTHON_INSTALL_PREFIX}/res/test "${PYTHON_SOURCES}" True)
+add_subdirectory(synthesizer)

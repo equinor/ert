@@ -1572,7 +1572,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
       /* Start the queue */
       if (queue_config_has_job_script( queue_config ))
-        job_queue_manager_start_queue( queue_manager , job_size , verbose_queue , restart_queue);
+        job_queue_manager_start_queue( queue_manager , job_size , verbose_queue );
       else
         util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
 
@@ -3150,6 +3150,11 @@ void enkf_main_rank_on_data(enkf_main_type * enkf_main,
 void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_key, const char * ranking_file) {
   ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
   ranking_table_fwrite_ranking(ranking_table, ranking_key, ranking_file);
+}
+
+
+queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main ) {
+  return site_config_get_queue_config( enkf_main->site_config );
 }
 
 #include "enkf_main_ensemble.c"

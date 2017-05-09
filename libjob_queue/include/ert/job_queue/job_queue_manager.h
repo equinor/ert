@@ -30,7 +30,7 @@ typedef struct job_queue_manager_struct job_queue_manager_type;
 
   job_queue_manager_type * job_queue_manager_alloc( job_queue_type * job_queue );
   void job_queue_manager_free( job_queue_manager_type * manager );
-  void job_queue_manager_start_queue( job_queue_manager_type * manager , int num_total_run , bool verbose , bool reset_queue);
+  void job_queue_manager_start_queue( job_queue_manager_type * manager , int num_total_run , bool verbose);
   bool job_queue_manager_try_wait( job_queue_manager_type * manager , int timeout_seconds);
   void job_queue_manager_wait( job_queue_manager_type * manager);
   int  job_queue_manager_get_num_running( const job_queue_manager_type * manager);

@@ -298,7 +298,7 @@ extern "C" {
   void              enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path );
   bool              enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case);
   const      char * enkf_main_get_mount_root( const enkf_main_type * enkf_main);
-
+  
 
   state_map_type  * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path);
   time_map_type   * enkf_main_alloc_readonly_time_map( const enkf_main_type * enkf_main , const char * case_path );
@@ -307,6 +307,7 @@ extern "C" {
   ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter);
   ert_init_context_type * enkf_main_alloc_ert_init_context(const enkf_main_type * enkf_main , enkf_fs_type * fs, const bool_vector_type * iactive , init_mode_type init_mode , int iter);
 
+  queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main );
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
