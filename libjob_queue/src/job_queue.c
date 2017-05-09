@@ -809,6 +809,8 @@ static void job_queue_check_expired(job_queue_type * queue) {
   }
 }
 
+
+
 bool job_queue_get_open(const job_queue_type * job_queue) {
   return job_queue->open;
 }
@@ -1181,6 +1183,9 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   queue->status           = job_queue_status_alloc( );
 
   pthread_mutex_init( &queue->run_mutex    , NULL );
+
+
+  
 
   return queue;
 }

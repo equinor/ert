@@ -21,6 +21,7 @@ class SimulationContext(object):
 
         self._thread_pool = CThreadPool(8)
         self._thread_pool.addTaskFunction("submitJob", ENKF_LIB, "enkf_main_isubmit_job__")
+       
 
 
     def addSimulation(self, iens, target_fs):
@@ -36,9 +37,9 @@ class SimulationContext(object):
         run_arg = RunArg.createEnsembleExperimentRunArg(target_fs, iens, runpath)
 
         self._ert.createRunPath(run_arg)
-
+        queue = self._queue_manager.get_job_queue()
         self._run_args[iens] = run_arg
-        self._thread_pool.submitJob(ArgPack(self._ert, run_arg))
+        self._thread_pool.submitJob(ArgPack(self._ert, run_arg, queue))
 
 
     def isRunning(self):

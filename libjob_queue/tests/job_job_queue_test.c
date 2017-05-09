@@ -80,10 +80,6 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
   test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
 
   test_assert_bool_equal(false, job_queue_get_open(queue));
-  test_assert_true(false); //change testcode
-  test_assert_bool_equal(true, job_queue_get_open(queue));
-
-  test_assert_int_equal(0, job_queue_get_num_complete(queue));
 
   job_queue_free(queue);
   queue_driver_free(driver);
@@ -132,9 +128,6 @@ void run_and_monitor_jobs(char * executable_to_run,
 
   test_assert_int_equal(number_of_jobs - job_queue_get_num_complete( queue ) , job_queue_get_num_killed(queue));
   test_assert_bool_equal(false, job_queue_get_open(queue));
-  test_assert_true(false); //change testcode
-  test_assert_bool_equal(true, job_queue_get_open(queue));
-  test_assert_int_equal(0, job_queue_get_num_complete(queue));
 
   job_queue_free(queue);
   queue_driver_free(driver);
@@ -168,43 +161,13 @@ void run_jobs_time_limit_multithreaded(char * executable_to_run, int number_of_j
   test_assert_int_equal(number_of_jobs - number_of_slowjobs, job_queue_get_num_complete(queue));
   test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
   test_assert_bool_equal(false, job_queue_get_open(queue));
-  test_assert_true(false); //change testcode
-  test_assert_bool_equal(true, job_queue_get_open(queue));
-  test_assert_int_equal(0, job_queue_get_num_complete(queue));
 
   job_queue_free(queue);
   queue_driver_free(driver);
   test_work_area_free(work_area);
 }
 
-void test1(char ** argv) {
-  printf("001: Running JobQueueRunJobs_ReuseQueue_AllOk\n");
 
-  int number_of_jobs = 20;
-  int number_of_queue_reuse = 10;
-
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
-
-  job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
-  queue_driver_type * driver = queue_driver_alloc_local();
-  job_queue_set_driver(queue, driver);
-
-  for (int j = 0; j < number_of_queue_reuse; j++) {
-    submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, 0, "0", "0");
-
-    job_queue_run_jobs(queue, number_of_jobs, false);
-
-    test_assert_int_equal(number_of_jobs, job_queue_get_num_complete(queue));
-    test_assert_bool_equal(false, job_queue_get_open(queue));
-    test_assert_true(false); //change testcode
-    test_assert_bool_equal(true, job_queue_get_open(queue));
-    test_assert_int_equal(0, job_queue_get_num_complete(queue));
-  }
-  job_queue_free(queue);
-  queue_driver_free(driver);
-  test_work_area_free(work_area);
-
-}
 
 void test2(char ** argv) {
   printf("002: Running JobQueueRunJobs_ReuseQueueWithStopTime_AllOk\n");
@@ -215,11 +178,13 @@ void test2(char ** argv) {
 
   test_work_area_type * work_area = test_work_area_alloc("job_queue");
 
-  job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
-  queue_driver_type * driver = queue_driver_alloc_local();
-  job_queue_set_driver(queue, driver);
+ 
 
   for (int j = 0; j < number_of_queue_reuse; j++) {
+    job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "STATUS", "ERROR");
+    queue_driver_type * driver = queue_driver_alloc_local();
+    job_queue_set_driver(queue, driver);
+
     submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, number_of_slow_jobs, "1", "5");
 
     job_queue_run_jobs(queue, number_of_jobs, false);
@@ -228,12 +193,10 @@ void test2(char ** argv) {
 
     test_assert_int_equal(number_of_jobs, job_queue_get_num_complete(queue));
     test_assert_bool_equal(false, job_queue_get_open(queue));
-    test_assert_true(false); //change testcode
-    test_assert_bool_equal(true, job_queue_get_open(queue));
-    test_assert_int_equal(0, job_queue_get_num_complete(queue));
+    job_queue_free(queue);
+    queue_driver_free(driver);
   }
-  job_queue_free(queue);
-  queue_driver_free(driver);
+
   test_work_area_free(work_area);
 
 }
@@ -407,10 +370,7 @@ void test14(char ** argv) {
   test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
 
   test_assert_bool_equal(false, job_queue_get_open(queue));
-  test_assert_true(false); //change testcode
-  test_assert_bool_equal(true, job_queue_get_open(queue));
 
-  test_assert_int_equal(0, job_queue_get_num_complete(queue));
 
   job_queue_manager_free( queue_manager );
   job_queue_free(queue);
@@ -458,9 +418,6 @@ void test16(char ** argv) {
 
   test_assert_int_equal(number_of_jobs, job_queue_get_num_complete(queue));
   test_assert_bool_equal(false, job_queue_get_open(queue));
-  test_assert_true(false); //change testcode
-  test_assert_bool_equal(true, job_queue_get_open(queue));
-  test_assert_int_equal(0, job_queue_get_num_complete(queue));
   job_queue_free(queue);
   queue_driver_free(driver);
   test_work_area_free(work_area);
@@ -470,7 +427,7 @@ void test16(char ** argv) {
 int main(int argc, char ** argv) {
   util_install_signals();
 
-  test1(argv);
+ 
   test2(argv);
   test3(argv);
   test4(argv);
