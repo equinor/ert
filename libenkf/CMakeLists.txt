@@ -1,5 +1,4 @@
 add_subdirectory( src )
-add_subdirectory( applications/ert_tui )
 
 #set( CMAKE_REQUIRED_LIBRARIES ${UTIL_LIBRARY} )
 #check_function_exists( buffer_fwrite_compressed HAVE_BUFFER_COMPRESS )
