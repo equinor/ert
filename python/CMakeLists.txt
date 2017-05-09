@@ -5,6 +5,7 @@ init_python(2.7)
 # Find an existing ert.ecl disribution
 
 find_python_package(ecl 2.1.0 ${PYTHON_INSTALL_PREFIX})
+find_python_package(res 2.1.0 ${PYTHON_INSTALL_PREFIX})
 find_python_package(cwrap 0.0.0 ${PYTHON_INSTALL_PREFIX})
 find_python_package(numpy 1.7.1 ${PYTHON_INSTALL_PREFIX})
 

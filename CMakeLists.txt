@@ -17,8 +17,6 @@ set( ERT_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
 #-----------------------------------------------------------------
 
 option( BUILD_TESTS         "Should the tests be built"                               OFF)
-option( BUILD_PYTHON        "Run py_compile on the python wrappers"                   ON )
-option( ERT_BUILD_GUI       "Should the PyQt based GUI be compiled and installed"     OFF)
 option( ERT_USE_OPENMP      "Use OpenMP"                                              OFF )
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)
@@ -27,7 +25,7 @@ option( USE_RUNPATH         "Should we embed path to libraries"                 
 set( BUILD_SHARED_LIBS ON )
 
 find_package( libecl REQUIRED )
-include_directories( ${libecl_INCLUDE_DIRS} )
+find_package( libres REQUIRED )
 
 
 set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
@@ -144,32 +142,14 @@ add_subdirectory( bin )
 
 include(cmake/ert_module_name.cmake)
 
-include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
-add_subdirectory( libconfig )
-
-include_directories( ${PROJECT_SOURCE_DIR}/libsched/include )
-add_subdirectory( libsched )
-
-include_directories( ${PROJECT_SOURCE_DIR}/librms/include )
-add_subdirectory( librms )
-
-include_directories( ${PROJECT_SOURCE_DIR}/libanalysis/include )
-add_subdirectory( libanalysis )
-
-include_directories( ${PROJECT_SOURCE_DIR}/libjob_queue/include )
-add_subdirectory( libjob_queue )
-
-include_directories( ${PROJECT_SOURCE_DIR}/libenkf/include )
 add_subdirectory( libenkf )
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 
-if (BUILD_PYTHON)
-   add_subdirectory( python )
+add_subdirectory( python )
 
-   if(ERT_DOC)
-      add_subdirectory( docs )
-   endif()
+if(ERT_DOC)
+   add_subdirectory( docs )
 endif()
 
