@@ -140,7 +140,6 @@ add_definitions( -DHAVE_PROC )
 if (BUILD_TESTS)
    option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit" OFF)
 endif()
-add_subdirectory( bin )
 
 include(cmake/ert_module_name.cmake)
 
@@ -173,3 +172,9 @@ if (BUILD_PYTHON)
    endif()
 endif()
 
+
+configure_file( cmake/libres-config.cmake.in libres-config.cmake @ONLY)
+configure_file( cmake/libres-config-version.cmake.in libres-config-version.cmake @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libres-config.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/libres-config-version.cmake
+        DESTINATION lib/libres )
