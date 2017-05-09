@@ -281,7 +281,7 @@ int main(int argc , char ** argv) {
   util_install_signals();
   util_sscanf_bool(argv[2] , &user_exit);
   job_queue_set_driver(queue, driver);
-  job_queue_manager_start_queue(queue_manager, 0, false , true);
+  job_queue_manager_start_queue(queue_manager, 0, false );
 
   {
     thread_pool_type * status_pool = thread_pool_alloc( status_threads , true );

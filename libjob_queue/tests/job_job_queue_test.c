@@ -118,7 +118,7 @@ void run_and_monitor_jobs(char * executable_to_run,
     free(runpath);
   }
   job_queue_submit_complete(queue);
-  job_queue_manager_start_queue(queue_manager,0,false,false);
+  job_queue_manager_start_queue(queue_manager,0,false);
   monitor_job_queue( queue , max_job_duration , stop_time , min_realizations );
   job_queue_manager_wait(queue_manager);
 
@@ -346,7 +346,7 @@ void test14(char ** argv) {
   char * sleep_long = "100";
   submit_jobs_to_queue(queue, work_area, argv[1], number_of_jobs, number_of_slowjobs, sleep_short, sleep_long);
   job_queue_submit_complete(queue);
-  job_queue_manager_start_queue( queue_manager , 10 , false , false);
+  job_queue_manager_start_queue( queue_manager , 10 , false );
 
   /*
     The jobs are distributed with some very fast, and some quite

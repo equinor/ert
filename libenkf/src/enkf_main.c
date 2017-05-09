@@ -1572,7 +1572,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
       /* Start the queue */
       if (queue_config_has_job_script( queue_config ))
-        job_queue_manager_start_queue( queue_manager , job_size , verbose_queue , restart_queue);
+        job_queue_manager_start_queue( queue_manager , job_size , verbose_queue );
       else
         util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
 

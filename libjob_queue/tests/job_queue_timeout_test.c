@@ -122,7 +122,7 @@ int main(int argc, char ** argv) {
 
   util_install_signals();
   job_queue_set_driver(queue, driver);
-  job_queue_manager_start_queue(queue_manager, number_of_jobs, false, true);
+  job_queue_manager_start_queue(queue_manager, number_of_jobs, false);
 
   {
     submit_jobs(queue, number_of_jobs, jobs);
