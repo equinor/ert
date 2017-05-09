@@ -173,3 +173,9 @@ if (BUILD_PYTHON)
    endif()
 endif()
 
+
+configure_file( cmake/libres-config.cmake.in libres-config.cmake @ONLY)
+configure_file( cmake/libres-config-version.cmake.in libres-config-version.cmake @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libres-config.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/libres-config-version.cmake
+        DESTINATION lib/libres )
