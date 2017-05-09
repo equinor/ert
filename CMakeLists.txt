@@ -122,10 +122,6 @@ set(INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to i
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
-if (NOT BUILD_SHARED_LIBS)
-   message(FATAL_ERROR "The libres library must be built as a shared library")
-endif()
-
 
 set( NEED_LIBM TRUE )
 set( LINK_STATIC FALSE )
