@@ -5,16 +5,11 @@ import sys
 
 from ecl.ecl import EclSum, EclSumTStep
 from ecl.test import ExtendedTestCase
+print sys.path
+print os.environ["PYTHONPATH"]
+import res
 
-try:
-    from synthesizer import OilSimulator
-except ImportError as e:
-    share_lib_path = ExtendedTestCase.createSharePath("lib")
-
-    sys.path.insert(0, share_lib_path)
-    synthesizer_module = __import__("synthesizer")
-    OilSimulator = synthesizer_module.OilSimulator
-    sys.path.pop(0)
+from res.test.synthesizer import OilSimulator
 
 
 def globalIndex(i, j, k, nx=10, ny=10, nz=10):

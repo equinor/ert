@@ -95,7 +95,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
     def stop(self):
         if self._session.simulation_context is not None:
             if self._session.simulation_context.isRunning():
-                self.ert.siteConfig().getJobQueue().killAllJobs()
+                self._session.simulation_context._queue_manager.get_job_queue().killAllJobs()
         self.shutdown()
         self.server_close()
         self._config = None

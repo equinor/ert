@@ -48,8 +48,11 @@ class JobQueueManager(BaseCClass):
 
     def __init__(self, queue):
         c_ptr = self._alloc(queue)
+        self.queue = queue
         super(JobQueueManager, self).__init__(c_ptr)
 
+    def get_job_queue(self):
+        return self.queue
 
     def startQueue(self , total_size , verbose = False , reset_queue = True):
         self._start_queue( total_size , verbose , reset_queue)
