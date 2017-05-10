@@ -5,3 +5,7 @@ if (ERT_BUILD_GUI)
    add_subdirectory( ert_gui )
 endif()
 add_subdirectory( bin )
+
+if (INSTALL_ERT_LEGACY)
+   add_subdirectory( legacy/ert )
+endif()

@@ -23,6 +23,7 @@ option( ERT_USE_OPENMP      "Use OpenMP"                                        
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)
 option( USE_RUNPATH         "Should we embed path to libraries"                       ON)
+option( INSTALL_ERT_LEGACY  "Install legacy ert code"                                 OFF)
 
 set( BUILD_SHARED_LIBS ON )
 
