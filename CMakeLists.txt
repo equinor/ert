@@ -18,7 +18,6 @@ set( ERT_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
 
 option( BUILD_TESTS         "Should the tests be built"                               OFF)
 option( BUILD_PYTHON        "Run py_compile on the python wrappers"                   ON )
-option( ERT_BUILD_GUI       "Should the PyQt based GUI be compiled and installed"     OFF)
 option( ERT_USE_OPENMP      "Use OpenMP"                                              OFF )
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( ERT_BUILD_CXX       "Build some CXX wrappers"                                 ON)

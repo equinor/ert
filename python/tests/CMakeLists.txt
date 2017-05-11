@@ -17,3 +17,5 @@ add_subdirectory(res)
 if (INSTALL_ERT_LEGACY)
    add_subdirectory(legacy)
 endif()
+
+configure_file( test_install.in ${EXECUTABLE_OUTPUT_PATH}/test_install @ONLY )
