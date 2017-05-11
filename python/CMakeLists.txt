@@ -10,8 +10,8 @@ find_python_package(cwrap 0.0.0 ${PYTHON_INSTALL_PREFIX})
 find_python_package(numpy 1.7.1 ${PYTHON_INSTALL_PREFIX})
 
 # libres python needs ecl, cwrap and numpy
-if (NOT DEFINED PY_ecl OR NOT DEFINED PY_cwrap OR NOT DEFINED PY_numpy)
-    message(WARNING "ecl, cwrap, or numpy module not found - Python wrappers not enabled")
+if (NOT DEFINED PY_ecl OR NOT DEFINED PY_cwrap OR NOT DEFINED PY_numpy OR NOT DEFINED PY_res)
+    message(WARNING "res, ecl, cwrap, or numpy module not found - Python wrappers not enabled")
     return()
 endif()
 

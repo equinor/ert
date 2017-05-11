@@ -65,9 +65,18 @@ before_script:
   - make install
   - popd
   - popd
+  - pushd ..
+  - git clone https://github.com/Statoil/libres
+  - mkdir libecl/build
+  - pushd libecl/build
+  - export LIBRES_INSTALL_ROOT=$(pwd)/install
+  - cmake .. -DCMAKE_INSTALL_PREFIX=$LIBRES_INSTALL_ROOT -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT
+  - make install
+  - popd
+  - popd
   - mkdir build
   - pushd build
-  - cmake -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT -DERT_BUILD_GUI=ON -DBUILD_TESTS=ON -DBUILD_PYTHON=ON -DERT_DOC=OFF ..
+  - cmake -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT:$LIBRES_INSTALL_ROOT -DBUILD_TESTS=ON -DBUILD_PYTHON=ON -DERT_DOC=OFF ..
 
 script:
   - make && ctest --output-on-failure
