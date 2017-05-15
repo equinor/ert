@@ -79,4 +79,7 @@ before_script:
   - cmake -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT:$LIBRES_INSTALL_ROOT -DBUILD_TESTS=ON -DBUILD_PYTHON=ON -DERT_DOC=OFF ..
 
 script:
-  - make && ctest --output-on-failure
+  - make
+  - ctest --output-on-failure
+  - make install
+  - bin/test_install
