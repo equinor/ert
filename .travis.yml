@@ -67,8 +67,8 @@ before_script:
   - popd
   - pushd ..
   - git clone https://github.com/Statoil/libres
-  - mkdir libecl/build
-  - pushd libecl/build
+  - mkdir libres/build
+  - pushd libres/build
   - export LIBRES_INSTALL_ROOT=$(pwd)/install
   - cmake .. -DCMAKE_INSTALL_PREFIX=$LIBRES_INSTALL_ROOT -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT
   - make install
