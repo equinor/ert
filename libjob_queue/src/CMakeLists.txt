@@ -21,7 +21,7 @@ if (USE_RUNPATH)
    add_runpath( job_queue )
 endif()
 
-target_link_libraries( job_queue config ${libecl_LIBRARIES} dl )
+target_link_libraries( job_queue config ert_util )
 
 install(TARGETS job_queue DESTINATION ${CMAKE_INSTALL_LIBDIR})
 foreach(header ${header_files})
