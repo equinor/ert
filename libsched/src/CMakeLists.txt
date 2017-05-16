@@ -9,7 +9,7 @@ include_directories( ${libutil_src_path} )
 add_library( sched ${LIBRARY_TYPE} ${source_files} )
 set_target_properties( sched PROPERTIES VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} SOVERSION ${ERT_VERSION_MAJOR} )
 
-target_link_libraries( sched ${libecl_LIBRARIES})
+target_link_libraries( sched ecl )
 if (USE_RUNPATH)
    add_runpath( sched )
 endif()

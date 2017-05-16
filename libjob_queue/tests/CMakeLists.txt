@@ -16,7 +16,7 @@ target_link_libraries( job_loadFail job_queue   )
 target_link_libraries( job_lsf_parse_bsub_stdout job_queue )
 target_link_libraries( job_node_test job_queue )
 target_link_libraries( job_list_test job_queue )
-target_link_libraries( job_lsf_exclude_hosts_test job_queue ${libecl_LIBRARIES} )
+target_link_libraries( job_lsf_exclude_hosts_test job_queue ert_util )
 
 add_test( job_status_test ${EXECUTABLE_OUTPUT_PATH}/job_status_test)
 add_test( job_lsf_parse_bsub_stdout ${EXECUTABLE_OUTPUT_PATH}/job_lsf_parse_bsub_stdout )
@@ -36,14 +36,14 @@ add_test( job_list_test valgrind --leak-check=full --error-exitcode=1 ${EXECUTAB
 add_test( job_lsf_exclude_hosts_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_exclude_hosts_test ${EXECUTABLE_OUTPUT_PATH}/job_program NULL LOCAL)
 
 add_executable( job_program_output job_program_output.c )
-target_link_libraries( job_program_output ${libecl_LIBRARIES} )
+target_link_libraries( job_program_output ert_util )
 
 add_executable( job_queue_test job_job_queue_test.c )
 target_link_libraries( job_queue_test job_queue  )
 add_test( job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_program_output )
 
 add_executable( job_queue_stress_task job_queue_stress_task.c )
-target_link_libraries( job_queue_stress_task  ${libecl_LIBRARIES} )
+target_link_libraries( job_queue_stress_task ert_util )
 
 add_executable( job_queue_stress_test job_queue_stress_test.c )
 target_link_libraries( job_queue_stress_test job_queue  )
@@ -60,16 +60,16 @@ add_test( job_queue_driver_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_driver_test 
 
 
 if (ERT_LSF_SUBMIT_TEST)
-   include( lsf_tests.cmake ) 
+   include( lsf_tests.cmake )
 endif()
 
 
 add_executable( job_torque_test job_torque_test.c )
-target_link_libraries( job_torque_test job_queue ${libecl_LIBRARIES} )
+target_link_libraries( job_torque_test job_queue ert_util )
 add_test( job_torque_test ${EXECUTABLE_OUTPUT_PATH}/job_torque_test )
 
 add_executable( job_queue_manager job_queue_manager.c )
-target_link_libraries( job_queue_manager job_queue ${libecl_LIBRARIES}  )
+target_link_libraries( job_queue_manager job_queue ert_util  )
 add_test( job_queue_manager ${EXECUTABLE_OUTPUT_PATH}/job_queue_manager )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/qsub_emulators/ DESTINATION ${EXECUTABLE_OUTPUT_PATH})

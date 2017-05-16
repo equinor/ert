@@ -5,7 +5,7 @@ add_library( analysis  SHARED ${source_files} )
 set_target_properties( analysis PROPERTIES COMPILE_DEFINITIONS INTERNAL_LINK)
 set_target_properties( analysis PROPERTIES VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} SOVERSION ${ERT_VERSION_MAJOR} )
 
-target_link_libraries( analysis ${libecl_LIBRARIES} dl)
+target_link_libraries( analysis ert_util )
 
 if (USE_RUNPATH)
    add_runpath( analysis )
