@@ -20,7 +20,7 @@ option( BUILD_TESTS         "Should the tests be built"                         
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( USE_RUNPATH         "Should we embed path to libraries"                       ON)
 
-find_package( libecl REQUIRED )
+find_package( ecl REQUIRED )
 find_package( libres REQUIRED )
 
 
@@ -75,18 +75,6 @@ endif()
 
 if (MSVC)
     add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4996" )
-endif()
-
-
-if (ERT_USE_OPENMP)
-  find_package(OpenMP)
-  if (OPENMP_FOUND) 
-     message(STATUS "Enabling OpenMP support")
-     # The actual use of OpenMP is only in the libecl library - the compile flags is only applied there.
-  else()
-     set( ERT_USE_OPENMP OFF )
-     message(STATUS "OpenMP package not found - OpenMP disabled")
-  endif()
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
