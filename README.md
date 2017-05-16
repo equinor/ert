@@ -1,8 +1,8 @@
-# libres [![Build Status](https://travis-ci.org/Statoil/libres.svg?branch=master)](https://travis-ci.org/Statoil/libres)
+# ert [![Build Status](https://travis-ci.org/Statoil/ert.svg?branch=master)](https://travis-ci.org/Statoil/ert)
 
-`libres` is part of the `ERT` project: _Ensemble based Reservoir Tool_.
 
-You need [libecl](https://github.com/Statoil/libecl) to build libres.
+To build ert, you need [libecl](https://github.com/Statoil/libecl)
+and [libres](https://github.com/Statoil/libres).
 
 
 ```
