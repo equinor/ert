@@ -11,3 +11,4 @@ add_subdirectory(global)
 add_subdirectory(gui)
 
 
+configure_file( test_install.in ${EXECUTABLE_OUTPUT_PATH}/test_install @ONLY )

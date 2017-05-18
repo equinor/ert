@@ -90,4 +90,7 @@ before_script:
           ..
 
 script:
-  - make && ctest --output-on-failure
+  - make
+  - ctest --output-on-failure
+  - make install
+  - bin/test_install
