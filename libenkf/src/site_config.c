@@ -139,6 +139,7 @@ static void site_config_set_queue_option(site_config_type * site_config, const c
 }
 
 static void site_config_set_config_file(site_config_type * site_config, const char * config_file) {
+  free(site_config->config_file);
   site_config->config_file = util_realloc_string_copy(site_config->config_file, config_file);
 }
 
@@ -786,7 +787,6 @@ const char * site_config_get_config_file(const site_config_type * site_config) {
   return site_config->config_file;
 }
 
-
 config_content_type * site_config_alloc_content(
         const site_config_type * site_config,
         config_parser_type * config_parser) {
@@ -828,6 +828,7 @@ config_content_type * site_config_alloc_content(
 
   return content;
 }
+
 
 const char * site_config_get_location() {
     const char * site_config = NULL;

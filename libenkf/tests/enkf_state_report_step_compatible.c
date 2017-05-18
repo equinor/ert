@@ -63,7 +63,6 @@ int main(int argc , char ** argv) {
   site_config_type * site_config = site_config_alloc_load_user_config(config_file);
   enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, strict, true);
   
-  
   test_assert_bool_equal(check_compatible , check_ecl_sum_compatible(enkf_main));
   
   enkf_main_free( enkf_main );

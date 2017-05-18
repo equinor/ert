@@ -2352,7 +2352,6 @@ static char * enkf_main_alloc_model_config_filename(const char * model_config) {
 static void enkf_main_init_log(
         const enkf_main_type * enkf_main,
         const config_content_type * content) {
-
   char * log_file=NULL;
   if (config_content_has_item( content , LOG_FILE_KEY))
     log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
@@ -2362,6 +2361,7 @@ static void enkf_main_init_log(
     res_log_init_log_default_log_level(log_file ,  enkf_main->verbose);
   free( log_file );
 }
+
 
 static void enkf_main_init_schedule_prediction(
         enkf_main_type * enkf_main,
@@ -2460,6 +2460,7 @@ static void enkf_main_init_obs(
     enkf_main_load_obs(enkf_main, obs_config_file, true);
   }
 }
+
 
 static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, bool verbose) {
   if (!enkf_main->user_config_file)
