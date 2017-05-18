@@ -83,6 +83,9 @@
  */
 
 struct site_config_struct {
+
+  char * config_file;
+
   ext_joblist_type * joblist; /* The list of external jobs which have been installed.
                                                      These jobs will be the parts of the forward model. */
   hash_type * env_variables_user; /* The environment variables set in the user config file. */
@@ -144,6 +147,7 @@ site_config_type * site_config_alloc_empty() {
 
   site_config->joblist = ext_joblist_alloc();
  
+  site_config->config_file = NULL;
   site_config->license_root_path = NULL;
   site_config->license_root_path_site = NULL;
   site_config->__license_root_path = NULL;
@@ -616,6 +620,7 @@ void site_config_free(site_config_type * site_config) {
   if (site_config->__license_root_path != NULL)
     util_clear_directory(site_config->__license_root_path, true, true);
 
+  util_safe_free(site_config->config_file);
   util_safe_free(site_config->manual_url);
   util_safe_free(site_config->default_browser);
   util_safe_free(site_config->license_root_path);
@@ -729,6 +734,14 @@ void site_config_add_config_items(config_parser_type * config, bool site_mode) {
 
   item = config_add_schema_item( config , ANALYSIS_LOAD_KEY , false  );
   config_schema_item_set_argc_minmax( item , 2 , 2);
+}
+
+const char * site_config_get_config_file(const site_config_type * site_config) {
+  return site_config->config_file;
+}
+
+void site_config_set_config_file(site_config_type * site_config, const char * config_file) {
+  site_config->config_file = util_realloc_string_copy(site_config->config_file, config_file);
 }
 
 const char * site_config_get_location() {

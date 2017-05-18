@@ -168,7 +168,6 @@ struct enkf_main_struct {
   int_vector_type      * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
   bool                   pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
 
-  char                 * site_config_file;
   char                 * user_config_file;
   char                 * rft_config_file;       /* File giving the configuration to the RFTwells*/
   enkf_obs_type        * obs;
@@ -235,7 +234,7 @@ void enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rf
 }
 
 void enkf_main_set_site_config_file( enkf_main_type * enkf_main , const char * site_config_file ) {
-  enkf_main->site_config_file = util_realloc_string_copy( enkf_main->site_config_file , site_config_file );
+  site_config_set_config_file(enkf_main->site_config, site_config_file);
 }
 
 const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) {
@@ -243,7 +242,7 @@ const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) 
 }
 
 const char * enkf_main_get_site_config_file( const enkf_main_type * enkf_main ) {
-  return enkf_main->site_config_file;
+  return site_config_get_config_file(enkf_main->site_config);
 }
 
 const char * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main ) {
@@ -397,7 +396,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   subst_func_pool_free( enkf_main->subst_func_pool );
   subst_list_free( enkf_main->subst_list );
   util_safe_free( enkf_main->user_config_file );
-  util_safe_free( enkf_main->site_config_file );
   util_safe_free( enkf_main->rft_config_file );
   free(enkf_main);
 }
@@ -2189,7 +2187,6 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   res_log_open_empty();
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;
-  enkf_main->site_config_file   = NULL;
   enkf_main->rft_config_file    = NULL;
   enkf_main->local_config       = NULL;
   enkf_main->rng                = NULL;
