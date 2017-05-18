@@ -15,12 +15,15 @@ addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
+      - george-edison55-precise-backports
     packages:
       - liblapack-dev
       - valgrind
       - gcc-4.8
       - g++-4.8
       - clang
+      - cmake
+      - cmake-data
 
 install:
     - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
@@ -66,17 +69,25 @@ before_script:
   - popd
   - popd
   - pushd ..
+  - export PYTHONPATH=$PYTHONPATH:$LIBECL_INSTALL_ROOT/lib/python2.7/dist-packages
   - git clone https://github.com/Statoil/libres
   - mkdir libres/build
   - pushd libres/build
   - export LIBRES_INSTALL_ROOT=$(pwd)/install
-  - cmake .. -DCMAKE_INSTALL_PREFIX=$LIBRES_INSTALL_ROOT -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT
+  - cmake .. -DCMAKE_INSTALL_PREFIX=$LIBRES_INSTALL_ROOT
+             -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT
+             -DCMAKE_MODULE_PATH=$LIBECL_INSTALL_ROOT/share/cmake/Modules
   - make install
+  - export PYTHONPATH=$PYTHONPATH:$LIBRES_INSTALL_ROOT/lib/python2.7/dist-packages
   - popd
   - popd
   - mkdir build
   - pushd build
-  - cmake -DCMAKE_PREFIX_PATH="$LIBECL_INSTALL_ROOT;$LIBRES_INSTALL_ROOT" -DBUILD_TESTS=ON -DBUILD_PYTHON=ON -DERT_DOC=OFF ..
+  - cmake -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT
+          -DCMAKE_PREFIX_PATH=$LIBRES_INSTALL_ROOT
+          -DCMAKE_MODULE_PATH=$LIBECL_INSTALL_ROOT/share/cmake/Modules
+          -DBUILD_TESTS=ON -DBUILD_PYTHON=ON -DERT_DOC=OFF
+          ..
 
 script:
   - make
