@@ -173,6 +173,13 @@ site_config_type * site_config_alloc_empty() {
   return site_config;
 }
 
+site_config_type * site_config_alloc_default() {
+  site_config_type * site_config = site_config_alloc_empty();
+  site_config_set_config_file(site_config, site_config_get_location());
+
+  return site_config;
+}
+
 const char * site_config_get_license_root_path(const site_config_type * site_config) {
   return site_config->license_root_path;
 }

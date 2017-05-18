@@ -2193,7 +2193,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->rng_config         = rng_config_alloc( );
-  enkf_main->site_config        = site_config_alloc_empty();
+  enkf_main->site_config        = site_config_alloc_default();
   enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
@@ -2432,7 +2432,9 @@ static hash_type *__enkf_main_alloc_predefined_kw_map(const enkf_main_type *enkf
 */
 
 
-static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * site_config_file) {
+static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
+  const char * site_config_file = site_config_get_config_file(enkf_main->site_config);
+
   if (site_config_file != NULL) {
     if (!util_file_exists(site_config_file))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config_file);
     config_parser_type * config = config_alloc();
@@ -2499,8 +2501,8 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
 */
 
 
+// TODO: Rename with alloc
 enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , bool verbose) {
-  const char     * site_config  = site_config_get_location();
   char           * model_config = NULL;
   enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
 
@@ -2546,10 +2548,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
     config_content_type * content;
     enkf_main            = enkf_main_alloc_empty( );
     enkf_main_set_verbose( enkf_main , verbose );
-    enkf_main_bootstrap_site( enkf_main , site_config);
+    enkf_main_bootstrap_site(enkf_main);
 
     if (model_config) {
-      enkf_main_set_site_config_file( enkf_main , site_config );
       enkf_main_set_user_config_file( enkf_main , model_config );
 
       config = config_alloc();

@@ -42,6 +42,7 @@ typedef struct site_config_struct site_config_type;
   const char *             site_config_get_location();
 
   const char *             site_config_get_config_file(const site_config_type*);
+  // TODO: remove?
   void                     site_config_set_config_file(site_config_type*, const char*);
   
   const char *             site_config_get_manual_url( const site_config_type * site_config );
@@ -103,6 +104,8 @@ typedef struct site_config_struct site_config_type;
   mode_t                   site_config_get_umask( const site_config_type * site_config );
 
   site_config_type       * site_config_alloc_empty();
+  site_config_type       * site_config_alloc_default();
+
   void                     site_config_add_config_items( config_parser_type * config , bool site_mode);
 #ifdef __cplusplus
 }
