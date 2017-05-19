@@ -130,7 +130,6 @@ foreach (test   enkf_active_list
                 enkf_iter_config
                 enkf_local_obsdata
                 enkf_local_obsdata_node
-                enkf_main
                 enkf_meas_data
                 enkf_model_config
                 enkf_obs_tests
@@ -151,6 +150,12 @@ foreach (test   enkf_active_list
     target_link_libraries(${test} enkf)
     add_test(NAME ${test} COMMAND ${test})
 endforeach ()
+
+add_executable(enkf_main tests/enkf_main.c)
+target_link_libraries(enkf_main enkf)
+add_test(NAME enkf_main
+         COMMAND enkf_main
+                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config rng)
 
 add_executable(enkf_runpath_list tests/enkf_runpath_list.c)
 target_link_libraries(enkf_runpath_list enkf)

@@ -30,10 +30,11 @@
 
 
 
-void test_case_initialized() {
-  test_work_area_type * work_area = test_work_area_alloc("enkf_main_case_initialized" );
+void test_case_initialized(const char * config_path, const char * config_file) {
+  test_work_area_type * work_area = test_work_area_alloc("enkf_main_case_initialized");
+  test_work_area_copy_directory_content(work_area, config_path);
   {
-    enkf_main_type * enkf_main = enkf_main_alloc_empty();
+    enkf_main_type * enkf_main = enkf_main_bootstrap(config_file, true, true);
     model_config_type * model_config = enkf_main_get_model_config(enkf_main);
     const char * new_case = "fs/case";
     char * mount_point = util_alloc_sprintf("%s/%s" , model_config_get_enspath(model_config) , new_case);
@@ -49,18 +50,25 @@ void test_case_initialized() {
 
 
 
-void test_create() {
-  enkf_main_type * enkf_main = enkf_main_alloc_empty();
+void test_create(const char * config_path, const char * config_file) {
+  test_work_area_type * work_area = test_work_area_alloc("enkf_main_create");
+  test_work_area_copy_directory_content(work_area, config_path);
+
+  enkf_main_type * enkf_main = enkf_main_bootstrap(config_file, true, true);
   test_assert_true( enkf_main_is_instance( enkf_main ) );
+
   enkf_main_free( enkf_main );
+  test_work_area_free( work_area );
 }
 
 
 
 int main(int argc , char ** argv) {
+  const char * config_path = argv[1];
+  const char * config_file = argv[2];
   util_install_signals();
-  test_create();
-  test_case_initialized();
+  test_create(config_path, config_file);
+  test_case_initialized(config_path, config_file);
   exit(0);
 }
 

@@ -29,11 +29,15 @@
 
 
 int main(int argc , char ** argv) {
+  const char * config_path = argv[1];
+  const char * config_file = argv[2];
+
   unsigned int rand1,rand2;
   {
     test_work_area_type * work_area = test_work_area_alloc("enkf-rng-0");
+    test_work_area_copy_directory_content(work_area, config_path);
     {
-      enkf_main_type * enkf_main = enkf_main_alloc_empty();
+      enkf_main_type * enkf_main = enkf_main_bootstrap(NULL, true, true);
       enkf_main_resize_ensemble( enkf_main , 10 );
       {
         enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
@@ -43,7 +47,7 @@ int main(int argc , char ** argv) {
     }
     
     {
-      enkf_main_type * enkf_main = enkf_main_alloc_empty();
+      enkf_main_type * enkf_main = enkf_main_bootstrap(NULL, true, true);
       enkf_main_resize_ensemble( enkf_main , 10 );
       {
         enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
@@ -59,9 +63,11 @@ int main(int argc , char ** argv) {
 
   {
     test_work_area_type * work_area = test_work_area_alloc("enkf-rng-1" );
+    test_work_area_copy_directory_content( work_area , config_path );
+
     const char * seed_file = "seed";
     {
-      enkf_main_type * enkf_main = enkf_main_alloc_empty();
+      enkf_main_type * enkf_main = enkf_main_bootstrap(config_file, true, true);
       {
         rng_config_type * rng_config = enkf_main_get_rng_config( enkf_main );
         rng_config_set_seed_store_file( rng_config , seed_file );
@@ -77,7 +83,7 @@ int main(int argc , char ** argv) {
     }
     
     {
-      enkf_main_type * enkf_main = enkf_main_alloc_empty();
+      enkf_main_type * enkf_main = enkf_main_bootstrap(config_file, true, true);
       {
         rng_config_type * rng_config = enkf_main_get_rng_config( enkf_main );
         rng_config_set_seed_load_file( rng_config , seed_file );
@@ -97,8 +103,6 @@ int main(int argc , char ** argv) {
   }
   /*****************************************************************/
   {
-    const char * config_path = argv[1];
-    const char * config_file = argv[2];
     test_work_area_type * work_area = test_work_area_alloc("enkf-rng-2" );
     test_work_area_copy_directory_content( work_area , config_path );
     {

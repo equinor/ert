@@ -381,7 +381,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
 
 
   hook_manager_free( enkf_main->hook_manager );
-  site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
 
   local_config_free( enkf_main->local_config );
@@ -2181,7 +2180,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 
 
 
-enkf_main_type * enkf_main_alloc_empty( ) {
+static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   res_log_open_empty();
@@ -2193,7 +2192,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->rng_config         = rng_config_alloc( );
-  enkf_main->site_config        = site_config_alloc_default();
+  enkf_main->site_config        = NULL;
   enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
@@ -2532,6 +2531,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
     config_parser_type * config;
     config_content_type * content;
     enkf_main            = enkf_main_alloc_empty( );
+    enkf_main->site_config = site_config_alloc_default();
     enkf_main_set_verbose( enkf_main , verbose );
     enkf_main_bootstrap_site(enkf_main);
 
