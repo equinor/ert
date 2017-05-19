@@ -173,9 +173,20 @@ site_config_type * site_config_alloc_empty() {
   return site_config;
 }
 
+static void site_config_load_config(site_config_type * site_config) {
+  config_parser_type * config = config_alloc();
+  config_content_type * content = site_config_alloc_content(site_config, config);
+
+  site_config_init(site_config, content);
+
+  config_free(config);
+  config_content_free(content);
+}
+
 site_config_type * site_config_alloc_default() {
   site_config_type * site_config = site_config_alloc_empty();
   site_config_set_config_file(site_config, site_config_get_location());
+  site_config_load_config(site_config);
 
   return site_config;
 }
@@ -749,6 +760,48 @@ const char * site_config_get_config_file(const site_config_type * site_config) {
 
 void site_config_set_config_file(site_config_type * site_config, const char * config_file) {
   site_config->config_file = util_realloc_string_copy(site_config->config_file, config_file);
+}
+
+config_content_type * site_config_alloc_content(
+        const site_config_type * site_config,
+        config_parser_type * config_parser) {
+
+  if(site_config == NULL)
+    util_abort(
+            "%s: Cannot load config from an uninitialized site_config.\n",
+            __func__
+            );
+
+  if(site_config->config_file == NULL)
+    util_abort("%s: No config file specified.\n", __func__);
+
+  if(!util_file_exists(site_config->config_file))
+    util_abort(
+            "%s: can not locate site configuration file:%s \n",__func__,
+            site_config->config_file
+            );
+
+  site_config_add_config_items(config_parser, true);
+  config_content_type * content = config_parse(
+                                        config_parser, site_config->config_file,
+                                        "--", INCLUDE_KEY, DEFINE_KEY, NULL,
+                                        CONFIG_UNRECOGNIZED_WARN, false
+                                        );
+
+  if(!config_content_is_valid(content)) {
+    config_error_type * errors = config_content_get_errors(content);
+    fprintf(stderr,
+            "** ERROR: Parsing site configuration file:%s failed \n\n",
+            site_config->config_file
+            );
+    config_error_fprintf( errors , true , stderr );
+    util_abort(
+            "%s: Invalid configurations in site_config file: %s.\n",
+            __func__, site_config->config_file
+            );
+  }
+
+  return content;
 }
 
 const char * site_config_get_location() {

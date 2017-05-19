@@ -2433,28 +2433,14 @@ static hash_type *__enkf_main_alloc_predefined_kw_map(const enkf_main_type *enkf
 
 
 static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
-  const char * site_config_file = site_config_get_config_file(enkf_main->site_config);
+  config_parser_type * config = config_alloc();
+  config_content_type * content = site_config_alloc_content(enkf_main->site_config, config);
 
-  if (site_config_file != NULL) {
-    if (!util_file_exists(site_config_file))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config_file);
-    config_parser_type * config = config_alloc();
-    site_config_add_config_items( config , true );
-    {
-      config_content_type * content = config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , NULL, CONFIG_UNRECOGNIZED_WARN , false);
-      if (config_content_is_valid( content )) {
-        site_config_init( enkf_main->site_config , content );
-        analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
-        ert_workflow_list_init( enkf_main->workflow_list , content );
-      } else {
-        config_error_type * errors = config_content_get_errors( content );
-        fprintf(stderr , "** ERROR: Parsing site configuration file:%s failed \n\n" , site_config_file);
-        config_error_fprintf( errors , true , stderr );
-        exit(1);
-      }
-      config_content_free( content );
-    }
-    config_free( config );
-  }
+  analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
+  ert_workflow_list_init(enkf_main->workflow_list, content);
+
+  config_free(config);
+  config_content_free(content);
 }
 
 
@@ -2501,7 +2487,6 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
 */
 
 
-// TODO: Rename with alloc
 enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , bool verbose) {
   char           * model_config = NULL;
   enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
