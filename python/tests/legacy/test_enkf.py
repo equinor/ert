@@ -72,7 +72,6 @@ from ert.enkf import EnkfFsManager
 from ert.enkf import RunArg
 from ert.enkf import ErtRunContext
 from ert.enkf import EnKFMain
-from ert.enkf import ErtLog
 from ert.enkf import ForwardLoadContext
 
 from ert.job_queue import ErtScript as ErtScript

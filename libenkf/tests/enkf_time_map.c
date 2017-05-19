@@ -32,7 +32,6 @@
 
 #include <ert/enkf/time_map.h>
 #include <ert/enkf/enkf_fs.h>
-#include <ert/enkf/ert_log.h>
 #include <ert/enkf/enkf_main.h>
 
 void ecl_test( const char * ecl_case ) {
@@ -375,7 +374,7 @@ void test_read_only() {
 int main(int argc , char ** argv) {
 
   enkf_main_install_SIGNALS();
-  ert_log_init_log(0 , NULL , false ); // Make sure there will be no logging.
+  res_log_init_log(0 , NULL , false ); // Make sure there will be no logging.
 
   if (argc == 1) {
     simple_test();

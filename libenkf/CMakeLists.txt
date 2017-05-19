@@ -35,7 +35,6 @@ add_library(enkf src/active_list.c
                  src/enkf_util.c
                  src/ensemble_config.c
                  src/ert_init_context.c
-                 src/ert_log.c
                  src/ert_run_context.c
                  src/ert_template.c
                  src/ert_test_context.c
@@ -96,7 +95,7 @@ target_include_directories(enkf
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
            $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(enkf PUBLIC sched analysis rms config job_queue ecl)
+target_link_libraries(enkf PUBLIC res_util sched analysis rms config job_queue ecl)
 target_compile_definitions(enkf PRIVATE
     -DSITE_CONFIG_FILE=\"${SITE_CONFIG_FILE}\"
 )

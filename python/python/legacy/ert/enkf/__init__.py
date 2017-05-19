@@ -72,7 +72,7 @@ from res.enkf import EnkfFsManager
 from res.enkf import RunArg
 from res.enkf import ErtRunContext
 from res.enkf import EnKFMain
-from res.enkf import ErtLog
+from res.enkf import ResLog
 from res.enkf import ForwardLoadContext
 
 from res.job_queue import ErtScript as ErtScript

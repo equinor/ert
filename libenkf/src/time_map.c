@@ -27,7 +27,7 @@
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/enkf/ert_log.h>
+#include <ert/res_util/res_log.h>
 #include <ert/enkf/time_map.h>
 
 #define DEFAULT_TIME  -1
@@ -206,7 +206,7 @@ static bool time_map_update__( time_map_type * map , int step , time_t update_ti
 
         if (ref_time != update_time) {
           updateOK = false;
-          ert_log_add_message( 1 ,  NULL , "Tried to load data where report step/data is incompatible with refcase - ignored" , false);
+          res_log_add_message( 1 ,  NULL , "Tried to load data where report step/data is incompatible with refcase - ignored" , false);
         }
       }
     }
@@ -373,7 +373,7 @@ bool time_map_update( time_map_type * map , int step , time_t time) {
     if (map->strict)
       time_map_update_abort(map , step , time);
     else
-      ert_log_add_message(1 , NULL , "Report step/true time inconsistency - data will be ignored" , false);
+      res_log_add_message(1 , NULL , "Report step/true time inconsistency - data will be ignored" , false);
   }
   return updateOK;
 }
@@ -399,7 +399,7 @@ bool time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum
     if (map->strict)
       time_map_summary_update_abort( map , ecl_sum );
     else
-      ert_log_add_message(1 , NULL , "Report step/true time inconsistency - data will be ignored" , false);
+      res_log_add_message(1 , NULL , "Report step/true time inconsistency - data will be ignored" , false);
   }
 
   return updateOK;
@@ -693,7 +693,7 @@ int_vector_type * time_map_alloc_index_map( time_map_type * map , const ecl_sum_
         if (sum_time == map_time)
           int_vector_iset( index_map , time_map_index , sum_index);
         else {
-          ert_log_add_message(1 , NULL , "Inconsistency in time_map - data will be ignored" , false);
+          res_log_add_message(1 , NULL , "Inconsistency in time_map - data will be ignored" , false);
           break;
         }
 

@@ -90,7 +90,6 @@ from .enkf_fs_manager import EnkfFsManager
 from .run_arg import RunArg
 from .ert_run_context import ErtRunContext
 from .enkf_main import EnKFMain
-from .ert_log import ErtLog
 from .forward_load_context import ForwardLoadContext
 
 from res.job_queue import ErtScript as ErtScript

@@ -104,7 +104,7 @@
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/field.h>
-#include <ert/enkf/ert_log.h>
+#include <ert/res_util/res_log.h>
 #include <ert/enkf/ert_init_context.h>
 #include <ert/enkf/ert_run_context.h>
 #include <ert/enkf/run_arg.h>
@@ -374,7 +374,7 @@ void enkf_main_free(enkf_main_type * enkf_main){
   ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
   enkf_main_close_fs( enkf_main );
-  ert_log_close();
+  res_log_close();
 
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
@@ -1051,7 +1051,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
         if (analysis_config_get_std_scale_correlated_obs(enkf_main->analysis_config)) {
           double scale_factor = enkf_obs_scale_correlated_std(enkf_main->obs, source_fs,
                                                               ens_active_list, obsdata);
-          ert_log_add_fmt_message(1, NULL,
+          res_log_add_fmt_message(1, NULL,
                                   "Scaling standard deviation in obdsata set:%s with %g",
                                   local_obsdata_get_name(obsdata), scale_factor);
         }
@@ -1080,7 +1080,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
                                       meas_data,
                                       obs_data);
         else if (target_fs != source_fs)
-          ert_log_add_fmt_message(1, stderr, "No active observations/parameters for MINISTEP: %s.",
+          res_log_add_fmt_message(1, stderr, "No active observations/parameters for MINISTEP: %s.",
                                   local_ministep_get_name(ministep));
       }
 
@@ -1561,7 +1561,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
     state_map_deselect_matching( enkf_fs_get_state_map( ert_run_context_get_init_fs( run_context )) ,
                                  ert_run_context_get_iactive( run_context ), STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
 
-    ert_log_add_fmt_message( 1 , NULL , "===================================================================", false);
+    res_log_add_fmt_message( 1 , NULL , "===================================================================", false);
 
     job_size = bool_vector_count_equal( ert_run_context_get_iactive(run_context) , true );
     {
@@ -1581,7 +1581,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
 
       job_queue_submit_complete( job_queue );
-      ert_log_add_message( 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
+      res_log_add_message( 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
 
       int max_runtime = analysis_config_get_max_runtime(enkf_main_get_analysis_config( enkf_main ));
       job_queue_set_max_job_duration(job_queue, max_runtime);
@@ -1615,7 +1615,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
     enkf_fs_fsync( ert_run_context_get_result_fs( run_context ) );
     if (totalFailed == 0)
-      ert_log_add_fmt_message( 1 , NULL , "All jobs complete and data loaded.");
+      res_log_add_fmt_message( 1 , NULL , "All jobs complete and data loaded.");
 
 
     return totalOK;
@@ -2186,7 +2186,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
-  ert_log_open_empty();
+  res_log_open_empty();
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;
   enkf_main->site_config_file   = NULL;
@@ -2590,22 +2590,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , b
   populating the enkf_main object.
       */
 
-
-
-
       {
-        char * log_file;
-        int log_level = DEFAULT_LOG_LEVEL;
-        if(config_content_has_item( content , LOG_LEVEL_KEY))
-          log_level = config_content_get_value_as_int(content , LOG_LEVEL_KEY);
-
+        char * log_file=NULL;
         if (config_content_has_item( content , LOG_FILE_KEY))
           log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
+        if(config_content_has_item( content , LOG_LEVEL_KEY))
+          res_log_init_log(config_content_get_value_as_int(content , LOG_LEVEL_KEY), log_file ,  enkf_main->verbose);
         else
-          log_file = util_alloc_filename( NULL , enkf_main->user_config_file , "log");
-
-        ert_log_init_log(log_level, log_file ,  enkf_main->verbose);
-
+          res_log_init_log_default_log_level(log_file ,  enkf_main->verbose);
         free( log_file );
       }
 
@@ -2897,13 +2889,10 @@ void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * str
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
   fprintf( stream , CONFIG_COMMENT_FORMAT  , "Here comes configuration information about the ERT logging.");
   fprintf( stream , CONFIG_KEY_FORMAT      , LOG_FILE_KEY );
-  fprintf( stream , CONFIG_ENDVALUE_FORMAT , ert_log_get_filename());
-
-  if (ert_log_get_log_level() != DEFAULT_LOG_LEVEL) {
-    fprintf(stream , CONFIG_KEY_FORMAT      , LOG_LEVEL_KEY );
-    fprintf(stream , CONFIG_INT_FORMAT , ert_log_get_log_level());
-    fprintf(stream , "\n");
-  }
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , res_log_get_filename());
+  fprintf(stream , CONFIG_KEY_FORMAT      , LOG_LEVEL_KEY );
+  fprintf(stream , CONFIG_INT_FORMAT , res_log_get_log_level());
+  fprintf(stream , "\n");
 
   fprintf(stream , "\n");
   fprintf(stream , "\n");

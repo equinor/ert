@@ -42,7 +42,7 @@
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
-#include <ert/enkf/ert_log.h>
+#include <ert/res_util/res_log.h>
 
 
 #define ERT_WORKFLOW_LIST_TYPE_ID 8856275
@@ -222,8 +222,8 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
 
 	    if (full_path) {
 	      set_add_key( names , root_name );
-	      if (ert_log_is_open())
-		ert_log_add_message( 1 , NULL , util_alloc_sprintf("Adding workflow job:%s " , full_path ), true);
+	      if (res_log_is_open())
+		res_log_add_message( 1 , NULL , util_alloc_sprintf("Adding workflow job:%s " , full_path ), true);
 
 	      ert_workflow_list_add_job( workflow_list , root_name , full_path );
 	    }

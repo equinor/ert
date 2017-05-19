@@ -40,37 +40,37 @@ find_library(LSF_LIBRARY NAMES lsf PATHS ${ERT_LSF_LIB_PATH})
 
 set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
 if (EXISTS ${STATOIL_TESTDATA_ROOT})
-  set( LINK "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Statoil" )
-  if (EXISTS ${LINK})
-    execute_process(COMMAND ${CMAKE_COMMAND} -E remove "${LINK}")
-  endif()
+    set( LINK "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Statoil" )
+    if (EXISTS ${LINK})
+        execute_process(COMMAND ${CMAKE_COMMAND} -E remove "${LINK}")
+    endif()
 
-  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${STATOIL_TESTDATA_ROOT}" "${LINK}")
-  message(STATUS "Linking testdata: ${LINK} -> ${STATOIL_TESTDATA_ROOT}")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${STATOIL_TESTDATA_ROOT}" "${LINK}")
+    message(STATUS "Linking testdata: ${LINK} -> ${STATOIL_TESTDATA_ROOT}")
 endif()
 
 set(STATOIL_SITE_CONFIG /project/res/etc/ERT/site-config)
 if (STATOIL_TESTDATA_ROOT)
-   set(SITE_CONFIG_FILE ${STATOIL_SITE_CONFIG}
-       CACHE
-       FILEPATH "Path to global ERT Configuration file")
+    set(SITE_CONFIG_FILE ${STATOIL_SITE_CONFIG}
+            CACHE
+            FILEPATH "Path to global ERT Configuration file")
 else()
-   if (EXISTS ${STATOIL_SITE_CONFIG})
-      set(SITE_CONFIG_FILE ${STATOIL_SITE_CONFIG})
-   else()
-      set(SITE_CONFIG_FILE "${PROJECT_SOURCE_DIR}/share/site-config")
-   endif()
+    if (EXISTS ${STATOIL_SITE_CONFIG})
+        set(SITE_CONFIG_FILE ${STATOIL_SITE_CONFIG})
+    else()
+        set(SITE_CONFIG_FILE "${PROJECT_SOURCE_DIR}/share/site-config")
+    endif()
 endif()
 
 #-----------------------------------------------------------------
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-   message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
-   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
-       "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
-   # Set the possible values of build type for cmake-gui
-   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-                "MinSizeRel" "RelWithDebInfo")
+    message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
+    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
+            "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+    # Set the possible values of build type for cmake-gui
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+            "MinSizeRel" "RelWithDebInfo")
 endif()
 
 if (MSVC)
@@ -85,12 +85,12 @@ if (NOT BUILD_SHARED_LIBS)
 endif ()
 
 set(INSTALL_GROUP ""
-    CACHE STRING "Group to install as - blank to install as current group")
+        CACHE STRING "Group to install as - blank to install as current group")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 #-----------------------------------------------------------------
-
+add_subdirectory(libres_util)
 add_subdirectory(libconfig)
 add_subdirectory(libsched)
 add_subdirectory(librms)
@@ -109,7 +109,7 @@ install(DIRECTORY share/ DESTINATION share)
 install(EXPORT res-config
         DESTINATION share/cmake/res
         NAMESPACE res::)
-export(TARGETS analysis config enkf job_queue rms sched
-       NAMESPACE res::
-       FILE resConfig.cmake)
+export(TARGETS res_util analysis config enkf job_queue rms sched
+        NAMESPACE res::
+        FILE resConfig.cmake)
 export(PACKAGE res)

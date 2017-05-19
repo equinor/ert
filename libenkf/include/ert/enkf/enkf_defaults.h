@@ -92,9 +92,6 @@
 #define DEFAULT_MAX_INTERNAL_SUBMIT  1        /** Attached to keyword : MAX_RETRY */
 
 
-#define DEFAULT_LOG_LEVEL 1
-#define DEFAULT_LOG_FILE  "log"
-
 
 
 /* 
