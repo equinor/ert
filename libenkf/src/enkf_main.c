@@ -1948,117 +1948,6 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 }
 
 
-static void enkf_main_user_config_deprecate( config_parser_type * config )
-{
-  config_parser_deprecate( config , "MAX_RUNNING_LSF" , "MAX_RUNNING_LSF is deprecated. Use the general QUEUE_OPTION LSF MAX_RUNNING instead.");
-  config_parser_deprecate( config , "MAX_RUNNING_LOCAL" , "MAX_RUNNING_LOCAL is deprecated. Use the general QUEUE_OPTION LOCAL MAX_RUNNING instead.");
-  config_parser_deprecate( config , "MAX_RUNNING_RSH" , "MAX_RUNNING_RSH is deprecated. Use the general QUEUE_OPTION RSH MAX_RUNNING instead.");
-}
-
-
-static void enkf_main_init_user_config(config_parser_type * config ) {
-  config_schema_item_type * item;
-
-  /*****************************************************************/
-  /* config_add_schema_item():                                     */
-  /*                                                               */
-  /*  1. boolean - required?                                       */
-  /*****************************************************************/
-
-  ert_workflow_list_add_config_items( config );
-  plot_settings_add_config_items( config );
-  analysis_config_add_config_items( config );
-  ensemble_config_add_config_items( config );
-  ecl_config_add_config_items( config );
-  rng_config_add_config_items( config );
-
-  /*****************************************************************/
-  /* Required keywords from the ordinary model_config file */
-
-  item = config_add_schema_item(config , CASE_TABLE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1);
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  config_add_key_value( config , LOG_LEVEL_KEY , false , CONFIG_INT);
-  config_add_key_value( config , LOG_FILE_KEY  , false , CONFIG_STRING);
-
-  config_add_key_value(config , MAX_RESAMPLE_KEY , false , CONFIG_INT);
-
-
-  item = config_add_schema_item(config , NUM_REALIZATIONS_KEY , true  );
-  config_schema_item_set_argc_minmax(item , 1 , 1);
-  config_schema_item_iset_type( item , 0 , CONFIG_INT );
-  config_add_alias(config , NUM_REALIZATIONS_KEY , "SIZE");
-  config_add_alias(config , NUM_REALIZATIONS_KEY , "NUM_REALISATIONS");
-  config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
-
-
-  /*****************************************************************/
-  /* Optional keywords from the model config file */
-
-  item = config_add_schema_item( config , RUN_TEMPLATE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  config_add_key_value(config , RUNPATH_KEY , false , CONFIG_STRING);
-
-  item = config_add_schema_item(config , ENSPATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-
-  item = config_add_schema_item( config , JOBNAME_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-
-  item = config_add_schema_item(config , DBASE_TYPE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1, 1 );
-  config_schema_item_set_common_selection_set(item , 2 , (const char *[2]) {"PLAIN" , "BLOCK_FS"});
-
-  item = config_add_schema_item(config , FORWARD_MODEL_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
-
-  item = config_add_schema_item(config , DATA_KW_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 2 , 2);
-
-  config_add_key_value(config , PRE_CLEAR_RUNPATH_KEY , false , CONFIG_BOOL);
-
-  item = config_add_schema_item(config , DELETE_RUNPATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
-
-  item = config_add_schema_item(config , OBS_CONFIG_KEY  , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  config_add_key_value(config , TIME_MAP_KEY , false , CONFIG_EXISTING_PATH);
-
-  item = config_add_schema_item(config , RFT_CONFIG_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  item = config_add_schema_item(config , RFTPATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-
-  item = config_add_schema_item(config, GEN_KW_EXPORT_FILE_KEY, false );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-
-  item = config_add_schema_item(config , LOCAL_CONFIG_KEY  , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  {
-    stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) { REFCASE_KEY } , 1);
-
-    item = config_add_schema_item(config , HISTORY_SOURCE_KEY , false  );
-    config_schema_item_set_argc_minmax(item , 1 , 1);
-    config_schema_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
-    config_schema_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
-    config_schema_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
-
-    stringlist_free(refcase_dep);
-  }
-
-  hook_manager_add_config_items( config );
-}
-
-
 keep_runpath_type  enkf_main_iget_keep_runpath( const enkf_main_type * enkf_main , int iens ) {
   return enkf_state_get_keep_runpath( enkf_main->ensemble[iens] );
 }
@@ -2392,36 +2281,6 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
   }
 }
 
-static char * __enkf_main_alloc_user_config_file(const enkf_main_type * enkf_main, bool base_only) {
-    char * base_name;
-    char * extension;
-    util_alloc_file_components(enkf_main_get_user_config_file(enkf_main), NULL, &base_name, &extension);
-
-    char * config_file;
-    if (base_only) {
-        config_file = util_alloc_filename(NULL, base_name, NULL);;
-    } else {
-        config_file = util_alloc_filename(NULL, base_name, extension);
-    }
-
-    free(base_name);
-    free(extension);
-    return config_file;
-}
-
-static hash_type *__enkf_main_alloc_predefined_kw_map(const enkf_main_type *enkf_main) {
-    char * config_file_base       = __enkf_main_alloc_user_config_file(enkf_main, true);
-    char * config_file            = __enkf_main_alloc_user_config_file(enkf_main, false);
-    hash_type * pre_defined_kw_map = hash_alloc();
-
-    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE>", config_file);
-    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE_BASE>", config_file_base);
-
-    free( config_file ) ;
-    free( config_file_base );
-    return pre_defined_kw_map;
-}
-
 
 /**
    Observe that the site-config initializations starts with chdir() to
@@ -2495,43 +2354,12 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   if (!enkf_main->user_config_file)
     return;
 
-  config_parser_type * config = config_alloc();
-  enkf_main_init_user_config(config);
-  site_config_add_config_items(config, false);
   site_config_init_user_mode(enkf_main->site_config);
-  enkf_main_user_config_deprecate(config);
 
-  hash_type *pre_defined_kw_map = __enkf_main_alloc_predefined_kw_map(enkf_main);
-  config_content_type * content = config_parse(
-          config , enkf_main->user_config_file,
-          "--", INCLUDE_KEY, DEFINE_KEY,
-          pre_defined_kw_map, CONFIG_UNRECOGNIZED_WARN, true
-          );
-  hash_free(pre_defined_kw_map);
-
-  const stringlist_type * warnings = config_content_get_warnings(content);
-  if (stringlist_get_size( warnings ) > 0) {
-    fprintf(stderr," ** There were warnings when parsing the configuration file: %s" , enkf_main->user_config_file );
-    for (int i=0; i < stringlist_get_size( warnings ); i++)
-      fprintf(stderr, " %02d : %s \n",i , stringlist_iget( warnings , i ));
-  }
-
-  if (!config_content_is_valid( content )) {
-    config_error_type * errors = config_content_get_errors( content );
-    config_error_fprintf( errors , true , stderr );
-    exit(1);
-  }
+  config_parser_type * config = config_alloc();
+  config_content_type * content = model_config_alloc_content(enkf_main->user_config_file, config);
 
   site_config_init( enkf_main->site_config , content );                                   /*  <---- model_config : second pass. */
-
-  /*****************************************************************/
-  /*
- - now we have parsed everything - and we are ready to start
-pulating the enkf_main object.
-  */
-
-
-
 
   {
     char * log_file;

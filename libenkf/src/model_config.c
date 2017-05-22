@@ -47,6 +47,14 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/time_map.h>
+#include <ert/enkf/ert_workflow_list.h>
+#include <ert/enkf/plot_settings.h>
+#include <ert/enkf/analysis_config.h>
+#include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/ecl_config.h>
+#include <ert/enkf/rng_config.h>
+#include <ert/enkf/hook_manager.h>
+#include <ert/enkf/site_config.h>
 
 /**
    This struct contains configuration which is specific to this
@@ -633,4 +641,216 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
   fprintf(stream , CONFIG_INT_FORMAT , ens_size);
   fprintf(stream , "\n\n");
 
+}
+
+static char * model_config_alloc_user_config_file(const char * user_config_file, bool base_only) {
+    char * base_name;
+    char * extension;
+    util_alloc_file_components(user_config_file, NULL, &base_name, &extension);
+
+    char * config_file;
+    if (base_only)
+      config_file = util_alloc_filename(NULL, base_name, NULL);
+    else
+      config_file = util_alloc_filename(NULL, base_name, extension);
+
+    free(base_name);
+    free(extension);
+
+    return config_file;
+}
+
+static hash_type * alloc_predefined_kw_map(const char * user_config_file) {
+    char * config_file_base       = model_config_alloc_user_config_file(user_config_file, true);
+    char * config_file            = model_config_alloc_user_config_file(user_config_file, false);
+
+    hash_type * pre_defined_kw_map = hash_alloc();
+    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE>", config_file);
+    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE_BASE>", config_file_base);
+
+    free(config_file) ;
+    free(config_file_base);
+
+    return pre_defined_kw_map;
+}
+
+static void model_config_init_user_config(config_parser_type * config ) {
+  config_schema_item_type * item;
+
+  /*****************************************************************/
+  /* config_add_schema_item():                                     */
+  /*                                                               */
+  /*  1. boolean - required?                                       */
+  /*****************************************************************/
+
+  ert_workflow_list_add_config_items( config );
+  plot_settings_add_config_items( config );
+  analysis_config_add_config_items( config );
+  ensemble_config_add_config_items( config );
+  ecl_config_add_config_items( config );
+  rng_config_add_config_items( config );
+
+  /*****************************************************************/
+  /* Required keywords from the ordinary model_config file */
+
+  item = config_add_schema_item(config, CASE_TABLE_KEY, false);
+  config_schema_item_set_argc_minmax(item, 1, 1);
+  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+
+  config_add_key_value(config, LOG_LEVEL_KEY, false, CONFIG_INT);
+  config_add_key_value(config, LOG_FILE_KEY, false, CONFIG_STRING);
+
+  config_add_key_value(config, MAX_RESAMPLE_KEY, false, CONFIG_INT);
+
+
+  item = config_add_schema_item(config, NUM_REALIZATIONS_KEY, true);
+  config_schema_item_set_argc_minmax(item, 1, 1);
+  config_schema_item_iset_type(item, 0, CONFIG_INT);
+  config_add_alias(config, NUM_REALIZATIONS_KEY, "SIZE");
+  config_add_alias(config, NUM_REALIZATIONS_KEY, "NUM_REALISATIONS");
+  config_install_message(
+          config, "SIZE",
+          "** Warning: \'SIZE\' is depreceated "
+          "- use \'NUM_REALIZATIONS\' instead."
+          );
+
+
+  /*****************************************************************/
+  /* Optional keywords from the model config file */
+
+  item = config_add_schema_item(config, RUN_TEMPLATE_KEY, false);
+  config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
+  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+
+  config_add_key_value(config, RUNPATH_KEY, false, CONFIG_STRING);
+
+  item = config_add_schema_item(config, ENSPATH_KEY, false);
+  config_schema_item_set_argc_minmax(item, 1, 1);
+
+  item = config_add_schema_item(config, JOBNAME_KEY, false);
+  config_schema_item_set_argc_minmax(item, 1, 1);
+
+  item = config_add_schema_item(config, DBASE_TYPE_KEY, false);
+  config_schema_item_set_argc_minmax(item , 1, 1);
+  config_schema_item_set_common_selection_set(
+          item, 2, (const char *[2]) {"PLAIN" , "BLOCK_FS"}
+          );
+
+  item = config_add_schema_item(config, FORWARD_MODEL_KEY, false);
+  config_schema_item_set_argc_minmax(item , 1, CONFIG_DEFAULT_ARG_MAX);
+
+  item = config_add_schema_item(config, DATA_KW_KEY, false);
+  config_schema_item_set_argc_minmax(item, 2, 2);
+
+  config_add_key_value(config, PRE_CLEAR_RUNPATH_KEY, false, CONFIG_BOOL);
+
+  item = config_add_schema_item(config, DELETE_RUNPATH_KEY, false);
+  config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
+
+  item = config_add_schema_item(config, OBS_CONFIG_KEY, false);
+  config_schema_item_set_argc_minmax(item , 1, 1);
+  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+
+  config_add_key_value(config, TIME_MAP_KEY, false, CONFIG_EXISTING_PATH);
+
+  item = config_add_schema_item(config, RFT_CONFIG_KEY, false);
+  config_schema_item_set_argc_minmax(item, 1, 1);
+  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+
+  item = config_add_schema_item(config, RFTPATH_KEY, false);
+  config_schema_item_set_argc_minmax(item, 1, 1);
+
+  item = config_add_schema_item(config, GEN_KW_EXPORT_FILE_KEY, false);
+  config_schema_item_set_argc_minmax(item, 1, 1);
+
+  item = config_add_schema_item(config, LOCAL_CONFIG_KEY, false);
+  config_schema_item_set_argc_minmax(item , 1, 1);
+  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+
+  stringlist_type * refcase_dep = stringlist_alloc_argv_ref(
+          (const char *[1]) { REFCASE_KEY },
+          1
+          );
+
+  item = config_add_schema_item(config, HISTORY_SOURCE_KEY, false);
+  config_schema_item_set_argc_minmax(item , 1 , 1);
+  config_schema_item_set_common_selection_set(
+          item, 3,
+          (const char *[3]) {"SCHEDULE", "REFCASE_SIMULATED", "REFCASE_HISTORY"}
+          );
+
+  config_schema_item_set_required_children_on_value(
+          item, "REFCASE_SIMULATED", refcase_dep
+          );
+
+  config_schema_item_set_required_children_on_value(
+          item, "REFCASE_HISTORY", refcase_dep
+          );
+
+  stringlist_free(refcase_dep);
+
+  hook_manager_add_config_items(config);
+}
+
+static void model_config_user_config_deprecate(config_parser_type * config) {
+  config_parser_deprecate(
+          config,
+          "MAX_RUNNING_LSF",
+          "MAX_RUNNING_LSF is deprecated. "
+          "Use the general QUEUE_OPTION LSF MAX_RUNNING instead."
+          );
+
+  config_parser_deprecate(
+          config,
+          "MAX_RUNNING_LOCAL",
+          "MAX_RUNNING_LOCAL is deprecated. "
+          "Use the general QUEUE_OPTION LOCAL MAX_RUNNING instead."
+          );
+
+  config_parser_deprecate(
+          config,
+          "MAX_RUNNING_RSH",
+          "MAX_RUNNING_RSH is deprecated. "
+          "Use the general QUEUE_OPTION RSH MAX_RUNNING instead."
+          );
+}
+
+config_content_type * model_config_alloc_content(
+        const char * user_config_file, config_parser_type * config) {
+
+  model_config_init_user_config(config);
+  site_config_add_config_items(config, false);
+  model_config_user_config_deprecate(config);
+
+  hash_type * pre_defined_kw_map = alloc_predefined_kw_map(user_config_file);
+  config_content_type * content = config_parse(
+          config , user_config_file,
+          "--", INCLUDE_KEY, DEFINE_KEY,
+          pre_defined_kw_map, CONFIG_UNRECOGNIZED_WARN, true
+          );
+  hash_free(pre_defined_kw_map);
+
+  const stringlist_type * warnings = config_content_get_warnings(content);
+  if (stringlist_get_size( warnings ) > 0) {
+    fprintf(
+            stderr,
+            " ** There were warnings when parsing the configuration file: %s",
+            user_config_file
+            );
+
+    for (int i=0; i < stringlist_get_size( warnings ); i++)
+      fprintf(stderr, " %02d : %s \n", i, stringlist_iget(warnings, i));
+  }
+
+  if (!config_content_is_valid(content)) {
+    config_error_type * errors = config_content_get_errors(content);
+    config_error_fprintf(errors, true, stderr);
+
+    util_abort(
+            "%s: Failed to load user configuration file: %s\n",
+            __func__, user_config_file
+            );
+  }
+
+  return content;
 }
