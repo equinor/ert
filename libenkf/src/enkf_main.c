@@ -2301,7 +2301,10 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
   config_content_free(content);
 }
 
-char * enkf_main_alloc_model_config_filename(const char * model_config) {
+/**
+ * Note: This function will chdir into the directory of the model_config file.
+ */
+static char * enkf_main_alloc_model_config_filename(const char * model_config) {
   if(model_config == NULL)
     return NULL;
 
@@ -2354,12 +2357,8 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   if (!enkf_main->user_config_file)
     return;
 
-  site_config_init_user_mode(enkf_main->site_config);
-
   config_parser_type * config = config_alloc();
   config_content_type * content = model_config_alloc_content(enkf_main->user_config_file, config);
-
-  site_config_init( enkf_main->site_config , content );                                   /*  <---- model_config : second pass. */
 
   {
     char * log_file;
@@ -2544,9 +2543,13 @@ itializing the various 'large' sub config objects.
 // TODO: Rename as alloc
 enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , bool verbose) {
   // TODO: site_config should be given as a const parameter
+  site_config_type * site_config = site_config_alloc_default();
+
+  if(_model_config)
+    site_config_load_user_config(site_config, _model_config);
 
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
-  enkf_main->site_config = site_config_alloc_default();
+  enkf_main->site_config = site_config;
   enkf_main_set_verbose(enkf_main, verbose);
   enkf_main_bootstrap_site(enkf_main);
 

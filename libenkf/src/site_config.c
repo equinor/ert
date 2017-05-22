@@ -571,6 +571,26 @@ void site_config_init_env(site_config_type * site_config, const config_content_t
   }
 }
 
+bool site_config_load_user_config(
+        site_config_type * site_config,
+        const char * user_config_filename) {
+
+  site_config_init_user_mode(site_config);
+
+  config_parser_type * config = config_alloc();
+  config_content_type * content = model_config_alloc_content(
+                                                    user_config_filename,
+                                                    config
+                                                    );
+
+  bool status = site_config_init(site_config, content);
+
+  config_content_free( content );
+  config_free(config);
+
+  return status;
+}
+
 /**
    This function will be called twice, first when the config instance
    is an internalization of the site-wide configuration file, and
