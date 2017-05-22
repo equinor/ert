@@ -1,3 +1,7 @@
+if (NOT BUILD_PYTHON)
+    return ()
+endif()
+
 include(init_python)
 init_python(2.7)
 
