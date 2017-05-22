@@ -44,6 +44,7 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/ert_workflow_list.h>
+#include <ert/enkf/model_config.h>
 
 /**
    This struct contains information which is specific to the site

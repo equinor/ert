@@ -2353,6 +2353,118 @@ static char * enkf_main_alloc_model_config_filename(const char * model_config) {
   return abs_model_config;
 }
 
+static void enkf_main_init_log(
+        const enkf_main_type * enkf_main,
+        const config_content_type * content) {
+
+  char * log_file=NULL;
+  if (config_content_has_item( content , LOG_FILE_KEY))
+    log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
+  if(config_content_has_item( content , LOG_LEVEL_KEY))
+    res_log_init_log(config_content_get_value_as_int(content , LOG_LEVEL_KEY), log_file ,  enkf_main->verbose);
+  else
+    res_log_init_log_default_log_level(log_file ,  enkf_main->verbose);
+  free( log_file );
+}
+
+static void enkf_main_init_schedule_prediction(
+        enkf_main_type * enkf_main,
+        const config_content_type * content) {
+
+  if (!config_content_has_item(content, SCHEDULE_PREDICTION_FILE_KEY))
+    return;
+
+  const config_content_item_type * pred_item = config_content_get_item(
+                                                   content,
+                                                   SCHEDULE_PREDICTION_FILE_KEY
+                                                   );
+
+  config_content_node_type * pred_node = config_content_item_get_last_node(pred_item);
+  const char * template_file = config_content_node_iget_as_path(pred_node, 0);
+
+  hash_type * opt_hash = hash_alloc();
+  config_content_node_init_opt_hash(pred_node, opt_hash, 1);
+
+  const char * parameters = hash_safe_get(opt_hash, "PARAMETERS");
+  const char * min_std    = hash_safe_get(opt_hash, "MIN_STD"   );
+  const char * init_files = hash_safe_get(opt_hash, "INIT_FILES");
+
+  enkf_main_set_schedule_prediction_file__(
+          enkf_main,
+          template_file,
+          parameters,
+          min_std,
+          init_files
+          );
+
+  hash_free(opt_hash);
+}
+
+/**
+   By default the simulation directories are left intact when
+   the simulations re complete, but using the keyword
+   DELETE_RUNPATH you can request (some of) the directories to
+   be wiped after the simulations are complete.
+*/
+static void enkf_main_init_delete_runpath(
+                enkf_main_type * enkf_main,
+                const config_content_type * content) {
+
+  char * delete_runpath_string = NULL;
+  int ens_size = config_content_get_value_as_int(content, NUM_REALIZATIONS_KEY);
+
+  if (config_content_has_item(content, DELETE_RUNPATH_KEY))
+    delete_runpath_string = config_content_alloc_joined_string(
+                                                          content,
+                                                          DELETE_RUNPATH_KEY,
+                                                          ""
+                                                          );
+
+  enkf_main_parse_keep_runpath(enkf_main, delete_runpath_string, ens_size);
+
+  util_safe_free(delete_runpath_string);
+}
+
+static void enkf_main_init_pre_clear_runpath(
+                enkf_main_type * enkf_main,
+                const config_content_type * content) {
+
+  enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
+  if (config_content_has_item(content, PRE_CLEAR_RUNPATH_KEY))
+    enkf_main->pre_clear_runpath = config_content_get_value_as_bool(
+                                                         content,
+                                                         PRE_CLEAR_RUNPATH_KEY
+                                                         );
+}
+
+
+static void ecl_main_init_rft_config(
+                enkf_main_type * enkf_main,
+                const config_content_type * content) {
+
+  const char * rft_config_file = NULL;
+  if (config_content_has_item(content , RFT_CONFIG_KEY))
+    rft_config_file = config_content_iget(content, RFT_CONFIG_KEY, 0, 0);
+
+  enkf_main_set_rft_config_file(enkf_main, rft_config_file);
+}
+
+static void enkf_main_init_obs(
+                enkf_main_type * enkf_main,
+                const config_content_type * content) {
+
+  enkf_main_alloc_obs(enkf_main);
+  if (config_content_has_item(content, OBS_CONFIG_KEY)) {
+    const char * obs_config_file = config_content_iget(
+                                                    content,
+                                                    OBS_CONFIG_KEY,
+                                                    0, 0
+                                                    );
+
+    enkf_main_load_obs(enkf_main, obs_config_file, true);
+  }
+}
+
 static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, bool verbose) {
   if (!enkf_main->user_config_file)
     return;
@@ -2360,25 +2472,8 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   config_parser_type * config = config_alloc();
   config_content_type * content = model_config_alloc_content(enkf_main->user_config_file, config);
 
-  {
-    char * log_file;
-    int log_level = DEFAULT_LOG_LEVEL;
-    if(config_content_has_item( content , LOG_LEVEL_KEY))
-      log_level = config_content_get_value_as_int(content , LOG_LEVEL_KEY);
+  enkf_main_init_log(enkf_main, content);
 
-    if (config_content_has_item( content , LOG_FILE_KEY))
-      log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
-    else
-      log_file = util_alloc_filename( NULL , enkf_main->user_config_file , "log");
-
-    ert_log_init_log(log_level, log_file ,  enkf_main->verbose);
-
-    free( log_file );
-  }
-
-  /*
-itializing the various 'large' sub config objects.
-  */
   rng_config_init( enkf_main->rng_config , content );
   enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
 
@@ -2387,6 +2482,7 @@ itializing the various 'large' sub config objects.
 
   analysis_config_load_internal_modules( enkf_main->analysis_config );
   analysis_config_init( enkf_main->analysis_config , content );
+
   ecl_config_init( enkf_main->ecl_config , content );
   config_settings_apply( enkf_main->plot_config , content );
 
@@ -2394,105 +2490,45 @@ itializing the various 'large' sub config objects.
                         ecl_config_get_grid( enkf_main->ecl_config ) ,
                         ecl_config_get_refcase( enkf_main->ecl_config) );
 
-  model_config_init( enkf_main->model_config ,
-                     content ,
-                     enkf_main_get_ensemble_size( enkf_main ),
-                     site_config_get_installed_jobs(enkf_main->site_config) ,
-                     ecl_config_get_last_history_restart( enkf_main->ecl_config ),
-                     ecl_config_get_sched_file(enkf_main->ecl_config) ,
-                     ecl_config_get_refcase( enkf_main->ecl_config ));
+  model_config_init(enkf_main->model_config,
+                    content,
+                    enkf_main_get_ensemble_size(enkf_main),
+                    site_config_get_installed_jobs(enkf_main->site_config),
+                    ecl_config_get_last_history_restart(enkf_main->ecl_config),
+                    ecl_config_get_sched_file(enkf_main->ecl_config),
+                    ecl_config_get_refcase(enkf_main->ecl_config)
+                    );
 
-  enkf_main_init_hook_manager( enkf_main , content );
-  enkf_main_init_data_kw( enkf_main , content );
-  enkf_main_update_num_cpu( enkf_main );
-  {
-    if (config_content_has_item( content , SCHEDULE_PREDICTION_FILE_KEY )) {
-      const config_content_item_type * pred_item = config_content_get_item( content , SCHEDULE_PREDICTION_FILE_KEY );
-      config_content_node_type * pred_node = config_content_item_get_last_node( pred_item );
-      const char * template_file = config_content_node_iget_as_path( pred_node , 0 );
-      {
-        hash_type * opt_hash = hash_alloc();
-        config_content_node_init_opt_hash( pred_node , opt_hash , 1 );
+  enkf_main_init_hook_manager(enkf_main, content);
 
-        const char * parameters = hash_safe_get( opt_hash , "PARAMETERS" );
-        const char * min_std    = hash_safe_get( opt_hash , "MIN_STD"    );
-        const char * init_files = hash_safe_get( opt_hash , "INIT_FILES" );
+  if (config_content_has_item(content , DELETE_RUNPATH_KEY))
+    delete_runpath_string = config_content_alloc_joined_string(content , DELETE_RUNPATH_KEY , "");
 
-        enkf_main_set_schedule_prediction_file__( enkf_main , template_file , parameters , min_std , init_files );
-        hash_free( opt_hash );
-      }
-    }
-  }
+  enkf_main_init_data_kw(enkf_main, content);
 
+  enkf_main_update_num_cpu(enkf_main);
 
-  /*****************************************************************/
-  /**
-     By default the simulation directories are left intact when
-     the simulations re complete, but using the keyword
-     DELETE_RUNPATH you can request (some of) the directories to
-     be wiped after the simulations are complete.
-  */
-  {
-    {
-      char * delete_runpath_string = NULL;
-      int    ens_size              = config_content_get_value_as_int(content , NUM_REALIZATIONS_KEY);
+  enkf_main_init_schedule_prediction(enkf_main, content);
 
-      {
-        char * log_file=NULL;
-        if (config_content_has_item( content , LOG_FILE_KEY))
-          log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
-        if(config_content_has_item( content , LOG_LEVEL_KEY))
-          res_log_init_log(config_content_get_value_as_int(content , LOG_LEVEL_KEY), log_file ,  enkf_main->verbose);
-        else
-          res_log_init_log_default_log_level(log_file ,  enkf_main->verbose);
-        free( log_file );
-      }
+  enkf_main_init_delete_runpath(enkf_main, content);
 
-      if (config_content_has_item(content , DELETE_RUNPATH_KEY))
-        delete_runpath_string = config_content_alloc_joined_string(content , DELETE_RUNPATH_KEY , "");
+  enkf_main_init_pre_clear_runpath(enkf_main, content);
 
-      enkf_main_parse_keep_runpath( enkf_main , delete_runpath_string , ens_size );
+  ecl_config_static_kw_init(enkf_main->ecl_config, content);
 
-      util_safe_free( delete_runpath_string );
-    }
+  /* Installing templates */
+  ert_templates_init(enkf_main->templates, content);
 
-    /* This is really in the wrong place ... */
-    {
-      enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
-      if (config_content_has_item(content , PRE_CLEAR_RUNPATH_KEY))
-        enkf_main->pre_clear_runpath = config_content_get_value_as_bool( content , PRE_CLEAR_RUNPATH_KEY);
-    }
+  enkf_main_user_select_initial_fs( enkf_main );
 
-    ecl_config_static_kw_init( enkf_main->ecl_config , content );
+  /* Adding ensemble members */
+  enkf_main_resize_ensemble(
+          enkf_main,
+          config_content_iget_as_int(content, NUM_REALIZATIONS_KEY, 0, 0)
+          );
 
-    /* Installing templates */
-    ert_templates_init( enkf_main->templates , content );
+  enkf_main_init_obs(enkf_main, content);
 
-    {
-      const char * rft_config_file = NULL;
-      if (config_content_has_item(content , RFT_CONFIG_KEY))
-        rft_config_file = config_content_iget(content , RFT_CONFIG_KEY , 0,0);
-
-      enkf_main_set_rft_config_file( enkf_main , rft_config_file );
-    }
-
-
-    /*****************************************************************/
-    enkf_main_user_select_initial_fs( enkf_main );
-
-    /* Adding ensemble members */
-    enkf_main_resize_ensemble( enkf_main, config_content_iget_as_int(content, NUM_REALIZATIONS_KEY , 0 , 0) );
-
-    /*****************************************************************/
-
-    /* Loading observations */
-    enkf_main_alloc_obs(enkf_main);
-    if (config_content_has_item(content , OBS_CONFIG_KEY)) {
-      const char * obs_config_file = config_content_iget(content  , OBS_CONFIG_KEY , 0,0);
-      enkf_main_load_obs( enkf_main , obs_config_file , true );
-    }
-
-  }
   config_content_free( content );
   config_free(config);
 }

@@ -90,7 +90,7 @@ extern "C" {
   void                   model_config_set_gen_kw_export_file( model_config_type * model_config, const char * file_name);
   const char           * model_config_get_gen_kw_export_file( const model_config_type * model_config);
 
-  config_content_type * model_config_alloc_content(const char*, config_parser_type*);
+  config_content_type  * model_config_alloc_content(const char*, config_parser_type*);
 
   UTIL_IS_INSTANCE_HEADER( model_config);
 
