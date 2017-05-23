@@ -16,7 +16,7 @@ class EnKFLibraryTest(ExtendedTestCase):
 
     def test_failed_class_creation(self):
         classes = [EnkfConfigNode, EnKFState,
-                   ErtTemplate, ErtTemplates, LocalConfig, ModelConfig, SiteConfig]
+                   ErtTemplate, ErtTemplates, LocalConfig, ModelConfig]
 
         for cls in classes:
             with self.assertRaises(NotImplementedError):

@@ -42,7 +42,6 @@ typedef struct site_config_struct site_config_type;
   const char *             site_config_get_location();
 
   const char *             site_config_get_config_file(const site_config_type*);
-  // TODO: remove?
   void                     site_config_set_config_file(site_config_type*, const char*);
   
   const char *             site_config_get_manual_url( const site_config_type * site_config );
@@ -60,7 +59,6 @@ typedef struct site_config_struct site_config_type;
   bool                     site_config_load_user_config(site_config_type *, const char *);
   void                     site_config_free(site_config_type *);
   ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );
-  void                     site_config_set_ens_size( site_config_type * site_config , int ens_size );
 
   void                     site_config_set_max_running_lsf( site_config_type * site_config , int max_running_lsf);
   int                      site_config_get_max_running_lsf( const site_config_type * site_config );
@@ -106,6 +104,7 @@ typedef struct site_config_struct site_config_type;
 
   site_config_type       * site_config_alloc_empty();
   site_config_type       * site_config_alloc_default();
+  site_config_type       * site_config_alloc_model_config(const char *);
 
   config_content_type    * site_config_alloc_content(const site_config_type*, config_parser_type*);
 

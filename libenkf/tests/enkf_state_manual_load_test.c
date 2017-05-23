@@ -66,11 +66,13 @@ int main(int argc , char ** argv) {
   test_work_area_copy_directory_content( work_area , root_path );
   {
     bool strict = true;
-    enkf_main_type * enkf_main = enkf_main_bootstrap( config_file , strict , true );
+    site_config_type * site_config = site_config_alloc_model_config(config_file);
+    enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, strict, true);
 
     test_assert_int_equal( 0 , test_load_manually_to_new_case(enkf_main));
 
     enkf_main_free( enkf_main );
+    site_config_free(site_config);
   }
   test_work_area_free(work_area);
 

@@ -192,6 +192,13 @@ site_config_type * site_config_alloc_default() {
   return site_config;
 }
 
+site_config_type * site_config_alloc_model_config(const char * model_config) {
+  site_config_type * site_config = site_config_alloc_default();
+  site_config_load_user_config(site_config, model_config);
+
+  return site_config;
+}
+
 const char * site_config_get_license_root_path(const site_config_type * site_config) {
   return site_config->license_root_path;
 }
@@ -576,6 +583,9 @@ bool site_config_load_user_config(
         site_config_type * site_config,
         const char * user_config_filename) {
 
+  if (user_config_filename == NULL)
+    return false;
+
   site_config_init_user_mode(site_config);
 
   config_parser_type * config = config_alloc();
@@ -629,12 +639,10 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
   }
   
   if (config_content_has_item(config, LICENSE_PATH_KEY))
-  site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
-
+    site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
   
-  if (config_content_has_item(config, EXT_JOB_SEARCH_PATH_KEY)){
+  if (config_content_has_item(config, EXT_JOB_SEARCH_PATH_KEY))
       site_config_set_ext_job_search_path(site_config, config_content_get_value_as_bool(config, EXT_JOB_SEARCH_PATH_KEY));
-  }
 
 
   return true;
@@ -674,11 +682,6 @@ ext_joblist_type * site_config_get_installed_jobs(const site_config_type * site_
   return site_config->joblist;
 }
 
-
-
-void site_config_set_ens_size(site_config_type * site_config, int ens_size) {
-  //job_queue_set_size( site_config->job_queue , ens_size );
-}
 
 /*****************************************************************/
 

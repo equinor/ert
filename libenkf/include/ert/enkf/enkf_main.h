@@ -119,7 +119,7 @@ extern "C" {
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
   void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
   void                          enkf_main_interactive_set_runpath__(void * );
-  enkf_main_type              * enkf_main_bootstrap(const char * model_config, bool strict, bool verbose);
+  enkf_main_type              * enkf_main_alloc(const char *, const site_config_type *, bool, bool);
   void                          enkf_main_create_new_config( const char * config_file , const char * storage_path , const char * dbase_type , int num_realizations);
 
 
@@ -157,7 +157,7 @@ extern "C" {
 
   subst_list_type        * enkf_main_get_data_kw( const enkf_main_type * enkf_main );
   void                     enkf_main_clear_data_kw( enkf_main_type * enkf_main );
-  site_config_type       * enkf_main_get_site_config( const enkf_main_type * enkf_main );
+  const site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main );
   void                     enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size );
   void                     enkf_main_get_observations( const enkf_main_type * enkf_main, const char * user_key , int obs_count , time_t * obs_time , double * y , double * std);
   int                      enkf_main_get_observation_count( const enkf_main_type * enkf_main, const char * user_key );

@@ -35,12 +35,12 @@ struct ert_test_context_struct {
   UTIL_TYPE_ID_DECLARATION;
   enkf_main_type * enkf_main;
   test_work_area_type * work_area;
+  site_config_type * site_config;
   rng_type * rng;
 };
 
 
 UTIL_IS_INSTANCE_FUNCTION( ert_test_context , ERT_TEST_CONTEXT_TYPE_ID )
-
 
 static ert_test_context_type * ert_test_context_alloc__( const char * test_name , const char * model_config , bool python_mode) {
   ert_test_context_type * test_context = util_malloc( sizeof * test_context );
@@ -62,7 +62,8 @@ static ert_test_context_type * ert_test_context_alloc__( const char * test_name 
     test_work_area_copy_parent_content(test_context->work_area , model_config );
     {
       char * config_file = util_split_alloc_filename( model_config );
-      test_context->enkf_main = enkf_main_bootstrap(config_file , true , false );
+      test_context->site_config = site_config_alloc_model_config(config_file);
+      test_context->enkf_main = enkf_main_alloc(config_file, test_context->site_config, true, false);
       free( config_file );
     }
     test_context->rng = rng_alloc( MZRAN , INIT_DEV_URANDOM );
@@ -70,6 +71,7 @@ static ert_test_context_type * ert_test_context_alloc__( const char * test_name 
     test_context->enkf_main = NULL;
     test_context->work_area = NULL;
     test_context->rng = NULL;
+    test_context->site_config = NULL;
   }
   return test_context;
 }
@@ -106,6 +108,9 @@ void ert_test_context_free( ert_test_context_type * test_context ) {
 
   if (test_context->rng)
     rng_free( test_context->rng );
+
+  if (test_context->site_config)
+    site_config_free(test_context->site_config);
 
   free( test_context );
 }

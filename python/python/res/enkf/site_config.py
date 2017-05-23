@@ -13,6 +13,8 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+from os.path import isfile
+
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
 from res.job_queue import JobQueue, ExtJoblist
@@ -22,6 +24,7 @@ from ecl.util import StringList, Hash
 class SiteConfig(BaseCClass):
     TYPE_NAME = "site_config"
 
+    _alloc                 = EnkfPrototype("void* site_config_alloc_model_config(char*)", bind=False)
     _free                  = EnkfPrototype("void site_config_free( site_config )")
     _get_lsf_queue         = EnkfPrototype("char* site_config_get_lsf_queue(site_config)")
     _set_lsf_queue         = EnkfPrototype("void site_config_set_lsf_queue(site_config, char*)")
@@ -50,11 +53,28 @@ class SiteConfig(BaseCClass):
     _update_pathvar        = EnkfPrototype("void site_config_update_pathvar(site_config, char*, char*)")
     _get_location          = EnkfPrototype("char* site_config_get_location(site_config)")
     _has_driver            = EnkfPrototype("bool site_config_has_queue_driver(site_config, char*)")
-
+    _get_config_file       = EnkfPrototype("char* site_config_get_config_file(site_config)")
 
     
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self, user_config_file=None):
+        if user_config_file is not None and not isfile(user_config_file):
+            raise IOError('No such configuration file "%s".' % user_config_file)
+
+        c_ptr = self._alloc(user_config_file)
+        if c_ptr:
+            super(SiteConfig, self).__init__(c_ptr)
+        else:
+            raise ValueError(
+                    'Failed to construct SiteConfig instance from model_config %s.'
+                    % user_config_file
+                    )
+
+    def __repr__(self):
+        return "Site Config loaded from %s" % self.config_file
+
+    @property
+    def config_file(self):
+        return self._get_config_file()
 
     def getQueueName(self):
         """ @rtype: str """

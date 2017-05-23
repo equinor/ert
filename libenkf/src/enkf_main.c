@@ -144,37 +144,37 @@
 
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
-  enkf_fs_type         * dbase;              /* The internalized information. */
+  enkf_fs_type           * dbase;              /* The internalized information. */
 
-  ensemble_config_type * ensemble_config;    /* The config objects for the various enkf nodes.*/
-  hook_manager_type    * hook_manager;
-  model_config_type    * model_config;
-  ecl_config_type      * ecl_config;
-  site_config_type     * site_config;
-  analysis_config_type * analysis_config;
-  local_config_type    * local_config;       /* Holding all the information about local analysis. */
-  ert_templates_type   * templates;          /* Run time templates */
-  config_settings_type * plot_config;        /* Information about plotting. */
-  rng_config_type      * rng_config;
-  rng_type             * rng;
+  ensemble_config_type   * ensemble_config;    /* The config objects for the various enkf nodes.*/
+  hook_manager_type      * hook_manager;
+  model_config_type      * model_config;
+  ecl_config_type        * ecl_config;
+  const site_config_type * site_config;
+  analysis_config_type   * analysis_config;
+  local_config_type      * local_config;       /* Holding all the information about local analysis. */
+  ert_templates_type     * templates;          /* Run time templates */
+  config_settings_type   * plot_config;        /* Information about plotting. */
+  rng_config_type        * rng_config;
+  rng_type               * rng;
   ert_workflow_list_type * workflow_list;
-  ranking_table_type   * ranking_table;
+  ranking_table_type     * ranking_table;
 
   /*---------------------------*/            /* Variables related to substitution. */
-  subst_func_pool_type * subst_func_pool;
-  subst_list_type      * subst_list;         /* A parent subst_list instance - common to all ensemble members. */
+  subst_func_pool_type   * subst_func_pool;
+  subst_list_type        * subst_list;         /* A parent subst_list instance - common to all ensemble members. */
   /*-------------------------*/
 
-  int_vector_type      * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
-  bool                   pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
+  int_vector_type        * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
+  bool                     pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
 
-  char                 * user_config_file;
-  char                 * rft_config_file;       /* File giving the configuration to the RFTwells*/
-  enkf_obs_type        * obs;
+  char                   * user_config_file;
+  char                   * rft_config_file;       /* File giving the configuration to the RFTwells*/
+  enkf_obs_type          * obs;
 
-  enkf_state_type     ** ensemble;         /* The ensemble ... */
-  int                    ens_size;         /* The size of the ensemble */
-  bool                   verbose;
+  enkf_state_type       ** ensemble;         /* The ensemble ... */
+  int                      ens_size;         /* The size of the ensemble */
+  bool                     verbose;
 };
 
 
@@ -233,10 +233,6 @@ void enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rf
   enkf_main->rft_config_file = util_realloc_string_copy( enkf_main->rft_config_file , rft_config_file );
 }
 
-void enkf_main_set_site_config_file( enkf_main_type * enkf_main , const char * site_config_file ) {
-  site_config_set_config_file(enkf_main->site_config, site_config_file);
-}
-
 const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) {
   return enkf_main->user_config_file;
 }
@@ -253,7 +249,7 @@ ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf
   return enkf_main->ensemble_config;
 }
 
-site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main ) {
+const site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main ) {
   return enkf_main->site_config;
 }
 
@@ -2323,9 +2319,9 @@ static char * enkf_main_alloc_model_config_filename(const char * model_config) {
     util_alloc_file_components(model_config, &path, &base, &ext);
   }
 
-  char * abs_model_config = NULL;
+  char * rel_model_config = NULL;
   if (path == NULL) {
-    abs_model_config = util_alloc_string_copy(model_config);
+    rel_model_config = util_alloc_string_copy(model_config);
   }
   else {
     if(util_chdir(path) != 0)
@@ -2335,22 +2331,22 @@ static char * enkf_main_alloc_model_config_filename(const char * model_config) {
               );
 
     if (ext != NULL)
-      abs_model_config = util_alloc_filename(NULL, base, ext);
+      rel_model_config = util_alloc_filename(NULL, base, ext);
     else
-      abs_model_config = util_alloc_string_copy(base);
+      rel_model_config = util_alloc_string_copy(base);
   }
 
   util_safe_free(path);
   util_safe_free(base);
   util_safe_free(ext);
 
-  if (!util_file_exists(abs_model_config))
+  if (!util_file_exists(rel_model_config))
     util_exit(
             "%s: can not locate user configuration file:%s \n",
-            __func__ , abs_model_config
+            __func__ , rel_model_config
             );
 
-  return abs_model_config;
+  return rel_model_config;
 }
 
 static void enkf_main_init_log(
@@ -2438,7 +2434,7 @@ static void enkf_main_init_pre_clear_runpath(
 }
 
 
-static void ecl_main_init_rft_config(
+static void enkf_main_init_rft_config(
                 enkf_main_type * enkf_main,
                 const config_content_type * content) {
 
@@ -2474,21 +2470,22 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   enkf_main_init_log(enkf_main, content);
 
-  rng_config_init( enkf_main->rng_config , content );
-  enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
+  rng_config_init(enkf_main->rng_config, content);
+  enkf_main_rng_init(enkf_main);  /* Must be called before the ensmeble is created. */
 
-  enkf_main_init_subst_list( enkf_main );
-  ert_workflow_list_init( enkf_main->workflow_list , content );
+  enkf_main_init_subst_list(enkf_main);
+  ert_workflow_list_init(enkf_main->workflow_list, content);
 
-  analysis_config_load_internal_modules( enkf_main->analysis_config );
-  analysis_config_init( enkf_main->analysis_config , content );
+  analysis_config_load_internal_modules(enkf_main->analysis_config);
+  analysis_config_init(enkf_main->analysis_config, content);
 
-  ecl_config_init( enkf_main->ecl_config , content );
-  config_settings_apply( enkf_main->plot_config , content );
+  ecl_config_init(enkf_main->ecl_config, content);
+  config_settings_apply(enkf_main->plot_config, content);
 
-  ensemble_config_init( enkf_main->ensemble_config , content ,
-                        ecl_config_get_grid( enkf_main->ecl_config ) ,
-                        ecl_config_get_refcase( enkf_main->ecl_config) );
+  ensemble_config_init(enkf_main->ensemble_config, content,
+                       ecl_config_get_grid(enkf_main->ecl_config),
+                       ecl_config_get_refcase(enkf_main->ecl_config)
+                       );
 
   model_config_init(enkf_main->model_config,
                     content,
@@ -2519,6 +2516,8 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   /* Installing templates */
   ert_templates_init(enkf_main->templates, content);
 
+  enkf_main_init_rft_config(enkf_main, content);
+
   enkf_main_user_select_initial_fs( enkf_main );
 
   /* Adding ensemble members */
@@ -2529,7 +2528,7 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   enkf_main_init_obs(enkf_main, content);
 
-  config_content_free( content );
+  config_content_free(content);
   config_free(config);
 }
 
@@ -2576,26 +2575,19 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 */
 
 
-// TODO: Rename as alloc
-enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , bool verbose) {
-  // TODO: site_config should be given as a const parameter
-  site_config_type * site_config = site_config_alloc_default();
-
-  if(_model_config)
-    site_config_load_user_config(site_config, _model_config);
+enkf_main_type * enkf_main_alloc(const char * model_config, const site_config_type * site_config, bool strict , bool verbose) {
 
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->site_config = site_config;
   enkf_main_set_verbose(enkf_main, verbose);
   enkf_main_bootstrap_site(enkf_main);
 
-  char * model_config = enkf_main_alloc_model_config_filename(_model_config);
-  if(model_config) {
-      enkf_main_set_user_config_file(enkf_main, model_config);
-      free(model_config);
-
-      enkf_main_bootstrap_model(enkf_main, strict, verbose);
+  char * user_config_file = enkf_main_alloc_model_config_filename(model_config);
+  if(user_config_file) {
+    enkf_main_set_user_config_file(enkf_main, user_config_file);
+    enkf_main_bootstrap_model(enkf_main, strict, verbose);
   }
+  free(user_config_file);
 
   enkf_main_init_jobname(enkf_main);
 

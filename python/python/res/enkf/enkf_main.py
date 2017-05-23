@@ -31,7 +31,7 @@ from res.enkf.key_manager import KeyManager
 
 class EnKFMain(BaseCClass):
     TYPE_NAME = "enkf_main"
-    _alloc = EnkfPrototype("void* enkf_main_bootstrap(char*, bool, bool)", bind = False)
+    _alloc = EnkfPrototype("void* enkf_main_alloc(char*, site_config, bool, bool)", bind = False)
     _create_new_config = EnkfPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
 
     _free = EnkfPrototype("void enkf_main_free(enkf_main)")
@@ -79,10 +79,16 @@ class EnKFMain(BaseCClass):
     def get_queue_config(self):
         return self._get_queue_config()
 
-    def __init__(self, model_config, strict=True, verbose=True):
+    def __init__(self, model_config, site_config=None, strict=True, verbose=True):
         if model_config is not None and not isfile(model_config):
             raise IOError('No such configuration file "%s".' % model_config)
-        c_ptr = self._alloc(model_config, strict, verbose)
+
+        if site_config is None:
+            site_config = SiteConfig(model_config)
+        if site_config is None or not isinstance(site_config, SiteConfig):
+            raise TypeError("Failed to construct EnKFMain instance due to invalid site_config.")
+
+        c_ptr = self._alloc(model_config, site_config, strict, verbose)
         if c_ptr:
             super(EnKFMain, self).__init__(c_ptr)
         else:
@@ -102,15 +108,6 @@ class EnKFMain(BaseCClass):
 
 
         self.__key_manager = KeyManager(self)
-
-    @staticmethod
-    def loadSiteConfig():
-        """
-        This method will load the site config file; the sole purpose
-        of this method is testing.
-        """
-        EnKFMain( None )
-
 
     @classmethod
     def createCReference(cls, c_pointer, parent=None):
