@@ -32,14 +32,11 @@ void parse_test(config_parser_type * config ,
                 const char * root_path ,     // The new working directory - the test will start by chdir() here.
                 const char * config_file ) { // The config_file, either as an absolute path - or relative from root_path
 
-#ifdef ERT_LINUX
   const char * path0 = "PATH0";
   const char * path1 = "path/PATH1";
   const char * path2 = "path/PATH2";
   const char * path3 = "path/subpath/PATH3";
   const char * path4 = "path/subpath/subsubpath/PATH4";
-#endif
-
 
   char * config_path, *config_rel_path,*config_abs_path;
   path_stack_type * path_stack = path_stack_alloc();

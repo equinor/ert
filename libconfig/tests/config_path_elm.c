@@ -29,13 +29,10 @@
 #include <ert/config/config_root_path.h>
 
 int main(int argc , char ** argv) {
-#ifdef ERT_LINUX
   const char * rel_path = "rel/path";
   const char * rel_true = "rel/path/XXX";
   const char * path_true1 = "rel/path/XXX";
-  
-  
-#endif
+
   test_work_area_type * work_area = test_work_area_alloc( "config_path_elm" );
   const char * root = test_work_area_get_cwd( work_area );
   char * abs_path = util_alloc_filename( root , "rel/path" , NULL);
