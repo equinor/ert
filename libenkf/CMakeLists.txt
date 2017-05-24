@@ -92,7 +92,7 @@ add_library(enkf src/active_list.c
                  src/trans_func.c
 )
 
-target_include_directories(analysis
+target_include_directories(enkf
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
            $<INSTALL_INTERFACE:include>
 )
