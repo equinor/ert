@@ -53,7 +53,7 @@ add_executable(sched_history_summary tests/sched_history_summary.c)
 target_link_libraries(sched_history_summary sched)
 add_test(NAME sched_history_summary1
          COMMAND sched_history_summary
-                 ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE)
+                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE)
 add_test(NAME sched_history_summary2
          COMMAND sched_history_summary
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Snorre/SNORRE)

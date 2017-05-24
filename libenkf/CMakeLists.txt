@@ -449,7 +449,6 @@ add_test(NAME enkf_forward_init_FIELD_FALSE
 
 add_executable(enkf_forward_init_transform tests/enkf_forward_init_transform.c)
 target_link_libraries(enkf_forward_init_transform enkf)
-
 add_test(NAME enkf_forward_init_transform_TRUE
          COMMAND enkf_forward_init_transform
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_true
