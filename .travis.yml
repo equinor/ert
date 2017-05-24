@@ -87,6 +87,7 @@ before_script:
           -DCMAKE_PREFIX_PATH=$LIBRES_INSTALL_ROOT
           -DCMAKE_MODULE_PATH=$LIBECL_INSTALL_ROOT/share/cmake/Modules
           -DBUILD_TESTS=ON -DBUILD_PYTHON=ON -DERT_DOC=OFF
+          -DCMAKE_INSTALL_PREFIX=$(pwd)/install
           ..
 
 script:
