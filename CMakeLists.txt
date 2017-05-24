@@ -21,7 +21,7 @@ option( ERT_DOC             "Build ERT documantation"                           
 option( USE_RUNPATH         "Should we embed path to libraries"                       ON)
 
 find_package( ecl REQUIRED )
-find_package( libres REQUIRED )
+find_package( res REQUIRED )
 
 
 set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
