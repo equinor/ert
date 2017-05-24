@@ -65,7 +65,7 @@ class SiteConfig(BaseCClass):
             super(SiteConfig, self).__init__(c_ptr)
         else:
             raise ValueError(
-                    'Failed to construct SiteConfig instance from model_config %s.'
+                    'Failed to construct SiteConfig instance from config file %s.'
                     % user_config_file
                     )
 

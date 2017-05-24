@@ -1,6 +1,6 @@
 #  Copyright (C) 2017  Statoil ASA, Norway.
 #
-#  The file 'test_site_config.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'test_enkf_config.py' is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,11 +14,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.enkf import SiteConfig
+from res.enkf import EnkfConfig, SiteConfig
 
 from ecl.test import ExtendedTestCase, TestAreaContext
 
-class SiteConfigTest(ExtendedTestCase):
+class EnkfConfigTest(ExtendedTestCase):
 
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
@@ -26,19 +26,17 @@ class SiteConfigTest(ExtendedTestCase):
     def test_invalid_user_config(self):
         with TestAreaContext("void land"):
             with self.assertRaises(IOError):
-                SiteConfig("this/is/not/a/file")
+                EnkfConfig("this/is/not/a/file")
 
     def test_init(self):
-        with TestAreaContext("site_config_init_test") as work_area:
+        with TestAreaContext("enkf_config_init_test") as work_area:
             work_area.copy_directory(self.case_directory)
-            site_config = SiteConfig()
-            self.assertIsNotNone(site_config)
-            self.assertIsNotNone(site_config.config_file)
-            
+
             config_file = "simple_config/minimum_config"
-            site_config2 = SiteConfig(user_config_file=config_file)
-            self.assertIsNotNone(site_config2)
+            enkf_config = EnkfConfig(user_config_file=config_file)
 
-            self.assertEqual(site_config.config_file, site_config2.config_file)
+            self.assertIsNotNone(enkf_config)
+            self.assertEqual(config_file, enkf_config.user_config_file)
 
-            self.assertEqual(site_config.__repr__(), site_config2.__repr__())
+            self.assertIsNotNone(enkf_config.site_config)
+            self.assertTrue(isinstance(enkf_config.site_config, SiteConfig))

@@ -15,12 +15,13 @@
 #  for more details.
 
 import os
+
 from ecl.test import ExtendedTestCase, TestAreaContext
 from ecl.util import BoolVector
 
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
                       EclConfig, PlotSettings, EnkfObs, ErtTemplates, EnkfFs,
-                      EnKFState, EnkfVarType, ObsVector, RunArg)
+                      EnKFState, EnkfVarType, ObsVector, RunArg, EnkfConfig)
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.enums import (EnkfObservationImplementationType, LoadFailTypeEnum,
@@ -54,24 +55,33 @@ class EnKFTest(ExtendedTestCase):
     def test_site_condif(self):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
-            site_config = SiteConfig("simple_config/minimum_config")
+            enkf_config = EnkfConfig("simple_config/minimum_config")
             main = EnKFMain(
                     "simple_config/minimum_config",
-                    site_config=site_config
+                    enkf_config=enkf_config
                     )
 
             self.assertTrue(main, "Load failed")
-            self.assertEqual(site_config, main.siteConfig())
+
+            self.assertEqual(
+                    enkf_config.site_config_file,
+                    main.enkfConfig().site_config_file
+                    )
+
+            self.assertEqual(
+                    enkf_config.user_config_file,
+                    main.enkfConfig().user_config_file
+                    )
 
     def test_site_bootstrap( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             EnKFMain(None)
 
-    def test_invalid_site_config(self):
+    def test_invalid_enkf_config(self):
         with TestAreaContext("enkf_test") as work_area:
             with self.assertRaises(TypeError):
                 work_area.copy_directory(self.case_directory)
-                main = EnKFMain("simple_config/minimum_config", site_config=self)
+                main = EnKFMain("simple_config/minimum_config", enkf_config=self)
 
 
 

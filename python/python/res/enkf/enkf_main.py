@@ -22,7 +22,7 @@ from res.enkf import (EnkfPrototype, EnkfObs, EnKFState, ENKF_LIB,
                       EnkfSimulationRunner, EnkfFsManager)
 from res.enkf import (AnalysisConfig, EclConfig, LocalConfig, ModelConfig,
                       EnsembleConfig, PlotSettings, SiteConfig, ErtWorkflowList,
-                      HookManager, HookWorkflow, ESUpdate)
+                      HookManager, HookWorkflow, ESUpdate, EnkfConfig)
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.key_manager import KeyManager
 
@@ -31,7 +31,7 @@ from res.enkf.key_manager import KeyManager
 
 class EnKFMain(BaseCClass):
     TYPE_NAME = "enkf_main"
-    _alloc = EnkfPrototype("void* enkf_main_alloc(char*, site_config, bool, bool)", bind = False)
+    _alloc = EnkfPrototype("void* enkf_main_alloc(char*, enkf_config, bool, bool)", bind = False)
     _create_new_config = EnkfPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
 
     _free = EnkfPrototype("void enkf_main_free(enkf_main)")
@@ -73,22 +73,22 @@ class EnKFMain(BaseCClass):
     _alloc_run_context_ENSEMBLE_EXPERIMENT= EnkfPrototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , enkf_init_mode_enum , int)")
     _get_runpath_list = EnkfPrototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
     _add_node = EnkfPrototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
-
+    _get_enkf_config = EnkfPrototype("enkf_config_ref enkf_main_get_enkf_config(enkf_main)")
 
 
     def get_queue_config(self):
         return self._get_queue_config()
 
-    def __init__(self, model_config, site_config=None, strict=True, verbose=True):
+    def __init__(self, model_config, enkf_config=None, strict=True, verbose=True):
         if model_config is not None and not isfile(model_config):
             raise IOError('No such configuration file "%s".' % model_config)
 
-        if site_config is None:
-            site_config = SiteConfig(model_config)
-        if site_config is None or not isinstance(site_config, SiteConfig):
-            raise TypeError("Failed to construct EnKFMain instance due to invalid site_config.")
+        if enkf_config is None:
+            enkf_config = EnkfConfig(model_config)
+        if enkf_config is None or not isinstance(enkf_config, EnkfConfig):
+            raise TypeError("Failed to construct EnKFMain instance due to invalid enkf_config.")
 
-        c_ptr = self._alloc(model_config, site_config, strict, verbose)
+        c_ptr = self._alloc(model_config, enkf_config, strict, verbose)
         if c_ptr:
             super(EnKFMain, self).__init__(c_ptr)
         else:
@@ -171,6 +171,9 @@ class EnKFMain(BaseCClass):
     def siteConfig(self):
         """ @rtype: SiteConfig """
         return self._get_site_config( ).setParent(self)
+
+    def enkfConfig(self):
+        return self._get_enkf_config( )
 
     def eclConfig(self):
         """ @rtype: EclConfig """

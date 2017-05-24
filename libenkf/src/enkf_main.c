@@ -79,6 +79,7 @@
 #include <ert/enkf/enkf_obs.h>
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_main.h>
+#include <ert/enkf/enkf_config.h>
 #include <ert/enkf/enkf_serialize.h>
 #include <ert/enkf/plot_settings.h>
 #include <ert/enkf/ensemble_config.h>
@@ -150,7 +151,7 @@ struct enkf_main_struct {
   hook_manager_type      * hook_manager;
   model_config_type      * model_config;
   ecl_config_type        * ecl_config;
-  const site_config_type * site_config;
+  const enkf_config_type * enkf_config;
   analysis_config_type   * analysis_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type     * templates;          /* Run time templates */
@@ -238,7 +239,9 @@ const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) 
 }
 
 const char * enkf_main_get_site_config_file( const enkf_main_type * enkf_main ) {
-  return site_config_get_config_file(enkf_main->site_config);
+  return site_config_get_config_file(
+            enkf_main_get_site_config(enkf_main)
+            );
 }
 
 const char * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main ) {
@@ -250,7 +253,11 @@ ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf
 }
 
 const site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main ) {
-  return enkf_main->site_config;
+  return enkf_config_get_site_config(enkf_main->enkf_config);
+}
+
+const enkf_config_type * enkf_main_get_enkf_config(const enkf_main_type * enkf_main) {
+  return enkf_main->enkf_config;
 }
 
 
@@ -1359,7 +1366,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
   enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
   const member_config_type  * member_config = enkf_state_get_member_config( enkf_state );
-  const queue_config_type * queue_config    = site_config_get_queue_config(enkf_main->site_config);
+  const queue_config_type * queue_config    = enkf_main_get_queue_config(enkf_main);
   const char * job_script                   = queue_config_get_job_script( queue_config );
   
   const char * run_path                     = run_arg_get_runpath( run_arg );
@@ -1558,7 +1565,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main       ,
 
     job_size = bool_vector_count_equal( ert_run_context_get_iactive(run_context) , true );
     {
-      const queue_config_type * queue_config = site_config_get_queue_config(enkf_main->site_config);
+      const queue_config_type * queue_config = enkf_main_get_queue_config(enkf_main);
       job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
       job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
       bool restart_queue = true;
@@ -2077,7 +2084,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->rng_config         = rng_config_alloc( );
-  enkf_main->site_config        = NULL;
+  enkf_main->enkf_config        = NULL;
   enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
@@ -2278,17 +2285,11 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
 }
 
 
-/**
-   Observe that the site-config initializations starts with chdir() to
-   the location of the site_config_file; this ensures that the
-   site_config can contain relative paths to job description files and
-   scripts.
-*/
-
-
 static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
+  const site_config_type * site_config = enkf_main_get_site_config(enkf_main);
+
   config_parser_type * config = config_alloc();
-  config_content_type * content = site_config_alloc_content(enkf_main->site_config, config);
+  config_content_type * content = site_config_alloc_content(site_config, config);
 
   analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
   ert_workflow_list_init(enkf_main->workflow_list, content);
@@ -2491,7 +2492,7 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   model_config_init(enkf_main->model_config,
                     content,
                     enkf_main_get_ensemble_size(enkf_main),
-                    site_config_get_installed_jobs(enkf_main->site_config),
+                    enkf_main_get_installed_jobs(enkf_main),
                     ecl_config_get_last_history_restart(enkf_main->ecl_config),
                     ecl_config_get_sched_file(enkf_main->ecl_config),
                     ecl_config_get_refcase(enkf_main->ecl_config)
@@ -2573,10 +2574,10 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 */
 
 
-enkf_main_type * enkf_main_alloc(const char * model_config, const site_config_type * site_config, bool strict , bool verbose) {
+enkf_main_type * enkf_main_alloc(const char * model_config, const enkf_config_type * enkf_config, bool strict , bool verbose) {
 
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
-  enkf_main->site_config = site_config;
+  enkf_main->enkf_config = enkf_config;
   enkf_main_set_verbose(enkf_main, verbose);
   enkf_main_bootstrap_site(enkf_main);
 
@@ -2743,7 +2744,9 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 
 
 const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main ) {
-  return site_config_get_installed_jobs( enkf_main->site_config );
+  return site_config_get_installed_jobs(
+             enkf_main_get_site_config(enkf_main)
+             );
 }
 
 
@@ -3019,7 +3022,9 @@ void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_k
 
 
 queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main ) {
-  return site_config_get_queue_config( enkf_main->site_config );
+  return site_config_get_queue_config(
+                enkf_main_get_site_config(enkf_main)
+        );
 }
 
 #include "enkf_main_ensemble.c"

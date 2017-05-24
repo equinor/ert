@@ -40,8 +40,8 @@ int main(int argc, char ** argv) {
   util_alloc_file_components( config_file , NULL , &model_config , NULL);
   test_work_area_copy_parent_content( work_area , config_file );
   {
-    site_config_type * site_config = site_config_alloc_load_user_config(model_config);
-    enkf_main_type * enkf_main = enkf_main_alloc(model_config, site_config, false, false);
+    enkf_config_type * enkf_config = enkf_config_alloc_load(model_config);
+    enkf_main_type * enkf_main = enkf_main_alloc(model_config, enkf_config, false, false);
 
     enkf_main_select_fs( enkf_main , "enkf");
     test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
@@ -119,7 +119,7 @@ int main(int argc, char ** argv) {
 
     test_assert_int_equal( 1 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
     enkf_main_free( enkf_main );
-    site_config_free(site_config);
+    enkf_config_free(enkf_config);
   }
   test_work_area_free( work_area );
   exit(0);
