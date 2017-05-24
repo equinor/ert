@@ -31,7 +31,7 @@ if (NOT BUILD_TESTS OR NOT STATOIL_TESTDATA_ROOT)
     return ()
 endif ()
 
-add_executable(rms_file_test src/rms_file_test.c )
+add_executable(rms_file_test tests/rms_file_test.c)
 target_link_libraries(rms_file_test rms)
 
 add_test(NAME rms_file_test
