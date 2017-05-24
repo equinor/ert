@@ -359,6 +359,9 @@ add_test(NAME enkf_plot_gendata_fs
          COMMAND enkf_plot_gendata_fs
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_GEN_DATA/config)
 
+add_executable(enkf_state_report_step_compatible
+               tests/enkf_state_report_step_compatible.c)
+target_link_libraries(enkf_state_report_step_compatible  enkf)
 add_test(NAME enkf_state_report_step_compatible_TRUE
          COMMAND enkf_state_report_step_compatible
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true
@@ -449,8 +452,8 @@ target_link_libraries(enkf_forward_init_transform enkf)
 
 add_test(NAME enkf_forward_init_transform_TRUE
          COMMAND enkf_forward_init_transform
-                 ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_true
-                 ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
+                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_true
+                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
                  TRUE)
 
 add_test(NAME enkf_forward_init_transform_FALSE
