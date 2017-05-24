@@ -19,6 +19,7 @@ set( ERT_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
 option( BUILD_TESTS         "Should the tests be built"                               OFF)
 option( ERT_DOC             "Build ERT documantation"                                 OFF)
 option( USE_RUNPATH         "Should we embed path to libraries"                       ON)
+option( GUI                 "Build Python GUI"                                        ON)
 
 find_package( ecl REQUIRED )
 find_package( res REQUIRED )

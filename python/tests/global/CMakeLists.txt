@@ -9,6 +9,6 @@ add_python_package("python.tests.global"  "${PYTHON_INSTALL_PREFIX}/tests/global
 addPythonTest( tests.global.test_import.ImportRes )
 
 
-if (ERT_BUILD_GUI)
+if (GUI)
     addPythonTest( tests.global.test_import_gui.ImportGUI )
 endif()

@@ -16,15 +16,20 @@ endif()
 
 #-----------------------------------------------------------------
 
-find_python_package(PyQt4      4.8.0  ${PYTHON_INSTALL_PREFIX})
 find_python_package(matplotlib 1.2.0  ${PYTHON_INSTALL_PREFIX})
 find_python_package(pandas     0.15.1 ${PYTHON_INSTALL_PREFIX})
 find_python_package(scipy      0.12.1 ${PYTHON_INSTALL_PREFIX})
 
-if(NOT DEFINED PY_PyQt4 OR NOT DEFINED PY_matplotlib OR NOT DEFINED PY_scipy OR NOT DEFINED PY_pandas)
-  message(SEND_ERROR "Cannot build GUI without PyQt4, matplotlib, scipy, or pandas")
+if(NOT DEFINED PY_matplotlib OR NOT DEFINED PY_scipy OR NOT DEFINED PY_pandas)
+  message(SEND_ERROR "Packages matplotlib, scipy and pandas are required")
 endif()
 
+if (GUI) 
+    find_python_package(PyQt4  4.8.0  ${PYTHON_INSTALL_PREFIX})
+    if (NOT DEFINED PY_PyQt4)
+        message(SEND_ERROR "PyQt4 module not found - can not build GUI")
+    endif()
+endif()
 
 if (BUILD_TESTS)
    add_subdirectory( tests )
