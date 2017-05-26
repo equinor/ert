@@ -72,8 +72,9 @@ from res.enkf import EnkfFsManager
 from res.enkf import RunArg
 from res.enkf import ErtRunContext
 from res.enkf import EnKFMain
-from res.enkf import ResLog
 from res.enkf import ForwardLoadContext
+
+from res.util import ResLog
 
 from res.job_queue import ErtScript as ErtScript
 from res.job_queue import ErtPlugin as ErtPlugin, CancelPluginException as CancelPluginException
