@@ -13,7 +13,6 @@ set(PYTHON_SOURCES
     enkf_simulation_runner.py
     enkf_state.py
     ensemble_config.py
-    ert_log.py
     ert_run_context.py
     ert_template.py
     ert_templates.py

@@ -15,7 +15,6 @@ set(TEST_SOURCES
     test_enkf_load_results_manually.py
     test_enkf_obs.py
     test_ert_context.py
-    test_ert_log.py
     test_gen_obs.py
     test_labscale.py
     test_local_obsdata_node.py
@@ -52,7 +51,6 @@ addPythonTest(tests.res.enkf.test_gen_obs.GenObsTest)
 addPythonTest(tests.res.enkf.test_summary_obs.SummaryObsTest)
 addPythonTest(tests.res.enkf.test_block_obs.BlockObsTest)
 addPythonTest(tests.res.enkf.test_obs_block.ObsBlockTest)
-addPythonTest(tests.res.enkf.test_ert_log.ErtLogTest)
 addPythonTest(tests.res.enkf.test_analysis_config.AnalysisConfigTest)
 addPythonTest(tests.res.enkf.test_analysis_iter_config.AnalysisIterConfigTest)
 addPythonTest(tests.res.enkf.test_state_map.StateMapTest)

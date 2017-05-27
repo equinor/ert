@@ -7,6 +7,7 @@ add_python_package("python.tests.res"  ${PYTHON_INSTALL_PREFIX}/tests/res "${TES
 add_subdirectory(analysis)
 add_subdirectory(config)
 add_subdirectory(enkf)
+add_subdirectory(util)
 add_subdirectory(job_queue)
 add_subdirectory(run)
 add_subdirectory(sched)

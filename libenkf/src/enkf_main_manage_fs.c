@@ -518,7 +518,7 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
           if (time_map_attach_refcase( time_map , refcase))
             time_map_set_strict( time_map , false );
           else
-            ert_log_add_fmt_message(1 , stderr , "Warning mismatch between refcase:%s and existing case:%s" , ecl_sum_get_case( refcase ) , new_mount_point);
+            res_log_add_fmt_message(1 , stderr , "Warning mismatch between refcase:%s and existing case:%s" , ecl_sum_get_case( refcase ) , new_mount_point);
         }
       }
 
