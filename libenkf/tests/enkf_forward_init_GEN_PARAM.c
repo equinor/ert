@@ -59,7 +59,7 @@ int main(int argc , char ** argv) {
     test_assert_true( util_sscanf_bool( forward_init_string , &forward_init));
 
     util_clear_directory( "Storage" , true , true );
-    site_config_type * site_config = site_config_alloc_model_config(config_file);
+    site_config_type * site_config = site_config_alloc_load_user_config(config_file);
     enkf_main = enkf_main_alloc(config_file, site_config, strict, true);
     {
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ) , "PARAM" );

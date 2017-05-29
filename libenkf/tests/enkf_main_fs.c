@@ -40,7 +40,7 @@ int main(int argc, char ** argv) {
   util_alloc_file_components( config_file , NULL , &model_config , NULL);
   test_work_area_copy_parent_content( work_area , config_file );
   {
-    site_config_type * site_config = site_config_alloc_model_config(model_config);
+    site_config_type * site_config = site_config_alloc_load_user_config(model_config);
     enkf_main_type * enkf_main = enkf_main_alloc(model_config, site_config, false, false);
 
     enkf_main_select_fs( enkf_main , "enkf");

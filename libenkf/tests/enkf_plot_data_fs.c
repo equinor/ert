@@ -113,7 +113,7 @@ int main(int argc, char ** argv) {
     test_work_area_set_store( work_area , true );
     test_work_area_copy_parent_content( work_area , config_file );
     {
-      site_config_type * site_config = site_config_alloc_model_config(model_config);
+      site_config_type * site_config = site_config_alloc_load_user_config(model_config);
       enkf_main_type * enkf_main = enkf_main_alloc(model_config, site_config, false, false);
 
       test_load_summary(enkf_main , "WWCT:OP_3");

@@ -138,10 +138,14 @@ static void site_config_set_queue_option(site_config_type * site_config, const c
     fprintf(stderr, "** Warning: Driver:%s not recognized - ignored \n", driver_name);
 }
 
+static void site_config_set_config_file(site_config_type * site_config, const char * config_file) {
+  site_config->config_file = util_realloc_string_copy(site_config->config_file, config_file);
+}
+
 /**
    This site_config object is not really ready for prime time.
  */
-site_config_type * site_config_alloc_empty() {
+static site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc(sizeof * site_config);
    
   site_config->queue_config = queue_config_alloc();
@@ -184,7 +188,7 @@ static void site_config_load_config(site_config_type * site_config) {
   config_content_free(content);
 }
 
-site_config_type * site_config_alloc_default() {
+site_config_type * site_config_alloc() {
   site_config_type * site_config = site_config_alloc_empty();
   site_config_set_config_file(site_config, site_config_get_location());
   site_config_load_config(site_config);
@@ -192,9 +196,9 @@ site_config_type * site_config_alloc_default() {
   return site_config;
 }
 
-site_config_type * site_config_alloc_model_config(const char * model_config) {
-  site_config_type * site_config = site_config_alloc_default();
-  site_config_load_user_config(site_config, model_config);
+site_config_type * site_config_alloc_load_user_config(const char * user_config_file) {
+  site_config_type * site_config = site_config_alloc();
+  site_config_load_user_config(site_config, user_config_file);
 
   return site_config;
 }
@@ -782,9 +786,6 @@ const char * site_config_get_config_file(const site_config_type * site_config) {
   return site_config->config_file;
 }
 
-void site_config_set_config_file(site_config_type * site_config, const char * config_file) {
-  site_config->config_file = util_realloc_string_copy(site_config->config_file, config_file);
-}
 
 config_content_type * site_config_alloc_content(
         const site_config_type * site_config,

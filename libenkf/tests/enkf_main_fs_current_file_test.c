@@ -29,7 +29,7 @@
 void test_current_file_not_present_symlink_present(const char * model_config) {
     test_assert_true(util_file_exists("Storage/enkf"));
     util_make_slink("enkf", "Storage/current" ); 
-    site_config_type * site_config = site_config_alloc_model_config(model_config);
+    site_config_type * site_config = site_config_alloc_load_user_config(model_config);
     enkf_main_type * enkf_main = enkf_main_alloc(model_config, site_config, false, false);
     test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
     test_assert_false(util_file_exists("Storage/current"));
@@ -43,7 +43,7 @@ void test_current_file_not_present_symlink_present(const char * model_config) {
 
 void test_current_file_present(const char * model_config) {
     test_assert_true(util_file_exists("Storage/current_case"));
-    site_config_type * site_config = site_config_alloc_model_config(model_config);
+    site_config_type * site_config = site_config_alloc_load_user_config(model_config);
     enkf_main_type * enkf_main = enkf_main_alloc(model_config, site_config, false, false);
     test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
     test_assert_false(util_file_exists("Storage/current"));
@@ -56,7 +56,7 @@ void test_current_file_present(const char * model_config) {
 
 
 void test_change_case(const char * model_config) {
-    site_config_type * site_config = site_config_alloc_model_config(model_config);
+    site_config_type * site_config = site_config_alloc_load_user_config(model_config);
     enkf_main_type * enkf_main = enkf_main_alloc(model_config, site_config, false, false);
     enkf_main_select_fs( enkf_main , "default");
     test_assert_true( enkf_main_case_is_current( enkf_main , "default"));

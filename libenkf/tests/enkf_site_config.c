@@ -45,32 +45,8 @@
 #define DEFINE_KEY  "DEFINE"
 
 
-void test_empty() {
-  site_config_type * site_config = site_config_alloc_empty();
-  site_config_free( site_config );
-}
-
-
 void test_init(const char * config_file) {
-  site_config_type * site_config = site_config_alloc_empty();
-  config_parser_type * config = config_alloc();
-  config_content_type * content;
-
-  site_config_add_config_items( config , true );
-  content = config_parse(config , config_file , "--" , INCLUDE_KEY , DEFINE_KEY , NULL , CONFIG_UNRECOGNIZED_WARN , true);
-  if (!config_content_is_valid(content)) {
-    config_error_type * errors = config_content_get_errors( content );
-    config_error_fprintf( errors , true , stderr );
-    test_assert_true( false );
-  }
-
-  if (!site_config_init( site_config , content )) {
-    printf("Loading site_config from config failed\n");
-    test_assert_true( false );
-  }
-
-  config_content_free( content );
-  config_free( config );
+  site_config_type * site_config = site_config_alloc();
   site_config_free( site_config );
 }
 
@@ -78,7 +54,7 @@ void test_init(const char * config_file) {
 void test_job_script() {
   test_work_area_type * test_area = test_work_area_alloc("site-config");
   {
-    site_config_type * site_config = site_config_alloc_empty();
+    site_config_type * site_config = site_config_alloc();
    
 
     test_assert_false( site_config_set_job_script( site_config , "/does/not/exist" ));
@@ -114,7 +90,6 @@ int main(int argc , char ** argv) {
 
   util_install_signals();
 
-  test_empty();
   test_init( site_config_file );
   test_job_script();
 

@@ -34,7 +34,7 @@ void test_case_initialized(const char * config_path, const char * config_file) {
   test_work_area_type * work_area = test_work_area_alloc("enkf_main_case_initialized");
   test_work_area_copy_directory_content(work_area, config_path);
   {
-    site_config_type * site_config = site_config_alloc_model_config(config_file);
+    site_config_type * site_config = site_config_alloc_load_user_config(config_file);
     enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, true, true);
     model_config_type * model_config = enkf_main_get_model_config(enkf_main);
     const char * new_case = "fs/case";
@@ -56,7 +56,7 @@ void test_create(const char * config_path, const char * config_file) {
   test_work_area_type * work_area = test_work_area_alloc("enkf_main_create");
   test_work_area_copy_directory_content(work_area, config_path);
 
-  site_config_type * site_config = site_config_alloc_model_config(config_file);
+  site_config_type * site_config = site_config_alloc_load_user_config(config_file);
   enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, true, true);
   test_assert_true( enkf_main_is_instance( enkf_main ) );
 

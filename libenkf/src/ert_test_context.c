@@ -62,7 +62,7 @@ static ert_test_context_type * ert_test_context_alloc__( const char * test_name 
     test_work_area_copy_parent_content(test_context->work_area , model_config );
     {
       char * config_file = util_split_alloc_filename( model_config );
-      test_context->site_config = site_config_alloc_model_config(config_file);
+      test_context->site_config = site_config_alloc_load_user_config(config_file);
       test_context->enkf_main = enkf_main_alloc(config_file, test_context->site_config, true, false);
       free( config_file );
     }

@@ -77,7 +77,7 @@ int main(int argc , char ** argv) {
   test_work_area_set_store(work_area, true);
 
   bool strict = true;
-  site_config_type * site_config = site_config_alloc_model_config(config_file);
+  site_config_type * site_config = site_config_alloc_load_user_config(config_file);
   enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, strict, true);
   ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
   enkf_fs_type * init_fs = enkf_main_get_fs(enkf_main);

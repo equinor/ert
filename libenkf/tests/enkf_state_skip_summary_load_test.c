@@ -62,7 +62,7 @@ int main(int argc , char ** argv) {
   test_work_area_copy_directory_content( work_area , root_path );
   
   bool strict = true;
-  site_config_type * site_config = site_config_alloc_model_config(config_file);
+  site_config_type * site_config = site_config_alloc_load_user_config(config_file);
   enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, strict, true);
   
   test_assert_true( check_ecl_sum_loaded(enkf_main) );

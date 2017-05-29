@@ -2498,9 +2498,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   enkf_main_init_hook_manager(enkf_main, content);
 
-  if (config_content_has_item(content , DELETE_RUNPATH_KEY))
-    delete_runpath_string = config_content_alloc_joined_string(content , DELETE_RUNPATH_KEY , "");
-
   enkf_main_init_data_kw(enkf_main, content);
 
   enkf_main_update_num_cpu(enkf_main);

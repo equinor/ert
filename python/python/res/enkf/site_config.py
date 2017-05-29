@@ -24,7 +24,7 @@ from ecl.util import StringList, Hash
 class SiteConfig(BaseCClass):
     TYPE_NAME = "site_config"
 
-    _alloc                 = EnkfPrototype("void* site_config_alloc_model_config(char*)", bind=False)
+    _alloc                 = EnkfPrototype("void* site_config_alloc_load_user_config(char*)", bind=False)
     _free                  = EnkfPrototype("void site_config_free( site_config )")
     _get_lsf_queue         = EnkfPrototype("char* site_config_get_lsf_queue(site_config)")
     _set_lsf_queue         = EnkfPrototype("void site_config_set_lsf_queue(site_config, char*)")

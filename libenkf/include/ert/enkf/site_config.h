@@ -42,7 +42,6 @@ typedef struct site_config_struct site_config_type;
   const char *             site_config_get_location();
 
   const char *             site_config_get_config_file(const site_config_type*);
-  void                     site_config_set_config_file(site_config_type*, const char*);
   
   const char *             site_config_get_manual_url( const site_config_type * site_config );
   void                     site_config_set_manual_url( site_config_type * site_config , const char * manual_url );
@@ -102,9 +101,8 @@ typedef struct site_config_struct site_config_type;
   void                     site_config_set_umask( site_config_type * site_config , mode_t umask);
   mode_t                   site_config_get_umask( const site_config_type * site_config );
 
-  site_config_type       * site_config_alloc_empty();
-  site_config_type       * site_config_alloc_default();
-  site_config_type       * site_config_alloc_model_config(const char *);
+  site_config_type       * site_config_alloc();
+  site_config_type       * site_config_alloc_load_user_config(const char *);
 
   config_content_type    * site_config_alloc_content(const site_config_type*, config_parser_type*);
 

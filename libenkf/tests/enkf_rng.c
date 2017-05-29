@@ -37,7 +37,7 @@ int main(int argc , char ** argv) {
     test_work_area_type * work_area = test_work_area_alloc("enkf-rng-0");
     test_work_area_copy_directory_content(work_area, config_path);
     {
-      site_config_type * site_config = site_config_alloc_model_config(NULL);
+      site_config_type * site_config = site_config_alloc_load_user_config(NULL);
       enkf_main_type * enkf_main = enkf_main_alloc(NULL, site_config, true, true);
       enkf_main_resize_ensemble( enkf_main , 10 );
       {
@@ -49,7 +49,7 @@ int main(int argc , char ** argv) {
     }
     
     {
-      site_config_type * site_config = site_config_alloc_model_config(NULL);
+      site_config_type * site_config = site_config_alloc_load_user_config(NULL);
       enkf_main_type * enkf_main = enkf_main_alloc(NULL, site_config, true, true);
       enkf_main_resize_ensemble( enkf_main , 10 );
       {
@@ -71,7 +71,7 @@ int main(int argc , char ** argv) {
 
     const char * seed_file = "seed";
     {
-      site_config_type * site_config = site_config_alloc_model_config(config_file);
+      site_config_type * site_config = site_config_alloc_load_user_config(config_file);
       enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, true, true);
       {
         rng_config_type * rng_config = enkf_main_get_rng_config( enkf_main );
@@ -89,7 +89,7 @@ int main(int argc , char ** argv) {
     }
     
     {
-      site_config_type * site_config = site_config_alloc_model_config(config_file);
+      site_config_type * site_config = site_config_alloc_load_user_config(config_file);
       enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, true, true);
       {
         rng_config_type * rng_config = enkf_main_get_rng_config( enkf_main );
@@ -114,7 +114,7 @@ int main(int argc , char ** argv) {
     test_work_area_type * work_area = test_work_area_alloc("enkf-rng-2" );
     test_work_area_copy_directory_content( work_area , config_path );
     {
-      site_config_type * site_config = site_config_alloc_model_config(config_file);
+      site_config_type * site_config = site_config_alloc_load_user_config(config_file);
       enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, true, true);
       enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
       rand1 = enkf_state_get_random( state );
@@ -123,7 +123,7 @@ int main(int argc , char ** argv) {
     }
 
     {
-      site_config_type * site_config = site_config_alloc_model_config(config_file);
+      site_config_type * site_config = site_config_alloc_load_user_config(config_file);
       enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, true, true);
       enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
       rand2 = enkf_state_get_random( state );
@@ -133,7 +133,7 @@ int main(int argc , char ** argv) {
     test_assert_uint_equal( rand1 , rand2 );
     
     {
-      site_config_type * site_config = site_config_alloc_model_config(config_file);
+      site_config_type * site_config = site_config_alloc_load_user_config(config_file);
       enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, true, true);
       enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
       rand2 = enkf_state_get_random( state );
