@@ -44,6 +44,7 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/ert_workflow_list.h>
+#include <ert/enkf/model_config.h>
 
 /**
    This struct contains information which is specific to the site
@@ -83,6 +84,9 @@
  */
 
 struct site_config_struct {
+
+  char * config_file;
+
   ext_joblist_type * joblist; /* The list of external jobs which have been installed.
                                                      These jobs will be the parts of the forward model. */
   hash_type * env_variables_user; /* The environment variables set in the user config file. */
@@ -134,16 +138,21 @@ static void site_config_set_queue_option(site_config_type * site_config, const c
     fprintf(stderr, "** Warning: Driver:%s not recognized - ignored \n", driver_name);
 }
 
+static void site_config_set_config_file(site_config_type * site_config, const char * config_file) {
+  site_config->config_file = util_realloc_string_copy(site_config->config_file, config_file);
+}
+
 /**
    This site_config object is not really ready for prime time.
  */
-site_config_type * site_config_alloc_empty() {
+static site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc(sizeof * site_config);
    
   site_config->queue_config = queue_config_alloc();
 
   site_config->joblist = ext_joblist_alloc();
  
+  site_config->config_file = NULL;
   site_config->license_root_path = NULL;
   site_config->license_root_path_site = NULL;
   site_config->__license_root_path = NULL;
@@ -166,6 +175,31 @@ site_config_type * site_config_alloc_empty() {
   site_config_set_default_browser(site_config, DEFAULT_BROWSER);
   
   site_config->search_path = false;
+  return site_config;
+}
+
+static void site_config_load_config(site_config_type * site_config) {
+  config_parser_type * config = config_alloc();
+  config_content_type * content = site_config_alloc_content(site_config, config);
+
+  site_config_init(site_config, content);
+
+  config_free(config);
+  config_content_free(content);
+}
+
+site_config_type * site_config_alloc() {
+  site_config_type * site_config = site_config_alloc_empty();
+  site_config_set_config_file(site_config, site_config_get_location());
+  site_config_load_config(site_config);
+
+  return site_config;
+}
+
+site_config_type * site_config_alloc_load_user_config(const char * user_config_file) {
+  site_config_type * site_config = site_config_alloc();
+  site_config_load_user_config(site_config, user_config_file);
+
   return site_config;
 }
 
@@ -549,6 +583,29 @@ void site_config_init_env(site_config_type * site_config, const config_content_t
   }
 }
 
+bool site_config_load_user_config(
+        site_config_type * site_config,
+        const char * user_config_filename) {
+
+  if (user_config_filename == NULL)
+    return false;
+
+  site_config_init_user_mode(site_config);
+
+  config_parser_type * config = config_alloc();
+  config_content_type * content = model_config_alloc_content(
+                                                    user_config_filename,
+                                                    config
+                                                    );
+
+  bool status = site_config_init(site_config, content);
+
+  config_content_free( content );
+  config_free(config);
+
+  return status;
+}
+
 /**
    This function will be called twice, first when the config instance
    is an internalization of the site-wide configuration file, and
@@ -586,12 +643,10 @@ bool site_config_init(site_config_type * site_config, const config_content_type 
   }
   
   if (config_content_has_item(config, LICENSE_PATH_KEY))
-  site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
-
+    site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
   
-  if (config_content_has_item(config, EXT_JOB_SEARCH_PATH_KEY)){
+  if (config_content_has_item(config, EXT_JOB_SEARCH_PATH_KEY))
       site_config_set_ext_job_search_path(site_config, config_content_get_value_as_bool(config, EXT_JOB_SEARCH_PATH_KEY));
-  }
 
 
   return true;
@@ -616,6 +671,7 @@ void site_config_free(site_config_type * site_config) {
   if (site_config->__license_root_path != NULL)
     util_clear_directory(site_config->__license_root_path, true, true);
 
+  util_safe_free(site_config->config_file);
   util_safe_free(site_config->manual_url);
   util_safe_free(site_config->default_browser);
   util_safe_free(site_config->license_root_path);
@@ -630,11 +686,6 @@ ext_joblist_type * site_config_get_installed_jobs(const site_config_type * site_
   return site_config->joblist;
 }
 
-
-
-void site_config_set_ens_size(site_config_type * site_config, int ens_size) {
-  //job_queue_set_size( site_config->job_queue , ens_size );
-}
 
 /*****************************************************************/
 
@@ -729,6 +780,53 @@ void site_config_add_config_items(config_parser_type * config, bool site_mode) {
 
   item = config_add_schema_item( config , ANALYSIS_LOAD_KEY , false  );
   config_schema_item_set_argc_minmax( item , 2 , 2);
+}
+
+const char * site_config_get_config_file(const site_config_type * site_config) {
+  return site_config->config_file;
+}
+
+
+config_content_type * site_config_alloc_content(
+        const site_config_type * site_config,
+        config_parser_type * config_parser) {
+
+  if(site_config == NULL)
+    util_abort(
+            "%s: Cannot load config from an uninitialized site_config.\n",
+            __func__
+            );
+
+  if(site_config->config_file == NULL)
+    util_abort("%s: No config file specified.\n", __func__);
+
+  if(!util_file_exists(site_config->config_file))
+    util_abort(
+            "%s: can not locate site configuration file:%s \n",__func__,
+            site_config->config_file
+            );
+
+  site_config_add_config_items(config_parser, true);
+  config_content_type * content = config_parse(
+                                        config_parser, site_config->config_file,
+                                        "--", INCLUDE_KEY, DEFINE_KEY, NULL,
+                                        CONFIG_UNRECOGNIZED_WARN, false
+                                        );
+
+  if(!config_content_is_valid(content)) {
+    config_error_type * errors = config_content_get_errors(content);
+    fprintf(stderr,
+            "** ERROR: Parsing site configuration file:%s failed \n\n",
+            site_config->config_file
+            );
+    config_error_fprintf( errors , true , stderr );
+    util_abort(
+            "%s: Invalid configurations in site_config file: %s.\n",
+            __func__, site_config->config_file
+            );
+  }
+
+  return content;
 }
 
 const char * site_config_get_location() {

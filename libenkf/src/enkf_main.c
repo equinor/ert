@@ -144,38 +144,37 @@
 
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
-  enkf_fs_type         * dbase;              /* The internalized information. */
+  enkf_fs_type           * dbase;              /* The internalized information. */
 
-  ensemble_config_type * ensemble_config;    /* The config objects for the various enkf nodes.*/
-  hook_manager_type    * hook_manager;
-  model_config_type    * model_config;
-  ecl_config_type      * ecl_config;
-  site_config_type     * site_config;
-  analysis_config_type * analysis_config;
-  local_config_type    * local_config;       /* Holding all the information about local analysis. */
-  ert_templates_type   * templates;          /* Run time templates */
-  config_settings_type * plot_config;        /* Information about plotting. */
-  rng_config_type      * rng_config;
-  rng_type             * rng;
+  ensemble_config_type   * ensemble_config;    /* The config objects for the various enkf nodes.*/
+  hook_manager_type      * hook_manager;
+  model_config_type      * model_config;
+  ecl_config_type        * ecl_config;
+  const site_config_type * site_config;
+  analysis_config_type   * analysis_config;
+  local_config_type      * local_config;       /* Holding all the information about local analysis. */
+  ert_templates_type     * templates;          /* Run time templates */
+  config_settings_type   * plot_config;        /* Information about plotting. */
+  rng_config_type        * rng_config;
+  rng_type               * rng;
   ert_workflow_list_type * workflow_list;
-  ranking_table_type   * ranking_table;
+  ranking_table_type     * ranking_table;
 
   /*---------------------------*/            /* Variables related to substitution. */
-  subst_func_pool_type * subst_func_pool;
-  subst_list_type      * subst_list;         /* A parent subst_list instance - common to all ensemble members. */
+  subst_func_pool_type   * subst_func_pool;
+  subst_list_type        * subst_list;         /* A parent subst_list instance - common to all ensemble members. */
   /*-------------------------*/
 
-  int_vector_type      * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
-  bool                   pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
+  int_vector_type        * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
+  bool                     pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
 
-  char                 * site_config_file;
-  char                 * user_config_file;
-  char                 * rft_config_file;       /* File giving the configuration to the RFTwells*/
-  enkf_obs_type        * obs;
+  char                   * user_config_file;
+  char                   * rft_config_file;       /* File giving the configuration to the RFTwells*/
+  enkf_obs_type          * obs;
 
-  enkf_state_type     ** ensemble;         /* The ensemble ... */
-  int                    ens_size;         /* The size of the ensemble */
-  bool                   verbose;
+  enkf_state_type       ** ensemble;         /* The ensemble ... */
+  int                      ens_size;         /* The size of the ensemble */
+  bool                     verbose;
 };
 
 
@@ -234,16 +233,12 @@ void enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rf
   enkf_main->rft_config_file = util_realloc_string_copy( enkf_main->rft_config_file , rft_config_file );
 }
 
-void enkf_main_set_site_config_file( enkf_main_type * enkf_main , const char * site_config_file ) {
-  enkf_main->site_config_file = util_realloc_string_copy( enkf_main->site_config_file , site_config_file );
-}
-
 const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) {
   return enkf_main->user_config_file;
 }
 
 const char * enkf_main_get_site_config_file( const enkf_main_type * enkf_main ) {
-  return enkf_main->site_config_file;
+  return site_config_get_config_file(enkf_main->site_config);
 }
 
 const char * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main ) {
@@ -254,7 +249,7 @@ ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf
   return enkf_main->ensemble_config;
 }
 
-site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main ) {
+const site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main ) {
   return enkf_main->site_config;
 }
 
@@ -382,7 +377,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
 
 
   hook_manager_free( enkf_main->hook_manager );
-  site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
 
   local_config_free( enkf_main->local_config );
@@ -397,7 +391,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   subst_func_pool_free( enkf_main->subst_func_pool );
   subst_list_free( enkf_main->subst_list );
   util_safe_free( enkf_main->user_config_file );
-  util_safe_free( enkf_main->site_config_file );
   util_safe_free( enkf_main->rft_config_file );
   free(enkf_main);
 }
@@ -1951,117 +1944,6 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 }
 
 
-static void enkf_main_user_config_deprecate( config_parser_type * config )
-{
-  config_parser_deprecate( config , "MAX_RUNNING_LSF" , "MAX_RUNNING_LSF is deprecated. Use the general QUEUE_OPTION LSF MAX_RUNNING instead.");
-  config_parser_deprecate( config , "MAX_RUNNING_LOCAL" , "MAX_RUNNING_LOCAL is deprecated. Use the general QUEUE_OPTION LOCAL MAX_RUNNING instead.");
-  config_parser_deprecate( config , "MAX_RUNNING_RSH" , "MAX_RUNNING_RSH is deprecated. Use the general QUEUE_OPTION RSH MAX_RUNNING instead.");
-}
-
-
-static void enkf_main_init_user_config( const enkf_main_type * enkf_main , config_parser_type * config ) {
-  config_schema_item_type * item;
-
-  /*****************************************************************/
-  /* config_add_schema_item():                                     */
-  /*                                                               */
-  /*  1. boolean - required?                                       */
-  /*****************************************************************/
-
-  ert_workflow_list_add_config_items( config );
-  plot_settings_add_config_items( config );
-  analysis_config_add_config_items( config );
-  ensemble_config_add_config_items( config );
-  ecl_config_add_config_items( config );
-  rng_config_add_config_items( config );
-
-  /*****************************************************************/
-  /* Required keywords from the ordinary model_config file */
-
-  item = config_add_schema_item(config , CASE_TABLE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1);
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  config_add_key_value( config , LOG_LEVEL_KEY , false , CONFIG_INT);
-  config_add_key_value( config , LOG_FILE_KEY  , false , CONFIG_STRING);
-
-  config_add_key_value(config , MAX_RESAMPLE_KEY , false , CONFIG_INT);
-
-
-  item = config_add_schema_item(config , NUM_REALIZATIONS_KEY , true  );
-  config_schema_item_set_argc_minmax(item , 1 , 1);
-  config_schema_item_iset_type( item , 0 , CONFIG_INT );
-  config_add_alias(config , NUM_REALIZATIONS_KEY , "SIZE");
-  config_add_alias(config , NUM_REALIZATIONS_KEY , "NUM_REALISATIONS");
-  config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
-
-
-  /*****************************************************************/
-  /* Optional keywords from the model config file */
-
-  item = config_add_schema_item( config , RUN_TEMPLATE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  config_add_key_value(config , RUNPATH_KEY , false , CONFIG_STRING);
-
-  item = config_add_schema_item(config , ENSPATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-
-  item = config_add_schema_item( config , JOBNAME_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-
-  item = config_add_schema_item(config , DBASE_TYPE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1, 1 );
-  config_schema_item_set_common_selection_set(item , 2 , (const char *[2]) {"PLAIN" , "BLOCK_FS"});
-
-  item = config_add_schema_item(config , FORWARD_MODEL_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
-
-  item = config_add_schema_item(config , DATA_KW_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 2 , 2);
-
-  config_add_key_value(config , PRE_CLEAR_RUNPATH_KEY , false , CONFIG_BOOL);
-
-  item = config_add_schema_item(config , DELETE_RUNPATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
-
-  item = config_add_schema_item(config , OBS_CONFIG_KEY  , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  config_add_key_value(config , TIME_MAP_KEY , false , CONFIG_EXISTING_PATH);
-
-  item = config_add_schema_item(config , RFT_CONFIG_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  item = config_add_schema_item(config , RFTPATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-
-  item = config_add_schema_item(config, GEN_KW_EXPORT_FILE_KEY, false );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-
-  item = config_add_schema_item(config , LOCAL_CONFIG_KEY  , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
-
-  {
-    stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) { REFCASE_KEY } , 1);
-
-    item = config_add_schema_item(config , HISTORY_SOURCE_KEY , false  );
-    config_schema_item_set_argc_minmax(item , 1 , 1);
-    config_schema_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
-    config_schema_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
-    config_schema_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
-
-    stringlist_free(refcase_dep);
-  }
-
-  hook_manager_add_config_items( config );
-}
-
-
 keep_runpath_type  enkf_main_iget_keep_runpath( const enkf_main_type * enkf_main , int iens ) {
   return enkf_state_get_keep_runpath( enkf_main->ensemble[iens] );
 }
@@ -2183,20 +2065,19 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 
 
 
-enkf_main_type * enkf_main_alloc_empty( ) {
+static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   res_log_open_empty();
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;
-  enkf_main->site_config_file   = NULL;
   enkf_main->rft_config_file    = NULL;
   enkf_main->local_config       = NULL;
   enkf_main->rng                = NULL;
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->rng_config         = rng_config_alloc( );
-  enkf_main->site_config        = site_config_alloc_empty();
+  enkf_main->site_config        = NULL;
   enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
@@ -2396,36 +2277,6 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
   }
 }
 
-static char * __enkf_main_alloc_user_config_file(const enkf_main_type * enkf_main, bool base_only) {
-    char * base_name;
-    char * extension;
-    util_alloc_file_components(enkf_main_get_user_config_file(enkf_main), NULL, &base_name, &extension);
-
-    char * config_file;
-    if (base_only) {
-        config_file = util_alloc_filename(NULL, base_name, NULL);;
-    } else {
-        config_file = util_alloc_filename(NULL, base_name, extension);
-    }
-
-    free(base_name);
-    free(extension);
-    return config_file;
-}
-
-static hash_type *__enkf_main_alloc_predefined_kw_map(const enkf_main_type *enkf_main) {
-    char * config_file_base       = __enkf_main_alloc_user_config_file(enkf_main, true);
-    char * config_file            = __enkf_main_alloc_user_config_file(enkf_main, false);
-    hash_type * pre_defined_kw_map = hash_alloc();
-
-    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE>", config_file);
-    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE_BASE>", config_file_base);
-
-    free( config_file ) ;
-    free( config_file_base );
-    return pre_defined_kw_map;
-}
-
 
 /**
    Observe that the site-config initializations starts with chdir() to
@@ -2435,29 +2286,248 @@ static hash_type *__enkf_main_alloc_predefined_kw_map(const enkf_main_type *enkf
 */
 
 
-static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * site_config_file) {
-  if (site_config_file != NULL) {
-    if (!util_file_exists(site_config_file))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config_file);
-    config_parser_type * config = config_alloc();
-    site_config_add_config_items( config , true );
-    {
-      config_content_type * content = config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , NULL, CONFIG_UNRECOGNIZED_WARN , false);
-      if (config_content_is_valid( content )) {
-        site_config_init( enkf_main->site_config , content );
-        analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
-        ert_workflow_list_init( enkf_main->workflow_list , content );
-      } else {
-        config_error_type * errors = config_content_get_errors( content );
-        fprintf(stderr , "** ERROR: Parsing site configuration file:%s failed \n\n" , site_config_file);
-        config_error_fprintf( errors , true , stderr );
-        exit(1);
-      }
-      config_content_free( content );
-    }
-    config_free( config );
+static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
+  config_parser_type * config = config_alloc();
+  config_content_type * content = site_config_alloc_content(enkf_main->site_config, config);
+
+  analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
+  ert_workflow_list_init(enkf_main->workflow_list, content);
+
+  config_free(config);
+  config_content_free(content);
+}
+
+/**
+ * Note: This function will chdir into the directory of the model_config file.
+ */
+static char * enkf_main_alloc_model_config_filename(const char * model_config) {
+  if(model_config == NULL)
+    return NULL;
+
+  char * path             = NULL;
+  char * base             = NULL;
+  char * ext              = NULL;
+
+  // The command line argument given is a symlink - we start by changing to
+  // the real location of the configuration file.
+  if (util_is_link(model_config)) {
+    char * realpath = util_alloc_link_target(model_config);
+    util_alloc_file_components(realpath, &path, &base, &ext);
+    free(realpath);
+  }
+  else {
+    util_alloc_file_components(model_config, &path, &base, &ext);
+  }
+
+  char * rel_model_config = NULL;
+  if (path == NULL) {
+    rel_model_config = util_alloc_string_copy(model_config);
+  }
+  else {
+    if(util_chdir(path) != 0)
+      util_abort(
+              "%s: failed to change directory to: %s : %s \n",
+              __func__, path, strerror(errno)
+              );
+
+    if (ext != NULL)
+      rel_model_config = util_alloc_filename(NULL, base, ext);
+    else
+      rel_model_config = util_alloc_string_copy(base);
+  }
+
+  util_safe_free(path);
+  util_safe_free(base);
+  util_safe_free(ext);
+
+  if (!util_file_exists(rel_model_config))
+    util_exit(
+            "%s: can not locate user configuration file:%s \n",
+            __func__ , rel_model_config
+            );
+
+  return rel_model_config;
+}
+
+static void enkf_main_init_log(
+        const enkf_main_type * enkf_main,
+        const config_content_type * content) {
+
+  char * log_file=NULL;
+  if (config_content_has_item( content , LOG_FILE_KEY))
+    log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
+  if(config_content_has_item( content , LOG_LEVEL_KEY))
+    res_log_init_log(config_content_get_value_as_int(content , LOG_LEVEL_KEY), log_file ,  enkf_main->verbose);
+  else
+    res_log_init_log_default_log_level(log_file ,  enkf_main->verbose);
+  free( log_file );
+}
+
+static void enkf_main_init_schedule_prediction(
+        enkf_main_type * enkf_main,
+        const config_content_type * content) {
+
+  if (!config_content_has_item(content, SCHEDULE_PREDICTION_FILE_KEY))
+    return;
+
+  const config_content_item_type * pred_item = config_content_get_item(
+                                                   content,
+                                                   SCHEDULE_PREDICTION_FILE_KEY
+                                                   );
+
+  config_content_node_type * pred_node = config_content_item_get_last_node(pred_item);
+  const char * template_file = config_content_node_iget_as_path(pred_node, 0);
+
+  hash_type * opt_hash = hash_alloc();
+  config_content_node_init_opt_hash(pred_node, opt_hash, 1);
+
+  const char * parameters = hash_safe_get(opt_hash, "PARAMETERS");
+  const char * min_std    = hash_safe_get(opt_hash, "MIN_STD"   );
+  const char * init_files = hash_safe_get(opt_hash, "INIT_FILES");
+
+  enkf_main_set_schedule_prediction_file__(
+          enkf_main,
+          template_file,
+          parameters,
+          min_std,
+          init_files
+          );
+
+  hash_free(opt_hash);
+}
+
+/**
+   By default the simulation directories are left intact when
+   the simulations re complete, but using the keyword
+   DELETE_RUNPATH you can request (some of) the directories to
+   be wiped after the simulations are complete.
+*/
+static void enkf_main_init_delete_runpath(
+                enkf_main_type * enkf_main,
+                const config_content_type * content) {
+
+  char * delete_runpath_string = NULL;
+  int ens_size = config_content_get_value_as_int(content, NUM_REALIZATIONS_KEY);
+
+  if (config_content_has_item(content, DELETE_RUNPATH_KEY))
+    delete_runpath_string = config_content_alloc_joined_string(
+                                                          content,
+                                                          DELETE_RUNPATH_KEY,
+                                                          ""
+                                                          );
+
+  enkf_main_parse_keep_runpath(enkf_main, delete_runpath_string, ens_size);
+
+  util_safe_free(delete_runpath_string);
+}
+
+static void enkf_main_init_pre_clear_runpath(
+                enkf_main_type * enkf_main,
+                const config_content_type * content) {
+
+  enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
+  if (config_content_has_item(content, PRE_CLEAR_RUNPATH_KEY))
+    enkf_main->pre_clear_runpath = config_content_get_value_as_bool(
+                                                         content,
+                                                         PRE_CLEAR_RUNPATH_KEY
+                                                         );
+}
+
+
+static void enkf_main_init_rft_config(
+                enkf_main_type * enkf_main,
+                const config_content_type * content) {
+
+  const char * rft_config_file = NULL;
+  if (config_content_has_item(content , RFT_CONFIG_KEY))
+    rft_config_file = config_content_iget(content, RFT_CONFIG_KEY, 0, 0);
+
+  enkf_main_set_rft_config_file(enkf_main, rft_config_file);
+}
+
+static void enkf_main_init_obs(
+                enkf_main_type * enkf_main,
+                const config_content_type * content) {
+
+  enkf_main_alloc_obs(enkf_main);
+  if (config_content_has_item(content, OBS_CONFIG_KEY)) {
+    const char * obs_config_file = config_content_iget(
+                                                    content,
+                                                    OBS_CONFIG_KEY,
+                                                    0, 0
+                                                    );
+
+    enkf_main_load_obs(enkf_main, obs_config_file, true);
   }
 }
 
+static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, bool verbose) {
+  if (!enkf_main->user_config_file)
+    return;
+
+  config_parser_type * config = config_alloc();
+  config_content_type * content = model_config_alloc_content(enkf_main->user_config_file, config);
+
+  enkf_main_init_log(enkf_main, content);
+
+  rng_config_init(enkf_main->rng_config, content);
+  enkf_main_rng_init(enkf_main);  /* Must be called before the ensmeble is created. */
+
+  enkf_main_init_subst_list(enkf_main);
+  ert_workflow_list_init(enkf_main->workflow_list, content);
+
+  analysis_config_load_internal_modules(enkf_main->analysis_config);
+  analysis_config_init(enkf_main->analysis_config, content);
+
+  ecl_config_init(enkf_main->ecl_config, content);
+  config_settings_apply(enkf_main->plot_config, content);
+
+  ensemble_config_init(enkf_main->ensemble_config, content,
+                       ecl_config_get_grid(enkf_main->ecl_config),
+                       ecl_config_get_refcase(enkf_main->ecl_config)
+                       );
+
+  model_config_init(enkf_main->model_config,
+                    content,
+                    enkf_main_get_ensemble_size(enkf_main),
+                    site_config_get_installed_jobs(enkf_main->site_config),
+                    ecl_config_get_last_history_restart(enkf_main->ecl_config),
+                    ecl_config_get_sched_file(enkf_main->ecl_config),
+                    ecl_config_get_refcase(enkf_main->ecl_config)
+                    );
+
+  enkf_main_init_hook_manager(enkf_main, content);
+
+  enkf_main_init_data_kw(enkf_main, content);
+
+  enkf_main_update_num_cpu(enkf_main);
+
+  enkf_main_init_schedule_prediction(enkf_main, content);
+
+  enkf_main_init_delete_runpath(enkf_main, content);
+
+  enkf_main_init_pre_clear_runpath(enkf_main, content);
+
+  ecl_config_static_kw_init(enkf_main->ecl_config, content);
+
+  /* Installing templates */
+  ert_templates_init(enkf_main->templates, content);
+
+  enkf_main_init_rft_config(enkf_main, content);
+
+  enkf_main_user_select_initial_fs( enkf_main );
+
+  /* Adding ensemble members */
+  enkf_main_resize_ensemble(
+          enkf_main,
+          config_content_iget_as_int(content, NUM_REALIZATIONS_KEY, 0, 0)
+          );
+
+  enkf_main_init_obs(enkf_main, content);
+
+  config_content_free(content);
+  config_free(config);
+}
 
 /**
    This function boots everything needed for running a EnKF
@@ -2502,217 +2572,22 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
 */
 
 
-enkf_main_type * enkf_main_bootstrap(const char * _model_config, bool strict , bool verbose) {
-  const char     * site_config  = site_config_get_location();
-  char           * model_config = NULL;
-  enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
+enkf_main_type * enkf_main_alloc(const char * model_config, const site_config_type * site_config, bool strict , bool verbose) {
 
-  if (_model_config) {
-    {
-      char * path;
-      char * base;
-      char * ext;
-      if (util_is_link( _model_config )) {   /* The command line argument given is a symlink - we start by changing to */
-                                       /* the real location of the configuration file. */
-        char  * realpath = util_alloc_link_target( _model_config );
-        util_alloc_file_components(realpath , &path , &base , &ext);
-        free( realpath );
-      } else
-        util_alloc_file_components(_model_config , &path , &base , &ext);
+  enkf_main_type * enkf_main = enkf_main_alloc_empty();
+  enkf_main->site_config = site_config;
+  enkf_main_set_verbose(enkf_main, verbose);
+  enkf_main_bootstrap_site(enkf_main);
 
-      if (path != NULL) {
-        if (util_chdir(path) != 0)
-          util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
-
-      if (verbose)
-        printf("Changing to directory ...................: %s \n",path);
-
-      if (ext != NULL)
-        model_config = util_alloc_filename( NULL , base , ext );
-      else
-        model_config = util_alloc_string_copy( base );
-      } else
-        model_config = util_alloc_string_copy(_model_config);
-
-      util_safe_free( path );
-      util_safe_free( base );
-      util_safe_free( ext );
-    }
-
-    if (!util_file_exists(model_config))
-      util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
+  char * user_config_file = enkf_main_alloc_model_config_filename(model_config);
+  if(user_config_file) {
+    enkf_main_set_user_config_file(enkf_main, user_config_file);
+    enkf_main_bootstrap_model(enkf_main, strict, verbose);
   }
+  free(user_config_file);
 
+  enkf_main_init_jobname(enkf_main);
 
-  {
-    config_parser_type * config;
-    config_content_type * content;
-    enkf_main            = enkf_main_alloc_empty( );
-    enkf_main_set_verbose( enkf_main , verbose );
-    enkf_main_bootstrap_site( enkf_main , site_config);
-
-    if (model_config) {
-      enkf_main_set_site_config_file( enkf_main , site_config );
-      enkf_main_set_user_config_file( enkf_main , model_config );
-
-      config = config_alloc();
-      enkf_main_init_user_config( enkf_main , config );
-      site_config_add_config_items( config , false );
-      site_config_init_user_mode( enkf_main->site_config );
-      enkf_main_user_config_deprecate( config );
-
-      {
-        hash_type *pre_defined_kw_map = __enkf_main_alloc_predefined_kw_map(enkf_main);
-        content = config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , pre_defined_kw_map, CONFIG_UNRECOGNIZED_WARN , true);
-        hash_free(pre_defined_kw_map);
-      }
-
-      {
-        const stringlist_type * warnings = config_content_get_warnings( content );
-        if (stringlist_get_size( warnings ) > 0) {
-          fprintf(stderr," ** There were warnings when parsing the configuration file: %s" , model_config );
-          for (int i=0; i < stringlist_get_size( warnings ); i++)
-            fprintf(stderr, " %02d : %s \n",i , stringlist_iget( warnings , i ));
-        }
-      }
-
-      if (!config_content_is_valid( content )) {
-        config_error_type * errors = config_content_get_errors( content );
-        config_error_fprintf( errors , true , stderr );
-        exit(1);
-      }
-
-      site_config_init( enkf_main->site_config , content );                                   /*  <---- model_config : second pass. */
-
-      /*****************************************************************/
-      /*
-  OK - now we have parsed everything - and we are ready to start
-  populating the enkf_main object.
-      */
-
-      {
-        char * log_file=NULL;
-        if (config_content_has_item( content , LOG_FILE_KEY))
-          log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
-        if(config_content_has_item( content , LOG_LEVEL_KEY))
-          res_log_init_log(config_content_get_value_as_int(content , LOG_LEVEL_KEY), log_file ,  enkf_main->verbose);
-        else
-          res_log_init_log_default_log_level(log_file ,  enkf_main->verbose);
-        free( log_file );
-      }
-
-      /*
-  Initializing the various 'large' sub config objects.
-      */
-      rng_config_init( enkf_main->rng_config , content );
-      enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
-
-      enkf_main_init_subst_list( enkf_main );
-      ert_workflow_list_init( enkf_main->workflow_list , content );
-
-      analysis_config_load_internal_modules( enkf_main->analysis_config );
-      analysis_config_init( enkf_main->analysis_config , content );
-      ecl_config_init( enkf_main->ecl_config , content );
-      config_settings_apply( enkf_main->plot_config , content );
-
-      ensemble_config_init( enkf_main->ensemble_config , content ,
-                            ecl_config_get_grid( enkf_main->ecl_config ) ,
-                            ecl_config_get_refcase( enkf_main->ecl_config) );
-
-      model_config_init( enkf_main->model_config ,
-                         content ,
-                         enkf_main_get_ensemble_size( enkf_main ),
-                         site_config_get_installed_jobs(enkf_main->site_config) ,
-                         ecl_config_get_last_history_restart( enkf_main->ecl_config ),
-                         ecl_config_get_sched_file(enkf_main->ecl_config) ,
-                         ecl_config_get_refcase( enkf_main->ecl_config ));
-
-      enkf_main_init_hook_manager( enkf_main , content );
-      enkf_main_init_data_kw( enkf_main , content );
-      enkf_main_update_num_cpu( enkf_main );
-      {
-        if (config_content_has_item( content , SCHEDULE_PREDICTION_FILE_KEY )) {
-          const config_content_item_type * pred_item = config_content_get_item( content , SCHEDULE_PREDICTION_FILE_KEY );
-          config_content_node_type * pred_node = config_content_item_get_last_node( pred_item );
-          const char * template_file = config_content_node_iget_as_path( pred_node , 0 );
-          {
-            hash_type * opt_hash = hash_alloc();
-            config_content_node_init_opt_hash( pred_node , opt_hash , 1 );
-
-            const char * parameters = hash_safe_get( opt_hash , "PARAMETERS" );
-            const char * min_std    = hash_safe_get( opt_hash , "MIN_STD"    );
-            const char * init_files = hash_safe_get( opt_hash , "INIT_FILES" );
-
-            enkf_main_set_schedule_prediction_file__( enkf_main , template_file , parameters , min_std , init_files );
-            hash_free( opt_hash );
-          }
-        }
-      }
-
-
-      /*****************************************************************/
-      /**
-         By default the simulation directories are left intact when
-         the simulations re complete, but using the keyword
-         DELETE_RUNPATH you can request (some of) the directories to
-         be wiped after the simulations are complete.
-      */
-      {
-        {
-          char * delete_runpath_string = NULL;
-          int    ens_size              = config_content_get_value_as_int(content , NUM_REALIZATIONS_KEY);
-
-          if (config_content_has_item(content , DELETE_RUNPATH_KEY))
-            delete_runpath_string = config_content_alloc_joined_string(content , DELETE_RUNPATH_KEY , "");
-
-          enkf_main_parse_keep_runpath( enkf_main , delete_runpath_string , ens_size );
-
-          util_safe_free( delete_runpath_string );
-        }
-
-        /* This is really in the wrong place ... */
-        {
-          enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
-          if (config_content_has_item(content , PRE_CLEAR_RUNPATH_KEY))
-            enkf_main->pre_clear_runpath = config_content_get_value_as_bool( content , PRE_CLEAR_RUNPATH_KEY);
-        }
-
-        ecl_config_static_kw_init( enkf_main->ecl_config , content );
-
-        /* Installing templates */
-        ert_templates_init( enkf_main->templates , content );
-
-        {
-          const char * rft_config_file = NULL;
-          if (config_content_has_item(content , RFT_CONFIG_KEY))
-            rft_config_file = config_content_iget(content , RFT_CONFIG_KEY , 0,0);
-
-          enkf_main_set_rft_config_file( enkf_main , rft_config_file );
-        }
-
-
-        /*****************************************************************/
-        enkf_main_user_select_initial_fs( enkf_main );
-
-        /* Adding ensemble members */
-        enkf_main_resize_ensemble( enkf_main, config_content_iget_as_int(content, NUM_REALIZATIONS_KEY , 0 , 0) );
-
-        /*****************************************************************/
-
-        /* Loading observations */
-        enkf_main_alloc_obs(enkf_main);
-        if (config_content_has_item(content , OBS_CONFIG_KEY)) {
-          const char * obs_config_file = config_content_iget(content  , OBS_CONFIG_KEY , 0,0);
-          enkf_main_load_obs( enkf_main , obs_config_file , true );
-        }
-
-      }
-      config_content_free( content );
-      config_free(config);
-    }
-    enkf_main_init_jobname( enkf_main );
-    free( model_config );
-  }
   return enkf_main;
 }
 

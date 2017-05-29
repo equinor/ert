@@ -41,6 +41,7 @@ typedef struct site_config_struct site_config_type;
   queue_config_type *      site_config_get_queue_config(const site_config_type * site_config);
   const char *             site_config_get_location();
 
+  const char *             site_config_get_config_file(const site_config_type*);
   
   const char *             site_config_get_manual_url( const site_config_type * site_config );
   void                     site_config_set_manual_url( site_config_type * site_config , const char * manual_url );
@@ -54,9 +55,9 @@ typedef struct site_config_struct site_config_type;
   void                     site_config_set_num_cpu( site_config_type * site_config , int num_cpu );
   void                     site_config_update_lsf_request(site_config_type *  , const forward_model_type *);
   bool                     site_config_init(site_config_type * site_config , const config_content_type * config);
+  bool                     site_config_load_user_config(site_config_type *, const char *);
   void                     site_config_free(site_config_type *);
   ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );
-  void                     site_config_set_ens_size( site_config_type * site_config , int ens_size );
 
   void                     site_config_set_max_running_lsf( site_config_type * site_config , int max_running_lsf);
   int                      site_config_get_max_running_lsf( const site_config_type * site_config );
@@ -100,7 +101,11 @@ typedef struct site_config_struct site_config_type;
   void                     site_config_set_umask( site_config_type * site_config , mode_t umask);
   mode_t                   site_config_get_umask( const site_config_type * site_config );
 
-  site_config_type       * site_config_alloc_empty();
+  site_config_type       * site_config_alloc();
+  site_config_type       * site_config_alloc_load_user_config(const char *);
+
+  config_content_type    * site_config_alloc_content(const site_config_type*, config_parser_type*);
+
   void                     site_config_add_config_items( config_parser_type * config , bool site_mode);
 #ifdef __cplusplus
 }

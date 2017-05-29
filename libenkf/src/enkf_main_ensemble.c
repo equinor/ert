@@ -38,9 +38,6 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
     return ;
 
   ranking_table_set_ens_size( enkf_main->ranking_table , new_ens_size );
-  /* Tell the site_config object (i.e. the queue drivers) about the new ensemble size: */
-  site_config_set_ens_size( enkf_main->site_config , new_ens_size );
-
 
   /* The ensemble is shrinking. */
   if (new_ens_size < enkf_main->ens_size) {

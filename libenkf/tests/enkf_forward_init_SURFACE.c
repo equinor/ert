@@ -62,7 +62,8 @@ int main(int argc , char ** argv) {
     test_assert_true( util_sscanf_bool( forward_init_string , &forward_init));
 
     util_clear_directory( "Storage" , true , true );
-    enkf_main = enkf_main_bootstrap( config_file , strict , true );
+    site_config_type * site_config = site_config_alloc_load_user_config(config_file);
+    enkf_main = enkf_main_alloc(config_file, site_config, strict, true);
     ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
     {
       const enkf_config_node_type * surface_config_node = ensemble_config_get_node( ens_config , "SURFACE");
@@ -161,6 +162,7 @@ int main(int argc , char ** argv) {
       util_clear_directory( "simulations" , true , true );
     }
     enkf_main_free( enkf_main );
+    site_config_free(site_config);
   }
 }
 
