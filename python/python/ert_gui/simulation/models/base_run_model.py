@@ -1,7 +1,7 @@
 import time
 from res.job_queue import JobStatusType
 from ert_gui import ERT
-from res.enkf import ErtLog
+from res.util import ResLog
 
 
 class ErtRunError(Exception):
