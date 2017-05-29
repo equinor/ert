@@ -158,10 +158,14 @@ int main (int argc , char ** argv) {
     }
     enkf_welcome( model_config_file );
     {
-      enkf_main_type * enkf_main = enkf_main_bootstrap(model_config_file , true , true);
+      site_config_type * site_config = site_config_alloc_load_user_config(
+                                                            model_config_file
+                                                            );
+      enkf_main_type * enkf_main = enkf_main_alloc(model_config_file, site_config, true, true);
       enkf_main_run_workflows( enkf_main , workflow_list );
       enkf_tui_main_menu(enkf_main); 
       enkf_main_free(enkf_main);
+      site_config_free(site_config);
     }
 
     stringlist_free( workflow_list );
