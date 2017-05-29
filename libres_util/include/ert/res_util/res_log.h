@@ -28,6 +28,7 @@ extern "C" {
 
 #include <ert/util/log.h>
 
+void res_log_add_message_str(message_level_type message_level, const char* message);
 void res_log_init_log(int log_level,const char * log_file_name, bool verbose);
 void res_log_init_log_default_log_level(const char * log_file_name, bool verbose);
 void res_log_init_log_default( bool verbose);

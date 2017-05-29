@@ -30,7 +30,7 @@ add_library(job_queue src/ext_job.c
                       ${lsb}
 )
 
-target_link_libraries(job_queue PUBLIC config ecl ${lsf})
+target_link_libraries(job_queue PUBLIC res_util config ecl ${lsf})
 target_include_directories(job_queue
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
            $<INSTALL_INTERFACE:include>

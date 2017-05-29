@@ -32,6 +32,7 @@
 
 #include <ert/enkf/time_map.h>
 #include <ert/enkf/enkf_fs.h>
+#include <ert/res_util/res_log.h>
 #include <ert/enkf/enkf_main.h>
 
 void ecl_test( const char * ecl_case ) {
