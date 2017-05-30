@@ -156,7 +156,6 @@ struct enkf_main_struct {
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type     * templates;          /* Run time templates */
   config_settings_type   * plot_config;        /* Information about plotting. */
-  rng_config_type        * rng_config;
   rng_type               * rng;
   ert_workflow_list_type * workflow_list;
   ranking_table_type     * ranking_table;
@@ -368,7 +367,6 @@ ui_return_type * enkf_main_set_data_file( enkf_main_type * enkf_main , const cha
 void enkf_main_free(enkf_main_type * enkf_main){
   if (enkf_main->rng != NULL)
     rng_free( enkf_main->rng );
-  rng_config_free( enkf_main->rng_config );
 
   if (enkf_main->obs)
     enkf_obs_free(enkf_main->obs);
@@ -2083,7 +2081,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->rng                = NULL;
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
-  enkf_main->rng_config         = rng_config_alloc( );
   enkf_main->enkf_config        = NULL;
   enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
@@ -2095,17 +2092,17 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->plot_config        = config_settings_alloc( PLOT_SETTING_KEY );
   plot_settings_init( enkf_main->plot_config );
 
-  enkf_main_rng_init( enkf_main );
   enkf_main->subst_func_pool    = subst_func_pool_alloc(  );
   enkf_main->subst_list         = subst_list_alloc( enkf_main->subst_func_pool );
   enkf_main->templates          = ert_templates_alloc( enkf_main->subst_list );
   enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main->subst_list );
   enkf_main->hook_manager       = hook_manager_alloc( enkf_main->workflow_list );
-  enkf_main->analysis_config    = analysis_config_alloc( enkf_main->rng );
+  enkf_main->analysis_config    = NULL;
 
   enkf_main_init_subst_list( enkf_main );
   enkf_main_set_verbose( enkf_main , true );
   enkf_main_init_fs( enkf_main );
+
   return enkf_main;
 }
 
@@ -2264,15 +2261,15 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_content_
 
 
 rng_config_type * enkf_main_get_rng_config( const enkf_main_type * enkf_main ) {
-  return enkf_main->rng_config;
+  return enkf_config_get_rng_config(enkf_main->enkf_config);
 }
 
 
 void enkf_main_rng_init( enkf_main_type * enkf_main) {
   if (enkf_main->rng != NULL)
-    rng_config_init_rng(enkf_main->rng_config, enkf_main->rng);
+    rng_config_init_rng(enkf_main_get_rng_config(enkf_main), enkf_main->rng);
   else
-    enkf_main->rng = rng_config_alloc_init_rng( enkf_main->rng_config );
+    enkf_main->rng = rng_config_alloc_init_rng(enkf_main_get_rng_config(enkf_main));
 }
 
 
@@ -2291,6 +2288,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
   config_parser_type * config = config_alloc();
   config_content_type * content = site_config_alloc_content(site_config, config);
 
+  enkf_main->analysis_config = analysis_config_alloc( enkf_main->rng );
   analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
   ert_workflow_list_init(enkf_main->workflow_list, content);
 
@@ -2472,9 +2470,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   enkf_main_init_log(enkf_main, content);
 
-  rng_config_init(enkf_main->rng_config, content);
-  enkf_main_rng_init(enkf_main);  /* Must be called before the ensmeble is created. */
-
   enkf_main_init_subst_list(enkf_main);
   ert_workflow_list_init(enkf_main->workflow_list, content);
 
@@ -2578,6 +2573,9 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const enkf_config_ty
 
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->enkf_config = enkf_config;
+
+  enkf_main_rng_init( enkf_main );
+
   enkf_main_set_verbose(enkf_main, verbose);
   enkf_main_bootstrap_site(enkf_main);
 

@@ -20,6 +20,7 @@
 #define ERT_ENKF_CONFIG_H
 
 #include <ert/enkf/site_config.h>
+#include <ert/enkf/rng_config.h>
 
 typedef struct enkf_config_struct enkf_config_type;
 
@@ -27,6 +28,7 @@ enkf_config_type * enkf_config_alloc_load(const char *);
 void enkf_config_free(enkf_config_type *);
 
 site_config_type * enkf_config_get_site_config(const enkf_config_type *);
+rng_config_type  * enkf_config_get_rng_config(const enkf_config_type *);
 
 const char * enkf_config_get_user_config_file(const enkf_config_type *);
 

@@ -18,10 +18,12 @@
 
 #include <ert/enkf/enkf_config.h>
 #include <ert/enkf/site_config.h>
+#include <ert/enkf/rng_config.h>
 
 struct enkf_config_struct {
   char * user_config_file;
   site_config_type * site_config;
+  rng_config_type  * rng_config;
 };
 
 static enkf_config_type * enkf_config_alloc_empty() {
@@ -29,6 +31,7 @@ static enkf_config_type * enkf_config_alloc_empty() {
   enkf_config->user_config_file = NULL;
 
   enkf_config->site_config = NULL;
+  enkf_config->rng_config  = NULL;
 
   return enkf_config;
 }
@@ -37,13 +40,16 @@ enkf_config_type * enkf_config_alloc_load(const char * config_file) {
   enkf_config_type * enkf_config = enkf_config_alloc_empty(); 
 
   enkf_config->user_config_file = util_alloc_string_copy(config_file);
+
   enkf_config->site_config = site_config_alloc_load_user_config(config_file);
+  enkf_config->rng_config  = rng_config_alloc_load_user_config(config_file);
 
   return enkf_config;
 }
 
 void enkf_config_free(enkf_config_type * enkf_config) {
   site_config_free(enkf_config->site_config);
+  rng_config_free(enkf_config->rng_config);
 
   free(enkf_config->user_config_file);
   free(enkf_config);
@@ -53,6 +59,12 @@ site_config_type * enkf_config_get_site_config(
                     const enkf_config_type * enkf_config
                     ) {
   return enkf_config->site_config;
+}
+
+rng_config_type * enkf_config_get_rng_config(
+                    const enkf_config_type * enkf_config
+                    ) {
+  return enkf_config->rng_config;
 }
 
 const char * enkf_config_get_user_config_file(const enkf_config_type * enkf_config) {
