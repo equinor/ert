@@ -3,7 +3,7 @@ project(res_util C)
 add_library( res_util src/res_log.c )
 
 
-target_link_libraries( res_util PUBLIC ert_util )
+target_link_libraries( res_util PUBLIC ecl )
 
 target_include_directories(res_util
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

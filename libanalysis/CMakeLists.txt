@@ -21,7 +21,7 @@ target_include_directories(analysis
            $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(analysis PUBLIC ert_util ecl)
+target_link_libraries(analysis PUBLIC ecl)
 target_compile_definitions(analysis PRIVATE -DINTERNAL_LINK)
 set_target_properties(analysis PROPERTIES
     VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR}

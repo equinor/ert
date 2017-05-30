@@ -30,7 +30,7 @@ add_library(job_queue src/ext_job.c
                       ${lsb}
 )
 
-target_link_libraries(job_queue PUBLIC config ert_util ${lsf})
+target_link_libraries(job_queue PUBLIC config ecl ${lsf})
 target_include_directories(job_queue
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
            $<INSTALL_INTERFACE:include>
@@ -109,12 +109,12 @@ add_test(NAME job_workflow_test
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/internal_job)
 
 add_executable(job_lsf_exclude_hosts_test tests/job_lsf_exclude_hosts_test.c)
-target_link_libraries(job_lsf_exclude_hosts_test job_queue ert_util)
+target_link_libraries(job_lsf_exclude_hosts_test job_queue ecl)
 add_test(NAME job_lsf_exclude_hosts_test
          COMMAND job_lsf_exclude_hosts_test job_program NULL LOCAL)
 
 add_executable(job_program_output tests/job_program_output.c)
-target_link_libraries(job_program_output ert_util)
+target_link_libraries(job_program_output ecl)
 
 add_executable(job_queue_test tests/job_job_queue_test.c)
 target_link_libraries(job_queue_test job_queue)
@@ -123,7 +123,7 @@ add_test(NAME job_queue_test
                  $<TARGET_FILE:job_program_output>)
 
 add_executable(job_queue_stress_task tests/job_queue_stress_task.c)
-target_link_libraries(job_queue_stress_task ert_util)
+target_link_libraries(job_queue_stress_task ecl)
 
 add_executable(job_queue_stress_test tests/job_queue_stress_test.c)
 target_link_libraries(job_queue_stress_test job_queue)
@@ -146,11 +146,11 @@ target_link_libraries(job_queue_driver_test job_queue)
 add_test(NAME job_queue_driver_test COMMAND job_queue_driver_test)
 
 add_executable(job_torque_test tests/job_torque_test.c)
-target_link_libraries(job_torque_test job_queue ert_util)
+target_link_libraries(job_torque_test job_queue ecl)
 add_test(NAME job_torque_test COMMAND job_torque_test)
 
 add_executable(job_queue_manager tests/job_queue_manager.c)
-target_link_libraries(job_queue_manager job_queue ert_util)
+target_link_libraries(job_queue_manager job_queue ecl)
 add_test(NAME job_queue_manager COMMAND job_queue_manager)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/qsub_emulators/
