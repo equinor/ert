@@ -77,8 +77,8 @@ int main(int argc , char ** argv) {
   test_work_area_set_store(work_area, true);
 
   bool strict = true;
-  enkf_config_type * enkf_config = enkf_config_alloc_load(config_file);
-  enkf_main_type * enkf_main = enkf_main_alloc(config_file, enkf_config, strict, true);
+  res_config_type * res_config = res_config_alloc_load(config_file);
+  enkf_main_type * enkf_main = enkf_main_alloc(config_file, res_config, strict, true);
   ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
   enkf_fs_type * init_fs = enkf_main_get_fs(enkf_main);
   run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( init_fs , 0 ,0 , "simulations/run0");
@@ -112,7 +112,7 @@ int main(int argc , char ** argv) {
 
   run_arg_free( run_arg );
   enkf_main_free(enkf_main);
-  enkf_config_free(enkf_config);
+  res_config_free(res_config);
   test_work_area_free(work_area);
 }
 

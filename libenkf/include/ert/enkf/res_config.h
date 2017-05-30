@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2017  Statoil ASA, Norway.
 
-   The file 'enkf_config.h' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'res_config.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,20 +16,20 @@
    for more details.
 */
 
-#ifndef ERT_ENKF_CONFIG_H
-#define ERT_ENKF_CONFIG_H
+#ifndef ERT_RES_CONFIG_H
+#define ERT_RES_CONFIG_H
 
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/rng_config.h>
 
-typedef struct enkf_config_struct enkf_config_type;
+typedef struct res_config_struct res_config_type;
 
-enkf_config_type * enkf_config_alloc_load(const char *);
-void enkf_config_free(enkf_config_type *);
+res_config_type * res_config_alloc_load(const char *);
+void res_config_free(res_config_type *);
 
-site_config_type * enkf_config_get_site_config(const enkf_config_type *);
-rng_config_type  * enkf_config_get_rng_config(const enkf_config_type *);
+site_config_type * res_config_get_site_config(const res_config_type *);
+rng_config_type  * res_config_get_rng_config(const res_config_type *);
 
-const char * enkf_config_get_user_config_file(const enkf_config_type *);
+const char * res_config_get_user_config_file(const res_config_type *);
 
 #endif

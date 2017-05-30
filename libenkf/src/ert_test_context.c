@@ -36,7 +36,7 @@ struct ert_test_context_struct {
   UTIL_TYPE_ID_DECLARATION;
   enkf_main_type * enkf_main;
   test_work_area_type * work_area;
-  enkf_config_type * enkf_config;
+  res_config_type * res_config;
   rng_type * rng;
 };
 
@@ -63,8 +63,8 @@ static ert_test_context_type * ert_test_context_alloc__( const char * test_name 
     test_work_area_copy_parent_content(test_context->work_area , model_config );
     {
       char * config_file = util_split_alloc_filename( model_config );
-      test_context->enkf_config = enkf_config_alloc_load(config_file);
-      test_context->enkf_main = enkf_main_alloc(config_file, test_context->enkf_config, true, false);
+      test_context->res_config = res_config_alloc_load(config_file);
+      test_context->enkf_main = enkf_main_alloc(config_file, test_context->res_config, true, false);
       free( config_file );
     }
     test_context->rng = rng_alloc( MZRAN , INIT_DEV_URANDOM );
@@ -72,7 +72,7 @@ static ert_test_context_type * ert_test_context_alloc__( const char * test_name 
     test_context->enkf_main = NULL;
     test_context->work_area = NULL;
     test_context->rng = NULL;
-    test_context->enkf_config = NULL;
+    test_context->res_config = NULL;
   }
   return test_context;
 }
@@ -110,8 +110,8 @@ void ert_test_context_free( ert_test_context_type * test_context ) {
   if (test_context->rng)
     rng_free( test_context->rng );
 
-  if (test_context->enkf_config)
-    enkf_config_free(test_context->enkf_config);
+  if (test_context->res_config)
+    res_config_free(test_context->res_config);
 
   free( test_context );
 }

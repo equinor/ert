@@ -79,7 +79,7 @@ add_library(enkf src/active_list.c
                  src/run_arg.c
                  src/runpath_list.c
                  src/site_config.c
-                 src/enkf_config.c
+                 src/res_config.c
                  src/state_map.c
                  src/state_map.c
                  src/summary.c

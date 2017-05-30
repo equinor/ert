@@ -38,14 +38,14 @@ set(TEST_SOURCES
     test_runpath_list.py
     test_queue_config.py
     test_site_config.py
-    test_enkf_config.py
+    test_res_config.py
 )
 
 add_python_package("python.tests.res.enkf" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf "${TEST_SOURCES}" False)
 
 addPythonTest(tests.res.enkf.test_es_update.ESUpdateTest)
 addPythonTest(tests.res.enkf.test_site_config.SiteConfigTest)
-addPythonTest(tests.res.enkf.test_enkf_config.EnkfConfigTest)
+addPythonTest(tests.res.enkf.test_res_config.ResConfigTest)
 addPythonTest(tests.res.enkf.test_forward_load_context.ForwardLoadContextTest)
 addPythonTest(tests.res.enkf.test_deprecation.DeprecationTest)
 addPythonTest(tests.res.enkf.test_meas_block.MeasBlockTest)

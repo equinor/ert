@@ -1,6 +1,6 @@
 #  Copyright (C) 2017  Statoil ASA, Norway.
 #
-#  The file 'test_enkf_config.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'test_res_config.py' is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,11 +14,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.enkf import EnkfConfig, SiteConfig
+from res.enkf import ResConfig, SiteConfig
 
 from ecl.test import ExtendedTestCase, TestAreaContext
 
-class EnkfConfigTest(ExtendedTestCase):
+class ResConfigTest(ExtendedTestCase):
 
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
@@ -26,17 +26,17 @@ class EnkfConfigTest(ExtendedTestCase):
     def test_invalid_user_config(self):
         with TestAreaContext("void land"):
             with self.assertRaises(IOError):
-                EnkfConfig("this/is/not/a/file")
+                ResConfig("this/is/not/a/file")
 
     def test_init(self):
-        with TestAreaContext("enkf_config_init_test") as work_area:
+        with TestAreaContext("res_config_init_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
             config_file = "simple_config/minimum_config"
-            enkf_config = EnkfConfig(user_config_file=config_file)
+            res_config = ResConfig(user_config_file=config_file)
 
-            self.assertIsNotNone(enkf_config)
-            self.assertEqual(config_file, enkf_config.user_config_file)
+            self.assertIsNotNone(res_config)
+            self.assertEqual(config_file, res_config.user_config_file)
 
-            self.assertIsNotNone(enkf_config.site_config)
-            self.assertTrue(isinstance(enkf_config.site_config, SiteConfig))
+            self.assertIsNotNone(res_config.site_config)
+            self.assertTrue(isinstance(res_config.site_config, SiteConfig))

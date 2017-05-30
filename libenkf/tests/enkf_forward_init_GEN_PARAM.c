@@ -59,8 +59,8 @@ int main(int argc , char ** argv) {
     test_assert_true( util_sscanf_bool( forward_init_string , &forward_init));
 
     util_clear_directory( "Storage" , true , true );
-    enkf_config_type * enkf_config = enkf_config_alloc_load(config_file);
-    enkf_main = enkf_main_alloc(config_file, enkf_config, strict, true);
+    res_config_type * res_config = res_config_alloc_load(config_file);
+    enkf_main = enkf_main_alloc(config_file, res_config, strict, true);
     {
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ) , "PARAM" );
       enkf_node_type * gen_param_node = enkf_node_alloc( config_node );
@@ -156,7 +156,7 @@ int main(int argc , char ** argv) {
       enkf_node_free( gen_param_node );
     }
     enkf_main_free( enkf_main );
-    enkf_config_free(enkf_config);
+    res_config_free(res_config);
   }
   test_work_area_free( work_area );
   rng_free( rng );

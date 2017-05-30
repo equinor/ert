@@ -113,13 +113,13 @@ int main(int argc, char ** argv) {
     test_work_area_set_store( work_area , true );
     test_work_area_copy_parent_content( work_area , config_file );
     {
-      enkf_config_type * enkf_config = enkf_config_alloc_load(model_config);
-      enkf_main_type * enkf_main = enkf_main_alloc(model_config, enkf_config, false, false);
+      res_config_type * res_config = res_config_alloc_load(model_config);
+      enkf_main_type * enkf_main = enkf_main_alloc(model_config, res_config, false, false);
 
       test_load_summary(enkf_main , "WWCT:OP_3");
       test_load_GEN_KW( enkf_main , "MULTFLT" , "F3");
       enkf_main_free( enkf_main );
-      enkf_config_free(enkf_config);
+      res_config_free(res_config);
     }
     test_work_area_free( work_area );
     exit(0);

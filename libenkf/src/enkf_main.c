@@ -79,7 +79,7 @@
 #include <ert/enkf/enkf_obs.h>
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_main.h>
-#include <ert/enkf/enkf_config.h>
+#include <ert/enkf/res_config.h>
 #include <ert/enkf/enkf_serialize.h>
 #include <ert/enkf/plot_settings.h>
 #include <ert/enkf/ensemble_config.h>
@@ -151,7 +151,7 @@ struct enkf_main_struct {
   hook_manager_type      * hook_manager;
   model_config_type      * model_config;
   ecl_config_type        * ecl_config;
-  const enkf_config_type * enkf_config;
+  const res_config_type  * res_config;
   analysis_config_type   * analysis_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type     * templates;          /* Run time templates */
@@ -252,11 +252,11 @@ ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf
 }
 
 const site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main ) {
-  return enkf_config_get_site_config(enkf_main->enkf_config);
+  return res_config_get_site_config(enkf_main->res_config);
 }
 
-const enkf_config_type * enkf_main_get_enkf_config(const enkf_main_type * enkf_main) {
-  return enkf_main->enkf_config;
+const res_config_type * enkf_main_get_res_config(const enkf_main_type * enkf_main) {
+  return enkf_main->res_config;
 }
 
 
@@ -2081,7 +2081,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->rng                = NULL;
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
-  enkf_main->enkf_config        = NULL;
+  enkf_main->res_config        = NULL;
   enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
@@ -2261,7 +2261,7 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_content_
 
 
 rng_config_type * enkf_main_get_rng_config( const enkf_main_type * enkf_main ) {
-  return enkf_config_get_rng_config(enkf_main->enkf_config);
+  return res_config_get_rng_config(enkf_main->res_config);
 }
 
 
@@ -2569,10 +2569,10 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 */
 
 
-enkf_main_type * enkf_main_alloc(const char * model_config, const enkf_config_type * enkf_config, bool strict , bool verbose) {
+enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_type * res_config, bool strict , bool verbose) {
 
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
-  enkf_main->enkf_config = enkf_config;
+  enkf_main->res_config = res_config;
 
   enkf_main_rng_init( enkf_main );
 

@@ -1,6 +1,6 @@
 #  Copyright (C) 2017  Statoil ASA, Norway. 
 #   
-#  The file 'enkf_config.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'res_config.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -20,15 +20,15 @@ from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
 from res.enkf import SiteConfig
 
-class EnkfConfig(BaseCClass):
+class ResConfig(BaseCClass):
 
-    TYPE_NAME = "enkf_config"
+    TYPE_NAME = "res_config"
 
-    _alloc = EnkfPrototype("void* enkf_config_alloc_load(char*)", bind=False)
-    _free  = EnkfPrototype("void enkf_config_free(enkf_config)")
+    _alloc = EnkfPrototype("void* res_config_alloc_load(char*)", bind=False)
+    _free  = EnkfPrototype("void res_config_free(res_config)")
 
-    _user_config_file = EnkfPrototype("char* enkf_config_get_user_config_file(enkf_config)")
-    _site_config      = EnkfPrototype("site_config_ref enkf_config_get_site_config(enkf_config)")
+    _user_config_file = EnkfPrototype("char* res_config_get_user_config_file(res_config)")
+    _site_config      = EnkfPrototype("site_config_ref res_config_get_site_config(res_config)")
 
     def __init__(self, user_config_file):
         if user_config_file is not None and not isfile(user_config_file):
@@ -36,7 +36,7 @@ class EnkfConfig(BaseCClass):
 
         c_ptr = self._alloc(user_config_file)
         if c_ptr:
-            super(EnkfConfig, self).__init__(c_ptr)
+            super(ResConfig, self).__init__(c_ptr)
         else:
             raise ValueError(
                     'Failed to construct EnkfConfig instance from config file %s.'
