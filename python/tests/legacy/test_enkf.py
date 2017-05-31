@@ -74,6 +74,9 @@ from ert.enkf import ErtRunContext
 from ert.enkf import EnKFMain
 from ert.enkf import ForwardLoadContext
 
+from ert.enkf.enums import EnkfObservationImplementationType
+from ert.enkf.export import GenDataCollector
+
 from ert.job_queue import ErtScript as ErtScript
 from ert.job_queue import ErtPlugin as ErtPlugin, CancelPluginException as CancelPluginException
 
