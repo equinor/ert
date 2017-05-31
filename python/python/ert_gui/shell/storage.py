@@ -11,7 +11,7 @@ STRING_SORT = 1
 OFFSET_SORT = 2
 
 import cwrap.clib as clib
-UTIL_LIB = ecl.load("libert_util")
+UTIL_LIB = ecl.load("libecl")
 
 UTIL_LIB.block_fs_is_mount.restype = ctypes.c_bool
 UTIL_LIB.block_fs_mount.restype = ctypes.c_void_p
