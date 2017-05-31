@@ -13,14 +13,19 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-
 import os
 import sys
-
+import glob
 
 from ecl.test import ImportTestCase
 
-class ImportRes(ImportTestCase):
+class ImportPlugins(ImportTestCase):
     
     def test_import(self):
-        self.assertTrue( self.import_package( "res" ))
+        
+        plugin_path = os.path.abspath( os.path.join( os.path.dirname( __file__) , "../../../../../../share/workflows/jobs/internal-gui/scripts") )
+        print plugin_path
+        self.assertTrue( os.path.isdir( plugin_path ))
+        for path in glob.glob("%s/*.py" % plugin_path):
+            print "Importing: %s" % path
+            self.import_file( path )
