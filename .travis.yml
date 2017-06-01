@@ -58,40 +58,6 @@ env:
   global:
      - ERT_SHOW_BACKTRACE=1
 
-before_script:
-  - pushd ..
-  - git clone https://github.com/Statoil/libecl
-  - mkdir libecl/build
-  - pushd libecl/build
-  - export LIBECL_INSTALL_ROOT=$(pwd)/install
-  - cmake .. -DCMAKE_INSTALL_PREFIX=$LIBECL_INSTALL_ROOT
-  - make install
-  - popd
-  - popd
-  - pushd ..
-  - export PYTHONPATH=$PYTHONPATH:$LIBECL_INSTALL_ROOT/lib/python2.7/dist-packages
-  - git clone https://github.com/Statoil/libres
-  - mkdir libres/build
-  - pushd libres/build
-  - export LIBRES_INSTALL_ROOT=$(pwd)/install
-  - cmake .. -DCMAKE_INSTALL_PREFIX=$LIBRES_INSTALL_ROOT
-             -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT
-             -DCMAKE_MODULE_PATH=$LIBECL_INSTALL_ROOT/share/cmake/Modules
-  - make install
-  - export PYTHONPATH=$PYTHONPATH:$LIBRES_INSTALL_ROOT/lib/python2.7/dist-packages
-  - popd
-  - popd
-  - mkdir build
-  - pushd build
-  - cmake -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT
-          -DCMAKE_PREFIX_PATH=$LIBRES_INSTALL_ROOT
-          -DCMAKE_MODULE_PATH=$LIBECL_INSTALL_ROOT/share/cmake/Modules
-          -DBUILD_TESTS=ON -DBUILD_PYTHON=ON -DERT_DOC=OFF
-          -DCMAKE_INSTALL_PREFIX=$(pwd)/install
-          ..
 
 script:
-  - make
-  - ctest --output-on-failure
-  - make install
-  - bin/test_install
+  - TRAVIS/build_total.py ert

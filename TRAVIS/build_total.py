@@ -73,12 +73,12 @@ class build_class():
 
     def assert_open_pr_status(self, rep_name, pr_num):
         if (pr_num >= 0):
-            if "GITHUB_API_TOKEN" in os.environ:  #DEBUG
-                github_api_token = os.getenv("GITHUB_API_TOKEN")
-            else:
-                sys.exit("You must create a github access token and set the environment variable 'GITHUB_API_TOKEN' to proceed")
             url = "https://api.github.com/repos/Statoil/%s/pulls/%d" % (rep_name, pr_num)
-            response = requests.get( url , {"access_token" : github_api_token})  #DEBUG
+            if "GITHUB_API_TOKEN" in os.environ:
+                github_api_token = os.getenv("GITHUB_API_TOKEN")
+                response = requests.get( url , {"access_token" : github_api_token})
+            else:
+                response = requests.get( url )
             content = json.loads( response.content )
             state = content["state"]
             assert(state == "open")
@@ -89,12 +89,12 @@ class build_class():
         url = "https://api.github.com/repos/Statoil/%s/pulls/%d" % (self.rep_name, self.pr_number)
         print "Accessing: %s" % url
 
-        if "GITHUB_API_TOKEN" in os.environ:  #DEBUG
+        if "GITHUB_API_TOKEN" in os.environ: 
             github_api_token = os.getenv("GITHUB_API_TOKEN")
+            response = requests.get( url , {"access_token" : github_api_token})
         else:
-            sys.exit("You must create a github access token and set the environment variable 'GITHUB_API_TOKEN' to proceed")
+            response = requests.get( url )
     
-        response = requests.get( url , {"access_token" : github_api_token})  #DEBUG
         content = json.loads( response.content )
         self.pr_description = content["body"]
         print "PULL REQUEST: %d\n%s" % (self.pr_number, self.pr_description)
@@ -135,15 +135,14 @@ class build_class():
         if not os.path.isdir(build_dir):
             os.makedirs(build_dir)
         cmake_args = ["cmake", source_dir, "-DBUILD_TESTS=ON", "-DBUILD_PYTHON=ON", "-DERT_BUILD_CXX=ON", "-DBUILD_APPLICATIONS=ON", "-DCMAKE_INSTALL_PREFIX=%s" % install_dir, 
-                      "-DINSTALL_ERT_LEGACY=ON", "-DCMAKE_PREFIX_PATH=%s" % install_dir, "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir, 
-                      "-DCMAKE_CXX_COMPILER=/private/stefos/bin/c++"]  #DEBUG
+                      "-DINSTALL_ERT_LEGACY=ON", "-DCMAKE_PREFIX_PATH=%s" % install_dir, "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir]
         cwd = os.getcwd()
         os.chdir(build_dir)
         subprocess.check_call(cmake_args)
-        subprocess.check_call(["make", "-j", "12"]) #DEBUG
+        subprocess.check_call(["make"])
         if test:
-            subprocess.check_call(["ctest", "-j", "12", "-E", "Lint"]) #DEBUG
-        subprocess.check_call(["make", "install", "-j", "12"]) #DEBUG
+            subprocess.check_call(["ctest"])
+        subprocess.check_call(["make"])
         os.chdir(cwd) 
 
     def compile_ecl(self, basedir, install_dir):
@@ -175,7 +174,6 @@ def main():
     os.chdir("..")
     basedir = os.getcwd()
     pr_build = build_class(sys.argv[1], basedir)
-    pr_build.display() #DEBUG
     sys.exit(0)
    
         
