@@ -27,7 +27,7 @@
 #include <ert/util/stringlist.h>
 
 #include <ert/enkf/enkf_fs.h>
-#include <ert/enkf/site_config.h>
+#include <ert/enkf/res_config.h>
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_types.h>
 #include <enkf_tui_main.h>
@@ -158,14 +158,12 @@ int main (int argc , char ** argv) {
     }
     enkf_welcome( model_config_file );
     {
-      site_config_type * site_config = site_config_alloc_load_user_config(
-                                                            model_config_file
-                                                            );
-      enkf_main_type * enkf_main = enkf_main_alloc(model_config_file, site_config, true, true);
+      res_config_type * res_config = res_config_alloc_load(model_config_file);
+      enkf_main_type * enkf_main = enkf_main_alloc(model_config_file, res_config, true, true);
       enkf_main_run_workflows( enkf_main , workflow_list );
       enkf_tui_main_menu(enkf_main); 
       enkf_main_free(enkf_main);
-      site_config_free(site_config);
+      res_config_free(res_config);
     }
 
     stringlist_free( workflow_list );
