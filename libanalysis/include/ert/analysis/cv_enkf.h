@@ -22,7 +22,7 @@
 
 typedef struct cv_enkf_data_struct cv_enkf_data_type;
 
-void * cv_enkf_data_alloc( rng_type * rng );
+void * cv_enkf_data_alloc( );
 void   cv_enkf_data_free( void * arg );
 
 void cv_enkf_init_update( void * arg , 
@@ -31,7 +31,8 @@ void cv_enkf_init_update( void * arg ,
                           const matrix_type * R , 
                           const matrix_type * dObs , 
                           const matrix_type * E , 
-                          const matrix_type * D );
+                          const matrix_type * D,
+                          rng_type * rng);
 
 void cv_enkf_initX(void * module_data , 
                    matrix_type * X , 
@@ -40,7 +41,8 @@ void cv_enkf_initX(void * module_data ,
                    matrix_type * R , 
                    matrix_type * dObs , 
                    matrix_type * E ,
-                   matrix_type * D);
+                   matrix_type * D,
+                   rng_type * rng);
 
 bool        cv_enkf_set_double( void * arg , const char * var_name , double value);
 bool        cv_enkf_set_int( void * arg , const char * var_name , int value);

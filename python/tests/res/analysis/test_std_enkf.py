@@ -25,7 +25,7 @@ class StdEnKFTest(ExtendedTestCase):
 
     def setUp(self):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
-        self.module = AnalysisModule( self.rng , name = "STD_ENKF" )
+        self.module = AnalysisModule(name = "STD_ENKF" )
 
     def toggleKey(self, key):
         self.assertTrue( self.module.hasVar( key ))

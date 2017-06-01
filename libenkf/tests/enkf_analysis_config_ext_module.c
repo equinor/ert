@@ -47,8 +47,7 @@ void test_load_external_module( analysis_config_type * ac , const char * user_na
 
 
 int main(int argc , char ** argv) {
-  rng_type * rng = rng_alloc(MZRAN , INIT_DEFAULT);
-  analysis_config_type * analysis_config = analysis_config_alloc(rng);
+  analysis_config_type * analysis_config = analysis_config_alloc();
 
   for (int i = 1; i < argc; i+= 2) {
     const char * user_name = argv[i];
@@ -57,7 +56,6 @@ int main(int argc , char ** argv) {
   }
 
   analysis_config_free(analysis_config);
-  rng_free( rng );
   exit(0);
 }
 

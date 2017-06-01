@@ -70,11 +70,11 @@ typedef enum {
 
   typedef struct analysis_module_struct analysis_module_type;
 
-  analysis_module_type * analysis_module_alloc_internal__( rng_type * rng , const char * symbol_table , bool verbose , analysis_module_load_status_enum * load_status);
-  analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * symbol_table );
+  analysis_module_type * analysis_module_alloc_internal__( const char * symbol_table , bool verbose , analysis_module_load_status_enum * load_status);
+  analysis_module_type * analysis_module_alloc_internal( const char * symbol_table );
 
-  analysis_module_type * analysis_module_alloc_external__(rng_type * rng , const char * lib_name , bool verbose , analysis_module_load_status_enum * load_status);
-  analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * libname );
+  analysis_module_type * analysis_module_alloc_external__( const char * lib_name , bool verbose , analysis_module_load_status_enum * load_status);
+  analysis_module_type * analysis_module_alloc_external( const char * libname );
 
   void                   analysis_module_free( analysis_module_type * module );
   void                   analysis_module_free__( void * arg);
@@ -86,7 +86,8 @@ typedef enum {
                              matrix_type * R ,
                              matrix_type * dObs ,
                              matrix_type * E ,
-                             matrix_type * D);
+                             matrix_type * D,
+                             rng_type * rng);
 
 
   void analysis_module_updateA(analysis_module_type * module ,
@@ -96,7 +97,8 @@ typedef enum {
                                matrix_type * dObs ,
                                matrix_type * E ,
                                matrix_type * D ,
-                               const module_info_type* module_info);
+                               const module_info_type* module_info,
+                               rng_type * rng);
 
 
   void                   analysis_module_init_update( analysis_module_type * module ,
@@ -105,7 +107,8 @@ typedef enum {
                                                       const matrix_type * R ,
                                                       const matrix_type * dObs ,
                                                       const matrix_type * E ,
-                                                      const matrix_type * D );
+                                                      const matrix_type * D,
+                                                      rng_type * rng);
 
 
   const char           * analysis_module_get_lib_name( const analysis_module_type * module);

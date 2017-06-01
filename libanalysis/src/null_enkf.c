@@ -23,7 +23,6 @@
 #include <ert/util/util.h>
 #include <ert/util/matrix.h>
 #include <ert/util/matrix_blas.h>
-#include <ert/util/rng.h>
 
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
@@ -39,7 +38,8 @@ void null_enkf_initX(void * module_data ,
                     matrix_type * R , 
                     matrix_type * dObs , 
                     matrix_type * E , 
-                    matrix_type * D) {
+                    matrix_type * D,
+                    rng_type * rng) {
 
   matrix_diag_set_scalar( X , 1.0 );
 

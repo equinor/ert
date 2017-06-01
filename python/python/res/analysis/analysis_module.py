@@ -23,8 +23,8 @@ from ecl.util import Matrix
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
     
-    _alloc_external      = AnalysisPrototype("void* analysis_module_alloc_external(rng, char*)" , bind = False)
-    _alloc_internal      = AnalysisPrototype("void* analysis_module_alloc_internal(rng, char*)" , bind = False)
+    _alloc_external      = AnalysisPrototype("void* analysis_module_alloc_external(char*)" , bind = False)
+    _alloc_internal      = AnalysisPrototype("void* analysis_module_alloc_internal(char*)" , bind = False)
     _free                = AnalysisPrototype("void analysis_module_free(analysis_module)")
     _get_lib_name        = AnalysisPrototype("char* analysis_module_get_lib_name(analysis_module)")
     _get_module_internal = AnalysisPrototype("bool analysis_module_internal(analysis_module)")
@@ -37,9 +37,9 @@ class AnalysisModule(BaseCClass):
     _get_int             = AnalysisPrototype("int analysis_module_get_int(analysis_module, char*)")
     _get_bool            = AnalysisPrototype("bool analysis_module_get_bool(analysis_module, char*)")
     _get_str             = AnalysisPrototype("char* analysis_module_get_ptr(analysis_module, char*)")
-    _init_update         = AnalysisPrototype("void analysis_module_init_update(analysis_module, bool_vector , matrix , matrix , matrix , matrix, matrix)")
-    _updateA             = AnalysisPrototype("void analysis_module_updateA(analysis_module, matrix , matrix ,  matrix , matrix, matrix, matrix, void*)")
-    _initX               = AnalysisPrototype("void analysis_module_initX(analysis_module, matrix , matrix , matrix , matrix , matrix, matrix, matrix)")
+    _init_update         = AnalysisPrototype("void analysis_module_init_update(analysis_module, bool_vector, matrix, matrix, matrix, matrix, matrix, rng)")
+    _updateA             = AnalysisPrototype("void analysis_module_updateA(analysis_module, matrix, matrix, matrix, matrix, matrix, matrix, void*, rng)")
+    _initX               = AnalysisPrototype("void analysis_module_initX(analysis_module, matrix, matrix, matrix, matrix, matrix, matrix, matrix, rng)")
 
 
     # The VARIABLE_NAMES field is a completly broken special case
@@ -60,7 +60,7 @@ class AnalysisModule(BaseCClass):
         "CV_PEN_PRESS": {"type": bool, "description": "CV_PEN_PRESS"}
     }
 
-    def __init__(self, rng , name = None , lib_name = None):
+    def __init__(self, name = None , lib_name = None):
         if name is None and lib_name is None:
             raise ValueError("Must supply exactly one of lib or lib_name")
 
@@ -68,9 +68,9 @@ class AnalysisModule(BaseCClass):
             raise ValueError("Must supply exactly one of name or lib_name")
 
         if lib_name:
-            c_ptr = self._alloc_external(rng, lib_name )
+            c_ptr = self._alloc_external(lib_name)
         else:
-            c_ptr = self._alloc_internal( rng , name )
+            c_ptr = self._alloc_internal(name)
             if not c_ptr:
                 raise KeyError("Failed to load internal module:%s" % name)
             
@@ -174,15 +174,15 @@ class AnalysisModule(BaseCClass):
         return self._get_str(var)
 
     
-    def initUpdate(self, mask, S, R, dObs, E, D):
-        self._init_update(mask, S, R, dObs, E, D)
+    def initUpdate(self, mask, S, R, dObs, E, D, rng):
+        self._init_update(mask, S, R, dObs, E, D, rng)
 
         
-    def updateA(self, A, S, R, dObs, E, D):
-        self._updateA(A, S, R, dObs, E, D, None)
+    def updateA(self, A, S, R, dObs, E, D, rng):
+        self._updateA(A, S, R, dObs, E, D, None, rng)
 
         
-    def initX(self, A, S, R, dObs, E, D):
+    def initX(self, A, S, R, dObs, E, D, rng):
         X = Matrix( A.columns() , A.columns())
-        self._initX(X, A, S, R, dObs, E, D)
+        self._initX(X, A, S, R, dObs, E, D, rng)
         return X

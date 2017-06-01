@@ -1158,7 +1158,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
   /*****************************************************************/
 
-  analysis_module_init_update( module , ens_mask , S , R , dObs , E , D );
+  analysis_module_init_update( module , ens_mask , S , R , dObs , E , D, enkf_main->rng);
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
@@ -1199,7 +1199,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     }
 
     if (localA == NULL)
-      analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
+      analysis_module_initX( module , X , NULL , S , R , dObs , E , D, enkf_main->rng);
 
 
     while (!hash_iter_is_complete( dataset_iter )) {
@@ -1215,14 +1215,14 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
         if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
           if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
-            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info );
+            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->rng);
           }
           else
-            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info );
+            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->rng);
         }
         else {
           if (analysis_module_check_option( module , ANALYSIS_USE_A)){
-            analysis_module_initX( module , X , localA , S , R , dObs , E , D );
+            analysis_module_initX( module , X , localA , S , R , dObs , E , D, enkf_main->rng);
           }
 
           matrix_inplace_matmul_mt2( A , X , tp );
@@ -2288,7 +2288,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
   config_parser_type * config = config_alloc();
   config_content_type * content = site_config_alloc_content(site_config, config);
 
-  enkf_main->analysis_config = analysis_config_alloc( enkf_main->rng );
+  enkf_main->analysis_config = analysis_config_alloc();
   analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
   ert_workflow_list_init(enkf_main->workflow_list, content);
 

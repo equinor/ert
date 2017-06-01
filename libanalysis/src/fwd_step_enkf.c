@@ -61,7 +61,6 @@
 struct fwd_step_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
   stepwise_type            * stepwise_data;
-  rng_type                 * rng;
   int                        nfolds;
   long                       option_flags;
   double                     r2_limit;
@@ -92,12 +91,11 @@ void fwd_step_enkf_set_num_threads( fwd_step_enkf_data_type * data , int threads
 }
 
 
-void * fwd_step_enkf_data_alloc( rng_type * rng ) {
+void * fwd_step_enkf_data_alloc( ) {
   fwd_step_enkf_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , FWD_STEP_ENKF_TYPE_ID );
 
   data->stepwise_data = NULL;
-  data->rng          = rng;
   data->nfolds       = DEFAULT_NFOLDS;
   data->r2_limit     = DEFAULT_R2_LIMIT;
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_SCALE_DATA;
@@ -248,7 +246,8 @@ void fwd_step_enkf_updateA(void * module_data ,
                            matrix_type * dObs ,
                            matrix_type * E ,
                            matrix_type * D ,
-                           const module_info_type* module_info) {
+                           const module_info_type* module_info,
+                           rng_type * rng) {
 
 
 
@@ -321,7 +320,7 @@ void fwd_step_enkf_updateA(void * module_data ,
         const int* active_indices = module_data_block_get_active_indices(data_block);
         int active_index = 0;
         bool all_active = active_indices == NULL; /* Inactive are not present in A */
-        stepwise_type * stepwise_data = stepwise_alloc1(ens_size, nd , fwd_step_data->rng, St, Et);
+        stepwise_type * stepwise_data = stepwise_alloc1(ens_size, nd , rng, St, Et);
 
         /*Update values of y */
         /*Start of the actual update */
