@@ -118,9 +118,9 @@ class build_class():
                 rep_path = os.path.join(basedir, rep_name)
                 cwd = os.getcwd()
                 os.chdir(rep_path)
-                s = "refs/pull/%d/head:x" % pr_num
+                s = "refs/pull/%d/head:%d" % (pr_num, pr_num)
                 subprocess.check_call(["git", "fetch", "-f", "https://github.com/Statoil/%s" % rep_name, s])
-                subprocess.check_call(["git", "merge", "x"])
+                subprocess.check_call(["git", "merge", "%d" % pr_num])
                 os.chdir(cwd) 
             
     def compile_and_build(self, basedir):
