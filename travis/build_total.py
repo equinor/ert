@@ -112,13 +112,12 @@ class build_class():
     def clone_merge_repository(self, rep_name, pr_num, basedir):
         if (self.rep_name != rep_name):
             subprocess.check_call(["git", "clone", "https://github.com/Statoil/%s" % rep_name])
+            
             if (pr_num >= 0):
                 rep_path = os.path.join(basedir, rep_name)
                 cwd = os.getcwd()
                 os.chdir(rep_path)
                 s = "refs/pull/%d/head:x" % pr_num
-                subprocess.check_call(["git", "config", "user.email", "you@example.com"])
-                subprocess.check_call(["git", "config", "user.name", "Your Name"])
                 subprocess.check_call(["git", "fetch", "-f", "https://github.com/Statoil/%s" % rep_name, s])
                 subprocess.check_call(["git", "merge", "x"])
                 os.chdir(cwd) 
@@ -148,7 +147,10 @@ class build_class():
         os.chdir(cwd) 
 
     def compile_ecl(self, basedir, install_dir):
-        source_dir = os.path.join(basedir, "libecl")
+        if (self.repository == 'ecl'):
+            source_dir = basedir
+        else:
+            source_dir = os.path.join(basedir, "ecl")
         if (self.repository == 'ecl'):
             test = True
         else:
@@ -156,7 +158,10 @@ class build_class():
         self.build(source_dir, install_dir, test)
 
     def compile_res(self, basedir, install_dir):
-        source_dir = os.path.join(basedir, "libres")
+        if (self.repository == 'res'):
+            source_dir = basedir
+        else:
+            source_dir = os.path.join(basedir, "res")
         if (self.repository == 'ecl' or self.repository == 'res'):
             test = True
         else:
@@ -164,13 +169,16 @@ class build_class():
         self.build(source_dir, install_dir, test)
 
     def compile_ert(self, basedir, install_dir):
-        source_dir = os.path.join(basedir, "ert")
+        if (self.repository == 'ert'):
+            source_dir = basedir
+        else:
+            source_dir = os.path.join(basedir, "ert")
         self.build(source_dir, install_dir, True)
         
 
 def main():
     
-    os.chdir("..")
+    
     basedir = os.getcwd()
     pr_build = build_class(sys.argv[1], basedir)
     sys.exit(0)
