@@ -1,6 +1,6 @@
-from res.server import SimulationContext
-from res.server import ErtRPCClient
-from res.server import ErtRPCServer
+from ert.server import SimulationContext
+from ert.server import ErtRPCClient
+from ert.server import ErtRPCServer
 
 from ecl.test import ExtendedTestCase
 
