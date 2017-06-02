@@ -14,9 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.enkf import ResConfig, SiteConfig
-
 from ecl.test import ExtendedTestCase, TestAreaContext
+
+from res.enkf import ResConfig, SiteConfig, AnalysisConfig
 
 class ResConfigTest(ExtendedTestCase):
 
@@ -40,3 +40,6 @@ class ResConfigTest(ExtendedTestCase):
 
             self.assertIsNotNone(res_config.site_config)
             self.assertTrue(isinstance(res_config.site_config, SiteConfig))
+
+            self.assertIsNotNone(res_config.analysis_config)
+            self.assertTrue(isinstance(res_config.analysis_config, AnalysisConfig))

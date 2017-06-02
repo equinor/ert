@@ -19,19 +19,22 @@
 #include <ert/enkf/res_config.h>
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/rng_config.h>
+#include <ert/enkf/analysis_config.h>
 
 struct res_config_struct {
   char * user_config_file;
-  site_config_type * site_config;
-  rng_config_type  * rng_config;
+  site_config_type     * site_config;
+  rng_config_type      * rng_config;
+  analysis_config_type * analysis_config;
 };
 
 static res_config_type * res_config_alloc_empty() {
   res_config_type * res_config = util_malloc(sizeof * res_config);
   res_config->user_config_file = NULL;
 
-  res_config->site_config = NULL;
-  res_config->rng_config  = NULL;
+  res_config->site_config     = NULL;
+  res_config->rng_config      = NULL;
+  res_config->analysis_config = NULL;
 
   return res_config;
 }
@@ -43,13 +46,18 @@ res_config_type * res_config_alloc_load(const char * config_file) {
 
   res_config->site_config = site_config_alloc_load_user_config(config_file);
   res_config->rng_config  = rng_config_alloc_load_user_config(config_file);
+  res_config->analysis_config = analysis_config_alloc_load(config_file);
 
   return res_config;
 }
 
 void res_config_free(res_config_type * res_config) {
+  if(!res_config)
+    return;
+
   site_config_free(res_config->site_config);
   rng_config_free(res_config->rng_config);
+  analysis_config_free(res_config->analysis_config);
 
   free(res_config->user_config_file);
   free(res_config);
@@ -67,6 +75,16 @@ rng_config_type * res_config_get_rng_config(
   return res_config->rng_config;
 }
 
+analysis_config_type * res_config_get_analysis_config(
+                    const res_config_type * res_config
+                    ) {
+  return res_config->analysis_config;
+}
+
 const char * res_config_get_user_config_file(const res_config_type * res_config) {
   return res_config->user_config_file;
+}
+
+const char * res_config_get_site_config_file(const res_config_type * res_config) {
+  return site_config_get_config_file(res_config->site_config);
 }

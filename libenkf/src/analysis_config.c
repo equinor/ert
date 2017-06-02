@@ -36,6 +36,8 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/analysis_iter_config.h>
+#include <ert/enkf/site_config.h>
+#include <ert/enkf/model_config.h>
 
 
 #define UPDATE_OVERLAP_KEY      "OVERLAP_LIMIT"
@@ -619,8 +621,36 @@ analysis_config_type * analysis_config_alloc(void) {
   return config;
 }
 
+static analysis_config_type * analysis_config_alloc_load_site_config() {
+  analysis_config_type * analysis_config = analysis_config_alloc();
 
+  config_parser_type * config = config_alloc();
+  config_content_type * content = site_config_alloc_content(config);
 
+  analysis_config_load_all_external_modules_from_config(analysis_config, content);
+
+  config_free(config);
+  config_content_free(content);
+
+  return analysis_config;
+}
+
+analysis_config_type * analysis_config_alloc_load(const char * user_config_file) {
+  analysis_config_type * analysis_config = analysis_config_alloc_load_site_config();
+
+  if(user_config_file) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(user_config_file, config);
+
+    analysis_config_load_internal_modules(analysis_config);
+    analysis_config_init(analysis_config, content);
+
+    config_content_free(content);
+    config_free(config);
+  }
+
+  return analysis_config;
+}
 /*****************************************************************/
 /*
   Keywords for the analysis - all optional. The analysis_config object

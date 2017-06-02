@@ -28,7 +28,9 @@ class ResConfig(BaseCClass):
     _free  = EnkfPrototype("void res_config_free(res_config)")
 
     _user_config_file = EnkfPrototype("char* res_config_get_user_config_file(res_config)")
+
     _site_config      = EnkfPrototype("site_config_ref res_config_get_site_config(res_config)")
+    _analysis_config  = EnkfPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
 
     def __init__(self, user_config_file):
         if user_config_file is not None and not isfile(user_config_file):
@@ -57,3 +59,7 @@ class ResConfig(BaseCClass):
     @property
     def site_config(self):
         return self._site_config()
+
+    @property
+    def analysis_config(self):
+        return self._analysis_config()

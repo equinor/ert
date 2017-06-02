@@ -85,6 +85,8 @@ class EnKFMain(BaseCClass):
 
         if res_config is None:
             res_config = ResConfig(model_config)
+            res_config.convertToCReference(self)
+
         if res_config is None or not isinstance(res_config, ResConfig):
             raise TypeError("Failed to construct EnKFMain instance due to invalid res_config.")
 
@@ -173,7 +175,7 @@ class EnKFMain(BaseCClass):
         return self._get_site_config( ).setParent(self)
 
     def resConfig(self):
-        return self._get_res_config( )
+        return self._get_res_config( ).setParent(self)
 
     def eclConfig(self):
         """ @rtype: EclConfig """

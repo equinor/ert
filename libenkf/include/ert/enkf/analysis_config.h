@@ -55,6 +55,7 @@ stringlist_type      * analysis_config_alloc_module_names( analysis_config_type 
 const char           * analysis_config_get_log_path( const analysis_config_type * config );
 void                   analysis_config_init( analysis_config_type * analysis , const config_content_type * config);
 analysis_config_type * analysis_config_alloc(void);
+analysis_config_type * analysis_config_alloc_load(const char * user_config_file);
 void                   analysis_config_free( analysis_config_type * );
 bool                   analysis_config_get_merge_observations(const analysis_config_type * );
 double                 analysis_config_get_alpha(const analysis_config_type * config);

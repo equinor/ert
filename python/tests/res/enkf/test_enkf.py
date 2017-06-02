@@ -77,6 +77,15 @@ class EnKFTest(ExtendedTestCase):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             EnKFMain(None)
 
+    def test_default_res_config(self):
+        with TestAreaContext("enkf_test", store_area=True) as work_area:
+            work_area.copy_directory(self.case_directory)
+            main = EnKFMain("simple_config/minimum_config")
+
+            self.assertIsNotNone(main.resConfig)
+            self.assertIsNotNone(main.siteConfig)
+            self.assertIsNotNone(main.analysisConfig)
+
     def test_invalid_res_config(self):
         with TestAreaContext("enkf_test") as work_area:
             with self.assertRaises(TypeError):

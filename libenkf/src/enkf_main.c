@@ -152,7 +152,6 @@ struct enkf_main_struct {
   model_config_type      * model_config;
   ecl_config_type        * ecl_config;
   const res_config_type  * res_config;
-  analysis_config_type   * analysis_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type     * templates;          /* Run time templates */
   config_settings_type   * plot_config;        /* Information about plotting. */
@@ -207,7 +206,7 @@ UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main , ENKF_MAIN_ID)
 
 analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
-  return enkf_main->analysis_config;
+  return res_config_get_analysis_config(enkf_main->res_config);
 }
 
 bool enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
@@ -326,7 +325,7 @@ void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_fi
 
   if (enkf_obs_load(enkf_main->obs ,
                     obs_config_file ,
-                    analysis_config_get_std_cutoff(enkf_main->analysis_config))) {
+                    analysis_config_get_std_cutoff(enkf_main_get_analysis_config(enkf_main)))) {
     enkf_main_update_local_updates( enkf_main );
   } else
       fprintf(stderr,"** Warning: failed to load observation data from: %s \n",obs_config_file);
@@ -376,7 +375,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   enkf_main_close_fs( enkf_main );
   res_log_close();
 
-  analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
   model_config_free( enkf_main->model_config);
 
@@ -962,7 +960,7 @@ static void assert_size_equal(int ens_size , const bool_vector_type * ens_mask) 
 
 // Opens and returns a log file.  A subroutine of enkf_main_UPDATE.
 static FILE * enkf_main_log_step_list(enkf_main_type * enkf_main, const int_vector_type * step_list) {
-  const char * log_path = analysis_config_get_log_path(enkf_main->analysis_config);
+  const char * log_path = analysis_config_get_log_path(enkf_main_get_analysis_config(enkf_main));
   char * log_file;
   if (int_vector_size(step_list) == 1)
     log_file = util_alloc_sprintf("%s%c%04d", log_path, UTIL_PATH_SEP_CHAR, int_vector_iget(step_list, 0));
@@ -1046,7 +1044,8 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
         */
         local_obsdata_reset_tstep_list(obsdata, step_list);
 
-        if (analysis_config_get_std_scale_correlated_obs(enkf_main->analysis_config)) {
+        const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+        if (analysis_config_get_std_scale_correlated_obs(analysis_config)) {
           double scale_factor = enkf_obs_scale_correlated_std(enkf_main->obs, source_fs,
                                                               ens_active_list, obsdata);
           res_log_add_fmt_message(1, NULL,
@@ -1056,8 +1055,8 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
         enkf_obs_get_obs_and_measure_data(enkf_main->obs, source_fs, obsdata,
                                           ens_active_list, meas_data, obs_data);
 
-        double alpha = analysis_config_get_alpha(enkf_main->analysis_config);
-        double std_cutoff = analysis_config_get_std_cutoff(enkf_main->analysis_config);
+        double alpha = analysis_config_get_alpha(analysis_config);
+        double std_cutoff = analysis_config_get_std_cutoff(analysis_config);
         enkf_analysis_deactivate_outliers(obs_data, meas_data,
                                           std_cutoff, alpha, enkf_main->verbose);
 
@@ -1133,7 +1132,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
 
-  analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
+  analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  analysis_module_type * module = analysis_config_get_active_module(analysis_config);
   if ( local_ministep_has_analysis_module (ministep))
     module = local_ministep_get_analysis_module (ministep);
 
@@ -1174,7 +1174,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
 
     // Store PC:
-    if (analysis_config_get_store_PC( enkf_main->analysis_config )) {
+    if (analysis_config_get_store_PC(analysis_config)) {
       double truncation    = -1;
       int ncomp            = active_ens_size - 1;
       matrix_type * PC     = matrix_alloc(1,1);
@@ -1185,8 +1185,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
       enkf_main_get_PC( S , dObs , truncation , ncomp , PC , PC_obs , singular_values);
       {
-        char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , obsdata_name);
-        char * full_path = util_alloc_filename( analysis_config_get_PC_path( enkf_main->analysis_config) , filename , NULL );
+        char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename(analysis_config) , step1 , step2 , obsdata_name);
+        char * full_path = util_alloc_filename( analysis_config_get_PC_path(analysis_config) , filename , NULL );
 
         enkf_main_fprintf_PC( full_path , PC , PC_obs);
 
@@ -1892,7 +1892,7 @@ ert_init_context_type * enkf_main_alloc_ert_init_context(const enkf_main_type * 
 void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 
 
-  bool single_node_update = analysis_config_get_single_node_update( enkf_main->analysis_config );
+  bool single_node_update = analysis_config_get_single_node_update(enkf_main_get_analysis_config(enkf_main));
   local_config_type * local_config = enkf_main->local_config;
   local_config_clear( local_config );
   {
@@ -2097,7 +2097,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->templates          = ert_templates_alloc( enkf_main->subst_list );
   enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main->subst_list );
   enkf_main->hook_manager       = hook_manager_alloc( enkf_main->workflow_list );
-  enkf_main->analysis_config    = NULL;
 
   enkf_main_init_subst_list( enkf_main );
   enkf_main_set_verbose( enkf_main , true );
@@ -2283,13 +2282,9 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
 
 
 static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
-  const site_config_type * site_config = enkf_main_get_site_config(enkf_main);
-
   config_parser_type * config = config_alloc();
-  config_content_type * content = site_config_alloc_content(site_config, config);
+  config_content_type * content = site_config_alloc_content(config);
 
-  enkf_main->analysis_config = analysis_config_alloc();
-  analysis_config_load_all_external_modules_from_config(enkf_main->analysis_config, content);
   ert_workflow_list_init(enkf_main->workflow_list, content);
 
   config_free(config);
@@ -2473,9 +2468,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   enkf_main_init_subst_list(enkf_main);
   ert_workflow_list_init(enkf_main->workflow_list, content);
 
-  analysis_config_load_internal_modules(enkf_main->analysis_config);
-  analysis_config_init(enkf_main->analysis_config, content);
-
   ecl_config_init(enkf_main->ecl_config, content);
   config_settings_apply(enkf_main->plot_config, content);
 
@@ -2570,7 +2562,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
 
 enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_type * res_config, bool strict , bool verbose) {
-
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->res_config = res_config;
 
