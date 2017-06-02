@@ -165,9 +165,6 @@ class build_class():
         source_dir = os.path.join(basedir, "ert")
         self.build(source_dir, install_dir, True)
         
-    
-   
-     
 
 def main():
     
