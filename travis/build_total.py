@@ -113,7 +113,7 @@ class build_class():
         if (self.rep_name != rep_name):
 
             subprocess.check_call(["git", "clone", "https://github.com/Statoil/%s" % rep_name])
-            
+
             if (pr_num >= 0):
                 rep_path = os.path.join(basedir, rep_name)
                 cwd = os.getcwd()
@@ -178,8 +178,9 @@ class build_class():
         
 
 def main():
-    
-    
+    subprocess.check_call(["git", "config", "user.email", "you@example.com"])
+    subprocess.check_call(["git", "config", "user.name", "Your Name"])
+
     basedir = os.getcwd()
     pr_build = build_class(sys.argv[1], basedir)
     sys.exit(0)
