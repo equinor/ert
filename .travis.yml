@@ -60,4 +60,4 @@ env:
 
 
 script:
-  - TRAVIS/build_total.py ert
+  - travis/build_total.py ert

@@ -11,7 +11,7 @@ import subprocess
 class build_class():
 
     def __init__(self, rep, basedir):
-        if (rep == 'ecl' or rep == 'res' or rep == 'ert'):
+        if rep in ('ecl', 'res', 'ert'):
             self.repository = rep
             if (rep == 'ecl'):
                 self.rep_name = 'libecl'
@@ -22,7 +22,6 @@ class build_class():
             self.ecl_pr_num = -1
             self.res_pr_num = -1
             self.ert_pr_num = -1
-            self.pr_description = None
             self.access_pr()
             self.clone_fetch_merge(basedir)
             self.compile_and_build(basedir)
@@ -145,6 +144,7 @@ class build_class():
         if test:
             subprocess.check_call(["ctest"])
         subprocess.check_call(["make" , "install"])
+        subprocess.check_call(["bin/test_install"])
         os.chdir(cwd) 
 
     def compile_ecl(self, basedir, install_dir):
