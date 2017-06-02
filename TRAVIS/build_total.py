@@ -118,6 +118,8 @@ class build_class():
                 cwd = os.getcwd()
                 os.chdir(rep_path)
                 s = "refs/pull/%d/head:x" % pr_num
+                subprocess.check_call(["git", "config", "user.email", "you@example.com"])
+                subprocess.check_call(["git", "config", "user.name", "Your Name"])
                 subprocess.check_call(["git", "fetch", "https://github.com/Statoil/%s" % rep_name, s])
                 subprocess.check_call(["git", "merge", "x"])
                 os.chdir(cwd) 
