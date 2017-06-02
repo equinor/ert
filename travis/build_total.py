@@ -111,6 +111,7 @@ class build_class():
 
     def clone_merge_repository(self, rep_name, pr_num, basedir):
         if (self.rep_name != rep_name):
+
             subprocess.check_call(["git", "clone", "https://github.com/Statoil/%s" % rep_name])
             
             if (pr_num >= 0):
