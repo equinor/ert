@@ -142,7 +142,7 @@ class build_class():
         subprocess.check_call(["make"])
         if test:
             subprocess.check_call(["ctest"])
-        subprocess.check_call(["make"])
+        subprocess.check_call(["make install"])
         os.chdir(cwd) 
 
     def compile_ecl(self, basedir, install_dir):
