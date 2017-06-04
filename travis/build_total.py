@@ -24,7 +24,7 @@ class build_class():
             self.res_pr_num = -1
             self.ert_pr_num = -1
             self.access_pr()
-            #self.clone_fetch_merge(basedir)
+            self.clone_fetch_merge(basedir)
             #self.compile_and_build(basedir)
            
         else:
