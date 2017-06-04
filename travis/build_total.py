@@ -119,7 +119,7 @@ class build_class():
                 subprocess.check_call(["git", "config", "user.email", "you@example.com"])
                 subprocess.check_call(["git", "config", "user.name", "Your Name"])
                 s = "refs/pull/%d/head:%d" % (pr_num, pr_num)
-                subprocess.check_call(["git", "fetch", "-f", "https://github.com/Statoil/%s" % rep_name, s])
+                subprocess.check_call(["git", "fetch", "-f", "origin", s])
                 subprocess.check_call(["git", "merge", "%d" % pr_num, '-m"A MESSAGE"'])
                 os.chdir(cwd) 
             
