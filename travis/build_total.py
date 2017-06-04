@@ -24,8 +24,8 @@ class build_class():
             self.res_pr_num = -1
             self.ert_pr_num = -1
             self.access_pr()
-            self.clone_fetch_merge(basedir)
-            self.compile_and_build(basedir)
+            #self.clone_fetch_merge(basedir)
+            #self.compile_and_build(basedir)
            
         else:
             raise Exception("Error: invalid repository type.")
@@ -151,7 +151,7 @@ class build_class():
         if (self.repository == 'ecl'):
             source_dir = basedir
         else:
-            source_dir = os.path.join(basedir, "ecl")
+            source_dir = os.path.join(basedir, "libecl")
         if (self.repository == 'ecl'):
             test = True
         else:
@@ -162,7 +162,7 @@ class build_class():
         if (self.repository == 'res'):
             source_dir = basedir
         else:
-            source_dir = os.path.join(basedir, "res")
+            source_dir = os.path.join(basedir, "libres")
         if (self.repository == 'ecl' or self.repository == 'res'):
             test = True
         else:
@@ -180,6 +180,7 @@ class build_class():
 def main():
     basedir = os.getcwd()
     pr_build = build_class(sys.argv[1], basedir)
+    pr_build.display()
     sys.exit(0)
    
         
