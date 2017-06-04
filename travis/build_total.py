@@ -25,7 +25,7 @@ class build_class():
             self.ert_pr_num = -1
             self.access_pr()
             self.clone_fetch_merge(basedir)
-            #self.compile_and_build(basedir)
+            self.compile_and_build(basedir)
            
         else:
             raise Exception("Error: invalid repository type.")
