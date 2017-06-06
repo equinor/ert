@@ -135,8 +135,18 @@ class build_class():
         build_dir = os.path.join(source_dir, "build")
         if not os.path.isdir(build_dir):
             os.makedirs(build_dir)
-        cmake_args = ["cmake", source_dir, "-DBUILD_TESTS=ON", "-DBUILD_PYTHON=ON", "-DERT_BUILD_CXX=ON", "-DBUILD_APPLICATIONS=ON", "-DCMAKE_INSTALL_PREFIX=%s" % install_dir, 
-                      "-DINSTALL_ERT_LEGACY=ON", "-DCMAKE_PREFIX_PATH=%s" % install_dir, "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir]
+
+        cmake_args = ["cmake",
+                      source_dir,
+                      "-DBUILD_TESTS=ON",
+                      "-DBUILD_PYTHON=ON",
+                      "-DERT_BUILD_CXX=ON",
+                      "-DBUILD_APPLICATIONS=ON",
+                      "-DCMAKE_INSTALL_PREFIX=%s" % install_dir, 
+                      "-DINSTALL_ERT_LEGACY=ON",
+                      "-DCMAKE_PREFIX_PATH=%s" % install_dir,
+                      "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir]
+
         cwd = os.getcwd()
         os.chdir(build_dir)
         subprocess.check_call(cmake_args)
