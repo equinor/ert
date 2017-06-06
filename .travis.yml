@@ -32,9 +32,9 @@ install:
     # We do this conditionally because it saves us some downloading if the version is the same.
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
         if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-          wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
+          wget https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -O miniconda.sh;
         else
-          wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+          wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
         fi
       else
         if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -59,28 +59,7 @@ env:
      - ERT_SHOW_BACKTRACE=1
 
 before_script:
-  - pushd ..
-  - git clone https://github.com/Statoil/libecl
-  - mkdir libecl/build
-  - pushd libecl/build
-  - export LIBECL_INSTALL_ROOT=$(pwd)/install
-  - export LIBRES_INSTALL_ROOT=$(pwd)/install
-  - cmake .. -DCMAKE_INSTALL_PREFIX=$LIBECL_INSTALL_ROOT
-  - make install
-  - popd
-  - popd
-  - mkdir build
-  - pushd build
-  - export PYTHONPATH=$LIBECL_INSTALL_ROOT/lib/python2.7/dist-packages:$(pwd)/lib/python2.7/dist-packages
-  - cmake   -DCMAKE_INSTALL_PREFIX=$LIBRES_INSTALL_ROOT
-            -DCMAKE_PREFIX_PATH=$LIBECL_INSTALL_ROOT
-            -DCMAKE_MODULE_PATH=$LIBECL_INSTALL_ROOT/share/cmake/Modules
-            -DBUILD_SHARED_LIBS=ON
-            -DBUILD_TESTS=ON -DBUILD_PYTHON=ON -DERT_DOC=OFF -DINSTALL_ERT_LEGACY=ON
-            ..
+  - wget https://raw.githubusercontent.com/Statoil/ert/master/travis/build_total.py
 
 script:
-  - make
-  - ctest --output-on-failure
-  - make install
-  - bin/test_install
+  - python build_total.py res
