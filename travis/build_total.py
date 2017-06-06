@@ -93,7 +93,7 @@ class build_class():
         response = requests.get( url , {"access_token" : self.github_api_token})
     
         if response.status_code != 200:
-            sys.exit("HTTP GET from GitHub failed")
+            sys.exit("HTTP GET from GitHub failed: %s" % response.text )
             
         content = json.loads( response.content )
         self.pr_description = content["body"]
