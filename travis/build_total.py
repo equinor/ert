@@ -92,6 +92,9 @@ class build_class():
 
         response = requests.get( url , {"access_token" : self.github_api_token})
     
+        if response.status_code != 200:
+            sys.exit("HTTP GET from GitHub failed")
+            
         content = json.loads( response.content )
         self.pr_description = content["body"]
         print "PULL REQUEST: %d\n%s" % (self.pr_number, self.pr_description)
