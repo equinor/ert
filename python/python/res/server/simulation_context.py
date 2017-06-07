@@ -13,7 +13,7 @@ class SimulationContext(object):
         
         max_runtime = ert.analysisConfig().get_max_runtime()
                
-        job_queue = ert.get_queue_config().alloc_job_queue()
+        job_queue = ert.get_queue_config().create_job_queue()
         self._queue_manager = JobQueueManager(job_queue)
         self._queue_manager.startQueue(size, verbose=verbose)
         self._run_args = {}

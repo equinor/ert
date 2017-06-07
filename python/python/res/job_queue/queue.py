@@ -77,6 +77,15 @@ class JobQueue(BaseCClass):
     _get_job_status  = QueuePrototype("int job_queue_iget_job_status(job_queue, int)")
 
 
+    def __repr__(self):
+        nrun, ncom, nwait, npend = (self._num_running(),
+                                    self._num_complete(),
+                                    self._num_waiting(),
+                                    self._num_pending())
+        isrun = 'running' if self.isRunning() else 'not running'
+        cnt = '%s, num_running=%d, num_complete=%d, num_waiting=%d, num_pending=%d, active=%d'
+        return self._create_repr(cnt % (isrun, nrun, ncom, nwait, npend, len(self)))
+
     def __init__(self, driver , max_submit=1, size=0):
         """
         Short doc...

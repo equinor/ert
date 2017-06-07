@@ -97,7 +97,11 @@ static void * enkf_main_smoother_JOB__( void * self , int iter , const stringlis
       fprintf(stderr, "** Warning: Function %s : Second argument must be a bool value. Exiting job\n", __func__);
       return NULL;
   }
-  enkf_main_run_smoother( enkf_main , source_fs , target_case , iactive , iter , rerun);
+
+  const queue_config_type * queue_config = enkf_main_get_queue_config(enkf_main);
+  job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
+  enkf_main_run_smoother( enkf_main , job_queue, source_fs , target_case , iactive , iter , rerun);
+  job_queue_free(job_queue);
   bool_vector_free( iactive );
   return NULL;
 }
@@ -127,7 +131,11 @@ void * enkf_main_iterated_smoother_JOB( void * self , const stringlist_type * ar
   analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
   int num_iter = analysis_iter_config_get_num_iterations(iter_config);
 
-  enkf_main_run_iterated_ES( enkf_main , num_iter);
+  const queue_config_type * queue_config = enkf_main_get_queue_config(enkf_main);
+  job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
+  enkf_main_run_iterated_ES(enkf_main, job_queue, num_iter);
+  job_queue_free(job_queue);
+
   return NULL;
 }
 

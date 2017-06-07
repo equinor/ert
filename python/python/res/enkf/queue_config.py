@@ -32,7 +32,7 @@ class QueueConfig(BaseCClass):
         c_ptr = self._alloc()
         super(QueueConfig, self).__init__(c_ptr)
 
-    def alloc_job_queue(self):
+    def create_job_queue(self):
         return self._alloc_job_queue()
 
     def free(self):
