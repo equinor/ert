@@ -41,9 +41,9 @@ class build_class():
 
 
     def parse_pr_description(self):
-        ecl_word = "^Statoil/libecl#(\d+)"
-        res_word = "^Statoil/libres#(\d+)"
-        ert_word = "^Statoil/ert#(\d+)"
+        ecl_word = "Statoil/libecl#(\d+)"
+        res_word = "Statoil/libres#(\d+)"
+        ert_word = "Statoil/ert#(\d+)"
         st = self.pr_description
         m = re.search(ecl_word, st, re.MULTILINE)
         if m:
