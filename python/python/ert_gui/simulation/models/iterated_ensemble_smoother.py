@@ -17,7 +17,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return self.ert().analysisConfig().getModule(module_name)
 
 
-    def runAndPostProcess(self, active_realization_mask, phase, phase_count, mode):
+    def _runAndPostProcess(self, job_queue, active_realization_mask, phase, phase_count, mode):
         self.setPhase(phase, "Running iteration %d of %d simulation iterations..." % (phase, phase_count - 1), indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
@@ -25,7 +25,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, active_realization_mask, mode, phase)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
@@ -53,7 +53,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Post processing update...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_UPDATE)
 
-    def runSimulations(self, arguments):
+    def runSimulations(self, job_queue, arguments):
         phase_count = getNumberOfIterations() + 1
         self.setPhaseCount(phase_count)
 
@@ -68,7 +68,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             self.ert().getEnkfFsManager().switchFileSystem(initial_fs)
             self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(source_fs, 0)
 
-        self.runAndPostProcess(active_realization_mask, 0, phase_count, EnkfInitModeEnum.INIT_CONDITIONAL)
+        self._runAndPostProcess(job_queue, active_realization_mask, 0, phase_count, EnkfInitModeEnum.INIT_CONDITIONAL)
 
         self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat( target_case_format )
 
@@ -91,12 +91,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
             if analysis_success:
                 self.ert().getEnkfFsManager().switchFileSystem(target_fs)
-                self.runAndPostProcess(active_realization_mask, current_iteration, phase_count, EnkfInitModeEnum.INIT_NONE)
+                self._runAndPostProcess(job_queue, active_realization_mask, current_iteration, phase_count, EnkfInitModeEnum.INIT_NONE)
                 num_tries = 0
                 current_iteration += 1
             else:
                 self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(target_fs, 0)
-                self.runAndPostProcess(active_realization_mask, current_iteration - 1 , phase_count, EnkfInitModeEnum.INIT_NONE)
+                self._runAndPostProcess(job_queue, active_realization_mask, current_iteration - 1 , phase_count, EnkfInitModeEnum.INIT_NONE)
                 num_tries += 1
 
 

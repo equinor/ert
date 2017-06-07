@@ -22,7 +22,7 @@ class BaseRunModel(object):
         self._indeterminate = False
         self._fail_message = ""
         self._failed = False
-        self._job_queue = self.ert().get_queue_config().create_job_queue()
+        self.__job_queue = None
         self.reset( )
 
 
@@ -30,20 +30,26 @@ class BaseRunModel(object):
         """ @rtype: res.enkf.EnKFMain"""
         return ERT.ert
 
-    def reset(self):
-        self._failed = False
+    @property
+    def _job_queue(self):
+        if self.__job_queue is None:
+            self.__job_queue = self.ert().get_queue_config().create_job_queue()
+        return self.__job_queue
 
+    def reset(self):
+        self.__job_queue = None
+        self._failed = False
 
     def startSimulations(self, run_arguments):
         try:
-            self.runSimulations(run_arguments)
+            self.runSimulations(self._job_queue, run_arguments)
         except ErtRunError as e:
             self._failed = True
             self._fail_message = str(e)
             self._simulationEnded()
 
 
-    def runSimulations(self, run_arguments):
+    def runSimulations(self, job_queue, run_arguments):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
 

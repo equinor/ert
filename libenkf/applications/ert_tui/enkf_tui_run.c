@@ -48,21 +48,31 @@
 
 void enkf_tui_run_smoother(void * arg) {
   enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
+
+  const queue_config_type * queue_config = enkf_main_get_queue_config(enkf_main);
+  job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
+
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = bool_vector_alloc( ens_size , true );
   enkf_fs_type * source_fs = enkf_main_tui_get_fs( enkf_main );
-  enkf_main_run_smoother(enkf_main , source_fs , "AUTO-SMOOTHER" , iactive , 0 , true );
+  enkf_main_run_smoother(enkf_main, job_queue, source_fs, "AUTO-SMOOTHER" , iactive , 0 , true );
   bool_vector_free( iactive );
+  job_queue_free(job_queue);
 }
 
 
 
 void enkf_tui_run_iterated_ES(void * arg) {
   enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
+  const queue_config_type * queue_config = enkf_main_get_queue_config(enkf_main);
+  job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
+
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
   int num_iter = analysis_iter_config_get_num_iterations(iter_config);
-  enkf_main_run_iterated_ES(enkf_main , num_iter );
+  enkf_main_run_iterated_ES(enkf_main, job_queue, num_iter );
+
+  job_queue_free(job_queue);
 }
 
 

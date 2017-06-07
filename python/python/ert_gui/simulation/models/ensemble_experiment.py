@@ -7,7 +7,7 @@ class EnsembleExperiment(BaseRunModel):
     def __init__(self):
         super(EnsembleExperiment, self).__init__("Ensemble Experiment")
 
-    def runSimulations(self, arguments):
+    def runSimulations(self, job_queue,  arguments):
         self.setPhase(0, "Running simulations...", indeterminate=False)
         active_realization_mask = arguments["active_realizations"]
 
@@ -17,7 +17,7 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName("Running ensemble experiment...", indeterminate=False)
 
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(job_queue, active_realization_mask)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
