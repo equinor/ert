@@ -92,6 +92,9 @@ class build_class():
 
         response = requests.get( url , {"access_token" : self.github_api_token})
     
+        if response.status_code != 200:
+            sys.exit("HTTP GET from GitHub failed: %s" % response.text )
+            
         content = json.loads( response.content )
         self.pr_description = content["body"]
         print "PULL REQUEST: %d\n%s" % (self.pr_number, self.pr_description)
@@ -132,8 +135,18 @@ class build_class():
         build_dir = os.path.join(source_dir, "build")
         if not os.path.isdir(build_dir):
             os.makedirs(build_dir)
-        cmake_args = ["cmake", source_dir, "-DBUILD_TESTS=ON", "-DBUILD_PYTHON=ON", "-DERT_BUILD_CXX=ON", "-DBUILD_APPLICATIONS=ON", "-DCMAKE_INSTALL_PREFIX=%s" % install_dir, 
-                      "-DINSTALL_ERT_LEGACY=ON", "-DCMAKE_PREFIX_PATH=%s" % install_dir, "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir]
+
+        cmake_args = ["cmake",
+                      source_dir,
+                      "-DBUILD_TESTS=ON",
+                      "-DBUILD_PYTHON=ON",
+                      "-DERT_BUILD_CXX=ON",
+                      "-DBUILD_APPLICATIONS=ON",
+                      "-DCMAKE_INSTALL_PREFIX=%s" % install_dir, 
+                      "-DINSTALL_ERT_LEGACY=ON",
+                      "-DCMAKE_PREFIX_PATH=%s" % install_dir,
+                      "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir]
+
         cwd = os.getcwd()
         os.chdir(build_dir)
         subprocess.check_call(cmake_args)
