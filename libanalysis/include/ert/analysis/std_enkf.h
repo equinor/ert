@@ -29,7 +29,7 @@ extern "C" {
   bool     std_enkf_has_var( const void * arg, const char * var_name);
 
   double   std_enkf_get_truncation( std_enkf_data_type * data );
-  void   * std_enkf_data_alloc( rng_type * rng);
+  void   * std_enkf_data_alloc( );
   void     std_enkf_data_free( void * module_data );
 
   bool   std_enkf_get_bool( const void * arg, const char * var_name);
@@ -47,7 +47,8 @@ extern "C" {
                         matrix_type * R ,
                         matrix_type * dObs ,
                         matrix_type * E ,
-                        matrix_type * D);
+                        matrix_type * D,
+                        rng_type * rng);
 
 #ifdef __cplusplus
 }

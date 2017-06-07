@@ -100,7 +100,8 @@ void std_enkf_debug_initX(void * module_data ,
                           matrix_type * R ,
                           matrix_type * dObs ,
                           matrix_type * E ,
-                          matrix_type * D) {
+                          matrix_type * D,
+                          rng_type * rng) {
 
   std_enkf_debug_data_type * data = std_enkf_debug_data_safe_cast( module_data );
   char * debug_path = util_alloc_sprintf( "%s/%d" , data->prefix , data->update_count );
@@ -126,7 +127,7 @@ void std_enkf_debug_initX(void * module_data ,
     matrix_free( value );
     matrix_free( std );
   }
-  std_enkf_initX( std_data , X , A , S , R , dObs , E , D );
+  std_enkf_initX( std_data , X , A , S , R , dObs , E , D, rng);
   {
     matrix_type * posterior = matrix_alloc_matmul( A , X );
     std_enkf_debug_save_matrix( posterior , debug_path , "posterior_ert.csv" , true);

@@ -60,13 +60,12 @@ int main(int argc , char ** argv) {
   test_work_area_copy_directory_content( work_area , root_path );
   
   bool strict = true;
-  site_config_type * site_config = site_config_alloc_load_user_config(config_file);
-  enkf_main_type * enkf_main = enkf_main_alloc(config_file, site_config, strict, true);
-  
+  res_config_type * res_config = res_config_alloc_load(config_file);
+  enkf_main_type * enkf_main = enkf_main_alloc(config_file, res_config, strict, true);
   
   test_assert_bool_equal(check_compatible , check_ecl_sum_compatible(enkf_main));
   
   enkf_main_free( enkf_main );
-  site_config_free(site_config);
+  res_config_free(res_config);
   test_work_area_free(work_area); 
 }

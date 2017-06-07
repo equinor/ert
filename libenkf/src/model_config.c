@@ -55,6 +55,7 @@
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/hook_manager.h>
 #include <ert/enkf/site_config.h>
+#include <ert/enkf/model_config.h>
 
 /**
    This struct contains configuration which is specific to this
@@ -602,10 +603,6 @@ bool model_config_internalize_state( const model_config_type * config , int repo
 bool model_config_load_state( const model_config_type * config , int report_step) {
   return bool_vector_iget(config->__load_eclipse_restart , report_step);
 }
-
-
-
-
 
 void model_config_fprintf_config( const model_config_type * model_config , int ens_size , FILE * stream ) {
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );

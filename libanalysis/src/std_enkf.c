@@ -23,7 +23,6 @@
 #include <ert/util/util.h>
 #include <ert/util/matrix.h>
 #include <ert/util/matrix_blas.h>
-#include <ert/util/rng.h>
 
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
@@ -127,7 +126,7 @@ void std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_d
 
 
 
-void * std_enkf_data_alloc( rng_type * rng) {
+void * std_enkf_data_alloc( ) {
   std_enkf_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , STD_ENKF_TYPE_ID );
 
@@ -206,7 +205,8 @@ void std_enkf_initX(void * module_data ,
                     matrix_type * R ,
                     matrix_type * dObs ,
                     matrix_type * E ,
-                    matrix_type * D) {
+                    matrix_type * D,
+                    rng_type * rng) {
 
 
   std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );

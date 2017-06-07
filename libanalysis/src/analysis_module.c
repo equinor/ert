@@ -24,7 +24,6 @@
 
 #include <ert/util/matrix.h>
 #include <ert/util/util.h>
-#include <ert/util/rng.h>
 #include <ert/util/type_macros.h>
 
 #include <ert/analysis/analysis_module.h>
@@ -102,8 +101,7 @@ static bool analysis_module_internal_check( analysis_module_type * module ) {
 }
 
 
-static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
-                                                       const analysis_table_type * table ,
+static analysis_module_type * analysis_module_alloc__( const analysis_table_type * table ,
                                                        const char * symbol_table ,
                                                        const char * lib_name ,
                                                        void * lib_handle ) {
@@ -130,7 +128,7 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
   analysis_module_set_name( module , table->name );
 
   if (module->alloc)
-    module->module_data = module->alloc( rng );
+    module->module_data = module->alloc( );
 
   if (!analysis_module_internal_check( module )) {
     fprintf(stderr,"** Warning loading module: %s failed - internal inconsistency\n", module->user_name);
@@ -145,8 +143,7 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
 
 
 
-static analysis_module_type * analysis_module_alloc( rng_type * rng ,
-                                                     const char * libname ,
+static analysis_module_type * analysis_module_alloc( const char * libname ,
                                                      const char * table_name ,
                                                      bool  verbose,
                                                      analysis_module_load_status_enum * load_status) {
@@ -156,7 +153,7 @@ static analysis_module_type * analysis_module_alloc( rng_type * rng ,
     analysis_table_type * analysis_table = (analysis_table_type *) dlsym( lib_handle , table_name );
     if (analysis_table != NULL) {
       *load_status = LOAD_OK;
-      module = analysis_module_alloc__( rng , analysis_table , table_name , libname , lib_handle );
+      module = analysis_module_alloc__( analysis_table , table_name , libname , lib_handle );
     } else {
       *load_status = LOAD_SYMBOL_TABLE_NOT_FOUND;
       if (verbose)
@@ -181,24 +178,24 @@ static analysis_module_type * analysis_module_alloc( rng_type * rng ,
   return module;
 }
 
-analysis_module_type * analysis_module_alloc_internal__( rng_type * rng , const char * symbol_table , bool verbose , analysis_module_load_status_enum * load_status) {
-  return analysis_module_alloc( rng , NULL , symbol_table , verbose ,  load_status);
+analysis_module_type * analysis_module_alloc_internal__( const char * symbol_table , bool verbose , analysis_module_load_status_enum * load_status) {
+  return analysis_module_alloc( NULL , symbol_table , verbose ,  load_status);
 }
 
-analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * symbol_table ) {
+analysis_module_type * analysis_module_alloc_internal( const char * symbol_table ) {
   analysis_module_load_status_enum load_status;
-  return analysis_module_alloc_internal__( rng , symbol_table , true , &load_status);
+  return analysis_module_alloc_internal__( symbol_table , true , &load_status);
 }
 
 
-analysis_module_type * analysis_module_alloc_external__(rng_type * rng , const char * lib_name , bool verbose , analysis_module_load_status_enum * load_status) {
-  return analysis_module_alloc( rng , lib_name , EXTERNAL_MODULE_NAME , verbose , load_status);
+analysis_module_type * analysis_module_alloc_external__( const char * lib_name , bool verbose , analysis_module_load_status_enum * load_status) {
+  return analysis_module_alloc( lib_name , EXTERNAL_MODULE_NAME , verbose , load_status);
 }
 
 
-analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * lib_name) {
+analysis_module_type * analysis_module_alloc_external( const char * lib_name) {
   analysis_module_load_status_enum load_status;
-  return analysis_module_alloc_external__( rng , lib_name , true , &load_status);
+  return analysis_module_alloc_external__( lib_name , true , &load_status);
 }
 
 /*****************************************************************/
@@ -258,10 +255,11 @@ void analysis_module_initX(analysis_module_type * module ,
                            matrix_type * R ,
                            matrix_type * dObs ,
                            matrix_type * E ,
-                           matrix_type * D ) {
+                           matrix_type * D,
+                           rng_type * rng) {
 
 
-  module->initX(module->module_data , X , A , S , R , dObs , E , D );
+  module->initX(module->module_data , X , A , S , R , dObs , E , D, rng);
 }
 
 
@@ -272,9 +270,10 @@ void analysis_module_updateA(analysis_module_type * module ,
                              matrix_type * dObs ,
                              matrix_type * E ,
                              matrix_type * D ,
-                             const module_info_type* module_info) {
+                             const module_info_type* module_info,
+                             rng_type * rng) {
 
-  module->updateA(module->module_data , A , S , R , dObs , E , D, module_info);
+  module->updateA(module->module_data , A , S , R , dObs , E , D, module_info, rng);
 }
 
 
@@ -286,9 +285,10 @@ void analysis_module_init_update( analysis_module_type * module ,
                                   const matrix_type * R ,
                                   const matrix_type * dObs ,
                                   const matrix_type * E ,
-                                  const matrix_type * D ) {
+                                  const matrix_type * D,
+                                  rng_type * rng) {
   if (module->init_update != NULL)
-    module->init_update( module->module_data , ens_mask , S , R , dObs , E , D);
+    module->init_update( module->module_data , ens_mask , S , R , dObs , E , D, rng);
 }
 
 

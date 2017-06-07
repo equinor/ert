@@ -16,11 +16,20 @@
 #  for more details.
 
 import os
-from res.enkf import AnalysisConfig
-from ecl.test import ExtendedTestCase
 
+from ecl.test import ExtendedTestCase, TestAreaContext
+
+from res.enkf import AnalysisConfig
 
 class AnalysisConfigTest(ExtendedTestCase):
+
+    def setUp(self):
+        self.case_directory = self.createTestPath("local/simple_config/")
+
+    def test_invalid_user_config(self):
+        with TestAreaContext("void land"):
+            with self.assertRaises(IOError):
+                AnalysisConfig("this/is/not/a/file")
 
     def test_keywords_for_monitoring_simulation_runtime(self):
         ac = AnalysisConfig()
@@ -46,3 +55,9 @@ class AnalysisConfigTest(ExtendedTestCase):
         self.assertFloatEqual(ac.getGlobalStdScaling(), 1.0)
         ac.setGlobalStdScaling(0.77)
         self.assertFloatEqual(ac.getGlobalStdScaling(), 0.77)
+
+    def test_init(self):
+        with TestAreaContext("analysis_config_init_test") as work_area:
+            work_area.copy_directory(self.case_directory)
+            analysis_config = AnalysisConfig()
+            self.assertIsNotNone(analysis_config)

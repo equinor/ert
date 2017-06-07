@@ -29,6 +29,7 @@
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/model_config.h>
 
 
 struct rng_config_struct {
@@ -74,7 +75,21 @@ rng_config_type * rng_config_alloc( ) {
   return rng_config;
 }
 
+rng_config_type * rng_config_alloc_load_user_config(const char * user_config_file) {
+  rng_config_type * rng_config = rng_config_alloc();
 
+  if(user_config_file != NULL) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(user_config_file, config);
+
+    rng_config_init(rng_config, content);
+
+    config_content_free(content);
+    config_free(config);
+  }
+
+  return rng_config;
+}
 
 void rng_config_free( rng_config_type * rng) {
   util_safe_free( rng->seed_load_file );

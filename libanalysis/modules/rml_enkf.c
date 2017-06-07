@@ -497,7 +497,15 @@ static void rml_enkf_updateA_iter0(rml_enkf_data_type * data, matrix_type * A, m
 }
 
 
-void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matrix_type * R, matrix_type * dObs, matrix_type * E, matrix_type * D, const module_info_type* module_info) {
+void rml_enkf_updateA(void * module_data,
+                      matrix_type * A,
+                      matrix_type * S,
+                      matrix_type * R,
+                      matrix_type * dObs,
+                      matrix_type * E,
+                      matrix_type * D,
+                      const module_info_type * module_info,
+                      rng_type * rng) {
 // A : ensemble matrix
 // R : (Inv?) Obs error cov.
 // S : measured ensemble
@@ -608,7 +616,14 @@ void rml_enkf_updateA(void * module_data, matrix_type * A, matrix_type * S, matr
 
 
 
-void rml_enkf_init_update(void * arg,  const bool_vector_type * ens_mask, const matrix_type * S, const matrix_type * R, const matrix_type * dObs, const matrix_type * E, const matrix_type * D ) {
+void rml_enkf_init_update(void * arg,
+                          const bool_vector_type * ens_mask,
+                          const matrix_type * S,
+                          const matrix_type * R,
+                          const matrix_type * dObs,
+                          const matrix_type * E,
+                          const matrix_type * D,
+                          rng_type * rng) {
   rml_enkf_data_type * module_data = rml_enkf_data_safe_cast( arg );
 
   if (module_data->ens_mask)

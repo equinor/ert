@@ -104,7 +104,7 @@ typedef struct site_config_struct site_config_type;
   site_config_type       * site_config_alloc();
   site_config_type       * site_config_alloc_load_user_config(const char *);
 
-  config_content_type    * site_config_alloc_content(const site_config_type*, config_parser_type*);
+  config_content_type    * site_config_alloc_content(config_parser_type*);
 
   void                     site_config_add_config_items( config_parser_type * config , bool site_mode);
 #ifdef __cplusplus

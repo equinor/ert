@@ -70,6 +70,8 @@ from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
 from .ecl_config import EclConfig
 
+from .site_config import SiteConfig
+from .res_config import ResConfig
 from .ensemble_config import EnsembleConfig
 from .enkf_obs import EnkfObs
 from .enkf_state import EnKFState
@@ -78,7 +80,6 @@ from .ert_templates import ErtTemplates
 from .local_config import LocalConfig
 from .model_config import ModelConfig
 from .plot_settings import PlotSettings
-from .site_config import SiteConfig
 from .queue_config import QueueConfig
 from .runpath_list import RunpathList, RunpathNode
 from .hook_workflow import HookWorkflow

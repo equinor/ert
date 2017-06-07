@@ -20,7 +20,8 @@ extern "C" {
                                          matrix_type * dObs ,
                                          matrix_type * E ,
                                          matrix_type * D ,
-                                         const module_info_type* module_info);
+                                         const module_info_type* module_info,
+                                         rng_type * rng);
 
 
   typedef void (analysis_initX_ftype)       (void * module_data ,
@@ -30,7 +31,8 @@ extern "C" {
                                              matrix_type * R ,
                                              matrix_type * dObs ,
                                              matrix_type * E ,
-                                             matrix_type * D );
+                                             matrix_type * D,
+                                             rng_type * rng);
 
 
   typedef bool (analysis_set_int_ftype)       (void * module_data , const char * flag , int value);
@@ -38,7 +40,7 @@ extern "C" {
   typedef bool (analysis_set_double_ftype)    (void * module_data , const char * var , double value);
   typedef bool (analysis_set_string_ftype)    (void * module_data , const char * var , const char * value);
   typedef void   (analysis_free_ftype) (void * );
-  typedef void * (analysis_alloc_ftype) ( rng_type * rng );
+  typedef void * (analysis_alloc_ftype) ( );
 
 
   typedef void (analysis_init_update_ftype) (void * module_data,
@@ -47,7 +49,8 @@ extern "C" {
                                              const matrix_type * R ,
                                              const matrix_type * dObs ,
                                              const matrix_type * E ,
-                                             const matrix_type * D);
+                                             const matrix_type * D,
+                                             rng_type * rng);
 
   typedef void (analysis_complete_update_ftype) (void * module_data );
 

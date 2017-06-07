@@ -24,7 +24,7 @@
 
 typedef struct fwd_step_enkf_data_struct fwd_step_enkf_data_type;
 
-void * fwd_step_enkf_data_alloc( rng_type * rng );
+void * fwd_step_enkf_data_alloc( );
 void   fwd_step_enkf_data_free( void * arg );
 
 void fwd_step_enkf_updateA(void * module_data ,
@@ -34,7 +34,8 @@ void fwd_step_enkf_updateA(void * module_data ,
                             matrix_type * dObs ,
                             matrix_type * E ,
                             matrix_type * D ,
-                            const module_info_type* module_info);
+                            const module_info_type* module_info,
+                            rng_type * rng);
 
 
 

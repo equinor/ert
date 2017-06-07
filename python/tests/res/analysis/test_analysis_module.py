@@ -29,7 +29,7 @@ class AnalysisModuleTest(ExtendedTestCase):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 
     def createAnalysisModule(self):
-        return AnalysisModule(self.rng, lib_name = self.libname)
+        return AnalysisModule(lib_name = self.libname)
 
     def test_load_status_enum(self):
         source_file_path = "libanalysis/include/ert/analysis/analysis_module.h"
@@ -55,7 +55,7 @@ class AnalysisModuleTest(ExtendedTestCase):
         self.assertIsInstance(am.getInt("ITER"), int)
 
     def test_set_get_var(self):
-        mod = AnalysisModule( self.rng , name = "STD_ENKF" )
+        mod = AnalysisModule(name = "STD_ENKF" )
         with self.assertRaises(KeyError):
             mod.setVar("NO-NOT_THIS_KEY" , 100)
 
@@ -69,14 +69,14 @@ class AnalysisModuleTest(ExtendedTestCase):
 
     def test_create_internal(self):
         with self.assertRaises( KeyError ):
-            mod = AnalysisModule( self.rng , name = "STD_ENKFXXX" )
+            mod = AnalysisModule(name = "STD_ENKFXXX" )
 
-        mod = AnalysisModule( self.rng , name = "STD_ENKF" )
+        mod = AnalysisModule(name = "STD_ENKF" )
 
 
     def test_initX_enkf_linalg_lowrankCinv(self):
         """Test AnalysisModule.initX with EE=False and GE=False"""
-        mod = AnalysisModule( self.rng , name = "STD_ENKF" )
+        mod = AnalysisModule(name = "STD_ENKF" )
         A, S, R, dObs, E, D = self._n_identity_mcs()
         self.assertFalse(mod.getBool('USE_EE'))
         self.assertFalse(mod.getBool('USE_GE'))
@@ -87,12 +87,12 @@ class AnalysisModuleTest(ExtendedTestCase):
                 elt_b, elt_b, elt_a)
         expected = self.construct_matrix(3, vals)
 
-        X = mod.initX(A, S, R, dObs, E, D)
+        X = mod.initX(A, S, R, dObs, E, D, self.rng)
         self._matrix_close(X, expected)
 
     def test_initX_enkf_linalg_lowrank_EE(self):
         """Test AnalysisModule.initX with EE=True and GE=False"""
-        mod = AnalysisModule( self.rng , name = "STD_ENKF" )
+        mod = AnalysisModule(name = "STD_ENKF" )
         A, S, R, dObs, E, D = self._n_identity_mcs()
         mod.setVar('USE_EE', True)
         self.assertTrue(mod.getBool('USE_EE'))
@@ -103,12 +103,12 @@ class AnalysisModuleTest(ExtendedTestCase):
                 elt_b, elt_a, elt_b,
                 elt_b, elt_b, elt_a)
         expected = self.construct_matrix(3,  vals)
-        X = mod.initX(A, S, R, dObs, E, D)
+        X = mod.initX(A, S, R, dObs, E, D, self.rng)
         self._matrix_close(X, expected)
 
     def test_initX_subspace_inversion_algorithm(self):
         """Test AnalysisModule.initX with EE=True and GE=True, the subspace inversion algorithm"""
-        mod = AnalysisModule( self.rng , name = "STD_ENKF" )
+        mod = AnalysisModule(name = "STD_ENKF" )
         A, S, R, dObs, E, D = self._n_identity_mcs()
 
         mod.setVar('USE_EE', True)
@@ -120,7 +120,7 @@ class AnalysisModuleTest(ExtendedTestCase):
                 -0.111,  1.39,  -0.278,
                  -0.278, -0.278,  1.56 )
         expected = self.construct_matrix(3, vals)
-        X = mod.initX(A, S, R, dObs, E, D)
+        X = mod.initX(A, S, R, dObs, E, D, self.rng)
         self._matrix_close(X, expected)
 
     def construct_matrix(self, n, vals):

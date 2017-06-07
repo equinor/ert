@@ -13,16 +13,21 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+
+from os.path import isfile
+
 from cwrap import BaseCClass
+
+from ecl.util import StringList
+
 from res.enkf import EnkfPrototype
 from res.enkf import AnalysisIterConfig
 from res.analysis import AnalysisModule
-from ecl.util import StringList
-
 
 class AnalysisConfig(BaseCClass):
     TYPE_NAME = "analysis_config"
-    _alloc = EnkfPrototype("void* analysis_config_alloc()", bind = False)
+
+    _alloc = EnkfPrototype("void* analysis_config_alloc_load(char*)", bind = False)
     _free = EnkfPrototype("void analysis_config_free( analysis_config )")
     _get_rerun = EnkfPrototype("int analysis_config_get_rerun( analysis_config )")
     _set_rerun = EnkfPrototype("void analysis_config_set_rerun( analysis_config, bool)")
@@ -50,10 +55,19 @@ class AnalysisConfig(BaseCClass):
     _set_global_std_scaling = EnkfPrototype("void analysis_config_set_global_std_scaling(analysis_config, double)")
     _get_global_std_scaling = EnkfPrototype("double analysis_config_get_global_std_scaling(analysis_config)")
 
-    def __init__(self):
-        c_ptr = AnalysisConfig._alloc()
-        super(AnalysisConfig , self).__init__(c_ptr)
 
+    def __init__(self, user_config_file=None):
+        if user_config_file is not None and not isfile(user_config_file):
+            raise IOError('No such configuration file "%s".' % user_config_file)
+
+        c_ptr = self._alloc(user_config_file)
+        if c_ptr:
+            super(AnalysisConfig, self).__init__(c_ptr)
+        else:
+            raise ValueError(
+                    'Failed to construct AnalysisConfig instance from config file %s.'
+                    % user_config_file
+                    )
 
     def get_rerun(self):
         return self._get_rerun()

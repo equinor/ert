@@ -27,7 +27,7 @@ class StdEnKFDebugTest(ExtendedTestCase):
     def setUp(self):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
         self.libname = res.res_lib_path + "/std_enkf_debug.so"
-        self.module = AnalysisModule( self.rng , lib_name = self.libname )
+        self.module = AnalysisModule(lib_name = self.libname)
 
         
     def toggleKey(self, key):

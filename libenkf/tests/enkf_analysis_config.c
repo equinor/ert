@@ -33,8 +33,7 @@
 
 
 analysis_config_type * create_analysis_config() {
-  rng_type * rng = rng_alloc( MZRAN , INIT_DEFAULT );
-  analysis_config_type * ac = analysis_config_alloc( rng );
+  analysis_config_type * ac = analysis_config_alloc();
   return ac;
 }
 

@@ -39,7 +39,7 @@ def measure(state):
     return 0.25*state[0] - 0.1*state[1]*state[1]
 
 
-def init_matrices(ens , mask , obs , rng):
+def init_matrices(ens , mask , obs, rng):
     state_size = 2
     report_step = 5
     meas_data = MeasData( mask )
@@ -83,7 +83,7 @@ class RMLTest(ExtendedTestCase):
 
     def createAnalysisModule(self):
         rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
-        return AnalysisModule(rng, lib_name = self.libname)
+        return AnalysisModule(lib_name = self.libname)
 
     def test_load_status_enum(self):
         source_file_path = "libanalysis/include/ert/analysis/analysis_module.h"
@@ -111,19 +111,19 @@ class RMLTest(ExtendedTestCase):
             
         mask = BoolVector(default_value = True , initial_size = ens_size)
         mask[2] = False
-        (A , S , E , D , R , dObs) = init_matrices( ens , mask , obs , rng )
+        (A , S , E , D , R , dObs) = init_matrices( ens , mask , obs, rng)
 
-        module.initUpdate( mask , S , R , dObs , E , D )
-        module.updateA( A , S , R , dObs , E , D )
+        module.initUpdate(mask, S, R, dObs, E, D, rng)
+        module.updateA(A, S, R, dObs, E, D, rng)
 
 
         mask[10] = False
         mask[5] = False
-        (A , S , E , D , R , dObs) = init_matrices( ens , mask , obs , rng )
+        (A , S , E , D , R , dObs) = init_matrices( ens , mask , obs, rng)
         self.assertEqual( S.dims() , (obs_size , mask.countEqual( True )))
         self.assertEqual( E.dims() , (obs_size , mask.countEqual( True )))
         self.assertEqual( D.dims() , (obs_size , mask.countEqual( True )))
         
-        module.initUpdate( mask , S , R , dObs , E , D )
-        module.updateA( A , S , R , dObs , E , D )
+        module.initUpdate(mask, S, R, dObs, E, D, rng)
+        module.updateA(A, S, R, dObs, E ,D, rng)
 

@@ -59,8 +59,8 @@ int main(int argc , char ** argv) {
     test_assert_true( util_sscanf_bool( forward_init_string , &forward_init));
 
     util_clear_directory( "Storage" , true , true );
-    site_config_type * site_config = site_config_alloc_load_user_config(config_file);
-    enkf_main = enkf_main_alloc(config_file, site_config, strict, true);
+    res_config_type * res_config = res_config_alloc_load(config_file);
+    enkf_main = enkf_main_alloc(config_file, res_config, strict, true);
     {
       ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
       enkf_config_node_type * field_config_node = ensemble_config_get_node( ens_config , "PORO" );
@@ -158,7 +158,7 @@ int main(int argc , char ** argv) {
       run_arg_free( run_arg );
     }
     enkf_main_free( enkf_main );
-    site_config_free(site_config);
+    res_config_free(res_config);
   }
 }
 

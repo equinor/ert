@@ -50,7 +50,6 @@ typedef struct {
   UTIL_TYPE_ID_DECLARATION;
   std_enkf_data_type   * std_enkf_data;
   cv_enkf_data_type    * cv_enkf_data;
-  rng_type             * rng;
   long                   option_flags;
   bool                   doCV;
 } bootstrap_enkf_data_type;
@@ -78,14 +77,13 @@ void bootstrap_enkf_set_subspace_dimension( bootstrap_enkf_data_type * boot_data
 }
 
 
-void * bootstrap_enkf_data_alloc( rng_type * rng ) {
+void * bootstrap_enkf_data_alloc( ) {
   bootstrap_enkf_data_type * boot_data = util_malloc( sizeof * boot_data );
   UTIL_TYPE_ID_INIT( boot_data , BOOTSTRAP_ENKF_TYPE_ID );
 
   boot_data->std_enkf_data = std_enkf_data_alloc( NULL );
-  boot_data->cv_enkf_data = cv_enkf_data_alloc( rng );
+  boot_data->cv_enkf_data = cv_enkf_data_alloc( );
 
-  boot_data->rng = rng;
   bootstrap_enkf_set_truncation( boot_data , DEFAULT_TRUNCATION );
   bootstrap_enkf_set_subspace_dimension( boot_data , DEFAULT_NCOMP );
   bootstrap_enkf_set_doCV( boot_data , DEFAULT_DO_CV);
@@ -140,7 +138,8 @@ void bootstrap_enkf_updateA(void * module_data ,
                             matrix_type * dObs ,
                             matrix_type * E ,
                             matrix_type * D ,
-                            const module_info_type* module_info) {
+                            const module_info_type* module_info,
+                            rng_type * rng) {
 
   bootstrap_enkf_data_type * bootstrap_data = bootstrap_enkf_data_safe_cast( module_data );
   {
@@ -150,7 +149,7 @@ void bootstrap_enkf_updateA(void * module_data ,
     matrix_type * A0          = matrix_alloc_copy( A );
     matrix_type * S_resampled = matrix_alloc_copy( S );
     matrix_type * A_resampled = matrix_alloc( matrix_get_rows(A0) , matrix_get_columns( A0 ));
-    int ** iens_resample      = alloc_iens_resample( bootstrap_data->rng , ens_size );
+    int ** iens_resample      = alloc_iens_resample( rng , ens_size );
     {
       int ensemble_members_loop;
       for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) {
@@ -171,10 +170,10 @@ void bootstrap_enkf_updateA(void * module_data ,
 
           if (bootstrap_data->doCV) {
             const bool_vector_type * ens_mask = NULL;
-            cv_enkf_init_update( bootstrap_data->cv_enkf_data , ens_mask , S_resampled , R , dObs , E , D);
-            cv_enkf_initX( bootstrap_data->cv_enkf_data , X , A_resampled , S_resampled , R , dObs , E , D);
+            cv_enkf_init_update(bootstrap_data->cv_enkf_data, ens_mask, S_resampled, R, dObs, E, D, rng);
+            cv_enkf_initX(bootstrap_data->cv_enkf_data, X, A_resampled, S_resampled, R, dObs, E, D, rng);
           } else
-            std_enkf_initX(bootstrap_data->std_enkf_data , X , NULL , S_resampled,R, dObs, E,D );
+            std_enkf_initX(bootstrap_data->std_enkf_data, X, NULL, S_resampled, R, dObs, E, D, rng);
 
 
           matrix_inplace_matmul_mt1( A_resampled , X , num_cpu_threads );

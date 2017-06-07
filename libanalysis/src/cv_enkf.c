@@ -51,7 +51,6 @@ struct cv_enkf_data_struct {
   matrix_type          * Z;
   matrix_type          * Rp;
   matrix_type          * Dp;
-  rng_type             * rng;
   double                 truncation;
   int                    nfolds;
   int                    subspace_dimension;  // ENKF_NCOMP_KEY (-1: use Truncation instead)
@@ -88,14 +87,13 @@ void cv_enkf_set_pen_press( cv_enkf_data_type * data , bool value ) {
 }
 
 
-void * cv_enkf_data_alloc( rng_type * rng ) {
+void * cv_enkf_data_alloc( ) {
   cv_enkf_data_type * data = util_malloc( sizeof * data);
   UTIL_TYPE_ID_INIT( data , CV_ENKF_TYPE_ID );
 
   data->Z            = NULL;
   data->Rp           = NULL;
   data->Dp           = NULL;
-  data->rng          = rng;
 
   data->penalised_press = DEFAULT_PEN_PRESS;
   data->option_flags    = ANALYSIS_NEED_ED + ANALYSIS_USE_A + ANALYSIS_SCALE_DATA;
@@ -128,7 +126,8 @@ void cv_enkf_init_update( void * arg ,
                           const matrix_type * R , 
                           const matrix_type * dObs , 
                           const matrix_type * E , 
-                          const matrix_type * D ) {
+                          const matrix_type * D,
+                          rng_type * rng) {
 
   cv_enkf_data_type * cv_data = cv_enkf_data_safe_cast( arg );
   {
@@ -390,7 +389,8 @@ int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
 
 
 static int get_optimal_principal_components( cv_enkf_data_type * cv_data , 
-                                             const matrix_type * A) {
+                                             const matrix_type * A,
+                                             rng_type * rng) {
   
 
   const int nrens = matrix_get_columns( cv_data->Z );
@@ -429,7 +429,7 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
   for (int i=0; i < nrens; i++)
     randperms[i] = i;
 
-  rng_shuffle_int( cv_data->rng , randperms , nrens );
+  rng_shuffle_int( rng , randperms , nrens );
   
   cvError = matrix_alloc( maxP , cv_data->nfolds );
   {
@@ -530,7 +530,8 @@ void cv_enkf_initX(void * module_data ,
                    matrix_type * R , 
                    matrix_type * dObs , 
                    matrix_type * E ,
-                   matrix_type * D) {
+                   matrix_type * D,
+                   rng_type * rng) {
 
   
   cv_enkf_data_type * cv_data = cv_enkf_data_safe_cast( module_data );
@@ -545,7 +546,7 @@ void cv_enkf_initX(void * module_data ,
     {
       matrix_type * workA = matrix_alloc_copy( A ); 
       matrix_subtract_row_mean( workA );
-      optP = get_optimal_principal_components(cv_data , workA );
+      optP = get_optimal_principal_components(cv_data , workA, rng);
       printf("Optimal subspace dimension found %d\n",optP);
       matrix_free( workA );
     }

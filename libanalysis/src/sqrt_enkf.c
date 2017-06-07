@@ -42,7 +42,6 @@ typedef struct {
   UTIL_TYPE_ID_DECLARATION;
   std_enkf_data_type * std_data;
   matrix_type        * randrot; 
-  rng_type           * rng;
   long                 options;
 } sqrt_enkf_data_type;
 
@@ -51,13 +50,12 @@ static UTIL_SAFE_CAST_FUNCTION( sqrt_enkf_data , SQRT_ENKF_TYPE_ID )
 static UTIL_SAFE_CAST_FUNCTION_CONST( sqrt_enkf_data , SQRT_ENKF_TYPE_ID )
 
 
-void * sqrt_enkf_data_alloc( rng_type * rng ) {
+void * sqrt_enkf_data_alloc( ) {
   sqrt_enkf_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , SQRT_ENKF_TYPE_ID );
 
-  data->std_data = std_enkf_data_alloc( rng );
+  data->std_data = std_enkf_data_alloc( );
   data->randrot  = NULL;
-  data->rng      = rng;
   data->options  = ANALYSIS_SCALE_DATA;
   
   return data;
@@ -111,7 +109,8 @@ void sqrt_enkf_initX(void * module_data ,
                      matrix_type * R , 
                      matrix_type * dObs , 
                      matrix_type * E , 
-                     matrix_type *D ) {
+                     matrix_type *D,
+                     rng_type * rng) {
 
   sqrt_enkf_data_type * data = sqrt_enkf_data_safe_cast( module_data );
   {
@@ -150,12 +149,13 @@ void sqrt_enkf_init_update( void * arg ,
                           const matrix_type * R , 
                           const matrix_type * dObs , 
                           const matrix_type * E , 
-                          const matrix_type * D ) {
+                          const matrix_type * D,
+                          rng_type * rng ) {
 
   sqrt_enkf_data_type * sqrt_data = sqrt_enkf_data_safe_cast( arg );
   {
     int ens_size = matrix_get_columns( S );
-    sqrt_data->randrot = enkf_linalg_alloc_mp_randrot( ens_size , sqrt_data->rng );
+    sqrt_data->randrot = enkf_linalg_alloc_mp_randrot( ens_size , rng );
   }
 }
 

@@ -23,7 +23,6 @@
 
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/rng.h>
 #include <ert/util/type_macros.h>
 
 #include <ert/config/config_parser.h>
@@ -37,6 +36,8 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/analysis_iter_config.h>
+#include <ert/enkf/site_config.h>
+#include <ert/enkf/model_config.h>
 
 
 #define UPDATE_OVERLAP_KEY      "OVERLAP_LIMIT"
@@ -59,7 +60,6 @@ struct analysis_config_struct {
   char                          * PC_path;
   bool                            store_PC;
   bool                            single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */
-  rng_type                      * rng;
   analysis_iter_config_type     * iter_config;
   int                             min_realisations;
   bool                            stop_long_running;
@@ -274,7 +274,7 @@ void analysis_config_set_merge_observations( analysis_config_type * config , boo
 
 void analysis_config_load_internal_module( analysis_config_type * config ,
                                            const char * symbol_table ) {
-  analysis_module_type * module = analysis_module_alloc_internal( config->rng , symbol_table );
+  analysis_module_type * module = analysis_module_alloc_internal(symbol_table);
   if (module != NULL)
     hash_insert_hash_owned_ref( config->analysis_modules , analysis_module_get_name( module ) , module , analysis_module_free__ );
   else
@@ -300,7 +300,7 @@ void analysis_config_load_all_external_modules_from_config ( analysis_config_typ
 bool analysis_config_load_external_module( analysis_config_type * config ,
                                            const char * lib_name,
                                            const char * user_name) {
-  analysis_module_type * module = analysis_module_alloc_external( config->rng , lib_name );
+  analysis_module_type * module = analysis_module_alloc_external(lib_name);
   if (module != NULL) {
     if (user_name)
       analysis_module_set_name(module, user_name);
@@ -321,10 +321,10 @@ void analysis_config_add_module_copy( analysis_config_type * config ,
 
   if (analysis_module_internal( src_module )) {
     const char * symbol_table = analysis_module_get_table_name( src_module );
-    target_module = analysis_module_alloc_internal( config->rng , symbol_table );
+    target_module = analysis_module_alloc_internal(symbol_table);
   } else {
     const char * lib_name = analysis_module_get_lib_name( src_module );
-    target_module = analysis_module_alloc_external( config->rng , lib_name );
+    target_module = analysis_module_alloc_external(lib_name);
   }
 
   hash_insert_hash_owned_ref( config->analysis_modules , target_name , target_module , analysis_module_free__ );
@@ -589,7 +589,7 @@ void analysis_config_free(analysis_config_type * config) {
 
 
 
-analysis_config_type * analysis_config_alloc( rng_type * rng ) {
+analysis_config_type * analysis_config_alloc(void) {
   analysis_config_type * config = util_malloc( sizeof * config );
   UTIL_TYPE_ID_INIT( config , ANALYSIS_CONFIG_TYPE_ID );
 
@@ -615,15 +615,42 @@ analysis_config_type * analysis_config_alloc( rng_type * rng ) {
 
   config->analysis_module      = NULL;
   config->analysis_modules     = hash_alloc();
-  config->rng                  = rng;
   config->iter_config          = analysis_iter_config_alloc();
   config->std_scale_correlated_obs = false;
   config->global_std_scaling   = 1.0;
   return config;
 }
 
+static analysis_config_type * analysis_config_alloc_load_site_config() {
+  analysis_config_type * analysis_config = analysis_config_alloc();
 
+  config_parser_type * config = config_alloc();
+  config_content_type * content = site_config_alloc_content(config);
 
+  analysis_config_load_all_external_modules_from_config(analysis_config, content);
+
+  config_free(config);
+  config_content_free(content);
+
+  return analysis_config;
+}
+
+analysis_config_type * analysis_config_alloc_load(const char * user_config_file) {
+  analysis_config_type * analysis_config = analysis_config_alloc_load_site_config();
+
+  if(user_config_file) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(user_config_file, config);
+
+    analysis_config_load_internal_modules(analysis_config);
+    analysis_config_init(analysis_config, content);
+
+    config_content_free(content);
+    config_free(config);
+  }
+
+  return analysis_config;
+}
 /*****************************************************************/
 /*
   Keywords for the analysis - all optional. The analysis_config object

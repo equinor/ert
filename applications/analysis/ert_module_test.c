@@ -19,14 +19,12 @@
 #include <stdbool.h>
 #include <dlfcn.h>
 
-#include <ert/util/rng.h>
-
 #include <ert/analysis/analysis_module.h>
 
 
-int check_module( rng_type * rng , const char * lib_name ) {
+int check_module( const char * lib_name ) {
   analysis_module_load_status_enum  load_status;
-  analysis_module_type * module = analysis_module_alloc_external__( rng , lib_name , false , &load_status);
+  analysis_module_type * module = analysis_module_alloc_external__(lib_name , false , &load_status);
   if (module != NULL) {
     printf("Module loaded successfully\n");
     analysis_module_free( module );
@@ -54,5 +52,5 @@ int check_module( rng_type * rng , const char * lib_name ) {
 
 
 int main( int argc , char ** argv) {
-  exit( check_module( NULL , argv[1] ) );
+  exit( check_module( argv[1] ) );
 }
