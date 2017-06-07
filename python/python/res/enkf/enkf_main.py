@@ -20,9 +20,10 @@ from ecl.util import SubstitutionList, Log
 
 from res.enkf import (EnkfPrototype, EnkfObs, EnKFState, ENKF_LIB,
                       EnkfSimulationRunner, EnkfFsManager)
+from res.enkf import (PlotSettings, ErtWorkflowList, HookManager, HookWorkflow,
+                      ESUpdate)
 from res.enkf import (AnalysisConfig, EclConfig, LocalConfig, ModelConfig,
-                      EnsembleConfig, PlotSettings, SiteConfig, ErtWorkflowList,
-                      HookManager, HookWorkflow, ESUpdate, ResConfig)
+                      EnsembleConfig, SiteConfig, ResConfig, QueueConfig)
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.key_manager import KeyManager
 
@@ -35,7 +36,7 @@ class EnKFMain(BaseCClass):
     _create_new_config = EnkfPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
 
     _free = EnkfPrototype("void enkf_main_free(enkf_main)")
-    _get_queue_config = EnkfPrototype("queue_config_ref enkf_main_get_queue_config ( enkf_main )")
+    _get_queue_config = EnkfPrototype("queue_config_ref enkf_main_get_queue_config(enkf_main)")
     _get_ensemble_size = EnkfPrototype("int enkf_main_get_ensemble_size( enkf_main )")
     _get_ens_config = EnkfPrototype("ens_config_ref enkf_main_get_ensemble_config( enkf_main )")
     _get_model_config = EnkfPrototype("model_config_ref enkf_main_get_model_config( enkf_main )")
@@ -76,9 +77,6 @@ class EnKFMain(BaseCClass):
     _get_res_config = EnkfPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
 
 
-    def get_queue_config(self):
-        return self._get_queue_config()
-
     def __init__(self, model_config, res_config=None, strict=True, verbose=True):
         if model_config is not None and not isfile(model_config):
             raise IOError('No such configuration file "%s".' % model_config)
@@ -110,6 +108,11 @@ class EnKFMain(BaseCClass):
 
 
         self.__key_manager = KeyManager(self)
+
+
+
+    def get_queue_config(self):
+        return self._get_queue_config()
 
     @classmethod
     def createCReference(cls, c_pointer, parent=None):

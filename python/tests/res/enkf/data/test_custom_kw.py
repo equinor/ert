@@ -90,10 +90,12 @@ class CustomKWTest(ExtendedTestCase):
             self.assertEqual(len(config.getKeys()), 0)
 
             simulation_runner = EnkfSimulationRunner(ert)
+            job_queue = ert.get_queue_config().create_job_queue()
+
             iteration_count = 0
             active = BoolVector(default_value = True, initial_size = ert.getEnsembleSize())
             simulation_runner.createRunPath(active, iteration_count)
-            simulation_runner.runEnsembleExperiment()
+            simulation_runner.runEnsembleExperiment(job_queue)
 
             config = ensemble_config.getNode("AGGREGATED").getCustomKeywordModelConfig()
 
