@@ -24,4 +24,4 @@ class QueueConfigTest(ExtendedTestCase):
 
     def test_get_queue_config(self):
         QC = QueueConfig()
-        JobQueue = QC.alloc_job_queue()
+        JobQueue = QC.create_job_queue()
