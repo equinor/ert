@@ -6,12 +6,14 @@ import os
 import sys
 import subprocess
 import shutil
+import codecs
 
-
+GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
 class build_class():
 
     def __init__(self, rep, basedir):
+        self.github_api_token = codecs.encode( GITHUB_ROT13_API_TOKEN , 'rot13')
         if rep in ('ecl', 'res', 'ert'):
             self.repository = rep
             if (rep == 'ecl'):
@@ -74,11 +76,9 @@ class build_class():
     def assert_open_pr_status(self, rep_name, pr_num):
         if (pr_num >= 0):
             url = "https://api.github.com/repos/Statoil/%s/pulls/%d" % (rep_name, pr_num)
-            if "GITHUB_API_TOKEN" in os.environ:
-                github_api_token = os.getenv("GITHUB_API_TOKEN")
-                response = requests.get( url , {"access_token" : github_api_token})
-            else:
-                response = requests.get( url )
+            github_api_token = os.getenv("GITHUB_API_TOKEN")
+            response = requests.get( url , {"access_token" : self.github_api_token})
+            
             content = json.loads( response.content )
             state = content["state"]
             assert(state == "open")
@@ -89,11 +89,7 @@ class build_class():
         url = "https://api.github.com/repos/Statoil/%s/pulls/%d" % (self.rep_name, self.pr_number)
         print "Accessing: %s" % url
 
-        if "GITHUB_API_TOKEN" in os.environ: 
-            github_api_token = os.getenv("GITHUB_API_TOKEN")
-            response = requests.get( url , {"access_token" : github_api_token})
-        else:
-            response = requests.get( url )
+        response = requests.get( url , {"access_token" : self.github_api_token})
     
         content = json.loads( response.content )
         self.pr_description = content["body"]
