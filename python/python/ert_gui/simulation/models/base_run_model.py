@@ -22,6 +22,7 @@ class BaseRunModel(object):
         self._indeterminate = False
         self._fail_message = ""
         self._failed = False
+        self._job_queue = None
         self.reset( )
 
 
@@ -34,6 +35,7 @@ class BaseRunModel(object):
 
 
     def startSimulations(self, run_arguments):
+        self._job_queue = self.ert().get_queue_config().create_job_queue()
         try:
             self.runSimulations(run_arguments)
         except ErtRunError as e:
@@ -47,14 +49,12 @@ class BaseRunModel(object):
 
 
     def killAllSimulations(self):
-        job_queue = self.ert().siteConfig().getJobQueue()
-        job_queue.killAllJobs()
+        self._job_queue.killAllJobs()
 
 
     def userExitCalled(self):
         """ @rtype: bool """
-        job_queue = self.ert().siteConfig().getJobQueue()
-        return job_queue.getUserExit( )
+        return self._job_queue.getUserExit( )
 
 
     def phaseCount(self):
@@ -133,7 +133,7 @@ class BaseRunModel(object):
 
     def getQueueSize(self):
         """ @rtype: int """
-        queue_size = len(self.ert().siteConfig().getJobQueue())
+        queue_size = len(self._job_queue)
 
         if queue_size == 0:
             queue_size = 1
@@ -143,13 +143,11 @@ class BaseRunModel(object):
 
     def getQueueStatus(self):
         """ @rtype: dict of (JobStatusType, int) """
-        job_queue = self.ert().siteConfig().getJobQueue()
-
         queue_status = {}
 
-        if job_queue.isRunning():
-            for job_number in range(len(job_queue)):
-                status = job_queue.getJobStatus(job_number)
+        if self._job_queue.isRunning():
+            for job_number in range(len(self._job_queue)):
+                status = self._job_queue.getJobStatus(job_number)
 
                 if not status in queue_status:
                     queue_status[status] = 0
@@ -160,7 +158,7 @@ class BaseRunModel(object):
 
     def isQueueRunning(self):
         """ @rtype: bool """
-        return self.ert().siteConfig().getJobQueue().isRunning()
+        return self._job_queue.isRunning()
 
 
     def getProgress(self):
