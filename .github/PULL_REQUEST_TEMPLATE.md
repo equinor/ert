@@ -1,8 +1,14 @@
-#### Task
+**Task**
 _Short description of the task_
 
-#### Approach
+
+**Approach**
 _Short description of the approach_
 
-#### Pre un-WIP checklist
-- [ ] All Statoil tests passes locally
+
+**Pre un-WIP checklist**
+- [ ] Statoil tests pass locally
+- [ ] Have completed graphical integration test steps
+
+**Depends on**
+* Statoil/libecl#
