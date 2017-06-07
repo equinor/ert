@@ -22,7 +22,7 @@ class BaseRunModel(object):
         self._indeterminate = False
         self._fail_message = ""
         self._failed = False
-        self._job_queue = None
+        self._job_queue = self.ert().get_queue_config().create_job_queue()
         self.reset( )
 
 
@@ -35,7 +35,6 @@ class BaseRunModel(object):
 
 
     def startSimulations(self, run_arguments):
-        self._job_queue = self.ert().get_queue_config().create_job_queue()
         try:
             self.runSimulations(run_arguments)
         except ErtRunError as e:
