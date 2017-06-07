@@ -15,7 +15,7 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
 
-    def runSimulations(self, arguments):
+    def runSimulations(self, job_queue, arguments):
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         self.setAnalysisModule(arguments["analysis_module"])
@@ -26,7 +26,7 @@ class EnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL , 0)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL , 0)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
@@ -55,7 +55,7 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_NONE, 1)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, active_realization_mask, EnkfInitModeEnum.INIT_NONE, 1)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 

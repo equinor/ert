@@ -22,6 +22,7 @@ class BaseRunModel(object):
         self._indeterminate = False
         self._fail_message = ""
         self._failed = False
+        self.__job_queue = None
         self.reset( )
 
 
@@ -29,32 +30,36 @@ class BaseRunModel(object):
         """ @rtype: res.enkf.EnKFMain"""
         return ERT.ert
 
-    def reset(self):
-        self._failed = False
+    @property
+    def _job_queue(self):
+        if self.__job_queue is None:
+            self.__job_queue = self.ert().get_queue_config().create_job_queue()
+        return self.__job_queue
 
+    def reset(self):
+        self.__job_queue = None
+        self._failed = False
 
     def startSimulations(self, run_arguments):
         try:
-            self.runSimulations(run_arguments)
+            self.runSimulations(self._job_queue, run_arguments)
         except ErtRunError as e:
             self._failed = True
             self._fail_message = str(e)
             self._simulationEnded()
 
 
-    def runSimulations(self, run_arguments):
+    def runSimulations(self, job_queue, run_arguments):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
 
     def killAllSimulations(self):
-        job_queue = self.ert().siteConfig().getJobQueue()
-        job_queue.killAllJobs()
+        self._job_queue.killAllJobs()
 
 
     def userExitCalled(self):
         """ @rtype: bool """
-        job_queue = self.ert().siteConfig().getJobQueue()
-        return job_queue.getUserExit( )
+        return self._job_queue.getUserExit( )
 
 
     def phaseCount(self):
@@ -133,7 +138,7 @@ class BaseRunModel(object):
 
     def getQueueSize(self):
         """ @rtype: int """
-        queue_size = len(self.ert().siteConfig().getJobQueue())
+        queue_size = len(self._job_queue)
 
         if queue_size == 0:
             queue_size = 1
@@ -143,13 +148,11 @@ class BaseRunModel(object):
 
     def getQueueStatus(self):
         """ @rtype: dict of (JobStatusType, int) """
-        job_queue = self.ert().siteConfig().getJobQueue()
-
         queue_status = {}
 
-        if job_queue.isRunning():
-            for job_number in range(len(job_queue)):
-                status = job_queue.getJobStatus(job_number)
+        if self._job_queue.isRunning():
+            for job_number in range(len(self._job_queue)):
+                status = self._job_queue.getJobStatus(job_number)
 
                 if not status in queue_status:
                     queue_status[status] = 0
@@ -160,7 +163,7 @@ class BaseRunModel(object):
 
     def isQueueRunning(self):
         """ @rtype: bool """
-        return self.ert().siteConfig().getJobQueue().isRunning()
+        return self._job_queue.isRunning()
 
 
     def getProgress(self):

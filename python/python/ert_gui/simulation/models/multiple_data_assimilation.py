@@ -43,7 +43,7 @@ class MultipleDataAssimilation(BaseRunModel):
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
 
-    def runSimulations(self, arguments):
+    def runSimulations(self, job_queue, arguments):
         weights = self.parseWeights(self.weights)
         iteration_count = len(weights)
 
@@ -79,7 +79,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
         for iteration, weight in enumerate(weights):
-            num_successful_realizations = self.simulateAndPostProcess(target_case_format, active_realization_mask, iteration)
+            num_successful_realizations = self._simulateAndPostProcess(job_queue, target_case_format, active_realization_mask, iteration)
 
             # We exit because the user has pressed 'Kill all simulations'.
             if self.userExitCalled( ):
@@ -94,7 +94,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_UPDATE )
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.simulateAndPostProcess(target_case_format, active_realization_mask, iteration_count)
+        self._simulateAndPostProcess(job_queue, target_case_format, active_realization_mask, iteration_count)
 
         self.setPhase(iteration_count + 2, "Simulations completed.")
 
@@ -116,7 +116,7 @@ class MultipleDataAssimilation(BaseRunModel):
             raise UserWarning("Analysis of simulation failed for iteration: %d!" % next_iteration)
 
 
-    def simulateAndPostProcess(self, target_case_format, active_realization_mask, iteration):
+    def _simulateAndPostProcess(self, job_queue, target_case_format, active_realization_mask, iteration):
         target_case_name = target_case_format % iteration
 
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
@@ -132,7 +132,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iteration)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iteration)
         
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)

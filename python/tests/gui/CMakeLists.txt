@@ -9,4 +9,5 @@ addPythonTest(tests.gui.test_multiple_data_assimilation.MDAWeightsTest)
 
 add_subdirectory(ertshell)
 add_subdirectory(ide)
+add_subdirectory(models)
 add_subdirectory(plottery)
