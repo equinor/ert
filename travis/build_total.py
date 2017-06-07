@@ -39,10 +39,11 @@ class build_class():
         print "RES pr number: %d" % self.res_pr_num
         print "ERT pr number: %d" % self.ert_pr_num
 
+
     def parse_pr_description(self):
-        ecl_word = "^ecl=(\d+)"
-        res_word = "^res=(\d+)"
-        ert_word = "^ert=(\d+)"
+        ecl_word = "^Statoil/libecl#(\d+)"
+        res_word = "^Statoil/libres#(\d+)"
+        ert_word = "^Statoil/ert#(\d+)"
         st = self.pr_description
         m = re.search(ecl_word, st, re.MULTILINE)
         if m:
