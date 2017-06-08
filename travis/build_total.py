@@ -14,10 +14,12 @@ class build_class():
 
     def __init__(self, rep, basedir):
         self.github_api_token = codecs.encode( GITHUB_ROT13_API_TOKEN , 'rot13')
+        self.build_ert = True
         if rep in ('ecl', 'res', 'ert'):
             self.repository = rep
             if (rep == 'ecl'):
                 self.rep_name = 'libecl'
+                self.build_ert = False
             if (rep == 'res'):
                 self.rep_name = 'libres'
             if (rep == 'ert'):
@@ -107,7 +109,8 @@ class build_class():
     def clone_fetch_merge(self, basedir):      
         self.clone_merge_repository('libecl', self.ecl_pr_num, basedir)
         self.clone_merge_repository('libres', self.res_pr_num, basedir)
-        self.clone_merge_repository('ert'   , self.ert_pr_num, basedir)
+        if self.build_ert:
+            self.clone_merge_repository('ert'   , self.ert_pr_num, basedir)
 
     def clone_merge_repository(self, rep_name, pr_num, basedir):
         if (self.rep_name != rep_name):
@@ -129,8 +132,9 @@ class build_class():
             os.makedirs(install_dir)
         self.compile_ecl(basedir, install_dir)
         self.compile_res(basedir, install_dir)
-        self.compile_ert(basedir, install_dir)
-
+        if self.build_ert:
+            self.compile_ert(basedir, install_dir)
+            
     def build(self, source_dir, install_dir, test):
         build_dir = os.path.join(source_dir, "build")
         if not os.path.isdir(build_dir):
