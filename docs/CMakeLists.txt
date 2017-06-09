@@ -1,13 +1,3 @@
-option( ERT_RST_DOC           "Build RST based documentation"  ON)
-
-if (NOT BUILD_ERT)
-  if (ERT_RST_DOC)
-    message(WARNING "Turning off ERT_RST_DOC.  Depends on BUILD_ERT.")
-    set (ERT_RST_DOC OFF)
-  endif()
-endif()
-
-if (ERT_RST_DOC)
   find_package(Sphinx REQUIRED)
   if (SPHINX_FOUND)
     set( ERT_DOC_INSTALL_PATH  "" CACHE PATH "Absolute path to install documentation *in addition* to $PREFIX/documentation")
@@ -28,13 +18,11 @@ if (ERT_RST_DOC)
     configure_file(index.rst.in ${PROJECT_BINARY_DIR}/doc-src/index.rst)
     configure_file(conf.py.in ${PROJECT_BINARY_DIR}/doc-src/conf.py)
 
-    if (BUILD_PYTHON)
-       EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_SOURCE_DIR}/code" "${PROJECT_BINARY_DIR}/doc-src/code")
-       add_custom_target(api-doc ALL
-         COMMAND sphinx-apidoc -e -o doc-src/API/python ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}
-         DEPENDS enkf
-         WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
-    endif()     
+     EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_SOURCE_DIR}/code" "${PROJECT_BINARY_DIR}/doc-src/code")
+     add_custom_target(api-doc ALL
+       COMMAND sphinx-apidoc -e -o doc-src/API/python ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}
+       # No dependency? was: DEPENDS ert
+       WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 
     add_custom_target(rst-doc ALL
       COMMAND sphinx-build -b html -d doc-src/doctrees doc-src documentation/rst
@@ -45,6 +33,5 @@ if (ERT_RST_DOC)
   else()
     message(STATUS "Sphinx documentation tool not found - documentation not generated")
   endif()
-endif()
 
 INSTALL( DIRECTORY ${PROJECT_BINARY_DIR}/documentation DESTINATION ${CMAKE_INSTALL_PREFIX} )
