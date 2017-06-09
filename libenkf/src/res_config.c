@@ -16,21 +16,33 @@
    for more details.
 */
 
+#include <ert/util/subst_list.h>
+#include <ert/util/subst_func.h>
+
 #include <ert/enkf/res_config.h>
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/analysis_config.h>
 
 struct res_config_struct {
+
   char * user_config_file;
+
+  subst_func_pool_type * subst_func_pool;
+  subst_list_type      * subst_list;
+
   site_config_type     * site_config;
   rng_config_type      * rng_config;
   analysis_config_type * analysis_config;
+
 };
 
 static res_config_type * res_config_alloc_empty() {
   res_config_type * res_config = util_malloc(sizeof * res_config);
   res_config->user_config_file = NULL;
+
+  res_config->subst_func_pool = NULL;
+  res_config->subst_list      = NULL;
 
   res_config->site_config     = NULL;
   res_config->rng_config      = NULL;
@@ -43,9 +55,11 @@ res_config_type * res_config_alloc_load(const char * config_file) {
   res_config_type * res_config = res_config_alloc_empty(); 
 
   res_config->user_config_file = util_alloc_string_copy(config_file);
+  res_config->subst_func_pool = subst_func_pool_alloc();
+  res_config->subst_list      = subst_list_alloc(res_config->subst_func_pool);
 
-  res_config->site_config = site_config_alloc_load_user_config(config_file);
-  res_config->rng_config  = rng_config_alloc_load_user_config(config_file);
+  res_config->site_config     = site_config_alloc_load_user_config(config_file);
+  res_config->rng_config      = rng_config_alloc_load_user_config(config_file);
   res_config->analysis_config = analysis_config_alloc_load(config_file);
 
   return res_config;
@@ -58,6 +72,9 @@ void res_config_free(res_config_type * res_config) {
   site_config_free(res_config->site_config);
   rng_config_free(res_config->rng_config);
   analysis_config_free(res_config->analysis_config);
+
+  free(res_config->subst_list);
+  free(res_config->subst_func_pool);
 
   free(res_config->user_config_file);
   free(res_config);
@@ -79,6 +96,18 @@ analysis_config_type * res_config_get_analysis_config(
                     const res_config_type * res_config
                     ) {
   return res_config->analysis_config;
+}
+
+subst_list_type * res_config_get_subst_list(
+                    const res_config_type * res_config
+                    ) {
+  return res_config->subst_list;
+}
+
+subst_func_pool_type * res_config_get_subst_func_pool(
+                    const res_config_type * res_config
+                    ) {
+  return res_config->subst_func_pool;
 }
 
 const char * res_config_get_user_config_file(const res_config_type * res_config) {

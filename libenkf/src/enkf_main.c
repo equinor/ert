@@ -159,11 +159,6 @@ struct enkf_main_struct {
   ert_workflow_list_type * workflow_list;
   ranking_table_type     * ranking_table;
 
-  /*---------------------------*/            /* Variables related to substitution. */
-  subst_func_pool_type   * subst_func_pool;
-  subst_list_type        * subst_list;         /* A parent subst_list instance - common to all ensemble members. */
-  /*-------------------------*/
-
   int_vector_type        * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
   bool                     pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
 
@@ -260,7 +255,7 @@ const res_config_type * enkf_main_get_res_config(const enkf_main_type * enkf_mai
 
 
 subst_list_type * enkf_main_get_data_kw( const enkf_main_type * enkf_main ) {
-  return enkf_main->subst_list;
+  return res_config_get_subst_list(enkf_main_get_res_config(enkf_main));
 }
 
 
@@ -344,7 +339,7 @@ static void enkf_main_update_num_cpu( enkf_main_type * enkf_main ) {
     char * num_cpu_key     = enkf_util_alloc_tagged_string( "NUM_CPU" );
     char * num_cpu_string  = util_alloc_sprintf( "%d" , ecl_config_get_num_cpu( enkf_main->ecl_config ));
 
-    subst_list_append_owned_ref( enkf_main->subst_list , num_cpu_key , num_cpu_string , NULL );
+    subst_list_append_owned_ref( enkf_main_get_data_kw(enkf_main) , num_cpu_key , num_cpu_string , NULL );
     free( num_cpu_key );
   }
 }
@@ -391,8 +386,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   config_settings_free( enkf_main->plot_config );
   ert_templates_free( enkf_main->templates );
 
-  subst_func_pool_free( enkf_main->subst_func_pool );
-  subst_list_free( enkf_main->subst_list );
   util_safe_free( enkf_main->user_config_file );
   util_safe_free( enkf_main->rft_config_file );
   free(enkf_main);
@@ -1879,11 +1872,11 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main,
 
 
 ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter) {
-  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main->subst_list , iter );
+  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
 }
 
 ert_init_context_type * enkf_main_alloc_ert_init_context(const enkf_main_type * enkf_main , enkf_fs_type * fs, const bool_vector_type * iactive , init_mode_type init_mode , int iter) {
-  return ert_init_context_alloc( fs, iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main->subst_list , init_mode , iter );
+  return ert_init_context_alloc( fs, iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main_get_data_kw(enkf_main) , init_mode , iter );
 }
 
 
@@ -2004,30 +1997,30 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * dele
    supplies the key __WITH__ tags.
 */
 void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value) {
-  subst_list_append_copy( enkf_main->subst_list   , key , value , "Supplied by the user in the configuration file.");
+  subst_list_append_copy( enkf_main_get_data_kw(enkf_main)   , key , value , "Supplied by the user in the configuration file.");
 }
 
 
 void enkf_main_data_kw_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
-  for (int i = 0; i < subst_list_get_size( enkf_main->subst_list ); i++) {
+  for (int i = 0; i < subst_list_get_size( enkf_main_get_data_kw(enkf_main) ); i++) {
     fprintf(stream , CONFIG_KEY_FORMAT , DATA_KW_KEY );
-    fprintf(stream , CONFIG_VALUE_FORMAT    , subst_list_iget_key( enkf_main->subst_list , i ));
-    fprintf(stream , CONFIG_ENDVALUE_FORMAT , subst_list_iget_value( enkf_main->subst_list , i ));
+    fprintf(stream , CONFIG_VALUE_FORMAT    , subst_list_iget_key( enkf_main_get_data_kw(enkf_main) , i ));
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , subst_list_iget_value( enkf_main_get_data_kw(enkf_main) , i ));
   }
 }
 
 
 void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
-  subst_list_clear( enkf_main->subst_list );
+  subst_list_clear(enkf_main_get_data_kw(enkf_main));
 }
 
 static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * key , const char * value, const char * help_text , bool insert_copy) {
   char * tagged_key = util_alloc_sprintf( INTERNAL_DATA_KW_TAG_FORMAT , key );
 
   if (insert_copy)
-    subst_list_append_owned_ref( enkf_main->subst_list , tagged_key , util_alloc_string_copy( value ), help_text);
+    subst_list_append_owned_ref( enkf_main_get_data_kw(enkf_main) , tagged_key , util_alloc_string_copy( value ), help_text);
   else
-    subst_list_append_ref( enkf_main->subst_list , tagged_key , value , help_text);
+    subst_list_append_ref( enkf_main_get_data_kw(enkf_main) , tagged_key , value , help_text);
 
   free(tagged_key);
 }
@@ -2039,13 +2032,15 @@ static void enkf_main_init_hook_manager( enkf_main_type * enkf_main , config_con
 
 static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
   /* Here we add the functions which should be available for string substitution operations. */
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP"       , "exp"                               , subst_func_exp         , false , 1 , 1 , NULL);
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "LOG"       , "log"                               , subst_func_log         , false , 1 , 1 , NULL);
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "POW10"     , "Calculates 10^x"                   , subst_func_pow10       , false , 1 , 1 , NULL);
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "ADD"       , "Adds arguments"                    , subst_func_add         , true  , 1 , 0 , NULL);
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "MUL"       , "Multiplies arguments"              , subst_func_mul         , true  , 1 , 0 , NULL);
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDINT"   , "Returns a random integer - 32 bit" , subst_func_randint     , false , 0 , 0 , enkf_main->rng);
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDFLOAT" , "Returns a random float 0-1."       , subst_func_randfloat   , false , 0 , 0 , enkf_main->rng);
+  subst_func_pool_type * subst_func_pool = res_config_get_subst_func_pool(enkf_main_get_res_config(enkf_main));
+
+  subst_func_pool_add_func( subst_func_pool , "EXP"       , "exp"                               , subst_func_exp         , false , 1 , 1 , NULL);
+  subst_func_pool_add_func( subst_func_pool , "LOG"       , "log"                               , subst_func_log         , false , 1 , 1 , NULL);
+  subst_func_pool_add_func( subst_func_pool , "POW10"     , "Calculates 10^x"                   , subst_func_pow10       , false , 1 , 1 , NULL);
+  subst_func_pool_add_func( subst_func_pool , "ADD"       , "Adds arguments"                    , subst_func_add         , true  , 1 , 0 , NULL);
+  subst_func_pool_add_func( subst_func_pool , "MUL"       , "Multiplies arguments"              , subst_func_mul         , true  , 1 , 0 , NULL);
+  subst_func_pool_add_func( subst_func_pool , "RANDINT"   , "Returns a random integer - 32 bit" , subst_func_randint     , false , 0 , 0 , enkf_main->rng);
+  subst_func_pool_add_func( subst_func_pool , "RANDFLOAT" , "Returns a random float 0-1."       , subst_func_randfloat   , false , 0 , 0 , enkf_main->rng);
 
   /**
      Allocating the parent subst_list instance. This will (should ...)
@@ -2063,15 +2058,15 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
       o Constant in time.
   */
 
-
+  subst_list_type * subst_list = res_config_get_subst_list(enkf_main_get_res_config(enkf_main));
   /* Installing the functions. */
-  subst_list_insert_func( enkf_main->subst_list , "EXP"         , "__EXP__");
-  subst_list_insert_func( enkf_main->subst_list , "LOG"         , "__LOG__");
-  subst_list_insert_func( enkf_main->subst_list , "POW10"       , "__POW10__");
-  subst_list_insert_func( enkf_main->subst_list , "ADD"         , "__ADD__");
-  subst_list_insert_func( enkf_main->subst_list , "MUL"         , "__MUL__");
-  subst_list_insert_func( enkf_main->subst_list , "RANDINT"     , "__RANDINT__");
-  subst_list_insert_func( enkf_main->subst_list , "RANDFLOAT"   , "__RANDFLOAT__");
+  subst_list_insert_func( subst_list , "EXP"         , "__EXP__");
+  subst_list_insert_func( subst_list , "LOG"         , "__LOG__");
+  subst_list_insert_func( subst_list , "POW10"       , "__POW10__");
+  subst_list_insert_func( subst_list , "ADD"         , "__ADD__");
+  subst_list_insert_func( subst_list , "MUL"         , "__MUL__");
+  subst_list_insert_func( subst_list , "RANDINT"     , "__RANDINT__");
+  subst_list_insert_func( subst_list , "RANDFLOAT"   , "__RANDFLOAT__");
 }
 
 
@@ -2098,13 +2093,10 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->plot_config        = config_settings_alloc( PLOT_SETTING_KEY );
   plot_settings_init( enkf_main->plot_config );
 
-  enkf_main->subst_func_pool    = subst_func_pool_alloc(  );
-  enkf_main->subst_list         = subst_list_alloc( enkf_main->subst_func_pool );
-  enkf_main->templates          = ert_templates_alloc( enkf_main->subst_list );
-  enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main->subst_list );
-  enkf_main->hook_manager       = hook_manager_alloc( enkf_main->workflow_list );
+  enkf_main->templates          = NULL;
+  enkf_main->workflow_list      = NULL;
+  enkf_main->hook_manager       = NULL;
 
-  enkf_main_init_subst_list( enkf_main );
   enkf_main_set_verbose( enkf_main , true );
   enkf_main_init_fs( enkf_main );
 
@@ -2571,6 +2563,12 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->res_config = res_config;
 
+  /*****************************************************************/
+  enkf_main->templates          = ert_templates_alloc( enkf_main_get_data_kw(enkf_main) );
+  enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main_get_data_kw(enkf_main) );
+  enkf_main->hook_manager       = hook_manager_alloc( enkf_main->workflow_list );
+  /*****************************************************************/
+
   enkf_main_rng_init( enkf_main );
 
   enkf_main_set_verbose(enkf_main, verbose);
@@ -2584,6 +2582,7 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
   free(user_config_file);
 
   enkf_main_init_jobname(enkf_main);
+  enkf_main_init_subst_list( enkf_main );
 
   return enkf_main;
 }
@@ -2843,7 +2842,7 @@ int enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int it
   int result[ens_size];
   model_config_type * model_config = enkf_main->model_config;
 
-  ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( model_config ) , enkf_main->subst_list , iter );
+  ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
   arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
   thread_pool_type * tp     = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
 
