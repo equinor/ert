@@ -25,15 +25,17 @@
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/analysis_config.h>
+#include <ert/enkf/ert_workflow_list.h>
 
 typedef struct res_config_struct res_config_type;
 
 res_config_type * res_config_alloc_load(const char *);
 void              res_config_free(res_config_type *);
 
-site_config_type     * res_config_get_site_config(const res_config_type *);
-rng_config_type      * res_config_get_rng_config(const res_config_type *);
-analysis_config_type * res_config_get_analysis_config(const res_config_type *);
+site_config_type       * res_config_get_site_config(const res_config_type *);
+rng_config_type        * res_config_get_rng_config(const res_config_type *);
+analysis_config_type   * res_config_get_analysis_config(const res_config_type *);
+ert_workflow_list_type * res_config_get_workflow_list(const res_config_type *);
 
 subst_list_type      * res_config_get_subst_list(const res_config_type *);
 subst_func_pool_type * res_config_get_subst_func_pool(const res_config_type *);

@@ -151,12 +151,11 @@ struct enkf_main_struct {
   hook_manager_type      * hook_manager;
   model_config_type      * model_config;
   ecl_config_type        * ecl_config;
-  const res_config_type  * res_config;
+  res_config_type        * res_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type     * templates;          /* Run time templates */
   config_settings_type   * plot_config;        /* Information about plotting. */
   rng_type               * rng;
-  ert_workflow_list_type * workflow_list;
   ranking_table_type     * ranking_table;
 
   int_vector_type        * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
@@ -378,9 +377,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   ensemble_config_free( enkf_main->ensemble_config );
 
   local_config_free( enkf_main->local_config );
-
-  ert_workflow_list_free( enkf_main->workflow_list );
-
 
   int_vector_free( enkf_main->keep_runpath );
   config_settings_free( enkf_main->plot_config );
@@ -2094,7 +2090,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   plot_settings_init( enkf_main->plot_config );
 
   enkf_main->templates          = NULL;
-  enkf_main->workflow_list      = NULL;
   enkf_main->hook_manager       = NULL;
 
   enkf_main_set_verbose( enkf_main , true );
@@ -2279,16 +2274,6 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
 }
 
 
-static void enkf_main_bootstrap_site(enkf_main_type * enkf_main) {
-  config_parser_type * config = config_alloc();
-  config_content_type * content = site_config_alloc_content(config);
-
-  ert_workflow_list_init(enkf_main->workflow_list, content);
-
-  config_free(config);
-  config_content_free(content);
-}
-
 /**
  * Note: This function will chdir into the directory of the model_config file.
  */
@@ -2463,9 +2448,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   enkf_main_init_log(enkf_main, content);
 
-  enkf_main_init_subst_list(enkf_main);
-  ert_workflow_list_init(enkf_main->workflow_list, content);
-
   ecl_config_init(enkf_main->ecl_config, content);
   config_settings_apply(enkf_main->plot_config, content);
 
@@ -2559,20 +2541,20 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 */
 
 
-enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_type * res_config, bool strict , bool verbose) {
+enkf_main_type * enkf_main_alloc(const char * model_config, res_config_type * res_config, bool strict , bool verbose) {
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->res_config = res_config;
 
+  enkf_main_init_subst_list(enkf_main);
+
   /*****************************************************************/
   enkf_main->templates          = ert_templates_alloc( enkf_main_get_data_kw(enkf_main) );
-  enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main_get_data_kw(enkf_main) );
-  enkf_main->hook_manager       = hook_manager_alloc( enkf_main->workflow_list );
+  enkf_main->hook_manager       = hook_manager_alloc( enkf_main_get_workflow_list(enkf_main) );
   /*****************************************************************/
 
   enkf_main_rng_init( enkf_main );
 
   enkf_main_set_verbose(enkf_main, verbose);
-  enkf_main_bootstrap_site(enkf_main);
 
   char * user_config_file = enkf_main_alloc_model_config_filename(model_config);
   if(user_config_file) {
@@ -2794,7 +2776,7 @@ ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
 /*****************************************************************/
 
 ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main ) {
-  return enkf_main->workflow_list;
+  return res_config_get_workflow_list(enkf_main->res_config);
 }
 
 bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow ) {
