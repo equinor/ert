@@ -17,7 +17,7 @@ set( ERT_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
 
 option( BUILD_TESTS         "Should the tests be built"             OFF)
 option( BUILD_PYTHON        "Run py_compile on the python wrappers" ON )
-option( ERT_DOC             "Build ERT documantation"               OFF)
+option( RST_DOC             "Build RST documentation"               OFF)
 option( USE_RUNPATH         "Should we embed path to libraries"     ON )
 option( INSTALL_ERT_LEGACY  "Install legacy ert code"               OFF)
 option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
@@ -100,7 +100,7 @@ add_subdirectory(libenkf)
 add_subdirectory(python)
 add_subdirectory(applications)
 
-if (BUILD_PYTHON AND ERT_DOC)
+if (RST_DOC)
     add_subdirectory( docs )
 endif()
 
