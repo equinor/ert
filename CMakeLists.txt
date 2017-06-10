@@ -105,6 +105,7 @@ if (BUILD_PYTHON AND ERT_DOC)
 endif()
 
 install(DIRECTORY share/ DESTINATION share)
+install(PROGRAMS bin/job_dispatch.py DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 install(EXPORT res-config
         DESTINATION share/cmake/res
