@@ -1,0 +1,230 @@
+/*
+   Copyright (C) 2017  Statoil ASA, Norway.
+
+   The file 'subst_config.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
+*/
+
+#include <ert/util/rng.h>
+#include <ert/util/subst_list.h>
+#include <ert/util/subst_func.h>
+
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/res_config.h>
+#include <ert/enkf/subst_config.h>
+#include <ert/enkf/model_config.h>
+#include <ert/enkf/runpath_list.h>
+
+struct subst_config_struct {
+
+  subst_func_pool_type * subst_func_pool;
+  subst_list_type      * subst_list;
+
+};
+
+static void subst_config_init_default(subst_config_type * subst_config);
+
+static void subst_config_install_working_directory(
+        subst_config_type * subst_config,
+        const char * user_config_file
+        );
+
+static void subst_config_init_load(
+        subst_config_type * subst_config,
+        const char * user_config_file
+        );
+
+static subst_config_type * subst_config_alloc_empty() {
+  subst_config_type * subst_config = util_malloc(sizeof * subst_config);
+
+  subst_config->subst_func_pool = NULL;
+  subst_config->subst_list      = NULL;
+
+  return subst_config;
+}
+
+static subst_config_type * subst_config_alloc_default() {
+  subst_config_type * subst_config = subst_config_alloc_empty();
+
+  subst_config->subst_func_pool = subst_func_pool_alloc();
+  subst_config->subst_list      = subst_list_alloc(subst_config->subst_func_pool);
+
+  subst_config_init_default(subst_config);
+
+  return subst_config;
+}
+
+subst_config_type * subst_config_alloc_load(const char * user_config_file) {
+  subst_config_type * subst_config = subst_config_alloc_default();
+
+  if(user_config_file) {
+    subst_config_install_working_directory(subst_config, user_config_file);
+    subst_config_init_load(subst_config, user_config_file);
+  }
+  
+  return subst_config;
+}
+
+void subst_config_free(subst_config_type * subst_config) {
+  if(!subst_config)
+    return;
+
+  subst_func_pool_free(subst_config->subst_func_pool);
+  subst_list_free(subst_config->subst_list);
+
+  free(subst_config);
+}
+
+subst_func_pool_type * subst_config_get_subst_func_pool(subst_config_type * subst_type) {
+  return subst_type->subst_func_pool;
+}
+
+subst_list_type * subst_config_get_subst_list(subst_config_type * subst_type) {
+  return subst_type->subst_list;
+}
+
+void subst_config_install_rng(subst_config_type * subst_config, rng_type * rng) {
+  subst_func_pool_add_func(subst_config->subst_func_pool, "RANDINT",   "Returns a random integer - 32 bit", subst_func_randint,   false, 0, 0, rng);
+  subst_func_pool_add_func(subst_config->subst_func_pool, "RANDFLOAT", "Returns a random float 0-1.",       subst_func_randfloat, false, 0, 0, rng);
+
+  subst_list_insert_func(subst_config->subst_list, "RANDINT",   "__RANDINT__");
+  subst_list_insert_func(subst_config->subst_list, "RANDFLOAT", "__RANDFLOAT__");
+}
+
+void subst_config_add_internal_subst_kw(subst_config_type * subst_config, const char * key , const char * value, const char * help_text) {
+  char * tagged_key = util_alloc_sprintf(INTERNAL_DATA_KW_TAG_FORMAT, key);
+  subst_list_append_copy(subst_config_get_subst_list(subst_config), tagged_key, value, help_text);
+  free(tagged_key);
+}
+
+void subst_config_add_subst_kw(subst_config_type * subst_config , const char * key , const char * value) {
+  subst_list_append_copy(subst_config->subst_list, key, value, "Supplied by the user in the configuration file.");
+}
+
+void subst_config_clear(subst_config_type * subst_config) {
+  subst_list_clear(subst_config->subst_list);
+}
+
+void subst_config_fprintf(const subst_config_type * subst_config, FILE * stream) {
+  for (int i = 0; i < subst_list_get_size(subst_config->subst_list); i++) {
+    fprintf(stream, CONFIG_KEY_FORMAT,      DATA_KW_KEY);
+    fprintf(stream, CONFIG_VALUE_FORMAT,    subst_list_iget_key(subst_config->subst_list, i));
+    fprintf(stream, CONFIG_ENDVALUE_FORMAT, subst_list_iget_value(subst_config->subst_list, i));
+  }
+}
+
+static void subst_config_init_default(subst_config_type * subst_config) {
+  /* Here we add the functions which should be available for string substitution operations. */
+
+  subst_func_pool_add_func(subst_config->subst_func_pool, "EXP",   "exp",                  subst_func_exp,   false, 1, 1, NULL);
+  subst_func_pool_add_func(subst_config->subst_func_pool, "LOG",   "log",                  subst_func_log,   false, 1, 1, NULL);
+  subst_func_pool_add_func(subst_config->subst_func_pool, "POW10", "Calculates 10^x",      subst_func_pow10, false, 1, 1, NULL);
+  subst_func_pool_add_func(subst_config->subst_func_pool, "ADD",   "Adds arguments",       subst_func_add,   true,  1, 0, NULL);
+  subst_func_pool_add_func(subst_config->subst_func_pool, "MUL",   "Multiplies arguments", subst_func_mul,   true,  1, 0, NULL);
+
+  /**
+     Allocating the parent subst_list instance. This will (should ...)
+     be the top level subst instance for all substitions in the ert
+     program.
+
+     All the functions available or only installed in this
+     subst_list.
+
+     The key->value replacements installed in this instance are
+     key,value pairs which are:
+
+      o Common to all ensemble members.
+
+      o Constant in time.
+  */
+
+  /* Installing the functions. */
+  subst_list_insert_func(subst_config->subst_list, "EXP",   "__EXP__");
+  subst_list_insert_func(subst_config->subst_list, "LOG",   "__LOG__");
+  subst_list_insert_func(subst_config->subst_list, "POW10", "__POW10__");
+  subst_list_insert_func(subst_config->subst_list, "ADD",   "__ADD__");
+  subst_list_insert_func(subst_config->subst_list, "MUL",   "__MUL__");
+
+  /*
+     Installing the based (key,value) pairs which are common to all
+     ensemble members, and independent of time.
+  */
+
+  char * date_string = util_alloc_date_stamp_utc();
+  const char * num_cpu_string = "1";
+
+  subst_config_add_internal_subst_kw(subst_config, "DATE",    date_string,    "The current date.");
+  subst_config_add_internal_subst_kw(subst_config, "NUM_CPU", num_cpu_string, "The number of CPU used for one forward model.");
+
+  free( date_string );
+}
+
+static void subst_config_install_working_directory(subst_config_type * subst_config, const char * user_config_file) {
+  char * cwd = res_config_alloc_working_directory(user_config_file);
+
+  subst_config_add_internal_subst_kw(subst_config, "CWD",         cwd, "The current working directory we are running from - the location of the config file.");
+  subst_config_add_internal_subst_kw(subst_config, "CONFIG_PATH", cwd, "The current working directory we are running from - the location of the config file.");
+
+  free( cwd );
+}
+
+static void subst_config_install_data_kw(subst_config_type * subst_config, hash_type * config_data_kw) {
+  /*
+    Installing the DATA_KW keywords supplied by the user - these are
+    at the very top level, so they can reuse everything defined later.
+  */
+  if (config_data_kw) {
+    hash_iter_type * iter = hash_iter_alloc(config_data_kw);
+    const char * key = hash_iter_get_next_key(iter);
+    while (key != NULL) {
+      subst_config_add_subst_kw(subst_config, key, hash_get(config_data_kw, key));
+      key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter);
+  }
+}
+
+static void subst_config_init_load(subst_config_type * subst_config, const char * user_config_file) {
+  config_parser_type * config = config_alloc();
+  config_content_type * content = model_config_alloc_content(user_config_file, config);
+
+  const subst_list_type * define_list = config_content_get_define_list(content);
+  for (int i=0; i < subst_list_get_size(define_list); i++) {
+    const char * key   = subst_list_iget_key(define_list, i);
+    const char * value = subst_list_iget_value(define_list, i);
+    subst_config_add_subst_kw(subst_config, key, value);
+  }
+
+  if (config_content_has_item( content , DATA_KW_KEY)) {
+    config_content_item_type * data_item = config_content_get_item(content, DATA_KW_KEY);
+    hash_type                * data_kw   = config_content_item_alloc_hash(data_item , true);
+    subst_config_install_data_kw(subst_config, data_kw);
+    hash_free(data_kw);
+  }
+
+  if (config_content_has_item(content, RUNPATH_FILE_KEY)) {
+    char * work_dir = res_config_alloc_working_directory(user_config_file);
+    const char * runpath_file = config_content_get_value(content, RUNPATH_FILE_KEY);
+    char * abs_runpath_file = runpath_list_alloc_filename(work_dir, runpath_file);
+
+    subst_config_add_internal_subst_kw(subst_config, "RUNPATH_FILE", abs_runpath_file, "The name of a file with a list of run directories.");
+
+    free(work_dir);
+    free(abs_runpath_file);
+  }
+
+  config_free(config);
+  config_content_free(content);
+}

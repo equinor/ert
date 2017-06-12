@@ -156,6 +156,7 @@ extern "C" {
   void                     enkf_main_list_users(  set_type * users , const char * executable );
   const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
 
+  subst_config_type      * enkf_main_get_subst_config(const enkf_main_type * enkf_main);
   subst_list_type        * enkf_main_get_data_kw( const enkf_main_type * enkf_main );
   void                     enkf_main_clear_data_kw( enkf_main_type * enkf_main );
   const site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main );
