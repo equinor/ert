@@ -87,6 +87,9 @@ class build_class():
             assert(state == "open")
             
     def access_pr(self): 
+        if not "TRAVIS_PULL_REQUEST" in os.environ:
+            return
+
         pr_number_string = os.getenv("TRAVIS_PULL_REQUEST")
         self.pr_number = int(pr_number_string)
         url = "https://api.github.com/repos/Statoil/%s/pulls/%d" % (self.rep_name, self.pr_number)
