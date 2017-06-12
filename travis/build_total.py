@@ -91,6 +91,9 @@ class build_class():
             return
 
         pr_number_string = os.getenv("TRAVIS_PULL_REQUEST")
+        if pr_number_string == "false":
+            return
+
         self.pr_number = int(pr_number_string)
         url = "https://api.github.com/repos/Statoil/%s/pulls/%d" % (self.rep_name, self.pr_number)
         print "Accessing: %s" % url
