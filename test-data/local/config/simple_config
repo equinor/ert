@@ -141,8 +141,8 @@ RSH_HOST     be-lx655082:2      be-lx633214:2
 
 
 LOG_LEVEL         3
-LOG_FILE          /tmp/log/log.txt
-UPDATE_LOG_PATH   /tmp/UP
+LOG_FILE          log.txt
+UPDATE_LOG_PATH   UP
 
 KEEP_RUNPATH     0 - 9
 DATA_KW          <INCLUDE_PATH>       __INCLUDE_PATH__
