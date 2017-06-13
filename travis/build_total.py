@@ -139,7 +139,7 @@ class build_class():
             os.makedirs(install_dir)
         self.compile_ecl(basedir, install_dir)
 
-        if (rep.name == 'libecl' and (platform == 'Darwin' or platform == 'darwin')):
+        if (self.rep_name == 'libecl' and (platform == 'Darwin' or platform == 'darwin')):
             return
            
         self.compile_res(basedir, install_dir)
