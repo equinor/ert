@@ -156,7 +156,7 @@ class build_class():
         subprocess.check_call(cmake_args)
         subprocess.check_call(["make"])
         if test:
-            subprocess.check_call(["ctest"])
+            subprocess.check_call(["ctest", "--output-on-failure"])
         subprocess.check_call(["make" , "install"])
         subprocess.check_call(["bin/test_install"])
         os.chdir(cwd) 
