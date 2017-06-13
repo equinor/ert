@@ -7,6 +7,7 @@ import sys
 import subprocess
 import shutil
 import codecs
+from sys import platform
 
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
@@ -137,6 +138,10 @@ class build_class():
         if not os.path.isdir(install_dir):
             os.makedirs(install_dir)
         self.compile_ecl(basedir, install_dir)
+
+        if (self.rep_name == 'libecl' and (platform == 'Darwin' or platform == 'darwin')):
+            return
+           
         self.compile_res(basedir, install_dir)
         if self.build_ert:
             self.compile_ert(basedir, install_dir)
