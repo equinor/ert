@@ -139,7 +139,7 @@ class build_class():
         self.compile_ecl(basedir, install_dir)
 
         from sys import platform
-        if (rep.name == 'libecl' and (platform == 'Darwin' or platform == 'darwin'))
+        if (rep.name == 'libecl' and (platform == 'Darwin' or platform == 'darwin')):
             return
            
         self.compile_res(basedir, install_dir)
