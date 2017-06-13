@@ -137,6 +137,11 @@ class build_class():
         if not os.path.isdir(install_dir):
             os.makedirs(install_dir)
         self.compile_ecl(basedir, install_dir)
+
+        from sys import platform
+            if (rep.name == 'libecl' and (platform == 'Darwin' or platform == 'darwin'))
+               return
+           
         self.compile_res(basedir, install_dir)
         if self.build_ert:
             self.compile_ert(basedir, install_dir)
