@@ -42,8 +42,8 @@ extern "C" {
 typedef struct analysis_config_struct analysis_config_type;
 
 analysis_iter_config_type * analysis_config_get_iter_config( const analysis_config_type * config );
-analysis_module_type * analysis_config_get_module( analysis_config_type * config , const char * module_name );
-bool                   analysis_config_has_module( analysis_config_type * config , const char * module_name );
+analysis_module_type * analysis_config_get_module(const analysis_config_type * config , const char * module_name );
+bool                   analysis_config_has_module(const analysis_config_type * config , const char * module_name );
 void                   analysis_config_load_internal_module( analysis_config_type * config , const char * symbol_table );
 void                   analysis_config_load_internal_modules( analysis_config_type * analysis );
 void                   analysis_config_reload_module( analysis_config_type * config , const char * module_name);
@@ -90,7 +90,7 @@ void                   analysis_config_add_config_items( config_parser_type * co
 void                   analysis_config_fprintf_config( analysis_config_type * config , FILE * stream);
 
 bool                   analysis_config_select_module( analysis_config_type * config , const char * module_name );
-analysis_module_type * analysis_config_get_active_module( analysis_config_type * config );
+analysis_module_type * analysis_config_get_active_module(const analysis_config_type * config );
 void                   analysis_config_set_single_node_update(analysis_config_type * config , bool single_node_update);
 bool                   analysis_config_get_single_node_update(const analysis_config_type * config);
 

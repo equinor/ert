@@ -199,7 +199,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main , ENKF_MAIN_ID)
 
-analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
+const analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
   return res_config_get_analysis_config(enkf_main->res_config);
 }
 
@@ -1120,7 +1120,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
 
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   analysis_module_type * module = analysis_config_get_active_module(analysis_config);
   if ( local_ministep_has_analysis_module (ministep))
     module = local_ministep_get_analysis_module (ministep);
@@ -1317,7 +1317,7 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
 
 
 static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main, job_queue_type * job_queue) {
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (analysis_config_get_stop_long_running(analysis_config)) {
     bool cont = true;
     while (cont) {
@@ -1722,7 +1722,7 @@ int enkf_main_run_simple_step(enkf_main_type * enkf_main,
 
 
 void enkf_main_run_smoother(enkf_main_type * enkf_main , job_queue_type * job_queue, enkf_fs_type * source_fs, const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun) {
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     if (enkf_main_run_simple_step( enkf_main , job_queue, iactive , INIT_CONDITIONAL, iter)) {
       hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
@@ -1755,7 +1755,7 @@ static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main
                                                       ert_run_context_type * run_context,
                                                       job_queue_type * job_queue) {
   bool ret = true;
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
 
   int active_after_step = enkf_main_run_step(enkf_main , run_context, job_queue);
   if (analysis_config_have_enough_realisations(analysis_config, active_after_step, enkf_main_get_ensemble_size(enkf_main))) {
@@ -1772,7 +1772,7 @@ static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main
 
 static bool enkf_main_run_analysis(enkf_main_type * enkf_main, enkf_fs_type * source_fs ,const char * target_fs_name, int iteration_number) {
   bool updateOK                          = false;
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   analysis_module_type * analysis_module = analysis_config_get_active_module(analysis_config);
   int pre_iteration_number               = analysis_module_get_int(analysis_module, "ITER");
 

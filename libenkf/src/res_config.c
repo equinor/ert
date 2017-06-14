@@ -88,7 +88,7 @@ void res_config_free(res_config_type * res_config) {
   free(res_config);
 }
 
-site_config_type * res_config_get_site_config(
+const site_config_type * res_config_get_site_config(
                     const res_config_type * res_config
                     ) {
   return res_config->site_config;
@@ -100,7 +100,7 @@ rng_config_type * res_config_get_rng_config(
   return res_config->rng_config;
 }
 
-analysis_config_type * res_config_get_analysis_config(
+const analysis_config_type * res_config_get_analysis_config(
                     const res_config_type * res_config
                     ) {
   return res_config->analysis_config;
