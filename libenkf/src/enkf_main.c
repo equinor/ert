@@ -152,7 +152,6 @@ struct enkf_main_struct {
   ecl_config_type        * ecl_config;
   const res_config_type  * res_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
-  ert_templates_type     * templates;          /* Run time templates */
   config_settings_type   * plot_config;        /* Information about plotting. */
   rng_type               * rng;
   ranking_table_type     * ranking_table;
@@ -376,7 +375,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
 
   int_vector_free( enkf_main->keep_runpath );
   config_settings_free( enkf_main->plot_config );
-  ert_templates_free( enkf_main->templates );
 
   util_safe_free( enkf_main->user_config_file );
   util_safe_free( enkf_main->rft_config_file );
@@ -2023,8 +2021,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->plot_config        = config_settings_alloc( PLOT_SETTING_KEY );
   plot_settings_init( enkf_main->plot_config );
 
-  enkf_main->templates          = NULL;
-
   enkf_main_set_verbose( enkf_main , true );
   enkf_main_init_fs( enkf_main );
 
@@ -2336,9 +2332,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   ecl_config_static_kw_init(enkf_main->ecl_config, content);
 
-  /* Installing templates */
-  ert_templates_init(enkf_main->templates, content);
-
   enkf_main_init_rft_config(enkf_main, content);
 
   enkf_main_user_select_initial_fs( enkf_main );
@@ -2401,10 +2394,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_type * res_config, bool strict , bool verbose) {
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->res_config = res_config;
-
-  /*****************************************************************/
-  enkf_main->templates          = ert_templates_alloc( enkf_main_get_data_kw(enkf_main) );
-  /*****************************************************************/
 
   enkf_main_rng_init( enkf_main );
   subst_config_install_rng(res_config_get_subst_config(res_config), enkf_main->rng);
@@ -2616,7 +2605,7 @@ void enkf_main_install_SIGNALS(void) {
 
 
 ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
-  return enkf_main->templates;
+  return res_config_get_templates(enkf_main->res_config);
 }
 
 

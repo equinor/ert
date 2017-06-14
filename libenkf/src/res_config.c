@@ -26,6 +26,7 @@
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/subst_config.h>
 #include <ert/enkf/hook_manager.h>
+#include <ert/enkf/ert_template.h>
 
 struct res_config_struct {
 
@@ -38,6 +39,7 @@ struct res_config_struct {
   ert_workflow_list_type * workflow_list;
   subst_config_type      * subst_config;
   hook_manager_type      * hook_manager;
+  ert_templates_type     * templates;
 
 };
 
@@ -54,6 +56,7 @@ static res_config_type * res_config_alloc_empty() {
   res_config->workflow_list     = NULL;
   res_config->subst_config      = NULL;
   res_config->hook_manager      = NULL;
+  res_config->templates         = NULL;
 
   return res_config;
 }
@@ -79,6 +82,11 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                     res_config->working_dir
                                     );
 
+  res_config->templates      = ert_templates_alloc_load(
+                                    subst_config_get_subst_list(res_config->subst_config),
+                                    config_file
+                                    );
+
   return res_config;
 }
 
@@ -92,6 +100,7 @@ void res_config_free(res_config_type * res_config) {
   ert_workflow_list_free(res_config->workflow_list);
   subst_config_free(res_config->subst_config);
   hook_manager_free(res_config->hook_manager);
+  ert_templates_free(res_config->templates);
 
   free(res_config->user_config_file);
   free(res_config->working_dir);
@@ -132,6 +141,12 @@ const hook_manager_type * res_config_get_hook_manager(
                     const res_config_type * res_config
                    ) {
   return res_config->hook_manager;
+}
+
+ert_templates_type * res_config_get_templates(
+                    const res_config_type * res_config
+                  ) {
+  return res_config->templates;
 }
 
 static char * res_config_alloc_working_directory(const char * user_config_file) {
