@@ -148,7 +148,6 @@ struct enkf_main_struct {
   enkf_fs_type           * dbase;              /* The internalized information. */
 
   ensemble_config_type   * ensemble_config;    /* The config objects for the various enkf nodes.*/
-  hook_manager_type      * hook_manager;
   model_config_type      * model_config;
   ecl_config_type        * ecl_config;
   const res_config_type  * res_config;
@@ -302,8 +301,8 @@ bool enkf_main_have_obs( const enkf_main_type * enkf_main ) {
 
 
 
-hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enkf_main ) {
-  return enkf_main->hook_manager;
+const hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enkf_main ) {
+  return res_config_get_hook_manager(enkf_main->res_config);
 }
 
 
@@ -371,8 +370,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   ecl_config_free(enkf_main->ecl_config);
   model_config_free( enkf_main->model_config);
 
-
-  hook_manager_free( enkf_main->hook_manager );
   ensemble_config_free( enkf_main->ensemble_config );
 
   local_config_free( enkf_main->local_config );
@@ -1389,7 +1386,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
 void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * run_arg){
   enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
   {
-    runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
+    runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
     runpath_list_add( runpath_list ,
                       run_arg_get_iens( run_arg ),
                       run_arg_get_iter( run_arg ),
@@ -1451,7 +1448,7 @@ void enkf_main_create_run_path(enkf_main_type * enkf_main , const bool_vector_ty
   */
 
   {
-    runpath_list_type * runpath_list = hook_manager_get_runpath_list(enkf_main->hook_manager );
+    runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
     runpath_list_fprintf( runpath_list );
   }
 }
@@ -1504,7 +1501,7 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   arg_pack_type ** arg_pack_list = util_malloc( ens_size * sizeof * arg_pack_list );
   thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
-  runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
+  runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
   int iens;
   for (iens = 0; iens < ens_size; iens++)
     arg_pack_list[iens] = arg_pack_alloc( );
@@ -1675,7 +1672,7 @@ void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
                            bool_vector_type * iactive) {
 
   int active_before = bool_vector_count_equal(iactive, true);
-  hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
+  const hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
   ert_run_context_type * run_context;
   init_mode_type init_mode = INIT_CONDITIONAL;
   int iter = 0;
@@ -1723,9 +1720,9 @@ int enkf_main_run_simple_step(enkf_main_type * enkf_main,
 
 void enkf_main_run_smoother(enkf_main_type * enkf_main , job_queue_type * job_queue, enkf_fs_type * source_fs, const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun) {
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  const hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     if (enkf_main_run_simple_step( enkf_main , job_queue, iactive , INIT_CONDITIONAL, iter)) {
-      hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
       hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
     }
 
@@ -1737,7 +1734,6 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , job_queue_type * job_qu
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
           if (enkf_main_run_simple_step(enkf_main , job_queue, iactive , INIT_NONE, iter + 1)) {
-            hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
             hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
           }
         } else
@@ -1759,7 +1755,7 @@ static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main
 
   int active_after_step = enkf_main_run_step(enkf_main , run_context, job_queue);
   if (analysis_config_have_enough_realisations(analysis_config, active_after_step, enkf_main_get_ensemble_size(enkf_main))) {
-    hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
+    const hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
     hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
   }  else {
     fprintf(stderr,"Simulation in iteration %d failed, stopping Iterated Ensemble Smoother\n", ert_run_context_get_iter( run_context ));
@@ -2005,12 +2001,6 @@ void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
   subst_config_clear(enkf_main_get_subst_config(enkf_main));
 }
 
-
-static void enkf_main_init_hook_manager( enkf_main_type * enkf_main , config_content_type * config ) {
-  hook_manager_init( enkf_main->hook_manager , config );
-}
-
-
 static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
@@ -2034,7 +2024,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   plot_settings_init( enkf_main->plot_config );
 
   enkf_main->templates          = NULL;
-  enkf_main->hook_manager       = NULL;
 
   enkf_main_set_verbose( enkf_main , true );
   enkf_main_init_fs( enkf_main );
@@ -2043,8 +2032,8 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
 }
 
 
-runpath_list_type * enkf_main_get_runpath_list( const enkf_main_type * enkf_main ) {
-  return hook_manager_get_runpath_list( enkf_main->hook_manager );
+runpath_list_type * enkf_main_get_runpath_list(const enkf_main_type * enkf_main) {
+  return hook_manager_get_runpath_list(enkf_main_get_hook_manager(enkf_main));
 }
 
 
@@ -2339,8 +2328,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
                     ecl_config_get_refcase(enkf_main->ecl_config)
                     );
 
-  enkf_main_init_hook_manager(enkf_main, content);
-
   enkf_main_init_schedule_prediction(enkf_main, content);
 
   enkf_main_init_delete_runpath(enkf_main, content);
@@ -2417,7 +2404,6 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
 
   /*****************************************************************/
   enkf_main->templates          = ert_templates_alloc( enkf_main_get_data_kw(enkf_main) );
-  enkf_main->hook_manager       = hook_manager_alloc( enkf_main_get_workflow_list(enkf_main) );
   /*****************************************************************/
 
   enkf_main_rng_init( enkf_main );

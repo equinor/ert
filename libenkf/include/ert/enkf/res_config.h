@@ -27,6 +27,7 @@
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/subst_config.h>
+#include <ert/enkf/hook_manager.h>
 
 typedef struct res_config_struct res_config_type;
 
@@ -38,6 +39,7 @@ rng_config_type              * res_config_get_rng_config(const res_config_type *
 const analysis_config_type   * res_config_get_analysis_config(const res_config_type *);
 ert_workflow_list_type       * res_config_get_workflow_list(const res_config_type *);
 subst_config_type            * res_config_get_subst_config(const res_config_type * res_config);
+const hook_manager_type      * res_config_get_hook_manager(const res_config_type * res_config);
 
 const char * res_config_get_working_directory(const res_config_type *);
 const char * res_config_get_user_config_file(const res_config_type *);

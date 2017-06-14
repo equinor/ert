@@ -174,7 +174,7 @@ extern "C" {
   void                        enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf_config_node);
   int_vector_type           * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride);
 
-  hook_manager_type         * enkf_main_get_hook_manager( const enkf_main_type * enkf_main );
+  const hook_manager_type   * enkf_main_get_hook_manager( const enkf_main_type * enkf_main );
 
   void enkf_main_get_PC( const matrix_type * S,
                          const matrix_type * dObs,

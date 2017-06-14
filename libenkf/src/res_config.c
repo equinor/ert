@@ -25,6 +25,7 @@
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/subst_config.h>
+#include <ert/enkf/hook_manager.h>
 
 struct res_config_struct {
 
@@ -36,6 +37,7 @@ struct res_config_struct {
   analysis_config_type   * analysis_config;
   ert_workflow_list_type * workflow_list;
   subst_config_type      * subst_config;
+  hook_manager_type      * hook_manager;
 
 };
 
@@ -51,6 +53,7 @@ static res_config_type * res_config_alloc_empty() {
   res_config->analysis_config   = NULL;
   res_config->workflow_list     = NULL;
   res_config->subst_config      = NULL;
+  res_config->hook_manager      = NULL;
 
   return res_config;
 }
@@ -70,6 +73,12 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                     config_file
                                     );
 
+  res_config->hook_manager    = hook_manager_alloc_load(
+                                    res_config->workflow_list,
+                                    config_file,
+                                    res_config->working_dir
+                                    );
+
   return res_config;
 }
 
@@ -82,6 +91,7 @@ void res_config_free(res_config_type * res_config) {
   analysis_config_free(res_config->analysis_config);
   ert_workflow_list_free(res_config->workflow_list);
   subst_config_free(res_config->subst_config);
+  hook_manager_free(res_config->hook_manager);
 
   free(res_config->user_config_file);
   free(res_config->working_dir);
@@ -108,7 +118,7 @@ const analysis_config_type * res_config_get_analysis_config(
 
 ert_workflow_list_type * res_config_get_workflow_list(
                     const res_config_type * res_config
-        ) {
+                    ) {
   return res_config->workflow_list;
 }
 
@@ -116,6 +126,12 @@ subst_config_type * res_config_get_subst_config(
                     const res_config_type * res_config
                    ) {
   return res_config->subst_config;
+}
+
+const hook_manager_type * res_config_get_hook_manager(
+                    const res_config_type * res_config
+                   ) {
+  return res_config->hook_manager;
 }
 
 static char * res_config_alloc_working_directory(const char * user_config_file) {
