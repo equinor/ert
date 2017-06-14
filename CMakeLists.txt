@@ -36,7 +36,7 @@ if (EXISTS ${STATOIL_TESTDATA_ROOT})
   message(STATUS "Linking testdata: ${LINK} -> ${STATOIL_TESTDATA_ROOT}")
 endif()
 
-
+EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_SOURCE_DIR}/share" "${CMAKE_CURRENT_SOURCE_DIR}/build/share" )
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
@@ -119,7 +119,7 @@ add_definitions( -DHAVE_PROC )
 if (BUILD_TESTS)
    option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit" OFF)
 endif()
-add_subdirectory( bin )
+
 
 include(cmake/ert_module_name.cmake)
 
@@ -129,6 +129,7 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX
 
 
 add_subdirectory( python )
+add_subdirectory( bin )
 
 if(RST_DOC)
    add_subdirectory( docs )
