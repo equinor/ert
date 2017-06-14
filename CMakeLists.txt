@@ -36,7 +36,7 @@ if (EXISTS ${STATOIL_TESTDATA_ROOT})
   message(STATUS "Linking testdata: ${LINK} -> ${STATOIL_TESTDATA_ROOT}")
 endif()
 
-
+EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_SOURCE_DIR}/share" "${CMAKE_CURRENT_SOURCE_DIR}/build/share" )
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
