@@ -24,17 +24,19 @@ option( GUI                 "Build Python GUI"                                  
 find_package( ecl REQUIRED )
 find_package( res REQUIRED )
 
+function( make_symlink target link )
+  if (EXISTS ${link}) 
+     EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E remove "${link}")
+  endif()
+  EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${target}" "${link}")
+  message(STATUS "Linking : ${link} -> ${target}")
+endfunction()  
 
 set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
 if (EXISTS ${STATOIL_TESTDATA_ROOT})
-  set( LINK "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Statoil" )
-  if (EXISTS ${LINK})
-    EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E remove "${LINK}")
-  endif()
-
-  EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${STATOIL_TESTDATA_ROOT}" "${LINK}")
-  message(STATUS "Linking testdata: ${LINK} -> ${STATOIL_TESTDATA_ROOT}")
+  make_symlink( "${STATOIL_TESTDATA_ROOT}" "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Statoil")
 endif()
+make_symlink( "${CMAKE_CURRENT_SOURCE_DIR}/share" "${CMAKE_CURRENT_BINARY_DIR}/share" )
 
 
 
