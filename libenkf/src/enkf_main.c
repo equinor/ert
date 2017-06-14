@@ -1538,7 +1538,7 @@ static void enkf_main_start_queue(enkf_main_type * enkf_main,
   enkf_main_submit_jobs( enkf_main , run_context, job_queue);
 
   job_queue_submit_complete( job_queue );
-  res_log_add_message( 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
+  res_log_add_message_str(LOG_INFO , "All jobs submitted to internal queue - waiting for completion");
 
   int max_runtime = analysis_config_get_max_runtime(enkf_main_get_analysis_config( enkf_main ));
   job_queue_set_max_job_duration(job_queue, max_runtime);

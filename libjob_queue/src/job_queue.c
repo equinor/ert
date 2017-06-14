@@ -28,6 +28,7 @@
 #include <ert/util/util.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
+#include <ert/res_util/res_log.h>
 
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/job_node.h>
@@ -38,7 +39,7 @@
 
 /**
 
-   The running of external jobs is handled thruogh an abstract
+   The running of external jobs is handled through an abstract
    job_queue implemented in this file; the job_queue then contains a
    'driver' which actually runs the job. All drivers must support the
    following functions
@@ -129,7 +130,7 @@
        system (and also external scope) can explicitly set the status
        of a job (by using the job_queue_change_node_status() function).
 
-       The most promiment example of this is when we want to run a
+       The most prominent example of this is when we want to run a
        certain job again, that is achieved with:
 
            job_queue_node_change_status( queue , node , JOB_QUEUE_WAITING );
@@ -144,16 +145,16 @@
   Communicating success/failure between the job_script and the job_queue:
   =======================================================================
 
-  The system for communicatin success/failure between the queue system
+  The system for communicating success/failure between the queue system
   (i.e. this file) and the job script is quite elaborate. There are
   essentially three problems which make this complicated:
 
    1. The exit status of the jobs is NOT reliably captured - the job
-      might very well fail without us detecing it with the exit
+      might very well fail without us detecting it with the exit
       status.
 
-   2. Syncronizing of disks can be quite slow, so altough a job has
-      completede successfully the files we expect to find might not
+   2. Synchronizing of disks can be quite slow, so although a job has
+      completed successfully the files we expect to find might not
       present.
 
    3. There is layer upon layer here - this file scope (i.e. the
@@ -213,13 +214,13 @@ struct job_queue_struct {
   UTIL_TYPE_ID_DECLARATION;
   job_list_type            * job_list;
   job_queue_status_type    * status;
-  char                     * exit_file;                         /* The queue will look for the occurence of this file to detect a failure. */
+  char                     * exit_file;                         /* The queue will look for the occurrence of this file to detect a failure. */
   char                     * ok_file;                           /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
   char                     * status_file;                       /* The queue will look for this file to verify that the job is running or has run.  If not, ok_file is ignored. */
   queue_driver_type        * driver;                            /* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
 
   bool                       open;                              /* True if the queue has been reset and is ready for use, false if the queue has been used and not reset */
-  bool                       user_exit;                         /* If there comes an external signal to abondond the whole thing user_exit will be set to true, and things start to dwindle down. */
+  bool                       user_exit;                         /* If there comes an external signal to abandon the whole thing user_exit will be set to true, and things start to dwindle down. */
   bool                       running;
   bool                       pause_on;
   bool                       submit_complete;
@@ -863,6 +864,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
     */
     const int NUM_WORKER_THREADS = 4;
     queue->work_pool = thread_pool_alloc( NUM_WORKER_THREADS , true );
+    res_log_add_message_str(LOG_DEBUG,"Allocated thread pool in job_queue_run_jobs");
     {
       bool new_jobs         = false;
       bool cont             = true;
@@ -870,12 +872,14 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
 
       queue->running = true;
       do {
+        res_log_add_message_str(LOG_DEBUG,"Entering inner loop in job_queue_run_jobs");
         bool local_user_exit = false;
         job_list_get_rdlock( queue->job_list );
         /*****************************************************************/
         if (queue->user_exit)  {/* An external thread has called the job_queue_user_exit() function, and we should kill
                                    all jobs, do some clearing up and go home. Observe that we will go through the
                                    queue handling codeblock below ONE LAST TIME before exiting. */
+          res_log_add_message_str(LOG_INFO,"Received queue->user_exit in inner loop of job_queue_run_jobs, exiting");
           job_queue_user_exit__( queue );
           local_user_exit = true;
         }
@@ -1012,6 +1016,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
       printf("\n");
     thread_pool_join( queue->work_pool );
     thread_pool_free( queue->work_pool );
+  }
+  else{
+    res_log_add_message_str(LOG_INFO,"queue->user_exit = true in job_queue, received external signal to abandon the whole thing");
   }
 
   /*

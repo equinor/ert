@@ -257,7 +257,7 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
 	    if (full_path) {
 	      set_add_key( names , root_name );
 	      if (res_log_is_open())
-		res_log_add_message( 1 , NULL , util_alloc_sprintf("Adding workflow job:%s " , full_path ), true);
+            res_log_add_fmt_message(LOG_INFO , NULL , "Adding workflow job:%s " , full_path);
 
 	      ert_workflow_list_add_job( workflow_list , root_name , full_path );
 	    }

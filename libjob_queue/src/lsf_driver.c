@@ -26,10 +26,12 @@
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/util/stringlist.h>
+#include <ert/res_util/res_log.h>
 
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/lsf_driver.h>
 #include <ert/job_queue/lsf_job_stat.h>
+#include <ert/util/log.h>
 
 #ifdef HAVE_LSF_LIBRARY
 #include <ert/job_queue/lsb.h>
@@ -310,6 +312,7 @@ static void lsf_driver_internal_error( const lsf_driver_type * driver ) {
   fprintf(stderr , "** a value for LSF_SERVER. Set this and try again.             **\n");
 #endif
   fprintf(stderr , "*****************************************************************\n\n");
+  res_log_add_message_str(LOG_ERROR,"In lsf_driver, attempt at submitting without setting a value for LSF_SERVER.");
   exit(1);
 }
 
@@ -513,6 +516,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
 
       if (driver->debug_output)
         printf("Submitting: %s %s %s \n",driver->rsh_cmd , argv[0] , argv[1]);
+      res_log_add_fmt_message(LOG_DEBUG,NULL, "Submitting: %s %s %s \n",driver->rsh_cmd , argv[0] , argv[1]);
 
       util_spawn_blocking(driver->rsh_cmd, 2, (const char **) argv, tmp_file, NULL);
 
@@ -713,7 +717,7 @@ static int lsf_driver_get_bhist_status_shell( lsf_driver_type * driver , lsf_job
   int sleep_time = 4;
   int run_time1, run_time2, pend_time1 , pend_time2;
 
-  fprintf(stderr,"** Warning: could not find status of job:%s using \'bjobs\' - trying with \'bhist\'.\n" , job->lsf_jobnr_char);
+  res_log_add_fmt_message(LOG_ERROR, stderr , "** Warning: could not find status of job:%s using \'bjobs\' - trying with \'bhist\'.\n" , job->lsf_jobnr_char);
   if (!lsf_driver_run_bhist( driver , job ,  &pend_time1 , &run_time1))
     return status;
 
@@ -767,6 +771,7 @@ static int lsf_driver_get_job_status_shell(void * __driver , void * __job) {
            it has completed/exited and fallen out of the bjobs status
            table maintained by LSF. We try calling bhist to get the status.
         */
+        res_log_add_message_str(LOG_WARNING,"In lsf_driver we found that job was not in the status cache,  this *might* mean that it has completed/exited and fallen out of the bjobs status table maintained by LSF.  ");
         status = lsf_driver_get_bhist_status_shell( driver , job );
         if (status != JOB_STAT_UNKWN)
           hash_insert_int( driver->bjobs_cache , job->lsf_jobnr_char , status );
@@ -853,7 +858,7 @@ static void lsf_driver_node_failure(lsf_driver_type * driver, long lsf_job_id) {
   stringlist_type * hosts = lsf_job_alloc_parse_hostnames(fname);
   char* hostnames = stringlist_alloc_joined_string(hosts, ", ");
 
-  fprintf(stderr, "The job:%ld never started - the nodes: %s will be excluded, the job will be resubmitted to LSF.\n", lsf_job_id , hostnames);
+  res_log_add_fmt_message(LOG_ERROR, stderr , "The job:%ld never started - the nodes: %s will be excluded, the job will be resubmitted to LSF.\n", lsf_job_id , hostnames);
   lsf_driver_add_exclude_hosts(driver, hostnames);
 
   util_free(hostnames);
@@ -919,12 +924,16 @@ void * lsf_driver_submit_job(void * __driver ,
       lsf_submit_method_enum submit_method = driver->submit_method;
       pthread_mutex_lock( &driver->submit_lock );
 
-      if (driver->debug_output)
-        printf("LSF DRIVER submitting using method:%d \n",submit_method);
+      if (driver->debug_output){
+        printf("LSF DRIVER submitting using method:%d \n",submit_method); //TODO: remove?
+        }
+      res_log_add_fmt_message(LOG_INFO, NULL ,"LSF DRIVER submitting using method:%d \n",submit_method);
 
       if (submit_method == LSF_SUBMIT_INTERNAL) {
-        if (stringlist_get_size(driver->exclude_hosts) > 0)
-          printf("WARNING:  EXCLUDE_HOST is not supported with submit method LSF_SUBMIT_INTERNAL");
+        if (stringlist_get_size(driver->exclude_hosts) > 0){
+          res_log_add_message_str(LOG_WARNING,"EXCLUDE_HOST is not supported with submit method LSF_SUBMIT_INTERNAL");
+          printf("WARNING:  EXCLUDE_HOST is not supported with submit method LSF_SUBMIT_INTERNAL"); //TODO: remove?
+        }
         job->lsf_jobnr = lsf_driver_submit_internal_job( driver , lsf_stdout , job_name , submit_cmd , num_cpu , argc, argv);
       } else {
         job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , lsf_stdout , job_name , submit_cmd , num_cpu , argc, argv);
@@ -948,7 +957,7 @@ void * lsf_driver_submit_job(void * __driver ,
       if (driver->error_count >= driver->max_error_count)
         util_exit("Maximum number of submit errors exceeded - giving up\n");
       else {
-        fprintf(stderr,"** ERROR ** Failed when submitting to LSF - will try again.\n");
+        res_log_add_fmt_message(LOG_ERROR,stderr, "** ERROR ** Failed when submitting to LSF - will try again.");
         usleep( driver->submit_error_sleep );
       }
 
