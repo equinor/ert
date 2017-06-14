@@ -167,6 +167,7 @@ class PrBuilder():
 
         cwd = os.getcwd()
         os.chdir(build_dir)
+        subprocess.check_call(["ln", "-s", "../share", "."])
         subprocess.check_call(cmake_args)
         subprocess.check_call(["make"])
         if test:
