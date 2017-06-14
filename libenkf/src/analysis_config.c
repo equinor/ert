@@ -377,11 +377,11 @@ void analysis_config_reload_module( analysis_config_type * config , const char *
 }
 
 
-analysis_module_type * analysis_config_get_module( analysis_config_type * config , const char * module_name ) {
+analysis_module_type * analysis_config_get_module(const analysis_config_type * config , const char * module_name ) {
   return hash_get( config->analysis_modules , module_name );
 }
 
-bool analysis_config_has_module(analysis_config_type * config , const char * module_name) {
+bool analysis_config_has_module(const analysis_config_type * config , const char * module_name) {
   return hash_has_key( config->analysis_modules , module_name );
 }
 
@@ -419,7 +419,7 @@ bool analysis_config_select_module( analysis_config_type * config , const char *
 }
 
 
-analysis_module_type * analysis_config_get_active_module( analysis_config_type * config ) {
+analysis_module_type * analysis_config_get_active_module(const analysis_config_type * config ) {
   return config->analysis_module;
 }
 

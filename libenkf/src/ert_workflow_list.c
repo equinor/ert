@@ -39,11 +39,13 @@
 #include <ert/job_queue/workflow_job.h>
 #include <ert/job_queue/workflow_joblist.h>
 
+#include <ert/res_util/res_log.h>
+
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
-#include <ert/res_util/res_log.h>
-
+#include <ert/enkf/site_config.h>
+#include <ert/enkf/model_config.h>
 
 #define ERT_WORKFLOW_LIST_TYPE_ID 8856275
 
@@ -73,6 +75,38 @@ ert_workflow_list_type * ert_workflow_list_alloc(const subst_list_type * context
   return workflow_list;
 }
 
+ert_workflow_list_type * ert_workflow_list_alloc_load_site_config(const subst_list_type * context) {
+  ert_workflow_list_type * workflow_list = ert_workflow_list_alloc(context);
+
+  config_parser_type * config = config_alloc();
+  config_content_type * content = site_config_alloc_content(config);
+
+  ert_workflow_list_init(workflow_list, content);
+
+  config_free(config);
+  config_content_free(content);
+
+  return workflow_list;
+}
+
+ert_workflow_list_type * ert_workflow_list_alloc_load(
+        const subst_list_type * context,
+        const char * user_config_file) {
+
+  ert_workflow_list_type * workflow_list = ert_workflow_list_alloc_load_site_config(context);
+
+  if(user_config_file) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(user_config_file, config);
+
+    ert_workflow_list_init(workflow_list, content);
+
+    config_free(config);
+    config_content_free(content);
+  }
+
+  return workflow_list;
+}
 
 
 UTIL_IS_INSTANCE_FUNCTION( ert_workflow_list , ERT_WORKFLOW_LIST_TYPE_ID )

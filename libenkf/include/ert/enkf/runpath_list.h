@@ -41,6 +41,7 @@ extern "C" {
   void                runpath_list_fprintf( runpath_list_type * list);
   const char *        runpath_list_get_export_file( const runpath_list_type * list );
   void                runpath_list_set_export_file( runpath_list_type * list , const char * export_file );
+  char              * runpath_list_alloc_filename(const char * basepath, const char * filename);
 
   
 

@@ -142,7 +142,7 @@ extern "C" {
   void                          enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file , bool clear_existing);
   enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
   bool                          enkf_main_have_obs( const enkf_main_type * enkf_main );
-  analysis_config_type        * enkf_main_get_analysis_config(const enkf_main_type * );
+  const analysis_config_type  * enkf_main_get_analysis_config(const enkf_main_type * );
 
   void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
   void         enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
@@ -156,6 +156,7 @@ extern "C" {
   void                     enkf_main_list_users(  set_type * users , const char * executable );
   const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
 
+  subst_config_type      * enkf_main_get_subst_config(const enkf_main_type * enkf_main);
   subst_list_type        * enkf_main_get_data_kw( const enkf_main_type * enkf_main );
   void                     enkf_main_clear_data_kw( enkf_main_type * enkf_main );
   const site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main );

@@ -33,7 +33,6 @@
 #include <ert/enkf/runpath_list.h>
 
 #define HOOK_MANAGER_NAME             "HOOK MANAGER"
-#define RUNPATH_LIST_FILE             ".ert_runpath_list"
 #define QC_WORKFLOW_NAME              "QC WORKFLOW"
 #define RUN_MODE_PRE_SIMULATION_NAME  "PRE_SIMULATION"
 #define RUN_MODE_POST_SIMULATION_NAME "POST_SIMULATION"
@@ -58,7 +57,7 @@ hook_manager_type * hook_manager_alloc( ert_workflow_list_type * workflow_list )
   hook_manager->workflow_list = workflow_list;
 
   hook_manager->runpath_list = runpath_list_alloc( NULL );
-  hook_manager_set_runpath_list_file( hook_manager, NULL, RUNPATH_LIST_FILE );
+  hook_manager_set_runpath_list_file(hook_manager, NULL, NULL);
 
   hook_manager->input_context = hash_alloc();
 
@@ -183,29 +182,9 @@ static void hook_manager_set_runpath_list_file__( hook_manager_type * hook_manag
 }
 
 void hook_manager_set_runpath_list_file( hook_manager_type * hook_manager , const char * basepath, const char * filename) {
-  if (filename && util_is_abs_path( filename ))
-    hook_manager_set_runpath_list_file__( hook_manager , filename );
-  else {
-    const char * file = RUNPATH_LIST_FILE;
-
-    if (filename != NULL)
-      file = filename;
-
-    char * file_with_path_prefix = NULL;
-    if (basepath != NULL) {
-      file_with_path_prefix = util_alloc_filename(basepath, file, NULL);
-    }
-    else
-      file_with_path_prefix = util_alloc_string_copy(file);
-
-    {
-      char * absolute_path = util_alloc_abs_path(file_with_path_prefix);
-      hook_manager_set_runpath_list_file__( hook_manager , absolute_path );
-      free( absolute_path );
-    }
-
-    free(file_with_path_prefix);
-  }
+  char * runpath_list_file = runpath_list_alloc_filename(basepath, filename);
+  hook_manager_set_runpath_list_file__(hook_manager, runpath_list_file);
+  free(runpath_list_file);
 }
 
 
@@ -249,6 +228,3 @@ bool hook_manager_run_post_hook_workflow( const hook_manager_type * hook_manager
 
   return hook_workflow_run_workflow(hook_manager->post_hook_workflow, hook_manager->workflow_list, self);
 }
-
-
-

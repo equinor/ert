@@ -90,6 +90,7 @@ add_library(enkf src/active_list.c
                  src/surface.c
                  src/surface_config.c
                  src/trans_func.c
+                 src/subst_config.c
 )
 
 target_include_directories(enkf
