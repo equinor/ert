@@ -92,6 +92,7 @@ ert_workflow_list_type * ert_workflow_list_alloc_load_site_config(const subst_li
 ert_workflow_list_type * ert_workflow_list_alloc_load(
         const subst_list_type * context,
         const char * user_config_file) {
+
   ert_workflow_list_type * workflow_list = ert_workflow_list_alloc_load_site_config(context);
 
   if(user_config_file) {

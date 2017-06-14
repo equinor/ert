@@ -39,11 +39,7 @@ analysis_config_type   * res_config_get_analysis_config(const res_config_type *)
 ert_workflow_list_type * res_config_get_workflow_list(const res_config_type *);
 subst_config_type      * res_config_get_subst_config(const res_config_type * res_config);
 
-subst_list_type      * res_config_get_subst_list(const res_config_type *);
-subst_func_pool_type * res_config_get_subst_func_pool(const res_config_type *);
-
-char * res_config_alloc_working_directory(const char * user_config_file);
-
+const char * res_config_get_working_directory(const res_config_type *);
 const char * res_config_get_user_config_file(const res_config_type *);
 const char * res_config_get_site_config_file(const res_config_type *);
 

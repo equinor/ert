@@ -120,7 +120,7 @@ extern "C" {
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
   void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
   void                          enkf_main_interactive_set_runpath__(void * );
-  enkf_main_type              * enkf_main_alloc(const char *, res_config_type *, bool, bool);
+  enkf_main_type              * enkf_main_alloc(const char *, const res_config_type *, bool, bool);
   void                          enkf_main_create_new_config( const char * config_file , const char * storage_path , const char * dbase_type , int num_realizations);
 
 

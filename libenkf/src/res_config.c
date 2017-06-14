@@ -29,6 +29,7 @@
 struct res_config_struct {
 
   char * user_config_file;
+  char * working_dir;
 
   site_config_type       * site_config;
   rng_config_type        * rng_config;
@@ -38,9 +39,12 @@ struct res_config_struct {
 
 };
 
+static char * res_config_alloc_working_directory(const char * user_config_file);
+
 static res_config_type * res_config_alloc_empty() {
   res_config_type * res_config = util_malloc(sizeof * res_config);
   res_config->user_config_file = NULL;
+  res_config->working_dir      = NULL;
 
   res_config->site_config       = NULL;
   res_config->rng_config        = NULL;
@@ -53,16 +57,16 @@ static res_config_type * res_config_alloc_empty() {
 
 res_config_type * res_config_alloc_load(const char * config_file) {
   res_config_type * res_config = res_config_alloc_empty(); 
-
   res_config->user_config_file = util_alloc_string_copy(config_file);
+  res_config->working_dir      = res_config_alloc_working_directory(config_file);
 
-  res_config->subst_config    = subst_config_alloc_load(config_file);
+  res_config->subst_config    = subst_config_alloc_load(config_file, res_config->working_dir);
 
   res_config->site_config     = site_config_alloc_load_user_config(config_file);
   res_config->rng_config      = rng_config_alloc_load_user_config(config_file);
   res_config->analysis_config = analysis_config_alloc_load(config_file);
   res_config->workflow_list   = ert_workflow_list_alloc_load(
-                                    res_config_get_subst_list(res_config),
+                                    subst_config_get_subst_list(res_config->subst_config),
                                     config_file
                                     );
 
@@ -80,6 +84,7 @@ void res_config_free(res_config_type * res_config) {
   subst_config_free(res_config->subst_config);
 
   free(res_config->user_config_file);
+  free(res_config->working_dir);
   free(res_config);
 }
 
@@ -107,25 +112,13 @@ ert_workflow_list_type * res_config_get_workflow_list(
   return res_config->workflow_list;
 }
 
-subst_list_type * res_config_get_subst_list(
-                    const res_config_type * res_config
-                    ) {
-  return subst_config_get_subst_list(res_config->subst_config);
-}
-
-subst_func_pool_type * res_config_get_subst_func_pool(
-                    const res_config_type * res_config
-                    ) {
-  return subst_config_get_subst_func_pool(res_config->subst_config);
-}
-
 subst_config_type * res_config_get_subst_config(
                     const res_config_type * res_config
                    ) {
   return res_config->subst_config;
 }
 
-char * res_config_alloc_working_directory(const char * user_config_file) {
+static char * res_config_alloc_working_directory(const char * user_config_file) {
   if(user_config_file == NULL)
     return NULL;
 
@@ -137,6 +130,10 @@ char * res_config_alloc_working_directory(const char * user_config_file) {
   free(abspath);
 
   return path;
+}
+
+const char * res_config_get_working_directory(const res_config_type * res_config) {
+  return res_config->working_dir;
 }
 
 const char * res_config_get_user_config_file(const res_config_type * res_config) {

@@ -151,7 +151,7 @@ struct enkf_main_struct {
   hook_manager_type      * hook_manager;
   model_config_type      * model_config;
   ecl_config_type        * ecl_config;
-  res_config_type        * res_config;
+  const res_config_type  * res_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type     * templates;          /* Run time templates */
   config_settings_type   * plot_config;        /* Information about plotting. */
@@ -257,7 +257,7 @@ subst_config_type * enkf_main_get_subst_config(const enkf_main_type * enkf_main)
 }
 
 subst_list_type * enkf_main_get_data_kw( const enkf_main_type * enkf_main ) {
-  return res_config_get_subst_list(enkf_main_get_res_config(enkf_main));
+  return subst_config_get_subst_list(enkf_main_get_subst_config(enkf_main));
 }
 
 
@@ -2411,7 +2411,7 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 */
 
 
-enkf_main_type * enkf_main_alloc(const char * model_config, res_config_type * res_config, bool strict , bool verbose) {
+enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_type * res_config, bool strict , bool verbose) {
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->res_config = res_config;
 

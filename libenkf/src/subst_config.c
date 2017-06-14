@@ -22,7 +22,6 @@
 
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
-#include <ert/enkf/res_config.h>
 #include <ert/enkf/subst_config.h>
 #include <ert/enkf/model_config.h>
 #include <ert/enkf/runpath_list.h>
@@ -43,7 +42,8 @@ static void subst_config_install_working_directory(
 
 static void subst_config_init_load(
         subst_config_type * subst_config,
-        const char * user_config_file
+        const char * user_config_file,
+        const char * working_dir
         );
 
 static subst_config_type * subst_config_alloc_empty() {
@@ -66,13 +66,14 @@ static subst_config_type * subst_config_alloc_default() {
   return subst_config;
 }
 
-subst_config_type * subst_config_alloc_load(const char * user_config_file) {
+subst_config_type * subst_config_alloc_load(const char * user_config_file, const char * working_dir) {
   subst_config_type * subst_config = subst_config_alloc_default();
 
-  if(user_config_file) {
+  if(working_dir)
     subst_config_install_working_directory(subst_config, user_config_file);
-    subst_config_init_load(subst_config, user_config_file);
-  }
+
+  if(user_config_file)
+    subst_config_init_load(subst_config, user_config_file, working_dir);
   
   return subst_config;
 }
@@ -171,13 +172,9 @@ static void subst_config_init_default(subst_config_type * subst_config) {
   free( date_string );
 }
 
-static void subst_config_install_working_directory(subst_config_type * subst_config, const char * user_config_file) {
-  char * cwd = res_config_alloc_working_directory(user_config_file);
-
-  subst_config_add_internal_subst_kw(subst_config, "CWD",         cwd, "The current working directory we are running from - the location of the config file.");
-  subst_config_add_internal_subst_kw(subst_config, "CONFIG_PATH", cwd, "The current working directory we are running from - the location of the config file.");
-
-  free( cwd );
+static void subst_config_install_working_directory(subst_config_type * subst_config, const char * working_dir) {
+  subst_config_add_internal_subst_kw(subst_config, "CWD",         working_dir, "The current working directory we are running from - the location of the config file.");
+  subst_config_add_internal_subst_kw(subst_config, "CONFIG_PATH", working_dir, "The current working directory we are running from - the location of the config file.");
 }
 
 static void subst_config_install_data_kw(subst_config_type * subst_config, hash_type * config_data_kw) {
@@ -196,7 +193,11 @@ static void subst_config_install_data_kw(subst_config_type * subst_config, hash_
   }
 }
 
-static void subst_config_init_load(subst_config_type * subst_config, const char * user_config_file) {
+static void subst_config_init_load(
+        subst_config_type * subst_config,
+        const char * user_config_file,
+        const char * working_dir) {
+
   config_parser_type * config = config_alloc();
   config_content_type * content = model_config_alloc_content(user_config_file, config);
 
@@ -215,13 +216,9 @@ static void subst_config_init_load(subst_config_type * subst_config, const char 
   }
 
   if (config_content_has_item(content, RUNPATH_FILE_KEY)) {
-    char * work_dir = res_config_alloc_working_directory(user_config_file);
     const char * runpath_file = config_content_get_value(content, RUNPATH_FILE_KEY);
-    char * abs_runpath_file = runpath_list_alloc_filename(work_dir, runpath_file);
-
+    char * abs_runpath_file = runpath_list_alloc_filename(working_dir, runpath_file);
     subst_config_add_internal_subst_kw(subst_config, "RUNPATH_FILE", abs_runpath_file, "The name of a file with a list of run directories.");
-
-    free(work_dir);
     free(abs_runpath_file);
   }
 
