@@ -19,6 +19,8 @@
 #include <ert/util/subst_list.h>
 #include <ert/util/subst_func.h>
 
+#include <ert/config/config_settings.h>
+
 #include <ert/enkf/res_config.h>
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/rng_config.h>
@@ -27,6 +29,7 @@
 #include <ert/enkf/subst_config.h>
 #include <ert/enkf/hook_manager.h>
 #include <ert/enkf/ert_template.h>
+#include <ert/enkf/plot_settings.h>
 
 struct res_config_struct {
 
@@ -40,6 +43,7 @@ struct res_config_struct {
   subst_config_type      * subst_config;
   hook_manager_type      * hook_manager;
   ert_templates_type     * templates;
+  config_settings_type   * plot_config;
 
 };
 
@@ -57,6 +61,7 @@ static res_config_type * res_config_alloc_empty() {
   res_config->subst_config      = NULL;
   res_config->hook_manager      = NULL;
   res_config->templates         = NULL;
+  res_config->plot_config       = NULL;
 
   return res_config;
 }
@@ -82,10 +87,12 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                     res_config->working_dir
                                     );
 
-  res_config->templates      = ert_templates_alloc_load(
+  res_config->templates       = ert_templates_alloc_load(
                                     subst_config_get_subst_list(res_config->subst_config),
                                     config_file
                                     );
+
+  res_config->plot_config     = plot_settings_alloc_load(config_file);
 
   return res_config;
 }
@@ -101,6 +108,7 @@ void res_config_free(res_config_type * res_config) {
   subst_config_free(res_config->subst_config);
   hook_manager_free(res_config->hook_manager);
   ert_templates_free(res_config->templates);
+  config_settings_free(res_config->plot_config);
 
   free(res_config->user_config_file);
   free(res_config->working_dir);
@@ -147,6 +155,12 @@ ert_templates_type * res_config_get_templates(
                     const res_config_type * res_config
                   ) {
   return res_config->templates;
+}
+
+const config_settings_type * res_config_get_plot_config(
+                    const res_config_type * res_config
+                  ) {
+  return res_config->plot_config;
 }
 
 static char * res_config_alloc_working_directory(const char * user_config_file) {

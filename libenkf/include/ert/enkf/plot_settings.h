@@ -22,6 +22,8 @@
 #include <ert/config/config_parser.h>
 #include <ert/config/config_settings.h>
 
+config_settings_type * plot_settings_alloc_load(const char * config_file);
+
 void               plot_settings_init(config_settings_type * setting);
 void               plot_settings_add_config_items( config_parser_type * config );
 

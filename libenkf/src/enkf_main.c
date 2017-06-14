@@ -152,7 +152,6 @@ struct enkf_main_struct {
   ecl_config_type        * ecl_config;
   const res_config_type  * res_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
-  config_settings_type   * plot_config;        /* Information about plotting. */
   rng_type               * rng;
   ranking_table_type     * ranking_table;
 
@@ -267,8 +266,8 @@ model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main
   return enkf_main->model_config;
 }
 
-config_settings_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
-  return enkf_main->plot_config;
+const config_settings_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
+  return res_config_get_plot_config(enkf_main->res_config);
 }
 
 ranking_table_type * enkf_main_get_ranking_table( const enkf_main_type * enkf_main ) {
@@ -374,7 +373,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   local_config_free( enkf_main->local_config );
 
   int_vector_free( enkf_main->keep_runpath );
-  config_settings_free( enkf_main->plot_config );
 
   util_safe_free( enkf_main->user_config_file );
   util_safe_free( enkf_main->rft_config_file );
@@ -2010,16 +2008,13 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->rng                = NULL;
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
-  enkf_main->res_config        = NULL;
+  enkf_main->res_config         = NULL;
   enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = NULL;
   enkf_main->model_config       = model_config_alloc( );
   enkf_main->local_config       = local_config_alloc( );
-
-  enkf_main->plot_config        = config_settings_alloc( PLOT_SETTING_KEY );
-  plot_settings_init( enkf_main->plot_config );
 
   enkf_main_set_verbose( enkf_main , true );
   enkf_main_init_fs( enkf_main );
@@ -2307,8 +2302,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   ecl_config_init(enkf_main->ecl_config, content);
   enkf_main_update_num_cpu(enkf_main);
-
-  config_settings_apply(enkf_main->plot_config, content);
 
   ensemble_config_init(enkf_main->ensemble_config, content,
                        ecl_config_get_grid(enkf_main->ecl_config),

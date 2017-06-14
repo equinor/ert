@@ -22,6 +22,8 @@
 #include <ert/util/subst_list.h>
 #include <ert/util/subst_func.h>
 
+#include <ert/config/config_settings.h>
+
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/analysis_config.h>
@@ -42,6 +44,7 @@ ert_workflow_list_type       * res_config_get_workflow_list(const res_config_typ
 subst_config_type            * res_config_get_subst_config(const res_config_type * res_config);
 const hook_manager_type      * res_config_get_hook_manager(const res_config_type * res_config);
 ert_templates_type           * res_config_get_templates(const res_config_type * res_config);
+const config_settings_type   * res_config_get_plot_config(const res_config_type * res_config);
 
 const char * res_config_get_working_directory(const res_config_type *);
 const char * res_config_get_user_config_file(const res_config_type *);
