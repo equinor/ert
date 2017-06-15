@@ -53,7 +53,7 @@ class SimulationPanel(QWidget):
         self._simulation_widgets = OrderedDict()
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
 
-        #self.addSimulationConfigPanel(SingleTestRunPanel())
+        self.addSimulationConfigPanel(SingleTestRunPanel())
         self.addSimulationConfigPanel(EnsembleExperimentPanel())
         self.addSimulationConfigPanel(EnsembleSmootherPanel())
         self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel(advanced_option=True))
