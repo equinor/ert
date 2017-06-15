@@ -96,14 +96,6 @@ subst_list_type * subst_config_get_subst_list(subst_config_type * subst_type) {
   return subst_type->subst_list;
 }
 
-void subst_config_install_rng(subst_config_type * subst_config, rng_type * rng) {
-  subst_func_pool_add_func(subst_config->subst_func_pool, "RANDINT",   "Returns a random integer - 32 bit", subst_func_randint,   false, 0, 0, rng);
-  subst_func_pool_add_func(subst_config->subst_func_pool, "RANDFLOAT", "Returns a random float 0-1.",       subst_func_randfloat, false, 0, 0, rng);
-
-  subst_list_insert_func(subst_config->subst_list, "RANDINT",   "__RANDINT__");
-  subst_list_insert_func(subst_config->subst_list, "RANDFLOAT", "__RANDFLOAT__");
-}
-
 void subst_config_add_internal_subst_kw(subst_config_type * subst_config, const char * key , const char * value, const char * help_text) {
   char * tagged_key = util_alloc_sprintf(INTERNAL_DATA_KW_TAG_FORMAT, key);
   subst_list_append_copy(subst_config_get_subst_list(subst_config), tagged_key, value, help_text);

@@ -2353,7 +2353,6 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
   enkf_main->res_config = res_config;
 
   enkf_main_rng_init( enkf_main );
-  subst_config_install_rng(res_config_get_subst_config(res_config), enkf_main->rng);
 
   enkf_main_set_verbose(enkf_main, verbose);
 
