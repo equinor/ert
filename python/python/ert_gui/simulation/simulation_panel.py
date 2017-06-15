@@ -5,6 +5,7 @@ from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel
+from ert_gui.simulation import SingleTestRunPanel
 from ert_gui.simulation import IteratedEnsembleSmootherPanel, MultipleDataAssimilationPanel, SimulationConfigPanel
 from ert_gui.simulation import RunDialog
 from collections import OrderedDict
@@ -52,6 +53,7 @@ class SimulationPanel(QWidget):
         self._simulation_widgets = OrderedDict()
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
 
+        self.addSimulationConfigPanel(SingleTestRunPanel())
         self.addSimulationConfigPanel(EnsembleExperimentPanel())
         self.addSimulationConfigPanel(EnsembleSmootherPanel())
         self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel(advanced_option=True))
