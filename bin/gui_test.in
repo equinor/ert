@@ -1,0 +1,113 @@
+#!/usr/bin/env python
+import sys
+import os
+import subprocess
+from argparse import ArgumentParser
+import inspect
+
+from ecl.test import TestAreaContext
+
+config_file = "${PROJECT_SOURCE_DIR}/test-data/local/snake_oil_no_data/snake_oil.ert"
+ERT_ROOT = "${ERT_ROOT}"
+ERT_LD_LIBRARY_PATH = "%s/${CMAKE_INSTALL_LIBDIR}" % ERT_ROOT
+ERT_PYTHONPATH = "%s/${PYTHON_INSTALL_PREFIX}" % ERT_ROOT
+ERT_SHARE_PATH = "%s/share" % ERT_ROOT
+
+ert = os.path.join( ERT_ROOT , "bin/ert" )
+
+def updateEnvVar(var, value):
+    print "|  * %s=%s" % (var,value)
+    os.environ[var] = value
+
+
+def updateEnvPath(path_var, value):
+    if path_var in os.environ:
+        path = "%s%s%s" % (value, os.pathsep, os.environ[path_var])
+        print "|  * %s=%s:$%s" % (path_var , value , path_var)
+    else:
+        path = value
+        print "|  * %s=$%s" % (path_var , value )
+
+    os.environ[path_var] = path
+
+
+def updateEnv():
+    print "/----------------------------------------------------------------"
+    print "| Setting environment variables for the run:"
+    print "|"
+    updateEnvPath( "LD_LIBRARY_PATH" , ERT_LD_LIBRARY_PATH )
+    updateEnvPath( "PYTHONPATH"      , ERT_PYTHONPATH )
+    updateEnvVar("ERT_SHARE_PATH", ERT_SHARE_PATH)
+    updateEnvVar("ERT_UI_MODE", "gui")
+    print "|"
+    print "\n\----------------------------------------------------------------\n\n"
+
+
+def check_ecl_res():
+    print "/----------------------------------------------------------------"
+    print "| Checking the import of ecl and res packages."
+    print "|"
+    try:
+        import ecl
+    except ImportError:
+        print "| Importing ecl failed completely"
+        sys.exit(1)
+
+    try:
+        import res
+    except ImportError:
+        print "| Importing res failed completely"
+        sys.exit(1)
+
+    ecl_path, _ = os.path.split( inspect.getfile( ecl ))
+    res_path, _ = os.path.split( inspect.getfile( res ))
+
+    print "|  ecl: %s" % ecl_path
+    print "|  res: %s" % res_path
+    print "|"
+    print "| If this does not agree with your expectations you should update"
+    print "| your PYTHONPATH enviornment variable and try again."
+    print "\----------------------------------------------------------------\n\n"
+
+
+def run(config_file, keep, ta = None):
+    print "/----------------------------------------------------------------"
+    print "| Starting the actual run:"
+    print "|"
+
+    cmd_args = [ert, "--gui", config_file]
+    if ta:
+        if keep:
+            print "| Run will be located in: %s" % ta.get_cwd( )
+        else:
+            print "| Run will be in temporary location - rerun with --keep to retain"
+    print "|"
+    print "| Calling ert as:"
+    print "|"
+    print "|      %s" % " ".join( cmd_args )
+    print "|"
+    print "\----------------------------------------------------------------"
+    subprocess.check_call( cmd_args )
+    
+
+
+parser = ArgumentParser( )
+parser.add_argument("--keep" , dest = "keep" , action = "store_true" , default = False,
+                    help="If you pass option --keep the temporary directory used for the test will be retained")
+options, args = parser.parse_known_args( args = sys.argv[1:] )
+
+print
+updateEnv( )
+check_ecl_res( )
+
+if len(args) == 0:
+    with TestAreaContext( "gui_test" , store_area = options.keep ) as ta:
+        ta.copy_parent_content( config_file )
+        run( os.path.basename( config_file ) , options.keep , ta)
+else:
+    # A config file argument has been passed to the script,
+    # we use that config file instead of the in-source testcase.
+    # We do not create a temporary directory in this case.
+    config_file = args[0]
+    run( config_file , True )     
+       

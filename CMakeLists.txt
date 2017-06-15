@@ -24,17 +24,19 @@ option( GUI                 "Build Python GUI"                                  
 find_package( ecl REQUIRED )
 find_package( res REQUIRED )
 
+function( make_symlink target link )
+  if (EXISTS ${link}) 
+     EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E remove "${link}")
+  endif()
+  EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${target}" "${link}")
+  message(STATUS "Linking : ${link} -> ${target}")
+endfunction()  
 
 set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
 if (EXISTS ${STATOIL_TESTDATA_ROOT})
-  set( LINK "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Statoil" )
-  if (EXISTS ${LINK})
-    EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E remove "${LINK}")
-  endif()
-
-  EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${STATOIL_TESTDATA_ROOT}" "${LINK}")
-  message(STATUS "Linking testdata: ${LINK} -> ${STATOIL_TESTDATA_ROOT}")
+  make_symlink( "${STATOIL_TESTDATA_ROOT}" "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Statoil")
 endif()
+make_symlink( "${CMAKE_CURRENT_SOURCE_DIR}/share" "${CMAKE_CURRENT_BINARY_DIR}/share" )
 
 
 
@@ -119,7 +121,7 @@ add_definitions( -DHAVE_PROC )
 if (BUILD_TESTS)
    option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit" OFF)
 endif()
-add_subdirectory( bin )
+
 
 include(cmake/ert_module_name.cmake)
 
@@ -129,6 +131,7 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX
 
 
 add_subdirectory( python )
+add_subdirectory( bin )
 
 if(RST_DOC)
    add_subdirectory( docs )
