@@ -149,7 +149,6 @@ struct enkf_main_struct {
 
   ensemble_config_type   * ensemble_config;    /* The config objects for the various enkf nodes.*/
   model_config_type      * model_config;
-  ecl_config_type        * ecl_config;
   const res_config_type  * res_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
   rng_type               * rng;
@@ -191,6 +190,12 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        const meas_data_type * forecast ,
                                        obs_data_type * obs_data);
 
+static void enkf_main_set_schedule_prediction_file__(enkf_main_type * enkf_main,
+        const char * template_file,
+        const char * parameters,
+        const char * min_std,
+        const char * init_file_fmt);
+
 /*****************************************************************/
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
@@ -200,20 +205,9 @@ const analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type 
   return res_config_get_analysis_config(enkf_main->res_config);
 }
 
-bool enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
-  bool set_refcase = ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
-
-  model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
-  ensemble_config_set_refcase( enkf_main->ensemble_config , ecl_config_get_refcase( enkf_main->ecl_config ));
-
-  return set_refcase;
-}
-
-
 ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path) {
-  return ecl_config_validate_refcase( enkf_main->ecl_config , refcase_path );
+  return ecl_config_validate_refcase(enkf_main_get_ecl_config(enkf_main), refcase_path);
 }
-
 
 void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file ) {
   enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
@@ -274,8 +268,8 @@ ranking_table_type * enkf_main_get_ranking_table( const enkf_main_type * enkf_ma
   return enkf_main->ranking_table;
 }
 
-ecl_config_type *enkf_main_get_ecl_config(const enkf_main_type * enkf_main) {
-        return enkf_main->ecl_config;
+const ecl_config_type * enkf_main_get_ecl_config(const enkf_main_type * enkf_main) {
+  return res_config_get_ecl_config(enkf_main->res_config);
 }
 
 int enkf_main_get_history_length( const enkf_main_type * enkf_main) {
@@ -306,10 +300,11 @@ const hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enk
 
 
 void enkf_main_alloc_obs( enkf_main_type * enkf_main ) {
+  const ecl_config_type * ecl_config = enkf_main_get_ecl_config(enkf_main);
   enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config),
                                    model_config_get_external_time_map(enkf_main->model_config),
-                                   ecl_config_get_grid( enkf_main->ecl_config ),
-                                   ecl_config_get_refcase( enkf_main->ecl_config ) ,
+                                   ecl_config_get_grid(ecl_config),
+                                   ecl_config_get_refcase(ecl_config) ,
                                    enkf_main->ensemble_config );
 }
 
@@ -329,30 +324,6 @@ static void enkf_main_add_internal_subst_kw( enkf_main_type * enkf_main , const 
   subst_config_add_internal_subst_kw(enkf_main_get_subst_config(enkf_main), key, value, help_text);
 }
 
-/**
-   This function should be called when a new data_file has been set.
-*/
-
-static void enkf_main_update_num_cpu( enkf_main_type * enkf_main ) {
-  char * num_cpu_string  = util_alloc_sprintf( "%d" , ecl_config_get_num_cpu( enkf_main->ecl_config ));
-  enkf_main_add_internal_subst_kw(enkf_main, "NUM_CPU", num_cpu_string, NULL);
-  free(num_cpu_string);
-}
-
-
-ui_return_type * enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file ) {
-  ui_return_type * ui_return = ecl_config_validate_data_file( enkf_main->ecl_config , data_file );
-  if (ui_return_get_status(ui_return) == UI_RETURN_OK) {
-    ecl_config_set_data_file( enkf_main->ecl_config , data_file );
-    enkf_main_update_num_cpu( enkf_main );
-  }
-  return ui_return;
-}
-
-
-
-
-
 void enkf_main_free(enkf_main_type * enkf_main){
   if (enkf_main->rng != NULL)
     rng_free( enkf_main->rng );
@@ -365,7 +336,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   enkf_main_close_fs( enkf_main );
   res_log_close();
 
-  ecl_config_free(enkf_main->ecl_config);
   model_config_free( enkf_main->model_config);
 
   ensemble_config_free( enkf_main->ensemble_config );
@@ -2010,7 +1980,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->res_config         = NULL;
   enkf_main->ensemble_config    = ensemble_config_alloc();
-  enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = NULL;
   enkf_main->model_config       = model_config_alloc( );
@@ -2072,7 +2041,7 @@ void enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf
   This function can only be called once in program life-time.
 */
 
-void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , const char * template_file , const char * parameters , const char * min_std , const char * init_file_fmt) {
+static void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , const char * template_file , const char * parameters , const char * min_std , const char * init_file_fmt) {
   const char * key = "PRED";
 
   if (template_file != NULL) {
@@ -2089,7 +2058,6 @@ void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , cons
     }
     enkf_config_node_update_gen_kw( config_node , target_file , template_file , parameters , min_std , init_file_fmt );
     free( target_file );
-    ecl_config_set_schedule_prediction_file( enkf_main->ecl_config , template_file );
   }
 }
 
@@ -2100,7 +2068,7 @@ void enkf_main_set_schedule_prediction_file( enkf_main_type * enkf_main , const 
 
 
 const char * enkf_main_get_schedule_prediction_file( const enkf_main_type * enkf_main ) {
-  return ecl_config_get_schedule_prediction_file( enkf_main->ecl_config );
+  return ecl_config_get_schedule_prediction_file(enkf_main_get_ecl_config(enkf_main));
 }
 
 
@@ -2300,21 +2268,19 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   enkf_main_init_log(enkf_main, content);
 
-  ecl_config_init(enkf_main->ecl_config, content);
-  enkf_main_update_num_cpu(enkf_main);
-
+  const ecl_config_type * ecl_config = enkf_main_get_ecl_config(enkf_main);
   ensemble_config_init(enkf_main->ensemble_config, content,
-                       ecl_config_get_grid(enkf_main->ecl_config),
-                       ecl_config_get_refcase(enkf_main->ecl_config)
+                       ecl_config_get_grid(ecl_config),
+                       ecl_config_get_refcase(ecl_config)
                        );
 
   model_config_init(enkf_main->model_config,
                     content,
                     enkf_main_get_ensemble_size(enkf_main),
                     enkf_main_get_installed_jobs(enkf_main),
-                    ecl_config_get_last_history_restart(enkf_main->ecl_config),
-                    ecl_config_get_sched_file(enkf_main->ecl_config),
-                    ecl_config_get_refcase(enkf_main->ecl_config)
+                    ecl_config_get_last_history_restart(ecl_config),
+                    ecl_config_get_sched_file(ecl_config),
+                    ecl_config_get_refcase(ecl_config)
                     );
 
   enkf_main_init_schedule_prediction(enkf_main, content);
@@ -2322,8 +2288,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   enkf_main_init_delete_runpath(enkf_main, content);
 
   enkf_main_init_pre_clear_runpath(enkf_main, content);
-
-  ecl_config_static_kw_init(enkf_main->ecl_config, content);
 
   enkf_main_init_rft_config(enkf_main, content);
 

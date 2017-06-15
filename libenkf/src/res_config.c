@@ -30,6 +30,7 @@
 #include <ert/enkf/hook_manager.h>
 #include <ert/enkf/ert_template.h>
 #include <ert/enkf/plot_settings.h>
+#include <ert/enkf/ecl_config.h>
 
 struct res_config_struct {
 
@@ -44,6 +45,7 @@ struct res_config_struct {
   hook_manager_type      * hook_manager;
   ert_templates_type     * templates;
   config_settings_type   * plot_config;
+  ecl_config_type        * ecl_config;
 
 };
 
@@ -62,6 +64,7 @@ static res_config_type * res_config_alloc_empty() {
   res_config->hook_manager      = NULL;
   res_config->templates         = NULL;
   res_config->plot_config       = NULL;
+  res_config->ecl_config        = NULL;
 
   return res_config;
 }
@@ -93,6 +96,7 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                     );
 
   res_config->plot_config     = plot_settings_alloc_load(config_file);
+  res_config->ecl_config      = ecl_config_alloc_load(config_file);
 
   return res_config;
 }
@@ -109,6 +113,7 @@ void res_config_free(res_config_type * res_config) {
   hook_manager_free(res_config->hook_manager);
   ert_templates_free(res_config->templates);
   config_settings_free(res_config->plot_config);
+  ecl_config_free(res_config->ecl_config);
 
   free(res_config->user_config_file);
   free(res_config->working_dir);
@@ -161,6 +166,12 @@ const config_settings_type * res_config_get_plot_config(
                     const res_config_type * res_config
                   ) {
   return res_config->plot_config;
+}
+
+const ecl_config_type * res_config_get_ecl_config(
+                    const res_config_type * res_config
+                  ) {
+  return res_config->ecl_config;
 }
 
 static char * res_config_alloc_working_directory(const char * user_config_file) {

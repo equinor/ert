@@ -45,7 +45,6 @@ class EnKFMain(BaseCClass):
     _get_site_config = EnkfPrototype("site_config_ref enkf_main_get_site_config( enkf_main)")
     _get_ecl_config = EnkfPrototype("ecl_config_ref enkf_main_get_ecl_config( enkf_main)")
     _get_plot_config = EnkfPrototype("plot_settings_ref enkf_main_get_plot_config( enkf_main)")
-    _set_datafile = EnkfPrototype("void enkf_main_set_data_file( enkf_main, char*)")
     _get_schedule_prediction_file = EnkfPrototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
     _set_schedule_prediction_file = EnkfPrototype("void enkf_main_set_schedule_prediction_file( enkf_main , char*)")
     _get_data_kw = EnkfPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
@@ -187,10 +186,6 @@ class EnKFMain(BaseCClass):
     def plotConfig(self):
         """ @rtype: PlotConfig """
         return self._get_plot_config( ).setParent(self)
-
-    def set_datafile(self, datafile):
-        self._set_datafile(datafile)
-
 
     def get_schedule_prediction_file(self):
         schedule_prediction_file = self._get_schedule_prediction_file( )

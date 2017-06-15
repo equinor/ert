@@ -248,7 +248,7 @@ static void test_export_runpath_file(ert_test_context_type * test_context,
     const hook_manager_type * hook_manager       = enkf_main_get_hook_manager( enkf_main );
     const char * runpath_file_name   = hook_manager_get_runpath_list_file(hook_manager);
 
-    ecl_config_type * ecl_config            = enkf_main_get_ecl_config(enkf_main);
+    const ecl_config_type * ecl_config      = enkf_main_get_ecl_config(enkf_main);
     const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
     const char * base_fmt                   = ecl_config_get_eclbase(ecl_config);
     const char * runpath_fmt                = model_config_get_runpath_as_char(model_config);

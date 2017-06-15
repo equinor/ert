@@ -126,6 +126,12 @@ void subst_config_fprintf(const subst_config_type * subst_config, FILE * stream)
   }
 }
 
+static void subst_config_install_num_cpu(subst_config_type * subst_config, int num_cpu) {
+  char * num_cpu_string = util_alloc_sprintf("%d" , num_cpu);
+  subst_config_add_internal_subst_kw(subst_config, "NUM_CPU", num_cpu_string, "The number of CPU used for one forward model.");
+  free(num_cpu_string);
+}
+
 static void subst_config_init_default(subst_config_type * subst_config) {
   /* Here we add the functions which should be available for string substitution operations. */
 
@@ -164,12 +170,10 @@ static void subst_config_init_default(subst_config_type * subst_config) {
   */
 
   char * date_string = util_alloc_date_stamp_utc();
-  const char * num_cpu_string = "1";
-
   subst_config_add_internal_subst_kw(subst_config, "DATE",    date_string,    "The current date.");
-  subst_config_add_internal_subst_kw(subst_config, "NUM_CPU", num_cpu_string, "The number of CPU used for one forward model.");
-
   free( date_string );
+
+  subst_config_install_num_cpu(subst_config, 1);
 }
 
 static void subst_config_install_working_directory(subst_config_type * subst_config, const char * working_dir) {
@@ -220,6 +224,15 @@ static void subst_config_init_load(
     char * abs_runpath_file = runpath_list_alloc_filename(working_dir, runpath_file);
     subst_config_add_internal_subst_kw(subst_config, "RUNPATH_FILE", abs_runpath_file, "The name of a file with a list of run directories.");
     free(abs_runpath_file);
+  }
+
+  if (config_content_has_item(content, DATA_FILE_KEY)) {
+    const char * data_file = config_content_iget(content, DATA_FILE_KEY, 0, 0);
+    if (!util_file_exists(data_file))
+      util_abort("%s: Could not find ECLIPSE data file: %s\n", __func__, data_file ? data_file : "NULL");
+
+    int num_cpu = ecl_util_get_num_cpu(data_file);
+    subst_config_install_num_cpu(subst_config, num_cpu);
   }
 
   config_free(config);

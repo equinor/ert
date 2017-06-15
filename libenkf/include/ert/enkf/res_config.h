@@ -31,6 +31,7 @@
 #include <ert/enkf/subst_config.h>
 #include <ert/enkf/hook_manager.h>
 #include <ert/enkf/ert_template.h>
+#include <ert/enkf/ecl_config.h>
 
 typedef struct res_config_struct res_config_type;
 
@@ -45,6 +46,7 @@ subst_config_type            * res_config_get_subst_config(const res_config_type
 const hook_manager_type      * res_config_get_hook_manager(const res_config_type * res_config);
 ert_templates_type           * res_config_get_templates(const res_config_type * res_config);
 const config_settings_type   * res_config_get_plot_config(const res_config_type * res_config);
+const ecl_config_type        * res_config_get_ecl_config(const res_config_type * res_config);
 
 const char * res_config_get_working_directory(const res_config_type *);
 const char * res_config_get_user_config_file(const res_config_type *);

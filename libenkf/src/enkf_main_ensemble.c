@@ -69,7 +69,7 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
                                                    enkf_main->model_config,
                                                    enkf_main->ensemble_config,
                                                    enkf_main_get_site_config(enkf_main),
-                                                   enkf_main->ecl_config,
+                                                   enkf_main_get_ecl_config(enkf_main),
                                                    enkf_main_get_templates(enkf_main),
                                                    enkf_main_get_data_kw(enkf_main));
     enkf_main->ens_size = new_ens_size;
