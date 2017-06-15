@@ -20,7 +20,7 @@ import signal
 import shutil
 import os.path
 import random
-import datetime
+from datetime import datetime as dt
 import time
 import subprocess
 import socket
@@ -28,6 +28,9 @@ import pwd
 import requests
 import json
 import imp
+
+LOG_URL = "http://10.220.65.22:4444" #To be extracted up to job_discpatch in the future after a bit of testing and when job_dispatch is properly
+#versioned
 
 
 def redirect(file, fd, open_mode):
@@ -114,10 +117,10 @@ class JobManager(object):
         else:
             self._loadModule(module_file)
 
-        self.start_time = datetime.datetime.now()
+        self.start_time = dt.now()
         ((self.file_server, self.isilon_node), self.fs_use) = JobManager.fsInfo()
         self.max_runtime = 0  # This option is currently sleeping
-        self.short_sleep = 2  # Sleep betweeen status checks
+        self.short_sleep = 2  # Sleep between status checks
         self.node = socket.gethostname()
 
         pw_entry = pwd.getpwuid(os.getuid())
@@ -208,16 +211,22 @@ class JobManager(object):
         with open(self.STATUS_file, "a") as f:
             now = time.localtime()
             f.write("%-32s: %02d:%02d:%02d .... " % (job["name"], now.tm_hour, now.tm_min, now.tm_sec))
+        self.postMessage(job=job)
 
 
     def completeStatus(self, exit_status, error_msg):
         now = time.localtime()
+        extra_fields = {"finished": True,
+                        "exit_status": exit_status,
+                        "status": "completeStatus"}
         with open(self.STATUS_file, "a") as f:
-
             if exit_status == 0:
                 status = ""
+                self.postMessage(extra_fields=extra_fields)
             else:
                 status = " EXIT: %d/%s" % (exit_status, error_msg)
+                extra_fields.update({"error_msg": error_msg})
+                self.postMessage(extra_fields=extra_fields)
 
             f.write("%02d:%02d:%02d  %s\n" % (now.tm_hour, now.tm_min, now.tm_sec, status))
 
@@ -226,6 +235,7 @@ class JobManager(object):
         now = time.localtime()
         with open(self.OK_file, "w") as f:
             f.write("All jobs complete %02d:%02d:%02d \n" % (now.tm_hour, now.tm_min, now.tm_sec))
+        self.postMessage(extra_fields={"status" : "OK"})
         time.sleep(self.sleep_time)   # Let the disks sync up
 
 
@@ -234,8 +244,8 @@ class JobManager(object):
 
 
     def getRuntime(self):
-        dt = datetime.datetime.now() - self.start_time
-        return dt.total_seconds()
+        rt = dt.now() - self.start_time
+        return rt.total_seconds()
 
 
     def getFileServer(self):
@@ -300,50 +310,66 @@ class JobManager(object):
         return P
 
 
+    def postMessage(self, job=None, extra_fields={}, url=LOG_URL):
+        if job:
+            job_fields = {"ert_job": job["name"],
+                           "executable": job["executable"],
+                           "arg_list": " ".join(job["argList"])}
+            job_fields.update(extra_fields)
+            extra_fields = job_fields
+
+        payload = {"user": self.user,
+                   "cwd": os.getcwd(),
+                   "file_server": self.isilon_node,
+                   "node": self.node,
+                   "start_time": self.start_time.isoformat(),
+                   "fs_use": "%s / %s / %s" % self.fs_use,
+                   "fs_utilization": "%s" % (self.fs_use[2])[:-1], #remove the "%"
+                   "node_timestamp": dt.now().isoformat()}
+        payload.update(extra_fields)
+        try:
+            if url is None:
+                sys.stderr.write('\nWARNING: LOG/ERROR URL NOT CONFIGURED.\n\n')
+                sys.stderr.write(json.dumps(payload))
+                sys.stderr.write('\nAbove error log NOT submitted.')
+                sys.stderr.flush()
+            else:
+                data = json.dumps(payload)
+                res = requests.post(url, timeout=3,
+                              headers={"Content-Type": "application/json"},
+                              data=data)
+                sys.stdout.write("Response status %s\n"%res.status_code)
+                sys.stdout.write("Request url %s\n"%res.url)
+                sys.stdout.write("Response headers %s\n"%res.headers)
+                sys.stdout.write("Response content %s\n"%res.content)
+                sys.stdout.write("Writing payload: %s\n"%payload)
+                sys.stdout.write("Writing data: %s\n"%data)
+        except:
+            pass
+
     def postError(self, job, error_msg):
-        stdout = None
-        stderr = None
+        extra_fields = self.extract_stderr_stdout(job)
+        self.postMessage(job, extra_fields, url=self._error_url)
+
+    def extract_stderr_stdout(self, job):
+        extra_fields = {}
         if job.get("stderr"):
             if os.path.exists(job["stderr"]):
                 with open(job["stderr"], "r") as errH:
                     stderr = errH.read()
-
+                    extra_fields.update({"stderr": stderr})
         if job.get("stdout"):
             if os.path.exists(job["stdout"]):
                 with open(job["stdout"], "r") as outH:
                     stdout = outH.read()
-
-        payload = {"user" : self.user,
-                   "ert_job" : job["name"],
-                   "executable" : job["executable"],
-                   "arg_list" : " ".join(job["argList"]),
-                   "error_msg" : error_msg,
-                   "cwd" : os.getcwd(),
-                   "file_server" : self.isilon_node,
-                   "node" : self.node,
-                   "fs_use" : "%s / %s / %s" % self.fs_use,
-                   "stderr" : stderr,
-                   "stdout" : stdout }
-
-        try:
-            if self._error_url is None:
-                sys.stderr.write('\nWARNING: ERROR_URL NOT CONFIGURED.\n\n')
-                sys.stderr.write(json.dumps(payload))
-                sys.stderr.write('\nAbove error log NOT submitted.')
-                sys.stderr.flush()
-                return
-
-            stat = requests.post(self._error_url,
-                                 headers = {"Content-Type" : "application/json"},
-                                 data = json.dumps(payload))
-        except:
-            pass
-
-
+                    extra_fields.update({"stdout": stdout})
+        return extra_fields
 
     def exit(self, job, exit_status, error_msg):
         self.dump_EXIT_file(job, error_msg)
-        self.postError(job, error_msg)
+        std_err_out = self.extract_stderr_stdout(job)
+        self.postMessage(job=job, extra_fields=std_err_out, url=self._error_url) #posts to the old database
+        self.postMessage(job=job, extra_fields=std_err_out) #Posts to new logstash
         pgid = os.getpgid(os.getpid())
         os.killpg(pgid, signal.SIGKILL)
 
@@ -361,6 +387,7 @@ class JobManager(object):
     def runJob(self, job):
         assert_file_executable(job.get('executable'))
         self.addLogLine(job)
+        self.postMessage(job=job, extra_fields={"status": "run","finished": False})
         pid = os.fork()
         exit_status, err_msg = 0, ''
         if pid == 0:
