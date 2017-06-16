@@ -147,7 +147,6 @@ struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
   enkf_fs_type           * dbase;              /* The internalized information. */
 
-  model_config_type      * model_config;
   const res_config_type  * res_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
   rng_type               * rng;
@@ -256,7 +255,7 @@ local_config_type * enkf_main_get_local_config( const enkf_main_type * enkf_main
 }
 
 model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main ) {
-  return enkf_main->model_config;
+  return res_config_get_model_config(enkf_main->res_config);
 }
 
 const config_settings_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
@@ -272,11 +271,11 @@ const ecl_config_type * enkf_main_get_ecl_config(const enkf_main_type * enkf_mai
 }
 
 int enkf_main_get_history_length( const enkf_main_type * enkf_main) {
-  return model_config_get_last_history_restart( enkf_main->model_config);
+  return model_config_get_last_history_restart(enkf_main_get_model_config(enkf_main));
 }
 
 bool enkf_main_has_prediction( const enkf_main_type * enkf_main ) {
-  return model_config_has_prediction( enkf_main->model_config );
+  return model_config_has_prediction(enkf_main_get_model_config(enkf_main));
 }
 
 
@@ -299,9 +298,10 @@ const hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enk
 
 
 void enkf_main_alloc_obs( enkf_main_type * enkf_main ) {
-  const ecl_config_type * ecl_config = enkf_main_get_ecl_config(enkf_main);
-  enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config),
-                                   model_config_get_external_time_map(enkf_main->model_config),
+  const ecl_config_type * ecl_config   = enkf_main_get_ecl_config(enkf_main);
+  model_config_type     * model_config = enkf_main_get_model_config(enkf_main);
+  enkf_main->obs = enkf_obs_alloc( model_config_get_history(model_config),
+                                   model_config_get_external_time_map(model_config),
                                    ecl_config_get_grid(ecl_config),
                                    ecl_config_get_refcase(ecl_config) ,
                                    enkf_main_get_ensemble_config(enkf_main));
@@ -334,8 +334,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   enkf_main_free_ensemble( enkf_main );
   enkf_main_close_fs( enkf_main );
   res_log_close();
-
-  model_config_free( enkf_main->model_config);
 
   local_config_free( enkf_main->local_config );
 
@@ -1267,7 +1265,7 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
 
   step2 = time_map_get_last_step( time_map );
   if (step2 < 0)
-    step2 = model_config_get_last_history_restart( enkf_main->model_config );
+    step2 = model_config_get_last_history_restart(enkf_main_get_model_config(enkf_main));
 
   step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , step2 , stride);
   update_done = enkf_main_smoother_update__( enkf_main , step_list , source_fs, target_fs );
@@ -1827,11 +1825,11 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main,
 
 
 ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter) {
-  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
+  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , iter );
 }
 
 ert_init_context_type * enkf_main_alloc_ert_init_context(const enkf_main_type * enkf_main , enkf_fs_type * fs, const bool_vector_type * iactive , init_mode_type init_mode , int iter) {
-  return ert_init_context_alloc( fs, iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main_get_data_kw(enkf_main) , init_mode , iter );
+  return ert_init_context_alloc( fs, iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , init_mode , iter );
 }
 
 
@@ -1979,7 +1977,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->res_config         = NULL;
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = NULL;
-  enkf_main->model_config       = model_config_alloc( );
   enkf_main->local_config       = local_config_alloc( );
 
   enkf_main_set_verbose( enkf_main , true );
@@ -2265,16 +2262,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   enkf_main_init_log(enkf_main, content);
 
-  const ecl_config_type * ecl_config = enkf_main_get_ecl_config(enkf_main);
-  model_config_init(enkf_main->model_config,
-                    content,
-                    enkf_main_get_ensemble_size(enkf_main),
-                    enkf_main_get_installed_jobs(enkf_main),
-                    ecl_config_get_last_history_restart(ecl_config),
-                    ecl_config_get_sched_file(ecl_config),
-                    ecl_config_get_refcase(ecl_config)
-                    );
-
   enkf_main_init_schedule_prediction(enkf_main, content);
 
   enkf_main_init_delete_runpath(enkf_main, content);
@@ -2466,10 +2453,10 @@ int enkf_main_get_ensemble_size( const enkf_main_type * enkf_main ) {
 
 void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type run_mode ) {
   /* Clearing old internalize flags. */
-  model_config_init_internalization( enkf_main->model_config );
+  model_config_init_internalization(enkf_main_get_model_config(enkf_main));
 
   /* Internalizing the initial state. */
-  model_config_set_internalize_state( enkf_main->model_config , 0);
+  model_config_set_internalize_state(enkf_main_get_model_config(enkf_main), 0);
 
 
   /* Make sure we internalize at all observation times.*/
@@ -2489,7 +2476,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
           {
             enkf_var_type var_type = enkf_config_node_get_var_type( data_node );
             if (var_type == DYNAMIC_STATE)
-              model_config_set_load_state( enkf_main->model_config , active_step);
+              model_config_set_load_state(enkf_main_get_model_config(enkf_main), active_step);
           }
         }
       } while (active_step >= 0);
@@ -2613,7 +2600,7 @@ int enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int it
   printf("Loading from forward model\n");
   const int ens_size        = enkf_main_get_ensemble_size( enkf_main );
   int result[ens_size];
-  model_config_type * model_config = enkf_main->model_config;
+  model_config_type * model_config = enkf_main_get_model_config(enkf_main);
 
   ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
   arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );

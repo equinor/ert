@@ -46,7 +46,7 @@ bool enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * c
 }
 
 static bool enkf_main_current_case_file_exists( const enkf_main_type * enkf_main) {
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  const char * ens_path = model_config_get_enspath(enkf_main_get_model_config(enkf_main));
   char * current_case_file = util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL);
   bool exists = util_file_exists(current_case_file);
   free(current_case_file);
@@ -55,7 +55,7 @@ static bool enkf_main_current_case_file_exists( const enkf_main_type * enkf_main
 
 char* enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main) {
   char * current_case = NULL;
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  const char * ens_path = model_config_get_enspath(enkf_main_get_model_config(enkf_main));
   char * current_case_file = util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL);
   if (enkf_main_current_case_file_exists(enkf_main)) {
     FILE * stream = util_fopen( current_case_file  , "r");
@@ -75,7 +75,7 @@ char* enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main) {
 stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
   stringlist_type * case_list = stringlist_alloc_new( );
   {
-    const char * ens_path = model_config_get_enspath( enkf_main->model_config );
+    const char * ens_path = model_config_get_enspath(enkf_main_get_model_config(enkf_main));
     DIR * ens_dir = opendir( ens_path );
     if (ens_dir != NULL) {
       int ens_fd = dirfd( ens_dir );
@@ -103,7 +103,7 @@ stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
 
 
 void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file ) {
-  model_config_set_case_table( enkf_main->model_config , enkf_main->ens_size , case_table_file );
+  model_config_set_case_table(enkf_main_get_model_config(enkf_main), enkf_main->ens_size , case_table_file );
 }
 
 
@@ -353,7 +353,7 @@ static void update_case_log(enkf_main_type * enkf_main , const char * case_path)
         of 'w'.
   */
 
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  const char * ens_path = model_config_get_enspath(enkf_main_get_model_config(enkf_main));
 
   {
     int buffer_size = 256;
@@ -385,7 +385,7 @@ static void update_case_log(enkf_main_type * enkf_main , const char * case_path)
 
 
 static void enkf_main_write_current_case_file( const enkf_main_type * enkf_main, const char * case_path) {
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  const char * ens_path = model_config_get_enspath(enkf_main_get_model_config(enkf_main));
   const char * base = CURRENT_CASE_FILE;
   char * current_case_file = util_alloc_filename(ens_path , base, NULL);
   FILE * stream = util_fopen( current_case_file  , "w");
@@ -428,8 +428,8 @@ static void enkf_main_create_fs( const enkf_main_type * enkf_main , const char *
   char * new_mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
 
   enkf_fs_create_fs( new_mount_point,
-                     model_config_get_dbase_type( enkf_main->model_config ) ,
-                     model_config_get_dbase_args( enkf_main->model_config ) ,
+                     model_config_get_dbase_type(enkf_main_get_model_config(enkf_main)),
+                     model_config_get_dbase_args(enkf_main_get_model_config(enkf_main)),
                      false );
 
   free( new_mount_point );
@@ -437,7 +437,7 @@ static void enkf_main_create_fs( const enkf_main_type * enkf_main , const char *
 
 
 const char * enkf_main_get_mount_root( const enkf_main_type * enkf_main) {
-  return model_config_get_enspath( enkf_main->model_config);
+  return model_config_get_enspath(enkf_main_get_model_config(enkf_main));
 }
 
 
@@ -447,7 +447,7 @@ char * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const cha
   if (util_is_abs_path( case_path ))
     mount_point = util_alloc_string_copy( case_path );
   else
-    mount_point = util_alloc_filename( model_config_get_enspath( enkf_main->model_config) , case_path , NULL);
+    mount_point = util_alloc_filename( model_config_get_enspath(enkf_main_get_model_config(enkf_main)) , case_path , NULL);
   return mount_point;
 }
 
@@ -611,7 +611,7 @@ void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) 
     if (new_fs != NULL)
       enkf_main_set_fs( enkf_main , new_fs , case_path);
     else {
-      const char * ens_path = model_config_get_enspath( enkf_main->model_config );
+      const char * ens_path = model_config_get_enspath(enkf_main_get_model_config(enkf_main));
       util_exit("%s: select filesystem %s:%s failed \n",__func__ , ens_path , case_path );
     }
     enkf_fs_decref( new_fs );
@@ -620,7 +620,7 @@ void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) 
 
 
 static void enkf_main_user_select_initial_fs(enkf_main_type * enkf_main) {
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  const char * ens_path = model_config_get_enspath(enkf_main_get_model_config(enkf_main));
   int root_version = enkf_fs_get_version104( ens_path );
   if (root_version == -1 || root_version == 105) {
     char * current_mount_point = util_alloc_filename( ens_path , CURRENT_CASE , NULL);

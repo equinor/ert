@@ -85,6 +85,7 @@ extern "C" {
   void                   model_config_set_refcase( model_config_type * model_config , const ecl_sum_type * refcase );
   void                   model_config_fprintf_config( const model_config_type * model_config , int ens_size ,FILE * stream );
   model_config_type    * model_config_alloc();
+  model_config_type    * model_config_alloc_load(const char * user_config_file, const ext_joblist_type * joblist, int last_history_restart, const sched_file_type * sched_file, const ecl_sum_type * refcase);
   bool                   model_config_select_history( model_config_type * model_config , history_source_type source_type, const sched_file_type * schede_file , const ecl_sum_type * refcase);
   void                   model_config_set_runpath(model_config_type * model_config , const char * fmt);
   void                   model_config_set_gen_kw_export_file( model_config_type * model_config, const char * file_name);

@@ -343,6 +343,35 @@ model_config_type * model_config_alloc() {
   return model_config;
 }
 
+model_config_type * model_config_alloc_load(const char * user_config_file,
+        const ext_joblist_type * joblist,
+        int last_history_restart,
+        const sched_file_type * sched_file,
+        const ecl_sum_type * refcase)
+{
+  model_config_type * model_config = model_config_alloc();
+
+  if(user_config_file) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(user_config_file, config);
+
+    model_config_init(model_config,
+                      content,
+                      0,
+                      joblist,
+                      last_history_restart,
+                      sched_file,
+                      refcase
+                      );
+
+    config_content_free(content);
+    config_free(config);
+  }
+
+  return model_config;
+}
+
+
 
 bool model_config_select_history( model_config_type * model_config , history_source_type source_type, const sched_file_type * sched_file , const ecl_sum_type * refcase) {
   bool selectOK = false;

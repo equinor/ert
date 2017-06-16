@@ -32,6 +32,7 @@
 #include <ert/enkf/plot_settings.h>
 #include <ert/enkf/ecl_config.h>
 #include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/model_config.h>
 
 struct res_config_struct {
 
@@ -48,6 +49,7 @@ struct res_config_struct {
   config_settings_type   * plot_config;
   ecl_config_type        * ecl_config;
   ensemble_config_type   * ensemble_config;
+  model_config_type      * model_config;
 
 };
 
@@ -68,6 +70,7 @@ static res_config_type * res_config_alloc_empty() {
   res_config->plot_config       = NULL;
   res_config->ecl_config        = NULL;
   res_config->ensemble_config   = NULL;
+  res_config->model_config      = NULL;
 
   return res_config;
 }
@@ -106,6 +109,13 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                             ecl_config_get_refcase(res_config->ecl_config)
                                     );
 
+  res_config->model_config    = model_config_alloc_load(config_file,
+                                        site_config_get_installed_jobs(res_config->site_config),
+                                        ecl_config_get_last_history_restart(res_config->ecl_config),
+                                        ecl_config_get_sched_file(res_config->ecl_config),
+                                        ecl_config_get_refcase(res_config->ecl_config)
+                                   );
+
   return res_config;
 }
 
@@ -123,6 +133,7 @@ void res_config_free(res_config_type * res_config) {
   config_settings_free(res_config->plot_config);
   ecl_config_free(res_config->ecl_config);
   ensemble_config_free(res_config->ensemble_config);
+  model_config_free(res_config->model_config);
 
   free(res_config->user_config_file);
   free(res_config->working_dir);
@@ -187,6 +198,12 @@ ensemble_config_type * res_config_get_ensemble_config(
                     const res_config_type * res_config
                   ) {
   return res_config->ensemble_config;
+}
+
+model_config_type * res_config_get_model_config(
+                    const res_config_type * res_config
+                  ) {
+  return res_config->model_config;
 }
 
 static char * res_config_alloc_working_directory(const char * user_config_file) {
