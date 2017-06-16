@@ -39,6 +39,7 @@ extern "C" {
 typedef struct queue_config_struct queue_config_type;
 
     queue_config_type * queue_config_alloc();
+    queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_config);
     void queue_config_free(queue_config_type * queue_config);
     void queue_config_init_user_mode(queue_config_type * queue_config);
     bool queue_config_init(queue_config_type * queue_config, const config_content_type * config);

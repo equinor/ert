@@ -47,6 +47,7 @@ struct queue_config_struct {
     bool max_submit_set;
 };
 
+static void queue_config_add_queue_driver(queue_config_type * queue_config, const char * driver_name, queue_driver_type * driver);
 
 queue_config_type * queue_config_alloc() {
     queue_config_type * queue_config = util_malloc(sizeof * queue_config);
@@ -55,6 +56,37 @@ queue_config_type * queue_config_alloc() {
     queue_config->driver_type = NULL_DRIVER;
     queue_config->user_mode = false;
     return queue_config;
+}
+
+queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_config) {
+    queue_config_type * queue_config_copy = util_malloc(sizeof * queue_config_copy);
+    queue_config_copy->queue_drivers = hash_alloc();
+    queue_config_add_queue_driver(queue_config_copy, LOCAL_DRIVER_NAME, queue_driver_alloc_local());
+    queue_config->user_mode = false;
+
+    if (queue_config_has_job_script(queue_config)) {
+        queue_config_copy->job_script = util_alloc_copy(queue_config->job_script, strlen( queue_config->job_script) + 1);        
+    }
+    else
+        queue_config_copy->job_script = NULL;
+
+    if (queue_config->user_mode) {
+        queue_config_init_user_mode( queue_config_copy );
+    }
+
+    if (queue_config->driver_type == NULL_DRIVER)
+        queue_config_copy->driver_type = NULL_DRIVER;
+    else
+        queue_config_copy->driver_type = LOCAL_DRIVER;
+    
+    if (queue_config->max_submit_set) {
+        queue_config_copy->max_submit_set = true;
+        queue_config_copy->max_submit = queue_config->max_submit;
+    }
+    else
+        queue_config->max_submit_set = false;
+
+    return queue_config_copy;
 }
 
 job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config) {
@@ -68,6 +100,7 @@ job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_co
 
   if (queue_config->max_submit_set)
     job_queue_set_max_submit(job_queue, queue_config->max_submit);
+
   return job_queue;
 }
 
@@ -164,6 +197,8 @@ bool queue_config_has_queue_driver(const queue_config_type * queue_config, const
 
 bool queue_config_init(queue_config_type * queue_config, const config_content_type * config_content)
 {
+
+
   if (!queue_config->user_mode)
     queue_config_create_queue_drivers(queue_config);
 

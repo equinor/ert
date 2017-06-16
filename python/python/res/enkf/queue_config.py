@@ -27,6 +27,8 @@ class QueueConfig(BaseCClass):
     _free                  = EnkfPrototype("void queue_config_free( queue_config )")
     _alloc_job_queue       = EnkfPrototype("job_queue_obj queue_config_alloc_job_queue( queue_config )")
     _alloc                 = EnkfPrototype("void* queue_config_alloc()" , bind      = False)
+    _alloc_local_copy      = EnkfPrototype("queue_config_obj queue_config_alloc_local_copy( queue_config )")
+    _has_job_script        = EnkfPrototype("bool queue_config_has_job_script( queue_config )")
 
     def __init__(self):
         c_ptr = self._alloc()
@@ -35,8 +37,15 @@ class QueueConfig(BaseCClass):
     def create_job_queue(self):
         return self._alloc_job_queue()
 
+    def create_local_copy(self):
+        return self._alloc_local_copy()
+
+    def has_job_script(self):
+        return self._has_job_script()
+
     def free(self):
         self._free()
+
 
 
 
