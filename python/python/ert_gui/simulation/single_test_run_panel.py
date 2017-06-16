@@ -24,26 +24,12 @@ class SingleTestRunPanel(SimulationConfigPanel):
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % 1)
-        addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
-
         self._active_realizations_model = ActiveRealizationsModel()
-        self._active_realizations_field = StringBox(self._active_realizations_model, "config/simulation/active_realizations")
-        self._active_realizations_field.setValidator(RangeStringArgument(getRealizationCount()))
-        layout.addRow("Active realizations", self._active_realizations_field)
-
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(self.simulationConfigurationChanged)
 
         self.setLayout(layout)
 
-
-    def isConfigurationValid(self):
-        return self._active_realizations_field.isValid()
-
     def toggleAdvancedOptions(self, show_advanced):
-        self._active_realizations_field.setVisible(False)
-        self.layout().labelForField(self._active_realizations_field).setVisible(False)
+        pass
 
     def getSimulationArguments(self):
         active_realizations_mask = self._active_realizations_model.getActiveRealizationsMask()
