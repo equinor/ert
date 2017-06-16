@@ -627,6 +627,39 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
   }
 }
 
+static void ensemble_config_init_PRED(ensemble_config_type * ensemble_config, const config_content_type * content) {
+  if (!config_content_has_item(content, SCHEDULE_PREDICTION_FILE_KEY))
+    return;
+
+  const config_content_item_type * pred_item = config_content_get_item(
+                                                   content,
+                                                   SCHEDULE_PREDICTION_FILE_KEY
+                                                   );
+
+  config_content_node_type * pred_node = config_content_item_get_last_node(pred_item);
+  const char * template_file = config_content_node_iget_as_path(pred_node, 0);
+  if(!template_file)
+    return;
+
+  hash_type * opt_hash = hash_alloc();
+  config_content_node_init_opt_hash(pred_node, opt_hash, 1);
+  const char * parameters = hash_safe_get(opt_hash, PARAMETER_KEY);
+  const char * min_std    = hash_safe_get(opt_hash, MIN_STD_KEY);
+  const char * init_files = hash_safe_get(opt_hash, INIT_FILES_KEY);
+  hash_free(opt_hash);
+
+  char * base;
+  char * ext;
+  util_alloc_file_components(template_file, NULL, &base, &ext);
+  char * target_file = util_alloc_filename(NULL , base, ext);
+  util_safe_free(base);
+  util_safe_free(ext);
+
+  enkf_config_node_type * config_node = ensemble_config_add_gen_kw(ensemble_config, PRED_KEY, false);
+  enkf_config_node_update_gen_kw(config_node, target_file, template_file, parameters, min_std, init_files);
+
+  free(target_file);
+}
 
 
 /**
@@ -641,16 +674,14 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
     ensemble_config_set_gen_kw_format( ensemble_config , config_content_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
   }
 
-  ensemble_config_init_GEN_PARAM( ensemble_config , config );
-  ensemble_config_init_GEN_DATA( ensemble_config , config );
+  ensemble_config_init_GEN_PARAM(ensemble_config, config);
+  ensemble_config_init_GEN_DATA(ensemble_config, config);
   ensemble_config_init_CUSTOM_KW(ensemble_config, config);
-  ensemble_config_init_GEN_KW(ensemble_config , config );
-  ensemble_config_init_SURFACE( ensemble_config , config );
-
-  ensemble_config_init_SUMMARY( ensemble_config , config , refcase );
-
-  ensemble_config_init_FIELD( ensemble_config , config , grid );
-
+  ensemble_config_init_GEN_KW(ensemble_config, config);
+  ensemble_config_init_SURFACE(ensemble_config, config);
+  ensemble_config_init_SUMMARY(ensemble_config, config, refcase);
+  ensemble_config_init_FIELD(ensemble_config, config, grid);
+  ensemble_config_init_PRED(ensemble_config, config);
 
   /* Containers - this must come last, to ensure that the other nodes have been added. */
   {

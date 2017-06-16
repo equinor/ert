@@ -187,13 +187,6 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        const local_ministep_type * ministep ,
                                        const meas_data_type * forecast ,
                                        obs_data_type * obs_data);
-
-static void enkf_main_set_schedule_prediction_file__(enkf_main_type * enkf_main,
-        const char * template_file,
-        const char * parameters,
-        const char * min_std,
-        const char * init_file_fmt);
-
 /*****************************************************************/
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
@@ -2016,51 +2009,6 @@ void enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf
 
 /******************************************************************/
 
-/**
-   SCHEDULE_PREDICTION_FILE.
-
-   The SCHEDULE_PREDICTION_FILE is implemented as a GEN_KW instance,
-   with some twists. Observe the following:
-
-   1. The SCHEDULE_PREDICTION_FILE is added to the ensemble_config
-      as a GEN_KW node with key 'PRED'.
-
-   2. The target file is set equal to the initial prediction file
-      (i.e. the template in this case), NOT including any path
-      components.
-
-*/
-
-/*
-  This function can only be called once in program life-time.
-*/
-
-static void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , const char * template_file , const char * parameters , const char * min_std , const char * init_file_fmt) {
-  const char * key = "PRED";
-
-  if (template_file != NULL) {
-    char * target_file;
-    bool forward_init = false;
-    enkf_config_node_type * config_node = ensemble_config_add_gen_kw(enkf_main_get_ensemble_config(enkf_main), key , forward_init);
-    {
-      char * base;
-      char * ext;
-      util_alloc_file_components( template_file , NULL , &base , &ext);
-      target_file = util_alloc_filename(NULL , base , ext );
-      util_safe_free( base );
-      util_safe_free( ext );
-    }
-    enkf_config_node_update_gen_kw( config_node , target_file , template_file , parameters , min_std , init_file_fmt );
-    free( target_file );
-  }
-}
-
-
-void enkf_main_set_schedule_prediction_file( enkf_main_type * enkf_main , const char * schedule_prediction_file) {
-  enkf_main_set_schedule_prediction_file__(enkf_main , schedule_prediction_file , NULL , NULL , NULL );
-}
-
-
 const char * enkf_main_get_schedule_prediction_file( const enkf_main_type * enkf_main ) {
   return ecl_config_get_schedule_prediction_file(enkf_main_get_ecl_config(enkf_main));
 }
@@ -2154,39 +2102,6 @@ static void enkf_main_init_log(
 }
 
 
-static void enkf_main_init_schedule_prediction(
-        enkf_main_type * enkf_main,
-        const config_content_type * content) {
-
-  if (!config_content_has_item(content, SCHEDULE_PREDICTION_FILE_KEY))
-    return;
-
-  const config_content_item_type * pred_item = config_content_get_item(
-                                                   content,
-                                                   SCHEDULE_PREDICTION_FILE_KEY
-                                                   );
-
-  config_content_node_type * pred_node = config_content_item_get_last_node(pred_item);
-  const char * template_file = config_content_node_iget_as_path(pred_node, 0);
-
-  hash_type * opt_hash = hash_alloc();
-  config_content_node_init_opt_hash(pred_node, opt_hash, 1);
-
-  const char * parameters = hash_safe_get(opt_hash, "PARAMETERS");
-  const char * min_std    = hash_safe_get(opt_hash, "MIN_STD"   );
-  const char * init_files = hash_safe_get(opt_hash, "INIT_FILES");
-
-  enkf_main_set_schedule_prediction_file__(
-          enkf_main,
-          template_file,
-          parameters,
-          min_std,
-          init_files
-          );
-
-  hash_free(opt_hash);
-}
-
 /**
    By default the simulation directories are left intact when
    the simulations re complete, but using the keyword
@@ -2261,8 +2176,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   config_content_type * content = model_config_alloc_content(enkf_main->user_config_file, config);
 
   enkf_main_init_log(enkf_main, content);
-
-  enkf_main_init_schedule_prediction(enkf_main, content);
 
   enkf_main_init_delete_runpath(enkf_main, content);
 

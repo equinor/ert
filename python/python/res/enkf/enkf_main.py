@@ -46,7 +46,6 @@ class EnKFMain(BaseCClass):
     _get_ecl_config = EnkfPrototype("ecl_config_ref enkf_main_get_ecl_config( enkf_main)")
     _get_plot_config = EnkfPrototype("plot_settings_ref enkf_main_get_plot_config( enkf_main)")
     _get_schedule_prediction_file = EnkfPrototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
-    _set_schedule_prediction_file = EnkfPrototype("void enkf_main_set_schedule_prediction_file( enkf_main , char*)")
     _get_data_kw = EnkfPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
     _clear_data_kw = EnkfPrototype("void enkf_main_clear_data_kw(enkf_main)")
     _add_data_kw = EnkfPrototype("void enkf_main_add_data_kw(enkf_main, char*, char*)")
@@ -190,9 +189,6 @@ class EnKFMain(BaseCClass):
     def get_schedule_prediction_file(self):
         schedule_prediction_file = self._get_schedule_prediction_file( )
         return schedule_prediction_file
-
-    def set_schedule_prediction_file(self, file):
-        self._set_schedule_prediction_file(file)
 
     def getDataKW(self):
         """ @rtype: SubstitutionList """
