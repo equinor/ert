@@ -16,6 +16,9 @@ class SimulationConfigPanel(QWidget):
     def is_advanced_option(self):
         return self._advanced_option
 
+    def set_model_name(self, name):
+        self.__simulation_model.set_name(name)
+
     def getSimulationModel(self):
         return self.__simulation_model
 

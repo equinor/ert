@@ -13,7 +13,9 @@ from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 class SingleTestRunPanel(SimulationConfigPanel):
 
     def __init__(self):
-        SimulationConfigPanel.__init__(self, SingleTestRun())
+        SimulationConfigPanel.__init__(self, EnsembleExperiment())
+        self.set_model_name('Single testrun')
+        
 
     def toggleAdvancedOptions(self, show_advanced):
         pass
