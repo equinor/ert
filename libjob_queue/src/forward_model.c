@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include <ert/util/util.h>
 #include <ert/util/subst_list.h>
@@ -236,8 +237,9 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
   }
   fprintf(stream, "],\n");
 
-  fprintf(stream, "\"ert_version\" : [%d, %d, \"%s\"]\n", version_get_major_ert_version(), version_get_minor_ert_version(), version_get_micro_ert_version());
-
+  fprintf(stream, "\n\"ert_version\" : [%d, %d, \"%s\"],\n", version_get_major_ert_version(), version_get_minor_ert_version(), version_get_micro_ert_version());
+  fprintf(stream, "\"simulation_id\" : \"%ld\",\n", random());
+  fprintf(stream, "\"ert_pid\" : \"%ld\"\n", getpid()); //Long is big enough to hold __pid_t
   fprintf(stream, "}\n");
   fclose(stream);
   free(json_file);

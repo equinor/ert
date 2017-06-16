@@ -29,7 +29,8 @@ import requests
 import json
 import imp
 
-LOG_URL = "http://10.220.65.22:4444" #To be extracted up to job_discpatch in the future after a bit of testing and when job_dispatch is properly
+LOG_URL = "http://st-vsib.st.statoil.no:4444"
+#LOG_URL = "http://10.220.65.22:4444" #To be extracted up to job_discpatch in the future after a bit of testing and when job_dispatch is properly
 #versioned
 
 
@@ -111,6 +112,8 @@ class JobManager(object):
 
     def __init__(self, module_file="jobs.py", json_file="jobs.json", error_url=None):
         self._job_map = {}
+        self.simulation_id = ""
+        self.ert_pid = ""
         self._error_url = error_url
         if json_file is not None and os.path.isfile(json_file):
             self._loadJson(json_file)
@@ -125,8 +128,9 @@ class JobManager(object):
 
         pw_entry = pwd.getpwuid(os.getuid())
         self.user = pw_entry.pw_name
-
-
+        logged_fields= {"status": "init"}
+        logged_fields.update({"jobs": self._job_map.values()})
+        self.postMessage(extra_fields=logged_fields)
         cond_unlink("EXIT")
         cond_unlink(self.EXIT_file)
         cond_unlink(self.STATUS_file)
@@ -145,7 +149,10 @@ class JobManager(object):
 
         umask = _jsonGet(jobs_data, "umask")
         os.umask(int(umask, 8))
-
+        if "simulation_id" in jobs_data:
+            self.simulation_id = _jsonGet(jobs_data, "simulation_id")
+        if "ert_pid" in jobs_data:
+            self.ert_pid = _jsonGet(jobs_data, "ert_pid")
         self.job_list = _jsonGet(jobs_data, "jobList")
         self._ensureCompatibleJobList()
         self._buildJobMap()
@@ -211,7 +218,7 @@ class JobManager(object):
         with open(self.STATUS_file, "a") as f:
             now = time.localtime()
             f.write("%-32s: %02d:%02d:%02d .... " % (job["name"], now.tm_hour, now.tm_min, now.tm_sec))
-        self.postMessage(job=job)
+        self.postMessage(job=job, extra_fields={"status": "startStatus"})
 
 
     def completeStatus(self, exit_status, error_msg):
@@ -325,7 +332,9 @@ class JobManager(object):
                    "start_time": self.start_time.isoformat(),
                    "fs_use": "%s / %s / %s" % self.fs_use,
                    "fs_utilization": "%s" % (self.fs_use[2])[:-1], #remove the "%"
-                   "node_timestamp": dt.now().isoformat()}
+                   "node_timestamp": dt.now().isoformat(),
+                   "simulation_id": self.simulation_id,
+                   "ert_pid": self.ert_pid}
         payload.update(extra_fields)
         try:
             if url is None:
@@ -338,17 +347,18 @@ class JobManager(object):
                 res = requests.post(url, timeout=3,
                               headers={"Content-Type": "application/json"},
                               data=data)
-                sys.stdout.write("Response status %s\n"%res.status_code)
-                sys.stdout.write("Request url %s\n"%res.url)
-                sys.stdout.write("Response headers %s\n"%res.headers)
-                sys.stdout.write("Response content %s\n"%res.content)
-                sys.stdout.write("Writing payload: %s\n"%payload)
-                sys.stdout.write("Writing data: %s\n"%data)
+                # sys.stdout.write("Response status %s\n"%res.status_code)
+                # sys.stdout.write("Request url %s\n"%res.url)
+                # sys.stdout.write("Response headers %s\n"%res.headers)
+                # sys.stdout.write("Response content %s\n"%res.content)
+                # sys.stdout.write("Writing payload: %s\n"%payload)
+                # sys.stdout.write("Writing data: %s\n"%data)
         except:
             pass
 
     def postError(self, job, error_msg):
         extra_fields = self.extract_stderr_stdout(job)
+        extra_fields.update({"status": "error","finished": True})
         self.postMessage(job, extra_fields, url=self._error_url)
 
     def extract_stderr_stdout(self, job):
@@ -369,6 +379,7 @@ class JobManager(object):
         self.dump_EXIT_file(job, error_msg)
         std_err_out = self.extract_stderr_stdout(job)
         self.postMessage(job=job, extra_fields=std_err_out, url=self._error_url) #posts to the old database
+        std_err_out.update({"status": "exit","finished": True})
         self.postMessage(job=job, extra_fields=std_err_out) #Posts to new logstash
         pgid = os.getpgid(os.getpid())
         os.killpg(pgid, signal.SIGKILL)
@@ -382,12 +393,13 @@ class JobManager(object):
             f.write("%02d:%02d:%02d  Calling: %s %s\n" %
                     (now.tm_hour, now.tm_min, now.tm_sec,
                      job.get('executable'), args))
+        self.postMessage(job=job,extra_fields={"status": "running"})
 
 
     def runJob(self, job):
         assert_file_executable(job.get('executable'))
         self.addLogLine(job)
-        self.postMessage(job=job, extra_fields={"status": "run","finished": False})
+        self.postMessage(job=job, extra_fields={"status": "runJob", "finished": False})
         pid = os.fork()
         exit_status, err_msg = 0, ''
         if pid == 0:
