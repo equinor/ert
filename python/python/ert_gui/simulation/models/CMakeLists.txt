@@ -1,8 +1,8 @@
 set(PYTHON_SOURCES
     __init__.py
     base_run_model.py
-    single_test_run.py
     ensemble_experiment.py
+    single_test_run.py
     ensemble_smoother.py
     iterated_ensemble_smoother.py
     multiple_data_assimilation.py

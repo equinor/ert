@@ -10,11 +10,7 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(0, "Running simulations...", indeterminate=False)
         active_realization_mask = arguments["active_realizations"]
 
-        active_realizations = 0;
-        for b in active_realization_mask:
-           if (b == 1):
-              active_realizations = active_realizations + 1
-
+        active_realizations = self.count_active_realizations(active_realization_mask);
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 0)
@@ -31,5 +27,6 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhase(1, "Simulations completed.") # done...
 
-
+    def count_active_realizations(self, active_realization_mask):
+        return sum(active_realization_mask)
 
