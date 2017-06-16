@@ -24,9 +24,6 @@ class BaseRunModel(object):
         self._failed = False
         self.__job_queue = None
         self.reset( )
-
-    def set_name(self, name):
-        self._name = name
     
     def ert(self):
         """ @rtype: res.enkf.EnKFMain"""
