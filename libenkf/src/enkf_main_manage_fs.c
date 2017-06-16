@@ -294,7 +294,8 @@ void enkf_main_init_case_from_existing_custom(const enkf_main_type * enkf_main,
 */
 
 static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * __mask) {
-  stringlist_type  * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+  ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  stringlist_type  * parameter_keys = ensemble_config_alloc_keylist_from_var_type(ensemble_config, PARAMETER);
   bool_vector_type * mask;
   bool initialized = true;
   int ikey = 0;
@@ -304,7 +305,7 @@ static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , 
     mask = bool_vector_alloc(0 , true );
 
   while ((ikey < stringlist_get_size( parameter_keys )) && (initialized)) {
-    const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
+    const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , stringlist_iget( parameter_keys , ikey) );
     int iens = 0;
     do {
       if (bool_vector_safe_iget( mask , iens)) {
@@ -395,9 +396,10 @@ static void enkf_main_write_current_case_file( const enkf_main_type * enkf_main,
 
 
 static void enkf_main_gen_data_special( enkf_main_type * enkf_main , enkf_fs_type * fs ) {
-  stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( enkf_main->ensemble_config , GEN_DATA);
+  ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config, GEN_DATA);
   for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
-    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( gen_data_keys , i));
+    enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config, stringlist_iget( gen_data_keys , i));
     gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
 
     if (gen_data_config_is_dynamic( gen_data_config )) 

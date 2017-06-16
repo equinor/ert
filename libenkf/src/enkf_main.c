@@ -147,7 +147,6 @@ struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
   enkf_fs_type           * dbase;              /* The internalized information. */
 
-  ensemble_config_type   * ensemble_config;    /* The config objects for the various enkf nodes.*/
   model_config_type      * model_config;
   const res_config_type  * res_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
@@ -232,7 +231,7 @@ const char * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main ) {
 }
 
 ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
-  return enkf_main->ensemble_config;
+  return res_config_get_ensemble_config(enkf_main->res_config);
 }
 
 const site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main ) {
@@ -305,7 +304,7 @@ void enkf_main_alloc_obs( enkf_main_type * enkf_main ) {
                                    model_config_get_external_time_map(enkf_main->model_config),
                                    ecl_config_get_grid(ecl_config),
                                    ecl_config_get_refcase(ecl_config) ,
-                                   enkf_main->ensemble_config );
+                                   enkf_main_get_ensemble_config(enkf_main));
 }
 
 void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file , bool clear_existing) {
@@ -337,8 +336,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   res_log_close();
 
   model_config_free( enkf_main->model_config);
-
-  ensemble_config_free( enkf_main->ensemble_config );
 
   local_config_free( enkf_main->local_config );
 
@@ -383,7 +380,7 @@ void enkf_main_exit(enkf_main_type * enkf_main) {
 static vector_type * enkf_main_alloc_node_ensemble(const enkf_main_type * enkf_main , enkf_fs_type * src_fs, const char * key , int report_step) {
   const int ens_size              = enkf_main_get_ensemble_size( enkf_main );
   vector_type * node_ensemble = vector_alloc_new( );
-  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main_get_ensemble_config(enkf_main), key );
   node_id_type node_id = {.report_step = report_step ,
                           .iens        = -1 };
   int iens;
@@ -500,12 +497,12 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs ,
 */
 
 void enkf_main_inflate(enkf_main_type * enkf_main , enkf_fs_type * src_fs , enkf_fs_type * target_fs , int report_step , hash_type * use_count) {
-  stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE);
+  stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER + DYNAMIC_STATE);
 
   for (int ikey = 0; ikey < stringlist_get_size( keys ); ikey++) {
     const char * key = stringlist_iget( keys  , ikey );
     if (hash_get_counter(use_count , key) > 0) {
-      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+      const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main_get_ensemble_config(enkf_main), key );
       const enkf_node_type * min_std            = enkf_config_node_get_min_std( config_node );
 
       if (min_std != NULL)
@@ -960,10 +957,11 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
       over there.
     */
     if (target_fs != source_fs) {
-      stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER);
+      const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+      stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(ensemble_config, PARAMETER);
       for (int i = 0; i < stringlist_get_size(param_keys); i++) {
         const char * key = stringlist_iget(param_keys, i);
-        enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config, key);
+        enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config, key);
         enkf_node_type * data_node = enkf_node_alloc(config_node);
         for (int j = 0; j < int_vector_size(ens_active_list); j++) {
           node_id_type node_id = { .iens = int_vector_iget(ens_active_list, j), .report_step = 0 };
@@ -1114,7 +1112,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
                                                                  target_fs ,
-                                                                 enkf_main->ensemble_config,
+                                                                 enkf_main_get_ensemble_config(enkf_main),
                                                                  iens_active_index,
                                                                  target_step ,
                                                                  enkf_main->ensemble,
@@ -1161,7 +1159,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
         int * row_offset  = util_calloc( local_dataset_get_size( dataset ) , sizeof * row_offset  );
         local_obsdata_type   * local_obsdata = local_ministep_get_obsdata( ministep );
 
-        enkf_main_serialize_dataset( enkf_main->ensemble_config , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
+        enkf_main_serialize_dataset(enkf_main_get_ensemble_config(enkf_main), dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
         module_info_type * module_info = enkf_main_module_info_alloc(ministep, obs_data, dataset, local_obsdata, active_size , row_offset);
 
         if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
@@ -1384,7 +1382,7 @@ void enkf_main_create_run_path(enkf_main_type * enkf_main , const bool_vector_ty
 
   enkf_main_init_internalization(enkf_main , init_mode);
   {
-    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
               enkf_main_get_fs( enkf_main ),
               param_list ,
@@ -1621,7 +1619,7 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type * run_context, init_mode_type init_mode) {
   enkf_main_init_internalization(enkf_main , ert_run_context_get_mode( run_context ));
   {
-    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
               ert_run_context_get_init_fs( run_context ),
               param_list ,
@@ -1873,7 +1871,7 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 
     /* Adding all node which can be updated. */
     {
-      stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER);
+      stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER);
       int i;
       for (i = 0; i < stringlist_get_size( keylist ); i++) {
         const char * key = stringlist_iget( keylist , i);
@@ -1979,7 +1977,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->res_config         = NULL;
-  enkf_main->ensemble_config    = ensemble_config_alloc();
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = NULL;
   enkf_main->model_config       = model_config_alloc( );
@@ -2047,7 +2044,7 @@ static void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main
   if (template_file != NULL) {
     char * target_file;
     bool forward_init = false;
-    enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key , forward_init);
+    enkf_config_node_type * config_node = ensemble_config_add_gen_kw(enkf_main_get_ensemble_config(enkf_main), key , forward_init);
     {
       char * base;
       char * ext;
@@ -2269,11 +2266,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   enkf_main_init_log(enkf_main, content);
 
   const ecl_config_type * ecl_config = enkf_main_get_ecl_config(enkf_main);
-  ensemble_config_init(enkf_main->ensemble_config, content,
-                       ecl_config_get_grid(ecl_config),
-                       ecl_config_get_refcase(ecl_config)
-                       );
-
   model_config_init(enkf_main->model_config,
                     content,
                     enkf_main_get_ensemble_size(enkf_main),
@@ -2529,12 +2521,12 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
 /*****************************************************************/
 
 void enkf_main_get_observations( const enkf_main_type * enkf_main, const char * user_key , int obs_count , time_t * obs_time , double * y , double * std) {
-  ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , obs_count , obs_time , y , std);
+  ensemble_config_get_observations( enkf_main_get_ensemble_config(enkf_main), enkf_main->obs , user_key , obs_count , obs_time , y , std);
 }
 
 
 int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const char * user_key ) {
-  return ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , 0 , NULL , NULL , NULL);
+  return ensemble_config_get_observations(enkf_main_get_ensemble_config(enkf_main), enkf_main->obs , user_key , 0 , NULL , NULL , NULL);
 }
 
 
@@ -2776,7 +2768,7 @@ void enkf_main_rank_on_data(enkf_main_type * enkf_main,
                             int step) {
 
   ranking_table_type * ranking_table     = enkf_main_get_ranking_table( enkf_main );
-  ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
   enkf_fs_type * fs                      = enkf_main_get_fs(enkf_main);
   char * key_index;
 

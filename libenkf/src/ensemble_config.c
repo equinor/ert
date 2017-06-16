@@ -79,8 +79,6 @@ struct ensemble_config_struct {
   char                     * gen_kw_format_string;   /* format string used when creating gen_kw search/replace strings. */
   hash_type                * config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
   field_trans_table_type   * field_trans_table;      /* a table of the transformations which are available to apply on fields. */
-  const ecl_sum_type       * refcase;                /* a ecl_sum reference instance - can be null (not owned by the ensemble
-                                                      config). is only used to check that summary keys are valid when adding. */
   bool                       have_forward_init;
   summary_key_matcher_type * summary_key_matcher;
 };
@@ -139,20 +137,12 @@ const char * ensemble_config_get_gen_kw_format( const ensemble_config_type * ens
 }
 
 
-void ensemble_config_set_refcase( ensemble_config_type * ensemble_config , const ecl_sum_type * refcase) {
-  ensemble_config->refcase = refcase;
-}
-
-
-
-
 ensemble_config_type * ensemble_config_alloc( ) {
   ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config );
 
   UTIL_TYPE_ID_INIT( ensemble_config , ENSEMBLE_CONFIG_TYPE_ID );
   ensemble_config->config_nodes          = hash_alloc();
   ensemble_config->field_trans_table     = field_trans_table_alloc();
-  ensemble_config->refcase               = NULL;
   ensemble_config->gen_kw_format_string  = util_alloc_string_copy( DEFAULT_GEN_KW_TAG_FORMAT );
   ensemble_config->have_forward_init     = false;
   ensemble_config->summary_key_matcher   = summary_key_matcher_alloc();
@@ -161,7 +151,21 @@ ensemble_config_type * ensemble_config_alloc( ) {
   return ensemble_config;
 }
 
+ensemble_config_type * ensemble_config_alloc_load(const char * user_config_file, ecl_grid_type * grid, const ecl_sum_type * refcase) {
+  ensemble_config_type * ensemble_config = ensemble_config_alloc();
 
+  if(user_config_file) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(user_config_file, config);
+
+    ensemble_config_init(ensemble_config, content, grid, refcase);
+
+    config_content_free(content);
+    config_free(config);
+  }
+
+  return ensemble_config;
+}
 
 void ensemble_config_free(ensemble_config_type * ensemble_config) {
   hash_free( ensemble_config->config_nodes );
@@ -512,11 +516,11 @@ void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , cons
 
         if (util_string_has_wildcard( key )) {
             //todo: DEPRECATED. In the Future the matcher should take care of this.
-          if (ensemble_config->refcase != NULL) {
+          if (refcase != NULL) {
             int k;
             stringlist_type * keys = stringlist_alloc_new ( );
 
-            ecl_sum_select_matching_general_var_list( ensemble_config->refcase , key , keys );   /* expanding the wildcard notation with help of the refcase. */
+            ecl_sum_select_matching_general_var_list(refcase , key , keys );   /* expanding the wildcard notation with help of the refcase. */
             for (k=0; k < stringlist_get_size( keys ); k++)
               ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) , LOAD_FAIL_SILENT );
 
@@ -632,8 +636,6 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
 */
 
 void ensemble_config_init(ensemble_config_type * ensemble_config , const config_content_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
-  int i;
-  ensemble_config_set_refcase( ensemble_config , refcase );
 
   if (config_content_has_item( config , GEN_KW_TAG_FORMAT_KEY)) {
     ensemble_config_set_gen_kw_format( ensemble_config , config_content_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
@@ -652,7 +654,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
 
   /* Containers - this must come last, to ensure that the other nodes have been added. */
   {
-    for (i=0; i < config_content_get_occurences(config , CONTAINER_KEY ); i++) {
+    for (int i=0; i < config_content_get_occurences(config , CONTAINER_KEY ); i++) {
       const stringlist_type * container_kw_list = config_content_iget_stringlist_ref(config , CONTAINER_KEY , i);
       const char * container_key = stringlist_iget( container_kw_list , 0 );
       enkf_config_node_type * container_node = ensemble_config_add_container( ensemble_config , container_key );
