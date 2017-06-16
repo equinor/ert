@@ -1,7 +1,6 @@
 from res.enkf.enums import HookRuntime
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
-
 class EnsembleExperiment(BaseRunModel):
 
     def __init__(self):
@@ -15,6 +14,7 @@ class EnsembleExperiment(BaseRunModel):
         for b in active_realization_mask:
            if (b == 1):
               active_realizations = active_realizations + 1
+
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 0)

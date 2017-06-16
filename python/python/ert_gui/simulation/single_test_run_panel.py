@@ -13,8 +13,7 @@ from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 class SingleTestRunPanel(SimulationConfigPanel):
 
     def __init__(self):
-        SimulationConfigPanel.__init__(self, EnsembleExperiment())
-        self.set_model_name('Single testrun')
+        SimulationConfigPanel.__init__(self, SingleTestRun())
         
         layout = QFormLayout()
 
@@ -25,7 +24,7 @@ class SingleTestRunPanel(SimulationConfigPanel):
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % getRealizationCount())
+        number_of_realizations_label = QLabel("<b>%d</b>" % 1)
         addHelpToWidget(number_of_realizations_label, "config/ensemble/num_realizations")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
@@ -43,8 +42,8 @@ class SingleTestRunPanel(SimulationConfigPanel):
         return self._active_realizations_field.isValid()
 
     def toggleAdvancedOptions(self, show_advanced):
-        self._active_realizations_field.setVisible(show_advanced)
-        self.layout().labelForField(self._active_realizations_field).setVisible(show_advanced)
+        self._active_realizations_field.setVisible(False)
+        self.layout().labelForField(self._active_realizations_field).setVisible(False)
 
     def getSimulationArguments(self):
         active_realizations_mask = self._active_realizations_model.getActiveRealizationsMask()
