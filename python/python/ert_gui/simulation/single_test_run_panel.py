@@ -31,8 +31,5 @@ class SingleTestRunPanel(SimulationConfigPanel):
     def toggleAdvancedOptions(self, show_advanced):
         pass
 
-    def getSimulationArguments(self):
-        active_realizations_mask = self._active_realizations_model.getActiveRealizationsMask()
-        return {"active_realizations": active_realizations_mask}
 
 
