@@ -71,6 +71,7 @@ class PlotDataGatherer(object):
         data = SummaryCollector.loadAllSummaryData(ert, case, [key])
         if not data.empty:
             data = data.reset_index()
+            data = data.drop_duplicates()
             data = data.pivot(index="Date", columns="Realization", values=key)
 
         return data #.dropna()
