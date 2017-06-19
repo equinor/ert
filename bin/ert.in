@@ -65,7 +65,7 @@ updateEnvPath( "LD_LIBRARY_PATH" , ERT_LD_LIBRARY_PATH )
 updateEnvPath( "PYTHONPATH"      , ERT_PYTHONPATH )
 os.environ["ERT_SHARE_PATH"] = ERT_SHARE_PATH
 os.environ["ERT_UI_MODE"] = "gui"
-
+os.environ["ERT_ROOT"] = ERT_ROOT
 
 parser = ArgumentParser( )
 mode = parser.add_mutually_exclusive_group( required = False )
