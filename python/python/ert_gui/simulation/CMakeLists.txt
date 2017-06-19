@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    single_test_run_panel.py
     ensemble_experiment_panel.py
     ensemble_smoother_panel.py
     iterated_ensemble_smoother_panel.py
