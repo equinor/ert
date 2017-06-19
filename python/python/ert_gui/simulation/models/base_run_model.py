@@ -4,12 +4,33 @@ from ert_gui import ERT
 from res.util import ResLog
 
 
+# A method decorated with the @job_queue decorator implements the following logic:
+#
+# 1. If self._job_queue is assigned a valid value the method is run normally.
+# 2. If self._job_queue is None - the decorator argument is returned.
+
+def job_queue(default):
+    
+    def job_queue_decorator(method):
+
+        def dispatch(self , *args, **kwargs):
+
+            if self._job_queue is None:
+                return default
+            else:
+                return method( self, *args , **kwargs) 
+
+        return dispatch
+
+    return job_queue_decorator
+    
+
 class ErtRunError(Exception):
     pass
 
 class BaseRunModel(object):
 
-    def __init__(self, name, phase_count=1):
+    def __init__(self, name, queue_config, phase_count=1):
         super(BaseRunModel, self).__init__()
         self._name = name
         self._phase = 0
@@ -22,24 +43,21 @@ class BaseRunModel(object):
         self._indeterminate = False
         self._fail_message = ""
         self._failed = False
-        self.__job_queue = None
+        self._queue_config = queue_config
+        self._job_queue = None
         self.reset( )
     
     def ert(self):
         """ @rtype: res.enkf.EnKFMain"""
         return ERT.ert
 
-    @property
-    def _job_queue(self):
-        if self.__job_queue is None:
-            self.__job_queue = self.ert().get_queue_config().create_job_queue()
-        return self.__job_queue
 
     def reset(self):
-        self.__job_queue = None
         self._failed = False
+        
 
     def startSimulations(self, run_arguments):
+        self._job_queue = self._queue_config.create_job_queue( )
         try:
             self.runSimulations(self._job_queue, run_arguments)
         except ErtRunError as e:
@@ -51,15 +69,15 @@ class BaseRunModel(object):
     def runSimulations(self, job_queue, run_arguments):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-
+    @job_queue(None)
     def killAllSimulations(self):
         self._job_queue.killAllJobs()
 
 
+    @job_queue(False)
     def userExitCalled(self):
         """ @rtype: bool """
         return self._job_queue.getUserExit( )
-
 
     def phaseCount(self):
         """ @rtype: int """
@@ -134,7 +152,7 @@ class BaseRunModel(object):
         else:
             return self._job_stop_time - self._job_start_time
 
-
+    @job_queue(1)
     def getQueueSize(self):
         """ @rtype: int """
         queue_size = len(self._job_queue)
@@ -144,7 +162,7 @@ class BaseRunModel(object):
 
         return queue_size
 
-
+    @job_queue({})
     def getQueueStatus(self):
         """ @rtype: dict of (JobStatusType, int) """
         queue_status = {}
@@ -160,6 +178,7 @@ class BaseRunModel(object):
 
         return queue_status
 
+    @job_queue(False)
     def isQueueRunning(self):
         """ @rtype: bool """
         return self._job_queue.isRunning()

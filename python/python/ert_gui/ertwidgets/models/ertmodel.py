@@ -170,3 +170,5 @@ def getCurrentAnalysisModuleName():
     return ERT.ert.analysisConfig().activeModuleName()
 
 
+def getQueueConfig():
+    return ERT.ert.get_queue_config( )

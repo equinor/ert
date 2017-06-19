@@ -18,7 +18,7 @@ from PyQt4.QtGui import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget, CaseSelector, ActiveLabel, AnalysisModuleSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
+from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath, getQueueConfig
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
@@ -29,7 +29,7 @@ from ert_gui.simulation.models import MultipleDataAssimilation
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def __init__(self):
-        SimulationConfigPanel.__init__(self, MultipleDataAssimilation())
+        SimulationConfigPanel.__init__(self, MultipleDataAssimilation( getQueueConfig() ))
 
         layout = QFormLayout()
 

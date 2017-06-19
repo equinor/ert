@@ -4,8 +4,8 @@ from ert_gui.simulation.models import BaseRunModel, ErtRunError, EnsembleExperim
 
 class SingleTestRun(EnsembleExperiment):
     
-    def __init__(self):
-        super(EnsembleExperiment, self).__init__("Single realization test-run")
+    def __init__(self, queue_config):
+        super(EnsembleExperiment, self).__init__("Single realization test-run" , queue_config)
 
 
         

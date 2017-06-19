@@ -3,8 +3,8 @@ from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 class EnsembleExperiment(BaseRunModel):
 
-    def __init__(self):
-        super(EnsembleExperiment, self).__init__("Ensemble Experiment")
+    def __init__(self, queue_config):
+        super(EnsembleExperiment, self).__init__("Ensemble Experiment" , queue_config)
 
     def runSimulations__(self, job_queue,  active_realization_mask, run_msg):
         self.setPhase(0, "Running simulations...", indeterminate=False)
@@ -26,7 +26,7 @@ class EnsembleExperiment(BaseRunModel):
         
         
     def runSimulations(self, job_queue,  arguments):
-        active_realization_mask = arguments["active_realizations"]
+        active_realizations_mask = arguments["active_realizations"]
         self.runSimulations__( job_queue , active_realizations_mask , "Running ensemble experiment...")
                 
         
