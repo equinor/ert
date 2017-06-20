@@ -53,6 +53,7 @@ if (EXISTS ${STATOIL_TESTDATA_ROOT})
 endif()
 
 file(COPY bin/job_dispatch.py DESTINATION ${PROJECT_BINARY_DIR}/bin )
+set( ERT_ROOT "${PROJECT_BINARY_DIR}" )
 #-----------------------------------------------------------------
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)

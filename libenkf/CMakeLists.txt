@@ -294,6 +294,7 @@ function( add_statoil_test name command )
               COMMAND ${command} ${ARGN})
      
     set_property( TEST ${name} PROPERTY LABELS StatoilData)
+    set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT}")
 endfunction()
               
 
