@@ -153,35 +153,43 @@ foreach (test   enkf_active_list
     add_test(NAME ${test} COMMAND ${test})
 endforeach ()
 
+function( add_config_test name command )
+    add_test( NAME ${name}
+              COMMAND ${command} ${ARGN})
+     
+    set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT}")
+endfunction()
+
+
 add_executable(enkf_main tests/enkf_main.c)
 target_link_libraries(enkf_main enkf)
-add_test(NAME enkf_main
-         COMMAND enkf_main
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config rng)
+add_config_test(enkf_main
+                enkf_main
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config rng)
 
 add_executable(enkf_runpath_list tests/enkf_runpath_list.c)
 target_link_libraries(enkf_runpath_list enkf)
-add_test(NAME enkf_runpath_list
-    COMMAND enkf_runpath_list
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/runpath_list/config)
+add_config_test(enkf_runpath_list
+                enkf_runpath_list
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/runpath_list/config)
 
 add_executable(enkf_gen_obs_load tests/enkf_gen_obs_load.c)
 target_link_libraries(enkf_gen_obs_load enkf)
-add_test(NAME enkf_gen_obs_load
-         COMMAND enkf_gen_obs_load
-                 ${CMAKE_SOURCE_DIR}/test-data/local/config/gen_data/config)
+add_config_test(enkf_gen_obs_load
+                enkf_gen_obs_load
+                ${CMAKE_SOURCE_DIR}/test-data/local/config/gen_data/config)
 
 add_executable(enkf_ert_workflow_list tests/enkf_ert_workflow_list.c)
 target_link_libraries(enkf_ert_workflow_list enkf)
-add_test(NAME enkf_ert_workflow_list
-    COMMAND enkf_ert_workflow_list
-            ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/SCALE_STD)
+add_config_test(enkf_ert_workflow_list
+                enkf_ert_workflow_list
+                ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/SCALE_STD)
 
 add_executable(enkf_analysis_config_analysis_load tests/enkf_analysis_config_analysis_load.c)
 target_link_libraries(enkf_analysis_config_analysis_load enkf)
-add_test(NAME enkf_analysis_config_analysis_load
-         COMMAND enkf_analysis_config_analysis_load
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/analysis_load_config)
+add_config_test(enkf_analysis_config_analysis_load
+                enkf_analysis_config_analysis_load
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/analysis_load_config)
 
 # It seems necessary to set the LD_LIBRARY_PATH for the loading of the
 # rml_enkf module to work.  Do understand why!
@@ -191,98 +199,98 @@ set_property(TEST enkf_analysis_config_analysis_load PROPERTY
 
 add_executable(enkf_workflow_job_test_version tests/enkf_workflow_job_test_version.c)
 target_link_libraries(enkf_workflow_job_test_version enkf)
-add_test(NAME enkf_workflow_job_test_version
-         COMMAND enkf_workflow_job_test_version
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/workflow_jobs)
+add_config_test(enkf_workflow_job_test_version
+                enkf_workflow_job_test_version
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/workflow_jobs)
 
 add_executable(enkf_ert_test_context tests/enkf_ert_test_context.c)
 target_link_libraries(enkf_ert_test_context enkf)
-add_test(NAME enkf_ert_test_context
-         COMMAND enkf_ert_test_context
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/test_context/config
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/test_context/wf_job
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/test_context/wf_job_fail)
+add_config_test(enkf_ert_test_context
+                enkf_ert_test_context
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/test_context/config
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/test_context/wf_job
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/test_context/wf_job_fail)
 
 add_executable(enkf_plot_gen_kw_fs tests/enkf_plot_gen_kw_fs.c)
 target_link_libraries(enkf_plot_gen_kw_fs enkf )
-add_test(NAME enkf_plot_gen_kw_fs
-         COMMAND enkf_plot_gen_kw_fs
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/gen_kw_plot/config)
+add_config_test(enkf_plot_gen_kw_fs
+                enkf_plot_gen_kw_fs
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/gen_kw_plot/config)
 
 add_executable(gen_kw_test tests/gen_kw_test.c)
 target_link_libraries(gen_kw_test enkf)
-add_test(NAME gen_kw_test
-         COMMAND gen_kw_test
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert/config_GEN_KW_true)
+add_config_test(gen_kw_test
+                gen_kw_test
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert/config_GEN_KW_true)
 
 
 add_executable(gen_kw_logarithmic_test tests/gen_kw_logarithmic_test.c)
 target_link_libraries(gen_kw_logarithmic_test enkf)
-add_test(NAME gen_kw_logarithmic_test
-         COMMAND gen_kw_logarithmic_test
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/gen_kw_logarithmic/config_GEN_KW_logarithmic)
+add_config_test(gen_kw_logarithmic_test
+                gen_kw_logarithmic_test
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/gen_kw_logarithmic/config_GEN_KW_logarithmic)
 
 add_executable(enkf_forward_init_GEN_KW tests/enkf_forward_init_GEN_KW.c)
 target_link_libraries(enkf_forward_init_GEN_KW enkf)
-add_test(NAME enkf_forward_init_GEN_KW_TRUE
-         COMMAND enkf_forward_init_GEN_KW
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert
-                 config_GEN_KW_true
-                 TRUE)
+add_config_test(enkf_forward_init_GEN_KW_TRUE
+                enkf_forward_init_GEN_KW
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert
+                config_GEN_KW_true
+                TRUE)
 
-add_test(NAME enkf_forward_init_GEN_KW_FALSE
-         COMMAND enkf_forward_init_GEN_KW
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert
-                 config_GEN_KW_false
-                 FALSE)
+add_config_test(enkf_forward_init_GEN_KW_FALSE
+                enkf_forward_init_GEN_KW
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert
+                config_GEN_KW_false
+                FALSE)
 
 
 add_executable(enkf_select_case_job tests/enkf_select_case_job.c)
 target_link_libraries(enkf_select_case_job enkf)
-add_test(NAME enkf_select_case_job
-         COMMAND enkf_select_case_job
-                 ${CMAKE_SOURCE_DIR}/test-data/local/snake_oil/snake_oil.ert
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal-tui/config/SELECT_CASE)
+add_config_test(enkf_select_case_job
+                enkf_select_case_job
+                ${CMAKE_SOURCE_DIR}/test-data/local/snake_oil/snake_oil.ert
+                ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal-tui/config/SELECT_CASE)
 
 
 add_executable(enkf_forward_init_GEN_PARAM tests/enkf_forward_init_GEN_PARAM.c)
 target_link_libraries(enkf_forward_init_GEN_PARAM enkf)
 
-add_test(NAME enkf_forward_init_GEN_PARAM_TRUE
-              COMMAND enkf_forward_init_GEN_PARAM
-              ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert
-              config_GEN_PARAM_true
-              TRUE)
+add_config_test(enkf_forward_init_GEN_PARAM_TRUE
+                enkf_forward_init_GEN_PARAM
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert
+                config_GEN_PARAM_true
+                TRUE)
 
-add_test(NAME enkf_forward_init_GEN_PARAM_FALSE
-         COMMAND enkf_forward_init_GEN_PARAM
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert
-                 config_GEN_PARAM_false
-                 FALSE)
+add_config_test(enkf_forward_init_GEN_PARAM_FALSE
+                enkf_forward_init_GEN_PARAM
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/forward/ert
+                config_GEN_PARAM_false
+                FALSE)
 
 add_executable(enkf_umask_config_test tests/enkf_umask_config_test.c)
 target_link_libraries(enkf_umask_config_test enkf)
-add_test(NAME enkf_umask_config_test
-         COMMAND enkf_umask_config_test
-                 ${CMAKE_SOURCE_DIR}/test-data/local/simple_config/config_umask)
+add_config_test(enkf_umask_config_test
+                enkf_umask_config_test
+                ${CMAKE_SOURCE_DIR}/test-data/local/simple_config/config_umask)
 
 add_executable(enkf_rng tests/enkf_rng.c)
 target_link_libraries(enkf_rng enkf)
-add_test(NAME enkf_rng
-         COMMAND enkf_rng ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config rng)
+add_config_test(enkf_rng
+                enkf_rng ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config rng)
 
 add_executable(enkf_forward_load_context tests/enkf_forward_load_context.c)
 target_link_libraries(enkf_forward_load_context enkf)
-add_test(NAME enkf_forward_load_context
-         COMMAND enkf_forward_load_context
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config
-                 forward_load_context)
+add_config_test(enkf_forward_load_context
+                enkf_forward_load_context
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config
+                forward_load_context)
 
 add_executable(enkf_ensemble_GEN_PARAM tests/enkf_ensemble_GEN_PARAM.c)
 target_link_libraries(enkf_ensemble_GEN_PARAM enkf)
-add_test(NAME enkf_ensemble_GEN_PARAM
-         COMMAND enkf_ensemble_GEN_PARAM
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/ensemble/GEN_PARAM)
+add_config_test(enkf_ensemble_GEN_PARAM
+                enkf_ensemble_GEN_PARAM
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/ensemble/GEN_PARAM)
 
 if (NOT STATOIL_TESTDATA_ROOT)
     return ()
