@@ -288,53 +288,62 @@ if (NOT STATOIL_TESTDATA_ROOT)
     return ()
 endif ()
 
+
+function( add_statoil_test name command )
+    add_test( NAME ${name}
+              COMMAND ${command} ${ARGN})
+     
+    set_property( TEST ${name} PROPERTY LABELS StatoilData)
+endfunction()
+              
+
 add_executable(enkf_site_config tests/enkf_site_config.c)
 target_link_libraries(enkf_site_config enkf)
-add_test(NAME enkf_site_config
-         COMMAND enkf_site_config /project/res/etc/ERT/site-config)
+add_statoil_test(enkf_site_config
+                 enkf_site_config /project/res/etc/ERT/site-config)
 
 add_executable(enkf_gen_data_config tests/enkf_gen_data_config.c)
 target_link_libraries(enkf_gen_data_config enkf)
-add_test(NAME enkf_gen_data_config
-         COMMAND enkf_gen_data_config
+add_statoil_test(enkf_gen_data_config
+                 enkf_gen_data_config
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/gendata_test/RFT_E-3H_21
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/gendata_test/RFT_E-3H_21_empty)
 
 add_executable(enkf_block_obs tests/enkf_block_obs.c)
 target_link_libraries(enkf_block_obs enkf)
-add_test(NAME enkf_block_obs
-         COMMAND enkf_block_obs
+add_statoil_test(enkf_block_obs
+                 enkf_block_obs
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID)
 
 add_executable(enkf_obs_fs tests/enkf_obs_fs.c)
 target_link_libraries(enkf_obs_fs enkf)
-add_test(NAME enkf_obs_fs
-         COMMAND enkf_obs_fs
+add_statoil_test(enkf_obs_fs
+                 enkf_obs_fs
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config)
 
 add_executable(enkf_magic_string_in_workflows tests/enkf_magic_string_in_workflows.c)
 target_link_libraries(enkf_magic_string_in_workflows enkf)
-add_test(NAME enkf_magic_string_in_workflows
-         COMMAND enkf_magic_string_in_workflows
+add_statoil_test(enkf_magic_string_in_workflows
+                 enkf_magic_string_in_workflows
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_data/config)
 
 add_executable(enkf_obs_vector_fs tests/enkf_obs_vector_fs.c)
 target_link_libraries(enkf_obs_vector_fs enkf)
-add_test(NAME enkf_obs_vector_fs
-         COMMAND enkf_obs_vector_fs
+add_statoil_test(enkf_obs_vector_fs
+                 enkf_obs_vector_fs
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config)
 
 add_executable(enkf_plot_data_fs tests/enkf_plot_data_fs.c)
 target_link_libraries(enkf_plot_data_fs enkf)
-add_test(NAME enkf_plot_data_fs
-         COMMAND enkf_plot_data_fs
+add_statoil_test(enkf_plot_data_fs
+                 enkf_plot_data_fs
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/plotData/config)
 
 add_executable(enkf_time_map tests/enkf_time_map.c)
 target_link_libraries(enkf_time_map enkf)
-add_test(NAME enkf_time_map1 COMMAND enkf_time_map)
-add_test(NAME enkf_time_map2
-         COMMAND enkf_time_map
+add_statoil_test(enkf_time_map1 enkf_time_map)
+        add_statoil_test(enkf_time_map2
+                 enkf_time_map
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/ModifiedSummary/EXTRA_TSTEP
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/ModifiedSummary/SHORT
@@ -342,68 +351,68 @@ add_test(NAME enkf_time_map2
 
 add_executable(enkf_main_fs tests/enkf_main_fs.c)
 target_link_libraries(enkf_main_fs enkf)
-add_test(NAME enkf_main_fs
-         COMMAND enkf_main_fs
+add_statoil_test(enkf_main_fs
+                 enkf_main_fs
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/plotData/config)
 
 add_executable(enkf_main_fs_current_file_test tests/enkf_main_fs_current_file_test.c)
 target_link_libraries(enkf_main_fs_current_file_test enkf)
-add_test(NAME enkf_main_fs_current_file_test
-         COMMAND enkf_main_fs_current_file_test
+add_statoil_test(enkf_main_fs_current_file_test
+                 enkf_main_fs_current_file_test
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/plotData/config)
 
 add_executable(enkf_scale_correlated_std tests/enkf_scale_correlated_std.c)
 target_link_libraries(enkf_scale_correlated_std enkf)
-add_test(NAME enkf_scale_correlated_std
-         COMMAND enkf_scale_correlated_std
+add_statoil_test(enkf_scale_correlated_std
+                 enkf_scale_correlated_std
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_data/config
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/STD_SCALE_CORRELATED_OBS)
 
 add_executable(enkf_plot_gendata_fs tests/enkf_plot_gendata_fs.c)
 target_link_libraries(enkf_plot_gendata_fs  enkf)
-add_test(NAME enkf_plot_gendata_fs
-         COMMAND enkf_plot_gendata_fs
+add_statoil_test(enkf_plot_gendata_fs
+                 enkf_plot_gendata_fs
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_GEN_DATA/config)
 
 add_executable(enkf_state_report_step_compatible
                tests/enkf_state_report_step_compatible.c)
 target_link_libraries(enkf_state_report_step_compatible  enkf)
-add_test(NAME enkf_state_report_step_compatible_TRUE
-         COMMAND enkf_state_report_step_compatible
+add_statoil_test(enkf_state_report_step_compatible_TRUE
+                 enkf_state_report_step_compatible
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true
                  config_ecl_sum_compatible_true
                  TRUE)
 
-add_test(NAME enkf_state_report_step_compatible_FALSE
-         COMMAND enkf_state_report_step_compatible
+add_statoil_test(enkf_state_report_step_compatible_FALSE
+                 enkf_state_report_step_compatible
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_false
                  config_ecl_sum_compatible_false
                  FALSE)
 
 add_executable(enkf_state_manual_load_test tests/enkf_state_manual_load_test.c)
 target_link_libraries(enkf_state_manual_load_test enkf)
-add_test(NAME enkf_state_manual_load_test
-         COMMAND enkf_state_manual_load_test
+add_statoil_test(enkf_state_manual_load_test
+                 enkf_state_manual_load_test
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true
                  config_ecl_sum_compatible_true)
 
 add_executable(enkf_state_skip_summary_load_test tests/enkf_state_skip_summary_load_test.c)
 target_link_libraries(enkf_state_skip_summary_load_test enkf)
 
-add_test(NAME enkf_state_summary_vars_present
-         COMMAND enkf_state_skip_summary_load_test
+add_statoil_test(enkf_state_summary_vars_present
+                 enkf_state_skip_summary_load_test
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_summary_vars_config
                  config_summary_vars)
 
-add_test(NAME enkf_state_no_summary_vars_present
-         COMMAND enkf_state_skip_summary_load_test
+add_statoil_test(enkf_state_no_summary_vars_present
+                 enkf_state_skip_summary_load_test
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_no_summary_vars_config
                  config_no_summary_vars)
 
 add_executable(enkf_export_field_test tests/enkf_export_field_test.c)
 target_link_libraries(enkf_export_field_test enkf)
-add_test(NAME enkf_export_field_test
-         COMMAND enkf_export_field_test
+add_statoil_test(enkf_export_field_test
+                 enkf_export_field_test
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/export_fields/config
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD_ECL_GRDECL
@@ -411,8 +420,8 @@ add_test(NAME enkf_export_field_test
 
 add_executable(enkf_workflow_job_test tests/enkf_workflow_job_test.c)
 target_link_libraries(enkf_workflow_job_test enkf)
-add_test(NAME enkf_workflow_job_test
-         COMMAND enkf_workflow_job_test
+add_statoil_test(enkf_workflow_job_test
+                 enkf_workflow_job_test
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_data/config
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/enkf_state_runpath/config_runpath_multiple_iterations
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal-tui/config/CREATE_CASE
@@ -427,74 +436,74 @@ add_test(NAME enkf_workflow_job_test
 
 add_executable(enkf_forward_init_SURFACE tests/enkf_forward_init_SURFACE.c)
 target_link_libraries(enkf_forward_init_SURFACE enkf)
-add_test(NAME enkf_forward_init_SURFACE_TRUE
-         COMMAND enkf_forward_init_SURFACE
+add_statoil_test(enkf_forward_init_SURFACE_TRUE
+                 enkf_forward_init_SURFACE
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface config_surface_true
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
                  TRUE)
 
-add_test(NAME enkf_forward_init_SURFACE_FALSE
-         COMMAND enkf_forward_init_SURFACE
+add_statoil_test(enkf_forward_init_SURFACE_FALSE
+                 enkf_forward_init_SURFACE
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface config_surface_false
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
                  FALSE)
 
 add_executable(enkf_forward_init_FIELD tests/enkf_forward_init_FIELD.c)
 target_link_libraries(enkf_forward_init_FIELD enkf)
-add_test(NAME enkf_forward_init_FIELD_TRUE
-         COMMAND enkf_forward_init_FIELD
+add_statoil_test(enkf_forward_init_FIELD_TRUE
+                 enkf_forward_init_FIELD
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/field config_field_true
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/petro.grdecl
                  TRUE)
 
-add_test(NAME enkf_forward_init_FIELD_FALSE
-         COMMAND enkf_forward_init_FIELD
+add_statoil_test(enkf_forward_init_FIELD_FALSE
+                 enkf_forward_init_FIELD
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/field config_field_false
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/petro.grdecl
                  FALSE)
 
 add_executable(enkf_forward_init_transform tests/enkf_forward_init_transform.c)
 target_link_libraries(enkf_forward_init_transform enkf)
-add_test(NAME enkf_forward_init_transform_TRUE
-         COMMAND enkf_forward_init_transform
+add_statoil_test(enkf_forward_init_transform_TRUE
+                 enkf_forward_init_transform
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_true
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
                  TRUE)
 
-add_test(NAME enkf_forward_init_transform_FALSE
-         COMMAND enkf_forward_init_transform
+add_statoil_test(enkf_forward_init_transform_FALSE
+                 enkf_forward_init_transform
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_false
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
                  FALSE)
 
 add_executable(enkf_export_inactive_cells tests/enkf_export_inactive_cells.c)
 target_link_libraries(enkf_export_inactive_cells enkf)
-add_test(NAME enkf_export_inactive_cells
-         COMMAND enkf_export_inactive_cells
+add_statoil_test(enkf_export_inactive_cells
+                 enkf_export_inactive_cells
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/export_inactive_cells/config
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/export_inactive_cells/petro.grdecl)
 
 add_executable(enkf_refcase_list tests/enkf_refcase_list.c)
 target_link_libraries(enkf_refcase_list enkf)
-add_test(NAME enkf_refcase_list
-         COMMAND enkf_refcase_list
+add_statoil_test(enkf_refcase_list
+                 enkf_refcase_list
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE)
 
-add_test(NAME enkf_refcase_list2
-         COMMAND enkf_refcase_list
+add_statoil_test(enkf_refcase_list2
+                 enkf_refcase_list
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE.*)
 
 add_executable(enkf_ecl_config tests/enkf_ecl_config.c)
 target_link_libraries(enkf_ecl_config enkf)
-add_test(NAME enkf_ecl_config1 COMMAND enkf_ecl_config)
-add_test(NAME enkf_ecl_config2
-         COMMAND enkf_ecl_config
+add_statoil_test(enkf_ecl_config1 enkf_ecl_config)
+        add_statoil_test(enkf_ecl_config2
+                 enkf_ecl_config
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE)
 
 add_executable(enkf_ecl_config_config tests/enkf_ecl_config_config.c)
 target_link_libraries(enkf_ecl_config_config enkf)
-add_test(NAME enkf_ecl_config_config
-         COMMAND enkf_ecl_config_config
+add_statoil_test(enkf_ecl_config_config
+                 enkf_ecl_config_config
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/ecl_config)
