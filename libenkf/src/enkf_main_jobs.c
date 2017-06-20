@@ -405,7 +405,7 @@ static void enkf_main_export_runpath_file(enkf_main_type * enkf_main,
                                           const int_vector_type * realizations,
                                           const int_vector_type * iterations) {
 
-  ecl_config_type * ecl_config            = enkf_main_get_ecl_config(enkf_main);
+  const ecl_config_type * ecl_config      = enkf_main_get_ecl_config(enkf_main);
   const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
   const char * basename_fmt               = ecl_config_get_eclbase(ecl_config);
   const char * runpath_fmt                = model_config_get_runpath_as_char(model_config);

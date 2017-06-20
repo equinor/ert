@@ -26,6 +26,7 @@
 #include <ert/enkf/ert_template.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/model_config.h>
 
 
 #define ERT_TEMPLATE_TYPE_ID  7731963
@@ -139,6 +140,24 @@ ert_templates_type * ert_templates_alloc( subst_list_type * parent_subst  ) {
   UTIL_TYPE_ID_INIT( templates , ERT_TEMPLATES_TYPE_ID );
   templates->templates       = hash_alloc();
   templates->parent_subst    = parent_subst;
+  return templates;
+}
+
+ert_templates_type * ert_templates_alloc_load(subst_list_type * parent_subst,
+        const char * config_file)
+{
+  ert_templates_type * templates = ert_templates_alloc(parent_subst);
+
+  if(config_file) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(config_file, config);
+
+    ert_templates_init(templates, content);
+
+    config_content_free(content);
+    config_free(config);
+  }
+
   return templates;
 }
 

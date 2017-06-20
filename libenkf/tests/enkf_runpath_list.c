@@ -120,7 +120,7 @@ void test_runpath_list() {
 void test_config( const char * config_file ) {
   ert_test_context_type * test_context = ert_test_context_alloc( "RUNPATH_FILE" , config_file );
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
-  hook_manager_type * hook_manager = enkf_main_get_hook_manager( enkf_main );
+  const hook_manager_type * hook_manager = enkf_main_get_hook_manager( enkf_main );
 
   ert_test_context_run_worklow( test_context , "ARGECHO_WF");
   {

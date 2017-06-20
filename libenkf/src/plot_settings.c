@@ -28,6 +28,7 @@
 #include <ert/enkf/plot_settings.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
+#include <ert/enkf/model_config.h>
 
 #define TRUE_STRING              "True"
 #define FALSE_STRING             "False"
@@ -40,6 +41,22 @@
 #define DEFAULT_SHOW_REFCASE     FALSE_STRING
 #define DEFAULT_SHOW_HISTORY     FALSE_STRING
 
+config_settings_type * plot_settings_alloc_load(const char * config_file) {
+  config_settings_type * plot_config = config_settings_alloc(PLOT_SETTING_KEY);
+  plot_settings_init(plot_config);
+
+  if(config_file) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(config_file, config);
+
+    config_settings_apply(plot_config, content);
+
+    config_content_free(content);
+    config_free(config);
+  }
+
+  return plot_config;
+}
 
 void plot_settings_init(config_settings_type * settings) {
 

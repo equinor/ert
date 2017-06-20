@@ -27,7 +27,6 @@ void                subst_config_free(subst_config_type * subst_config);
 subst_func_pool_type * subst_config_get_subst_func_pool(subst_config_type * subst_type);
 subst_list_type      * subst_config_get_subst_list(subst_config_type * subst_type);
 
-void subst_config_install_rng(subst_config_type * subst_config, rng_type * rng);
 void subst_config_add_internal_subst_kw(subst_config_type *, const char *, const char *, const char *);
 void subst_config_add_subst_kw(subst_config_type * subst_config , const char * key , const char * value);
 void subst_config_clear(subst_config_type * subst_config);

@@ -32,12 +32,16 @@ extern "C" {
   typedef struct hook_manager_struct hook_manager_type;
 
   hook_manager_type   * hook_manager_alloc(ert_workflow_list_type * workflow_list);
+  hook_manager_type * hook_manager_alloc_load(
+        ert_workflow_list_type * workflow_list,
+        const char * user_config_file, const char * working_dir);
+
   void                  hook_manager_free();
 
-  void                  hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config);
+  void                  hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config, const char * working_dir);
   void                  hook_manager_add_config_items( config_parser_type * config );
 
-  runpath_list_type   * hook_manager_get_runpath_list( hook_manager_type * hook_manager );
+  runpath_list_type   * hook_manager_get_runpath_list(const hook_manager_type * hook_manager);
   void                  hook_manager_export_runpath_list( const hook_manager_type * hook_manager );
   void                  hook_manager_set_runpath_list_file( hook_manager_type * hook_manager , const char * path, const char * filename);
   const char          * hook_manager_get_runpath_list_file(const hook_manager_type * hook_manager);

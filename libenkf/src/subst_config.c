@@ -96,14 +96,6 @@ subst_list_type * subst_config_get_subst_list(subst_config_type * subst_type) {
   return subst_type->subst_list;
 }
 
-void subst_config_install_rng(subst_config_type * subst_config, rng_type * rng) {
-  subst_func_pool_add_func(subst_config->subst_func_pool, "RANDINT",   "Returns a random integer - 32 bit", subst_func_randint,   false, 0, 0, rng);
-  subst_func_pool_add_func(subst_config->subst_func_pool, "RANDFLOAT", "Returns a random float 0-1.",       subst_func_randfloat, false, 0, 0, rng);
-
-  subst_list_insert_func(subst_config->subst_list, "RANDINT",   "__RANDINT__");
-  subst_list_insert_func(subst_config->subst_list, "RANDFLOAT", "__RANDFLOAT__");
-}
-
 void subst_config_add_internal_subst_kw(subst_config_type * subst_config, const char * key , const char * value, const char * help_text) {
   char * tagged_key = util_alloc_sprintf(INTERNAL_DATA_KW_TAG_FORMAT, key);
   subst_list_append_copy(subst_config_get_subst_list(subst_config), tagged_key, value, help_text);
@@ -124,6 +116,12 @@ void subst_config_fprintf(const subst_config_type * subst_config, FILE * stream)
     fprintf(stream, CONFIG_VALUE_FORMAT,    subst_list_iget_key(subst_config->subst_list, i));
     fprintf(stream, CONFIG_ENDVALUE_FORMAT, subst_list_iget_value(subst_config->subst_list, i));
   }
+}
+
+static void subst_config_install_num_cpu(subst_config_type * subst_config, int num_cpu) {
+  char * num_cpu_string = util_alloc_sprintf("%d" , num_cpu);
+  subst_config_add_internal_subst_kw(subst_config, "NUM_CPU", num_cpu_string, "The number of CPU used for one forward model.");
+  free(num_cpu_string);
 }
 
 static void subst_config_init_default(subst_config_type * subst_config) {
@@ -164,12 +162,10 @@ static void subst_config_init_default(subst_config_type * subst_config) {
   */
 
   char * date_string = util_alloc_date_stamp_utc();
-  const char * num_cpu_string = "1";
-
   subst_config_add_internal_subst_kw(subst_config, "DATE",    date_string,    "The current date.");
-  subst_config_add_internal_subst_kw(subst_config, "NUM_CPU", num_cpu_string, "The number of CPU used for one forward model.");
-
   free( date_string );
+
+  subst_config_install_num_cpu(subst_config, 1);
 }
 
 static void subst_config_install_working_directory(subst_config_type * subst_config, const char * working_dir) {
@@ -220,6 +216,15 @@ static void subst_config_init_load(
     char * abs_runpath_file = runpath_list_alloc_filename(working_dir, runpath_file);
     subst_config_add_internal_subst_kw(subst_config, "RUNPATH_FILE", abs_runpath_file, "The name of a file with a list of run directories.");
     free(abs_runpath_file);
+  }
+
+  if (config_content_has_item(content, DATA_FILE_KEY)) {
+    const char * data_file = config_content_iget(content, DATA_FILE_KEY, 0, 0);
+    if (!util_file_exists(data_file))
+      util_abort("%s: Could not find ECLIPSE data file: %s\n", __func__, data_file ? data_file : "NULL");
+
+    int num_cpu = ecl_util_get_num_cpu(data_file);
+    subst_config_install_num_cpu(subst_config, num_cpu);
   }
 
   config_free(config);

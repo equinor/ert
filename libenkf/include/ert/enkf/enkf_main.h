@@ -75,7 +75,6 @@ extern "C" {
   const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );
   void                          enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rft_config_file );
   const char                  * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main );
-  bool                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
   ui_return_type              * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path);
 
   ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
@@ -130,7 +129,7 @@ extern "C" {
   const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);
   const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
   ranking_table_type          * enkf_main_get_ranking_table( const enkf_main_type * enkf_main );
-  ecl_config_type             * enkf_main_get_ecl_config(const enkf_main_type * enkf_main);
+  const ecl_config_type       * enkf_main_get_ecl_config(const enkf_main_type * enkf_main);
   ensemble_config_type        * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main);
   int                           enkf_main_get_ensemble_size( const enkf_main_type * enkf_main );
   int                           enkf_main_get_history_length( const enkf_main_type * );
@@ -138,7 +137,7 @@ extern "C" {
   //const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
   model_config_type           * enkf_main_get_model_config( const enkf_main_type * );
   local_config_type           * enkf_main_get_local_config( const enkf_main_type * enkf_main );
-  config_settings_type        * enkf_main_get_plot_config( const enkf_main_type * enkf_main );
+  const config_settings_type  * enkf_main_get_plot_config( const enkf_main_type * enkf_main );
   void                          enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file , bool clear_existing);
   enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
   bool                          enkf_main_have_obs( const enkf_main_type * enkf_main );
@@ -174,7 +173,7 @@ extern "C" {
   void                        enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf_config_node);
   int_vector_type           * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride);
 
-  hook_manager_type         * enkf_main_get_hook_manager( const enkf_main_type * enkf_main );
+  const hook_manager_type   * enkf_main_get_hook_manager( const enkf_main_type * enkf_main );
 
   void enkf_main_get_PC( const matrix_type * S,
                          const matrix_type * dObs,

@@ -31,6 +31,7 @@
 #include <ert/enkf/hook_manager.h>
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/runpath_list.h>
+#include <ert/enkf/model_config.h>
 
 #define HOOK_MANAGER_NAME             "HOOK MANAGER"
 #define QC_WORKFLOW_NAME              "QC WORKFLOW"
@@ -64,6 +65,27 @@ hook_manager_type * hook_manager_alloc( ert_workflow_list_type * workflow_list )
   return hook_manager;
 }
 
+hook_manager_type * hook_manager_alloc_load(
+        ert_workflow_list_type * workflow_list,
+        const char * user_config_file,
+        const char * working_dir)
+{
+  hook_manager_type * hook_manager = hook_manager_alloc(workflow_list);
+
+  if(user_config_file) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(user_config_file, config);
+
+    hook_manager_init(hook_manager, content, working_dir);
+
+    config_content_free(content);
+    config_free(config);
+  }
+
+  return hook_manager;
+}
+
+
 
 void hook_manager_free( hook_manager_type * hook_manager ) {
   runpath_list_free( hook_manager->runpath_list );
@@ -80,7 +102,7 @@ void hook_manager_add_input_context( hook_manager_type * hook_manager, const cha
 
 
 
-runpath_list_type * hook_manager_get_runpath_list( hook_manager_type * hook_manager ) {
+runpath_list_type * hook_manager_get_runpath_list(const hook_manager_type * hook_manager) {
   return hook_manager->runpath_list;
 }
 
@@ -98,7 +120,7 @@ static void hook_manager_add_workflow( hook_manager_type * hook_manager , const 
 
 
 
-void hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config_content) {
+void hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config_content, const char * working_dir) {
 
   /* Old stuff explicitly prefixed with QC  */
   {
@@ -126,7 +148,7 @@ void hook_manager_init( hook_manager_type * hook_manager , const config_content_
 
 
   if (config_content_has_item( config_content , RUNPATH_FILE_KEY))
-    hook_manager_set_runpath_list_file( hook_manager, NULL, config_content_get_value( config_content , RUNPATH_FILE_KEY));
+    hook_manager_set_runpath_list_file( hook_manager, working_dir, config_content_get_value( config_content , RUNPATH_FILE_KEY));
 }
 
 

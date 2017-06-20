@@ -46,6 +46,7 @@ extern "C" {
 #define  REPORT_STEPS_KEY                  "REPORT_STEPS"
 #define  RESULT_FILE_KEY                   "RESULT_FILE"
 #define  TEMPLATE_KEY                      "TEMPLATE"
+#define  PRED_KEY                          "PRED_KEY"
 
 
 #define  ADD_FIXED_LENGTH_SCHEDULE_KW_KEY  "ADD_FIXED_LENGTH_SCHEDULE_KW"

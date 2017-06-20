@@ -147,14 +147,8 @@ struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
   enkf_fs_type           * dbase;              /* The internalized information. */
 
-  ensemble_config_type   * ensemble_config;    /* The config objects for the various enkf nodes.*/
-  hook_manager_type      * hook_manager;
-  model_config_type      * model_config;
-  ecl_config_type        * ecl_config;
   const res_config_type  * res_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
-  ert_templates_type     * templates;          /* Run time templates */
-  config_settings_type   * plot_config;        /* Information about plotting. */
   rng_type               * rng;
   ranking_table_type     * ranking_table;
 
@@ -193,7 +187,6 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
                                        const local_ministep_type * ministep ,
                                        const meas_data_type * forecast ,
                                        obs_data_type * obs_data);
-
 /*****************************************************************/
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
@@ -203,20 +196,9 @@ const analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type 
   return res_config_get_analysis_config(enkf_main->res_config);
 }
 
-bool enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
-  bool set_refcase = ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
-
-  model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
-  ensemble_config_set_refcase( enkf_main->ensemble_config , ecl_config_get_refcase( enkf_main->ecl_config ));
-
-  return set_refcase;
-}
-
-
 ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path) {
-  return ecl_config_validate_refcase( enkf_main->ecl_config , refcase_path );
+  return ecl_config_validate_refcase(enkf_main_get_ecl_config(enkf_main), refcase_path);
 }
-
 
 void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file ) {
   enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
@@ -241,7 +223,7 @@ const char * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main ) {
 }
 
 ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
-  return enkf_main->ensemble_config;
+  return res_config_get_ensemble_config(enkf_main->res_config);
 }
 
 const site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main ) {
@@ -266,27 +248,27 @@ local_config_type * enkf_main_get_local_config( const enkf_main_type * enkf_main
 }
 
 model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main ) {
-  return enkf_main->model_config;
+  return res_config_get_model_config(enkf_main->res_config);
 }
 
-config_settings_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
-  return enkf_main->plot_config;
+const config_settings_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
+  return res_config_get_plot_config(enkf_main->res_config);
 }
 
 ranking_table_type * enkf_main_get_ranking_table( const enkf_main_type * enkf_main ) {
   return enkf_main->ranking_table;
 }
 
-ecl_config_type *enkf_main_get_ecl_config(const enkf_main_type * enkf_main) {
-        return enkf_main->ecl_config;
+const ecl_config_type * enkf_main_get_ecl_config(const enkf_main_type * enkf_main) {
+  return res_config_get_ecl_config(enkf_main->res_config);
 }
 
 int enkf_main_get_history_length( const enkf_main_type * enkf_main) {
-  return model_config_get_last_history_restart( enkf_main->model_config);
+  return model_config_get_last_history_restart(enkf_main_get_model_config(enkf_main));
 }
 
 bool enkf_main_has_prediction( const enkf_main_type * enkf_main ) {
-  return model_config_has_prediction( enkf_main->model_config );
+  return model_config_has_prediction(enkf_main_get_model_config(enkf_main));
 }
 
 
@@ -302,18 +284,20 @@ bool enkf_main_have_obs( const enkf_main_type * enkf_main ) {
 
 
 
-hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enkf_main ) {
-  return enkf_main->hook_manager;
+const hook_manager_type * enkf_main_get_hook_manager( const enkf_main_type * enkf_main ) {
+  return res_config_get_hook_manager(enkf_main->res_config);
 }
 
 
 
 void enkf_main_alloc_obs( enkf_main_type * enkf_main ) {
-  enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config),
-                                   model_config_get_external_time_map(enkf_main->model_config),
-                                   ecl_config_get_grid( enkf_main->ecl_config ),
-                                   ecl_config_get_refcase( enkf_main->ecl_config ) ,
-                                   enkf_main->ensemble_config );
+  const ecl_config_type * ecl_config   = enkf_main_get_ecl_config(enkf_main);
+  model_config_type     * model_config = enkf_main_get_model_config(enkf_main);
+  enkf_main->obs = enkf_obs_alloc( model_config_get_history(model_config),
+                                   model_config_get_external_time_map(model_config),
+                                   ecl_config_get_grid(ecl_config),
+                                   ecl_config_get_refcase(ecl_config) ,
+                                   enkf_main_get_ensemble_config(enkf_main));
 }
 
 void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file , bool clear_existing) {
@@ -332,30 +316,6 @@ static void enkf_main_add_internal_subst_kw( enkf_main_type * enkf_main , const 
   subst_config_add_internal_subst_kw(enkf_main_get_subst_config(enkf_main), key, value, help_text);
 }
 
-/**
-   This function should be called when a new data_file has been set.
-*/
-
-static void enkf_main_update_num_cpu( enkf_main_type * enkf_main ) {
-  char * num_cpu_string  = util_alloc_sprintf( "%d" , ecl_config_get_num_cpu( enkf_main->ecl_config ));
-  enkf_main_add_internal_subst_kw(enkf_main, "NUM_CPU", num_cpu_string, NULL);
-  free(num_cpu_string);
-}
-
-
-ui_return_type * enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file ) {
-  ui_return_type * ui_return = ecl_config_validate_data_file( enkf_main->ecl_config , data_file );
-  if (ui_return_get_status(ui_return) == UI_RETURN_OK) {
-    ecl_config_set_data_file( enkf_main->ecl_config , data_file );
-    enkf_main_update_num_cpu( enkf_main );
-  }
-  return ui_return;
-}
-
-
-
-
-
 void enkf_main_free(enkf_main_type * enkf_main){
   if (enkf_main->rng != NULL)
     rng_free( enkf_main->rng );
@@ -368,18 +328,9 @@ void enkf_main_free(enkf_main_type * enkf_main){
   enkf_main_close_fs( enkf_main );
   res_log_close();
 
-  ecl_config_free(enkf_main->ecl_config);
-  model_config_free( enkf_main->model_config);
-
-
-  hook_manager_free( enkf_main->hook_manager );
-  ensemble_config_free( enkf_main->ensemble_config );
-
   local_config_free( enkf_main->local_config );
 
   int_vector_free( enkf_main->keep_runpath );
-  config_settings_free( enkf_main->plot_config );
-  ert_templates_free( enkf_main->templates );
 
   util_safe_free( enkf_main->user_config_file );
   util_safe_free( enkf_main->rft_config_file );
@@ -420,7 +371,7 @@ void enkf_main_exit(enkf_main_type * enkf_main) {
 static vector_type * enkf_main_alloc_node_ensemble(const enkf_main_type * enkf_main , enkf_fs_type * src_fs, const char * key , int report_step) {
   const int ens_size              = enkf_main_get_ensemble_size( enkf_main );
   vector_type * node_ensemble = vector_alloc_new( );
-  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main_get_ensemble_config(enkf_main), key );
   node_id_type node_id = {.report_step = report_step ,
                           .iens        = -1 };
   int iens;
@@ -537,12 +488,12 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs ,
 */
 
 void enkf_main_inflate(enkf_main_type * enkf_main , enkf_fs_type * src_fs , enkf_fs_type * target_fs , int report_step , hash_type * use_count) {
-  stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE);
+  stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER + DYNAMIC_STATE);
 
   for (int ikey = 0; ikey < stringlist_get_size( keys ); ikey++) {
     const char * key = stringlist_iget( keys  , ikey );
     if (hash_get_counter(use_count , key) > 0) {
-      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+      const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main_get_ensemble_config(enkf_main), key );
       const enkf_node_type * min_std            = enkf_config_node_get_min_std( config_node );
 
       if (min_std != NULL)
@@ -997,10 +948,11 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
       over there.
     */
     if (target_fs != source_fs) {
-      stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(enkf_main->ensemble_config, PARAMETER);
+      const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+      stringlist_type * param_keys = ensemble_config_alloc_keylist_from_var_type(ensemble_config, PARAMETER);
       for (int i = 0; i < stringlist_get_size(param_keys); i++) {
         const char * key = stringlist_iget(param_keys, i);
-        enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config, key);
+        enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config, key);
         enkf_node_type * data_node = enkf_node_alloc(config_node);
         for (int j = 0; j < int_vector_size(ens_active_list); j++) {
           node_id_type node_id = { .iens = int_vector_iget(ens_active_list, j), .report_step = 0 };
@@ -1151,7 +1103,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
                                                                  target_fs ,
-                                                                 enkf_main->ensemble_config,
+                                                                 enkf_main_get_ensemble_config(enkf_main),
                                                                  iens_active_index,
                                                                  target_step ,
                                                                  enkf_main->ensemble,
@@ -1198,7 +1150,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
         int * row_offset  = util_calloc( local_dataset_get_size( dataset ) , sizeof * row_offset  );
         local_obsdata_type   * local_obsdata = local_ministep_get_obsdata( ministep );
 
-        enkf_main_serialize_dataset( enkf_main->ensemble_config , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
+        enkf_main_serialize_dataset(enkf_main_get_ensemble_config(enkf_main), dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
         module_info_type * module_info = enkf_main_module_info_alloc(ministep, obs_data, dataset, local_obsdata, active_size , row_offset);
 
         if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
@@ -1306,7 +1258,7 @@ bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * sourc
 
   step2 = time_map_get_last_step( time_map );
   if (step2 < 0)
-    step2 = model_config_get_last_history_restart( enkf_main->model_config );
+    step2 = model_config_get_last_history_restart(enkf_main_get_model_config(enkf_main));
 
   step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , step2 , stride);
   update_done = enkf_main_smoother_update__( enkf_main , step_list , source_fs, target_fs );
@@ -1389,7 +1341,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
 void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * run_arg){
   enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
   {
-    runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
+    runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
     runpath_list_add( runpath_list ,
                       run_arg_get_iens( run_arg ),
                       run_arg_get_iter( run_arg ),
@@ -1421,7 +1373,7 @@ void enkf_main_create_run_path(enkf_main_type * enkf_main , const bool_vector_ty
 
   enkf_main_init_internalization(enkf_main , init_mode);
   {
-    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
               enkf_main_get_fs( enkf_main ),
               param_list ,
@@ -1451,7 +1403,7 @@ void enkf_main_create_run_path(enkf_main_type * enkf_main , const bool_vector_ty
   */
 
   {
-    runpath_list_type * runpath_list = hook_manager_get_runpath_list(enkf_main->hook_manager );
+    runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
     runpath_list_fprintf( runpath_list );
   }
 }
@@ -1504,7 +1456,7 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   arg_pack_type ** arg_pack_list = util_malloc( ens_size * sizeof * arg_pack_list );
   thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
-  runpath_list_type * runpath_list = hook_manager_get_runpath_list( enkf_main->hook_manager );
+  runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
   int iens;
   for (iens = 0; iens < ens_size; iens++)
     arg_pack_list[iens] = arg_pack_alloc( );
@@ -1658,7 +1610,7 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type * run_context, init_mode_type init_mode) {
   enkf_main_init_internalization(enkf_main , ert_run_context_get_mode( run_context ));
   {
-    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
               ert_run_context_get_init_fs( run_context ),
               param_list ,
@@ -1675,7 +1627,7 @@ void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
                            bool_vector_type * iactive) {
 
   int active_before = bool_vector_count_equal(iactive, true);
-  hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
+  const hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
   ert_run_context_type * run_context;
   init_mode_type init_mode = INIT_CONDITIONAL;
   int iter = 0;
@@ -1723,9 +1675,9 @@ int enkf_main_run_simple_step(enkf_main_type * enkf_main,
 
 void enkf_main_run_smoother(enkf_main_type * enkf_main , job_queue_type * job_queue, enkf_fs_type * source_fs, const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun) {
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  const hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     if (enkf_main_run_simple_step( enkf_main , job_queue, iactive , INIT_CONDITIONAL, iter)) {
-      hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
       hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
     }
 
@@ -1737,7 +1689,6 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , job_queue_type * job_qu
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
           if (enkf_main_run_simple_step(enkf_main , job_queue, iactive , INIT_NONE, iter + 1)) {
-            hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
             hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
           }
         } else
@@ -1759,7 +1710,7 @@ static bool enkf_main_run_simulation_and_postworkflow(enkf_main_type * enkf_main
 
   int active_after_step = enkf_main_run_step(enkf_main , run_context, job_queue);
   if (analysis_config_have_enough_realisations(analysis_config, active_after_step, enkf_main_get_ensemble_size(enkf_main))) {
-    hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
+    const hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
     hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
   }  else {
     fprintf(stderr,"Simulation in iteration %d failed, stopping Iterated Ensemble Smoother\n", ert_run_context_get_iter( run_context ));
@@ -1867,11 +1818,11 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main,
 
 
 ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter) {
-  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
+  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , iter );
 }
 
 ert_init_context_type * enkf_main_alloc_ert_init_context(const enkf_main_type * enkf_main , enkf_fs_type * fs, const bool_vector_type * iactive , init_mode_type init_mode , int iter) {
-  return ert_init_context_alloc( fs, iactive , model_config_get_runpath_fmt( enkf_main->model_config ) , enkf_main_get_data_kw(enkf_main) , init_mode , iter );
+  return ert_init_context_alloc( fs, iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , init_mode , iter );
 }
 
 
@@ -1911,7 +1862,7 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main) {
 
     /* Adding all node which can be updated. */
     {
-      stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER);
+      stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER);
       int i;
       for (i = 0; i < stringlist_get_size( keylist ); i++) {
         const char * key = stringlist_iget( keylist , i);
@@ -2005,12 +1956,6 @@ void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
   subst_config_clear(enkf_main_get_subst_config(enkf_main));
 }
 
-
-static void enkf_main_init_hook_manager( enkf_main_type * enkf_main , config_content_type * config ) {
-  hook_manager_init( enkf_main->hook_manager , config );
-}
-
-
 static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
@@ -2022,19 +1967,10 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->rng                = NULL;
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
-  enkf_main->res_config        = NULL;
-  enkf_main->ensemble_config    = ensemble_config_alloc();
-  enkf_main->ecl_config         = ecl_config_alloc();
+  enkf_main->res_config         = NULL;
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = NULL;
-  enkf_main->model_config       = model_config_alloc( );
   enkf_main->local_config       = local_config_alloc( );
-
-  enkf_main->plot_config        = config_settings_alloc( PLOT_SETTING_KEY );
-  plot_settings_init( enkf_main->plot_config );
-
-  enkf_main->templates          = NULL;
-  enkf_main->hook_manager       = NULL;
 
   enkf_main_set_verbose( enkf_main , true );
   enkf_main_init_fs( enkf_main );
@@ -2043,8 +1979,8 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
 }
 
 
-runpath_list_type * enkf_main_get_runpath_list( const enkf_main_type * enkf_main ) {
-  return hook_manager_get_runpath_list( enkf_main->hook_manager );
+runpath_list_type * enkf_main_get_runpath_list(const enkf_main_type * enkf_main) {
+  return hook_manager_get_runpath_list(enkf_main_get_hook_manager(enkf_main));
 }
 
 
@@ -2073,54 +2009,8 @@ void enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf
 
 /******************************************************************/
 
-/**
-   SCHEDULE_PREDICTION_FILE.
-
-   The SCHEDULE_PREDICTION_FILE is implemented as a GEN_KW instance,
-   with some twists. Observe the following:
-
-   1. The SCHEDULE_PREDICTION_FILE is added to the ensemble_config
-      as a GEN_KW node with key 'PRED'.
-
-   2. The target file is set equal to the initial prediction file
-      (i.e. the template in this case), NOT including any path
-      components.
-
-*/
-
-/*
-  This function can only be called once in program life-time.
-*/
-
-void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , const char * template_file , const char * parameters , const char * min_std , const char * init_file_fmt) {
-  const char * key = "PRED";
-
-  if (template_file != NULL) {
-    char * target_file;
-    bool forward_init = false;
-    enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key , forward_init);
-    {
-      char * base;
-      char * ext;
-      util_alloc_file_components( template_file , NULL , &base , &ext);
-      target_file = util_alloc_filename(NULL , base , ext );
-      util_safe_free( base );
-      util_safe_free( ext );
-    }
-    enkf_config_node_update_gen_kw( config_node , target_file , template_file , parameters , min_std , init_file_fmt );
-    free( target_file );
-    ecl_config_set_schedule_prediction_file( enkf_main->ecl_config , template_file );
-  }
-}
-
-
-void enkf_main_set_schedule_prediction_file( enkf_main_type * enkf_main , const char * schedule_prediction_file) {
-  enkf_main_set_schedule_prediction_file__(enkf_main , schedule_prediction_file , NULL , NULL , NULL );
-}
-
-
 const char * enkf_main_get_schedule_prediction_file( const enkf_main_type * enkf_main ) {
-  return ecl_config_get_schedule_prediction_file( enkf_main->ecl_config );
+  return ecl_config_get_schedule_prediction_file(enkf_main_get_ecl_config(enkf_main));
 }
 
 
@@ -2212,39 +2102,6 @@ static void enkf_main_init_log(
 }
 
 
-static void enkf_main_init_schedule_prediction(
-        enkf_main_type * enkf_main,
-        const config_content_type * content) {
-
-  if (!config_content_has_item(content, SCHEDULE_PREDICTION_FILE_KEY))
-    return;
-
-  const config_content_item_type * pred_item = config_content_get_item(
-                                                   content,
-                                                   SCHEDULE_PREDICTION_FILE_KEY
-                                                   );
-
-  config_content_node_type * pred_node = config_content_item_get_last_node(pred_item);
-  const char * template_file = config_content_node_iget_as_path(pred_node, 0);
-
-  hash_type * opt_hash = hash_alloc();
-  config_content_node_init_opt_hash(pred_node, opt_hash, 1);
-
-  const char * parameters = hash_safe_get(opt_hash, "PARAMETERS");
-  const char * min_std    = hash_safe_get(opt_hash, "MIN_STD"   );
-  const char * init_files = hash_safe_get(opt_hash, "INIT_FILES");
-
-  enkf_main_set_schedule_prediction_file__(
-          enkf_main,
-          template_file,
-          parameters,
-          min_std,
-          init_files
-          );
-
-  hash_free(opt_hash);
-}
-
 /**
    By default the simulation directories are left intact when
    the simulations re complete, but using the keyword
@@ -2320,37 +2177,9 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   enkf_main_init_log(enkf_main, content);
 
-  ecl_config_init(enkf_main->ecl_config, content);
-  enkf_main_update_num_cpu(enkf_main);
-
-  config_settings_apply(enkf_main->plot_config, content);
-
-  ensemble_config_init(enkf_main->ensemble_config, content,
-                       ecl_config_get_grid(enkf_main->ecl_config),
-                       ecl_config_get_refcase(enkf_main->ecl_config)
-                       );
-
-  model_config_init(enkf_main->model_config,
-                    content,
-                    enkf_main_get_ensemble_size(enkf_main),
-                    enkf_main_get_installed_jobs(enkf_main),
-                    ecl_config_get_last_history_restart(enkf_main->ecl_config),
-                    ecl_config_get_sched_file(enkf_main->ecl_config),
-                    ecl_config_get_refcase(enkf_main->ecl_config)
-                    );
-
-  enkf_main_init_hook_manager(enkf_main, content);
-
-  enkf_main_init_schedule_prediction(enkf_main, content);
-
   enkf_main_init_delete_runpath(enkf_main, content);
 
   enkf_main_init_pre_clear_runpath(enkf_main, content);
-
-  ecl_config_static_kw_init(enkf_main->ecl_config, content);
-
-  /* Installing templates */
-  ert_templates_init(enkf_main->templates, content);
 
   enkf_main_init_rft_config(enkf_main, content);
 
@@ -2415,13 +2244,7 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->res_config = res_config;
 
-  /*****************************************************************/
-  enkf_main->templates          = ert_templates_alloc( enkf_main_get_data_kw(enkf_main) );
-  enkf_main->hook_manager       = hook_manager_alloc( enkf_main_get_workflow_list(enkf_main) );
-  /*****************************************************************/
-
   enkf_main_rng_init( enkf_main );
-  subst_config_install_rng(res_config_get_subst_config(res_config), enkf_main->rng);
 
   enkf_main_set_verbose(enkf_main, verbose);
 
@@ -2543,10 +2366,10 @@ int enkf_main_get_ensemble_size( const enkf_main_type * enkf_main ) {
 
 void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type run_mode ) {
   /* Clearing old internalize flags. */
-  model_config_init_internalization( enkf_main->model_config );
+  model_config_init_internalization(enkf_main_get_model_config(enkf_main));
 
   /* Internalizing the initial state. */
-  model_config_set_internalize_state( enkf_main->model_config , 0);
+  model_config_set_internalize_state(enkf_main_get_model_config(enkf_main), 0);
 
 
   /* Make sure we internalize at all observation times.*/
@@ -2566,7 +2389,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
           {
             enkf_var_type var_type = enkf_config_node_get_var_type( data_node );
             if (var_type == DYNAMIC_STATE)
-              model_config_set_load_state( enkf_main->model_config , active_step);
+              model_config_set_load_state(enkf_main_get_model_config(enkf_main), active_step);
           }
         }
       } while (active_step >= 0);
@@ -2598,12 +2421,12 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
 /*****************************************************************/
 
 void enkf_main_get_observations( const enkf_main_type * enkf_main, const char * user_key , int obs_count , time_t * obs_time , double * y , double * std) {
-  ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , obs_count , obs_time , y , std);
+  ensemble_config_get_observations( enkf_main_get_ensemble_config(enkf_main), enkf_main->obs , user_key , obs_count , obs_time , y , std);
 }
 
 
 int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const char * user_key ) {
-  return ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , 0 , NULL , NULL , NULL);
+  return ensemble_config_get_observations(enkf_main_get_ensemble_config(enkf_main), enkf_main->obs , user_key , 0 , NULL , NULL , NULL);
 }
 
 
@@ -2630,7 +2453,7 @@ void enkf_main_install_SIGNALS(void) {
 
 
 ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
-  return enkf_main->templates;
+  return res_config_get_templates(enkf_main->res_config);
 }
 
 
@@ -2690,7 +2513,7 @@ int enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int it
   printf("Loading from forward model\n");
   const int ens_size        = enkf_main_get_ensemble_size( enkf_main );
   int result[ens_size];
-  model_config_type * model_config = enkf_main->model_config;
+  model_config_type * model_config = enkf_main_get_model_config(enkf_main);
 
   ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
   arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
@@ -2845,7 +2668,7 @@ void enkf_main_rank_on_data(enkf_main_type * enkf_main,
                             int step) {
 
   ranking_table_type * ranking_table     = enkf_main_get_ranking_table( enkf_main );
-  ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
   enkf_fs_type * fs                      = enkf_main_get_fs(enkf_main);
   char * key_index;
 
