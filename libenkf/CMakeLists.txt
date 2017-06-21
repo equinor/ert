@@ -161,6 +161,13 @@ function( add_config_test name command )
 endfunction()
 
 
+add_executable(enkf_magic_string_in_workflows tests/enkf_magic_string_in_workflows.c)
+target_link_libraries(enkf_magic_string_in_workflows enkf)
+add_config_test(enkf_magic_string_in_workflows
+                enkf_magic_string_in_workflows
+                ${CMAKE_SOURCE_DIR}/test-data/local/config/workflows/config)
+
+
 add_executable(enkf_main tests/enkf_main.c)
 target_link_libraries(enkf_main enkf)
 add_config_test(enkf_main
@@ -329,12 +336,6 @@ target_link_libraries(enkf_obs_fs enkf)
 add_statoil_test(enkf_obs_fs
                  enkf_obs_fs
                  ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/obs_testing/config)
-
-add_executable(enkf_magic_string_in_workflows tests/enkf_magic_string_in_workflows.c)
-target_link_libraries(enkf_magic_string_in_workflows enkf)
-add_statoil_test(enkf_magic_string_in_workflows
-                 enkf_magic_string_in_workflows
-                 ${CMAKE_SOURCE_DIR}/test-data/Statoil/config/with_data/config)
 
 add_executable(enkf_obs_vector_fs tests/enkf_obs_vector_fs.c)
 target_link_libraries(enkf_obs_vector_fs enkf)
