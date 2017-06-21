@@ -1,0 +1,50 @@
+--===============================================================
+--
+-- ERT CONFIGURATION FILE
+--
+--===============================================================
+
+---------------------------------
+-- SECTION: Internal variables --
+---------------------------------
+DEFINE 	<USER> 		TEST_USER
+DEFINE 	<SCRATCH> 	scratch/ert
+DEFINE 	<CASE_DIR>  the_extensive_case	
+DEFINE	<ECLIPSE_NAME>	XYZ
+
+---------------------------------------------------
+-- SECTION: Eclipse, runpath and storage settings
+---------------------------------------------------
+RUNPATH             <SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d 	  -- Runpath for simulations (first %d will be replaced with realization number, second %d with iteration number
+ 
+-- --------------------------------------------------
+-- -- SECTION: LSF settings, AHM configuration etc
+-- --------------------------------------------------
+NUM_REALIZATIONS  	          10                                          -- Set number of realizations to run
+MAX_RUNTIME                23400          				                  -- Set the maximum allowed runtime in seconds. (Killed when exceeding)
+MIN_REALIZATIONS              50%          			                      -- Set minimum number of realization that must be completed before moving to next iteration
+MAX_SUBMIT                    13   	     			                      -- How many times should the queue system retry a simulation. Default = 2 (use 1 when debugging)
+
+-- ------------------------------------------------------------------------
+-- -- SECTION: Uncertainty parameters 
+-- ------------------------------------------------------------------------
+
+-- ------ ---------------------------------------------------------------------------------------------------------------------
+-- ------ ert identifier    template file                          result file             parameter distribution
+-- ------ ---------------------------------------------------------------------------------------------------------------------
+
+-- -------------------------------------------------------
+-- -- SECTION: Forward models
+-- -------------------------------------------------------
+
+-- --------------------------------------
+-- -- SECTION: Observations
+-- --------------------------------------
+
+-- --------------------------------------
+-- -- SECTION: Plotting 
+-- --------------------------------------
+
+-- --------------------------------------
+-- -- SECTION: Workflows
+-- --------------------------------------
