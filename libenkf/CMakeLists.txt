@@ -290,7 +290,7 @@ add_executable(enkf_ensemble_GEN_PARAM tests/enkf_ensemble_GEN_PARAM.c)
 target_link_libraries(enkf_ensemble_GEN_PARAM enkf)
 add_config_test(enkf_ensemble_GEN_PARAM
                 enkf_ensemble_GEN_PARAM
-                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config/ensemble/GEN_PARAM)
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/ensemble/GEN_PARAM)
 
 if (NOT STATOIL_TESTDATA_ROOT)
     return ()
