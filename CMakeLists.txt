@@ -21,6 +21,9 @@ option( RST_DOC             "Build RST documentation"               OFF)
 option( USE_RUNPATH         "Should we embed path to libraries"     ON )
 option( INSTALL_ERT_LEGACY  "Install legacy ert code"               OFF)
 option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
+set( SITE_CONFIG_FILE "${PROJECT_SOURCE_DIR}/share/site-config" CACHE FILEPATH "Path to global ERT Configuration file")
+
+
 
 if (USE_RUNPATH)
     SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
@@ -49,19 +52,8 @@ if (EXISTS ${STATOIL_TESTDATA_ROOT})
     message(STATUS "Linking testdata: ${LINK} -> ${STATOIL_TESTDATA_ROOT}")
 endif()
 
-set(STATOIL_SITE_CONFIG /project/res/etc/ERT/site-config)
-if (STATOIL_TESTDATA_ROOT)
-    set(SITE_CONFIG_FILE ${STATOIL_SITE_CONFIG}
-            CACHE
-            FILEPATH "Path to global ERT Configuration file")
-else()
-    if (EXISTS ${STATOIL_SITE_CONFIG})
-        set(SITE_CONFIG_FILE ${STATOIL_SITE_CONFIG})
-    else()
-        set(SITE_CONFIG_FILE "${PROJECT_SOURCE_DIR}/share/site-config")
-    endif()
-endif()
-
+file(COPY bin/job_dispatch.py DESTINATION ${PROJECT_BINARY_DIR}/bin )
+set( ERT_ROOT "${PROJECT_BINARY_DIR}" )
 #-----------------------------------------------------------------
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)

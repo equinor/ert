@@ -48,6 +48,11 @@ int main(int argc , char ** argv) {
   enkf_config_node_add_GEN_PARAM_config_schema( config );
 
   content = config_parse( config , config_file , "--" , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true );
+  {
+    config_error_type * errors = config_content_get_errors( content );
+    config_error_fprintf( errors , true , stdout );
+  }
+
   test_assert_true( config_content_is_valid( content ) );
 
   ensemble_config_init_GEN_PARAM( ensemble, content );
