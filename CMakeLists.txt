@@ -36,8 +36,12 @@ set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
 if (EXISTS ${STATOIL_TESTDATA_ROOT})
   make_symlink( "${STATOIL_TESTDATA_ROOT}" "${CMAKE_CURRENT_SOURCE_DIR}/test-data/Statoil")
 endif()
-make_symlink( "${CMAKE_CURRENT_SOURCE_DIR}/share" "${CMAKE_CURRENT_BINARY_DIR}/share" )
 
+EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/bin")
+make_symlink( "${CMAKE_CURRENT_SOURCE_DIR}/share" "${CMAKE_CURRENT_BINARY_DIR}/share" )
+make_symlink( "${res_DIR}/bin/job_dispatch.py" "${CMAKE_CURRENT_BINARY_DIR}/bin/job_dispatch.py")
+
+set( ERT_ROOT "${PROJECT_BINARY_DIR}" )
 
 
 include( CheckFunctionExists )
