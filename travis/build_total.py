@@ -149,7 +149,7 @@ class PrBuilder():
         if self.build_ert:
             self.compile_ert(basedir, install_dir)
 
-    def build(self, source_dir, install_dir, test):
+    def build(self, source_dir, install_dir, test, c_flags=""):
         build_dir = os.path.join(source_dir, "build")
         if not os.path.isdir(build_dir):
             os.makedirs(build_dir)
@@ -163,7 +163,9 @@ class PrBuilder():
                       "-DCMAKE_INSTALL_PREFIX=%s" % install_dir,
                       "-DINSTALL_ERT_LEGACY=ON",
                       "-DCMAKE_PREFIX_PATH=%s" % install_dir,
-                      "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir]
+                      "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir,
+                      "-DCMAKE_C_FLAGS=%s" % c_flags
+                      ]
 
         cwd = os.getcwd()
         os.chdir(build_dir)
@@ -180,8 +182,10 @@ class PrBuilder():
             source_dir = basedir
         else:
             source_dir = os.path.join(basedir, "libecl")
+
         test = (self.repository == 'ecl')
-        self.build(source_dir, install_dir, test)
+        c_flags = "-Werror=all"
+        self.build(source_dir, install_dir, test, c_flags=c_flags)
 
     def compile_res(self, basedir, install_dir):
         if self.repository == 'res':
