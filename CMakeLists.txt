@@ -33,7 +33,7 @@ function( make_symlink target link )
      EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E create_symlink "${target}" "${link}")
      message(STATUS "Linking : ${link} -> ${target}")
   else()
-     message( EXIT "Link target: ${target} does not exist")
+     message( SEND_ERROR "Link target: ${target} does not exist")
   endif()    
 endfunction()  
 
