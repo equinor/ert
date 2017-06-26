@@ -5,8 +5,8 @@ from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 class IteratedEnsembleSmoother(BaseRunModel):
 
-    def __init__(self):
-        super(IteratedEnsembleSmoother, self).__init__(name="Iterated Ensemble Smoother", phase_count=2)
+    def __init__(self, queue_config):
+        super(IteratedEnsembleSmoother, self).__init__("Iterated Ensemble Smoother", queue_config , phase_count=2)
 
     def setAnalysisModule(self, module_name):
         module_load_success = self.ert().analysisConfig().selectModule(module_name)

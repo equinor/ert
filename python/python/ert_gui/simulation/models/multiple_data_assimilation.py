@@ -24,8 +24,8 @@ class MultipleDataAssimilation(BaseRunModel):
     Run Multiple Data Assimilation (MDA) Ensemble Smoother with custom weights.
     """
 
-    def __init__(self):
-        super(MultipleDataAssimilation, self).__init__(name="Multiple Data Assimilation (ES MDA)", phase_count=2)
+    def __init__(self, queue_config):
+        super(MultipleDataAssimilation, self).__init__("Multiple Data Assimilation (ES MDA)", queue_config , phase_count=2)
         self.weights = "3, 2, 1" # default value
 
     def getWeights(self):
