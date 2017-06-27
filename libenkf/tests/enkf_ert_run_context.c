@@ -106,6 +106,7 @@ void test_iactive_update() {
     ert_run_context_deactivate_realization( context , 5 );
     ert_run_context_deactivate_realization( context , 9 );
 
+    test_assert_not_NULL( ert_run_context_get_id( context ));
     ert_run_context_free( context );
     path_fmt_free( runpath_fmt );
     subst_list_free( subst_list );

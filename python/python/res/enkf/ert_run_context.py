@@ -20,16 +20,20 @@ from ecl.util import PathFormat, StringList
 
 class ErtRunContext(BaseCClass):
     TYPE_NAME = "ert_run_context"
-
+    _alloc              = EnkfPrototype("void* ert_run_context_alloc( enkf_run_mode_enum , enkf_fs , enkf_fs, bool_vector, path_fmt ,subst_list, int)", bind = False)
     _alloc_runpath_list = EnkfPrototype("stringlist_obj ert_run_context_alloc_runpath_list(bool_vector, path_fmt, subst_list, int)", bind = False)
     _alloc_runpath      = EnkfPrototype("char* ert_run_context_alloc_runpath(int, path_fmt, subst_list, int)", bind = False)
     _get_size           = EnkfPrototype("int ert_run_context_get_size( ert_run_context )")
     _free               = EnkfPrototype("void ert_run_context_free( ert_run_context )")
     _iget               = EnkfPrototype("run_arg_ref ert_run_context_iget_arg( ert_run_context , int)")
     _iens_get           = EnkfPrototype("run_arg_ref ert_run_context_iens_get_arg( ert_run_context , int)")
+    _get_id             = EnkfPrototype("char* ert_run_context_get_id( ert_run_context )")
 
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    
+    def __init__(self , run_type , init_fs , target_fs , mask , path_fmt , subst_list , itr):
+        c_ptr = self._alloc( run_type, init_fs , target_fs, mask , path_fmt , subst_list, itr)
+        super(ErtRunContext, self).__init__(c_ptr)
+        
 
     def __len__(self):
         return self._get_size()
@@ -69,3 +73,7 @@ class ErtRunContext(BaseCClass):
     def createRunpath(cls, iens , runpath_fmt, subst_list, iter=0):
         """ @rtype: str """
         return cls._alloc_runpath(iens, runpath_fmt, subst_list, iter)
+
+    
+    def get_id(self):
+        return self._get_id( )

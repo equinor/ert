@@ -15,6 +15,9 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <unistd.h>
+#include <sys/types.h>
+#include <time.h>
 
 #include <ert/util/type_macros.h>
 #include <ert/util/vector.h>
@@ -51,6 +54,7 @@ struct ert_run_context_struct {
   enkf_fs_type          * init_fs;
   enkf_fs_type          * result_fs;
   enkf_fs_type          * update_target_fs;
+  char                  * run_id;
 };
 
 
@@ -86,7 +90,7 @@ stringlist_type * ert_run_context_alloc_runpath_list(const bool_vector_type * ia
 }
 
 
-static ert_run_context_type * ert_run_context_alloc(bool_vector_type * iactive , run_mode_type run_mode , enkf_fs_type * init_fs , enkf_fs_type * result_fs , enkf_fs_type * update_target_fs , int iter) {
+static ert_run_context_type * ert_run_context_alloc__(bool_vector_type * iactive , run_mode_type run_mode , enkf_fs_type * init_fs , enkf_fs_type * result_fs , enkf_fs_type * update_target_fs , int iter) {
   ert_run_context_type * context = util_malloc( sizeof * context );
   UTIL_TYPE_ID_INIT( context , ERT_RUN_CONTEXT_TYPE_ID );
 
@@ -101,6 +105,13 @@ static ert_run_context_type * ert_run_context_alloc(bool_vector_type * iactive ,
 
   context->step1 = 0;
   context->step2 = 0;
+  {
+    int year,month,day,hour,min,sec;
+    time_t now = time( NULL );
+    unsigned int random = util_dev_urandom_seed( );
+    util_set_datetime_values_utc( now , &sec, &min, &hour, &day, &month, &year);
+    context->run_id = util_alloc_sprintf("%d:%d:%4d-%0d-%02d-%02d-%02d-%02d:%ud" , getpid() , getuid(), year , month , day , hour , min , sec, random);
+  }
   return context;
 }
 
@@ -110,7 +121,7 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
                                                                  subst_list_type * subst_list ,
                                                                  int iter) {
 
-  ert_run_context_type * context = ert_run_context_alloc( iactive , ENSEMBLE_EXPERIMENT , fs , fs , NULL , iter);
+  ert_run_context_type * context = ert_run_context_alloc__( iactive , ENSEMBLE_EXPERIMENT , fs , fs , NULL , iter);
   {
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
@@ -132,7 +143,7 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulat
                                                           subst_list_type * subst_list ,
                                                           int iter) {
 
-  ert_run_context_type * context = ert_run_context_alloc( iactive , SMOOTHER_UPDATE , simulate_fs , simulate_fs , target_update_fs , iter);
+  ert_run_context_type * context = ert_run_context_alloc__( iactive , SMOOTHER_UPDATE , simulate_fs , simulate_fs , target_update_fs , iter);
   {
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
@@ -146,11 +157,31 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulat
   return context;
 }
 
+ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode, enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
+                                             bool_vector_type * iactive ,
+                                             path_fmt_type * runpath_fmt ,
+                                             subst_list_type * subst_list ,
+                                             int iter) {
+  if (run_mode == SMOOTHER_UPDATE)
+    return ert_run_context_alloc_SMOOTHER_RUN( simulate_fs , target_update_fs, iactive, runpath_fmt , subst_list , iter );
+
+  if (run_mode == ENSEMBLE_EXPERIMENT)
+    return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( simulate_fs , iactive , runpath_fmt , subst_list , iter);
+
+  util_abort("%s: internal error - should never be here \n",__func__);
+  return NULL;
+}
+
+
 
 
 
 UTIL_IS_INSTANCE_FUNCTION( ert_run_context , ERT_RUN_CONTEXT_TYPE_ID );
 
+
+const char * ert_run_context_get_id( const ert_run_context_type * context ) {
+  return context->run_id;
+}
 
 
 void ert_run_context_free( ert_run_context_type * context ) {
@@ -164,6 +195,7 @@ void ert_run_context_free( ert_run_context_type * context ) {
 
   vector_free( context->run_args );
   int_vector_free( context->iens_map );
+  free( context->run_id );
   free( context );
 }
 
