@@ -304,10 +304,11 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
 
         return forward_model
 
-    def verify_json_dump(self, selected_jobs, global_args, umask):
+    def verify_json_dump(self, selected_jobs, global_args, umask, run_id):
         self.assertTrue(os.path.isfile(self.JOBS_JSON_FILE))
         config = load_configs(self.JOBS_JSON_FILE)
 
+        self.assertEqual(run_id , config["run_id"])
         self.assertEqual(umask, int(config["umask"], 8))
         self.assertEqual(len(selected_jobs), len(config["jobList"]))
 
@@ -336,14 +337,16 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
     def test_no_jobs(self):
         with TestAreaContext("python/job_queue/forward_model_no_jobs"):
             forward_model = self.set_up_forward_model([])
+            run_id = "test_no_jobs_id"
             umask = 4
             global_args = SubstitutionList()
             forward_model.formatted_fprintf(
+                    run_id,
                     os.getcwd(),
                     global_args,
                     umask)
 
-            self.verify_json_dump([], global_args, umask)
+            self.verify_json_dump([], global_args, umask, run_id)
 
 
     def test_repr(self):
@@ -355,25 +358,29 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
         with TestAreaContext("python/job_queue/forward_model_one_job"):
             for i in range(len(joblist)):
                 forward_model = self.set_up_forward_model([i])
+                run_id = "test_one_job"
                 umask = 11
                 global_args = SubstitutionList()
                 forward_model.formatted_fprintf(
+                    run_id,
                     os.getcwd(),
                     global_args,
                     umask)
 
-                self.verify_json_dump([i], global_args, umask)
+                self.verify_json_dump([i], global_args, umask, run_id)
 
     def run_all(self):
         forward_model = self.set_up_forward_model(range(len(joblist)))
         umask = 0
+        run_id = "run_all"
         global_args = SubstitutionList()
         forward_model.formatted_fprintf(
+                run_id,
                 os.getcwd(),
                 global_args,
                 umask)
 
-        self.verify_json_dump(range(len(joblist)), global_args, umask)
+        self.verify_json_dump(range(len(joblist)), global_args, umask, run_id)
 
     def test_all_jobs(self):
         with TestAreaContext("python/job_queue/forward_model_all"):

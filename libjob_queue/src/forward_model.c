@@ -217,9 +217,10 @@ static void forward_model_python_fprintf(const forward_model_type * forward_mode
 }
 
 static void forward_model_json_fprintf(const forward_model_type * forward_model,
-                                  const char * path,
-                                  const subst_list_type * global_args,
-                                  mode_t umask) {
+                                       const char * run_id,
+                                       const char * path,
+                                       const subst_list_type * global_args,
+                                       mode_t umask) {
   char * json_file = util_alloc_filename(path , DEFAULT_JOB_JSON, NULL);
   FILE * stream    = util_fopen(json_file, "w");
   int i;
@@ -238,7 +239,7 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
   fprintf(stream, "],\n");
 
   fprintf(stream, "\n\"ert_version\" : [%d, %d, \"%s\"],\n", version_get_major_ert_version(), version_get_minor_ert_version(), version_get_micro_ert_version());
-  fprintf(stream, "\"run_id\" : \"%ld\",\n", random());
+  fprintf(stream, "\"run_id\" : \"%s\",\n", run_id);
   fprintf(stream, "\"ert_pid\" : \"%ld\"\n", getpid()); //Long is big enough to hold __pid_t
   fprintf(stream, "}\n");
   fclose(stream);
@@ -246,11 +247,12 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
 }
 
 void forward_model_formatted_fprintf(const forward_model_type * forward_model ,
-                                    const char * path,
-                                    const subst_list_type * global_args,
-                                    mode_t umask) {
+                                     const char * run_id,
+                                     const char * path,
+                                     const subst_list_type * global_args,
+                                     mode_t umask) {
   forward_model_python_fprintf( forward_model, path, global_args, umask);
-  forward_model_json_fprintf(   forward_model, path, global_args, umask);
+  forward_model_json_fprintf(   forward_model, run_id, path, global_args, umask);
 }
 
 #undef DEFAULT_JOB_JSON
