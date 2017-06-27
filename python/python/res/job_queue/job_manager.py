@@ -344,9 +344,14 @@ class JobManager(object):
                 sys.stderr.flush()
             else:
                 data = json.dumps(payload)
+                #Disabling proxies
+                proxies = {
+                    "http": None,
+                    "https": None,
+                }
                 res = requests.post(url, timeout=3,
                               headers={"Content-Type": "application/json"},
-                              data=data)
+                                    data=data,proxies=proxies)
                 # sys.stdout.write("Response status %s\n"%res.status_code)
                 # sys.stdout.write("Request url %s\n"%res.url)
                 # sys.stdout.write("Response headers %s\n"%res.headers)
