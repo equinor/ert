@@ -27,6 +27,7 @@
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/run_arg.h>
 #include <ert/enkf/ert_init_context.h>
+#include <ert/enkf/ert_run_context.h>
 
 
 #define ERT_INIT_CONTEXT_TYPE_ID 555341328
@@ -39,7 +40,7 @@ struct ert_init_context_struct {
   init_mode_type     init_mode;
   int                iter;
   int_vector_type  * iens_map;
-
+  char             * run_id;
 };
 
 
@@ -84,7 +85,7 @@ static ert_init_context_type * ert_init_context_alloc1(const bool_vector_type * 
   context->run_args = vector_alloc_new();
   context->init_mode = init_mode;
   context->iter = iter;
-
+  context->run_id = ert_run_context_alloc_run_id( );
   return context;
 }
 
@@ -99,7 +100,7 @@ ert_init_context_type * ert_init_context_alloc(enkf_fs_type * init_fs , const bo
     stringlist_type * runpath_list = ert_init_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
       if (bool_vector_iget( iactive , iens )) {
-        run_arg_type * arg = run_arg_alloc_INIT_ONLY( init_fs , iens , iter , stringlist_iget( runpath_list , iens));
+        run_arg_type * arg = run_arg_alloc_INIT_ONLY( context->run_id, init_fs , iens , iter , stringlist_iget( runpath_list , iens));
         vector_append_owned_ref( context->run_args , arg , run_arg_free__);
       }
     }
@@ -120,6 +121,7 @@ void ert_init_context_free( ert_init_context_type * context ) {
   vector_free( context->run_args );
   bool_vector_free( context->iactive );
   int_vector_free( context->iens_map );
+  free( context->run_id );
   free( context );
 }
 

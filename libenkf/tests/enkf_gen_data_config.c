@@ -101,7 +101,7 @@ void test_gendata_fload(const char * filename) {
 
   const char * cwd = test_work_area_get_cwd(work_area);
   enkf_fs_type * write_fs = enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL , true);
-  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(write_fs , 0,0,"path");
+  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", write_fs , 0,0,"path");
   forward_load_context_type * load_context = forward_load_context_alloc( run_arg , false , NULL , NULL , NULL);
   forward_load_context_select_step(load_context , 0 );
   gen_data_fload_with_report_step(gen_data, filename , load_context);
@@ -123,7 +123,7 @@ void test_gendata_fload_empty_file(const char * filename) {
   gen_data_type * gen_data = gen_data_alloc(config);
   const char * cwd = test_work_area_get_cwd(work_area);
   enkf_fs_type * write_fs = enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, NULL , true);
-  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(write_fs , 0,0,"path");
+  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", write_fs , 0,0,"path");
   forward_load_context_type * load_context = forward_load_context_alloc( run_arg , false , NULL , NULL , NULL);
 
   forward_load_context_select_step(load_context , 0 );

@@ -15,11 +15,12 @@ class ErtRunContextTest(ExtendedTestCase):
             runpath_fmt = PathFormat( "path/to/sim%d" )
             subst_list = SubstitutionList( )
             itr = 0
-            run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , sim_fs, sim_fs , mask , runpath_fmt, subst_list , itr )
-            run_id1 = run_context.get_id( )
+            run_context1 = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , sim_fs, sim_fs , mask , runpath_fmt, subst_list , itr )
+            run_id1 = run_context1.get_id( )
+            run_arg0 = run_context1[0]
+            self.assertEqual( run_id1 , run_arg0.get_run_id( ))
+            
+            run_context2 = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , sim_fs, sim_fs , mask , runpath_fmt, subst_list , itr )
+            run_id2 = run_context2.get_id( )
 
-            run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , sim_fs, sim_fs , mask , runpath_fmt, subst_list , itr )
-            run_id2 = run_context.get_id( )
-
-            print run_id1, run_id2
             self.assertFalse( run_id1 == run_id2 )

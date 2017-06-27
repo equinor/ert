@@ -90,6 +90,14 @@ stringlist_type * ert_run_context_alloc_runpath_list(const bool_vector_type * ia
 }
 
 
+char * ert_run_context_alloc_run_id( ) {
+  int year,month,day,hour,min,sec;
+  time_t now = time( NULL );
+  unsigned int random = util_dev_urandom_seed( );
+  util_set_datetime_values_utc( now , &sec, &min, &hour, &day, &month, &year);
+  return util_alloc_sprintf("%d:%d:%4d-%0d-%02d-%02d-%02d-%02d:%ud" , getpid() , getuid(), year , month , day , hour , min , sec, random);
+}
+
 static ert_run_context_type * ert_run_context_alloc__(bool_vector_type * iactive , run_mode_type run_mode , enkf_fs_type * init_fs , enkf_fs_type * result_fs , enkf_fs_type * update_target_fs , int iter) {
   ert_run_context_type * context = util_malloc( sizeof * context );
   UTIL_TYPE_ID_INIT( context , ERT_RUN_CONTEXT_TYPE_ID );
@@ -105,13 +113,7 @@ static ert_run_context_type * ert_run_context_alloc__(bool_vector_type * iactive
 
   context->step1 = 0;
   context->step2 = 0;
-  {
-    int year,month,day,hour,min,sec;
-    time_t now = time( NULL );
-    unsigned int random = util_dev_urandom_seed( );
-    util_set_datetime_values_utc( now , &sec, &min, &hour, &day, &month, &year);
-    context->run_id = util_alloc_sprintf("%d:%d:%4d-%0d-%02d-%02d-%02d-%02d:%ud" , getpid() , getuid(), year , month , day , hour , min , sec, random);
-  }
+  context->run_id = ert_run_context_alloc_run_id( );
   return context;
 }
 
@@ -126,12 +128,13 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
       if (bool_vector_iget( iactive , iens )) {
-        run_arg_type * arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , iens , iter , stringlist_iget( runpath_list , iens));
+        run_arg_type * arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( context->run_id, fs , iens , iter , stringlist_iget( runpath_list , iens));
         vector_append_owned_ref( context->run_args , arg , run_arg_free__);
       }
     }
     stringlist_free( runpath_list );
   }
+  printf("%s  run_id:%s\n",__func__, context->run_id);
   return context;
 }
 
@@ -148,7 +151,7 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulat
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
       if (bool_vector_iget( iactive , iens )) {
-        run_arg_type * arg = run_arg_alloc_SMOOTHER_RUN( simulate_fs , target_update_fs , iens , iter , stringlist_iget( runpath_list , iens));
+        run_arg_type * arg = run_arg_alloc_SMOOTHER_RUN( context->run_id, simulate_fs , target_update_fs , iens , iter , stringlist_iget( runpath_list , iens));
         vector_append_owned_ref( context->run_args , arg , run_arg_free__);
       }
     }
