@@ -145,8 +145,8 @@ class JobManager(object):
 
         umask = _jsonGet(jobs_data, "umask")
         os.umask(int(umask, 8))
-        if "simulation_id" in jobs_data:
-            self.simulation_id = _jsonGet(jobs_data, "simulation_id")
+        if "run_id" in jobs_data:
+            self.simulation_id = _jsonGet(jobs_data, "run_id")
         if "ert_pid" in jobs_data:
             self.ert_pid = _jsonGet(jobs_data, "ert_pid")
         self.job_list = _jsonGet(jobs_data, "jobList")
