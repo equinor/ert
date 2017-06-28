@@ -23,6 +23,7 @@
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.h>
 #include <ert/util/util.h>
+#include <ert/util/subst_list.h>
 
 #include <ert/ecl/ecl_kw_magic.h>
 
@@ -37,11 +38,15 @@
 
 void create_runpath(enkf_main_type * enkf_main, int iter ) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive = bool_vector_alloc(0,false);
+  bool_vector_type * iactive = bool_vector_alloc(ens_size, true);
+  const path_fmt_type * runpath_fmt = model_config_get_runpath_fmt( enkf_main_get_model_config( enkf_main ));
+  const subst_list_type * subst_list = NULL;
+  enkf_fs_type * fs           =  enkf_main_get_fs(enkf_main);
+  ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs , iactive, runpath_fmt, subst_list , iter );
 
-  bool_vector_iset( iactive , ens_size - 1 , true );
-  enkf_main_create_run_path(enkf_main , iactive , iter);
+  enkf_main_create_run_path(enkf_main , run_context);
   bool_vector_free(iactive);
+  ert_run_context_free( run_context );
 }
 
 

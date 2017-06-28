@@ -60,7 +60,7 @@ struct ert_run_context_struct {
 
 
 
-char * ert_run_context_alloc_runpath( int iens , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter) {
+char * ert_run_context_alloc_runpath( int iens , const path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter) {
   char * runpath;
   {
     char * first_pass = path_fmt_alloc_path(runpath_fmt , false , iens, iter);    /* 1: Replace first %d with iens, if a second %d replace with iter */
@@ -76,7 +76,7 @@ char * ert_run_context_alloc_runpath( int iens , path_fmt_type * runpath_fmt , s
 }
 
 
-stringlist_type * ert_run_context_alloc_runpath_list(const bool_vector_type * iactive , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter) {
+stringlist_type * ert_run_context_alloc_runpath_list(const bool_vector_type * iactive , const path_fmt_type * runpath_fmt , const subst_list_type * subst_list , int iter) {
   stringlist_type * runpath_list = stringlist_alloc_new();
   for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
 
@@ -119,8 +119,8 @@ static ert_run_context_type * ert_run_context_alloc__(bool_vector_type * iactive
 
 
 ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs , bool_vector_type * iactive ,
-                                                                 path_fmt_type * runpath_fmt ,
-                                                                 subst_list_type * subst_list ,
+                                                                 const path_fmt_type * runpath_fmt ,
+                                                                 const subst_list_type * subst_list ,
                                                                  int iter) {
 
   ert_run_context_type * context = ert_run_context_alloc__( iactive , ENSEMBLE_EXPERIMENT , fs , fs , NULL , iter);
@@ -134,7 +134,26 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
     }
     stringlist_free( runpath_list );
   }
-  printf("%s  run_id:%s\n",__func__, context->run_id);
+  return context;
+}
+
+
+ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * init_fs,
+                                                       bool_vector_type * iactive ,
+                                                       const path_fmt_type * runpath_fmt ,
+                                                       const subst_list_type * subst_list ,
+                                                       int iter) {
+  ert_run_context_type * context = ert_run_context_alloc__( iactive , INIT_ONLY , init_fs , NULL , NULL , iter);
+  {
+    stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
+    for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
+      if (bool_vector_iget( iactive , iens )) {
+        run_arg_type * arg = run_arg_alloc_INIT_ONLY( context->run_id, init_fs , iens , iter , stringlist_iget( runpath_list , iens));
+        vector_append_owned_ref( context->run_args , arg , run_arg_free__);
+      }
+    }
+    stringlist_free( runpath_list );
+  }
   return context;
 }
 
@@ -142,8 +161,8 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
 
 ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
                                                           bool_vector_type * iactive ,
-                                                          path_fmt_type * runpath_fmt ,
-                                                          subst_list_type * subst_list ,
+                                                          const path_fmt_type * runpath_fmt ,
+                                                          const subst_list_type * subst_list ,
                                                           int iter) {
 
   ert_run_context_type * context = ert_run_context_alloc__( iactive , SMOOTHER_UPDATE , simulate_fs , simulate_fs , target_update_fs , iter);

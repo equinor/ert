@@ -64,7 +64,6 @@ extern "C" {
 #include <ert/enkf/pca_plot_data.h>
 #include <ert/enkf/field_config.h>
 #include <ert/enkf/ert_run_context.h>
-#include <ert/enkf/ert_init_context.h>
 
   /*****************************************************************/
 
@@ -105,7 +104,7 @@ extern "C" {
 
   bool                          enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * source_fs, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode);
   bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * source_fs, enkf_fs_type * target_fs);
-  void                          enkf_main_create_run_path(enkf_main_type * enkf_main , const bool_vector_type * iactive , int iter);
+  void                          enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_context_type * run_context);
   int                           enkf_main_run_simple_step( enkf_main_type* enkf_main, job_queue_type * job_queue, bool_vector_type* iactive, init_mode_type init_mode, int iter );
 
   void                          enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
@@ -298,8 +297,7 @@ extern "C" {
 
   runpath_list_type    * enkf_main_get_runpath_list( const enkf_main_type * enkf_main );
   ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter);
-  ert_init_context_type * enkf_main_alloc_ert_init_context(const enkf_main_type * enkf_main , enkf_fs_type * fs, const bool_vector_type * iactive , init_mode_type init_mode , int iter);
-
+  
   queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main );
 
 UTIL_SAFE_CAST_HEADER(enkf_main);

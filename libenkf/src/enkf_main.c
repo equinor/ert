@@ -106,7 +106,6 @@
 #include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/field.h>
 #include <ert/res_util/res_log.h>
-#include <ert/enkf/ert_init_context.h>
 #include <ert/enkf/ert_run_context.h>
 #include <ert/enkf/run_arg.h>
 #include <ert/res_util/res_util_defaults.h>
@@ -1338,45 +1337,35 @@ void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * ru
 
 
 static void * enkf_main_create_run_path__( enkf_main_type * enkf_main,
-                                           const ert_init_context_type * init_context) {
+                                           const ert_run_context_type * run_context) {
 
-  const bool_vector_type * iactive = ert_init_context_get_iactive(init_context);
+  const bool_vector_type * iactive = ert_run_context_get_iactive(run_context);
   const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
   int iens;
   for (iens = 0; iens < active_ens_size; iens++) {
     if (bool_vector_iget(iactive , iens)) {
-      run_arg_type * run_arg = ert_init_context_iens_get_arg( init_context , iens);
+      run_arg_type * run_arg = ert_run_context_iens_get_arg( run_context , iens);
       enkf_main_icreate_run_path(enkf_main, run_arg);
     }
   }
   return NULL;
 }
 
-void enkf_main_create_run_path(enkf_main_type * enkf_main , const bool_vector_type * iactive , int iter) {
+void enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_context_type * run_context) {
   init_mode_type init_mode = INIT_CONDITIONAL;
 
   enkf_main_init_internalization(enkf_main , init_mode);
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
-              enkf_main_get_fs( enkf_main ),
-              param_list ,
-              iactive,
-              init_mode);
+                                      enkf_main_get_fs( enkf_main ),
+                                      param_list ,
+                                      ert_run_context_get_iactive( run_context ),
+                                      init_mode);
     stringlist_free( param_list );
   }
 
-
-  {
-    ert_init_context_type * init_context = enkf_main_alloc_ert_init_context( enkf_main ,
-                                                                             enkf_main_get_fs( enkf_main ),
-                                                                             iactive ,
-                                                                             init_mode ,
-                                                                             iter );
-    enkf_main_create_run_path__( enkf_main , init_context );
-    ert_init_context_free( init_context );
-  }
-
+  enkf_main_create_run_path__( enkf_main , run_context );
 
   /*
     The runpath_list is written to disk here, when all the simulation
@@ -1622,7 +1611,7 @@ void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
   job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
 
   enkf_main_init_run( enkf_main , run_context , init_mode);
-  enkf_main_create_run_path( enkf_main , iactive , iter );
+  enkf_main_create_run_path( enkf_main , run_context );
   hook_manager_run_workflows(hook_manager, PRE_SIMULATION, enkf_main);
   enkf_main_run_step(enkf_main, run_context, job_queue);
 
@@ -1803,9 +1792,6 @@ ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const
   return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , iter );
 }
 
-ert_init_context_type * enkf_main_alloc_ert_init_context(const enkf_main_type * enkf_main , enkf_fs_type * fs, const bool_vector_type * iactive , init_mode_type init_mode , int iter) {
-  return ert_init_context_alloc( fs, iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , init_mode , iter );
-}
 
 
 

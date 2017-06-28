@@ -33,8 +33,12 @@ extern "C" {
 
 typedef struct ert_run_context_struct ert_run_context_type;
 
-  stringlist_type      * ert_run_context_alloc_runpath_list(const bool_vector_type * iactive , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter);
-  char                 * ert_run_context_alloc_runpath( int iens , path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter);
+  stringlist_type      * ert_run_context_alloc_runpath_list(const bool_vector_type * iactive ,
+                                                            const path_fmt_type * runpath_fmt ,
+                                                            const subst_list_type * subst_list ,
+                                                            int iter);
+
+  char                 * ert_run_context_alloc_runpath( int iens , const path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter);
 
   ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode, enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
                                                bool_vector_type * iactive ,
@@ -44,16 +48,22 @@ typedef struct ert_run_context_struct ert_run_context_type;
 
   ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs ,
                                                                    bool_vector_type * iactive ,
-                                                                   path_fmt_type * runpath_fmt ,
-                                                                   subst_list_type * subst_list ,
+                                                                   const path_fmt_type * runpath_fmt ,
+                                                                   const subst_list_type * subst_list ,
                                                                    int iter);
 
+  ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * init_fs,
+                                                         bool_vector_type * iactive ,
+                                                         const path_fmt_type * runpath_fmt ,
+                                                         const subst_list_type * subst_list ,
+                                                         int iter);
 
   ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
                                                             bool_vector_type * iactive ,
-                                                            path_fmt_type * runpath_fmt ,
-                                                            subst_list_type * subst_list ,
+                                                            const path_fmt_type * runpath_fmt ,
+                                                            const subst_list_type * subst_list ,
                                                             int iter);
+
   void                     ert_run_context_set_init_fs(ert_run_context_type * context,  enkf_fs_type * init_fs);
   void                     ert_run_context_set_result_fs(ert_run_context_type * context, enkf_fs_type * result_fs);
   void                     ert_run_context_set_update_target_fs(ert_run_context_type * context, enkf_fs_type * update_target_fs);
