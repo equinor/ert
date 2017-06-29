@@ -988,7 +988,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
         if (analysis_config_get_std_scale_correlated_obs(analysis_config)) {
           double scale_factor = enkf_obs_scale_correlated_std(enkf_main->obs, source_fs,
                                                               ens_active_list, obsdata);
-          res_log_add_fmt_message(1, NULL,
+          res_log_add_fmt_message(LOG_INFO, NULL,
                                   "Scaling standard deviation in obdsata set:%s with %g",
                                   local_obsdata_get_name(obsdata), scale_factor);
         }
@@ -1017,7 +1017,7 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
                                       meas_data,
                                       obs_data);
         else if (target_fs != source_fs)
-          res_log_add_fmt_message(1, stderr, "No active observations/parameters for MINISTEP: %s.",
+          res_log_add_fmt_message(LOG_ERROR, stderr, "No active observations/parameters for MINISTEP: %s.",
                                   local_ministep_get_name(ministep));
       }
 
@@ -1521,8 +1521,6 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
     state_map_deselect_matching( enkf_fs_get_state_map( ert_run_context_get_init_fs( run_context )) ,
                                  ert_run_context_get_iactive( run_context ), STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
 
-    res_log_add_fmt_message( 1 , NULL , "===================================================================", false);
-
     job_size = bool_vector_count_equal( ert_run_context_get_iactive(run_context) , true );
     enkf_main_start_queue(enkf_main, run_context, job_queue, job_size, verbose_queue);
 
@@ -1548,7 +1546,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
 
     enkf_fs_fsync( ert_run_context_get_result_fs( run_context ) );
     if (totalFailed == 0)
-      res_log_add_fmt_message( 1 , NULL , "All jobs complete and data loaded.");
+      res_log_add_fmt_message( LOG_INFO , NULL , "All jobs complete and data loaded.");
 
 
     return totalOK;

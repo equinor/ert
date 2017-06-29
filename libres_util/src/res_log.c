@@ -32,6 +32,7 @@
  */
 
 #include <stdarg.h>
+#include <string.h>
 
 #include <ert/util/util.h>
 
@@ -46,7 +47,7 @@ static log_type * logh = NULL;               /* Handle to an open log file. */
  *
  * if log_file_name=NULL then DEFAULT_LOG_FILE is used
  */
-void res_log_init_log( int log_level , const char * log_file_name, bool verbose){
+void res_log_init_log( message_level_type log_level , const char * log_file_name, bool verbose){
   if(log_file_name==NULL){
     log_file_name=DEFAULT_LOG_FILE;
   }
@@ -54,7 +55,7 @@ void res_log_init_log( int log_level , const char * log_file_name, bool verbose)
 
   if (verbose)
     printf("Activity will be logged to ..............: %s \n",log_get_filename( logh ));
-  log_add_message(logh , 1 , NULL , "ert configuration loaded" , false);
+  log_add_message(logh , LOG_INFO , NULL , "ert configuration loaded" , false);
 }
 
 /**
@@ -93,18 +94,17 @@ void res_log_add_message_py(int message_level, char* message){
  * Adding a message with a given message_level. A low message_level means "more important", as only messages with
  * message_level below the configured log_level will be included.
  */
-void res_log_add_message(int message_level , FILE * dup_stream , char* message, bool free_message) {
+void res_log_add_message(message_level_type message_level , FILE * dup_stream , char* message, bool free_message) {
    if(logh==NULL)
      res_log_init_log_default(true);
    log_add_message(logh, message_level, dup_stream, message, free_message);
 }
 
 /**
- * Adding a message with a given message_level. A low message_level means "more important", as only messages with
- * message_level below the configured log_level will be included. Expects fmt to be a string with potentiall
+ * Adding a message with a given message_level. Expects fmt to be a string with potentiall
  * string-formating, and "..." is the required arguments to the string-formating.
  */
-void res_log_add_fmt_message(int message_level , FILE * dup_stream , const char * fmt , ...) {
+void res_log_add_fmt_message(message_level_type message_level , FILE * dup_stream , const char * fmt , ...) {
     if (log_include_message(logh,message_level)) {
       char * message;
       va_list ap;
@@ -114,6 +114,7 @@ void res_log_add_fmt_message(int message_level , FILE * dup_stream , const char 
       va_end(ap);
     }
 }
+
 
 void res_log_close(){
     if (log_is_open( logh ))
@@ -128,7 +129,7 @@ bool res_log_is_open(){
     return log_is_open(logh);
 }
 
-void res_log_set_log_level(int log_level){
+void res_log_set_log_level(message_level_type log_level){
     if(logh==NULL)
       res_log_init_log_default(true);
     log_set_level(logh, log_level);

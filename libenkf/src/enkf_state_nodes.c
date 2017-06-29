@@ -112,7 +112,7 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
           enkf_node_store( enkf_node , result_fs, store_vectors , node_id );
         } else {
           forward_load_context_update_result(load_context, LOAD_FAILURE);
-          res_log_add_fmt_message( 1 , NULL , "[%03d:%04d] Failed load data for FIELD node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
+          res_log_add_fmt_message(LOG_ERROR, NULL , "[%03d:%04d] Failed load data for FIELD node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
 
           if (forward_load_context_accept_messages(load_context)) {
             char * msg = util_alloc_sprintf("Failed to load: %s at step:%d" , enkf_node_get_key( enkf_node ) , report_step);
