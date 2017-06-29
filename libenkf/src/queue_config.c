@@ -223,6 +223,11 @@ bool queue_config_init(queue_config_type * queue_config, const config_content_ty
   if (config_content_has_item(config_content, JOB_SCRIPT_KEY))
     queue_config_set_job_script(queue_config, config_content_get_value_as_abspath(config_content, JOB_SCRIPT_KEY));
 
+  if (config_content_has_item(config_content, MAX_SUBMIT_KEY)) {
+    queue_config->max_submit = config_content_get_value_as_int(config_content, MAX_SUBMIT_KEY);
+    queue_config->max_submit_set = true;
+  }
+
   /* Setting QUEUE_OPTIONS */
   for (int i = 0; i < config_content_get_occurences(config_content, QUEUE_OPTION_KEY); i++) {
     const stringlist_type * tokens = config_content_iget_stringlist_ref(config_content, QUEUE_OPTION_KEY, i);
@@ -235,11 +240,6 @@ bool queue_config_init(queue_config_type * queue_config, const config_content_ty
     // file.
     queue_config_set_queue_option(queue_config, driver_name, option_key, option_value);
     free( option_value );
-
-    if (config_content_has_item(config_content, MAX_SUBMIT_KEY)) {
-        queue_config->max_submit = config_content_get_value_as_int(config_content, MAX_SUBMIT_KEY);
-        queue_config->max_submit_set = true;
-     }
   }
 
   return true;

@@ -125,7 +125,6 @@ class ResConfigTest(ExtendedTestCase):
                     res_config.analysis_config.get_max_runtime()
                     )
 
-            return
             self.assertEqual(
                     config_data["MAX_SUBMIT"],
                     res_config.site_config.queue_config.max_submit
