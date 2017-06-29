@@ -29,6 +29,7 @@ class ResConfig(BaseCClass):
 
     _user_config_file = EnkfPrototype("char* res_config_get_user_config_file(res_config)")
 
+    _config_path      = EnkfPrototype("char* res_config_get_working_directory(res_config)")
     _site_config      = EnkfPrototype("site_config_ref res_config_get_site_config(res_config)")
     _analysis_config  = EnkfPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
 
@@ -63,3 +64,8 @@ class ResConfig(BaseCClass):
     @property
     def analysis_config(self):
         return self._analysis_config()
+
+    @property
+    def config_path(self):
+        return self._config_path( )
+
