@@ -109,6 +109,7 @@
 #include <ert/enkf/ert_init_context.h>
 #include <ert/enkf/ert_run_context.h>
 #include <ert/enkf/run_arg.h>
+#include <ert/res_util/res_util_defaults.h>
 
 /**/
 
@@ -2093,7 +2094,7 @@ static void enkf_main_init_log(
   if (config_content_has_item( content , LOG_FILE_KEY))
     log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
   if(config_content_has_item( content , LOG_LEVEL_KEY))
-    res_log_init_log(config_content_get_value_as_int(content , LOG_LEVEL_KEY), log_file ,  enkf_main->verbose);
+    res_log_init_log(res_log_level_parser(config_content_get_value(content , LOG_LEVEL_KEY)), log_file ,  enkf_main->verbose);
   else
     res_log_init_log_default_log_level(log_file ,  enkf_main->verbose);
   free( log_file );
@@ -2230,13 +2231,11 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
 */
 
-
 /**
    It is possible to pass NULL as the model_config argument, in that
    case only the site config file will be parsed. The purpose of this
    is mainly to be able to test that the site config file is valid.
 */
-
 
 enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_type * res_config, bool strict , bool verbose) {
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
@@ -2258,8 +2257,45 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
   return enkf_main;
 }
 
+/**
+ * TODO:  NB: this method is basily the initializer of a "log-config" struct, so when log-onfig is extracted to a
+ * seperate file as the other config objects have been this should be moved there as well.
+ *
+ * This method parses the 'LOG_LEVEL_KEY' value according to the following rules:
+ * - If it is an integer 0 <= i <= 4 then it issues an deprecation warning and uses the aproximately corrrect enum of
+ * message_level_type.
+ * - If it is one of the strings CRITICAL, ERROR, WARNING, INFO, DEBUG it returns the corresponding enum of
+ * message_level_type
+ * - Else it returns the DEFAULT_LOG_LEVEL
+ */
+message_level_type res_log_level_parser(const char *level) {
+  typedef struct {
+    const char *log_keyword; //The keyword written in the config file for this log-level
+    const char *log_old_numeric_str; //The *old* integer value (as a string) representing the same log-level
+    const message_level_type log_enum; //The enum for the new log-level.
+  } log_tupple;
 
+  log_tupple log_levels[] = {
+          {"CRITICAL", "0", LOG_CRITICAL},
+          {"ERROR",    "1", LOG_ERROR},
+          {"WARNING",  "2", LOG_WARNING},
+          {"INFO",     "3", LOG_INFO},
+          {"DEBUG",    "4", LOG_DEBUG}};
+  const int nr_of_log_levels = 5;
 
+  for (int i = 0; i < nr_of_log_levels; i++) {
+    log_tupple curr_log_level = log_levels[i];
+    if (strcmp(level, curr_log_level.log_old_numeric_str)==0) { //We found an old integer level.
+      fprintf(stderr, "** Deprecation warning: Use of %s %s is deprecated, use %s %s instead\n",LOG_LEVEL_KEY,
+              curr_log_level.log_old_numeric_str,LOG_LEVEL_KEY, curr_log_level.log_keyword);
+      return curr_log_level.log_enum;
+    } else if (strcmp(level, curr_log_level.log_keyword)==0) { //We found a new proper name.
+      return curr_log_level.log_enum;
+    }
+  }
+  fprintf(stderr, "** The log_level: %s is not valid, using default log level\n", level);
+  return DEFAULT_LOG_LEVEL;
+}
 
 /**
    This function creates a minimal configuration file, with a few

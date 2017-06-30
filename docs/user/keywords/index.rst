@@ -83,7 +83,7 @@ Keyword name                                                        	Required by
 :ref:`LICENSE_PATH <licence_path>`  				    	NO 									A path where ert-licenses to e.g. RMS are stored. 
 :ref:`LOCAL_CONFIG <load_config>` 			            	NO 									A file with configuration information for local analysis. 
 :ref:`LOG_FILE <log_file>` 					    	NO 					log 				Name of log file 
-:ref:`LOG_LEVEL <log_level>` 					    	NO 		 			1 				How much logging? 
+:ref:`LOG_LEVEL <log_level>` 					    	NO 		 			1 				How much logging, legal values are CRITICAL, ERROR, WARNING,INFO,DEBUG, with more DEBUG beeing the most verbose.
 :ref:`LSF_QUEUE <lsf_queue>` 					    	NO 					normal				Name of LSF queue. 
 :ref:`LSF_RESOURCES <lsf_resources>` 				    	NO 
 :ref:`LSF_SERVER <lsf_server>` 					    	NO 									Set server used when submitting LSF jobs. 
