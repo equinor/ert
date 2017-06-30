@@ -13,6 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import os
+import os.path
 
 from ecl.test import ExtendedTestCase, TestAreaContext
 
@@ -30,6 +32,7 @@ class ResConfigTest(ExtendedTestCase):
 
     def test_init(self):
         with TestAreaContext("res_config_init_test") as work_area:
+            cwd = os.getcwd()
             work_area.copy_directory(self.case_directory)
 
             config_file = "simple_config/minimum_config"
@@ -43,3 +46,19 @@ class ResConfigTest(ExtendedTestCase):
 
             self.assertIsNotNone(res_config.analysis_config)
             self.assertTrue(isinstance(res_config.analysis_config, AnalysisConfig))
+            self.assertEqual( res_config.config_path , os.path.join( cwd , "simple_config"))
+
+            config_file = os.path.join( cwd, "simple_config/minimum_config")
+            res_config = ResConfig(user_config_file=config_file)
+            self.assertEqual( res_config.config_path , os.path.join( cwd , "simple_config"))
+
+            os.chdir("simple_config")
+            config_file = "minimum_config"
+            res_config = ResConfig(user_config_file=config_file)
+            self.assertEqual( res_config.config_path , os.path.join( cwd , "simple_config"))
+
+            subst_config = res_config.subst_config
+            for t in subst_config:
+                print t
+            self.assertEqual( subst_config["<CONFIG_PATH>"], os.path.join( cwd , "simple_config"))
+

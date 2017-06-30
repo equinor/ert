@@ -70,7 +70,7 @@ subst_config_type * subst_config_alloc_load(const char * user_config_file, const
   subst_config_type * subst_config = subst_config_alloc_default();
 
   if(working_dir)
-    subst_config_install_working_directory(subst_config, user_config_file);
+    subst_config_install_working_directory(subst_config, working_dir);
 
   if(user_config_file)
     subst_config_init_load(subst_config, user_config_file, working_dir);

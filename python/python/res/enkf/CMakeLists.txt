@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    subst_config.py
     res_config.py
     active_list.py
     analysis_config.py
