@@ -131,13 +131,13 @@ history_type * history_alloc_from_refcase(const ecl_sum_type * refcase , bool us
 }
 
 
-
-
-
 /******************************************************************/
 // Exported functions for accessing history_type.
 
 
+history_source_type history_get_source(const history_type * history) {
+  return history->source;
+}
 
 
 int history_get_last_restart(const history_type * history) {

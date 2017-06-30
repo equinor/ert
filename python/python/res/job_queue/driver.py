@@ -47,6 +47,7 @@ class Driver(BaseCClass):
     _alloc = QueuePrototype("void* queue_driver_alloc( queue_driver_enum )" , bind = False)
     _free = QueuePrototype("void queue_driver_free( driver )")
     _set_option = QueuePrototype("void queue_driver_set_option( driver , char* , char*)")
+    _get_option = QueuePrototype("char* queue_driver_get_option(driver, char*)")
     _submit = QueuePrototype("void* queue_driver_submit_job( driver , char* , int , char* , char* , int , char**)")
     _free_job = QueuePrototype("void   queue_driver_free_job( driver , job )")
     _get_status = QueuePrototype("int queue_driver_get_status( driver , job)")
@@ -78,6 +79,8 @@ class Driver(BaseCClass):
         """
         return self._set_option(option, str(value))
 
+    def get_option(self, option_key):
+        return self._get_option(option_key)
     
     def is_driver_instance( self ):
         return True
@@ -116,7 +119,7 @@ class Driver(BaseCClass):
 
     @property
     def name(self):
-        return self._get_name(self)
+        return self._get_name()
 
     def free(self):
         self._free( )

@@ -13,12 +13,13 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
-from res.job_queue import JobQueue, ExtJoblist
+
 from ecl.util import StringList, Hash
 
-
+from res.enkf import EnkfPrototype
+from res.job_queue import JobQueue, ExtJoblist, Driver
 
 class QueueConfig(BaseCClass):
 
@@ -30,6 +31,8 @@ class QueueConfig(BaseCClass):
     _alloc_local_copy      = EnkfPrototype("queue_config_obj queue_config_alloc_local_copy( queue_config )")
     _has_job_script        = EnkfPrototype("bool queue_config_has_job_script( queue_config )")
     _max_submit            = EnkfPrototype("int queue_config_get_max_submit(queue_config)")
+    _queue_name            = EnkfPrototype("char* queue_config_get_queue_name(queue_config)")
+    _queue_driver          = EnkfPrototype("driver_ref queue_config_get_queue_driver(queue_config, char*)")
 
     def __init__(self, user_config_file=None):
         c_ptr = self._alloc(user_config_file)
@@ -50,3 +53,11 @@ class QueueConfig(BaseCClass):
     @property
     def max_submit(self):
         return self._max_submit()
+
+    @property
+    def queue_name(self):
+        return self._queue_name()
+
+    @property
+    def driver(self):
+        return self._queue_driver(self.queue_name).setParent(self)

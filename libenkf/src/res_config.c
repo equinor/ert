@@ -77,39 +77,44 @@ static res_config_type * res_config_alloc_empty() {
 
 res_config_type * res_config_alloc_load(const char * config_file) {
   res_config_type * res_config = res_config_alloc_empty(); 
-  res_config->user_config_file = util_alloc_string_copy(config_file);
-  res_config->working_dir      = res_config_alloc_working_directory(config_file);
+  res_config->user_config_file = (config_file ?
+                                    util_alloc_realpath(config_file) :
+                                    NULL
+                                    );
+  res_config->working_dir      = res_config_alloc_working_directory(res_config->user_config_file);
 
-  res_config->subst_config    = subst_config_alloc_load(config_file, res_config->working_dir);
+  res_config->subst_config    = subst_config_alloc_load(res_config->user_config_file, res_config->working_dir);
 
-  res_config->site_config     = site_config_alloc_load_user_config(config_file);
-  res_config->rng_config      = rng_config_alloc_load_user_config(config_file);
-  res_config->analysis_config = analysis_config_alloc_load(config_file);
+  res_config->site_config     = site_config_alloc_load_user_config(res_config->user_config_file);
+  res_config->rng_config      = rng_config_alloc_load_user_config(res_config->user_config_file);
+  res_config->analysis_config = analysis_config_alloc_load(res_config->user_config_file);
   res_config->workflow_list   = ert_workflow_list_alloc_load(
                                     subst_config_get_subst_list(res_config->subst_config),
-                                    config_file
+                                    res_config->user_config_file,
+                                    res_config->working_dir
                                     );
 
   res_config->hook_manager    = hook_manager_alloc_load(
                                     res_config->workflow_list,
-                                    config_file,
+                                    res_config->user_config_file,
                                     res_config->working_dir
                                     );
 
   res_config->templates       = ert_templates_alloc_load(
                                     subst_config_get_subst_list(res_config->subst_config),
-                                    config_file
+                                    res_config->user_config_file
                                     );
 
-  res_config->plot_config     = plot_settings_alloc_load(config_file);
-  res_config->ecl_config      = ecl_config_alloc_load(config_file);
+  res_config->plot_config     = plot_settings_alloc_load(res_config->user_config_file);
+  res_config->ecl_config      = ecl_config_alloc_load(res_config->user_config_file, res_config->working_dir);
 
-  res_config->ensemble_config = ensemble_config_alloc_load(config_file,
+  res_config->ensemble_config = ensemble_config_alloc_load(res_config->user_config_file,
                                             ecl_config_get_grid(res_config->ecl_config),
-                                            ecl_config_get_refcase(res_config->ecl_config)
+                                            ecl_config_get_refcase(res_config->ecl_config),
+                                            res_config->working_dir
                                     );
 
-  res_config->model_config    = model_config_alloc_load(config_file,
+  res_config->model_config    = model_config_alloc_load(res_config->user_config_file,
                                         site_config_get_installed_jobs(res_config->site_config),
                                         ecl_config_get_last_history_restart(res_config->ecl_config),
                                         ecl_config_get_sched_file(res_config->ecl_config),
@@ -212,7 +217,7 @@ static char * res_config_alloc_working_directory(const char * user_config_file) 
 
   char * path = NULL;
   char * realpath = util_alloc_link_target(user_config_file);
-  char * abspath  = util_alloc_abs_path(realpath);
+  char * abspath  = util_alloc_realpath(realpath);
   util_alloc_file_components(abspath, &path, NULL, NULL);
   free(realpath);
   free(abspath);

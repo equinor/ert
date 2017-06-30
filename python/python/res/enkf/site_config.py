@@ -55,6 +55,7 @@ class SiteConfig(BaseCClass):
     _has_driver            = EnkfPrototype("bool site_config_has_queue_driver(site_config, char*)")
     _get_config_file       = EnkfPrototype("char* site_config_get_config_file(site_config)")
     _get_queue_config      = EnkfPrototype("queue_config_ref site_config_get_queue_config(site_config)")
+    _get_umask             = EnkfPrototype("int site_config_get_umask(site_config)")
 
     
     def __init__(self, user_config_file=None):
@@ -199,3 +200,7 @@ class SiteConfig(BaseCClass):
     @property
     def queue_config(self):
         return self._get_queue_config()
+
+    @property
+    def umask(self):
+        return self._get_umask()

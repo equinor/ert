@@ -15,6 +15,7 @@ class Workflow(BaseCClass):
 
     _try_compile    = QueuePrototype("bool workflow_try_compile(workflow, subst_list)")
     _get_last_error = QueuePrototype("config_error_ref workflow_get_last_error(workflow)")
+    _get_src_file   = QueuePrototype("char* worflow_get_src_file(workflow)")
 
     def __init__(self, src_file, job_list):
         """
@@ -44,6 +45,10 @@ class Workflow(BaseCClass):
     def __iter__(self):
         for index in range(len(self)):
             yield self[index]
+
+    @property
+    def src_file(self):
+        return self._get_src_file()
 
     def run(self, ert, verbose=False, context=None):
         """

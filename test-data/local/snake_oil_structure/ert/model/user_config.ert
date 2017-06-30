@@ -4,6 +4,8 @@
 --
 --===============================================================
 
+JOBNAME SNAKE_OIL_STRUCTURE_%d
+
 ---------------------------------
 -- SECTION: Internal variables --
 ---------------------------------
@@ -15,15 +17,34 @@ DEFINE	<ECLIPSE_NAME>	XYZ
 ---------------------------------------------------
 -- SECTION: Eclipse, runpath and storage settings
 ---------------------------------------------------
-RUNPATH             <SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d 	  -- Runpath for simulations (first %d will be replaced with realization number, second %d with iteration number
+DATA_FILE           ../../eclipse/model/SNAKE_OIL.DATA                    -- Location of the Eclipse .DATA-file
+GRID                ../../eclipse/include/grid/CASE.EGRID                 -- Name of the Eclipse .GRID-file
+RUNPATH             <SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d    -- Runpath for simulations (first %d will be replaced with realization number, second %d with iteration number
+ECLBASE             eclipse/model/<ECLIPSE_NAME>-%d                       -- Name used for the ECLIPSE simulations (%d will be replaced with the realization number)
+ENSPATH             ../output/storage/<CASE_DIR>                          -- Storage of internal ert data
+PLOT_SETTINGS PATH  ../output/results/plot/<CASE_DIR>                     -- Storage of workflow qc plots
+RUNPATH_FILE        ../output/run_path_file/.ert-runpath-list_<CASE_DIR>  -- Ert runpath file for workflows
  
+REFCASE             ../input/refcase/SNAKE_OIL_FIELD                      -- Used for plotting and neccessary for AHM for reading historical production, files needed by ert: .SMSPEC and .UNSMRY
+
+LOG_LEVEL           3
+UPDATE_LOG_PATH     ../output/update_log/<CASE_DIR>                       -- Storage of update log (list of active and inactive data points)
+LOG_FILE            ../output/log/ert_<CASE_DIR>.log                      -- Ert log file
+
+STORE_SEED          ../input/rng/SEED
+LOAD_SEED           ../input/rng/SEED
 -- --------------------------------------------------
 -- -- SECTION: LSF settings, AHM configuration etc
 -- --------------------------------------------------
-NUM_REALIZATIONS  	          10                                          -- Set number of realizations to run
-MAX_RUNTIME                23400          				                  -- Set the maximum allowed runtime in seconds. (Killed when exceeding)
-MIN_REALIZATIONS              50%          			                      -- Set minimum number of realization that must be completed before moving to next iteration
-MAX_SUBMIT                    13   	     			                      -- How many times should the queue system retry a simulation. Default = 2 (use 1 when debugging)
+NUM_REALIZATIONS  	              10                                      -- Set number of realizations to run
+MAX_RUNTIME                    23400      				                  -- Set the maximum allowed runtime in seconds. (Killed when exceeding)
+MIN_REALIZATIONS                  50%      			                      -- Set minimum number of realization that must be completed before moving to next iteration
+
+QUEUE_OPTION LSF MAX_RUNNING     100
+MAX_SUBMIT                        13      			                      -- How many times should the queue system retry a simulation. Default = 2 (use 1 when debugging)
+
+QUEUE_SYSTEM                     LSF
+UMASK                            007                                      -- Make the simulation run not available for others (chmod o-xrw)
 
 -- ------------------------------------------------------------------------
 -- -- SECTION: Uncertainty parameters 
@@ -32,19 +53,53 @@ MAX_SUBMIT                    13   	     			                      -- How many ti
 -- ------ ---------------------------------------------------------------------------------------------------------------------
 -- ------ ert identifier    template file                          result file             parameter distribution
 -- ------ ---------------------------------------------------------------------------------------------------------------------
+GEN_KW SIGMA 	         ../input/templates/sigma.tmpl          coarse.sigma          	../input/distributions/sigma.dist
+
+RUN_TEMPLATE             ../input/templates/seed_template.txt     seed.txt
 
 -- -------------------------------------------------------
 -- -- SECTION: Forward models
 -- -------------------------------------------------------
 
+-- Run Snakeoil
+
+INSTALL_JOB SNAKE_OIL_SIMULATOR ../../snake_oil/jobs/SNAKE_OIL_SIMULATOR
+INSTALL_JOB SNAKE_OIL_NPV ../../snake_oil/jobs/SNAKE_OIL_NPV
+INSTALL_JOB SNAKE_OIL_DIFF ../../snake_oil/jobs/SNAKE_OIL_DIFF
+
+FORWARD_MODEL SNAKE_OIL_SIMULATOR
+FORWARD_MODEL SNAKE_OIL_NPV
+FORWARD_MODEL SNAKE_OIL_DIFF
+
+--------------------------------------------------------------------------------------------------
 -- --------------------------------------
 -- -- SECTION: Observations
 -- --------------------------------------
+
+HISTORY_SOURCE REFCASE_HISTORY
+
+OBS_CONFIG ../input/observations/obsfiles/observations.txt
+
+TIME_MAP   ../input/refcase/time_map.txt
 
 -- --------------------------------------
 -- -- SECTION: Plotting 
 -- --------------------------------------
 
+SUMMARY WOPR:PROD
+SUMMARY WOPT:PROD
+SUMMARY WWPR:PROD
+SUMMARY WWCT:PROD
+SUMMARY WWPT:PROD
+SUMMARY WBHP:PROD
+SUMMARY WWIR:INJ
+SUMMARY WWIT:INJ
+SUMMARY WBHP:INJ
+SUMMARY ROE:1
+
 -- --------------------------------------
 -- -- SECTION: Workflows
 -- --------------------------------------
+
+LOAD_WORKFLOW_JOB ../bin/workflows/workflowjobs/UBER_PRINT
+LOAD_WORKFLOW     ../bin/workflows/MAGIC_PRINT

@@ -151,14 +151,14 @@ ensemble_config_type * ensemble_config_alloc( ) {
   return ensemble_config;
 }
 
-ensemble_config_type * ensemble_config_alloc_load(const char * user_config_file, ecl_grid_type * grid, const ecl_sum_type * refcase) {
+ensemble_config_type * ensemble_config_alloc_load(const char * user_config_file, ecl_grid_type * grid, const ecl_sum_type * refcase, const char * working_dir) {
   ensemble_config_type * ensemble_config = ensemble_config_alloc();
 
   if(user_config_file) {
     config_parser_type * config = config_alloc();
     config_content_type * content = model_config_alloc_content(user_config_file, config);
 
-    ensemble_config_init(ensemble_config, content, grid, refcase);
+    ensemble_config_init(ensemble_config, content, grid, refcase, working_dir);
 
     config_content_free(content);
     config_free(config);
@@ -400,7 +400,7 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
 }
 
 
-void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const config_content_type * config ) {
+void ensemble_config_init_GEN_KW(ensemble_config_type * ensemble_config, const config_content_type * config, const char * working_dir) {
   if (config_content_has_item(config , GEN_KW_KEY)) {
     const config_content_item_type * gen_kw_item = config_content_get_item( config , GEN_KW_KEY );
     int i;
@@ -408,9 +408,21 @@ void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const
       config_content_node_type * node = config_content_item_iget_node( gen_kw_item , i );
 
       const char * key             = config_content_node_iget( node , 0 );
-      const char * template_file   = config_content_node_iget_as_path( node , 1 );
+
+      char * template_file         = util_alloc_filename(
+                                                working_dir,
+                                                config_content_node_iget(node, 1),
+                                                NULL
+                                                );
+
       const char * enkf_outfile    = config_content_node_iget( node , 2 );
-      const char * parameter_file  = config_content_node_iget_as_path( node , 3 );
+
+      char * parameter_file        = util_alloc_filename(
+                                                working_dir,
+                                                config_content_node_iget(node, 3),
+                                                NULL
+                                                );
+
       hash_type * opt_hash         = hash_alloc();
 
       config_content_node_init_opt_hash( node , opt_hash , 4 );
@@ -433,6 +445,8 @@ void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const
                                         hash_safe_get( opt_hash , INIT_FILES_KEY));
       }
       hash_free( opt_hash );
+      free(template_file);
+      free(parameter_file);
     }
   }
 }
@@ -668,7 +682,7 @@ static void ensemble_config_init_PRED(ensemble_config_type * ensemble_config, co
    impossible to use wildcards when expanding summary variables.
 */
 
-void ensemble_config_init(ensemble_config_type * ensemble_config , const config_content_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
+void ensemble_config_init(ensemble_config_type * ensemble_config , const config_content_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase, const char * working_dir) {
 
   if (config_content_has_item( config , GEN_KW_TAG_FORMAT_KEY)) {
     ensemble_config_set_gen_kw_format( ensemble_config , config_content_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
@@ -677,7 +691,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   ensemble_config_init_GEN_PARAM(ensemble_config, config);
   ensemble_config_init_GEN_DATA(ensemble_config, config);
   ensemble_config_init_CUSTOM_KW(ensemble_config, config);
-  ensemble_config_init_GEN_KW(ensemble_config, config);
+  ensemble_config_init_GEN_KW(ensemble_config, config, working_dir);
   ensemble_config_init_SURFACE(ensemble_config, config);
   ensemble_config_init_SUMMARY(ensemble_config, config, refcase);
   ensemble_config_init_FIELD(ensemble_config, config, grid);

@@ -220,11 +220,15 @@ static void subst_config_init_load(
 
   if (config_content_has_item(content, DATA_FILE_KEY)) {
     const char * data_file = config_content_iget(content, DATA_FILE_KEY, 0, 0);
-    if (!util_file_exists(data_file))
-      util_abort("%s: Could not find ECLIPSE data file: %s\n", __func__, data_file ? data_file : "NULL");
+    char * abs_data_file = util_alloc_filename(working_dir, data_file, NULL);
 
-    int num_cpu = ecl_util_get_num_cpu(data_file);
+    if (!util_file_exists(abs_data_file))
+      util_abort("%s: Could not find ECLIPSE data file: %s\n", __func__, abs_data_file ? abs_data_file : "NULL");
+
+    int num_cpu = ecl_util_get_num_cpu(abs_data_file);
     subst_config_install_num_cpu(subst_config, num_cpu);
+
+    free(abs_data_file);
   }
 
   config_free(config);

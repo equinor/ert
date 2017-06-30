@@ -73,7 +73,6 @@ from .ecl_config import EclConfig
 from .queue_config import QueueConfig
 from .site_config import SiteConfig
 from .subst_config import SubstConfig
-from .res_config import ResConfig
 from .ensemble_config import EnsembleConfig
 from .enkf_obs import EnkfObs
 from .enkf_state import EnKFState
@@ -85,6 +84,8 @@ from .plot_settings import PlotSettings
 from .runpath_list import RunpathList, RunpathNode
 from .hook_workflow import HookWorkflow
 from .hook_manager import HookManager
+from .rng_config import RNGConfig
+from .res_config import ResConfig
 
 from .es_update import ESUpdate
 from .enkf_simulation_runner import EnkfSimulationRunner

@@ -540,14 +540,14 @@ ecl_config_type * ecl_config_alloc()
   return ecl_config;
 }
 
-ecl_config_type * ecl_config_alloc_load(const char * user_config_file) {
+ecl_config_type * ecl_config_alloc_load(const char * user_config_file, const char * working_dir) {
   ecl_config_type * ecl_config = ecl_config_alloc();
 
   if(user_config_file) {
     config_parser_type * config = config_alloc();
     config_content_type * content = model_config_alloc_content(user_config_file, config);
 
-    ecl_config_init(ecl_config, content);
+    ecl_config_init(ecl_config, content, working_dir);
 
     config_content_free(content);
     config_free(config);
@@ -556,7 +556,7 @@ ecl_config_type * ecl_config_alloc_load(const char * user_config_file) {
   return ecl_config;
 }
 
-void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * config)
+void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * config, const char * working_dir)
 {
   if (config_content_has_item(config, ECLBASE_KEY)) {
     ui_return_type * ui_return = ecl_config_validate_eclbase(ecl_config, config_content_iget(config, ECLBASE_KEY, 0, 0));
@@ -569,13 +569,15 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
 
   if (config_content_has_item(config, DATA_FILE_KEY))
   {
-    ui_return_type * ui_return = ecl_config_validate_data_file(ecl_config, config_content_iget(config, DATA_FILE_KEY, 0, 0));
+    char * abs_data_file = util_alloc_filename(working_dir, config_content_iget(config, DATA_FILE_KEY, 0, 0), NULL);
+    ui_return_type * ui_return = ecl_config_validate_data_file(ecl_config, abs_data_file);
     if (ui_return_get_status( ui_return ) == UI_RETURN_OK)
-      ecl_config_set_data_file( ecl_config, config_content_iget(config, DATA_FILE_KEY, 0, 0) );
+      ecl_config_set_data_file( ecl_config, abs_data_file);
     else
-      util_abort("%s: problem setting ECLIPSE data file\n",__func__ , ui_return_get_last_error(ui_return));
+      util_abort("%s: problem setting ECLIPSE data file (%s)\n",__func__ , ui_return_get_last_error(ui_return));
 
     ui_return_free(ui_return);
+    free(abs_data_file);
   }
 
   if (config_content_has_item(config, SCHEDULE_FILE_KEY)) {
@@ -598,7 +600,12 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
   }
 
   if (config_content_has_item(config, GRID_KEY)) {
-    const char * grid_file = config_content_iget(config, GRID_KEY, 0, 0);
+    const char * grid_file = util_alloc_filename(
+                                                working_dir,
+                                                config_content_iget(config, GRID_KEY, 0, 0),
+                                                NULL
+                                                );
+
     ui_return_type * ui_return = ecl_config_validate_grid( ecl_config , grid_file);
     if (ui_return_get_status(ui_return) == UI_RETURN_OK)
       ecl_config_set_grid(ecl_config, grid_file );
@@ -620,9 +627,13 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
 
   if (config_content_has_item(config, REFCASE_KEY))
   {
-    const char * refcase_path = config_content_get_value_as_path(config, REFCASE_KEY);
-    if (!ecl_config_load_refcase(ecl_config, refcase_path))
-      fprintf(stderr, "** Warning: loading refcase:%s failed \n", refcase_path);
+    const char * refcase_path = config_content_iget(config, REFCASE_KEY, 0, 0);
+    char * abs_refcase_path = util_alloc_filename(working_dir, refcase_path, NULL);
+
+    if (!ecl_config_load_refcase(ecl_config, abs_refcase_path))
+      fprintf(stderr, "** Warning: loading refcase:%s failed \n", abs_refcase_path);
+
+    free(abs_refcase_path);
   }
 
   if (config_content_has_item(config, REFCASE_LIST_KEY))
@@ -635,8 +646,11 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
       int j;
       for (j = 0; j < config_content_node_get_size(node); j++)
       {
-        const char * case_glob = config_content_node_iget_as_path(node, j);
-        ecl_refcase_list_add_matching(ecl_config->refcase_list, case_glob);
+        const char * refcase_list_path = config_content_node_iget(node, j);
+        char * abs_refcase_list_path = util_alloc_filename(working_dir, refcase_list_path, NULL);
+
+        ecl_refcase_list_add_matching(ecl_config->refcase_list, abs_refcase_list_path);
+        free(abs_refcase_list_path);
       }
     }
   }
