@@ -56,3 +56,9 @@ class ResConfigTest(ExtendedTestCase):
             config_file = "minimum_config"
             res_config = ResConfig(user_config_file=config_file)
             self.assertEqual( res_config.config_path , os.path.join( cwd , "simple_config"))
+
+            subst_config = res_config.subst_config
+            for t in subst_config:
+                print t
+            self.assertEqual( subst_config["<CONFIG_PATH>"], os.path.join( cwd , "simple_config"))
+
