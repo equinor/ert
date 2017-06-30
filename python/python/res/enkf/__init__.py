@@ -71,6 +71,7 @@ from .analysis_config import AnalysisConfig
 from .ecl_config import EclConfig
 
 from .site_config import SiteConfig
+from .subst_config import SubstConfig
 from .res_config import ResConfig
 from .ensemble_config import EnsembleConfig
 from .enkf_obs import EnkfObs

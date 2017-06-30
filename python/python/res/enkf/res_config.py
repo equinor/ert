@@ -19,6 +19,7 @@ from os.path import isfile
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
 from res.enkf import SiteConfig
+from res.enkf import SubstConfig
 
 class ResConfig(BaseCClass):
 
@@ -32,6 +33,7 @@ class ResConfig(BaseCClass):
     _config_path      = EnkfPrototype("char* res_config_get_working_directory(res_config)")
     _site_config      = EnkfPrototype("site_config_ref res_config_get_site_config(res_config)")
     _analysis_config  = EnkfPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
+    _subst_config     = EnkfPrototype("subst_config_ref res_config_get_subst_config(res_config)")
 
     def __init__(self, user_config_file):
         if user_config_file is not None and not isfile(user_config_file):
@@ -69,3 +71,6 @@ class ResConfig(BaseCClass):
     def config_path(self):
         return self._config_path( )
 
+    @property
+    def subst_config(self):
+        return self._subst_config( )
