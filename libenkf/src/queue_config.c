@@ -37,6 +37,8 @@
 #include <ert/enkf/queue_config.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/site_config.h>
+#include <ert/enkf/model_config.h>
 
 struct queue_config_struct {
     job_driver_type driver_type;
@@ -48,21 +50,60 @@ struct queue_config_struct {
 };
 
 static void queue_config_add_queue_driver(queue_config_type * queue_config, const char * driver_name, queue_driver_type * driver);
+static bool queue_config_init(queue_config_type * queue_config, const config_content_type * config_content);
 
-queue_config_type * queue_config_alloc() {
+static queue_config_type * queue_config_alloc_empty() {
     queue_config_type * queue_config = util_malloc(sizeof * queue_config);
     queue_config->queue_drivers = hash_alloc();
     queue_config->job_script = NULL;
     queue_config->driver_type = NULL_DRIVER;
     queue_config->user_mode = false;
+    queue_config->max_submit_set = false;
+    queue_config->max_submit = 2; // Default value
+
     return queue_config;
+}
+
+static queue_config_type * queue_config_alloc() {
+  queue_config_type * queue_config = queue_config_alloc_empty();
+
+  config_parser_type * config = config_alloc();
+  config_content_type * content = site_config_alloc_content(config);
+
+  queue_config_init(queue_config, content);
+
+  config_free(config);
+  config_content_free(content);
+
+  return queue_config;
+}
+
+queue_config_type * queue_config_alloc_load(const char * user_config_file) {
+  queue_config_type * queue_config = queue_config_alloc();
+
+  if(user_config_file) {
+    queue_config->user_mode = true;
+
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(
+                                                    user_config_file,
+                                                    config
+                                                    );
+
+    queue_config_init(queue_config, content);
+
+    config_free(config);
+    config_content_free(content);
+  }
+
+  return queue_config;
 }
 
 queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_config) {
     queue_config_type * queue_config_copy = util_malloc(sizeof * queue_config_copy);
     queue_config_copy->queue_drivers = hash_alloc();
     queue_config_add_queue_driver(queue_config_copy, LOCAL_DRIVER_NAME, queue_driver_alloc_local());
-    queue_config->user_mode = false;
+    queue_config_copy->user_mode = queue_config->user_mode;
 
     if (queue_config_has_job_script(queue_config)) {
         queue_config_copy->job_script = util_alloc_copy(queue_config->job_script, strlen( queue_config->job_script) + 1);        
@@ -70,21 +111,13 @@ queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_con
     else
         queue_config_copy->job_script = NULL;
 
-    if (queue_config->user_mode) {
-        queue_config_init_user_mode( queue_config_copy );
-    }
-
     if (queue_config->driver_type == NULL_DRIVER)
         queue_config_copy->driver_type = NULL_DRIVER;
     else
         queue_config_copy->driver_type = LOCAL_DRIVER;
     
-    if (queue_config->max_submit_set) {
-        queue_config_copy->max_submit_set = true;
-        queue_config_copy->max_submit = queue_config->max_submit;
-    }
-    else
-        queue_config->max_submit_set = false;
+    queue_config_copy->max_submit_set = queue_config->max_submit_set;
+    queue_config_copy->max_submit = queue_config->max_submit;
 
     return queue_config_copy;
 }
@@ -109,12 +142,6 @@ void queue_config_free(queue_config_type * queue_config) {
   util_safe_free(queue_config->job_script);
   free(queue_config);
 }
-
-void queue_config_init_user_mode(queue_config_type * queue_config) {
-  queue_config->user_mode = true;
-}
-
-
 
 const char * queue_config_get_queue_name(const queue_config_type * queue_config) {
     switch(queue_config->driver_type) {
@@ -195,7 +222,7 @@ bool queue_config_has_queue_driver(const queue_config_type * queue_config, const
 }
 
 
-bool queue_config_init(queue_config_type * queue_config, const config_content_type * config_content)
+static bool queue_config_init(queue_config_type * queue_config, const config_content_type * config_content)
 {
 
 
@@ -281,10 +308,3 @@ void queue_config_add_config_items(config_parser_type * parser, bool site_mode) 
     config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
   }
 }
-
-
-
-
-
-
-

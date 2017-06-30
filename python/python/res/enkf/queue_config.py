@@ -26,13 +26,13 @@ class QueueConfig(BaseCClass):
 
     _free                  = EnkfPrototype("void queue_config_free( queue_config )")
     _alloc_job_queue       = EnkfPrototype("job_queue_obj queue_config_alloc_job_queue( queue_config )")
-    _alloc                 = EnkfPrototype("void* queue_config_alloc()" , bind      = False)
+    _alloc                 = EnkfPrototype("void* queue_config_alloc_load(char*)", bind=False)
     _alloc_local_copy      = EnkfPrototype("queue_config_obj queue_config_alloc_local_copy( queue_config )")
     _has_job_script        = EnkfPrototype("bool queue_config_has_job_script( queue_config )")
     _max_submit            = EnkfPrototype("int queue_config_get_max_submit(queue_config)")
 
-    def __init__(self):
-        c_ptr = self._alloc()
+    def __init__(self, user_config_file=None):
+        c_ptr = self._alloc(user_config_file)
         super(QueueConfig, self).__init__(c_ptr)
 
     def create_job_queue(self):

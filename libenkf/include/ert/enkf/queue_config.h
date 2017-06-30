@@ -38,11 +38,9 @@ extern "C" {
 
 typedef struct queue_config_struct queue_config_type;
 
-    queue_config_type * queue_config_alloc();
+    queue_config_type * queue_config_alloc_load(const char * user_config_file);
     queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_config);
     void queue_config_free(queue_config_type * queue_config);
-    void queue_config_init_user_mode(queue_config_type * queue_config);
-    bool queue_config_init(queue_config_type * queue_config, const config_content_type * config);
 
     int queue_config_get_max_submit(queue_config_type * queue_config);
     bool queue_config_has_job_script( const queue_config_type * queue_config );
