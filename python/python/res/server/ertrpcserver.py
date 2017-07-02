@@ -164,6 +164,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
     def startSimulationBatch(self, initialization_case_name, target_case_name, simulation_count):
         fs_manager = self.ert.getEnkfFsManager()
         init_fs = fs_manager.getFileSystem(initialization_case_name)
+        target_fs = fs_manager.getFileSystem(target_case_name)
         with self._session.lock:
             if not self.isRunning():
                 self._session.simulation_context = None

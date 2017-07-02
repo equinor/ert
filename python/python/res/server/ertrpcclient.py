@@ -57,7 +57,7 @@ class ErtRPCClient(object):
         return self._server_proxy.isInitializationCaseAvailable()
 
 
-    def startSimulationBatch(self, initialization_case_name, simulation_count):
+    def startSimulationBatch(self, initialization_case_name, target_case_name, simulation_count):
         """
         Start a simulation batch. Will prepare a batch that will run for the specified number of realizations.
         Will fail if the server is already running a batch or no initialization case is available.
@@ -66,7 +66,7 @@ class ErtRPCClient(object):
         @type simulation_count: int
         """
         try:
-            self._server_proxy.startSimulationBatch(initialization_case_name, simulation_count)
+            self._server_proxy.startSimulationBatch(initialization_case_name, target_case_name, simulation_count)
         except Fault as f:
             raise convertFault(f)
 
