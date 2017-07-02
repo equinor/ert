@@ -1,16 +1,18 @@
+from ecl.util import ArgPack, CThreadPool
+
+from res.job_queue import JobQueueManager
+
 from res.enkf import ENKF_LIB
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.run_arg import RunArg
-from res.job_queue import JobQueueManager
-from ecl.util import ArgPack, CThreadPool
+from res.enkf.enums import EnkfRunType
 
 
 class SimulationContext(object):
-    def __init__(self, ert, size, verbose=False):
+    def __init__(self, ert, init_fs, target_fs, size, itr , verbose=False):
         self._ert = ert
         """ :type: res.enkf.EnKFMain """
         self._size = size
-        
         max_runtime = ert.analysisConfig().get_max_runtime()
                
         job_queue = ert.get_queue_config().create_job_queue()
@@ -21,21 +23,21 @@ class SimulationContext(object):
 
         self._thread_pool = CThreadPool(8)
         self._thread_pool.addTaskFunction("submitJob", ENKF_LIB, "enkf_main_isubmit_job__")
-       
 
+        subst_list = self._ert.getDataKW( )
+        path_fmt = self._ert.getModelConfig().getRunpathFormat()
+        self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, init_fs, result_fs, None, mask, path_fmt, subst_list, itr)
+        
+        
 
-    def addSimulation(self, iens, target_fs):
+    def addSimulation(self, iens):
         if iens >= self._size:
             raise UserWarning("Realization number out of range: %d >= %d" % (iens, self._size))
 
         if iens in self._run_args:
             raise UserWarning("Realization number: '%d' already queued" % iens)
 
-        runpath_fmt = self._ert.getModelConfig().getRunpathFormat()
-        member = self._ert.getRealisation(iens)
-        runpath = ErtRunContext.createRunpath(iens , runpath_fmt, member.getDataKW( ))
-        run_arg = RunArg.createEnsembleExperimentRunArg(target_fs, iens, runpath)
-
+        run_arg = self._run_context.iensGet( iens )
         self._ert.createRunPath(run_arg)
         queue = self._queue_manager.get_job_queue()
         self._run_args[iens] = run_arg
