@@ -71,10 +71,9 @@ class ErtRPCClient(object):
             raise convertFault(f)
 
 
-    def addSimulation(self, target_case_name, geo_id, pert_id, sim_id, keywords):
+    def addSimulation(self, geo_id, pert_id, sim_id, keywords):
         """
         Start a simulation.
-        @type target_case_name: str
         @type geo_id: int
         @type pert_id:
         @type sim_id: int
@@ -83,7 +82,7 @@ class ErtRPCClient(object):
         @raise UserWarning if the server is already running a simulation with the same id as sim_id
         """
         try:
-            self._server_proxy.addSimulation(target_case_name, geo_id, pert_id, sim_id, keywords)
+            self._server_proxy.addSimulation(geo_id, pert_id, sim_id, keywords)
         except Fault as f:
             raise convertFault(f)
 

@@ -161,7 +161,9 @@ class ErtRPCServer(SimpleXMLRPCServer):
         return self._session.init_case_name is not None
 
 
-    def startSimulationBatch(self, initialization_case_name, simulation_count):
+    def startSimulationBatch(self, initialization_case_name, target_case_name, simulation_count):
+        fs_manager = self.ert.getEnkfFsManager()
+        init_fs = fs_manager.getFileSystem(initialization_case_name)
         with self._session.lock:
             if not self.isRunning():
                 self._session.simulation_context = None
@@ -169,15 +171,15 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
                 self.ert.addDataKW("<WPRO_RUN_COUNT>", str(self._session.batch_number))
                 self.ert.addDataKW("<ELCO_RUN_COUNT>", str(self._session.batch_number))
+                self._session.simulation_context = SimulationContext(self.ert, init_fs, target_fs, simulation_count, self._session.batch_number, verbose=self._verbose_queue)
                 self._session.batch_number += 1
-                self._session.simulation_context = SimulationContext(self.ert, simulation_count, verbose=self._verbose_queue)
-
+                
 
     def _getInitializationCase(self):
         return self.ert.getEnkfFsManager().getFileSystem(self._session.init_case_name)
 
 
-    def addSimulation(self, target_case_name, geo_id, pert_id, iens, keywords):
+    def addSimulation(self, geo_id, pert_id, iens, keywords):
         if not self.isRunning():
             raise createFault(UserWarning, "The server is not ready to receive simulations. Have you called startSimulationBatch() first?")
 
@@ -186,12 +188,8 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
         state = self.ert.getRealisation(iens)
         state.addSubstKeyword("GEO_ID", "%d" % geo_id)
-        target_fs = self.ert.getEnkfFsManager().getFileSystem(target_case_name)
         self._initializeRealization(target_fs, geo_id, iens, keywords)
-        self._session.simulation_context.addSimulation(iens, target_fs)
-
-        if not target_case_name.startswith("."):
-            self.ert.getEnkfFsManager().switchFileSystem(target_fs)
+        self._session.simulation_context.addSimulation(iens)
 
 
     def _initializeRealization(self, target_fs, geo_id, iens, keywords):
