@@ -98,11 +98,11 @@ class RPCStorageTest(ExtendedTestCase):
 
 
     def runSimulation(self, client, realization_count, batch_id, batch_name):
-        client.startSimulationBatch("default", 2)
+        client.startSimulationBatch("default", "target_case", 2)
         kw = {"SNAKE_OIL_PARAM": [0.50, 6, 1.750, 0.250, 0.990, 2, 1.770, 0.330, 0.550, 0.770]} # identical runs
 
         for iens in range(realization_count):
-            client.addSimulation(batch_name, geo_id=0, pert_id=0, sim_id=iens, keywords=kw)
+            client.addSimulation(0,0,iens,  kw)
 
         while client.isRunning():
             time.sleep(0.2)

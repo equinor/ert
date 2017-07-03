@@ -89,10 +89,10 @@ from .log_config import LogConfig
 from .res_config import ResConfig
 
 from .es_update import ESUpdate
-from .enkf_simulation_runner import EnkfSimulationRunner
-from .enkf_fs_manager import EnkfFsManager
 from .run_arg import RunArg
 from .ert_run_context import ErtRunContext
+from .enkf_simulation_runner import EnkfSimulationRunner
+from .enkf_fs_manager import EnkfFsManager
 from .enkf_main import EnKFMain
 from .forward_load_context import ForwardLoadContext
 

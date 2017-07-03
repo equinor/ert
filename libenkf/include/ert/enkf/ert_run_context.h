@@ -38,9 +38,13 @@ typedef struct ert_run_context_struct ert_run_context_type;
                                                             const subst_list_type * subst_list ,
                                                             int iter);
 
-  char                 * ert_run_context_alloc_runpath( int iens , const path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter);
+  char                 * ert_run_context_alloc_runpath( int iens , const path_fmt_type * runpath_fmt , const subst_list_type * subst_list , int iter);
 
-  ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode, enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
+  ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
+                                               init_mode_type init_mode,
+                                               enkf_fs_type * init_fs, 
+                                               enkf_fs_type * simulate_fs ,
+                                               enkf_fs_type * target_update_fs ,
                                                bool_vector_type * iactive ,
                                                path_fmt_type * runpath_fmt ,
                                                subst_list_type * subst_list ,
@@ -53,6 +57,7 @@ typedef struct ert_run_context_struct ert_run_context_type;
                                                                    int iter);
 
   ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * init_fs,
+                                                         init_mode_type init_mode,
                                                          bool_vector_type * iactive ,
                                                          const path_fmt_type * runpath_fmt ,
                                                          const subst_list_type * subst_list ,
@@ -80,6 +85,7 @@ typedef struct ert_run_context_struct ert_run_context_type;
   run_arg_type           * ert_run_context_iens_get_arg( const ert_run_context_type * context , int iens);
   void                     ert_run_context_deactivate_realization( ert_run_context_type * context , int iens);
   const char             * ert_run_context_get_id( const ert_run_context_type * context );
+  init_mode_type           ert_run_context_get_init_mode( const ert_run_context_type * context );
   char                   * ert_run_context_alloc_run_id( );
 
   enkf_fs_type * ert_run_context_get_init_fs(const ert_run_context_type * run_context);

@@ -126,7 +126,7 @@ void forward_initialize_node(enkf_main_type * enkf_main, const char * init_file,
     bool_vector_type * iactive  = bool_vector_alloc(ens_size, true);
     const path_fmt_type * runpath_fmt = model_config_get_runpath_fmt( enkf_main_get_model_config( enkf_main ));
     const subst_list_type * subst_list = NULL;
-    ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs , iactive, runpath_fmt, subst_list , 0 );
+    ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs, INIT_CONDITIONAL , iactive, runpath_fmt, subst_list , 0 );
 
     enkf_main_create_run_path(enkf_main , run_context );
     bool_vector_free(iactive);

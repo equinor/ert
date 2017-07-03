@@ -45,6 +45,7 @@ struct ert_run_context_struct {
   // to false during runtime.
   bool_vector_type * iactive;
   run_mode_type      run_mode;
+  init_mode_type     init_mode;
   int                iter;
   int                step1;
   int                step2;
@@ -60,7 +61,7 @@ struct ert_run_context_struct {
 
 
 
-char * ert_run_context_alloc_runpath( int iens , const path_fmt_type * runpath_fmt , subst_list_type * subst_list , int iter) {
+char * ert_run_context_alloc_runpath( int iens , const path_fmt_type * runpath_fmt , const subst_list_type * subst_list , int iter) {
   char * runpath;
   {
     char * first_pass = path_fmt_alloc_path(runpath_fmt , false , iens, iter);    /* 1: Replace first %d with iens, if a second %d replace with iter */
@@ -98,7 +99,7 @@ char * ert_run_context_alloc_run_id( ) {
   return util_alloc_sprintf("%d:%d:%4d-%0d-%02d-%02d-%02d-%02d:%ud" , getpid() , getuid(), year , month , day , hour , min , sec, random);
 }
 
-static ert_run_context_type * ert_run_context_alloc__(bool_vector_type * iactive , run_mode_type run_mode , enkf_fs_type * init_fs , enkf_fs_type * result_fs , enkf_fs_type * update_target_fs , int iter) {
+static ert_run_context_type * ert_run_context_alloc__(bool_vector_type * iactive , run_mode_type run_mode , init_mode_type init_mode, enkf_fs_type * init_fs , enkf_fs_type * result_fs , enkf_fs_type * update_target_fs , int iter) {
   ert_run_context_type * context = util_malloc( sizeof * context );
   UTIL_TYPE_ID_INIT( context , ERT_RUN_CONTEXT_TYPE_ID );
 
@@ -106,6 +107,7 @@ static ert_run_context_type * ert_run_context_alloc__(bool_vector_type * iactive
   context->iens_map = bool_vector_alloc_active_index_list( iactive , -1 );
   context->run_args = vector_alloc_new();
   context->run_mode = run_mode;
+  context->init_mode = init_mode;
   context->iter = iter;
   ert_run_context_set_init_fs(context, init_fs);
   ert_run_context_set_result_fs(context, result_fs);
@@ -123,7 +125,7 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
                                                                  const subst_list_type * subst_list ,
                                                                  int iter) {
 
-  ert_run_context_type * context = ert_run_context_alloc__( iactive , ENSEMBLE_EXPERIMENT , fs , fs , NULL , iter);
+  ert_run_context_type * context = ert_run_context_alloc__( iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL, fs , fs , NULL , iter);
   {
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
@@ -139,11 +141,12 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
 
 
 ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * init_fs,
+                                                       init_mode_type init_mode,
                                                        bool_vector_type * iactive ,
                                                        const path_fmt_type * runpath_fmt ,
                                                        const subst_list_type * subst_list ,
                                                        int iter) {
-  ert_run_context_type * context = ert_run_context_alloc__( iactive , INIT_ONLY , init_fs , NULL , NULL , iter);
+  ert_run_context_type * context = ert_run_context_alloc__( iactive , INIT_ONLY , init_mode, init_fs , NULL , NULL , iter);
   {
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
@@ -165,7 +168,7 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulat
                                                           const subst_list_type * subst_list ,
                                                           int iter) {
 
-  ert_run_context_type * context = ert_run_context_alloc__( iactive , SMOOTHER_UPDATE , simulate_fs , simulate_fs , target_update_fs , iter);
+  ert_run_context_type * context = ert_run_context_alloc__( iactive , SMOOTHER_UPDATE , INIT_CONDITIONAL, simulate_fs , simulate_fs , target_update_fs , iter);
   {
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
@@ -179,7 +182,11 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulat
   return context;
 }
 
-ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode, enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
+ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
+                                             init_mode_type init_mode,
+                                             enkf_fs_type * init_fs,
+                                             enkf_fs_type * simulate_fs ,
+                                             enkf_fs_type * target_update_fs ,
                                              bool_vector_type * iactive ,
                                              path_fmt_type * runpath_fmt ,
                                              subst_list_type * subst_list ,
@@ -189,6 +196,9 @@ ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode, enkf_fs_typ
 
   if (run_mode == ENSEMBLE_EXPERIMENT)
     return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( simulate_fs , iactive , runpath_fmt , subst_list , iter);
+
+  if (run_mode == INIT_ONLY)
+    return ert_run_context_alloc_INIT_ONLY( init_fs, init_mode , iactive, runpath_fmt , subst_list, iter );
 
   util_abort("%s: internal error - should never be here \n",__func__);
   return NULL;
@@ -238,6 +248,11 @@ run_mode_type ert_run_context_get_mode( const ert_run_context_type * context ) {
 
 int ert_run_context_get_iter( const ert_run_context_type * context ) {
   return context->iter;
+}
+
+
+init_mode_type ert_run_context_get_init_mode( const ert_run_context_type * context ) {
+  return context->init_mode;
 }
 
 int ert_run_context_get_step1( const ert_run_context_type * context ) {

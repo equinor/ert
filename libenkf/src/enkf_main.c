@@ -1358,7 +1358,7 @@ void enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_contex
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
-                                      enkf_main_get_fs( enkf_main ),
+                                      ert_run_context_get_init_fs( run_context ),
                                       param_list ,
                                       ert_run_context_get_iactive( run_context ),
                                       init_mode);

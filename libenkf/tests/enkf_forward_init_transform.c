@@ -42,7 +42,7 @@ void create_runpath(enkf_main_type * enkf_main, int iter ) {
   const path_fmt_type * runpath_fmt = model_config_get_runpath_fmt( enkf_main_get_model_config( enkf_main ));
   const subst_list_type * subst_list = NULL;
   enkf_fs_type * fs           =  enkf_main_get_fs(enkf_main);
-  ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs , iactive, runpath_fmt, subst_list , iter );
+  ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs, INIT_CONDITIONAL, iactive, runpath_fmt, subst_list , iter );
 
   enkf_main_create_run_path(enkf_main , run_context);
   bool_vector_free(iactive);
