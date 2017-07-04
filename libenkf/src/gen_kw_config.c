@@ -240,6 +240,10 @@ const char * gen_kw_config_get_key(const gen_kw_config_type * config ) {
   return config->key;
 }
 
+const char * gen_kw_config_get_tag_fmt(const gen_kw_config_type * config) {
+  return config->tag_fmt;
+}
+
 
 char * gen_kw_config_alloc_user_key(const gen_kw_config_type * config , int kw_nr) {
   char * user_key = util_alloc_sprintf("%s:%s" , config->key ,gen_kw_config_iget_name( config , kw_nr ));
