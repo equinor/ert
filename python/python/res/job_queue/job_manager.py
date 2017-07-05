@@ -201,6 +201,17 @@ class JobManager(object):
     def __len__(self):
         return len(self.job_list)
 
+    def __repr__(self):
+        st = self.start_time
+        fs = self.file_server
+        is_node = self.isilon_node
+        fu = self.fs_use
+        node = self.node
+        us = self.user
+        cnt = 'len=%d, start=%s, file_server=%s, fs_use=%s, node=%s, isilon_node=%s, user=%s'
+        cnt = cnt % (len(self), st, fs, fu, node, is_node, us)
+        return 'JobManager(%s)' % cnt
+
 
     def __getitem__(self, index):
         if isinstance(index, int):

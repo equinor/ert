@@ -88,6 +88,15 @@ class JobManagerTest(TestCase):
                 jobm = JobManager(module_file="Does/not/exist",
                                   json_file="Neither/does/this/one")
 
+    def test_repr(self):
+        with TestAreaContext("jobman_repr"):
+            self.assert_clean_slate()
+            create_jobs_json([{'name' : 'COPY_FILE', 'executable' : 'XYZ'}])
+            jobm = JobManager()
+            self.assertIn('len=1', repr(jobm))
+            self.assertTrue(repr(jobm).startswith('JobManager('))
+
+
     def test_invalid_jobs_json(self):
         with TestAreaContext("invalid_jobs_json"):
             self.assert_clean_slate()
