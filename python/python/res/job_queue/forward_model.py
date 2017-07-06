@@ -54,8 +54,8 @@ class ForwardModel(BaseCClass):
     def free(self):
         self._free( )
 
-    def formatted_fprintf(self, path, global_args, unmask):
-        self._formatted_fprintf(path, global_args, unmask)
+    def formatted_fprintf(self, path, global_args, umask):
+        self._formatted_fprintf(path, global_args, umask)
 
     def __repr__(self):
         return self._create_repr('joblist=%s' % self.joblist())
