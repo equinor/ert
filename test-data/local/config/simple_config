@@ -140,7 +140,7 @@ RSH_HOST     be-lx655082:2      be-lx633214:2
 
 
 
-LOG_LEVEL         3
+LOG_LEVEL         INFO
 LOG_FILE          log.txt
 UPDATE_LOG_PATH   UP
 

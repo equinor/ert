@@ -723,7 +723,7 @@ static void model_config_init_user_config(config_parser_type * config ) {
   config_schema_item_set_argc_minmax(item, 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 
-  config_add_key_value(config, LOG_LEVEL_KEY, false, CONFIG_INT);
+  config_add_key_value(config, LOG_LEVEL_KEY, false, CONFIG_STRING);
   config_add_key_value(config, LOG_FILE_KEY, false, CONFIG_STRING);
 
   config_add_key_value(config, MAX_RESAMPLE_KEY, false, CONFIG_INT);

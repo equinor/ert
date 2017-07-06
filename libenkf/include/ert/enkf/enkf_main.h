@@ -150,6 +150,7 @@ extern "C" {
   const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
 
 
+  message_level_type res_log_level_parser(const char *level);
 
 
   void                     enkf_main_list_users(  set_type * users , const char * executable );

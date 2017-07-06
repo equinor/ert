@@ -45,6 +45,6 @@ FIELD PERMX PARAMETER  permx.grdcel  INIT_FILES:fields/permx%d.grdecl
 FIELD PORO  PARAMETER  poro.grdcel   INIT_FILES:fields/poro%d.grdecl
 
 
-LOG_LEVEL 3
+LOG_LEVEL INFO
 LOG_FILE log/log_snake_oil.ert.txt
 UPDATE_LOG_PATH log/update

@@ -29,11 +29,11 @@ extern "C" {
 #include <ert/util/log.h>
 
 void res_log_add_message_str(message_level_type message_level, const char* message);
-void res_log_init_log(int log_level,const char * log_file_name, bool verbose);
+void res_log_init_log(message_level_type log_level,const char * log_file_name, bool verbose);
 void res_log_init_log_default_log_level(const char * log_file_name, bool verbose);
 void res_log_init_log_default( bool verbose);
-void res_log_add_fmt_message(int message_level , FILE * dup_stream , const char * fmt , ...);
-void res_log_add_message(int message_level , FILE * dup_stream , char* message, bool free_message);
+void res_log_add_fmt_message(message_level_type message_level , FILE * dup_stream , const char * fmt , ...);
+void res_log_add_message(message_level_type message_level , FILE * dup_stream , char* message, bool free_message);
 void res_log_add_message_py(int message_level, char* message);
 void res_log_close();
 bool res_log_is_open();

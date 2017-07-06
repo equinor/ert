@@ -375,7 +375,7 @@ void test_read_only() {
 int main(int argc , char ** argv) {
 
   enkf_main_install_SIGNALS();
-  res_log_init_log(0 , NULL , false ); // Make sure there will be no logging.
+  res_log_init_log(LOG_CRITICAL, NULL , false ); // Make sure there will be no logging.
 
   if (argc == 1) {
     simple_test();

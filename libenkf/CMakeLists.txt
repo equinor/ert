@@ -147,6 +147,7 @@ foreach (test   enkf_active_list
                 enkf_run_arg
                 enkf_state_map
                 obs_vector_tests
+                enkf_res_log_level_parse
     )
     add_executable(${test} tests/${test}.c)
     target_link_libraries(${test} enkf)
@@ -166,7 +167,6 @@ target_link_libraries(enkf_magic_string_in_workflows enkf)
 add_config_test(enkf_magic_string_in_workflows
                 enkf_magic_string_in_workflows
                 ${CMAKE_SOURCE_DIR}/test-data/local/config/workflows/config)
-
 
 add_executable(enkf_main tests/enkf_main.c)
 target_link_libraries(enkf_main enkf)
