@@ -71,7 +71,7 @@ Keyword name                                                        	Required by
 :ref:`HISTORY_SOURCE <history_source>`                              	NO                    			REFCASE_HISTORY     	  	Source used for historical values.
 :ref:`HOOK_WORKFLOW <hook_workflow>` 					NO 									Install a workflow to be run automatically.
 :ref:`IGNORE_SCHEDULE <ignore_schedule>`                            	NO
-:ref:`INSTALL_JOB <install_jobb>`                                   	NO                                          				Install a job for use in a forward model. 
+:ref:`INSTALL_JOB <install_job>`                                   	NO                                          				Install a job for use in a forward model.
 :ref:`ITER_CASE <iter_Case>`                                        	NO                    			IES%d         	        	Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                      	NO                    			4             	        	Number of iterations - iterated ensemble smoother 
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                          	NO                    			4         	            	Number of retries for a iteration - iterated ensemble smoother 
@@ -83,7 +83,7 @@ Keyword name                                                        	Required by
 :ref:`LICENSE_PATH <licence_path>`  				    	NO 									A path where ert-licenses to e.g. RMS are stored. 
 :ref:`LOCAL_CONFIG <load_config>` 			            	NO 									A file with configuration information for local analysis. 
 :ref:`LOG_FILE <log_file>` 					    	NO 					log 				Name of log file 
-:ref:`LOG_LEVEL <log_level>` 					    	NO 		 			1 				How much logging, legal values are CRITICAL, ERROR, WARNING,INFO,DEBUG, with more DEBUG beeing the most verbose.
+:ref:`LOG_LEVEL <log_level>` 					    	NO 		 			1 				How much logging, legal values are CRITICAL, ERROR, WARNING, INFO, DEBUG, with DEBUG being more verbose.
 :ref:`LSF_QUEUE <lsf_queue>` 					    	NO 					normal				Name of LSF queue. 
 :ref:`LSF_RESOURCES <lsf_resources>` 				    	NO 
 :ref:`LSF_SERVER <lsf_server>` 					    	NO 									Set server used when submitting LSF jobs. 

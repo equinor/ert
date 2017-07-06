@@ -2258,21 +2258,27 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
 }
 
 /**
- * TODO:  NB: this method is basily the initializer of a "log-config" struct, so when log-onfig is extracted to a
- * seperate file as the other config objects have been this should be moved there as well.
+ * TODO: This method is basically the initializer of a "log-config" struct, so
+ * when log-config is extracted to a separate file as the other config objects
+ * have been this should be moved there as well.
  *
- * This method parses the 'LOG_LEVEL_KEY' value according to the following rules:
- * - If it is an integer 0 <= i <= 4 then it issues an deprecation warning and uses the aproximately corrrect enum of
- * message_level_type.
- * - If it is one of the strings CRITICAL, ERROR, WARNING, INFO, DEBUG it returns the corresponding enum of
- * message_level_type
+ * This method parses the 'LOG_LEVEL_KEY' value according to the following
+ * rules:
+ *
+ * - If it is an integer 0 <= i <= 4 then it issues an deprecation warning and
+ *   uses the approximately correct enum of message_level_type.
+ *
+ * - If it is one of the strings CRITICAL, ERROR, WARNING, INFO, DEBUG it
+ *   returns the corresponding enum of message_level_type
+ *
  * - Else it returns the DEFAULT_LOG_LEVEL
+ *
  */
 message_level_type res_log_level_parser(const char *level) {
   typedef struct {
-    const char *log_keyword; //The keyword written in the config file for this log-level
-    const char *log_old_numeric_str; //The *old* integer value (as a string) representing the same log-level
-    const message_level_type log_enum; //The enum for the new log-level.
+    const char *log_keyword; // The keyword written in the config file
+    const char *log_old_numeric_str; // The *old* integer value
+    const message_level_type log_enum; // The enum for the new log-level
   } log_tupple;
 
   log_tupple log_levels[] = {
@@ -2285,11 +2291,11 @@ message_level_type res_log_level_parser(const char *level) {
 
   for (int i = 0; i < nr_of_log_levels; i++) {
     log_tupple curr_log_level = log_levels[i];
-    if (strcmp(level, curr_log_level.log_old_numeric_str)==0) { //We found an old integer level.
+    if (strcmp(level, curr_log_level.log_old_numeric_str)==0) { // We found an old integer level
       fprintf(stderr, "** Deprecation warning: Use of %s %s is deprecated, use %s %s instead\n",LOG_LEVEL_KEY,
               curr_log_level.log_old_numeric_str,LOG_LEVEL_KEY, curr_log_level.log_keyword);
       return curr_log_level.log_enum;
-    } else if (strcmp(level, curr_log_level.log_keyword)==0) { //We found a new proper name.
+    } else if (strcmp(level, curr_log_level.log_keyword)==0) { // We found a new proper name
       return curr_log_level.log_enum;
     }
   }

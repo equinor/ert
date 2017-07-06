@@ -91,7 +91,9 @@ void res_log_add_message_py(int message_level, char* message){
 }
 
 /**
- * Adding a message with a given message_level. A low message_level means "more important", as only messages with
+ * Adding a message with a given message_level.
+ *
+ * A low message_level means "more important", as only messages with
  * message_level below the configured log_level will be included.
  */
 void res_log_add_message(message_level_type message_level , FILE * dup_stream , char* message, bool free_message) {
@@ -101,8 +103,10 @@ void res_log_add_message(message_level_type message_level , FILE * dup_stream , 
 }
 
 /**
- * Adding a message with a given message_level. Expects fmt to be a string with potentiall
- * string-formating, and "..." is the required arguments to the string-formating.
+ * Adding a message with a given message_level.
+ *
+ * Expects fmt to be a string with potential string-formatting, and "..." is the
+ * required arguments to the string-formatting.
  */
 void res_log_add_fmt_message(message_level_type message_level , FILE * dup_stream , const char * fmt , ...) {
     if (log_include_message(logh,message_level)) {

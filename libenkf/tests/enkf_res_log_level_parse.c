@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2014  Statoil ASA, Norway.
+   Copyright (C) 2017  Statoil ASA, Norway.
 
    The file 'enkf_res_log_level_parse.c' is part of ERT - Ensemble based Reservoir Tool.
 
@@ -21,22 +21,22 @@
 #include <ert/enkf/enkf_main.h>
 
 typedef struct {
-  const char * log_keyword; //The keyword written in the config file for this log-level
-  const char * log_old_numeric_str; //The *old* integer value (as a string) representing the same log-level
-  const message_level_type log_enum; //The enum for the new log-level.
-} log_tupple;
-log_tupple log_levels[] = {
+  const char * log_keyword; // keyword written in the config file
+  const char * log_old_numeric_str; // *old* integer value (as a string)
+  const message_level_type log_enum; // enum for the new log-level
+} log_tuple;
+log_tuple log_levels[] = {
         {"CRITICAL", "0", LOG_CRITICAL},
         {"ERROR", "1", LOG_ERROR},
         {"WARNING", "2", LOG_WARNING},
         {"INFO", "3", LOG_INFO},
         {"DEBUG", "4", LOG_DEBUG}};
 
-/*Old numeric values are parsed and converted properly*/
+/* Old numeric values are parsed and converted properly */
 void test_parse_old_numeric_positive() {
   for (int i = 0; i < 5; i++) {
-    log_tupple curr_log_tupple = log_levels[i];
-    test_assert_int_equal(res_log_level_parser(curr_log_tupple.log_old_numeric_str), curr_log_tupple.log_enum);
+    log_tuple curr_log_tuple = log_levels[i];
+    test_assert_int_equal(res_log_level_parser(curr_log_tuple.log_old_numeric_str), curr_log_tuple.log_enum);
   }
 }
 
