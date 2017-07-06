@@ -64,7 +64,7 @@ class EnKFMain(BaseCClass):
     _export_field = EnkfPrototype("bool enkf_main_export_field(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int)")
     _export_field_with_fs = EnkfPrototype("bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_fs_manager)")
     _load_from_forward_model = EnkfPrototype("int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)")
-    _create_run_path = EnkfPrototype("void enkf_main_icreate_run_path(enkf_main , run_arg)")
+    _create_run_path = EnkfPrototype("void enkf_main_icreate_run_path(enkf_main , run_arg, bool)")
     _submit_simulation = EnkfPrototype("void enkf_main_isubmit_job(enkf_main , run_arg, job_queue)")
     _alloc_run_context_ENSEMBLE_EXPERIMENT= EnkfPrototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , enkf_init_mode_enum , int)")
     _get_runpath_list = EnkfPrototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
@@ -305,8 +305,8 @@ class EnKFMain(BaseCClass):
         """Returns the number of loaded realizations"""
         return self._load_from_forward_model(iteration, realization, fs)
 
-    def createRunPath(self , run_arg):
-        self._create_run_path( run_arg)
+    def createRunPath(self , run_arg, init = True):
+        self._create_run_path( run_arg, init)
 
     def submitSimulation(self , run_arg, queue):
         self._submit_simulation( run_arg, queue)
