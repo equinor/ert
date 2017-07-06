@@ -34,32 +34,32 @@ Keyword name                                                             Require
 =====================================================================    ====================================    ==============================  ==============================================================================================================================================
 :ref:`ADD_FIXED_LENGTH_SCHEDULE_KW <add_fixed_length_schedule_kw>`        NO                                                                     Supporting unknown SCHEDULE keywords.
 :ref:`ANALYSIS_COPY <analysis_copy>`                                      NO                                                                     Create new instance of analysis module
-:ref:`ANALYSIS_LOAD <analysis_load>`					  NO									 Load analysis module
-:ref:`ANALYSIS_SET_VAR <analysis_set_var>`				  NO									 Set analysis module internal state variable
-:ref:`ANALYSIS_SELECT <analysis_select>`				  NO					 STD_ENKF			 Select analysis module to use in update
-:ref:`CASE_TABLE <case_table>`						  NO									 For running sensitivities you can give the cases descriptive names
-:ref:`CONTAINER <container>`						  NO									 ...
-:ref:`CUSTOM_KW <custom_kw>`						  NO									 Ability to load arbitrary values from the forward model.
-:ref:`DATA_FILE <data_file>`						  YES									 Provide an ECLIPSE data file for the problem.
-:ref:`DATA_KW <data_kw>`						  NO									 Replace strings in ECLIPSE .DATA files
-:ref:`DBASE_TYPE <dbase_type>`						  NO					 BLOCK_FS			 Which 'database' system should be used for storage
-:ref:`DEFINE <define>`							  NO									 Define keywords with config scope
-:ref:`DELETE_RUNPATH <delete_runpath>`					  NO									 Explicitly tell ert to delete the runpath when a job is complete
-:ref:`ECLBASE <eclbase>`						  YES									 Define a name for the ECLIPSE simulations.
-:ref:`END_DATE <end_date>`						  NO									 You can tell ERT how long the simulations should be - for error check
-:ref:`ENKF_ALPHA <enkf_alpha>`						  NO					 1.50				 Parameter controlling outlier behaviour in EnKF algorithm
-:ref:`ENKF_BOOTSTRAP <enkf_bootstrap>`					  NO					 FALSE				 Should we bootstrap the Kalman gain estimate
-:ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`			  NO						       ...			
-:ref:`ENKF_CV_FOLDS <enkf_cv_folds>`					  NO					 10				 Number of folds used in the Cross-Validation scheme
-:ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`				  NO					 1					
-:ref:`ENKF_LOCAL_CV <enkf_local_cv>`					  NO					 FALSE				 Should we estimate the subspace dimension using Cross-Validation
-:ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`		  NO					 FALSE				 Should observations from many times be merged together
-:ref:`ENKF_MODE <enkf_mode>`						  NO					 STANDARD			 Which EnKF should be used
-:ref:`ENKF_PEN_PRESS <enkf_pen_press>`					  NO					 FALSE				 Should we want to use a penalized PRESS statistic in model selection?
-:ref:`ENKF_RERUN <enkf_rerun>`						  NO					 FALSE				 Should the simulations be restarted from time zero after each update.
-:ref:`ENKF_SCALING <enkf_scaling>`					  NO					 TRUE				 Do we want to normalize the data ensemble to have unit variance?
-:ref:`ENKF_TRUNCATION <enfk_truncation>`				  NO					 0.99				 Cutoff used on singular value spectrum.
-:ref:`ENSPATH <enspath>`						  NO					 storage			 Folder used for storage of simulation results.
+:ref:`ANALYSIS_LOAD <analysis_load>`                                      NO                                                                     Load analysis module
+:ref:`ANALYSIS_SET_VAR <analysis_set_var>`                                NO                                                                     Set analysis module internal state variable
+:ref:`ANALYSIS_SELECT <analysis_select>`                                  NO                                     STD_ENKF                        Select analysis module to use in update
+:ref:`CASE_TABLE <case_table>`                                            NO                                                                     For running sensitivities you can give the cases descriptive names
+:ref:`CONTAINER <container>`                                              NO                                                                     ...
+:ref:`CUSTOM_KW <custom_kw>`                                              NO                                                                     Ability to load arbitrary values from the forward model.
+:ref:`DATA_FILE <data_file>`                                              YES                                                                    Provide an ECLIPSE data file for the problem.
+:ref:`DATA_KW <data_kw>`                                                  NO                                                                     Replace strings in ECLIPSE .DATA files
+:ref:`DBASE_TYPE <dbase_type>`                                            NO                                     BLOCK_FS                        Which 'database' system should be used for storage
+:ref:`DEFINE <define>`                                                    NO                                                                     Define keywords with config scope
+:ref:`DELETE_RUNPATH <delete_runpath>`                                    NO                                                                     Explicitly tell ert to delete the runpath when a job is complete
+:ref:`ECLBASE <eclbase>`                                                  YES                                                                    Define a name for the ECLIPSE simulations.
+:ref:`END_DATE <end_date>`                                                NO                                                                     You can tell ERT how long the simulations should be - for error check
+:ref:`ENKF_ALPHA <enkf_alpha>`                                            NO                                     1.50                            Parameter controlling outlier behaviour in EnKF algorithm
+:ref:`ENKF_BOOTSTRAP <enkf_bootstrap>`                                    NO                                     FALSE                           Should we bootstrap the Kalman gain estimate
+:ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                      NO                                                   ...                      
+:ref:`ENKF_CV_FOLDS <enkf_cv_folds>`                                      NO                                     10                              Number of folds used in the Cross-Validation scheme
+:ref:`ENKF_KERNEL_PARAM <enkf_kernel_param>`                              NO                                     1                                      
+:ref:`ENKF_LOCAL_CV <enkf_local_cv>`                                      NO                                     FALSE                           Should we estimate the subspace dimension using Cross-Validation
+:ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`                  NO                                     FALSE                           Should observations from many times be merged together
+:ref:`ENKF_MODE <enkf_mode>`                                              NO                                     STANDARD                        Which EnKF should be used
+:ref:`ENKF_PEN_PRESS <enkf_pen_press>`                                    NO                                     FALSE                           Should we want to use a penalized PRESS statistic in model selection?
+:ref:`ENKF_RERUN <enkf_rerun>`                                            NO                                     FALSE                           Should the simulations be restarted from time zero after each update.
+:ref:`ENKF_SCALING <enkf_scaling>`                                        NO                                     TRUE                            Do we want to normalize the data ensemble to have unit variance?
+:ref:`ENKF_TRUNCATION <enfk_truncation>`                                  NO                                     0.99                            Cutoff used on singular value spectrum.
+:ref:`ENSPATH <enspath>`                                                  NO                                     storage                         Folder used for storage of simulation results.
 :ref:`FIELD <field>`                                                      NO                                                                     Ads grid parameters
 :ref:`FORWARD_MODEL <forward_model>`                                      NO                                                                     Add the running of a job to the simulation forward model.
 :ref:`GEN_DATA <gen_data>`                                                NO                                                                     Specify a general type of data created/updated by the forward model.
@@ -76,23 +76,23 @@ Keyword name                                                             Require
 :ref:`ITER_COUNT <iter_count>`                                            NO                                     4                               Number of iterations - iterated ensemble smoother
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                                NO                                     4                               Number of retries for a iteration - iterated ensemble smoother
 :ref:`JOBNAME <jobname>`                                                  NO                                                                     Name used for simulation files. An alternative to ECLBASE.
-:ref:`JOB_SCRIPT <job_script>`						  NO								         Python script managing the forward model.
-:ref:`LOAD_SEED <load_seed>`						  NO								         Load random seed from given file.
+:ref:`JOB_SCRIPT <job_script>`                                            NO                                                                     Python script managing the forward model.
+:ref:`LOAD_SEED <load_seed>`                                              NO                                                                     Load random seed from given file.
 :ref:`LOAD_WORKFLOW <load_workflow>`                                      NO                                                                     Load a workflow into ERT.
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                              NO                                                                     Load a workflow job into ERT.
 :ref:`LICENSE_PATH <license_path>`                                        NO                                                                     A path where ert-licenses to e.g. RMS are stored.
 :ref:`LOCAL_CONFIG <load_config>`                                         NO                                                                     A file with configuration information for local analysis.
-:ref:`LOG_FILE <log_file>`                                                NO                                 	 log		                 Name of log file
-:ref:`LOG_LEVEL <log_level>`						  NO					 1		                 How much logging, legal values are CRITICAL, ERROR, WARNING, INFO, DEBUG, with DEBUG being more verbose.
-:ref:`LSF_QUEUE <lsf_queue>`						  NO					 normal		                 Name of LSF queue.
-:ref:`LSF_RESOURCES <lsf_resources>`					  NO					 
-:ref:`LSF_SERVER <lsf_server>`						  NO							                 Set server used when submitting LSF jobs.
-:ref:`MAX_ITER_COUNT <max_iter_count>`					  NO							                 Maximal number of iterations - iterated ensemble smoother.
-:ref:`MAX_RESAMPLE <max_resample>`					  NO					 1	                         How many times should ert resample & retry a simulation.
-:ref:`MAX_RUNNING_RSH <max_running_rsh>`				  NO					 		                 The maximum number of running jobs when using RSH queue system.
-:ref:`MAX_RUNTIME <max_runtime>`					  NO					 0		                 Set the maximum runtime in seconds for a realization.
-:ref:`MAX_SUBMIT <max_submit>`						  NO					 2		                 How many times should the queue system retry a simulation.
-:ref:`MIN_REALIZATIONS <min_realizations>`				  NO					 0		                 Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set.
+:ref:`LOG_FILE <log_file>`                                                NO                                     log                             Name of log file
+:ref:`LOG_LEVEL <log_level>`                                              NO                                     1                               How much logging, legal values are CRITICAL, ERROR, WARNING, INFO, DEBUG, with DEBUG being more verbose.
+:ref:`LSF_QUEUE <lsf_queue>`                                              NO                                     normal                          Name of LSF queue.
+:ref:`LSF_RESOURCES <lsf_resources>`                                      NO                                     
+:ref:`LSF_SERVER <lsf_server>`                                            NO                                                                     Set server used when submitting LSF jobs.
+:ref:`MAX_ITER_COUNT <max_iter_count>`                                    NO                                                                     Maximal number of iterations - iterated ensemble smoother.
+:ref:`MAX_RESAMPLE <max_resample>`                                        NO                                     1                               How many times should ert resample & retry a simulation.
+:ref:`MAX_RUNNING_RSH <max_running_rsh>`                                  NO                                                                     The maximum number of running jobs when using RSH queue system.
+:ref:`MAX_RUNTIME <max_runtime>`                                          NO                                     0                               Set the maximum runtime in seconds for a realization.
+:ref:`MAX_SUBMIT <max_submit>`                                            NO                                     2                               How many times should the queue system retry a simulation.
+:ref:`MIN_REALIZATIONS <min_realizations>`                                NO                                     0                               Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set.
 :ref:`NUM_REALIZATIONS <num_realizations>`                                YES                                                                    Set the number of reservoir realizations to use.
 :ref:`OBS_CONFIG <obs_config>`                                            NO                                                                     File specifying observations with uncertainties.
 :ref:`PLOT_SETTINGS <plot_driver>`                                        NO                                                                     Possibility to configure some aspects of plotting.
