@@ -35,6 +35,7 @@
 #include <ert/enkf/enkf_analysis.h>
 #include <ert/enkf/ecl_config.h>
 #include <ert/enkf/run_arg.h>
+#include <ert/enkf/ert_run_context.h>
 
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
@@ -124,7 +125,14 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
     util_safe_free( select_string );
     free( prompt );
   }
-  enkf_main_create_run_path(enkf_main , iactive , 0 );
+  {
+    enkf_fs_type * init_fs = enkf_main_get_fs( enkf_main );
+    const path_fmt_type * runpath_fmt = model_config_get_runpath_fmt( enkf_main_get_model_config( enkf_main ));
+    const subst_list_type * subst_list = enkf_main_get_data_kw( enkf_main );
+    ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( init_fs, INIT_CONDITIONAL, iactive, runpath_fmt , subst_list , 0);
+    enkf_main_create_run_path(enkf_main , run_context);
+    ert_run_context_free( run_context );
+  }
   bool_vector_free(iactive);
 }
 
