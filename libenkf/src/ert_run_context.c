@@ -60,6 +60,13 @@ struct ert_run_context_struct {
 
 
 
+/*
+  Observe that since this function uses one shared subst_list instance
+  for all realisations it is __NOT__ possible to get per realisation
+  substititions in the runpath; i.e. a <IENS> element in the RUNPATH
+  will *not* be replaced.
+*/
+
 
 char * ert_run_context_alloc_runpath( int iens , const path_fmt_type * runpath_fmt , const subst_list_type * subst_list , int iter) {
   char * runpath;
@@ -120,17 +127,19 @@ static ert_run_context_type * ert_run_context_alloc__(bool_vector_type * iactive
 }
 
 
-ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs , bool_vector_type * iactive ,
+ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * init_fs,
+                                                                 enkf_fs_type * result_fs ,
+                                                                 bool_vector_type * iactive ,
                                                                  const path_fmt_type * runpath_fmt ,
                                                                  const subst_list_type * subst_list ,
                                                                  int iter) {
 
-  ert_run_context_type * context = ert_run_context_alloc__( iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL, fs , fs , NULL , iter);
+  ert_run_context_type * context = ert_run_context_alloc__( iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL, init_fs , result_fs , NULL , iter);
   {
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
       if (bool_vector_iget( iactive , iens )) {
-        run_arg_type * arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( context->run_id, fs , iens , iter , stringlist_iget( runpath_list , iens));
+        run_arg_type * arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( context->run_id, init_fs , result_fs , iens , iter , stringlist_iget( runpath_list , iens));
         vector_append_owned_ref( context->run_args , arg , run_arg_free__);
       }
     }
@@ -195,7 +204,7 @@ ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
     return ert_run_context_alloc_SMOOTHER_RUN( simulate_fs , target_update_fs, iactive, runpath_fmt , subst_list , iter );
 
   if (run_mode == ENSEMBLE_EXPERIMENT)
-    return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( simulate_fs , iactive , runpath_fmt , subst_list , iter);
+    return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( init_fs, simulate_fs , iactive , runpath_fmt , subst_list , iter);
 
   if (run_mode == INIT_ONLY)
     return ert_run_context_alloc_INIT_ONLY( init_fs, init_mode , iactive, runpath_fmt , subst_list, iter );

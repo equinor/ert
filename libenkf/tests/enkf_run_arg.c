@@ -42,7 +42,7 @@ void test_queue_index() {
   test_work_area_type * test_area = test_work_area_alloc("run_arg/ENS");
   {
     enkf_fs_type * fs   = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
-    run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs , 0 , 6 , "path");
+    run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs , fs, 0 , 6 , "path");
 
     test_assert_false( run_arg_is_submitted( run_arg ) );
     test_assert_util_abort("run_arg_get_queue_index" , call_get_queue_index , run_arg );
@@ -131,7 +131,7 @@ void test_ENSEMBLE_EXPERIMENT( ) {
   {
     enkf_fs_type * fs   = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
 
-    run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs , 0 , 6 , "path");
+    run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs, fs , 0 , 6 , "path");
     test_assert_true( run_arg_is_instance( run_arg ));
 
     test_assert_ptr_equal( run_arg_get_init_fs( run_arg ) , fs );

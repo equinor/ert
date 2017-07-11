@@ -36,7 +36,7 @@ UTIL_SAFE_CAST_HEADER( run_arg );
 UTIL_IS_INSTANCE_HEADER( run_arg );
 
 
-  run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * fs , int iens , int iter , const char * runpath);
+  run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * init_fs , enkf_fs_type * result_fs, int iens , int iter , const char * runpath);
   run_arg_type * run_arg_alloc_INIT_ONLY(const char * run_id, enkf_fs_type * init_fs , int iens , int iter , const char * runpath);
   run_arg_type * run_arg_alloc_SMOOTHER_RUN(const char * run_id , enkf_fs_type * simulate_fs , enkf_fs_type * update_target_fs , int iens , int iter , const char * runpath);
 

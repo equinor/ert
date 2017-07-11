@@ -9,15 +9,15 @@ from res.enkf.enums import EnkfRunType, EnkfInitModeEnum
 
 
 class SimulationContext(object):
-    def __init__(self, ert, init_fs, result_fs, size, itr , verbose=False):
+    def __init__(self, ert, init_fs, result_fs, mask, itr , verbose=False):
         self._ert = ert
         """ :type: res.enkf.EnKFMain """
-        self._size = size
         max_runtime = ert.analysisConfig().get_max_runtime()
-               
+        self._mask = mask
+
         job_queue = ert.get_queue_config().create_job_queue()
         self._queue_manager = JobQueueManager(job_queue)
-        self._queue_manager.startQueue(size, verbose=verbose)
+        self._queue_manager.startQueue( mask.count( ), verbose=verbose)
         self._run_args = {}
         """ :type: dict[int, RunArg] """
 
@@ -26,20 +26,20 @@ class SimulationContext(object):
 
         subst_list = self._ert.getDataKW( )
         path_fmt = self._ert.getModelConfig().getRunpathFormat()
-        mask = BoolVector( initial_size = size, default_value = True )
         self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, init_fs, result_fs, None, mask, path_fmt, subst_list, itr)
-        self._ert.createRunpath( self._run_context )
 
         
     def addSimulation(self, iens):
-        if iens >= self._size:
-            raise UserWarning("Realization number out of range: %d >= %d" % (iens, self._size))
+        if iens >= len(self._mask):
+            raise UserWarning("Realization number out of range: %d >= %d" % (iens, len(self._mask)))
 
+        if not self._mask[iens]:
+            raise UserWarning("Realization number: '%d' is not active" % iens)
+        
         if iens in self._run_args:
             raise UserWarning("Realization number: '%d' already queued" % iens)
 
         run_arg = self._run_context.iensGet( iens )
-        self._ert.createRunPath(run_arg)
         queue = self._queue_manager.get_job_queue()
         self._run_args[iens] = run_arg
         self._thread_pool.submitJob(ArgPack(self._ert, run_arg, queue))
@@ -47,7 +47,7 @@ class SimulationContext(object):
 
     def isRunning(self):
         return self._queue_manager.isRunning()
-
+    
 
     def getNumRunning(self):
         return self._queue_manager.getNumRunning()
@@ -99,3 +99,7 @@ class SimulationContext(object):
 
     def get_result_fs(self):
         return self._run_context.get_result_fs( )
+
+
+    def get_run_context(self):
+        return self._run_context

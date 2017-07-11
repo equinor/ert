@@ -50,7 +50,8 @@ typedef struct ert_run_context_struct ert_run_context_type;
                                                subst_list_type * subst_list ,
                                                int iter);
 
-  ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs ,
+  ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * init_fs ,
+                                                                   enkf_fs_type * result_fs ,
                                                                    bool_vector_type * iactive ,
                                                                    const path_fmt_type * runpath_fmt ,
                                                                    const subst_list_type * subst_list ,

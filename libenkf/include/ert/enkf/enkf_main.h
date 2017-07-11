@@ -97,7 +97,7 @@ extern "C" {
   void                          enkf_main_free(enkf_main_type * );
   void                          enkf_main_exit(enkf_main_type * enkf_main);
   void                          enkf_main_init_eclipse(enkf_main_type * , int , int );
-  void                          enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type * run_context , init_mode_type init_mode);
+  void                          enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type * run_context);
   void                          enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );
   void                          enkf_main_load_ecl_complete_mt(enkf_main_type *);
   void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
@@ -105,7 +105,7 @@ extern "C" {
   bool                          enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * source_fs, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode);
   bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * source_fs, enkf_fs_type * target_fs);
   void                          enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_context_type * run_context);
-  int                           enkf_main_run_simple_step( enkf_main_type* enkf_main, job_queue_type * job_queue, bool_vector_type* iactive, init_mode_type init_mode, int iter );
+  int                           enkf_main_run_simple_step( enkf_main_type* enkf_main, job_queue_type * job_queue, ert_run_context_type * run_context );
 
   void                          enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
                                                       bool_vector_type * iactive);

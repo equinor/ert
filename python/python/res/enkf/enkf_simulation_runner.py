@@ -9,7 +9,7 @@ class EnkfSimulationRunner(BaseCClass):
     TYPE_NAME = "enkf_simulation_runner"
 
     _create_run_path = EnkfPrototype("bool enkf_main_create_run_path(enkf_simulation_runner, ert_run_context)")
-    _run_simple_step = EnkfPrototype("int enkf_main_run_simple_step(enkf_simulation_runner, job_queue, bool_vector, enkf_init_mode_enum, int)")
+    _run_simple_step = EnkfPrototype("int enkf_main_run_simple_step(enkf_simulation_runner, job_queue, ert_run_context)")
 
     def __init__(self, enkf_main):
         assert isinstance(enkf_main, BaseCClass)
@@ -19,7 +19,7 @@ class EnkfSimulationRunner(BaseCClass):
 
     def runSimpleStep(self, job_queue, run_context):
         """ @rtype: int """
-        return self._run_simple_step(job_queue, run_context.get_mask( ), initialization_mode , run_context.get_iter( ))
+        return self._run_simple_step(job_queue, run_context )
 
     def createRunPath(self, run_context):
         """ @rtype: bool """

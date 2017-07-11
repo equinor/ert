@@ -20,7 +20,7 @@ from res.enkf import EnkfPrototype
 class RunArg(BaseCClass):
     TYPE_NAME = "run_arg"
 
-    _alloc_ENSEMBLE_EXPERIMENT = EnkfPrototype("run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT(char*, enkf_fs , int, int, char*)", bind = False)
+    _alloc_ENSEMBLE_EXPERIMENT = EnkfPrototype("run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT(char*, enkf_fs , enkf_fs, int, int, char*)", bind = False)
     _free                      = EnkfPrototype("void run_arg_free(run_arg)")
     _get_queue_index           = EnkfPrototype("int  run_arg_get_queue_index(run_arg)")
     _is_submitted              = EnkfPrototype("bool run_arg_is_submitted(run_arg)")
@@ -31,7 +31,7 @@ class RunArg(BaseCClass):
 
     @classmethod
     def createEnsembleExperimentRunArg(cls, run_id, fs, iens, runpath, iter=0):
-        return cls._alloc_ENSEMBLE_EXPERIMENT(run_id, fs, iens, iter, runpath)
+        return cls._alloc_ENSEMBLE_EXPERIMENT(run_id, fs, fs, iens, iter, runpath)
 
     def free(self):
         self._free()

@@ -2,7 +2,7 @@ from os import path, symlink, remove
 from ecl.test import ExtendedTestCase, TestAreaContext
 from res.test import ErtTestContext
 
-from res.enkf import RunpathList, RunpathNode,ErtRunContext
+from res.enkf import RunpathList, RunpathNode, ErtRunContext
 from res.enkf.enums import EnkfInitModeEnum,EnkfRunType
 from ecl.util import BoolVector
 from ecl.util import SubstitutionList
@@ -144,28 +144,35 @@ class RunpathListTest(ExtendedTestCase):
             
 
             
-#    def test_assert_symlink_deleted(self):
-#        with ErtTestContext("create_runpath2" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
-#            ert = tc.getErt( )
-#            runpath_list = ert.getRunpathList( )
-#
-#            ens_size = ert.getEnsembleSize( )
-#            runner = ert.getEnkfSimulationRunner( )
-#            mask = BoolVector( initial_size = ens_size , default_value = True )
-#
-#            # create directory structure
-#            runner.createRunPath( mask , 0 )
-#
-#            # replace field file with symlink
-#            linkpath = '%s/permx.grdcel' % str(runpath_list[0].runpath)
-#            targetpath = '%s/permx.grdcel.target' % str(runpath_list[0].runpath)
-#            open(targetpath, 'a').close()
-#            remove(linkpath)
-#            symlink(targetpath, linkpath)
-#
-#            # recreate directory structure
-#            runner.createRunPath( mask , 0 )
-#
-#            # ensure field symlink is replaced by file
-#            self.assertFalse( path.islink(linkpath) )
+    def test_assert_symlink_deleted(self):
+        with ErtTestContext("create_runpath2" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
+            ert = tc.getErt( )
+            runpath_list = ert.getRunpathList( )
+
+            ens_size = ert.getEnsembleSize( )
+            runner = ert.getEnkfSimulationRunner( )
+            mask = BoolVector( initial_size = ens_size , default_value = True )
+            fs_manager = ert.getEnkfFsManager( )
+            init_fs = fs_manager.getFileSystem("init_fs")
+
+            # create directory structure
+            runpath_fmt = ert.getModelConfig().getRunpathFormat( )
+            subst_list = SubstitutionList( )
+            itr = 0
+            run_context = ErtRunContext( EnkfRunType.INIT_ONLY , init_fs, None,None , mask , runpath_fmt, subst_list , itr )
+            runner.createRunPath( run_context )
+
+            # replace field file with symlink
+            linkpath = '%s/permx.grdcel' % str(runpath_list[0].runpath)
+            targetpath = '%s/permx.grdcel.target' % str(runpath_list[0].runpath)
+            open(targetpath, 'a').close()
+            remove(linkpath)
+            symlink(targetpath, linkpath)
+
+            # recreate directory structure
+            runner.createRunPath( run_context )
+
+            # ensure field symlink is replaced by file
+            self.assertFalse( path.islink(linkpath) )
+>>>>>>> 3f5e983c3... fixup! Changed numerous call sites to use run_context.
 

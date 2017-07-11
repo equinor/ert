@@ -101,8 +101,8 @@ static run_arg_type * run_arg_alloc(const char * run_id,
 
 
 
-run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * fs , int iens , int iter , const char * runpath) {
-  return run_arg_alloc(run_id, fs , fs , NULL , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
+run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * init_fs , enkf_fs_type * result_fs, int iens , int iter , const char * runpath) {
+  return run_arg_alloc(run_id, init_fs , result_fs , NULL , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
 }
 
 

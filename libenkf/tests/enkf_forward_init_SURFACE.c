@@ -96,7 +96,7 @@ int main(int argc , char ** argv) {
       const enkf_config_node_type * config_node = ensemble_config_get_node( ens_config , "SURFACE");
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs , 0 ,0 , "simulations/run0");
+      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs , fs, 0 ,0 , "simulations/run0");
       enkf_node_type * surface_node = enkf_node_alloc( config_node );
       node_id_type node_id = {.report_step = 0 ,
                               .iens = 0 };

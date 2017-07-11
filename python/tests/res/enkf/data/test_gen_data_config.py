@@ -5,7 +5,7 @@ from res.test import ErtTestContext
 from res.enkf.data import EnkfNode
 from res.enkf.config import GenDataConfig
 from res.enkf import EnkfPrototype
-from res.enkf import NodeId
+from res.enkf import NodeId, RunArg
 from res.enkf import ForwardLoadContext
 
 
@@ -70,6 +70,6 @@ class GenDataConfigTest(ExtendedTestCase):
         conf = GenDataConfig("KEY")
 
     def updateMask(self, gen_data_config , report_step , fs, active_mask):
-        run_arg = self._alloc_run_arg( "run_id", fs , 0 , 0 , "Path")
+        run_arg = RunArg.createEnsembleExperimentRunArg("run_id", fs , 0, "Path")
         load_context = ForwardLoadContext( run_arg = run_arg , report_step = report_step )
         self._update_active_mask( gen_data_config , load_context , active_mask )

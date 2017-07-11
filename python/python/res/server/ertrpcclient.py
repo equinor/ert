@@ -13,7 +13,6 @@ FAULT_CODES = {1: UserWarning,
 
 
 def convertFault(fault):
-    print fault
     if fault.faultCode in FAULT_CODES:
         fault_type = FAULT_CODES[fault.faultCode]
         raise fault_type(fault.faultString)
