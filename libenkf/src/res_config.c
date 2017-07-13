@@ -90,14 +90,12 @@ res_config_type * res_config_alloc_load(const char * config_file) {
   res_config->analysis_config = analysis_config_alloc_load(res_config->user_config_file);
   res_config->workflow_list   = ert_workflow_list_alloc_load(
                                     subst_config_get_subst_list(res_config->subst_config),
-                                    res_config->user_config_file,
-                                    res_config->working_dir
+                                    res_config->user_config_file
                                     );
 
   res_config->hook_manager    = hook_manager_alloc_load(
                                     res_config->workflow_list,
-                                    res_config->user_config_file,
-                                    res_config->working_dir
+                                    res_config->user_config_file
                                     );
 
   res_config->templates       = ert_templates_alloc_load(
@@ -106,12 +104,11 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                     );
 
   res_config->plot_config     = plot_settings_alloc_load(res_config->user_config_file);
-  res_config->ecl_config      = ecl_config_alloc_load(res_config->user_config_file, res_config->working_dir);
+  res_config->ecl_config      = ecl_config_alloc_load(res_config->user_config_file);
 
   res_config->ensemble_config = ensemble_config_alloc_load(res_config->user_config_file,
                                             ecl_config_get_grid(res_config->ecl_config),
-                                            ecl_config_get_refcase(res_config->ecl_config),
-                                            res_config->working_dir
+                                            ecl_config_get_refcase(res_config->ecl_config)
                                     );
 
   res_config->model_config    = model_config_alloc_load(res_config->user_config_file,

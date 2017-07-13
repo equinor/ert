@@ -139,7 +139,7 @@ class ResConfigTest(ExtendedTestCase):
             res_config = ResConfig(user_config_file=config_file)
 
             self.assertIsNotNone(res_config)
-            self.assertSameConfigFile(config_file, res_config.user_config_file)
+            self.assertSameConfigFile(config_file, res_config.user_config_file, os.getcwd())
 
             self.assertIsNotNone(res_config.site_config)
             self.assertTrue(isinstance(res_config.site_config, SiteConfig))
@@ -163,19 +163,14 @@ class ResConfigTest(ExtendedTestCase):
                 print t
             self.assertEqual( subst_config["<CONFIG_PATH>"], os.path.join( cwd , "simple_config"))
 
-    def assertSameConfigFile(self, expected_filename, filename, cwd=None):
-        orig_cwd = os.getcwd()
+    def assertSameConfigFile(self, expected_filename, filename, prefix):
+        prefix_path = lambda fn: fn if os.path.isabs(fn) else os.path.join(prefix, fn)
+        canonical_path = lambda fn: os.path.realpath(os.path.abspath(prefix_path(fn)))
 
-        if cwd is not None:
-            os.chdir(cwd)
-
-        self.assertTrue(os.path.samefile(
-                    expected_filename,
-                    filename
+        self.assertEqual(
+                    canonical_path(expected_filename),
+                    canonical_path(filename)
                     )
-                    )
-
-        os.chdir(orig_cwd)
 
     def test_extensive_config(self):
         self.set_up_snake_oil_structure()
@@ -273,13 +268,6 @@ class ResConfigTest(ExtendedTestCase):
                     res_config.analysis_config.get_log_path()
                     )
 
-            exp_runpath_file = rel2workdir(config_data["RUNPATH_FILE"])
-
-            # Touch exp_runpath_file
-            os.makedirs(os.path.split(exp_runpath_file)[0])
-            with open(exp_runpath_file, "a") as f:
-                f.write("")
-
             self.assertSameConfigFile(
                         config_data["RUNPATH_FILE"],
                         res_config.hook_manager.getRunpathList().getExportFile(),
@@ -307,9 +295,10 @@ class ResConfigTest(ExtendedTestCase):
                     work_dir
                     )
 
-            self.assertEqual(
+            self.assertSameConfigFile(
                     config_data["SIGMA"]["RESULT"],
-                    res_config.ensemble_config["SIGMA"]._get_enkf_outfile()
+                    res_config.ensemble_config["SIGMA"]._get_enkf_outfile(),
+                    work_dir
                     )
 
             self.assertEqual(

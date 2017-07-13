@@ -25,9 +25,8 @@ int main(int argc, char ** argv) {
   ert_workflow_list_type * list = NULL;
   hook_manager_type * hook_manager = hook_manager_alloc(list);
 
-  char * expected_path = util_alloc_abs_path(".ert_runpath_list");
+  char * expected_path = "<CWD>/.ert_runpath_list";
   test_assert_string_equal(expected_path, hook_manager_get_runpath_list_file(hook_manager));
-  free(expected_path);
 
   hook_manager_set_runpath_list_file(hook_manager, "Folder", NULL);
   expected_path = util_alloc_abs_path("Folder/.ert_runpath_list");

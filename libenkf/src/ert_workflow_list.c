@@ -60,7 +60,7 @@ struct ert_workflow_list_struct {
   bool                      verbose;
 };
 
-
+static void ert_workflow_list_init(ert_workflow_list_type * workflow_list , config_content_type * config);
 
 ert_workflow_list_type * ert_workflow_list_alloc(const subst_list_type * context) {
   ert_workflow_list_type * workflow_list = util_malloc( sizeof * workflow_list );
@@ -81,7 +81,7 @@ ert_workflow_list_type * ert_workflow_list_alloc_load_site_config(const subst_li
   config_parser_type * config = config_alloc();
   config_content_type * content = site_config_alloc_content(config);
 
-  ert_workflow_list_init(workflow_list, content, NULL);
+  ert_workflow_list_init(workflow_list, content);
 
   config_free(config);
   config_content_free(content);
@@ -91,8 +91,7 @@ ert_workflow_list_type * ert_workflow_list_alloc_load_site_config(const subst_li
 
 ert_workflow_list_type * ert_workflow_list_alloc_load(
         const subst_list_type * context,
-        const char * user_config_file,
-        const char * working_dir) {
+        const char * user_config_file) {
 
   ert_workflow_list_type * workflow_list = ert_workflow_list_alloc_load_site_config(context);
 
@@ -100,7 +99,7 @@ ert_workflow_list_type * ert_workflow_list_alloc_load(
     config_parser_type * config = config_alloc();
     config_content_type * content = model_config_alloc_content(user_config_file, config);
 
-    ert_workflow_list_init(workflow_list, content, working_dir);
+    ert_workflow_list_init(workflow_list, content);
 
     config_free(config);
     config_content_free(content);
@@ -284,7 +283,7 @@ stringlist_type * ert_workflow_list_get_job_names(const ert_workflow_list_type *
 }
 
 
-void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_content_type * config, const char * working_dir) {
+static void ert_workflow_list_init(ert_workflow_list_type * workflow_list , config_content_type * config) {
   /* Adding jobs */
   {
     if (config_content_has_item( config , WORKFLOW_JOB_DIRECTORY_KEY)) {
@@ -316,17 +315,12 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_con
     if (config_content_has_item( config , LOAD_WORKFLOW_KEY)) {
       const config_content_item_type * workflow_item = config_content_get_item( config , LOAD_WORKFLOW_KEY);
       for (int i=0; i < config_content_item_get_size( workflow_item ); i++) {
-        config_content_node_type * workflow_node = config_content_item_iget_node( workflow_item , i );
-        char * workflow_file = util_alloc_filename(
-                                            working_dir,
-                                            config_content_node_iget(workflow_node, 0),
-                                            NULL
-                                            );
+        config_content_node_type * workflow_node = config_content_item_iget_node(workflow_item, i);
+
+        const char * workflow_file = config_content_node_iget_as_abspath(workflow_node, 0);
         const char * workflow_name = config_content_node_safe_iget( workflow_node , 1 );
 
         ert_workflow_list_add_workflow( workflow_list , workflow_file , workflow_name );
-
-        free(workflow_file);
       }
     }
   }

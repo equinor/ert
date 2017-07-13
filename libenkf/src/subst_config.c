@@ -42,8 +42,7 @@ static void subst_config_install_working_directory(
 
 static void subst_config_init_load(
         subst_config_type * subst_config,
-        const char * user_config_file,
-        const char * working_dir
+        const char * user_config_file
         );
 
 static subst_config_type * subst_config_alloc_empty() {
@@ -73,7 +72,7 @@ subst_config_type * subst_config_alloc_load(const char * user_config_file, const
     subst_config_install_working_directory(subst_config, working_dir);
 
   if(user_config_file)
-    subst_config_init_load(subst_config, user_config_file, working_dir);
+    subst_config_init_load(subst_config, user_config_file);
   
   return subst_config;
 }
@@ -191,8 +190,7 @@ static void subst_config_install_data_kw(subst_config_type * subst_config, hash_
 
 static void subst_config_init_load(
         subst_config_type * subst_config,
-        const char * user_config_file,
-        const char * working_dir) {
+        const char * user_config_file) {
 
   config_parser_type * config = config_alloc();
   config_content_type * content = model_config_alloc_content(user_config_file, config);
@@ -212,23 +210,18 @@ static void subst_config_init_load(
   }
 
   if (config_content_has_item(content, RUNPATH_FILE_KEY)) {
-    const char * runpath_file = config_content_get_value(content, RUNPATH_FILE_KEY);
-    char * abs_runpath_file = runpath_list_alloc_filename(working_dir, runpath_file);
-    subst_config_add_internal_subst_kw(subst_config, "RUNPATH_FILE", abs_runpath_file, "The name of a file with a list of run directories.");
-    free(abs_runpath_file);
+    const char * runpath_file = config_content_get_value_as_abspath(content, RUNPATH_FILE_KEY);
+    subst_config_add_internal_subst_kw(subst_config, "RUNPATH_FILE", runpath_file, "The name of a file with a list of run directories.");
   }
 
   if (config_content_has_item(content, DATA_FILE_KEY)) {
-    const char * data_file = config_content_iget(content, DATA_FILE_KEY, 0, 0);
-    char * abs_data_file = util_alloc_filename(working_dir, data_file, NULL);
+    const char * data_file = config_content_get_value_as_abspath(content, DATA_FILE_KEY);
 
-    if (!util_file_exists(abs_data_file))
-      util_abort("%s: Could not find ECLIPSE data file: %s\n", __func__, abs_data_file ? abs_data_file : "NULL");
+    if (!util_file_exists(data_file))
+      util_abort("%s: Could not find ECLIPSE data file: %s\n", __func__, data_file ? data_file : "NULL");
 
-    int num_cpu = ecl_util_get_num_cpu(abs_data_file);
+    int num_cpu = ecl_util_get_num_cpu(data_file);
     subst_config_install_num_cpu(subst_config, num_cpu);
-
-    free(abs_data_file);
   }
 
   config_free(config);

@@ -27,6 +27,7 @@
 
 #include <ert/enkf/runpath_list.h>
 
+#define RUNPATH_LIST_DIR  "<CWD>"
 #define RUNPATH_LIST_FILE ".ert_runpath_list"
 
 typedef struct runpath_node_struct runpath_node_type;
@@ -243,6 +244,9 @@ char * runpath_list_alloc_filename(const char * basepath, const char * filename)
 
   if(!filename)
     filename = RUNPATH_LIST_FILE;
+
+  if(!basepath)
+    return util_alloc_filename(RUNPATH_LIST_DIR, filename, NULL);
 
   char * file_with_prefix = util_alloc_filename(basepath, filename, NULL);
   char * absolute_path    = util_alloc_abs_path(file_with_prefix);
