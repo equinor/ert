@@ -139,7 +139,7 @@ class ResConfigTest(ExtendedTestCase):
             res_config = ResConfig(user_config_file=config_file)
 
             self.assertIsNotNone(res_config)
-            self.assertSameConfigFile(config_file, res_config.user_config_file, os.getcwd())
+            self.assert_same_config_file(config_file, res_config.user_config_file, os.getcwd())
 
             self.assertIsNotNone(res_config.site_config)
             self.assertTrue(isinstance(res_config.site_config, SiteConfig))
@@ -163,7 +163,8 @@ class ResConfigTest(ExtendedTestCase):
                 print t
             self.assertEqual( subst_config["<CONFIG_PATH>"], os.path.join( cwd , "simple_config"))
 
-    def assertSameConfigFile(self, expected_filename, filename, prefix):
+
+    def assert_same_config_file(self, expected_filename, filename, prefix):
         prefix_path = lambda fn: fn if os.path.isabs(fn) else os.path.join(prefix, fn)
         canonical_path = lambda fn: os.path.realpath(os.path.abspath(prefix_path(fn)))
 
@@ -171,6 +172,232 @@ class ResConfigTest(ExtendedTestCase):
                     canonical_path(expected_filename),
                     canonical_path(filename)
                     )
+
+
+    def assert_model_config(self, model_config, config_data):
+        self.assertEqual(
+                config_data["RUNPATH"],
+                model_config.getRunpathAsString()
+                )
+
+        self.assertEqual(
+                config_data["ENSPATH"],
+                model_config.getEnspath()
+                )
+
+        self.assertEqual(
+                config_data["JOBNAME"],
+                model_config.getJobnameFormat()
+                )
+
+        self.assertEqual(
+                config_data["FORWARD_MODEL"],
+                model_config.getForwardModel().joblist()
+                )
+
+        self.assertEqual(
+                config_data["HISTORY_SOURCE"],
+                model_config.get_history_source()
+                )
+
+
+    def assert_analysis_config(self, analysis_config, config_data):
+        self.assertEqual(
+                config_data["MAX_RUNTIME"],
+                analysis_config.get_max_runtime()
+                )
+
+        self.assertEqual(
+                config_data["UPDATE_LOG_PATH"],
+                analysis_config.get_log_path()
+                )
+
+    def assert_site_config(self, site_config, config_data, working_dir):
+        self.assertEqual(
+                config_data["MAX_SUBMIT"],
+                site_config.queue_config.max_submit
+                )
+
+        self.assertEqual(
+                config_data["QUEUE_SYSTEM"],
+                site_config.queue_config.queue_name
+                )
+
+        self.assertEqual(
+                config_data["QUEUE_SYSTEM"],
+                site_config.queue_config.driver.name
+                )
+
+        self.assertEqual(
+                config_data["MAX_RUNNING"],
+                site_config.queue_config.driver.get_option("MAX_RUNNING")
+                )
+
+        self.assertEqual(
+                config_data["UMASK"],
+                site_config.umask
+                )
+
+        job_list = site_config.get_installed_jobs()
+        self.assertEqual(len(config_data["INSTALL_JOB"]), len(job_list))
+        for job_name in config_data["INSTALL_JOB"]:
+            self.assertTrue(job_name in job_list)
+
+            exp_job_data = config_data["INSTALL_JOB"][job_name]
+
+            self.assert_same_config_file(
+                    exp_job_data["CONFIG"],
+                    job_list[job_name].get_config_file(),
+                    working_dir
+                    )
+
+            self.assertEqual(
+                    exp_job_data["STDERR"],
+                    job_list[job_name].get_stderr_file()
+                    )
+
+            self.assertEqual(
+                    exp_job_data["STDOUT"],
+                    job_list[job_name].get_stdout_file()
+                    )
+
+    def assert_ecl_config(self, ecl_config, config_data, working_dir):
+        self.assert_same_config_file(
+                config_data["DATA_FILE"],
+                ecl_config.getDataFile(),
+                working_dir
+                )
+
+        self.assertEqual(
+                CTime(config_data["START"]),
+                ecl_config.getStartDate()
+                )
+
+        self.assertEqual(
+                config_data["ECLBASE"],
+                ecl_config.getEclBase()
+                )
+
+        for extension in ["SMSPEC", "UNSMRY"]:
+            self.assert_same_config_file(
+                    config_data["REFCASE"] + "." + extension,
+                    ecl_config.getRefcaseName() + "." + extension,
+                    working_dir
+                    )
+
+        self.assert_same_config_file(
+                config_data["GRID"],
+                ecl_config.get_gridfile(),
+                working_dir
+                )
+
+    def assert_ensemble_config(self, ensemble_config, config_data, working_dir):
+        self.assertEqual(
+            set(config_data["SUMMARY"] + config_data["GEN_KW"]),
+            set(ensemble_config.alloc_keylist())
+            )
+
+        loaded_template_file = ensemble_config["SIGMA"].getKeywordModelConfig().getTemplateFile()
+        self.assert_same_config_file(
+                config_data["SIGMA"]["TEMPLATE"],
+                loaded_template_file,
+                working_dir
+                )
+
+        loaded_parameter_file = ensemble_config["SIGMA"].getKeywordModelConfig().getParameterFile()
+        self.assert_same_config_file(
+                config_data["SIGMA"]["PARAMETER"],
+                loaded_parameter_file,
+                working_dir
+                )
+
+        self.assert_same_config_file(
+                config_data["SIGMA"]["RESULT"],
+                ensemble_config["SIGMA"]._get_enkf_outfile(),
+                working_dir
+                )
+
+
+    def assert_plot_config(self, plot_config, config_data):
+        self.assertEqual(
+                config_data["PLOT_PATH"],
+                plot_config.getPath()
+                )
+
+    def assert_hook_manager(self, hook_manager, config_data, working_dir):
+        self.assert_same_config_file(
+                    config_data["RUNPATH_FILE"],
+                    hook_manager.getRunpathList().getExportFile(),
+                    working_dir
+                    )
+
+    def assert_ert_workflow_list(self, ert_workflow_list, config_data, working_dir):
+        self.assertEqual(
+                len(config_data["LOAD_WORKFLOW"]),
+                len(ert_workflow_list.getWorkflowNames())
+                )
+
+        for w_name in config_data["LOAD_WORKFLOW"]:
+            self.assertTrue(w_name in ert_workflow_list)
+
+            self.assert_same_config_file(
+                    config_data["LOAD_WORKFLOW"][w_name],
+                    ert_workflow_list[w_name].src_file,
+                    working_dir
+                    )
+
+        for wj_name in config_data["LOAD_WORKFLOW_JOB"]:
+            self.assertTrue(ert_workflow_list.hasJob(wj_name))
+            job = ert_workflow_list.getJob(wj_name)
+
+            self.assertEqual(wj_name, job.name())
+            self.assert_same_config_file(
+                    config_data["LOAD_WORKFLOW_JOB"][wj_name],
+                    job.executable(),
+                    working_dir
+                    )
+
+    def assert_rng_config(self, rng_config, config_data, working_dir):
+        self.assertEqual(
+                config_data["RNG_ALG_TYPE"],
+                rng_config.alg_type
+                )
+
+        self.assert_same_config_file(
+                config_data["STORE_SEED"],
+                rng_config.store_filename,
+                working_dir
+                )
+
+        self.assert_same_config_file(
+                config_data["LOAD_SEED"],
+                rng_config.load_filename,
+                working_dir
+                )
+
+
+    def assert_ert_templates(self, ert_templates, config_data, working_dir):
+        self.assertEqual(
+                    config_data["RUN_TEMPLATE"].keys(),
+                    ert_templates.getTemplateNames()
+                    )
+
+        for template_name in ert_templates.getTemplateNames():
+            ert_template = ert_templates.get_template(template_name)
+            config_template = config_data["RUN_TEMPLATE"][template_name]
+
+            self.assert_same_config_file(
+                    config_template["TEMPLATE_FILE"],
+                    ert_template.get_template_file(),
+                    working_dir
+                    )
+
+            self.assertEqual(
+                    config_template["TARGET_FILE"],
+                    ert_template.get_target_file(),
+                    working_dir
+                    )
+
 
     def test_extensive_config(self):
         self.set_up_snake_oil_structure()
@@ -196,217 +423,16 @@ class ResConfigTest(ExtendedTestCase):
                                              path
                                              )
 
-            # Test properties
-            self.assertEqual(
-                    config_data["RUNPATH"],
-                    res_config.model_config.getRunpathAsString()
-                    )
-
-            self.assertEqual(
-                    config_data["MAX_RUNTIME"],
-                    res_config.analysis_config.get_max_runtime()
-                    )
-
-            self.assertEqual(
-                    config_data["MAX_SUBMIT"],
-                    res_config.site_config.queue_config.max_submit
-                    )
-
-            self.assertEqual(
-                    config_data["QUEUE_SYSTEM"],
-                    res_config.site_config.queue_config.queue_name
-                    )
-
-            self.assertEqual(
-                    config_data["QUEUE_SYSTEM"],
-                    res_config.site_config.queue_config.driver.name
-                    )
-
-            self.assertEqual(
-                    config_data["MAX_RUNNING"],
-                    res_config.site_config.queue_config.driver.get_option("MAX_RUNNING")
-                    )
-
-            self.assertEqual(
-                    config_data["UMASK"],
-                    res_config.site_config.umask
-                    )
-
-            self.assertSameConfigFile(
-                    config_data["DATA_FILE"],
-                    res_config.ecl_config.getDataFile(),
-                    work_dir
-                    )
-
-            self.assertEqual(
-                    CTime(config_data["START"]),
-                    res_config.ecl_config.getStartDate()
-                    )
-
-            self.assertEqual(
-                set(config_data["SUMMARY"] + config_data["GEN_KW"]),
-                set(res_config.ensemble_config.alloc_keylist())
-                )
-
-            self.assertEqual(
-                    config_data["ECLBASE"],
-                    res_config.ecl_config.getEclBase()
-                    )
-
-            self.assertEqual(
-                    config_data["ENSPATH"],
-                    res_config.model_config.getEnspath()
-                    )
-
-            self.assertEqual(
-                    config_data["PLOT_PATH"],
-                    res_config.plot_config.getPath()
-                    )
-
-            self.assertEqual(
-                    config_data["UPDATE_LOG_PATH"],
-                    res_config.analysis_config.get_log_path()
-                    )
-
-            self.assertSameConfigFile(
-                        config_data["RUNPATH_FILE"],
-                        res_config.hook_manager.getRunpathList().getExportFile(),
-                        work_dir
-                        )
-
-            for extension in ["SMSPEC", "UNSMRY"]:
-                self.assertSameConfigFile(
-                        config_data["REFCASE"] + "." + extension,
-                        res_config.ecl_config.getRefcaseName() + "." + extension,
-                        work_dir
-                        )
-
-            loaded_template_file = res_config.ensemble_config["SIGMA"].getKeywordModelConfig().getTemplateFile()
-            self.assertSameConfigFile(
-                    config_data["SIGMA"]["TEMPLATE"],
-                    loaded_template_file,
-                    work_dir
-                    )
-
-            loaded_parameter_file = res_config.ensemble_config["SIGMA"].getKeywordModelConfig().getParameterFile()
-            self.assertSameConfigFile(
-                    config_data["SIGMA"]["PARAMETER"],
-                    loaded_parameter_file,
-                    work_dir
-                    )
-
-            self.assertSameConfigFile(
-                    config_data["SIGMA"]["RESULT"],
-                    res_config.ensemble_config["SIGMA"]._get_enkf_outfile(),
-                    work_dir
-                    )
-
-            self.assertEqual(
-                    config_data["JOBNAME"],
-                    res_config.model_config.getJobnameFormat()
-                    )
-
-            job_list = res_config.site_config.get_installed_jobs()
-            self.assertEqual(len(config_data["INSTALL_JOB"]), len(job_list))
-            for job_name in config_data["INSTALL_JOB"]:
-                self.assertTrue(job_name in job_list)
-
-                exp_job_data = config_data["INSTALL_JOB"][job_name]
-
-                self.assertSameConfigFile(
-                        exp_job_data["CONFIG"],
-                        job_list[job_name].get_config_file(),
-                        work_dir
-                        )
-
-                self.assertEqual(
-                        exp_job_data["STDERR"],
-                        job_list[job_name].get_stderr_file()
-                        )
-
-                self.assertEqual(
-                        exp_job_data["STDOUT"],
-                        job_list[job_name].get_stdout_file()
-                        )
-
-            self.assertEqual(
-                    config_data["FORWARD_MODEL"],
-                    res_config.model_config.getForwardModel().joblist()
-                    )
-
-            self.assertEqual(
-                    config_data["HISTORY_SOURCE"],
-                    res_config.model_config.get_history_source()
-                    )
-
-            self.assertEqual(
-                    len(config_data["LOAD_WORKFLOW"]),
-                    len(res_config.ert_workflow_list.getWorkflowNames())
-                    )
-
-            for w_name in config_data["LOAD_WORKFLOW"]:
-                self.assertTrue(w_name in res_config.ert_workflow_list)
-
-                self.assertSameConfigFile(
-                        config_data["LOAD_WORKFLOW"][w_name],
-                        res_config.ert_workflow_list[w_name].src_file,
-                        work_dir
-                        )
-
-            for wj_name in config_data["LOAD_WORKFLOW_JOB"]:
-                self.assertTrue(res_config.ert_workflow_list.hasJob(wj_name))
-                job = res_config.ert_workflow_list.getJob(wj_name)
-
-                self.assertEqual(wj_name, job.name())
-                self.assertSameConfigFile(
-                        config_data["LOAD_WORKFLOW_JOB"][wj_name],
-                        job.executable(),
-                        work_dir
-                        )
-
-            self.assertEqual(
-                    config_data["RNG_ALG_TYPE"],
-                    res_config.rng_config.alg_type
-                    )
-
-            self.assertSameConfigFile(
-                    config_data["STORE_SEED"],
-                    res_config.rng_config.store_filename,
-                    work_dir
-                    )
-
-            self.assertSameConfigFile(
-                    config_data["LOAD_SEED"],
-                    res_config.rng_config.load_filename,
-                    work_dir
-                    )
-
-            self.assertSameConfigFile(
-                    config_data["GRID"],
-                    res_config.ecl_config.get_gridfile(),
-                    work_dir
-                    )
-
-            self.assertEqual(
-                    config_data["RUN_TEMPLATE"].keys(),
-                    res_config.ert_templates.getTemplateNames()
-                    )
-
-            for template_name in res_config.ert_templates.getTemplateNames():
-                ert_template = res_config.ert_templates.get_template(template_name)
-                config_template = config_data["RUN_TEMPLATE"][template_name]
-
-                self.assertSameConfigFile(
-                        config_template["TEMPLATE_FILE"],
-                        ert_template.get_template_file(),
-                        work_dir
-                        )
-
-                self.assertEqual(
-                        config_template["TARGET_FILE"],
-                        ert_template.get_target_file(),
-                        work_dir
-                        )
+            self.assert_model_config(res_config.model_config, config_data)
+            self.assert_analysis_config(res_config.analysis_config, config_data)
+            self.assert_site_config(res_config.site_config, config_data, work_dir)
+            self.assert_ecl_config(res_config.ecl_config, config_data, work_dir)
+            self.assert_ensemble_config(res_config.ensemble_config, config_data, work_dir)
+            self.assert_plot_config(res_config.plot_config, config_data)
+            self.assert_hook_manager(res_config.hook_manager, config_data, work_dir)
+            self.assert_ert_workflow_list(res_config.ert_workflow_list, config_data, work_dir)
+            self.assert_rng_config(res_config.rng_config, config_data, work_dir)
+            self.assert_ert_templates(res_config.ert_templates, config_data, work_dir)
 
             # TODO: Not tested
             # - NUM_REALIZATIONS
