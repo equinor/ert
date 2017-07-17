@@ -46,7 +46,6 @@ struct queue_config_struct {
     hash_type * queue_drivers;
     bool user_mode;
     int max_submit;
-    bool max_submit_set;
 };
 
 static void queue_config_add_queue_driver(queue_config_type * queue_config, const char * driver_name, queue_driver_type * driver);
@@ -58,7 +57,6 @@ static queue_config_type * queue_config_alloc_empty() {
     queue_config->job_script = NULL;
     queue_config->driver_type = NULL_DRIVER;
     queue_config->user_mode = false;
-    queue_config->max_submit_set = false;
     queue_config->max_submit = 2; // Default value
 
     return queue_config;
@@ -116,7 +114,6 @@ queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_con
     else
         queue_config_copy->driver_type = LOCAL_DRIVER;
     
-    queue_config_copy->max_submit_set = queue_config->max_submit_set;
     queue_config_copy->max_submit = queue_config->max_submit;
 
     return queue_config_copy;
@@ -131,8 +128,7 @@ job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_co
         job_queue_set_driver(job_queue, driver);
     }
 
-  if (queue_config->max_submit_set)
-    job_queue_set_max_submit(job_queue, queue_config->max_submit);
+  job_queue_set_max_submit(job_queue, queue_config->max_submit);
 
   return job_queue;
 }
@@ -250,10 +246,8 @@ static bool queue_config_init(queue_config_type * queue_config, const config_con
   if (config_content_has_item(config_content, JOB_SCRIPT_KEY))
     queue_config_set_job_script(queue_config, config_content_get_value_as_abspath(config_content, JOB_SCRIPT_KEY));
 
-  if (config_content_has_item(config_content, MAX_SUBMIT_KEY)) {
+  if (config_content_has_item(config_content, MAX_SUBMIT_KEY))
     queue_config->max_submit = config_content_get_value_as_int(config_content, MAX_SUBMIT_KEY);
-    queue_config->max_submit_set = true;
-  }
 
   /* Setting QUEUE_OPTIONS */
   for (int i = 0; i < config_content_get_occurences(config_content, QUEUE_OPTION_KEY); i++) {

@@ -103,9 +103,15 @@ config_data = {
         }
 
 def expand_config_data():
+    '''
+    Expands all strings in config_data according to config_defines. This is to
+    enable one to copy the expected data directly from the configuration file
+    without having to do manual expantion (that is what we have computers for
+    anyway).
+    '''
     for define_key in config_defines:
         for data_key in config_data:
-            if type(config_data[data_key]) is str:
+            if isinstance(config_data[data_key], str):
                 config_data[data_key] = config_data[data_key].replace(
                                                         define_key,
                                                         config_defines[define_key]
