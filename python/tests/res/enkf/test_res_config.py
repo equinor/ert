@@ -19,7 +19,7 @@ from datetime import date
 
 from ecl.test import ExtendedTestCase, TestAreaContext
 from ecl.util import CTime
-from ecl.util.enums import RngAlgTypeEnum
+from ecl.util.enums import RngAlgTypeEnum, MessageLevelEnum
 
 from res.sched import HistorySourceEnum
 
@@ -89,7 +89,7 @@ config_data = {
         "LOAD_WORKFLOW_JOB" : {
                                   "UBER_PRINT"  : "../bin/workflows/workflowjobs/bin/uber_print.py"
                               },
-        "LOG_LEVEL"         : 3,
+        "LOG_LEVEL"         : MessageLevelEnum.LOG_INFO,
         "RNG_ALG_TYPE"      : RngAlgTypeEnum.MZRAN,
         "STORE_SEED"        : "../input/rng/SEED",
         "LOAD_SEED"         : "../input/rng/SEED",
@@ -404,6 +404,18 @@ class ResConfigTest(ExtendedTestCase):
                     working_dir
                     )
 
+    def assert_log_config(self, log_config, config_data, working_dir):
+        self.assert_same_config_file(
+                config_data["LOG_FILE"],
+                log_config.log_file,
+                working_dir
+                )
+
+        self.assertEqual(
+                config_data["LOG_LEVEL"],
+                log_config.log_level
+                )
+
 
     def test_extensive_config(self):
         self.set_up_snake_oil_structure()
@@ -439,10 +451,10 @@ class ResConfigTest(ExtendedTestCase):
             self.assert_ert_workflow_list(res_config.ert_workflow_list, config_data, work_dir)
             self.assert_rng_config(res_config.rng_config, config_data, work_dir)
             self.assert_ert_templates(res_config.ert_templates, config_data, work_dir)
+            self.assert_log_config(res_config.log_config, config_data, work_dir)
+
 
             # TODO: Not tested
             # - NUM_REALIZATIONS
             # - MIN_REALIZATIONS
-            # - LOG_FILE
-            # - LOG_LEVEL
             # - OBS_CONFIG

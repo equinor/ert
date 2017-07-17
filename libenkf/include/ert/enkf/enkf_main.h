@@ -142,16 +142,13 @@ extern "C" {
   enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
   bool                          enkf_main_have_obs( const enkf_main_type * enkf_main );
   const analysis_config_type  * enkf_main_get_analysis_config(const enkf_main_type * );
+  const log_config_type       * enkf_main_get_log_config(const enkf_main_type *);
 
   void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
   void         enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
   const char * enkf_main_get_image_viewer(const enkf_main_type * );
   const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main );
   const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
-
-
-  message_level_type res_log_level_parser(const char *level);
-
 
   void                     enkf_main_list_users(  set_type * users , const char * executable );
   const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );

@@ -33,6 +33,7 @@
 #include <ert/enkf/ecl_config.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/model_config.h>
+#include <ert/enkf/log_config.h>
 
 struct res_config_struct {
 
@@ -50,6 +51,7 @@ struct res_config_struct {
   ecl_config_type        * ecl_config;
   ensemble_config_type   * ensemble_config;
   model_config_type      * model_config;
+  log_config_type        * log_config;
 
 };
 
@@ -71,6 +73,7 @@ static res_config_type * res_config_alloc_empty() {
   res_config->ecl_config        = NULL;
   res_config->ensemble_config   = NULL;
   res_config->model_config      = NULL;
+  res_config->log_config        = NULL;
 
   return res_config;
 }
@@ -118,6 +121,8 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                         ecl_config_get_refcase(res_config->ecl_config)
                                    );
 
+  res_config->log_config      = log_config_alloc_load(res_config->user_config_file);
+
   return res_config;
 }
 
@@ -136,6 +141,7 @@ void res_config_free(res_config_type * res_config) {
   ecl_config_free(res_config->ecl_config);
   ensemble_config_free(res_config->ensemble_config);
   model_config_free(res_config->model_config);
+  log_config_free(res_config->log_config);
 
   free(res_config->user_config_file);
   free(res_config->working_dir);
@@ -206,6 +212,12 @@ model_config_type * res_config_get_model_config(
                     const res_config_type * res_config
                   ) {
   return res_config->model_config;
+}
+
+const log_config_type * res_config_get_log_config(
+                    const res_config_type * res_config
+                  ) {
+  return res_config->log_config;
 }
 
 static char * res_config_alloc_working_directory(const char * user_config_file) {

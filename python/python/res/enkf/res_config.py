@@ -45,6 +45,7 @@ class ResConfig(BaseCClass):
     _ert_workflow_list = EnkfPrototype("ert_workflow_list_ref res_config_get_workflow_list(res_config)")
     _rng_config        = EnkfPrototype("rng_config_ref res_config_get_rng_config(res_config)")
     _ert_templates     = EnkfPrototype("ert_templates_ref res_config_get_templates(res_config)")
+    _log_config        = EnkfPrototype("log_config_ref res_config_get_log_config(res_config)")
 
     def __init__(self, user_config_file):
         if user_config_file is not None and not isfile(user_config_file):
@@ -55,7 +56,7 @@ class ResConfig(BaseCClass):
             super(ResConfig, self).__init__(c_ptr)
         else:
             raise ValueError(
-                    'Failed to construct EnkfConfig instance from config file %s.'
+                    'Failed to construct ResConfig instance from config file %s.'
                     % user_config_file
                     )
 
@@ -117,3 +118,7 @@ class ResConfig(BaseCClass):
     @property
     def ert_templates(self):
         return self._ert_templates()
+
+    @property
+    def log_config(self):
+        return self._log_config()
