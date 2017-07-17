@@ -31,7 +31,7 @@ REQUESTED_HEXVERSION  =  0x02070000
 
 FILE_SERVER_BLACKLIST = ["stfv-fsi01-nfs.st.statoil.no"]
 ERROR_URL     = "http://st-vlinbuild01.st.statoil.no:8000/api/error/"
-
+LOG_URL       = "http://st-vsib.st.statoil.no:4444"
 
 def illegal_fileserver_exit(msg_txt , user):
     from_ = "no-reply@statoil.com"
@@ -376,7 +376,7 @@ def main(argv):
     check_version()
 
     max_runtime = 0
-    job_manager = JobManager(error_url=ERROR_URL)
+    job_manager = JobManager(error_url=ERROR_URL, log_url=LOG_URL)
 
 
     # Desperate bug fix.
@@ -393,7 +393,7 @@ def main(argv):
         for job in job_manager:
             job_manager.startStatus( job )
             (OK , exit_status, error_msg) = run_one( job_manager , job)
-            job_manager.completeStatus( exit_status , error_msg )
+            job_manager.completeStatus(job, exit_status , error_msg )
             if not OK:
                 job_manager.exit( job, exit_status , error_msg )
 
