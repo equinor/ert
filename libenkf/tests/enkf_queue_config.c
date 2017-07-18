@@ -17,7 +17,7 @@
 
 
 void test_empty() {
-   queue_config_type * queue_config = queue_config_alloc();
+   queue_config_type * queue_config = queue_config_alloc_load(NULL);
    queue_config_type * queue_config_copy = queue_config_alloc_local_copy( queue_config );
    queue_config_free(queue_config);
    queue_config_free(queue_config_copy);
@@ -26,6 +26,7 @@ void test_empty() {
 
 void test_parse() {
    test_work_area_type * work_area = test_work_area_alloc("queue_config");
+   const char * user_config_file = "queue_config.txt";
    config_parser_type * parser = config_alloc( );
 
 
@@ -40,7 +41,8 @@ void test_parse() {
      util_chmod_if_owner("tiny_executable", 0777);
    }
    {
-     FILE* stream = util_fopen("queue_config.txt", "w");
+     FILE* stream = util_fopen(user_config_file, "w");
+     fprintf(stream, "NUM_REALIZATIONS 14\n");
      fprintf(stream, "QUEUE_SYSTEM LSF\n");
      fprintf(stream, "LSF_SERVER    be-grid01\n");
      fprintf(stream, "QUEUE_OPTION  LSF     BJOBS_CMD   the_path\n");
@@ -50,14 +52,13 @@ void test_parse() {
    }
 
 
-   config_content_type * config_content = config_parse(parser, "queue_config.txt", NULL, NULL, NULL, NULL, CONFIG_UNRECOGNIZED_ERROR, true);
+   config_content_type * config_content = config_parse(parser, user_config_file, NULL, NULL, NULL, NULL, CONFIG_UNRECOGNIZED_ERROR, true);
    test_assert_true(config_content_has_item(config_content, QUEUE_SYSTEM_KEY));
 
    test_assert_true(config_content_has_item(config_content, QUEUE_OPTION_KEY));
    test_assert_true(config_content_has_item(config_content, MAX_SUBMIT_KEY));
 
-   queue_config_type * queue_config = queue_config_alloc();
-   queue_config_init(queue_config, config_content);
+   queue_config_type * queue_config = queue_config_alloc_load(user_config_file);
 
    test_assert_true(queue_config_has_queue_driver(queue_config, "LSF"));
    test_assert_true(queue_config_get_driver_type(queue_config) == LSF_DRIVER);

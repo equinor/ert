@@ -112,6 +112,9 @@ struct site_config_struct {
   bool search_path;
 };
 
+static bool site_config_init(site_config_type * site_config, const config_content_type * config);
+static void site_config_init_env(site_config_type * site_config, const config_content_type * config);
+
 void site_config_set_umask(site_config_type * site_config, mode_t new_mask) {
   umask(new_mask);
   site_config->umask = new_mask;
@@ -149,7 +152,7 @@ static void site_config_set_config_file(site_config_type * site_config, const ch
 static site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc(sizeof * site_config);
    
-  site_config->queue_config = queue_config_alloc();
+  site_config->queue_config = NULL;
 
   site_config->joblist = ext_joblist_alloc();
  
@@ -189,7 +192,10 @@ static void site_config_load_config(site_config_type * site_config) {
   config_content_free(content);
 }
 
-site_config_type * site_config_alloc() {
+/*
+ * NOTE: The queue config is not loaded until the site_config_alloc_load_user.
+ */
+static site_config_type * site_config_alloc() {
   site_config_type * site_config = site_config_alloc_empty();
   site_config_set_config_file(site_config, site_config_get_location());
   site_config_load_config(site_config);
@@ -199,7 +205,22 @@ site_config_type * site_config_alloc() {
 
 site_config_type * site_config_alloc_load_user_config(const char * user_config_file) {
   site_config_type * site_config = site_config_alloc();
-  site_config_load_user_config(site_config, user_config_file);
+  site_config->queue_config = queue_config_alloc_load(user_config_file);
+
+  if(user_config_file) {
+    site_config->user_mode = true;
+
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(
+                                                    user_config_file,
+                                                    config
+                                                    );
+
+    site_config_init(site_config, content);
+
+    config_content_free(content);
+    config_free(config);
+  }
 
   return site_config;
 }
@@ -237,13 +258,8 @@ void site_config_set_license_root_path(site_config_type * site_config, const cha
   }
 }
 
-void site_config_init_user_mode(site_config_type * site_config) {
-  queue_config_init_user_mode(site_config->queue_config);
-  site_config->user_mode = true;
-}
-
 queue_config_type * site_config_get_queue_config(const site_config_type * site_config) {
-    return site_config->queue_config;
+  return site_config->queue_config;
 }
 
 
@@ -554,7 +570,7 @@ void site_config_set_default_browser(site_config_type * site_config, const char 
 
 
 
-void site_config_init_env(site_config_type * site_config, const config_content_type * config) {
+static void site_config_init_env(site_config_type * site_config, const config_content_type * config) {
   {
     if (config_content_has_item( config , SETENV_KEY)) {
       config_content_item_type * setenv_item = config_content_get_item(config, SETENV_KEY);
@@ -584,29 +600,6 @@ void site_config_init_env(site_config_type * site_config, const config_content_t
   }
 }
 
-bool site_config_load_user_config(
-        site_config_type * site_config,
-        const char * user_config_filename) {
-
-  if (user_config_filename == NULL)
-    return false;
-
-  site_config_init_user_mode(site_config);
-
-  config_parser_type * config = config_alloc();
-  config_content_type * content = model_config_alloc_content(
-                                                    user_config_filename,
-                                                    config
-                                                    );
-
-  bool status = site_config_init(site_config, content);
-
-  config_content_free( content );
-  config_free(config);
-
-  return status;
-}
-
 /**
    This function will be called twice, first when the config instance
    is an internalization of the site-wide configuration file, and
@@ -616,10 +609,8 @@ bool site_config_load_user_config(
  */
 
 
-bool site_config_init(site_config_type * site_config, const config_content_type * config) {
+static bool site_config_init(site_config_type * site_config, const config_content_type * config) {
   
-  queue_config_init(site_config->queue_config, config);
-
   site_config_add_jobs(site_config, config);
   site_config_init_env(site_config, config);
 

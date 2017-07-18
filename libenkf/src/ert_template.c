@@ -235,7 +235,7 @@ void ert_templates_init( ert_templates_type * templates , const config_content_t
     const config_content_item_type * template_item = config_content_get_item( config , RUN_TEMPLATE_KEY );
     for (int i=0; i < config_content_item_get_size( template_item ); i++) {
       config_content_node_type * template_node = config_content_item_iget_node( template_item , i );
-      const char * template_file = config_content_node_iget_as_path(template_node , 0 );
+      const char * template_file = config_content_node_iget_as_abspath(template_node , 0 );
       const char * target_file   = config_content_node_iget( template_node , 1 );
 
       ert_template_type * template = ert_templates_add_template( templates , NULL , template_file , target_file , NULL);

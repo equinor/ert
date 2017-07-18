@@ -46,7 +46,7 @@
 
 
 void test_init(const char * config_file) {
-  site_config_type * site_config = site_config_alloc();
+  site_config_type * site_config = site_config_alloc_load_user_config(NULL);
   site_config_free( site_config );
 }
 
@@ -54,7 +54,7 @@ void test_init(const char * config_file) {
 void test_job_script() {
   test_work_area_type * test_area = test_work_area_alloc("site-config");
   {
-    site_config_type * site_config = site_config_alloc();
+    site_config_type * site_config = site_config_alloc_load_user_config(NULL);
    
 
     test_assert_false( site_config_set_job_script( site_config , "/does/not/exist" ));

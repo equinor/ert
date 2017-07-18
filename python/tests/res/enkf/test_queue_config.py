@@ -23,9 +23,11 @@ from res.enkf import QueueConfig
 class QueueConfigTest(ExtendedTestCase):
 
     def test_get_queue_config(self):
-        QC = QueueConfig()
-        JobQueue = QC.create_job_queue()
-        QC_copy = QC.create_local_copy()
-        self.assertFalse(QC_copy.has_job_script())
+        queue_config = QueueConfig(None)
+        job_queue = queue_config.create_job_queue()
+        queue_config_copy = queue_config.create_local_copy()
 
-    
+        self.assertEqual(
+                queue_config.has_job_script(),
+                queue_config_copy.has_job_script()
+                )

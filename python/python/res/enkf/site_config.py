@@ -54,6 +54,8 @@ class SiteConfig(BaseCClass):
     _get_location          = EnkfPrototype("char* site_config_get_location(site_config)")
     _has_driver            = EnkfPrototype("bool site_config_has_queue_driver(site_config, char*)")
     _get_config_file       = EnkfPrototype("char* site_config_get_config_file(site_config)")
+    _get_queue_config      = EnkfPrototype("queue_config_ref site_config_get_queue_config(site_config)")
+    _get_umask             = EnkfPrototype("int site_config_get_umask(site_config)")
 
     
     def __init__(self, user_config_file=None):
@@ -168,13 +170,6 @@ class SiteConfig(BaseCClass):
         """ @rtype: ExtJoblist """
         return self._get_installed_jobs().setParent(self)
 
-    def get_max_submit(self):
-        """ @rtype: int """
-        return self._get_max_submit( )
-
-    def set_max_submit(self, max_value):
-        self._set_max_submit( max_value)
-
     def get_license_root_path(self):
         """ @rtype: str """
         return self._get_license_root_path( )
@@ -202,4 +197,10 @@ class SiteConfig(BaseCClass):
     def free(self):
         self._free()
 
+    @property
+    def queue_config(self):
+        return self._get_queue_config()
 
+    @property
+    def umask(self):
+        return self._get_umask()

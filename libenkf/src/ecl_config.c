@@ -569,11 +569,12 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
 
   if (config_content_has_item(config, DATA_FILE_KEY))
   {
-    ui_return_type * ui_return = ecl_config_validate_data_file(ecl_config, config_content_iget(config, DATA_FILE_KEY, 0, 0));
+    const char * data_file = config_content_get_value_as_abspath(config, DATA_FILE_KEY);
+    ui_return_type * ui_return = ecl_config_validate_data_file(ecl_config, data_file);
     if (ui_return_get_status( ui_return ) == UI_RETURN_OK)
-      ecl_config_set_data_file( ecl_config, config_content_iget(config, DATA_FILE_KEY, 0, 0) );
+      ecl_config_set_data_file(ecl_config, data_file);
     else
-      util_abort("%s: problem setting ECLIPSE data file\n",__func__ , ui_return_get_last_error(ui_return));
+      util_abort("%s: problem setting ECLIPSE data file (%s)\n",__func__ , ui_return_get_last_error(ui_return));
 
     ui_return_free(ui_return);
   }
@@ -598,7 +599,8 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
   }
 
   if (config_content_has_item(config, GRID_KEY)) {
-    const char * grid_file = config_content_iget(config, GRID_KEY, 0, 0);
+    const char * grid_file = config_content_get_value_as_abspath(config, GRID_KEY);
+
     ui_return_type * ui_return = ecl_config_validate_grid( ecl_config , grid_file);
     if (ui_return_get_status(ui_return) == UI_RETURN_OK)
       ecl_config_set_grid(ecl_config, grid_file );
@@ -620,7 +622,8 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
 
   if (config_content_has_item(config, REFCASE_KEY))
   {
-    const char * refcase_path = config_content_get_value_as_path(config, REFCASE_KEY);
+    const char * refcase_path = config_content_get_value_as_abspath(config, REFCASE_KEY);
+
     if (!ecl_config_load_refcase(ecl_config, refcase_path))
       fprintf(stderr, "** Warning: loading refcase:%s failed \n", refcase_path);
   }
@@ -635,8 +638,8 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
       int j;
       for (j = 0; j < config_content_node_get_size(node); j++)
       {
-        const char * case_glob = config_content_node_iget_as_path(node, j);
-        ecl_refcase_list_add_matching(ecl_config->refcase_list, case_glob);
+        const char * refcase_list_path = config_content_node_iget_as_abspath(node, j);
+        ecl_refcase_list_add_matching(ecl_config->refcase_list, refcase_list_path);
       }
     }
   }

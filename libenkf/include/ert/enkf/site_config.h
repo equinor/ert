@@ -50,12 +50,9 @@ typedef struct site_config_struct site_config_type;
 
   const char            *  site_config_get_license_root_path( const site_config_type * site_config );
   void                     site_config_set_license_root_path( site_config_type * site_config , const char * license_root_path);
-  void                     site_config_init_user_mode( site_config_type * site_config );
 
   void                     site_config_set_num_cpu( site_config_type * site_config , int num_cpu );
   void                     site_config_update_lsf_request(site_config_type *  , const forward_model_type *);
-  bool                     site_config_init(site_config_type * site_config , const config_content_type * config);
-  bool                     site_config_load_user_config(site_config_type *, const char *);
   void                     site_config_free(site_config_type *);
   ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );
 
@@ -101,7 +98,6 @@ typedef struct site_config_struct site_config_type;
   void                     site_config_set_umask( site_config_type * site_config , mode_t umask);
   mode_t                   site_config_get_umask( const site_config_type * site_config );
 
-  site_config_type       * site_config_alloc();
   site_config_type       * site_config_alloc_load_user_config(const char *);
 
   config_content_type    * site_config_alloc_content(config_parser_type*);

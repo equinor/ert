@@ -51,6 +51,8 @@ struct hook_manager_struct {
   hook_workflow_type     * post_hook_workflow; /* This is the good old QC workflow, kept for backward compatibility, obsolete */
 };
 
+void hook_manager_set_runpath_list_file(hook_manager_type *, const char *, const char *);
+
 hook_manager_type * hook_manager_alloc( ert_workflow_list_type * workflow_list ) {
   hook_manager_type * hook_manager = util_malloc( sizeof * hook_manager );
   hook_manager->hook_workflow_list = vector_alloc_new();
@@ -67,8 +69,7 @@ hook_manager_type * hook_manager_alloc( ert_workflow_list_type * workflow_list )
 
 hook_manager_type * hook_manager_alloc_load(
         ert_workflow_list_type * workflow_list,
-        const char * user_config_file,
-        const char * working_dir)
+        const char * user_config_file)
 {
   hook_manager_type * hook_manager = hook_manager_alloc(workflow_list);
 
@@ -76,7 +77,7 @@ hook_manager_type * hook_manager_alloc_load(
     config_parser_type * config = config_alloc();
     config_content_type * content = model_config_alloc_content(user_config_file, config);
 
-    hook_manager_init(hook_manager, content, working_dir);
+    hook_manager_init(hook_manager, content);
 
     config_content_free(content);
     config_free(config);
@@ -120,7 +121,7 @@ static void hook_manager_add_workflow( hook_manager_type * hook_manager , const 
 
 
 
-void hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config_content, const char * working_dir) {
+void hook_manager_init( hook_manager_type * hook_manager , const config_content_type * config_content) {
 
   /* Old stuff explicitly prefixed with QC  */
   {
@@ -146,9 +147,10 @@ void hook_manager_init( hook_manager_type * hook_manager , const config_content_
     }
   }
 
-
-  if (config_content_has_item( config_content , RUNPATH_FILE_KEY))
-    hook_manager_set_runpath_list_file( hook_manager, working_dir, config_content_get_value( config_content , RUNPATH_FILE_KEY));
+  if (config_content_has_item(config_content, RUNPATH_FILE_KEY)) {
+    const char * runpath_file = config_content_get_value_as_abspath(config_content, RUNPATH_FILE_KEY);
+    hook_manager_set_runpath_list_file(hook_manager, NULL, runpath_file);
+  }
 }
 
 
@@ -188,6 +190,7 @@ void hook_manager_add_config_items( config_parser_type * config ) {
 
   item = config_add_schema_item( config , RUNPATH_FILE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type(item, 0, CONFIG_PATH);
 }
 
 
@@ -203,10 +206,10 @@ static void hook_manager_set_runpath_list_file__( hook_manager_type * hook_manag
   runpath_list_set_export_file( hook_manager->runpath_list , runpath_list_file );
 }
 
-void hook_manager_set_runpath_list_file( hook_manager_type * hook_manager , const char * basepath, const char * filename) {
-  char * runpath_list_file = runpath_list_alloc_filename(basepath, filename);
-  hook_manager_set_runpath_list_file__(hook_manager, runpath_list_file);
-  free(runpath_list_file);
+void hook_manager_set_runpath_list_file( hook_manager_type * hook_manager, const char * base_dir, const char * filename) {
+  char * runpath_file = runpath_list_alloc_filename(base_dir, filename);
+  hook_manager_set_runpath_list_file__(hook_manager, runpath_file);
+  free(runpath_file);
 }
 
 

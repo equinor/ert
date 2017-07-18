@@ -52,6 +52,7 @@ class EclConfig(BaseCClass):
     _add_static_kw          = EnkfPrototype("void  ecl_config_add_static_kw(ecl_config, char*)")
     _get_depth_unit         = EnkfPrototype("char* ecl_config_get_depth_unit(ecl_config)")
     _get_pressure_unit      = EnkfPrototype("char* ecl_config_get_pressure_unit(ecl_config)")
+    _get_start_date         = EnkfPrototype("time_t ecl_config_get_start_date(ecl_config)")
 
     def __init__(self):
         c_ptr = self._alloc()
@@ -171,3 +172,8 @@ class EclConfig(BaseCClass):
 
     def getPressureUnit(self):
         return self._get_pressure_unit()
+
+    #-----------------------------------------------------------------
+
+    def getStartDate(self):
+        return self._get_start_date()

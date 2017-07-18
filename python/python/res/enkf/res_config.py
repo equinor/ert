@@ -17,9 +17,12 @@
 from os.path import isfile
 
 from cwrap import BaseCClass
+
+from res.config import ConfigSettings
+
 from res.enkf import EnkfPrototype
-from res.enkf import SiteConfig
-from res.enkf import SubstConfig
+from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig,
+                      EnsembleConfig, RNGConfig)
 
 class ResConfig(BaseCClass):
 
@@ -30,10 +33,18 @@ class ResConfig(BaseCClass):
 
     _user_config_file = EnkfPrototype("char* res_config_get_user_config_file(res_config)")
 
-    _config_path      = EnkfPrototype("char* res_config_get_working_directory(res_config)")
-    _site_config      = EnkfPrototype("site_config_ref res_config_get_site_config(res_config)")
-    _analysis_config  = EnkfPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
-    _subst_config     = EnkfPrototype("subst_config_ref res_config_get_subst_config(res_config)")
+    _config_path       = EnkfPrototype("char* res_config_get_working_directory(res_config)")
+    _site_config       = EnkfPrototype("site_config_ref res_config_get_site_config(res_config)")
+    _analysis_config   = EnkfPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
+    _subst_config      = EnkfPrototype("subst_config_ref res_config_get_subst_config(res_config)")
+    _model_config      = EnkfPrototype("model_config_ref res_config_get_model_config(res_config)")
+    _ecl_config        = EnkfPrototype("ecl_config_ref res_config_get_ecl_config(res_config)")
+    _ensemble_config   = EnkfPrototype("ens_config_ref res_config_get_ensemble_config(res_config)")
+    _plot_config       = EnkfPrototype("plot_settings_ref res_config_get_plot_config(res_config)")
+    _hook_manager      = EnkfPrototype("hook_manager_ref res_config_get_hook_manager(res_config)")
+    _ert_workflow_list = EnkfPrototype("ert_workflow_list_ref res_config_get_workflow_list(res_config)")
+    _rng_config        = EnkfPrototype("rng_config_ref res_config_get_rng_config(res_config)")
+    _ert_templates     = EnkfPrototype("ert_templates_ref res_config_get_templates(res_config)")
 
     def __init__(self, user_config_file):
         if user_config_file is not None and not isfile(user_config_file):
@@ -74,3 +85,35 @@ class ResConfig(BaseCClass):
     @property
     def subst_config(self):
         return self._subst_config( )
+
+    @property
+    def model_config(self):
+        return self._model_config()
+
+    @property
+    def ecl_config(self):
+        return self._ecl_config()
+
+    @property
+    def ensemble_config(self):
+        return self._ensemble_config()
+
+    @property
+    def plot_config(self):
+        return self._plot_config()
+
+    @property
+    def hook_manager(self):
+        return self._hook_manager()
+
+    @property
+    def ert_workflow_list(self):
+        return self._ert_workflow_list()
+
+    @property
+    def rng_config(self):
+        return self._rng_config()
+
+    @property
+    def ert_templates(self):
+        return self._ert_templates()

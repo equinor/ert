@@ -98,7 +98,6 @@ struct model_config_struct {
   fs_driver_impl         dbase_type;
   bool                   has_prediction;
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
-  history_source_type    history_source;
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
   char                 * gen_kw_export_file_name;
@@ -263,7 +262,10 @@ void model_config_set_refcase( model_config_type * model_config , const ecl_sum_
 
 
 history_source_type model_config_get_history_source( const model_config_type * model_config ) {
-  return model_config->history_source;
+  if(!model_config->history)
+    return HISTORY_SOURCE_INVALID;
+
+  return history_get_source(model_config->history);
 }
 
 
@@ -274,7 +276,6 @@ void model_config_select_schedule_history( model_config_type * model_config , co
 
   if (sched_file != NULL) {
     model_config->history = history_alloc_from_sched_file( SUMMARY_KEY_JOIN_STRING , sched_file);
-    model_config->history_source = SCHEDULE;
   } else
     util_abort("%s: internal error - trying to select HISTORY_SOURCE:SCHEDULE - but no Schedule file has been loaded.\n",__func__);
 }
@@ -286,7 +287,6 @@ void model_config_select_refcase_history( model_config_type * model_config , con
 
   if (refcase != NULL) {
     model_config->history = history_alloc_from_refcase( refcase , use_history );
-    model_config->history_source = SCHEDULE;
   } else
     util_abort("%s: internal error - trying to load history from REFCASE - but no REFCASE has been loaded.\n",__func__);
 }
@@ -327,7 +327,6 @@ model_config_type * model_config_alloc() {
   model_config->external_time_map         = NULL;
   model_config->internalize_state         = bool_vector_alloc( 0 , false );
   model_config->__load_eclipse_restart    = bool_vector_alloc( 0 , false );
-  model_config->history_source            = HISTORY_SOURCE_INVALID;
   model_config->runpath_map               = hash_alloc();
   model_config->gen_kw_export_file_name   = NULL;
   model_config->refcase                   = NULL;
@@ -661,7 +660,7 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
   }
 
   fprintf(stream , CONFIG_KEY_FORMAT      , HISTORY_SOURCE_KEY);
-  fprintf(stream , CONFIG_ENDVALUE_FORMAT , history_get_source_string( model_config->history_source ));
+  fprintf(stream , CONFIG_ENDVALUE_FORMAT , history_get_source_string( model_config_get_history_source(model_config) ));
 
   fprintf(stream , CONFIG_KEY_FORMAT , NUM_REALIZATIONS_KEY);
   fprintf(stream , CONFIG_INT_FORMAT , ens_size);

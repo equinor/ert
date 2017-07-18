@@ -60,7 +60,7 @@ struct ert_workflow_list_struct {
   bool                      verbose;
 };
 
-
+static void ert_workflow_list_init(ert_workflow_list_type * workflow_list , config_content_type * config);
 
 ert_workflow_list_type * ert_workflow_list_alloc(const subst_list_type * context) {
   ert_workflow_list_type * workflow_list = util_malloc( sizeof * workflow_list );
@@ -168,7 +168,7 @@ void ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const c
     util_alloc_file_components( config_file , NULL , &name , NULL );
 
   if (!workflow_joblist_add_job_from_file( workflow_list->joblist , name , config_file ))
-    fprintf(stderr,"** Warning: failed to add workflow job:%s from:%s \n",name , config_file );
+    fprintf(stderr,"** Warning: failed to add workflow job:%s from:%s \n", name , config_file );
 
   if (job_name == NULL)
     free(name);
@@ -283,7 +283,7 @@ stringlist_type * ert_workflow_list_get_job_names(const ert_workflow_list_type *
 }
 
 
-void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_content_type * config ) {
+static void ert_workflow_list_init(ert_workflow_list_type * workflow_list , config_content_type * config) {
   /* Adding jobs */
   {
     if (config_content_has_item( config , WORKFLOW_JOB_DIRECTORY_KEY)) {
@@ -315,8 +315,9 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_con
     if (config_content_has_item( config , LOAD_WORKFLOW_KEY)) {
       const config_content_item_type * workflow_item = config_content_get_item( config , LOAD_WORKFLOW_KEY);
       for (int i=0; i < config_content_item_get_size( workflow_item ); i++) {
-        config_content_node_type * workflow_node = config_content_item_iget_node( workflow_item , i );
-        const char * workflow_file = config_content_node_iget_as_path( workflow_node , 0 );
+        config_content_node_type * workflow_node = config_content_item_iget_node(workflow_item, i);
+
+        const char * workflow_file = config_content_node_iget_as_abspath(workflow_node, 0);
         const char * workflow_name = config_content_node_safe_iget( workflow_node , 1 );
 
         ert_workflow_list_add_workflow( workflow_list , workflow_file , workflow_name );

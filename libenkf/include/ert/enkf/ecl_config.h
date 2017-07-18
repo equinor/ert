@@ -74,7 +74,6 @@ extern "C" {
 
   /*****************************************************************/
 
-  void                  ecl_config_static_kw_init( ecl_config_type * ecl_config , const config_content_type * config );
   bool                  ecl_config_active( const ecl_config_type * config );
   time_t                ecl_config_get_end_date( const ecl_config_type * ecl_config );
   time_t                ecl_config_get_start_date( const ecl_config_type * ecl_config );

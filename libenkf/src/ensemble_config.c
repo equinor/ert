@@ -311,6 +311,7 @@ void ensemble_config_add_config_items(config_parser_type * config) {
   item = config_add_schema_item(config , GEN_KW_KEY , false  );
   config_schema_item_set_argc_minmax(item , 4 , 6);
   config_schema_item_iset_type( item , 1 , CONFIG_EXISTING_PATH );
+  config_schema_item_iset_type( item , 2 , CONFIG_PATH );
   config_schema_item_iset_type( item , 3 , CONFIG_EXISTING_PATH );
 
 
@@ -400,17 +401,18 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
 }
 
 
-void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const config_content_type * config ) {
+void ensemble_config_init_GEN_KW(ensemble_config_type * ensemble_config, const config_content_type * config) {
   if (config_content_has_item(config , GEN_KW_KEY)) {
     const config_content_item_type * gen_kw_item = config_content_get_item( config , GEN_KW_KEY );
     int i;
     for (i=0; i < config_content_item_get_size( gen_kw_item ); i++) {
       config_content_node_type * node = config_content_item_iget_node( gen_kw_item , i );
 
-      const char * key             = config_content_node_iget( node , 0 );
-      const char * template_file   = config_content_node_iget_as_path( node , 1 );
-      const char * enkf_outfile    = config_content_node_iget( node , 2 );
-      const char * parameter_file  = config_content_node_iget_as_path( node , 3 );
+      const char * key            = config_content_node_iget(node, 0);
+      const char * template_file  = config_content_node_iget_as_abspath(node, 1);
+      const char * enkf_outfile   = config_content_node_iget(node, 2);
+      const char * parameter_file = config_content_node_iget_as_abspath(node, 3);
+
       hash_type * opt_hash         = hash_alloc();
 
       config_content_node_init_opt_hash( node , opt_hash , 4 );

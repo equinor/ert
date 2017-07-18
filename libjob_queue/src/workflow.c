@@ -263,3 +263,7 @@ stringlist_type * workflow_iget_arguments( const workflow_type * workflow, int i
     const cmd_type * cmd = vector_iget_const( workflow->cmd_list , index );
     return cmd->arglist;
 }
+
+const char * worflow_get_src_file(const workflow_type * workflow) {
+  return workflow->src_file;
+}

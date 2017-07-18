@@ -30,6 +30,7 @@ class GenKwConfig(BaseCClass):
     _alloc_name_list      = EnkfPrototype("stringlist_obj gen_kw_config_alloc_name_list(gen_kw_config)")
     _should_use_log_scale = EnkfPrototype("bool  gen_kw_config_should_use_log_scale(gen_kw_config, int)")
     _get_key              = EnkfPrototype("char* gen_kw_config_get_key(gen_kw_config)")
+    _get_tag_fmt          = EnkfPrototype("char* gen_kw_config_get_tag_fmt(gen_kw_config)")
     _size                 = EnkfPrototype("int   gen_kw_config_get_data_size(gen_kw_config)")
     _iget_name            = EnkfPrototype("char* gen_kw_config_iget_name(gen_kw_config, int)")
 
@@ -44,8 +45,6 @@ class GenKwConfig(BaseCClass):
             super(GenKwConfig, self).__init__(c_ptr)
         else:
             raise ValueError('Could not instantiate GenKwConfig with key="%s" and tag_fmt="%s"' % (key, tag_fmt))
-        self._key = key
-        self._tag_fmt = tag_fmt
         self.setTemplateFile(template_file)
         self.setParameterFile(parameter_file)
         self.__str__ = self.__repr__
@@ -75,11 +74,15 @@ class GenKwConfig(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return 'GenKwConfig(key = "%s", tag_fmt = "%s") at 0x%x' % (self._key, self._tag_fmt, self._address())
+        return 'GenKwConfig(key = "%s", tag_fmt = "%s") at 0x%x' % (self.getKey(), self.tag_fmt, self._address())
 
     def getKey(self):
         """ @rtype: str """
         return self._get_key()
+
+    @property
+    def tag_fmt(self):
+        return self._get_tag_fmt()
 
     def __len__(self):
         return self._size()
