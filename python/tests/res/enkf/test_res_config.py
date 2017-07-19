@@ -245,7 +245,6 @@ class ResConfigTest(ExtendedTestCase):
                 )
 
         job_list = site_config.get_installed_jobs()
-        self.assertEqual(len(config_data["INSTALL_JOB"]), len(job_list))
         for job_name in config_data["INSTALL_JOB"]:
             self.assertTrue(job_name in job_list)
 
