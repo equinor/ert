@@ -228,7 +228,7 @@ class JobManager(object):
         self.postMessage(job=job, extra_fields={"status": "startStatus"})
 
 
-    def completeStatus(self, job, exit_status, error_msg):
+    def completeStatus(self, exit_status, error_msg, job=None):
         now = time.localtime()
         extra_fields = {"finished": True,
                         "exit_status": exit_status,

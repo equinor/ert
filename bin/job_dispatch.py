@@ -393,7 +393,7 @@ def main(argv):
         for job in job_manager:
             job_manager.startStatus( job )
             (OK , exit_status, error_msg) = run_one( job_manager , job)
-            job_manager.completeStatus(job, exit_status , error_msg )
+            job_manager.completeStatus(exit_status, error_msg, job=job)
             if not OK:
                 job_manager.exit( job, exit_status , error_msg )
 
