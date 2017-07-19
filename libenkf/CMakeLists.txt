@@ -143,7 +143,6 @@ foreach (test   enkf_active_list
                 enkf_plot_gen_kw_vector
                 enkf_plot_genvector
                 enkf_plot_tvector
-                enkf_queue_config
                 enkf_run_arg
                 enkf_state_map
                 obs_vector_tests
@@ -161,6 +160,10 @@ function( add_config_test name command )
     set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT}")
 endfunction()
 
+add_executable(enkf_queue_config tests/enkf_queue_config.c)
+target_link_libraries(enkf_queue_config enkf)
+add_config_test(enkf_queue_config
+                enkf_queue_config)
 
 add_executable(enkf_magic_string_in_workflows tests/enkf_magic_string_in_workflows.c)
 target_link_libraries(enkf_magic_string_in_workflows enkf)
