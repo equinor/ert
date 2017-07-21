@@ -15,18 +15,17 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
 
-    def runSimulations(self, job_queue, arguments):
+    def runSimulations(self, job_queue, run_context):
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
-        self.setAnalysisModule(arguments["analysis_module"])
-        active_realization_mask = arguments["active_realizations"]
+        # self.setAnalysisModule(arguments["analysis_module"])
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 0)
+        self.ert().getEnkfSimulationRunner().createRunPath(run_context)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL , 0)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, run_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
@@ -35,13 +34,9 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Analyzing...")
 
-        target_case_name = arguments["target_case"]
-        target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
-        source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
-        
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_UPDATE )
         es_update = self.ert().getESUpdate( ) 
-        success = es_update.smootherUpdate(source_fs, target_fs)
+        success = es_update.smootherUpdate( run_context )
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_UPDATE )

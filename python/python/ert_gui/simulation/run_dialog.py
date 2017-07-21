@@ -11,7 +11,7 @@ from ert_gui.tools.plot.plot_tool import PlotTool
 
 class RunDialog(QDialog):
 
-    def __init__(self, run_model, run_arguments, parent):
+    def __init__(self, run_model, run_context, parent):
         QDialog.__init__(self, parent)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
@@ -21,7 +21,7 @@ class RunDialog(QDialog):
 
         assert isinstance(run_model, BaseRunModel)
         self._run_model = run_model
-        self._run_arguments = run_arguments
+        self._run_context = run_context
 
         layout = QVBoxLayout()
         layout.setSizeConstraint(QLayout.SetFixedSize)
@@ -113,7 +113,7 @@ class RunDialog(QDialog):
         self._run_model.reset()
 
         def run():
-            self._run_model.startSimulations(self._run_arguments)
+            self._run_model.startSimulations(self._run_context)
 
         simulation_thread = Thread(name="ert_gui_simulation_thread")
         simulation_thread.setDaemon(True)

@@ -117,7 +117,7 @@ class SimulationPanel(QWidget):
         if start_simulations == QMessageBox.Yes:
             run_model = self.getCurrentSimulationModel()
             arguments = self.getSimulationArguments()
-            dialog = RunDialog(run_model, arguments, self)
+            dialog = RunDialog(run_model, run_context , self)
             dialog.startSimulation()
             dialog.exec_()
 
