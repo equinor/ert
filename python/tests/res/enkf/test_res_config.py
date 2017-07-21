@@ -206,6 +206,11 @@ class ResConfigTest(ExtendedTestCase):
                 model_config.get_history_source()
                 )
 
+        self.assertEqual(
+                config_data["NUM_REALIZATIONS"],
+                model_config.num_realizations
+                )
+
 
     def assert_analysis_config(self, analysis_config, config_data):
         self.assertEqual(
@@ -454,6 +459,5 @@ class ResConfigTest(ExtendedTestCase):
 
 
             # TODO: Not tested
-            # - NUM_REALIZATIONS
             # - MIN_REALIZATIONS
             # - OBS_CONFIG
