@@ -1,5 +1,6 @@
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.enums import HookRuntime
+from res.enkf import ErtRunContext
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 
@@ -15,6 +16,8 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
 
+    # This is broken because the run run_context is a full-smoother object,
+    # but it is reused in multiple experiments.
     def runSimulations(self, job_queue, run_context):
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
@@ -42,15 +45,15 @@ class EnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_UPDATE )
 
         self.setPhase(1, "Running simulations...")
-        self.ert().getEnkfFsManager().switchFileSystem(target_fs)
+        self.ert().getEnkfFsManager().switchFileSystem( run_context.get_target_fs( ) )
         
         self.setPhaseName("Pre processing...")
-        self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 1)
+        self.ert().getEnkfSimulationRunner().createRunPath( run_context )  
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, active_realization_mask, EnkfInitModeEnum.INIT_NONE, 1)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, run_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
@@ -58,3 +61,18 @@ class EnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
 
         self.setPhase(2, "Simulations completed.")
+
+
+
+    def create_context(self, arguments):
+        fs_manager = self.ert().getEnkfFsManager()
+        sim_fs = fs_manager.getCurrentFileSystem( )
+        target_fs = fs_manager.getFileSystem("smoother-update")
+
+        model_config = self.ert().getModelConfig( )
+        runpath_fmt = model_config.getRunpathFormat( )
+        subst_list = self.ert().getDataKW( )
+        itr = 0
+        mask = arguments["active_realizations"]
+        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, subst_list, itr)
+        return run_context

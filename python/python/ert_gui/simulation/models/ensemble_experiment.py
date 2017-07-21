@@ -1,4 +1,5 @@
 from res.enkf.enums import HookRuntime
+from res.enkf import ErtRunContext
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
 class EnsembleExperiment(BaseRunModel):
@@ -15,7 +16,7 @@ class EnsembleExperiment(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName( run_msg, indeterminate=False)
-
+        
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(job_queue, run_context)
         self.assertHaveSufficientRealizations(num_successful_realizations, active_realizations )
 
@@ -25,9 +26,8 @@ class EnsembleExperiment(BaseRunModel):
 
         
         
-    def runSimulations(self, job_queue,  arguments):
-        active_realizations_mask = arguments["active_realizations"]
-        self.runSimulations__( job_queue , active_realizations_mask , "Running ensemble experiment...")
+    def runSimulations(self, job_queue,  run_context):
+        self.runSimulations__( job_queue , run_context , "Running ensemble experiment...")
                 
         
 
@@ -35,3 +35,16 @@ class EnsembleExperiment(BaseRunModel):
     def count_active_realizations(self, run_context):
         return sum(run_context.get_mask( ))
 
+
+    def create_context(self, arguments):
+        fs_manager = self.ert().getEnkfFsManager()
+        init_fs = fs_manager.getCurrentFileSystem( )
+        result_fs = fs_manager.getCurrentFileSystem( )
+
+        model_config = self.ert().getModelConfig( )
+        runpath_fmt = model_config.getRunpathFormat( )
+        subst_list = self.ert().getDataKW( )
+        itr = 0
+        mask = arguments["active_realizations"]
+        run_context = ErtRunContext.ensemble_experiment( init_fs, result_fs, mask, runpath_fmt, subst_list, itr)
+        return run_context

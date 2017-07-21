@@ -69,6 +69,11 @@ class BaseRunModel(object):
     def runSimulations(self, job_queue, run_context):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
+    
+    def create_context(self, arguments):
+        raise NotImplementedError("Method must be implemented by inheritors!")
+
+    
     @job_queue(None)
     def killAllSimulations(self):
         self._job_queue.killAllJobs()
