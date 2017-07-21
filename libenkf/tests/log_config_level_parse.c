@@ -18,37 +18,38 @@
 #include <stdlib.h>
 #include <ert/util/test_util.h>
 #include <ert/util/string_util.h>
-#include <ert/enkf/enkf_main.h>
+#include <ert/enkf/log_config.h>
 
 typedef struct {
   const char * log_keyword; // keyword written in the config file
   const char * log_old_numeric_str; // *old* integer value (as a string)
   const message_level_type log_enum; // enum for the new log-level
 } log_tuple;
+
 log_tuple log_levels[] = {
-        {"CRITICAL", "0", LOG_CRITICAL},
-        {"ERROR", "1", LOG_ERROR},
-        {"WARNING", "2", LOG_WARNING},
-        {"INFO", "3", LOG_INFO},
-        {"DEBUG", "4", LOG_DEBUG}};
+        {LOG_CRITICAL_NAME, LOG_CRITICAL_DEPRECATED_NAME, LOG_CRITICAL},
+        {LOG_ERROR_NAME,    LOG_ERROR_DEPRECATED_NAME,    LOG_ERROR},
+        {LOG_WARNING_NAME,  LOG_WARNING_DEPRECATED_NAME,  LOG_WARNING},
+        {LOG_INFO_NAME,     LOG_INFO_DEPRECATED_NAME,     LOG_INFO},
+        {LOG_DEBUG_NAME,    LOG_DEBUG_DEPRECATED_NAME,    LOG_DEBUG}};
 
 /* Old numeric values are parsed and converted properly */
 void test_parse_old_numeric_positive() {
   for (int i = 0; i < 5; i++) {
     log_tuple curr_log_tuple = log_levels[i];
-    test_assert_int_equal(res_log_level_parser(curr_log_tuple.log_old_numeric_str), curr_log_tuple.log_enum);
+    test_assert_int_equal(log_config_level_parser(curr_log_tuple.log_old_numeric_str), curr_log_tuple.log_enum);
   }
 }
 
 void test_parse_keywords_positive() {
   for (int i = 0; i < 5; i++) {
-    test_assert_int_equal(res_log_level_parser(log_levels[i].log_keyword), log_levels[i].log_enum);
+    test_assert_int_equal(log_config_level_parser(log_levels[i].log_keyword), log_levels[i].log_enum);
   }
 }
 
 void test_parse_negative_becomes_default() {
   for (int i = 0; i < 5; i++) {
-    test_assert_int_equal(res_log_level_parser(log_levels[i].log_keyword), log_levels[i].log_enum);
+    test_assert_int_equal(log_config_level_parser(log_levels[i].log_keyword), log_levels[i].log_enum);
   }
 }
 

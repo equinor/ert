@@ -85,6 +85,7 @@ from .runpath_list import RunpathList, RunpathNode
 from .hook_workflow import HookWorkflow
 from .hook_manager import HookManager
 from .rng_config import RNGConfig
+from .log_config import LogConfig
 from .res_config import ResConfig
 
 from .es_update import ESUpdate

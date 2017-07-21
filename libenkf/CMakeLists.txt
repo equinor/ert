@@ -91,6 +91,7 @@ add_library(enkf src/active_list.c
                  src/surface_config.c
                  src/trans_func.c
                  src/subst_config.c
+                 src/log_config.c
 )
 
 target_include_directories(enkf
@@ -146,7 +147,7 @@ foreach (test   enkf_active_list
                 enkf_run_arg
                 enkf_state_map
                 obs_vector_tests
-                enkf_res_log_level_parse
+                log_config_level_parse
     )
     add_executable(${test} tests/${test}.c)
     target_link_libraries(${test} enkf)

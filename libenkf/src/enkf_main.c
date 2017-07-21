@@ -235,6 +235,10 @@ const res_config_type * enkf_main_get_res_config(const enkf_main_type * enkf_mai
   return enkf_main->res_config;
 }
 
+const log_config_type * enkf_main_get_log_config(const enkf_main_type * enkf_main) {
+  return res_config_get_log_config(enkf_main->res_config);
+}
+
 subst_config_type * enkf_main_get_subst_config(const enkf_main_type * enkf_main) {
   return res_config_get_subst_config(enkf_main->res_config);
 }
@@ -2087,17 +2091,13 @@ static char * enkf_main_alloc_model_config_filename(const char * model_config) {
   return rel_model_config;
 }
 
-static void enkf_main_init_log(
-        const enkf_main_type * enkf_main,
-        const config_content_type * content) {
-  char * log_file=NULL;
-  if (config_content_has_item( content , LOG_FILE_KEY))
-    log_file = util_alloc_string_copy( config_content_get_value(content , LOG_FILE_KEY));
-  if(config_content_has_item( content , LOG_LEVEL_KEY))
-    res_log_init_log(res_log_level_parser(config_content_get_value(content , LOG_LEVEL_KEY)), log_file ,  enkf_main->verbose);
-  else
-    res_log_init_log_default_log_level(log_file ,  enkf_main->verbose);
-  free( log_file );
+static void enkf_main_init_log(const enkf_main_type * enkf_main) {
+  const log_config_type * log_config = enkf_main_get_log_config(enkf_main);
+  res_log_init_log(
+          log_config_get_log_level(log_config),
+          log_config_get_log_file(log_config),
+          enkf_main->verbose
+          );
 }
 
 
@@ -2174,8 +2174,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   config_parser_type * config = config_alloc();
   config_content_type * content = model_config_alloc_content(enkf_main->user_config_file, config);
 
-  enkf_main_init_log(enkf_main, content);
-
   enkf_main_init_delete_runpath(enkf_main, content);
 
   enkf_main_init_pre_clear_runpath(enkf_main, content);
@@ -2245,6 +2243,8 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
 
   enkf_main_set_verbose(enkf_main, verbose);
 
+  enkf_main_init_log(enkf_main);
+
   char * user_config_file = enkf_main_alloc_model_config_filename(model_config);
   if(user_config_file) {
     enkf_main_set_user_config_file(enkf_main, user_config_file);
@@ -2255,52 +2255,6 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
   enkf_main_init_jobname(enkf_main);
 
   return enkf_main;
-}
-
-/**
- * TODO: This method is basically the initializer of a "log-config" struct, so
- * when log-config is extracted to a separate file as the other config objects
- * have been this should be moved there as well.
- *
- * This method parses the 'LOG_LEVEL_KEY' value according to the following
- * rules:
- *
- * - If it is an integer 0 <= i <= 4 then it issues an deprecation warning and
- *   uses the approximately correct enum of message_level_type.
- *
- * - If it is one of the strings CRITICAL, ERROR, WARNING, INFO, DEBUG it
- *   returns the corresponding enum of message_level_type
- *
- * - Else it returns the DEFAULT_LOG_LEVEL
- *
- */
-message_level_type res_log_level_parser(const char *level) {
-  typedef struct {
-    const char *log_keyword; // The keyword written in the config file
-    const char *log_old_numeric_str; // The *old* integer value
-    const message_level_type log_enum; // The enum for the new log-level
-  } log_tupple;
-
-  log_tupple log_levels[] = {
-          {"CRITICAL", "0", LOG_CRITICAL},
-          {"ERROR",    "1", LOG_ERROR},
-          {"WARNING",  "2", LOG_WARNING},
-          {"INFO",     "3", LOG_INFO},
-          {"DEBUG",    "4", LOG_DEBUG}};
-  const int nr_of_log_levels = 5;
-
-  for (int i = 0; i < nr_of_log_levels; i++) {
-    log_tupple curr_log_level = log_levels[i];
-    if (strcmp(level, curr_log_level.log_old_numeric_str)==0) { // We found an old integer level
-      fprintf(stderr, "** Deprecation warning: Use of %s %s is deprecated, use %s %s instead\n",LOG_LEVEL_KEY,
-              curr_log_level.log_old_numeric_str,LOG_LEVEL_KEY, curr_log_level.log_keyword);
-      return curr_log_level.log_enum;
-    } else if (strcmp(level, curr_log_level.log_keyword)==0) { // We found a new proper name
-      return curr_log_level.log_enum;
-    }
-  }
-  fprintf(stderr, "** The log_level: %s is not valid, using default log level\n", level);
-  return DEFAULT_LOG_LEVEL;
 }
 
 /**
