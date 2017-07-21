@@ -104,7 +104,7 @@ void test_parse() {
 int main() {
     util_install_signals();
  
-    //test_empty();
+    test_empty();
     test_parse();
     return 0;
 }
