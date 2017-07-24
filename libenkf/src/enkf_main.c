@@ -157,7 +157,6 @@ struct enkf_main_struct {
   bool                     pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
 
   char                   * user_config_file;
-  char                   * rft_config_file;       /* File giving the configuration to the RFTwells*/
   enkf_obs_type          * obs;
 
   enkf_state_type       ** ensemble;         /* The ensemble ... */
@@ -205,10 +204,6 @@ void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * u
   enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
 }
 
-void enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rft_config_file ) {
-  enkf_main->rft_config_file = util_realloc_string_copy( enkf_main->rft_config_file , rft_config_file );
-}
-
 const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) {
   return enkf_main->user_config_file;
 }
@@ -217,10 +212,6 @@ const char * enkf_main_get_site_config_file( const enkf_main_type * enkf_main ) 
   return site_config_get_config_file(
             enkf_main_get_site_config(enkf_main)
             );
-}
-
-const char * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main ) {
-  return enkf_main->rft_config_file;
 }
 
 ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
@@ -338,7 +329,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
   int_vector_free( enkf_main->keep_runpath );
 
   util_safe_free( enkf_main->user_config_file );
-  util_safe_free( enkf_main->rft_config_file );
   free(enkf_main);
 }
 
@@ -1965,7 +1955,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   res_log_open_empty();
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;
-  enkf_main->rft_config_file    = NULL;
   enkf_main->local_config       = NULL;
   enkf_main->rng                = NULL;
   enkf_main->ens_size           = 0;
@@ -2139,17 +2128,6 @@ static void enkf_main_init_pre_clear_runpath(
 }
 
 
-static void enkf_main_init_rft_config(
-                enkf_main_type * enkf_main,
-                const config_content_type * content) {
-
-  const char * rft_config_file = NULL;
-  if (config_content_has_item(content , RFT_CONFIG_KEY))
-    rft_config_file = config_content_iget(content, RFT_CONFIG_KEY, 0, 0);
-
-  enkf_main_set_rft_config_file(enkf_main, rft_config_file);
-}
-
 static void enkf_main_init_obs(
                 enkf_main_type * enkf_main,
                 const config_content_type * content) {
@@ -2177,8 +2155,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   enkf_main_init_delete_runpath(enkf_main, content);
 
   enkf_main_init_pre_clear_runpath(enkf_main, content);
-
-  enkf_main_init_rft_config(enkf_main, content);
 
   enkf_main_user_select_initial_fs( enkf_main );
 
