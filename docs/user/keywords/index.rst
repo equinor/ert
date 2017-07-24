@@ -116,7 +116,6 @@ Keyword name                                                             Require
 :ref:`REFCASE_LIST <refcase_list>`                                        NO                                                                     Full path to Eclipse .DATA files containing completed runs (which you can add to plots)
 :ref:`RERUN_PATH  <rerun_path>`                                           NO                                                                     ...
 :ref:`RERUN_START  <rerun_start>`                                         NO                                     0                               ...
-:ref:`RFT_CONFIG  <rft_config>`                                           NO                                                                     Config file specifying well names and dates for rft-measurements. Used for plotting. The format has to be name day month year (ex. Q-2FI 02 08 1973), with a new entry on a new line.
 :ref:`RFTPATH <rftpath>`                                                  NO                                     rft                             Path to where the rft well observations are stored
 :ref:`RSH_COMMAND  <rsh_command>`                                         NO                                                                     Command used for remote shell operations.
 :ref:`RSH_HOST <rsh_host>`                                                NO                                                                     Remote host used to run forward model.
@@ -2015,34 +2014,6 @@ Keywords related to plotting
         SHOW_REFCASE : Default True
         SHOW_HISTORY : Default True
 
-
-
-
-.. _rft_config:
-.. topic:: RFT_CONFIG
-
-    RFT_CONFIGS argument is a file with the name of the rfts followed by date
-    (day month year) Ex.
-
-    ::
-
-        RFT_CONFIG  ../models/wells/rft/WELLNAME_AND_RFT_TIME.txt
-
-    Where the contents of the file is something like
-
-    ::
-
-        be-linapp16(inmyr) -/models/wells/rft 34> more WELLNAME_AND_RFT_TIME.txt
-        A-1HP  06 05 1993
-        A-9HW  31 07 1993
-        C-1HP  11 12 2007
-        C-5HP  21 12 1999
-        C-6HR  09 11 1999
-        D-4HP  10 07 2003
-        K-3HW  09 02 2003
-        K-6HW  08 11 2002
-        K-7HW  21 04 2005
-        D-6HP  22 04 2006
 
 
 
