@@ -2166,7 +2166,7 @@ static void enkf_main_init_obs(
   }
 }
 
-static void enkf_main_init_ensemble(enkf_main_type * enkf_main) {
+static void enkf_main_add_ensemble_members(enkf_main_type * enkf_main) {
   const model_config_type * model_config = enkf_main_get_model_config(enkf_main);
   int num_realizations = model_config_get_num_realizations(model_config);
   enkf_main_resize_ensemble(enkf_main, num_realizations);
@@ -2251,7 +2251,7 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
   }
   free(user_config_file);
 
-  enkf_main_init_ensemble(enkf_main);
+  enkf_main_add_ensemble_members(enkf_main);
 
   enkf_main_init_jobname(enkf_main);
 
