@@ -2144,6 +2144,11 @@ static void enkf_main_init_obs(
   }
 }
 
+static void enkf_main_add_ensemble_members(enkf_main_type * enkf_main) {
+  const model_config_type * model_config = enkf_main_get_model_config(enkf_main);
+  int num_realizations = model_config_get_num_realizations(model_config);
+  enkf_main_resize_ensemble(enkf_main, num_realizations);
+}
 
 static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, bool verbose) {
   if (!enkf_main->user_config_file)
@@ -2157,12 +2162,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   enkf_main_init_pre_clear_runpath(enkf_main, content);
 
   enkf_main_user_select_initial_fs( enkf_main );
-
-  /* Adding ensemble members */
-  enkf_main_resize_ensemble(
-          enkf_main,
-          config_content_iget_as_int(content, NUM_REALIZATIONS_KEY, 0, 0)
-          );
 
   enkf_main_init_obs(enkf_main, content);
 
@@ -2227,6 +2226,8 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
     enkf_main_bootstrap_model(enkf_main, strict, verbose);
   }
   free(user_config_file);
+
+  enkf_main_add_ensemble_members(enkf_main);
 
   enkf_main_init_jobname(enkf_main);
 

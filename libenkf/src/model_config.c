@@ -101,6 +101,7 @@ struct model_config_struct {
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
   char                 * gen_kw_export_file_name;
+  int                    num_realizations;
 
   /** The results are always loaded. */
   bool_vector_type    * internalize_state;          /* Should the (full) state be internalized (at this report_step). */
@@ -330,6 +331,7 @@ model_config_type * model_config_alloc() {
   model_config->runpath_map               = hash_alloc();
   model_config->gen_kw_export_file_name   = NULL;
   model_config->refcase                   = NULL;
+  model_config->num_realizations          = 0;
 
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
   model_config_set_rftpath( model_config        , DEFAULT_RFTPATH );
@@ -420,6 +422,8 @@ void model_config_init(model_config_type * model_config ,
   model_config->forward_model = forward_model_alloc(  joblist );
   model_config_set_refcase( model_config , refcase );
 
+  if (config_content_has_item(config, NUM_REALIZATIONS_KEY))
+    model_config->num_realizations = config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
 
   if (config_content_has_item( config , FORWARD_MODEL_KEY )) {
     char * config_string = config_content_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");
@@ -558,6 +562,10 @@ bool model_config_has_history(const model_config_type * config) {
 
 history_type * model_config_get_history(const model_config_type * config) {
   return config->history;
+}
+
+int model_config_get_num_realizations(const model_config_type * model_config) {
+  return model_config->num_realizations;
 }
 
 /**

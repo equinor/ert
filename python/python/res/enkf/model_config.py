@@ -42,6 +42,7 @@ class ModelConfig(BaseCClass):
     _runpath_requires_iterations = EnkfPrototype("bool  model_config_runpath_requires_iter(model_config)")
     _get_jobname_fmt             = EnkfPrototype("char* model_config_get_jobname_fmt(model_config)")
     _get_runpath_fmt             = EnkfPrototype("path_fmt_ref model_config_get_runpath_fmt(model_config)")
+    _get_num_realizations        = EnkfPrototype("int model_config_get_num_realizations(model_config)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -118,3 +119,7 @@ class ModelConfig(BaseCClass):
     def getRunpathFormat(self):
         """ @rtype: PathFormat """
         return self._get_runpath_fmt()
+
+    @property
+    def num_realizations(self):
+        return self._get_num_realizations()
