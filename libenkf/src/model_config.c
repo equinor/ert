@@ -102,6 +102,7 @@ struct model_config_struct {
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
   char                 * gen_kw_export_file_name;
   int                    num_realizations;
+  char                 * obs_config_file;
 
   /** The results are always loaded. */
   bool_vector_type    * internalize_state;          /* Should the (full) state be internalized (at this report_step). */
@@ -118,6 +119,9 @@ void model_config_set_jobname_fmt( model_config_type * model_config , const char
   model_config->jobname_fmt = util_realloc_string_copy( model_config->jobname_fmt , jobname_fmt );
 }
 
+const char * model_config_get_obs_config_file(const model_config_type * model_config) {
+  return model_config->obs_config_file;
+}
 
 path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_config) {
   return model_config->current_runpath;
@@ -332,6 +336,7 @@ model_config_type * model_config_alloc() {
   model_config->gen_kw_export_file_name   = NULL;
   model_config->refcase                   = NULL;
   model_config->num_realizations          = 0;
+  model_config->obs_config_file           = NULL;
 
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
   model_config_set_rftpath( model_config        , DEFAULT_RFTPATH );
@@ -511,6 +516,15 @@ void model_config_init(model_config_type * model_config ,
 
     model_config_set_gen_kw_export_file(model_config, export_file_name);
    }
+
+  if (config_content_has_item(config, OBS_CONFIG_KEY)) {
+    const char * obs_config_file = config_content_get_value_as_abspath(
+                                                    config,
+                                                    OBS_CONFIG_KEY
+                                                    );
+
+    model_config->obs_config_file = util_alloc_string_copy(obs_config_file);
+  }
 }
 
 
@@ -530,6 +544,7 @@ void model_config_free(model_config_type * model_config) {
   util_safe_free( model_config->case_table_file );
   util_safe_free( model_config->current_path_key);
   util_safe_free( model_config->gen_kw_export_file_name);
+  util_safe_free( model_config->obs_config_file );
 
   if (model_config->history)
     history_free(model_config->history);

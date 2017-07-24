@@ -180,7 +180,7 @@ class ResConfigTest(ExtendedTestCase):
                     )
 
 
-    def assert_model_config(self, model_config, config_data):
+    def assert_model_config(self, model_config, config_data, working_dir):
         self.assertEqual(
                 config_data["RUNPATH"],
                 model_config.getRunpathAsString()
@@ -209,6 +209,12 @@ class ResConfigTest(ExtendedTestCase):
         self.assertEqual(
                 config_data["NUM_REALIZATIONS"],
                 model_config.num_realizations
+                )
+
+        self.assert_same_config_file(
+                config_data["OBS_CONFIG"],
+                model_config.obs_config_file,
+                working_dir
                 )
 
 
@@ -445,7 +451,7 @@ class ResConfigTest(ExtendedTestCase):
                                              path
                                              )
 
-            self.assert_model_config(res_config.model_config, config_data)
+            self.assert_model_config(res_config.model_config, config_data, work_dir)
             self.assert_analysis_config(res_config.analysis_config, config_data)
             self.assert_site_config(res_config.site_config, config_data, work_dir)
             self.assert_ecl_config(res_config.ecl_config, config_data, work_dir)
@@ -460,4 +466,3 @@ class ResConfigTest(ExtendedTestCase):
 
             # TODO: Not tested
             # - MIN_REALIZATIONS
-            # - OBS_CONFIG

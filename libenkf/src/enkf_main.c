@@ -2128,20 +2128,14 @@ static void enkf_main_init_pre_clear_runpath(
 }
 
 
-static void enkf_main_init_obs(
-                enkf_main_type * enkf_main,
-                const config_content_type * content) {
 
+static void enkf_main_init_obs(enkf_main_type * enkf_main) {
   enkf_main_alloc_obs(enkf_main);
-  if (config_content_has_item(content, OBS_CONFIG_KEY)) {
-    const char * obs_config_file = config_content_iget(
-                                                    content,
-                                                    OBS_CONFIG_KEY,
-                                                    0, 0
-                                                    );
 
+  const model_config_type * model_config = enkf_main_get_model_config(enkf_main);
+  const char * obs_config_file = model_config_get_obs_config_file(model_config);
+  if (obs_config_file)
     enkf_main_load_obs(enkf_main, obs_config_file, true);
-  }
 }
 
 static void enkf_main_add_ensemble_members(enkf_main_type * enkf_main) {
@@ -2163,7 +2157,7 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
 
   enkf_main_user_select_initial_fs( enkf_main );
 
-  enkf_main_init_obs(enkf_main, content);
+  enkf_main_init_obs(enkf_main);
 
   config_content_free(content);
   config_free(config);
