@@ -43,6 +43,7 @@ class ModelConfig(BaseCClass):
     _get_jobname_fmt             = EnkfPrototype("char* model_config_get_jobname_fmt(model_config)")
     _get_runpath_fmt             = EnkfPrototype("path_fmt_ref model_config_get_runpath_fmt(model_config)")
     _get_num_realizations        = EnkfPrototype("int model_config_get_num_realizations(model_config)")
+    _get_obs_config_file         = EnkfPrototype("char* model_config_get_obs_config_file(model_config)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -111,6 +112,10 @@ class ModelConfig(BaseCClass):
     def getJobnameFormat(self):
         """ @rtype: str """
         return self._get_jobname_fmt()
+
+    @property
+    def obs_config_file(self):
+        return self._get_obs_config_file()
 
     def getEnspath(self):
         """ @rtype: str """
