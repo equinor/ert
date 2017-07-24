@@ -60,7 +60,6 @@ extern "C" {
 #define  DATA_FILE_KEY                     "DATA_FILE"
 #define  DATA_KW_KEY                       "DATA_KW"
 #define  DBASE_TYPE_KEY                    "DBASE_TYPE"
-#define  DELETE_RUNPATH_KEY                "DELETE_RUNPATH"
 #define  ECLBASE_KEY                       "ECLBASE"
 #define  END_DATE_KEY                      "END_DATE"
 #define  ENKF_BOOTSTRAP_KEY                "ENKF_BOOTSTRAP"

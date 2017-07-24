@@ -52,8 +52,6 @@ class EnKFMain(BaseCClass):
     _resize_ensemble = EnkfPrototype("void enkf_main_resize_ensemble(enkf_main, int)")
     _get_obs = EnkfPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _load_obs = EnkfPrototype("void enkf_main_load_obs(enkf_main, char* , bool)")
-    _iget_keep_runpath = EnkfPrototype("int enkf_main_iget_keep_runpath(enkf_main, int)")
-    _iset_keep_runpath = EnkfPrototype("void enkf_main_iset_keep_runpath(enkf_main, int, int_vector)")
     _get_templates = EnkfPrototype("ert_templates_ref enkf_main_get_templates(enkf_main)")
     _get_site_config_file = EnkfPrototype("char* enkf_main_get_site_config_file(enkf_main)")
     _get_history_length = EnkfPrototype("int enkf_main_get_history_length(enkf_main)")
@@ -211,14 +209,6 @@ class EnKFMain(BaseCClass):
 
     def loadObservations(self , obs_config_file , clear = True):
         self._load_obs(obs_config_file , clear)
-
-
-    def iget_keep_runpath(self, iens):
-        ikeep = self._iget_keep_runpath(iens)
-        return ikeep
-
-    def iset_keep_runpath(self, iens, keep_runpath):
-        self._iset_keep_runpath(iens, keep_runpath)
 
     def get_templates(self):
         return self._get_templates( ).setParent(self)

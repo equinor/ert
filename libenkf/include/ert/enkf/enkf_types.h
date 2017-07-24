@@ -67,14 +67,6 @@ enkf_var_type;
 
 
 
-typedef enum { DEFAULT_KEEP    = 0,    /* Remove for enkf assimilation - keep for ensemble experiments. */
-               EXPLICIT_DELETE = 1,    /* Remove unconditionally */
-               EXPLICIT_KEEP   = 2}    /* keep unconditionally */
-keep_runpath_type;
-
-
-
-
 
 /*
    ert_impl_type are the actual node implementation types. Observe
