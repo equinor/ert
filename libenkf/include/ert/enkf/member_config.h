@@ -49,13 +49,9 @@ typedef  struct member_config_struct member_config_type;
   const char *               member_config_get_eclbase( const member_config_type * member_config );
   const char *               member_config_get_casename( const member_config_type * member_config );
 
-  bool                       member_config_pre_clear_runpath(const member_config_type * member_config);
-  void                       member_config_set_pre_clear_runpath(member_config_type * member_config , bool pre_clear_runpath);
-
 
   member_config_type *       member_config_alloc(int iens ,
                                                  const char * casename ,
-                                                 bool                         pre_clear_runpath ,
                                                  keep_runpath_type            keep_runpath      ,
                                                  const ecl_config_type      * ecl_config        ,
                                                  const ensemble_config_type * ensemble_config);

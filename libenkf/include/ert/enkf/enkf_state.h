@@ -55,9 +55,6 @@ extern "C" {
 
 typedef struct enkf_state_struct    enkf_state_type;
 
-  bool               enkf_state_get_pre_clear_runpath( const enkf_state_type * enkf_state );
-  void               enkf_state_set_pre_clear_runpath( enkf_state_type * enkf_state , bool pre_clear_runpath );
-
   keep_runpath_type  enkf_state_get_keep_runpath( const enkf_state_type * enkf_state );
   void               enkf_state_set_keep_runpath( enkf_state_type * enkf_state , keep_runpath_type keep_runpath);
   keep_runpath_type  member_config_get_keep_runpath(const member_config_type * member_config);
@@ -84,7 +81,6 @@ typedef struct enkf_state_struct    enkf_state_type;
   enkf_state_type  * enkf_state_alloc(int ,
                                       rng_type        * main_rng ,
                                       const char * casename ,
-                                      bool         pre_clear_runpath,
                                       keep_runpath_type ,
                                       model_config_type * ,
                                       ensemble_config_type * ,

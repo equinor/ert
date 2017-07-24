@@ -138,8 +138,6 @@
 #define DEFAULT_REPORT_LARGE     false
 #define DEFAULT_REPORT_TIMEOUT   120
 
-#define DEFAULT_PRE_CLEAR_RUNPATH   false
-
 #define DEFAULT_PLOT_WIDTH           1024
 #define DEFAULT_PLOT_HEIGHT           768
 #define DEFAULT_PLOT_ERRORBAR_MAX      25

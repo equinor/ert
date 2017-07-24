@@ -154,7 +154,6 @@ struct enkf_main_struct {
   ranking_table_type     * ranking_table;
 
   int_vector_type        * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
-  bool                     pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
 
   char                   * user_config_file;
   enkf_obs_type          * obs;
@@ -2115,18 +2114,6 @@ static void enkf_main_init_delete_runpath(
   util_safe_free(delete_runpath_string);
 }
 
-static void enkf_main_init_pre_clear_runpath(
-                enkf_main_type * enkf_main,
-                const config_content_type * content) {
-
-  enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
-  if (config_content_has_item(content, PRE_CLEAR_RUNPATH_KEY))
-    enkf_main->pre_clear_runpath = config_content_get_value_as_bool(
-                                                         content,
-                                                         PRE_CLEAR_RUNPATH_KEY
-                                                         );
-}
-
 
 
 static void enkf_main_init_obs(enkf_main_type * enkf_main) {
@@ -2152,8 +2139,6 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
   config_content_type * content = model_config_alloc_content(enkf_main->user_config_file, config);
 
   enkf_main_init_delete_runpath(enkf_main, content);
-
-  enkf_main_init_pre_clear_runpath(enkf_main, content);
 
   enkf_main_user_select_initial_fs( enkf_main );
 

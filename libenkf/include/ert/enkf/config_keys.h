@@ -115,7 +115,6 @@ extern "C" {
 #define  MIN_REALIZATIONS_KEY              "MIN_REALIZATIONS"
 #define  OBS_CONFIG_KEY                    "OBS_CONFIG"
 #define  PLOT_PATH_KEY                     "PLOT_PATH"
-#define  PRE_CLEAR_RUNPATH_KEY             "PRE_CLEAR_RUNPATH"
 #define  QUEUE_SYSTEM_KEY                  "QUEUE_SYSTEM"
 #define  QUEUE_OPTION_KEY                  "QUEUE_OPTION"
 #define  QC_PATH_KEY                       "QC_PATH"

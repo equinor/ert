@@ -314,26 +314,9 @@ static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_c
 }
 
 
-/**
-   This variable is on a per-instance basis, but that is not really
-   supported. The exported functionality applies to all realizations.
-*/
-
-bool enkf_state_get_pre_clear_runpath( const enkf_state_type * enkf_state ) {
-  return member_config_pre_clear_runpath( enkf_state->my_config );
-}
-
-
-void enkf_state_set_pre_clear_runpath( enkf_state_type * enkf_state , bool pre_clear_runpath ) {
-  member_config_set_pre_clear_runpath( enkf_state->my_config , pre_clear_runpath );
-}
-
-
-
 enkf_state_type * enkf_state_alloc(int iens,
                                    rng_type                  * main_rng ,
                                    const char                * casename ,
-                                   bool                        pre_clear_runpath ,
                                    keep_runpath_type           keep_runpath ,
                                    model_config_type         * model_config,
                                    ensemble_config_type      * ensemble_config,
@@ -406,7 +389,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   else
     enkf_state_add_subst_kw(enkf_state , "CASE" , "---" , "The casename for this realization - similar to ECLBASE.");
 
-  enkf_state->my_config = member_config_alloc( iens , casename , pre_clear_runpath , keep_runpath , ecl_config , ensemble_config);
+  enkf_state->my_config = member_config_alloc( iens , casename, keep_runpath , ecl_config , ensemble_config);
   enkf_state_set_static_subst_kw( enkf_state );
   enkf_state_add_nodes( enkf_state , ensemble_config );
 
@@ -1011,9 +994,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
   const member_config_type  * my_config = enkf_state->my_config;
   const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
   {
-    if (member_config_pre_clear_runpath( my_config ))
-      util_clear_directory( run_arg_get_runpath( run_arg ) , true , false );
-
     util_make_path(run_arg_get_runpath( run_arg ));
     {
       if (ecl_config_get_schedule_target( ecl_config ) != NULL) {

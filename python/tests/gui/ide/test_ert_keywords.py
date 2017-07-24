@@ -67,7 +67,6 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("LOG_FILE", [PathArgument], "keywords/log_file", "Run")
         self.keywordTest("MAX_SUBMIT", [IntegerArgument], "keywords/max_submit", "Run")
         self.keywordTest("MAX_RESAMPLE", [IntegerArgument], "keywords/max_resample", "Run")
-        self.keywordTest("PRE_CLEAR_RUNPATH", [BoolArgument], "keywords/pre_clear_runpath", "Run")
 
 
 
