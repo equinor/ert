@@ -69,7 +69,6 @@ plot_refcase	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ER
 refcase_list	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#REFCASE_LIST
 plot_path	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#PLOT_PATH
 plot_width	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#PLOT_WIDTH
-rft_config	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#RFT_CONFIG
 rftpath	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#RFTPATH
 select_case	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SELECT_CASE
 create_case	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#CREATE_CASE

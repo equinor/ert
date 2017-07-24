@@ -131,7 +131,6 @@ extern "C" {
 #define  ITER_RUNPATH_KEY                  "ITER_RUNPATH"
 #define  RERUN_PATH_KEY                    "RERUN_PATH"
 #define  RUN_TEMPLATE_KEY                  "RUN_TEMPLATE"
-#define  RFT_CONFIG_KEY                    "RFT_CONFIG"
 #define  RFTPATH_KEY                       "RFTPATH"
 #define  SCHEDULE_FILE_KEY                 "SCHEDULE_FILE"
 #define  SCHEDULE_PREDICTION_FILE_KEY      "SCHEDULE_PREDICTION_FILE"

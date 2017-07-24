@@ -158,7 +158,6 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("PLOT_REFCASE", [BoolArgument], "keywords/plot_refcase", "Plot")
         self.keywordTest("PLOT_REFCASE_LIST", [StringArgument], "keywords/plot_refcase_list", "Plot")
         self.keywordTest("PLOT_PATH", [PathArgument], "keywords/plot_path", "Plot")
-        self.keywordTest("RFT_CONFIG", [PathArgument], "keywords/rft_config", "Plot")
         self.keywordTest("RFTPATH", [PathArgument], "keywords/rftpath", "Plot")
 
     def test_workflow_keywords(self):
