@@ -37,8 +37,6 @@ LICENSE_PATH               /tmp/BJARNE_PATH
 --CASE_TABLE                 CaseNames
 
 
---PRE_CLEAR_RUNPATH  TRUE
-
 -- Where do you want to store things
 
 

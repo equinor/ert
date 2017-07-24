@@ -56,8 +56,6 @@ class ErtKeywordTest(ExtendedTestCase):
 
     def test_run_keywords(self):
         self.keywordTest("INSTALL_JOB", [StringArgument, PathArgument], "keywords/install_job", "Run")
-        self.keywordTest("DELETE_RUNPATH", [StringArgument], "keywords/delete_runpath", "Run")
-        self.keywordTest("KEEP_RUNPATH", [StringArgument], "keywords/keep_runpath", "Run")
         self.keywordTest("RUNPATH", [PathArgument], "keywords/runpath", "Run")
         self.keywordTest("RUNPATH_FILE", [PathArgument], "keywords/runpath_file", "Run")
         self.keywordTest("FORWARD_MODEL", [StringArgument], "keywords/forward_model", "Run")
@@ -67,7 +65,6 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("LOG_FILE", [PathArgument], "keywords/log_file", "Run")
         self.keywordTest("MAX_SUBMIT", [IntegerArgument], "keywords/max_submit", "Run")
         self.keywordTest("MAX_RESAMPLE", [IntegerArgument], "keywords/max_resample", "Run")
-        self.keywordTest("PRE_CLEAR_RUNPATH", [BoolArgument], "keywords/pre_clear_runpath", "Run")
 
 
 

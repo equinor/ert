@@ -41,20 +41,12 @@
 struct member_config_struct {
   int                     iens;                /* The ensemble member number of this member. */
   char                  * casename;            /* The name of this case - will mostly be NULL. */
-  keep_runpath_type       keep_runpath;        /* Should the run-path directory be left around (for this member)*/
-  bool                    pre_clear_runpath;   /* Should the runpath directory be cleared before starting? */
   char                  * jobname;             /* The jobname used for this job when submitting to the queue system. */
   char                  * eclbase;             /* The ECLBASE string used for simulations of this member. */
 };
 
 
 /*****************************************************************/
-/*
-  Observe that there is a potential for conflict between the fields
-  pre_clear_runpath and keep_runpath when running normal EnKF. If both
-  are set to true the former will win.
-*/
-
 
 
 /******************************************************************/
@@ -108,29 +100,6 @@ void member_config_free(member_config_type * member_config) {
 }
 
 
-
-void member_config_set_keep_runpath(member_config_type * member_config , keep_runpath_type keep_runpath) {
-  member_config->keep_runpath   = keep_runpath;
-}
-
-
-keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config) {
-  return member_config->keep_runpath;
-}
-
-bool member_config_pre_clear_runpath(const member_config_type * member_config) {
-  return member_config->pre_clear_runpath;
-}
-
-
-void member_config_set_pre_clear_runpath(member_config_type * member_config , bool pre_clear_runpath) {
-  member_config->pre_clear_runpath = pre_clear_runpath;
-}
-
-
-
-
-
 const char * member_config_get_eclbase( const member_config_type * member_config ) {
   return member_config->eclbase;
 }
@@ -157,8 +126,6 @@ const char * member_config_get_casename( const member_config_type * member_confi
 
 member_config_type * member_config_alloc(int iens ,
                                          const char                 * casename ,
-                                         bool                         pre_clear_runpath ,
-                                         keep_runpath_type            keep_runpath ,
                                          const ecl_config_type      * ecl_config ,
                                          const ensemble_config_type * ensemble_config) {
 
@@ -168,7 +135,5 @@ member_config_type * member_config_alloc(int iens ,
   member_config->iens                = iens; /* Can only be changed in the allocater. */
   member_config->eclbase             = NULL;
   member_config->jobname             = NULL;
-  member_config->pre_clear_runpath   = pre_clear_runpath;
-  member_config_set_keep_runpath(member_config , keep_runpath);
   return member_config;
 }

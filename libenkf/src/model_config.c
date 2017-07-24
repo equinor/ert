@@ -790,11 +790,6 @@ static void model_config_init_user_config(config_parser_type * config ) {
   item = config_add_schema_item(config, DATA_KW_KEY, false);
   config_schema_item_set_argc_minmax(item, 2, 2);
 
-  config_add_key_value(config, PRE_CLEAR_RUNPATH_KEY, false, CONFIG_BOOL);
-
-  item = config_add_schema_item(config, DELETE_RUNPATH_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
-
   item = config_add_schema_item(config, OBS_CONFIG_KEY, false);
   config_schema_item_set_argc_minmax(item , 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);

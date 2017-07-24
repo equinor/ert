@@ -153,13 +153,6 @@ model_config_get_history_source( m , source)    <- NB Hvis source har en av verd
 
 
 
-PRE_CLEAR_RUNPATH:
------------------
-Get: enkf_main_get_pre_clear_runpath( enkf_main )   <- Return value: true | false
-Set: enkf_main_set_pre_clear_runpath( enkf_main , true | false )
-
-
-
 
 CASE_TABLE
 ----------

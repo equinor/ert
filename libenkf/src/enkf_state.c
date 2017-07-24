@@ -314,27 +314,9 @@ static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_c
 }
 
 
-/**
-   This variable is on a per-instance basis, but that is not really
-   supported. The exported functionality applies to all realizations.
-*/
-
-bool enkf_state_get_pre_clear_runpath( const enkf_state_type * enkf_state ) {
-  return member_config_pre_clear_runpath( enkf_state->my_config );
-}
-
-
-void enkf_state_set_pre_clear_runpath( enkf_state_type * enkf_state , bool pre_clear_runpath ) {
-  member_config_set_pre_clear_runpath( enkf_state->my_config , pre_clear_runpath );
-}
-
-
-
 enkf_state_type * enkf_state_alloc(int iens,
                                    rng_type                  * main_rng ,
                                    const char                * casename ,
-                                   bool                        pre_clear_runpath ,
-                                   keep_runpath_type           keep_runpath ,
                                    model_config_type         * model_config,
                                    ensemble_config_type      * ensemble_config,
                                    const site_config_type    * site_config,
@@ -406,7 +388,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   else
     enkf_state_add_subst_kw(enkf_state , "CASE" , "---" , "The casename for this realization - similar to ECLBASE.");
 
-  enkf_state->my_config = member_config_alloc( iens , casename , pre_clear_runpath , keep_runpath , ecl_config , ensemble_config);
+  enkf_state->my_config = member_config_alloc( iens , casename, ecl_config , ensemble_config);
   enkf_state_set_static_subst_kw( enkf_state );
   enkf_state_add_nodes( enkf_state , ensemble_config );
 
@@ -1011,9 +993,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
   const member_config_type  * my_config = enkf_state->my_config;
   const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
   {
-    if (member_config_pre_clear_runpath( my_config ))
-      util_clear_directory( run_arg_get_runpath( run_arg ) , true , false );
-
     util_make_path(run_arg_get_runpath( run_arg ));
     {
       if (ecl_config_get_schedule_target( ecl_config ) != NULL) {
@@ -1074,45 +1053,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-static void enkf_state_clear_runpath( const enkf_state_type * enkf_state , run_arg_type * run_arg) {
-  const member_config_type  * my_config   = enkf_state->my_config;
-  keep_runpath_type keep_runpath          = member_config_get_keep_runpath( my_config );
-
-  bool unlink_runpath;
-  if (keep_runpath == DEFAULT_KEEP)
-    unlink_runpath = false;  /* For experiments the default is to keep the directories around. */
-  else {
-    /* We have explcitly set a value for the keep_runpath variable - with either KEEP_RUNAPTH or DELETE_RUNPATH. */
-    if (keep_runpath == EXPLICIT_KEEP)
-      unlink_runpath = false;
-    else if (keep_runpath == EXPLICIT_DELETE)
-      unlink_runpath = true;
-    else {
-      util_abort("%s: internal error \n",__func__);
-      unlink_runpath = false; /* Compiler .. */
-      }
-  }
-
-  if (unlink_runpath)
-    util_clear_directory(run_arg_get_runpath( run_arg ) , true , true);
-}
-
-
 /**
     Observe that if run_arg == false, this routine will return with
     job_completeOK == true, that might be a bit misleading.
@@ -1153,7 +1093,6 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , r
     run_arg_set_run_status( run_arg , JOB_RUN_OK);
     res_log_add_fmt_message(LOG_INFO , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
 
-    enkf_state_clear_runpath( enkf_state , run_arg );
     run_arg_complete_run(run_arg);              /* free() on runpath */
   }
 
@@ -1264,16 +1203,6 @@ unsigned int enkf_state_get_random( enkf_state_type * enkf_state ) {
   return rng_forward( enkf_state->rng );
 }
 
-
-
-void enkf_state_set_keep_runpath( enkf_state_type * enkf_state , keep_runpath_type keep_runpath) {
-  member_config_set_keep_runpath( enkf_state->my_config , keep_runpath);
-}
-
-
-keep_runpath_type enkf_state_get_keep_runpath( const enkf_state_type * enkf_state ) {
-  return member_config_get_keep_runpath( enkf_state->my_config );
-}
 
 
 const ensemble_config_type * enkf_state_get_ensemble_config( const enkf_state_type * enkf_state ) {

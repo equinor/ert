@@ -40,8 +40,6 @@ extern "C" {
 typedef  struct member_config_struct member_config_type;
 
   const char               * member_config_get_jobname( const member_config_type * member_config );
-  void                       member_config_set_keep_runpath(member_config_type * member_config , keep_runpath_type keep_runpath);
-  keep_runpath_type          member_config_get_keep_runpath(const member_config_type * member_config);
   int                        member_config_get_iens( const member_config_type * member_config );
   const char *               member_config_update_jobname(member_config_type * member_config , const char * jobname_fmt , const subst_list_type * subst_list);
   const char *               member_config_update_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list);
@@ -49,14 +47,9 @@ typedef  struct member_config_struct member_config_type;
   const char *               member_config_get_eclbase( const member_config_type * member_config );
   const char *               member_config_get_casename( const member_config_type * member_config );
 
-  bool                       member_config_pre_clear_runpath(const member_config_type * member_config);
-  void                       member_config_set_pre_clear_runpath(member_config_type * member_config , bool pre_clear_runpath);
-
 
   member_config_type *       member_config_alloc(int iens ,
                                                  const char * casename ,
-                                                 bool                         pre_clear_runpath ,
-                                                 keep_runpath_type            keep_runpath      ,
                                                  const ecl_config_type      * ecl_config        ,
                                                  const ensemble_config_type * ensemble_config);
 
