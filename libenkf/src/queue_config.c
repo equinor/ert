@@ -104,7 +104,7 @@ queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_con
     queue_config_copy->user_mode = queue_config->user_mode;
 
     if (queue_config_has_job_script(queue_config)) {
-        queue_config_copy->job_script = util_alloc_copy(queue_config->job_script, strlen( queue_config->job_script) + 1);        
+        queue_config_copy->job_script = util_alloc_string_copy( queue_config->job_script );
     }
     else
         queue_config_copy->job_script = NULL;
