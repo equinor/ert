@@ -21,7 +21,7 @@ import smtplib
 from email.mime.text import MIMEText
 
 try:
-    from ert.job_queue import JobManager, assert_file_executable
+    from res.job_queue import JobManager, assert_file_executable
 except ImportError:
     from ert_statoil.job_manager import JobManager, assert_file_executable
 
