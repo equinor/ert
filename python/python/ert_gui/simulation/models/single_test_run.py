@@ -10,8 +10,8 @@ class SingleTestRun(EnsembleExperiment):
 
 
         
-    def runSimulations(self, job_queue,  run_context):
-        self.runSimulations__( job_queue ,  run_context  , "Running single realisation test ...")
+    def runSimulations(self, arguments):
+        self.runSimulations__( arguments  , "Running single realisation test ...")
         
 
     def create_context(self, arguments):

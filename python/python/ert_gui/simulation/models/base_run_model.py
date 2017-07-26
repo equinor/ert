@@ -56,10 +56,9 @@ class BaseRunModel(object):
         self._failed = False
         
 
-    def startSimulations(self, run_context):
-        self._job_queue = self._queue_config.create_job_queue( )
+    def startSimulations(self, arguments):
         try:
-            self.runSimulations(self._job_queue, run_context)
+            self.runSimulations(arguments)
         except ErtRunError as e:
             self._failed = True
             self._fail_message = str(e)

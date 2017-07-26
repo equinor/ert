@@ -7,7 +7,9 @@ class EnsembleExperiment(BaseRunModel):
     def __init__(self, queue_config):
         super(EnsembleExperiment, self).__init__("Ensemble Experiment" , queue_config)
 
-    def runSimulations__(self, job_queue, run_context, run_msg):
+    def runSimulations__(self, arguments, run_msg):
+        self._job_queue = self._queue_config.create_job_queue( )
+        run_context = self.create_context( arguments )
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         active_realizations = self.count_active_realizations( run_context )
@@ -17,17 +19,18 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName( run_msg, indeterminate=False)
         
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(job_queue, run_context)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
         self.assertHaveSufficientRealizations(num_successful_realizations, active_realizations )
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
         self.setPhase(1, "Simulations completed.") # done...
+        self._job_queue = None
 
         
         
-    def runSimulations(self, job_queue,  run_context):
-        self.runSimulations__( job_queue , run_context , "Running ensemble experiment...")
+    def runSimulations(self, arguments ):
+        self.runSimulations__(  arguments , "Running ensemble experiment...")
                 
         
 

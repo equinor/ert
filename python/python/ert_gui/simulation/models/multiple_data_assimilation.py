@@ -43,7 +43,7 @@ class MultipleDataAssimilation(BaseRunModel):
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
 
-    def runSimulations(self, job_queue, arguments):
+    def runSimulations(self, arguments):
         weights = self.parseWeights(self.weights)
         iteration_count = len(weights)
 
@@ -116,7 +116,8 @@ class MultipleDataAssimilation(BaseRunModel):
             raise UserWarning("Analysis of simulation failed for iteration: %d!" % next_iteration)
 
 
-    def _simulateAndPostProcess(self, job_queue, target_case_format, active_realization_mask, iteration):
+    def _simulateAndPostProcess(self, run_context):
+        self._job_queue = self._queue_config.create_job_queue( )
         target_case_name = target_case_format % iteration
 
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
@@ -137,7 +138,7 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_SIMULATION)
-
+        self._job_queue = None
         return num_successful_realizations
 
 
@@ -172,3 +173,23 @@ class MultipleDataAssimilation(BaseRunModel):
                 raise ValueError('Warning: cannot parse weight %s' % element)
 
         return result
+
+    
+    def create_context(self, arguments, prior_context = None):
+        model_config = self.ert().getModelConfig( )
+        runpath_fmt = model_config.getRunpathFormat( )
+        subst_list = self.ert().getDataKW( )
+        fs_manager = self.ert().getEnkfFsManager()
+        if prior_context is None:
+            sim_fs = fs_manager.getCurrentFileSystem( )
+            target_fs = fs_manager.getFileSystem("smoother-update")
+            itr = 0
+            mask = arguments["active_realizations"]
+        else:
+            itr = 1
+            mask = prior_context.get_mask( )
+            sim_fs = prior_context.get_target_fs( )
+            target_fs = None
+            
+        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, subst_list, itr)
+        return run_context
