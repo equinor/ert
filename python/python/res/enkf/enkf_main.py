@@ -32,7 +32,7 @@ from res.enkf.key_manager import KeyManager
 
 class EnKFMain(BaseCClass):
     TYPE_NAME = "enkf_main"
-    _alloc = EnkfPrototype("void* enkf_main_alloc(char*, res_config, bool, bool)", bind = False)
+    _alloc = EnkfPrototype("void* enkf_main_alloc(res_config, bool, bool)", bind = False)
     _create_new_config = EnkfPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
 
     _free = EnkfPrototype("void enkf_main_free(enkf_main)")
@@ -73,9 +73,16 @@ class EnKFMain(BaseCClass):
     _get_res_config = EnkfPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
 
 
-    def __init__(self, model_config, res_config=None, strict=True, verbose=True):
+    def __init__(self, model_config=None, res_config=None, strict=True, verbose=True):
         if model_config is not None and not isfile(model_config):
             raise IOError('No such configuration file "%s".' % model_config)
+
+        if model_config is not None and res_config is not None:
+            raise ValueError(
+                        "Expected either model_config or res_config to be None"
+                        )
+
+        # TODO: Deprecation warning it model_config is not None
 
         if res_config is None:
             res_config = ResConfig(model_config)
@@ -84,7 +91,7 @@ class EnKFMain(BaseCClass):
         if res_config is None or not isinstance(res_config, ResConfig):
             raise TypeError("Failed to construct EnKFMain instance due to invalid res_config.")
 
-        c_ptr = self._alloc(model_config, res_config, strict, verbose)
+        c_ptr = self._alloc(res_config, strict, verbose)
         if c_ptr:
             super(EnKFMain, self).__init__(c_ptr)
         else:

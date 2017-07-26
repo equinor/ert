@@ -38,7 +38,7 @@ int main(int argc , char ** argv) {
     test_work_area_copy_directory_content(work_area, config_path);
     {
       res_config_type * res_config = res_config_alloc_load(NULL);
-      enkf_main_type * enkf_main = enkf_main_alloc(NULL, res_config, true, true);
+      enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
       enkf_main_resize_ensemble( enkf_main , 10 );
       {
         enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
@@ -50,7 +50,7 @@ int main(int argc , char ** argv) {
     
     {
       res_config_type * res_config = res_config_alloc_load(NULL);
-      enkf_main_type * enkf_main = enkf_main_alloc(NULL, res_config, true, true);
+      enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
       enkf_main_resize_ensemble( enkf_main , 10 );
       {
         enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
@@ -72,7 +72,7 @@ int main(int argc , char ** argv) {
     const char * seed_file = "seed";
     {
       res_config_type * res_config = res_config_alloc_load(config_file);
-      enkf_main_type * enkf_main = enkf_main_alloc(config_file, res_config, true, true);
+      enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
       {
         rng_config_type * rng_config = enkf_main_get_rng_config( enkf_main );
         rng_config_set_seed_store_file( rng_config , seed_file );
@@ -90,7 +90,7 @@ int main(int argc , char ** argv) {
     
     {
       res_config_type * res_config = res_config_alloc_load(config_file);
-      enkf_main_type * enkf_main = enkf_main_alloc(config_file, res_config, true, true);
+      enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
       {
         rng_config_type * rng_config = enkf_main_get_rng_config( enkf_main );
         rng_config_set_seed_load_file( rng_config , seed_file );
@@ -115,7 +115,7 @@ int main(int argc , char ** argv) {
     test_work_area_copy_directory_content( work_area , config_path );
     {
       res_config_type * res_config = res_config_alloc_load(config_file);
-      enkf_main_type * enkf_main = enkf_main_alloc(config_file, res_config, true, true);
+      enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
       enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
       rand1 = enkf_state_get_random( state );
       enkf_main_free( enkf_main );
@@ -124,7 +124,7 @@ int main(int argc , char ** argv) {
 
     {
       res_config_type * res_config = res_config_alloc_load(config_file);
-      enkf_main_type * enkf_main = enkf_main_alloc(config_file, res_config, true, true);
+      enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
       enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
       rand2 = enkf_state_get_random( state );
       enkf_main_free( enkf_main );
@@ -134,7 +134,7 @@ int main(int argc , char ** argv) {
     
     {
       res_config_type * res_config = res_config_alloc_load(config_file);
-      enkf_main_type * enkf_main = enkf_main_alloc(config_file, res_config, true, true);
+      enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
       enkf_state_type * state = enkf_main_iget_state( enkf_main , 9 );
       rand2 = enkf_state_get_random( state );
       enkf_main_free( enkf_main );

@@ -63,7 +63,7 @@ int main(int argc , char ** argv) {
 
     util_clear_directory( "Storage" , true , true );
     res_config_type * res_config = res_config_alloc_load(config_file);
-    enkf_main = enkf_main_alloc(config_file, res_config, strict, true);
+    enkf_main = enkf_main_alloc(res_config, strict, true);
     ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
     {
       const enkf_config_node_type * surface_config_node = ensemble_config_get_node( ens_config , "SURFACE");

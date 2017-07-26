@@ -56,10 +56,7 @@ class EnKFTest(ExtendedTestCase):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
             res_config = ResConfig("simple_config/minimum_config")
-            main = EnKFMain(
-                    "simple_config/minimum_config",
-                    res_config=res_config
-                    )
+            main = EnKFMain(res_config=res_config)
 
             self.assertTrue(main, "Load failed")
 
@@ -90,7 +87,7 @@ class EnKFTest(ExtendedTestCase):
         with TestAreaContext("enkf_test") as work_area:
             with self.assertRaises(TypeError):
                 work_area.copy_directory(self.case_directory)
-                main = EnKFMain("simple_config/minimum_config", res_config=self)
+                main = EnKFMain(res_config=self)
 
 
 
