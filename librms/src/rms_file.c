@@ -66,23 +66,20 @@ struct rms_file_struct {
 
 
 static bool rms_fmt_file(const rms_file_type *rms_file) {
-  bool fmt_file;
   char filetype[9];
   rms_util_fread_string( filetype , 9 , rms_file->stream);
 
   if (strncmp(filetype , rms_binary_header , 8) == 0)
-    fmt_file = false;
-  else if (strncmp(filetype , rms_ascii_header , 8) == 0)
-    fmt_file = true;
-  else {
-    fprintf(stderr,"%s: header : %8s not recognized in file: %s - aborting \n",__func__ , filetype , rms_file->filename);
-    abort();
-  }
-  return fmt_file;
+    return false;
+  if (strncmp(filetype , rms_ascii_header , 8) == 0)
+    return true;
+
+  fprintf(stderr,"%s: header : %8s not recognized in file: %s - aborting \n",__func__ , filetype , rms_file->filename);
+  abort();
+  return false; // will not happen
 }
 
 
-    
 static void rms_file_add_tag(rms_file_type *rms_file , const rms_tag_type *tag) {
   vector_append_owned_ref(rms_file->tag_list , tag , rms_tag_free__ );
 }
@@ -108,22 +105,16 @@ rms_tag_type * rms_file_get_tag_ref(const rms_file_type *rms_file ,
                                     const char *keyvalue, bool abort_on_error) {
 
   rms_tag_type *return_tag = NULL;
-  bool cont;
-  {
-    int index = 0;
-    while (cont) {
-      if (index < vector_get_size( rms_file->tag_list )) {
-        rms_tag_type *tag = vector_iget( rms_file->tag_list , index );
-        if (rms_tag_name_eq(tag , tagname , keyname , keyvalue)) {
-          return_tag = tag;
-          cont = false;
-        } else 
-          index++;
-      } else
-        cont = false;
+
+  int size = vector_get_size( rms_file->tag_list );
+  for (int index = 0; index < size; ++index) {
+    rms_tag_type *tag = vector_iget( rms_file->tag_list , index );
+    if (rms_tag_name_eq(tag , tagname , keyname , keyvalue)) {
+      return_tag = tag;
+      break;
     }
   }
-  
+
   if (return_tag == NULL && abort_on_error) {
     if (keyname != NULL && keyvalue != NULL) 
       fprintf(stderr,"%s: failed to find tag:%s with key:%s=%s in file:%s - aborting \n",__func__ , tagname , keyname , keyvalue , rms_file->filename);
@@ -313,12 +304,12 @@ void rms_file_fclose(rms_file_type * rms_file) {
 
 rms_tagkey_type * rms_file_fread_alloc_data_tagkey(rms_file_type * rms_file , const char *tagname , const char * keyname , const char *keyvalue) {
   rms_tag_type * tag = rms_file_fread_alloc_tag(rms_file , tagname , keyname , keyvalue);
-  if (tag != NULL) {
-    rms_tagkey_type *tagkey = rms_tagkey_copyc( rms_tag_get_key(tag , "data") );
-    rms_tag_free(tag);
-    return tagkey;
-  } else
+  if (tag == NULL)
     return NULL;
+
+  rms_tagkey_type *tagkey = rms_tagkey_copyc( rms_tag_get_key(tag , "data") );
+  rms_tag_free(tag);
+  return tagkey;
 }
 
 
@@ -370,12 +361,10 @@ void rms_file_fwrite(rms_file_type * rms_file, const char * filetype) {
   rms_file_fopen_w(rms_file);
   rms_file_init_fwrite(rms_file , filetype );
 
-  {
-    int tag_index;
-    for (tag_index = 0; tag_index < vector_get_size( rms_file->tag_list ); tag_index++) {
-      const rms_tag_type *tag = vector_iget_const( rms_file->tag_list , tag_index );
-      rms_tag_fwrite(tag , rms_file->stream);
-    }
+  int size = vector_get_size(rms_file->tag_list);
+  for (int tag_index = 0; tag_index < size; tag_index++) {
+    const rms_tag_type *tag = vector_iget_const( rms_file->tag_list , tag_index );
+    rms_tag_fwrite(tag , rms_file->stream);
   }
 
   rms_file_complete_fwrite(rms_file );
@@ -385,13 +374,13 @@ void rms_file_fwrite(rms_file_type * rms_file, const char * filetype) {
 
 void rms_file_fprintf(const rms_file_type *rms_file , FILE *stream) {
   fprintf(stream , "<%s>\n",rms_file->filename);
-  {
-    int tag_index;
-    for (tag_index = 0; tag_index < vector_get_size( rms_file->tag_list ); tag_index++) {
-      const rms_tag_type *tag = vector_iget_const( rms_file->tag_list , tag_index );
-      rms_tag_fprintf(tag , rms_file->stream);
-    }
+
+  int size = vector_get_size(rms_file->tag_list);
+  for (int tag_index = 0; tag_index < size; tag_index++) {
+    const rms_tag_type *tag = vector_iget_const( rms_file->tag_list , tag_index );
+    rms_tag_fprintf(tag , rms_file->stream);
   }
+
   fprintf(stream , "</%s>\n",rms_file->filename);
 }
 
