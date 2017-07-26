@@ -379,10 +379,7 @@ def main(argv):
     job_manager = JobManager(error_url=ERROR_URL, log_url=LOG_URL)
 
 
-    # Desperate bug fix.
-    #checkFileServerBlackList(job_manager)
-
-
+    checkFileServerBlackList(job_manager)
 
     if len(sys.argv) <= 2:
         # Normal batch run.
@@ -432,6 +429,8 @@ def main(argv):
 
 
 def checkFileServerBlackList(job_manager):
+    fs_info, usage = JobManager.fsInfo( )
+    file_server = fs_info[0]
     if file_server in FILE_SERVER_BLACKLIST:
         msg = """************************************************************************
 You are now running a forward model simulation in a runpath directory:
