@@ -244,29 +244,35 @@ rms_tag_type * rms_file_fread_alloc_tag(rms_file_type * rms_file,
                                         const char *keyvalue) {
   rms_tag_type * tag = NULL;
   rms_file_fopen_r(rms_file);
-  {
-  
-    bool cont          = true;
-    bool tag_found     = false;
-    long int start_pos = util_ftell(rms_file->stream);
-    util_fseek(rms_file->stream , 0 , SEEK_SET);
-    rms_file_init_fread(rms_file);
-    while (cont) {
-      bool eof_tag;
-      rms_tag_type * tmp_tag = rms_tag_fread_alloc(rms_file->stream , rms_file->type_map , rms_file->endian_convert , &eof_tag);
-      if (rms_tag_name_eq(tmp_tag , tagname , keyname , keyvalue)) {
-        tag_found = true;
-        tag = tmp_tag;
-      } else 
-        rms_tag_free(tmp_tag);
-      if (tag_found || eof_tag)
-        cont = false;
+
+  long int start_pos = util_ftell(rms_file->stream);
+  util_fseek(rms_file->stream , 0 , SEEK_SET);
+  rms_file_init_fread(rms_file);
+  while (true) {
+    bool eof_tag = false;  // will be set by rms_tag
+    rms_tag_type * tmp_tag = rms_tag_fread_alloc(rms_file->stream,
+                                                 rms_file->type_map,
+                                                 rms_file->endian_convert,
+                                                 &eof_tag);
+
+    if (!rms_tag_name_eq(tmp_tag, tagname, keyname, keyvalue)) {
+      rms_tag_free(tmp_tag);
+      continue;
     }
-    if (tag == NULL) {
-      util_fseek(rms_file->stream , start_pos , SEEK_SET);
-      util_abort("%s: could not find tag: \"%s\" (with %s=%s) in file:%s - aborting.\n",__func__ , tagname , keyname , keyvalue , rms_file->filename);
-    }
+    tag = tmp_tag;
+    break;
   }
+
+  if (tag == NULL) {
+    util_fseek(rms_file->stream , start_pos , SEEK_SET);
+    util_abort("%s: could not find tag: \"%s\" (with %s=%s) in file:%s - aborting.\n",
+               __func__,
+               tagname,
+               keyname,
+               keyvalue,
+               rms_file->filename);
+  }
+
   rms_file_fclose(rms_file);
   return tag;
 }
