@@ -153,7 +153,6 @@ struct enkf_main_struct {
   rng_type               * rng;
   ranking_table_type     * ranking_table;
 
-  char                   * user_config_file;
   enkf_obs_type          * obs;
 
   enkf_state_type       ** ensemble;         /* The ensemble ... */
@@ -197,12 +196,8 @@ ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , 
   return ecl_config_validate_refcase(enkf_main_get_ecl_config(enkf_main), refcase_path);
 }
 
-void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file ) {
-  enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
-}
-
 const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) {
-  return enkf_main->user_config_file;
+  return res_config_get_user_config_file(enkf_main->res_config);
 }
 
 const char * enkf_main_get_site_config_file( const enkf_main_type * enkf_main ) {
@@ -323,7 +318,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
 
   local_config_free( enkf_main->local_config );
 
-  util_safe_free( enkf_main->user_config_file );
   free(enkf_main);
 }
 
@@ -1915,7 +1909,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   res_log_open_empty();
   enkf_main->ensemble           = NULL;
-  enkf_main->user_config_file   = NULL;
   enkf_main->local_config       = NULL;
   enkf_main->rng                = NULL;
   enkf_main->ens_size           = 0;
@@ -2067,22 +2060,10 @@ static void enkf_main_add_ensemble_members(enkf_main_type * enkf_main) {
 
 /**
    This function boots everything needed for running a EnKF
-   application. Very briefly it can be summarized as follows:
+   application from the provided res_config.
 
-    1. A large config object is initalized with all the possible
-       keywords we are looking for.
-
-    2. All the config files are parsed in one go.
-
-    3. The various objects are build up by reading from the config
-       object.
-
-    4. The resulting enkf_main object contains *EVERYTHING*
-       (whoaha...)
-
-
-  Observe that the function will start with chdir() to the directory
-  containing the configuration file, so that all subsequent file
+  Observe that the function will start with chdir() to the working directory
+  specified by res_config, so that all subsequent file
   references are relative to the location of the configuration
   file. This also applies if the command_line argument given is a
   symlink.
@@ -2113,13 +2094,6 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
   enkf_main_rng_init( enkf_main );
   enkf_main_set_verbose(enkf_main, verbose);
   enkf_main_init_log(enkf_main);
-
-  char * user_config_file = enkf_main_alloc_model_config_filename(model_config);
-  if(user_config_file) {
-    enkf_main_set_user_config_file(enkf_main, user_config_file);
-  }
-  free(user_config_file);
-
   enkf_main_user_select_initial_fs( enkf_main );
   enkf_main_init_obs(enkf_main);
   enkf_main_add_ensemble_members(enkf_main);

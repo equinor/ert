@@ -32,7 +32,12 @@ class RPCServiceTest(ExtendedTestCase):
 
             self.assertIsNotNone(server.port)
             self.assertEqual(ert, server._config)
-            self.assertEqual(os.path.basename(self.config), server._config_file)
+
+            expected_config_file = os.path.join(
+                                            test_context.getCwd(),
+                                            os.path.basename(self.config)
+                                            )
+            self.assertEqual(expected_config_file, server._config_file)
 
             thread = Thread(name="ErtRPCServerTest")
             thread.run = server.start

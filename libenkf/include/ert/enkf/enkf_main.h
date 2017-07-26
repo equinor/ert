@@ -71,7 +71,6 @@ extern "C" {
   typedef struct enkf_main_struct enkf_main_type;
   ui_return_type *              enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);
   ui_return_type *              enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file );
-  void                          enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file );
   const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );
   void                          enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rft_config_file );
   const char                  * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main );
