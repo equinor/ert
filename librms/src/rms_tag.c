@@ -88,49 +88,48 @@ void rms_tag_fread_header(rms_tag_type *tag , FILE *stream , bool *eof_tag) {
   char *buffer;
   *eof_tag = false;
   buffer = util_calloc( 4 , sizeof * buffer);
-  if (rms_util_fread_string(buffer , 4 , stream )) {
-    if (strcmp(buffer , rms_starttag_string) == 0) {
-      /* OK */
-      {
-        char *tmp = util_calloc( rms_util_fread_strlen(stream) + 1 , sizeof * tmp);
-        rms_util_fread_string(tmp , 0 , stream);
-        tag->name = tmp;
-        if (strcmp(tag->name , rms_eof_tag) == 0)
-          *eof_tag = true;
-      }
-    } else 
-      util_abort("%s: not at tag - header aborting \n",__func__);
-  } else 
+  if (!rms_util_fread_string(buffer , 4 , stream ))
     util_abort("%s: not at tag - header aborting \n",__func__);
-  
+
+  if (strcmp(buffer , rms_starttag_string) != 0)
+    util_abort("%s: not at tag - header aborting \n",__func__);
+
+  char *tmp = util_calloc(rms_util_fread_strlen(stream) + 1, sizeof * tmp);
+  rms_util_fread_string(tmp , 0 , stream);
+  tag->name = tmp;
+  if (strcmp(tag->name , rms_eof_tag) == 0)
+    *eof_tag = true;
+
   free(buffer);
 }
 
 
 
 /**
-   This function does a "two-level" comparison. 
-   
+   This function does a "two-level" comparison.
+
    1. tag->name is compared with tagname.
-   2. Iff test number one succeeds we go further to step2. The second will always suceed if tagkey_name == NULL.
-   
+   2. Iff test number one succeeds we go further to step2.
+      The second will always suceed if tagkey_name == NULL.
 */
-   
-bool rms_tag_name_eq(const rms_tag_type *tag , const char * tagname , const char *tagkey_name , const char *keyvalue) {
-  bool eq = false;
-   if (strcmp(tag->name , tagname) == 0) {
-    if (tagkey_name != NULL && keyvalue != NULL) {
-      if (hash_has_key(tag->key_hash , tagkey_name)) {
-        const rms_tagkey_type *tagkey = hash_get(tag->key_hash , tagkey_name);
-        eq = rms_tagkey_char_eq(tagkey , keyvalue);
-      }
-    } else
-      eq = true;
+bool rms_tag_name_eq(const rms_tag_type *tag,
+                     const char *tagname,
+                     const char *tagkey_name,
+                     const char *keyvalue) {
+
+  if (strcmp(tag->name , tagname) != 0)
+    return false;
+
+  if (tagkey_name == NULL || keyvalue == NULL)
+    return true;
+
+  if (hash_has_key(tag->key_hash , tagkey_name)) {
+    const rms_tagkey_type *tagkey = hash_get(tag->key_hash, tagkey_name);
+    return rms_tagkey_char_eq(tagkey, keyvalue);
   }
-  return eq;
+
+  return false;
 }
-
-
 
 
 rms_tagkey_type * rms_tag_get_key(const rms_tag_type *tag , const char *keyname) {
