@@ -135,8 +135,7 @@ bool rms_tag_name_eq(const rms_tag_type *tag,
 rms_tagkey_type * rms_tag_get_key(const rms_tag_type *tag , const char *keyname) {
   if (hash_has_key(tag->key_hash , keyname)) 
     return hash_get(tag->key_hash, keyname);
-  else 
-    return NULL;
+  return NULL;
 }
 
 
@@ -190,7 +189,7 @@ void rms_tag_add_tagkey(rms_tag_type *tag , const rms_tagkey_type *tagkey, int m
 
 static bool rms_tag_at_endtag(FILE *stream) {
   const int init_pos = util_ftell(stream);
-  bool at_endtag;
+  bool at_endtag = false;
   char tag[7];
   if (rms_util_fread_string(tag , 7 , stream)) {
     if (strcmp(tag , rms_endtag_string) == 0)
@@ -208,13 +207,14 @@ static bool rms_tag_at_endtag(FILE *stream) {
 
 void rms_fread_tag(rms_tag_type *tag, FILE *stream , hash_type *type_map , bool endian_convert , bool *at_eof) {
   rms_tag_fread_header(tag , stream , at_eof);
-  if (!*at_eof) {
-    while (! rms_tag_at_endtag(stream)) {
-      rms_tagkey_type *tagkey = rms_tagkey_alloc_empty(endian_convert);
-      rms_tagkey_load(tagkey , endian_convert , stream , type_map);
-      rms_tag_add_tagkey(tag , tagkey , COPY);
-      rms_tagkey_free(tagkey);
-    }
+  if (*at_eof)
+    return;
+
+  while (! rms_tag_at_endtag(stream)) {
+    rms_tagkey_type *tagkey = rms_tagkey_alloc_empty(endian_convert);
+    rms_tagkey_load(tagkey , endian_convert , stream , type_map);
+    rms_tag_add_tagkey(tag , tagkey , COPY);
+    rms_tagkey_free(tagkey);
   }
 }
 
@@ -231,14 +231,11 @@ rms_tag_type * rms_tag_fread_alloc(FILE *stream , hash_type *type_map , bool end
 void rms_tag_fwrite(const rms_tag_type * tag , FILE * stream) {
   rms_util_fwrite_string("tag"     , stream);
   rms_util_fwrite_string(tag->name , stream);
-  {
-    
-    int i;
-    for (i=0; i < vector_get_size( tag->key_list ); i++) {
-      const rms_tagkey_type * tagkey = vector_iget_const( tag->key_list , i );
-      rms_tagkey_fwrite( tagkey , stream);
-    }
 
+  int size = vector_get_size(tag->key_list);
+  for (int i = 0; i < size; i++) {
+    const rms_tagkey_type * tagkey = vector_iget_const( tag->key_list , i );
+    rms_tagkey_fwrite( tagkey , stream);
   }
   rms_util_fwrite_string("endtag" , stream);
 }
@@ -246,14 +243,11 @@ void rms_tag_fwrite(const rms_tag_type * tag , FILE * stream) {
 
 void rms_tag_fprintf(const rms_tag_type * tag , FILE * stream) {
   fprintf(stream , "  <%s>\n",tag->name);
-  {
-    
-    int i;
-    for (i=0; i < vector_get_size( tag->key_list ); i++) {
-      const rms_tagkey_type * tagkey = vector_iget_const( tag->key_list , i );
-      rms_tagkey_fprintf( tagkey , stream);
-    }
-    
+
+  int size = vector_get_size( tag->key_list );
+  for (int i=0; i < size; i++) {
+    const rms_tagkey_type * tagkey = vector_iget_const( tag->key_list , i );
+    rms_tagkey_fprintf( tagkey , stream);
   }
   fprintf(stream , "  </%s>\n",tag->name);
 }
