@@ -51,7 +51,7 @@ bool                   analysis_config_get_module_option( const analysis_config_
 bool                   analysis_config_load_external_module( analysis_config_type * config , const char * lib_name, const char * user_name);
 void                   analysis_config_load_all_external_modules_from_config ( analysis_config_type * analysis_config, const config_content_type * config);
 
-stringlist_type      * analysis_config_alloc_module_names( analysis_config_type * config );
+stringlist_type      * analysis_config_alloc_module_names( const analysis_config_type * config );
 const char           * analysis_config_get_log_path( const analysis_config_type * config );
 void                   analysis_config_init( analysis_config_type * analysis , const config_content_type * config);
 analysis_config_type * analysis_config_alloc(void);

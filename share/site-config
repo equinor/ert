@@ -5,3 +5,4 @@ WORKFLOW_JOB_DIRECTORY workflows/jobs/internal-gui/config
 JOB_SCRIPT ../bin/job_dispatch.py
 QUEUE_OPTION LOCAL MAX_RUNNING 1
 
+
