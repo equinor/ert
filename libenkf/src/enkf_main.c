@@ -2064,20 +2064,6 @@ static void enkf_main_add_ensemble_members(enkf_main_type * enkf_main) {
   enkf_main_resize_ensemble(enkf_main, num_realizations);
 }
 
-static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, bool verbose) {
-  if (!enkf_main->user_config_file)
-    return;
-
-  config_parser_type * config = config_alloc();
-  config_content_type * content = model_config_alloc_content(enkf_main->user_config_file, config);
-
-  enkf_main_user_select_initial_fs( enkf_main );
-
-  enkf_main_init_obs(enkf_main);
-
-  config_content_free(content);
-  config_free(config);
-}
 
 /**
    This function boots everything needed for running a EnKF
@@ -2125,20 +2111,18 @@ enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_typ
   enkf_main->res_config = res_config;
 
   enkf_main_rng_init( enkf_main );
-
   enkf_main_set_verbose(enkf_main, verbose);
-
   enkf_main_init_log(enkf_main);
 
   char * user_config_file = enkf_main_alloc_model_config_filename(model_config);
   if(user_config_file) {
     enkf_main_set_user_config_file(enkf_main, user_config_file);
-    enkf_main_bootstrap_model(enkf_main, strict, verbose);
   }
   free(user_config_file);
 
+  enkf_main_user_select_initial_fs( enkf_main );
+  enkf_main_init_obs(enkf_main);
   enkf_main_add_ensemble_members(enkf_main);
-
   enkf_main_init_jobname(enkf_main);
 
   return enkf_main;
