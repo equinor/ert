@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'rms_tag.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'rms_tag.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -76,15 +76,15 @@ void rms_tag_free__(void * arg) {
   rms_tag_free( tag );
 }
 
-  
+
 const char * rms_tag_get_name(const rms_tag_type *tag) {
   return tag->name;
 }
 
 
 
-/*static*/ 
-void rms_tag_fread_header(rms_tag_type *tag , FILE *stream , bool *eof_tag) {
+/*static*/
+void rms_tag_fread_header(rms_tag_type *tag, FILE *stream, bool *eof_tag) {
   char *buffer;
   *eof_tag = false;
   buffer = util_calloc( 4 , sizeof * buffer);
@@ -132,8 +132,9 @@ bool rms_tag_name_eq(const rms_tag_type *tag,
 }
 
 
-rms_tagkey_type * rms_tag_get_key(const rms_tag_type *tag , const char *keyname) {
-  if (hash_has_key(tag->key_hash , keyname)) 
+rms_tagkey_type * rms_tag_get_key(const rms_tag_type *tag,
+                                  const char *keyname) {
+  if (hash_has_key(tag->key_hash , keyname))
     return hash_get(tag->key_hash, keyname);
   return NULL;
 }
@@ -146,18 +147,20 @@ rms_tagkey_type * rms_tag_get_datakey(const rms_tag_type *tag) {
 
 const char * rms_tag_get_namekey_name(const rms_tag_type * tag) {
   rms_tagkey_type * name_key = rms_tag_get_key(tag , "name");
-  if (name_key == NULL) 
-    util_abort("%s: no name tagkey defined for this tag - aborting \n",__func__);
-  
+  if (name_key == NULL)
+    util_abort("%s: no name tagkey defined for this tag - aborting \n",
+               __func__);
+
   return rms_tagkey_get_data_ref(name_key);
 }
 
 
 int rms_tag_get_datakey_sizeof_ctype(const rms_tag_type * tag) {
   rms_tagkey_type * data_key = rms_tag_get_key(tag , "data");
-  if (data_key == NULL) 
-    util_abort("%s: no data tagkey defined for this tag - aborting \n",__func__);
-  
+  if (data_key == NULL)
+    util_abort("%s: no data tagkey defined for this tag - aborting \n",
+               __func__);
+
   return rms_tagkey_get_sizeof_ctype(data_key);
 }
 
@@ -165,7 +168,9 @@ int rms_tag_get_datakey_sizeof_ctype(const rms_tag_type * tag) {
 
 
 
-void rms_tag_add_tagkey(rms_tag_type *tag , const rms_tagkey_type *tagkey, int mem_mode) {
+void rms_tag_add_tagkey(rms_tag_type *tag,
+                        const rms_tagkey_type *tagkey,
+                        int mem_mode) {
   rms_tagkey_type * tagkey_copy;
 
   switch (mem_mode) {
@@ -198,14 +203,18 @@ static bool rms_tag_at_endtag(FILE *stream) {
       at_endtag = false;
   } else
     at_endtag = false;
-  
+
   if (!at_endtag)
     util_fseek(stream , init_pos , SEEK_SET);
   return at_endtag;
 }
 
 
-void rms_fread_tag(rms_tag_type *tag, FILE *stream , hash_type *type_map , bool endian_convert , bool *at_eof) {
+void rms_fread_tag(rms_tag_type *tag,
+                   FILE *stream,
+                   hash_type *type_map,
+                   bool endian_convert,
+                   bool *at_eof) {
   rms_tag_fread_header(tag , stream , at_eof);
   if (*at_eof)
     return;
@@ -220,7 +229,10 @@ void rms_fread_tag(rms_tag_type *tag, FILE *stream , hash_type *type_map , bool 
 
 
 
-rms_tag_type * rms_tag_fread_alloc(FILE *stream , hash_type *type_map , bool endian_convert , bool *at_eof) {
+rms_tag_type * rms_tag_fread_alloc(FILE *stream,
+                                   hash_type *type_map,
+                                   bool endian_convert,
+                                   bool *at_eof) {
   rms_tag_type *tag = rms_tag_alloc(NULL);
   rms_fread_tag(tag , stream , type_map , endian_convert , at_eof);
   return tag;
@@ -237,6 +249,7 @@ void rms_tag_fwrite(const rms_tag_type * tag , FILE * stream) {
     const rms_tagkey_type * tagkey = vector_iget_const( tag->key_list , i );
     rms_tagkey_fwrite( tagkey , stream);
   }
+
   rms_util_fwrite_string("endtag" , stream);
 }
 
@@ -249,6 +262,7 @@ void rms_tag_fprintf(const rms_tag_type * tag , FILE * stream) {
     const rms_tagkey_type * tagkey = vector_iget_const( tag->key_list , i );
     rms_tagkey_fprintf( tagkey , stream);
   }
+
   fprintf(stream , "  </%s>\n",tag->name);
 }
 
@@ -266,7 +280,7 @@ void rms_tag_fwrite_filedata(const char * filetype, FILE *stream) {
   rms_tag_add_tagkey(tag , rms_tagkey_alloc_byteswap()         , OWNED_REF);
   rms_tag_add_tagkey(tag , rms_tagkey_alloc_filetype(filetype) , OWNED_REF);
   rms_tag_add_tagkey(tag , rms_tagkey_alloc_creationDate()     , OWNED_REF);
-  
+
   rms_tag_fwrite(tag , stream);
   rms_tag_free(tag);
 }
@@ -274,7 +288,7 @@ void rms_tag_fwrite_filedata(const char * filetype, FILE *stream) {
 
 rms_tag_type * rms_tag_alloc_dimensions(int nX , int nY , int nZ) {
   rms_tag_type * tag = rms_tag_alloc("dimensions");
-  
+
   rms_tag_add_tagkey(tag , rms_tagkey_alloc_dim("nX", nX) , OWNED_REF);
   rms_tag_add_tagkey(tag , rms_tagkey_alloc_dim("nY", nY) , OWNED_REF);
   rms_tag_add_tagkey(tag , rms_tagkey_alloc_dim("nZ", nZ) , OWNED_REF);
@@ -290,19 +304,19 @@ void rms_tag_fwrite_dimensions(int nX , int nY , int nZ , FILE *stream) {
 }
 
 
-void rms_tag_fwrite_parameter(const char *param_name , const rms_tagkey_type *data_key, FILE *stream) {
+void rms_tag_fwrite_parameter(const char *param_name,
+                              const rms_tagkey_type *data_key,
+                              FILE *stream) {
   rms_tag_type * tag = rms_tag_alloc("parameter");
 
-  rms_tag_add_tagkey(tag , rms_tagkey_alloc_parameter_name(param_name) , OWNED_REF);
-  rms_tag_add_tagkey(tag , data_key , SHARED);
+  rms_tag_add_tagkey(tag, rms_tagkey_alloc_parameter_name(param_name), OWNED_REF);
+  rms_tag_add_tagkey(tag, data_key, SHARED);
   rms_tag_fwrite(tag , stream);
   rms_tag_free(tag);
-  
+
 }
 
 
 const char *rms_tag_name_ref(const rms_tag_type * tag) {
   return tag->name;
 }
-
-
