@@ -1,4 +1,6 @@
-from res.enkf import ESUpdate
+from ecl.util import BoolVector
+
+from res.enkf import ESUpdate, ErtRunContext
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import splitArguments, createFloatValidator
 from res.enkf.enums import HookRuntime
@@ -77,7 +79,13 @@ class Smoother(ErtShellCollection):
             es_update = ESUpdate( ert )
             target_fs = fs_manager.getFileSystem(case_name)
             source_fs = fs_manager.getCurrentFileSystem( )
-            success = es_update.smootherUpdate( source_fs , target_fs )
+            model_config = ert.getModelConfig( )
+            runpath_fmt = model_config.getRunpathFormat( )
+            subst_list = ert.getDataKW( )
+            mask = BoolVector( default_value = True, initial_size = ert.getEnsembleSize( ) )
+            
+            run_context = ErtRunContext.ensemble_smoother( source_fs , target_fs , mask, runpath_fmt, subst_list, 0 )
+            success = es_update.smootherUpdate( run_context  )
 
             if not success:
                 self.lastCommandFailed("Unable to perform update")

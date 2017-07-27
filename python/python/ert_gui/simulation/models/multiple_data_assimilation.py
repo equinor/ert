@@ -15,6 +15,7 @@
 #  for more details.
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.enums import HookRuntime
+from res.enkf import ErtRunContext
 
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
@@ -57,29 +58,15 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
         self.setPhaseCount(iteration_count+2) # pre + post + weights
-
-        target_case_format = arguments["target_case"]
-
-        source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
-        target_case_name = target_case_format % 0
-        target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
-
-        if not source_fs == target_fs:
-            self.ert().getEnkfFsManager().switchFileSystem(target_fs)
-            self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(source_fs, 0)
-
-        active_realization_mask = arguments["active_realizations"]
-
-
         phase_string = "Running MDA ES %d iteration%s." % (iteration_count, ('s' if (iteration_count != 1) else ''))
         self.setPhaseName(phase_string, indeterminate=True)
 
-        self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, 1)
-        self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
-
+        run_context = None
         for iteration, weight in enumerate(weights):
-            num_successful_realizations = self._simulateAndPostProcess(job_queue, target_case_format, active_realization_mask, iteration)
+            run_context = self.create_context( arguments , iteration,  prior_context = run_context )
+
+            num_successful_realizations = self._simulateAndPostProcess(run_context )
 
             # We exit because the user has pressed 'Kill all simulations'.
             if self.userExitCalled( ):
@@ -90,27 +77,27 @@ class MultipleDataAssimilation(BaseRunModel):
             self.checkHaveSufficientRealizations(num_successful_realizations)
 
             self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_UPDATE )
-            self.update(target_case_format, iteration, weights[iteration])
+            self.update( run_context , weights[iteration])
             self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_UPDATE )
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self._simulateAndPostProcess(job_queue, target_case_format, active_realization_mask, iteration_count)
+        run_context = self.create_context( arguments , len(weights),  prior_context = run_context, update = False)
+        self._simulateAndPostProcess(run_context)
 
         self.setPhase(iteration_count + 2, "Simulations completed.")
 
 
-    def update(self, target_case_format, iteration, weight):
-        source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
-        next_iteration = (iteration + 1)
-        next_target_case_name = target_case_format % next_iteration
-        target_fs = self.ert().getEnkfFsManager().getFileSystem(next_target_case_name)
+    def update(self, run_context, weight):
+        source_fs = run_context.get_result_fs( )
+        next_iteration = run_context.get_iter( ) + 1
+        target_fs = run_context.get_target_fs( )
 
         phase_string = "Analyzing iteration: %d with weight %f" % (next_iteration, weight)
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
 
         es_update = self.ert().getESUpdate( ) 
         es_update.setGlobalStdScaling(weight)
-        success = es_update.smootherUpdate(source_fs, target_fs)
+        success = es_update.smootherUpdate( run_context )
         
         if not success:
             raise UserWarning("Analysis of simulation failed for iteration: %d!" % next_iteration)
@@ -118,14 +105,11 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def _simulateAndPostProcess(self, run_context):
         self._job_queue = self._queue_config.create_job_queue( )
-        target_case_name = target_case_format % iteration
-
-        target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_name)
-        self.ert().getEnkfFsManager().switchFileSystem(target_fs)
-
+        iteration = run_context.get_iter( )
+        
         phase_string = "Running simulation for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, iteration)
+        self.ert().getEnkfSimulationRunner().createRunPath(run_context)
 
         phase_string = "Pre processing for iteration: %d" % iteration
         self.setPhaseName(phase_string)
@@ -133,7 +117,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL, iteration)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
         
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
@@ -175,21 +159,23 @@ class MultipleDataAssimilation(BaseRunModel):
         return result
 
     
-    def create_context(self, arguments, prior_context = None):
+    def create_context(self, arguments, itr, prior_context = None, update = True):
+        target_case_format = arguments["target_case"]
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
         subst_list = self.ert().getDataKW( )
         fs_manager = self.ert().getEnkfFsManager()
+
+        sim_fs = fs_manager.getFileSystem(target_case_format % itr)
+        if update:
+            target_fs = fs_manager.getFileSystem(target_case_format % (itr + 1))
+        else:
+            target_fs = None
+            
         if prior_context is None:
-            sim_fs = fs_manager.getCurrentFileSystem( )
-            target_fs = fs_manager.getFileSystem("smoother-update")
-            itr = 0
             mask = arguments["active_realizations"]
         else:
-            itr = 1
             mask = prior_context.get_mask( )
-            sim_fs = prior_context.get_target_fs( )
-            target_fs = None
             
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, subst_list, itr)
         return run_context
