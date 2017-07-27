@@ -138,9 +138,8 @@ class EnkfFs(BaseCClass):
 
     def __repr__(self):
         cn = self.getCaseName()
-        wc = self.writeCount()
         ad = self._ad_str()
-        return 'EnkfFs(case_name = %s, write_count = %d) %s' % (cn, wc, ad)
+        return 'EnkfFs(case_name = %s) %s' % (cn, ad)
 
     def fsync(self):
         self._fsync()
