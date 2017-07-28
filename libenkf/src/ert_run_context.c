@@ -200,14 +200,17 @@ ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
                                              path_fmt_type * runpath_fmt ,
                                              subst_list_type * subst_list ,
                                              int iter) {
-  if (run_mode == SMOOTHER_UPDATE)
+  switch (run_mode) {
+
+  case(SMOOTHER_UPDATE):
     return ert_run_context_alloc_SMOOTHER_RUN( simulate_fs , target_update_fs, iactive, runpath_fmt , subst_list , iter );
 
-  if (run_mode == ENSEMBLE_EXPERIMENT)
+  case(ENSEMBLE_EXPERIMENT):
     return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( init_fs, simulate_fs , iactive , runpath_fmt , subst_list , iter);
 
-  if (run_mode == INIT_ONLY)
+  case(INIT_ONLY):
     return ert_run_context_alloc_INIT_ONLY( init_fs, init_mode , iactive, runpath_fmt , subst_list, iter );
+  }
 
   util_abort("%s: internal error - should never be here \n",__func__);
   return NULL;
