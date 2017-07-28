@@ -3,7 +3,7 @@ import sys
 import os
 from PyQt4.QtGui import QApplication
 import time
-from res.enkf import EnKFMain
+from res.enkf import EnKFMain, ResConfig
 from ecl.util import Version
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import resourceIcon
@@ -54,8 +54,8 @@ def main(argv):
 
     now = time.time()
 
-
-    ert = EnKFMain(config_file, strict=strict, verbose=False)
+    res_config = ResConfig(config_file)
+    ert = EnKFMain(res_config, strict=strict, verbose=False)
     ert_gui.configureErtNotifier(ert, config_file)
 
     window = PlotWindow(ert, None)
