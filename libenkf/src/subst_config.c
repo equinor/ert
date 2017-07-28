@@ -17,8 +17,8 @@
 */
 
 #include <ert/util/rng.h>
-#include <ert/util/subst_list.h>
 #include <ert/util/subst_func.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>

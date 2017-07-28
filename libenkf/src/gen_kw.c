@@ -25,7 +25,7 @@
 #include <ert/util/buffer.h>
 #include <ert/util/matrix.h>
 #include <ert/util/rng.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/ecl/fortio.h>
 

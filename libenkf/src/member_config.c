@@ -22,7 +22,7 @@
 
 #include <ert/util/util.h>
 #include <ert/util/path_fmt.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/enkf/ecl_config.h>
 #include <ert/enkf/member_config.h>

@@ -27,7 +27,7 @@
 #include <ert/util/arg_pack.h>
 #include <ert/util/rng.h>
 #include <ert/util/mzran.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/enkf/enkf_main.h>
 

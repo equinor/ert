@@ -27,13 +27,13 @@ extern "C" {
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/set.h>
-#include <ert/util/subst_list.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/matrix.h>
 #include <ert/util/path_fmt.h>
 #include <ert/util/ui_return.h>
 #include <ert/util/log.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/sched/sched_file.h>
 

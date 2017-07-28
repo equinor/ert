@@ -27,8 +27,8 @@
 #include <ert/util/hash.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/set.h>
-#include <ert/util/subst_list.h>
 #include <ert/util/vector.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/config/config_error.h>
 #include <ert/config/config_schema_item.h>

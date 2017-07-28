@@ -2,7 +2,7 @@ import time
 from res.config import ConfigError
 from cwrap import BaseCClass
 from res.job_queue import QueuePrototype, WorkflowJoblist, WorkflowJob
-from ecl.util import SubstitutionList
+from res.util.substitution_list import SubstitutionList
 
 
 class Workflow(BaseCClass):

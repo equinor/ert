@@ -24,8 +24,8 @@ extern "C" {
 #include <stdio.h>
 
 #include <ert/util/hash.h>
-#include <ert/util/subst_list.h>
 #include <ert/util/stringlist.h>
+#include <ert/res_util/subst_list.h>
 
 typedef struct ext_job_struct ext_job_type;
 

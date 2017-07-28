@@ -22,8 +22,8 @@
 extern "C" {
 #endif
 
-#include <ert/util/subst_list.h>
 #include <ert/util/double_vector.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/enkf/gen_kw_config.h>
 #include <ert/enkf/enkf_util.h>

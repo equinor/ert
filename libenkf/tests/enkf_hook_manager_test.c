@@ -18,7 +18,7 @@
 #include <ert/util/util.h>
 #include <ert/util/test_util.h>
 #include <ert/enkf/hook_manager.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 int main(int argc, char ** argv) {
 

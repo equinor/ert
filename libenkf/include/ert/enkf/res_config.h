@@ -19,8 +19,8 @@
 #ifndef ERT_RES_CONFIG_H
 #define ERT_RES_CONFIG_H
 
-#include <ert/util/subst_list.h>
 #include <ert/util/subst_func.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/config/config_settings.h>
 

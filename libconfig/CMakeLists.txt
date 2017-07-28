@@ -14,7 +14,7 @@ add_library(config src/config_parser.c
                    src/conf_util.c
 )
 
-target_link_libraries(config PUBLIC ecl)
+target_link_libraries(config PUBLIC ecl res_util)
 target_include_directories(config
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
            $<INSTALL_INTERFACE:include>

@@ -26,7 +26,7 @@ extern "C" {
 
 #include <ert/util/type_macros.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/config/config_content_item.h>
 #include <ert/config/config_schema_item.h>

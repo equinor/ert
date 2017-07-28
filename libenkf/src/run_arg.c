@@ -18,8 +18,8 @@
 
 
 #include <ert/util/path_fmt.h>
-#include <ert/util/subst_list.h>
 #include <ert/util/type_macros.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/run_arg.h>

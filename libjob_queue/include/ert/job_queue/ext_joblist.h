@@ -25,7 +25,7 @@ extern "C" {
 
 #include <ert/util/hash.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/job_queue/ext_job.h>
 
