@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import sys
 import time 
-from ert.enkf import EnKFMain
+from ert.enkf import EnKFMain, ResConfig
 from ert.enkf.enums import ErtImplType
 
 
 # This will instantiate the EnkFMain object and create a handle to
 # "everything" ert related for this instance.
-ert = EnKFMain( sys.argv[1] )
+res_config = ResConfig( sys.argv[1] )
+ert = EnKFMain( res_config )
 
 
 # Ask the EnKFMain instance how many realisations it has. Observe that

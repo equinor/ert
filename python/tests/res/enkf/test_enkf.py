@@ -40,7 +40,8 @@ class EnKFTest(ExtendedTestCase):
     def test_repr( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
-            main = EnKFMain("simple_config/minimum_config")
+            res_config = ResConfig("simple_config/minimum_config")
+            main = EnKFMain(res_config)
             pfx = 'EnKFMain(ensemble_size'
             self.assertEqual(pfx, repr(main)[:len(pfx)])
             main.free()
@@ -48,7 +49,8 @@ class EnKFTest(ExtendedTestCase):
     def test_bootstrap( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
-            main = EnKFMain("simple_config/minimum_config")
+            res_config = ResConfig("simple_config/minimum_config")
+            main = EnKFMain(res_config)
             self.assertTrue(main, "Load failed")
             main.free()
 
@@ -56,7 +58,7 @@ class EnKFTest(ExtendedTestCase):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
             res_config = ResConfig("simple_config/minimum_config")
-            main = EnKFMain(res_config=res_config)
+            main = EnKFMain(res_config)
 
             self.assertTrue(main, "Load failed")
 
@@ -77,7 +79,8 @@ class EnKFTest(ExtendedTestCase):
     def test_default_res_config(self):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
-            main = EnKFMain("simple_config/minimum_config")
+            res_config = ResConfig("simple_config/minimum_config")
+            main = EnKFMain(res_config)
 
             self.assertIsNotNone(main.resConfig)
             self.assertIsNotNone(main.siteConfig)
@@ -87,7 +90,7 @@ class EnKFTest(ExtendedTestCase):
         with TestAreaContext("enkf_test") as work_area:
             with self.assertRaises(TypeError):
                 work_area.copy_directory(self.case_directory)
-                main = EnKFMain(res_config=self)
+                main = EnKFMain(res_config="This is not a ResConfig instance")
 
 
 
@@ -109,7 +112,8 @@ class EnKFTest(ExtendedTestCase):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
-            main = EnKFMain("simple_config/minimum_config")
+            res_config = ResConfig("simple_config/minimum_config")
+            main = EnKFMain(res_config)
 
             count = 10
             summary_key = "test_key"
@@ -160,7 +164,8 @@ class EnKFTest(ExtendedTestCase):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
-            main = EnKFMain("simple_config/minimum_config")
+            res_config = ResConfig("simple_config/minimum_config")
+            main = EnKFMain(res_config)
 
             self.assertIsInstance(main.ensembleConfig(), EnsembleConfig)
             self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
@@ -188,14 +193,16 @@ class EnKFTest(ExtendedTestCase):
         
         with TestAreaContext("python/ens_condif/create_config" , store_area = True) as ta:
             EnKFMain.createNewConfig(config_file, "storage" , dbase_type, num_realizations)
-            main = EnKFMain(config_file)
+            res_config = ResConfig(config_file)
+            main = EnKFMain(res_config)
             self.assertEqual(main.getEnsembleSize(), num_realizations)
 
 
     def test_run_context(self):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
-            main = EnKFMain("simple_config/minimum_config")
+            res_config = ResConfig("simple_config/minimum_config")
+            main = EnKFMain(res_config)
             fs_manager = main.getEnkfFsManager()
             fs = fs_manager.getCurrentFileSystem( )
             iactive = BoolVector(initial_size = 10 , default_value = True)

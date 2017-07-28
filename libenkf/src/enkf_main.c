@@ -1981,56 +1981,14 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
 }
 
 
-/**
- * Note: This function will chdir into the directory of the model_config file.
- */
-static char * enkf_main_alloc_model_config_filename(const char * model_config) {
-  if(model_config == NULL)
-    return NULL;
+static void enkf_main_enter_work_dir(const enkf_main_type * enkf_main) {
+  const char * work_dir = res_config_get_working_directory(enkf_main->res_config);
 
-  char * path             = NULL;
-  char * base             = NULL;
-  char * ext              = NULL;
-
-  // The command line argument given is a symlink - we start by changing to
-  // the real location of the configuration file.
-  if (util_is_link(model_config)) {
-    char * realpath = util_alloc_link_target(model_config);
-    util_alloc_file_components(realpath, &path, &base, &ext);
-    free(realpath);
-  }
-  else {
-    util_alloc_file_components(model_config, &path, &base, &ext);
-  }
-
-  char * rel_model_config = NULL;
-  if (path == NULL) {
-    rel_model_config = util_alloc_string_copy(model_config);
-  }
-  else {
-    if(util_chdir(path) != 0)
-      util_abort(
+  if(work_dir && util_chdir(work_dir) != 0)
+    util_abort(
               "%s: failed to change directory to: %s : %s \n",
-              __func__, path, strerror(errno)
+              __func__, work_dir, strerror(errno)
               );
-
-    if (ext != NULL)
-      rel_model_config = util_alloc_filename(NULL, base, ext);
-    else
-      rel_model_config = util_alloc_string_copy(base);
-  }
-
-  util_safe_free(path);
-  util_safe_free(base);
-  util_safe_free(ext);
-
-  if (!util_file_exists(rel_model_config))
-    util_exit(
-            "%s: can not locate user configuration file:%s \n",
-            __func__ , rel_model_config
-            );
-
-  return rel_model_config;
 }
 
 static void enkf_main_init_log(const enkf_main_type * enkf_main) {
@@ -2091,10 +2049,12 @@ enkf_main_type * enkf_main_alloc(const res_config_type * res_config, bool strict
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->res_config = res_config;
 
-  enkf_main_rng_init( enkf_main );
+  enkf_main_enter_work_dir(enkf_main);
+
+  enkf_main_rng_init(enkf_main);
   enkf_main_set_verbose(enkf_main, verbose);
   enkf_main_init_log(enkf_main);
-  enkf_main_user_select_initial_fs( enkf_main );
+  enkf_main_user_select_initial_fs(enkf_main);
   enkf_main_init_obs(enkf_main);
   enkf_main_add_ensemble_members(enkf_main);
   enkf_main_init_jobname(enkf_main);

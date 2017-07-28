@@ -13,7 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import ctypes
+import ctypes, warnings
+
 from os.path import isfile
 from cwrap import BaseCClass
 from ecl.util import SubstitutionList, Log
@@ -26,8 +27,6 @@ from res.enkf import (AnalysisConfig, EclConfig, LocalConfig, ModelConfig,
                       EnsembleConfig, SiteConfig, ResConfig, QueueConfig)
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.key_manager import KeyManager
-
-
 
 
 class EnKFMain(BaseCClass):
@@ -73,34 +72,26 @@ class EnKFMain(BaseCClass):
     _get_res_config = EnkfPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
 
 
-    def __init__(self, model_config=None, res_config=None, strict=True, verbose=True):
-        if model_config is not None and not isfile(model_config):
-            raise IOError('No such configuration file "%s".' % model_config)
+    def __init__(self, config, strict=True, verbose=True):
+        """
+        Initializes an instance of EnkfMain.
 
-        if model_config is not None and res_config is not None:
-            raise ValueError(
-                        "Expected either model_config or res_config to be None"
-                        )
+        Note: @config ought to be the ResConfig instance holding the
+        configuration. It also accepts that config is the name of a
+        configuration file, this is however deprecated.
+        """
 
-        # TODO: Deprecation warning it model_config is not None
-
+        res_config = self._init_res_config(config)
         if res_config is None:
-            res_config = ResConfig(model_config)
-            res_config.convertToCReference(self)
-
-        if res_config is None or not isinstance(res_config, ResConfig):
             raise TypeError("Failed to construct EnKFMain instance due to invalid res_config.")
 
         c_ptr = self._alloc(res_config, strict, verbose)
         if c_ptr:
             super(EnKFMain, self).__init__(c_ptr)
         else:
-            raise ValueError('Failed to construct EnKFMain instance from config %s.' % model_config)
+            raise ValueError('Failed to construct EnKFMain instance from config %s.' % res_config)
 
-        # The model_config argument can be None; the only reason to
-        # allow that possibility is to be able to test that the
-        # site-config loads correctly.
-        if model_config is None:
+        if config is None:
             self.__simulation_runner = None
             self.__fs_manager = None
             self.__es_update = None
@@ -113,9 +104,39 @@ class EnKFMain(BaseCClass):
         self.__key_manager = KeyManager(self)
 
 
+    def _init_res_config(self, config):
+        if isinstance(config, ResConfig):
+            return config
+
+        # The res_config argument can be None; the only reason to
+        # allow that possibility is to be able to test that the
+        # site-config loads correctly.
+        if config is None or isinstance(config, basestring):
+            user_config_file = None
+
+            if isinstance(config, basestring):
+                if not isfile(config):
+                    raise IOError('No such configuration file "%s".' % res_config)
+
+                warnings.warn("Initializing enkf_main with a config_file is "
+                            "deprecated. Please use res_config to load the file "
+                            "instead",
+                            DeprecationWarning
+                            )
+
+                user_config_file = config
+
+            res_config = ResConfig(user_config_file)
+            res_config.convertToCReference(self)
+
+            return res_config
+
+        raise TypeError("Expected ResConfig, received: %r" % res_config)
+
 
     def get_queue_config(self):
         return self._get_queue_config()
+
 
     @classmethod
     def createCReference(cls, c_pointer, parent=None):

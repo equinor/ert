@@ -5,7 +5,7 @@ from ecl.ecl import EclSum
 from res.enkf import AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig, ObsVector
 from res.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, EnsembleConfig
 from res.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig
-from res.enkf.enkf_main import EnKFMain
+from res.enkf import EnKFMain, ResConfig
 
 from res.enkf.util import TimeMap
 
@@ -27,7 +27,8 @@ class EnKFLibraryTest(ExtendedTestCase):
         with TestAreaContext("enkf_library_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
-            main = EnKFMain("simple_config/minimum_config")
+            res_config = ResConfig("simple_config/minimum_config")
+            main = EnKFMain(res_config)
 
             self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
             self.assertIsInstance(main.eclConfig(), EclConfig)
@@ -47,7 +48,8 @@ class EnKFLibraryTest(ExtendedTestCase):
         with TestAreaContext("enkf_library_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
-            main = EnKFMain("simple_config/minimum_config")
+            res_config = ResConfig("simple_config/minimum_config")
+            main = EnKFMain(res_config)
             state = main.getRealisation( 0 )
             
             with self.assertRaises(TypeError):
