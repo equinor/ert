@@ -187,7 +187,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main , ENKF_MAIN_ID)
 
-const analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
+analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
   return res_config_get_analysis_config(enkf_main->res_config);
 }
 
