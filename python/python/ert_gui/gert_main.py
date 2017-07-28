@@ -118,7 +118,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QFileDialog
 
 import ert_gui.ertwidgets
-from res.enkf import EnKFMain
+from res.enkf import EnKFMain, ResConfig
 from ecl.util import Version
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
@@ -214,7 +214,8 @@ def main(argv):
 
     now = time.time()
 
-    ert = EnKFMain(config_file, strict=strict, verbose=verbose)
+    res_config = ResConfig(config_file)
+    ert = EnKFMain(res_config, strict=strict, verbose=verbose)
     ert_gui.configureErtNotifier(ert, config_file)
 
     window = GertMainWindow()

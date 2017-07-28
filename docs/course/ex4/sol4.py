@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 import sys
-import time 
-from res.enkf import EnKFMain, RunArg, NodeId
+import time
+from res.enkf import EnKFMain, RunArg, NodeId, ResConfig
 from res.enkf.data import EnkfNode
 from ert.job_queue import JobQueueManager
 
-ert = EnKFMain( sys.argv[1] )
+res_config = ResConfig( sys.argv[1] )
+ert = EnKFMain( res_config )
 fs_manager = ert.getEnkfFsManager( )
 fs = fs_manager.getCurrentFileSystem( )
 
 
-# Initialize the realisations. 
+# Initialize the realisations.
 for iens in range( ert.getEnsembleSize()):
     realisation = ert.getRealisation( iens )
     realisation.initialize( fs )
