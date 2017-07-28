@@ -174,5 +174,4 @@ class RunpathListTest(ExtendedTestCase):
 
             # ensure field symlink is replaced by file
             self.assertFalse( path.islink(linkpath) )
->>>>>>> 3f5e983c3... fixup! Changed numerous call sites to use run_context.
 

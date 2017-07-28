@@ -89,7 +89,7 @@ class RPCServiceTest(ExtendedTestCase):
 
             server.stop()
 
-    def xtest_client_interaction(self):
+    def test_client_interaction(self):
         target_case_names = ["batch_1", ".batch_1", "batch_1", ".batch_1"]
         kw = [
             {"SNAKE_OIL_PARAM": [0.50, 6, 1.750, 0.250, 0.990, 2, 1.770, 0.330, 0.550, 0.770]},
