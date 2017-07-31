@@ -5,7 +5,7 @@ from res.test.ert_test_context import ErtTestContext
 
 from res.enkf import SummaryKeySet
 from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enkf_main import EnKFMain
+from res.enkf import EnKFMain, ResConfig
 
 
 class SummaryKeySetTest(ExtendedTestCase):
@@ -83,7 +83,8 @@ class SummaryKeySetTest(ExtendedTestCase):
             summary_key_set.addSummaryKey("WOPR")
             fs.umount()
 
-            ert = EnKFMain("config")
+            res_config = ResConfig("config")
+            ert = EnKFMain(res_config)
             fs = ert.getEnkfFsManager().getCurrentFileSystem()
             summary_key_set = fs.getSummaryKeySet()
             self.assertTrue("FOPT" in summary_key_set)

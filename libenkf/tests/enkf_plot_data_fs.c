@@ -114,7 +114,7 @@ int main(int argc, char ** argv) {
     test_work_area_copy_parent_content( work_area , config_file );
     {
       res_config_type * res_config = res_config_alloc_load(model_config);
-      enkf_main_type * enkf_main = enkf_main_alloc(model_config, res_config, false, false);
+      enkf_main_type * enkf_main = enkf_main_alloc(res_config, false, false);
 
       test_load_summary(enkf_main , "WWCT:OP_3");
       test_load_GEN_KW( enkf_main , "MULTFLT" , "F3");

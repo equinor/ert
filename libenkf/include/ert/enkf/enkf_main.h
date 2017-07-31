@@ -71,7 +71,6 @@ extern "C" {
   typedef struct enkf_main_struct enkf_main_type;
   ui_return_type *              enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);
   ui_return_type *              enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file );
-  void                          enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file );
   const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );
   void                          enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rft_config_file );
   const char                  * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main );
@@ -119,7 +118,7 @@ extern "C" {
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
   void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
   void                          enkf_main_interactive_set_runpath__(void * );
-  enkf_main_type              * enkf_main_alloc(const char *, const res_config_type *, bool, bool);
+  enkf_main_type              * enkf_main_alloc(const res_config_type *, bool, bool);
   void                          enkf_main_create_new_config( const char * config_file , const char * storage_path , const char * dbase_type , int num_realizations);
 
 

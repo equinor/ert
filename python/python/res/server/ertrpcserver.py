@@ -9,8 +9,9 @@ except ImportError:
     from xmlrpc.client import Fault
 
 
+import warnings
 from ecl import Version
-from res.enkf import EnKFMain, NodeId
+from res.enkf import EnKFMain, NodeId, ResConfig
 from res.enkf.config import CustomKWConfig
 from res.enkf.data import EnkfNode, CustomKW
 from res.enkf.enums import RealizationStateEnum, EnkfVarType, ErtImplType
@@ -39,24 +40,14 @@ def createFault(error, message):
     error_code = INVERSE_FAULT_CODES[error]
     return Fault(error_code, message)
 
-
-
 class ErtRPCServer(SimpleXMLRPCServer):
-    def __init__(self, config, host="localhost", port=0, log_requests=False, verbose_queue=False):
+    def __init__(self, enkf_main, host="localhost", port=0, log_requests=False, verbose_queue=False):
         SimpleXMLRPCServer.__init__(self, (host, port), allow_none=True, logRequests=log_requests)
         self._host = host
         self._verbose_queue = verbose_queue
         # https: server.socket = ssl.wrap_socket(srv.socket, ...)
 
-        if isinstance(config, EnKFMain):
-            self._config = config
-            self._config_file = config.getUserConfigFile()
-        else:
-            if os.path.exists(config):
-                self._config = EnKFMain(config)
-                self._config_file = config
-            else:
-                raise IOError("The ert config file: %s does not exist" % config)
+        self._init_enkf_main(enkf_main)
 
         self._session = Session()
 
@@ -77,6 +68,39 @@ class ErtRPCServer(SimpleXMLRPCServer):
         self.register_function(self.storeGlobalData)
         self.register_function(self.storeSimulationData)
 
+
+    def _init_enkf_main(self, enkf_main):
+        if enkf_main is None:
+            raise ValueError("Expected enkf_main to be "
+                    "provided upon initialization of ErtRPCServer. "
+                    "Received enkf_main=%r"
+                    % enkf_main
+                    )
+
+        if isinstance(enkf_main, EnKFMain):
+            self._enkf_main   = enkf_main
+            self._res_config  = enkf_main.resConfig
+            self._config_file = enkf_main.getUserConfigFile()
+
+        elif isinstance(enkf_main, basestring):
+            if not os.path.exists(enkf_main):
+                raise IOError("No such configuration file: %s" % enkf_main)
+
+            warnings.warn("Providing a configuration file as the argument "
+                    "to ErtRPCServer is deprecated. Please use the "
+                    "optional argument res_config to provide an "
+                    "configuration!",
+                    DeprecationWarning
+                    )
+
+            self._config_file = enkf_main
+            self._res_config  = ResConfig(self._config_file)
+            self._enkf_main   = EnKFMain(self._res_config)
+
+        else:
+            raise TypeError("Expected enkf_main to be an instance of "
+                    "EnKFMain, received: %r" % enkf_main)
+
     @property
     def port(self):
         return self.server_address[1]
@@ -87,7 +111,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
     @property
     def ert(self):
-        return self._config
+        return self._enkf_main
 
     def start(self):
         self.serve_forever()
@@ -98,7 +122,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 self._session.simulation_context._queue_manager.get_job_queue().killAllJobs()
         self.shutdown()
         self.server_close()
-        self._config = None
+        self._enkf_main = None
 
     def ertVersion(self):
         return Version.currentVersion().versionTuple()

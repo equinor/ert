@@ -153,7 +153,6 @@ struct enkf_main_struct {
   rng_type               * rng;
   ranking_table_type     * ranking_table;
 
-  char                   * user_config_file;
   enkf_obs_type          * obs;
 
   enkf_state_type       ** ensemble;         /* The ensemble ... */
@@ -197,12 +196,8 @@ ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , 
   return ecl_config_validate_refcase(enkf_main_get_ecl_config(enkf_main), refcase_path);
 }
 
-void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file ) {
-  enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
-}
-
 const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) {
-  return enkf_main->user_config_file;
+  return res_config_get_user_config_file(enkf_main->res_config);
 }
 
 const char * enkf_main_get_site_config_file( const enkf_main_type * enkf_main ) {
@@ -323,7 +318,6 @@ void enkf_main_free(enkf_main_type * enkf_main){
 
   local_config_free( enkf_main->local_config );
 
-  util_safe_free( enkf_main->user_config_file );
   free(enkf_main);
 }
 
@@ -1915,7 +1909,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   res_log_open_empty();
   enkf_main->ensemble           = NULL;
-  enkf_main->user_config_file   = NULL;
   enkf_main->local_config       = NULL;
   enkf_main->rng                = NULL;
   enkf_main->ens_size           = 0;
@@ -1988,56 +1981,14 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
 }
 
 
-/**
- * Note: This function will chdir into the directory of the model_config file.
- */
-static char * enkf_main_alloc_model_config_filename(const char * model_config) {
-  if(model_config == NULL)
-    return NULL;
+static void enkf_main_enter_work_dir(const enkf_main_type * enkf_main) {
+  const char * work_dir = res_config_get_working_directory(enkf_main->res_config);
 
-  char * path             = NULL;
-  char * base             = NULL;
-  char * ext              = NULL;
-
-  // The command line argument given is a symlink - we start by changing to
-  // the real location of the configuration file.
-  if (util_is_link(model_config)) {
-    char * realpath = util_alloc_link_target(model_config);
-    util_alloc_file_components(realpath, &path, &base, &ext);
-    free(realpath);
-  }
-  else {
-    util_alloc_file_components(model_config, &path, &base, &ext);
-  }
-
-  char * rel_model_config = NULL;
-  if (path == NULL) {
-    rel_model_config = util_alloc_string_copy(model_config);
-  }
-  else {
-    if(util_chdir(path) != 0)
-      util_abort(
+  if(work_dir && util_chdir(work_dir) != 0)
+    util_abort(
               "%s: failed to change directory to: %s : %s \n",
-              __func__, path, strerror(errno)
+              __func__, work_dir, strerror(errno)
               );
-
-    if (ext != NULL)
-      rel_model_config = util_alloc_filename(NULL, base, ext);
-    else
-      rel_model_config = util_alloc_string_copy(base);
-  }
-
-  util_safe_free(path);
-  util_safe_free(base);
-  util_safe_free(ext);
-
-  if (!util_file_exists(rel_model_config))
-    util_exit(
-            "%s: can not locate user configuration file:%s \n",
-            __func__ , rel_model_config
-            );
-
-  return rel_model_config;
 }
 
 static void enkf_main_init_log(const enkf_main_type * enkf_main) {
@@ -2064,39 +2015,13 @@ static void enkf_main_add_ensemble_members(enkf_main_type * enkf_main) {
   enkf_main_resize_ensemble(enkf_main, num_realizations);
 }
 
-static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, bool verbose) {
-  if (!enkf_main->user_config_file)
-    return;
-
-  config_parser_type * config = config_alloc();
-  config_content_type * content = model_config_alloc_content(enkf_main->user_config_file, config);
-
-  enkf_main_user_select_initial_fs( enkf_main );
-
-  enkf_main_init_obs(enkf_main);
-
-  config_content_free(content);
-  config_free(config);
-}
 
 /**
    This function boots everything needed for running a EnKF
-   application. Very briefly it can be summarized as follows:
+   application from the provided res_config.
 
-    1. A large config object is initalized with all the possible
-       keywords we are looking for.
-
-    2. All the config files are parsed in one go.
-
-    3. The various objects are build up by reading from the config
-       object.
-
-    4. The resulting enkf_main object contains *EVERYTHING*
-       (whoaha...)
-
-
-  Observe that the function will start with chdir() to the directory
-  containing the configuration file, so that all subsequent file
+  Observe that the function will start with chdir() to the working directory
+  specified by res_config, so that all subsequent file
   references are relative to the location of the configuration
   file. This also applies if the command_line argument given is a
   symlink.
@@ -2120,25 +2045,18 @@ static void enkf_main_bootstrap_model(enkf_main_type * enkf_main, bool strict, b
    is mainly to be able to test that the site config file is valid.
 */
 
-enkf_main_type * enkf_main_alloc(const char * model_config, const res_config_type * res_config, bool strict , bool verbose) {
+enkf_main_type * enkf_main_alloc(const res_config_type * res_config, bool strict , bool verbose) {
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->res_config = res_config;
 
-  enkf_main_rng_init( enkf_main );
+  enkf_main_enter_work_dir(enkf_main);
 
+  enkf_main_rng_init(enkf_main);
   enkf_main_set_verbose(enkf_main, verbose);
-
   enkf_main_init_log(enkf_main);
-
-  char * user_config_file = enkf_main_alloc_model_config_filename(model_config);
-  if(user_config_file) {
-    enkf_main_set_user_config_file(enkf_main, user_config_file);
-    enkf_main_bootstrap_model(enkf_main, strict, verbose);
-  }
-  free(user_config_file);
-
+  enkf_main_user_select_initial_fs(enkf_main);
+  enkf_main_init_obs(enkf_main);
   enkf_main_add_ensemble_members(enkf_main);
-
   enkf_main_init_jobname(enkf_main);
 
   return enkf_main;

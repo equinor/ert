@@ -59,7 +59,7 @@ int main(int argc , char ** argv) {
 
     util_clear_directory( "Storage" , true , true );
     res_config_type * res_config = res_config_alloc_load(config_file);
-    enkf_main = enkf_main_alloc(config_file, res_config, strict, true);
+    enkf_main = enkf_main_alloc(res_config, strict, true);
     {
       const enkf_config_node_type * gen_kw_config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ) , "MULTFLT" );
       enkf_node_type * gen_kw_node = enkf_node_alloc( gen_kw_config_node );

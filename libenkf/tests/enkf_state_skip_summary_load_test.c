@@ -63,7 +63,7 @@ int main(int argc , char ** argv) {
   
   bool strict = true;
   res_config_type * res_config = res_config_alloc_load(config_file);
-  enkf_main_type * enkf_main = enkf_main_alloc(config_file, res_config, strict, true);
+  enkf_main_type * enkf_main = enkf_main_alloc(res_config, strict, true);
   
   test_assert_true( check_ecl_sum_loaded(enkf_main) );
   

@@ -64,7 +64,7 @@ static ert_test_context_type * ert_test_context_alloc__( const char * test_name 
     {
       char * config_file = util_split_alloc_filename( model_config );
       test_context->res_config = res_config_alloc_load(config_file);
-      test_context->enkf_main = enkf_main_alloc(config_file, test_context->res_config, true, false);
+      test_context->enkf_main = enkf_main_alloc(test_context->res_config, true, false);
       free( config_file );
     }
     test_context->rng = rng_alloc( MZRAN , INIT_DEV_URANDOM );
