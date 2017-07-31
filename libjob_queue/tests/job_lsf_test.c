@@ -35,18 +35,21 @@ void test_status(int lsf_status , job_status_type job_status) {
   test_assert_true( lsf_driver_convert_status( lsf_status ) == job_status);
 }
 
-
-int main( int argc , char ** argv) {
+void test_options(void) {
   lsf_driver_type * driver = lsf_driver_alloc();
-
+  test_assert_false( lsf_driver_has_project_code( driver ));
   test_option( driver , LSF_BSUB_CMD    , "Xbsub");
   test_option( driver , LSF_BJOBS_CMD   , "Xbsub");
   test_option( driver , LSF_BKILL_CMD   , "Xbsub");
   test_option( driver , LSF_RSH_CMD     , "RSH");
   test_option( driver , LSF_LOGIN_SHELL , "shell");
   test_option( driver , LSF_BSUB_CMD    , "bsub");
+  test_option( driver , LSF_PROJECT_CODE    , "my-ppu");
+  test_assert_true( lsf_driver_has_project_code( driver ));
+  lsf_driver_free( driver );
+}
 
-
+void test_status_tr() {
   test_status( JOB_STAT_PEND   , JOB_QUEUE_PENDING );
   test_status( JOB_STAT_PSUSP  , JOB_QUEUE_RUNNING );
   test_status( JOB_STAT_USUSP  , JOB_QUEUE_RUNNING );
@@ -57,6 +60,13 @@ int main( int argc , char ** argv) {
   test_status( JOB_STAT_EXIT   , JOB_QUEUE_EXIT );
   test_status( JOB_STAT_UNKWN  , JOB_QUEUE_EXIT );
   test_status( 192             , JOB_QUEUE_DONE );
+}
+
+
+int main( int argc , char ** argv) {
+
+  test_options();
+  test_status_tr( );
 
   exit(0);
 }
