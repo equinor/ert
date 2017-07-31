@@ -16,6 +16,7 @@
 
 import sys
 import os.path
+import warnings
 
 from res.config import UnrecognizedEnum, ContentTypeEnum , ConfigContent, ConfigPrototype
 from cwrap import BaseCClass
@@ -48,10 +49,15 @@ class ConfigParser(BaseCClass):
         return item
 
 
-    def getSchemaItem(self , keyword):
+    def getSchemaItem(self, keyword):
+        warnings.warn('deprecated, use conf[kw]', DeprecationWarning)
+        return self[keyword]
+
+    def __getitem__(self , keyword):
         if keyword in self:
             item = self._get_schema_item(keyword)
             item.setParent( self )
+            return item
         else:
             raise KeyError("Config parser does not have item:%s" % keyword)
 

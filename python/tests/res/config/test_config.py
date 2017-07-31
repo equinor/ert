@@ -66,8 +66,8 @@ class ConfigTest(ExtendedTestCase):
             schema_item.iset_type(2 , ContentTypeEnum.CONFIG_BOOL )
             schema_item.iset_type(3 , ContentTypeEnum.CONFIG_STRING )
             schema_item.iset_type(4 , ContentTypeEnum.CONFIG_PATH )
-            self.assertFalse( "TYPE_XX" in conf )
-            self.assertTrue( "TYPE_ITEM" in conf )
+            self.assertNotIn( "TYPE_XX", conf )
+            self.assertIn( "TYPE_ITEM", conf )
             
             content = conf.parse("config")
             type_item = content["TYPE_ITEM"][0]
@@ -91,7 +91,10 @@ class ConfigTest(ExtendedTestCase):
             self.assertEqual( path_value , "file")
             self.assertEqual( type_item.igetString(4) , "file")
 
-
+            # test __getitem__
+            self.assertTrue(conf['TYPE_ITEM'])
+            with self.assertRaises(KeyError):
+                _ = conf['TYPE_XX']
             
 
 
