@@ -22,7 +22,6 @@
 
 #include <ert/job_queue/lsf_job_stat.h>
 #include <ert/job_queue/lsf_driver.h>
-#include <ert/job_queue/lsb.h>
 
 
 void test_option(lsf_driver_type * driver , const char * option , const char * value) {
@@ -31,21 +30,11 @@ void test_option(lsf_driver_type * driver , const char * option , const char * v
 }
 
 
-void test_server(lsf_driver_type * driver , const char * server, lsf_submit_method_enum submit_method) {
-  lsf_driver_set_option(driver , LSF_SERVER , server );
-  test_assert_true( lsf_driver_get_submit_method( driver ) == submit_method );
-}
-
 
 void test_status(int lsf_status , job_status_type job_status) {
   test_assert_true( lsf_driver_convert_status( lsf_status ) == job_status);
 }
 
-
-/*
-  This test should ideally be run twice in two different environments;
-  with and without dlopen() access to the lsf libraries.
-*/
 
 int main( int argc , char ** argv) {
   lsf_driver_type * driver = lsf_driver_alloc();
@@ -56,29 +45,8 @@ int main( int argc , char ** argv) {
   test_option( driver , LSF_RSH_CMD     , "RSH");
   test_option( driver , LSF_LOGIN_SHELL , "shell");
   test_option( driver , LSF_BSUB_CMD    , "bsub");
-  printf("Options OK\n");
-
-  {
-
-    lsf_submit_method_enum submit_NULL;
-    lsb_type * lsb = lsb_alloc();
-    if (lsb_ready(lsb))
-      submit_NULL = LSF_SUBMIT_INTERNAL;
-    else
-      submit_NULL = LSF_SUBMIT_LOCAL_SHELL;
 
 
-    test_server( driver , NULL        , submit_NULL );
-    test_server( driver , "LoCaL"     , LSF_SUBMIT_LOCAL_SHELL );
-    test_server( driver , "LOCAL"     , LSF_SUBMIT_LOCAL_SHELL );
-    test_server( driver , "XLOCAL"    , LSF_SUBMIT_REMOTE_SHELL );
-    test_server( driver , NULL        , submit_NULL );
-    test_server( driver , "NULL"      , submit_NULL );
-    test_server( driver , "be-grid01" , LSF_SUBMIT_REMOTE_SHELL );
-    printf("Servers OK\n");
-
-    lsb_free( lsb );
-  }
   test_status( JOB_STAT_PEND   , JOB_QUEUE_PENDING );
   test_status( JOB_STAT_PSUSP  , JOB_QUEUE_RUNNING );
   test_status( JOB_STAT_USUSP  , JOB_QUEUE_RUNNING );
@@ -89,7 +57,6 @@ int main( int argc , char ** argv) {
   test_status( JOB_STAT_EXIT   , JOB_QUEUE_EXIT );
   test_status( JOB_STAT_UNKWN  , JOB_QUEUE_EXIT );
   test_status( 192             , JOB_QUEUE_DONE );
-  printf("Status OK \n");
 
   exit(0);
 }
