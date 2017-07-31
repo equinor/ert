@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2012  Statoil ASA, Norway. 
-    
-   The file 'job_lsf_test.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2012  Statoil ASA, Norway.
+
+   The file 'job_lsf_test.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #include <stdlib.h>
 #include <stdbool.h>
@@ -59,21 +59,21 @@ int main( int argc , char ** argv) {
   printf("Options OK\n");
 
   {
-    
+
     lsf_submit_method_enum submit_NULL;
     lsb_type * lsb = lsb_alloc();
     if (lsb_ready(lsb))
       submit_NULL = LSF_SUBMIT_INTERNAL;
     else
       submit_NULL = LSF_SUBMIT_LOCAL_SHELL;
-    
 
-    test_server( driver , NULL        , submit_NULL ); 
-    test_server( driver , "LoCaL"     , LSF_SUBMIT_LOCAL_SHELL ); 
-    test_server( driver , "LOCAL"     , LSF_SUBMIT_LOCAL_SHELL ); 
+
+    test_server( driver , NULL        , submit_NULL );
+    test_server( driver , "LoCaL"     , LSF_SUBMIT_LOCAL_SHELL );
+    test_server( driver , "LOCAL"     , LSF_SUBMIT_LOCAL_SHELL );
     test_server( driver , "XLOCAL"    , LSF_SUBMIT_REMOTE_SHELL );
-    test_server( driver , NULL        , submit_NULL ); 
-    test_server( driver , "NULL"      , submit_NULL ); 
+    test_server( driver , NULL        , submit_NULL );
+    test_server( driver , "NULL"      , submit_NULL );
     test_server( driver , "be-grid01" , LSF_SUBMIT_REMOTE_SHELL );
     printf("Servers OK\n");
 
@@ -88,7 +88,7 @@ int main( int argc , char ** argv) {
   test_status( JOB_STAT_DONE   , JOB_QUEUE_DONE );
   test_status( JOB_STAT_EXIT   , JOB_QUEUE_EXIT );
   test_status( JOB_STAT_UNKWN  , JOB_QUEUE_EXIT );
-  test_status( 192             , JOB_QUEUE_DONE ); 
+  test_status( 192             , JOB_QUEUE_DONE );
   printf("Status OK \n");
 
   exit(0);

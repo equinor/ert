@@ -82,9 +82,11 @@ void test_bjobs_parse_hosts() {
 }
 
 int main(int argc, char ** argv) {
-  lsf_driver_type * driver = lsf_driver_alloc();
-  test_submit(driver, argv[1]);
-  lsf_driver_free(driver);
+  {
+    lsf_driver_type * driver = lsf_driver_alloc();
+    test_submit(driver, argv[1]);
+    lsf_driver_free(driver);
+  }
   test_bjobs_parse_hosts();
   exit(0);
 }
