@@ -159,7 +159,7 @@ int main (int argc, char ** argv) {
     enkf_welcome(model_config_file);
     {
       res_config_type * res_config = res_config_alloc_load(model_config_file);
-      enkf_main_type * enkf_main = enkf_main_alloc(model_config_file, res_config, true, true);
+      enkf_main_type * enkf_main = enkf_main_alloc(res_config, true, true);
       enkf_main_run_workflows(enkf_main, workflow_list);
       enkf_tui_main_menu(enkf_main);
       enkf_main_free(enkf_main);
