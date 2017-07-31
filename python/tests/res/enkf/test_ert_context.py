@@ -15,7 +15,7 @@ class ErtTestContextTest(ExtendedTestCase):
         ert = context.getErt()
 
         init_case_job = self.createSharePath("%s/INIT_CASE_FROM_EXISTING" % root_path)
-        self.assertTrue(context.installWorkflowJob("INIT_CASE_JOB", init_case_job))
+        context.installWorkflowJob("INIT_CASE_JOB", init_case_job)
         self.assertTrue(context.runWorkflowJob("INIT_CASE_JOB", "default", "new_not_current_case"))
 
         default_fs = ert.getEnkfFsManager().getFileSystem("default")
@@ -30,7 +30,7 @@ class ErtTestContextTest(ExtendedTestCase):
 
     def createCaseTest(self, context, root_path):
         create_case_job = self.createSharePath("%s/CREATE_CASE" % root_path)
-        self.assertTrue(context.installWorkflowJob("CREATE_CASE_JOB", create_case_job))
+        context.installWorkflowJob("CREATE_CASE_JOB", create_case_job)
         self.assertTrue(context.runWorkflowJob("CREATE_CASE_JOB", "newly_created_case"))
         self.assertDirectoryExists("storage/newly_created_case")
 
@@ -45,7 +45,7 @@ class ErtTestContextTest(ExtendedTestCase):
 
         self.assertEqual(ert.getEnkfFsManager().getCurrentFileSystem(), default_fs)
 
-        self.assertTrue(context.installWorkflowJob("SELECT_CASE_JOB", select_case_job))
+        context.installWorkflowJob("SELECT_CASE_JOB", select_case_job)
         self.assertTrue(context.runWorkflowJob("SELECT_CASE_JOB", "CustomCase"))
 
         self.assertEqual(ert.getEnkfFsManager().getCurrentFileSystem(), custom_fs)
@@ -53,14 +53,14 @@ class ErtTestContextTest(ExtendedTestCase):
 
     def loadResultsTest(self, context):
         load_results_job = self.createSharePath("workflows/jobs/internal/config/LOAD_RESULTS")
-        self.assertTrue(context.installWorkflowJob("LOAD_RESULTS_JOB", load_results_job))
+        context.installWorkflowJob("LOAD_RESULTS_JOB", load_results_job)
         self.assertTrue(context.runWorkflowJob("LOAD_RESULTS_JOB", 0, 1))
 
 
     def rankRealizationsOnObservationsTest(self, context):
         rank_job = self.createSharePath("workflows/jobs/internal/config/OBSERVATION_RANKING")
 
-        self.assertTrue(context.installWorkflowJob("OBS_RANK_JOB", rank_job))
+        context.installWorkflowJob("OBS_RANK_JOB", rank_job)
 
         self.assertTrue(context.runWorkflowJob("OBS_RANK_JOB", "NameOfObsRanking1", "|", "WOPR:*"))
         self.assertTrue(context.runWorkflowJob("OBS_RANK_JOB", "NameOfObsRanking2", "1-5", "55", "|", "WWCT:*", "WOPR:*"))
@@ -88,6 +88,9 @@ class ErtTestContextTest(ExtendedTestCase):
     def test_workflow_ert_script_jobs(self):
 
         with ErtTestContext("python/enkf/ert_test_context_workflow_ert_script_job", self.config) as context:
+            with self.assertRaises(IOError):
+                context.installWorkflowJob("JOB_NAME" , "DOES/NOT/EXIST")
+
             ert_scripts_config = "workflows/jobs/internal-gui/config"
             self.createCaseTest(context, root_path=ert_scripts_config)
             self.selectCaseTest(context, root_path=ert_scripts_config)
