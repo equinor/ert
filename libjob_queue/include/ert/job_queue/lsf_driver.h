@@ -42,6 +42,7 @@ extern "C" {
 #define LSF_DEBUG_OUTPUT  "DEBUG_OUTPUT"
 #define LSF_SUBMIT_SLEEP  "SUBMIT_SLEEP"
 #define LSF_EXCLUDE_HOST  "EXCLUDE_HOST"
+#define LSF_PROJECT_CODE  "PROJECT_CODE"
 
 #define LOCAL_LSF_SERVER "LOCAL"
 #define NULL_LSF_SERVER  "NULL"
@@ -95,6 +96,7 @@ typedef struct lsf_job_struct    lsf_job_type;
   bool            lsf_driver_has_option( const void * __driver , const char * option_key);
   const  void   * lsf_driver_get_option( const void * __driver , const char * option_key);
   bool            lsf_driver_set_option( void * __driver , const char * option_key , const void * value);
+  bool            lsf_driver_has_project_code( const lsf_driver_type * driver );
   void            lsf_driver_init_option_list(stringlist_type * option_list);
   int             lsf_job_parse_bsub_stdout(const char * bsub_cmd, const char * stdout_file);
   char          * lsf_job_write_bjobs_to_file(const char * bjobs_cmd, lsf_driver_type * driver, const long jobid);

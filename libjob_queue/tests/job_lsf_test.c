@@ -19,6 +19,7 @@
 #include <stdbool.h>
 
 #include <ert/util/test_util.h>
+#include <ert/util/util.h>
 
 #include <ert/job_queue/lsf_job_stat.h>
 #include <ert/job_queue/lsf_driver.h>
@@ -63,10 +64,36 @@ void test_status_tr() {
 }
 
 
+void test_cmd(void) {
+  const char * project_code = "XXX_PROJECT";
+  lsf_driver_type * driver = lsf_driver_alloc();
+  {
+    stringlist_type * cmd = lsf_driver_alloc_cmd( driver , "out" , "job", "/bin/echo" , 1 , 0 , NULL );
+    test_assert_false( lsf_driver_has_project_code( driver ));
+    test_assert_false( stringlist_contains( cmd , "-P" ));
+    stringlist_free( cmd );
+  }
+
+  lsf_driver_set_option( driver , LSF_PROJECT_CODE , project_code);
+  {
+    stringlist_type * cmd = lsf_driver_alloc_cmd( driver , "out" , "job", "/bin/echo" , 1 , 0 , NULL );
+    int P_index = stringlist_find_first( cmd , "-P" );
+    test_assert_true( lsf_driver_has_project_code( driver ));
+    test_assert_true( P_index >= 0 );
+    test_assert_string_equal( stringlist_iget( cmd , P_index + 1) , project_code );
+    stringlist_free( cmd );
+  }
+
+  lsf_driver_free(driver);
+}
+
+
 int main( int argc , char ** argv) {
+  util_install_signals();
 
   test_options();
   test_status_tr( );
+  test_cmd();
 
   exit(0);
 }
