@@ -178,7 +178,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 self._session.batch_number += 1
 
 
-                
+
 
     def _getInitializationCase(self):
         return self.ert.getEnkfFsManager().getFileSystem(self._session.init_case_name)
@@ -193,7 +193,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
         state = self.ert.getRealisation(iens)
         state.addSubstKeyword("GEO_ID", "%d" % geo_id)
-        
+
         result_fs = self._session.simulation_context.get_result_fs( )
         self._initializeRealization(result_fs, geo_id, iens, keywords)
         self.ert.createRunpath( self._session.simulation_context.get_run_context( ) , iens = iens)
