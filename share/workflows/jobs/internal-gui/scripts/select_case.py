@@ -1,4 +1,4 @@
-from ert.enkf import ErtScript
+from res.enkf import ErtScript
 
 class SelectCaseJob(ErtScript):
 
