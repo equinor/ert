@@ -65,10 +65,6 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    set(ERT_MAC TRUE)
    add_definitions( -DERT_LINUX )
    set( ERT_BINARY_POSTFIX .${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} )
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-   message(STATUS "Found Windows")
-   set(ERT_WINDOWS TRUE)
-   add_definitions( -DERT_WINDOWS )
 endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -86,14 +82,7 @@ if (NOT ERT_WINDOWS)
    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall " )
 endif()
 
-if (MSVC)
-    add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4996" )
-endif()
-
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
-find_package(CXX11Features)
-
-
 
 #-----------------------------------------------------------------
 
@@ -101,10 +90,7 @@ find_package(CXX11Features)
 
 set( CMAKE_C_FLAGS_main ${CMAKE_C_FLAGS} )
 set( CMAKE_CXX_FLAGS_main ${CMAKE_CXX_FLAGS} )
-
-if (NOT ERT_WINDOWS)
-  set( CMAKE_C_FLAGS_main "${CMAKE_C_FLAGS} -std=gnu99" )
-endif()
+set( CMAKE_C_FLAGS_main "${CMAKE_C_FLAGS} -std=gnu99" )
 
 set( ERT_EXTERNAL_UTIL_LIBS "" )
 include(cmake/ert_build_check.cmake)
@@ -124,8 +110,6 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 
-set( NEED_LIBM TRUE )
-set( LINK_STATIC FALSE )
 add_definitions( -DHAVE_PROC )
 
 if (BUILD_TESTS)
