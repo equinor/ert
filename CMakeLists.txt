@@ -25,7 +25,7 @@ find_package( ecl REQUIRED )
 find_package( res REQUIRED )
 
 function( make_symlink target link )
-  if (EXISTS ${link}) 
+  if (EXISTS ${link})
      EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E remove "${link}")
   endif()
 
@@ -35,8 +35,8 @@ function( make_symlink target link )
      message(STATUS "Linking : ${link} -> ${abs_target}")
   else()
      message( SEND_ERROR "Link target: ${target} does not exist")
-  endif()    
-endfunction()  
+  endif()
+endfunction()
 
 set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
 if (EXISTS ${STATOIL_TESTDATA_ROOT})
@@ -73,7 +73,7 @@ endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
    message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
-   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING 
+   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
        "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
    # Set the possible values of build type for cmake-gui
    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
