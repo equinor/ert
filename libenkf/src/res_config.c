@@ -242,6 +242,7 @@ res_config_type * res_config_alloc(const config_content_type * config_content) {
   res_config->log_config      = log_config_alloc(config_content);
 
 
+  setenv( "DATA_ROOT" ,  res_config->working_dir , 1 );
   return res_config;
 }
 

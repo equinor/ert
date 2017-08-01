@@ -25,6 +25,23 @@ from res.sched import HistorySourceEnum
 
 from res.enkf import ResConfig, SiteConfig, AnalysisConfig
 
+
+# The res_config object should set the environment variable
+# 'DATA_ROOT' to the root directory with the config
+# file. Unfortunately the python methods to get environment variable,
+# os.getenv() and os.environ[] do not reflect the:
+#
+#    setenv( "DATA_ROOT" , ...)
+#
+# call in the res_config C code. We therefor create a wrapper to the
+# underlying libc getenv() function to be used for testing.
+
+from cwrap import Prototype
+from cwrap import load
+clib = load( None )
+clib_getenv = Prototype(clib, "char* getenv( char* )" , bind = False)
+
+
 config_defines = {
         "<USER>"            : "TEST_USER",
         "<SCRATCH>"         : "scratch/ert",
@@ -144,6 +161,7 @@ class ResConfigTest(ExtendedTestCase):
             config_file = "simple_config/minimum_config"
             res_config = ResConfig(user_config_file=config_file)
 
+            self.assertEqual( clib_getenv("DATA_ROOT") , os.path.join( cwd , "simple_config"))
             self.assertIsNotNone(res_config)
             self.assert_same_config_file(config_file, res_config.user_config_file, os.getcwd())
 
