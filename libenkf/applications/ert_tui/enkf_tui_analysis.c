@@ -57,7 +57,7 @@ void enkf_tui_analysis_scale_observation_std__(void * arg) {
 
 
 static void enkf_tui_analysis_update_title( enkf_main_type * enkf_main , menu_type * menu ) {
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   analysis_module_type * analysis_module = analysis_config_get_active_module( analysis_config );
   char * title = util_alloc_sprintf("Analysis menu [Current module:%s]" , analysis_module_get_name( analysis_module ));
   menu_set_title( menu , title );
@@ -72,7 +72,8 @@ void enkf_tui_analysis_select_module__(void * arg) {
   menu_type * menu = arg_pack_iget_ptr( arg_pack , 1 );
   
   {
-    analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+    // This is really a const return.
+    analysis_config_type * analysis_config = (analysis_config_type *) enkf_main_get_analysis_config( enkf_main );
     char module_name[256];
     util_printf_prompt("Name module to select" , prompt_len , '=' , "=> ");
     scanf("%s", module_name);
@@ -84,7 +85,7 @@ void enkf_tui_analysis_select_module__(void * arg) {
 
 void enkf_tui_analysis_list_modules__(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
 
   printf("Available modules: ");
   {
@@ -98,7 +99,7 @@ void enkf_tui_analysis_list_modules__(void * arg) {
 
 void enkf_tui_analysis_reload_module__(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  analysis_config_type * analysis_config = (analysis_config_type *) enkf_main_get_analysis_config( enkf_main );
   analysis_config_reload_module( analysis_config , NULL );
 }
 
@@ -107,7 +108,7 @@ void enkf_tui_analysis_update_module__(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   int prompt_len = 50;
   {
-    analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+    const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
     analysis_module_type * analysis_module = analysis_config_get_active_module( analysis_config );
     char var_name[256];
     char value[256];

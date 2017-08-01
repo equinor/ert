@@ -56,19 +56,23 @@ class BaseRunModel(object):
         self._failed = False
         
 
-    def startSimulations(self, run_arguments):
-        self._job_queue = self._queue_config.create_job_queue( )
+    def startSimulations(self, arguments):
         try:
-            self.runSimulations(self._job_queue, run_arguments)
+            self.runSimulations(arguments)
         except ErtRunError as e:
             self._failed = True
             self._fail_message = str(e)
             self._simulationEnded()
 
 
-    def runSimulations(self, job_queue, run_arguments):
+    def runSimulations(self, job_queue, run_context):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
+    
+    def create_context(self, arguments):
+        raise NotImplementedError("Method must be implemented by inheritors!")
+
+    
     @job_queue(None)
     def killAllSimulations(self):
         self._job_queue.killAllJobs()

@@ -1,4 +1,5 @@
 from res.enkf.enums import EnkfInitModeEnum, HookRuntime
+from res.enkf import ErtRunContext
 from ert_gui.ertwidgets.models.ertmodel import getNumberOfIterations
 from ert_gui.simulation.models import BaseRunModel, ErtRunError
 
@@ -17,28 +18,33 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return self.ert().analysisConfig().getModule(module_name)
 
 
-    def _runAndPostProcess(self, job_queue, active_realization_mask, phase, phase_count, mode):
-        self.setPhase(phase, "Running iteration %d of %d simulation iterations..." % (phase, phase_count - 1), indeterminate=False)
+    def _runAndPostProcess(self, run_context):
+        self._job_queue = self._queue_config.create_job_queue( )
+        phase_msg = "Running iteration %d of %d simulation iterations..." % (run_context.get_iter(), self.phaseCount() - 1)
+        self.setPhase(run_context.get_iter(), phase_msg, indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath(active_realization_mask, phase)
+        self.ert().getEnkfSimulationRunner().createRunPath( run_context )
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
-        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(job_queue, active_realization_mask, mode, phase)
+        num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
+        self._job_queue = None
 
+        
 
     def createTargetCaseFileSystem(self, phase, target_case_format):
         target_fs = self.ert().getEnkfFsManager().getFileSystem(target_case_format % phase)
         return target_fs
 
 
-    def analyzeStep(self, target_fs):
+    def analyzeStep(self, run_context):
+        target_fs = run_context.get_target_fs( )
         self.setPhaseName("Analyzing...", indeterminate=True)
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
 
@@ -46,31 +52,24 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.PRE_UPDATE)
         es_update = self.ert().getESUpdate()
 
-        success = es_update.smootherUpdate(source_fs, target_fs)
+        success = es_update.smootherUpdate(run_context)
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
 
         self.setPhaseName("Post processing update...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows(HookRuntime.POST_UPDATE)
 
-    def runSimulations(self, job_queue, arguments):
+    def runSimulations(self, arguments):
         phase_count = getNumberOfIterations() + 1
         self.setPhaseCount(phase_count)
 
         analysis_module = self.setAnalysisModule(arguments["analysis_module"])
-        active_realization_mask = arguments["active_realizations"]
         target_case_format = arguments["target_case"]
-
-        source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
-        initial_fs = self.createTargetCaseFileSystem(0, target_case_format)
-
-        if not source_fs == initial_fs:
-            self.ert().getEnkfFsManager().switchFileSystem(initial_fs)
-            self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(source_fs, 0)
-
-        self._runAndPostProcess(job_queue, active_realization_mask, 0, phase_count, EnkfInitModeEnum.INIT_CONDITIONAL)
-
+        run_context = self.create_context( arguments , 0 )
         self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat( target_case_format )
+
+        self._runAndPostProcess( run_context )
+
 
         analysis_config = self.ert().analysisConfig()
         analysis_iter_config = analysis_config.getAnalysisIterConfig()
@@ -79,24 +78,25 @@ class IteratedEnsembleSmoother(BaseRunModel):
         current_iteration = 1
 
         while current_iteration <= getNumberOfIterations() and num_tries < num_retries_per_iteration:
-            target_fs = self.createTargetCaseFileSystem(current_iteration, target_case_format)
-
             pre_analysis_iter_num = analysis_module.getInt("ITER")
-            self.analyzeStep(target_fs)
+            self.analyzeStep( run_context )
             post_analysis_iter_num = analysis_module.getInt("ITER")
 
             analysis_success = False
             if  post_analysis_iter_num > pre_analysis_iter_num:
                 analysis_success = True
 
+
+                
             if analysis_success:
-                self.ert().getEnkfFsManager().switchFileSystem(target_fs)
-                self._runAndPostProcess(job_queue, active_realization_mask, current_iteration, phase_count, EnkfInitModeEnum.INIT_NONE)
-                num_tries = 0
                 current_iteration += 1
+                run_context = self.create_context( arguments, current_iteration, prior_context = run_context )
+                self.ert().getEnkfFsManager().switchFileSystem(run_context.get_target_fs())
+                self._runAndPostProcess(run_context)
+                num_tries = 0
             else:
-                self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(target_fs, 0)
-                self._runAndPostProcess(job_queue, active_realization_mask, current_iteration - 1 , phase_count, EnkfInitModeEnum.INIT_NONE)
+                run_context = self.create_context( arguments, current_iteration, prior_context = run_context , rerun = True)
+                self._runAndPostProcess(run_context)
                 num_tries += 1
 
 
@@ -105,5 +105,28 @@ class IteratedEnsembleSmoother(BaseRunModel):
             self.setPhase(phase_count, "Simulations completed.")
         else:
             raise ErtRunError("Iterated Ensemble Smoother stopped: maximum number of iteration retries (%d retries) reached for iteration %d" % (num_retries_per_iteration, current_iteration))
+
+
+    def create_context(self, arguments, itr, prior_context = None, rerun = False):
+        model_config = self.ert().getModelConfig( )
+        runpath_fmt = model_config.getRunpathFormat( )
+        subst_list = self.ert().getDataKW( )
+        fs_manager = self.ert().getEnkfFsManager()
+        target_case_format = arguments["target_case"]
+
+        if prior_context is None:
+            mask = arguments["active_realizations"]
+        else:
+            mask = prior_context.get_mask( )
+        
+        sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)
+        if rerun:
+            target_fs = None
+        else:
+            target_fs = self.createTargetCaseFileSystem(itr + 1 , target_case_format)
+
+        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, subst_list, itr)
+        return run_context
+
 
 
