@@ -12,6 +12,7 @@ except ImportError:
 import warnings
 from ecl import Version
 from res.enkf import EnKFMain, NodeId, ResConfig
+from ecl.util import BoolVector
 from res.enkf.config import CustomKWConfig
 from res.enkf.data import EnkfNode, CustomKW
 from res.enkf.enums import RealizationStateEnum, EnkfVarType, ErtImplType
@@ -161,7 +162,11 @@ class ErtRPCServer(SimpleXMLRPCServer):
         return self._session.init_case_name is not None
 
 
-    def startSimulationBatch(self, initialization_case_name, simulation_count):
+    def startSimulationBatch(self, initialization_case_name, result_case_name, simulation_count):
+        fs_manager = self.ert.getEnkfFsManager()
+        init_fs = fs_manager.getFileSystem(initialization_case_name)
+        result_fs = fs_manager.getFileSystem(result_case_name)
+        mask = BoolVector( initial_size = simulation_count, default_value = True )
         with self._session.lock:
             if not self.isRunning():
                 self._session.simulation_context = None
@@ -169,15 +174,17 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
                 self.ert.addDataKW("<WPRO_RUN_COUNT>", str(self._session.batch_number))
                 self.ert.addDataKW("<ELCO_RUN_COUNT>", str(self._session.batch_number))
+                self._session.simulation_context = SimulationContext(self.ert, init_fs, result_fs, mask , self._session.batch_number, verbose=self._verbose_queue)
                 self._session.batch_number += 1
-                self._session.simulation_context = SimulationContext(self.ert, simulation_count, verbose=self._verbose_queue)
+
+
 
 
     def _getInitializationCase(self):
         return self.ert.getEnkfFsManager().getFileSystem(self._session.init_case_name)
 
 
-    def addSimulation(self, target_case_name, geo_id, pert_id, iens, keywords):
+    def addSimulation(self, geo_id, pert_id, iens, keywords):
         if not self.isRunning():
             raise createFault(UserWarning, "The server is not ready to receive simulations. Have you called startSimulationBatch() first?")
 
@@ -186,15 +193,14 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
         state = self.ert.getRealisation(iens)
         state.addSubstKeyword("GEO_ID", "%d" % geo_id)
-        target_fs = self.ert.getEnkfFsManager().getFileSystem(target_case_name)
-        self._initializeRealization(target_fs, geo_id, iens, keywords)
-        self._session.simulation_context.addSimulation(iens, target_fs)
 
-        if not target_case_name.startswith("."):
-            self.ert.getEnkfFsManager().switchFileSystem(target_fs)
+        result_fs = self._session.simulation_context.get_result_fs( )
+        self._initializeRealization(result_fs, geo_id, iens, keywords)
+        self.ert.createRunpath( self._session.simulation_context.get_run_context( ) , iens = iens)
+        self._session.simulation_context.addSimulation(iens)
 
 
-    def _initializeRealization(self, target_fs, geo_id, iens, keywords):
+    def _initializeRealization(self, result_fs, geo_id, iens, keywords):
         ens_config = self.ert.ensembleConfig()
 
         for kw in ens_config.getKeylistFromVarType(EnkfVarType.PARAMETER):
@@ -204,7 +210,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 init_id = NodeId(0, geo_id)
                 run_id = NodeId(0, iens)
                 data_node.load(self._getInitializationCase(), init_id)
-                data_node.save(target_fs, run_id)
+                data_node.save(result_fs, run_id)
 
         for key, values in keywords.items():
             config_node = ens_config[key]
@@ -214,10 +220,10 @@ class ErtRPCServer(SimpleXMLRPCServer):
             gen_kw.setValues(values)
 
             run_id = NodeId(0, iens)
-            data_node.save(target_fs, run_id)
+            data_node.save(result_fs, run_id)
 
-        target_fs.fsync()
-        state_map = target_fs.getStateMap()
+        result_fs.fsync()
+        state_map = result_fs.getStateMap()
         state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
 
 

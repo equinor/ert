@@ -1,42 +1,45 @@
+from ecl.util import ArgPack, CThreadPool,BoolVector
+
+from res.job_queue import JobQueueManager
+
 from res.enkf import ENKF_LIB
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.run_arg import RunArg
-from res.job_queue import JobQueueManager
-from ecl.util import ArgPack, CThreadPool
+from res.enkf.enums import EnkfRunType, EnkfInitModeEnum
 
 
 class SimulationContext(object):
-    def __init__(self, ert, size, verbose=False):
+    def __init__(self, ert, init_fs, result_fs, mask, itr , verbose=False):
         self._ert = ert
         """ :type: res.enkf.EnKFMain """
-        self._size = size
-        
         max_runtime = ert.analysisConfig().get_max_runtime()
-               
+        self._mask = mask
+
         job_queue = ert.get_queue_config().create_job_queue()
         self._queue_manager = JobQueueManager(job_queue)
-        self._queue_manager.startQueue(size, verbose=verbose)
+        self._queue_manager.startQueue( mask.count( ), verbose=verbose)
         self._run_args = {}
         """ :type: dict[int, RunArg] """
 
         self._thread_pool = CThreadPool(8)
         self._thread_pool.addTaskFunction("submitJob", ENKF_LIB, "enkf_main_isubmit_job__")
-       
 
+        subst_list = self._ert.getDataKW( )
+        path_fmt = self._ert.getModelConfig().getRunpathFormat()
+        self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, init_fs, result_fs, None, mask, path_fmt, subst_list, itr)
 
-    def addSimulation(self, iens, target_fs):
-        if iens >= self._size:
-            raise UserWarning("Realization number out of range: %d >= %d" % (iens, self._size))
+        
+    def addSimulation(self, iens):
+        if iens >= len(self._mask):
+            raise UserWarning("Realization number out of range: %d >= %d" % (iens, len(self._mask)))
 
+        if not self._mask[iens]:
+            raise UserWarning("Realization number: '%d' is not active" % iens)
+        
         if iens in self._run_args:
             raise UserWarning("Realization number: '%d' already queued" % iens)
 
-        runpath_fmt = self._ert.getModelConfig().getRunpathFormat()
-        member = self._ert.getRealisation(iens)
-        runpath = ErtRunContext.createRunpath(iens , runpath_fmt, member.getDataKW( ))
-        run_arg = RunArg.createEnsembleExperimentRunArg(target_fs, iens, runpath)
-
-        self._ert.createRunPath(run_arg)
+        run_arg = self._run_context.iensGet( iens )
         queue = self._queue_manager.get_job_queue()
         self._run_args[iens] = run_arg
         self._thread_pool.submitJob(ArgPack(self._ert, run_arg, queue))
@@ -44,7 +47,7 @@ class SimulationContext(object):
 
     def isRunning(self):
         return self._queue_manager.isRunning()
-
+    
 
     def getNumRunning(self):
         return self._queue_manager.getNumRunning()
@@ -93,3 +96,10 @@ class SimulationContext(object):
         fmt = '%s, #running = %d, #success = %d, #failed = %d, #waiting = %d'
         fmt =  fmt % (running, numRunn, numSucc, numFail, numWait)
         return 'SimulationContext(%s)' % fmt
+
+    def get_result_fs(self):
+        return self._run_context.get_result_fs( )
+
+
+    def get_run_context(self):
+        return self._run_context

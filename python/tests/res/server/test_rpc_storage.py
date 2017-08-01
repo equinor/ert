@@ -1,13 +1,33 @@
 from itertools import product
 from random import random
 
+import sys
 import time
 
 from res.enkf.enums import ErtImplType
 from res.enkf.export.custom_kw_collector import CustomKWCollector
 from res.server import ErtRPCClient
 from ecl.test import ExtendedTestCase
-from tests.res.server import RPCServiceContext, initializeCase
+from tests.res.server import RPCServiceContext
+from res.enkf import EnkfFsManager, EnkfFs, EnkfVarType
+
+
+def initializeCase(ert, name, size):
+    """
+    @type ert: res.enkf.enkf_main.EnKFMain
+    @type name: str
+    @type size: int
+    @rtype:
+    """
+    current_fs = ert.getEnkfFsManager().getCurrentFileSystem()
+    fs = ert.getEnkfFsManager().getFileSystem(name)
+    ert.getEnkfFsManager().switchFileSystem(fs)
+    parameters = ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
+    ert.getEnkfFsManager().initializeFromScratch(parameters, 0, size - 1)
+
+    ert.getEnkfFsManager().switchFileSystem(current_fs)
+    return fs
+
 
 
 class RPCStorageTest(ExtendedTestCase):
@@ -84,25 +104,25 @@ class RPCStorageTest(ExtendedTestCase):
 
             client.prototypeStorage("SNAKEX", {"SNAKE_ID": float, "SNAKE_RUN": str})
 
-            batch_names = ["test_run_0", "test_run_1"]
+            case_names = ["test_run_0", "test_run_1"]
 
-            for batch_id, batch_name in enumerate(batch_names):
-                self.runSimulation(client, realization_count, batch_id, batch_name)
+            for batch_id, case_name in enumerate(case_names):
+                self.runSimulation(client, realization_count, batch_id, case_name)
 
-            for (batch_id, batch_name), iens in product(enumerate(batch_names), range(realization_count)):
-                result = client.getCustomKWResult(batch_name, iens, "SNAKEX")
+            for (batch_id, case_name), iens in product(enumerate(case_names), range(realization_count)):
+                result = client.getCustomKWResult(case_name, iens, "SNAKEX")
                 self.assertEqual(result["SNAKE_RUN"], "batch_%d" % batch_id)
                 snake_id = realization_count * batch_id + iens
                 self.assertEqual(result["SNAKE_ID"], snake_id)
 
 
 
-    def runSimulation(self, client, realization_count, batch_id, batch_name):
-        client.startSimulationBatch("default", 2)
+    def runSimulation(self, client, realization_count, batch_id, case_name):
+        client.startSimulationBatch("default", case_name, 2)
         kw = {"SNAKE_OIL_PARAM": [0.50, 6, 1.750, 0.250, 0.990, 2, 1.770, 0.330, 0.550, 0.770]} # identical runs
 
         for iens in range(realization_count):
-            client.addSimulation(batch_name, geo_id=0, pert_id=0, sim_id=iens, keywords=kw)
+            client.addSimulation(0, 0, iens, kw)
 
         while client.isRunning():
             time.sleep(0.2)
@@ -111,10 +131,10 @@ class RPCStorageTest(ExtendedTestCase):
             self.assertTrue(client.didRealizationSucceed(iens))
 
 
-        client.storeGlobalData(batch_name, "SNAKEX", "SNAKE_RUN", "batch_%d" % batch_id)
+        client.storeGlobalData(case_name, "SNAKEX", "SNAKE_RUN", "batch_%d" % batch_id)
 
         for iens in range(realization_count):
-            client.storeSimulationData(batch_name, "SNAKEX", "SNAKE_ID", realization_count * batch_id + iens, iens)
+            client.storeSimulationData(case_name, "SNAKEX", "SNAKE_ID", realization_count * batch_id + iens, iens)
 
 
 

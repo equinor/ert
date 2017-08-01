@@ -1,4 +1,6 @@
 import os
+from res.enkf.enums import EnkfRunType
+from res.enkf import ErtRunContext
 from res.enkf.config import CustomKWConfig
 from res.enkf.data import CustomKW
 from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
@@ -94,8 +96,15 @@ class CustomKWTest(ExtendedTestCase):
 
             iteration_count = 0
             active = BoolVector(default_value = True, initial_size = ert.getEnsembleSize())
-            simulation_runner.createRunPath(active, iteration_count)
-            simulation_runner.runEnsembleExperiment(job_queue)
+            subst_list = ert.getDataKW( )
+            runpath_fmt = ert.getModelConfig( ).getRunpathFormat( )
+            fs_manager = ert.getEnkfFsManager( )
+            fs = fs_manager.getFileSystem("fs")
+            
+            run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , fs, fs, fs , active , runpath_fmt, subst_list , iteration_count)
+            
+            simulation_runner.createRunPath( run_context )
+            simulation_runner.runEnsembleExperiment(job_queue, run_context)
 
             config = ensemble_config.getNode("AGGREGATED").getCustomKeywordModelConfig()
 

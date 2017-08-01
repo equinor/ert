@@ -31,5 +31,7 @@ class ESUpdate(BaseCClass):
 
 
 
-    def smootherUpdate( self , data_fs , target_fs):
-        return self._smoother_update(data_fs , target_fs )
+    def smootherUpdate( self , run_context):
+        data_fs   = run_context.get_result_fs( )
+        target_fs = run_context.get_target_fs( )
+        return self._smoother_update(data_fs, target_fs)

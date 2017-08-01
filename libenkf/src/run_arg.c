@@ -50,6 +50,7 @@ struct run_arg_struct {
   /******************************************************************/
   /* Return value - set by the called routine!!  */
   run_status_type         run_status;
+  char                  * run_id;
 };
 
 
@@ -57,7 +58,8 @@ UTIL_SAFE_CAST_FUNCTION( run_arg , RUN_ARG_TYPE_ID )
 UTIL_IS_INSTANCE_FUNCTION( run_arg , RUN_ARG_TYPE_ID )
 
 
-static run_arg_type * run_arg_alloc(enkf_fs_type * init_fs ,
+static run_arg_type * run_arg_alloc(const char * run_id,
+                                    enkf_fs_type * init_fs ,
                                     enkf_fs_type * result_fs ,
                                     enkf_fs_type * update_target_fs ,
                                     int iens ,
@@ -71,7 +73,7 @@ static run_arg_type * run_arg_alloc(enkf_fs_type * init_fs ,
   {
     run_arg_type * run_arg = util_malloc(sizeof * run_arg );
     UTIL_TYPE_ID_INIT(run_arg , RUN_ARG_TYPE_ID);
-
+    run_arg->run_id = util_alloc_string_copy( run_id );
     run_arg->init_fs = init_fs;
     run_arg->result_fs = result_fs;
     run_arg->update_target_fs = update_target_fs;
@@ -99,24 +101,25 @@ static run_arg_type * run_arg_alloc(enkf_fs_type * init_fs ,
 
 
 
-run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * fs , int iens , int iter , const char * runpath) {
-  return run_arg_alloc(fs , fs , NULL , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
+run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * init_fs , enkf_fs_type * result_fs, int iens , int iter , const char * runpath) {
+  return run_arg_alloc(run_id, init_fs , result_fs , NULL , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
 }
 
 
-run_arg_type * run_arg_alloc_INIT_ONLY(enkf_fs_type * init_fs , int iens , int iter , const char * runpath) {
-  return run_arg_alloc(init_fs , NULL , NULL , iens , INIT_ONLY , 0 , 0 , iter , runpath);
+run_arg_type * run_arg_alloc_INIT_ONLY(const char * run_id, enkf_fs_type * init_fs , int iens , int iter , const char * runpath) {
+  return run_arg_alloc(run_id , init_fs , NULL , NULL , iens , INIT_ONLY , 0 , 0 , iter , runpath);
 }
 
 
-run_arg_type * run_arg_alloc_SMOOTHER_RUN(enkf_fs_type * simulate_fs , enkf_fs_type * update_target_fs , int iens , int iter , const char * runpath) {
-  return run_arg_alloc(simulate_fs , simulate_fs , update_target_fs , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
+run_arg_type * run_arg_alloc_SMOOTHER_RUN(const char * run_id , enkf_fs_type * simulate_fs , enkf_fs_type * update_target_fs , int iens , int iter , const char * runpath) {
+  return run_arg_alloc(run_id, simulate_fs , simulate_fs , update_target_fs , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
 }
 
 
 
 void run_arg_free(run_arg_type * run_arg) {
   util_safe_free(run_arg->run_path);
+  free( run_arg->run_id );
   free(run_arg);
 }
 
@@ -152,6 +155,11 @@ void run_arg_set_queue_index( run_arg_type * run_arg , int queue_index) {
 
 const char * run_arg_get_runpath( const run_arg_type * run_arg) {
   return run_arg->run_path;
+}
+
+
+const char * run_arg_get_run_id( const run_arg_type * run_arg) {
+  return run_arg->run_id;
 }
 
 

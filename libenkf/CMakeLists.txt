@@ -34,7 +34,6 @@ add_library(enkf src/active_list.c
                  src/enkf_types.c
                  src/enkf_util.c
                  src/ensemble_config.c
-                 src/ert_init_context.c
                  src/ert_run_context.c
                  src/ert_template.c
                  src/ert_test_context.c

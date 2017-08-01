@@ -34,10 +34,14 @@
 
 void create_runpath(enkf_main_type * enkf_main, int iter ) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive = bool_vector_alloc(0,false);
+  bool_vector_type * iactive = bool_vector_alloc(ens_size,true);
+  const path_fmt_type * runpath_fmt = model_config_get_runpath_fmt( enkf_main_get_model_config( enkf_main ));
+  const subst_list_type * subst_list = NULL;
+  enkf_fs_type * fs           =  enkf_main_get_fs(enkf_main);
+  ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs, INIT_CONDITIONAL, iactive, runpath_fmt, subst_list , iter );
 
-  bool_vector_iset( iactive , ens_size - 1 , true );
-  enkf_main_create_run_path(enkf_main , iactive , iter);
+  enkf_main_create_run_path(enkf_main , run_context);
+  ert_run_context_free( run_context );
   bool_vector_free(iactive);
 }
 
@@ -87,7 +91,7 @@ int main(int argc , char ** argv) {
     if (forward_init) {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , 0 , 0 , "simulations/run0");
+      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs , fs , 0 , 0 , "simulations/run0");
       const enkf_config_node_type * gen_kw_config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ), "MULTFLT");
       enkf_node_type * gen_kw_node = enkf_node_alloc( gen_kw_config_node );
       node_id_type node_id = {.report_step = 0 ,

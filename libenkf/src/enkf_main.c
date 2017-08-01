@@ -106,7 +106,6 @@
 #include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/field.h>
 #include <ert/res_util/res_log.h>
-#include <ert/enkf/ert_init_context.h>
 #include <ert/enkf/ert_run_context.h>
 #include <ert/enkf/run_arg.h>
 #include <ert/res_util/res_util_defaults.h>
@@ -188,7 +187,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main , ENKF_MAIN_ID)
 
-const analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
+analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
   return res_config_get_analysis_config(enkf_main->res_config);
 }
 
@@ -1315,14 +1314,13 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
                                          member_config_get_jobname( member_config ) ,
                                          1,
                                          (const char *[1]) { run_path } );
-
     run_arg_set_queue_index( run_arg , queue_index );
     run_arg_increase_submit_count( run_arg );
   }
- 
+
 }
 
-void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * run_arg){
+void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * run_arg, init_mode_type init_mode) {
   enkf_state_type * enkf_state = enkf_main->ensemble[ run_arg_get_iens(run_arg) ];
   {
     runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
@@ -1332,51 +1330,49 @@ void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * ru
                       run_arg_get_runpath( run_arg ),
                       enkf_state_get_eclbase( enkf_state ));
   }
+
+  if (init_mode != INIT_NONE) {
+    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
+    enkf_fs_type * init_fs = run_arg_get_init_fs( run_arg );
+    enkf_state_initialize( enkf_state , init_fs , param_list , init_mode);
+    stringlist_free( param_list );
+  }
+
   enkf_state_init_eclipse( enkf_state , run_arg );
   return NULL;
 }
 
 
 static void * enkf_main_create_run_path__( enkf_main_type * enkf_main,
-                                           const ert_init_context_type * init_context) {
+                                           const ert_run_context_type * run_context) {
 
-  const bool_vector_type * iactive = ert_init_context_get_iactive(init_context);
+  const bool_vector_type * iactive = ert_run_context_get_iactive(run_context);
   const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
   int iens;
   for (iens = 0; iens < active_ens_size; iens++) {
     if (bool_vector_iget(iactive , iens)) {
-      run_arg_type * run_arg = ert_init_context_iens_get_arg( init_context , iens);
-      enkf_main_icreate_run_path(enkf_main, run_arg);
+      run_arg_type * run_arg = ert_run_context_iens_get_arg( run_context , iens);
+      enkf_main_icreate_run_path(enkf_main, run_arg, INIT_NONE);
     }
   }
   return NULL;
 }
 
-void enkf_main_create_run_path(enkf_main_type * enkf_main , const bool_vector_type * iactive , int iter) {
-  init_mode_type init_mode = INIT_CONDITIONAL;
+void enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_context_type * run_context) {
+  init_mode_type init_mode = ert_run_context_get_init_mode( run_context );
 
   enkf_main_init_internalization(enkf_main , init_mode);
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
-              enkf_main_get_fs( enkf_main ),
-              param_list ,
-              iactive,
-              init_mode);
+                                      ert_run_context_get_init_fs( run_context ),
+                                      param_list ,
+                                      ert_run_context_get_iactive( run_context ),
+                                      init_mode);
     stringlist_free( param_list );
   }
 
-
-  {
-    ert_init_context_type * init_context = enkf_main_alloc_ert_init_context( enkf_main ,
-                                                                             enkf_main_get_fs( enkf_main ),
-                                                                             iactive ,
-                                                                             init_mode ,
-                                                                             iter );
-    enkf_main_create_run_path__( enkf_main , init_context );
-    ert_init_context_free( init_context );
-  }
-
+  enkf_main_create_run_path__( enkf_main , run_context );
 
   /*
     The runpath_list is written to disk here, when all the simulation
@@ -1463,18 +1459,16 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
 }
 
 static void enkf_main_start_queue(enkf_main_type * enkf_main,
-                                  ert_run_context_type * run_context,
+                                  const ert_run_context_type * run_context,
                                   job_queue_type * job_queue,
                                   int job_size,
                                   bool verbose_queue) {
 
   job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
   job_queue_manager_start_queue( queue_manager , job_size , verbose_queue );
-
   enkf_main_submit_jobs( enkf_main , run_context, job_queue);
-
   job_queue_submit_complete( job_queue );
-  res_log_add_message_str(LOG_INFO , "All jobs submitted to internal queue - waiting for completion");
+  res_log_add_message_str(LOG_INFO , "All jobs submitted to internal queue - waiting for completion.");
 
   int max_runtime = analysis_config_get_max_runtime(enkf_main_get_analysis_config( enkf_main ));
   job_queue_set_max_job_duration(job_queue, max_runtime);
@@ -1515,7 +1509,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
     int totalFailed = 0;
     for (iens = 0; iens < active_ens_size; iens++) {
       if (bool_vector_iget(ert_run_context_get_iactive(run_context) , iens)) {
-        run_arg_type * run_arg = ert_run_context_iens_get_arg( run_context , iens );
+        const run_arg_type * run_arg = ert_run_context_iens_get_arg( run_context , iens );
         run_status_type run_status = run_arg_get_run_status( run_arg );
 
         if ((run_status == JOB_LOAD_FAILURE) || (run_status == JOB_RUN_FAILURE)) {
@@ -1589,15 +1583,15 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 */
 
 
-void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type * run_context, init_mode_type init_mode) {
+void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type * run_context) {
   enkf_main_init_internalization(enkf_main , ert_run_context_get_mode( run_context ));
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
-              ert_run_context_get_init_fs( run_context ),
-              param_list ,
-              ert_run_context_get_iactive( run_context ),
-              init_mode);
+                                      ert_run_context_get_init_fs( run_context ),
+                                      param_list ,
+                                      ert_run_context_get_iactive( run_context ),
+                                      ert_run_context_get_init_mode( run_context ));
     stringlist_free( param_list );
   }
 }
@@ -1611,7 +1605,6 @@ void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
   int active_before = bool_vector_count_equal(iactive, true);
   const hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
   ert_run_context_type * run_context;
-  init_mode_type init_mode = INIT_CONDITIONAL;
   int iter = 0;
 
   run_context = enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(enkf_main ,
@@ -1621,8 +1614,8 @@ void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
   const queue_config_type * queue_config = enkf_main_get_queue_config(enkf_main);
   job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);
 
-  enkf_main_init_run( enkf_main , run_context , init_mode);
-  enkf_main_create_run_path( enkf_main , iactive , iter );
+  enkf_main_init_run( enkf_main , run_context);
+  enkf_main_create_run_path( enkf_main , run_context );
   hook_manager_run_workflows(hook_manager, PRE_SIMULATION, enkf_main);
   enkf_main_run_step(enkf_main, run_context, job_queue);
 
@@ -1639,18 +1632,10 @@ void enkf_main_run_tui_exp(enkf_main_type * enkf_main ,
 
 int enkf_main_run_simple_step(enkf_main_type * enkf_main,
                               job_queue_type * job_queue,
-                              bool_vector_type * iactive,
-                              init_mode_type init_mode,
-                              int iter) {
-  ert_run_context_type * run_context = enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main ,
-                                                                                            enkf_main_get_fs( enkf_main ) ,
-                                                                                            iactive ,
-                                                                                            iter );
-  enkf_main_init_run( enkf_main , run_context , init_mode);
-  int successful_realizations = enkf_main_run_step(enkf_main, run_context, job_queue);
-  ert_run_context_free( run_context );
+                              ert_run_context_type * run_context) {
 
-  return successful_realizations;
+  enkf_main_init_run( enkf_main , run_context );
+  return enkf_main_run_step(enkf_main, run_context, job_queue);
 }
 
 
@@ -1658,8 +1643,9 @@ int enkf_main_run_simple_step(enkf_main_type * enkf_main,
 void enkf_main_run_smoother(enkf_main_type * enkf_main , job_queue_type * job_queue, enkf_fs_type * source_fs, const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun) {
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   const hook_manager_type * hook_manager = enkf_main_get_hook_manager(enkf_main);
+  ert_run_context_type * run_context = NULL;
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
-    if (enkf_main_run_simple_step( enkf_main , job_queue, iactive , INIT_CONDITIONAL, iter)) {
+    if (enkf_main_run_simple_step( enkf_main , job_queue, run_context)) {
       hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
     }
 
@@ -1670,7 +1656,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , job_queue_type * job_qu
       if (rerun) {
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
-          if (enkf_main_run_simple_step(enkf_main , job_queue, iactive , INIT_NONE, iter + 1)) {
+          if (enkf_main_run_simple_step(enkf_main , job_queue, run_context)) {
             hook_manager_run_workflows(hook_manager, POST_SIMULATION, enkf_main);
           }
         } else
@@ -1755,8 +1741,8 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main,
     }
 
     { //Iteration 0
-      ert_run_context_type * run_context = NULL;
-      enkf_main_init_run(enkf_main , run_context , INIT_CONDITIONAL );
+      ert_run_context_type * run_context = NULL; // This is going to blow up!
+      enkf_main_init_run(enkf_main , run_context );
       enkf_main_run_simulation_and_postworkflow(enkf_main, run_context, job_queue);
       ert_run_context_free( run_context );
     }
@@ -1800,12 +1786,9 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main,
 
 
 ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter) {
-  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , iter );
+  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs, fs , iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , iter );
 }
 
-ert_init_context_type * enkf_main_alloc_ert_init_context(const enkf_main_type * enkf_main , enkf_fs_type * fs, const bool_vector_type * iactive , init_mode_type init_mode , int iter) {
-  return ert_init_context_alloc( fs, iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , init_mode , iter );
-}
 
 
 
@@ -2314,7 +2297,7 @@ int enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int it
   int result[ens_size];
   model_config_type * model_config = enkf_main_get_model_config(enkf_main);
 
-  ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
+  ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs, fs , iactive , model_config_get_runpath_fmt( model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
   arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
   thread_pool_type * tp     = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
 

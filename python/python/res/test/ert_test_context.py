@@ -61,9 +61,8 @@ class ErtTest(BaseCClass):
             workflow_list = ert.getWorkflowList()
 
             workflow_list.addJob(job_name, job_path)
-            return workflow_list.hasJob(job_name)
         else:
-            return False
+            raise IOError("Could not load workflowjob from:%s" % job_path)
 
     def runWorkflowJob(self, job_name, *arguments):
         """ @rtype: bool """

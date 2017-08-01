@@ -19,7 +19,7 @@ class EnkfRunType(BaseCEnum):
     TYPE_NAME = "enkf_run_mode_enum"
     ENKF_ASSIMILATION = None
     ENSEMBLE_EXPERIMENT = None
-    SMOOTHER_UPDATED = None
+    SMOOTHER_UPDATE = None
     INIT_ONLY = None
 
 

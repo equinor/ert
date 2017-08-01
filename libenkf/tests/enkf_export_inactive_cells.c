@@ -23,6 +23,7 @@
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.h>
 #include <ert/util/util.h>
+#include <ert/util/subst_list.h>
 
 #include <ert/ecl/ecl_kw_magic.h>
 #include <ert/ecl/ecl_kw.h>
@@ -33,7 +34,7 @@
 #include <ert/enkf/field.h>
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/enkf/run_arg.h>
-
+#include <ert/enkf/ert_run_context.h>
 
 
 
@@ -119,20 +120,24 @@ void check_exported_data(const char * exported_file,
 
 
 void forward_initialize_node(enkf_main_type * enkf_main, const char * init_file, enkf_node_type * field_node) {
+  enkf_fs_type * fs           =  enkf_main_get_fs(enkf_main);
   {
-    const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
-    bool_vector_type * iactive = bool_vector_alloc(0, false);
-    bool_vector_iset( iactive , ens_size - 1 , true );
+    const int ens_size          = enkf_main_get_ensemble_size( enkf_main );
+    bool_vector_type * iactive  = bool_vector_alloc(ens_size, true);
+    const path_fmt_type * runpath_fmt = model_config_get_runpath_fmt( enkf_main_get_model_config( enkf_main ));
+    const subst_list_type * subst_list = NULL;
+    ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs, INIT_CONDITIONAL , iactive, runpath_fmt, subst_list , 0 );
 
-    enkf_main_create_run_path(enkf_main , iactive , 0);
+    enkf_main_create_run_path(enkf_main , run_context );
     bool_vector_free(iactive);
+    ert_run_context_free( run_context );
   }
 
   {
     int iens                = 0;
     enkf_state_type * state = enkf_main_iget_state( enkf_main , iens );
-    enkf_fs_type * fs       = enkf_main_get_fs(enkf_main);
-    run_arg_type  * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , 0 ,0 , "simulations/run0");
+
+    run_arg_type  * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "RUN_ID", fs , fs, 0 ,0 , "simulations/run0");
 
     enkf_state_forward_init( state , run_arg);
   }

@@ -27,6 +27,7 @@
 #include <ert/util/util.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
+#include <ert/util/subst_list.h>
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/run_arg.h>
@@ -34,11 +35,15 @@
 
 void create_runpath(enkf_main_type * enkf_main, int iter ) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive = bool_vector_alloc(0,false);
+  bool_vector_type * iactive = bool_vector_alloc(ens_size, true);
+  const path_fmt_type * runpath_fmt = model_config_get_runpath_fmt( enkf_main_get_model_config( enkf_main ));
+  const subst_list_type * subst_list = NULL;
+  enkf_fs_type * fs           =  enkf_main_get_fs(enkf_main);
+  ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs, INIT_CONDITIONAL, iactive, runpath_fmt, subst_list , iter );
 
-  bool_vector_iset( iactive , ens_size - 1 , true );
-  enkf_main_create_run_path(enkf_main , iactive , iter);
+  enkf_main_create_run_path(enkf_main , run_context);
   bool_vector_free(iactive);
+  ert_run_context_free( run_context );
 }
 
 
@@ -90,7 +95,7 @@ int main(int argc , char ** argv) {
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ) , "PARAM" );
       enkf_node_type * gen_param_node = enkf_node_alloc( config_node );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( fs , 0 , 0 , "simulations/run0");
+      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, fs , 0 , 0 , "simulations/run0");
 
       node_id_type node_id = {.report_step = 0 ,
                               .iens = 0};
