@@ -65,7 +65,7 @@ void rng_config_set_seed_store_file( rng_config_type * rng_config , const char *
 }
 
 
-rng_config_type * rng_config_alloc( ) {
+static rng_config_type * rng_config_alloc_default(void) {
   rng_config_type * rng_config = util_malloc( sizeof * rng_config);
 
   rng_config_set_type( rng_config , MZRAN );  /* Only type ... */
@@ -76,17 +76,24 @@ rng_config_type * rng_config_alloc( ) {
 }
 
 rng_config_type * rng_config_alloc_load_user_config(const char * user_config_file) {
-  rng_config_type * rng_config = rng_config_alloc();
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
+  if(user_config_file)
+    config_content = model_config_alloc_content(user_config_file, config_parser);
 
-  if(user_config_file != NULL) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(user_config_file, config);
+  rng_config_type * rng_config = rng_config_alloc(config_content);
 
-    rng_config_init(rng_config, content);
+  config_content_free(config_content);
+  config_free(config_parser);
 
-    config_content_free(content);
-    config_free(config);
-  }
+  return rng_config;
+}
+
+rng_config_type * rng_config_alloc(const config_content_type * config_content) {
+  rng_config_type * rng_config = rng_config_alloc_default();
+
+  if(config_content)
+    rng_config_init(rng_config, config_content);
 
   return rng_config;
 }
@@ -153,12 +160,12 @@ void rng_config_add_config_items( config_parser_type * config ) {
 }
 
 
-void rng_config_init( rng_config_type * rng_config , config_content_type * config ) {
-  if (config_content_has_item( config , STORE_SEED_KEY ))
-    rng_config_set_seed_store_file( rng_config , config_content_iget(config , STORE_SEED_KEY ,0,0));
+void rng_config_init(rng_config_type * rng_config, const config_content_type * config_content) {
+  if(config_content_has_item(config_content, STORE_SEED_KEY))
+    rng_config_set_seed_store_file(rng_config, config_content_iget(config_content, STORE_SEED_KEY, 0, 0));
 
-  if (config_content_has_item( config , LOAD_SEED_KEY ))
-    rng_config_set_seed_load_file( rng_config , config_content_iget(config , LOAD_SEED_KEY ,0,0));
+  if(config_content_has_item(config_content, LOAD_SEED_KEY))
+    rng_config_set_seed_load_file(rng_config, config_content_iget(config_content, LOAD_SEED_KEY,0 ,0));
 }
 
 
