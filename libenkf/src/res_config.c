@@ -157,9 +157,9 @@ res_config_type * res_config_alloc_load(const char * config_file) {
   res_config->rng_config      = rng_config_alloc(config_content);
   res_config->analysis_config = analysis_config_alloc(config_content);
 
-  res_config->workflow_list   = ert_workflow_list_alloc_load(
+  res_config->workflow_list   = ert_workflow_list_alloc(
                                     subst_config_get_subst_list(res_config->subst_config),
-                                    res_config->user_config_file
+                                    config_content
                                     );
 
   res_config->hook_manager    = hook_manager_alloc_load(

@@ -53,7 +53,7 @@ int main(int argc , const char ** argv) {
   test_version( );
   {
     const char * path = argv[1];
-    ert_workflow_list_type * workflows = ert_workflow_list_alloc( NULL );
+    ert_workflow_list_type * workflows = ert_workflow_list_alloc_empty(NULL);
     ert_workflow_list_add_jobs_in_directory( workflows , path );
     
     // The CONF1 only exists as default - unversioned

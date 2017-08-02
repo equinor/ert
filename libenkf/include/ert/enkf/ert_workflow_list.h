@@ -40,9 +40,11 @@ extern "C" {
   workflow_type           *  ert_workflow_list_get_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name );
   workflow_type           *  ert_workflow_list_add_workflow( ert_workflow_list_type * workflow_list , const char * workflow_file , const char * workflow_name);
   void                       ert_workflow_list_free( ert_workflow_list_type * workflow_list );
-  ert_workflow_list_type  *  ert_workflow_list_alloc( const subst_list_type * subst_list );
+  ert_workflow_list_type  *  ert_workflow_list_alloc_empty( const subst_list_type * subst_list );
   ert_workflow_list_type  *  ert_workflow_list_alloc_load_site_config(const subst_list_type *);
   ert_workflow_list_type  *  ert_workflow_list_alloc_load(const subst_list_type * context, const char * user_config_file);
+  ert_workflow_list_type  *  ert_workflow_list_alloc(const subst_list_type * context, const config_content_type * config_content);
+
   void                       ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path );
   void                       ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const char * job_name , const char * config_file );
   bool                       ert_workflow_list_has_job( const ert_workflow_list_type * workflow_list , const char * job_name);
