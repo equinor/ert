@@ -126,6 +126,9 @@ const stringlist_type * config_content_get_warnings( const config_content_type *
 
 
 void config_content_free( config_content_type * content ) {
+  if(!content)
+    return;
+
   stringlist_free( content->warnings );
   vector_free( content->nodes );
   vector_free( content->path_elm_stack );
@@ -376,6 +379,9 @@ subst_list_type * config_content_get_define_list( config_content_type * content 
   return content->define_list;
 }
 
+const subst_list_type * config_content_get_const_define_list(const config_content_type * content) {
+  return content->define_list;
+}
 
 /*****************************************************************/
 

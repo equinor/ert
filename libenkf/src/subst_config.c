@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <ert/config/config_content.h>
+
 #include <ert/util/rng.h>
 #include <ert/util/subst_list.h>
 #include <ert/util/subst_func.h>
@@ -42,7 +44,7 @@ static void subst_config_install_working_directory(
 
 static void subst_config_init_load(
         subst_config_type * subst_config,
-        const char * user_config_file
+        const config_content_type * content
         );
 
 static subst_config_type * subst_config_alloc_empty() {
@@ -71,9 +73,25 @@ subst_config_type * subst_config_alloc_load(const char * user_config_file, const
   if(working_dir)
     subst_config_install_working_directory(subst_config, working_dir);
 
-  if(user_config_file)
-    subst_config_init_load(subst_config, user_config_file);
+  if(user_config_file) {
+    config_parser_type * config = config_alloc();
+    config_content_type * content = model_config_alloc_content(user_config_file, config);
+
+    subst_config_init_load(subst_config, content);
+
+    config_free(config);
+    config_content_free(content);
+  }
   
+  return subst_config;
+}
+
+subst_config_type * subst_config_alloc(const config_content_type * user_config) {
+  subst_config_type * subst_config = subst_config_alloc_default();
+
+  if(user_config)
+    subst_config_init_load(subst_config, user_config);
+
   return subst_config;
 }
 
@@ -190,12 +208,14 @@ static void subst_config_install_data_kw(subst_config_type * subst_config, hash_
 
 static void subst_config_init_load(
         subst_config_type * subst_config,
-        const char * user_config_file) {
+        const config_content_type * content) {
 
-  config_parser_type * config = config_alloc();
-  config_content_type * content = model_config_alloc_content(user_config_file, config);
+  if(config_content_has_item(content, WORKING_DIRECTORY_KEY)) {
+    const char * work_dir = config_content_get_value_as_abspath(content, WORKING_DIRECTORY_KEY);
+    subst_config_install_working_directory(subst_config, work_dir);
+  }
 
-  const subst_list_type * define_list = config_content_get_define_list(content);
+  const subst_list_type * define_list = config_content_get_const_define_list(content);
   for (int i=0; i < subst_list_get_size(define_list); i++) {
     const char * key   = subst_list_iget_key(define_list, i);
     const char * value = subst_list_iget_value(define_list, i);
@@ -223,7 +243,4 @@ static void subst_config_init_load(
     int num_cpu = ecl_util_get_num_cpu(data_file);
     subst_config_install_num_cpu(subst_config, num_cpu);
   }
-
-  config_free(config);
-  config_content_free(content);
 }

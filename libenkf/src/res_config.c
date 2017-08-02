@@ -21,6 +21,7 @@
 
 #include <ert/config/config_settings.h>
 
+#include <ert/enkf/config_keys.h>
 #include <ert/enkf/res_config.h>
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/rng_config.h>
@@ -78,6 +79,67 @@ static res_config_type * res_config_alloc_empty() {
   return res_config;
 }
 
+static void res_config_install_config_key(
+                     config_parser_type * config_parser,
+                     config_content_type * config_content,
+                     const char * key, const char * value,
+                     const config_item_types item_type
+                     ) {
+
+  /* Add working directory as a key */
+  config_schema_item_type * schema_item = config_add_key_value(
+                                                        config_parser,
+                                                        key,
+                                                        false,
+                                                        item_type
+                                                        );
+
+  /* Inject working directory */
+  if(config_content_has_item(config_content, key))
+    util_abort(
+            "%s: Did not expect %s to be provided in config file\n",
+            __func__, key
+            );
+
+  config_content_add_item(config_content, schema_item, NULL);
+  config_content_item_type * content_item = config_content_get_item(config_content, key);
+
+  config_content_node_type * new_node = config_content_item_alloc_node(content_item, NULL);
+  config_content_node_add_value(new_node, value);
+
+  if(!new_node)
+    util_abort(
+            "%s: Failed to internally install %s: %s\n",
+            __func__, key, value
+            );
+
+  config_content_add_node(config_content, new_node);
+}
+
+
+static config_content_type * res_config_alloc_user_content(
+                                const res_config_type * res_config,
+                                config_parser_type * config_parser) {
+
+  if(!res_config->user_config_file)
+    return NULL;
+
+  config_content_type * config_content = model_config_alloc_content(
+                                                     res_config->user_config_file,
+                                                     config_parser
+                                                     );
+
+  res_config_install_config_key(config_parser,
+                                config_content,
+                                WORKING_DIRECTORY_KEY,
+                                res_config->working_dir,
+                                CONFIG_EXISTING_PATH
+                                );
+
+  return config_content;
+}
+
+
 res_config_type * res_config_alloc_load(const char * config_file) {
   res_config_type * res_config = res_config_alloc_empty(); 
   res_config->user_config_file = (config_file ?
@@ -86,7 +148,11 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                     );
   res_config->working_dir      = res_config_alloc_working_directory(res_config->user_config_file);
 
-  res_config->subst_config    = subst_config_alloc_load(res_config->user_config_file, res_config->working_dir);
+  config_parser_type * config                = config_alloc();
+  config_content_type * content              = res_config_alloc_user_content(res_config, config);
+  const config_content_type * config_content = content;
+
+  res_config->subst_config    = subst_config_alloc(config_content);
 
   res_config->site_config     = site_config_alloc_load_user_config(res_config->user_config_file);
   res_config->rng_config      = rng_config_alloc_load_user_config(res_config->user_config_file);
@@ -122,6 +188,10 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                    );
 
   res_config->log_config      = log_config_alloc_load(res_config->user_config_file);
+
+
+  config_free(config);
+  config_content_free(content);
 
   return res_config;
 }
