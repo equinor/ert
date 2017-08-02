@@ -47,7 +47,7 @@ void test_load_external_module( analysis_config_type * ac , const char * user_na
 
 
 int main(int argc , char ** argv) {
-  analysis_config_type * analysis_config = analysis_config_alloc();
+  analysis_config_type * analysis_config = analysis_config_alloc_default();
 
   for (int i = 1; i < argc; i+= 2) {
     const char * user_name = argv[i];

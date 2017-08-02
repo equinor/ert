@@ -54,8 +54,9 @@ void                   analysis_config_load_all_external_modules_from_config ( a
 stringlist_type      * analysis_config_alloc_module_names( const analysis_config_type * config );
 const char           * analysis_config_get_log_path( const analysis_config_type * config );
 void                   analysis_config_init( analysis_config_type * analysis , const config_content_type * config);
-analysis_config_type * analysis_config_alloc(void);
+analysis_config_type * analysis_config_alloc_default(void);
 analysis_config_type * analysis_config_alloc_load(const char * user_config_file);
+analysis_config_type * analysis_config_alloc(const config_content_type * config_content);
 void                   analysis_config_free( analysis_config_type * );
 bool                   analysis_config_get_merge_observations(const analysis_config_type * );
 double                 analysis_config_get_alpha(const analysis_config_type * config);

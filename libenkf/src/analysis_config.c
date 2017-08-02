@@ -589,7 +589,7 @@ void analysis_config_free(analysis_config_type * config) {
 
 
 
-analysis_config_type * analysis_config_alloc(void) {
+analysis_config_type * analysis_config_alloc_default(void) {
   analysis_config_type * config = util_malloc( sizeof * config );
   UTIL_TYPE_ID_INIT( config , ANALYSIS_CONFIG_TYPE_ID );
 
@@ -622,7 +622,7 @@ analysis_config_type * analysis_config_alloc(void) {
 }
 
 static analysis_config_type * analysis_config_alloc_load_site_config() {
-  analysis_config_type * analysis_config = analysis_config_alloc();
+  analysis_config_type * analysis_config = analysis_config_alloc_default();
 
   config_parser_type * config = config_alloc();
   config_content_type * content = site_config_alloc_content(config);
@@ -636,20 +636,29 @@ static analysis_config_type * analysis_config_alloc_load_site_config() {
 }
 
 analysis_config_type * analysis_config_alloc_load(const char * user_config_file) {
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
+  if(user_config_file)
+    config_content = model_config_alloc_content(user_config_file, config_parser);
+
+  analysis_config_type * analysis_config = analysis_config_alloc(config_content);
+
+  config_content_free(config_content);
+  config_free(config_parser);
+
+  return analysis_config;
+}
+
+analysis_config_type * analysis_config_alloc(const config_content_type * config_content) {
   analysis_config_type * analysis_config = analysis_config_alloc_load_site_config();
 
-  if(user_config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(user_config_file, config);
-
+  if(config_content) {
     analysis_config_load_internal_modules(analysis_config);
-    analysis_config_init(analysis_config, content);
-
-    config_content_free(content);
-    config_free(config);
+    analysis_config_init(analysis_config, config_content);
   }
 
   return analysis_config;
+
 }
 /*****************************************************************/
 /*
