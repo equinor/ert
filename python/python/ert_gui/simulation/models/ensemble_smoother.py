@@ -18,6 +18,7 @@ class EnsembleSmoother(BaseRunModel):
 
     def runSimulations(self, arguments):
         prior_context = self.create_context( arguments )
+        active_realizations = self.count_active_realizations( prior_context )
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         # self.setAnalysisModule(arguments["analysis_module"])
@@ -30,7 +31,7 @@ class EnsembleSmoother(BaseRunModel):
         self._job_queue = self._queue_config.create_job_queue( )
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, prior_context)
 
-        self.checkHaveSufficientRealizations(num_successful_realizations)
+        self.assertHaveSufficientRealizations(num_successful_realizations , active_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
@@ -58,7 +59,7 @@ class EnsembleSmoother(BaseRunModel):
         self._job_queue = self._queue_config.create_job_queue( )
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, rerun_context)
 
-        self.checkHaveSufficientRealizations(num_successful_realizations)
+        self.assertHaveSufficientRealizations(num_successful_realizations , active_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.POST_SIMULATION )
@@ -85,3 +86,7 @@ class EnsembleSmoother(BaseRunModel):
             
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, subst_list, itr)
         return run_context
+
+
+    def count_active_realizations(self, run_context):
+        return sum(run_context.get_mask( ))
