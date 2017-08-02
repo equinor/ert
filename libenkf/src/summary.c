@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'summary.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'summary.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -24,7 +24,7 @@
 #include <ert/util/double_vector.h>
 
 #include <ert/ecl/ecl_sum.h>
-#include <ert/ecl/ecl_smspec.h> 
+#include <ert/ecl/ecl_smspec.h>
 #include <ert/ecl/ecl_file.h>
 
 #include <ert/enkf/enkf_types.h>
@@ -42,9 +42,9 @@
 #define SUMMARY_UNDEF -9999
 
 struct summary_struct {
-  int                          __type_id;         /* Only used for run_time checking. */
-  summary_config_type        * config;            /* Can not be NULL - var_type is set on first load. */
-  double_vector_type         * data_vector;
+  int                   __type_id;   /* Only used for run_time checking. */
+  summary_config_type * config;      /* Can not be NULL - var_type is set on first load. */
+  double_vector_type  * data_vector;
 };
 
 
@@ -52,13 +52,16 @@ struct summary_struct {
 
 
 
-static double SUMMARY_GET_VALUE( const summary_type * summary , int report_step) {
-  return double_vector_iget( summary->data_vector , report_step );
+static double SUMMARY_GET_VALUE( const summary_type * summary,
+                                 int report_step) {
+  return double_vector_iget( summary->data_vector, report_step );
 }
 
 
-static void SUMMARY_SET_VALUE( summary_type * summary , int report_step , double value) {
-  double_vector_iset( summary->data_vector , report_step , value);
+static void SUMMARY_SET_VALUE( summary_type * summary,
+                               int report_step,
+                               double value) {
+  double_vector_iset( summary->data_vector, report_step, value);
 }
 
 /*****************************************************************/
@@ -74,7 +77,7 @@ summary_type * summary_alloc(const summary_config_type * summary_config) {
   summary_type * summary   = util_malloc(sizeof *summary );
   summary->__type_id       = SUMMARY;
   summary->config          = (summary_config_type *) summary_config;
-  summary->data_vector     = double_vector_alloc(0 , SUMMARY_UNDEF);
+  summary->data_vector     = double_vector_alloc(0, SUMMARY_UNDEF);
   return summary;
 }
 
@@ -89,9 +92,9 @@ bool summary_active_value( double value ) {
 }
 
 
-void summary_copy(const summary_type *src , summary_type * target) {
+void summary_copy(const summary_type *src, summary_type * target) {
   if (src->config == target->config)
-    double_vector_memcpy( target->data_vector , src->data_vector );
+    double_vector_memcpy( target->data_vector, src->data_vector );
   else
     util_abort("%s: do not share config objects \n",__func__);
 }
@@ -99,21 +102,27 @@ void summary_copy(const summary_type *src , summary_type * target) {
 
 
 
-void summary_read_from_buffer(summary_type * summary , buffer_type * buffer, enkf_fs_type * fs, int report_step) {
-  enkf_util_assert_buffer_type( buffer , SUMMARY );
-  double_vector_buffer_fread( summary->data_vector , buffer );
+void summary_read_from_buffer(summary_type * summary,
+                              buffer_type * buffer,
+                              enkf_fs_type * fs,
+                              int report_step) {
+  enkf_util_assert_buffer_type( buffer, SUMMARY );
+  double_vector_buffer_fread( summary->data_vector, buffer );
 }
 
 
-bool summary_write_to_buffer(const summary_type * summary , buffer_type * buffer, int report_step) {
-  buffer_fwrite_int( buffer , SUMMARY );
-  double_vector_buffer_fwrite( summary->data_vector , buffer );
+bool summary_write_to_buffer(const summary_type * summary,
+                             buffer_type * buffer,
+                             int report_step) {
+  buffer_fwrite_int( buffer, SUMMARY );
+  double_vector_buffer_fwrite( summary->data_vector, buffer );
   return true;
 }
 
 
-bool summary_has_data( const summary_type * summary , int report_step) {
-  return (double_vector_size( summary->data_vector ) > report_step) ? true : false;
+bool summary_has_data( const summary_type * summary,
+                       int report_step) {
+  return double_vector_size(summary->data_vector) > report_step;
 }
 
 
@@ -123,20 +132,26 @@ void summary_free(summary_type *summary) {
 }
 
 
-
-
-
-
-void summary_serialize(const summary_type * summary , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
-  double value = SUMMARY_GET_VALUE( summary , node_id.report_step );
-  enkf_matrix_serialize( &value , 1 , ECL_DOUBLE , active_list , A , row_offset , column);
+void summary_serialize(const summary_type * summary,
+                       node_id_type node_id,
+                       const active_list_type * active_list,
+                       matrix_type * A,
+                       int row_offset,
+                       int column) {
+  double value = SUMMARY_GET_VALUE( summary, node_id.report_step );
+  enkf_matrix_serialize( &value, 1, ECL_DOUBLE, active_list, A, row_offset, column);
 }
 
 
-void summary_deserialize(summary_type * summary , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+void summary_deserialize(summary_type * summary,
+                         node_id_type node_id,
+                         const active_list_type * active_list,
+                         const matrix_type * A,
+                         int row_offset,
+                         int column) {
   double value;
-  enkf_matrix_deserialize( &value , 1 , ECL_DOUBLE , active_list , A , row_offset , column);
-  SUMMARY_SET_VALUE( summary , node_id.report_step , value );
+  enkf_matrix_deserialize( &value, 1, ECL_DOUBLE, active_list, A, row_offset, column);
+  SUMMARY_SET_VALUE( summary, node_id.report_step, value );
 }
 
 int summary_length(const summary_type * summary) {
@@ -144,13 +159,16 @@ int summary_length(const summary_type * summary) {
 }
 
 double summary_get(const summary_type * summary, int report_step) {
-  return SUMMARY_GET_VALUE( summary , report_step );
+  return SUMMARY_GET_VALUE( summary, report_step );
 }
 
 
-bool summary_user_get(const summary_type * summary , const char * index_key , int report_step , double * value) {
+bool summary_user_get(const summary_type * summary,
+                      const char * index_key,
+                      int report_step,
+                      double * value) {
   if (double_vector_size( summary->data_vector ) > report_step) {
-    *value = double_vector_iget( summary->data_vector , report_step);
+    *value = double_vector_iget( summary->data_vector, report_step);
     return true;
   } else {
     *value = -1;
@@ -160,8 +178,10 @@ bool summary_user_get(const summary_type * summary , const char * index_key , in
 
 
 
-void summary_user_get_vector(const summary_type * summary , const char * index_key , double_vector_type * value) {
-  double_vector_memcpy( value , summary->data_vector);
+void summary_user_get_vector(const summary_type * summary,
+                             const char * index_key,
+                             double_vector_type * value) {
+  double_vector_memcpy( value, summary->data_vector);
 }
 
 
@@ -177,13 +197,15 @@ void summary_user_get_vector(const summary_type * summary , const char * index_k
    signaling that the simulation has failed. In the last case we check
    the required flag of the variable, and if this is set to false we
    return true. This is done because this is a typical situation for
-   e.g. a well which has not yet opened.  
+   e.g. a well which has not yet opened.
 */
 
-bool summary_forward_load(summary_type * summary , const char * ecl_file_name , const forward_load_context_type * load_context) {
+bool summary_forward_load(summary_type * summary,
+                          const char * ecl_file_name,
+                          const forward_load_context_type * load_context) {
   bool loadOK = false;
   double load_value;
-  int report_step                    = forward_load_context_get_load_step( load_context );
+  int report_step              = forward_load_context_get_load_step( load_context );
   const ecl_sum_type * ecl_sum = forward_load_context_get_ecl_sum( load_context );
   if (ecl_sum != NULL) {
     const char * var_key               = summary_config_get_var(summary->config);
@@ -240,17 +262,17 @@ bool summary_forward_load(summary_type * summary , const char * ecl_file_name , 
   } 
   
   if (loadOK)
-    SUMMARY_SET_VALUE( summary , report_step , load_value );
-  
+    SUMMARY_SET_VALUE( summary, report_step, load_value );
+
   return loadOK;
 }
 
 
 
-bool summary_forward_load_vector(summary_type * summary , 
-				 const char * ecl_file_name , 
-				 const forward_load_context_type * load_context , 
-				 const int_vector_type * time_index) {
+bool summary_forward_load_vector(summary_type * summary,
+                                 const char * ecl_file_name,
+                                 const forward_load_context_type * load_context,
+                                 const int_vector_type * time_index) {
   bool loadOK = false;
 
   const ecl_sum_type * ecl_sum = forward_load_context_get_ecl_sum( load_context );
@@ -309,14 +331,27 @@ bool summary_forward_load_vector(summary_type * summary ,
 
 
 
+    if (summary_index >= 0) {
+      if (ecl_sum_has_report_step( ecl_sum, summary_index )) {
+        int last_ministep_index = ecl_sum_iget_report_end( ecl_sum, summary_index );
+        double_vector_iset( summary->data_vector,
+                            store_index,
+                            ecl_sum_iget(ecl_sum,
+                                         last_ministep_index,
+                                         key_index ));
+      }
+    }
+  }
+  return true;
 
+}
 
 
 /******************************************************************/
-/* Anonumously generated functions used by the enkf_node object   */
+/* Anonymously generated functions used by the enkf_node object   */
 /******************************************************************/
-UTIL_SAFE_CAST_FUNCTION(summary , SUMMARY)
-UTIL_SAFE_CAST_FUNCTION_CONST(summary , SUMMARY)
+UTIL_SAFE_CAST_FUNCTION(summary, SUMMARY)
+UTIL_SAFE_CAST_FUNCTION_CONST(summary, SUMMARY)
 VOID_ALLOC(summary)
 VOID_FREE(summary)
 VOID_COPY     (summary)

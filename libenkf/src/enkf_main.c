@@ -1277,7 +1277,7 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main, job_
         util_usleep(10000);
       }
     }
-    
+
   }
 }
 
@@ -1289,7 +1289,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   const member_config_type  * member_config = enkf_state_get_member_config( enkf_state );
   const queue_config_type * queue_config    = enkf_main_get_queue_config(enkf_main);
   const char * job_script                   = queue_config_get_job_script( queue_config );
-  
+
   const char * run_path                     = run_arg_get_runpath( run_arg );
 
   // The job_queue_node will take ownership of this arg_pack; and destroy it when
