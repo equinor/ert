@@ -100,7 +100,7 @@ void enkf_util_truncate(void * void_data , int size , ecl_data_type data_type , 
 
 
 void enkf_util_assert_buffer_type(buffer_type * buffer, ert_impl_type target_type) {
-  ert_impl_type file_type;
+  ert_impl_type file_type = INVALID;
   file_type = buffer_fread_int(buffer);
   if (file_type != target_type)
     util_abort("%s: wrong target type in file (expected:%d  got:%d) - aborting \n",
@@ -109,22 +109,20 @@ void enkf_util_assert_buffer_type(buffer_type * buffer, ert_impl_type target_typ
 }
 
 
-static void __fread_from_buffer(void * ptr,
-                                size_t element_size,
-                                size_t items,
-                                char ** buffer) {
-  int bytes = element_size * items;
-  memcpy(ptr, *buffer, bytes);
-  *buffer += bytes;
+static void fread_file_type(ert_impl_type * file_type,
+                            char ** buffer) {
+  size_t size = sizeof *file_type;
+  memcpy(file_type, *buffer, size);
+  *buffer += size;
 }
 
-
-void enkf_util_fread_assert_target_type_from_buffer(char ** ptr , ert_impl_type target_type) {
-  ert_impl_type file_type;
-  __fread_from_buffer(&file_type, sizeof file_type, 1 ,ptr);
-  if (file_type != target_type)
+void enkf_util_fread_assert_target_type_from_buffer(char ** buffer,
+                                                    ert_impl_type target_type) {
+  ert_impl_type file_type = INVALID;
+  fread_file_type(&file_type, buffer);
+  if (file_type != target_type) // FIXME flaky runpath_list test
     util_abort("%s: wrong target type in file (expected:%d  got:%d) - aborting \n",
-                 __func__, target_type, file_type);
+               __func__, target_type, file_type);
 }
 
 

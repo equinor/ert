@@ -207,60 +207,63 @@ bool summary_forward_load(summary_type * summary,
   double load_value;
   int report_step              = forward_load_context_get_load_step( load_context );
   const ecl_sum_type * ecl_sum = forward_load_context_get_ecl_sum( load_context );
-  if (ecl_sum != NULL) {
-    const char * var_key               = summary_config_get_var(summary->config);
-    load_fail_type load_fail_action    = summary_config_get_load_fail_mode(summary->config );
+  if (ecl_sum == NULL)
+    return false;
 
-    /* Check if the ecl_sum instance has this report step. */
-    if (ecl_sum_has_report_step( ecl_sum , report_step )) {
-      int last_report_index = ecl_sum_iget_report_end( ecl_sum , report_step );
+  const char * var_key            = summary_config_get_var(summary->config);
+  load_fail_type load_fail_action = summary_config_get_load_fail_mode(summary->config );
 
-      if (ecl_sum_has_general_var(ecl_sum , var_key)) {
-        load_value = ecl_sum_get_general_var(ecl_sum , last_report_index  ,var_key );
-        loadOK = true;
-      } else {
-        load_value = 0;
-        /* 
-           The summary object does not have this variable - probably
-           meaning that it is a well/group which has not yet
-           opened. When required == false we do not signal load
-           failure in this situation.
-           
-           If the user has misspelled the name, we will go through
-           the whole simulation without detecting that error.
-        */
-        if (load_fail_action == LOAD_FAIL_EXIT)
-          loadOK = false;
-        else {
-          loadOK = true;
-          if (load_fail_action == LOAD_FAIL_WARN)
-            fprintf(stderr,"** WARNING ** Failed summary:%s does not have key:%s \n",ecl_sum_get_case( ecl_sum ) , var_key);
-        }
-      } 
+  /* Check if the ecl_sum instance has this report step. */
+  if (ecl_sum_has_report_step( ecl_sum, report_step )) {
+    int last_report_index = ecl_sum_iget_report_end( ecl_sum, report_step );
+
+    if (ecl_sum_has_general_var(ecl_sum, var_key)) {
+      load_value = ecl_sum_get_general_var(ecl_sum, last_report_index ,var_key );
+      loadOK = true;
     } else {
       load_value = 0;
-      if (report_step == 0) 
-        loadOK = true;  
-        /* 
-           We do not signal load failure if we do not have the S0000
-           summary file - which does not contain any useful information
-           anyway. 
-           
-           Hmmm - there is a "if (report_step > 0)" check in the
-           enkf_state_internalize_x() function as well.
-        */
+      /*
+         The summary object does not have this variable - probably
+         meaning that it is a well/group which has not yet
+         opened. When required == false we do not signal load
+         failure in this situation.
+
+         If the user has misspelled the name, we will go through
+         the whole simulation without detecting that error.
+      */
+      if (load_fail_action == LOAD_FAIL_EXIT)
+        loadOK = false;
       else {
-        if (load_fail_action == LOAD_FAIL_EXIT)
-          loadOK = false;
-        else {
-          loadOK = true;
-          if (load_fail_action == LOAD_FAIL_WARN)
-            fprintf(stderr,"** WARNING ** Failed summary:%s does not have report_step:%d \n",ecl_sum_get_case( ecl_sum ) , report_step);
-        }
+        loadOK = true;
+        if (load_fail_action == LOAD_FAIL_WARN)
+          fprintf(stderr,"** WARNING ** Failed summary:%s does not have key:%s \n",
+                  ecl_sum_get_case( ecl_sum ), var_key);
       }
-    } 
-  } 
-  
+    }
+  } else {
+    load_value = 0;
+    if (report_step == 0)
+      loadOK = true;
+      /*
+         We do not signal load failure if we do not have the S0000
+         summary file - which does not contain any useful information
+         anyway.
+
+         Hmmm - there is a "if (report_step > 0)" check in the
+         enkf_state_internalize_x() function as well.
+      */
+    else {
+      if (load_fail_action == LOAD_FAIL_EXIT)
+        loadOK = false;
+      else {
+        loadOK = true;
+        if (load_fail_action == LOAD_FAIL_WARN)
+          fprintf(stderr,"** WARNING ** Failed summary:%s does not have report_step:%d \n",
+                  ecl_sum_get_case( ecl_sum ), report_step);
+      }
+    }
+  }
+
   if (loadOK)
     SUMMARY_SET_VALUE( summary, report_step, load_value );
 
@@ -276,60 +279,43 @@ bool summary_forward_load_vector(summary_type * summary,
   bool loadOK = false;
 
   const ecl_sum_type * ecl_sum = forward_load_context_get_ecl_sum( load_context );
-  if (ecl_sum != NULL) {
-    const char * var_key                = summary_config_get_var(summary->config);
-    load_fail_type load_fail_action     = summary_config_get_load_fail_mode(summary->config );
-    bool normal_load = false;
-      
-      
-    if (load_fail_action != LOAD_FAIL_EXIT) {
-      /*
-        The load will always ~succeed - but if we do not have the data;
-        we will fill the vector with zeros.
-      */
-      
-      if (!ecl_sum_has_general_var(ecl_sum , var_key)) {
-        for (int step = 0; step < int_vector_size( time_index ); step++) {
-          int summary_step = int_vector_iget( time_index , step );
-          if (summary_step >= 0)
-            double_vector_iset( summary->data_vector , summary_step , 0);
-        }
-        loadOK = true;  
-        
-        if (load_fail_action == LOAD_FAIL_WARN)
-          fprintf(stderr,"** WARNING ** Failed summary:%s does not have key:%s \n",ecl_sum_get_case( ecl_sum ) , var_key);
-      } else
-        normal_load = true;
-      
-    }
-    
-      
-    if (normal_load) {
-      int key_index  = ecl_sum_get_general_var_params_index( ecl_sum , var_key );
-      
-      for (int store_index = 0; store_index < int_vector_size( time_index ); store_index++) {
-        int summary_index = int_vector_iget( time_index , store_index );
-        
-        if (summary_index >= 0) {
-          if (ecl_sum_has_report_step( ecl_sum , summary_index )) {
-            int last_ministep_index = ecl_sum_iget_report_end( ecl_sum , summary_index );
-            double_vector_iset( summary->data_vector , store_index , ecl_sum_iget(ecl_sum , last_ministep_index  , key_index ));
-          }
-        }
-        
+  if (ecl_sum == NULL)
+    return false;
+
+  const char * var_key                = summary_config_get_var(summary->config);
+  load_fail_type load_fail_action     = summary_config_get_load_fail_mode(summary->config );
+  bool normal_load = false;
+
+
+  if (load_fail_action != LOAD_FAIL_EXIT) {
+    /*
+      The load will always ~succeed - but if we do not have the data;
+      we will fill the vector with zeros.
+    */
+
+    if (!ecl_sum_has_general_var(ecl_sum, var_key)) {
+      for (int step = 0; step < int_vector_size( time_index ); step++) {
+        int summary_step = int_vector_iget( time_index, step );
+        if (summary_step >= 0)
+          double_vector_iset( summary->data_vector, summary_step, 0);
       }
       loadOK = true;
-    }
-  } 
-  
-  return loadOK;
-}
+
+      if (load_fail_action == LOAD_FAIL_WARN)
+        fprintf(stderr,"** WARNING ** Failed summary:%s does not have key:%s \n",
+                ecl_sum_get_case( ecl_sum ), var_key);
+    } else
+      normal_load = true;
+
+  }
 
 
+  if (!normal_load)
+    return loadOK;
 
-
-
-
+  int key_index  = ecl_sum_get_general_var_params_index( ecl_sum, var_key );
+  for (int store_index = 0; store_index < int_vector_size( time_index ); store_index++) {
+    int summary_index = int_vector_iget( time_index, store_index );
 
     if (summary_index >= 0) {
       if (ecl_sum_has_report_step( ecl_sum, summary_index )) {

@@ -184,7 +184,7 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
     else {
       for (int ip = 0; ip < stringlist_get_size(param_list); ip++) {
         enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
-        node_id_type node_id = { .report_step = 0, .iens = iens }; 
+        node_id_type node_id = { .report_step = 0, .iens = iens };
         bool has_data = enkf_node_has_data(param_node, fs, node_id);
 
         if ((init_mode == INIT_FORCE) || (has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
@@ -502,8 +502,8 @@ static void enkf_state_check_for_missing_eclipse_summary_data(const summary_key_
 }
 
 static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state ,
-							   forward_load_context_type * load_context ,
-							   const model_config_type * model_config) {
+                                                           forward_load_context_type * load_context ,
+                                                           const model_config_type * model_config) {
 
   bool load_summary = ensemble_config_has_impl_type(enkf_state->ensemble_config, SUMMARY);
   const run_arg_type * run_arg = forward_load_context_get_run_arg( load_context );
@@ -588,8 +588,8 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
 
 static void enkf_state_internalize_custom_kw(enkf_state_type * enkf_state,
-					     forward_load_context_type * load_context ,
-					     const model_config_type * model_config) {
+                                             forward_load_context_type * load_context ,
+                                             const model_config_type * model_config) {
 
   member_config_type * my_config   = enkf_state->my_config;
   const int iens                   = member_config_get_iens( my_config );
@@ -605,30 +605,29 @@ static void enkf_state_internalize_custom_kw(enkf_state_type * enkf_state,
     const char* custom_kw_key = stringlist_iget(custom_kw_keys, ikey);
     enkf_node_type * node = enkf_state_get_node(enkf_state, custom_kw_key);
 
-    if (enkf_node_vector_storage(node)) {
+    if (enkf_node_vector_storage(node))
       util_abort("%s: Vector storage not correctly implemented for CUSTOM_KW\n", __func__);
-    } else {
-      if (enkf_node_internalize(node, report_step)) {
-        if (enkf_node_has_func(node, forward_load_func)) {
-          if (enkf_node_forward_load(node, load_context)) {
-            node_id_type node_id = {.report_step = report_step, .iens = iens };
 
-            enkf_node_store(node, result_fs, false, node_id);
+    if (enkf_node_internalize(node, report_step) && enkf_node_has_func(node, forward_load_func)) {
+      if (enkf_node_forward_load(node, load_context)) {
+        node_id_type node_id = {.report_step = report_step, .iens = iens };
 
-            const enkf_config_node_type * config_node = enkf_node_get_config(node);
-            const custom_kw_config_type * custom_kw_config = (custom_kw_config_type*) enkf_config_node_get_ref(config_node);
-            custom_kw_config_set_add_config(config_set, custom_kw_config);
-            enkf_state_log_custom_kw_load(node, report_step, load_context);
-          } else {
-            forward_load_context_update_result(load_context, LOAD_FAILURE);
-            res_log_add_fmt_message(LOG_ERROR, stderr, "[%03d:%04d] Failed load data for CUSTOM_KW node: %s.", iens , report_step, enkf_node_get_key(node));
+        enkf_node_store(node, result_fs, false, node_id);
 
-            if (forward_load_context_accept_messages(load_context)) {
-              char * msg = util_alloc_sprintf("Failed to load: %s at step: %d", enkf_node_get_key(node), report_step);
-              forward_load_context_add_message(load_context , msg);
-              free( msg );
-            }
-          }
+        const enkf_config_node_type * config_node = enkf_node_get_config(node);
+        const custom_kw_config_type * custom_kw_config = (custom_kw_config_type*) enkf_config_node_get_ref(config_node);
+        custom_kw_config_set_add_config(config_set, custom_kw_config);
+        enkf_state_log_custom_kw_load(node, report_step, load_context);
+      } else {
+        forward_load_context_update_result(load_context, LOAD_FAILURE);
+        res_log_add_fmt_message(LOG_ERROR, stderr,
+                                "[%03d:%04d] Failed load data for CUSTOM_KW node: %s.",
+                                iens, report_step, enkf_node_get_key(node));
+
+        if (forward_load_context_accept_messages(load_context)) {
+          char * msg = util_alloc_sprintf("Failed to load: %s at step: %d", enkf_node_get_key(node), report_step);
+          forward_load_context_add_message(load_context , msg);
+          free( msg );
         }
       }
     }
@@ -643,68 +642,74 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
                                             forward_load_context_type * load_context ,
                                             const model_config_type * model_config ,
                                             int last_report) {
-  {
-    member_config_type * my_config     = enkf_state->my_config;
-    const int  iens                    = member_config_get_iens( my_config );
-    stringlist_type * keylist_GEN_DATA = ensemble_config_alloc_keylist_from_impl_type(enkf_state->ensemble_config , GEN_DATA );
-    const run_arg_type * run_arg       = forward_load_context_get_run_arg( load_context );
-    enkf_fs_type * result_fs           = run_arg_get_result_fs( run_arg );
 
-    for (int ikey=0; ikey < stringlist_get_size( keylist_GEN_DATA ); ikey++) {
-      enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( keylist_GEN_DATA , ikey));
+  member_config_type * my_config     = enkf_state->my_config;
+  const int  iens                    = member_config_get_iens( my_config );
+  stringlist_type * keylist_GEN_DATA = ensemble_config_alloc_keylist_from_impl_type(enkf_state->ensemble_config,
+                                                                                    GEN_DATA);
+  const run_arg_type * run_arg       = forward_load_context_get_run_arg( load_context );
+  enkf_fs_type * result_fs           = run_arg_get_result_fs( run_arg );
 
-      for (int report_step = run_arg_get_load_start( run_arg ); report_step <= last_report; report_step++) {
-	if (enkf_node_internalize(node , report_step)) {
+  for (int ikey=0; ikey < stringlist_get_size( keylist_GEN_DATA ); ikey++) {
+    enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( keylist_GEN_DATA , ikey));
 
-	  if (enkf_node_has_func(node , forward_load_func)) {
-            forward_load_context_select_step(load_context, report_step);
-	    if (enkf_node_forward_load(node , load_context )) {
-	      node_id_type node_id = {.report_step = report_step ,
-				      .iens = iens };
+    for (int report_step = run_arg_get_load_start( run_arg ); report_step <= last_report; report_step++) {
 
-	      enkf_node_store( node , result_fs, false , node_id );
-              enkf_state_log_GEN_DATA_load( node , report_step , load_context);
-	    } else {
-              forward_load_context_update_result(load_context, LOAD_FAILURE);
-	      res_log_add_fmt_message(LOG_ERROR , stderr , "[%03d:%04d] Failed load data for GEN_DATA node:%s.",iens , report_step , enkf_node_get_key( node ));
+      if (!enkf_node_internalize(node , report_step))
+        continue;
+      if (!enkf_node_has_func(node, forward_load_func))
+        continue;
 
-              if (forward_load_context_accept_messages(load_context)) {
-                char * msg = util_alloc_sprintf("Failed to load: %s at step:%d" , enkf_node_get_key( node ) , report_step);
-		forward_load_context_add_message(load_context, msg);
-                free( msg );
-              }
-            }
-          }
+      forward_load_context_select_step(load_context, report_step);
+      if (enkf_node_forward_load(node , load_context )) {
+        node_id_type node_id = {.report_step = report_step ,
+                                .iens = iens };
+
+        enkf_node_store( node , result_fs, false , node_id );
+        enkf_state_log_GEN_DATA_load( node , report_step , load_context);
+      } else {
+        forward_load_context_update_result(load_context, LOAD_FAILURE);
+        res_log_add_fmt_message(LOG_ERROR, stderr,
+                                "[%03d:%04d] Failed load data for GEN_DATA node:%s.",
+                                iens, report_step, enkf_node_get_key(node));
+
+        if (forward_load_context_accept_messages(load_context)) {
+          char * msg = util_alloc_sprintf("Failed to load: %s at step:%d",
+                                          enkf_node_get_key(node), report_step);
+          forward_load_context_add_message(load_context, msg);
+          free( msg );
         }
       }
     }
-    stringlist_free( keylist_GEN_DATA );
   }
+  stringlist_free( keylist_GEN_DATA );
 }
 
 
 
 
 
-static forward_load_context_type * enkf_state_alloc_load_context( const enkf_state_type * state , run_arg_type * run_arg, stringlist_type * messages) {
-  bool load_summary = ensemble_config_has_impl_type(state->ensemble_config, SUMMARY);
+static forward_load_context_type * enkf_state_alloc_load_context(const enkf_state_type * state,
+                                                                 run_arg_type * run_arg,
+                                                                 stringlist_type * messages) {
+  bool load_summary = ensemble_config_has_impl_type(state->ensemble_config,
+                                                    SUMMARY);
   if (!load_summary) {
     const summary_key_matcher_type * matcher = ensemble_config_get_summary_key_matcher(state->ensemble_config);
     load_summary = (summary_key_matcher_get_size(matcher) > 0);
   }
 
-  {
-    forward_load_context_type * load_context;
-    const ecl_config_type * ecl_config = state->shared_info->ecl_config;
-    const char * eclbase = enkf_state_get_eclbase( state );
+  forward_load_context_type * load_context;
+  const ecl_config_type * ecl_config = state->shared_info->ecl_config;
+  const char * eclbase = enkf_state_get_eclbase( state );
 
-    load_context = forward_load_context_alloc( run_arg,
-                                               load_summary,
-                                               ecl_config ,
-                                               eclbase,
-                                               messages );
-    return load_context;
-  }
+  load_context = forward_load_context_alloc(run_arg,
+                                            load_summary,
+                                            ecl_config,
+                                            eclbase,
+                                            messages);
+  return load_context;
+
 }
 
 
@@ -716,8 +721,6 @@ static forward_load_context_type * enkf_state_alloc_load_context( const enkf_sta
    Will mainly be called at the end of the forward model, but can also
    be called manually from external scope.
 */
-
-
 static int enkf_state_internalize_results(enkf_state_type * enkf_state , run_arg_type * run_arg , stringlist_type * msg_list) {
   model_config_type * model_config = enkf_state->shared_info->model_config;
   forward_load_context_type * load_context = enkf_state_alloc_load_context( enkf_state , run_arg , msg_list);
@@ -730,31 +733,29 @@ static int enkf_state_internalize_results(enkf_state_type * enkf_state , run_arg
   */
 
   enkf_state_internalize_dynamic_eclipse_results(enkf_state ,
-						 load_context ,
-						 model_config);
-  {
-    enkf_fs_type * result_fs = run_arg_get_result_fs( run_arg );
-    int last_report = time_map_get_last_step( enkf_fs_get_time_map( result_fs ));
-    if (last_report < 0)
-      last_report = model_config_get_last_history_restart( enkf_state->shared_info->model_config);
+                                                 load_context ,
+                                                 model_config);
 
-    /* Ensure that the last step is internalized? */
-    model_config_set_internalize_state( model_config , last_report);
+  enkf_fs_type * result_fs = run_arg_get_result_fs( run_arg );
+  int last_report = time_map_get_last_step( enkf_fs_get_time_map( result_fs ));
+  if (last_report < 0)
+    last_report = model_config_get_last_history_restart( enkf_state->shared_info->model_config);
 
-    for (report_step = run_arg_get_load_start( run_arg ); report_step <= last_report; report_step++) {
-      bool store_vectors = (report_step == last_report) ? true : false;
-      if (model_config_load_state( model_config , report_step))
-        enkf_state_internalize_eclipse_state(enkf_state ,
-					     load_context ,
-					     model_config ,
-					     report_step ,
-					     store_vectors);
-    }
+  /* Ensure that the last step is internalized? */
+  model_config_set_internalize_state( model_config , last_report);
 
-    enkf_state_internalize_GEN_DATA(enkf_state , load_context , model_config , last_report);
-    enkf_state_internalize_custom_kw(enkf_state, load_context , model_config);
+  for (report_step = run_arg_get_load_start(run_arg); report_step <= last_report; report_step++) {
+    bool store_vectors = (report_step == last_report);
+    if (model_config_load_state( model_config , report_step))
+      enkf_state_internalize_eclipse_state(enkf_state ,
+                                           load_context ,
+                                           model_config ,
+                                           report_step ,
+                                           store_vectors);
   }
 
+  enkf_state_internalize_GEN_DATA(enkf_state , load_context , model_config , last_report);
+  enkf_state_internalize_custom_kw(enkf_state, load_context , model_config);
 
   int result = forward_load_context_get_result(load_context);
   forward_load_context_free( load_context );
@@ -775,14 +776,12 @@ int enkf_state_load_from_forward_model(enkf_state_type * enkf_state ,
     result |= enkf_state_forward_init( enkf_state , run_arg );
 
   result |= enkf_state_internalize_results( enkf_state , run_arg , msg_list );
-  {
-    state_map_type * state_map = enkf_fs_get_state_map( run_arg_get_result_fs( run_arg ) );
-    int iens = member_config_get_iens( enkf_state->my_config );
-    if (result & LOAD_FAILURE)
-      state_map_iset( state_map , iens , STATE_LOAD_FAILURE);
-    else
-      state_map_iset( state_map , iens , STATE_HAS_DATA);
-  }
+  state_map_type * state_map = enkf_fs_get_state_map( run_arg_get_result_fs( run_arg ) );
+  int iens = member_config_get_iens( enkf_state->my_config );
+  if (result & LOAD_FAILURE)
+    state_map_iset( state_map , iens , STATE_LOAD_FAILURE);
+  else
+    state_map_iset( state_map , iens , STATE_HAS_DATA);
 
   return result;
 }
@@ -823,20 +822,6 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void enkf_state_free(enkf_state_type *enkf_state) {
   rng_free( enkf_state->rng );
   hash_free(enkf_state->node_hash);
@@ -845,8 +830,6 @@ void enkf_state_free(enkf_state_type *enkf_state) {
   shared_info_free(enkf_state->shared_info);
   free(enkf_state);
 }
-
-
 
 
 
@@ -869,46 +852,41 @@ static void enkf_state_set_dynamic_subst_kw__(enkf_state_type * enkf_state , con
 
 
   /* Time step */
-  {
-    char * step1_s           = util_alloc_sprintf("%d" , step1);
-    char * step2_s           = util_alloc_sprintf("%d" , step2);
-    char * step1_s04         = util_alloc_sprintf("%04d" , step1);
-    char * step2_s04         = util_alloc_sprintf("%04d" , step2);
+  char * step1_s           = util_alloc_sprintf("%d" , step1);
+  char * step2_s           = util_alloc_sprintf("%d" , step2);
+  char * step1_s04         = util_alloc_sprintf("%04d" , step1);
+  char * step2_s04         = util_alloc_sprintf("%04d" , step2);
 
-    enkf_state_add_subst_kw(enkf_state , "TSTEP1"        , step1_s       , NULL);
-    enkf_state_add_subst_kw(enkf_state , "TSTEP2"        , step2_s       , NULL);
-    enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"     , step1_s04     , NULL);
-    enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , step2_s04     , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP1"        , step1_s       , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP2"        , step2_s       , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"     , step1_s04     , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , step2_s04     , NULL);
 
-    free(step1_s);
-    free(step2_s);
-    free(step1_s04);
-    free(step2_s04);
-  }
+  free(step1_s);
+  free(step2_s);
+  free(step1_s04);
+  free(step2_s04);
 
 
   /* Restart file names and RESTART keyword in datafile. */
-  {
-    const char * eclbase     = member_config_get_eclbase( enkf_state->my_config );
-    if (eclbase != NULL) {
-      {
-        char * restart_file1     = ecl_util_alloc_filename(NULL , eclbase , ECL_RESTART_FILE , fmt_file , step1);
-        char * restart_file2     = ecl_util_alloc_filename(NULL , eclbase , ECL_RESTART_FILE , fmt_file , step2);
+  const char * eclbase     = member_config_get_eclbase( enkf_state->my_config );
+  if (eclbase != NULL) {
+    char * restart_file1     = ecl_util_alloc_filename(NULL , eclbase , ECL_RESTART_FILE , fmt_file , step1);
+    char * restart_file2     = ecl_util_alloc_filename(NULL , eclbase , ECL_RESTART_FILE , fmt_file , step2);
 
-        enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , restart_file1 , NULL);
-        enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , restart_file2 , NULL);
+    enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , restart_file1 , NULL);
+    enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , restart_file2 , NULL);
 
-        free(restart_file1);
-        free(restart_file2);
-      }
+    free(restart_file1);
+    free(restart_file2);
 
-      if (step1 > 0) {
-        char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , eclbase , step1);
-        enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize , NULL);
-        free(data_initialize);
-      }
+    if (step1 > 0) {
+      char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , eclbase , step1);
+      enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize , NULL);
+      free(data_initialize);
     }
   }
+
 
   /**
      The <INIT> magic string:
@@ -926,30 +904,34 @@ static void enkf_state_set_dynamic_subst_kw__(enkf_state_type * enkf_state , con
   }
 
 
-  {
-    /**
-        Adding keys for <RANDINT> and <RANDFLOAT> - these are only
-        added for backwards compatibility, should be replaced with
-        prober function callbacks.
-    */
-    char * randint_value    = util_alloc_sprintf( "%u"      , rng_forward( enkf_state->rng ));
-    char * randfloat_value  = util_alloc_sprintf( "%12.10f" , rng_get_double( enkf_state->rng ));
+  /**
+     Adding keys for <RANDINT> and <RANDFLOAT> - these are only
+     added for backwards compatibility, should be replaced with
+     prober function callbacks.
+  */
+  char * randint_value    = util_alloc_sprintf( "%u"      , rng_forward( enkf_state->rng ));
+  char * randfloat_value  = util_alloc_sprintf( "%12.10f" , rng_get_double( enkf_state->rng ));
 
-    enkf_state_add_subst_kw( enkf_state , "RANDINT"   , randint_value   , NULL);
-    enkf_state_add_subst_kw( enkf_state , "RANDFLOAT" , randfloat_value , NULL);
+  enkf_state_add_subst_kw( enkf_state , "RANDINT"   , randint_value   , NULL);
+  enkf_state_add_subst_kw( enkf_state , "RANDFLOAT" , randfloat_value , NULL);
 
-    free( randint_value );
-    free( randfloat_value );
-  }
+  free( randint_value );
+  free( randfloat_value );
 }
 
-static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const run_arg_type * run_arg ) {
-  enkf_state_set_dynamic_subst_kw__( enkf_state , run_arg_get_runpath( run_arg ) , run_arg_get_step1( run_arg ) , run_arg_get_step2( run_arg ));
+static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state,
+                                            const run_arg_type * run_arg ) {
+  enkf_state_set_dynamic_subst_kw__(enkf_state,
+                                    run_arg_get_runpath(run_arg),
+                                    run_arg_get_step1(run_arg),
+                                    run_arg_get_step2(run_arg));
 }
 
 
 
-void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int step2) {
+void enkf_state_printf_subst_list(enkf_state_type * enkf_state,
+                                  int step1,
+                                  int step2) {
   int ikw;
   const char * fmt_string = "%-16s %-40s :: %s\n";
   printf("\n\n");
@@ -987,69 +969,72 @@ void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int
    it is required that report_step1 == 0; otherwise the dynamic data
    will become completely inconsistent. We just don't allow that!
 */
-
-
 void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * run_arg ) {
   const member_config_type  * my_config = enkf_state->my_config;
   const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
-  {
-    util_make_path(run_arg_get_runpath( run_arg ));
-    {
-      if (ecl_config_get_schedule_target( ecl_config ) != NULL) {
 
-        char * schedule_file_target = util_alloc_filename(run_arg_get_runpath( run_arg ) , ecl_config_get_schedule_target( ecl_config ) , NULL);
-        char * schedule_file_target_path = util_split_alloc_dirname(schedule_file_target);
-        util_make_path(schedule_file_target_path);
-        free(schedule_file_target_path);
+  util_make_path(run_arg_get_runpath( run_arg ));
+  if (ecl_config_get_schedule_target( ecl_config ) != NULL) {
 
-        sched_file_fprintf( ecl_config_get_sched_file( ecl_config ) , schedule_file_target);
+    char * schedule_file_target = util_alloc_filename(run_arg_get_runpath( run_arg ),
+                                                      ecl_config_get_schedule_target( ecl_config ),
+                                                      NULL);
+    char * schedule_file_target_path = util_split_alloc_dirname(schedule_file_target);
+    util_make_path(schedule_file_target_path);
+    free(schedule_file_target_path);
 
-        free(schedule_file_target);
-      }
-    }
+    sched_file_fprintf( ecl_config_get_sched_file( ecl_config ) , schedule_file_target);
 
-
-    /**
-       For reruns of various kinds the parameters and the state are
-       generally loaded from different timesteps:
-    */
-    {
-      enkf_fs_type * init_fs = run_arg_get_init_fs( run_arg );
-      /* Loading parameter information: loaded from timestep: run_arg->init_step_parameters. */
-      enkf_state_fread(enkf_state , init_fs , PARAMETER , 0);
-
-
-      /* Loading state information: loaded from timestep: run_arg->step1 */
-      if (run_arg_get_step1(run_arg) == 0)
-        enkf_state_fread_initial_state(enkf_state , init_fs);
-      else
-        enkf_state_fread_state_nodes( enkf_state , init_fs , run_arg_get_step1(run_arg));
-
-      enkf_state_set_dynamic_subst_kw(  enkf_state , run_arg );
-      ert_templates_instansiate( enkf_state->shared_info->templates , run_arg_get_runpath( run_arg ) , enkf_state->subst_list );
-      enkf_state_ecl_write( enkf_state , run_arg , init_fs);
-
-      if (member_config_get_eclbase( my_config ) != NULL) {
-
-        /* Writing the ECLIPSE data file. */
-        if (ecl_config_get_data_file( ecl_config ) != NULL) {
-          char * data_file = ecl_util_alloc_filename(run_arg_get_runpath( run_arg ) , member_config_get_eclbase( my_config ) , ECL_DATA_FILE , true , -1);
-          subst_list_filter_file(enkf_state->subst_list , ecl_config_get_data_file(ecl_config) , data_file);
-          free( data_file );
-        }
-      }
-    }
-    member_config_get_jobname( my_config );
-    mode_t umask = site_config_get_umask(enkf_state->shared_info->site_config);
-
-
-    /* This is where the job script is created */
-    forward_model_formatted_fprintf( model_config_get_forward_model( enkf_state->shared_info->model_config ) ,
-                                     run_arg_get_run_id( run_arg ),
-                                     run_arg_get_runpath( run_arg ) ,
-                                     enkf_state->subst_list,
-                                     umask);
+    free(schedule_file_target);
   }
+
+
+  /**
+     For reruns of various kinds the parameters and the state are
+     generally loaded from different timesteps:
+  */
+  enkf_fs_type * init_fs = run_arg_get_init_fs( run_arg );
+  /* Loading parameter information: loaded from timestep: run_arg->init_step_parameters. */
+  enkf_state_fread(enkf_state , init_fs , PARAMETER , 0);
+
+
+  /* Loading state information: loaded from timestep: run_arg->step1 */
+  if (run_arg_get_step1(run_arg) == 0)
+    enkf_state_fread_initial_state(enkf_state , init_fs);
+  else
+    enkf_state_fread_state_nodes( enkf_state , init_fs , run_arg_get_step1(run_arg));
+
+  enkf_state_set_dynamic_subst_kw(  enkf_state , run_arg );
+  ert_templates_instansiate( enkf_state->shared_info->templates , run_arg_get_runpath( run_arg ) , enkf_state->subst_list );
+  enkf_state_ecl_write( enkf_state , run_arg , init_fs);
+
+  if (member_config_get_eclbase( my_config ) != NULL) {
+
+    /* Writing the ECLIPSE data file. */
+    if (ecl_config_get_data_file( ecl_config ) != NULL) {
+      char * data_file = ecl_util_alloc_filename(run_arg_get_runpath( run_arg ),
+                                                 member_config_get_eclbase( my_config ),
+                                                 ECL_DATA_FILE,
+                                                 true,
+                                                 -1);
+      subst_list_filter_file(enkf_state->subst_list,
+                             ecl_config_get_data_file(ecl_config),
+                             data_file);
+      free( data_file );
+    }
+  }
+
+  member_config_get_jobname( my_config );
+  mode_t umask = site_config_get_umask(enkf_state->shared_info->site_config);
+
+
+  /* This is where the job script is created */
+  forward_model_formatted_fprintf( model_config_get_forward_model( enkf_state->shared_info->model_config ) ,
+                                   run_arg_get_run_id( run_arg ),
+                                   run_arg_get_runpath( run_arg ) ,
+                                   enkf_state->subst_list,
+                                   umask);
+
 }
 
 
@@ -1074,7 +1059,9 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , r
      in this scope whether the results can be loaded back; if that
      is OK the final status is updated, otherwise: restart.
   */
-  res_log_add_fmt_message(LOG_INFO , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
+  res_log_add_fmt_message(LOG_INFO, NULL,
+                          "[%03d:%04d-%04d] Forward model complete - starting to load results.",
+                          iens , run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
   result = enkf_state_load_from_forward_model(enkf_state , run_arg , NULL);
 
   if (result & REPORT_STEP_INCOMPATIBLE) {
@@ -1092,7 +1079,9 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , r
       (should be avoided) to JOB_RUN_OK.
     */
     run_arg_set_run_status( run_arg , JOB_RUN_OK);
-    res_log_add_fmt_message(LOG_INFO , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
+    res_log_add_fmt_message(LOG_INFO, NULL,
+                            "[%03d:%04d-%04d] Results loaded successfully.",
+                            iens , run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
 
     run_arg_complete_run(run_arg);              /* free() on runpath */
   }
@@ -1111,10 +1100,13 @@ bool enkf_state_complete_forward_modelOK__(void * arg ) {
 
 
 
-static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , run_arg_type * run_arg) {
+static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state,
+                                                             run_arg_type * run_arg) {
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
-  res_log_add_fmt_message(LOG_ERROR, NULL, "[%03d:%04d-%04d] FAILED COMPLETELY.", iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
+  res_log_add_fmt_message(LOG_ERROR, NULL,
+                          "[%03d:%04d-%04d] FAILED COMPLETELY.",
+                          iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
 
   if (run_arg_get_run_status(run_arg) != JOB_LOAD_FAILURE)
     run_arg_set_run_status( run_arg , JOB_RUN_FAILURE);
@@ -1159,20 +1151,21 @@ static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_typ
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
 
-  res_log_add_fmt_message(LOG_ERROR, NULL , "[%03d:%04d - %04d] Forward model failed.",iens, run_arg_get_step1(run_arg) , run_arg_get_step2(run_arg));
+  res_log_add_fmt_message(LOG_ERROR, NULL,
+                          "[%03d:%04d - %04d] Forward model failed.",
+                          iens, run_arg_get_step1(run_arg) , run_arg_get_step2(run_arg));
   if (run_arg_can_retry( run_arg ) ) {
     res_log_add_fmt_message(LOG_ERROR, NULL , "[%03d] Resampling and resubmitting realization." ,iens);
-    {
-      /* Reinitialization of the nodes */
-      stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
-      for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
-        enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
-        enkf_node_initialize( node , iens , enkf_state->rng );
-      }
-      stringlist_free( init_keys );
+    /* Reinitialization of the nodes */
+    stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
+    for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
+      enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
+      enkf_node_initialize( node , iens , enkf_state->rng );
     }
+    stringlist_free( init_keys );
 
-    enkf_state_init_eclipse( enkf_state , run_arg  );                                  /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
+    /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
+    enkf_state_init_eclipse( enkf_state , run_arg  );
     run_arg_increase_submit_count( run_arg );
   }
 }
@@ -1186,9 +1179,9 @@ bool enkf_state_complete_forward_modelRETRY__(void * arg ) {
   if (run_arg_can_retry(run_arg)) {
     enkf_state_internal_retry(enkf_state, run_arg);
     return true;
-  } else {
-    return false;
   }
+
+  return false;
 }
 
 
@@ -1263,7 +1256,6 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
   fclose(export_file);
   free(export_file_name);
 }
-
 
 
 #include "enkf_state_nodes.c"
