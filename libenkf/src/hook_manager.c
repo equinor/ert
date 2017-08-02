@@ -53,7 +53,7 @@ struct hook_manager_struct {
 
 void hook_manager_set_runpath_list_file(hook_manager_type *, const char *, const char *);
 
-hook_manager_type * hook_manager_alloc( ert_workflow_list_type * workflow_list ) {
+hook_manager_type * hook_manager_alloc_default(ert_workflow_list_type * workflow_list) {
   hook_manager_type * hook_manager = util_malloc( sizeof * hook_manager );
   hook_manager->hook_workflow_list = vector_alloc_new();
 
@@ -71,17 +71,27 @@ hook_manager_type * hook_manager_alloc_load(
         ert_workflow_list_type * workflow_list,
         const char * user_config_file)
 {
-  hook_manager_type * hook_manager = hook_manager_alloc(workflow_list);
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
+  if(user_config_file)
+    config_content = model_config_alloc_content(user_config_file, config_parser);
 
-  if(user_config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(user_config_file, config);
+  hook_manager_type * hook_manager = hook_manager_alloc(workflow_list, config_content);
 
-    hook_manager_init(hook_manager, content);
+  config_content_free(config_content);
+  config_free(config_parser);
 
-    config_content_free(content);
-    config_free(config);
-  }
+  return hook_manager;
+}
+
+hook_manager_type * hook_manager_alloc(
+                    ert_workflow_list_type * workflow_list,
+                    const config_content_type * config_content) {
+
+  hook_manager_type * hook_manager = hook_manager_alloc_default(workflow_list);
+
+  if(config_content)
+    hook_manager_init(hook_manager, config_content);
 
   return hook_manager;
 }

@@ -23,7 +23,7 @@
 int main(int argc, char ** argv) {
 
   ert_workflow_list_type * list = NULL;
-  hook_manager_type * hook_manager = hook_manager_alloc(list);
+  hook_manager_type * hook_manager = hook_manager_alloc_default(list);
 
   char * expected_path = "<CWD>/.ert_runpath_list";
   test_assert_string_equal(expected_path, hook_manager_get_runpath_list_file(hook_manager));
