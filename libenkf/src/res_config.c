@@ -167,9 +167,9 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                     config_content
                                     );
 
-  res_config->templates       = ert_templates_alloc_load(
+  res_config->templates       = ert_templates_alloc(
                                     subst_config_get_subst_list(res_config->subst_config),
-                                    res_config->user_config_file
+                                    config_content
                                     );
 
   res_config->plot_config     = plot_settings_alloc_load(res_config->user_config_file);
