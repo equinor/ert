@@ -62,7 +62,7 @@ static queue_config_type * queue_config_alloc_empty() {
     return queue_config;
 }
 
-static queue_config_type * queue_config_alloc() {
+static queue_config_type * queue_config_alloc_default() {
   queue_config_type * queue_config = queue_config_alloc_empty();
 
   config_parser_type * config = config_alloc();
@@ -77,21 +77,25 @@ static queue_config_type * queue_config_alloc() {
 }
 
 queue_config_type * queue_config_alloc_load(const char * user_config_file) {
-  queue_config_type * queue_config = queue_config_alloc();
+  config_parser_type * config = config_alloc();
+  config_content_type * content = NULL;
+  if(user_config_file)
+    content = model_config_alloc_content(user_config_file, config);
 
-  if(user_config_file) {
+  queue_config_type * queue_config = queue_config_alloc(content);
+
+  config_free(config);
+  config_content_free(content);
+
+  return queue_config;
+}
+
+queue_config_type * queue_config_alloc(const config_content_type * config_content) {
+  queue_config_type * queue_config = queue_config_alloc_default();
+
+  if(config_content) {
     queue_config->user_mode = true;
-
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(
-                                                    user_config_file,
-                                                    config
-                                                    );
-
-    queue_config_init(queue_config, content);
-
-    config_free(config);
-    config_content_free(content);
+    queue_config_init(queue_config, config_content);
   }
 
   return queue_config;
