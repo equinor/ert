@@ -137,7 +137,7 @@ const char * ensemble_config_get_gen_kw_format( const ensemble_config_type * ens
 }
 
 
-ensemble_config_type * ensemble_config_alloc( ) {
+static ensemble_config_type * ensemble_config_alloc_empty(void) {
   ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config );
 
   UTIL_TYPE_ID_INIT( ensemble_config , ENSEMBLE_CONFIG_TYPE_ID );
@@ -152,17 +152,28 @@ ensemble_config_type * ensemble_config_alloc( ) {
 }
 
 ensemble_config_type * ensemble_config_alloc_load(const char * user_config_file, ecl_grid_type * grid, const ecl_sum_type * refcase) {
-  ensemble_config_type * ensemble_config = ensemble_config_alloc();
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
+  if(user_config_file)
+    config_content = model_config_alloc_content(user_config_file, config_parser);
 
-  if(user_config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(user_config_file, config);
+  ensemble_config_type * ensemble_config = ensemble_config_alloc(config_content, grid, refcase);
 
-    ensemble_config_init(ensemble_config, content, grid, refcase);
+  config_content_free(config_content);
+  config_free(config_parser);
 
-    config_content_free(content);
-    config_free(config);
-  }
+  return ensemble_config;
+}
+
+ensemble_config_type * ensemble_config_alloc(
+                            const config_content_type * config_content,
+                            ecl_grid_type * grid,
+                            const ecl_sum_type * refcase) {
+
+  ensemble_config_type * ensemble_config = ensemble_config_alloc_empty();
+
+  if(config_content)
+    ensemble_config_init(ensemble_config, config_content, grid, refcase);
 
   return ensemble_config;
 }

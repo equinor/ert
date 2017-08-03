@@ -43,7 +43,7 @@ int main(int argc , char ** argv) {
   const char * config_file = argv[1];
   config_parser_type * config = config_alloc();
   config_content_type * content;
-  ensemble_config_type * ensemble = ensemble_config_alloc();
+  ensemble_config_type * ensemble = ensemble_config_alloc(NULL, NULL, NULL);
 
   enkf_config_node_add_GEN_PARAM_config_schema( config );
 
