@@ -511,7 +511,7 @@ static void ecl_config_init_static_kw(ecl_config_type * ecl_config)
     [i]);
 }
 
-ecl_config_type * ecl_config_alloc()
+static ecl_config_type * ecl_config_alloc_empty(void)
 {
   ecl_config_type * ecl_config = util_malloc(sizeof *ecl_config);
 
@@ -541,17 +541,24 @@ ecl_config_type * ecl_config_alloc()
 }
 
 ecl_config_type * ecl_config_alloc_load(const char * user_config_file) {
-  ecl_config_type * ecl_config = ecl_config_alloc();
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
+  if(user_config_file)
+    config_content = model_config_alloc_content(user_config_file, config_parser);
 
-  if(user_config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(user_config_file, config);
+  ecl_config_type * ecl_config = ecl_config_alloc(config_content);
 
-    ecl_config_init(ecl_config, content);
+  config_content_free(config_content);
+  config_free(config_parser);
 
-    config_content_free(content);
-    config_free(config);
-  }
+  return ecl_config;
+}
+
+ecl_config_type * ecl_config_alloc(const config_content_type * config_content) {
+  ecl_config_type * ecl_config = ecl_config_alloc_empty();
+
+  if(config_content)
+    ecl_config_init(ecl_config, config_content);
 
   return ecl_config;
 }

@@ -173,7 +173,7 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                     );
 
   res_config->plot_config     = plot_settings_alloc(config_content);
-  res_config->ecl_config      = ecl_config_alloc_load(res_config->user_config_file);
+  res_config->ecl_config      = ecl_config_alloc(config_content);
 
   res_config->ensemble_config = ensemble_config_alloc_load(res_config->user_config_file,
                                             ecl_config_get_grid(res_config->ecl_config),
