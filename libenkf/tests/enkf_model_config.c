@@ -26,14 +26,14 @@
 
 
 void test_create() {
-  model_config_type * model_config = model_config_alloc();
+  model_config_type * model_config = model_config_alloc_empty();
   test_assert_true( model_config_is_instance( model_config));
   model_config_free( model_config );
 }
 
 
 void test_runpath() {
-  model_config_type * model_config = model_config_alloc();
+  model_config_type * model_config = model_config_alloc_empty();
   model_config_add_runpath(model_config , "KEY" , "RunPath%d");
   model_config_add_runpath(model_config , "KEY2" , "2-RunPath%d");
   test_assert_true( model_config_select_runpath(model_config , "KEY"));

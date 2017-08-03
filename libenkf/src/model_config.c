@@ -308,7 +308,7 @@ void model_config_set_max_internal_submit( model_config_type * model_config , in
 
 UTIL_IS_INSTANCE_FUNCTION( model_config , MODEL_CONFIG_TYPE_ID)
 
-model_config_type * model_config_alloc() {
+model_config_type * model_config_alloc_empty() {
   model_config_type * model_config  = util_malloc(sizeof * model_config );
   /**
      There are essentially three levels of initialisation:
@@ -355,24 +355,43 @@ model_config_type * model_config_alloc_load(const char * user_config_file,
         const sched_file_type * sched_file,
         const ecl_sum_type * refcase)
 {
-  model_config_type * model_config = model_config_alloc();
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
+  if(user_config_file)
+    config_content = model_config_alloc_content(user_config_file, config_parser);
 
-  if(user_config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(user_config_file, config);
+  model_config_type * model_config = model_config_alloc(
+                                            config_content,
+                                            joblist,
+                                            last_history_restart,
+                                            sched_file,
+                                            refcase
+                                            );
 
+  config_content_free(config_content);
+  config_free(config_parser);
+
+  return model_config;
+}
+
+model_config_type * model_config_alloc(
+        const config_content_type * config_content,
+        const ext_joblist_type * joblist,
+        int last_history_restart,
+        const sched_file_type * sched_file,
+        const ecl_sum_type * refcase)
+{
+  model_config_type * model_config = model_config_alloc_empty();
+
+  if(config_content)
     model_config_init(model_config,
-                      content,
+                      config_content,
                       0,
                       joblist,
                       last_history_restart,
                       sched_file,
                       refcase
                       );
-
-    config_content_free(content);
-    config_free(config);
-  }
 
   return model_config;
 }
