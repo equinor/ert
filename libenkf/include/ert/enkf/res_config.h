@@ -39,6 +39,7 @@
 typedef struct res_config_struct res_config_type;
 
 res_config_type * res_config_alloc_load(const char *);
+res_config_type * res_config_alloc(const config_content_type *);
 void              res_config_free(res_config_type *);
 
 const site_config_type       * res_config_get_site_config(const res_config_type *);

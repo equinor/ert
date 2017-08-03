@@ -36,6 +36,8 @@
 #include <ert/enkf/model_config.h>
 #include <ert/enkf/log_config.h>
 
+#define  RES_CONFIG_FILE_KEY "RES_CONFIG_FILE"
+
 struct res_config_struct {
 
   char * user_config_file;
@@ -56,7 +58,9 @@ struct res_config_struct {
 
 };
 
+
 static char * res_config_alloc_working_directory(const char * user_config_file);
+
 
 static res_config_type * res_config_alloc_empty() {
   res_config_type * res_config = util_malloc(sizeof * res_config);
@@ -78,6 +82,7 @@ static res_config_type * res_config_alloc_empty() {
 
   return res_config;
 }
+
 
 static void res_config_install_config_key(
                      config_parser_type * config_parser,
@@ -118,39 +123,86 @@ static void res_config_install_config_key(
 
 
 static config_content_type * res_config_alloc_user_content(
-                                const res_config_type * res_config,
+                                const char * user_config_file,
                                 config_parser_type * config_parser) {
 
-  if(!res_config->user_config_file)
+  if(!user_config_file)
     return NULL;
 
+  // Read config file
   config_content_type * config_content = model_config_alloc_content(
-                                                     res_config->user_config_file,
+                                                     user_config_file,
                                                      config_parser
                                                      );
+
+  // Install config file name
+  char * res_config_file = (user_config_file ?
+                                    util_alloc_realpath(user_config_file) :
+                                    NULL
+                                    );
+
+  res_config_install_config_key(config_parser,
+                                config_content,
+                                RES_CONFIG_FILE_KEY,
+                                res_config_file,
+                                CONFIG_EXISTING_PATH
+                                );
+
+  // Install working directory
+  char * res_working_dir = res_config_alloc_working_directory(res_config_file);
 
   res_config_install_config_key(config_parser,
                                 config_content,
                                 WORKING_DIRECTORY_KEY,
-                                res_config->working_dir,
+                                res_working_dir,
                                 CONFIG_EXISTING_PATH
                                 );
+
+  free(res_config_file);
+  free(res_working_dir);
 
   return config_content;
 }
 
 
 res_config_type * res_config_alloc_load(const char * config_file) {
-  res_config_type * res_config = res_config_alloc_empty(); 
-  res_config->user_config_file = (config_file ?
-                                    util_alloc_realpath(config_file) :
-                                    NULL
-                                    );
-  res_config->working_dir      = res_config_alloc_working_directory(res_config->user_config_file);
+  config_parser_type * config_parser   = config_alloc();
+  config_content_type * config_content = res_config_alloc_user_content(config_file, config_parser);
 
-  config_parser_type * config                = config_alloc();
-  config_content_type * content              = res_config_alloc_user_content(res_config, config);
-  const config_content_type * config_content = content;
+  res_config_type * res_config = res_config_alloc(config_content);
+
+  config_content_free(config_content);
+  config_free(config_parser);
+
+  return res_config;
+}
+
+
+static void res_config_init(
+        res_config_type * res_config,
+        const config_content_type * config_content)
+{
+  if(config_content_has_item(config_content, RES_CONFIG_FILE_KEY)) {
+    const char * res_config_file = config_content_get_value_as_abspath(config_content, RES_CONFIG_FILE_KEY);
+    res_config->user_config_file = util_alloc_string_copy(res_config_file);
+  } else {
+    util_abort("%s: Expected to find a config_file.\n", __func__);
+  }
+
+  if(config_content_has_item(config_content, WORKING_DIRECTORY_KEY)) {
+    const char * working_dir = config_content_get_value_as_abspath(config_content, WORKING_DIRECTORY_KEY);
+    res_config->working_dir = util_alloc_string_copy(working_dir);
+  } else {
+    util_abort("%s: Expected to find a working directory.\n", __func__);
+  }
+}
+
+
+res_config_type * res_config_alloc(const config_content_type * config_content) {
+  res_config_type * res_config = res_config_alloc_empty();
+
+  if(config_content)
+    res_config_init(res_config, config_content);
 
   res_config->subst_config    = subst_config_alloc(config_content);
   res_config->site_config     = site_config_alloc(config_content);
@@ -190,11 +242,9 @@ res_config_type * res_config_alloc_load(const char * config_file) {
   res_config->log_config      = log_config_alloc(config_content);
 
 
-  config_free(config);
-  config_content_free(content);
-
   return res_config;
 }
+
 
 void res_config_free(res_config_type * res_config) {
   if(!res_config)
