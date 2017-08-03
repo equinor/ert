@@ -187,7 +187,7 @@ res_config_type * res_config_alloc_load(const char * config_file) {
                                         ecl_config_get_refcase(res_config->ecl_config)
                                    );
 
-  res_config->log_config      = log_config_alloc_load(res_config->user_config_file);
+  res_config->log_config      = log_config_alloc(config_content);
 
 
   config_free(config);

@@ -19,6 +19,7 @@
 #ifndef ERT_LOG_CONFIG_H
 #define ERT_LOG_CONFIG_H
 
+#include <ert/config/config_content.h>
 #include <ert/util/log.h>
 
 
@@ -41,6 +42,7 @@
 typedef struct log_config_struct log_config_type;
 
 log_config_type * log_config_alloc_load(const char *);
+log_config_type * log_config_alloc(const config_content_type *);
 void              log_config_free(log_config_type *);
 
 const char *             log_config_get_log_file(const log_config_type *);
