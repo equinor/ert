@@ -197,7 +197,7 @@ class PrBuilder(object):
 
         test = (self.repository == 'ecl')
         c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, c_flags=c_flags)
+        build(source_dir, install_dir, test, c_flags=c_flags, test_flags=self.test_flags)
 
     def compile_res(self, basedir, install_dir):
         if self.repository == 'res':
@@ -206,14 +206,14 @@ class PrBuilder(object):
             source_dir = os.path.join(basedir, "libres")
         test = (self.repository in ('ecl', 'res'))
         # TODO add c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, c_flags=c_flags)
+        build(source_dir, install_dir, test, c_flags=c_flags, test_flags=self.test_flags)
 
     def compile_ert(self, basedir, install_dir):
         if self.repository == 'ert':
             source_dir = basedir
         else:
             source_dir = os.path.join(basedir, "ert")
-        build(source_dir, install_dir, True)
+        build(source_dir, install_dir, True, test_flags=self.test_flags)
 
 
 def main():
