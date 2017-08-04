@@ -389,9 +389,12 @@ void field_copy(const field_type *src , field_type * target ) {
 
 
 void field_read_from_buffer(field_type * field , buffer_type * buffer, enkf_fs_type * fs, int report_step) {
-  int byte_size = field_config_get_byte_size( field->config );
-  enkf_util_assert_buffer_type(buffer , FIELD);
-  buffer_fread_compressed(buffer , buffer_get_remaining_size( buffer ) , field->data , byte_size);
+  int byte_size = field_config_get_byte_size(field->config);
+  enkf_util_assert_buffer_type(buffer, FIELD); // FIXME flaky runpath_list test
+  buffer_fread_compressed(buffer,
+                          buffer_get_remaining_size(buffer),
+                          field->data,
+                          byte_size);
 }
 
 
@@ -726,37 +729,40 @@ void field_export(const field_type * __field,
                   const char * init_file) {
   field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
 
-  if (output_transform) field_output_transform(field);
-  {
+  if (output_transform)
+    field_output_transform(field);
 
-    /*  Writes the field to in ecl_kw format to a new file.  */
-    if ((file_type == ECL_KW_FILE_ALL_CELLS) || (file_type == ECL_KW_FILE_ACTIVE_CELLS)) {
-      fortio_type * fortio;
-      bool fmt_file = false;                /* For formats which support both formatted and unformatted output this is hardwired to unformatted. */
 
-      fortio = fortio_open_writer(file , fmt_file , ECL_ENDIAN_FLIP);
+  /*  Writes the field to in ecl_kw format to a new file.  */
+  if ((file_type == ECL_KW_FILE_ALL_CELLS) || (file_type == ECL_KW_FILE_ACTIVE_CELLS)) {
+    fortio_type * fortio;
+    bool fmt_file = false;                /* For formats which support both formatted and unformatted output this is hardwired to unformatted. */
 
-      if (file_type == ECL_KW_FILE_ALL_CELLS)
-        field_ecl_write3D_fortio(field , fortio, init_file);
-      else
-        field_ecl_write1D_fortio(field , fortio);
+    fortio = fortio_open_writer(file , fmt_file , ECL_ENDIAN_FLIP);
 
-      fortio_fclose(fortio);
-    } else if (file_type == ECL_GRDECL_FILE) {
-      /* Writes the field to a new grdecl file. */
-      FILE * stream = util_mkdir_fopen(file , "w");
-      field_ecl_grdecl_export(field , stream, init_file);
-      fclose(stream);
-    } else if (file_type == RMS_ROFF_FILE)
-      /* Roff export */
-      field_ROFF_export(field , file, init_file);
-    else if (file_type == ECL_FILE)
-      /* This entry point is used by the ecl_write() function to write to an ALREADY OPENED eclipse restart file. */
-      field_ecl_write1D_fortio( field , restart_fortio);
+    if (file_type == ECL_KW_FILE_ALL_CELLS)
+      field_ecl_write3D_fortio(field , fortio, init_file);
     else
-      util_abort("%s: internal error file_type = %d - aborting \n",__func__ , file_type);
-  }
-  if (output_transform) field_revert_output_transform(field);
+      field_ecl_write1D_fortio(field , fortio);
+
+    fortio_fclose(fortio);
+  } else if (file_type == ECL_GRDECL_FILE) {
+    /* Writes the field to a new grdecl file. */
+    FILE * stream = util_mkdir_fopen(file , "w");
+    field_ecl_grdecl_export(field , stream, init_file);
+    fclose(stream);
+  } else if (file_type == RMS_ROFF_FILE)
+    /* Roff export */
+    field_ROFF_export(field , file, init_file);
+  else if (file_type == ECL_FILE)
+    /* This entry point is used by the ecl_write() function to write to an ALREADY OPENED eclipse restart file. */
+    field_ecl_write1D_fortio( field , restart_fortio);
+  else
+    util_abort("%s: internal error file_type = %d - aborting \n",
+               __func__, file_type);
+
+  if (output_transform)
+    field_revert_output_transform(field);
 }
 
 
@@ -770,21 +776,24 @@ void field_export(const field_type * __field,
    unchanged.
 */
 
-void field_ecl_write(const field_type * field , const char * run_path , const char * file , void * filestream) {
+void field_ecl_write(const field_type * field,
+                     const char * run_path,
+                     const char * file,
+                     void * filestream) {
   field_file_format_type export_format = field_config_get_export_format(field->config);
 
   if (export_format == ECL_FILE) {
     fortio_type * restart_fortio = fortio_safe_cast(filestream);
     field_export(field , NULL , restart_fortio , export_format , true, NULL);
+    return;
   }
-  else {
-    char * full_path = util_alloc_filename( run_path , file  , NULL);
-    if (util_is_link(full_path)) {
-    	util_unlink_existing(full_path);
-    }
-    field_export(field , full_path , NULL , export_format , true, NULL);
-    free( full_path );
-  }
+
+  char * full_path = util_alloc_filename( run_path , file  , NULL);
+  if (util_is_link(full_path))
+    util_unlink_existing(full_path);
+
+  field_export(field , full_path , NULL , export_format , true, NULL);
+  free( full_path );
 }
 
 
@@ -1109,34 +1118,32 @@ bool field_fload_rms(field_type * field , const char * filename, bool keep_inact
 
 
 
-static bool field_fload_ecl_kw(field_type * field , const char * filename, bool keep_inactive) {
+static bool field_fload_ecl_kw(field_type * field, const char * filename, bool keep_inactive) {
   const char * key = field_config_get_ecl_kw_name(field->config);
   ecl_kw_type * ecl_kw = NULL;
+  bool fmt_file = false;
 
-  {
-    bool fmt_file;
+  if (!ecl_util_fmt_file(filename, &fmt_file))
+    util_abort("%s: could not determine formatted/unformatted status of file:%s \n",
+               __func__, filename);
 
-    if (ecl_util_fmt_file( filename , &fmt_file)) {
-      fortio_type * fortio = fortio_open_reader(filename , fmt_file , ECL_ENDIAN_FLIP);
-      if (fortio) {
-        ecl_kw_fseek_kw(key , true , true , fortio);
-        ecl_kw = ecl_kw_fread_alloc( fortio );
-        fortio_fclose(fortio);
+  fortio_type * fortio = fortio_open_reader(filename, fmt_file, ECL_ENDIAN_FLIP);
+  if (!fortio)
+    return false;
 
-        if (field_config_get_volume(field->config) == ecl_kw_get_size(ecl_kw))
-          field_import3D(field , ecl_kw_get_void_ptr(ecl_kw) , false , keep_inactive, ecl_kw_get_data_type(ecl_kw));
-        else
-          /* Keyword is already packed - e.g. from a restart file. Size is
-             verified in the _copy function.*/
-          field_copy_ecl_kw_data(field , ecl_kw);
+  ecl_kw_fseek_kw(key, true, true, fortio);
+  ecl_kw = ecl_kw_fread_alloc(fortio);
+  fortio_fclose(fortio);
 
-        ecl_kw_free(ecl_kw);
-        return true;
-      }
-    } else
-      util_abort("%s: could not determine formatted/unformatted status of file:%s \n",filename);
-  }
-  return false;
+  if (field_config_get_volume(field->config) == ecl_kw_get_size(ecl_kw))
+    field_import3D(field, ecl_kw_get_void_ptr(ecl_kw), false, keep_inactive, ecl_kw_get_data_type(ecl_kw));
+  else
+    /* Keyword is already packed - e.g. from a restart file. Size is
+       verified in the _copy function.*/
+    field_copy_ecl_kw_data(field, ecl_kw);
+
+  ecl_kw_free(ecl_kw);
+  return true;
 }
 
 
@@ -1460,8 +1467,8 @@ void field_update_sum(field_type * sum , field_type * field , double lower_limit
 bool field_user_get(const field_type * field, const char * index_key, int report_step , double * value)
 {
   const    bool internal_value = false;
-  bool     valid;
-  int      i,j,k;
+  bool     valid = false;
+  int      i=0,j=0,k=0;
   int      parse_user_key = field_config_parse_user_key(field->config , index_key , &i, &j , &k);
 
 
@@ -1477,7 +1484,8 @@ bool field_user_get(const field_type * field, const char * index_key, int report
     else if (parse_user_key == 3)
       fprintf(stderr," ijk: %d , %d, %d is an inactive cell. \n",i+1 , j + 1 , k + 1);
     else
-      util_abort("%s: internal error -invalid value:%d \n",__func__ , parse_user_key);
+      util_abort("%s: internal error -invalid value:%d \n",
+                 __func__, parse_user_key);
     *value = 0.0;
     valid = false;
   }

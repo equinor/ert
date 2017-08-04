@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'field.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'field.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #ifndef ERT_FIELD_H
@@ -34,7 +34,7 @@ extern "C" {
 #include <ert/enkf/field_common.h>
 
 /* Typedef field_type moved to field_config.h */
- 
+
   void         field_scale(field_type * field, double scale_factor);
   int          field_get_global_index(const field_type * , int  , int  , int );
   void         field_ijk_set(field_type * , int  , int  , int  , const void * );
@@ -61,10 +61,10 @@ extern "C" {
   void         field_export(const field_type * , const char * , fortio_type * , field_file_format_type , bool, const char *);
   field_type * field_copyc(const field_type *);
   bool         field_cmp(const field_type *  , const field_type * );
-  
+
   double     * field_indexed_get_alloc(const field_type *, int, const int *);
   void         field_inplace_output_transform(field_type * field);
-  
+
   void          field_iscale(field_type * , double );
   void          field_isqrt(field_type *);
   void          field_isqr(field_type *);
@@ -74,7 +74,7 @@ extern "C" {
   ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * );
   void          field_update_sum(field_type * sum , field_type * field , double lower_limit , double upper_limit);
   void          field_upgrade_103(const char * filename);
-  
+
   UTIL_IS_INSTANCE_HEADER(field);
   UTIL_SAFE_CAST_HEADER_CONST(field);
   VOID_ALLOC_HEADER(field);
@@ -101,4 +101,3 @@ extern "C" {
 }
 #endif
 #endif
-

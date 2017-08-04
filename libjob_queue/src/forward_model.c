@@ -240,7 +240,7 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
 
   fprintf(stream, "\n\"ert_version\" : [%d, %d, \"%s\"],\n", version_get_major_ert_version(), version_get_minor_ert_version(), version_get_micro_ert_version());
   fprintf(stream, "\"run_id\" : \"%s\",\n", run_id);
-  fprintf(stream, "\"ert_pid\" : \"%ld\"\n", getpid()); //Long is big enough to hold __pid_t
+  fprintf(stream, "\"ert_pid\" : \"%ld\"\n", (long)getpid()); //Long is big enough to hold __pid_t
   fprintf(stream, "}\n");
   fclose(stream);
   free(json_file);

@@ -1277,7 +1277,7 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main, job_
         util_usleep(10000);
       }
     }
-    
+
   }
 }
 
@@ -1289,7 +1289,7 @@ void enkf_main_isubmit_job( enkf_main_type * enkf_main , run_arg_type * run_arg 
   const member_config_type  * member_config = enkf_state_get_member_config( enkf_state );
   const queue_config_type * queue_config    = enkf_main_get_queue_config(enkf_main);
   const char * job_script                   = queue_config_get_job_script( queue_config );
-  
+
   const char * run_path                     = run_arg_get_runpath( run_arg );
 
   // The job_queue_node will take ownership of this arg_pack; and destroy it when
@@ -2377,45 +2377,47 @@ bool enkf_main_export_field_with_fs(const enkf_main_type * enkf_main,
   if (util_int_format_count(path) < 1)
     return false;
 
-  {
-    enkf_node_type * node = enkf_node_alloc( config_node );
-    model_config_type * mc = enkf_main_get_model_config(enkf_main);
-    path_fmt_type * runpath_fmt = model_config_get_runpath_fmt(mc);
-    const char * init_file = enkf_config_node_get_FIELD_fill_file(config_node, runpath_fmt);
-    if (init_file)
-      printf("init_file found: \"%s\", exporting initial value for inactive cells\n", init_file);
-    else
-      printf("no init_file found, exporting 0 or fill value for inactive cells\n");
 
-    int iens;
-    for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
-      if (bool_vector_iget(iactive, iens)) {
-        node_id_type node_id = {.report_step = report_step , .iens = iens };
-        if (enkf_node_try_load(node , fs , node_id)) {
-          path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
-          char * filename = path_fmt_alloc_path( export_path , false , iens);
-          path_fmt_free(export_path);
+  enkf_node_type * node = enkf_node_alloc(config_node);
+  model_config_type * mc = enkf_main_get_model_config(enkf_main);
+  path_fmt_type * runpath_fmt = model_config_get_runpath_fmt(mc);
+  const char * init_file = enkf_config_node_get_FIELD_fill_file(config_node, runpath_fmt);
+  if (init_file)
+    printf("init_file found: \"%s\", exporting initial value for inactive cells\n", init_file);
+  else
+    printf("no init_file found, exporting 0 or fill value for inactive cells\n");
 
-          {
-            char * path;
-            util_alloc_file_components(filename , &path , NULL , NULL);
-            if (path) {
-              util_make_path( path );
-              free( path );
-            }
-          }
+  for (int iens = 0; iens < bool_vector_size(iactive); ++iens) {
+    if (!bool_vector_iget(iactive, iens))
+      continue;
 
-          {
-            const field_type * field = enkf_node_value_ptr(node);
-            const bool output_transform = true;
-            field_export(field , filename , NULL , file_type , output_transform, init_file);
-          }
-          free(filename);
-        }
-      }
+    node_id_type node_id = {.report_step = report_step, .iens = iens };
+    if (!enkf_node_try_load(node, fs, node_id))
+      continue;
+
+    path_fmt_type * export_path = path_fmt_alloc_path_fmt(path);
+    char * filename = path_fmt_alloc_path(export_path, false, iens);
+    path_fmt_free(export_path);
+
+    char * path;
+    util_alloc_file_components(filename, &path, NULL, NULL);
+    if (path) {
+      util_make_path(path);
+      free(path);
     }
-    enkf_node_free( node );
+
+    const field_type * field = enkf_node_value_ptr(node);
+    field_export(field,
+                 filename,
+                 NULL,
+                 file_type,
+                 true, //output_transform
+                 init_file);
+
+    free(filename);
   }
+  enkf_node_free(node);
+
 
   return true;
 }
