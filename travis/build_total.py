@@ -193,7 +193,8 @@ class PrBuilder():
         else:
             source_dir = os.path.join(basedir, "libres")
         test = (self.repository in ('ecl', 'res'))
-        self.build(source_dir, install_dir, test)
+        c_flags = "-Werror=all"
+        self.build(source_dir, install_dir, test, c_flags=c_flags)
 
     def compile_ert(self, basedir, install_dir):
         if self.repository == 'ert':
