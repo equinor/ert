@@ -25,7 +25,7 @@ find_package( ecl REQUIRED )
 find_package( res REQUIRED )
 
 function( make_symlink target link )
-  if (EXISTS ${link}) 
+  if (EXISTS ${link})
      EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E remove "${link}")
   endif()
 
@@ -35,8 +35,8 @@ function( make_symlink target link )
      message(STATUS "Linking : ${link} -> ${abs_target}")
   else()
      message( SEND_ERROR "Link target: ${target} does not exist")
-  endif()    
-endfunction()  
+  endif()
+endfunction()
 
 set(STATOIL_TESTDATA_ROOT "" CACHE PATH  "Root to Statoil internal testdata")
 if (EXISTS ${STATOIL_TESTDATA_ROOT})
@@ -65,15 +65,11 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    set(ERT_MAC TRUE)
    add_definitions( -DERT_LINUX )
    set( ERT_BINARY_POSTFIX .${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} )
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-   message(STATUS "Found Windows")
-   set(ERT_WINDOWS TRUE)
-   add_definitions( -DERT_WINDOWS )
 endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
    message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
-   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING 
+   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
        "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
    # Set the possible values of build type for cmake-gui
    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
@@ -86,14 +82,7 @@ if (NOT ERT_WINDOWS)
    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall " )
 endif()
 
-if (MSVC)
-    add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4996" )
-endif()
-
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
-find_package(CXX11Features)
-
-
 
 #-----------------------------------------------------------------
 
@@ -101,10 +90,7 @@ find_package(CXX11Features)
 
 set( CMAKE_C_FLAGS_main ${CMAKE_C_FLAGS} )
 set( CMAKE_CXX_FLAGS_main ${CMAKE_CXX_FLAGS} )
-
-if (NOT ERT_WINDOWS)
-  set( CMAKE_C_FLAGS_main "${CMAKE_C_FLAGS} -std=gnu99" )
-endif()
+set( CMAKE_C_FLAGS_main "${CMAKE_C_FLAGS} -std=gnu99" )
 
 set( ERT_EXTERNAL_UTIL_LIBS "" )
 include(cmake/ert_build_check.cmake)
@@ -124,8 +110,6 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 
-set( NEED_LIBM TRUE )
-set( LINK_STATIC FALSE )
 add_definitions( -DHAVE_PROC )
 
 if (BUILD_TESTS)
