@@ -27,7 +27,7 @@
 #include <ert/util/util.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/run_arg.h>

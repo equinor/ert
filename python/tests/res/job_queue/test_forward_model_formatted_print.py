@@ -2,7 +2,8 @@ import os.path
 import json
 
 from ecl.test import TestAreaContext, ExtendedTestCase
-from ecl.util import SubstitutionList, Version
+from ecl.util import Version
+from res.util.substitution_list import SubstitutionList
 from res.job_queue.forward_model import ForwardModel
 from res.job_queue.ext_job import ExtJob
 from res.job_queue.ext_joblist import ExtJoblist

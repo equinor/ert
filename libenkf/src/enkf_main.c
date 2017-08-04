@@ -31,7 +31,6 @@
 
 #define HAVE_THREAD_POOL 1
 #include <ert/util/matrix.h>
-#include <ert/util/subst_list.h>
 #include <ert/util/rng.h>
 #include <ert/util/subst_func.h>
 #include <ert/util/int_vector.h>
@@ -47,6 +46,7 @@
 #include <ert/util/node_ctype.h>
 #include <ert/util/string_util.h>
 #include <ert/util/type_vector_functions.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/config/config_parser.h>
 #include <ert/config/config_schema_item.h>

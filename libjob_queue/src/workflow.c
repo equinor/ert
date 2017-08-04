@@ -26,7 +26,7 @@
 #include <ert/util/stringlist.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/vector.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/config/config_parser.h>
 

@@ -27,9 +27,9 @@
 #include <ert/util/parser.h>
 #include <ert/util/hash.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/subst_list.h>
 #include <ert/util/vector.h>
 #include <ert/util/path_stack.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/config/config_parser.h>
 #include <ert/config/config_error.h>

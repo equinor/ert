@@ -21,7 +21,7 @@
 #include <ert/util/hash.h>
 #include <ert/util/set.h>
 #include <ert/util/vector.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/config/config_root_path.h>
 #include <ert/config/config_path_elm.h>

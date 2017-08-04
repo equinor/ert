@@ -1,6 +1,19 @@
 project(res_util C)
 
-add_library( res_util src/res_log.c )
+if (ERT_HAVE_REGEXP)
+ list(APPEND opt_srcs src/template_loop.c)
+endif ()
+
+if (HAVE_PTHREAD)
+    list(APPEND opt_srcs src/block_fs.c)
+endif ()
+
+add_library( res_util src/res_log.c
+                      src/subst_list.c
+                      src/template.c
+                      src/template_loop.c
+                      src/block_fs.c
+                      ${opt_srcs})
 
 
 target_link_libraries( res_util PUBLIC ecl )
@@ -24,3 +37,11 @@ if (NOT BUILD_TESTS)
 endif()
 
 #Tests go below
+add_executable(ert_util_subst_list tests/ert_util_subst_list.c)
+target_link_libraries(ert_util_subst_list res_util)
+add_test(NAME ert_util_subst_list COMMAND ert_util_subst_list)
+
+add_executable(ert_util_block_fs tests/ert_util_block_fs.c)
+target_link_libraries(ert_util_block_fs res_util)
+add_test(NAME ert_util_block_fs COMMAND ert_util_block_fs)
+

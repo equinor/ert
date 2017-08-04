@@ -2,7 +2,7 @@ import os
 import time
 from res.job_queue import WorkflowJoblist, Workflow, WorkflowRunner
 from ecl.test import TestAreaContext, ExtendedTestCase
-from ecl.util.substitution_list import SubstitutionList
+from res.util.substitution_list import SubstitutionList
 from .workflow_common import WorkflowCommon
 
 

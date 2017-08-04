@@ -1,4 +1,5 @@
-from ecl.util import BoolVector, PathFormat, SubstitutionList
+from ecl.util import BoolVector, PathFormat
+from res.util.substitution_list import SubstitutionList
 from ecl.test import ExtendedTestCase, TestAreaContext
 from res.enkf import ErtRunContext
 from res.enkf.enums import EnkfRunType

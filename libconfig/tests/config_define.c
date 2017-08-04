@@ -21,12 +21,13 @@
 
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
-#include <ert/util/subst_list.h>
 
 #include <ert/config/config_parser.h>
 #include <ert/config/config_content_node.h>
 #include <ert/config/config_schema_item.h>
 #include <ert/config/config_path_elm.h>
+
+#include <ert/res_util/subst_list.h>
 
 void test_define(config_parser_type * config , const char * config_file) {
   hash_type * pre_defined_kw_map = hash_alloc();

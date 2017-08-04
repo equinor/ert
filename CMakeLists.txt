@@ -80,8 +80,18 @@ set(INSTALL_GROUP ""
         CACHE STRING "Group to install as - blank to install as current group")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
-
 #-----------------------------------------------------------------
+
+find_package(Threads)
+if (CMAKE_USE_PTHREADS_INIT)
+    set(HAVE_PTHREAD TRUE)
+endif ()
+
+# feature tests
+include(CheckFunctionExists)
+check_function_exists( regexec ERT_HAVE_REGEXP )
+#-----------------------------------------------------------------
+
 add_subdirectory(libres_util)
 add_subdirectory(libconfig)
 add_subdirectory(libsched)

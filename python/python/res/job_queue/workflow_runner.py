@@ -1,6 +1,6 @@
 from threading import Thread
 from res.job_queue import Workflow
-from ecl.util.substitution_list import SubstitutionList
+from res.util.substitution_list import SubstitutionList
 
 
 class WorkflowRunner(object):

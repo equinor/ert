@@ -23,7 +23,7 @@
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.h>
 #include <ert/util/util.h>
-#include <ert/util/subst_list.h>
+#include <ert/res_util/subst_list.h>
 
 #include <ert/ecl/ecl_kw_magic.h>
 #include <ert/ecl/ecl_kw.h>
