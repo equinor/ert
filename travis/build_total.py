@@ -12,13 +12,50 @@ import requests
 
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
-class PrBuilder():
 
-    def __init__(self, rep, basedir):
+
+
+
+def build(source_dir, install_dir, test, c_flags="", test_flags=None):
+    build_dir = os.path.join(source_dir, "build")
+    if not os.path.isdir(build_dir):
+        os.makedirs(build_dir)
+
+    cmake_args = ["cmake",
+                  source_dir,
+                  "-DBUILD_TESTS=ON",
+                  "-DBUILD_PYTHON=ON",
+                  "-DERT_BUILD_CXX=ON",
+                  "-DBUILD_APPLICATIONS=ON",
+                  "-DCMAKE_INSTALL_PREFIX=%s" % install_dir,
+                  "-DINSTALL_ERT_LEGACY=ON",
+                  "-DCMAKE_PREFIX_PATH=%s" % install_dir,
+                  "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir,
+                  "-DCMAKE_C_FLAGS=%s" % c_flags
+                 ]
+
+    cwd = os.getcwd()
+    os.chdir(build_dir)
+    subprocess.check_call(cmake_args)
+    subprocess.check_call(["make"])
+    if test:
+        if test_flags is None:
+            test_flags = []
+        subprocess.check_call(["ctest", "--output-on-failure"] + test_flags)
+    subprocess.check_call(["make", "install"])
+    subprocess.check_call(["bin/test_install"])
+    os.chdir(cwd)
+
+
+
+class PrBuilder(object):
+
+    def __init__(self, argv):
+        rep = argv[1]
         self.github_api_token = codecs.encode(GITHUB_ROT13_API_TOKEN, 'rot13')
         self.build_ert = True
         if rep not in ('ecl', 'res', 'ert'):
-            raise Exception("Error: invalid repository type.")
+            raise KeyError("Error: invalid repository type %s." % rep)
         self.repository = rep
         if rep == 'ecl':
             self.rep_name = 'libecl'
@@ -27,19 +64,18 @@ class PrBuilder():
             self.rep_name = 'libres'
         if rep == 'ert':
             self.rep_name = 'ert'
-        self.ecl_pr_num = -1
-        self.res_pr_num = -1
-        self.ert_pr_num = -1
-        self.access_pr()
-        self.clone_fetch_merge(basedir)
-        self.compile_and_build(basedir)
 
-    def display(self):
-        print("Settings: ")
-        print("Repository type: %s" % self.repository)
-        print("ECL pr number: %d" % self.ecl_pr_num)
-        print("RES pr number: %d" % self.res_pr_num)
-        print("ERT pr number: %d" % self.ert_pr_num)
+        self.pr_map = {}
+        self.access_pr()
+        self.test_flags = argv[2:]  # argv = [exec, repo, [L|LE, LABEL]]
+
+    def __str__(self):
+        ret_str = "Settings: "
+        ret_str += "\nRepository type: %s" % self.repository
+        ret_str += "\nECL pr number:   %s" % self.pr_map.get('libecl')
+        ret_str += "\nRES pr number:   %s" % self.pr_map.get('libres')
+        ret_str += "\nERT pr number:   %s" % self.pr_map.get('ert')
+        return ret_str
 
 
     def parse_pr_description(self):
@@ -49,35 +85,29 @@ class PrBuilder():
         desc = self.pr_description
         match = re.search(ecl_word, desc, re.MULTILINE)
         if match:
-            self.ecl_pr_num = int(match.group(1))
+            self.pr_map['libecl'] = int(match.group(1))
         match = re.search(res_word, desc, re.MULTILINE)
         if match:
-            self.res_pr_num = int(match.group(1))
+            self.pr_map['libres'] = int(match.group(1))
         match = re.search(ert_word, desc, re.MULTILINE)
         if match:
-            self.ert_pr_num = int(match.group(1))
+            self.pr_map['ert'] = int(match.group(1))
 
     def check_pr_num_consistency(self):
         if self.repository == "ecl":
-            pr_num = self.ecl_pr_num
-        if self.repository == "res":
-            pr_num = self.res_pr_num
-        if self.repository == "ert":
-            pr_num = self.ert_pr_num
-        if pr_num >= 0:
+            pr_num = self.pr_map.get('libecl')
+        elif self.repository == "res":
+            pr_num = self.pr_map.get('libres')
+        elif self.repository == "ert":
+            pr_num = self.pr_map.get('libecl')
+
+        if pr_num is not None:
             if pr_num != self.pr_number:
                 sys.exit("Error: The line rep=%d does not match pull request %d" %
                          (pr_num, self.pr_number))
-        else:
-            if self.repository == "ecl":
-                self.ecl_pr_num = self.pr_number
-            if self.repository == "res":
-                self.res_pr_num = self.pr_number
-            if self.repository == "ert":
-                self.ert_pr_num = self.pr_number
 
-    def assert_open_pr_status(self, rep_name, pr_num):
-        if pr_num < 0:
+    def pr_is_open(self, rep_name, pr_num=None):
+        if pr_num is None:
             return
         url = "https://api.github.com/repos/Statoil/%s/pulls/%d" % (rep_name, pr_num)
         github_api_token = os.getenv("GITHUB_API_TOKEN")
@@ -85,7 +115,7 @@ class PrBuilder():
 
         content = json.loads(response.content)
         state = content["state"]
-        assert state == "open"
+        return state == "open"
 
     def access_pr(self):
         if "TRAVIS_PULL_REQUEST" not in os.environ:
@@ -109,22 +139,26 @@ class PrBuilder():
         print("PULL REQUEST: %d\n%s" % (self.pr_number, self.pr_description))
         self.parse_pr_description()
         self.check_pr_num_consistency()
-        self.assert_open_pr_status('libecl', self.ecl_pr_num)
-        self.assert_open_pr_status('libres', self.res_pr_num)
-        self.assert_open_pr_status('ert',    self.ert_pr_num)
+
+        # Removing referred-to closed PRs
+        for rep in ('libecl', 'libres', 'ert'):
+            if not self.pr_is_open(rep, self.pr_map.get(rep)):
+                print('Ignoring referred-to closed %s pr %s' % (rep, self.pr_map.get(rep)))
+                self.pr_map[rep] = None
+
 
     def clone_fetch_merge(self, basedir):
-        self.clone_merge_repository('libecl', self.ecl_pr_num, basedir)
-        self.clone_merge_repository('libres', self.res_pr_num, basedir)
+        self.clone_merge_repository('libecl', self.pr_map.get('libecl'), basedir)
+        self.clone_merge_repository('libres', self.pr_map.get('libres'), basedir)
         if self.build_ert:
-            self.clone_merge_repository('ert', self.ert_pr_num, basedir)
+            self.clone_merge_repository('ert', self.pr_map.get('ert'), basedir)
 
     def clone_merge_repository(self, rep_name, pr_num, basedir):
         if self.rep_name == rep_name:
             return
 
         subprocess.check_call(["git", "clone", "https://github.com/Statoil/%s" % rep_name])
-        if pr_num < 0:
+        if pr_num is None:
             return
         rep_path = os.path.join(basedir, rep_name)
         cwd = os.getcwd()
@@ -149,33 +183,6 @@ class PrBuilder():
         if self.build_ert:
             self.compile_ert(basedir, install_dir)
 
-    def build(self, source_dir, install_dir, test, c_flags=""):
-        build_dir = os.path.join(source_dir, "build")
-        if not os.path.isdir(build_dir):
-            os.makedirs(build_dir)
-
-        cmake_args = ["cmake",
-                      source_dir,
-                      "-DBUILD_TESTS=ON",
-                      "-DBUILD_PYTHON=ON",
-                      "-DERT_BUILD_CXX=ON",
-                      "-DBUILD_APPLICATIONS=ON",
-                      "-DCMAKE_INSTALL_PREFIX=%s" % install_dir,
-                      "-DINSTALL_ERT_LEGACY=ON",
-                      "-DCMAKE_PREFIX_PATH=%s" % install_dir,
-                      "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir,
-                      "-DCMAKE_C_FLAGS=%s" % c_flags
-                      ]
-
-        cwd = os.getcwd()
-        os.chdir(build_dir)
-        subprocess.check_call(cmake_args)
-        subprocess.check_call(["make"])
-        if test:
-            subprocess.check_call(["ctest", "--output-on-failure"])
-        subprocess.check_call(["make", "install"])
-        subprocess.check_call(["bin/test_install"])
-        os.chdir(cwd)
 
     def compile_ecl(self, basedir, install_dir):
         if self.repository == 'ecl':
@@ -185,7 +192,7 @@ class PrBuilder():
 
         test = (self.repository == 'ecl')
         c_flags = "-Werror=all"
-        self.build(source_dir, install_dir, test, c_flags=c_flags)
+        build(source_dir, install_dir, test, c_flags=c_flags)
 
     def compile_res(self, basedir, install_dir):
         if self.repository == 'res':
@@ -193,21 +200,26 @@ class PrBuilder():
         else:
             source_dir = os.path.join(basedir, "libres")
         test = (self.repository in ('ecl', 'res'))
-        self.build(source_dir, install_dir, test)
+        c_flags = "-Werror=all"
+        build(source_dir, install_dir, test, c_flags=c_flags)
 
     def compile_ert(self, basedir, install_dir):
         if self.repository == 'ert':
             source_dir = basedir
         else:
             source_dir = os.path.join(basedir, "ert")
-        self.build(source_dir, install_dir, True)
+        build(source_dir, install_dir, True)
 
 
 def main():
     basedir = os.getcwd()
-    pr_build = PrBuilder(sys.argv[1], basedir)
-    pr_build.display()
-    sys.exit(0)
+    print('\n===================')
+    print(' '.join(sys.argv))
+    print('===================\n')
+    pr_build = PrBuilder(sys.argv)
+    pr_build.clone_fetch_merge(basedir)
+    pr_build.compile_and_build(basedir)
+    print(pr_build)
 
 if __name__ == "__main__":
     main()
