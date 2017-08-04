@@ -13,7 +13,9 @@ import requests
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
 
-
+def check_call(args):
+    print('\nCalling %s' % ' '.join(args))
+    return subprocess.check_call(args)
 
 
 def build(source_dir, install_dir, test, c_flags="", test_flags=None):
@@ -36,14 +38,14 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
 
     cwd = os.getcwd()
     os.chdir(build_dir)
-    subprocess.check_call(cmake_args)
-    subprocess.check_call(["make"])
+    check_call(cmake_args)
+    check_call(["make"])
     if test:
         if test_flags is None:
             test_flags = []
-        subprocess.check_call(["ctest", "--output-on-failure"] + test_flags)
-    subprocess.check_call(["make", "install"])
-    subprocess.check_call(["bin/test_install"])
+        check_call(["ctest", "--output-on-failure"] + test_flags)
+    check_call(["make", "install"])
+    check_call(["bin/test_install"])
     os.chdir(cwd)
 
 
@@ -157,17 +159,17 @@ class PrBuilder(object):
         if self.rep_name == rep_name:
             return
 
-        subprocess.check_call(["git", "clone", "https://github.com/Statoil/%s" % rep_name])
+        check_call(["git", "clone", "https://github.com/Statoil/%s" % rep_name])
         if pr_num is None:
             return
         rep_path = os.path.join(basedir, rep_name)
         cwd = os.getcwd()
         os.chdir(rep_path)
-        subprocess.check_call(["git", "config", "user.email", "you@example.com"])
-        subprocess.check_call(["git", "config", "user.name", "Your Name"])
+        check_call(["git", "config", "user.email", "you@example.com"])
+        check_call(["git", "config", "user.name", "Your Name"])
         path = "refs/pull/%d/head:%d" % (pr_num, pr_num)
-        subprocess.check_call(["git", "fetch", "-f", "origin", path])
-        subprocess.check_call(["git", "merge", "%d" % pr_num, '-m"A MESSAGE"'])
+        check_call(["git", "fetch", "-f", "origin", path])
+        check_call(["git", "merge", "%d" % pr_num, '-m"A MESSAGE"'])
         os.chdir(cwd)
 
     def compile_and_build(self, basedir):
