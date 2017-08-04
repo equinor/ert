@@ -205,7 +205,7 @@ class PrBuilder(object):
         else:
             source_dir = os.path.join(basedir, "libres")
         test = (self.repository in ('ecl', 'res'))
-        c_flags = "-Werror=all"
+        # TODO add c_flags = "-Werror=all"
         build(source_dir, install_dir, test, c_flags=c_flags)
 
     def compile_ert(self, basedir, install_dir):
