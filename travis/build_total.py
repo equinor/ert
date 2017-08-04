@@ -16,7 +16,7 @@ GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
 
 
-def build(source_dir, install_dir, test, c_flags=""):
+def build(source_dir, install_dir, test, c_flags="", test_flags=None):
     build_dir = os.path.join(source_dir, "build")
     if not os.path.isdir(build_dir):
         os.makedirs(build_dir)
@@ -39,7 +39,9 @@ def build(source_dir, install_dir, test, c_flags=""):
     subprocess.check_call(cmake_args)
     subprocess.check_call(["make"])
     if test:
-        subprocess.check_call(["ctest", "--output-on-failure"])
+        if test_flags is None:
+            test_flags = []
+        subprocess.check_call(["ctest", "--output-on-failure"] + test_flags)
     subprocess.check_call(["make", "install"])
     subprocess.check_call(["bin/test_install"])
     os.chdir(cwd)
@@ -48,7 +50,8 @@ def build(source_dir, install_dir, test, c_flags=""):
 
 class PrBuilder(object):
 
-    def __init__(self, rep):
+    def __init__(self, argv):
+        rep = argv[1]
         self.github_api_token = codecs.encode(GITHUB_ROT13_API_TOKEN, 'rot13')
         self.build_ert = True
         if rep not in ('ecl', 'res', 'ert'):
@@ -64,7 +67,7 @@ class PrBuilder(object):
 
         self.pr_map = {}
         self.access_pr()
-
+        self.test_flags = argv[2:]  # argv = [exec, repo, [L|LE, LABEL]]
 
     def __str__(self):
         ret_str = "Settings: "
@@ -210,7 +213,10 @@ class PrBuilder(object):
 
 def main():
     basedir = os.getcwd()
-    pr_build = PrBuilder(sys.argv[1])
+    print('\n===================')
+    print(' '.join(sys.argv))
+    print('===================\n')
+    pr_build = PrBuilder(sys.argv)
     pr_build.clone_fetch_merge(basedir)
     pr_build.compile_and_build(basedir)
     print(pr_build)
