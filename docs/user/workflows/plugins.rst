@@ -12,7 +12,7 @@ size in the console:
 .. code:: python
 
     from ert.util import DoubleVector
-    from ert.enkf import ErtScript
+    from res.enkf import ErtScript
 
     class PrintEnsembleSize(ErtPlugin):
 
@@ -52,8 +52,8 @@ results, parameters and observations to a CSV file[#csv_export]_.
     import pandas
     from PyQt4.QtGui import QCheckBox
 
-    from ert.enkf import ErtPlugin, CancelPluginException
-    from ert.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader, CustomKWCollector
+    from res.enkf import ErtPlugin, CancelPluginException
+    from res.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader, CustomKWCollector
     from ert_gui.ertwidgets.customdialog import CustomDialog
     from ert_gui.ertwidgets.listeditbox import ListEditBox
     from ert_gui.ertwidgets.models.path_model import PathModel
