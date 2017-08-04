@@ -12,19 +12,20 @@ OFFSET_SORT = 2
 
 import cwrap.clib as clib
 UTIL_LIB = ecl.load("libecl")
+RES_UTIL_LIB = ecl.load("libres_util")
 
-UTIL_LIB.block_fs_is_mount.restype = ctypes.c_bool
-UTIL_LIB.block_fs_mount.restype = ctypes.c_void_p
-UTIL_LIB.block_fs_alloc_filelist.restype = ctypes.c_void_p
-UTIL_LIB.block_fs_close.restype = ctypes.c_void_p
+RES_UTIL_LIB.block_fs_is_mount.restype = ctypes.c_bool
+RES_UTIL_LIB.block_fs_mount.restype = ctypes.c_void_p
+RES_UTIL_LIB.block_fs_alloc_filelist.restype = ctypes.c_void_p
+RES_UTIL_LIB.block_fs_close.restype = ctypes.c_void_p
 
 UTIL_LIB.vector_get_size.restype = ctypes.c_int
 UTIL_LIB.vector_iget_const.restype = ctypes.c_void_p
 UTIL_LIB.vector_free.restype = ctypes.c_void_p
 
-UTIL_LIB.user_file_node_get_filename.restype = ctypes.c_char_p
-UTIL_LIB.user_file_node_get_data_size.restype = ctypes.c_int
-UTIL_LIB.user_file_node_get_node_offset.restype = ctypes.c_long
+RES_UTIL_LIB.user_file_node_get_filename.restype = ctypes.c_char_p
+RES_UTIL_LIB.user_file_node_get_data_size.restype = ctypes.c_int
+RES_UTIL_LIB.user_file_node_get_node_offset.restype = ctypes.c_long
 
 class Storage(ErtShellCollection):
     def __init__(self, parent):
@@ -48,12 +49,12 @@ class Storage(ErtShellCollection):
             if not os.path.isfile(block_file):
                 self.lastCommandFailed("The path: '%s' is not a file." % block_file)
             else:
-                if not UTIL_LIB.block_fs_is_mount(block_file):
+                if not RES_UTIL_LIB.block_fs_is_mount(block_file):
                     _, filename = os.path.split(block_file)
                     self.lastCommandFailed("The file: '%s' is not a block mount file." % filename)
                 else:
-                    block_fs = UTIL_LIB.block_fs_mount(block_file, 1, 0, 1, 0, False, True, False)
-                    files = UTIL_LIB.block_fs_alloc_filelist(block_fs, pattern, OFFSET_SORT, False)
+                    block_fs = RES_UTIL_LIB.block_fs_mount(block_file, 1, 0, 1, 0, False, True, False)
+                    files = RES_UTIL_LIB.block_fs_alloc_filelist(block_fs, pattern, OFFSET_SORT, False)
 
                     file_count = UTIL_LIB.vector_get_size(files)
 
@@ -63,13 +64,13 @@ class Storage(ErtShellCollection):
 
                         for index in range(file_count):
                             node = UTIL_LIB.vector_iget_const(files, index)
-                            node_filename = UTIL_LIB.user_file_node_get_filename(node)
-                            node_size = UTIL_LIB.user_file_node_get_data_size(node)
-                            node_offset = UTIL_LIB.user_file_node_get_node_offset(node)
+                            node_filename = RES_UTIL_LIB.user_file_node_get_filename(node)
+                            node_size = RES_UTIL_LIB.user_file_node_get_data_size(node)
+                            node_offset = RES_UTIL_LIB.user_file_node_get_node_offset(node)
                             print(fmt % (node_filename, node_size, node_offset))
 
                     UTIL_LIB.vector_free(files)
-                    UTIL_LIB.block_fs_close(block_fs)
+                    RES_UTIL_LIB.block_fs_close(block_fs)
 
 
     def completeLs(self, text, line, begidx, endidx):
