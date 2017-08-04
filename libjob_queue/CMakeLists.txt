@@ -144,6 +144,10 @@ target_link_libraries(job_queue_timeout_test job_queue)
 add_test(NAME job_queue_timeout_test
          COMMAND job_queue_timeout_test $<TARGET_FILE:job_queue_stress_task>)
 
+add_executable(job_lsf_test tests/job_lsf_test.c)
+target_link_libraries(job_lsf_test job_queue)
+add_test(NAME job_lsf_test COMMAND job_lsf_test)
+
 add_executable(job_queue_driver_test tests/job_queue_driver_test.c)
 target_link_libraries(job_queue_driver_test job_queue)
 add_test(NAME job_queue_driver_test COMMAND job_queue_driver_test)
@@ -201,9 +205,9 @@ endif()
 set(LSF_SERVER "" CACHE STRING  "List of LSF servers for testing")
 
 if (LSF_LIBRARY)
-   add_executable(job_lsf_test tests/job_lsf_test.c)
-   target_link_libraries(job_lsf_test job_queue util test_util)
-   add_test(NAME job_lsf_test COMMAND job_lsf_test)
+   add_executable(job_lsb_test tests/job_lsb_test.c)
+   target_link_libraries(job_lsb_test job_queue util test_util)
+   add_test(NAME job_lsb_test COMMAND job_lsb_test)
 
    add_executable(job_lsb tests/job_lsb.c)
    target_link_libraries(job_lsb job_queue util test_util)

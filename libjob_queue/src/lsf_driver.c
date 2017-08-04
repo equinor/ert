@@ -129,6 +129,7 @@ struct lsf_driver_struct {
   char              * resource_request;
   stringlist_type   * exclude_hosts;
   char              * login_shell;
+  char              * project_code;
   pthread_mutex_t     submit_lock;
 
   lsf_submit_method_enum submit_method;
@@ -359,37 +360,35 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
       }
     }
 
-    char * excludes_string = NULL;
-    char * req = "";
-    char * resreq = NULL;
+    char * req = NULL;
 
     if (stringlist_get_size(select_list) > 0) {
-      excludes_string = stringlist_alloc_joined_string(select_list, " && ");
       if (driver->resource_request != NULL) {
-        resreq = util_alloc_string_copy(driver->resource_request);
+        char * resreq = util_alloc_string_copy(driver->resource_request);
+        char * excludes_string = stringlist_alloc_joined_string(select_list, " && ");
+
         util_string_tr(resreq, ']', ' '); // remove "]" from "select[A && B]
-        excludes_string = stringlist_alloc_joined_string(select_list, " && ");
         req = util_alloc_sprintf("%s && %s]", resreq, excludes_string);
+
+        free(excludes_string);
+        free(resreq);
       } else {
-        req = util_alloc_sprintf("select[%s]", excludes_string);
+        char * select_string = stringlist_alloc_joined_string(select_list, " && ");
+        req = util_alloc_sprintf("select[%s]", select_string);
+        free(select_string);
       }
     } else {
-      if (driver->resource_request != NULL) {
-        resreq = util_alloc_string_copy(driver->resource_request);
-        req = util_alloc_sprintf("%s", resreq);
-      }
+      if (driver->resource_request)
+        req = util_alloc_string_copy(driver->resource_request);
     }
-    if (resreq)
-      free(resreq);
 
-    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
-      quoted_resource_request = util_alloc_sprintf("\"%s\"", req);
-    else
-      quoted_resource_request = util_alloc_string_copy(req);
-
-    free(req);
-    if (excludes_string)
-      free(excludes_string);
+    if (req) {
+      if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
+        quoted_resource_request = util_alloc_sprintf("\"%s\"", req);
+      else
+        quoted_resource_request = util_alloc_string_copy(req);
+      free(req);
+    }
     stringlist_free(select_list);
   }
 
@@ -415,6 +414,11 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
   if (driver->login_shell != NULL) {
     stringlist_append_ref( argv , "-L");
     stringlist_append_ref( argv , driver->login_shell );
+  }
+
+  if (driver->project_code) {
+    stringlist_append_ref( argv , "-P");
+    stringlist_append_ref( argv , driver->project_code );
   }
 
   stringlist_append_ref( argv , submit_cmd);
@@ -980,6 +984,7 @@ void lsf_driver_free(lsf_driver_type * driver ) {
   free( driver->bkill_cmd );
   free( driver->bjobs_cmd );
   free( driver->bsub_cmd );
+  free( driver->project_code );
 
   hash_free(driver->status_map);
   hash_free(driver->bjobs_cache);
@@ -999,6 +1004,10 @@ void lsf_driver_free__(void * __driver ) {
   lsf_driver_free( driver );
 }
 
+
+static void lsf_driver_set_project_code( lsf_driver_type * driver,  const char * project_code) {
+  driver->project_code = util_realloc_string_copy( driver->project_code , project_code);
+}
 
 static void lsf_driver_set_queue( lsf_driver_type * driver,  const char * queue ) {
   driver->queue_name         = util_realloc_string_copy( driver->queue_name , queue);
@@ -1147,6 +1156,8 @@ bool lsf_driver_set_option( void * __driver , const char * option_key , const vo
       lsf_driver_add_exclude_hosts( driver , value );
     else if (strcmp( LSF_BJOBS_TIMEOUT , option_key) == 0)
       lsf_driver_set_bjobs_refresh_interval_option( driver , value );
+    else if (strcmp( LSF_PROJECT_CODE , option_key) == 0)
+      lsf_driver_set_project_code( driver , value );
     else
       has_option = false;
   }
@@ -1175,6 +1186,9 @@ const void * lsf_driver_get_option( const void * __driver , const char * option_
       return driver->bkill_cmd;
     else if (strcmp( LSF_BHIST_CMD , option_key ) == 0)
       return driver->bhist_cmd;
+    else if (strcmp( LSF_PROJECT_CODE , option_key ) == 0)
+      /* Will be NULL if the project code has not been set. */
+      return driver->project_code;
     else if (strcmp( LSF_BJOBS_TIMEOUT , option_key ) == 0) {
       /* This will leak. */
       char * timeout_string = util_alloc_sprintf( "%d"  , driver->bjobs_refresh_interval );
@@ -1273,6 +1287,13 @@ static void lsf_driver_shell_init( lsf_driver_type * lsf_driver ) {
 }
 
 
+bool lsf_driver_has_project_code( const lsf_driver_type * driver ) {
+  if (driver->project_code)
+    return true;
+  else
+    return false;
+}
+
 
 void * lsf_driver_alloc( ) {
   lsf_driver_type * lsf_driver     = util_malloc(sizeof * lsf_driver );
@@ -1283,6 +1304,7 @@ void * lsf_driver_alloc( ) {
   lsf_driver->remote_lsf_server    = NULL;
   lsf_driver->rsh_cmd              = NULL;
   lsf_driver->resource_request     = NULL;
+  lsf_driver->project_code         = NULL;
   lsf_driver->error_count          = 0;
   lsf_driver->max_error_count      = MAX_ERROR_COUNT;
   lsf_driver->submit_error_sleep   = SUBMIT_ERROR_SLEEP * 1000000;
