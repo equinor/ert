@@ -102,8 +102,9 @@ extern "C" {
   void                  ecl_config_clear_static_kw( ecl_config_type * ecl_config );
   stringlist_type     * ecl_config_get_static_kw_list( const ecl_config_type * ecl_config );
   void                  ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stream );
-  ecl_config_type     * ecl_config_alloc( );
   ecl_config_type     * ecl_config_alloc_load(const char * user_config_file);
+  ecl_config_type     * ecl_config_alloc(const config_content_type * config_content);
+
   void                  ecl_config_add_config_items( config_parser_type * config );
   const char          * ecl_config_get_depth_unit( const ecl_config_type * ecl_config );
   const char          * ecl_config_get_pressure_unit( const ecl_config_type * ecl_config );

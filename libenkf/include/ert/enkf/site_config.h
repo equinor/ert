@@ -99,6 +99,7 @@ typedef struct site_config_struct site_config_type;
   mode_t                   site_config_get_umask( const site_config_type * site_config );
 
   site_config_type       * site_config_alloc_load_user_config(const char *);
+  site_config_type       * site_config_alloc(const config_content_type * config_content);
 
   config_content_type    * site_config_alloc_content(config_parser_type*);
 

@@ -35,7 +35,7 @@ int main(int argc , char ** argv) {
   {
     char * config_file = util_alloc_abs_path(argv[1]);
 
-    ecl_config_type * ecl_config = ecl_config_alloc();
+    ecl_config_type * ecl_config = ecl_config_alloc(NULL);
     ecl_refcase_list_type * refcase_list = ecl_config_get_refcase_list( ecl_config );
     {
       config_parser_type * config = config_alloc();

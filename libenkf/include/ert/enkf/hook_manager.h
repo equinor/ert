@@ -31,10 +31,9 @@ extern "C" {
 
   typedef struct hook_manager_struct hook_manager_type;
 
-  hook_manager_type   * hook_manager_alloc(ert_workflow_list_type * workflow_list);
-  hook_manager_type * hook_manager_alloc_load(
-        ert_workflow_list_type * workflow_list,
-        const char * user_config_file);
+  hook_manager_type   * hook_manager_alloc_default(ert_workflow_list_type * workflow_list);
+  hook_manager_type   * hook_manager_alloc_load(ert_workflow_list_type *, const char *);
+  hook_manager_type   * hook_manager_alloc(ert_workflow_list_type *, const config_content_type *);
 
   void                  hook_manager_free();
 

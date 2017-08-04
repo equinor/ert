@@ -60,9 +60,9 @@ struct ert_workflow_list_struct {
   bool                      verbose;
 };
 
-static void ert_workflow_list_init(ert_workflow_list_type * workflow_list , config_content_type * config);
+static void ert_workflow_list_init(ert_workflow_list_type * workflow_list, const config_content_type * config);
 
-ert_workflow_list_type * ert_workflow_list_alloc(const subst_list_type * context) {
+ert_workflow_list_type * ert_workflow_list_alloc_empty(const subst_list_type * context) {
   ert_workflow_list_type * workflow_list = util_malloc( sizeof * workflow_list );
   UTIL_TYPE_ID_INIT( workflow_list , ERT_WORKFLOW_LIST_TYPE_ID );
   workflow_list->path_list  = stringlist_alloc_new();
@@ -76,7 +76,7 @@ ert_workflow_list_type * ert_workflow_list_alloc(const subst_list_type * context
 }
 
 ert_workflow_list_type * ert_workflow_list_alloc_load_site_config(const subst_list_type * context) {
-  ert_workflow_list_type * workflow_list = ert_workflow_list_alloc(context);
+  ert_workflow_list_type * workflow_list = ert_workflow_list_alloc_empty(context);
 
   config_parser_type * config = config_alloc();
   config_content_type * content = site_config_alloc_content(config);
@@ -93,17 +93,27 @@ ert_workflow_list_type * ert_workflow_list_alloc_load(
         const subst_list_type * context,
         const char * user_config_file) {
 
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
+  if(user_config_file)
+    config_content = model_config_alloc_content(user_config_file, config_parser);
+
+  ert_workflow_list_type * workflow_list = ert_workflow_list_alloc(context, config_content);
+
+  config_free(config_parser);
+  config_content_free(config_content);
+
+  return workflow_list;
+}
+
+ert_workflow_list_type * ert_workflow_list_alloc(
+        const subst_list_type * context,
+        const config_content_type * config_content) {
+
   ert_workflow_list_type * workflow_list = ert_workflow_list_alloc_load_site_config(context);
 
-  if(user_config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(user_config_file, config);
-
-    ert_workflow_list_init(workflow_list, content);
-
-    config_free(config);
-    config_content_free(content);
-  }
+  if(config_content)
+    ert_workflow_list_init(workflow_list, config_content);
 
   return workflow_list;
 }
@@ -283,7 +293,7 @@ stringlist_type * ert_workflow_list_get_job_names(const ert_workflow_list_type *
 }
 
 
-static void ert_workflow_list_init(ert_workflow_list_type * workflow_list , config_content_type * config) {
+static void ert_workflow_list_init(ert_workflow_list_type * workflow_list , const config_content_type * config) {
   /* Adding jobs */
   {
     if (config_content_has_item( config , WORKFLOW_JOB_DIRECTORY_KEY)) {

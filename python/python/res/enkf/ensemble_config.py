@@ -15,7 +15,9 @@
 #  for more details.
 from cwrap import BaseCClass
 from ecl.util import StringList
+from ecl.ecl import EclGrid, EclSum
 from res.enkf import EnkfPrototype, SummaryKeyMatcher
+from res.config import ConfigContent
 from res.enkf.config import EnkfConfigNode, CustomKWConfig
 from res.enkf.enums import EnkfVarType, ErtImplType
 
@@ -23,7 +25,7 @@ from res.enkf.enums import EnkfVarType, ErtImplType
 
 class EnsembleConfig(BaseCClass):
     TYPE_NAME = "ens_config"
-    _alloc = EnkfPrototype("void* ensemble_config_alloc()" , bind = False)
+    _alloc = EnkfPrototype("void* ensemble_config_alloc(config_content, ecl_grid, ecl_sum)", bind = False)
     _free = EnkfPrototype("void ensemble_config_free( ens_config )")
     _has_key = EnkfPrototype("bool ensemble_config_has_key( ens_config , char* )")
     _size = EnkfPrototype("int ensemble_config_get_size( ens_config)")
@@ -41,7 +43,7 @@ class EnsembleConfig(BaseCClass):
 
     
     def __init__(self):
-        c_ptr = self._alloc( )
+        c_ptr = self._alloc(None, None, None)
         super(EnsembleConfig , self).__init__(c_ptr)
         
 

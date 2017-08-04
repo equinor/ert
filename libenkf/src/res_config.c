@@ -21,6 +21,7 @@
 
 #include <ert/config/config_settings.h>
 
+#include <ert/enkf/config_keys.h>
 #include <ert/enkf/res_config.h>
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/rng_config.h>
@@ -34,6 +35,8 @@
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/model_config.h>
 #include <ert/enkf/log_config.h>
+
+#define  RES_CONFIG_FILE_KEY "RES_CONFIG_FILE"
 
 struct res_config_struct {
 
@@ -55,7 +58,9 @@ struct res_config_struct {
 
 };
 
+
 static char * res_config_alloc_working_directory(const char * user_config_file);
+
 
 static res_config_type * res_config_alloc_empty() {
   res_config_type * res_config = util_malloc(sizeof * res_config);
@@ -78,53 +83,168 @@ static res_config_type * res_config_alloc_empty() {
   return res_config;
 }
 
-res_config_type * res_config_alloc_load(const char * config_file) {
-  res_config_type * res_config = res_config_alloc_empty(); 
-  res_config->user_config_file = (config_file ?
-                                    util_alloc_realpath(config_file) :
+
+static void res_config_install_config_key(
+                     config_parser_type * config_parser,
+                     config_content_type * config_content,
+                     const char * key, const char * value,
+                     const config_item_types item_type
+                     ) {
+
+  /* Add working directory as a key */
+  config_schema_item_type * schema_item = config_add_key_value(
+                                                        config_parser,
+                                                        key,
+                                                        false,
+                                                        item_type
+                                                        );
+
+  /* Inject working directory */
+  if(config_content_has_item(config_content, key))
+    util_abort(
+            "%s: Did not expect %s to be provided in config file\n",
+            __func__, key
+            );
+
+  config_content_add_item(config_content, schema_item, NULL);
+  config_content_item_type * content_item = config_content_get_item(config_content, key);
+
+  config_content_node_type * new_node = config_content_item_alloc_node(content_item, NULL);
+  config_content_node_add_value(new_node, value);
+
+  if(!new_node)
+    util_abort(
+            "%s: Failed to internally install %s: %s\n",
+            __func__, key, value
+            );
+
+  config_content_add_node(config_content, new_node);
+}
+
+
+static config_content_type * res_config_alloc_user_content(
+                                const char * user_config_file,
+                                config_parser_type * config_parser) {
+
+  if(!user_config_file)
+    return NULL;
+
+  // Read config file
+  config_content_type * config_content = model_config_alloc_content(
+                                                     user_config_file,
+                                                     config_parser
+                                                     );
+
+  // Install config file name
+  char * res_config_file = (user_config_file ?
+                                    util_alloc_realpath(user_config_file) :
                                     NULL
                                     );
-  res_config->working_dir      = res_config_alloc_working_directory(res_config->user_config_file);
 
-  res_config->subst_config    = subst_config_alloc_load(res_config->user_config_file, res_config->working_dir);
+  res_config_install_config_key(config_parser,
+                                config_content,
+                                RES_CONFIG_FILE_KEY,
+                                res_config_file,
+                                CONFIG_EXISTING_PATH
+                                );
 
-  res_config->site_config     = site_config_alloc_load_user_config(res_config->user_config_file);
-  res_config->rng_config      = rng_config_alloc_load_user_config(res_config->user_config_file);
-  res_config->analysis_config = analysis_config_alloc_load(res_config->user_config_file);
-  res_config->workflow_list   = ert_workflow_list_alloc_load(
+  // Install working directory
+  char * res_working_dir = res_config_alloc_working_directory(res_config_file);
+
+  res_config_install_config_key(config_parser,
+                                config_content,
+                                WORKING_DIRECTORY_KEY,
+                                res_working_dir,
+                                CONFIG_EXISTING_PATH
+                                );
+
+  free(res_config_file);
+  free(res_working_dir);
+
+  return config_content;
+}
+
+
+res_config_type * res_config_alloc_load(const char * config_file) {
+  config_parser_type * config_parser   = config_alloc();
+  config_content_type * config_content = res_config_alloc_user_content(config_file, config_parser);
+
+  res_config_type * res_config = res_config_alloc(config_content);
+
+  config_content_free(config_content);
+  config_free(config_parser);
+
+  return res_config;
+}
+
+
+static void res_config_init(
+        res_config_type * res_config,
+        const config_content_type * config_content)
+{
+  if(config_content_has_item(config_content, RES_CONFIG_FILE_KEY)) {
+    const char * res_config_file = config_content_get_value_as_abspath(config_content, RES_CONFIG_FILE_KEY);
+    res_config->user_config_file = util_alloc_string_copy(res_config_file);
+  } else {
+    util_abort("%s: Expected to find a config_file.\n", __func__);
+  }
+
+  if(config_content_has_item(config_content, WORKING_DIRECTORY_KEY)) {
+    const char * working_dir = config_content_get_value_as_abspath(config_content, WORKING_DIRECTORY_KEY);
+    res_config->working_dir = util_alloc_string_copy(working_dir);
+  } else {
+    util_abort("%s: Expected to find a working directory.\n", __func__);
+  }
+}
+
+
+res_config_type * res_config_alloc(const config_content_type * config_content) {
+  res_config_type * res_config = res_config_alloc_empty();
+
+  if(config_content)
+    res_config_init(res_config, config_content);
+
+  res_config->subst_config    = subst_config_alloc(config_content);
+  res_config->site_config     = site_config_alloc(config_content);
+  res_config->rng_config      = rng_config_alloc(config_content);
+  res_config->analysis_config = analysis_config_alloc(config_content);
+
+  res_config->workflow_list   = ert_workflow_list_alloc(
                                     subst_config_get_subst_list(res_config->subst_config),
-                                    res_config->user_config_file
+                                    config_content
                                     );
 
-  res_config->hook_manager    = hook_manager_alloc_load(
+  res_config->hook_manager    = hook_manager_alloc(
                                     res_config->workflow_list,
-                                    res_config->user_config_file
+                                    config_content
                                     );
 
-  res_config->templates       = ert_templates_alloc_load(
+  res_config->templates       = ert_templates_alloc(
                                     subst_config_get_subst_list(res_config->subst_config),
-                                    res_config->user_config_file
+                                    config_content
                                     );
 
-  res_config->plot_config     = plot_settings_alloc_load(res_config->user_config_file);
-  res_config->ecl_config      = ecl_config_alloc_load(res_config->user_config_file);
+  res_config->plot_config     = plot_settings_alloc(config_content);
+  res_config->ecl_config      = ecl_config_alloc(config_content);
 
-  res_config->ensemble_config = ensemble_config_alloc_load(res_config->user_config_file,
+  res_config->ensemble_config = ensemble_config_alloc(config_content,
                                             ecl_config_get_grid(res_config->ecl_config),
                                             ecl_config_get_refcase(res_config->ecl_config)
                                     );
 
-  res_config->model_config    = model_config_alloc_load(res_config->user_config_file,
+  res_config->model_config    = model_config_alloc(config_content,
                                         site_config_get_installed_jobs(res_config->site_config),
                                         ecl_config_get_last_history_restart(res_config->ecl_config),
                                         ecl_config_get_sched_file(res_config->ecl_config),
                                         ecl_config_get_refcase(res_config->ecl_config)
                                    );
 
-  res_config->log_config      = log_config_alloc_load(res_config->user_config_file);
+  res_config->log_config      = log_config_alloc(config_content);
+
 
   return res_config;
 }
+
 
 void res_config_free(res_config_type * res_config) {
   if(!res_config)

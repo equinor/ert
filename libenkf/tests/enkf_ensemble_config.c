@@ -35,7 +35,7 @@ void add_NULL_node( void * arg) {
 
 
 void test_abort_on_add_NULL() {
-  ensemble_config_type * ensemble_config = ensemble_config_alloc();
+  ensemble_config_type * ensemble_config = ensemble_config_alloc(NULL, NULL, NULL);
 
   test_assert_true( ensemble_config_is_instance( ensemble_config ));
   test_assert_util_abort("ensemble_config_add_node" , add_NULL_node , ensemble_config );

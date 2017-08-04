@@ -16,6 +16,7 @@
 
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
+from res.config import ConfigContent
 from ecl.ecl import EclSum, EclGrid
 from ecl.util import StringList, UIReturn
 from res.sched import SchedFile
@@ -23,7 +24,7 @@ from res.sched import SchedFile
 class EclConfig(BaseCClass):
     TYPE_NAME = "ecl_config"
 
-    _alloc                  = EnkfPrototype("void* ecl_config_alloc( )", bind = False)
+    _alloc                  = EnkfPrototype("void* ecl_config_alloc(config_content)", bind = False)
     _free                   = EnkfPrototype("void  ecl_config_free( ecl_config )")
     _get_eclbase            = EnkfPrototype("char* ecl_config_get_eclbase( ecl_config )")
     _validate_eclbase       = EnkfPrototype("ui_return_obj ecl_config_validate_eclbase( ecl_config , char*)")
@@ -55,7 +56,7 @@ class EclConfig(BaseCClass):
     _get_start_date         = EnkfPrototype("time_t ecl_config_get_start_date(ecl_config)")
 
     def __init__(self):
-        c_ptr = self._alloc()
+        c_ptr = self._alloc(None)
         if c_ptr:
             super(EclConfig, self).__init__(c_ptr)
         else:

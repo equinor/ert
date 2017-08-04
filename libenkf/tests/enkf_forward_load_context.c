@@ -49,7 +49,8 @@ void test_create() {
 
 void test_load_restart1() {
   run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", NULL, NULL , 0 , 0 , "run");
-  ecl_config_type * ecl_config = ecl_config_alloc( );
+  ecl_config_type * ecl_config = ecl_config_alloc(NULL);
+
   forward_load_context_type * load_context = forward_load_context_alloc( run_arg , false , ecl_config , "BASE" , NULL );
 
   test_assert_false( forward_load_context_load_restart_file( load_context , 10 ));
@@ -74,7 +75,7 @@ void test_load_restart2() {
   test_work_area_type * work_area = test_work_area_alloc("forward_load");
   {
     run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", NULL, NULL , 0 , 0 , "run");
-    ecl_config_type * ecl_config = ecl_config_alloc( );
+    ecl_config_type * ecl_config = ecl_config_alloc(NULL);
     forward_load_context_type * load_context = forward_load_context_alloc( run_arg , false , ecl_config , "BASE" , NULL );
     util_make_path("run");
     make_restart_mock( "run" , "BASE" , 1 );

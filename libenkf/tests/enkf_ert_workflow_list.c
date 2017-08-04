@@ -29,7 +29,7 @@
 
 
 void test_create_workflow_list() {
-   ert_workflow_list_type * wf_list = ert_workflow_list_alloc( NULL );
+   ert_workflow_list_type * wf_list = ert_workflow_list_alloc_empty(NULL);
    test_assert_true( ert_workflow_list_is_instance( wf_list ));
    ert_workflow_list_free( wf_list );
 }
@@ -38,7 +38,7 @@ void test_create_workflow_list() {
 
 void test_add_alias( const char * job) {
   test_work_area_type * work_area = test_work_area_alloc( "workflow_list/alias" );
-  ert_workflow_list_type * wf_list = ert_workflow_list_alloc( NULL );
+  ert_workflow_list_type * wf_list = ert_workflow_list_alloc_empty(NULL);
   ert_workflow_list_add_job( wf_list , "JOB" , job );
 
   {

@@ -42,40 +42,49 @@
 #define DEFAULT_SHOW_HISTORY     FALSE_STRING
 
 config_settings_type * plot_settings_alloc_load(const char * config_file) {
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
+  if(config_file)
+    config_content = model_config_alloc_content(config_file, config_parser);
+
+  config_settings_type * plot_config = plot_settings_alloc(config_content);
+
+  config_content_free(config_content);
+  config_free(config_parser);
+
+  return plot_config;
+}
+
+config_settings_type * plot_settings_alloc(const config_content_type * config_content) {
   config_settings_type * plot_config = config_settings_alloc(PLOT_SETTING_KEY);
   plot_settings_init(plot_config);
 
-  if(config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(config_file, config);
-
-    config_settings_apply(plot_config, content);
-
-    config_content_free(content);
-    config_free(config);
-  }
+  if(config_content)
+    config_settings_apply(plot_config, config_content);
 
   return plot_config;
 }
 
 void plot_settings_init(config_settings_type * settings) {
 
-  config_settings_add_setting(settings , PATH_KEY , CONFIG_STRING , DEFAULT_PLOT_PATH );
-  config_settings_add_setting(settings , SHOW_REFCASE_KEY , CONFIG_BOOL , DEFAULT_SHOW_REFCASE );
-  config_settings_add_setting(settings , SHOW_HISTORY_KEY , CONFIG_BOOL , DEFAULT_SHOW_HISTORY );
+  config_settings_add_setting(settings, PATH_KEY,         CONFIG_STRING, DEFAULT_PLOT_PATH);
+  config_settings_add_setting(settings, SHOW_REFCASE_KEY, CONFIG_BOOL,   DEFAULT_SHOW_REFCASE);
+  config_settings_add_setting(settings, SHOW_HISTORY_KEY, CONFIG_BOOL,   DEFAULT_SHOW_HISTORY);
 
 }
 
 
 void plot_settings_add_config_items( config_parser_type * config ) {
-  config_settings_init_parser__( PLOT_SETTING_KEY , config , false );
+  config_settings_init_parser__(PLOT_SETTING_KEY, config, false);
+  config_add_key_value(config, PLOT_PATH_KEY, false, CONFIG_STRING);
 
-  config_add_key_value(config , PLOT_PATH_KEY         , false , CONFIG_STRING);
-  {
-    char * msg = util_alloc_sprintf( "The keyword %s has been deprecated - use %s %s <PATH>", PLOT_PATH_KEY , PLOT_SETTING_KEY , PATH_KEY );
-    config_parser_deprecate( config , PLOT_PATH_KEY , msg);
-    free( msg );
-  }
+  char * msg = util_alloc_sprintf(
+                   "The keyword %s has been deprecated - use %s %s <PATH>",
+                   PLOT_PATH_KEY,
+                   PLOT_SETTING_KEY,
+                   PATH_KEY
+                   );
+
+  config_parser_deprecate(config, PLOT_PATH_KEY, msg);
+  free(msg);
 }
-
-

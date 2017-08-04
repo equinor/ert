@@ -135,7 +135,7 @@ static void ert_template_fprintf_config( const ert_template_type * template , FI
 /*****************************************************************/
 
 
-ert_templates_type * ert_templates_alloc( subst_list_type * parent_subst  ) {
+static ert_templates_type * ert_templates_alloc_default(subst_list_type * parent_subst) {
   ert_templates_type * templates = util_malloc( sizeof * templates );
   UTIL_TYPE_ID_INIT( templates , ERT_TEMPLATES_TYPE_ID );
   templates->templates       = hash_alloc();
@@ -146,17 +146,27 @@ ert_templates_type * ert_templates_alloc( subst_list_type * parent_subst  ) {
 ert_templates_type * ert_templates_alloc_load(subst_list_type * parent_subst,
         const char * config_file)
 {
-  ert_templates_type * templates = ert_templates_alloc(parent_subst);
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
 
-  if(config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(config_file, config);
+  if(config_file)
+    config_content = model_config_alloc_content(config_file, config_parser);
 
-    ert_templates_init(templates, content);
+  ert_templates_type * templates = ert_templates_alloc(parent_subst, config_content);
 
-    config_content_free(content);
-    config_free(config);
-  }
+  config_content_free(config_content);
+  config_free(config_parser);
+
+  return templates;
+}
+
+ert_templates_type * ert_templates_alloc(subst_list_type * parent_subst,
+                                         const config_content_type * config_content) {
+
+  ert_templates_type * templates = ert_templates_alloc_default(parent_subst);
+
+  if(config_content)
+    ert_templates_init(templates, config_content);
 
   return templates;
 }

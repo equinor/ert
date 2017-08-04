@@ -45,17 +45,25 @@ static log_config_type * log_config_alloc_default() {
 
 
 log_config_type * log_config_alloc_load(const char * config_file) {
+  config_parser_type * config_parser = config_alloc();
+  config_content_type * config_content = NULL;
+  if(config_file)
+    config_content = model_config_alloc_content(config_file, config_parser);
+
+  log_config_type * log_config = log_config_alloc(config_content);
+
+  config_content_free(config_content);
+  config_free(config_parser);
+
+  return log_config;
+}
+
+
+log_config_type * log_config_alloc(const config_content_type * config_content) {
   log_config_type * log_config = log_config_alloc_default();
 
-  if(config_file) {
-    config_parser_type * config = config_alloc();
-    config_content_type * content = model_config_alloc_content(config_file, config);
-
-    log_config_init(log_config, content);
-
-    config_content_free(content);
-    config_free(config);
-  }
+  if(config_content)
+    log_config_init(log_config, config_content);
 
   return log_config;
 }

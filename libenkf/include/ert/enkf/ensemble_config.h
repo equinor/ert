@@ -80,8 +80,9 @@ typedef struct ensemble_config_struct ensemble_config_type;
   stringlist_type                * ensemble_config_alloc_keylist(const ensemble_config_type *);
   stringlist_type                * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type *  , int var_mask);
   stringlist_type                * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *, ert_impl_type);
-  ensemble_config_type           * ensemble_config_alloc( );
-  ensemble_config_type           * ensemble_config_alloc_load(const char * user_config_file, ecl_grid_type * grid, const ecl_sum_type * refcase);
+  ensemble_config_type           * ensemble_config_alloc_load(const char *, ecl_grid_type *, const ecl_sum_type *);
+  ensemble_config_type           * ensemble_config_alloc(const config_content_type *, ecl_grid_type *, const ecl_sum_type *);
+
   void                             ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FILE * stream );
   const summary_key_matcher_type * ensemble_config_get_summary_key_matcher(const ensemble_config_type * ensemble_config);
   int                      ensemble_config_get_size(const ensemble_config_type * ensemble_config );

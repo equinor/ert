@@ -33,7 +33,7 @@
 
 
 analysis_config_type * create_analysis_config() {
-  analysis_config_type * ac = analysis_config_alloc();
+  analysis_config_type * ac = analysis_config_alloc_default();
   return ac;
 }
 
