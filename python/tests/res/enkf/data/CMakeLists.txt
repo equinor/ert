@@ -11,7 +11,7 @@ set(TEST_SOURCES
 
 add_python_package("python.tests.res.enkf.data" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf/data "${TEST_SOURCES}" False)
 
-addPythonTest(tests.res.enkf.data.test_custom_kw.CustomKWTest)
+addPythonTest(tests.res.enkf.data.test_custom_kw.CustomKWTest LABELS SLOW_1)
 addPythonTest(tests.res.enkf.data.test_gen_kw.GenKwTest)
 
 if (STATOIL_TESTDATA_ROOT)

@@ -121,6 +121,7 @@ target_link_libraries(job_queue_test job_queue)
 add_test(NAME job_queue_test
          COMMAND job_queue_test
                  $<TARGET_FILE:job_program_output>)
+set_tests_properties(job_queue_test PROPERTIES LABELS "SLOW_1")
 
 add_executable(job_queue_stress_task tests/job_queue_stress_task.c)
 target_link_libraries(job_queue_stress_task ecl)
@@ -131,6 +132,8 @@ add_test(NAME job_queue_stress_test
          COMMAND job_queue_stress_test
                  $<TARGET_FILE:job_queue_stress_task>
                  False)
+set_tests_properties(job_queue_stress_test PROPERTIES LABELS "SLOW_1")
+
 add_test(NAME job_queue_user_exit
          COMMAND job_queue_stress_test
                  $<TARGET_FILE:job_queue_stress_task>

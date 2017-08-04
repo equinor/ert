@@ -7,6 +7,6 @@ set(TEST_SOURCES
 
 add_python_package("python.tests.res.server" ${PYTHON_INSTALL_PREFIX}/tests/res/server "${TEST_SOURCES}" False)
 
-addPythonTest(tests.res.server.test_simulation_context.SimulationContextTest)
-addPythonTest(tests.res.server.test_rpc_service.RPCServiceTest)
-addPythonTest(tests.res.server.test_rpc_storage.RPCStorageTest)
+addPythonTest(tests.res.server.test_simulation_context.SimulationContextTest LABELS SLOW_2)
+addPythonTest(tests.res.server.test_rpc_service.RPCServiceTest LABELS SLOW_2)
+addPythonTest(tests.res.server.test_rpc_storage.RPCStorageTest LABELS SLOW_1)

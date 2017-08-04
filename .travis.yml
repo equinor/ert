@@ -1,15 +1,34 @@
 language: c
 
+compiler:
+  - gcc
+  - clang
+
+os:
+  - linux
+  - osx
+
+osx_image: xcode7.3
+sudo: false
+dist: trusty
+
+env:
+  global:
+    - ERT_SHOW_BACKTRACE=1
+  matrix:
+    - TEST_SUITE="-LE SLOW"  # Run all tests not labeled as slow
+    - TEST_SUITE="-L SLOW_1" # Run all tests labeled as SLOW in group 1
+    - TEST_SUITE="-L SLOW_2" # Run all tests labeled as SLOW in group 2
+
 matrix:
   fast_finish: true
   allow_failures:
     - os: osx
-  include:
+  exclude:
     - os: osx
-      osx_image: xcode7.3
-      compiler: clang
-    - os: linux
       compiler: gcc
+    - os: linux
+      compiler: clang
 
 addons:
   apt:
@@ -50,12 +69,8 @@ install:
     - conda info -a
     - conda install pyqt=4 scipy=0.16.1 pylint numpy pandas matplotlib future
 
-env:
-  global:
-     - ERT_SHOW_BACKTRACE=1
-
 before_script:
   - wget https://raw.githubusercontent.com/Statoil/ert/master/travis/build_total.py
 
 script:
-  - python build_total.py res
+  - python build_total.py res ${TEST_SUITE}
