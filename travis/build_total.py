@@ -13,9 +13,12 @@ import requests
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
 
-def check_call(args):
-    print('\nCalling %s' % ' '.join(args))
-    return subprocess.check_call(args)
+def call(args):
+    arg_str = ' '.join(args)
+    print('\nCalling %s' % arg_str)
+    status = subprocess.call(args)
+    if status:
+        exit('subprocess.call error:\n\tcode %d\n\targs %s' % (status, arg_str))
 
 
 def build(source_dir, install_dir, test, c_flags="", test_flags=None):
@@ -38,14 +41,14 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
 
     cwd = os.getcwd()
     os.chdir(build_dir)
-    check_call(cmake_args)
-    check_call(["make"])
+    call(cmake_args)
+    call(["make"])
     if test:
         if test_flags is None:
             test_flags = []
-        check_call(["ctest", "--output-on-failure"] + test_flags)
-    check_call(["make", "install"])
-    check_call(["bin/test_install"])
+        call(["ctest", "--output-on-failure"] + test_flags)
+    call(["make", "install"])
+    call(["bin/test_install"])
     os.chdir(cwd)
 
 
@@ -159,17 +162,17 @@ class PrBuilder(object):
         if self.rep_name == rep_name:
             return
 
-        check_call(["git", "clone", "https://github.com/Statoil/%s" % rep_name])
+        call(["git", "clone", "https://github.com/Statoil/%s" % rep_name])
         if pr_num is None:
             return
         rep_path = os.path.join(basedir, rep_name)
         cwd = os.getcwd()
         os.chdir(rep_path)
-        check_call(["git", "config", "user.email", "you@example.com"])
-        check_call(["git", "config", "user.name", "Your Name"])
+        call(["git", "config", "user.email", "you@example.com"])
+        call(["git", "config", "user.name", "Your Name"])
         path = "refs/pull/%d/head:%d" % (pr_num, pr_num)
-        check_call(["git", "fetch", "-f", "origin", path])
-        check_call(["git", "merge", "%d" % pr_num, '-m"A MESSAGE"'])
+        call(["git", "fetch", "-f", "origin", path])
+        call(["git", "merge", "%d" % pr_num, '-m"A MESSAGE"'])
         os.chdir(cwd)
 
     def compile_and_build(self, basedir):
