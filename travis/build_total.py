@@ -85,7 +85,7 @@ class PrBuilder():
 
         content = json.loads(response.content)
         state = content["state"]
-        assert state == "open"
+        return state == "open"
 
     def access_pr(self):
         if "TRAVIS_PULL_REQUEST" not in os.environ:
