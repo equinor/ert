@@ -14,8 +14,8 @@ config commands by writing a Python script, and invoking it from a workflow.
 
 ::
 
- from ert.enkf import ErtScript
- from ert.enkf import (LocalConfig, LocalObsdata, LocalObsdataNode,
+ from res.enkf import ErtScript
+ from res.enkf import (LocalConfig, LocalObsdata, LocalObsdataNode,
                        LocalMinistep, LocalUpdateStep, LocalDataset, ActiveList)
  from ert.ecl import EclGrid, EclRegion, Ecl3DKW, EclFile, EclInitFile, EclKW, EclTypeEnum
 

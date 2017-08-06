@@ -4,7 +4,7 @@ import os
 import os.path
 
 from ert.config import ConfigParser, ContentTypeEnum, UnrecognizedEnum
-from ert.enkf import TimeMap,EnkfFs
+from res.enkf import TimeMap,EnkfFs
 from ert.ecl import EclSum
 
 #TimeMap._upgrade107 = 
