@@ -18,6 +18,8 @@ class EnsembleSmoother(BaseRunModel):
 
     def runSimulations(self, arguments):
         prior_context = self.create_context( arguments )
+        
+        self.checkMinimumActiveRealizations(prior_context)
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         # self.setAnalysisModule(arguments["analysis_module"])
@@ -85,3 +87,5 @@ class EnsembleSmoother(BaseRunModel):
             
         run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, subst_list, itr)
         return run_context
+
+

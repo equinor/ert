@@ -230,6 +230,13 @@ class BaseRunModel(object):
             raise ErtRunError("Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations.\n\n"
                               "Check ERT log file '%s' or simulation folder for details." % ErtLog.getFilename())
 
+    def checkMinimumActiveRealizations(self, run_context):
+        active_realizations = self.count_active_realizations( run_context )
+        if not self.ert().analysisConfig().haveEnoughRealisations(active_realizations, self.ert().getEnsembleSize()):
+            raise ErtRunError("Number of active realizations is less than the specified MIN_REALIZATIONS in the config file")
+
+    def count_active_realizations(self, run_context):
+        return sum(run_context.get_mask( ))
 
     def __str__(self):
         return self._name
