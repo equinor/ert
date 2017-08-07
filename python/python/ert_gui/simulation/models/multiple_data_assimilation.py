@@ -45,7 +45,8 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
     def runSimulations(self, arguments):
-        #self.checkMinimumActiveRealizations(arguments)
+        context = self.create_context(arguments, 0, None)
+        self.checkMinimumActiveRealizations(context)
         weights = self.parseWeights(self.weights)
         iteration_count = len(weights)
 
