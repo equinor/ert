@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import sys
 import time 
-from ert.enkf import EnKFMain, RunArg, NodeId, ResConfig
-from ert.enkf.data import EnkfNode
+from res.enkf import EnKFMain, RunArg, NodeId, ResConfig
+from res.enkf.data import EnkfNode
 from ert.job_queue import JobQueueManager
 
 res_config = ResConfig( sys.argv[1] )

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import sys
 import time 
-from ert.enkf import EnKFMain, ResConfig
-from ert.enkf.enums import ErtImplType
+from res.enkf import EnKFMain, ResConfig
+from res.enkf.enums import ErtImplType
 
 
 # This will instantiate the EnkFMain object and create a handle to

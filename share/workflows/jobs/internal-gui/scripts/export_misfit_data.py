@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import os
-from ert.enkf import ErtScript, RealizationStateEnum
+from res.enkf import ErtScript, RealizationStateEnum
 from ecl.util import BoolVector
 
 """

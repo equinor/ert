@@ -68,7 +68,7 @@ of this kind must:
 .. code:: python
 
     from ert.util import DoubleVector
-    from ert.enkf import ErtScript
+    from res.enkf import ErtScript
 
     class ExportMisfit(ErtScript):
 
