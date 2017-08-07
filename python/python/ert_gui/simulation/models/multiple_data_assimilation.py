@@ -45,6 +45,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
 
     def runSimulations(self, arguments):
+        #self.checkMinimumActiveRealizations(arguments)
         weights = self.parseWeights(self.weights)
         iteration_count = len(weights)
 
@@ -85,6 +86,9 @@ class MultipleDataAssimilation(BaseRunModel):
         self._simulateAndPostProcess(run_context)
 
         self.setPhase(iteration_count + 2, "Simulations completed.")
+
+    def count_active_realizations(self, run_context):
+        return sum(run_context.get_mask( ))
 
 
     def update(self, run_context, weight):
