@@ -548,9 +548,10 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
         for(int i = 0; i < ecl_smspec_num_nodes(smspec); i++) {
             const smspec_node_type * smspec_node = ecl_smspec_iget_node(smspec, i);
-            const char * key = smspec_node_get_gen_key1(smspec_node);
+            if (smspec_node_is_valid( smspec_node )) {
+              const char * key = smspec_node_get_gen_key1(smspec_node);
 
-            if(summary_key_matcher_match_summary_key(matcher, key)) {
+              if(summary_key_matcher_match_summary_key(matcher, key)) {
                 summary_key_set_type * key_set = enkf_fs_get_summary_key_set(result_fs);
                 summary_key_set_add_summary_key(key_set, key);
 
@@ -561,6 +562,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
                 enkf_node_forward_load_vector( node , load_context , time_index);
                 enkf_node_store_vector( node , result_fs , iens );
+              }
             }
         }
 
