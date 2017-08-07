@@ -31,12 +31,7 @@ class EnsembleExperiment(BaseRunModel):
         
     def runSimulations(self, arguments ):
         self.runSimulations__(  arguments , "Running ensemble experiment...")
-                
-        
-
-        
-    def count_active_realizations(self, run_context):
-        return sum(run_context.get_mask( ))
+               
 
 
     def create_context(self, arguments):
