@@ -336,6 +336,8 @@ class JobManager(object):
 
         payload = {"user": self.user,
                    "cwd": os.getcwd(),
+                   "application": "ert",
+                   "subsystem": "ert_forward_model",
                    "file_server": self.isilon_node,
                    "node": self.node,
                    "start_time": self.start_time.isoformat(),
