@@ -1,9 +1,8 @@
 language: c
 
-env:
-    matrix:
-        - MB_PYTHON_VERSION=3.6
-        - MB_PYTHON_VERSION=2.7
+language: python
+python:
+  - "3.6"
 
 matrix:
   fast_finish: true
