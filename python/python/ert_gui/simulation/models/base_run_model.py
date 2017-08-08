@@ -221,14 +221,14 @@ class BaseRunModel(object):
             raise ErtRunError("Simulation failed! All realizations failed!")
         elif not self.ert().analysisConfig().haveEnoughRealisations(num_successful_realizations, active_realizations):
             raise ErtRunError("Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations.\n\n"
-                              "Check ERT log file '%s' or simulation folder for details." % ErtLog.getFilename()) 
+                              "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename()) 
     
     def checkHaveSufficientRealizations(self, num_successful_realizations):
         if num_successful_realizations == 0:
             raise ErtRunError("Simulation failed! All realizations failed!")
         elif not self.ert().analysisConfig().haveEnoughRealisations(num_successful_realizations, self.ert().getEnsembleSize()):
             raise ErtRunError("Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations.\n\n"
-                              "Check ERT log file '%s' or simulation folder for details." % ErtLog.getFilename())
+                              "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename())
 
     def checkMinimumActiveRealizations(self, run_context):
         active_realizations = self.count_active_realizations( run_context )
