@@ -1,5 +1,10 @@
 language: c
 
+env:
+    matrix:
+        - MB_PYTHON_VERSION=3.6
+        - MB_PYTHON_VERSION=2.7
+
 matrix:
   fast_finish: true
   allow_failures:

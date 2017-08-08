@@ -13,6 +13,10 @@ import requests
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
 
+def find_python_version:
+    if (sys.version_info.major >= 3):
+        sys.exit(0)
+
 def call(args):
     arg_str = ' '.join(args)
     print('\nCalling %s' % arg_str)
@@ -217,6 +221,7 @@ class PrBuilder(object):
 
 
 def main():
+    find_python_version()
     basedir = os.getcwd()
     print('\n===================')
     print(' '.join(sys.argv))
