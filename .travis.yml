@@ -55,12 +55,12 @@ install:
     # Useful for debugging any issues with conda
     - conda info -a
     #- conda install pyqt=4 scipy=0.16.1 pylint numpy pandas matplotlib future
-    conda install future
-    conda install scipy=0.16.1
-    conda install pylint
-    conda install numpy
-    conda install pandas
-    conda install pyqt=4
+    - conda install future
+    - conda install scipy=0.16.1
+    - conda install pylint
+    - conda install numpy
+    - conda install pandas
+    - conda install pyqt=4
 
 env:
   global:
