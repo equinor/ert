@@ -15,8 +15,8 @@ GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
 def find_python_version():
     print(sys.version)
-    if (sys.version_info.major >= 3):
-        sys.exit(1)
+    #if (sys.version_info.major >= 3):
+    #    sys.exit(1)
 
 def call(args):
     arg_str = ' '.join(args)
