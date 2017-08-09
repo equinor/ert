@@ -58,6 +58,7 @@ install:
     - conda install future
     - conda install pylint
     - conda install numpy
+    - conda install matplotlib
     - conda install pandas
 
 
