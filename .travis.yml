@@ -32,7 +32,7 @@ addons:
       - cmake-data
 
 install:
-    - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
+    #- if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
 
     # We do this conditionally because it saves us some downloading if the version is the same.
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -65,4 +65,5 @@ env:
 
 
 script:
+  - g++ --version
   - travis/build_total.py ert
