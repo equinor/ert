@@ -48,7 +48,7 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
     os.chdir(build_dir)
     call(cmake_args)
     call(["make"])
-    if test:
+    if True:
         if test_flags is None:
             test_flags = []
         call(["ctest", "--output-on-failure"] + test_flags)
