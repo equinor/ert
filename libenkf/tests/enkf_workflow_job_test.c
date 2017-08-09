@@ -36,6 +36,40 @@ ert_test_context_type * create_context( const char * config_file, const char * n
   return test_context;
 }
 
+void test_pre_simulation_copy__( ert_test_context_type * test_context,
+                                 const char * job_name,
+                                 const char * source_path,
+                                 const char * target_path,
+                                 const char * expected_DATA_ROOT) {
+
+  stringlist_type * args = stringlist_alloc_new();
+  unsetenv("DATA_ROOT");
+  stringlist_append_copy( args , source_path );
+  stringlist_append_copy( args , target_path );
+  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
+
+  test_assert_string_equal( expected_DATA_ROOT , getenv("DATA_ROOT") );
+  if (expected_DATA_ROOT)
+    test_assert_true( util_is_directory( target_path ));
+
+  stringlist_free( args );
+}
+
+void test_pre_simulation_copy(ert_test_context_type * test_context, const char * job_name , const char * job_file) {
+  test_assert_true( ert_test_context_install_workflow_job( test_context , job_name , job_file ));
+
+  test_pre_simulation_copy__( test_context , job_name, "does_not_exist" , "target" , NULL );
+
+  {
+    FILE * f = util_mkdir_fopen("input/path/xxx/model/file", "w");
+    fprintf(f, "File \n");
+    fclose( f );
+  }
+  test_pre_simulation_copy__( test_context , job_name, "input/path/xxx/model" , "target" , "target");
+  test_assert_true( util_is_file( "target/model/file"));
+}
+
+
 void test_create_case_job(ert_test_context_type * test_context, const char * job_name , const char * job_file) {
   stringlist_type * args = stringlist_alloc_new();
   stringlist_append_copy( args , "newly_created_case");
@@ -473,6 +507,7 @@ int main(int argc , const char ** argv) {
   const char * job_file_ranking_export      = argv[9];
   const char * job_file_init_misfit_table   = argv[10];
   const char * job_file_export_runpath      = argv[11];
+  const char * job_file_pre_simulation_copy = argv[12];
 
 
   ert_test_context_type * test_context = create_context( config_file, "enkf_workflow_job_test" );
@@ -485,6 +520,7 @@ int main(int argc , const char ** argv) {
     test_rank_realizations_on_observations_job(test_context, "JOB6" , job_file_observation_ranking);
     test_rank_realizations_on_data_job(test_context , "JOB7" , job_file_data_ranking);
     test_export_ranking(test_context, "JOB8" , job_file_ranking_export);
+    test_pre_simulation_copy(test_context , "JOBB" , job_file_pre_simulation_copy);
   }
   ert_test_context_free( test_context );
 

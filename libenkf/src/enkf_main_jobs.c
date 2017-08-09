@@ -537,3 +537,18 @@ void * enkf_main_analysis_update_JOB( void * self , const stringlist_type * args
   return NULL;
 }
 
+
+void * enkf_main_pre_simulation_copy_JOB( void * self , const stringlist_type * args) {
+  const char * source_path  = stringlist_iget( args , 0 );
+  const char * target_path = stringlist_iget( args , 1 );
+
+  if (util_is_directory( source_path )) {
+    util_make_path( target_path );
+    util_copy_directory( source_path , target_path );
+    setenv("DATA_ROOT" , target_path, 1);
+  } else {
+    char * msg = util_alloc_sprintf("Error in workflow job PRE_SIMULATION_COPY - source directory: %s not existing\n",source_path);
+    res_log_add_message(LOG_ERROR, stderr , msg , true );
+  }
+  return NULL;
+}

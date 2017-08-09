@@ -445,7 +445,8 @@ add_statoil_test(enkf_workflow_job_test
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/DATA_RANKING
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RANKING
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/INIT_MISFIT_TABLE
-                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RUNPATH)
+                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RUNPATH
+                 ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/PRE_SIMULATION_COPY)
 
 add_executable(enkf_forward_init_SURFACE tests/enkf_forward_init_SURFACE.c)
 target_link_libraries(enkf_forward_init_SURFACE enkf)
