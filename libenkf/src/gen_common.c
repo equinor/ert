@@ -120,10 +120,14 @@ void * gen_common_fread_alloc(const char * file , ecl_data_type load_data_type ,
   on what was actually used when the data was loaded.
 */
 
-void * gen_common_fload_alloc(const char * file , gen_data_file_format_type load_format , ecl_data_type ASCII_data_type , ecl_data_type * load_data_type , int * size) {
+void * gen_common_fload_alloc(const char * file,
+                              gen_data_file_format_type load_format,
+                              ecl_data_type ASCII_data_type,
+                              ecl_data_type * load_data_type,
+                              int * size) {
   void * buffer = NULL;
 
-  ecl_data_type * load_type;
+  ecl_data_type * load_type = &ECL_FLOAT;
   if (load_format == ASCII) {
     load_type = &ASCII_data_type;
     buffer =  gen_common_fscanf_alloc(file , ASCII_data_type , size);
@@ -133,7 +137,7 @@ void * gen_common_fload_alloc(const char * file , gen_data_file_format_type load
   } else if (load_format == BINARY_DOUBLE) {
     load_type = &ECL_DOUBLE;
     buffer = gen_common_fread_alloc(file , ECL_DOUBLE , size);
-  } else 
+  } else
     util_abort("%s: trying to load with unsupported format:%s... \n" , load_format);
 
   memcpy(load_data_type, load_type, sizeof * load_type);
