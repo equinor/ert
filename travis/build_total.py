@@ -222,11 +222,11 @@ class PrBuilder(object):
 
 
 def main():
-    find_python_version()
     basedir = os.getcwd()
     print('\n===================')
     print(' '.join(sys.argv))
     print('===================\n')
+    find_python_version()
     pr_build = PrBuilder(sys.argv)
     pr_build.clone_fetch_merge(basedir)
     pr_build.compile_and_build(basedir)
