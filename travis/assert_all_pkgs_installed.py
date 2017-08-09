@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import scaipy as sp
-
 import PyQt5 as pq
 import scipy as sp
 import pylint as pl
