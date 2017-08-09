@@ -34,7 +34,7 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
     cmake_args = ["cmake",
                   source_dir,
                   "-DBUILD_TESTS=ON",
-                  "-DBUILD_PYTHON=OFF",
+                  "-DBUILD_PYTHON=ON",
                   "-DERT_BUILD_CXX=ON",
                   "-DBUILD_APPLICATIONS=ON",
                   "-DCMAKE_INSTALL_PREFIX=%s" % install_dir,
