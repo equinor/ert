@@ -70,16 +70,13 @@ void enkf_tui_analysis_select_module__(void * arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_main_type * enkf_main = arg_pack_iget_ptr( arg_pack , 0 );
   menu_type * menu = arg_pack_iget_ptr( arg_pack , 1 );
-  
-  {
-    // This is really a const return.
-    analysis_config_type * analysis_config = (analysis_config_type *) enkf_main_get_analysis_config( enkf_main );
-    char module_name[256];
-    util_printf_prompt("Name module to select" , prompt_len , '=' , "=> ");
-    scanf("%s", module_name);
-    if (analysis_config_select_module( analysis_config , module_name ))
-      enkf_tui_analysis_update_title( enkf_main , menu );
-  }
+
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  char module_name[256];
+  util_printf_prompt("Name module to select" , prompt_len , '=' , "=> ");
+  scanf("%s", module_name);
+  if (analysis_config_select_module( analysis_config , module_name ))
+    enkf_tui_analysis_update_title( enkf_main , menu );
 }
 
 
