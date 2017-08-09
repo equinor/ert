@@ -69,7 +69,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             return int(match.group(1))
         return 0
 
-    def run(self, output_file, trajectory_path, case_list=None, infer_iteration=True):
+    def run(self, output_file, trajectory_path, case_list=None, infer_iteration=True, drop_const_cols=False):
         """The run method will export the RFT's for all wells and all cases.
 
         The successfull operation of this method hinges on two naming
@@ -157,6 +157,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 data_frame = data_frame.append(case_frame)
 
         data_frame.set_index(["Realization", "Well", "Case", "Iteration"], inplace=True)
+        if drop_const_cols:
+            data_frame = data_frame.loc[:, (data_frame != data_frame.iloc[0]).any()]
+        
         data_frame.to_csv(output_file)
         export_info = "Exported RFT information for wells: %s to: %s " % (", ".join(list(wells)), output_file)
         return export_info
@@ -179,11 +182,16 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         infer_iteration_check = QCheckBox()
         infer_iteration_check.setChecked(True)
         infer_iteration_check.setToolTip(GenDataRFTCSVExportJob.INFER_HELP)
+        
+        drop_const_columns_check = QCheckBox()
+        drop_const_columns_check.setChecked(False)
+        drop_const_columns_check.setToolTip("If checked, exclude columns whose value is the same for every entry")
 
         dialog.addLabeledOption("Output file path", output_path_chooser)
         dialog.addLabeledOption("Trajectory file", trajectory_chooser)
         dialog.addLabeledOption("List of cases to export", list_edit)
         dialog.addLabeledOption("Infer iteration number", infer_iteration_check)
+        dialog.addLabeledOption("Drop constant columns", drop_const_columns_check)
 
         dialog.addButtons()
 
@@ -192,7 +200,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         if success:
             case_list = ",".join(list_edit.getItems())
             try:
-                return [output_path_model.getPath(), trajectory_model.getPath(), case_list, infer_iteration_check.isChecked()]
+                return [output_path_model.getPath(), trajectory_model.getPath(), case_list, infer_iteration_check.isChecked(), drop_const_columns_check.isChecked()]
             except ValueError:
                 pass
 

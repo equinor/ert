@@ -67,9 +67,9 @@ class CSVExportJob(ErtPlugin):
         return 0
 
 
-    def run(self, output_file, case_list=None, design_matrix_path=None, infer_iteration=True):
+    def run(self, output_file, case_list=None, design_matrix_path=None, infer_iteration=True, drop_const_cols=False):
         cases = []
-
+        
         if case_list is not None:
             if case_list.strip() == "*":
                 cases = self.getAllCaseList()
@@ -131,6 +131,9 @@ class CSVExportJob(ErtPlugin):
             data = pandas.concat([data, case_data])
 
         data = data.reorder_levels(["Realization", "Iteration", "Date", "Case"])
+        if drop_const_cols:
+            data = data.loc[:, (data != data.iloc[0]).any()]
+        
         data.to_csv(output_file)
 
         export_info = "Exported %d rows and %d columns to %s." % (len(data.index), len(data.columns), output_file)
@@ -154,11 +157,17 @@ class CSVExportJob(ErtPlugin):
         infer_iteration_check = QCheckBox()
         infer_iteration_check.setChecked(True)
         infer_iteration_check.setToolTip(CSVExportJob.INFER_HELP)
+        
+        drop_const_columns_check = QCheckBox()
+        drop_const_columns_check.setChecked(False)
+        drop_const_columns_check.setToolTip("If checked, exclude columns whose value is the same for every entry")
+
 
         dialog.addLabeledOption("Output file path", output_path_chooser)
         dialog.addLabeledOption("Design Matrix path", design_matrix_path_chooser)
         dialog.addLabeledOption("List of cases to export", list_edit)
         dialog.addLabeledOption("Infer iteration number", infer_iteration_check)
+        dialog.addLabeledOption("Drop constant columns", drop_const_columns_check)
 
         dialog.addButtons()
 
@@ -171,7 +180,7 @@ class CSVExportJob(ErtPlugin):
 
             case_list = ",".join(list_edit.getItems())
 
-            return [output_path_model.getPath(), case_list, design_matrix_path, infer_iteration_check.isChecked()]
+            return [output_path_model.getPath(), case_list, design_matrix_path, infer_iteration_check.isChecked(), drop_const_columns_check.isChecked()]
 
         raise CancelPluginException("User cancelled!")
 
@@ -187,3 +196,4 @@ class CSVExportJob(ErtPlugin):
         all_case_list = fs_manager.getCaseList()
         all_case_list = [case for case in all_case_list if fs_manager.caseHasData(case)]
         return all_case_list
+    
