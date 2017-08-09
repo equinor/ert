@@ -69,5 +69,5 @@ env:
 
 
 script:
-  - g++ --version
+  - travis/assert_all_pkgs_installed.py
   - travis/build_total.py ert
