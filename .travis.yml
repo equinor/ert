@@ -54,7 +54,7 @@ install:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-
+    - conda install pyqt=5
     - conda install future
     - conda install pylint
     - conda install numpy
