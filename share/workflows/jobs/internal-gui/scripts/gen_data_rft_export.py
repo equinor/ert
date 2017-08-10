@@ -6,10 +6,10 @@ import pandas
 from PyQt4.QtGui import QCheckBox
 
 from ecl.ecl.rft import WellTrajectory
-from ert.enkf import ErtPlugin, CancelPluginException
-from ert.enkf import RealizationStateEnum
-from ert.enkf.enums import EnkfObservationImplementationType
-from ert.enkf.export import GenDataCollector, ArgLoader
+from res.enkf import ErtPlugin, CancelPluginException
+from res.enkf import RealizationStateEnum
+from res.enkf.enums import EnkfObservationImplementationType
+from res.enkf.export import GenDataCollector, ArgLoader
 from ert_gui.ertwidgets.customdialog import CustomDialog
 from ert_gui.ertwidgets.listeditbox import ListEditBox
 from ert_gui.ertwidgets.models.path_model import PathModel

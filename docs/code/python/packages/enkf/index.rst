@@ -1,2 +1,2 @@
-The ert.enkf package
+The res.enkf package
 ====================

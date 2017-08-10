@@ -1,4 +1,4 @@
-from ert.enkf import ErtScript
+from res.enkf import ErtScript
 
 """
 This job is useful if you are running a workflow that requires the hook_manager runpath_list
