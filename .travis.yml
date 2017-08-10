@@ -1,8 +1,5 @@
 language: c
 
-python:
-  - "2.7"
-
 matrix:
   fast_finish: true
   allow_failures:
@@ -13,6 +10,7 @@ matrix:
       compiler: clang
     - os: linux
       compiler: gcc
+      env: TRAVIS_PYTHON_VERSION = "2.7"
 
 addons:
   apt:
@@ -57,7 +55,6 @@ install:
 
     - travis/install_python_packages.py
       
-
 
 env:
   global:
