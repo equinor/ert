@@ -14,8 +14,12 @@ GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
 def find_python_version(argv):
     print(sys.version)
-    if (sys.version_info.major >= 3 and argv[2] != 'allowPython3'):
-        print("ERT does not support python version 3 or higher, exiting.")
+    allowPython3 = False
+    if (len(argv) >= 3):
+        if (argv[2] == 'allowPython3'):
+            allowPython3 = True
+    if (sys.version_info.major >= 3 and not allowPython3):
+        print("ERT does not support python version 3 or higher, exiting...")
         sys.exit(0)
 
 def call(args):
