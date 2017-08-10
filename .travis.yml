@@ -55,7 +55,7 @@ install:
     # Useful for debugging any issues with conda
     - conda info -a
 
-   - travis/install_python_packages.py
+    - travis/install_python_packages.py
       
 
 
