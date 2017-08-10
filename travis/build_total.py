@@ -12,11 +12,11 @@ import requests
 
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
-
-def find_python_version():
+def find_python_version(argv):
     print(sys.version)
-    #if (sys.version_info.major >= 3):
-    #    sys.exit(1)
+    if (sys.version_info.major >= 3 and argv[2] != 'allowPython3'):
+        print("ERT does not support python version 3 or higher, exiting.")
+        sys.exit(0)
 
 def call(args):
     arg_str = ' '.join(args)
@@ -48,7 +48,7 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
     os.chdir(build_dir)
     call(cmake_args)
     call(["make"])
-    if True:
+    if test:
         if test_flags is None:
             test_flags = []
         call(["ctest", "--output-on-failure"] + test_flags)
@@ -226,7 +226,7 @@ def main():
     print('\n===================')
     print(' '.join(sys.argv))
     print('===================\n')
-    find_python_version()
+    find_python_version(sys.argv)
     pr_build = PrBuilder(sys.argv)
     pr_build.clone_fetch_merge(basedir)
     pr_build.compile_and_build(basedir)
