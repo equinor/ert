@@ -29,7 +29,10 @@ addons:
 install:
     - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
 
-    - export TRAVIS_PYTHON_VERSION="2.7"
+    - echo $TRAVIS_PYTHON_VERSION
+    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+         - export TRAVIS_PYTHON_VERSION="2.7"
+      fi
 
     # We do this conditionally because it saves us some downloading if the version is the same.
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
