@@ -10,9 +10,7 @@ matrix:
       compiler: clang
     - os: linux
       compiler: gcc
-
-env:
-  - PYTHON_VERSION="2.7"
+      env: PYTHON_VERSION=2.7
 
 addons:
   apt:
@@ -33,7 +31,7 @@ install:
 
     - echo "$ERT_SHOW_BACKTRACE"
     - echo "$PYTHON_VERSION"
-    - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+    - if [[ "$PYTHON_VERSION" == 2.7 ]]; then
          export TRAVIS_PYTHON_VERSION="2.7";
       fi
 
@@ -66,6 +64,9 @@ install:
 env:
   global:
      - ERT_SHOW_BACKTRACE=1
+  matrix:
+     - PYTHON_VERSION=2.7
+     - PYTHON_VERSION=3.4
 
 script:
   - travis/build_total.py ert
