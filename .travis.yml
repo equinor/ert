@@ -30,7 +30,6 @@ addons:
 
 install:
     - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
-    - travis/install_python_packages.py
 
     # We do this conditionally because it saves us some downloading if the version is the same.
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -56,21 +55,7 @@ install:
     # Useful for debugging any issues with conda
     - conda info -a
 
-    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        conda install pyqt= 4
-        conda install scipy=0.16.1
-      fi
-
-    - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-        conda install pyqt= 5
-        conda install scipy=0.19.0
-      fi
-
-    - conda install future
-    - conda install pylint
-    - conda install numpy
-    - conda install matplotlib
-    - conda install pandas
+   - travis/install_python_packages.py
       
 
 
