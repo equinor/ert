@@ -39,14 +39,31 @@ void test_status(int lsf_status , job_status_type job_status) {
 void test_options(void) {
   lsf_driver_type * driver = lsf_driver_alloc();
   test_assert_false( lsf_driver_has_project_code( driver ));
+
+  // test setting values
   test_option( driver , LSF_BSUB_CMD    , "Xbsub");
   test_option( driver , LSF_BJOBS_CMD   , "Xbsub");
   test_option( driver , LSF_BKILL_CMD   , "Xbsub");
   test_option( driver , LSF_RSH_CMD     , "RSH");
   test_option( driver , LSF_LOGIN_SHELL , "shell");
   test_option( driver , LSF_BSUB_CMD    , "bsub");
-  test_option( driver , LSF_PROJECT_CODE    , "my-ppu");
+  test_option( driver , LSF_PROJECT_CODE, "my-ppu");
+  test_option( driver , LSF_BJOBS_TIMEOUT, "1234");
+
   test_assert_true( lsf_driver_has_project_code( driver ));
+
+  // test unsetting/resetting options to default values
+  test_option( driver , LSF_BSUB_CMD    , NULL);
+  test_option( driver , LSF_BJOBS_CMD   , NULL);
+  test_option( driver , LSF_BKILL_CMD   , NULL);
+  test_option( driver , LSF_RSH_CMD     , NULL);
+  test_option( driver , LSF_LOGIN_SHELL , NULL);
+  test_option( driver , LSF_PROJECT_CODE, NULL);
+
+  // Setting NULL to numerical options should leave the value unchanged
+  lsf_driver_set_option( driver, LSF_BJOBS_TIMEOUT, NULL);
+  test_assert_string_equal( lsf_driver_get_option( driver, LSF_BJOBS_TIMEOUT ), "1234");
+
   lsf_driver_free( driver );
 }
 
