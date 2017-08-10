@@ -426,7 +426,7 @@ static void config_validate(config_parser_type * config, config_content_type * c
 
    These are not strict rules - it is possible to get other things to
    work as well, but the problem is that it very quickly becomes
-   dependant on 'arbitrariness' in the parsing configuration.
+   dependent on 'arbitrariness' in the parsing configuration.
 
    validate: whether we should validate when complete, that should
              typically only be done at the last parsing.
