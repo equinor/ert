@@ -198,6 +198,16 @@ static void queue_config_set_queue_option(queue_config_type * queue_config, cons
     fprintf(stderr, "** Warning: Driver:%s not recognized - ignored \n", driver_name);
 }
 
+static void queue_config_unset_queue_option(queue_config_type * queue_config, const char * driver_name, const char * option_key) {
+  if (queue_config_has_queue_driver(queue_config, driver_name)) {
+    queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
+    if (!queue_driver_unset_option(driver, option_key))
+        fprintf(stderr, "** Warning: Option:%s is not recognized by driver:%s- ignored \n", option_key, driver_name);
+  } else
+    fprintf(stderr, "** Warning: Driver:%s not recognized - ignored \n", driver_name);
+}
+
+
 
 static void queue_config_add_queue_driver(queue_config_type * queue_config, const char * driver_name, queue_driver_type * driver) {
   hash_insert_hash_owned_ref(queue_config->queue_drivers, driver_name, driver, queue_driver_free__);
@@ -258,13 +268,18 @@ static bool queue_config_init(queue_config_type * queue_config, const config_con
     const stringlist_type * tokens = config_content_iget_stringlist_ref(config_content, QUEUE_OPTION_KEY, i);
     const char * driver_name = stringlist_iget(tokens, 0);
     const char * option_key = stringlist_iget(tokens, 1);
-    char * option_value = stringlist_alloc_joined_substring(tokens, 2, stringlist_get_size(tokens), " ");
 
-    // If it is essential to keep the exact number of spaces in the
-    // option_value, it should be quoted with "" in the configuration
-    // file.
-    queue_config_set_queue_option(queue_config, driver_name, option_key, option_value);
-    free( option_value );
+    if(stringlist_get_size(tokens) > 2) {
+      char * option_value = stringlist_alloc_joined_substring(tokens, 2, stringlist_get_size(tokens), " ");
+
+      // If it is essential to keep the exact number of spaces in the
+      // option_value, it should be quoted with "" in the configuration
+      // file.
+      queue_config_set_queue_option(queue_config, driver_name, option_key, option_value);
+      free( option_value );
+    }
+    else
+        queue_config_unset_queue_option(queue_config, driver_name, option_key);
   }
 
   return true;
@@ -297,7 +312,7 @@ void queue_config_add_config_items(config_parser_type * parser, bool site_mode) 
 
   {
     config_schema_item_type * item = config_add_schema_item(parser, QUEUE_OPTION_KEY, false);
-    config_schema_item_set_argc_minmax(item, 3, CONFIG_DEFAULT_ARG_MAX);
+    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
   }
 
   {
