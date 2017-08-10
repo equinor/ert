@@ -10,7 +10,7 @@ matrix:
       compiler: clang
     - os: linux
       compiler: gcc
-      env: TRAVIS_PYTHON_VERSION = "2.7"
+      env: PYTHON_VERSION = "2.7"
 
 addons:
   apt:
@@ -29,9 +29,9 @@ addons:
 install:
     - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
 
-    - echo $TRAVIS_PYTHON_VERSION
-    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-         - export TRAVIS_PYTHON_VERSION="2.7"
+    - echo "$PYTHON_VERSION"
+    - if [[ "$PYTHON_VERSION" == "2.7" ]]; then
+         export TRAVIS_PYTHON_VERSION="2.7"
       fi
 
     # We do this conditionally because it saves us some downloading if the version is the same.
