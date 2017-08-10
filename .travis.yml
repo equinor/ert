@@ -1,7 +1,7 @@
 language: c
 
 python:
-  - "3.6"
+  - "2.7"
 
 matrix:
   fast_finish: true
@@ -54,13 +54,7 @@ install:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-    - conda install pyqt=5
-    - conda install scipy=0.19.0
-    - conda install future
-    - conda install pylint
-    - conda install numpy
-    - conda install matplotlib
-    - conda install pandas
+    - travis/install_python_packages.py
 
 
 env:
@@ -69,5 +63,4 @@ env:
 
 
 script:
-  - travis/assert_all_pkgs_installed.py
   - travis/build_total.py ert
