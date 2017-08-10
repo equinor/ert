@@ -10,7 +10,6 @@ matrix:
       compiler: clang
     - os: linux
       compiler: gcc
-      env: PYTHON_VERSION=2.7
 
 addons:
   apt:
