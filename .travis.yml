@@ -58,6 +58,5 @@ env:
   global:
      - ERT_SHOW_BACKTRACE=1
 
-
 script:
   - travis/build_total.py ert
