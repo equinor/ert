@@ -1,3 +1,22 @@
+Skip to content
+This repository
+Search
+Pull requests
+Issues
+Marketplace
+Gist
+ @stefoss23
+ Sign out
+ Watch 7
+  Star 0
+  Fork 9 Statoil/ert
+ Code  Issues 3  Pull requests 2  Projects 0  Wiki Insights 
+Branch: master Find file Copy pathert/.travis.yml
+1f0cf2b  on Jun 6
+@stefoss23 stefoss23 WIP: Make travis build script (#15)
+5 contributors @joakim-hove @jepebe @pgdr @stefoss23 @jokva
+RawBlameHistory     
+64 lines (55 sloc)  1.68 KB
 language: c
 
 matrix:
@@ -28,12 +47,7 @@ addons:
 install:
     - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
 
-    - echo "$ERT_SHOW_BACKTRACE"
-    - echo "$PYTHON_VERSION"
-    - if [[ "$PYTHON_VERSION" == 2.7 ]]; then
-         export TRAVIS_PYTHON_VERSION="2.7";
-      fi
-
+    - export TRAVIS_PYTHON_VERSION="2.7"
     # We do this conditionally because it saves us some downloading if the version is the same.
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
         if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -57,14 +71,15 @@ install:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-
     - travis/install_python_packages.py
-      
+
 env:
   global:
      - ERT_SHOW_BACKTRACE=1
-  matrix:
-     - PYTHON_VERSION=3.4
+
 
 script:
   - travis/build_total.py ert
+
+Contact GitHub API Training Shop Blog About
+© 2017 GitHub, Inc. Terms Privacy Security Status Help
