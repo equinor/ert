@@ -1,22 +1,3 @@
-Skip to content
-This repository
-Search
-Pull requests
-Issues
-Marketplace
-Gist
- @stefoss23
- Sign out
- Watch 7
-  Star 0
-  Fork 9 Statoil/ert
- Code  Issues 3  Pull requests 2  Projects 0  Wiki Insights 
-Branch: master Find file Copy pathert/.travis.yml
-1f0cf2b  on Jun 6
-@stefoss23 stefoss23 WIP: Make travis build script (#15)
-5 contributors @joakim-hove @jepebe @pgdr @stefoss23 @jokva
-RawBlameHistory     
-64 lines (55 sloc)  1.68 KB
 language: c
 
 matrix:
