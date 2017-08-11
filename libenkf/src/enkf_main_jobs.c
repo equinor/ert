@@ -22,6 +22,7 @@
 #include <ert/util/string_util.h>
 #include <ert/util/int_vector.h>
 
+#include <ert/res_util/res_log.h>
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/field_config.h>
 #include <ert/enkf/local_obsdata.h>
