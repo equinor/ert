@@ -124,6 +124,16 @@ static bool queue_driver_set_generic_option__(queue_driver_type * driver, const 
   return option_set;
 }
 
+static bool queue_driver_unset_generic_option__(queue_driver_type * driver, const char * option_key) {
+  bool option_unset = false;
+  if (strcmp(MAX_RUNNING, option_key) == 0) {
+    queue_driver_set_max_running(driver, 0);
+    option_unset = true;
+  }
+  return option_unset;
+}
+
+
 static void * queue_driver_get_generic_option__(queue_driver_type * driver, const char * option_key) {
   if (strcmp(MAX_RUNNING, option_key) == 0) {
     return driver->max_running_string;
@@ -156,6 +166,23 @@ bool queue_driver_set_option(queue_driver_type * driver, const char * option_key
   }
   return false;
 }
+
+/**
+   Unset the given option. If the option cannot be unset, it is restored to its default value.
+ */
+bool queue_driver_unset_option(queue_driver_type * driver, const char * option_key) {
+  if (queue_driver_unset_generic_option__(driver, option_key)) {
+    return true;
+  } else if (driver->set_option != NULL)
+    /* The actual low level set functions can not fail! */
+    return driver->set_option(driver->data, option_key, NULL);
+  else {
+    util_abort("%s: driver:%s does not support run time setting of options\n", __func__, driver->name);
+    return false;
+  }
+  return false;
+}
+
 
 
 /**

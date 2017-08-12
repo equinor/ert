@@ -123,6 +123,7 @@ extern "C" {
   const char * queue_driver_get_name(const queue_driver_type * driver);
 
   bool queue_driver_set_option(queue_driver_type * driver, const char * option_key, const void * value);
+  bool queue_driver_unset_option(queue_driver_type * driver, const char * option_key);
   const void * queue_driver_get_option(queue_driver_type * driver, const char * option_key);
   void queue_driver_init_option_list(queue_driver_type * driver, stringlist_type * option_list);
 

@@ -52,6 +52,21 @@ void setoption_setalloptions_optionsset() {
   test_assert_true( torque_driver_set_option( driver , TORQUE_DEBUG_OUTPUT , "/tmp/torqueue_debug.txt"));
   test_assert_not_NULL( torque_driver_get_debug_stream(driver) );
 
+  test_option(driver, TORQUE_QSUB_CMD      , NULL);
+  test_option(driver, TORQUE_QSTAT_CMD     , NULL);
+  test_option(driver, TORQUE_QDEL_CMD      , NULL);
+  test_option(driver, TORQUE_QUEUE         , NULL);
+  test_option(driver, TORQUE_CLUSTER_LABEL , NULL);
+  test_option(driver, TORQUE_JOB_PREFIX_KEY, NULL);
+
+  // Setting NULL to numerical options should leave the value unchanged
+  torque_driver_set_option(driver, TORQUE_NUM_CPUS_PER_NODE, NULL);
+  torque_driver_set_option(driver, TORQUE_NUM_NODES        , NULL);
+  torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT , NULL);
+  test_assert_string_equal( torque_driver_get_option( driver, TORQUE_NUM_CPUS_PER_NODE ), "42");
+  test_assert_string_equal( torque_driver_get_option( driver, TORQUE_NUM_NODES         ), "36");
+  test_assert_string_equal( torque_driver_get_option( driver, TORQUE_KEEP_QSUB_OUTPUT  ), "0");
+
   printf("Options OK\n");
   torque_driver_free(driver);
 }
