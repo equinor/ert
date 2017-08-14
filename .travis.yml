@@ -52,12 +52,11 @@ install:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-    - conda install pyqt=4 scipy=0.16.1 pylint numpy pandas matplotlib future
+    - travis/install_python_packages.py
 
 env:
   global:
      - ERT_SHOW_BACKTRACE=1
-
 
 script:
   - travis/build_total.py ert

@@ -12,6 +12,15 @@ import requests
 
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
+def find_python_version(argv):
+    print(sys.version)
+    allowPython3 = False
+    if (len(argv) >= 5):
+        if (argv[4] == 'allowPython3'):
+            allowPython3 = True
+    if (sys.version_info.major >= 3 and not allowPython3):
+        print("ERT does not support python version 3 or higher, exiting...")
+        sys.exit(0)
 
 def call(args):
     arg_str = ' '.join(args)
@@ -221,6 +230,7 @@ def main():
     print('\n===================')
     print(' '.join(sys.argv))
     print('===================\n')
+    find_python_version(sys.argv)
     pr_build = PrBuilder(sys.argv)
     pr_build.clone_fetch_merge(basedir)
     pr_build.compile_and_build(basedir)
