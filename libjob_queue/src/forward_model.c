@@ -219,6 +219,7 @@ static void forward_model_python_fprintf(const forward_model_type * forward_mode
 static void forward_model_json_fprintf(const forward_model_type * forward_model,
                                        const char * run_id,
                                        const char * path,
+                                       const char * data_root,
                                        const subst_list_type * global_args,
                                        mode_t umask) {
   char * json_file = util_alloc_filename(path , DEFAULT_JOB_JSON, NULL);
@@ -228,7 +229,7 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
   fprintf(stream, "{\n");
 
   fprintf(stream, "\"umask\" : \"%04o\",\n", umask);
-
+  fprintf(stream, "\"DATA_ROOT\": \"%s\",\n", data_root);
   fprintf(stream, "\"jobList\" : [");
   for (i=0; i < vector_get_size(forward_model->jobs); i++) {
     const ext_job_type * job = vector_iget_const(forward_model->jobs , i);
@@ -249,10 +250,11 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
 void forward_model_formatted_fprintf(const forward_model_type * forward_model ,
                                      const char * run_id,
                                      const char * path,
+                                     const char * data_root,
                                      const subst_list_type * global_args,
                                      mode_t umask) {
   forward_model_python_fprintf( forward_model, path, global_args, umask);
-  forward_model_json_fprintf(   forward_model, run_id, path, global_args, umask);
+  forward_model_json_fprintf(   forward_model, run_id, path, data_root, global_args, umask);
 }
 
 #undef DEFAULT_JOB_JSON

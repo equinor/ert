@@ -44,6 +44,8 @@ class ModelConfig(BaseCClass):
     _get_runpath_fmt             = EnkfPrototype("path_fmt_ref model_config_get_runpath_fmt(model_config)")
     _get_num_realizations        = EnkfPrototype("int model_config_get_num_realizations(model_config)")
     _get_obs_config_file         = EnkfPrototype("char* model_config_get_obs_config_file(model_config)")
+    _get_data_root               = EnkfPrototype("char* model_config_get_data_root(model_config)")
+    _set_data_root               = EnkfPrototype("void model_config_get_data_root(model_config, char*)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -128,3 +130,11 @@ class ModelConfig(BaseCClass):
     @property
     def num_realizations(self):
         return self._get_num_realizations()
+
+    def data_root(self):
+        return self._get_data_root( )
+
+    def set_data_root(self, data_root):
+         self._set_data_root( data_root )
+
+
