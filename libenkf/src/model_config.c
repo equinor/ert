@@ -95,6 +95,7 @@ struct model_config_struct {
   char                 * jobname_fmt;               /* Format string with one '%d' for the jobname - can be NULL in which case the eclbase name will be used. */
   char                 * enspath;
   char                 * rftpath;
+  char                 * data_root;
   fs_driver_impl         dbase_type;
   bool                   has_prediction;
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
@@ -322,6 +323,7 @@ model_config_type * model_config_alloc_empty() {
   model_config->case_names                = NULL;
   model_config->enspath                   = NULL;
   model_config->rftpath                   = NULL;
+  model_config->data_root                 = NULL;
   model_config->dbase_type                = INVALID_DRIVER_ID;
   model_config->current_runpath           = NULL;
   model_config->current_path_key          = NULL;
@@ -350,32 +352,39 @@ model_config_type * model_config_alloc_empty() {
 }
 
 model_config_type * model_config_alloc_load(const char * user_config_file,
-        const ext_joblist_type * joblist,
-        int last_history_restart,
-        const sched_file_type * sched_file,
-        const ecl_sum_type * refcase)
+                                            const ext_joblist_type * joblist,
+                                            int last_history_restart,
+                                            const sched_file_type * sched_file,
+                                            const ecl_sum_type * refcase)
 {
   config_parser_type * config_parser = config_alloc();
   config_content_type * config_content = NULL;
-  if(user_config_file)
-    config_content = model_config_alloc_content(user_config_file, config_parser);
+  char * data_root = NULL;
 
-  model_config_type * model_config = model_config_alloc(
-                                            config_content,
-                                            joblist,
-                                            last_history_restart,
-                                            sched_file,
-                                            refcase
-                                            );
+  if(user_config_file) {
+    char * tmp_path;
+    util_alloc_file_components( user_config_file, &tmp_path , NULL , NULL );
+    data_root = util_alloc_abs_path( tmp_path );
+    config_content = model_config_alloc_content(user_config_file, config_parser);
+    free( tmp_path );
+  }
+
+  model_config_type * model_config = model_config_alloc(config_content,
+                                                        data_root,
+                                                        joblist,
+                                                        last_history_restart,
+                                                        sched_file,
+                                                        refcase);
 
   config_content_free(config_content);
   config_free(config_parser);
-
+  free( data_root );
   return model_config;
 }
 
 model_config_type * model_config_alloc(
         const config_content_type * config_content,
+        const char * data_root,
         const ext_joblist_type * joblist,
         int last_history_restart,
         const sched_file_type * sched_file,
@@ -386,12 +395,12 @@ model_config_type * model_config_alloc(
   if(config_content)
     model_config_init(model_config,
                       config_content,
+                      data_root,
                       0,
                       joblist,
                       last_history_restart,
                       sched_file,
-                      refcase
-                      );
+                      refcase);
 
   return model_config;
 }
@@ -432,11 +441,19 @@ static bool model_config_select_any_history( model_config_type * model_config , 
   return selectOK;
 }
 
+const char * model_config_get_data_root( const model_config_type * model_config ) {
+  return model_config->data_root;
+}
 
+void model_config_set_data_root( model_config_type * model_config , const char * data_root) {
+  model_config->data_root = util_realloc_string_copy( model_config->data_root , data_root );
+  setenv( "DATA_ROOT" ,  data_root , 1 );
+}
 
 
 void model_config_init(model_config_type * model_config ,
                        const config_content_type * config ,
+                       const char * data_root,
                        int ens_size ,
                        const ext_joblist_type * joblist ,
                        int last_history_restart ,
@@ -445,6 +462,7 @@ void model_config_init(model_config_type * model_config ,
 
   model_config->forward_model = forward_model_alloc(  joblist );
   model_config_set_refcase( model_config , refcase );
+  model_config_set_data_root( model_config, data_root );
 
   if (config_content_has_item(config, NUM_REALIZATIONS_KEY))
     model_config->num_realizations = config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
@@ -512,6 +530,9 @@ void model_config_init(model_config_type * model_config ,
 
   if (config_content_has_item( config , ENSPATH_KEY))
     model_config_set_enspath( model_config , config_content_get_value(config , ENSPATH_KEY));
+
+  if (config_content_has_item( config , DATA_ROOT_KEY))
+    model_config_set_data_root( model_config , config_content_get_value(config , DATA_ROOT_KEY));
 
   if (config_content_has_item( config , JOBNAME_KEY))
     model_config_set_jobname_fmt( model_config , config_content_get_value(config , JOBNAME_KEY));
@@ -790,6 +811,7 @@ static void model_config_init_user_config(config_parser_type * config ) {
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 
   config_add_key_value(config, RUNPATH_KEY, false, CONFIG_STRING);
+  config_add_key_value(config, DATA_ROOT_KEY, false, CONFIG_STRING);
 
   item = config_add_schema_item(config, ENSPATH_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);

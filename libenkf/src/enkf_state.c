@@ -1034,6 +1034,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
   forward_model_formatted_fprintf( model_config_get_forward_model( enkf_state->shared_info->model_config ) ,
                                    run_arg_get_run_id( run_arg ),
                                    run_arg_get_runpath( run_arg ) ,
+                                   model_config_get_data_root( enkf_state->shared_info->model_config ) ,
                                    enkf_state->subst_list,
                                    umask);
 

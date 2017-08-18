@@ -161,7 +161,15 @@ class ResConfigTest(ExtendedTestCase):
             config_file = "simple_config/minimum_config"
             res_config = ResConfig(user_config_file=config_file)
 
+            self.assertEqual( res_config.model_config.data_root( ) , os.path.join( cwd , "simple_config"))
             self.assertEqual( clib_getenv("DATA_ROOT") , os.path.join( cwd , "simple_config"))
+
+            # This fails with an not-understandable Python error:
+            #-----------------------------------------------------------------
+            # res_config.model_config.set_data_root( "NEW" )
+            # self.assertEqual( res_config.model_config.data_root( ) , "NEW")
+            # self.assertEqual( clib_getenv("DATA_ROOT") , "NEW")
+
             self.assertIsNotNone(res_config)
             self.assert_same_config_file(config_file, res_config.user_config_file, os.getcwd())
 

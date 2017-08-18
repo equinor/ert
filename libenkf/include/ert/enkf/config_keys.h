@@ -57,6 +57,7 @@ extern "C" {
 #define  CASE_TABLE_KEY                    "CASE_TABLE"
 #define  CONTAINER_KEY                     "CONTAINER"
 #define  CUSTOM_KW_KEY                     "CUSTOM_KW"
+#define  DATA_ROOT_KEY                     "DATA_ROOT"
 #define  DATA_FILE_KEY                     "DATA_FILE"
 #define  DATA_KW_KEY                       "DATA_KW"
 #define  DBASE_TYPE_KEY                    "DBASE_TYPE"

@@ -87,9 +87,9 @@ def assert_file_executable(fname):
 
 
 def _jsonGet(data, key, err_msg=None):
-    if err_msg is None:
-        err_msg = "JSON-file did not contain a %s." % key
     if key not in data:
+        if err_msg is None:
+            err_msg = "JSON-file did not contain a %s." % key
         raise IOError(err_msg)
     return data[key]
 
@@ -111,6 +111,7 @@ class JobManager(object):
         self.ert_pid = ""
         self._error_url = error_url
         self._log_url = log_url
+        self._data_root = None
         if json_file is not None and os.path.isfile(json_file):
             self._loadJson(json_file)
         else:
@@ -132,8 +133,12 @@ class JobManager(object):
         cond_unlink(self.STATUS_file)
         cond_unlink(self.OK_file)
         self.initStatusFile()
+        if self._data_root:
+            os.environ["DATA_ROOT"] = self._data_root
 
 
+    def data_root(self):
+        return self._data_root
 
 
     def _loadJson(self, json_file_name):
@@ -143,6 +148,7 @@ class JobManager(object):
         except ValueError as e:
             raise IOError("Job Manager failed to load JSON-file." + str(e))
 
+        self._data_root = jobs_data.get("DATA_ROOT")
         umask = _jsonGet(jobs_data, "umask")
         os.umask(int(umask, 8))
         if "run_id" in jobs_data:

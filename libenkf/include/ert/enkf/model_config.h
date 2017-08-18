@@ -44,6 +44,8 @@ extern "C" {
 #include <ert/enkf/time_map.h>
 
   typedef struct model_config_struct model_config_type;
+  const char *           model_config_get_data_root( const model_config_type * model_config );
+  void                   model_config_set_data_root( model_config_type * model_config , const char * data_root);
 
   const char *           model_config_get_jobname_fmt( const model_config_type * model_config );
   void                   model_config_set_jobname_fmt( model_config_type * model_config , const char * jobname_fmt);
@@ -67,7 +69,7 @@ extern "C" {
   time_map_type        * model_config_get_external_time_map( const model_config_type * config);
   int                    model_config_get_num_realizations(const model_config_type * model_config);
   const char           * model_config_get_obs_config_file(const model_config_type * model_config);
-  void                   model_config_init(model_config_type * model_config , const config_content_type * , int ens_size , const ext_joblist_type * , int , const sched_file_type * , const ecl_sum_type * refcase);
+  void                   model_config_init(model_config_type * model_config , const config_content_type * , const char * data_root, int ens_size , const ext_joblist_type * , int , const sched_file_type * , const ecl_sum_type * refcase);
   void                   model_config_free(model_config_type *);
   bool                   model_config_runpath_requires_iter( const model_config_type * model_config );
   path_fmt_type        * model_config_get_runpath_fmt(const model_config_type * );
@@ -88,7 +90,7 @@ extern "C" {
   void                   model_config_fprintf_config( const model_config_type * model_config , int ens_size ,FILE * stream );
   model_config_type    * model_config_alloc_empty();
   model_config_type    * model_config_alloc_load(const char*, const ext_joblist_type*, int, const sched_file_type*, const ecl_sum_type*);
-  model_config_type    * model_config_alloc(const config_content_type*, const ext_joblist_type *, int, const sched_file_type *, const ecl_sum_type*);
+  model_config_type    * model_config_alloc(const config_content_type*, const char * data_root, const ext_joblist_type *, int, const sched_file_type *, const ecl_sum_type*);
 
   bool                   model_config_select_history( model_config_type * model_config , history_source_type source_type, const sched_file_type * schede_file , const ecl_sum_type * refcase);
   void                   model_config_set_runpath(model_config_type * model_config , const char * fmt);

@@ -233,16 +233,15 @@ res_config_type * res_config_alloc(const config_content_type * config_content) {
                                     );
 
   res_config->model_config    = model_config_alloc(config_content,
-                                        site_config_get_installed_jobs(res_config->site_config),
-                                        ecl_config_get_last_history_restart(res_config->ecl_config),
-                                        ecl_config_get_sched_file(res_config->ecl_config),
-                                        ecl_config_get_refcase(res_config->ecl_config)
+                                                   res_config->working_dir,
+                                                   site_config_get_installed_jobs(res_config->site_config),
+                                                   ecl_config_get_last_history_restart(res_config->ecl_config),
+                                                   ecl_config_get_sched_file(res_config->ecl_config),
+                                                   ecl_config_get_refcase(res_config->ecl_config)
                                    );
 
   res_config->log_config      = log_config_alloc(config_content);
 
-
-  setenv( "DATA_ROOT" ,  res_config->working_dir , 1 );
   return res_config;
 }
 
