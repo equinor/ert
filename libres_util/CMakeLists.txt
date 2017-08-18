@@ -13,6 +13,7 @@ add_library( res_util src/res_log.c
                       src/template.c
                       src/template_loop.c
                       src/block_fs.c
+                      src/res_version.c
                       ${opt_srcs})
 
 
@@ -23,7 +24,18 @@ target_include_directories(res_util
         $<INSTALL_INTERFACE:include>
         )
 
-set_target_properties( res_util PROPERTIES VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR} SOVERSION ${ERT_VERSION_MAJOR} )
+set_target_properties( res_util PROPERTIES VERSION ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR} SOVERSION ${RES_VERSION_MAJOR} )
+
+target_compile_definitions(res_util PRIVATE
+            -DGIT_COMMIT=${GIT_COMMIT}
+            -DGIT_COMMIT_SHORT=${GIT_COMMIT_SHORT}
+            -DRES_VERSION_MAJOR=${RES_VERSION_MAJOR}
+            -DRES_VERSION_MINOR=${RES_VERSION_MINOR}
+            -DRES_VERSION_MICRO=${RES_VERSION_MICRO}
+            -DCOMPILE_TIME_STAMP="${RES_BUILD_TIME}"
+)
+
+
 
 install(DIRECTORY include/ DESTINATION include)
 install(TARGETS res_util

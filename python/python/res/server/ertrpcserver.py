@@ -10,7 +10,7 @@ except ImportError:
 
 
 import warnings
-from ecl import EclVersion
+from res.util import ResVersion
 from res.enkf import EnKFMain, NodeId, ResConfig
 from ecl.util import BoolVector
 from res.enkf.config import CustomKWConfig
@@ -46,7 +46,7 @@ def createFault(error, message):
 class ErtRPCServer(SimpleXMLRPCServer):
     def __init__(self, enkf_main, host="localhost", port=0, log_requests=False, verbose_queue=False):
         SimpleXMLRPCServer.__init__(self, (host, port), allow_none=True, logRequests=log_requests)
-        self.ert_version = EclVersion( )
+        self.ert_version = ResVersion( )
         self._host = host
         self._verbose_queue = verbose_queue
         # https: server.socket = ssl.wrap_socket(srv.socket, ...)

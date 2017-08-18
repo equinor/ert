@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     res_log.py
+    res_version.py
     substitution_list.py
 )
 

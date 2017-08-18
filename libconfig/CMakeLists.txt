@@ -21,8 +21,8 @@ target_include_directories(config
 )
 
 set_target_properties(config PROPERTIES
-    VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR}
-    SOVERSION ${ERT_VERSION_MAJOR}
+    VERSION ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}
+    SOVERSION ${RES_VERSION_MAJOR}
 )
 
 install(DIRECTORY include/ DESTINATION include)
