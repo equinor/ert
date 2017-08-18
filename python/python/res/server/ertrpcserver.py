@@ -24,9 +24,11 @@ def checkRealizationState(state):
     return state == RealizationStateEnum.STATE_INITIALIZED or state == RealizationStateEnum.STATE_HAS_DATA
 
 
+
+
 class Session:
     def __init__(self):
-        self.init_case_name = None
+        self.geo_case = None
         """ :type: str """
 
         self.simulation_context = None
@@ -159,7 +161,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
 
     def isInitializationCaseAvailable(self):
-        return self._session.init_case_name is not None
+        return self._session.geo_case is not None
 
 
     def startSimulationBatch(self, initialization_case_name, result_case_name, simulation_count):
@@ -170,18 +172,16 @@ class ErtRPCServer(SimpleXMLRPCServer):
         with self._session.lock:
             if not self.isRunning():
                 self._session.simulation_context = None
-                self._session.init_case_name = initialization_case_name
+                self._session.geo_case = initialization_case_name
 
                 self.ert.addDataKW("<WPRO_RUN_COUNT>", str(self._session.batch_number))
                 self.ert.addDataKW("<ELCO_RUN_COUNT>", str(self._session.batch_number))
-                self._session.simulation_context = SimulationContext(self.ert, init_fs, result_fs, mask , self._session.batch_number, verbose=self._verbose_queue)
+                self._session.simulation_context = SimulationContext(self.ert, result_fs, result_fs, mask , self._session.batch_number, verbose=self._verbose_queue)
                 self._session.batch_number += 1
 
 
 
 
-    def _getInitializationCase(self):
-        return self.ert.getEnkfFsManager().getFileSystem(self._session.init_case_name)
 
 
     def addSimulation(self, geo_id, pert_id, iens, keywords):
@@ -191,6 +191,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
         if self._session.simulation_context.isRealizationQueued(iens):
             raise createFault(UserWarning, "Simulation with id: '%d' is already running." % iens)
 
+        print "Server has recieved:%s" % keywords
         state = self.ert.getRealisation(iens)
         state.addSubstKeyword("GEO_ID", "%d" % geo_id)
 
@@ -203,15 +204,21 @@ class ErtRPCServer(SimpleXMLRPCServer):
     def _initializeRealization(self, result_fs, geo_id, iens, keywords):
         ens_config = self.ert.ensembleConfig()
 
+        # Copy all parameter all parameter values which are not given by @keywords from the
+        # the initialization case to the target case.
+
+        geo_case_fs = self.ert.getEnkfFsManager().getFileSystem(self._session.geo_case)
         for kw in ens_config.getKeylistFromVarType(EnkfVarType.PARAMETER):
             if not kw in keywords:
                 config_node = ens_config[kw]
                 data_node = EnkfNode( config_node )
                 init_id = NodeId(0, geo_id)
                 run_id = NodeId(0, iens)
-                data_node.load(self._getInitializationCase(), init_id)
+                data_node.load(geo_case_fs , init_id)
                 data_node.save(result_fs, run_id)
 
+        # All the values supplied externally by the keywords list will be written
+        # directly into the result case.
         for key, values in keywords.items():
             config_node = ens_config[key]
             data_node = EnkfNode( config_node )
