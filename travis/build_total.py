@@ -12,15 +12,8 @@ import requests
 
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
-def find_python_version(argv):
+def find_python_version():
     print(sys.version)
-    allowPython3 = False
-    if (len(argv) >= 5):
-        if (argv[4] == 'allowPython3'):
-            allowPython3 = True
-    if (sys.version_info.major >= 3 and not allowPython3):
-        print("ERT does not support python version 3 or higher, exiting...")
-        sys.exit(0)
 
 def call(args):
     arg_str = ' '.join(args)
@@ -30,7 +23,7 @@ def call(args):
         exit('subprocess.call error:\n\tcode %d\n\targs %s' % (status, arg_str))
 
 
-def build(source_dir, install_dir, test, c_flags="", test_flags=None):
+def build(source_dir, install_dir, test, c_flags="", test_flags=None, test_python3=False):
     build_dir = os.path.join(source_dir, "build")
     if not os.path.isdir(build_dir):
         os.makedirs(build_dir)
@@ -55,7 +48,11 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
     if test:
         if test_flags is None:
             test_flags = []
-        call(["ctest", "--output-on-failure"] + test_flags)
+        if test_python3:
+            check_call(["ctest", "--output-on-failure"] + test_flags)
+            return
+        else:
+            call(["ctest", "--output-on-failure"] + test_flags)
     call(["make", "install"])
     call(["bin/test_install"])
     os.chdir(cwd)
@@ -92,11 +89,24 @@ class PrBuilder(object):
         return ret_str
 
 
+
+
     def parse_pr_description(self):
         ecl_word = "Statoil/libecl#(\\d+)"
         res_word = "Statoil/libres#(\\d+)"
         ert_word = "Statoil/ert#(\\d+)"
         desc = self.pr_description
+  
+        if (sys.version_info.major >= 3):
+            match = re.search('PYTHON3', desc)
+            if match:
+                self.python3 = True
+            else:
+                print("ERT does not support python version 3 or higher, exiting...")
+                sys.exit(0)
+        else:
+            self.python3 = False
+
         match = re.search(ecl_word, desc, re.MULTILINE)
         if match:
             self.pr_map['libecl'] = int(match.group(1))
@@ -190,6 +200,9 @@ class PrBuilder(object):
             os.makedirs(install_dir)
         self.compile_ecl(basedir, install_dir)
 
+        if self.python3:
+            return
+
         if self.rep_name == 'libecl' and sys.platform in ('Darwin', 'darwin'):
             return
 
@@ -206,7 +219,7 @@ class PrBuilder(object):
 
         test = (self.repository == 'ecl')
         c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, c_flags=c_flags, test_flags=self.test_flags)
+        build(source_dir, install_dir, test, c_flags=c_flags, test_flags=self.test_flags, self.python3)
 
     def compile_res(self, basedir, install_dir):
         if self.repository == 'res':
@@ -230,8 +243,8 @@ def main():
     print('\n===================')
     print(' '.join(sys.argv))
     print('===================\n')
-    find_python_version(sys.argv)
-    pr_build = PrBuilder(sys.argv)
+    find_python_version()
+    pr_build = PrBuilder()
     pr_build.clone_fetch_merge(basedir)
     pr_build.compile_and_build(basedir)
     print(pr_build)
