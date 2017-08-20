@@ -23,7 +23,7 @@ def call(args):
         exit('subprocess.call error:\n\tcode %d\n\targs %s' % (status, arg_str))
 
 
-def build(source_dir, install_dir, test, c_flags="", test_flags=None, test_python3=False):
+def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=None):
     build_dir = os.path.join(source_dir, "build")
     if not os.path.isdir(build_dir):
         os.makedirs(build_dir)
@@ -32,6 +32,7 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None, test_pytho
                   source_dir,
                   "-DBUILD_TESTS=ON",
                   "-DBUILD_PYTHON=ON",
+                  #"-DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-3/root/usr/bin/g++", #DEBUG
                   "-DERT_BUILD_CXX=ON",
                   "-DBUILD_APPLICATIONS=ON",
                   "-DCMAKE_INSTALL_PREFIX=%s" % install_dir,
@@ -45,7 +46,7 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None, test_pytho
     os.chdir(build_dir)
     call(cmake_args)
     call(["make"])
-    if test:
+    if True:  #DEBUG
         if test_flags is None:
             test_flags = []
         if test_python3:
@@ -123,7 +124,7 @@ class PrBuilder(object):
         elif self.repository == "res":
             pr_num = self.pr_map.get('libres')
         elif self.repository == "ert":
-            pr_num = self.pr_map.get('libecl')
+            pr_num = self.pr_map.get('ert')
 
         if pr_num is not None:
             if pr_num != self.pr_number:
@@ -219,7 +220,7 @@ class PrBuilder(object):
 
         test = (self.repository == 'ecl')
         c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, c_flags=c_flags, test_flags=self.test_flags, self.python3)
+        build(source_dir, install_dir, test, self.python3, c_flags=c_flags, test_flags=self.test_flags)
 
     def compile_res(self, basedir, install_dir):
         if self.repository == 'res':
@@ -228,14 +229,14 @@ class PrBuilder(object):
             source_dir = os.path.join(basedir, "libres")
         test = (self.repository in ('ecl', 'res'))
         # TODO add c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, test_flags=self.test_flags)
+        build(source_dir, install_dir, test, self.python3, test_flags=self.test_flags)
 
     def compile_ert(self, basedir, install_dir):
         if self.repository == 'ert':
             source_dir = basedir
         else:
             source_dir = os.path.join(basedir, "ert")
-        build(source_dir, install_dir, True, test_flags=self.test_flags)
+        build(source_dir, install_dir, True, self.python3, test_flags=self.test_flags)
 
 
 def main():
@@ -244,7 +245,7 @@ def main():
     print(' '.join(sys.argv))
     print('===================\n')
     find_python_version()
-    pr_build = PrBuilder()
+    pr_build = PrBuilder(sys.argv)
     pr_build.clone_fetch_merge(basedir)
     pr_build.compile_and_build(basedir)
     print(pr_build)
