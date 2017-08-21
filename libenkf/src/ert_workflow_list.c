@@ -25,7 +25,7 @@
 
 #include <ert/util/hash.h>
 #include <ert/util/set.h>
-#include <ert/util/ert_version.h>
+#include <ert/util/ecl_version.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
@@ -207,9 +207,9 @@ const workflow_job_type * ert_workflow_list_get_job( const ert_workflow_list_typ
 
 static char * ert_workflow_list_alloc_version_name( const char * path , const char * root_name ) {
   char * full_path = util_alloc_sprintf( "%s%s%s@%d.%d.%s" , path , UTIL_PATH_SEP_STRING , root_name ,
-					 version_get_major_ert_version(),
-					 version_get_minor_ert_version(),
-					 version_get_micro_ert_version());
+					 ecl_version_get_major_version(),
+					 ecl_version_get_minor_version(),
+					 ecl_version_get_micro_version());
   if (util_is_file( full_path ))
     return full_path;
   else
@@ -218,8 +218,8 @@ static char * ert_workflow_list_alloc_version_name( const char * path , const ch
   /*****************************************************************/
 
   full_path = util_alloc_sprintf( "%s%s%s@%d.%d" , path , UTIL_PATH_SEP_STRING , root_name ,
-				  version_get_major_ert_version(),
-				  version_get_minor_ert_version());
+				  ecl_version_get_major_version(),
+				  ecl_version_get_minor_version());
 
   if (util_is_file( full_path ))
     return full_path;
@@ -229,7 +229,7 @@ static char * ert_workflow_list_alloc_version_name( const char * path , const ch
   /*****************************************************************/
 
   full_path = util_alloc_sprintf( "%s%s%s@%d" , path , UTIL_PATH_SEP_STRING , root_name ,
-				  version_get_major_ert_version());
+				  ecl_version_get_major_version());
 
   if (util_is_file( full_path ))
     return full_path;

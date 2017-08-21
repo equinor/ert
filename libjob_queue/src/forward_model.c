@@ -31,7 +31,7 @@
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/forward_model.h>
 
-#include <ert/util/ert_version.h>
+#include <ert/util/ecl_version.h>
 
 
 /**
@@ -239,7 +239,11 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
   }
   fprintf(stream, "],\n");
 
-  fprintf(stream, "\n\"ert_version\" : [%d, %d, \"%s\"],\n", version_get_major_ert_version(), version_get_minor_ert_version(), version_get_micro_ert_version());
+  fprintf(stream, "\n\"ert_version\" : [%d, %d, \"%s\"],\n",
+          ecl_version_get_major_version(),
+          ecl_version_get_minor_version(),
+          ecl_version_get_micro_version());
+
   fprintf(stream, "\"run_id\" : \"%s\",\n", run_id);
   fprintf(stream, "\"ert_pid\" : \"%ld\"\n", (long)getpid()); //Long is big enough to hold __pid_t
   fprintf(stream, "}\n");
