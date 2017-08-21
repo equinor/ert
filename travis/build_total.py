@@ -32,7 +32,6 @@ def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=No
                   source_dir,
                   "-DBUILD_TESTS=ON",
                   "-DBUILD_PYTHON=ON",
-                  #"-DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-3/root/usr/bin/g++", #DEBUG
                   "-DERT_BUILD_CXX=ON",
                   "-DBUILD_APPLICATIONS=ON",
                   "-DCMAKE_INSTALL_PREFIX=%s" % install_dir,
@@ -50,7 +49,7 @@ def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=No
         if test_flags is None:
             test_flags = []
         if test_python3:
-            check_call(["ctest", "--output-on-failure"] + test_flags)
+            os.system("ctest --output-on-failure")
             return
         else:
             call(["ctest", "--output-on-failure"] + test_flags)
@@ -80,6 +79,7 @@ class PrBuilder(object):
         self.pr_map = {}
         self.access_pr()
         self.test_flags = argv[2:]  # argv = [exec, repo, [L|LE, LABEL]]
+
 
     def __str__(self):
         ret_str = "Settings: "
