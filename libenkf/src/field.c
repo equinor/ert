@@ -879,7 +879,8 @@ float field_ijk_get_float(const field_type * field, int i , int j , int k) {
 double field_iget_double(const field_type * field , int index) {
   ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
   int sizeof_ctype        = field_config_get_sizeof_ctype(field->config);
-  char buffer[8]; /* Enough to hold one double */
+  char __buffer[8];
+  char * buffer = &__buffer[0];
   memcpy(buffer , &field->data[index * sizeof_ctype] , sizeof_ctype);
   if ( ecl_type_is_double(data_type) )
     return *((double *) buffer);
@@ -904,7 +905,8 @@ double field_iget_double(const field_type * field , int index) {
 float field_iget_float(const field_type * field , int index) {
   ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
   int sizeof_ctype        = field_config_get_sizeof_ctype(field->config);
-  char buffer[8];          /* Enough to hold one double */
+  char __buffer[8];
+  char * buffer = &__buffer[0];
   memcpy(buffer , &field->data[index * sizeof_ctype] , sizeof_ctype);
   if ( ecl_type_is_float(data_type) )
     return *((float *) buffer);
