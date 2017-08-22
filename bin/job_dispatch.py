@@ -7,6 +7,7 @@
 # users environment has not been set correctly.
 #-----------------------------------------------------------------
 
+import json
 import sys
 import os
 import os.path
