@@ -45,7 +45,7 @@ def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=No
     os.chdir(build_dir)
     call(cmake_args)
     call(["make"])
-    if True:  #DEBUG
+    if test:
         if test_flags is None:
             test_flags = []
         if test_python3:
