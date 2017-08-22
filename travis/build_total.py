@@ -50,11 +50,11 @@ def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=No
             test_flags = []
         if test_python3:
             os.system("ctest --output-on-failure")
-            return
         else:
             call(["ctest", "--output-on-failure"] + test_flags)
     call(["make", "install"])
-    call(["bin/test_install"])
+    if not test_python3:
+        call(["bin/test_install"])
     os.chdir(cwd)
 
 
