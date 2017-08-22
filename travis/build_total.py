@@ -113,7 +113,7 @@ class PrBuilder(object):
         elif self.repository == "res":
             pr_num = self.pr_map.get('libres')
         elif self.repository == "ert":
-            pr_num = self.pr_map.get('libecl')
+            pr_num = self.pr_map.get('ert')
 
         if pr_num is not None:
             if pr_num != self.pr_number:
