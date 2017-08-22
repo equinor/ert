@@ -3,7 +3,7 @@ from cmd import Cmd
 import readline
 import os
 
-from res.enkf import EnKFMain
+from res.enkf import EnKFMain, ResConfig
 import ert_gui
 from ert_gui.shell import PlotSettings
 
@@ -128,7 +128,9 @@ class ErtShell(Cmd):
 
     def do_load_config(self, config_file):
         if os.path.exists(config_file) and os.path.isfile(config_file):
-            self.shellContext().setErt(EnKFMain(config_file))
+            res_config = ResConfig(config_file)
+            self.shellContext().res_config = res_config
+            self.shellContext().setErt(EnKFMain(res_config))
             ert_gui.configureErtNotifier(self.shellContext().ert(), config_file)
         else:
             self.lastCommandFailed("Config file '%s' not found!\n" % config_file)
