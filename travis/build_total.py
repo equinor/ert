@@ -62,6 +62,7 @@ def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=No
 class PrBuilder(object):
 
     def __init__(self, argv):
+        self.python3
         rep = argv[1]
         self.github_api_token = codecs.encode(GITHUB_ROT13_API_TOKEN, 'rot13')
         self.build_ert = True
