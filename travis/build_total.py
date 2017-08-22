@@ -12,15 +12,8 @@ import requests
 
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
-def find_python_version(argv):
+def find_python_version():
     print(sys.version)
-    allowPython3 = False
-    if (len(argv) >= 5):
-        if (argv[4] == 'allowPython3'):
-            allowPython3 = True
-    if (sys.version_info.major >= 3 and not allowPython3):
-        print("ERT does not support python version 3 or higher, exiting...")
-        sys.exit(0)
 
 def call(args):
     arg_str = ' '.join(args)
@@ -30,7 +23,7 @@ def call(args):
         exit('subprocess.call error:\n\tcode %d\n\targs %s' % (status, arg_str))
 
 
-def build(source_dir, install_dir, test, c_flags="", test_flags=None):
+def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=None):
     build_dir = os.path.join(source_dir, "build")
     if not os.path.isdir(build_dir):
         os.makedirs(build_dir)
@@ -55,9 +48,13 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
     if test:
         if test_flags is None:
             test_flags = []
-        call(["ctest", "--output-on-failure"] + test_flags)
+        if test_python3:
+            os.system("ctest --output-on-failure")
+        else:
+            call(["ctest", "--output-on-failure"] + test_flags)
     call(["make", "install"])
-    call(["bin/test_install"])
+    if not test_python3:
+        call(["bin/test_install"])
     os.chdir(cwd)
 
 
@@ -65,6 +62,7 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
 class PrBuilder(object):
 
     def __init__(self, argv):
+        self.python3 = False
         rep = argv[1]
         self.github_api_token = codecs.encode(GITHUB_ROT13_API_TOKEN, 'rot13')
         self.build_ert = True
@@ -83,6 +81,7 @@ class PrBuilder(object):
         self.access_pr()
         self.test_flags = argv[2:]  # argv = [exec, repo, [L|LE, LABEL]]
 
+
     def __str__(self):
         ret_str = "Settings: "
         ret_str += "\nRepository type: %s" % self.repository
@@ -92,11 +91,24 @@ class PrBuilder(object):
         return ret_str
 
 
+
+
     def parse_pr_description(self):
         ecl_word = "Statoil/libecl#(\\d+)"
         res_word = "Statoil/libres#(\\d+)"
         ert_word = "Statoil/ert#(\\d+)"
         desc = self.pr_description
+  
+        if (sys.version_info.major >= 3):
+            match = re.search('PYTHON3', desc)
+            if match:
+                self.python3 = True
+            else:
+                print("ERT does not support python version 3 or higher, exiting...")
+                sys.exit(0)
+        else:
+            self.python3 = False
+
         match = re.search(ecl_word, desc, re.MULTILINE)
         if match:
             self.pr_map['libecl'] = int(match.group(1))
@@ -113,7 +125,7 @@ class PrBuilder(object):
         elif self.repository == "res":
             pr_num = self.pr_map.get('libres')
         elif self.repository == "ert":
-            pr_num = self.pr_map.get('libecl')
+            pr_num = self.pr_map.get('ert')
 
         if pr_num is not None:
             if pr_num != self.pr_number:
@@ -190,6 +202,9 @@ class PrBuilder(object):
             os.makedirs(install_dir)
         self.compile_ecl(basedir, install_dir)
 
+        if self.python3:
+            return
+
         if self.rep_name == 'libecl' and sys.platform in ('Darwin', 'darwin'):
             return
 
@@ -206,7 +221,7 @@ class PrBuilder(object):
 
         test = (self.repository == 'ecl')
         c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, c_flags=c_flags, test_flags=self.test_flags)
+        build(source_dir, install_dir, test, self.python3, c_flags=c_flags, test_flags=self.test_flags)
 
     def compile_res(self, basedir, install_dir):
         if self.repository == 'res':
@@ -215,14 +230,14 @@ class PrBuilder(object):
             source_dir = os.path.join(basedir, "libres")
         test = (self.repository in ('ecl', 'res'))
         # TODO add c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, test_flags=self.test_flags)
+        build(source_dir, install_dir, test, self.python3, test_flags=self.test_flags)
 
     def compile_ert(self, basedir, install_dir):
         if self.repository == 'ert':
             source_dir = basedir
         else:
             source_dir = os.path.join(basedir, "ert")
-        build(source_dir, install_dir, True, test_flags=self.test_flags)
+        build(source_dir, install_dir, True, self.python3, test_flags=self.test_flags)
 
 
 def main():
@@ -230,7 +245,7 @@ def main():
     print('\n===================')
     print(' '.join(sys.argv))
     print('===================\n')
-    find_python_version(sys.argv)
+    find_python_version()
     pr_build = PrBuilder(sys.argv)
     pr_build.clone_fetch_merge(basedir)
     pr_build.compile_and_build(basedir)
