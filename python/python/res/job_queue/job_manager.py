@@ -231,7 +231,6 @@ class JobManager(object):
         with open(self.STATUS_file, "a") as f:
             now = time.localtime()
             f.write("%-32s: %02d:%02d:%02d .... " % (job["name"], now.tm_hour, now.tm_min, now.tm_sec))
-        self.postMessage(job=job, extra_fields={"status": "startStatus"})
 
 
     def completeStatus(self, exit_status, error_msg, job=None):
@@ -242,11 +241,9 @@ class JobManager(object):
         with open(self.STATUS_file, "a") as f:
             if exit_status == 0:
                 status = ""
-                self.postMessage(job=job, extra_fields=extra_fields)
             else:
                 status = " EXIT: %d/%s" % (exit_status, error_msg)
                 extra_fields.update({"error_msg": error_msg})
-                self.postMessage(job=job, extra_fields=extra_fields)
 
             f.write("%02d:%02d:%02d  %s\n" % (now.tm_hour, now.tm_min, now.tm_sec, status))
 
@@ -415,13 +412,10 @@ class JobManager(object):
             f.write("%02d:%02d:%02d  Calling: %s %s\n" %
                     (now.tm_hour, now.tm_min, now.tm_sec,
                      job.get('executable'), args))
-        self.postMessage(job=job,extra_fields={"status": "running"})
-
 
     def runJob(self, job):
         assert_file_executable(job.get('executable'))
         self.addLogLine(job)
-        self.postMessage(job=job, extra_fields={"status": "runJob", "finished": False})
         pid = os.fork()
         exit_status, err_msg = 0, ''
         if pid == 0:
