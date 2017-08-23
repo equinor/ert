@@ -56,14 +56,15 @@ void * read_file( void * self , const stringlist_type * args) {
   printf("Running read_file \n");
   int * value = (int *) self;
   FILE * stream = util_fopen(stringlist_iget(args , 0 ) , "r");
-  fscanf(stream , "%d" , value );
+  int read_count = fscanf(stream , "%d" , value );
   fclose( stream );
-  {
+  if (read_count == 1) {
     int * return_value = util_malloc( sizeof * return_value );
     return_value[0] = value[0];
 
     return return_value;
-  }
+  } else
+    return NULL;
 }
 
 

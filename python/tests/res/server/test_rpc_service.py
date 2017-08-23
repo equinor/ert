@@ -5,7 +5,6 @@ import warnings
 import sys
 from threading import Thread
 
-from ecl import Version
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
 from res.server import ErtRPCServer, ErtRPCClient

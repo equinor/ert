@@ -17,7 +17,7 @@
    for more details.
 */
 
-#include <ert/util/ert_version.h>
+#include <ert/util/ecl_version.h>
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.h>
 
@@ -26,25 +26,25 @@
   version mapping.
 */
 
-int version_get_major_ert_version( ) {
+int ecl_version_get_major_version( ) {
   return 1;
 }
 
 
-int version_get_minor_ert_version( ) {
+int ecl_version_get_minor_version( ) {
   return 2;
 }
 
 
-const char* version_get_micro_ert_version( ) {
+const char* ecl_version_get_micro_version( ) {
   return "3";
 }
 
 
 void test_version() {
-  test_assert_int_equal( version_get_major_ert_version( ) , 1 );
-  test_assert_int_equal( version_get_minor_ert_version( ) , 2 );
-  test_assert_string_equal( version_get_micro_ert_version( ) , "3" );
+  test_assert_int_equal( ecl_version_get_major_version( ) , 1 );
+  test_assert_int_equal( ecl_version_get_minor_version( ) , 2 );
+  test_assert_string_equal( ecl_version_get_micro_version( ) , "3" );
 }
 
 
@@ -55,10 +55,10 @@ int main(int argc , const char ** argv) {
     const char * path = argv[1];
     ert_workflow_list_type * workflows = ert_workflow_list_alloc_empty(NULL);
     ert_workflow_list_add_jobs_in_directory( workflows , path );
-    
+
     // The CONF1 only exists as default - unversioned
     test_assert_true( ert_workflow_list_has_job( workflows , "CONF1"));
-    
+
     // The CONF2 exists as the default - which is invalid and will not load,
     // and CONF2@1 - which should load.
     test_assert_false( ert_workflow_list_has_job( workflows , "CONF2@1"));
