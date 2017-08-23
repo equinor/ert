@@ -751,11 +751,19 @@ static char * model_config_alloc_user_config_file(const char * user_config_file,
 static hash_type * alloc_predefined_kw_map(const char * user_config_file) {
     char * config_file_base       = model_config_alloc_user_config_file(user_config_file, true);
     char * config_file            = model_config_alloc_user_config_file(user_config_file, false);
+    char * config_path;
 
     hash_type * pre_defined_kw_map = hash_alloc();
     hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE>", config_file);
     hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE_BASE>", config_file_base);
-
+    {
+      char * tmp_path;
+      util_alloc_file_components( user_config_file , &tmp_path , NULL , NULL );
+      config_path = util_alloc_abs_path( tmp_path );
+      free( tmp_path );
+    }
+    hash_insert_string(pre_defined_kw_map, "<CONFIG_PATH>", config_path);
+    free(config_path);
     free(config_file) ;
     free(config_file_base);
 
