@@ -48,9 +48,6 @@
 #include <ert/util/type_vector_functions.h>
 #include <ert/res_util/subst_list.h>
 
-#include <ert/config/config_parser.h>
-#include <ert/config/config_schema_item.h>
-
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_io_config.h>
 
