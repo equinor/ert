@@ -41,10 +41,12 @@ set(TEST_SOURCES
     test_res_config.py
     test_log_config.py
     test_run_context.py
+    test_data_kw_define.py
 )
 
 add_python_package("python.tests.res.enkf" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf "${TEST_SOURCES}" False)
 
+addPythonTest(tests.res.enkf.test_data_kw_define.DataKWTest)
 addPythonTest(tests.res.enkf.test_es_update.ESUpdateTest)
 addPythonTest(tests.res.enkf.test_site_config.SiteConfigTest)
 addPythonTest(tests.res.enkf.test_res_config.ResConfigTest)
