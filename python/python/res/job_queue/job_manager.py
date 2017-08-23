@@ -125,7 +125,10 @@ class JobManager(object):
 
         pw_entry = pwd.getpwuid(os.getuid())
         self.user = pw_entry.pw_name
-        logged_fields= {"status": "init"}
+        logged_fields= {"status": "init",
+                        "python_sys_path": sys.path,
+                        "pythonpath": os.environ.get('PYTHONPATH', ''),
+                        }
         logged_fields.update({"jobs": self._job_map.values()})
         self.postMessage(extra_fields=logged_fields)
         cond_unlink("EXIT")
