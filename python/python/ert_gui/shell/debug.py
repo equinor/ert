@@ -1,4 +1,4 @@
-from ecl import Version
+from ecl import EclVersion
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 
 
@@ -17,6 +17,7 @@ class Debug(ErtShellCollection):
         self.shellContext()["debug"] = self
         self.__last_plugin_result = None
         self.__local_variables = {}
+        self.__version = EclVersion( )
 
     def setLastPluginResult(self, result):
         self.__last_plugin_result = result
@@ -26,20 +27,20 @@ class Debug(ErtShellCollection):
         print("Site Config: %s" % self.ert().siteConfig().getLocation())
 
     def version(self, line):
-        print("Version: %s" % Version.getVersion())
+        print("Version: %s" % self.__version.versionString())
 
     def timestamp(self, line):
-        print("Timestamp: %s" % Version.getBuildTime())
+        print("Timestamp: %s" % self.__version.getBuildTime())
 
     def gitCommit(self, line):
-        print("Git Commit: %s" % Version.getGitCommit(True))
+        print("Git Commit: %s" % self.__version.getGitCommit(True))
 
     @assertConfigLoaded
     def info(self, line):
         print("Site Config: %s" % self.ert().siteConfig().getLocation())
-        print("Version:     %s" % Version.getVersion())
-        print("Timestamp:   %s" % Version.getBuildTime())
-        print("Git Commit:  %s" % Version.getGitCommit(True))
+        print("Version:     %s" % self.__version.versionString())
+        print("Timestamp:   %s" % self.__version.getBuildTime())
+        print("Git Commit:  %s" % self.__version.getGitCommit(True))
 
     def lastPluginResult(self, line):
         print("Last plugin result: %s" % self.__last_plugin_result)
