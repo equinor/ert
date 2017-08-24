@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 2.8 )
-project( ERT C CXX )
+project( ERT C )
 
 if(POLICY CMP0042)
   cmake_policy(SET CMP0042 OLD)
@@ -13,6 +13,19 @@ set( ERT_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
 
 # If the micro version is not integer, that should be interpreted as a
 # development version leading towards version MAJOR.MINOR.0
+
+execute_process(COMMAND date "+%Y-%m-%d %H:%M:%S" OUTPUT_VARIABLE ERT_BUILD_TIME )
+string(STRIP ${ERT_BUILD_TIME} ERT_BUILD_TIME)
+
+find_package(Git)
+if(GIT_EXECUTABLE)
+   execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                   OUTPUT_VARIABLE GIT_COMMIT)
+   string(STRIP "${GIT_COMMIT}" GIT_COMMIT)
+else()
+   set(GIT_COMMIT)
+endif()
 
 #-----------------------------------------------------------------
 
@@ -92,10 +105,6 @@ set( CMAKE_C_FLAGS_main ${CMAKE_C_FLAGS} )
 set( CMAKE_CXX_FLAGS_main ${CMAKE_CXX_FLAGS} )
 set( CMAKE_C_FLAGS_main "${CMAKE_C_FLAGS} -std=gnu99" )
 
-set( ERT_EXTERNAL_UTIL_LIBS "" )
-include(cmake/ert_build_check.cmake)
-include(cmake/ert_api_check.cmake)
-include(cmake/ert_lib_check.cmake)
 
 set( CMAKE_C_FLAGS ${CMAKE_C_FLAGS_main} )
 set( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_main} )
@@ -119,7 +128,7 @@ endif()
 
 include(cmake/ert_module_name.cmake)
 
-add_subdirectory( libenkf )
+add_subdirectory( libert )
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX})
 

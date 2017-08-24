@@ -30,6 +30,9 @@
 #include <ert/enkf/res_config.h>
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_types.h>
+
+#include <ert/ert/ert_version.h>
+
 #include <enkf_tui_main.h>
 
 #define WORKFLOW_OPTION "-wf"
@@ -134,8 +137,8 @@ int main (int argc, char ** argv) {
   init_debug(argv[0]);
   printf("\n");
   printf("Documentation : %s \n","http://ert.nr.no");
-  printf("git commit    : %s \n",GIT_COMMIT);
-  printf("compile time  : %s \n",COMPILE_TIME_STAMP);
+  printf("git commit    : %s \n",ert_version_get_git_commit( ));
+  printf("compile time  : %s \n",ert_version_get_build_time( ));
   printf("site config   : %s \n", site_config_get_location());
 
   enkf_main_install_SIGNALS();                     /* Signals common to both tui and gui. */

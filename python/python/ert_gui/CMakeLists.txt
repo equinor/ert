@@ -8,6 +8,8 @@ set(PYTHON_SOURCES
     main_window.py
     newconfig.py
 )
+configure_file(ert_version.py.in   ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/ert_gui/ert_version.py )
+install(FILES ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/ert_gui/ert_version.py DESTINATION ${PYTHON_INSTALL_PREFIX}/ert_gui)
 
 add_python_package("python.ert_gui" ${PYTHON_INSTALL_PREFIX}/ert_gui "${PYTHON_SOURCES}" True)
 
