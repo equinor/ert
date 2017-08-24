@@ -119,7 +119,7 @@ from PyQt4.QtGui import QApplication, QFileDialog
 
 import ert_gui.ertwidgets
 from res.enkf import EnKFMain, ResConfig
-from ecl import EclVersion
+from ert_gui import ErtVersion
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 from ert_gui.main_window import GertMainWindow
@@ -206,8 +206,9 @@ def main(argv):
         sys.exit(1)
 
     splash = ErtSplash()
-    version = EclVersion( )
+    version = ErtVersion( )
     splash.version = "Version %s" % version.versionString()
+
     splash.timestamp = version.getBuildTime()
 
     splash.show()

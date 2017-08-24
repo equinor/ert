@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 2.8 )
-project( ERT C CXX )
+project( ERT C )
 
 if(POLICY CMP0042)
   cmake_policy(SET CMP0042 OLD)
@@ -13,6 +13,19 @@ set( ERT_VERSION_MICRO git ) # with "new in Ert Version X.X.X"!
 
 # If the micro version is not integer, that should be interpreted as a
 # development version leading towards version MAJOR.MINOR.0
+
+execute_process(COMMAND date "+%Y-%m-%d %H:%M:%S" OUTPUT_VARIABLE ERT_BUILD_TIME )
+string(STRIP ${ERT_BUILD_TIME} ERT_BUILD_TIME)
+
+find_package(Git)
+if(GIT_EXECUTABLE)
+   execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                   OUTPUT_VARIABLE GIT_COMMIT)
+   string(STRIP "${GIT_COMMIT}" GIT_COMMIT)
+else()
+   set(GIT_COMMIT)
+endif()
 
 #-----------------------------------------------------------------
 

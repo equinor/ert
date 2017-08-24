@@ -1,0 +1,26 @@
+from ecl.util import Version,EclVersion
+from res.util import ResVersion
+
+class ErtVersion(Version):
+
+    def __init__(self):
+        major = ${ERT_VERSION_MAJOR}
+        minor = ${ERT_VERSION_MINOR}
+        micro = "${ERT_VERSION_MICRO}"
+        git_commit = "${GIT_COMMIT}"
+        build_time = "${ERT_BUILD_TIME}"
+        super( ErtVersion, self).__init__( major, minor , micro , git_commit, build_time)
+
+    @staticmethod
+    def res_version():
+        return ResVersion( )
+
+
+    @staticmethod
+    def ecl_version():
+        return EclVersion( )
+
+    def combined(self):
+        res = ResVersion( )
+        ecl = EclVersion( )
+        return (self.major, self.minor, (ecl.micro, res.micro, self.micro))

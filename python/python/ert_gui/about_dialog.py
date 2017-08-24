@@ -16,7 +16,7 @@
 
 from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import  QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QFont
-from ecl.util import Version
+from ert_gui import ErtVersion
 from ert_gui.ertwidgets import resourceImage
 
 
@@ -74,18 +74,19 @@ class AboutDialog(QDialog):
         info_layout.addWidget(ert_title)
 
         version = QLabel()
+        ert_version = ErtVersion( )
         version.setAlignment(Qt.AlignHCenter)
-        version.setText("Version: %s" % Version.getVersion())
+        version.setText("Versions: ecl:%s    res:%s    ert:%s" % (ert_version.ecl_version().versionString(), ert_version.res_version().versionString(), ert_version.versionString()))
         info_layout.addWidget(version)
 
         timestamp = QLabel()
         timestamp.setAlignment(Qt.AlignHCenter)
-        timestamp.setText("Build time: %s" % Version.getBuildTime())
+        timestamp.setText("Build time: %s" % ert_version.getBuildTime())
         info_layout.addWidget(timestamp)
 
         git_commit = QLabel()
         git_commit.setAlignment(Qt.AlignHCenter)
-        git_commit.setText("Git commit hash: %s" % Version.getGitCommit(short=True))
+        git_commit.setText("Git commit hash: %s" % ert_version.getGitCommit(short=True))
         info_layout.addWidget(git_commit)
 
         info_layout.addStretch(5)
