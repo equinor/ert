@@ -36,8 +36,8 @@ target_include_directories(job_queue
            $<INSTALL_INTERFACE:include>
 )
 set_target_properties(job_queue PROPERTIES
-    VERSION ${ERT_VERSION_MAJOR}.${ERT_VERSION_MINOR}
-    SOVERSION ${ERT_VERSION_MAJOR}
+    VERSION ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}
+    SOVERSION ${RES_VERSION_MAJOR}
 )
 
 install(DIRECTORY include/
