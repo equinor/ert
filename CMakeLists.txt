@@ -115,7 +115,7 @@ endif()
 
 include(cmake/ert_module_name.cmake)
 
-add_subdirectory( libenkf )
+add_subdirectory( libert )
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX})
 
