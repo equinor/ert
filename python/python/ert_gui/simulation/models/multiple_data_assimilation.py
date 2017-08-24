@@ -63,20 +63,10 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = "Running MDA ES %d iteration%s." % (iteration_count, ('s' if (iteration_count != 1) else ''))
         self.setPhaseName(phase_string, indeterminate=True)
 
-
         run_context = None
         for iteration, weight in enumerate(weights):
             run_context = self.create_context( arguments , iteration,  prior_context = run_context )
-
-            num_successful_realizations = self._simulateAndPostProcess(run_context )
-
-            # We exit because the user has pressed 'Kill all simulations'.
-            if self.userExitCalled( ):
-                self.setPhase(iteration_count + 2, "Simulations stopped")
-                return
-
-            # We exit if there are too few realisations left for updating.
-            self.checkHaveSufficientRealizations(num_successful_realizations)
+            self._simulateAndPostProcess(run_context )
 
             self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_UPDATE )
             self.update( run_context , weights[iteration])
@@ -123,6 +113,8 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runSimpleStep(self._job_queue, run_context)
+
+        self.checkHaveSufficientRealizations(num_successful_realizations)
         
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
