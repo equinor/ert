@@ -92,10 +92,6 @@ set( CMAKE_C_FLAGS_main ${CMAKE_C_FLAGS} )
 set( CMAKE_CXX_FLAGS_main ${CMAKE_CXX_FLAGS} )
 set( CMAKE_C_FLAGS_main "${CMAKE_C_FLAGS} -std=gnu99" )
 
-set( ERT_EXTERNAL_UTIL_LIBS "" )
-include(cmake/ert_build_check.cmake)
-include(cmake/ert_api_check.cmake)
-include(cmake/ert_lib_check.cmake)
 
 set( CMAKE_C_FLAGS ${CMAKE_C_FLAGS_main} )
 set( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_main} )
