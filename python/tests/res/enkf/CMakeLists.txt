@@ -14,6 +14,7 @@ set(TEST_SOURCES
     test_enkf_library.py
     test_enkf_load_results_manually.py
     test_enkf_obs.py
+    test_enkf_runpath.py
     test_ert_context.py
     test_gen_obs.py
     test_labscale.py
@@ -75,6 +76,7 @@ addPythonTest(tests.res.enkf.test_field_config.FieldConfigTest)
 addPythonTest(tests.res.enkf.test_queue_config.QueueConfigTest)
 addPythonTest(tests.res.enkf.test_log_config.LogConfigTest)
 addPythonTest(tests.res.enkf.test_run_context.ErtRunContextTest)
+addPythonTest(tests.res.enkf.test_enkf_runpath.EnKFRunpathTest)
 
 if (STATOIL_TESTDATA_ROOT)
   addPythonTest(tests.res.enkf.test_enkf.EnKFTest LABELS StatoilData)
