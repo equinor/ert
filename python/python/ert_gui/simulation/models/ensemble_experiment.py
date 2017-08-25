@@ -27,6 +27,13 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(1, "Simulations completed.") # done...
         self._job_queue = None
 
+
+    def assertHaveSufficientRealizations(self, num_successful_realizations, active_realizations):
+        if num_successful_realizations == 0:
+            raise ErtRunError("Simulation failed! All realizations failed!")
+        elif (num_successful_realizations < active_realizations):
+            raise ErtRunError("Too many simulations have failed! .\n\n"
+                              "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename()) 
         
         
     def runSimulations(self, arguments ):

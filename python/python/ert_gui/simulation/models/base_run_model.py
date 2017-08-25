@@ -215,14 +215,7 @@ class BaseRunModel(object):
     def isIndeterminate(self):
         """ @rtype: bool """
         return not self.isFinished() and self._indeterminate
-
-    def assertHaveSufficientRealizations(self, num_successful_realizations, active_realizations):
-        if num_successful_realizations == 0:
-            raise ErtRunError("Simulation failed! All realizations failed!")
-        elif (num_successful_realizations < active_realizations):
-            raise ErtRunError("Too many simulations have failed! .\n\n"
-                              "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename()) 
-    
+       
     def checkHaveSufficientRealizations(self, num_successful_realizations):
         if num_successful_realizations == 0:
             raise ErtRunError("Simulation failed! All realizations failed!")
