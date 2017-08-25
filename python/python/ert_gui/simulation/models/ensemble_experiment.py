@@ -40,7 +40,6 @@ class EnsembleExperiment(BaseRunModel):
         self.runSimulations__(  arguments , "Running ensemble experiment...")
                
 
-
     def create_context(self, arguments):
         fs_manager = self.ert().getEnkfFsManager()
         init_fs = fs_manager.getCurrentFileSystem( )
