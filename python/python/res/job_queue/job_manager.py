@@ -28,6 +28,8 @@ import pwd
 import requests
 import json
 import imp
+from ecl import EclVersion
+from res import ResVersion
 
 def redirect(file, fd, open_mode):
     new_fd = os.open(file, open_mode)
@@ -122,12 +124,15 @@ class JobManager(object):
         self.max_runtime = 0  # This option is currently sleeping
         self.short_sleep = 2  # Sleep between status checks
         self.node = socket.gethostname()
-
         pw_entry = pwd.getpwuid(os.getuid())
         self.user = pw_entry.pw_name
+        ecl_v = EclVersion()
+        res_v = ResVersion()
         logged_fields= {"status": "init",
                         "python_sys_path": sys.path,
                         "pythonpath": os.environ.get('PYTHONPATH', ''),
+                        "res_version": ecl_v.versionString(),
+                        "ecl_version": res_v.versionString(),
                         }
         logged_fields.update({"jobs": self._job_map.values()})
         self.postMessage(extra_fields=logged_fields)
