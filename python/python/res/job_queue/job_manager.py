@@ -18,7 +18,6 @@ import sys
 import os
 import signal
 import shutil
-import os.path
 import random
 from datetime import datetime as dt
 import time
@@ -30,6 +29,7 @@ import json
 import imp
 from ecl import EclVersion
 from res import ResVersion
+from sys import version as sys_version
 
 def redirect(file, fd, open_mode):
     new_fd = os.open(file, open_mode)
@@ -95,6 +95,27 @@ def _jsonGet(data, key, err_msg=None):
         raise IOError(err_msg)
     return data[key]
 
+def _read_os_release(pfx='LSB_'):
+    fname = '/etc/os-release'
+    if not os.path.isfile(fname):
+        return {}
+    def processline(ln):
+        return ln.strip().replace('"', '')
+    def splitline(ln, pfx=''):
+        if ln.count('=') == 1:
+            k, v = ln.split('=')
+            return pfx+k, v
+        return None
+    props = {}
+    with open(fname, 'r') as f:
+        for line in f:
+            kv = splitline(processline(line), pfx=pfx)
+            if kv:
+                props[kv[0]] = kv[1]
+    return props
+
+def pad_nonexisting(path, pad='-- '):
+    return path if os.path.exists(path) else pad + path
 
 class JobManager(object):
     LOG_file      = "JOB_LOG"
@@ -126,13 +147,20 @@ class JobManager(object):
         self.node = socket.gethostname()
         pw_entry = pwd.getpwuid(os.getuid())
         self.user = pw_entry.pw_name
+        os_info = _read_os_release()
+        _, _, release, _, _ = os.uname()
+        python_vs, _ = sys_version.split('\n')
         ecl_v = EclVersion()
         res_v = ResVersion()
         logged_fields= {"status": "init",
-                        "python_sys_path": sys.path,
-                        "pythonpath": os.environ.get('PYTHONPATH', ''),
+                        "python_sys_path": map(pad_nonexisting, sys.path),
+                        "pythonpath": map(pad_nonexisting, os.environ.get('PYTHONPATH', '').split(':')),
                         "res_version": ecl_v.versionString(),
                         "ecl_version": res_v.versionString(),
+                        "LSB_ID": os_info.get('LSB_ID', ''),
+                        "LSB_VERSION_ID": os_info.get('LSB_VERSION_ID', ''),
+                        "python_version": python_vs,
+                        "kernel_version": release,
                         }
         logged_fields.update({"jobs": self._job_map.values()})
         self.postMessage(extra_fields=logged_fields)
@@ -143,6 +171,7 @@ class JobManager(object):
         self.initStatusFile()
         if self._data_root:
             os.environ["DATA_ROOT"] = self._data_root
+        self.information = logged_fields
 
 
     def data_root(self):
