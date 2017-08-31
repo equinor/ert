@@ -107,6 +107,14 @@ class JobManagerTest(TestCase):
             self.assertIn('len=1', repr(jobm))
             self.assertTrue(repr(jobm).startswith('JobManager('))
 
+    def test_logged_fields(self):
+        with TestAreaContext("jobman_repr"):
+            self.assert_clean_slate()
+            create_jobs_json([{'name' : 'COPY_FILE', 'executable' : 'XYZ'}])
+            jobm = JobManager()
+            self.assertIn('kernel_version', jobm.information)
+            self.assertIn('res_version', jobm.information)
+            self.assertIn('ecl_version', jobm.information)
 
     def test_invalid_jobs_json(self):
         with TestAreaContext("invalid_jobs_json"):
