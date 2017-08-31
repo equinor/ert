@@ -47,9 +47,25 @@ typedef struct
   int argc;
   char ** argv;
   const char * cmd;
+  int retry_call_count;
+  int exit_call_count;
 } job_type;
 
 UTIL_SAFE_CAST_FUNCTION(job, JOB_TYPE_ID)
+
+
+bool job_retry_callback(void * _job) {
+   job_type * job = job_safe_cast(_job);
+   ++job->retry_call_count;
+   return job->retry_call_count <= 1; // retry once then exit;
+}
+
+bool job_exit_callback(void * _job) {
+   job_type * job = job_safe_cast(_job);
+   ++job->exit_call_count;
+   return true;
+}
+
 
 job_type * alloc_job(int ind, const char * cmd) {
   job_type * job = util_malloc(sizeof *job);
@@ -58,7 +74,7 @@ job_type * alloc_job(int ind, const char * cmd) {
   job->queue_index     = -1;
   job->submit_usleep   = 0;
   job->callback_usleep = 0;
-  job->run_usleep      = 2 * 1000*1000; // 4 sec
+  job->run_usleep      = 2 * 1000*1000; // 2 sec - should be large enough so that the queue has time to detect the timeout
   job->run_path        = util_alloc_sprintf("timeout_test_%d", ind);
   job->cmd             = cmd;
   job->argc            = 4;
@@ -68,6 +84,9 @@ job_type * alloc_job(int ind, const char * cmd) {
   job->argv[1] = "RUNNING";
   job->argv[2] = "OK";
   job->argv[3] = util_alloc_sprintf("%d", job->run_usleep);
+
+  job->retry_call_count = 0;
+  job->exit_call_count = 0;
 
   util_make_path(job->run_path);
   return job;
@@ -87,8 +106,7 @@ job_type ** alloc_jobs(int num_jobs, const char * cmd) {
 void submit_jobs(job_queue_type * queue, int num_jobs, job_type ** jobs) {
   for (int i = 0; i < num_jobs; i++) {
     job_type * job = jobs[i];
-
-    job->queue_index = job_queue_add_job(queue, job->cmd, NULL, NULL, NULL, job, 1, job->run_path, job->run_path,
+    job->queue_index = job_queue_add_job(queue, job->cmd, NULL, job_retry_callback, job_exit_callback, job, 1, job->run_path, job->run_path,
             job->argc, (const char **) job->argv);
   }
 }
@@ -108,7 +126,7 @@ int main(int argc, char ** argv) {
   const int number_of_jobs = 1;
   util_alloc_abs_path(argv[1]);
 
-  const int running_timeout = 0;
+  const int running_timeout = 0; // Pretend that the node running the job is dead
   const int sec = 1000*1000;
 
   test_work_area_type * work_area = test_work_area_alloc("job_timeout");
@@ -116,7 +134,8 @@ int main(int argc, char ** argv) {
 
   job_type **jobs = alloc_jobs(number_of_jobs, argv[1]);
 
-  job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK", "DOES_NOT_EXIST", "ERROR");
+  // By setting max_submit to 0, failing jobs won't be restarted unless the retry callback says so
+  job_queue_type * queue = job_queue_alloc(0, "OK", "DOES_NOT_EXIST", "ERROR");
   queue_driver_type * driver = queue_driver_alloc_local();
   job_queue_manager_type * queue_manager = job_queue_manager_alloc(queue);
 
@@ -133,11 +152,14 @@ int main(int argc, char ** argv) {
       util_exit("Job failed to be queued!\n");
     }
 
-    usleep(1 * sec); // 1.0 sec
-    int job_status = job_queue_iget_job_status(queue, 0);
+    usleep(4 * sec); // 4.0 sec - should be large enough so that the queue has the time to restart and the exit the job
 
-    if (job_status != JOB_QUEUE_IS_KILLED) {
-      util_exit("Job should have been killed, had status %d != %d\n", job_status, JOB_QUEUE_IS_KILLED);
+    for(int ijob = 0; ijob < number_of_jobs; ++ijob) {
+       if(jobs[ijob]->retry_call_count < 1)
+         util_exit("Job's retry callback should have been called at least once, instead it was never called");
+
+     if(jobs[ijob]->exit_call_count < 1)
+          util_exit("Job's exit callback should have been called at least once, instead it was never called");
     }
   }
   if (!job_queue_manager_try_wait(queue_manager, 5 * sec))
