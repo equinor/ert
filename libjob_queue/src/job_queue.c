@@ -543,9 +543,9 @@ void job_queue_iset_external_restart(job_queue_type * queue , int job_index) {
    status to JOB_QUEUE_RUN_FAIL.
 
 
-   This is a bit dangerous beacuse the queue system has said that the
+   This is a bit dangerous because the queue system has said that the
    job was all hunkadory, and freed the driver related resources
-   attached to the job; it is therefor essential that the
+   attached to the job; it is therefore essential that the
    JOB_QUEUE_EXIT code explicitly checks the status of the job node's
    driver specific data before dereferencing.
 */
@@ -759,7 +759,7 @@ static void * job_queue_run_DO_KILL_callback( void * arg ) {
 
 static void job_queue_handle_DO_KILL_NODE_FAILURE(job_queue_type * queue, job_queue_node_type * node) {
   queue_driver_blacklist_node( queue->driver, job_queue_node_get_driver_data(node) );
-  job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
+  job_queue_change_node_status(queue, node, JOB_QUEUE_EXIT);
   job_queue_node_dec_submit_attempt(node);
 }
 
