@@ -192,6 +192,7 @@ void job_queue_node_free_data(job_queue_node_type * node) {
   util_safe_free( node->job_name );
   util_safe_free( node->exit_file );
   util_safe_free( node->ok_file );
+  util_safe_free( node->status_file );
   util_safe_free( node->run_cmd );
   util_free_stringlist( node->argv , node->argc );
 
@@ -588,7 +589,7 @@ bool job_queue_node_kill( job_queue_node_type * node , job_queue_status_type * s
    This frees the storage allocated by the driver - the storage
    allocated by the queue layer is retained.
 
-   In the case of jobs which are first marked as successfull by the
+   In the case of jobs which are first marked as successful by the
    queue layer, and then subsequently set to status EXIT by the
    DONE_callback this function will be called twice; i.e. we must
    protect against a double free.

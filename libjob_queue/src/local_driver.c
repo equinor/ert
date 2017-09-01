@@ -31,9 +31,12 @@
 #include <ert/job_queue/local_driver.h>
 
 
+typedef struct local_job_struct local_job_type;
+
 struct local_job_struct {
   UTIL_TYPE_ID_DECLARATION;
   bool            active;
+  bool            free_when_finished;
   job_status_type status;
   pthread_t       run_thread;
   pid_t           child_process;
@@ -53,23 +56,24 @@ struct local_driver_struct {
 
 
 static UTIL_SAFE_CAST_FUNCTION( local_driver , LOCAL_DRIVER_TYPE_ID )
-UTIL_SAFE_CAST_FUNCTION( local_job    , LOCAL_JOB_TYPE_ID    )
+static UTIL_SAFE_CAST_FUNCTION( local_job    , LOCAL_JOB_TYPE_ID    )
 
 
-local_job_type * local_job_alloc() {
+static local_job_type * local_job_alloc() {
   local_job_type * job;
   job = util_malloc(sizeof * job );
   UTIL_TYPE_ID_INIT( job , LOCAL_JOB_TYPE_ID );
   job->active = false;
+  job->free_when_finished = false;
   job->status = JOB_QUEUE_WAITING;
   return job;
 }
 
-void local_job_free(local_job_type * job) {
-  if (job->active) {
-    /* Thread clean up */
-  }
-  free(job);
+static void local_job_free(local_job_type * job) {
+   if (job->active)
+      job->free_when_finished = true;
+   else
+      free(job);
 }
 
 
@@ -108,24 +112,27 @@ void * submit_job_thread__(void * __arg) {
   const char *executable = arg_pack_iget_const_ptr(arg_pack, 0);
   /*
     The arg_pack contains a run_path field as the second argument,
-    it has therefor been left here as a comment:
+    it has therefore been left here as a comment:
 
     const char * run_path    = arg_pack_iget_const_ptr(arg_pack , 1);
   */
   int argc = arg_pack_iget_int(arg_pack, 2);
   char **argv = arg_pack_iget_ptr(arg_pack, 3);
   local_job_type *job = arg_pack_iget_ptr(arg_pack, 4);
-
   {
     int wait_status;
     job->child_process = util_spawn(executable, argc, (const char**) argv, NULL, NULL);
     util_free_stringlist(argv, argc);
     arg_pack_free(arg_pack);
     waitpid(job->child_process, &wait_status, 0);
-  }
 
-  job->status = JOB_QUEUE_DONE;
-  job->active = false;
+    if(job->free_when_finished) // A request to free the job sent while its thread was still running
+       free(job);
+    else {
+       job->active = false;
+       job->status = WIFEXITED(wait_status) ? JOB_QUEUE_DONE : JOB_QUEUE_IS_KILLED;
+    }
+  }
   pthread_exit(NULL);
   return NULL;
 }

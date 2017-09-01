@@ -1051,7 +1051,7 @@ void * job_queue_run_jobs__(void * __arg_pack) {
 
 void job_queue_start_manager_thread( job_queue_type * job_queue , pthread_t * queue_thread , int job_size , bool verbose) {
 
-  arg_pack_type  * queue_args = arg_pack_alloc(); /* This arg_pack will be freed() in the job_que_run_jobs__() */
+  arg_pack_type  * queue_args = arg_pack_alloc(); /* This arg_pack will be freed() in the job_queue_run_jobs__() */
   arg_pack_append_ptr(queue_args  , job_queue);
   arg_pack_append_int(queue_args  , job_size);
   arg_pack_append_bool(queue_args , verbose);
@@ -1298,6 +1298,7 @@ bool job_queue_get_user_exit( const job_queue_type * queue) {
 void job_queue_free(job_queue_type * queue) {
   util_safe_free( queue->ok_file );
   util_safe_free( queue->exit_file );
+  util_safe_free( queue->status_file );
   job_list_free( queue->job_list );
   job_queue_status_free( queue->status );
   free(queue);

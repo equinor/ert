@@ -76,7 +76,7 @@ job_type * alloc_job(int ind, const char * cmd) {
   job->callback_usleep = 0;
   job->run_usleep      = 2 * 1000*1000; // 2 sec - should be large enough so that the queue has time to detect the timeout
   job->run_path        = util_alloc_sprintf("timeout_test_%d", ind);
-  job->cmd             = cmd;
+  job->cmd             = util_alloc_abs_path(cmd);
   job->argc            = 4;
 
   job->argv    = util_malloc(4 * sizeof *job->argv);
@@ -102,6 +102,17 @@ job_type ** alloc_jobs(int num_jobs, const char * cmd) {
   return jobs;
 }
 
+void free_jobs(job_type ** jobs, int num_jobs) {
+  for (int i = 0; i < num_jobs; i++) {
+    util_free(jobs[i]->run_path);
+    util_free(jobs[i]->cmd);
+    util_free(jobs[i]->argv[3]);
+    util_free(jobs[i]->argv);
+    util_free(jobs[i]);
+  }
+  util_free(jobs);
+}
+
 
 void submit_jobs(job_queue_type * queue, int num_jobs, job_type ** jobs) {
   for (int i = 0; i < num_jobs; i++) {
@@ -124,7 +135,6 @@ int main(int argc, char ** argv) {
   setbuf(stdout, NULL);
 
   const int number_of_jobs = 1;
-  util_alloc_abs_path(argv[1]);
 
   const int running_timeout = 0; // Pretend that the node running the job is dead
   const int sec = 1000*1000;
@@ -167,5 +177,6 @@ int main(int argc, char ** argv) {
   job_queue_manager_free(queue_manager);
   job_queue_free(queue);
   queue_driver_free(driver);
+  free_jobs(jobs, number_of_jobs);
   test_work_area_free(work_area);
 }
