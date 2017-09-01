@@ -1210,7 +1210,7 @@ const ensemble_config_type * enkf_state_get_ensemble_config( const enkf_state_ty
 /**
   This function writes out all the files needed by an ECLIPSE simulation, this
   includes the restart file, and the various INCLUDE files corresponding to
-  parameteres estimated by EnKF.
+  parameters estimated by EnKF.
 
   The writing of restart file is delegated to enkf_state_write_restart_file().
 */
@@ -1253,6 +1253,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
         enkf_node_load(enkf_node, fs, node_id);
 
       enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export_file , run_arg_get_step1(run_arg));
+      enkf_node_free(enkf_node);
     }
     fclose(export_file);
     free(export_file_name);

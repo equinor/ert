@@ -96,6 +96,7 @@ int member_config_get_iens( const member_config_type * member_config ) {
 void member_config_free(member_config_type * member_config) {
   util_safe_free(member_config->eclbase);
   util_safe_free(member_config->casename );
+  util_safe_free(member_config->jobname );
   free(member_config);
 }
 

@@ -48,6 +48,10 @@ static log_type * logh = NULL;               /* Handle to an open log file. */
  * if log_file_name=NULL then DEFAULT_LOG_FILE is used
  */
 void res_log_init_log( message_level_type log_level , const char * log_file_name, bool verbose){
+  // If a log is already open, close it
+  if(logh)
+     log_close(logh);
+
   if(log_file_name==NULL){
     log_file_name=DEFAULT_LOG_FILE;
   }
@@ -157,6 +161,8 @@ log_type * res_log_get_logh() {
   return logh;
 }
 
-void res_log_open_empty(){
+void res_log_open_empty() {
+  if(logh)
+    log_close(logh);
   logh = log_open(NULL, DEFAULT_LOG_LEVEL);
 }
