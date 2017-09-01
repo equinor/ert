@@ -113,7 +113,7 @@ void custom_kw_config_serialize(const custom_kw_config_type * config, stringlist
     {
         stringlist_clear(config_set);
 
-        stringlist_type * configured_keys = custom_kw_config_get_keys(config);
+        stringlist_type * configured_keys = custom_kw_config_get_alloc_keys(config);
 
         for (int i = 0; i < stringlist_get_size(configured_keys); i++) {
             const char * key = stringlist_iget(configured_keys, i);
@@ -185,7 +185,7 @@ int custom_kw_config_index_of_key(const custom_kw_config_type * config, const ch
     return hash_get_int(config->custom_keys, key);
 }
 
-stringlist_type * custom_kw_config_get_keys(const custom_kw_config_type * config) {
+stringlist_type * custom_kw_config_get_alloc_keys(const custom_kw_config_type * config) {
     return hash_alloc_stringlist(config->custom_keys);
 }
 

@@ -29,7 +29,7 @@ extern "C" {
     bool                    custom_kw_config_key_is_double(const custom_kw_config_type * config, const char * key);
     int                     custom_kw_config_index_of_key(const custom_kw_config_type * config, const char * key);
     int                     custom_kw_config_size(const custom_kw_config_type * config);
-    stringlist_type *       custom_kw_config_get_keys(const custom_kw_config_type * config);
+    stringlist_type *       custom_kw_config_get_alloc_keys(const custom_kw_config_type * config);
 
 
     UTIL_IS_INSTANCE_HEADER(custom_kw_config);
