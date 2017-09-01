@@ -91,7 +91,7 @@ static void forward_load_context_load_ecl_sum(forward_load_context_type * load_c
     }
 
     if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) {
-      summary = ecl_sum_fread_alloc(header_file , data_files , SUMMARY_KEY_JOIN_STRING );
+      summary = ecl_sum_fread_alloc(header_file , data_files , SUMMARY_KEY_JOIN_STRING , false );
       {
         time_t end_time = ecl_config_get_end_date( load_context->ecl_config );
         if (end_time > 0) {
