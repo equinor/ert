@@ -543,9 +543,9 @@ void job_queue_iset_external_restart(job_queue_type * queue , int job_index) {
    status to JOB_QUEUE_RUN_FAIL.
 
 
-   This is a bit dangerous beacuse the queue system has said that the
+   This is a bit dangerous because the queue system has said that the
    job was all hunkadory, and freed the driver related resources
-   attached to the job; it is therefor essential that the
+   attached to the job; it is therefore essential that the
    JOB_QUEUE_EXIT code explicitly checks the status of the job node's
    driver specific data before dereferencing.
 */
@@ -759,7 +759,7 @@ static void * job_queue_run_DO_KILL_callback( void * arg ) {
 
 static void job_queue_handle_DO_KILL_NODE_FAILURE(job_queue_type * queue, job_queue_node_type * node) {
   queue_driver_blacklist_node( queue->driver, job_queue_node_get_driver_data(node) );
-  job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
+  job_queue_change_node_status(queue, node, JOB_QUEUE_EXIT);
   job_queue_node_dec_submit_attempt(node);
 }
 
@@ -1051,7 +1051,7 @@ void * job_queue_run_jobs__(void * __arg_pack) {
 
 void job_queue_start_manager_thread( job_queue_type * job_queue , pthread_t * queue_thread , int job_size , bool verbose) {
 
-  arg_pack_type  * queue_args = arg_pack_alloc(); /* This arg_pack will be freed() in the job_que_run_jobs__() */
+  arg_pack_type  * queue_args = arg_pack_alloc(); /* This arg_pack will be freed() in the job_queue_run_jobs__() */
   arg_pack_append_ptr(queue_args  , job_queue);
   arg_pack_append_int(queue_args  , job_size);
   arg_pack_append_bool(queue_args , verbose);
@@ -1298,6 +1298,7 @@ bool job_queue_get_user_exit( const job_queue_type * queue) {
 void job_queue_free(job_queue_type * queue) {
   util_safe_free( queue->ok_file );
   util_safe_free( queue->exit_file );
+  util_safe_free( queue->status_file );
   job_list_free( queue->job_list );
   job_queue_status_free( queue->status );
   free(queue);

@@ -25,8 +25,6 @@ extern "C" {
 #include <ert/job_queue/queue_driver.h>
   
   typedef struct local_driver_struct local_driver_type;
-  typedef struct local_job_struct    local_job_type;
-
 
   void      * local_driver_alloc();
 
