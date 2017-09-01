@@ -132,8 +132,9 @@ class JobManager(object):
         self._job_map = {}
         self.simulation_id = ""
         self.ert_pid = ""
-        self._error_url = error_url
         self._log_url = log_url
+        if log_url is None:
+            self._log_url = error_url
         self._data_root = None
         if json_file is not None and os.path.isfile(json_file):
             self._loadJson(json_file)
@@ -415,7 +416,7 @@ class JobManager(object):
     def postError(self, job, error_msg):
         extra_fields = self.extract_stderr_stdout(job)
         extra_fields.update({"status": "error","finished": True})
-        self.postMessage(job, extra_fields, url=self._error_url)
+        self.postMessage(job, extra_fields, url=self._log_url)
 
     def extract_stderr_stdout(self, job):
         extra_fields = {}
@@ -434,7 +435,6 @@ class JobManager(object):
     def exit(self, job, exit_status, error_msg):
         self.dump_EXIT_file(job, error_msg)
         std_err_out = self.extract_stderr_stdout(job)
-        self.postMessage(job=job, extra_fields=std_err_out, url=self._error_url) #posts to the old database
         std_err_out.update({"status": "exit","finished": True, "error_msg": error_msg, "exit_status": exit_status, "error": True})
         self.postMessage(job=job, extra_fields=std_err_out) #Posts to new logstash
         pgid = os.getpgid(os.getpid())

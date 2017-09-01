@@ -1,12 +1,5 @@
 #!/usr/bin/env python
 
-#-----------------------------------------------------------------
-# Observe that this script should work with the default Python version
-# installed as /usr/bin/python (that is 2.4 on RHEL5). That way we are
-# certain that the script will "work" even in situations were the
-# users environment has not been set correctly.
-#-----------------------------------------------------------------
-
 import json
 import sys
 import os
@@ -58,8 +51,7 @@ block_illegal_fileserver = False
 REQUESTED_HEXVERSION  =  0x02070000
 
 FILE_SERVER_BLACKLIST = ["stfv-fsi01-nfs.st.statoil.no"]
-ERROR_URL     = "http://st-vlinbuild01.st.statoil.no:8000/api/error/"
-LOG_URL       = "http://st-vsib.st.statoil.no:4444"
+LOG_URL       = "http://devnull.statoil.no:4444"
 
 def illegal_fileserver_exit(msg_txt , user):
     from_ = "no-reply@statoil.com"
@@ -72,7 +64,7 @@ def illegal_fileserver_exit(msg_txt , user):
     s = smtplib.SMTP('localhost')
     s.sendmail(from_, [to], msg.as_string())
     s.quit()
-    
+
     sys.exit(1)
 
 
@@ -82,7 +74,7 @@ def check_version():
         warning = """
 /------------------------------------------------------------------------
 | You are running Python version %d.%d.%d; much of the ert functionality
-| expects to be running on Python 2.7.5.  Version 2.7.11 is the default
+| expects to be running on Python 2.7.5.  Version 2.7.13 is the default
 | version in /prog/sdpsoft.
 |
 | It is highly recommended that you update your setup to use Python 2.7.5.
@@ -404,7 +396,7 @@ def main(argv):
     check_version()
 
     max_runtime = 0
-    job_manager = JobManager(error_url=ERROR_URL, log_url=LOG_URL)
+    job_manager = JobManager(error_url=LOG_URL, log_url=LOG_URL)
 
 
     checkFileServerBlackList(job_manager)
@@ -487,7 +479,7 @@ Please contact Ketil Nummedal if you do not understand how to proceed.
 
         print json.dumps(payload)
         try:
-            stat = requests.post(ERROR_URL, headers={"Content-Type" :
+            stat = requests.post(LOG_URL, headers={"Content-Type" :
                                                      "application/json"},
                                  data=json.dumps(payload))
             print stat.text
@@ -496,7 +488,7 @@ Please contact Ketil Nummedal if you do not understand how to proceed.
 
         with open("WARNING-ILLEGAL-FILESERVER.txt", "w") as f:
             f.write(msg)
-            
+
         if block_illegal_fileserver:
             illegal_fileserver_exit( msg , job_manager.user )
 
