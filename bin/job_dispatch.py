@@ -58,8 +58,7 @@ block_illegal_fileserver = False
 REQUESTED_HEXVERSION  =  0x02070000
 
 FILE_SERVER_BLACKLIST = ["stfv-fsi01-nfs.st.statoil.no"]
-ERROR_URL     = "http://st-vlinbuild01.st.statoil.no:8000/api/error/"
-LOG_URL       = "http://st-vsib.st.statoil.no:4444"
+LOG_URL       = "http://devnull.statoil.no:4444"
 
 def illegal_fileserver_exit(msg_txt , user):
     from_ = "no-reply@statoil.com"
@@ -404,7 +403,7 @@ def main(argv):
     check_version()
 
     max_runtime = 0
-    job_manager = JobManager(error_url=ERROR_URL, log_url=LOG_URL)
+    job_manager = JobManager(error_url=LOG_URL, log_url=LOG_URL)
 
 
     checkFileServerBlackList(job_manager)
@@ -487,7 +486,7 @@ Please contact Ketil Nummedal if you do not understand how to proceed.
 
         print json.dumps(payload)
         try:
-            stat = requests.post(ERROR_URL, headers={"Content-Type" :
+            stat = requests.post(LOG_URL, headers={"Content-Type" :
                                                      "application/json"},
                                  data=json.dumps(payload))
             print stat.text
