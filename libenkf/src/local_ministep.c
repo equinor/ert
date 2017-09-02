@@ -78,6 +78,7 @@ local_ministep_type * local_ministep_alloc(const char * name, analysis_module_ty
   strcpy(result, obsdata_name);
   strcat(result, name);
   ministep->observations = local_obsdata_alloc(result);
+  free(result);
 
 
   ministep->datasets     = hash_alloc();

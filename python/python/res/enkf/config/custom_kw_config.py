@@ -33,7 +33,7 @@ class CustomKWConfig(BaseCClass):
     _key_is_double         = EnkfPrototype("bool  custom_kw_config_key_is_double(custom_kw_config, char*)")
     _index_of_key          = EnkfPrototype("int   custom_kw_config_index_of_key(custom_kw_config, char*)")
     _size                  = EnkfPrototype("int   custom_kw_config_size(custom_kw_config)")
-    _keys                  = EnkfPrototype("stringlist_obj custom_kw_config_get_keys(custom_kw_config)")
+    _keys                  = EnkfPrototype("stringlist_obj custom_kw_config_get_alloc_keys(custom_kw_config)")
     _free                  = EnkfPrototype("void  custom_kw_config_free(custom_kw_config)")
 
     def __init__(self, key, result_file, output_file=None, definition=None):

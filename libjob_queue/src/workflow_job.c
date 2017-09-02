@@ -358,6 +358,7 @@ void workflow_job_free( workflow_job_type * workflow_job ) {
   util_safe_free( workflow_job->function );
   util_safe_free( workflow_job->executable );
   int_vector_free( workflow_job->arg_types );
+  util_safe_free( workflow_job->internal_script_path );
   free( workflow_job->name );
   free( workflow_job );
 }

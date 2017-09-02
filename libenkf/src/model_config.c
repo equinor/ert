@@ -585,6 +585,7 @@ void model_config_free(model_config_type * model_config) {
   util_safe_free( model_config->current_path_key);
   util_safe_free( model_config->gen_kw_export_file_name);
   util_safe_free( model_config->obs_config_file );
+  util_safe_free( model_config->data_root );
 
   if (model_config->history)
     history_free(model_config->history);
@@ -594,7 +595,6 @@ void model_config_free(model_config_type * model_config) {
 
   if (model_config->external_time_map)
     time_map_free( model_config->external_time_map );
-
 
   bool_vector_free(model_config->internalize_state);
   bool_vector_free(model_config->__load_eclipse_restart);

@@ -37,7 +37,7 @@ custom_kw_type * custom_kw_alloc(const custom_kw_config_type * config) {
     custom_kw->config = (custom_kw_config_type *) config;
     custom_kw->data = stringlist_alloc_new();
 
-    stringlist_type * keys = custom_kw_config_get_keys(custom_kw->config);
+    stringlist_type * keys = custom_kw_config_get_alloc_keys(custom_kw->config);
     for(int index = 0; index < stringlist_get_size(keys); index++) {
         const char * key = stringlist_iget(keys, index);
         if(custom_kw_config_key_is_double(custom_kw->config, key)) {
@@ -46,6 +46,7 @@ custom_kw_type * custom_kw_alloc(const custom_kw_config_type * config) {
             custom_kw_set_string(custom_kw, key, "");
         }
     }
+    stringlist_free(keys);
     
     custom_kw->__type_id = CUSTOM_KW;
     return custom_kw;
