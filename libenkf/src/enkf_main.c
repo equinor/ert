@@ -1961,16 +1961,6 @@ void enkf_main_update_local_updates( enkf_main_type * enkf_main) {
 }
 
 
-static void enkf_main_enter_work_dir(const enkf_main_type * enkf_main) {
-  const char * work_dir = res_config_get_working_directory(enkf_main->res_config);
-
-  if(work_dir && util_chdir(work_dir) != 0)
-    util_abort(
-              "%s: failed to change directory to: %s : %s \n",
-              __func__, work_dir, strerror(errno)
-              );
-}
-
 static void enkf_main_init_log(const enkf_main_type * enkf_main) {
   const log_config_type * log_config = enkf_main_get_log_config(enkf_main);
   res_log_init_log(
@@ -2028,8 +2018,6 @@ static void enkf_main_add_ensemble_members(enkf_main_type * enkf_main) {
 enkf_main_type * enkf_main_alloc(const res_config_type * res_config, bool strict , bool verbose) {
   enkf_main_type * enkf_main = enkf_main_alloc_empty();
   enkf_main->res_config = res_config;
-
-  enkf_main_enter_work_dir(enkf_main);
 
   enkf_main_rng_init(enkf_main);
   enkf_main_set_verbose(enkf_main, verbose);

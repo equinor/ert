@@ -33,7 +33,7 @@ class ResConfig(BaseCClass):
 
     _user_config_file = EnkfPrototype("char* res_config_get_user_config_file(res_config)")
 
-    _config_path       = EnkfPrototype("char* res_config_get_working_directory(res_config)")
+    _config_path       = EnkfPrototype("char* res_config_get_config_directory(res_config)")
     _site_config       = EnkfPrototype("site_config_ref res_config_get_site_config(res_config)")
     _analysis_config   = EnkfPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
     _subst_config      = EnkfPrototype("subst_config_ref res_config_get_subst_config(res_config)")
