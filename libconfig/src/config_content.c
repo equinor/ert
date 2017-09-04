@@ -43,6 +43,7 @@ struct config_content_struct {
   subst_list_type    * define_list;
   char               * config_file;
   char               * abs_path;
+  char               * config_path;
 
   config_root_path_type * invoke_path;
   vector_type           * path_elm_storage;
@@ -69,11 +70,8 @@ config_content_type * config_content_alloc(const char * filename) {
 
   content->config_file = util_alloc_string_copy( filename );
   content->abs_path = util_alloc_abs_path( filename );
-  {
-    char * path = util_split_alloc_dirname( filename );
-    content->invoke_path = config_root_path_alloc( NULL );
-    free( path );
-  }
+  content->config_path = util_split_alloc_dirname( content->abs_path );
+  content->invoke_path = config_root_path_alloc( NULL );
 
 
   return content;
@@ -138,6 +136,7 @@ void config_content_free( config_content_type * content ) {
   subst_list_free( content->define_list );
   util_safe_free( content->config_file );
   util_safe_free( content->abs_path );
+  util_safe_free( content->config_path );
   set_free( content->parsed_files );
   if (content->invoke_path != NULL)
     config_root_path_free( content->invoke_path );
@@ -427,4 +426,9 @@ config_path_elm_type * config_content_add_path_elm( config_content_type * conten
 
 void config_content_pop_path_stack( config_content_type * content ) {
   vector_pop_back( content->path_elm_stack );
+}
+
+
+const char * config_content_get_config_path( const config_content_type * content ) {
+  return content->config_path;
 }
