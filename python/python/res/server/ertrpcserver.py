@@ -192,7 +192,6 @@ class ErtRPCServer(SimpleXMLRPCServer):
         if self._session.simulation_context.isRealizationQueued(iens):
             raise createFault(UserWarning, "Simulation with id: '%d' is already running." % iens)
 
-        print "Server has recieved:%s" % keywords
         state = self.ert.getRealisation(iens)
         state.addSubstKeyword("GEO_ID", "%d" % geo_id)
 
