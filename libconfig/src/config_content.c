@@ -368,7 +368,9 @@ const stringlist_type * config_content_iget_stringlist_ref(const config_content_
 }
 
 void config_content_add_define( config_content_type * content , const char * key , const char * value ) {
-  subst_list_append_copy( content->define_list , key , value , NULL );
+  char * filtered_value = subst_list_alloc_filtered_string(content->define_list, value);
+  subst_list_append_copy(content->define_list, key, filtered_value, NULL);
+  free(filtered_value);
 }
 
 subst_list_type * config_content_get_define_list( config_content_type * content ) {
