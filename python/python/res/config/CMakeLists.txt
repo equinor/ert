@@ -7,6 +7,7 @@ set(PYTHON_SOURCES
     config_settings.py
     content_type_enum.py
     unrecognized_enum.py
+    config_path_elm.py
 )
 
 add_python_package("python.res.config"  ${PYTHON_INSTALL_PREFIX}/res/config "${PYTHON_SOURCES}" True)

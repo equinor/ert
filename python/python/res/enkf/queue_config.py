@@ -30,6 +30,7 @@ class QueueConfig(BaseCClass):
     _alloc                 = EnkfPrototype("void* queue_config_alloc_load(char*)", bind=False)
     _alloc_local_copy      = EnkfPrototype("queue_config_obj queue_config_alloc_local_copy( queue_config )")
     _has_job_script        = EnkfPrototype("bool queue_config_has_job_script( queue_config )")
+    _get_job_script        = EnkfPrototype("char* queue_config_get_job_script(queue_config)")
     _max_submit            = EnkfPrototype("int queue_config_get_max_submit(queue_config)")
     _queue_name            = EnkfPrototype("char* queue_config_get_queue_name(queue_config)")
     _queue_driver          = EnkfPrototype("driver_ref queue_config_get_queue_driver(queue_config, char*)")
@@ -61,3 +62,7 @@ class QueueConfig(BaseCClass):
     @property
     def driver(self):
         return self._queue_driver(self.queue_name).setParent(self)
+
+    @property
+    def job_script(self):
+        return self._get_job_script()

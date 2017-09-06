@@ -84,29 +84,29 @@ static res_config_type * res_config_alloc_empty() {
 }
 
 
+void res_config_add_config_items(config_parser_type * config_parser) {
+  config_add_key_value(config_parser, RES_CONFIG_FILE_KEY,   false, CONFIG_EXISTING_PATH);
+  config_add_key_value(config_parser, CONFIG_DIRECTORY_KEY, false, CONFIG_EXISTING_PATH);
+}
+
+
+void res_config_init_config_parser(config_parser_type * config_parser) {
+  model_config_init_config_parser(config_parser);
+  res_config_add_config_items(config_parser);
+}
+
+
 static void res_config_install_config_key(
                      config_parser_type * config_parser,
                      config_content_type * config_content,
-                     const char * key, const char * value,
-                     const config_item_types item_type
+                     const char * key, const char * value
                      ) {
 
-  /* Add working directory as a key */
-  config_schema_item_type * schema_item = config_add_key_value(
-                                                        config_parser,
-                                                        key,
-                                                        false,
-                                                        item_type
-                                                        );
+  config_schema_item_type * schema_item = config_get_schema_item(config_parser, key);
 
-  /* Inject working directory */
-  if(config_content_has_item(config_content, key))
-    util_abort(
-            "%s: Did not expect %s to be provided in config file\n",
-            __func__, key
-            );
+  if(!config_content_has_item(config_content, key))
+    config_content_add_item(config_content, schema_item, NULL);
 
-  config_content_add_item(config_content, schema_item, NULL);
   config_content_item_type * content_item = config_content_get_item(config_content, key);
 
   config_content_node_type * new_node = config_content_item_alloc_node(content_item, NULL);
@@ -135,6 +135,8 @@ static config_content_type * res_config_alloc_user_content(
                                                      config_parser
                                                      );
 
+  res_config_add_config_items(config_parser);
+
   // Install config file name
   char * res_config_file = (user_config_file ?
                                     util_alloc_realpath(user_config_file) :
@@ -144,8 +146,7 @@ static config_content_type * res_config_alloc_user_content(
   res_config_install_config_key(config_parser,
                                 config_content,
                                 RES_CONFIG_FILE_KEY,
-                                res_config_file,
-                                CONFIG_EXISTING_PATH
+                                res_config_file
                                 );
 
   // Install working directory
@@ -154,8 +155,7 @@ static config_content_type * res_config_alloc_user_content(
   res_config_install_config_key(config_parser,
                                 config_content,
                                 CONFIG_DIRECTORY_KEY,
-                                res_config_dir,
-                                CONFIG_EXISTING_PATH
+                                res_config_dir
                                 );
 
   free(res_config_file);
@@ -185,15 +185,11 @@ static void res_config_init(
   if(config_content_has_item(config_content, RES_CONFIG_FILE_KEY)) {
     const char * res_config_file = config_content_get_value_as_abspath(config_content, RES_CONFIG_FILE_KEY);
     res_config->user_config_file = util_alloc_string_copy(res_config_file);
-  } else {
-    util_abort("%s: Expected to find a config_file.\n", __func__);
   }
 
   if(config_content_has_item(config_content, CONFIG_DIRECTORY_KEY)) {
     const char * config_dir = config_content_get_value_as_abspath(config_content, CONFIG_DIRECTORY_KEY);
     res_config->config_dir = util_alloc_string_copy(config_dir);
-  } else {
-    util_abort("%s: Expected to find a config directory.\n", __func__);
   }
 }
 

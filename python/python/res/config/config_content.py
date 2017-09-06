@@ -127,7 +127,8 @@ class ContentItem(BaseCClass):
             if (index >= 0) and (index < len(self)):
                 return self._iget_content_node(index).setParent(self)
             else:
-                raise IndexError
+                raise IndexError("Expected 0 <= index < %d, was 0 <= %d < %d" %
+                                 (len(self), index, len(self)))
         else:
             raise TypeError("[] operator must have integer index")
 
@@ -147,6 +148,7 @@ class ContentItem(BaseCClass):
 class ConfigContent(BaseCClass):
     TYPE_NAME = "config_content"
 
+    _alloc = ConfigPrototype("void* config_content_alloc(char*)", bind=False)
     _free = ConfigPrototype("void config_content_free( config_content )")
     _is_valid = ConfigPrototype("bool config_content_is_valid( config_content )")
     _has_key = ConfigPrototype("bool config_content_has_item( config_content , char*)")
@@ -154,10 +156,19 @@ class ConfigContent(BaseCClass):
     _get_errors = ConfigPrototype("config_error_ref config_content_get_errors( config_content )")
     _get_warnings =  ConfigPrototype("stringlist_ref config_content_get_warnings( config_content )")
     _get_config_path = ConfigPrototype("char* config_content_get_config_path( config_content )")
+    _create_path_elm = ConfigPrototype("config_path_elm_ref config_content_add_path_elm(config_content, char*)")
 
+    def __init__(self, filename):
+        c_ptr = self._alloc(filename)
 
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+        if c_ptr:
+            super(ConfigContent, self).__init__(c_ptr)
+        else:
+            raise ValueError(
+                    'Failed to construct ConfigContent instance from config file %s.'
+                    % filename
+                    )
+
 
     def __contains__(self , key):
         return self._has_key(key)
@@ -209,3 +220,6 @@ class ConfigContent(BaseCClass):
     def get_config_path(self):
         return self._get_config_path( )
 
+
+    def create_path_elm(self, path):
+        return self._create_path_elm(path)
