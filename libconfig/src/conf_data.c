@@ -32,8 +32,6 @@
 #define DT_FLOAT_STRING           "floating point number"
 #define DT_POSFLOAT_STRING        "positive floating foint number"
 #define DT_FILE_STRING            "file"
-#define DT_EXEC_STRING            "executable"
-#define DT_FOLDER_STRING          "folder"
 #define DT_DATE_STRING            "date"
 
 
@@ -48,8 +46,6 @@ dt_enum conf_data_get_dt_from_string(
   RETURN_TYPE_IF_MATCH(str, DT_FLOAT);
   RETURN_TYPE_IF_MATCH(str, DT_POSFLOAT);
   RETURN_TYPE_IF_MATCH(str, DT_FILE);
-  RETURN_TYPE_IF_MATCH(str, DT_EXEC);
-  RETURN_TYPE_IF_MATCH(str, DT_FOLDER);
   RETURN_TYPE_IF_MATCH(str, DT_DATE);
 
   util_abort("%s: Data type \"%s\" is unkown.\n", __func__, str);
@@ -68,8 +64,6 @@ bool conf_data_string_is_dt(
   else if(!strcmp(str, DT_FLOAT_STRING          )) return true;
   else if(!strcmp(str, DT_POSFLOAT_STRING       )) return true;
   else if(!strcmp(str, DT_FILE_STRING           )) return true;
-  else if(!strcmp(str, DT_EXEC_STRING           )) return true;
-  else if(!strcmp(str, DT_FOLDER_STRING         )) return true;
   else if(!strcmp(str, DT_DATE_STRING           )) return true;
   else                                             return false;
 }
@@ -93,10 +87,6 @@ const char * conf_data_get_dt_name_ref(
       return DT_POSFLOAT_STRING;
     case(DT_FILE):
       return DT_FILE_STRING;
-    case(DT_EXEC):
-      return DT_EXEC_STRING;
-    case(DT_FOLDER):
-      return DT_FOLDER_STRING;
     case(DT_DATE):
       return DT_DATE_STRING;
     default:
@@ -143,18 +133,6 @@ bool conf_data_validate_string_as_dt_value(
     case(DT_FILE):
     {
       return util_file_exists(str);
-    }
-    case(DT_EXEC):
-    {
-      bool ok;
-      char * exec = util_alloc_PATH_executable(str);
-      ok = exec != NULL;
-      free(exec);
-      return ok;
-    }
-    case(DT_FOLDER):
-    {
-      return util_is_directory(str);
     }
     case(DT_DATE):
     {
