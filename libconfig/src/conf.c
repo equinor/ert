@@ -141,7 +141,7 @@ void conf_class_free__(
 
 
 
-conf_instance_type * conf_instance_alloc_default(
+static conf_instance_type * conf_instance_alloc_default(
   const conf_class_type * conf_class,
   const char            * name)
 {

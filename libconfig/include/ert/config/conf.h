@@ -136,11 +136,6 @@ void conf_class_free__(
   void * conf_class);
 
 
-
-conf_instance_type * conf_instance_alloc_default(
-  const conf_class_type * conf_class,
-  const char            * name);
-
 conf_instance_type * conf_instance_copyc(
   const conf_instance_type * conf_instance);
 
