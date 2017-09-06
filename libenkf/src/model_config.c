@@ -903,12 +903,16 @@ static void model_config_user_config_deprecate(config_parser_type * config) {
           );
 }
 
+void model_config_init_config_parser(config_parser_type * config_parser) {
+  model_config_init_user_config(config_parser);
+  site_config_add_config_items(config_parser, false);
+  model_config_user_config_deprecate(config_parser);
+}
+
 config_content_type * model_config_alloc_content(
         const char * user_config_file, config_parser_type * config) {
 
-  model_config_init_user_config(config);
-  site_config_add_config_items(config, false);
-  model_config_user_config_deprecate(config);
+  model_config_init_config_parser(config);
 
   hash_type * pre_defined_kw_map = alloc_predefined_kw_map(user_config_file);
   config_content_type * content = config_parse(

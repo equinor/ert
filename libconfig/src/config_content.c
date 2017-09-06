@@ -71,7 +71,6 @@ config_content_type * config_content_alloc(const char * filename) {
   content->config_path = util_split_alloc_dirname( content->abs_path );
   content->invoke_path = config_root_path_alloc( NULL );
 
-
   return content;
 }
 
