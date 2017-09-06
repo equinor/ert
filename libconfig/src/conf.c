@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'conf.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'conf.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <assert.h>
@@ -29,7 +29,7 @@
 
 
 
-/** S T R U C T   D E F I N I T I O N S */ 
+/** S T R U C T   D E F I N I T I O N S */
 
 
 
@@ -40,7 +40,7 @@ struct conf_class_struct
   char                  * help;               /** Can be NULL if not given. */
   bool                    require_instance;
   bool                    singleton;
-  
+
   hash_type             * sub_classes;        /** conf_class_types          */
   hash_type             * item_specs;         /** conf_item_spec_types      */
   vector_type           * item_mutexes;       /** item_mutex_types          */
@@ -50,8 +50,8 @@ struct conf_class_struct
 
 struct conf_instance_struct
 {
-  const conf_class_type * conf_class; 
-  char                  * name;  
+  const conf_class_type * conf_class;
+  char                  * name;
 
   hash_type             * sub_instances; /** conf_instance_types */
   hash_type             * items;         /** conf_item_types     */
@@ -98,12 +98,12 @@ conf_class_type * conf_class_alloc_empty(
   const char * class_name,
   bool         require_instance,
   bool         singleton,
-  const char * help) 
+  const char * help)
 {
   assert(class_name != NULL);
 
   conf_class_type * conf_class = util_malloc(sizeof *conf_class);
-  
+
   conf_class->super_class      = NULL;
   conf_class->class_name       = util_alloc_string_copy(class_name);
   conf_class->help             = NULL;
@@ -112,8 +112,8 @@ conf_class_type * conf_class_alloc_empty(
   conf_class->sub_classes      = hash_alloc();
   conf_class->item_specs       = hash_alloc();
   conf_class->item_mutexes     = vector_alloc_new();
-  
-  
+
+
   conf_class_set_help( conf_class , help );
   return conf_class;
 }
@@ -218,7 +218,7 @@ void conf_instance_copy_sub_instances(
 
   util_free_stringlist(sub_instance_keys, num_sub_instances);
 }
-  
+
 
 
 conf_instance_type * conf_instance_copyc(
@@ -262,7 +262,7 @@ conf_item_spec_type * conf_item_spec_alloc(
   char    * name,
   bool      required_set,
   dt_enum   dt,
-  const char * help) 
+  const char * help)
 {
   assert(name != NULL);
 
@@ -321,7 +321,7 @@ conf_item_type * conf_item_alloc(
 conf_item_type * conf_item_copyc(
   const conf_item_type * conf_item)
 {
-  return conf_item_alloc(conf_item->conf_item_spec, conf_item->value); 
+  return conf_item_alloc(conf_item->conf_item_spec, conf_item->value);
 }
 
 
@@ -350,7 +350,7 @@ conf_item_mutex_type * conf_item_mutex_alloc(
   bool inverse)
 {
   conf_item_mutex_type * conf_item_mutex = util_malloc(sizeof * conf_item_mutex);
-  
+
   conf_item_mutex->super_class    = super_class;
   conf_item_mutex->require_one    = require_one;
   conf_item_mutex->inverse        = inverse;
@@ -381,11 +381,11 @@ void conf_item_mutex_free__(
 
 
 
-/** M A N I P U L A T O R S ,   I N S E R T I O N */ 
+/** M A N I P U L A T O R S ,   I N S E R T I O N */
 
 
 
-static 
+static
 bool conf_class_has_super_class(
   const conf_class_type * conf_class,
   const conf_class_type * super_class)
@@ -394,7 +394,7 @@ bool conf_class_has_super_class(
   assert(super_class  != NULL);
 
   const conf_class_type * parent = conf_class->super_class;
-  
+
   while(parent != NULL)
   {
     if(parent == super_class)
@@ -433,7 +433,7 @@ void conf_class_insert_owned_sub_class(
 
   hash_insert_hash_owned_ref(conf_class->sub_classes, sub_conf_class->class_name,
                              sub_conf_class, conf_class_free__);
-  
+
   sub_conf_class->super_class = conf_class;
 }
 
@@ -451,7 +451,7 @@ void conf_class_insert_owned_item_spec(
   if(item_spec->super_class != NULL)
     util_abort("%s: Internal error: item is already assigned to another class.\n", __func__);
 
-  
+
   /** Abort if the class has a sub class with the same name.. */
   if(hash_has_key(conf_class->sub_classes, item_spec->name))
     util_abort("%s: Internal error. conf class already has a sub class with name \"%s\".\n", __func__, item_spec->name);
@@ -459,7 +459,7 @@ void conf_class_insert_owned_item_spec(
 
   hash_insert_hash_owned_ref(conf_class->item_specs, item_spec->name,
                              item_spec, conf_item_spec_free__);
-  
+
   item_spec->super_class = conf_class;
 }
 
@@ -538,7 +538,7 @@ void conf_instance_insert_owned_item(
     if(conf_item_spec != conf_item->conf_item_spec)
       util_abort("%s: Internal error.\n", __func__);
   }
-  
+
   hash_insert_hash_owned_ref(conf_instance->items, item_name, conf_item, conf_item_free__);
 }
 
@@ -578,7 +578,7 @@ void conf_instance_overload(
 
   if(conf_instance_target->conf_class != conf_instance_source->conf_class)
     util_abort("%s: Internal error. Invalid overloading.\n", __func__);
-  
+
   conf_instance_copy_items(        conf_instance_target, conf_instance_source);
   conf_instance_copy_sub_instances(conf_instance_target, conf_instance_source);
 }
@@ -620,7 +620,7 @@ void conf_item_mutex_add_item_spec(
 
 
 
-/** M A N I P U L A T O R S ,   C L A S S   A N D   I T E M   S P E C I F I C A T I O N */ 
+/** M A N I P U L A T O R S ,   C L A S S   A N D   I T E M   S P E C I F I C A T I O N */
 
 
 
@@ -756,7 +756,7 @@ bool conf_instance_has_sub_instance(
 {
   if(!hash_has_key(conf_instance->sub_instances, sub_instance_name))
     return false;
-  else 
+  else
     return true;
 }
 
@@ -788,7 +788,7 @@ stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class(
 
   for(int key_nr = 0; key_nr < num_sub_instances; key_nr++)
   {
-    const conf_instance_type * sub_instance = hash_get(conf_instance->sub_instances, 
+    const conf_instance_type * sub_instance = hash_get(conf_instance->sub_instances,
                                                          sub_instance_keys[key_nr]);
 
     const conf_class_type * sub_instance_class = sub_instance->conf_class;
@@ -811,7 +811,7 @@ stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class_by_name(
   if(!conf_class_has_sub_class(conf_instance->conf_class, sub_class_name))
     util_abort("%s: Instance \"%s\" is of class \"%s\" which has no sub class with name \"%s\"\n",
                conf_instance->name, conf_instance->conf_class->class_name, sub_class_name);
-  
+
   const conf_class_type * conf_class = conf_class_get_sub_class_ref(conf_instance->conf_class, sub_class_name);
 
   return conf_instance_alloc_list_of_sub_instances_of_class(conf_instance, conf_class);
@@ -946,7 +946,7 @@ void conf_item_spec_printf_help(
     {
       printf("       %i. %s\n", key_nr + 1, restriction_keys[key_nr]);
     }
-    
+
     util_free_stringlist(restriction_keys, num_restrictions);
   }
   printf("\n");
@@ -976,7 +976,7 @@ void conf_class_printf_help(
 
 
 
-static 
+static
 bool conf_item_validate(
   const conf_item_type * conf_item)
 {
@@ -988,7 +988,7 @@ bool conf_item_validate(
 
   if(!conf_data_validate_string_as_dt_value(conf_item_spec->dt, conf_item->value))
   {
-    ok = false; 
+    ok = false;
     printf("ERROR: Failed to validate \"%s\" as a %s for item \"%s\".\n",
            conf_item->value, conf_data_get_dt_name_ref(conf_item_spec->dt),
            conf_item_spec->name);
@@ -997,11 +997,11 @@ bool conf_item_validate(
   if(num_restrictions > 0 && ok)
   {
     char ** restriction_keys = set_alloc_keylist(conf_item_spec->restriction);
-    
+
     /** Legacy work-around when removing the vector supprt. */
     const int num_tokens = 1;
     const char ** tokens = (const char **) &conf_item->value;
-    
+
     for(int token_nr = 0; token_nr < num_tokens; token_nr++)
     {
       bool valid = false;
@@ -1011,7 +1011,7 @@ bool conf_item_validate(
         if(strcmp(tokens[token_nr], restriction_keys[key_nr]) == 0)
           valid = true;
       }
-      
+
       if(valid == false)
       {
         ok = false;
@@ -1023,7 +1023,7 @@ bool conf_item_validate(
   }
 
   if(!ok)
-    conf_item_spec_printf_help(conf_item_spec); 
+    conf_item_spec_printf_help(conf_item_spec);
 
 
   return ok;
@@ -1052,7 +1052,7 @@ bool conf_instance_has_required_items(
         ok = false;
         printf("ERROR: Missing item \"%s\" in instance \"%s\" of class \"%s\"\n",
                 item_spec_name, conf_instance->name, conf_instance->conf_class->class_name);
-        conf_item_spec_printf_help(conf_item_spec); 
+        conf_item_spec_printf_help(conf_item_spec);
       }
     }
   }
@@ -1086,7 +1086,7 @@ bool conf_instance_has_valid_items(
 }
 
 
-static 
+static
 bool conf_instance_check_item_mutex(
   const conf_instance_type   * conf_instance,
   const conf_item_mutex_type * conf_item_mutex)
@@ -1107,7 +1107,7 @@ bool conf_instance_check_item_mutex(
   }
 
   num_items_set = set_get_size(items_set);
-  
+
   if (conf_item_mutex->inverse)
   {
     /** This is an inverse mutex - all (or none) items should be set. */
@@ -1125,7 +1125,7 @@ bool conf_instance_check_item_mutex(
       for(int item_nr = 0; item_nr < num_items_set; item_nr++)
         printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
       printf("\n");
-      
+
       util_free_stringlist(items_set_keys, num_items_set);
     }
   }
@@ -1135,19 +1135,19 @@ bool conf_instance_check_item_mutex(
     {
       ok = false;
       char ** items_set_keys = set_alloc_keylist(items_set);
-      
+
       printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
              conf_instance->name, conf_instance->conf_class->class_name);
       printf("       Only one of the following items may be set:\n");
       for(int item_nr = 0; item_nr < num_items; item_nr++)
         printf("       %i : %s\n", item_nr, item_keys[item_nr]);
-      
+
       printf("\n");
       printf("       However, all the following items were set:\n");
       for(int item_nr = 0; item_nr < num_items_set; item_nr++)
         printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
       printf("\n");
-      
+
       util_free_stringlist(items_set_keys, num_items_set);
     }
   }
@@ -1179,7 +1179,7 @@ bool conf_instance_has_valid_mutexes(
   const conf_class_type * conf_class   = conf_instance->conf_class;
   const vector_type     * item_mutexes = conf_class->item_mutexes;
   int                     num_mutexes  = vector_get_size(item_mutexes);
-  
+
   for(int mutex_nr = 0; mutex_nr < num_mutexes; mutex_nr++)
   {
     const conf_item_mutex_type * conf_item_mutex = vector_iget( item_mutexes, mutex_nr );
@@ -1226,7 +1226,7 @@ bool conf_instance_has_required_sub_instances(
     util_free_stringlist(sub_instance_keys, num_sub_instances);
   }
 
-  
+
 
 
 
@@ -1257,7 +1257,7 @@ bool conf_instance_has_required_sub_instances(
   }
 
   free(class_signatures);
- 
+
   return ok;
 }
 
@@ -1281,7 +1281,7 @@ bool conf_instance_validate_sub_instances(
   }
 
   util_free_stringlist(sub_instance_keys, num_sub_instances);
-  
+
   return ok;
 }
 
@@ -1303,13 +1303,13 @@ bool conf_instance_validate(
 
   if(!conf_instance_has_valid_mutexes(conf_instance))
     ok = false;
-  
+
   if(!conf_instance_has_valid_items(conf_instance))
     ok = false;
 
   if(!conf_instance_has_required_sub_instances(conf_instance))
     ok = false;
-  
+
   if(!conf_instance_validate_sub_instances(conf_instance))
     ok = false;
 
@@ -1322,7 +1322,7 @@ bool conf_instance_validate(
 
 
 
-static 
+static
 void conf_instance_parser_add_item(
   conf_instance_type  * conf_instance,
   const char          * item_name,
@@ -1434,7 +1434,7 @@ void conf_instance_add_data_from_token_buffer(
     else if(conf_class_has_sub_class(conf_class, token) && (scope_start_set || is_root))
     {
       char                    * name             = conf_util_alloc_next_token(buffer_pos);
-      const conf_class_type * sub_conf_class = conf_class_get_sub_class_ref(conf_class, token);  
+      const conf_class_type * sub_conf_class = conf_class_get_sub_class_ref(conf_class, token);
       if(name != NULL)
       {
         conf_instance_type * sub_conf_instance = conf_instance_alloc_default(sub_conf_class, name);
@@ -1562,7 +1562,7 @@ conf_instance_type * conf_instance_alloc_from_file(
   conf_instance_add_data_from_token_buffer(conf_instance, &buffer_pos, true, true);
 
   free(buffer);
-  
+
   return conf_instance;
 }
 
