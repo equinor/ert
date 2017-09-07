@@ -23,6 +23,7 @@
 #include <ert/util/set.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
+#include <ert/util/path_stack.h>
 
 #include <ert/config/conf.h>
 #include <ert/config/conf_util.h>
@@ -50,11 +51,11 @@ struct conf_class_struct
 
 struct conf_instance_struct
 {
-  const conf_class_type * conf_class;
-  char                  * name;
+  const conf_class_type  * conf_class;
+  char                   * name;
 
-  hash_type             * sub_instances; /** conf_instance_types */
-  hash_type             * items;         /** conf_item_types     */
+  hash_type              * sub_instances; /** conf_instance_types */
+  hash_type              * items;         /** conf_item_types     */
 };
 
 
@@ -150,11 +151,10 @@ static conf_instance_type * conf_instance_alloc_default(
 
   conf_instance_type * conf_instance = util_malloc(sizeof * conf_instance);
 
-  conf_instance->conf_class  = conf_class;
+  conf_instance->conf_class    = conf_class;
   conf_instance->name          = util_alloc_string_copy(name);
   conf_instance->sub_instances = hash_alloc();
   conf_instance->items         = hash_alloc();
-
   {
     /** Insert items that have a default value in their specs. */
     int     num_item_specs = hash_get_size(conf_class->item_specs);
@@ -308,10 +308,13 @@ conf_item_type * conf_item_alloc(
   conf_item_type * conf_item = util_malloc(sizeof * conf_item);
 
   assert(conf_item_spec != NULL);
-  assert(value            != NULL);
+  assert(value          != NULL);
 
   conf_item->conf_item_spec = conf_item_spec;
-  conf_item->value            = util_alloc_string_copy(value);
+  if (conf_item_spec->dt == DT_FILE)
+    conf_item->value           = util_alloc_abs_path( value );
+  else
+    conf_item->value          = util_alloc_string_copy(value);
 
   return conf_item;
 }
@@ -1475,7 +1478,7 @@ void conf_instance_add_data_from_token_buffer(
     }
     else if(strcmp(token, "include") == 0)
     {
-      char * file_name = conf_util_alloc_next_token(buffer_pos);
+      char * file_name = util_alloc_abs_path( conf_util_alloc_next_token(buffer_pos) );
       char * buffer_pos_lookahead = *buffer_pos;
       char * token_end;
 
@@ -1491,12 +1494,19 @@ void conf_instance_add_data_from_token_buffer(
       }
       else
       {
-        char * buffer_new     = conf_util_fscanf_alloc_token_buffer(file_name);
-        char * buffer_pos_new = buffer_new;
+        path_stack_type * path_stack = path_stack_alloc( );
+        path_stack_push_cwd(path_stack );
+        util_chdir_file( file_name );
+        {
+          char * buffer_new     = conf_util_fscanf_alloc_token_buffer(file_name);
+          char * buffer_pos_new = buffer_new;
 
-        conf_instance_add_data_from_token_buffer(conf_instance, &buffer_pos_new, false, true);
+          conf_instance_add_data_from_token_buffer(conf_instance, &buffer_pos_new, false, true);
 
-        free(buffer_new);
+          free(buffer_new);
+        }
+        path_stack_pop( path_stack );
+        path_stack_free( path_stack );
       }
 
       /** Check that the filename is followed by a ; */
@@ -1555,14 +1565,21 @@ conf_instance_type * conf_instance_alloc_from_file(
   const char            * file_name)
 {
   conf_instance_type * conf_instance = conf_instance_alloc_default(conf_class, name);
+  path_stack_type * path_stack = path_stack_alloc( );
+  char * file_arg = util_split_alloc_filename( file_name );
+  path_stack_push_cwd( path_stack );
+  util_chdir_file( file_name );
+  {
+    char * buffer     = conf_util_fscanf_alloc_token_buffer(file_arg);
+    char * buffer_pos = buffer;
 
-  char * buffer     = conf_util_fscanf_alloc_token_buffer(file_name);
-  char * buffer_pos = buffer;
+    conf_instance_add_data_from_token_buffer(conf_instance, &buffer_pos, true, true);
 
-  conf_instance_add_data_from_token_buffer(conf_instance, &buffer_pos, true, true);
-
-  free(buffer);
-
+    free(buffer);
+  }
+  free( file_arg );
+  path_stack_pop( path_stack );
+  path_stack_free( path_stack );
   return conf_instance;
 }
 
