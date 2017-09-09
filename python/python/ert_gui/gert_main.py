@@ -217,6 +217,7 @@ def main(argv):
     now = time.time()
 
     res_config = ResConfig(config_file)
+    os.chdir( res_config.config_path )
     ert = EnKFMain(res_config, strict=strict, verbose=verbose)
     ert_gui.configureErtNotifier(ert, config_file)
 
