@@ -130,6 +130,7 @@ class ErtShell(Cmd):
         if os.path.exists(config_file) and os.path.isfile(config_file):
             res_config = ResConfig(config_file)
             self.shellContext().res_config = res_config
+            os.chdir( res_config.config_path )
             self.shellContext().setErt(EnKFMain(res_config))
             ert_gui.configureErtNotifier(self.shellContext().ert(), config_file)
         else:
