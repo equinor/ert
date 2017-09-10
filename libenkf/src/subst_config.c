@@ -37,7 +37,7 @@ struct subst_config_struct {
 
 static void subst_config_init_default(subst_config_type * subst_config);
 
-static void subst_config_install_working_directory(
+static void subst_config_install_config_directory(
         subst_config_type * subst_config,
         const char * user_config_file
         );
@@ -67,11 +67,11 @@ static subst_config_type * subst_config_alloc_default() {
   return subst_config;
 }
 
-subst_config_type * subst_config_alloc_load(const char * user_config_file, const char * working_dir) {
+subst_config_type * subst_config_alloc_load(const char * user_config_file, const char * config_dir) {
   subst_config_type * subst_config = subst_config_alloc_default();
 
-  if(working_dir)
-    subst_config_install_working_directory(subst_config, working_dir);
+  if(config_dir)
+    subst_config_install_config_directory(subst_config, config_dir);
 
   if(user_config_file) {
     config_parser_type * config = config_alloc();
@@ -185,9 +185,9 @@ static void subst_config_init_default(subst_config_type * subst_config) {
   subst_config_install_num_cpu(subst_config, 1);
 }
 
-static void subst_config_install_working_directory(subst_config_type * subst_config, const char * working_dir) {
-  subst_config_add_internal_subst_kw(subst_config, "CWD",         working_dir, "The current working directory we are running from - the location of the config file.");
-  subst_config_add_internal_subst_kw(subst_config, "CONFIG_PATH", working_dir, "The current working directory we are running from - the location of the config file.");
+static void subst_config_install_config_directory(subst_config_type * subst_config, const char * config_dir) {
+  subst_config_add_internal_subst_kw(subst_config, "CWD",         config_dir, "The current working directory we are running from - the location of the config file.");
+  subst_config_add_internal_subst_kw(subst_config, "CONFIG_PATH", config_dir, "The current working directory we are running from - the location of the config file.");
 }
 
 static void subst_config_install_data_kw(subst_config_type * subst_config, hash_type * config_data_kw) {
@@ -210,9 +210,9 @@ static void subst_config_init_load(
         subst_config_type * subst_config,
         const config_content_type * content) {
 
-  if(config_content_has_item(content, WORKING_DIRECTORY_KEY)) {
-    const char * work_dir = config_content_get_value_as_abspath(content, WORKING_DIRECTORY_KEY);
-    subst_config_install_working_directory(subst_config, work_dir);
+  if(config_content_has_item(content, CONFIG_DIRECTORY_KEY)) {
+    const char * work_dir = config_content_get_value_as_abspath(content, CONFIG_DIRECTORY_KEY);
+    subst_config_install_config_directory(subst_config, work_dir);
   }
 
   const subst_list_type * define_list = config_content_get_const_define_list(content);

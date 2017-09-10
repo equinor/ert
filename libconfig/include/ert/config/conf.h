@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'conf.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'conf.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #ifndef ERT_CONF_H
@@ -30,9 +30,9 @@
  * developer with a tool for rapid specification of configuration
  * files, automatic checking of user provided configuration files
  * and typed access to configuration items.
- * 
- * 
- * 
+ *
+ *
+ *
  * A Simple Example
  *
  * Let us consider a simple example of user provided configuration
@@ -41,9 +41,9 @@
  *
  * res_sim FrontSim2007
  * {
- *   executable = /bin/frontsim2007; 
+ *   executable = /bin/frontsim2007;
  *   version    = 2007;
- *   
+ *
  *   run_host bgo179lin
  *   {
  *     hostname = bgo179lin.nho.hydro.com;
@@ -57,9 +57,9 @@
  * FrontSim2007. Further, the user has set the items executable and version.
  * He has also provided a instance of the sub class "run_host" with name
  * bgo179lin and allocated 4 jobs to this machine.
- * 
- * 
- * 
+ *
+ *
+ *
  * Structure
  *
  * The system is built around four basic objects:
@@ -96,10 +96,10 @@
  *  - If the validation fails, the developer can choose to exit.
  *  - Using the library, the devloper has typed access to all
  *    information provided by the user.
- *  
+ *
  */
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -135,11 +135,6 @@ void conf_class_free(
 void conf_class_free__(
   void * conf_class);
 
-
-
-conf_instance_type * conf_instance_alloc_default(
-  const conf_class_type * conf_class,
-  const char            * name);
 
 conf_instance_type * conf_instance_copyc(
   const conf_instance_type * conf_instance);
@@ -189,7 +184,7 @@ void conf_item_mutex_free__(
 
 
 
-/** M A N I P U L A T O R S ,   I N S E R T I O N */ 
+/** M A N I P U L A T O R S ,   I N S E R T I O N */
 
 
 
@@ -229,7 +224,7 @@ void conf_item_mutex_add_item_spec(
 
 
 
-/** M A N I P U L A T O R S ,   C L A S S   A N D   I T E M   S P E C I F I C A T I O N */ 
+/** M A N I P U L A T O R S ,   C L A S S   A N D   I T E M   S P E C I F I C A T I O N */
 
 
 
@@ -348,7 +343,7 @@ conf_instance_type * conf_instance_alloc_from_file(
   const char            * name,
   const char            * file_name);
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 }
 #endif
-#endif  
+#endif

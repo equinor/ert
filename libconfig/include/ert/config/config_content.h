@@ -74,8 +74,9 @@ typedef struct config_content_struct config_content_type;
   bool config_content_add_file( config_content_type * content , const char * config_file);
   config_root_path_type * config_content_get_invoke_path( config_content_type * content );
   config_path_elm_type * config_content_add_path_elm( config_content_type * content , const char * path );
-  void config_content_pop_path_stack( config_content_type * content );
   const stringlist_type * config_content_get_warnings( const config_content_type * content);
+  const char * config_content_get_config_path( const config_content_type * content );
+  void config_content_pop_path_stack( config_content_type * content );
 
   UTIL_IS_INSTANCE_HEADER( config_content );
 

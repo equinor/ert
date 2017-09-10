@@ -41,7 +41,7 @@
 struct res_config_struct {
 
   char * user_config_file;
-  char * working_dir;
+  char * config_dir;
 
   site_config_type       * site_config;
   rng_config_type        * rng_config;
@@ -59,13 +59,13 @@ struct res_config_struct {
 };
 
 
-static char * res_config_alloc_working_directory(const char * user_config_file);
+static char * res_config_alloc_config_directory(const char * user_config_file);
 
 
 static res_config_type * res_config_alloc_empty() {
-  res_config_type * res_config = util_malloc(sizeof * res_config);
-  res_config->user_config_file = NULL;
-  res_config->working_dir      = NULL;
+  res_config_type * res_config  = util_malloc(sizeof * res_config);
+  res_config->user_config_file  = NULL;
+  res_config->config_dir        = NULL;
 
   res_config->site_config       = NULL;
   res_config->rng_config        = NULL;
@@ -149,17 +149,17 @@ static config_content_type * res_config_alloc_user_content(
                                 );
 
   // Install working directory
-  char * res_working_dir = res_config_alloc_working_directory(res_config_file);
+  char * res_config_dir = res_config_alloc_config_directory(res_config_file);
 
   res_config_install_config_key(config_parser,
                                 config_content,
-                                WORKING_DIRECTORY_KEY,
-                                res_working_dir,
+                                CONFIG_DIRECTORY_KEY,
+                                res_config_dir,
                                 CONFIG_EXISTING_PATH
                                 );
 
   free(res_config_file);
-  free(res_working_dir);
+  free(res_config_dir);
 
   return config_content;
 }
@@ -189,11 +189,11 @@ static void res_config_init(
     util_abort("%s: Expected to find a config_file.\n", __func__);
   }
 
-  if(config_content_has_item(config_content, WORKING_DIRECTORY_KEY)) {
-    const char * working_dir = config_content_get_value_as_abspath(config_content, WORKING_DIRECTORY_KEY);
-    res_config->working_dir = util_alloc_string_copy(working_dir);
+  if(config_content_has_item(config_content, CONFIG_DIRECTORY_KEY)) {
+    const char * config_dir = config_content_get_value_as_abspath(config_content, CONFIG_DIRECTORY_KEY);
+    res_config->config_dir = util_alloc_string_copy(config_dir);
   } else {
-    util_abort("%s: Expected to find a working directory.\n", __func__);
+    util_abort("%s: Expected to find a config directory.\n", __func__);
   }
 }
 
@@ -233,7 +233,7 @@ res_config_type * res_config_alloc(const config_content_type * config_content) {
                                     );
 
   res_config->model_config    = model_config_alloc(config_content,
-                                                   res_config->working_dir,
+                                                   res_config->config_dir,
                                                    site_config_get_installed_jobs(res_config->site_config),
                                                    ecl_config_get_last_history_restart(res_config->ecl_config),
                                                    ecl_config_get_sched_file(res_config->ecl_config),
@@ -264,7 +264,7 @@ void res_config_free(res_config_type * res_config) {
   log_config_free(res_config->log_config);
 
   free(res_config->user_config_file);
-  free(res_config->working_dir);
+  free(res_config->config_dir);
   free(res_config);
 }
 
@@ -340,7 +340,7 @@ const log_config_type * res_config_get_log_config(
   return res_config->log_config;
 }
 
-static char * res_config_alloc_working_directory(const char * user_config_file) {
+static char * res_config_alloc_config_directory(const char * user_config_file) {
   if(user_config_file == NULL)
     return NULL;
 
@@ -354,8 +354,8 @@ static char * res_config_alloc_working_directory(const char * user_config_file) 
   return path;
 }
 
-const char * res_config_get_working_directory(const res_config_type * res_config) {
-  return res_config->working_dir;
+const char * res_config_get_config_directory(const res_config_type * res_config) {
+  return res_config->config_dir;
 }
 
 const char * res_config_get_user_config_file(const res_config_type * res_config) {

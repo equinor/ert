@@ -4,6 +4,7 @@ add_library(config src/config_parser.c
                    src/conf.c
                    src/conf_data.c
                    src/config_content.c
+                   src/config_path_stack.c
                    src/config_content_item.c
                    src/config_content_node.c
                    src/config_error.c

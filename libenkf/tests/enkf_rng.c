@@ -33,6 +33,7 @@ int main(int argc , char ** argv) {
   const char * config_file = argv[2];
 
   unsigned int rand1,rand2;
+  util_install_signals( );
   {
     test_work_area_type * work_area = test_work_area_alloc("enkf-rng-0");
     test_work_area_copy_directory_content(work_area, config_path);

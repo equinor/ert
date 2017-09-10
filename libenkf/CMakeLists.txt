@@ -128,7 +128,6 @@ foreach (test   enkf_active_list
                 enkf_ert_run_context
                 enkf_fs
                 enkf_gen_data_config_parse
-                enkf_hook_manager_test
                 enkf_iter_config
                 enkf_local_obsdata
                 enkf_local_obsdata_node

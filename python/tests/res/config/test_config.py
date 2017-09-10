@@ -215,6 +215,7 @@ class ConfigTest(ExtendedTestCase):
             self.assertTrue(content.isValid())
             self.assertTrue("KEY" in content)
             self.assertFalse("NOKEY" in content)
+            self.assertEqual( cwd0, content.get_config_path( ))
 
             self.assertFalse("NOT_IN_CONTENT" in content)
             item = content["NOT_IN_CONTENT"]

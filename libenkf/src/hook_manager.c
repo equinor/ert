@@ -60,8 +60,6 @@ hook_manager_type * hook_manager_alloc_default(ert_workflow_list_type * workflow
   hook_manager->workflow_list = workflow_list;
 
   hook_manager->runpath_list = runpath_list_alloc( NULL );
-  hook_manager_set_runpath_list_file(hook_manager, NULL, NULL);
-
   hook_manager->input_context = hash_alloc();
 
   return hook_manager;
@@ -160,7 +158,8 @@ void hook_manager_init( hook_manager_type * hook_manager , const config_content_
   if (config_content_has_item(config_content, RUNPATH_FILE_KEY)) {
     const char * runpath_file = config_content_get_value_as_abspath(config_content, RUNPATH_FILE_KEY);
     hook_manager_set_runpath_list_file(hook_manager, NULL, runpath_file);
-  }
+  } else
+    hook_manager_set_runpath_list_file(hook_manager, config_content_get_config_path( config_content ), RUNPATH_LIST_FILE);
 }
 
 
@@ -212,13 +211,9 @@ const char * hook_manager_get_runpath_list_file( const hook_manager_type * hook_
   return runpath_list_get_export_file( hook_manager->runpath_list );
 }
 
-static void hook_manager_set_runpath_list_file__( hook_manager_type * hook_manager , const char * runpath_list_file) {
-  runpath_list_set_export_file( hook_manager->runpath_list , runpath_list_file );
-}
-
 void hook_manager_set_runpath_list_file( hook_manager_type * hook_manager, const char * base_dir, const char * filename) {
-  char * runpath_file = runpath_list_alloc_filename(base_dir, filename);
-  hook_manager_set_runpath_list_file__(hook_manager, runpath_file);
+  char * runpath_file = util_alloc_filename( base_dir , filename , NULL );
+  runpath_list_set_export_file( hook_manager->runpath_list , runpath_file );
   free(runpath_file);
 }
 

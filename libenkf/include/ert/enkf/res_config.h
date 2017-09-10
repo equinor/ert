@@ -55,7 +55,7 @@ ensemble_config_type         * res_config_get_ensemble_config(const res_config_t
 model_config_type            * res_config_get_model_config(const res_config_type * res_config);
 const log_config_type        * res_config_get_log_config(const res_config_type * res_config);
 
-const char * res_config_get_working_directory(const res_config_type *);
+const char * res_config_get_config_directory(const res_config_type *);
 const char * res_config_get_user_config_file(const res_config_type *);
 const char * res_config_get_site_config_file(const res_config_type *);
 

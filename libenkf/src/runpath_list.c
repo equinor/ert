@@ -27,8 +27,7 @@
 
 #include <ert/enkf/runpath_list.h>
 
-#define RUNPATH_LIST_DIR  "<CWD>"
-#define RUNPATH_LIST_FILE ".ert_runpath_list"
+#define RUNPATH_LIST_DIR  "<CWD>"   //<---- This does not work; I think
 
 typedef struct runpath_node_struct runpath_node_type;
 
@@ -238,19 +237,3 @@ void runpath_list_set_export_file( runpath_list_type * list , const char * expor
   list->export_file = util_realloc_string_copy( list->export_file , export_file );
 }
 
-char * runpath_list_alloc_filename(const char * basepath, const char * filename) {
-  if (filename && util_is_abs_path(filename))
-    return util_alloc_string_copy(filename);
-
-  if(!filename)
-    filename = RUNPATH_LIST_FILE;
-
-  if(!basepath)
-    return util_alloc_filename(RUNPATH_LIST_DIR, filename, NULL);
-
-  char * file_with_prefix = util_alloc_filename(basepath, filename, NULL);
-  char * absolute_path    = util_alloc_abs_path(file_with_prefix);
-  free(file_with_prefix);
-
-  return absolute_path;
-}

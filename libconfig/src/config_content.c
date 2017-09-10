@@ -25,6 +25,7 @@
 
 #include <ert/config/config_root_path.h>
 #include <ert/config/config_path_elm.h>
+#include <ert/config/config_path_stack.h>
 #include <ert/config/config_content.h>
 #include <ert/config/config_content_item.h>
 #include <ert/config/config_schema_item.h>
@@ -43,10 +44,10 @@ struct config_content_struct {
   subst_list_type    * define_list;
   char               * config_file;
   char               * abs_path;
+  char               * config_path;
 
-  config_root_path_type * invoke_path;
-  vector_type           * path_elm_storage;
-  vector_type           * path_elm_stack;
+  config_path_stack_type * path_stack;
+  config_root_path_type  * invoke_path;
   bool valid;
 };
 
@@ -64,16 +65,11 @@ config_content_type * config_content_alloc(const char * filename) {
   content->parsed_files = set_alloc_empty();
   content->warnings = stringlist_alloc_new();
 
-  content->path_elm_storage  = vector_alloc_new();
-  content->path_elm_stack    = vector_alloc_new();
-
+  content->path_stack = config_path_stack_alloc( );
   content->config_file = util_alloc_string_copy( filename );
   content->abs_path = util_alloc_abs_path( filename );
-  {
-    char * path = util_split_alloc_dirname( filename );
-    content->invoke_path = config_root_path_alloc( NULL );
-    free( path );
-  }
+  content->config_path = util_split_alloc_dirname( content->abs_path );
+  content->invoke_path = config_root_path_alloc( NULL );
 
 
   return content;
@@ -131,17 +127,17 @@ void config_content_free( config_content_type * content ) {
 
   stringlist_free( content->warnings );
   vector_free( content->nodes );
-  vector_free( content->path_elm_stack );
-  vector_free( content->path_elm_storage );
   hash_free( content->items );
   config_error_free( content->parse_errors );
   subst_list_free( content->define_list );
   util_safe_free( content->config_file );
   util_safe_free( content->abs_path );
+  util_safe_free( content->config_path );
   set_free( content->parsed_files );
   if (content->invoke_path != NULL)
     config_root_path_free( content->invoke_path );
 
+  config_path_stack_free( content->path_stack );
   free( content );
 }
 
@@ -399,10 +395,10 @@ const char * config_content_get_config_file( const config_content_type * content
 config_path_elm_type * config_content_add_path_elm( config_content_type * content , const char * path ) {
   const config_path_elm_type * current_path_elm;
 
-  if (vector_get_size( content->path_elm_stack ) == 0)
+  if (config_path_stack_size( content->path_stack ) == 0)
     current_path_elm = NULL;
   else
-    current_path_elm = vector_get_last_const(content->path_elm_stack);
+    current_path_elm = config_path_stack_get_last( content->path_stack );
 
   {
     config_path_elm_type * new_path_elm;
@@ -419,12 +415,17 @@ config_path_elm_type * config_content_add_path_elm( config_content_type * conten
       new_path_elm = config_path_elm_alloc( invoke_path , rel_path );
       util_safe_free( rel_path );
     }
-    vector_append_owned_ref( content->path_elm_storage , new_path_elm , config_path_elm_free__);
-    vector_append_ref( content->path_elm_stack , new_path_elm );
+    config_path_stack_append( content->path_stack , new_path_elm );
     return new_path_elm;
   }
 }
 
+
+
+const char * config_content_get_config_path( const config_content_type * content ) {
+  return content->config_path;
+}
+
 void config_content_pop_path_stack( config_content_type * content ) {
-  vector_pop_back( content->path_elm_stack );
+  config_path_stack_pop( content->path_stack );
 }
