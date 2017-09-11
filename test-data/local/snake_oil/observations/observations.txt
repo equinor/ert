@@ -52,5 +52,5 @@ GENERAL_OBSERVATION WPR_DIFF_1 {
    DATA       = SNAKE_OIL_WPR_DIFF;
    INDEX_LIST = 400,800,1200,1800;
    RESTART    = 199;
-   OBS_FILE   = observations/wpr_diff_obs.txt;
+   OBS_FILE   = wpr_diff_obs.txt;
 };
