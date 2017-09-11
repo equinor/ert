@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'gen_kw_config.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'gen_kw_config.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -39,7 +39,7 @@ typedef struct {
   UTIL_TYPE_ID_DECLARATION;
   char             * name;
   char             * tagged_name;
-  trans_func_type  * trans_func;  
+  trans_func_type  * trans_func;
 } gen_kw_parameter_type;
 
 
@@ -50,7 +50,7 @@ struct gen_kw_config_struct {
   vector_type          * parameters;       /* Vector of gen_kw_parameter_type instances. */
   char                 * template_file;
   char                 * parameter_file;
-  const char           * tag_fmt;          /* Pointer to the tag_format owned by the ensemble config object. */ 
+  const char           * tag_fmt;          /* Pointer to the tag_format owned by the ensemble config object. */
 };
 
 
@@ -71,7 +71,7 @@ static void gen_kw_parameter_update_tagged_name( gen_kw_parameter_type * paramet
 
 static gen_kw_parameter_type * gen_kw_parameter_alloc( const char * parameter_name , const char * tag_fmt ) {
   gen_kw_parameter_type * parameter = util_malloc( sizeof * parameter );
-  UTIL_TYPE_ID_INIT( parameter , GEN_KW_PARAMETER_TYPE_ID); 
+  UTIL_TYPE_ID_INIT( parameter , GEN_KW_PARAMETER_TYPE_ID);
   parameter->name        = util_alloc_string_copy( parameter_name );
   parameter->tagged_name = NULL;
   parameter->trans_func  = NULL;
@@ -112,7 +112,7 @@ const char * gen_kw_config_get_template_file(const gen_kw_config_type * config) 
 
 
 /*
-  The input template file must point to an existing file. 
+  The input template file must point to an existing file.
 */
 void gen_kw_config_set_template_file( gen_kw_config_type * config , const char * template_file ) {
   if (template_file != NULL) {
@@ -130,11 +130,11 @@ void gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char 
   vector_clear( config->parameters );
   if (parameter_file != NULL) {
     FILE * stream = util_fopen(parameter_file , "r");
-    
+
     while (true) {
       char parameter_name[256];
       int  fscanf_return;
-      
+
       fscanf_return = fscanf(stream , "%s" , parameter_name);
       if (fscanf_return == 1) {
         gen_kw_parameter_type * parameter  = gen_kw_parameter_alloc( parameter_name , config->tag_fmt);
@@ -142,10 +142,10 @@ void gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char 
         gen_kw_parameter_set_trans_func( parameter , trans_func );
 
         vector_append_owned_ref( config->parameters , parameter , gen_kw_parameter_free__ );
-      } else 
+      } else
         break; /* OK - we are ate EOF. */
-    } 
-    
+    }
+
     fclose( stream );
   }
 }
@@ -171,7 +171,7 @@ const char * gen_kw_config_get_parameter_file( const gen_kw_config_type * config
    -------------
     * template_file  != NULL
     * parameter_file != NULL  (this means that the special schedule_prediction_file keyword will be invalid).
-    
+
 */
 
 bool gen_kw_config_is_valid( const gen_kw_config_type * config ) {
@@ -190,12 +190,12 @@ gen_kw_config_type * gen_kw_config_alloc_empty( const char * key , const char * 
   gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config);
   UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
 
-  gen_kw_config->key                = NULL; 
+  gen_kw_config->key                = NULL;
   gen_kw_config->template_file      = NULL;
   gen_kw_config->parameter_file     = NULL;
   gen_kw_config->parameters         = vector_alloc_new();
   gen_kw_config->tag_fmt            = tag_fmt;
-  gen_kw_config->key                = util_alloc_string_copy( key );  
+  gen_kw_config->key                = util_alloc_string_copy( key );
 
   return gen_kw_config;
 }
@@ -267,15 +267,15 @@ const char * gen_kw_config_get_tagged_name(const gen_kw_config_type * config, in
 
 void gen_kw_config_update_tag_format(gen_kw_config_type * config , const char * tag_format) {
   int i;
-  
+
   config->tag_fmt = tag_format;
-  for (i=0; i < vector_get_size( config->parameters ); i++) 
+  for (i=0; i < vector_get_size( config->parameters ); i++)
     gen_kw_parameter_update_tagged_name( vector_iget( config->parameters , i ) , config->tag_fmt);
 }
 
 
 stringlist_type * gen_kw_config_alloc_name_list( const gen_kw_config_type * config ) {
-  
+
   stringlist_type * name_list = stringlist_alloc_new();
   int i;
   for (i=0; i < vector_get_size( config->parameters ); i++) {
@@ -297,7 +297,7 @@ int gen_kw_config_get_index(const gen_kw_config_type * config , const char * key
   const int size   = gen_kw_config_get_data_size(config);
   bool    have_key = false;
   int     index    = 0;
-  
+
   while (index < size && !have_key) {
     const gen_kw_parameter_type * parameter = vector_iget_const( config->parameters , index );
     if (strcmp(parameter->name , key) == 0)
@@ -305,7 +305,7 @@ int gen_kw_config_get_index(const gen_kw_config_type * config , const char * key
     else
       index++;
   }
-  
+
   if (have_key)
     return index;
   else
@@ -319,9 +319,9 @@ void gen_kw_config_fprintf_config( const gen_kw_config_type * config , const cha
   fprintf(stream , CONFIG_VALUE_FORMAT , outfile );
   fprintf(stream , CONFIG_VALUE_FORMAT , config->parameter_file );
 
-  if (min_std_file != NULL) 
+  if (min_std_file != NULL)
     fprintf( stream , CONFIG_OPTION_FORMAT , MIN_STD_KEY , min_std_file);
-  
+
 }
 
 
