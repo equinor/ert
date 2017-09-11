@@ -264,6 +264,10 @@ class JobManager(object):
         with open(self.STATUS_file, "a") as f:
             f.write("%-32s: %s/%s  file-server:%s \n" % ("Current host", self.node, os.uname()[4], self.isilon_node))
 
+            if "LSF_JOBID" in os.environ:
+                f.write("LSF JOBID: %s\n" % os.environ.get("LSF_JOBID"))
+            else:
+                f.write("LSF JOBID: not running LSF\n")
 
     def startStatus(self, job):
         with open(self.STATUS_file, "a") as f:
