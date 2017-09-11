@@ -118,7 +118,10 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QFileDialog
 
 import ert_gui.ertwidgets
+from ecl.util import EclVersion
+from res.util import ResVersion
 from res.enkf import EnKFMain, ResConfig
+from res.util import ResLog
 from ert_gui import ErtVersion
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
@@ -247,8 +250,8 @@ def main(argv):
     splash.finish(window)
     window.activateWindow()
     window.raise_()
+    ResLog.log(3, "Versions ecl:%s  res:%s   ert:%s" % (EclVersion( ), ResVersion( ), ErtVersion( )))
     finished_code = app.exec_()
-
     ert.free()
 
     sys.exit(finished_code)
