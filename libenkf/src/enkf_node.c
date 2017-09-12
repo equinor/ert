@@ -27,6 +27,7 @@
 #include <ert/util/rng.h>
 #include <ert/util/vector.h>
 #include <ert/util/path_fmt.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_node.h>
 #include <ert/enkf/enkf_config_node.h>
@@ -38,6 +39,7 @@
 #include <ert/enkf/custom_kw.h>
 #include <ert/enkf/gen_kw.h>
 #include <ert/enkf/gen_data.h>
+#include <ert/enkf/ext_param.h>
 #include <ert/enkf/container.h>
 #include <ert/enkf/enkf_serialize.h>
 
@@ -230,6 +232,8 @@ struct enkf_node_struct {
 };
 
 
+UTIL_IS_INSTANCE_FUNCTION( enkf_node, ENKF_NODE_TYPE_ID )
+
 const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) {
   return node->config;
 }
@@ -252,10 +256,13 @@ bool enkf_node_vector_storage( const enkf_node_type * node ) {
 
 
 
-void enkf_node_alloc_domain_object(enkf_node_type * node) {
-  if (node->data != NULL)
-    node->freef( node->data );
-  node->data = node->alloc(enkf_config_node_get_ref(node->config));
+void enkf_node_alloc_domain_object(enkf_node_type * enkf_node) {
+  FUNC_ASSERT(enkf_node->alloc);
+  {
+    if (enkf_node->data != NULL)
+      enkf_node->freef( enkf_node->data );
+    enkf_node->data = enkf_node->alloc( enkf_config_node_get_ref(enkf_node->config) );
+  }
 }
 
 
@@ -526,6 +533,7 @@ static void enkf_node_buffer_load( enkf_node_type * enkf_node , enkf_fs_type * f
       enkf_fs_fread_node( fs , buffer , node_key , var_type , report_step , iens );
 
     buffer_fskip_time_t( buffer );
+
     enkf_node->read_from_buffer(enkf_node->data , buffer , fs , report_step );
     buffer_free( buffer );
   }
@@ -976,6 +984,13 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->imul               = gen_data_imul__;
     node->isqrt              = gen_data_isqrt__;
     //node->fload              = gen_data_fload__;
+    break;
+  case(EXT_PARAM):
+    node->alloc              = ext_param_alloc__;
+    node->freef              = ext_param_free__;
+    node->ecl_write          = ext_param_ecl_write__;
+    node->write_to_buffer    = ext_param_write_to_buffer__;
+    node->read_from_buffer   = ext_param_read_from_buffer__;
     break;
   default:
     util_abort("%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);

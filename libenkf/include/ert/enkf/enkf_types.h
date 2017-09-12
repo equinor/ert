@@ -62,7 +62,8 @@ typedef enum {INVALID_VAR      =  0  ,    /* */
               PARAMETER        =  1  ,    /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
               DYNAMIC_STATE    =  2  ,    /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
               DYNAMIC_RESULT   =  4  ,    /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
-              INDEX_STATE      = 16 }     /* Index data - enum value is used for storage classification */
+              INDEX_STATE      = 16  ,    /* Index data - enum value is used for storage classification */
+              EXT_PARAMETER    = 32 }     /* Parameter fully managed by external scope. */
 enkf_var_type;
 
 
@@ -91,7 +92,8 @@ typedef enum {INVALID          = 0   ,
               SUMMARY          = 110 ,       /* TPGZONE has been removed */
               GEN_DATA         = 113 ,       /* PILOT_POINT has been removed */
               SURFACE          = 114 ,
-              CONTAINER        = 115 } ert_impl_type;
+              CONTAINER        = 115 ,
+              EXT_PARAM        = 116 } ert_impl_type;
 
 
 

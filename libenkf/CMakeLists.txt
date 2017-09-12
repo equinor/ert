@@ -38,6 +38,8 @@ add_library(enkf src/active_list.c
                  src/ert_template.c
                  src/ert_test_context.c
                  src/ert_workflow_list.c
+                 src/ext_param.c
+                 src/ext_param_config.c
                  src/field.c
                  src/field_config.c
                  src/field_trans.c
@@ -123,6 +125,7 @@ foreach (test   enkf_active_list
                 enkf_cases_config
                 enkf_config_node
                 enkf_enkf_config_node_gen_data
+                enkf_config_node_ext_param
                 enkf_ensemble
                 enkf_ensemble_config
                 enkf_ert_run_context
