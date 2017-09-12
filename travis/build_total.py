@@ -12,7 +12,7 @@ import requests
 
 GITHUB_ROT13_API_TOKEN = "rp2rr795p41n83p076o6ro2qp209981r00590r8q"
 
-def find_python_version():
+def print_python_version():
     print(sys.version)
 
 def call(args):
@@ -56,6 +56,14 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
     os.chdir(cwd)
 
 
+def exit_if_p3():
+    """Simply exit with exit code 0 if we run Python 3."""
+    if (sys.version_info.major >= 3):
+        match = re.search('PYTHON3', desc)
+        if not match:
+            print("ERT does not support python version 3 or higher, exiting...")
+            sys.exit(0)
+
 
 class PrBuilder(object):
 
@@ -95,12 +103,6 @@ class PrBuilder(object):
         res_word = "Statoil/libres#(\\d+)"
         ert_word = "Statoil/ert#(\\d+)"
         desc = self.pr_description
-  
-        if (sys.version_info.major >= 3):
-            match = re.search('PYTHON3', desc)
-            if not match:
-                print("ERT does not support python version 3 or higher, exiting...")
-                sys.exit(0)
 
         match = re.search(ecl_word, desc, re.MULTILINE)
         if match:
@@ -235,7 +237,8 @@ def main():
     print('\n===================')
     print(' '.join(sys.argv))
     print('===================\n')
-    find_python_version()
+    print_python_version()
+    exit_if_p3()
     pr_build = PrBuilder(sys.argv)
     pr_build.clone_fetch_merge(basedir)
     pr_build.compile_and_build(basedir)
