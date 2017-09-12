@@ -23,7 +23,7 @@ def call(args):
         exit('subprocess.call error:\n\tcode %d\n\targs %s' % (status, arg_str))
 
 
-def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=None):
+def build(source_dir, install_dir, test, c_flags="", test_flags=None):
     build_dir = os.path.join(source_dir, "build")
     if not os.path.isdir(build_dir):
         os.makedirs(build_dir)
@@ -48,13 +48,11 @@ def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=No
     if test:
         if test_flags is None:
             test_flags = []
-        if test_python3:
-            os.system("ctest --output-on-failure")
-        else:
-            call(["ctest", "--output-on-failure"] + test_flags)
+
+        call(["ctest", "--output-on-failure"] + test_flags)
     call(["make", "install"])
-    if not test_python3:
-        call(["bin/test_install"])
+
+    call(["bin/test_install"])
     os.chdir(cwd)
 
 
@@ -62,7 +60,6 @@ def build(source_dir, install_dir, test, test_python3, c_flags="", test_flags=No
 class PrBuilder(object):
 
     def __init__(self, argv):
-        self.python3 = False
         rep = argv[1]
         self.github_api_token = codecs.encode(GITHUB_ROT13_API_TOKEN, 'rot13')
         self.build_ert = True
@@ -101,13 +98,9 @@ class PrBuilder(object):
   
         if (sys.version_info.major >= 3):
             match = re.search('PYTHON3', desc)
-            if match:
-                self.python3 = True
-            else:
+            if not match:
                 print("ERT does not support python version 3 or higher, exiting...")
                 sys.exit(0)
-        else:
-            self.python3 = False
 
         match = re.search(ecl_word, desc, re.MULTILINE)
         if match:
@@ -202,9 +195,6 @@ class PrBuilder(object):
             os.makedirs(install_dir)
         self.compile_ecl(basedir, install_dir)
 
-        if self.python3:
-            return
-
         if self.rep_name == 'libecl' and sys.platform in ('Darwin', 'darwin'):
             return
 
@@ -221,7 +211,7 @@ class PrBuilder(object):
 
         test = (self.repository == 'ecl')
         c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, self.python3, c_flags=c_flags, test_flags=self.test_flags)
+        build(source_dir, install_dir, test, c_flags=c_flags, test_flags=self.test_flags)
 
     def compile_res(self, basedir, install_dir):
         if self.repository == 'res':
@@ -230,14 +220,14 @@ class PrBuilder(object):
             source_dir = os.path.join(basedir, "libres")
         test = (self.repository in ('ecl', 'res'))
         # TODO add c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, self.python3, test_flags=self.test_flags)
+        build(source_dir, install_dir, test, test_flags=self.test_flags)
 
     def compile_ert(self, basedir, install_dir):
         if self.repository == 'ert':
             source_dir = basedir
         else:
             source_dir = os.path.join(basedir, "ert")
-        build(source_dir, install_dir, True, self.python3, test_flags=self.test_flags)
+        build(source_dir, install_dir, True, test_flags=self.test_flags)
 
 
 def main():
