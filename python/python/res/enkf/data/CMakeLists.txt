@@ -5,6 +5,7 @@ set(PYTHON_SOURCES
     field.py
     gen_data.py
     gen_kw.py
+    ext_param.py
 )
 
 add_python_package("python.res.enkf.data" ${PYTHON_INSTALL_PREFIX}/res/enkf/data "${PYTHON_SOURCES}" True)
