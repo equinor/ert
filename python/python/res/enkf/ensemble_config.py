@@ -1,17 +1,17 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
 #  The file 'ensemble_config.py' is part of ERT - Ensemble based Reservoir Tool.
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
 from ecl.util import StringList
@@ -41,16 +41,16 @@ class EnsembleConfig(BaseCClass):
     _add_defined_custom_kw = EnkfPrototype("enkf_config_node_ref ensemble_config_add_defined_custom_kw(ens_config, char*, integer_hash)")
 
 
-    
+
     def __init__(self):
         c_ptr = self._alloc(None, None, None)
         super(EnsembleConfig , self).__init__(c_ptr)
-        
+
 
     def __len__(self):
         return self._size( )
 
-    
+
     def __getitem__(self , key):
         """ @rtype: EnkfConfigNode """
         if key in self:
@@ -58,7 +58,7 @@ class EnsembleConfig(BaseCClass):
         else:
             raise KeyError("The key:%s is not in the ensemble configuration" % key)
 
-    
+
     def getNode(self, key):
         return self[key]
 
