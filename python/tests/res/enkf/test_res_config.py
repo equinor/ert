@@ -13,8 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os
-import os.path
+import os, os.path
+from copy import deepcopy
 from datetime import date
 
 from ecl.test import ExtendedTestCase, TestAreaContext

@@ -395,6 +395,96 @@ static void config_validate(config_parser_type * config, config_content_type * c
 
 
 
+static void assert_no_circular_includes(config_content_type * config_content,
+                                        const char * config_filename)
+{
+  char * abs_filename = util_alloc_realpath(config_filename);
+  if (!config_content_add_file(config_content, abs_filename))
+      util_exit(
+              "%s: file (%s) already parsed - circular include?",
+              __func__,
+              abs_filename
+              );
+
+  free(abs_filename);
+}
+
+
+static void alloc_config_filename_components(const char * config_filename,
+                                             char ** config_path,
+                                             char ** config_file)
+{
+  char * config_base;
+  char * config_ext;
+  util_alloc_file_components(config_filename, config_path, &config_base, &config_ext);
+
+  *config_file = util_alloc_filename(NULL, config_base, config_ext);
+
+  free(config_base);
+  free(config_ext);
+}
+
+
+static config_path_elm_type * config_relocate(const char * config_path,
+                                                   config_content_type * config_content,
+                                                   path_stack_type * path_stack)
+{
+  config_path_elm_type * current_path_elm = config_content_add_path_elm(config_content, config_path);
+  path_stack_push_cwd(path_stack);
+
+  if (config_path)
+    util_chdir(config_path);
+
+  return current_path_elm;
+}
+
+
+void config_parser_add_key_values(config_parser_type * config,
+                                  config_content_type * content,
+                                  const char * kw,
+                                  stringlist_type * values,
+                                  const config_path_elm_type * current_path_elm,
+                                  const char * config_filename,
+                                  config_schema_unrecognized_enum unrecognized)
+{
+  if (hash_has_key(config->messages, kw))
+    printf("%s \n", (const char *) hash_get(config->messages, kw));
+
+  if (!config_has_schema_item(config, kw)) {
+    if (unrecognized == CONFIG_UNRECOGNIZED_WARN)
+      fprintf(stderr,
+              "** Warning keyword: %s not recognized when parsing: %s --- \n",
+              kw,
+              config_filename);
+    else if (unrecognized == CONFIG_UNRECOGNIZED_ERROR) {
+      char * error_message = util_alloc_sprintf("Keyword:%s is not recognized", kw);
+      config_error_add(config_content_get_errors(content), error_message);
+      free(error_message);
+    }
+
+    return;
+  }
+
+  config_schema_item_type * schema_item = config_get_schema_item(config, kw);
+
+  if (!config_content_has_item(content, kw))
+    config_content_add_item(content, schema_item, current_path_elm);
+
+  subst_list_type * define_list = config_content_get_define_list(content);
+
+  config_content_item_type * content_item = config_content_get_item(content,
+                                                                    config_schema_item_get_kw(schema_item));
+
+  config_content_node_type * new_node = config_content_item_set_arg__(define_list,
+                                                                      config_content_get_errors(content),
+                                                                      content_item,
+                                                                      values,
+                                                                      current_path_elm,
+                                                                      config_filename);
+
+  if (new_node)
+    config_content_add_node(content, new_node);
+}
 
 
 /**
@@ -469,171 +559,101 @@ static void config_validate(config_parser_type * config, config_content_type * c
 */
 
 
-static void config_parse__(config_parser_type * config ,
-                           config_content_type * content ,
-                           path_stack_type * path_stack ,
-                           const char * config_input ,
-                           const char * comment_string ,
-                           const char * include_kw ,
-                           const char * define_kw ,
+static void config_parse__(config_parser_type * config,
+                           config_content_type * content,
+                           path_stack_type * path_stack,
+                           const char * config_filename,
+                           const char * comment_string,
+                           const char * include_kw,
+                           const char * define_kw,
                            config_schema_unrecognized_enum unrecognized,
-                           bool validate) {
+                           bool validate)
+{
+  assert_no_circular_includes(content, config_filename);
 
-  /* Guard against circular includes. */
-  {
-    char * abs_filename = util_alloc_realpath(config_input);
-    if (!config_content_add_file( content , abs_filename ))
-      util_exit("%s: file:%s already parsed - circular include ? \n",__func__ , abs_filename);
-    free( abs_filename );
-  }
-  config_path_elm_type * current_path_elm;
-  
+  // Relocate
+  char * config_path;
   char * config_file;
-  {
-    /* Extract the path component of the current input file and chdir() */
-    char * config_path;
-    {
-      char * config_base;
-      char * config_ext;
-      util_alloc_file_components( config_input , &config_path , &config_base , &config_ext);
-      config_file = util_alloc_filename( NULL , config_base , config_ext );
-      free( config_base );
-      util_safe_free( config_ext );
-    }
-    current_path_elm = config_content_add_path_elm( content , config_path );
-    path_stack_push_cwd( path_stack );
-    if (config_path != NULL) {
-      util_chdir( config_path );
-      free( config_path );
-    }
-  }
+  alloc_config_filename_components(config_filename, &config_path, &config_file);
 
+  config_path_elm_type * current_path_elm = config_relocate(config_path, content, path_stack);
+  free(config_path);
 
-  {
-    const char * comment_end = comment_string ? "\n" : NULL;
-    basic_parser_type * parser = basic_parser_alloc(" \t" , "\"", NULL , NULL , comment_string , comment_end);
-    FILE * stream = util_fopen(config_file , "r");
-    bool   at_eof = false;
+  // Setup config parsing
+  const char * comment_end = comment_string ? "\n" : NULL;
+  basic_parser_type * parser = basic_parser_alloc(" \t", "\"", NULL, NULL, comment_string, comment_end);
 
-    while (!at_eof) {
-      int    active_tokens;
-      stringlist_type * token_list;
-      char  *line_buffer;
+  FILE * stream = util_fopen(config_file, "r");
+  bool at_eof = false;
 
+  while (!at_eof) {
+    char * line_buffer = util_fscanf_alloc_line(stream , &at_eof);
+    if (!line_buffer)
+      continue;
 
-      line_buffer  = util_fscanf_alloc_line(stream , &at_eof);
-      if (line_buffer != NULL) {
-        token_list = basic_parser_tokenize_buffer(parser , line_buffer , true);
-        active_tokens = stringlist_get_size( token_list );
+    stringlist_type * token_list = basic_parser_tokenize_buffer(parser, line_buffer, true);
+    int active_tokens = stringlist_get_size(token_list);
 
-        /*
-          util_split_string(line_buffer , " \t" , &tokens , &token_list);
-          active_tokens = tokens;
-          for (i = 0; i < tokens; i++) {
-          char * comment_ptr = NULL;
-          if(comment_string != NULL)
-          comment_ptr = strstr(token_list[i] , comment_string);
+    if (active_tokens > 0) {
+      const char * kw = stringlist_iget(token_list, 0);
 
-          if (comment_ptr != NULL) {
-          if (comment_ptr == token_list[i])
-          active_tokens = i;
-          else
-          active_tokens = i + 1;
-          break;
-          }
-          }
-        */
+      // Include config file
+      if (include_kw && (strcmp(include_kw, kw) == 0)) {
+        if (active_tokens != 2)
+          util_abort("%s: keyword:%s must have exactly one argument. \n", __func__, include_kw);
 
-        if (active_tokens > 0) {
-          const char * kw = stringlist_iget( token_list , 0 );
+        const char * include_file = stringlist_iget(token_list, 1);
 
-          /*Treating the include keyword. */
-          if (include_kw != NULL && (strcmp(include_kw , kw) == 0)) {
-            if (active_tokens != 2)
-              util_abort("%s: keyword:%s must have exactly one argument. \n",__func__ ,include_kw);
-            {
-              const char *include_file  = stringlist_iget( token_list , 1);
-              if (util_file_exists( include_file ))
-                config_parse__(config , content , path_stack , include_file , comment_string , include_kw , define_kw , unrecognized, false); /* Recursive call */
-              else {
-                char * error_message = util_alloc_sprintf("%s file:%s not found" , include_kw , include_file);
-                config_error_add( config_content_get_errors( content ) , error_message );
-                free( error_message );
-              }
-            }
-          } else if ((define_kw != NULL) && (strcmp(define_kw , kw) == 0)) {
-            /* Treating the define keyword. */
-            if (active_tokens < 3)
-              util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
-            {
-              char * key   = util_alloc_string_copy( stringlist_iget(token_list ,1) );
-              char * value = stringlist_alloc_joined_substring( token_list , 2 , active_tokens , " ");
-
-              {
-                char * filtered_value = subst_list_alloc_filtered_string( config_content_get_define_list( content ) , value);
-                config_content_add_define( content , key , filtered_value );
-                free( filtered_value );
-              }
-              free(key);
-              free(value);
-            }
-          } else {
-            if (hash_has_key(config->messages , kw))
-              printf("%s \n", (const char *) hash_get(config->messages , kw));
-
-            if (!config_has_schema_item(config , kw)) {
-              if (unrecognized == CONFIG_UNRECOGNIZED_WARN)
-                fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s --- \n" , kw , config_input);
-              else if (unrecognized == CONFIG_UNRECOGNIZED_ERROR) {
-                char * error_message = util_alloc_sprintf("Keyword:%s is not recognized" , kw);
-                config_error_add( config_content_get_errors( content ) , error_message );
-                free( error_message );
-              }
-            }
-
-            if (config_has_schema_item(config , kw)) {
-              config_schema_item_type * schema_item = config_get_schema_item( config , kw );
-              char * config_cwd;
-              util_alloc_file_components( config_file , &config_cwd , NULL , NULL );
-
-              if (!config_content_has_item( content , kw ))
-                config_content_add_item( content , schema_item , current_path_elm);
-
-
-              {
-                subst_list_type * define_list = config_content_get_define_list( content );
-                config_content_item_type * content_item = config_content_get_item( content , config_schema_item_get_kw( schema_item ) );
-                config_content_node_type * new_node = config_content_item_set_arg__(define_list , config_content_get_errors( content ) , content_item , token_list , current_path_elm , config_file );
-                if (new_node)
-                  config_content_add_node( content , new_node );
-                
-              }
-            }
-          }
+        if (!util_file_exists(include_file)) {
+          char * error_message = util_alloc_sprintf("%s file:%s not found", include_kw, include_file);
+          config_error_add(config_content_get_errors(content), error_message);
+          free(error_message);
         }
-        stringlist_free(token_list);
-        free(line_buffer);
+
+        config_parse__(config,
+                       content,
+                       path_stack,
+                       include_file,
+                       comment_string,
+                       include_kw,
+                       define_kw,
+                       unrecognized,
+                       false);
       }
+
+      // Add define
+      else if (define_kw && (strcmp(define_kw , kw) == 0)) {
+        if (active_tokens < 3)
+          util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n", __func__, define_kw);
+
+        char * key   = util_alloc_string_copy(stringlist_iget(token_list, 1));
+        char * value = stringlist_alloc_joined_substring(token_list, 2, active_tokens, " ");
+
+        config_content_add_define(content, key, value);
+
+        free(key);
+        free(value);
+      }
+
+      // Add keyword
+      else
+        config_parser_add_key_values(config, content, kw, token_list, current_path_elm, config_file, unrecognized);
     }
-    if (validate)
-      config_validate(config , content , config_file);
-    fclose(stream);
-    basic_parser_free( parser );
+
+    stringlist_free(token_list);
+    free(line_buffer);
   }
+
+  fclose(stream);
+  basic_parser_free(parser);
+
+  if (validate)
+    config_validate(config, content, config_file);
+
   free(config_file);
-  path_stack_pop( path_stack );
-  config_content_pop_path_stack( content );
+  path_stack_pop(path_stack);
+  config_content_pop_path_stack(content);
 }
-
-
-
-
-
-
-
-
-
-
 
 
 config_content_type * config_parse(config_parser_type * config ,

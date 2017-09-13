@@ -136,5 +136,3 @@ class ModelConfig(BaseCClass):
 
     def set_data_root(self, data_root):
          self._set_data_root( data_root )
-
-

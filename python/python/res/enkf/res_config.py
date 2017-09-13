@@ -14,12 +14,15 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 
+import os
 from os.path import isfile
 
 from cwrap import BaseCClass
 
-from res.config import ConfigSettings
+from ecl.util import StringList
 
+from res.config import (ConfigParser, ConfigContent, ConfigSettings,
+                        UnrecognizedEnum)
 from res.enkf import EnkfPrototype
 from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig,
                       EnsembleConfig, RNGConfig)
@@ -28,10 +31,11 @@ class ResConfig(BaseCClass):
 
     TYPE_NAME = "res_config"
 
-    _alloc = EnkfPrototype("void* res_config_alloc_load(char*)", bind=False)
-    _free  = EnkfPrototype("void res_config_free(res_config)")
+    _alloc_load = EnkfPrototype("void* res_config_alloc_load(char*)", bind=False)
+    _alloc      = EnkfPrototype("void* res_config_alloc(config_content)", bind=False)
+    _free       = EnkfPrototype("void res_config_free(res_config)")
 
-    _user_config_file = EnkfPrototype("char* res_config_get_user_config_file(res_config)")
+    _user_config_file  = EnkfPrototype("char* res_config_get_user_config_file(res_config)")
 
     _config_path       = EnkfPrototype("char* res_config_get_config_directory(res_config)")
     _site_config       = EnkfPrototype("site_config_ref res_config_get_site_config(res_config)")
@@ -46,12 +50,22 @@ class ResConfig(BaseCClass):
     _rng_config        = EnkfPrototype("rng_config_ref res_config_get_rng_config(res_config)")
     _ert_templates     = EnkfPrototype("ert_templates_ref res_config_get_templates(res_config)")
     _log_config        = EnkfPrototype("log_config_ref res_config_get_log_config(res_config)")
+    _add_config_items  = EnkfPrototype("void res_config_add_config_items(config_parser)")
+    _init_parser       = EnkfPrototype("void res_config_init_config_parser(config_parser)", bind=False)
 
-    def __init__(self, user_config_file):
-        if user_config_file is not None and not isfile(user_config_file):
-            raise IOError('No such configuration file "%s".' % user_config_file)
+    def __init__(self, user_config_file=None, config=None):
+        if user_config_file is not None and config is not None:
+            raise ValueError("Expected either user_config_file " +
+                             "or config to be provided, got both!")
 
-        c_ptr = self._alloc(user_config_file)
+        if config is not None:
+            config_content = self._build_config_content(config)
+            c_ptr = self._alloc(config_content)
+        else:
+            if user_config_file is not None and not isfile(user_config_file):
+                raise IOError('No such configuration file "%s".' % user_config_file)
+            c_ptr = self._alloc_load(user_config_file)
+
         if c_ptr:
             super(ResConfig, self).__init__(c_ptr)
         else:
@@ -60,8 +74,35 @@ class ResConfig(BaseCClass):
                     % user_config_file
                     )
 
+    def _build_config_content(self, config):
+        config_parser  = ConfigParser()
+        ResConfig.init_config_parser(config_parser)
+
+        config_content = ConfigContent(None)
+        config_content.setParser(config_parser)
+
+        config["WORKING_DIRECTORY"] = os.path.realpath(config["WORKING_DIRECTORY"])
+        path_elm = config_content.create_path_elm(config["WORKING_DIRECTORY"])
+
+        keys = config.keys()
+        for key in keys:
+            value = str(config[key]) # TODO: Support lists of arguments
+            config_parser.add_key_value(config_content,
+                                        key,
+                                        StringList([key, value]),
+                                        path_elm=path_elm,
+                                        )
+
+        # TODO: Dump warnings and errors
+
+        return config_content
+
     def free(self):
         self._free()
+
+    @classmethod
+    def init_config_parser(cls, config_parser):
+        cls._init_parser(config_parser)
 
     @property
     def user_config_file(self):
