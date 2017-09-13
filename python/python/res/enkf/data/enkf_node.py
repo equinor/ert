@@ -17,7 +17,7 @@ import sys
 from res.enkf.enums import ErtImplType
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype, EnkfFs, NodeId
-from res.enkf.data import GenKw, GenData, CustomKW, Field
+from res.enkf.data import GenKw, GenData, CustomKW, Field, ExtParam
 
 class EnkfNode(BaseCClass):
     TYPE_NAME = "enkf_node"
@@ -29,6 +29,7 @@ class EnkfNode(BaseCClass):
     _try_load      = EnkfPrototype("bool  enkf_node_try_load(enkf_node, enkf_fs, node_id)")
     _store         = EnkfPrototype("bool  enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
     _get_impl_type = EnkfPrototype("ert_impl_type_enum enkf_node_get_impl_type(enkf_node)")
+    _ecl_write     = EnkfPrototype("void enkf_node_ecl_write(enkf_node, char*, void*, int)")
 
     def __init__(self, config_node, private=False):
         self._private = private
@@ -103,6 +104,14 @@ class EnkfNode(BaseCClass):
 
         return Field.createCReference(self.valuePointer(), self)
 
+    def as_ext_param(self):
+        """ @rtype: CustomKW """
+        impl_type = self.getImplType( )
+        assert impl_type == ErtImplType.EXT_PARAM
+
+        return ExtParam.createCReference(self.valuePointer(), self)
+
+
     def tryLoad(self, fs, node_id):
         """
         @type fs: EnkfFS
@@ -136,3 +145,9 @@ class EnkfNode(BaseCClass):
     def __repr__(self):
         pp = ', private' if self._private else ''
         return 'EnkfNode(name = "%s"%s) %s' % (self.name(), pp, self._ad_str())
+
+
+    def ecl_write(self, path):
+        filestream_ptr = None
+        report_step = 0
+        self._ecl_write( path, filestream_ptr, report_step )

@@ -8,6 +8,7 @@ set(TEST_SOURCES
     test_gen_kw.py
     test_gen_kw_config.py
     test_ext_param.py
+    test_enkf_node.py
 )
 
 add_python_package("python.tests.res.enkf.data" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf/data "${TEST_SOURCES}" False)
@@ -15,6 +16,7 @@ add_python_package("python.tests.res.enkf.data" ${PYTHON_INSTALL_PREFIX}/tests/r
 addPythonTest(tests.res.enkf.data.test_custom_kw.CustomKWTest LABELS SLOW_1)
 addPythonTest(tests.res.enkf.data.test_gen_kw.GenKwTest)
 addPythonTest(tests.res.enkf.data.test_ext_param.ExtParamTest)
+addPythonTest(tests.res.enkf.data.test_enkf_node.EnkfNodeTest)
 
 if (STATOIL_TESTDATA_ROOT)
   addPythonTest(tests.res.enkf.data.test_gen_kw_config.GenKwConfigTest LABELS StatoilData)
