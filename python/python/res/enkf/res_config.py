@@ -53,26 +53,47 @@ class ResConfig(BaseCClass):
     _add_config_items  = EnkfPrototype("void res_config_add_config_items(config_parser)")
     _init_parser       = EnkfPrototype("void res_config_init_config_parser(config_parser)", bind=False)
 
-    def __init__(self, user_config_file=None, config=None):
-        if user_config_file is not None and config is not None:
-            raise ValueError("Expected either user_config_file " +
-                             "or config to be provided, got both!")
+    def __init__(self, user_config_file=None, config=None, throw_on_error=True):
+        self._errors = None
+        self._assert_input(user_config_file, config, throw_on_error)
 
         if config is not None:
             config_content = self._build_config_content(config)
-            c_ptr = self._alloc(config_content)
+
+            c_ptr = None
+            if not self.errors or not throw_on_error:
+                c_ptr = self._alloc(config_content)
         else:
-            if user_config_file is not None and not isfile(user_config_file):
-                raise IOError('No such configuration file "%s".' % user_config_file)
             c_ptr = self._alloc_load(user_config_file)
 
         if c_ptr:
             super(ResConfig, self).__init__(c_ptr)
         else:
             raise ValueError(
-                    'Failed to construct ResConfig instance from config file %s.'
-                    % user_config_file
+                    'Failed to construct ResConfig instance from %r.'
+                    % user_config_file if user_config_file else config
                     )
+
+
+    def _assert_input(self, user_config_file, config, throw_on_error):
+        if config and not isinstance(config, dict):
+            raise ValueError("Expected config to be a dictionary, was %r"
+                             % type(config))
+
+        if user_config_file and not isinstance(user_config_file, str):
+            raise ValueError("Expected user_config_file to be a string.")
+
+        if user_config_file is not None and config is not None:
+            raise ValueError("Expected either user_config_file " +
+                             "or config to be provided, got both!")
+
+        if user_config_file is not None and not isfile(user_config_file):
+            raise IOError('No such configuration file "%s".' % user_config_file)
+
+        if user_config_file is not None and not throw_on_error:
+            raise NotImplementedError("Disabling exceptions on errors is not "
+                                      "available when loading from file.")
+
 
     def _build_config_content(self, config):
         config_parser  = ConfigParser()
@@ -93,7 +114,8 @@ class ResConfig(BaseCClass):
                                         path_elm=path_elm,
                                         )
 
-        # TODO: Dump warnings and errors
+        config_parser.validate(config_content)
+        self._errors = list(config_content.getErrors())
 
         return config_content
 
@@ -103,6 +125,10 @@ class ResConfig(BaseCClass):
     @classmethod
     def init_config_parser(cls, config_parser):
         cls._init_parser(config_parser)
+
+    @property
+    def errors(self):
+        return self._errors
 
     @property
     def user_config_file(self):

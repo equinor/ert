@@ -35,6 +35,7 @@ class ConfigParser(BaseCClass):
     _get_schema_item = ConfigPrototype("schema_item_ref config_get_schema_item(config_parser, char*)")
     _has_schema_item = ConfigPrototype("bool config_has_schema_item(config_parser, char*)")
     _add_key_value   = ConfigPrototype("void config_parser_add_key_values(config_parser, config_content, char*, stringlist, config_path_elm, char*, config_unrecognized_enum)")
+    _validate        = ConfigPrototype("void config_validate(config_parser, config_content)")
 
 
     def __init__(self):
@@ -105,6 +106,10 @@ class ConfigParser(BaseCClass):
 
     def free(self):
         self._free()
+
+
+    def validate(self, config_content):
+        self._validate(config_content)
 
 
     def add_key_value(self,

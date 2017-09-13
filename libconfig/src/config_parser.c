@@ -370,7 +370,7 @@ static void config_validate_content_item(const config_parser_type * config , con
 
 
 
-static void config_validate(config_parser_type * config, config_content_type * content , const char * filename) {
+void config_validate(config_parser_type * config, config_content_type * content) {
   int size = hash_get_size(config->schema_items);
   char ** key_list = hash_alloc_keylist(config->schema_items);
   int ikey;
@@ -648,7 +648,7 @@ static void config_parse__(config_parser_type * config,
   basic_parser_free(parser);
 
   if (validate)
-    config_validate(config, content, config_file);
+    config_validate(config, content);
 
   free(config_file);
   path_stack_pop(path_stack);
