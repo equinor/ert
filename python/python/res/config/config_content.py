@@ -157,6 +157,7 @@ class ConfigContent(BaseCClass):
     _get_warnings =  ConfigPrototype("stringlist_ref config_content_get_warnings( config_content )")
     _get_config_path = ConfigPrototype("char* config_content_get_config_path( config_content )")
     _create_path_elm = ConfigPrototype("config_path_elm_ref config_content_add_path_elm(config_content, char*)")
+    _add_define = ConfigPrototype("void config_content_add_define(config_content, char*, char*)")
 
     def __init__(self, filename):
         c_ptr = self._alloc(filename)
@@ -223,3 +224,6 @@ class ConfigContent(BaseCClass):
 
     def create_path_elm(self, path):
         return self._create_path_elm(path)
+
+    def add_define(self, key, value):
+        self._add_define(key, value)

@@ -95,8 +95,24 @@ class ResConfig(BaseCClass):
                                       "available when loading from file.")
 
 
+    def _filter_config(self, config):
+        defines = {}
+        if ConfigKeys.DEFINES in config:
+            for key in config[ConfigKeys.DEFINES]:
+                defines[key] = config[ConfigKeys.DEFINES][key]
+
+        key_filter = [ConfigKeys.DEFINES]
+        filtered_config = {}
+        for key in config:
+            if key not in key_filter:
+                filtered_config[key] = config[key]
+
+        return defines, filtered_config
+
+
     def _build_config_content(self, config):
         self._failed_keys = {}
+        defines, config = self._filter_config(config)
 
         config_parser  = ConfigParser()
         ResConfig.init_config_parser(config_parser)
@@ -108,6 +124,11 @@ class ResConfig(BaseCClass):
             raise ValueError("Expected config to specify %s" % dir_key)
         config[dir_key] = os.path.realpath(config[dir_key])
 
+        # Insert defines
+        for key in defines:
+            config_content.add_define(key, defines[key])
+
+        # Insert key values
         path_elm = config_content.create_path_elm(config[dir_key])
         for key in config.keys():
             value = str(config[key]) # TODO: Support lists of arguments

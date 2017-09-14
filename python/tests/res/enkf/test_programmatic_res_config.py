@@ -25,10 +25,24 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
                                 "CONFIG_DIRECTORY"   : "simple_config",
                                 "JOBNAME"            : "Job%d",
                                 "RUNPATH"            : "/tmp/simulations/run%d",
-                                "NUM_REALIZATIONS"   : 1,
+                                "NUM_REALIZATIONS"   : "1",
                                 "JOB_SCRIPT"         : "script.sh",
                                 "ENSPATH"            : "Ensemble"
                               }
+
+        self.large_config  = {
+                                "DEFINES" : {
+                                              "<USER>"        : "TEST_USER",
+                                              "<SCRATCH>"     : "scratch/ert",
+                                              "<CASE_DIR>"    : "the_extensive_case",
+                                              "<ECLIPSE_NAME>": "XYZ"
+                                            },
+                                "CONFIG_DIRECTORY"   : "snake_oil_structure/ert/model",
+                                "JOBNAME"            : "SNAKE_OIL_STRUCTURE_%d",
+                                "RUNPATH"            : "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d",
+                                "NUM_REALIZATIONS"   : "10",
+                                "ENSPATH"            : "../output/storage/<CASE_DIR>"
+                             }
 
     def test_minimum_config(self):
         case_directory = self.createTestPath("local/simple_config")
@@ -100,3 +114,23 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
             self.assertEqual(["UNKNOWN_KEY"], res_config.failed_keys.keys())
             self.assertEqual(self.minimum_config["UNKNOWN_KEY"],
                              res_config.failed_keys["UNKNOWN_KEY"])
+
+
+    def test_large_config(self):
+        case_directory = self.createTestPath("local/snake_oil_structure")
+        config_file = "snake_oil_structure/ert/model/user_config.ert"
+
+        with TestAreaContext("res_config_prog_test") as work_area:
+            work_area.copy_directory(case_directory)
+
+            loaded_res_config = ResConfig(user_config_file=config_file)
+            prog_res_config   = ResConfig(config=self.large_config)
+
+            self.assertEqual(loaded_res_config.model_config.num_realizations,
+                             prog_res_config.model_config.num_realizations)
+
+            self.assertEqual(loaded_res_config.model_config.getJobnameFormat(),
+                             prog_res_config.model_config.getJobnameFormat())
+
+            self.assertEqual(loaded_res_config.model_config.getRunpathAsString(),
+                             prog_res_config.model_config.getRunpathAsString())
