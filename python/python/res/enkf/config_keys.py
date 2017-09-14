@@ -20,6 +20,10 @@ from enum import Enum
 class ConfigKeys:
 
     _config_directory_key = EnkfPrototype("char* config_keys_get_config_directory_key()", bind=False)
+    _queue_system_key     = EnkfPrototype("char* config_keys_get_queue_system_key()", bind=False)
 
     CONFIG_DIRECTORY = _config_directory_key()
     DEFINES          = "DEFINES"
+    INTERNALS        = "INTERNALS"
+    SIMULATION       = "SIMULATION"
+    QUEUE_SYSTEM     = _queue_system_key()

@@ -21,3 +21,7 @@
 const char * config_keys_get_config_directory_key() {
   return CONFIG_DIRECTORY_KEY;
 }
+
+const char * config_keys_get_queue_system_key() {
+  return QUEUE_SYSTEM_KEY;
+}

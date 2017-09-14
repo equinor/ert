@@ -95,24 +95,67 @@ class ResConfig(BaseCClass):
                                       "available when loading from file.")
 
 
-    def _filter_config(self, config):
+    def _extract_defines(self, config):
         defines = {}
         if ConfigKeys.DEFINES in config:
             for key in config[ConfigKeys.DEFINES]:
-                defines[key] = config[ConfigKeys.DEFINES][key]
+                defines[key] = str(config[ConfigKeys.DEFINES][key])
 
+        return defines
+
+
+    def _extract_internals(self, config):
+        internal_config = {}
+        if ConfigKeys.INTERNALS in config:
+            for key in config[ConfigKeys.INTERNALS]:
+                internal_config[key] = str(config[ConfigKeys.INTERNALS][key])
+
+        return internal_config
+
+
+    def _extract_simulation(self, config):
+        simulation_config = {}
+        if ConfigKeys.SIMULATION in config:
+            sc = config[ConfigKeys.SIMULATION]
+
+            # Extract queue system
+            if ConfigKeys.QUEUE_SYSTEM in sc:
+                for key in sc[ConfigKeys.QUEUE_SYSTEM]:
+                    simulation_config[key] = str(sc[ConfigKeys.QUEUE_SYSTEM][key])
+
+            sim_filter = [ConfigKeys.QUEUE_SYSTEM]
+            for key in sc:
+                if not key in sim_filter:
+                    simulation_config[key] = str(sc[key])
+
+        return simulation_config
+
+
+    def _extract_config(self, config):
+        defines = self._extract_defines(config)
         key_filter = [ConfigKeys.DEFINES]
-        filtered_config = {}
+
+        new_config = {}
+
+        # Extract internals
+        key_filter.append(ConfigKeys.INTERNALS)
+        new_config.update(self._extract_internals(config))
+
+        # Extract simulation
+        key_filter.append(ConfigKeys.SIMULATION)
+        new_config.update(self._extract_simulation(config))
+
+        # Unrecognized keys
         for key in config:
             if key not in key_filter:
-                filtered_config[key] = config[key]
+                self._failed_keys[key] = config[key]
 
-        return defines, filtered_config
+        return defines, new_config
 
 
     def _build_config_content(self, config):
         self._failed_keys = {}
-        defines, config = self._filter_config(config)
+        defines, config = self._extract_config(config)
 
         config_parser  = ConfigParser()
         ResConfig.init_config_parser(config_parser)
@@ -131,7 +174,7 @@ class ResConfig(BaseCClass):
         # Insert key values
         path_elm = config_content.create_path_elm(config[dir_key])
         for key in config.keys():
-            value = str(config[key]) # TODO: Support lists of arguments
+            value = config[key] # TODO: Support lists of arguments
             ok = config_parser.add_key_value(config_content,
                                         key,
                                         StringList([key, value]),
