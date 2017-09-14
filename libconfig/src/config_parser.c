@@ -370,7 +370,7 @@ static void config_validate_content_item(const config_parser_type * config , con
 
 
 
-static void config_validate(config_parser_type * config, config_content_type * content , const char * filename) {
+void config_validate(config_parser_type * config, config_content_type * content) {
   int size = hash_get_size(config->schema_items);
   char ** key_list = hash_alloc_keylist(config->schema_items);
   int ikey;
@@ -439,7 +439,7 @@ static config_path_elm_type * config_relocate(const char * config_path,
 }
 
 
-void config_parser_add_key_values(config_parser_type * config,
+bool config_parser_add_key_values(config_parser_type * config,
                                   config_content_type * content,
                                   const char * kw,
                                   stringlist_type * values,
@@ -462,7 +462,7 @@ void config_parser_add_key_values(config_parser_type * config,
       free(error_message);
     }
 
-    return;
+    return false;
   }
 
   config_schema_item_type * schema_item = config_get_schema_item(config, kw);
@@ -482,8 +482,10 @@ void config_parser_add_key_values(config_parser_type * config,
                                                                       current_path_elm,
                                                                       config_filename);
 
-  if (new_node)
+  if(new_node)
     config_content_add_node(content, new_node);
+
+  return new_node != NULL;
 }
 
 
@@ -648,7 +650,7 @@ static void config_parse__(config_parser_type * config,
   basic_parser_free(parser);
 
   if (validate)
-    config_validate(config, content, config_file);
+    config_validate(config, content);
 
   free(config_file);
   path_stack_pop(path_stack);
