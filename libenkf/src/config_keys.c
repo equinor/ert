@@ -25,3 +25,23 @@ const char * config_keys_get_config_directory_key() {
 const char * config_keys_get_queue_system_key() {
   return QUEUE_SYSTEM_KEY;
 }
+
+const char * config_keys_get_run_template_key() {
+  return RUN_TEMPLATE_KEY;
+}
+
+const char * config_keys_get_gen_kw_key() {
+  return GEN_KW_KEY;
+}
+
+const char * config_keys_get_queue_option_key() {
+  return QUEUE_OPTION_KEY;
+}
+
+const char * config_keys_get_install_job_key() {
+  return INSTALL_JOB_KEY;
+}
+
+const char * config_keys_get_plot_setting_key() {
+  return PLOT_SETTING_KEY;
+}

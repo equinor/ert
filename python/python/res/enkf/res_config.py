@@ -71,7 +71,7 @@ class ResConfig(BaseCClass):
         else:
             raise ValueError(
                     'Failed to construct ResConfig instance from %r.'
-                    % user_config_file if user_config_file else config
+                    % (user_config_file if user_config_file else config)
                     )
 
 
@@ -104,29 +104,191 @@ class ResConfig(BaseCClass):
         return defines
 
 
-    def _extract_internals(self, config):
-        internal_config = {}
-        if ConfigKeys.INTERNALS in config:
-            for key in config[ConfigKeys.INTERNALS]:
-                internal_config[key] = str(config[ConfigKeys.INTERNALS][key])
+    def _parse_value(self, value):
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, list):
+            return [str(elem) for elem in value]
+        else:
+            return str(value)
 
-        return internal_config
+
+    def _assert_keys(self, mother_key, exp_keys, keys):
+        if set(exp_keys) != set(keys):
+            err_msg = "Did expect the keys %r in %s, received %r."
+            raise ValueError(err_msg % (exp_keys, mother_key, keys))
+
+
+    def _extract_internals(self, config):
+        internal_config = []
+        config_dir = None
+
+        if ConfigKeys.INTERNALS in config:
+            intercon = config[ConfigKeys.INTERNALS]
+
+            dir_key = ConfigKeys.CONFIG_DIRECTORY
+            if dir_key in intercon:
+                config_dir = os.path.realpath(intercon[dir_key])
+                internal_config.append((dir_key, config_dir))
+
+            internal_filter = [dir_key]
+            for key, value in intercon.iteritems():
+                if key not in internal_filter:
+                    internal_config.append((key, self._parse_value(value)))
+
+        return config_dir, internal_config
+
+
+    def _extract_queue_system(self, config):
+        if ConfigKeys.QUEUE_SYSTEM not in config:
+            return []
+
+        qc = config[ConfigKeys.QUEUE_SYSTEM]
+        queue_config = []
+        if ConfigKeys.QUEUE_OPTION in qc:
+            for qo in qc[ConfigKeys.QUEUE_OPTION]:
+                queue_options = [ConfigKeys.DRIVER_NAME,
+                                 ConfigKeys.OPTION,
+                                 ConfigKeys.VALUE]
+
+                self._assert_keys(ConfigKeys.QUEUE_OPTION, queue_options, qo.keys())
+
+                value = [str(qo[item]) for item in queue_options]
+                queue_config.append((ConfigKeys.QUEUE_OPTION, value))
+
+        queue_system_filter = [ConfigKeys.QUEUE_OPTION]
+        for key, value in qc.iteritems():
+            if not key in queue_system_filter:
+                queue_config.append((key, self._parse_value(value)))
+
+        return queue_config
+
+
+    def _extract_plot_settings(self, config):
+        if ConfigKeys.PLOT_SETTINGS not in config:
+            return []
+
+        pc = config[ConfigKeys.PLOT_SETTINGS]
+        plot_config = []
+        for key in pc:
+            plot_config.append((ConfigKeys.PLOT_SETTINGS, [key, pc[key]]))
+
+        return plot_config
+
+
+    def _extract_install_job(self, config):
+        if ConfigKeys.INSTALL_JOB not in config:
+            return []
+
+        ic = config[ConfigKeys.INSTALL_JOB]
+        job_config = []
+        for job in ic:
+            job_options = [ConfigKeys.NAME, ConfigKeys.PATH]
+
+            self._assert_keys(ConfigKeys.INSTALL_JOB, job_options, job.keys())
+            value = [str(job[item]) for item in job_options]
+            job_config.append((ConfigKeys.INSTALL_JOB, value))
+
+        return job_config
+
+
+    def _extract_logging(self, config):
+        if ConfigKeys.LOGGING not in config:
+            return []
+
+        logging_config = []
+        for key, value in config[ConfigKeys.LOGGING].iteritems():
+            logging_config.append((key, self._parse_value(value)))
+
+        return logging_config
+
+
+    def _extract_seed(self, config):
+        if ConfigKeys.SEED not in config:
+            return []
+
+        seed_config = []
+        for key, value in config[ConfigKeys.SEED].iteritems():
+            seed_config.append((key, self._parse_value(value)))
+
+        return seed_config
+
+
+    def _extract_run_templates(self, config):
+        if ConfigKeys.RUN_TEMPLATE not in config:
+            return []
+
+        template_config = []
+        for rt in config[ConfigKeys.RUN_TEMPLATE]:
+            rt_options = [ConfigKeys.TEMPLATE, ConfigKeys.EXPORT]
+
+            self._assert_keys(ConfigKeys.RUN_TEMPLATE, rt_options, rt.keys())
+
+            value = [rt[option] for option in rt_options]
+            template_config.append((ConfigKeys.RUN_TEMPLATE, value))
+
+        return template_config
+
+
+    def _extract_gen_kw(self, config):
+        if ConfigKeys.GEN_KW not in config:
+            return []
+
+        gen_kw_config = []
+        for gk in config[ConfigKeys.GEN_KW]:
+            gen_kw_options = [ConfigKeys.NAME,
+                              ConfigKeys.TEMPLATE,
+                              ConfigKeys.OUT_FILE,
+                              ConfigKeys.PARAMETER_FILE]
+
+            self._assert_keys(ConfigKeys.GEN_KW, gen_kw_options, gk.keys())
+
+            value = [gk[item] for item in gen_kw_options]
+            gen_kw_config.append((ConfigKeys.GEN_KW, value))
+
+        return gen_kw_config
 
 
     def _extract_simulation(self, config):
-        simulation_config = {}
-        if ConfigKeys.SIMULATION in config:
-            sc = config[ConfigKeys.SIMULATION]
+        if ConfigKeys.SIMULATION not in config:
+            return []
 
-            # Extract queue system
-            if ConfigKeys.QUEUE_SYSTEM in sc:
-                for key in sc[ConfigKeys.QUEUE_SYSTEM]:
-                    simulation_config[key] = str(sc[ConfigKeys.QUEUE_SYSTEM][key])
+        simulation_config = []
+        sc = config[ConfigKeys.SIMULATION]
+        sim_filter = []
 
-            sim_filter = [ConfigKeys.QUEUE_SYSTEM]
-            for key in sc:
-                if not key in sim_filter:
-                    simulation_config[key] = str(sc[key])
+        # Extract queue system
+        sim_filter.append(ConfigKeys.QUEUE_SYSTEM)
+        simulation_config += self._extract_queue_system(sc)
+
+        # Extract plot settings
+        sim_filter.append(ConfigKeys.PLOT_SETTINGS)
+        simulation_config += self._extract_plot_settings(sc)
+
+        # Extract install job
+        sim_filter.append(ConfigKeys.INSTALL_JOB)
+        simulation_config += self._extract_install_job(sc)
+
+        # Extract logging
+        sim_filter.append(ConfigKeys.LOGGING)
+        simulation_config += self._extract_logging(sc)
+
+        # Extract seed
+        sim_filter.append(ConfigKeys.SEED)
+        simulation_config += self._extract_seed(sc)
+
+        # Extract run templates
+        sim_filter.append(ConfigKeys.RUN_TEMPLATE)
+        simulation_config += self._extract_run_templates(sc)
+
+        # Extract GEN_KW
+        sim_filter.append(ConfigKeys.GEN_KW)
+        simulation_config += self._extract_gen_kw(sc)
+
+        # Others
+        for key, value in sc.iteritems():
+            if not key in sim_filter:
+                simulation_config.append((key, self._parse_value(value)))
 
         return simulation_config
 
@@ -135,54 +297,59 @@ class ResConfig(BaseCClass):
         defines = self._extract_defines(config)
         key_filter = [ConfigKeys.DEFINES]
 
-        new_config = {}
+        new_config = []
 
         # Extract internals
         key_filter.append(ConfigKeys.INTERNALS)
-        new_config.update(self._extract_internals(config))
+        config_dir, internal_config = self._extract_internals(config)
+        new_config += internal_config
 
         # Extract simulation
         key_filter.append(ConfigKeys.SIMULATION)
-        new_config.update(self._extract_simulation(config))
+        new_config += self._extract_simulation(config)
 
         # Unrecognized keys
-        for key in config:
+        for key, value in config.iteritems():
             if key not in key_filter:
-                self._failed_keys[key] = config[key]
+                self._failed_keys[key] = value
 
-        return defines, new_config
+        return defines, config_dir, new_config
 
 
     def _build_config_content(self, config):
         self._failed_keys = {}
-        defines, config = self._extract_config(config)
+        defines, config_dir, config_list = self._extract_config(config)
 
         config_parser  = ConfigParser()
         ResConfig.init_config_parser(config_parser)
         config_content = ConfigContent(None)
         config_content.setParser(config_parser)
 
-        dir_key = ConfigKeys.CONFIG_DIRECTORY
-        if dir_key not in config:
-            raise ValueError("Expected config to specify %s" % dir_key)
-        config[dir_key] = os.path.realpath(config[dir_key])
+        if config_dir is None:
+            raise ValueError("Expected config to specify %s"
+                             % ConfigKeys.CONFIG_DIRECTORY)
 
         # Insert defines
         for key in defines:
             config_content.add_define(key, defines[key])
 
         # Insert key values
-        path_elm = config_content.create_path_elm(config[dir_key])
-        for key in config.keys():
-            value = config[key] # TODO: Support lists of arguments
-            ok = config_parser.add_key_value(config_content,
-                                        key,
-                                        StringList([key, value]),
-                                        path_elm=path_elm,
-                                        )
+        path_elm = config_content.create_path_elm(config_dir)
+        add_key_value = lambda key, value : config_parser.add_key_value(
+                                                            config_content,
+                                                            key,
+                                                            StringList([key] + value),
+                                                            path_elm=path_elm)
 
+        for key, value in config_list:
+            if isinstance(value, str):
+                value = [value]
+            if not isinstance(value, list):
+                raise ValueError("Expected value to be str or list, was %r" % (type(value)))
+
+            ok = add_key_value(key, value)
             if not ok:
-                self._failed_keys[key] = config[key]
+                self._failed_keys[key] = value
 
         config_parser.validate(config_content)
         self._errors = list(config_content.getErrors())

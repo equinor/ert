@@ -21,9 +21,32 @@ class ConfigKeys:
 
     _config_directory_key = EnkfPrototype("char* config_keys_get_config_directory_key()", bind=False)
     _queue_system_key     = EnkfPrototype("char* config_keys_get_queue_system_key()", bind=False)
+    _run_template_key     = EnkfPrototype("char* config_keys_get_run_template_key()", bind=False)
+    _gen_kw_key           = EnkfPrototype("char* config_keys_get_gen_kw_key()", bind=False)
+    _history_source_key   = EnkfPrototype("char* config_keys_get_history_source_key()", bind=False)
+    _queue_option_key     = EnkfPrototype("char* config_keys_get_queue_option_key()", bind=False)
+    _install_job_key      = EnkfPrototype("char* config_keys_get_install_job_key()", bind=False)
+    _plot_settings_key    = EnkfPrototype("char* config_keys_get_plot_setting_key()", bind=False)
+
 
     CONFIG_DIRECTORY = _config_directory_key()
     DEFINES          = "DEFINES"
     INTERNALS        = "INTERNALS"
     SIMULATION       = "SIMULATION"
+    LOGGING          = "LOGGING"
+    SEED             = "SEED"
     QUEUE_SYSTEM     = _queue_system_key()
+    RUN_TEMPLATE     = _run_template_key()
+    TEMPLATE         = "TEMPLATE"
+    EXPORT           = "EXPORT"
+    GEN_KW           = _gen_kw_key()
+    NAME             = "NAME"
+    OUT_FILE         = "OUT_FILE"
+    PARAMETER_FILE   = "PARAMETER_FILE"
+    PATH             = "PATH"
+    QUEUE_OPTION     = _queue_option_key()
+    DRIVER_NAME      = "DRIVER_NAME"
+    OPTION           = "OPTION"
+    VALUE            = "VALUE"
+    INSTALL_JOB      = _install_job_key()
+    PLOT_SETTINGS    = _plot_settings_key()

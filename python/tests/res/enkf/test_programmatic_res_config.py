@@ -24,18 +24,18 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
         self.minimum_config = {
                                 "INTERNALS" :
                                 {
-                                  "CONFIG_DIRECTORY"   : "simple_config",
+                                  "CONFIG_DIRECTORY" : "simple_config",
                                 },
 
                                 "SIMULATION" :
                                 {
                                   "QUEUE_SYSTEM" :
                                   {
-                                    "JOBNAME"            : "Job%d",
+                                    "JOBNAME" : "Job%d",
                                   },
 
                                   "RUNPATH"            : "/tmp/simulations/run%d",
-                                  "NUM_REALIZATIONS"   : "1",
+                                  "NUM_REALIZATIONS"   : 1,
                                   "JOB_SCRIPT"         : "script.sh",
                                   "ENSPATH"            : "Ensemble"
                                 }
@@ -44,29 +44,133 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
         self.large_config  = {
                                 "DEFINES" :
                                 {
-                                  "<USER>"        : "TEST_USER",
-                                  "<SCRATCH>"     : "scratch/ert",
-                                  "<CASE_DIR>"    : "the_extensive_case",
-                                  "<ECLIPSE_NAME>": "XYZ"
+                                  "<USER>"         : "TEST_USER",
+                                  "<SCRATCH>"      : "scratch/ert",
+                                  "<CASE_DIR>"     : "the_extensive_case",
+                                  "<ECLIPSE_NAME>" : "XYZ"
                                 },
 
                                 "INTERNALS" :
                                 {
-                                  "CONFIG_DIRECTORY"   : "snake_oil_structure/ert/model",
+                                  "CONFIG_DIRECTORY" : "snake_oil_structure/ert/model",
                                 },
 
                                 "SIMULATION" :
                                 {
                                   "QUEUE_SYSTEM" :
                                   {
-                                    "JOBNAME"            : "SNAKE_OIL_STRUCTURE_%d",
+                                    "JOBNAME"          : "SNAKE_OIL_STRUCTURE_%d",
+                                    "QUEUE_SYSTEM"     : "LSF",
+                                    "MAX_RUNTIME"      : 23400,
+                                    "MIN_REALIZATIONS" : "50%",
+                                    "MAX_SUBMIT"       : 13,
+                                    "UMASK"            : "007",
+                                    "QUEUE_OPTION"     :
+                                    [
+                                      {
+                                        "DRIVER_NAME" : "LSF",
+                                        "OPTION"      : "MAX_RUNNING",
+                                        "VALUE"       : 100
+                                      }
+                                    ]
                                   },
 
-                                  "RUNPATH"            : "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d",
-                                  "NUM_REALIZATIONS"   : "10",
-                                  "ENSPATH"            : "../output/storage/<CASE_DIR>"
+                                  "DATA_FILE"        : "../../eclipse/model/SNAKE_OIL.DATA",
+                                  "RUNPATH"          : "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d",
+                                  "RUNPATH_FILE"     : "../output/run_path_file/.ert-runpath-list_<CASE_DIR>",
+                                  "ECLBASE"          : "eclipse/model/<ECLIPSE_NAME>-%d",
+                                  "NUM_REALIZATIONS" : "10",
+                                  "ENSPATH"          : "../output/storage/<CASE_DIR>",
+                                  "GRID"             : "../../eclipse/include/grid/CASE.EGRID",
+                                  "REFCASE"          : "../input/refcase/SNAKE_OIL_FIELD",
+                                  "HISTORY_SOURCE"   : "REFCASE_HISTORY",
+                                  "OBS_CONFIG"       : "../input/observations/obsfiles/observations.txt",
+                                  "TIME_MAP"         : "../input/refcase/time_map.txt",
+
+                                  "PLOT_SETTINGS" :
+                                  {
+                                    "PATH" : "../output/results/plot/<CASE_DIR>"
+                                  },
+
+                                  "SUMMARY" :
+                                  [
+                                    "WOPR:PROD",
+                                    "WOPT:PROD",
+                                    "WWPR:PROD",
+                                    "WWCT:PROD",
+                                    "WWPT:PROD",
+                                    "WBHP:PROD",
+                                    "WWIR:INJ",
+                                    "WWIT:INJ",
+                                    "WBHP:INJ",
+                                    "ROE:1"
+                                  ],
+
+                                  "INSTALL_JOB" :
+                                  [
+                                    {
+                                      "NAME" : "SNAKE_OIL_SIMULATOR",
+                                      "PATH" : "../../snake_oil/jobs/SNAKE_OIL_SIMULATOR"
+                                    },
+                                    {
+                                      "NAME" : "SNAKE_OIL_NPV",
+                                      "PATH" : "../../snake_oil/jobs/SNAKE_OIL_NPV"
+                                    },
+                                    {
+                                      "NAME" : "SNAKE_OIL_DIFF",
+                                      "PATH" : "../../snake_oil/jobs/SNAKE_OIL_DIFF"
+                                    }
+                                  ],
+
+                                  "LOAD_WORKFLOW_JOB" :
+                                  [
+                                    "../bin/workflows/workflowjobs/UBER_PRINT"
+                                  ],
+
+                                  "LOAD_WORKFLOW" :
+                                  [
+                                    "../bin/workflows/MAGIC_PRINT"
+                                  ],
+
+                                  "FORWARD_MODEL" :
+                                  [
+                                    "SNAKE_OIL_SIMULATOR",
+                                    "SNAKE_OIL_NPV",
+                                    "SNAKE_OIL_DIFF"
+                                  ],
+
+                                  "RUN_TEMPLATE" :
+                                  [
+                                    {
+                                      "TEMPLATE" : "../input/templates/seed_template.txt",
+                                      "EXPORT"   : "seed.txt"
+                                    }
+                                  ],
+
+                                  "GEN_KW" :
+                                  [
+                                    {
+                                      "NAME"           : "SIGMA",
+                                      "TEMPLATE"       : "../input/templates/sigma.tmpl",
+                                      "OUT_FILE"       : "coarse.sigma",
+                                      "PARAMETER_FILE" : "../input/distributions/sigma.dist"
+                                    }
+                                  ],
+
+                                  "LOGGING" :
+                                  {
+                                    "LOG_LEVEL"       : "INFO",
+                                    "UPDATE_LOG_PATH" : "../output/update_log/<CASE_DIR>",
+                                    "LOG_FILE"        : "../output/log/ert_<CASE_DIR>.log"
+                                  },
+
+                                  "SEED" :
+                                  {
+                                    "STORE_SEED" : "../input/rng/SEED",
+                                    "LOAD_SEED"  : "../input/rng/SEED"
+                                  }
                                 }
-                             }
+                              }
 
     def test_minimum_config(self):
         case_directory = self.createTestPath("local/simple_config")
@@ -143,6 +247,142 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
                              res_config.failed_keys["UNKNOWN_KEY"])
 
 
+    def assert_equal_model_config(self, loaded_model_config, prog_model_config):
+        self.assertEqual(loaded_model_config.num_realizations,
+                         prog_model_config.num_realizations)
+
+        self.assertEqual(loaded_model_config.getJobnameFormat(),
+                         prog_model_config.getJobnameFormat())
+
+        self.assertEqual(loaded_model_config.getRunpathAsString(),
+                         prog_model_config.getRunpathAsString())
+
+        self.assertEqual(loaded_model_config.getEnspath(),
+                         prog_model_config.getEnspath())
+
+        self.assertEqual(loaded_model_config.get_history_source(),
+                         prog_model_config.get_history_source())
+
+        self.assertEqual(loaded_model_config.obs_config_file,
+                         prog_model_config.obs_config_file)
+
+        self.assertEqual(loaded_model_config.getForwardModel().joblist(),
+                         prog_model_config.getForwardModel().joblist())
+
+
+    def assert_equal_site_config(self, loaded_site_config, prog_site_config):
+        self.assertEqual(loaded_site_config.queue_config.queue_name,
+                         prog_site_config.queue_config.queue_name)
+
+        self.assertEqual(loaded_site_config.queue_config.max_submit,
+                         prog_site_config.queue_config.max_submit)
+
+        self.assertEqual(loaded_site_config.umask,
+                         prog_site_config.umask)
+
+        self.assertEqual(loaded_site_config.queue_config.driver.get_option("MAX_RUNNING"),
+                         prog_site_config.queue_config.driver.get_option("MAX_RUNNING"))
+
+        loaded_job_list = loaded_site_config.get_installed_jobs()
+        prog_job_list = prog_site_config.get_installed_jobs()
+
+        self.assertEqual(loaded_job_list.getAvailableJobNames(),
+                         prog_job_list.getAvailableJobNames())
+
+        for job_name in loaded_job_list.getAvailableJobNames():
+            self.assertEqual(loaded_job_list[job_name].get_config_file(),
+                             prog_job_list[job_name].get_config_file())
+
+            self.assertEqual(loaded_job_list[job_name].get_stderr_file(),
+                             prog_job_list[job_name].get_stderr_file())
+
+            self.assertEqual(loaded_job_list[job_name].get_stdout_file(),
+                             prog_job_list[job_name].get_stdout_file())
+
+
+    def assert_equal_ecl_config(self, loaded_ecl_config, prog_ecl_config):
+        self.assertEqual(loaded_ecl_config.getDataFile(),
+                         prog_ecl_config.getDataFile())
+
+        self.assertEqual(loaded_ecl_config.get_gridfile(),
+                         prog_ecl_config.get_gridfile())
+
+        self.assertEqual(loaded_ecl_config.getEclBase(),
+                         prog_ecl_config.getEclBase())
+
+        self.assertEqual(loaded_ecl_config.getRefcaseName(),
+                         prog_ecl_config.getRefcaseName())
+
+
+    def assert_equal_analysis_config(self, loaded_config, prog_config):
+        self.assertEqual(loaded_config.get_log_path(),
+                         prog_config.get_log_path())
+
+        self.assertEqual(loaded_config.get_max_runtime(),
+                         prog_config.get_max_runtime())
+
+    def assert_equal_hook_manager(self, loaded_hook_manager, prog_hook_manager):
+        self.assertEqual(loaded_hook_manager.getRunpathList().getExportFile(),
+                         prog_hook_manager.getRunpathList().getExportFile())
+
+
+    def assert_equal_log_config(self, loaded_log_config, prog_log_config):
+        self.assertEqual(loaded_log_config.log_file,
+                         prog_log_config.log_file)
+
+        self.assertEqual(loaded_log_config.log_level,
+                         prog_log_config.log_level)
+
+
+    def assert_equal_rng_config(self, loaded_rng_config, prog_rng_config):
+        self.assertEqual(loaded_rng_config.store_filename,
+                         prog_rng_config.store_filename)
+
+        self.assertEqual(loaded_rng_config.load_filename,
+                         prog_rng_config.load_filename)
+
+
+    def assert_equal_ensemble_config(self, loaded_config, prog_config):
+        self.assertEqual(set(loaded_config.alloc_keylist()),
+                         set(prog_config.alloc_keylist()))
+
+
+    def assert_equal_ert_templates(self, loaded_templates, prog_templates):
+        self.assertEqual(loaded_templates.getTemplateNames(),
+                         prog_templates.getTemplateNames())
+
+        for template_name in loaded_templates.getTemplateNames():
+            let = loaded_templates.get_template(template_name)
+            pet = prog_templates.get_template(template_name)
+
+            self.assertEqual(let.get_template_file(), pet.get_template_file())
+            self.assertEqual(let.get_target_file(), pet.get_target_file())
+
+
+    def assert_equal_ert_workflow(self, loaded_workflow_list, prog_workflow_list):
+        self.assertEqual(loaded_workflow_list.getWorkflowNames(),
+                         prog_workflow_list.getWorkflowNames())
+
+        for wname in loaded_workflow_list.getWorkflowNames():
+            self.assertEqual(loaded_workflow_list[wname].src_file,
+                             prog_workflow_list[wname].src_file)
+
+        self.assertEqual(loaded_workflow_list.getJobNames(),
+                         prog_workflow_list.getJobNames())
+
+        for jname in loaded_workflow_list.getJobNames():
+            ljob = loaded_workflow_list.getJob(jname)
+            pjob = prog_workflow_list.getJob(jname)
+
+            self.assertEqual(ljob.name(), pjob.name())
+            self.assertEqual(ljob.executable(), pjob.executable())
+
+
+    def assert_equal_plot_config(self, loaded_plot_config, prog_plot_config):
+        self.assertEqual(loaded_plot_config.getPath(),
+                         prog_plot_config.getPath())
+
+
     def test_large_config(self):
         case_directory = self.createTestPath("local/snake_oil_structure")
         config_file = "snake_oil_structure/ert/model/user_config.ert"
@@ -153,14 +393,35 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
             loaded_res_config = ResConfig(user_config_file=config_file)
             prog_res_config   = ResConfig(config=self.large_config)
 
-            self.assertEqual(loaded_res_config.model_config.num_realizations,
-                             prog_res_config.model_config.num_realizations)
+            self.assert_equal_model_config(loaded_res_config.model_config,
+                                           prog_res_config.model_config)
 
-            self.assertEqual(loaded_res_config.model_config.getJobnameFormat(),
-                             prog_res_config.model_config.getJobnameFormat())
+            self.assert_equal_site_config(loaded_res_config.site_config,
+                                          prog_res_config.site_config)
 
-            self.assertEqual(loaded_res_config.model_config.getRunpathAsString(),
-                             prog_res_config.model_config.getRunpathAsString())
+            self.assert_equal_ecl_config(loaded_res_config.ecl_config,
+                                         prog_res_config.ecl_config)
 
-            self.assertEqual(loaded_res_config.model_config.getEnspath(),
-                             prog_res_config.model_config.getEnspath())
+            self.assert_equal_analysis_config(loaded_res_config.analysis_config,
+                                              prog_res_config.analysis_config)
+
+            self.assert_equal_hook_manager(loaded_res_config.hook_manager,
+                                           prog_res_config.hook_manager)
+
+            self.assert_equal_log_config(loaded_res_config.log_config,
+                                         prog_res_config.log_config)
+
+            self.assert_equal_rng_config(loaded_res_config.rng_config,
+                                         prog_res_config.rng_config)
+
+            self.assert_equal_ensemble_config(loaded_res_config.ensemble_config,
+                                              prog_res_config.ensemble_config)
+
+            self.assert_equal_ert_templates(loaded_res_config.ert_templates,
+                                            prog_res_config.ert_templates)
+
+            self.assert_equal_ert_workflow(loaded_res_config.ert_workflow_list,
+                                           prog_res_config.ert_workflow_list)
+
+            self.assert_equal_plot_config(loaded_res_config.plot_config,
+                                          prog_res_config.plot_config)
