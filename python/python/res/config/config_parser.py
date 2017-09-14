@@ -34,7 +34,7 @@ class ConfigParser(BaseCClass):
     _size  = ConfigPrototype("int config_get_schema_size(config_parser)");
     _get_schema_item = ConfigPrototype("schema_item_ref config_get_schema_item(config_parser, char*)")
     _has_schema_item = ConfigPrototype("bool config_has_schema_item(config_parser, char*)")
-    _add_key_value   = ConfigPrototype("void config_parser_add_key_values(config_parser, config_content, char*, stringlist, config_path_elm, char*, config_unrecognized_enum)")
+    _add_key_value   = ConfigPrototype("bool config_parser_add_key_values(config_parser, config_content, char*, stringlist, config_path_elm, char*, config_unrecognized_enum)")
     _validate        = ConfigPrototype("void config_validate(config_parser, config_content)")
 
 
@@ -120,7 +120,7 @@ class ConfigParser(BaseCClass):
                       config_filename=None,
                       unrecognized_action=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN):
 
-        self._add_key_value(config_content,
+        return self._add_key_value(config_content,
                             key, value,
                             path_elm, config_filename,
                             unrecognized_action)

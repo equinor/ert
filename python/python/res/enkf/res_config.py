@@ -54,7 +54,7 @@ class ResConfig(BaseCClass):
     _init_parser       = EnkfPrototype("void res_config_init_config_parser(config_parser)", bind=False)
 
     def __init__(self, user_config_file=None, config=None, throw_on_error=True):
-        self._errors = None
+        self._errors, self._failed_keys = None, None
         self._assert_input(user_config_file, config, throw_on_error)
 
         if config is not None:
@@ -96,6 +96,7 @@ class ResConfig(BaseCClass):
 
 
     def _build_config_content(self, config):
+        self._failed_keys = {}
         config_parser  = ConfigParser()
         ResConfig.init_config_parser(config_parser)
 
@@ -105,14 +106,16 @@ class ResConfig(BaseCClass):
         config["WORKING_DIRECTORY"] = os.path.realpath(config["WORKING_DIRECTORY"])
         path_elm = config_content.create_path_elm(config["WORKING_DIRECTORY"])
 
-        keys = config.keys()
-        for key in keys:
+        for key in config.keys():
             value = str(config[key]) # TODO: Support lists of arguments
-            config_parser.add_key_value(config_content,
+            ok = config_parser.add_key_value(config_content,
                                         key,
                                         StringList([key, value]),
                                         path_elm=path_elm,
                                         )
+
+            if not ok:
+                self._failed_keys[key] = config[key]
 
         config_parser.validate(config_content)
         self._errors = list(config_content.getErrors())
@@ -129,6 +132,10 @@ class ResConfig(BaseCClass):
     @property
     def errors(self):
         return self._errors
+
+    @property
+    def failed_keys(self):
+        return self._failed_keys
 
     @property
     def user_config_file(self):
