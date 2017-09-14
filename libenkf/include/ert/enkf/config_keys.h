@@ -154,7 +154,9 @@ extern "C" {
 #define  PLOT_SETTING_KEY                  "PLOT_SETTINGS"
 #define  UPDATE_SETTING_KEY                "UPDATE_SETTINGS"
 
-#define  CONFIG_DIRECTORY_KEY              "WORKING_DIRECTORY"
+#define  CONFIG_DIRECTORY_KEY              "CONFIG_DIRECTORY"
+#define  RES_CONFIG_FILE_KEY               "RES_CONFIG_FILE"
+
 
 #define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"
 

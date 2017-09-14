@@ -93,6 +93,7 @@ add_library(enkf src/active_list.c
                  src/trans_func.c
                  src/subst_config.c
                  src/log_config.c
+                 src/config_keys.c
 )
 
 target_include_directories(enkf

@@ -46,6 +46,7 @@ set(PYTHON_SOURCES
     forward_load_context.py
     es_update.py
     log_config.py
+    config_keys.py
 )
 
 add_python_package("python.res.enkf" ${PYTHON_INSTALL_PREFIX}/res/enkf "${PYTHON_SOURCES}" True)

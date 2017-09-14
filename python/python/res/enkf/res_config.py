@@ -25,7 +25,7 @@ from res.config import (ConfigParser, ConfigContent, ConfigSettings,
                         UnrecognizedEnum)
 from res.enkf import EnkfPrototype
 from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig,
-                      EnsembleConfig, RNGConfig)
+                      EnsembleConfig, RNGConfig, ConfigKeys)
 
 class ResConfig(BaseCClass):
 
@@ -97,15 +97,18 @@ class ResConfig(BaseCClass):
 
     def _build_config_content(self, config):
         self._failed_keys = {}
+
         config_parser  = ConfigParser()
         ResConfig.init_config_parser(config_parser)
-
         config_content = ConfigContent(None)
         config_content.setParser(config_parser)
 
-        config["WORKING_DIRECTORY"] = os.path.realpath(config["WORKING_DIRECTORY"])
-        path_elm = config_content.create_path_elm(config["WORKING_DIRECTORY"])
+        dir_key = ConfigKeys.CONFIG_DIRECTORY
+        if dir_key not in config:
+            raise ValueError("Expected config to specify %s" % dir_key)
+        config[dir_key] = os.path.realpath(config[dir_key])
 
+        path_elm = config_content.create_path_elm(config[dir_key])
         for key in config.keys():
             value = str(config[key]) # TODO: Support lists of arguments
             ok = config_parser.add_key_value(config_content,

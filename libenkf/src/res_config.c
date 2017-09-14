@@ -36,8 +36,6 @@
 #include <ert/enkf/model_config.h>
 #include <ert/enkf/log_config.h>
 
-#define  RES_CONFIG_FILE_KEY "RES_CONFIG_FILE"
-
 struct res_config_struct {
 
   char * user_config_file;

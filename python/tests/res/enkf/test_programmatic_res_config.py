@@ -16,20 +16,19 @@
 
 from ecl.test import ExtendedTestCase, TestAreaContext
 
-from res.enkf import ResConfig
+from res.enkf import ResConfig, ConfigKeys
 
 class ProgrammaticResConfigTest(ExtendedTestCase):
 
     def setUp(self):
         self.minimum_config = {
-                                "WORKING_DIRECTORY"  : "simple_config",
+                                "CONFIG_DIRECTORY"   : "simple_config",
                                 "JOBNAME"            : "Job%d",
                                 "RUNPATH"            : "/tmp/simulations/run%d",
                                 "NUM_REALIZATIONS"   : 1,
                                 "JOB_SCRIPT"         : "script.sh",
                                 "ENSPATH"            : "Ensemble"
                               }
-
 
     def test_minimum_config(self):
         case_directory = self.createTestPath("local/simple_config")
@@ -55,6 +54,18 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
 
             self.assertEqual(0, len(prog_res_config.errors))
             self.assertEqual(0, len(prog_res_config.failed_keys))
+
+
+    def test_no_config_directory(self):
+        case_directory = self.createTestPath("local/simple_config")
+        config_file = "simple_config/minimum_config"
+
+        with TestAreaContext("res_config_prog_test") as work_area:
+            work_area.copy_directory(case_directory)
+            del self.minimum_config[ConfigKeys.CONFIG_DIRECTORY]
+
+            with self.assertRaises(ValueError):
+                ResConfig(config=self.minimum_config)
 
 
     def test_errors(self):
