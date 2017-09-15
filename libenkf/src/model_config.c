@@ -96,6 +96,8 @@ struct model_config_struct {
   char                 * enspath;
   char                 * rftpath;
   char                 * data_root;
+  char                 * default_data_root;
+
   fs_driver_impl         dbase_type;
   bool                   has_prediction;
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
@@ -324,6 +326,7 @@ model_config_type * model_config_alloc_empty() {
   model_config->enspath                   = NULL;
   model_config->rftpath                   = NULL;
   model_config->data_root                 = NULL;
+  model_config->default_data_root         = NULL;
   model_config->dbase_type                = INVALID_DRIVER_ID;
   model_config->current_runpath           = NULL;
   model_config->current_path_key          = NULL;
@@ -442,13 +445,30 @@ static bool model_config_select_any_history( model_config_type * model_config , 
 }
 
 const char * model_config_get_data_root( const model_config_type * model_config ) {
-  return model_config->data_root;
+  if (model_config->data_root)
+    return model_config->data_root;
+
+  return model_config->default_data_root;
 }
 
 void model_config_set_data_root( model_config_type * model_config , const char * data_root) {
   model_config->data_root = util_realloc_string_copy( model_config->data_root , data_root );
   setenv( "DATA_ROOT" ,  data_root , 1 );
 }
+
+static void model_config_set_default_data_root( model_config_type * model_config , const char * data_root) {
+  model_config->default_data_root = util_alloc_string_copy( data_root );
+  setenv( "DATA_ROOT" ,  data_root , 1 );
+}
+
+
+bool model_config_data_root_is_set( const model_config_type * model_config ) {
+  if (!model_config->data_root)
+    return false;
+
+  return !util_string_equal( model_config->data_root, model_config->default_data_root);
+}
+
 
 
 void model_config_init(model_config_type * model_config ,
@@ -462,7 +482,7 @@ void model_config_init(model_config_type * model_config ,
 
   model_config->forward_model = forward_model_alloc(  joblist );
   model_config_set_refcase( model_config , refcase );
-  model_config_set_data_root( model_config, data_root );
+  model_config_set_default_data_root( model_config, data_root );
 
   if (config_content_has_item(config, NUM_REALIZATIONS_KEY))
     model_config->num_realizations = config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
@@ -586,6 +606,7 @@ void model_config_free(model_config_type * model_config) {
   util_safe_free( model_config->gen_kw_export_file_name);
   util_safe_free( model_config->obs_config_file );
   util_safe_free( model_config->data_root );
+  util_safe_free( model_config->default_data_root );
 
   if (model_config->history)
     history_free(model_config->history);

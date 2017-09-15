@@ -46,6 +46,7 @@ extern "C" {
   typedef struct model_config_struct model_config_type;
   const char *           model_config_get_data_root( const model_config_type * model_config );
   void                   model_config_set_data_root( model_config_type * model_config , const char * data_root);
+  bool                   model_config_data_root_is_set( const model_config_type * model_config );
 
   const char *           model_config_get_jobname_fmt( const model_config_type * model_config );
   void                   model_config_set_jobname_fmt( model_config_type * model_config , const char * jobname_fmt);
