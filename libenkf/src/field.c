@@ -1266,35 +1266,6 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
 */
 
 
-static bool field_forward_load(field_type * field ,
-                               const char * ecl_file_name ,
-                               const forward_load_context_type * load_context) {
-  bool keep_inactive = false;
-  bool loadOK = true;
-  field_file_format_type import_format = field_config_get_import_format(field->config);
-
-  if (import_format == ECL_FILE) {
-    const ecl_file_type * restart_file = forward_load_context_get_restart_file( load_context );
-    if (restart_file != NULL) {
-      ecl_kw_type * field_kw = ecl_file_iget_named_kw(restart_file , field_config_get_ecl_kw_name(field->config) , 0);
-      field_copy_ecl_kw_data(field , field_kw);
-    } else
-      loadOK = false;
-    //util_abort("%s: fatal error when loading: %s - no restart information has been loaded \n",__func__ , field_config_get_key( field->config ));
-  } else
-    /* Loading from unique file - currently this only applies to the modelerror implementation. */
-    field_fload_typed(field , ecl_file_name , import_format, keep_inactive);
-
-
-  if (loadOK) {
-    field_func_type * input_transform = field_config_get_input_transform(field->config);
-    /* The input transform is done in-place. */
-    if (input_transform != NULL)
-      field_apply(field , input_transform);
-
-  }
-  return loadOK;
-}
 
 
 
@@ -1554,7 +1525,6 @@ UTIL_IS_INSTANCE_FUNCTION(field , FIELD)
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_ECL_WRITE (field)
-VOID_FORWARD_LOAD(field)
 VOID_COPY     (field)
 VOID_INITIALIZE(field);
 VOID_USER_GET(field)

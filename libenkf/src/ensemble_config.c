@@ -576,10 +576,7 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
         }
 
 
-        if (strcmp(var_type_string , DYNAMIC_KEY) == 0) {
-          config_node = ensemble_config_add_field( ensemble_config , key , grid , false);
-          enkf_config_node_update_state_field( config_node , truncation , value_min , value_max );
-        } else if (strcmp(var_type_string , PARAMETER_KEY) == 0) {
+        if (strcmp(var_type_string , PARAMETER_KEY) == 0) {
           const char *  ecl_file          = config_content_node_iget( node , 2 );
           const char *  init_file_fmt     = hash_safe_get( options , INIT_FILES_KEY );
           const char *  init_transform    = hash_safe_get( options , INIT_TRANSFORM_KEY );

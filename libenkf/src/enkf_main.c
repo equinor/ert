@@ -468,7 +468,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * src_fs ,
 */
 
 void enkf_main_inflate(enkf_main_type * enkf_main , enkf_fs_type * src_fs , enkf_fs_type * target_fs , int report_step , hash_type * use_count) {
-  stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER + DYNAMIC_STATE);
+  stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
 
   for (int ikey = 0; ikey < stringlist_get_size( keys ); ikey++) {
     const char * key = stringlist_iget( keys  , ikey );
@@ -2151,14 +2151,8 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
       int active_step = -1;
       do {
         active_step = obs_vector_get_next_active_step( obs_vector , active_step );
-        if (active_step >= 0) {
+        if (active_step >= 0)
           enkf_config_node_set_internalize( data_node , active_step );
-          {
-            enkf_var_type var_type = enkf_config_node_get_var_type( data_node );
-            if (var_type == DYNAMIC_STATE)
-              model_config_set_load_state(enkf_main_get_model_config(enkf_main), active_step);
-          }
-        }
       } while (active_step >= 0);
       obs_key = hash_iter_get_next_key(iter);
     }

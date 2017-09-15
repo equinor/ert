@@ -944,7 +944,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   case(FIELD):
     node->alloc              = field_alloc__;
     node->ecl_write          = field_ecl_write__;
-    node->forward_load       = field_forward_load__;
     node->copy               = field_copy__;
     node->initialize         = field_initialize__;
     node->freef              = field_free__;
