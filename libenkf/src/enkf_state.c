@@ -174,6 +174,10 @@ static void shared_info_free(shared_info_type * shared_info) {
 /** Helper classes complete - starting on the enkf_state proper object. */
 /*****************************************************************/
 
+
+/*
+  This function does not acces the nodes of the enkf_state object.
+*/
 void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list, init_mode_type init_mode) {
   if (init_mode != INIT_NONE) {
     int iens = enkf_state_get_iens( enkf_state );
@@ -182,8 +186,10 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
     if ((current_state == STATE_PARENT_FAILURE) && (init_mode != INIT_FORCE))
       return;
     else {
+      const ensemble_config_type * ensemble_config = enkf_state->ensemble_config;
       for (int ip = 0; ip < stringlist_get_size(param_list); ip++) {
-        enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
+        const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget(param_list, ip));
+        enkf_node_type * param_node = enkf_node_alloc( config_node );
         node_id_type node_id = { .report_step = 0, .iens = iens };
         bool has_data = enkf_node_has_data(param_node, fs, node_id);
 
@@ -191,6 +197,8 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
           if (enkf_node_initialize(param_node, iens, enkf_state->rng))
             enkf_node_store(param_node, fs, true, node_id);
         }
+
+        enkf_node_free( param_node );
       }
       state_map_update_matching(state_map , iens , STATE_UNDEFINED | STATE_LOAD_FAILURE , STATE_INITIALIZED);
       enkf_fs_fsync(fs);
