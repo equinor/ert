@@ -28,7 +28,7 @@
 struct job_queue_status_struct {
   UTIL_TYPE_ID_DECLARATION;
   int status_list[JOB_QUEUE_MAX_STATE];
-  pthread_mutex_t update_mutex;
+  pthread_rwlock_t rw_lock;
   int status_index[JOB_QUEUE_MAX_STATE];
 };
 
@@ -56,7 +56,7 @@ UTIL_SAFE_CAST_FUNCTION( job_queue_status , JOB_QUEUE_STATUS_TYPE_ID )
 job_queue_status_type * job_queue_status_alloc() {
   job_queue_status_type * status = util_malloc( sizeof * status );
   UTIL_TYPE_ID_INIT( status ,   JOB_QUEUE_STATUS_TYPE_ID );
-  pthread_mutex_init( &status->update_mutex , NULL );
+  pthread_rwlock_init( &status->rw_lock , NULL);
   job_queue_status_clear( status );
 
     
@@ -75,9 +75,10 @@ job_queue_status_type * job_queue_status_alloc() {
     status->status_index[10] = JOB_QUEUE_RUNNING_DONE_CALLBACK; // Temporary state, while running requested callbacks after an ended job -                                                               controlled by job_queue
     status->status_index[11] = JOB_QUEUE_RUNNING_EXIT_CALLBACK; // Temporary state, while running requested callbacks after an ended job -                                                               controlled by job_queue
     status->status_index[12] = JOB_QUEUE_RUNNING_KILL_CALLBACK; // Temporary state, while running requested callbacks after an ended job -                                                               controlled by job_queue
-    status->status_index[13] = JOB_QUEUE_FAILED; // Job has failed, no more retries, FINAL STATE
-    status->status_index[14] = JOB_QUEUE_DO_KILL_NODE_FAILURE; // Job has failed, node should be blacklisted
-    status->status_index[15] = JOB_QUEUE_STATUS_FAILURE; //The driver call to get status has failed, job status remains unchanged
+    status->status_index[13] = JOB_QUEUE_STATUS_FAILURE; //The driver call to get status has failed, job status remains unchanged
+    status->status_index[14] = JOB_QUEUE_FAILED; // Job has failed, no more retries, FINAL STATE
+    status->status_index[15] = JOB_QUEUE_DO_KILL_NODE_FAILURE; // Job has failed, node should be blacklisted
+
     
     
     
@@ -98,37 +99,53 @@ void job_queue_status_clear( job_queue_status_type * status ) {
 }
 
 
-int job_queue_status_get_count( job_queue_status_type * status_count , job_status_type status_type) {
-  int index = STATUS_INDEX(status_count, status_type );
-  int count;
+int job_queue_status_get_count( job_queue_status_type * status_count , int job_status_mask) {
+  int count = 0;
+  pthread_rwlock_rdlock( &status_count->rw_lock );
+  {
+    int index = 0;
+    int status = 1;
 
-  count = status_count->status_list[index];
+    while (true) {
+      if ((status & job_status_mask) == status) {
+        job_status_mask -= status;
+        count += status_count->status_list[index];
+      }
 
+      if (job_status_mask == 0)
+        break;
+
+      index++;
+      status <<= 1;
+      if (index == JOB_QUEUE_MAX_STATE)
+        util_abort("%s: internal error: remaining unrecognized status value:%d \n",__func__ , job_status_mask);
+    }
+  }
+  pthread_rwlock_unlock( &status_count->rw_lock );
   return count;
 }
-
 
 void job_queue_status_inc( job_queue_status_type * status_count , job_status_type status_type) {
   int index = STATUS_INDEX(status_count, status_type );
 
-  pthread_mutex_lock( &status_count->update_mutex );
+  pthread_rwlock_wrlock( &status_count->rw_lock );
   {
     int count = status_count->status_list[index];
     status_count->status_list[index] = count + 1;
   }
-  pthread_mutex_unlock( &status_count->update_mutex );
+  pthread_rwlock_unlock( &status_count->rw_lock );
 }
 
 
 static void job_queue_status_dec( job_queue_status_type * status_count , job_status_type status_type) {
   int index = STATUS_INDEX(status_count, status_type );
 
-  pthread_mutex_lock( &status_count->update_mutex );
+  pthread_rwlock_wrlock( &status_count->rw_lock );
   {
     int count = status_count->status_list[index];
     status_count->status_list[index] = count - 1;
   }
-  pthread_mutex_unlock( &status_count->update_mutex );
+  pthread_rwlock_unlock( &status_count->rw_lock );
 }
 
 
