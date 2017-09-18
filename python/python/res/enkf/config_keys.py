@@ -15,7 +15,6 @@
 #  for more details.
 
 from res.enkf import EnkfPrototype
-from enum import Enum
 
 class ConfigKeys:
 
