@@ -740,6 +740,11 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
 }
 
 
+/*
+  In this case the assumption is that we do not have proper contact
+  with the node running the job, and we just switch the job status to
+  JOB_QUEUE_EXIT without calling the driver->kill_job( ) function.
+*/
 
 static void job_queue_handle_DO_KILL_NODE_FAILURE(job_queue_type * queue, job_queue_node_type * node) {
   queue_driver_blacklist_node( queue->driver, job_queue_node_get_driver_data(node) );
