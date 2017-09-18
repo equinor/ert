@@ -1,17 +1,17 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
 #  The file 'gen_kw.py' is part of ERT - Ensemble based Reservoir Tool.
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os.path
 
@@ -37,7 +37,7 @@ class GenKw(BaseCClass):
     _has_key           = EnkfPrototype("bool   gen_kw_data_has_key(gen_kw, char*)")
     _ecl_write         = EnkfPrototype("void   gen_kw_ecl_write(gen_kw,    char* , char* , FILE)")
     _iget_key          = EnkfPrototype("char*  gen_kw_get_name(gen_kw, int)")
-    
+
 
     def __init__(self, gen_kw_config):
         """
@@ -50,7 +50,7 @@ class GenKw(BaseCClass):
             self.__str__ = self.__repr__
         else:
             raise ValueError('Cannot issue a GenKw from the given keyword config: %s.' % str(gen_kw_config))
-    
+
 
     def exportParameters(self, file_name):
         """ @type: str """
@@ -107,7 +107,7 @@ class GenKw(BaseCClass):
                         self._data_iget(index, do_transform)) )
         return v
 
-        
+
     def eclWrite(self , path , filename , export_file = None):
         if not path is None:
             if not os.path.isdir(path):
@@ -138,7 +138,7 @@ class GenKw(BaseCClass):
         """ @rtype: int """
         return self._size( )
 
-    
+
     def __contains__(self, item):
         return self._has_key(item)
 

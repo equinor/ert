@@ -754,11 +754,14 @@ static void enkf_fs_umount( enkf_fs_type * fs ) {
 static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, const char * key) {
   void * driver = NULL;
   switch (var_type) {
-  case(PARAMETER):
-    driver = fs->parameter;
-    break;
   case(DYNAMIC_RESULT):
     driver = fs->dynamic_forecast;
+    break;
+  case(EXT_PARAMETER):
+    driver = fs->parameter;
+    break;
+  case(PARAMETER):
+    driver = fs->parameter;
     break;
   case(DYNAMIC_STATE):
     driver = fs->dynamic_forecast;

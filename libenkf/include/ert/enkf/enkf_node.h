@@ -28,6 +28,7 @@
 #include <ert/util/rng.h>
 #include <ert/util/hash.h>
 #include <ert/util/int_vector.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_file.h>
@@ -192,6 +193,8 @@ bool              enkf_node_has_func(const enkf_node_type * , node_function_type
 bool              enkf_node_internalize(const enkf_node_type * , int );
 
 void              enkf_node_upgrade_file_103( const char * path , const char * file , ert_impl_type impl_type , int perc_complete , msg_type * msg);
+
+UTIL_IS_INSTANCE_HEADER( enkf_node );
 
 #ifdef __cplusplus
 }

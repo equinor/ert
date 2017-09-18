@@ -33,6 +33,7 @@
 #include <ert/enkf/enkf_macros.h>
 #include <ert/enkf/enkf_node.h>
 #include <ert/enkf/field_config.h>
+#include <ert/enkf/ext_param_config.h>
 #include <ert/enkf/gen_data_config.h>
 #include <ert/enkf/gen_kw_config.h>
 #include <ert/enkf/custom_kw_config.h>
@@ -166,8 +167,12 @@ static enkf_config_node_type * enkf_config_node_alloc__(enkf_var_type  var_type,
             node->freef             = container_config_free__;
             node->get_data_size     = container_config_get_data_size__;
             break;
-        default:
-            util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
+        case(EXT_PARAM):
+            node->freef             = ext_param_config_free__;
+            node->get_data_size     = ext_param_config_get_data_size__;
+            break;
+    default:
+          util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
     }
     return node;
 }
@@ -353,6 +358,34 @@ enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , load_
   return config_node;
 }
 
+
+enkf_config_node_type * enkf_config_node_alloc_EXT_PARAM( const char * node_key ,
+                                                          const stringlist_type * keys,
+                                                          const char * outfile)
+{
+  ext_param_config_type * data = ext_param_config_alloc( node_key , keys );
+  if (data) {
+    enkf_config_node_type * config_node = enkf_config_node_alloc__( EXT_PARAMETER ,  EXT_PARAM , node_key , false );
+    char * output_file;
+
+    config_node->data = data;
+    if (outfile)
+      output_file = util_alloc_string_copy( outfile );
+    else
+      output_file = util_alloc_sprintf("%s.json" , node_key);
+
+    enkf_config_node_update( config_node,
+                             NULL ,
+                             output_file,
+                             NULL,
+                             NULL);
+
+    free( output_file );
+
+    return config_node;
+  } else
+    return NULL;
+}
 
 
 

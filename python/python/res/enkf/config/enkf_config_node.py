@@ -1,30 +1,31 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'enkf_config_node.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
+#  The file 'enkf_config_node.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
-from res.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig
+from res.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig, ExtParamConfig
 from res.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
 from ecl.ecl import EclGrid
-from ecl.util import PathFormat
+from ecl.util import PathFormat, StringList
 
 class EnkfConfigNode(BaseCClass):
     TYPE_NAME = "enkf_config_node"
 
     _alloc_summary_node = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)", bind = False)
     _alloc_field_node   = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, void*, bool)", bind = False)
+    _alloc_ext_param_node = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_EXT_PARAM(char*, stringlist, char*)", bind = False)
     _get_ref            = EnkfPrototype("void* enkf_config_node_get_ref(enkf_config_node)") #todo: fix return type
     _get_impl_type      = EnkfPrototype("ert_impl_type_enum enkf_config_node_get_impl_type(enkf_config_node)")
     _get_enkf_outfile   = EnkfPrototype("char* enkf_config_node_get_enkf_outfile(enkf_config_node)")
@@ -112,6 +113,12 @@ class EnkfConfigNode(BaseCClass):
         """
         return cls._alloc_field_node(key, grid, trans_table, forward_init)
 
+
+    @classmethod
+    def create_ext_param(cls, key, key_list, output_file = None):
+        keys = StringList( initial = key_list )
+        return cls._alloc_ext_param_node(key, keys, output_file)
+
     def free(self):
         self._free()
 
@@ -135,6 +142,8 @@ class EnkfConfigNode(BaseCClass):
             return self.getCustomKeywordModelConfig()
         elif implementation_type == ErtImplType.SUMMARY:
             return SummaryConfig.createCReference(self.getPointerReference(), parent=self)
+        elif implementation_type == ErtImplType.EXT_PARAM:
+            return ExtParamConfig.createCReference(self.getPointerReference(), parent=self)
         else:
             print("[EnkfConfigNode::getModelConfig()] Unhandled implementation model type: %i" % implementation_type)
             # raise NotImplementedError("Unknown model type: %i" % type)
