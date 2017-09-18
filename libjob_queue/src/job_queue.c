@@ -335,7 +335,9 @@ int job_queue_iget_status_summary( const job_queue_type * queue , job_status_typ
 }
 
 int job_queue_get_num_callback( const job_queue_type * queue) {
-  return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_CALLBACK );
+  return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_DONE_CALLBACK ) +
+         job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_EXIT_CALLBACK ) +
+         job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_KILL_CALLBACK );
 }
 
 int job_queue_get_num_running( const job_queue_type * queue) {
@@ -609,7 +611,7 @@ static void job_queue_print_summary(job_queue_type *queue, bool status_change ) 
       int complete = job_queue_status_get_count( queue->status , JOB_QUEUE_SUCCESS );
       int failed   = job_queue_status_get_count( queue->status , JOB_QUEUE_FAILED ) +
                      job_queue_status_get_count( queue->status , JOB_QUEUE_IS_KILLED );
-      int loading  = job_queue_status_get_count( queue->status , JOB_QUEUE_RUNNING_CALLBACK );
+      int loading  = job_queue_status_get_count( queue->status , JOB_QUEUE_RUNNING_DONE_CALLBACK );
 
       printf(status_fmt , waiting , pending , running , loading , failed , complete);
     }
@@ -693,7 +695,7 @@ static void * job_queue_run_DONE_callback( void * arg ) {
 }
 
 static void job_queue_handle_DONE( job_queue_type * queue , job_queue_node_type * node) {
-  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
+  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_DONE_CALLBACK );
   {
     arg_pack_type * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , queue );
@@ -765,7 +767,7 @@ static void job_queue_handle_DO_KILL_NODE_FAILURE(job_queue_type * queue, job_qu
 
 static void job_queue_handle_DO_KILL( job_queue_type * queue , job_queue_node_type * node) {
   job_queue_kill_job_node(queue, node);
-  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
+  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_KILL_CALLBACK );
   {
     arg_pack_type * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , queue );
@@ -775,7 +777,7 @@ static void job_queue_handle_DO_KILL( job_queue_type * queue , job_queue_node_ty
 }
 
 static void job_queue_handle_EXIT( job_queue_type * queue , job_queue_node_type * node) {
-  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
+  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_EXIT_CALLBACK );
   {
     arg_pack_type * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , queue );

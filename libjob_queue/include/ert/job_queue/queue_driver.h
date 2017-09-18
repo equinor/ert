@@ -62,14 +62,16 @@ extern "C" {
     //JOB_QUEUE_ALL_FAIL  =  2048, /* The job has failed completely - the calling scope must set this status. */
     JOB_QUEUE_IS_KILLED   =  4096, /* The job has been killed, following a  JOB_QUEUE_DO_KILL*/
     JOB_QUEUE_DO_KILL     =  8192, /* The the job should be killed, either due to user request, or automated measures - the job can NOT be restarted. */
-    JOB_QUEUE_SUCCESS     = 16384,
-    JOB_QUEUE_RUNNING_CALLBACK = 32768,
-    JOB_QUEUE_FAILED      = 65536,
-    JOB_QUEUE_DO_KILL_NODE_FAILURE = 131072, /* LSF will attempt to blacklist the nodes that failed this job */
-    JOB_QUEUE_STATUS_FAILURE = 262144        /* The command to get job_status has failed - let the status remain unchanged. */
+    JOB_QUEUE_SUCCESS               = 16384,
+    JOB_QUEUE_RUNNING_DONE_CALLBACK = 32768,
+    JOB_QUEUE_RUNNING_EXIT_CALLBACK = 65536,
+    JOB_QUEUE_RUNNING_KILL_CALLBACK = 131072,
+    JOB_QUEUE_STATUS_FAILURE        = 262144,  /* The command to get job_status has failed - let the status remain unchanged. */
+    JOB_QUEUE_FAILED                = 524288,
+    JOB_QUEUE_DO_KILL_NODE_FAILURE  = 1048576
   } job_status_type;
 
-#define JOB_QUEUE_MAX_STATE 14
+#define JOB_QUEUE_MAX_STATE 16
 
   /*
     All jobs which are in the status set defined by
