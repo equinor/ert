@@ -778,7 +778,11 @@ static int lsf_driver_get_job_status_shell(void * __driver , void * __job) {
            it has completed/exited and fallen out of the bjobs status
            table maintained by LSF. We try calling bhist to get the status.
         */
-        res_log_add_message_str(LOG_WARNING,"In lsf_driver we found that job was not in the status cache,  this *might* mean that it has completed/exited and fallen out of the bjobs status table maintained by LSF.  ");
+        res_log_add_message_str(LOG_ERROR,"In lsf_driver we found that job was not in the status cache,  this *might* mean that it has completed/exited and fallen out of the bjobs status table maintained by LSF.  ");
+        if (!driver->debug_output) {
+          driver->debug_output = true;
+          res_log_add_fmt_message(LOG_INFO, stdout , "Have turned lsf debug info ON.");
+        }
         status = lsf_driver_get_bhist_status_shell( driver , job );
         if (status != JOB_STAT_UNKWN)
           hash_insert_int( driver->bjobs_cache , job->lsf_jobnr_char , status );
@@ -868,7 +872,10 @@ static void lsf_driver_node_failure(lsf_driver_type * driver, const lsf_job_type
 
   res_log_add_fmt_message(LOG_ERROR, stderr , "The job:%ld/%s never started - the nodes: %s will be excluded, the job will be resubmitted to LSF.\n", lsf_job_id , job->job_name, hostnames);
   lsf_driver_add_exclude_hosts(driver, hostnames);
-
+  if (!driver->debug_output) {
+    driver->debug_output = true;
+    res_log_add_fmt_message(LOG_INFO, stdout , "Have turned lsf debug info ON.");
+  }
   util_free(hostnames);
   stringlist_free(hosts);
   util_free(fname);
@@ -965,6 +972,10 @@ void * lsf_driver_submit_job(void * __driver ,
         util_exit("Maximum number of submit errors exceeded - giving up\n");
       else {
         res_log_add_fmt_message(LOG_ERROR,stderr, "** ERROR ** Failed when submitting to LSF - will try again.");
+        if (!driver->debug_output) {
+          driver->debug_output = true;
+          res_log_add_fmt_message(LOG_INFO, stdout , "Have turned lsf debug info ON.");
+        }
         usleep( driver->submit_error_sleep );
       }
 
