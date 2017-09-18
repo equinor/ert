@@ -179,21 +179,17 @@ void test_index() {
   test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_RUNNING_EXIT_CALLBACK), 1);
   test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_STATUS_ALL ), 12);
 
-  job_queue_status_inc( status, JOB_QUEUE_RUNNING_KILL_CALLBACK );
-  test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_RUNNING_KILL_CALLBACK), 1);
-  test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_STATUS_ALL ), 13);
-
   job_queue_status_inc( status, JOB_QUEUE_STATUS_FAILURE );
   test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_STATUS_FAILURE), 1);
-  test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_STATUS_ALL ), 14);
+  test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_STATUS_ALL ), 13);
 
   job_queue_status_inc( status, JOB_QUEUE_FAILED );
   test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_FAILED), 1);
-  test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_STATUS_ALL ), 15);
+  test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_STATUS_ALL ), 14);
 
   job_queue_status_inc( status, JOB_QUEUE_DO_KILL_NODE_FAILURE );
   test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_DO_KILL_NODE_FAILURE), 1);
-  test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_STATUS_ALL ), 16);
+  test_assert_int_equal( job_queue_status_get_count( status, JOB_QUEUE_STATUS_ALL ), 15);
 
   job_queue_status_free( status );
 }
