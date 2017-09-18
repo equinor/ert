@@ -119,6 +119,7 @@ struct lsf_job_struct {
   int         num_exec_host;
   char      **exec_host;
   char       * lsf_jobnr_char;  /* Used to look up the job status in the bjobs_cache hash table */
+  char       * job_name;
 };
 
 
@@ -174,7 +175,7 @@ UTIL_SAFE_CAST_FUNCTION( lsf_driver , LSF_DRIVER_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION_CONST( lsf_driver , LSF_DRIVER_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION( lsf_job , LSF_JOB_TYPE_ID)
 
-lsf_job_type * lsf_job_alloc() {
+static lsf_job_type * lsf_job_alloc( const char * job_name ) {
   lsf_job_type * job;
   job                = util_malloc(sizeof * job);
   job->num_exec_host = 0;
@@ -182,6 +183,7 @@ lsf_job_type * lsf_job_alloc() {
 
   job->lsf_jobnr      = 0;
   job->lsf_jobnr_char = NULL;
+  job->job_name = util_alloc_string_copy( job_name );
   UTIL_TYPE_ID_INIT( job , LSF_JOB_TYPE_ID);
   return job;
 }
@@ -191,6 +193,7 @@ lsf_job_type * lsf_job_alloc() {
 void lsf_job_free(lsf_job_type * job) {
   util_safe_free(job->lsf_jobnr_char);
   util_free_stringlist(job->exec_host , job->num_exec_host);
+  free( job->job_name );
   free(job);
 }
 
@@ -721,7 +724,7 @@ static int lsf_driver_get_bhist_status_shell( lsf_driver_type * driver , lsf_job
   int sleep_time = 4;
   int run_time1, run_time2, pend_time1 , pend_time2;
 
-  res_log_add_fmt_message(LOG_ERROR, stderr , "** Warning: could not find status of job:%s using \'bjobs\' - trying with \'bhist\'.\n" , job->lsf_jobnr_char);
+  res_log_add_fmt_message(LOG_ERROR, stderr , "** Warning: could not find status of job:%s/%s using \'bjobs\' - trying with \'bhist\'.\n" , job->lsf_jobnr_char , job->job_name);
   if (!lsf_driver_run_bhist( driver , job ,  &pend_time1 , &run_time1))
     return status;
 
@@ -857,12 +860,13 @@ void lsf_driver_free_job(void * __job) {
   lsf_job_free(job);
 }
 
-static void lsf_driver_node_failure(lsf_driver_type * driver, long lsf_job_id) {
+static void lsf_driver_node_failure(lsf_driver_type * driver, const lsf_job_type * job) {
+  long lsf_job_id = lsf_job_get_jobnr(job);
   char * fname = lsf_job_write_bjobs_to_file(driver->bjobs_cmd, driver, lsf_job_id);
   stringlist_type * hosts = lsf_job_alloc_parse_hostnames(fname);
   char* hostnames = stringlist_alloc_joined_string(hosts, ", ");
 
-  res_log_add_fmt_message(LOG_ERROR, stderr , "The job:%ld never started - the nodes: %s will be excluded, the job will be resubmitted to LSF.\n", lsf_job_id , hostnames);
+  res_log_add_fmt_message(LOG_ERROR, stderr , "The job:%ld/%s never started - the nodes: %s will be excluded, the job will be resubmitted to LSF.\n", lsf_job_id , job->job_name, hostnames);
   lsf_driver_add_exclude_hosts(driver, hostnames);
 
   util_free(hostnames);
@@ -874,8 +878,7 @@ static void lsf_driver_node_failure(lsf_driver_type * driver, long lsf_job_id) {
 void lsf_driver_blacklist_node(void * __driver, void * __job) {
   lsf_driver_type * driver = lsf_driver_safe_cast(__driver);
   lsf_job_type * job = lsf_job_safe_cast(__job);
-  long lsf_job_id = lsf_job_get_jobnr(job);
-  lsf_driver_node_failure(driver, lsf_job_id);
+  lsf_driver_node_failure(driver, job);
 }
 
 
@@ -920,7 +923,7 @@ void * lsf_driver_submit_job(void * __driver ,
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   lsf_driver_assert_submit_method( driver );
   {
-    lsf_job_type * job      = lsf_job_alloc();
+    lsf_job_type * job      = lsf_job_alloc( job_name );
     usleep( driver->submit_sleep );
 
     {
