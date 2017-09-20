@@ -74,10 +74,9 @@ job_queue_status_type * job_queue_status_alloc() {
     status->status_index[9] = JOB_QUEUE_SUCCESS; // All good, comes after JOB_QUEUE_DONE, with additional checks, FINAL STATE - controlled by job_queue
     status->status_index[10] = JOB_QUEUE_RUNNING_DONE_CALLBACK; // Temporary state, while running requested callbacks after an ended job -                                                               controlled by job_queue
     status->status_index[11] = JOB_QUEUE_RUNNING_EXIT_CALLBACK; // Temporary state, while running requested callbacks after an ended job -                                                               controlled by job_queue
-    status->status_index[12] = JOB_QUEUE_RUNNING_KILL_CALLBACK; // Temporary state, while running requested callbacks after an ended job -                                                               controlled by job_queue
-    status->status_index[13] = JOB_QUEUE_STATUS_FAILURE; //The driver call to get status has failed, job status remains unchanged
-    status->status_index[14] = JOB_QUEUE_FAILED; // Job has failed, no more retries, FINAL STATE
-    status->status_index[15] = JOB_QUEUE_DO_KILL_NODE_FAILURE; // Job has failed, node should be blacklisted
+    status->status_index[12] = JOB_QUEUE_STATUS_FAILURE; //The driver call to get status has failed, job status remains unchanged
+    status->status_index[13] = JOB_QUEUE_FAILED; // Job has failed, no more retries, FINAL STATE
+    status->status_index[14] = JOB_QUEUE_DO_KILL_NODE_FAILURE; // Job has failed, node should be blacklisted
 
     
     

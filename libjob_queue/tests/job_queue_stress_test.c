@@ -203,15 +203,13 @@ void * status_job__( void * arg ) {
             (status == JOB_QUEUE_SUBMITTED ||
              (status == JOB_QUEUE_RUNNING_DONE_CALLBACK) ||
              (status == JOB_QUEUE_RUNNING_EXIT_CALLBACK) ||
-             (status == JOB_QUEUE_RUNNING_KILL_CALLBACK) ||
              (status == JOB_QUEUE_DONE));
           if (!status_true) {
             if (user_exit)
               status_true = (status == JOB_QUEUE_DO_KILL) ||
                 (status == JOB_QUEUE_IS_KILLED ||
                 (status == JOB_QUEUE_RUNNING_DONE_CALLBACK) ||
-                (status == JOB_QUEUE_RUNNING_EXIT_CALLBACK) ||
-                (status == JOB_QUEUE_RUNNING_KILL_CALLBACK));
+                (status == JOB_QUEUE_RUNNING_EXIT_CALLBACK));
           }
           if (!status_true)
             fprintf(stderr," Invalid status:%d for job:%d \n",status , job->queue_index );
