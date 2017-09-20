@@ -517,8 +517,9 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
   const run_arg_type * run_arg = forward_load_context_get_run_arg( load_context );
   const summary_key_matcher_type * matcher = ensemble_config_get_summary_key_matcher(enkf_state->ensemble_config);
   int matcher_size = summary_key_matcher_get_size(matcher);
+  const ecl_sum_type * summary = forward_load_context_get_ecl_sum( load_context );
 
-  if (load_summary || matcher_size > 0) {
+  if (load_summary || matcher_size > 0 || summary) {
     int load_start = run_arg_get_load_start( run_arg );
 
     if (load_start == 0) { /* Do not attempt to load the "S0000" summary results. */
@@ -527,7 +528,6 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
     {
       /* Looking for summary files on disk, and loading them. */
-      const ecl_sum_type * summary = forward_load_context_get_ecl_sum( load_context );
       enkf_fs_type * result_fs = run_arg_get_result_fs( run_arg );
       /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
       if (summary) {
