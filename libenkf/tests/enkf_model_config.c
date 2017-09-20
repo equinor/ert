@@ -55,8 +55,17 @@ void test_runpath() {
 }
 
 
+void test_data_root( ) {
+  model_config_type * model_config = model_config_alloc_empty();
+  test_assert_false( model_config_data_root_set( model_config ));
+  model_config_set_data_root( model_config ,  "root");
+  test_assert_true( model_config_data_root_set( model_config ));
+}
+
 int main(int argc , char ** argv) {
   test_create();
+  test_runpath( );
+  test_data_root( );
   exit(0);
 }
 
