@@ -36,7 +36,6 @@ class EnkfConfigNode(BaseCClass):
     _get_var_type       = EnkfPrototype("enkf_var_type_enum enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
     _get_key            = EnkfPrototype("char* enkf_config_node_get_key(enkf_config_node)")
     _get_obs_keys       = EnkfPrototype("stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)")
-    _update_state_field = EnkfPrototype("void enkf_config_node_update_state_field(enkf_config_node, enkf_truncation_type_enum, double, double)")
     _free               = EnkfPrototype("void enkf_config_node_free(enkf_config_node)")
 
     def __init__(self):
@@ -90,9 +89,6 @@ class EnkfConfigNode(BaseCClass):
         """ @rtype:  StringList """
         return self._get_obs_keys().setParent(self)
 
-    def updateStateField(self, truncation, value_min, value_max):
-        assert isinstance(truncation, EnkfTruncationType)
-        self._update_state_field(truncation, value_min, value_max)
 
     @classmethod
     def createSummaryConfigNode(cls, key, load_fail_type):

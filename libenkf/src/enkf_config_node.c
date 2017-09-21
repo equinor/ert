@@ -429,33 +429,6 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_result( const char * key
 }
 
 
-enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_state( const char * key,
-                                                               bool forward_init ,
-                                                               gen_data_file_format_type input_format,
-                                                               gen_data_file_format_type output_format,
-                                                               const char * init_file_fmt           ,
-                                                               const char * template_ecl_file       ,
-                                                               const char * template_data_key       ,
-                                                               const char * enkf_outfile_fmt        ,
-                                                               const char * enkf_infile_fmt         ,
-                                                               const char * min_std_file) {
-
-  if (gen_data_config_valid_result_format( enkf_infile_fmt )) {
-    enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_STATE , GEN_DATA , key , forward_init);
-    config_node->data = gen_data_config_alloc_GEN_DATA_state( key , output_format , input_format );
-
-    enkf_config_node_update(config_node ,               /* Generic update - needs the format settings from the special.*/
-                            init_file_fmt ,
-                            enkf_outfile_fmt ,
-                            enkf_infile_fmt,
-                            min_std_file);
-
-    return config_node;
-  } else {
-    fprintf(stderr, "** ERROR: The RESULT_FILE setting for %s is invalid - must have an embedded %%d - and be a relative path.\n" , key );
-    return NULL;
-  }
-}
 
 
 
@@ -491,16 +464,6 @@ enkf_config_node_type * enkf_config_node_alloc_field( const char * key , ecl_gri
 }
 
 
-
-/**
-   This is for dynamic ECLIPSE fields like PRESSURE and SWAT; they
-   only have truncation as possible parameters.
-*/
-void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max ) {
-  config_node->var_type = DYNAMIC_STATE;
-  field_config_update_state_field( config_node->data , truncation , value_min , value_max );
-  enkf_config_node_update( config_node , NULL , NULL , NULL , NULL );
-}
 
 
 
@@ -543,14 +506,14 @@ void enkf_config_node_update_general_field( enkf_config_node_type * config_node 
 
   field_file_format_type export_format = field_config_default_export_format( enkf_outfile_fmt ); /* Purely based on extension, recognizes ROFF and GRDECL, the rest will be ecl_kw format. */
   {
-    enkf_var_type var_type;
+    enkf_var_type var_type = INVALID_VAR;
     if (enkf_infile_fmt == NULL)
       var_type = PARAMETER;
     else {
       if (enkf_outfile_fmt == NULL)
         var_type = DYNAMIC_RESULT;   /* Probably not very realistic */
       else
-        var_type = DYNAMIC_STATE;
+        util_abort("%s: this used to be DYNAMIC_STATE ?? \n",__func__);
     }
     config_node->var_type = var_type;
   }
@@ -1008,17 +971,7 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const confi
         else if ((init_file_fmt != NULL) &&
                  (ecl_file      != NULL) &&
                  (result_file   != NULL))
-          config_node = enkf_config_node_alloc_GEN_DATA_state( node_key ,
-                                                               forward_init ,
-                                                               input_format ,
-                                                               output_format ,
-                                                               init_file_fmt ,
-                                                               template ,
-                                                               data_key ,
-                                                               ecl_file ,
-                                                               result_file ,
-                                                               min_std_file);
-
+          util_abort("%s: This used to call the removed enkf_config_node_alloc_GEN_DATA_state() function \n",__func__);
         {
           gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
 

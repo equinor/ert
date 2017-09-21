@@ -62,19 +62,6 @@ extern "C" {
                                                             const char * ert_outfile_fmt);
 
 
-  enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_state( const char * key,
-                                                                 bool forward_init ,
-                                                                 gen_data_file_format_type input_format,
-                                                                 gen_data_file_format_type output_format,
-                                                                 const char * init_file_fmt           ,
-                                                                 const char * template_ecl_file       ,
-                                                                 const char * template_data_key       ,
-                                                                 const char * enkf_outfile_fmt        ,
-                                                                 const char * enkf_infile_fmt         ,
-                                                                 const char * min_std_file);
-
-
-
   enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_result( const char * key ,
                                                                   gen_data_file_format_type input_format,
                                                                   const char * enkf_infile_fmt );
@@ -140,8 +127,6 @@ extern "C" {
 
   enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , load_fail_type load_fail);
 
-
-  void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max );
 
 
   void enkf_config_node_update_parameter_field( enkf_config_node_type * config_node ,

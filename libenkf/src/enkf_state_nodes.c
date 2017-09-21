@@ -95,9 +95,6 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
     hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
     while ( !hash_iter_is_complete(iter) ) {
       enkf_node_type * enkf_node = hash_iter_get_next_value(iter);
-      if (enkf_node_get_var_type(enkf_node) != DYNAMIC_STATE)
-        continue;
-
       if (enkf_node_get_impl_type(enkf_node) != FIELD)
         continue;
 
@@ -197,86 +194,6 @@ static void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , 
   util_free_stringlist(key_list , num_keys);
 }
 
-
-/**
-   This function will load all the nodes listed in the current
-   restart_kw_list; in addition to all other variable of type
-   DYNAMIC_STATE. Observe that for DYNAMIC state nodes it will try
-   firt analyzed state and then forecast state.
-*/
-
-
-static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , enkf_fs_type * fs , int report_step ) {
-  const member_config_type * my_config = enkf_state->my_config;
-  const int iens                       = member_config_get_iens( my_config );
-
-  /*
-     First pass - load all the STATIC nodes. It is essential to use
-     the restart_kw_list when loading static nodes, otherwise static
-     nodes which were only present at e.g. step == 0 will create
-     problems: (They are in the enkf_state hash table because they
-     were seen at step == 0, but have not been seen subesquently and
-     the loading fails.)
-  */
-
-  /* Second pass - DYNAMIC state nodes. */
-  {
-    const int num_keys = hash_get_size(enkf_state->node_hash);
-    char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
-    int ikey;
-
-    for (ikey = 0; ikey < num_keys; ikey++) {
-      enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-      enkf_var_type var_type = enkf_node_get_var_type( enkf_node );
-      node_id_type node_id = {.report_step = report_step ,
-                              .iens = iens };
-
-      if (var_type == DYNAMIC_STATE) {
-        /*
-           Here the enkf_node_try_load() function is used NOT because we accept
-           that the node is not present, but because the try_fread()
-           function accepts the BOTH state type.
-        */
-        if (!enkf_node_try_load(enkf_node , fs , node_id))
-          util_abort("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , iens  );
-      }
-    }
-    util_free_stringlist(key_list , num_keys);
-  }
-}
-
-/**
-   This is a special function which is only used to load the initial
-   state of dynamic_state nodes. It checks if the enkf_config_node has
-   set a valid value for input_file, in that case that means we should
-   also have an internalized representation of it, otherwise it will
-   just return (i.e. for PRESSURE / SWAT).
-*/
-
-static void enkf_state_fread_initial_state(enkf_state_type * enkf_state , enkf_fs_type * fs) {
-  const member_config_type * my_config = enkf_state->my_config;
-  const int num_keys = hash_get_size(enkf_state->node_hash);
-  char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
-  int ikey;
-
-  for (ikey = 0; ikey < num_keys; ikey++) {
-    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_get_var_type(enkf_node) == DYNAMIC_STATE) {
-      const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
-
-      /* Just checked for != NULL */
-      char * load_file = enkf_config_node_alloc_infile( config_node , 0);
-      if (load_file != NULL) {
-        node_id_type node_id = {.report_step = 0 ,
-                                .iens  = member_config_get_iens( my_config ) };
-        enkf_node_load(enkf_node , fs , node_id);
-      }
-
-      util_safe_free( load_file );
-    }
-  }
-  util_free_stringlist(key_list , num_keys);
-}
 
 
 

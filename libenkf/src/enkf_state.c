@@ -132,10 +132,6 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
                                                  int report_step ,
                                                  bool store_vectors);
 
-static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , enkf_fs_type * fs , int report_step );
-
-static void enkf_state_fread_initial_state(enkf_state_type * enkf_state , enkf_fs_type * fs);
-
 static enkf_node_type * enkf_state_get_or_create_node(enkf_state_type * enkf_state, const enkf_config_node_type * config_node);
 
 static void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step );
@@ -1021,12 +1017,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
   enkf_state_fread(enkf_state , init_fs , PARAMETER , 0);
 
 
-  /* Loading state information: loaded from timestep: run_arg->step1 */
-  if (run_arg_get_step1(run_arg) == 0)
-    enkf_state_fread_initial_state(enkf_state , init_fs);
-  else
-    enkf_state_fread_state_nodes( enkf_state , init_fs , run_arg_get_step1(run_arg));
-
   enkf_state_set_dynamic_subst_kw(  enkf_state , run_arg );
   ert_templates_instansiate( enkf_state->shared_info->templates , run_arg_get_runpath( run_arg ) , enkf_state->subst_list );
   enkf_state_ecl_write( enkf_state , run_arg , init_fs);
@@ -1181,7 +1171,7 @@ static void enkf_state_internal_retry(enkf_state_type * enkf_state , run_arg_typ
   if (run_arg_can_retry( run_arg ) ) {
     res_log_add_fmt_message(LOG_ERROR, NULL , "[%03d] Resampling and resubmitting realization." ,iens);
     /* Reinitialization of the nodes */
-    stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
+    stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , PARAMETER );
     for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
       enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
       enkf_node_initialize( node , iens , enkf_state->rng );
