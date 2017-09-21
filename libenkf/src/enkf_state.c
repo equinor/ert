@@ -517,8 +517,9 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
   const run_arg_type * run_arg = forward_load_context_get_run_arg( load_context );
   const summary_key_matcher_type * matcher = ensemble_config_get_summary_key_matcher(enkf_state->ensemble_config);
   int matcher_size = summary_key_matcher_get_size(matcher);
+  const ecl_sum_type * summary = forward_load_context_get_ecl_sum( load_context );
 
-  if (load_summary || matcher_size > 0) {
+  if (load_summary || matcher_size > 0 || summary) {
     int load_start = run_arg_get_load_start( run_arg );
 
     if (load_start == 0) { /* Do not attempt to load the "S0000" summary results. */
@@ -527,7 +528,6 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
     {
       /* Looking for summary files on disk, and loading them. */
-      const ecl_sum_type * summary = forward_load_context_get_ecl_sum( load_context );
       enkf_fs_type * result_fs = run_arg_get_result_fs( run_arg );
       /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
       if (summary) {
@@ -653,12 +653,24 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
                                             const model_config_type * model_config ,
                                             int last_report) {
 
-  member_config_type * my_config     = enkf_state->my_config;
-  const int  iens                    = member_config_get_iens( my_config );
   stringlist_type * keylist_GEN_DATA = ensemble_config_alloc_keylist_from_impl_type(enkf_state->ensemble_config,
                                                                                     GEN_DATA);
+
+
+  if (stringlist_get_size( keylist_GEN_DATA) > 0) {
+    if (last_report <= 0) {
+      res_log_add_message( LOG_ERROR, stderr, "Trying to load GEN_DATA without properly set last_report - THIS WILL FAIL.", false);
+      stringlist_free( keylist_GEN_DATA );
+      return;
+    }
+  }
+
+
   const run_arg_type * run_arg       = forward_load_context_get_run_arg( load_context );
   enkf_fs_type * result_fs           = run_arg_get_result_fs( run_arg );
+  member_config_type * my_config     = enkf_state->my_config;
+  const int  iens                    = member_config_get_iens( my_config );
+
 
   for (int ikey=0; ikey < stringlist_get_size( keylist_GEN_DATA ); ikey++) {
     enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( keylist_GEN_DATA , ikey));
@@ -752,7 +764,8 @@ static int enkf_state_internalize_results(enkf_state_type * enkf_state , run_arg
     last_report = model_config_get_last_history_restart( enkf_state->shared_info->model_config);
 
   /* Ensure that the last step is internalized? */
-  model_config_set_internalize_state( model_config , last_report);
+  if (last_report > 0)
+    model_config_set_internalize_state( model_config , last_report);
 
   for (report_step = run_arg_get_load_start(run_arg); report_step <= last_report; report_step++) {
     bool store_vectors = (report_step == last_report);

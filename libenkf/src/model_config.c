@@ -659,10 +659,8 @@ int model_config_get_last_history_restart(const model_config_type * config) {
   else {
     if (config->external_time_map)
       return time_map_get_last_step( config->external_time_map);
-    else {
-      fprintf(stderr,"** Warning: Trying to get the last restart number - no history/time_map object has been registered.\n");
-      return 0;
-    }
+    else
+      return -1;
   }
 }
 
