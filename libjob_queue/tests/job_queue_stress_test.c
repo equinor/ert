@@ -199,10 +199,17 @@ void * status_job__( void * arg ) {
       if (util_is_file(run_file)) {
         status = job_queue_iget_job_status(queue, job->queue_index);
         if (util_is_file(run_file)) {
-          bool status_true = (status == JOB_QUEUE_RUNNING) || (status == JOB_QUEUE_SUBMITTED || (status == JOB_QUEUE_RUNNING_CALLBACK) || (status == JOB_QUEUE_DONE));
+          bool status_true = (status == JOB_QUEUE_RUNNING) ||
+            (status == JOB_QUEUE_SUBMITTED ||
+             (status == JOB_QUEUE_RUNNING_DONE_CALLBACK) ||
+             (status == JOB_QUEUE_RUNNING_EXIT_CALLBACK) ||
+             (status == JOB_QUEUE_DONE));
           if (!status_true) {
             if (user_exit)
-              status_true = (status == JOB_QUEUE_DO_KILL) || (status == JOB_QUEUE_IS_KILLED || (status == JOB_QUEUE_RUNNING_CALLBACK));
+              status_true = (status == JOB_QUEUE_DO_KILL) ||
+                (status == JOB_QUEUE_IS_KILLED ||
+                (status == JOB_QUEUE_RUNNING_DONE_CALLBACK) ||
+                (status == JOB_QUEUE_RUNNING_EXIT_CALLBACK));
           }
           if (!status_true)
             fprintf(stderr," Invalid status:%d for job:%d \n",status , job->queue_index );

@@ -335,7 +335,8 @@ int job_queue_iget_status_summary( const job_queue_type * queue , job_status_typ
 }
 
 int job_queue_get_num_callback( const job_queue_type * queue) {
-  return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_CALLBACK );
+  return job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_DONE_CALLBACK ) +
+         job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING_EXIT_CALLBACK );
 }
 
 int job_queue_get_num_running( const job_queue_type * queue) {
@@ -609,7 +610,7 @@ static void job_queue_print_summary(job_queue_type *queue, bool status_change ) 
       int complete = job_queue_status_get_count( queue->status , JOB_QUEUE_SUCCESS );
       int failed   = job_queue_status_get_count( queue->status , JOB_QUEUE_FAILED ) +
                      job_queue_status_get_count( queue->status , JOB_QUEUE_IS_KILLED );
-      int loading  = job_queue_status_get_count( queue->status , JOB_QUEUE_RUNNING_CALLBACK );
+      int loading  = job_queue_status_get_count( queue->status , JOB_QUEUE_RUNNING_DONE_CALLBACK );
 
       printf(status_fmt , waiting , pending , running , loading , failed , complete);
     }
@@ -693,7 +694,7 @@ static void * job_queue_run_DONE_callback( void * arg ) {
 }
 
 static void job_queue_handle_DONE( job_queue_type * queue , job_queue_node_type * node) {
-  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
+  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_DONE_CALLBACK );
   {
     arg_pack_type * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , queue );
@@ -738,24 +739,11 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
 }
 
 
-static void * job_queue_run_DO_KILL_callback( void * arg ) {
-  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
-  job_queue_type * job_queue = arg_pack_iget_ptr( arg_pack , 0 );
-  int queue_index = arg_pack_iget_int( arg_pack , 1 );
-
-  job_list_get_rdlock( job_queue->job_list );
-  {
-    job_queue_node_type * node = job_list_iget_job( job_queue->job_list , queue_index );
-    job_queue_node_free_driver_data( node , job_queue->driver );
-
-    // It's time to call it a day
-    job_queue_node_run_EXIT_callback( node );
-    job_queue_change_node_status(job_queue, node, JOB_QUEUE_IS_KILLED);
-  }
-  job_list_unlock(job_queue->job_list );
-  arg_pack_free( arg_pack );
-  return NULL;
-}
+/*
+  In this case the assumption is that we do not have proper contact
+  with the node running the job, and we just switch the job status to
+  JOB_QUEUE_EXIT without calling the driver->kill_job( ) function.
+*/
 
 static void job_queue_handle_DO_KILL_NODE_FAILURE(job_queue_type * queue, job_queue_node_type * node) {
   queue_driver_blacklist_node( queue->driver, job_queue_node_get_driver_data(node) );
@@ -765,17 +753,12 @@ static void job_queue_handle_DO_KILL_NODE_FAILURE(job_queue_type * queue, job_qu
 
 static void job_queue_handle_DO_KILL( job_queue_type * queue , job_queue_node_type * node) {
   job_queue_kill_job_node(queue, node);
-  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
-  {
-    arg_pack_type * arg_pack = arg_pack_alloc();
-    arg_pack_append_ptr( arg_pack , queue );
-    arg_pack_append_int( arg_pack , job_queue_node_get_queue_index(node));
-    thread_pool_add_job( queue->work_pool , job_queue_run_DO_KILL_callback , arg_pack );
-  }
+  job_queue_node_free_driver_data( node , queue->driver );
+  job_queue_change_node_status(queue , node , JOB_QUEUE_IS_KILLED );
 }
 
 static void job_queue_handle_EXIT( job_queue_type * queue , job_queue_node_type * node) {
-  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
+  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_EXIT_CALLBACK );
   {
     arg_pack_type * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , queue );
