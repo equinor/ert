@@ -544,13 +544,6 @@ int gen_data_config_iget_report_step( const gen_data_config_type *config , int i
   return int_vector_iget( config->active_report_steps , index );
 }
 
-void gen_data_config_set_active_report_steps_from_string( gen_data_config_type *config , const char * range_string) {
-  if (config->dynamic) {
-    int_vector_reset( config->active_report_steps );
-    string_util_update_active_list(range_string , config->active_report_steps );
-  }
-}
-
 
 const int_vector_type * gen_data_config_get_active_report_steps( const gen_data_config_type *config) {
   return config->active_report_steps;

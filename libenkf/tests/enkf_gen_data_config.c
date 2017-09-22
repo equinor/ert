@@ -44,12 +44,6 @@ void test_report_steps_param() {
   test_assert_int_equal( 0 , gen_data_config_num_report_step( config ));
   test_assert_false( gen_data_config_has_report_step( config , 10 ));
 
-  /* Add to parameter should fail. */
-  gen_data_config_set_active_report_steps_from_string( config , "0-9,100");
-  test_assert_int_equal( 0 , gen_data_config_num_report_step( config ));
-  test_assert_false( gen_data_config_has_report_step( config , 10 ));
-
-
   gen_data_config_free( config );
 }
 
@@ -82,13 +76,6 @@ void test_report_steps_dynamic() {
     test_assert_int_equal( int_vector_iget( active_steps  , 0 ) , 5);
     test_assert_int_equal( int_vector_iget( active_steps  , 1 ) , 10);
   }
-
-  gen_data_config_set_active_report_steps_from_string( config , "0-3,7-10,100"); // 0,1,2,3,7,8,9,10,100
-  test_assert_int_equal( 9 , gen_data_config_num_report_step( config ));
-  test_assert_int_equal( 0 , gen_data_config_iget_report_step( config , 0 ));
-  test_assert_int_equal( 3 , gen_data_config_iget_report_step( config , 3));
-  test_assert_int_equal( 9 , gen_data_config_iget_report_step( config , 6));
-  test_assert_int_equal( 100 , gen_data_config_iget_report_step( config , 8));
 
   gen_data_config_free( config );
 }
