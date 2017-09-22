@@ -32,6 +32,8 @@
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_util.h>
 
+#include <ert/res_util/res_log.h>
+
 #include <ert/enkf/enkf_serialize.h>
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_macros.h>
@@ -271,7 +273,9 @@ static bool gen_data_fload_active__(gen_data_type * gen_data, const char * filen
             util_abort("%s: error when loading active mask from:%s - file not long enough.\n",__func__ , active_file );
         }
         fclose( stream );
-      }
+        res_log_add_fmt_message( LOG_INFO , NULL , "GEN_DATA(%s): active information loaded from:%s.", gen_data_get_key( gen_data ), active_file);
+      } else
+        res_log_add_fmt_message( LOG_INFO , NULL , "GEN_DATA(%s): active information NOT loaded.", gen_data_get_key( gen_data ));
       free( active_file );
     }
   }
@@ -306,6 +310,7 @@ bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * fi
     gen_data_file_format_type input_format = gen_data_config_get_input_format( gen_data->config );
     int    size     = 0;
     buffer = gen_common_fload_alloc( filename , input_format , internal_type , &load_type , &size);
+    res_log_add_fmt_message( LOG_INFO , NULL , "GEN_DATA(%s): loading from: %s   size:%d", gen_data_get_key( gen_data ), filename, size);
     if (size > 0) {
       gen_data_fload_active__(gen_data, filename, size);
     } else {
@@ -313,7 +318,8 @@ bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * fi
     }
     gen_data_set_data__(gen_data , size , load_context , load_type , buffer );
     util_safe_free(buffer);
-  }
+  } else
+    res_log_add_fmt_message( LOG_INFO , NULL , "GEN_DATA(%s): missing file: %s" , gen_data_get_key( gen_data ), filename);
   return file_exists;
 }
 

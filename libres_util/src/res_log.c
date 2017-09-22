@@ -113,7 +113,10 @@ void res_log_add_message(message_level_type message_level , FILE * dup_stream , 
  * required arguments to the string-formatting.
  */
 void res_log_add_fmt_message(message_level_type message_level , FILE * dup_stream , const char * fmt , ...) {
-    if (log_include_message(logh,message_level)) {
+  if(logh==NULL)
+    res_log_init_log_default(true);
+
+  if (log_include_message(logh,message_level)) {
       char * message;
       va_list ap;
       va_start(ap , fmt);
