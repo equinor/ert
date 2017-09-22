@@ -410,6 +410,24 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM( const char * node_key 
 }
 
 
+enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_everest( const char * key ,
+                                                                 const char * result_file_fmt,
+                                                                 const int_vector_type * report_steps) {
+
+  if (!gen_data_config_valid_result_format( result_file_fmt ))
+    return NULL;
+
+  enkf_config_node_type * config_node = enkf_config_node_alloc_GEN_DATA_result( key, ASCII , result_file_fmt );
+  gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+
+  for (int i=0; i < int_vector_size( report_steps ); i++) {
+    int report_step = int_vector_iget( report_steps , i );
+    gen_data_config_add_report_step( gen_data_config , report_step);
+    enkf_config_node_set_internalize( config_node , report_step );
+  }
+
+  return config_node;
+}
 
 
 enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_result( const char * key ,

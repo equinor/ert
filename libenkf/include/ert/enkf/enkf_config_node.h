@@ -138,6 +138,10 @@ extern "C" {
                                                 const char * output_transform );
 
 
+  enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_everest( const char * key ,
+                                                                   const char * result_file_fmt,
+                                                                   const int_vector_type * report_steps);
+
   void enkf_config_node_update_general_field( enkf_config_node_type * config_node ,
                                               const char * enkf_outfile_fmt        ,
                                               const char * enkf_infile_fmt         ,
