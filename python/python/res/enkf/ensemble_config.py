@@ -79,7 +79,7 @@ class EnsembleConfig(BaseCClass):
     def addNode(self , config_node):
         assert isinstance(config_node , EnkfConfigNode)
         self._add_node( config_node )
-        config_node.setParent( self )
+        config_node.convertToCReference( self )
 
 
     def add_field(self, key, eclipse_grid):
