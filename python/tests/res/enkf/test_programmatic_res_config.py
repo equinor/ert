@@ -425,3 +425,5 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
 
             self.assert_equal_plot_config(loaded_res_config.plot_config,
                                           prog_res_config.plot_config)
+
+            self.assertEqual(0, len(prog_res_config.failed_keys))
