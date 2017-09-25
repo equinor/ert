@@ -42,14 +42,14 @@ endif()
 option( BUILD_TESTS         "Should the tests be built"             OFF)
 option( BUILD_PYTHON        "Run py_compile on the python wrappers" ON )
 option( RST_DOC             "Build RST documentation"               OFF)
-option( USE_RUNPATH         "Should we embed path to libraries"     ON )
+option( USE_RPATH           "Should we embed path to libraries"     ON )
 option( INSTALL_ERT_LEGACY  "Install legacy ert code"               OFF)
 option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
 set( SITE_CONFIG_FILE "${PROJECT_SOURCE_DIR}/share/site-config" CACHE FILEPATH "Path to global ERT Configuration file")
 
 
 
-if (USE_RUNPATH)
+if (USE_RPATH)
     SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif ()
