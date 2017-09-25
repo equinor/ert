@@ -45,3 +45,95 @@ const char * config_keys_get_install_job_key() {
 const char * config_keys_get_plot_setting_key() {
   return PLOT_SETTING_KEY;
 }
+
+const char * config_keys_get_forward_model_key() {
+  return FORWARD_MODEL_KEY;
+}
+
+const char * config_keys_get_log_file_key() {
+  return LOG_FILE_KEY;
+}
+
+const char * config_keys_get_log_level_key() {
+  return LOG_LEVEL_KEY;
+}
+
+const char * config_keys_get_update_log_path_key() {
+  return UPDATE_LOG_PATH_KEY;
+}
+
+const char * config_keys_get_store_seed_key() {
+  return STORE_SEED_KEY;
+}
+
+const char * config_keys_get_load_seed_key() {
+  return LOAD_SEED_KEY;
+}
+
+const char * config_keys_get_summary_key() {
+  return SUMMARY_KEY;
+}
+
+const char * config_keys_get_jobname_key() {
+  return JOBNAME_KEY;
+}
+
+const char * config_keys_get_max_runtime_key() {
+  return MAX_RUNTIME_KEY;
+}
+
+const char * config_keys_get_min_realizations_key() {
+  return MIN_REALIZATIONS_KEY;
+}
+
+const char * config_keys_get_max_submit_key() {
+  return MAX_SUBMIT_KEY;
+}
+
+const char * config_keys_get_umask_key() {
+  return UMASK_KEY;
+}
+
+const char * config_keys_get_data_file_key() {
+  return DATA_FILE_KEY;
+}
+
+const char * config_keys_get_runpath_key() {
+  return RUNPATH_KEY;
+}
+
+const char * config_keys_get_runpath_file_key() {
+  return RUNPATH_FILE_KEY;
+}
+
+const char * config_keys_get_eclbase_key() {
+  return ECLBASE_KEY;
+}
+
+const char * config_keys_get_num_realizations_key() {
+  return NUM_REALIZATIONS_KEY;
+}
+
+const char * config_keys_get_enspath_key() {
+  return ENSPATH_KEY;
+}
+
+const char * config_keys_get_grid_key() {
+  return GRID_KEY;
+}
+
+const char * config_keys_get_refcase_key() {
+  return REFCASE_KEY;
+}
+
+const char * config_keys_get_history_source_key() {
+  return HISTORY_SOURCE_KEY;
+}
+
+const char * config_keys_get_obs_config_key() {
+  return OBS_CONFIG_KEY;
+}
+
+const char * config_keys_get_time_map_key() {
+  return TIME_MAP_KEY;
+}
