@@ -305,6 +305,14 @@ add_config_test(enkf_ensemble_GEN_PARAM
                 enkf_ensemble_GEN_PARAM
                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/ensemble/GEN_PARAM)
 
+add_executable(enkf_workflow_job_test2 tests/enkf_workflow_job_test2.c)
+target_link_libraries(enkf_workflow_job_test2 enkf)
+add_config_test(enkf_workflow_job_test2
+                enkf_workflow_job_test2
+                ${CMAKE_SOURCE_DIR}/test-data/local/snake_oil_no_data/snake_oil_GEN_DATA.ert
+                ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS)
+
+
 if (NOT STATOIL_TESTDATA_ROOT)
     return ()
 endif ()
@@ -450,6 +458,7 @@ add_statoil_test(enkf_workflow_job_test
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/INIT_MISFIT_TABLE
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RUNPATH
                  ${CMAKE_SOURCE_DIR}/share/workflows/jobs/internal/config/PRE_SIMULATION_COPY)
+
 
 add_executable(enkf_forward_init_SURFACE tests/enkf_forward_init_SURFACE.c)
 target_link_libraries(enkf_forward_init_SURFACE enkf)

@@ -814,7 +814,20 @@ bool ensemble_config_has_impl_type(const  ensemble_config_type * config, const e
 }
 
 
-
+bool ensemble_config_has_GEN_DATA(const  ensemble_config_type * config) {
+  bool ret = false;
+  hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
+  while (!hash_iter_is_complete( iter )) {
+    const char * key = hash_iter_get_next_key(iter);
+    const enkf_config_node_type * config_node = hash_get(config->config_nodes , key);
+    if ((enkf_config_node_get_impl_type(config_node) == GEN_DATA) && (enkf_config_node_get_var_type( config_node ) != PARAMETER)) {
+      ret = true;
+      break;
+    }
+  }
+  hash_iter_free(iter);
+  return ret;
+}
 
 
 /**

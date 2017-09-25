@@ -710,12 +710,16 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
 static forward_load_context_type * enkf_state_alloc_load_context(const enkf_state_type * state,
                                                                  run_arg_type * run_arg,
                                                                  stringlist_type * messages) {
-  bool load_summary = ensemble_config_has_impl_type(state->ensemble_config,
-                                                    SUMMARY);
-  if (!load_summary) {
-    const summary_key_matcher_type * matcher = ensemble_config_get_summary_key_matcher(state->ensemble_config);
-    load_summary = (summary_key_matcher_get_size(matcher) > 0);
-  }
+  bool load_summary = false;
+  const summary_key_matcher_type * matcher = ensemble_config_get_summary_key_matcher(state->ensemble_config);
+  if (summary_key_matcher_get_size(matcher) > 0)
+    load_summary = true;
+
+  if (ensemble_config_has_GEN_DATA(state->ensemble_config))
+    load_summary = true;
+
+  if (ensemble_config_has_impl_type(state->ensemble_config, SUMMARY))
+    load_summary = true;
 
   forward_load_context_type * load_context;
   const ecl_config_type * ecl_config = state->shared_info->ecl_config;
