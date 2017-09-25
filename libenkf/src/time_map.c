@@ -595,7 +595,8 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
       }
 
       {
-          time_t current_time = time_map_iget__( map , step );
+        time_t current_time = time_map_iget__( map , step );
+        if (current_time != time) {
           int current[3];
           int new[3];
 
@@ -605,6 +606,7 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
           fprintf(stderr,"Time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",step ,
                   new[0] , new[1] , new[2] ,
                   current[0] , current[1] , current[2]);
+        }
       }
     }
   }
