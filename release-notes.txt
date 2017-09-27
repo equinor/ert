@@ -1,5 +1,38 @@
+Version 2.2.1 September 2017 PR: 1 - 66
+Cherry-picked: 70
+
+Misc:
+
+ - Using res_config changes from libres [16]
+ - files moved from libecl to libres: [51].
+ - replaced ert.enkf with res.enkf [56]
+ - Created ErtVersion: [61, 66].
+ - Using res_config: [62]
+ - Removed dead workflow files: [64]
+
+Build and testing:
+
+ - Cleanup after repo split [1, 2, 3 , 4, 5 , 6]
+ - Added test_install functionality [7]
+ - Added travis build script for libecl+libres+ert:
+   [15, 17, 18, 19, 21, 26, 27, 39, 52-55, 63
+
+ - MacOS build error: [28].
+ - Created simple gui_test bin/gui_test [32]
+ - cmake - create symlink: [41, 42, 43]
+ - Initial Python3 testing [58, 60].
+
+
+Queue and running:
+
+ - Added base run model - gui model updates: [20].
+ - Added single simulation pretest running [33, 36, 50, 67].
+ - Add run_id to simulation batches.
+
+-----------------------------------------------------------------
+
 Version 2.1.0 February 2017  PR: 1150 - 1415
-Open PR: 1352, 1358, 1362 
+Open PR: 1352, 1358, 1362
 
 Queue system/workflows:
 
