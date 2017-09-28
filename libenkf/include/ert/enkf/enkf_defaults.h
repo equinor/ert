@@ -27,7 +27,7 @@
 /**
   Default file name for export file for GEN_KW parameters
 */
-#define DEFAULT_GEN_KW_EXPORT_FILE   "parameters.txt"
+#define DEFAULT_GEN_KW_EXPORT_NAME   "parameters"
 
 
 /**

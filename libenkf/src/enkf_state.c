@@ -1245,8 +1245,8 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
     const shared_info_type * shared_info   = enkf_state->shared_info;
     const model_config_type * model_config = shared_info->model_config;
     int iens                               = enkf_state_get_iens( enkf_state );
-    const char * base_name                 = model_config_get_gen_kw_export_file(model_config);
-    char * export_file_name                = util_alloc_filename( run_arg_get_runpath( run_arg ) , base_name  , NULL);
+    const char * base_name                 = model_config_get_gen_kw_export_name(model_config);
+    char * export_file_name                = util_alloc_filename( run_arg_get_runpath( run_arg ) , base_name  , "txt");
     FILE * export_file                     = util_mkdir_fopen(export_file_name, "w");
 
     int ikey;
