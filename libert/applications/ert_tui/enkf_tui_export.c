@@ -154,7 +154,7 @@ void enkf_tui_export_gen_data(void * arg) {
           {
             const gen_data_type * gen_data = enkf_node_value_ptr(node);
             msg_update(msg , full_path);
-            gen_data_export(gen_data , full_path , export_type , NULL);
+            gen_data_export(gen_data , full_path , export_type);
           }
 
           free(full_path);
