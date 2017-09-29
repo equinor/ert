@@ -579,7 +579,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
         return true;
       } else {
-        fprintf(stderr , "** Warning: could not load ECLIPSE summary data from %s - this will probably fail later ...\n" , run_arg_get_runpath( run_arg ));
+        res_log_add_fmt_message(LOG_WARNING, NULL, "Could not load ECLIPSE summary data from %s - this will probably fail later ... ",run_arg_get_runpath( run_arg ));
         return false;
       }
     }
