@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'enkf_tui_export.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'enkf_tui_export.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -47,7 +47,7 @@ void enkf_tui_export_field(const enkf_main_type * enkf_main , field_file_format_
   const int last_report = enkf_main_get_history_length( enkf_main );
   int        iens1 , iens2 , iens , report_step;
   path_fmt_type * export_path;
-  
+
   config_node    = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN ,  FIELD  , INVALID_VAR );
 
   report_step = util_scanf_int_with_limits("Report step: ", PROMPT_LEN , 0 , last_report);
@@ -60,7 +60,7 @@ void enkf_tui_export_field(const enkf_main_type * enkf_main , field_file_format_
     export_path = path_fmt_alloc_path_fmt( path_fmt );
     free( path_fmt );
   }
-  
+
   {
     enkf_fs_type   * fs   = enkf_main_tui_get_fs(enkf_main);
     enkf_node_type * node = enkf_node_alloc(config_node);
@@ -83,11 +83,11 @@ void enkf_tui_export_field(const enkf_main_type * enkf_main , field_file_format_
           field_export(field , filename , NULL , file_type , output_transform, NULL);
         }
         free(filename);
-      } else 
+      } else
         printf("Warning: could not load realization:%d \n", iens);
-    } 
+    }
     enkf_node_free(node);
-  } 
+  }
 }
 
 
@@ -124,8 +124,8 @@ void enkf_tui_export_gen_data(void * arg) {
     path_fmt_type * file_fmt;
 
     config_node    = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN ,  GEN_DATA , INVALID_VAR);
-    
-    
+
+
     report_step = util_scanf_int_with_limits("Report step: ", PROMPT_LEN , 0 , last_report);
     enkf_tui_util_scanf_iens_range("Realizations members to export(0 - %d)" , enkf_main_get_ensemble_size( enkf_main ) , PROMPT_LEN , &iens1 , &iens2);
     {
@@ -134,14 +134,14 @@ void enkf_tui_export_gen_data(void * arg) {
       scanf("%s" , path_fmt);
       file_fmt = path_fmt_alloc_path_fmt( path_fmt );
     }
-    
+
     {
       msg_type * msg = msg_alloc("Writing file: " , false);
       enkf_fs_type   * fs   = enkf_main_tui_get_fs(enkf_main);
       enkf_node_type * node = enkf_node_alloc(config_node);
       gen_data_file_format_type export_type = gen_data_guess_export_type( enkf_node_value_ptr(node) );
       int iens;
-      
+
       msg_show( msg );
       for (iens = iens1; iens <= iens2; iens++) {
         node_id_type node_id = {.report_step = report_step , .iens = iens};
@@ -150,20 +150,20 @@ void enkf_tui_export_gen_data(void * arg) {
           char * path;
           util_alloc_file_components(full_path , &path , NULL , NULL);
           if (path != NULL) util_make_path( path );
-          
+
           {
             const gen_data_type * gen_data = enkf_node_value_ptr(node);
             msg_update(msg , full_path);
             gen_data_export(gen_data , full_path , export_type , NULL);
           }
-          
+
           free(full_path);
           util_safe_free(path);
         }
-      } 
+      }
       enkf_node_free(node);
       msg_free( msg , true );
-    } 
+    }
   }
 }
 
@@ -181,14 +181,14 @@ void enkf_tui_export_profile(void * enkf_main) {
     const enkf_config_node_type * config_node;
     int        direction;  /* 0: i running, 1: j running, 2: k running */
     int        total_cells;
-    int       *cell_list; 
+    int       *cell_list;
     path_fmt_type * file_fmt;
 
     config_node    = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN ,  FIELD , INVALID_VAR);
     iens_active    = enkf_tui_util_scanf_alloc_iens_active( ens_size , PROMPT_LEN , &iens1 , &iens2); /* Not used yet ... */
     report_active  = enkf_tui_util_scanf_alloc_report_active( last_report , PROMPT_LEN );
     direction      = util_scanf_int_with_limits("Give scan direction 0:i  1:j  2:k" , PROMPT_LEN , 0 , 2);
-    
+
     {
       const field_config_type * field_config = enkf_config_node_get_ref( config_node );
       int nx,ny,nz;
@@ -207,7 +207,7 @@ void enkf_tui_export_profile(void * enkf_main) {
       case(1):
         j1 = 0; j2 = ny-1;
         enkf_tui_util_scanf_ijk__(field_config , PROMPT_LEN , &i1 , NULL , &k1);
-        i2 = i1; 
+        i2 = i1;
         k2 = k1;
         break;
       case(2):
@@ -231,17 +231,17 @@ void enkf_tui_export_profile(void * enkf_main) {
               cell_index++;
             }
       }
-    
+
       file_fmt = path_fmt_scanf_alloc("Give filename to store profiles (with TWO %d specifiers) =>" , 0 , NULL , false);
       {
         double * profile      = util_calloc(total_cells , sizeof * profile );
         int iens , report_step;
         enkf_node_type * node = enkf_node_alloc( config_node );
         enkf_fs_type   * fs   = enkf_main_tui_get_fs(enkf_main);
-        
+
         for (report_step = 0; report_step <= last_report; report_step++) {
           if (report_active[report_step]) {
-            for (iens = iens1; iens <= iens2; iens++) {              
+            for (iens = iens1; iens <= iens2; iens++) {
               node_id_type node_id = {.report_step = report_step , .iens = iens };
               if (enkf_node_try_load(node , fs, node_id)) {
                 {
@@ -254,12 +254,12 @@ void enkf_tui_export_profile(void * enkf_main) {
                     FILE * stream = util_fopen(filename , "w");
                     for (field_index = 0; field_index < total_cells; field_index++)
                       fprintf(stream, "%d  %g\n",field_index , profile[field_index]);
-                    
+
                     fclose(stream);
                     free(filename);
-                  }                           
+                  }
                 }
-              } else 
+              } else
                 fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",enkf_config_node_get_key(config_node) , iens , report_step);
             }
           }
@@ -289,7 +289,7 @@ void enkf_tui_export_cell(void * enkf_main) {
     {
       const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
       const int last_report = enkf_main_get_history_length( enkf_main );
-      int iens1 , iens2;   
+      int iens1 , iens2;
       bool * iens_active    = enkf_tui_util_scanf_alloc_iens_active( ens_size , PROMPT_LEN , &iens1 , &iens2); /* Not used yet ... */
       bool * report_active  = enkf_tui_util_scanf_alloc_report_active( last_report , PROMPT_LEN);
       double * cell_data    = util_calloc(ens_size , sizeof * cell_data);
@@ -297,8 +297,8 @@ void enkf_tui_export_cell(void * enkf_main) {
       enkf_node_type * node = enkf_node_alloc( config_node );
       enkf_fs_type   * fs   = enkf_main_tui_get_fs(enkf_main);
       path_fmt_type * file_fmt = path_fmt_scanf_alloc("Give filename to store historgrams (with %d for report step) =>" , 0 , NULL , false);
-          
-      
+
+
       for (report_step = 0; report_step <= last_report; report_step++) {
         if (report_active[report_step]) {
           node_id_type node_id = {.report_step = report_step , .iens = iens1 };
@@ -320,7 +320,7 @@ void enkf_tui_export_cell(void * enkf_main) {
               FILE * stream = util_fopen(filename , "w");
               for (iens = iens1; iens <= iens2; iens++)
                 fprintf(stream,"%g\n",cell_data[iens]);
-              
+
               fclose(stream);
               free(filename);
             }
@@ -343,7 +343,7 @@ void enkf_tui_export_time(void * enkf_main) {
   {
     const enkf_config_node_type * config_node;
     int        cell_nr;
-    
+
     config_node = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN , FIELD ,INVALID_VAR);
     cell_nr = enkf_tui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , PROMPT_LEN);
     {
@@ -351,21 +351,21 @@ void enkf_tui_export_time(void * enkf_main) {
       const int step1       = util_scanf_int_with_limits("First report step",PROMPT_LEN , 0 , last_report);
       const int step2       = util_scanf_int_with_limits("Last report step",PROMPT_LEN , step1 , last_report);
       const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
-      int iens1 , iens2;   
+      int iens1 , iens2;
       bool * iens_active    = enkf_tui_util_scanf_alloc_iens_active( ens_size , PROMPT_LEN , &iens1 , &iens2); /* Not used yet ... */
       double * x, *y;
       int iens; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node = enkf_node_alloc( config_node );
       enkf_fs_type   * fs   = enkf_main_tui_get_fs(enkf_main);
       path_fmt_type * file_fmt = path_fmt_scanf_alloc("Give filename to store line (with %d for report iens) =>" , 0 , NULL , false);
-      
-      
+
+
       {
         x = util_calloc( (step2 - step1 + 1)  , sizeof * x);
         y = util_calloc( (step2 - step1 + 1)  , sizeof * y);
       }
-        
-      
+
+
       for (iens = iens1; iens <= iens2; iens++) {
         enkf_tui_util_get_time(fs , config_node , node , cell_nr , step1 , step2 , iens , x ,y);
         {
@@ -393,7 +393,7 @@ void enkf_tui_export_time(void * enkf_main) {
 /*****************************************************************/
 
 void enkf_tui_export_fieldP(void * arg) {
-  enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg ); 
+  enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const enkf_config_node_type * config_node    = enkf_tui_util_scanf_key(ensemble_config , PROMPT_LEN ,  FIELD  , INVALID_VAR );
   int iens1                                    = 0;
@@ -411,7 +411,7 @@ void enkf_tui_export_fieldP(void * arg) {
     enkf_node_type *  sum      = enkf_node_alloc( config_node );
     int active_ens_size        = 0;
     int iens;
-    
+
     enkf_node_clear( sum );
     {
       /* OK going low level */
@@ -436,8 +436,8 @@ void enkf_tui_export_fieldP(void * arg) {
         }
         field_export(sum_field , export_file , NULL , RMS_ROFF_FILE , false, NULL);
       } else fprintf(stderr,"Warning: no data found \n");
-    }    
-    
+    }
+
     for (iens = iens1; iens < iens2; iens++) {
       if (ensemble[iens - iens1] != NULL)
         enkf_node_free( ensemble[iens - iens1] );
@@ -476,7 +476,7 @@ void enkf_tui_export_fieldP(void * arg) {
          1. Select (*) Delimited - press next.
          2. Select delimiter "Comma" - press next.
          3. press finish.
-  
+
       Finally you are asked where in the excel workbook you want to
       insert the data.
 */
@@ -492,16 +492,16 @@ void enkf_tui_export_scalar2csv(void * arg) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const enkf_config_node_type * config_node;
   char * user_key, *key_index;
-  
+
   util_printf_prompt("Scalar to export (KEY:INDEX)" , PROMPT_LEN , '=' , "=> "); user_key = util_alloc_stdin_line();
   config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
   if (config_node != NULL) {
     int    report_step , first_report, last_report;
     int    iens1 , iens2, iens;
     char * csv_file;
-    
+
     iens2        = enkf_main_get_ensemble_size( enkf_main ) - 1;
-    iens1        = 0;   
+    iens1        = 0;
     first_report = 0;
     last_report  = enkf_main_get_history_length( enkf_main );
     {
@@ -536,11 +536,11 @@ void enkf_tui_export_scalar2csv(void * arg) {
       FILE * stream         = util_fopen( csv_file , "w");
       msg_type * msg        = msg_alloc("Exporting report_step/member: " , false);
       node_id_type node_id;
-      
+
 
       /* Header line */
       fprintf(stream , "\"Report step\"");
-      for (iens = iens1; iens <= iens2; iens++) 
+      for (iens = iens1; iens <= iens2; iens++)
         fprintf(stream , "%s\"%s(%d)\"" , CSV_SEP , user_key , iens);
       fprintf(stream , CSV_NEWLINE);
 
@@ -551,19 +551,19 @@ void enkf_tui_export_scalar2csv(void * arg) {
         for (iens = iens1; iens <= iens2; iens++) {
           double value;
           char label[32];
-          /* 
+          /*
              Have not implemented a choice on forecast/analyzed. Tries
              analyzed first, then forecast.
           */
           node_id.iens = iens;
           sprintf(label , "%03d/%03d" , report_step , iens);
           msg_update( msg , label);
-          
-          if (enkf_node_user_get( node , fs , key_index , node_id ,  &value)) 
+
+          if (enkf_node_user_get( node , fs , key_index , node_id ,  &value))
             fprintf(stream , "%s%g" , CSV_SEP , value);
           else
             fprintf(stream , "%s%s" , CSV_SEP , CSV_MISSING_VALUE);
-          
+
         }
         fprintf(stream , CSV_NEWLINE);
       }
@@ -572,15 +572,15 @@ void enkf_tui_export_scalar2csv(void * arg) {
       enkf_node_free( node );
       fclose(stream);
     }
-  } else 
+  } else
     fprintf(stderr,"Sorry - could not find any nodes with key:%s\n",user_key);
-  
+
   free(user_key);
 }
 
 
-#undef CSV_NEWLINE        
-#undef CSV_MISSING_VALUE  
+#undef CSV_NEWLINE
+#undef CSV_MISSING_VALUE
 #undef CSV_SEP
 
 /*****************************************************************/
@@ -599,7 +599,7 @@ void enkf_tui_export_menu(void * arg) {
   menu_add_item(menu , "Export fields to ECLIPSE restart format (active cells)" , "aA" , enkf_tui_export_restart_active , enkf_main , NULL);
   menu_add_item(menu , "Export fields to ECLIPSE restart format (all cells)"    , "lL" , enkf_tui_export_restart_all    , enkf_main , NULL);
   menu_add_separator(menu);
-  menu_add_item(menu , "Export P( a =< x < b )"                                 , "sS" , enkf_tui_export_fieldP , enkf_main , NULL);                 
+  menu_add_item(menu , "Export P( a =< x < b )"                                 , "sS" , enkf_tui_export_fieldP , enkf_main , NULL);
   menu_add_separator(menu);
   menu_add_item(menu , "Export cell values to text file(s)"                     , "cC" , enkf_tui_export_cell    , enkf_main , NULL);
   menu_add_item(menu , "Export line profile of a field to text file(s)"         , "pP" , enkf_tui_export_profile , enkf_main , NULL);
