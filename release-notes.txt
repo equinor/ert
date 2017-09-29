@@ -1,5 +1,72 @@
+Version 2.2.9 September 2017 PR: 1 - 104
+Cherry-picks: [106, 108, 110, 118, 121, 122, 123, 127]
+
+Misc:
+
+ - implement legacy from ert.xxx [1, 20, 21, 22]
+ - Setting up libres_util and moving ert_log there [13, 44, 48].
+ - Added subst_list + block_fs functionality to res_util - moved from
+   libecl [27, 68, 74].
+ - Do not generate parameters.txt if no GEN_KW is specified.[89]
+ - Started using RES_VERSION [91].
+ - CONFIG_PATH subtitution settings - bug fixed[43, 96].
+ - Will load summary if GEN_DATA is present [123, 127]
+
+
+Build and test fixes:
+
+ - Simple functionality to do post-install testing[3]
+ - Use libecl as cmake target[6,15]
+ - removed stale binaries [7, 9]
+ - travis will build all repositories [23].
+ - Travis + OSX [69, 72]
+ - Remove statoil specific settings from build sytem [38].
+ - Travis split for parallell builds [79].
+
+
+Config refactor:
+
+  In this release cycle there have been large amount of changes to the
+  code configuring the ERT state; the purpose of these changes has
+  been to prepare for further development with Everest. The main net
+  change is that a new configuration object - res_config has been
+  created ,which holds all the configuration subobjects:
+
+    [10, 14, 35, 39, 45, 52, 54, 58-62, 66, 75]
+
+
+Queue layer:
+
+ - Improved logging [17, 37].
+ - Funcionality to create a queue_config object copy [36].
+
+ As part of this development cycle the job_dispatch script has been
+ included in the libres distribution. There are many PR's related to
+ this script:
+
+    [28, 40, 41, 51, 53, 63, 64, 83, 84, 85,93, 94, 95, 97-99,
+     101, 103, 108, 110]
+
+ - Create a common run_id for one batch of simulations, and generally
+   treat one batch of simulations as one unit, in a better way than
+   previously: [42, 67]
+
+ - Added PPU (Paay Per Use) code to LSF driver [71].
+ - Workflow job PRE_SIMULATION_COPY [73, 88].
+ - Allow to unset QUEUE_OPTION [87].
+ - Jobs failing due to dead nodes are restarted [100].
+
+
+Documentation:
+
+  - Formatting bugs: [49, 50]
+  - Removed doxygen + build rst [29]
+
+
+-----------------------------------------------------------------
+
 Version 2.1.0 February 2017  PR: 1150 - 1415
-Open PR: 1352, 1358, 1362 
+Open PR: 1352, 1358, 1362
 
 Queue system/workflows:
 
