@@ -252,54 +252,52 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
     util_abort("%s: internal error - tried to filter gen_kw instance without template file.\n",__func__);
 }
 
-
-void gen_kw_write_export_file(const gen_kw_type * gen_kw, FILE * filestream) {
+void gen_kw_export_values(const gen_kw_type * gen_kw, value_export_type * export) {
   const int size = gen_kw_config_get_data_size(gen_kw->config );
-  int ikw;
 
-  for (ikw = 0; ikw < size; ++ikw) {
+  for (int ikw = 0; ikw < size; ++ikw) {
     const char * key          = gen_kw_config_get_key(gen_kw->config);
     const char * parameter    = gen_kw_config_iget_name(gen_kw->config , ikw);
-    int width                 = 60 - (strlen(key) + strlen(parameter) + 1);
-    double transformed_value  = gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] );
-    {
-      char * print_string       = util_alloc_sprintf("%s:%s %g\n", key, parameter, width, transformed_value);
-      fprintf(filestream, "%s", print_string);
-      free( print_string );
-    }
+    char * export_key         = util_alloc_sprintf("%s:%s" , key, parameter);
+    double value              = gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] );
+
+    value_export_append( export, export_key , value );
+    free( export_key );
 
     if (gen_kw_config_should_use_log_scale(gen_kw->config, ikw)) {
-      double log_transformed_value = log10(transformed_value);
-      char * print_log_string = util_alloc_sprintf("LOG10_%s:%s %g\n", key, parameter, width, log_transformed_value);
-      fprintf(filestream, "%s", print_log_string);
-      free( print_log_string );
+      double log_value = log10(value);
+      char * log_export_key = util_alloc_sprintf("LOG10_%s:%s", key , parameter);
+      value_export_append( export, log_export_key , log_value );
+      free( log_export_key );
     }
   }
 }
+
+void gen_kw_write_export_file(const gen_kw_type * gen_kw , const char * filename) {
+  value_export_type * export = value_export_alloc( NULL, filename );
+  gen_kw_export_values( gen_kw, export );
+  value_export_txt__( export , filename );
+  value_export_free( export );
+}
+
 
 void gen_kw_ecl_write_template(const gen_kw_type * gen_kw , const char * file_name){
-    gen_kw_filter_file(gen_kw , file_name);
+   gen_kw_filter_file(gen_kw , file_name);
 }
 
 
-void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * run_path , const char * base_file , void * filestream) {
-  if (fortio_is_instance(filestream)) {
-      util_abort("%s: Called with fortio instance, aborting\n", __func__);
-  } else {
-    if (filestream)
-      gen_kw_write_export_file(gen_kw, filestream);
-    {
-      char * target_file;
-      if (run_path)
-        target_file = util_alloc_filename( run_path , base_file  , NULL);
-      else
-        target_file = util_alloc_string_copy( base_file );
+void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * run_path , const char * base_file , value_export_type * export) {
+  char * target_file;
+  if (run_path)
+    target_file = util_alloc_filename( run_path , base_file  , NULL);
+  else
+    target_file = util_alloc_string_copy( base_file );
 
-      gen_kw_filter_file(gen_kw , target_file);
+  gen_kw_filter_file(gen_kw , target_file);
+  free( target_file );
 
-      free( target_file );
-    }
-  }
+  if (export)
+    gen_kw_export_values(gen_kw, export);
 }
 
 

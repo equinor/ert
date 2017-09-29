@@ -44,7 +44,7 @@ gen_data_config_type   *  gen_data_get_config(const gen_data_type * );
 const bool_vector_type *  gen_data_get_forward_mask( const gen_data_type * gen_data );
 int                       gen_data_get_size(const gen_data_type * );
 double                    gen_data_iget_double(const gen_data_type * , int );
-void                      gen_data_export(const gen_data_type * gen_data , const char * full_path , gen_data_file_format_type export_type , fortio_type * fortio);
+void                      gen_data_export(const gen_data_type * gen_data , const char * full_path , gen_data_file_format_type export_type);
 void                      gen_data_export_data(const gen_data_type * gen_data , double_vector_type * export_data);
 gen_data_file_format_type gen_data_guess_export_type( const gen_data_type * gen_data );
 const char  *             gen_data_get_key( const gen_data_type * gen_data);

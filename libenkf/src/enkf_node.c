@@ -42,6 +42,7 @@
 #include <ert/enkf/ext_param.h>
 #include <ert/enkf/container.h>
 #include <ert/enkf/enkf_serialize.h>
+#include <ert/enkf/value_export.h>
 
 /**
    A small illustration (says more than thousand words ...) of how the
@@ -313,7 +314,7 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
    spesific file.
 */
 
-void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , void * filestream , int report_step) {
+void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , value_export_type * export , int report_step) {
   if (enkf_node->ecl_write != NULL) {
     char * node_eclfile = enkf_config_node_alloc_outfile(enkf_node->config , report_step); /* Will return NULL if the node does not have any outfile format. */
     /*
@@ -322,7 +323,7 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , vo
       is then the responsability of the low-level implementation to
       do "the right thing".
     */
-    enkf_node->ecl_write(enkf_node->data , path , node_eclfile , filestream);
+    enkf_node->ecl_write(enkf_node->data , path , node_eclfile , export);
     util_safe_free( node_eclfile );
   }
 }

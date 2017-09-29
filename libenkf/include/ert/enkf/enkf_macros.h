@@ -39,7 +39,7 @@ extern "C" {
 #include <ert/enkf/meas_data.h>
 #include <ert/enkf/enkf_fs_type.h>
 #include <ert/enkf/forward_load_context.h>
-
+#include <ert/enkf/value_export.h>
 
 
 
@@ -110,12 +110,12 @@ bool prefix ## _fload__(void * void_arg , const char * filename) {              
 /*****************************************************************/
 
 #define VOID_ECL_WRITE(prefix) \
-void prefix ## _ecl_write__(const void * void_arg , const char * path , const char * file , void * filestream) { \
+void prefix ## _ecl_write__(const void * void_arg , const char * path , const char * file , value_export_type * export) { \
    const prefix ## _type * arg = prefix ## _safe_cast_const( void_arg );       \
-   prefix ## _ecl_write(arg , path , file , filestream);                    \
+   prefix ## _ecl_write(arg , path , file , export);                           \
 }
 
-#define VOID_ECL_WRITE_HEADER(prefix) void prefix ## _ecl_write__(const void * , const char * , const char * , void *);
+#define VOID_ECL_WRITE_HEADER(prefix) void prefix ## _ecl_write__(const void * , const char * , const char * , value_export_type * export);
 
 /*****************************************************************/
 

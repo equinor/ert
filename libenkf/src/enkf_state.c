@@ -1246,11 +1246,9 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
     const model_config_type * model_config = shared_info->model_config;
     int iens                               = enkf_state_get_iens( enkf_state );
     const char * base_name                 = model_config_get_gen_kw_export_name(model_config);
-    char * export_file_name                = util_alloc_filename( run_arg_get_runpath( run_arg ) , base_name  , "txt");
-    FILE * export_file                     = util_mkdir_fopen(export_file_name, "w");
+    value_export_type * export             = value_export_alloc( run_arg_get_runpath( run_arg ), base_name );
 
-    int ikey;
-    for (ikey = 0; ikey < stringlist_get_size( key_list ); ikey++) {
+    for (int ikey = 0; ikey < stringlist_get_size( key_list ); ikey++) {
       enkf_config_node_type * config_node = ensemble_config_get_node( enkf_state->ensemble_config, stringlist_iget( key_list , ikey));
       enkf_node_type * enkf_node = enkf_node_alloc( config_node );
       bool forward_init = enkf_node_use_forward_init( enkf_node );
@@ -1263,15 +1261,14 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
           enkf_node_load(enkf_node, fs, node_id);
         else
           continue;
-
       } else
         enkf_node_load(enkf_node, fs, node_id);
 
-      enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export_file , run_arg_get_step1(run_arg));
+      enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export , run_arg_get_step1(run_arg));
       enkf_node_free(enkf_node);
     }
-    fclose(export_file);
-    free(export_file_name);
+    value_export( export );
+    value_export_free( export );
   }
   stringlist_free( key_list );
 }

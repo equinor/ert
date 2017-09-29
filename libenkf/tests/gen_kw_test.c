@@ -37,34 +37,22 @@
 
 
 
-void test_send_fortio_to_gen_kw_ecl_write(void * arg) {
-  enkf_main_type * enkf_main = arg;
-  fortio_type * fortio  = fortio_open_writer("my_new_file", false, ECL_ENDIAN_FLIP);
-  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ), "MULTFLT");
-  enkf_node_type * enkf_node = enkf_node_alloc( config_node );
-
-  if (GEN_KW == enkf_config_node_get_impl_type(config_node)) {
-    const char * dummy_path = "dummy_path";
-    enkf_node_ecl_write(enkf_node, dummy_path, fortio, 0);
-  }
-
-  enkf_node_free( enkf_node );
-  fortio_fclose( fortio );
-}
 
 
 void test_write_gen_kw_export_file(enkf_main_type * enkf_main)
 {
-  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ), "MULTFLT");
-  if (GEN_KW == enkf_config_node_get_impl_type(config_node)) {
-    enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
-    enkf_fs_type * init_fs = enkf_main_get_fs( enkf_main );
-    run_arg_type * run_arg = run_arg_alloc_INIT_ONLY( "run_id", init_fs , 0 ,0 , "simulations/run0");
-    enkf_state_ecl_write(state, run_arg , init_fs);
-    test_assert_true(util_file_exists("simulations/run0/parameters.txt"));
-    run_arg_free( run_arg );
-  } else
-    util_exit("Test configuration error \n");
+  stringlist_type * key_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config( enkf_main ) , PARAMETER );
+  enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
+  enkf_fs_type * init_fs = enkf_main_get_fs( enkf_main );
+  run_arg_type * run_arg = run_arg_alloc_INIT_ONLY( "run_id", init_fs , 0 ,0 , "simulations/run0");
+
+  enkf_state_initialize( state , init_fs, key_list , INIT_FORCE );
+  enkf_state_ecl_write(state, run_arg , init_fs);
+  test_assert_true(util_file_exists("simulations/run0/parameters.txt"));
+  test_assert_true(util_file_exists("simulations/run0/parameters.json"));
+  run_arg_free( run_arg );
+
+  stringlist_free(key_list);
 }
 
 
@@ -112,7 +100,6 @@ int main(int argc , char ** argv) {
   test_assert_not_NULL(enkf_main);
 
   test_write_gen_kw_export_file(enkf_main);
-  test_assert_util_abort("gen_kw_ecl_write", test_send_fortio_to_gen_kw_ecl_write, enkf_main);
   test_read_erroneous_gen_kw_file();
 
   ert_test_context_free( test_context );

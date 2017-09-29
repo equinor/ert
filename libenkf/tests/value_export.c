@@ -57,6 +57,22 @@ test_work_area_type * work_area = test_work_area_alloc("value_export");
 }
 
 
+void test_export_txt__() {
+  test_work_area_type * work_area = test_work_area_alloc("value_export");
+  value_export_type * export = value_export_alloc( NULL, "parameters");
+  value_export_append(export, "KEY100", 100);
+  value_export_append(export, "KEY200", 200);
+  test_assert_int_equal( 2 , value_export_size( export ));
+
+  value_export_txt( export );
+  value_export_txt__( export , "parameters__.txt");
+  test_assert_true( util_file_exists( "path/parameters__.txt" ));
+  test_assert_true( util_files_equal( "path/parameters__.txt", "path/parameters.txt"));
+  value_export_free( export );
+  test_work_area_free( work_area );
+}
+
+
 void test_export_txt() {
   test_work_area_type * work_area = test_work_area_alloc("value_export");
   value_export_type * export = value_export_alloc( "path", "parameters");
@@ -69,9 +85,9 @@ void test_export_txt() {
   value_export_txt( export );
   test_assert_true( util_file_exists( "path/parameters.txt" ));
 
-  value_export_txt( export );
+  value_export_txt__( export , "path/parameters__.txt");
   test_assert_true( util_file_exists( "path/parameters__.txt" ));
-  test_assert_true( util_file_equal( "path/parameters__.txt", "path/parameters.txt"))
+  test_assert_true( util_files_equal( "path/parameters__.txt", "path/parameters.txt"));
   {
     FILE * stream = util_fopen("path/parameters.txt", "r");
     char key1[100],key2[100];

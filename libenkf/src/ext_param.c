@@ -27,6 +27,7 @@
 #include <ert/enkf/enkf_util.h>
 #include <ert/enkf/ext_param_config.h>
 #include <ert/enkf/ext_param.h>
+#include <ert/enkf/value_export.h>
 
 GET_DATA_SIZE_HEADER(ext_param);
 
@@ -123,7 +124,7 @@ void ext_param_json_export(const ext_param_type * ext_param, const char * json_f
   fclose( stream );
 }
 
-void ext_param_ecl_write(const ext_param_type * ext_param , const char * run_path , const char * base_file , void * filestream) {
+void ext_param_ecl_write(const ext_param_type * ext_param , const char * run_path , const char * base_file , value_export_type * export) {
   char * target_file;
 
   if (run_path)
