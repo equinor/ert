@@ -18,11 +18,12 @@ from res.enkf import EnkfPrototype
 from res.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig, ExtParamConfig
 from res.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
 from ecl.ecl import EclGrid
-from ecl.util import PathFormat, StringList
+from ecl.util import PathFormat, StringList, IntVector
 
 class EnkfConfigNode(BaseCClass):
     TYPE_NAME = "enkf_config_node"
 
+    _alloc_gen_data_everest = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_everest(char*, char* , int_vector)", bind = False)
     _alloc_summary_node = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)", bind = False)
     _alloc_field_node   = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, void*, bool)", bind = False)
     _alloc_ext_param_node = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_EXT_PARAM(char*, stringlist, char*)", bind = False)
@@ -114,6 +115,22 @@ class EnkfConfigNode(BaseCClass):
     def create_ext_param(cls, key, key_list, output_file = None):
         keys = StringList( initial = key_list )
         return cls._alloc_ext_param_node(key, keys, output_file)
+
+
+    # This method only exposes the details relevant for Everest usage.
+    @classmethod
+    def create_gen_data(cls, key, file_fmt, report_steps = (1,)):
+        active_steps = IntVector( )
+        for step in report_steps:
+            active_steps.append( step )
+
+        config_node = cls._alloc_gen_data_everest( key, file_fmt, active_steps)
+        if config_node is None:
+            raise ValueError("Failed to create GEN_DATA node for:%s" % key)
+
+        return config_node
+
+
 
     def free(self):
         self._free()
