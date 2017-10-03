@@ -121,7 +121,7 @@ class ResConfig(BaseCClass):
 
     def _extract_internals(self, config):
         internal_config = []
-        config_dir = None
+        config_dir = os.getcwd()
 
         if ConfigKeys.INTERNALS in config:
             intercon = config[ConfigKeys.INTERNALS]
@@ -129,13 +129,13 @@ class ResConfig(BaseCClass):
             dir_key = ConfigKeys.CONFIG_DIRECTORY
             if dir_key in intercon:
                 config_dir = os.path.realpath(intercon[dir_key])
-                internal_config.append((dir_key, config_dir))
 
             internal_filter = [dir_key]
             for key, value in intercon.iteritems():
                 if key not in internal_filter:
                     internal_config.append((key, self._parse_value(value)))
 
+        internal_config.append((ConfigKeys.CONFIG_DIRECTORY, config_dir))
         return config_dir, internal_config
 
 
@@ -324,10 +324,6 @@ class ResConfig(BaseCClass):
         ResConfig.init_config_parser(config_parser)
         config_content = ConfigContent(None)
         config_content.setParser(config_parser)
-
-        if config_dir is None:
-            raise ValueError("Expected config to specify %s"
-                             % ConfigKeys.CONFIG_DIRECTORY)
 
         # Insert defines
         for key in defines:
