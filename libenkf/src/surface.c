@@ -31,6 +31,7 @@
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_util.h>
 #include <ert/enkf/enkf_serialize.h>
+#include <ert/enkf/value_export.h>
 
 
 /*****************************************************************/
@@ -150,7 +151,7 @@ void surface_deserialize(surface_type * surface,
 void surface_ecl_write(const surface_type * surface,
                        const char * run_path,
                        const char * base_file,
-                       void * filestream) {
+                       value_export_type * export) {
   char * target_file = util_alloc_filename(run_path, base_file , NULL);
   surface_config_ecl_write(surface->config, target_file, surface->data);
   free(target_file);

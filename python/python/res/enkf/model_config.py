@@ -38,7 +38,7 @@ class ModelConfig(BaseCClass):
     _get_history_source          = EnkfPrototype("history_source_enum model_config_get_history_source(model_config)")
     _select_history              = EnkfPrototype("bool  model_config_select_history(model_config, history_source_enum, sched_file, ecl_sum)")
     _has_history                 = EnkfPrototype("bool  model_config_has_history(model_config)")
-    _gen_kw_export_file          = EnkfPrototype("char* model_config_get_gen_kw_export_file(model_config)")
+    _gen_kw_export_name          = EnkfPrototype("char* model_config_get_gen_kw_export_name(model_config)")
     _runpath_requires_iterations = EnkfPrototype("bool  model_config_runpath_requires_iter(model_config)")
     _get_jobname_fmt             = EnkfPrototype("char* model_config_get_jobname_fmt(model_config)")
     _get_runpath_fmt             = EnkfPrototype("path_fmt_ref model_config_get_runpath_fmt(model_config)")
@@ -103,9 +103,9 @@ class ModelConfig(BaseCClass):
     def getFSType(self):
         return self._get_fs_type()
 
-    def getGenKWExportFile(self):
+    def getGenKWExportName(self):
         """ @rtype: str """
-        return self._gen_kw_export_file()
+        return self._gen_kw_export_name( )
 
     def runpathRequiresIterations(self):
         """ @rtype: bool """

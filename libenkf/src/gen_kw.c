@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'gen_kw.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'gen_kw.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -65,14 +65,14 @@ gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw->__type_id     = GEN_KW;
   gen_kw->config        = config;
   gen_kw->subst_list    = subst_list_alloc( NULL );
-  gen_kw->data          = util_calloc( gen_kw_config_get_data_size( config ) , sizeof * gen_kw->data ); 
+  gen_kw->data          = util_calloc( gen_kw_config_get_data_size( config ) , sizeof * gen_kw->data );
   return gen_kw;
 }
 
 
 void gen_kw_clear(gen_kw_type * gen_kw) {
   int i;
-  for (i=0; i < gen_kw_config_get_data_size( gen_kw->config ); i++) 
+  for (i=0; i < gen_kw_config_get_data_size( gen_kw->config ); i++)
     gen_kw->data[i]        = 0.0;
 }
 
@@ -176,36 +176,36 @@ void gen_kw_read_from_buffer(gen_kw_type * gen_kw , buffer_type * buffer, enkf_f
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   ert_impl_type file_type;
   file_type = buffer_fread_int(buffer);
-  if ((file_type == GEN_KW) || (file_type == MULTFLT)) 
+  if ((file_type == GEN_KW) || (file_type == MULTFLT))
     buffer_fread(buffer , gen_kw->data , sizeof *gen_kw->data , data_size);
 }
 #undef MULTFLT
 
 
 void gen_kw_truncate(gen_kw_type * gen_kw) {
-  return ; 
+  return ;
 }
 
 
 
 bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , const char * init_file , rng_type * rng ) {
   if (!init_file && !rng)
-    util_abort("%s internal error: both init_file and rng are NULL", __func__); 
-  
-  bool ret = false; 
-  
-  if (init_file) 
+    util_abort("%s internal error: both init_file and rng are NULL", __func__);
+
+  bool ret = false;
+
+  if (init_file)
     ret = gen_kw_fload(gen_kw , init_file );
   else {
     const double mean = 0.0; /* Mean and std are hardcoded - the variability should be in the transformation. */
-    const double std  = 1.0; 
+    const double std  = 1.0;
     const int    data_size = gen_kw_config_get_data_size( gen_kw->config );
     int i;
-    
-    for (i=0; i < data_size; i++) 
+
+    for (i=0; i < data_size; i++)
       gen_kw->data[i] = enkf_util_rand_normal(mean , std , rng);
-   
-    ret = true; 
+
+    ret = true;
   }
   return ret;
 }
@@ -232,12 +232,12 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   if (template_file != NULL) {
     const int size = gen_kw_config_get_data_size(gen_kw->config );
     int ikw;
-    
+
     for (ikw = 0; ikw < size; ikw++) {
-      const char * key = gen_kw_config_get_tagged_name(gen_kw->config , ikw);  
+      const char * key = gen_kw_config_get_tagged_name(gen_kw->config , ikw);
       subst_list_append_owned_ref(gen_kw->subst_list , key , util_alloc_sprintf("%g" , gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] )) , NULL);
     }
-      
+
     /*
       If the target_file already exists as a symbolic link the
       symbolic link is removed before creating the target file. The is
@@ -246,60 +246,58 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
     */
     if (util_is_link( target_file ))
       remove( target_file );
-    
+
     subst_list_filter_file( gen_kw->subst_list  , template_file  , target_file);
-  } else 
+  } else
     util_abort("%s: internal error - tried to filter gen_kw instance without template file.\n",__func__);
 }
 
-
-void gen_kw_write_export_file(const gen_kw_type * gen_kw, FILE * filestream) {
+void gen_kw_export_values(const gen_kw_type * gen_kw, value_export_type * export) {
   const int size = gen_kw_config_get_data_size(gen_kw->config );
-  int ikw;
 
-  for (ikw = 0; ikw < size; ++ikw) {
+  for (int ikw = 0; ikw < size; ++ikw) {
     const char * key          = gen_kw_config_get_key(gen_kw->config);
     const char * parameter    = gen_kw_config_iget_name(gen_kw->config , ikw);
-    int width                 = 60 - (strlen(key) + strlen(parameter) + 1);
-    double transformed_value  = gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] );
-    {
-      char * print_string       = util_alloc_sprintf("%s:%s %g\n", key, parameter, width, transformed_value);
-      fprintf(filestream, "%s", print_string);
-      free( print_string );
-    }
+    char * export_key         = util_alloc_sprintf("%s:%s" , key, parameter);
+    double value              = gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] );
+
+    value_export_append( export, export_key , value );
+    free( export_key );
 
     if (gen_kw_config_should_use_log_scale(gen_kw->config, ikw)) {
-      double log_transformed_value = log10(transformed_value);
-      char * print_log_string = util_alloc_sprintf("LOG10_%s:%s %g\n", key, parameter, width, log_transformed_value);
-      fprintf(filestream, "%s", print_log_string);
-      free( print_log_string );
+      double log_value = log10(value);
+      char * log_export_key = util_alloc_sprintf("LOG10_%s:%s", key , parameter);
+      value_export_append( export, log_export_key , log_value );
+      free( log_export_key );
     }
   }
 }
+
+void gen_kw_write_export_file(const gen_kw_type * gen_kw , const char * filename) {
+  value_export_type * export = value_export_alloc( NULL, filename );
+  gen_kw_export_values( gen_kw, export );
+  value_export_txt__( export , filename );
+  value_export_free( export );
+}
+
 
 void gen_kw_ecl_write_template(const gen_kw_type * gen_kw , const char * file_name){
-    gen_kw_filter_file(gen_kw , file_name);
+   gen_kw_filter_file(gen_kw , file_name);
 }
 
 
-void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * run_path , const char * base_file , void * filestream) {
-  if (fortio_is_instance(filestream)) {
-      util_abort("%s: Called with fortio instance, aborting\n", __func__);
-  } else {
-    if (filestream)
-      gen_kw_write_export_file(gen_kw, filestream);
-    {
-      char * target_file;
-      if (run_path)
-        target_file = util_alloc_filename( run_path , base_file  , NULL);
-      else
-        target_file = util_alloc_string_copy( base_file );
+void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * run_path , const char * base_file , value_export_type * export) {
+  char * target_file;
+  if (run_path)
+    target_file = util_alloc_filename( run_path , base_file  , NULL);
+  else
+    target_file = util_alloc_string_copy( base_file );
 
-      gen_kw_filter_file(gen_kw , target_file);
-      
-      free( target_file );
-    }
-  }
+  gen_kw_filter_file(gen_kw , target_file);
+  free( target_file );
+
+  if (export)
+    gen_kw_export_values(gen_kw, export);
 }
 
 
@@ -312,7 +310,7 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 /**
    This function will load values for gen_kw instance from file. The
    file should be formatted as either:
-   
+
    -------
    Value1
    Value2
@@ -320,11 +318,11 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
    ....
    ValueN
    -------
-   
+
    Or
 
    ------------
-   Key3  Value3  
+   Key3  Value3
    Key5  Value5
    Key1  Value1
    .....
@@ -338,7 +336,7 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 
     1. All values must be specified.
     2. The values are in the N(0,1) domain, i.e. the untransformed variables.
-    
+
 */
 
 bool gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
@@ -346,43 +344,43 @@ bool gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
   if (stream) {
     const int size = gen_kw_config_get_data_size(gen_kw->config );
     bool   readOK  = true;
-    
+
     /* First try reading all the data as one long vector. */
     {
       int index = 0;
       while ((index < size) && readOK) {
         double value;
-        if (fscanf(stream,"%lg" , &value) == 1) 
+        if (fscanf(stream,"%lg" , &value) == 1)
           gen_kw->data[index] = value;
         else
           readOK = false;
         index++;
       }
     }
-    
-    /* 
+
+    /*
        OK - rewind and try again with interlaced key + value
        pairs. Observe that we still require that ALL the elements in the
        gen_kw instance are set, i.e. it is not allowed to read only some
        of the keywords; but the ordering is not relevant.
-       
+
        The code will be fooled (and give undefined erronous results) if
        the same key appears several times. Be polite!
     */
-    
+
     if (!readOK) {
       int counter = 0;
       readOK = true;
       util_fseek( stream , 0 , SEEK_SET );
-      
+
       while ((counter < size) && readOK) {
         char key[128];
         double value;
         int    fscanf_return = fscanf(stream , "%s %lg" , key , &value);
-        
+
         if (fscanf_return == 2) {
           int index = gen_kw_config_get_index(gen_kw->config , key);
-          if (index >= 0) 
+          if (index >= 0)
             gen_kw->data[index] = value;
           else
             util_abort("%s: key:%s not recognized as part of GEN_KW instance - error when reading file:%s \n",__func__ , key , filename);
@@ -393,7 +391,7 @@ bool gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
         }
       }
     }
-    
+
     if (!readOK)
       util_abort("%s: failed loading from file:%s \n",__func__ , filename);
 
@@ -411,7 +409,7 @@ bool gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
 */
 bool gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , int report_step , double * value) {
   int index = gen_kw_config_get_index(gen_kw->config , key);
-  
+
   if (index >= 0) {
     *value = gen_kw_config_transform(gen_kw->config , index , gen_kw->data[ index ] );
     return true;
@@ -437,8 +435,8 @@ void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , co
   {
     for (int i=0; i < data_size; i++) {
       if (std_data[i] > 0)
-        inflation_data[i] = util_double_max( 1.0 , min_std_data[i] / std_data[i]);   
-      else 
+        inflation_data[i] = util_double_max( 1.0 , min_std_data[i] / std_data[i]);
+      else
         inflation_data[i] = 1;
     }
   }
@@ -498,4 +496,4 @@ VOID_SCALE(gen_kw)
 VOID_IMUL(gen_kw)
 VOID_IADDSQR(gen_kw)
 VOID_ISQRT(gen_kw)
-VOID_FLOAD(gen_kw)     
+VOID_FLOAD(gen_kw)

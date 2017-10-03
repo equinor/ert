@@ -51,6 +51,7 @@ add_library(enkf src/active_list.c
                  src/gen_data_config.c
                  src/gen_kw.c
                  src/gen_kw_config.c
+                 src/value_export.c
                  src/gen_obs.c
                  src/hook_manager.c
                  src/hook_workflow.c
@@ -150,6 +151,7 @@ foreach (test   enkf_active_list
                 enkf_state_map
                 obs_vector_tests
                 log_config_level_parse
+                value_export
     )
     add_executable(${test} tests/${test}.c)
     target_link_libraries(${test} enkf)
@@ -159,7 +161,7 @@ endforeach ()
 function( add_config_test name command )
     add_test( NAME ${name}
               COMMAND ${command} ${ARGN})
-     
+
     set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT}")
 endfunction()
 
@@ -321,11 +323,11 @@ endif ()
 function( add_statoil_test name command )
     add_test( NAME ${name}
               COMMAND ${command} ${ARGN})
-     
+
     set_property( TEST ${name} PROPERTY LABELS StatoilData)
     set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT}")
 endfunction()
-              
+
 
 add_executable(enkf_site_config tests/enkf_site_config.c)
 target_link_libraries(enkf_site_config enkf)

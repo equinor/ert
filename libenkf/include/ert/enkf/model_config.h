@@ -95,8 +95,8 @@ extern "C" {
 
   bool                   model_config_select_history( model_config_type * model_config , history_source_type source_type, const sched_file_type * schede_file , const ecl_sum_type * refcase);
   void                   model_config_set_runpath(model_config_type * model_config , const char * fmt);
-  void                   model_config_set_gen_kw_export_file( model_config_type * model_config, const char * file_name);
-  const char           * model_config_get_gen_kw_export_file( const model_config_type * model_config);
+  void                   model_config_set_gen_kw_export_name( model_config_type * model_config, const char * name);
+  const char           * model_config_get_gen_kw_export_name( const model_config_type * model_config);
 
   config_content_type  * model_config_alloc_content(const char*, config_parser_type*);
   void                   model_config_init_config_parser(config_parser_type * config_parser);

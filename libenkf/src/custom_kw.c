@@ -22,6 +22,7 @@
 #include <ert/enkf/custom_kw_config.h>
 #include <ert/enkf/custom_kw.h>
 #include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/value_export.h>
 
 
 struct custom_kw_struct {
@@ -112,16 +113,15 @@ void custom_kw_read_from_buffer(const custom_kw_type * custom_kw, buffer_type * 
     stringlist_buffer_fread(custom_kw->data, buffer);
 }
 
-void custom_kw_ecl_write(const custom_kw_type * custom_kw, const char * run_path, const char * base_file, void * filestream) {
-    //printf("CustomKW ecl_write\n");
+
+void custom_kw_ecl_write(const custom_kw_type * custom_kw, const char * run_path, const char * base_file, value_export_type * export) {
 }
 
+
 void custom_kw_serialize(const custom_kw_type * custom_kw, node_id_type node_id, const active_list_type * active_list, matrix_type * A, int row_offset, int column) {
-    printf("CustomKW serialize\n");
 }
 
 void custom_kw_deserialize(custom_kw_type * custom_kw, node_id_type node_id, const active_list_type * active_list, const matrix_type * A, int row_offset, int column) {
-    printf("CustomKW deserialize\n");
 }
 
 /******************************************************************/

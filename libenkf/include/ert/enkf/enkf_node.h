@@ -42,6 +42,7 @@
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/forward_load_context.h>
+#include <ert/enkf/value_export.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,7 +61,7 @@ extern "C" {
   typedef void          (ecl_write_ftype)         (const void *  ,   /* Node object */
                                                    const char *  ,   /* Directory to write to. */
                                                    const char *  ,   /* Filename - can be NULL. */
-                                                   void * );   /* fortio or FILE inistance for writing elements in restart files. */
+                                                   value_export_type *);
 
   typedef bool          (fload_ftype)                     (      void *  , const char *);
   typedef void          (read_from_buffer_ftype)          (      void *  , buffer_type * , enkf_fs_type * ,  int);
@@ -139,7 +140,7 @@ extern "C" {
 
   bool             enkf_node_forward_load_vector(enkf_node_type *enkf_node , const forward_load_context_type * load_context , const int_vector_type * time_index);
   bool             enkf_node_forward_load  (enkf_node_type *, const forward_load_context_type * load_context);
-  void             enkf_node_ecl_write (const enkf_node_type *, const char * , void * , int);
+  void             enkf_node_ecl_write (const enkf_node_type *, const char * , value_export_type * , int);
   bool             enkf_node_initialize(enkf_node_type *enkf_node , int , rng_type * );
   void             enkf_node_printf(const enkf_node_type *);
   bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, bool , int , int);

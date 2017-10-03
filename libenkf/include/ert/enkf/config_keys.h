@@ -87,6 +87,7 @@ extern "C" {
 #define  GEN_KW_KEY                        "GEN_KW"
 #define  GEN_KW_TAG_FORMAT_KEY             "GEN_KW_TAG_FORMAT"
 #define  GEN_KW_EXPORT_FILE_KEY            "GEN_KW_EXPORT_FILE"
+#define  GEN_KW_EXPORT_NAME_KEY            "GEN_KW_EXPORT_NAME"
 #define  GEN_PARAM_KEY                     "GEN_PARAM"
 #define  GRID_KEY                          "GRID"
 #define  HISTORY_SOURCE_KEY                "HISTORY_SOURCE"

@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'enkf_macros.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'enkf_macros.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #ifndef ERT_ENKF_MACROS_H
@@ -39,7 +39,7 @@ extern "C" {
 #include <ert/enkf/meas_data.h>
 #include <ert/enkf/enkf_fs_type.h>
 #include <ert/enkf/forward_load_context.h>
-
+#include <ert/enkf/value_export.h>
 
 
 
@@ -110,12 +110,12 @@ bool prefix ## _fload__(void * void_arg , const char * filename) {              
 /*****************************************************************/
 
 #define VOID_ECL_WRITE(prefix) \
-void prefix ## _ecl_write__(const void * void_arg , const char * path , const char * file , void * filestream) { \
+void prefix ## _ecl_write__(const void * void_arg , const char * path , const char * file , value_export_type * export) { \
    const prefix ## _type * arg = prefix ## _safe_cast_const( void_arg );       \
-   prefix ## _ecl_write(arg , path , file , filestream);                    \
+   prefix ## _ecl_write(arg , path , file , export);                           \
 }
 
-#define VOID_ECL_WRITE_HEADER(prefix) void prefix ## _ecl_write__(const void * , const char * , const char * , void *);
+#define VOID_ECL_WRITE_HEADER(prefix) void prefix ## _ecl_write__(const void * , const char * , const char * , value_export_type * export);
 
 /*****************************************************************/
 
@@ -317,7 +317,7 @@ void prefix ## _update_std_scale__( void * void_obs ,  double std_multiplier , c
 
 #define VOID_IADD(prefix)   void prefix ## _iadd__( void * void_arg , const void * void_delta ) { \
    prefix ## _iadd( prefix ## _safe_cast( void_arg ) , prefix ## _safe_cast_const( void_delta ) ); \
-} 
+}
 
 #define VOID_IADD_HEADER(prefix)   void prefix ## _iadd__( void * void_arg , const void * void_delta );
 
@@ -325,7 +325,7 @@ void prefix ## _update_std_scale__( void * void_obs ,  double std_multiplier , c
 
 #define VOID_IMUL(prefix)   void prefix ## _imul__( void * void_arg , const void * void_delta ) { \
    prefix ## _imul( prefix ## _safe_cast( void_arg ) , prefix ## _safe_cast_const( void_delta ) ); \
-} 
+}
 
 #define VOID_IMUL_HEADER(prefix)   void prefix ## _imul__( void * void_arg , const void * void_delta );
 
@@ -333,7 +333,7 @@ void prefix ## _update_std_scale__( void * void_obs ,  double std_multiplier , c
 
 #define VOID_IADDSQR(prefix)   void prefix ## _iaddsqr__( void * void_arg , const void * void_delta ) { \
    prefix ## _iaddsqr( prefix ## _safe_cast( void_arg ) , prefix ## _safe_cast_const( void_delta ) ); \
-} 
+}
 
 #define VOID_IADDSQR_HEADER(prefix)   void prefix ## _iaddsqr__( void * void_arg , const void * void_delta );
 
@@ -347,7 +347,7 @@ void prefix ## _update_std_scale__( void * void_obs ,  double std_multiplier , c
 /*****************************************************************/
 
 #define VOID_IGET(prefix)        double prefix ## _iget__(const void * void_arg, int index) { return prefix ## _iget((const prefix ## _type *) void_arg , index); }
-#define VOID_IGET_HEADER(prefix) double prefix ## _iget__(const void * , int ) 
+#define VOID_IGET_HEADER(prefix) double prefix ## _iget__(const void * , int )
 
 #ifdef __cplusplus
 }

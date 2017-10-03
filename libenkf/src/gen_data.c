@@ -423,7 +423,7 @@ gen_data_file_format_type gen_data_guess_export_type( const gen_data_type * gen_
 }
 
 
-void gen_data_export(const gen_data_type * gen_data , const char * full_path , gen_data_file_format_type export_type , fortio_type * fortio) {
+void gen_data_export(const gen_data_type * gen_data , const char * full_path , gen_data_file_format_type export_type) {
   switch (export_type) {
   case(ASCII):
     gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
@@ -450,12 +450,12 @@ void gen_data_export(const gen_data_type * gen_data , const char * full_path , g
 */
 
 
-void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path , const char * eclfile , void * filestream) {
+void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path , const char * eclfile , value_export_type * export) {
   if (eclfile != NULL) {
     char * full_path = util_alloc_filename( run_path , eclfile  , NULL);
 
     gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
-    gen_data_export( gen_data , full_path , export_type , filestream );
+    gen_data_export( gen_data , full_path , export_type);
     free( full_path );
   }
 }

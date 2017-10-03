@@ -103,7 +103,7 @@ struct model_config_struct {
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
-  char                 * gen_kw_export_file_name;
+  char                 * gen_kw_export_name;
   int                    num_realizations;
   char                 * obs_config_file;
 
@@ -218,12 +218,12 @@ void model_config_set_runpath(model_config_type * model_config , const char * fm
 
 
 
-void  model_config_set_gen_kw_export_file( model_config_type * model_config, const char * file_name) {
-  model_config->gen_kw_export_file_name = util_realloc_string_copy( model_config->gen_kw_export_file_name , file_name );
+void  model_config_set_gen_kw_export_name( model_config_type * model_config, const char * name) {
+  model_config->gen_kw_export_name = util_realloc_string_copy( model_config->gen_kw_export_name , name );
 }
 
-const char * model_config_get_gen_kw_export_file( const model_config_type * model_config) {
-  return model_config->gen_kw_export_file_name;
+const char * model_config_get_gen_kw_export_name( const model_config_type * model_config) {
+  return model_config->gen_kw_export_name;
 }
 
 
@@ -338,7 +338,7 @@ model_config_type * model_config_alloc_empty() {
   model_config->internalize_state         = bool_vector_alloc( 0 , false );
   model_config->__load_eclipse_restart    = bool_vector_alloc( 0 , false );
   model_config->runpath_map               = hash_alloc();
-  model_config->gen_kw_export_file_name   = NULL;
+  model_config->gen_kw_export_name        = NULL;
   model_config->refcase                   = NULL;
   model_config->num_realizations          = 0;
   model_config->obs_config_file           = NULL;
@@ -349,7 +349,7 @@ model_config_type * model_config_alloc_empty() {
   model_config_set_max_internal_submit( model_config   , DEFAULT_MAX_INTERNAL_SUBMIT);
   model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , DEFAULT_RUNPATH);
   model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
-  model_config_set_gen_kw_export_file(model_config, DEFAULT_GEN_KW_EXPORT_FILE);
+  model_config_set_gen_kw_export_name(model_config, DEFAULT_GEN_KW_EXPORT_NAME);
 
   return model_config;
 }
@@ -568,14 +568,11 @@ void model_config_init(model_config_type * model_config ,
 
 
   {
-    const char * export_file_name;
-    if (config_content_has_item( config , GEN_KW_EXPORT_FILE_KEY))
-      export_file_name = config_content_get_value(config, GEN_KW_EXPORT_FILE_KEY);
-    else
-      export_file_name = DEFAULT_GEN_KW_EXPORT_FILE;
-
-    model_config_set_gen_kw_export_file(model_config, export_file_name);
-   }
+    if (config_content_has_item( config , GEN_KW_EXPORT_NAME_KEY)) {
+      const char * export_name = config_content_get_value(config, GEN_KW_EXPORT_NAME_KEY);
+      model_config_set_gen_kw_export_name(model_config, export_name);
+    }
+  }
 
   if (config_content_has_item(config, OBS_CONFIG_KEY)) {
     const char * obs_config_file = config_content_get_value_as_abspath(
@@ -603,7 +600,7 @@ void model_config_free(model_config_type * model_config) {
   util_safe_free( model_config->jobname_fmt );
   util_safe_free( model_config->case_table_file );
   util_safe_free( model_config->current_path_key);
-  util_safe_free( model_config->gen_kw_export_file_name);
+  util_safe_free( model_config->gen_kw_export_name);
   util_safe_free( model_config->obs_config_file );
   util_safe_free( model_config->data_root );
   util_safe_free( model_config->default_data_root );
@@ -867,8 +864,17 @@ static void model_config_init_user_config(config_parser_type * config ) {
   item = config_add_schema_item(config, RFTPATH_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
 
+  item = config_add_schema_item(config, GEN_KW_EXPORT_NAME_KEY, false);
+  config_schema_item_set_argc_minmax(item, 1, 1);
+
   item = config_add_schema_item(config, GEN_KW_EXPORT_FILE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
+  {
+    char * msg = util_alloc_sprintf("The keyword:%s has been deprecated - use %s *WITHOUT* extension instead", GEN_KW_EXPORT_FILE_KEY, GEN_KW_EXPORT_NAME_KEY);
+    config_parser_deprecate( config, GEN_KW_EXPORT_FILE_KEY, msg );
+    free( msg );
+  }
+
 
   item = config_add_schema_item(config, LOCAL_CONFIG_KEY, false);
   config_schema_item_set_argc_minmax(item , 1, 1);
