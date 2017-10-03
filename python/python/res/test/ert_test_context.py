@@ -15,13 +15,15 @@
 #  for more details.
 import os.path
 
+from ecl.test import TestArea
+
 from cwrap import BaseCClass
-from res.enkf import EnKFMain, EnkfPrototype
+from res.enkf import EnKFMain, EnkfPrototype, ResConfig
 
 class ErtTest(BaseCClass):
     TYPE_NAME = "ert_test"
 
-    _alloc         = EnkfPrototype("void* ert_test_context_alloc_python( char* , char*)", bind = False)
+    _alloc         = EnkfPrototype("void* ert_test_context_alloc_python( test_area , res_config)", bind = False)
     _set_store     = EnkfPrototype("void* ert_test_context_set_store( ert_test , bool)")
     _free          = EnkfPrototype("void  ert_test_context_free( ert_test )")
     _get_cwd       = EnkfPrototype("char* ert_test_context_get_cwd( ert_test )")
@@ -33,11 +35,19 @@ class ErtTest(BaseCClass):
         if not os.path.exists(model_config):
             raise IOError("The configuration file: %s does not exist" % model_config)
         else:
-            c_ptr = self._alloc(test_name, model_config)
+            work_area = TestArea( test_name )
+            work_area.copy_parent_content( model_config )
+            work_area.convertToCReference( self )
+
+            res_config = ResConfig( user_config_file = os.path.basename(model_config) )
+            res_config.convertToCReference( self )
+
+            c_ptr = self._alloc(work_area, res_config)
             super(ErtTest, self).__init__(c_ptr)
             self.setStore(store_area)
 
         self.__ert = None
+
 
     def setStore(self, store):
         self._set_store(store)

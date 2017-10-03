@@ -27,17 +27,8 @@
 
 
 void test_create_invalid(const char * config_file) {
-  char * cwd0 = util_alloc_cwd();
   ert_test_context_type * test_context = ert_test_context_alloc("CREATE_CONTEXT" , config_file );
-  test_assert_true( ert_test_context_is_instance( test_context ));
-  test_assert_NULL( ert_test_context_get_main( test_context ));
-  {
-    char * cwd1 = util_alloc_cwd();
-    test_assert_string_equal(cwd1 , cwd0);
-    free( cwd1 );
-  }
-  free( cwd0 );
-  ert_test_context_free( test_context );
+  test_assert_NULL( test_context );
 }
 
 

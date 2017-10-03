@@ -43,47 +43,43 @@ struct ert_test_context_struct {
 
 UTIL_IS_INSTANCE_FUNCTION( ert_test_context , ERT_TEST_CONTEXT_TYPE_ID )
 
-static ert_test_context_type * ert_test_context_alloc__( const char * test_name , const char * model_config , bool python_mode) {
+
+static ert_test_context_type * ert_test_context_alloc__( test_work_area_type * work_area, res_config_type * res_config, const char * ui_mode) {
   ert_test_context_type * test_context = util_malloc( sizeof * test_context );
   UTIL_TYPE_ID_INIT( test_context , ERT_TEST_CONTEXT_TYPE_ID );
 
   /*
     This environment variable is set to ensure that test context will
-    parse the correct files when loading site config.
+    parse the correct files when loading site config. The ui_mode
+    string should be "tui" or "gui".
   */
-  if (python_mode)
-    setenv("ERT_UI_MODE" , "gui" , 1);
-  else
-    setenv("ERT_UI_MODE" , "tui" , 1);
-
-
-  if (util_file_exists(model_config)) {
-    test_context->work_area = test_work_area_alloc(test_name);
-    test_work_area_set_store( test_context->work_area , false );
-    test_work_area_copy_parent_content(test_context->work_area , model_config );
-    {
-      char * config_file = util_split_alloc_filename( model_config );
-      test_context->res_config = res_config_alloc_load(config_file);
-      test_context->enkf_main = enkf_main_alloc(test_context->res_config, true, false);
-      free( config_file );
-    }
-    test_context->rng = rng_alloc( MZRAN , INIT_DEV_URANDOM );
-  } else {
-    test_context->enkf_main = NULL;
-    test_context->work_area = NULL;
-    test_context->rng = NULL;
-    test_context->res_config = NULL;
-  }
+  setenv("ERT_UI_MODE" , ui_mode , 1);
+  test_context->res_config = res_config;
+  test_context->work_area = work_area;
+  test_context->enkf_main = enkf_main_alloc(test_context->res_config, true, false);
+  test_context->rng = rng_alloc( MZRAN , INIT_DEV_URANDOM );
   return test_context;
 }
 
+
 ert_test_context_type * ert_test_context_alloc( const char * test_name , const char * model_config) {
-  return ert_test_context_alloc__( test_name , model_config , false );
+  if (!util_file_exists(model_config))
+    return NULL;
+
+  test_work_area_type * work_area = test_work_area_alloc(test_name);
+  test_work_area_set_store( work_area , false );
+  test_work_area_copy_parent_content(work_area , model_config );
+
+  char * config_file = util_split_alloc_filename( model_config );
+  res_config_type * res_config = res_config_alloc_load(config_file);
+  free( config_file );
+
+  return ert_test_context_alloc__( work_area, res_config, "tui");
 }
 
 
-ert_test_context_type * ert_test_context_alloc_python( const char * test_name , const char * model_config) {
-  return ert_test_context_alloc__( test_name , model_config , true );
+ert_test_context_type * ert_test_context_alloc_python( test_work_area_type * work_area, res_config_type * res_config) {
+  return ert_test_context_alloc__( work_area, res_config , "gui");
 }
 
 

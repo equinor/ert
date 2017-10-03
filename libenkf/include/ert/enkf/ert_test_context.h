@@ -23,7 +23,9 @@
 #include <stdbool.h>
 
 #include <ert/util/type_macros.h>
+#include <ert/util/test_work_area.h>
 
+#include <ert/enkf/res_config.h>
 #include <ert/enkf/enkf_main.h>
 
 #ifdef __cplusplus
@@ -34,7 +36,7 @@ typedef struct ert_test_context_struct ert_test_context_type;
 
 void                    ert_test_context_set_store( ert_test_context_type * test_context , bool store);
 ert_test_context_type * ert_test_context_alloc( const char * test_name , const char * model_config);
-ert_test_context_type * ert_test_context_alloc_python( const char * test_name , const char * model_config);
+ert_test_context_type * ert_test_context_alloc_python( test_work_area_type * work_area, res_config_type * res_config);
 void                    ert_test_context_free( ert_test_context_type * test_context );
 enkf_main_type        * ert_test_context_get_main( ert_test_context_type * test_context );
 bool                    ert_test_context_install_workflow_job( ert_test_context_type * test_context , const char * job_name , const char * job_file);
