@@ -42,7 +42,6 @@ res_config_type * res_config_alloc_load(const char *);
 res_config_type * res_config_alloc(const config_content_type *);
 void              res_config_free(res_config_type *);
 
-void                           res_config_update_config_directory(res_config_type * res_config, const char * config_dir);
 const site_config_type       * res_config_get_site_config(const res_config_type *);
 rng_config_type              * res_config_get_rng_config(const res_config_type *);
 const analysis_config_type   * res_config_get_analysis_config(const res_config_type *);

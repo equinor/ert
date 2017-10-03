@@ -31,20 +31,24 @@ class ErtTest(BaseCClass):
 
 
 
-    def __init__(self, test_name, model_config, store_area=False):
-        if not os.path.exists(model_config):
-            raise IOError("The configuration file: %s does not exist" % model_config)
-        else:
-            work_area = TestArea( test_name )
+    def __init__(self, test_name, model_config = None, config_dict = None, store_area=False):
+        if model_config is None and config_dict is None:
+            raise ValueError("Must suuply either model_config or config_dict argument")
+
+        work_area = TestArea( test_name )
+        work_area.convertToCReference( self )
+
+        if model_config:
             work_area.copy_parent_content( model_config )
-            work_area.convertToCReference( self )
-
             res_config = ResConfig( user_config_file = os.path.basename(model_config) )
-            res_config.convertToCReference( self )
+        else:
+            work_area.copy_directory_content( work_area.get_original_cwd( ))
+            res_config = ResConfig( config = config_dict )
 
-            c_ptr = self._alloc(work_area, res_config)
-            super(ErtTest, self).__init__(c_ptr)
-            self.setStore(store_area)
+        res_config.convertToCReference( self )
+        c_ptr = self._alloc(work_area, res_config)
+        super(ErtTest, self).__init__(c_ptr)
+        self.setStore(store_area)
 
         self.__ert = None
 
@@ -97,11 +101,12 @@ class ErtTest(BaseCClass):
 
 
 class ErtTestContext(object):
-    def __init__(self, test_name, model_config, store_area=False):
+    def __init__(self, test_name, model_config = None, config_dict = None, store_area=False):
         self.__test_name = test_name
         self.__model_config = model_config
         self.__store_area = store_area
-        self.__test_context = ErtTest(self.__test_name, self.__model_config, store_area=self.__store_area)
+        self.__config_dict = config_dict
+        self.__test_context = ErtTest(self.__test_name, model_config = self.__model_config, config_dict = config_dict, store_area=self.__store_area)
 
 
     def __enter__(self):

@@ -53,6 +53,7 @@ class ResConfig(BaseCClass):
     _add_config_items  = EnkfPrototype("void res_config_add_config_items(config_parser)")
     _init_parser       = EnkfPrototype("void res_config_init_config_parser(config_parser)", bind=False)
 
+
     def __init__(self, user_config_file=None, config=None, throw_on_error=True):
         self._errors, self._failed_keys = None, None
         self._assert_input(user_config_file, config, throw_on_error)
@@ -330,6 +331,9 @@ class ResConfig(BaseCClass):
             config_content.add_define(key, defines[key])
 
         # Insert key values
+        if not os.path.exists( config_dir ):
+            raise IOError("The configuration direcetory: %s does not exist" % config_dir)
+        
         path_elm = config_content.create_path_elm(config_dir)
         add_key_value = lambda key, value : config_parser.add_key_value(
                                                             config_content,

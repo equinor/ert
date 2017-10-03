@@ -13,9 +13,10 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-
+import os
 from ecl.test import ExtendedTestCase, TestAreaContext
 
+from res.test import ErtTestContext
 from res.enkf import ResConfig, ConfigKeys
 
 class ProgrammaticResConfigTest(ExtendedTestCase):
@@ -40,6 +41,26 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
                                   "ENSPATH"            : "Ensemble"
                                 }
                               }
+
+        self.minimum_config_cwd = {
+                                "INTERNALS" :
+                                {
+                                },
+
+                                "SIMULATION" :
+                                {
+                                  "QUEUE_SYSTEM" :
+                                  {
+                                    "JOBNAME" : "Job%d",
+                                  },
+
+                                  "RUNPATH"            : "/tmp/simulations/run%d",
+                                  "NUM_REALIZATIONS"   : 1,
+                                  "JOB_SCRIPT"         : "script.sh",
+                                  "ENSPATH"            : "Ensemble"
+                                }
+                              }
+
 
         self.large_config  = {
                                 "DEFINES" :
@@ -427,3 +448,29 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
                                           prog_res_config.plot_config)
 
             self.assertEqual(0, len(prog_res_config.failed_keys))
+
+
+    def test_test_context(self):
+        case_directory = self.createTestPath("local/simple_config")
+
+        # We first make sure that the files referred to in the
+        # minimum_config dictionary are found are located correctly by
+        # creating a working area, and then we create testcontext from
+        # there.
+        with TestAreaContext("res_config_prog_test", store_area = True) as work_area:
+            work_area.copy_directory(case_directory)
+            self.assertTrue(os.path.isfile( "simple_config/script.sh"))
+
+            with ErtTestContext( "dict_test", config_dict = self.minimum_config, store_area = True):
+                pass
+
+            os.chdir( "simple_config")
+            # The directory referenced in INTERNALS.CONFIG_DIRECTORY does not exist => IOError
+            with self.assertRaises(IOError):
+                with ErtTestContext( "dict_test", config_dict = self.minimum_config, store_area = True):
+                    pass
+
+            # Create minimum config in cwd:
+            with ErtTestContext( "dict_test", config_dict = self.minimum_config_cwd, store_area = True):
+                pass
+

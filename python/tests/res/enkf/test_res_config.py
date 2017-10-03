@@ -24,7 +24,7 @@ from ecl.util.enums import RngAlgTypeEnum, MessageLevelEnum
 from res.sched import HistorySourceEnum
 
 from res.enkf import ResConfig, SiteConfig, AnalysisConfig
-
+from res.test import ErtTestContext
 
 # The res_config object should set the environment variable
 # 'DATA_ROOT' to the root directory with the config
@@ -492,3 +492,25 @@ class ResConfigTest(ExtendedTestCase):
 
             # TODO: Not tested
             # - MIN_REALIZATIONS
+
+    def test_missing_directory(self):
+        config = {
+            "INTERNALS" :
+            {
+                "CONFIG_DIRECTORY" : "does_not_exist",
+            },
+            "SIMULATION" :
+            {
+                "QUEUE_SYSTEM" :
+                {
+                    "JOBNAME" : "Job%d",
+                },
+                "RUNPATH"            : "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS"   : 1,
+                "JOB_SCRIPT"         : "script.sh",
+                "ENSPATH"            : "Ensemble"
+            }
+        }
+
+        with self.assertRaises(IOError):
+            ResConfig( config = config )
