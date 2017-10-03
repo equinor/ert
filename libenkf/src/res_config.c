@@ -359,3 +359,18 @@ const char * res_config_get_user_config_file(const res_config_type * res_config)
 const char * res_config_get_site_config_file(const res_config_type * res_config) {
   return site_config_get_config_file(res_config->site_config);
 }
+
+
+/*
+  This functionality is only present to support the following situation:
+
+  1. The res_config object is created in memory from a dictionary.
+  2. A test_area is created.
+  3. An EnKFMain instance is created with
+     this res_config - to run in the newly created test area.
+
+*/
+
+void res_config_update_config_directory(res_config_type * res_config, const char * config_dir) {
+  res_config->config_dir = util_realloc_string_copy( res_config->config_dir, config_dir);
+}
