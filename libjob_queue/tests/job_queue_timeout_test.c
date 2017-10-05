@@ -46,7 +46,7 @@ typedef struct
   int run_usleep;
   int argc;
   char ** argv;
-  const char * cmd;
+  char * cmd;
   int retry_call_count;
   int exit_call_count;
 } job_type;

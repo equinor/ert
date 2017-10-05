@@ -109,7 +109,7 @@ class RunpathListTest(ExtendedTestCase):
                     iteration = int(tmp[3])
 
                     path_list.append( (iens , iteration) )
-                
+
             for iens in range(4):
                 t0 = path_list[iens]
                 t4 = path_list[iens + 4]
@@ -129,7 +129,7 @@ class RunpathListTest(ExtendedTestCase):
             ens_size = ert.getEnsembleSize( )
             runner = ert.getEnkfSimulationRunner( )
             fs_manager = ert.getEnkfFsManager( )
-            
+
             init_fs = fs_manager.getFileSystem("init_fs")
             mask = BoolVector( initial_size = 100 , default_value = True )
             runpath_fmt = ert.getModelConfig().getRunpathFormat( )
@@ -141,9 +141,9 @@ class RunpathListTest(ExtendedTestCase):
 
             self.assertTrue( path.isfile( runpath_list.getExportFile( ) ))
             self.assertEqual( "test_runpath_list.txt" , path.basename( runpath_list.getExportFile( ) ))
-            
 
-            
+
+
     def test_assert_symlink_deleted(self):
         with ErtTestContext("create_runpath2" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
             ert = tc.getErt( )

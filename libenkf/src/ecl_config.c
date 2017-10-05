@@ -587,22 +587,29 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
   }
 
   if (config_content_has_item(config, SCHEDULE_FILE_KEY)) {
-    const char * schedule_target_file = config_content_safe_iget(config, SCHEDULE_FILE_KEY, 0, 1);
-    if (schedule_target_file) {
+    const config_content_item_type * schedule_item = config_content_get_item( config,  SCHEDULE_FILE_KEY);
+    config_content_node_type * schedule_node = config_content_item_get_last_node( schedule_item );
+    char * schedule_target_file = NULL;
+
+    if (config_content_node_get_size( schedule_node ) > 1) {
+      schedule_target_file = config_content_node_iget_as_abspath( schedule_node, 1 );
       ui_return_type * ui_return_sched_target_file = ecl_config_validate_schedule_file(ecl_config, schedule_target_file);
       if (!ui_return_get_status(ui_return_sched_target_file) == UI_RETURN_OK) {
-         util_abort("%s: failed to set target schedule file. Error:%s\n",__func__ , ui_return_get_last_error(ui_return_sched_target_file));
+        util_abort("%s: failed to set target schedule file. Error:%s\n",__func__ , ui_return_get_last_error(ui_return_sched_target_file));
       }
       ui_return_free(ui_return_sched_target_file);
     }
 
-    ui_return_type * ui_return = ecl_config_validate_schedule_file(ecl_config, config_content_iget(config, SCHEDULE_FILE_KEY, 0, 0));
-    if (ui_return_get_status(ui_return) == UI_RETURN_OK)
-      ecl_config_set_schedule_file(ecl_config, config_content_iget(config, SCHEDULE_FILE_KEY, 0, 0), schedule_target_file);
-    else
-      util_abort("%s: failed to set schedule file. Error:%s\n",__func__ , ui_return_get_last_error(ui_return));
 
-    ui_return_free(ui_return);
+    {
+      const char * schedule_src_file = config_content_node_iget_as_abspath( schedule_node, 0 );
+      ui_return_type * ui_return = ecl_config_validate_schedule_file(ecl_config, schedule_src_file);
+      if (ui_return_get_status(ui_return) == UI_RETURN_OK)
+        ecl_config_set_schedule_file(ecl_config, schedule_src_file, schedule_target_file);
+      else
+        util_abort("%s: failed to set schedule file. Error:%s\n",__func__ , ui_return_get_last_error(ui_return));
+      ui_return_free(ui_return);
+    }
   }
 
   if (config_content_has_item(config, GRID_KEY)) {

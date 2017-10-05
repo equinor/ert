@@ -15,13 +15,15 @@
 #  for more details.
 import os.path
 
+from ecl.test import TestArea
+
 from cwrap import BaseCClass
-from res.enkf import EnKFMain, EnkfPrototype
+from res.enkf import EnKFMain, EnkfPrototype, ResConfig
 
 class ErtTest(BaseCClass):
     TYPE_NAME = "ert_test"
 
-    _alloc         = EnkfPrototype("void* ert_test_context_alloc_python( char* , char*)", bind = False)
+    _alloc         = EnkfPrototype("void* ert_test_context_alloc_python( test_area , res_config)", bind = False)
     _set_store     = EnkfPrototype("void* ert_test_context_set_store( ert_test , bool)")
     _free          = EnkfPrototype("void  ert_test_context_free( ert_test )")
     _get_cwd       = EnkfPrototype("char* ert_test_context_get_cwd( ert_test )")
@@ -29,15 +31,27 @@ class ErtTest(BaseCClass):
 
 
 
-    def __init__(self, test_name, model_config, store_area=False):
-        if not os.path.exists(model_config):
-            raise IOError("The configuration file: %s does not exist" % model_config)
+    def __init__(self, test_name, model_config = None, config_dict = None, store_area=False):
+        if model_config is None and config_dict is None:
+            raise ValueError("Must suuply either model_config or config_dict argument")
+
+        work_area = TestArea( test_name )
+        work_area.convertToCReference( self )
+
+        if model_config:
+            work_area.copy_parent_content( model_config )
+            res_config = ResConfig( user_config_file = os.path.basename(model_config) )
         else:
-            c_ptr = self._alloc(test_name, model_config)
-            super(ErtTest, self).__init__(c_ptr)
-            self.setStore(store_area)
+            work_area.copy_directory_content( work_area.get_original_cwd( ))
+            res_config = ResConfig( config = config_dict )
+
+        res_config.convertToCReference( self )
+        c_ptr = self._alloc(work_area, res_config)
+        super(ErtTest, self).__init__(c_ptr)
+        self.setStore(store_area)
 
         self.__ert = None
+
 
     def setStore(self, store):
         self._set_store(store)
@@ -87,11 +101,12 @@ class ErtTest(BaseCClass):
 
 
 class ErtTestContext(object):
-    def __init__(self, test_name, model_config, store_area=False):
+    def __init__(self, test_name, model_config = None, config_dict = None, store_area=False):
         self.__test_name = test_name
         self.__model_config = model_config
         self.__store_area = store_area
-        self.__test_context = ErtTest(self.__test_name, self.__model_config, store_area=self.__store_area)
+        self.__config_dict = config_dict
+        self.__test_context = ErtTest(self.__test_name, model_config = self.__model_config, config_dict = config_dict, store_area=self.__store_area)
 
 
     def __enter__(self):
