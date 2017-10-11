@@ -9,7 +9,7 @@ from res.enkf.enums import EnkfRunType, EnkfInitModeEnum
 
 
 class SimulationContext(object):
-    def __init__(self, ert, init_fs, result_fs, mask, itr , verbose=False):
+    def __init__(self, ert, sim_fs, mask, itr , verbose=False):
         self._ert = ert
         """ :type: res.enkf.EnKFMain """
         max_runtime = ert.analysisConfig().get_max_runtime()
@@ -26,7 +26,7 @@ class SimulationContext(object):
 
         subst_list = self._ert.getDataKW( )
         path_fmt = self._ert.getModelConfig().getRunpathFormat()
-        self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, init_fs, result_fs, None, mask, path_fmt, subst_list, itr)
+        self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, sim_fs, None, mask, path_fmt, subst_list, itr)
 
         
     def addSimulation(self, iens):
@@ -97,8 +97,8 @@ class SimulationContext(object):
         fmt =  fmt % (running, numRunn, numSucc, numFail, numWait)
         return 'SimulationContext(%s)' % fmt
 
-    def get_result_fs(self):
-        return self._run_context.get_result_fs( )
+    def get_sim_fs(self):
+        return self._run_context.get_sim_fs( )
 
 
     def get_run_context(self):

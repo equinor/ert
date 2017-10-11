@@ -436,7 +436,7 @@ void gen_data_config_update_active(gen_data_config_type * config, const forward_
            i.e. we update the on-disk representation.
         */
         char * filename = util_alloc_sprintf("%s_active" , config->key );
-        FILE * stream   = enkf_fs_open_case_tstep_file( forward_load_context_get_result_fs( load_context ) , 
+        FILE * stream   = enkf_fs_open_case_tstep_file( forward_load_context_get_sim_fs( load_context ) , 
 							filename , 
 							report_step , 
 							"w");

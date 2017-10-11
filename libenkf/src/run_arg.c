@@ -43,8 +43,7 @@ struct run_arg_struct {
   run_mode_type           run_mode;             /* What type of run this is */
   int                     queue_index;          /* The job will in general have a different index in the queue than the iens number. */
 
-  enkf_fs_type          * init_fs;
-  enkf_fs_type          * result_fs;
+  enkf_fs_type          * sim_fs;
   enkf_fs_type          * update_target_fs;
 
   /******************************************************************/
@@ -59,8 +58,7 @@ UTIL_IS_INSTANCE_FUNCTION( run_arg , RUN_ARG_TYPE_ID )
 
 
 static run_arg_type * run_arg_alloc(const char * run_id,
-                                    enkf_fs_type * init_fs ,
-                                    enkf_fs_type * result_fs ,
+                                    enkf_fs_type * sim_fs ,
                                     enkf_fs_type * update_target_fs ,
                                     int iens ,
                                     run_mode_type run_mode          ,
@@ -68,14 +66,13 @@ static run_arg_type * run_arg_alloc(const char * run_id,
                                     int step2                       ,
                                     int iter                        ,
                                     const char * runpath) {
-  if ((result_fs != NULL) && (result_fs == update_target_fs))
-    util_abort("%s: internal error - can  not have result_fs == update_target_fs \n",__func__);
+  if ((sim_fs != NULL) && (sim_fs == update_target_fs))
+    util_abort("%s: internal error - can  not have sim_fs == update_target_fs \n",__func__);
   {
     run_arg_type * run_arg = util_malloc(sizeof * run_arg );
     UTIL_TYPE_ID_INIT(run_arg , RUN_ARG_TYPE_ID);
     run_arg->run_id = util_alloc_string_copy( run_id );
-    run_arg->init_fs = init_fs;
-    run_arg->result_fs = result_fs;
+    run_arg->sim_fs = sim_fs;
     run_arg->update_target_fs = update_target_fs;
 
     run_arg->iens = iens;
@@ -101,18 +98,18 @@ static run_arg_type * run_arg_alloc(const char * run_id,
 
 
 
-run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * init_fs , enkf_fs_type * result_fs, int iens , int iter , const char * runpath) {
-  return run_arg_alloc(run_id, init_fs , result_fs , NULL , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
+run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * sim_fs, int iens , int iter , const char * runpath) {
+  return run_arg_alloc(run_id, sim_fs , NULL , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
 }
 
 
-run_arg_type * run_arg_alloc_INIT_ONLY(const char * run_id, enkf_fs_type * init_fs , int iens , int iter , const char * runpath) {
-  return run_arg_alloc(run_id , init_fs , NULL , NULL , iens , INIT_ONLY , 0 , 0 , iter , runpath);
+run_arg_type * run_arg_alloc_INIT_ONLY(const char * run_id, enkf_fs_type * sim_fs , int iens , int iter , const char * runpath) {
+  return run_arg_alloc(run_id , sim_fs , NULL , iens , INIT_ONLY , 0 , 0 , iter , runpath);
 }
 
 
-run_arg_type * run_arg_alloc_SMOOTHER_RUN(const char * run_id , enkf_fs_type * simulate_fs , enkf_fs_type * update_target_fs , int iens , int iter , const char * runpath) {
-  return run_arg_alloc(run_id, simulate_fs , simulate_fs , update_target_fs , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
+run_arg_type * run_arg_alloc_SMOOTHER_RUN(const char * run_id , enkf_fs_type * sim_fs , enkf_fs_type * update_target_fs , int iens , int iter , const char * runpath) {
+  return run_arg_alloc(run_id, sim_fs, update_target_fs , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
 }
 
 
@@ -228,21 +225,13 @@ void run_arg_set_run_status( run_arg_type * run_arg , run_status_type run_status
 
 
 
-enkf_fs_type * run_arg_get_init_fs(const run_arg_type * run_arg) {
-  if (run_arg->init_fs)
-    return run_arg->init_fs;
-  else {
-    util_abort("%s: internal error - tried to access run_arg->init_fs when init_fs == NULL\n",__func__);
-    return NULL;
-  }
-}
 
 
-enkf_fs_type * run_arg_get_result_fs(const run_arg_type * run_arg) {
-  if (run_arg->result_fs)
-    return run_arg->result_fs;
+enkf_fs_type * run_arg_get_sim_fs(const run_arg_type * run_arg) {
+  if (run_arg->sim_fs)
+    return run_arg->sim_fs;
   else {
-    util_abort("%s: internal error - tried to access run_arg->result_fs when result_fs == NULL\n",__func__);
+    util_abort("%s: internal error - tried to access run_arg->sim_fs when sim_fs == NULL\n",__func__);
     return NULL;
   }
 }

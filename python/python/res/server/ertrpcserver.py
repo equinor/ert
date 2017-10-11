@@ -168,7 +168,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
     def startSimulationBatch(self, initialization_case_name, result_case_name, simulation_count):
         fs_manager = self.ert.getEnkfFsManager()
         init_fs = fs_manager.getFileSystem(initialization_case_name)
-        result_fs = fs_manager.getFileSystem(result_case_name)
+        sim_fs = fs_manager.getFileSystem(result_case_name)
         mask = BoolVector( initial_size = simulation_count, default_value = True )
         with self._session.lock:
             if not self.isRunning():
@@ -177,7 +177,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
                 self.ert.addDataKW("<WPRO_RUN_COUNT>", str(self._session.batch_number))
                 self.ert.addDataKW("<ELCO_RUN_COUNT>", str(self._session.batch_number))
-                self._session.simulation_context = SimulationContext(self.ert, result_fs, result_fs, mask , self._session.batch_number, verbose=self._verbose_queue)
+                self._session.simulation_context = SimulationContext(self.ert, sim_fs, mask , self._session.batch_number, verbose=self._verbose_queue)
                 self._session.batch_number += 1
 
 
@@ -195,13 +195,13 @@ class ErtRPCServer(SimpleXMLRPCServer):
         state = self.ert.getRealisation(iens)
         state.addSubstKeyword("GEO_ID", "%d" % geo_id)
 
-        result_fs = self._session.simulation_context.get_result_fs( )
-        self._initializeRealization(result_fs, geo_id, iens, keywords)
+        sim_fs = self._session.simulation_context.get_sim_fs( )
+        self._initializeRealization(sim_fs, geo_id, iens, keywords)
         self.ert.createRunpath( self._session.simulation_context.get_run_context( ) , iens = iens)
         self._session.simulation_context.addSimulation(iens)
 
 
-    def _initializeRealization(self, result_fs, geo_id, iens, keywords):
+    def _initializeRealization(self, sim_fs, geo_id, iens, keywords):
         ens_config = self.ert.ensembleConfig()
 
         # Copy all parameter all parameter values which are not given by @keywords from the
@@ -215,7 +215,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 init_id = NodeId(0, geo_id)
                 run_id = NodeId(0, iens)
                 data_node.load(geo_case_fs , init_id)
-                data_node.save(result_fs, run_id)
+                data_node.save(sim_fs, run_id)
 
         # All the values supplied externally by the keywords list will be written
         # directly into the result case.
@@ -227,10 +227,10 @@ class ErtRPCServer(SimpleXMLRPCServer):
             gen_kw.setValues(values)
 
             run_id = NodeId(0, iens)
-            data_node.save(result_fs, run_id)
+            data_node.save(sim_fs, run_id)
 
-        result_fs.fsync()
-        state_map = result_fs.getStateMap()
+        sim_fs.fsync()
+        state_map = sim_fs.getStateMap()
         state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
 
 

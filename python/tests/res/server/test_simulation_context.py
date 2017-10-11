@@ -34,8 +34,8 @@ class SimulationContextTest(ExtendedTestCase):
             first_half = fs_manager.getFileSystem("first_half")
             other_half = fs_manager.getFileSystem("other_half")
 
-            simulation_context1 = SimulationContext(ert, first_half, first_half , mask1 , 0)
-            simulation_context2 = SimulationContext(ert, other_half, other_half , mask2 , 0)
+            simulation_context1 = SimulationContext(ert, first_half, mask1 , 0)
+            simulation_context2 = SimulationContext(ert, other_half, mask2 , 0)
 
             ert.createRunpath( simulation_context1.get_run_context( ) )
             ert.createRunpath( simulation_context2.get_run_context( ) )
