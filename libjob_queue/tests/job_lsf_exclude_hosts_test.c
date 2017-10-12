@@ -26,28 +26,88 @@
 #include <ert/job_queue/lsf_driver.h>
 #include <ert/job_queue/lsf_job_stat.h>
 
-void test_submit(lsf_driver_type * driver, const char * cmd) {
-  {
-    char * node1 = "enern";
-    char * node2 = "toern";
-    char * node3 = "tre-ern.statoil.org";
-    char * black1 = util_alloc_sprintf("hname!='%s'", node1);
-    char * black2 = util_alloc_sprintf("hname!='%s'", node2);
-    char * black3 = util_alloc_sprintf("hname!='%s'", node3);
-    char * select = util_alloc_sprintf("select[%s && %s && %s]", black1, black2, black3);
+static char * add_excluded(lsf_driver_type * driver) {
+  char * node1 = "enern";
+  char * node2 = "toern";
+  char * node3 = "tre-ern.statoil.org";
+  char * black1 = util_alloc_sprintf("hname!='%s'", node1);
+  char * black2 = util_alloc_sprintf("hname!='%s'", node2);
+  char * black3 = util_alloc_sprintf("hname!='%s'", node3);
 
-    lsf_driver_add_exclude_hosts(driver, node1);
-    lsf_driver_add_exclude_hosts(driver, node2);
-    lsf_driver_add_exclude_hosts(driver, node3);
+  lsf_driver_add_exclude_hosts(driver, node1);
+  lsf_driver_add_exclude_hosts(driver, node2);
+  lsf_driver_add_exclude_hosts(driver, node3);
+  char * select = util_alloc_sprintf("select[%s && %s && %s]",
+                                     black1, black2, black3);
+  return select;
+}
 
-    {
-      stringlist_type * argv = lsf_driver_alloc_cmd(driver, "", "NAME", "bsub", 1, 0, NULL);
-      if (!stringlist_contains(argv, select)) {
-        printf("%s lsf_driver_alloc_cmd argv does not contain %s\n", __func__, select);
-        printf("%s lsf_driver_alloc_cmd was %s\n", __func__, stringlist_alloc_joined_string(argv, " "));
-        exit(1);
-      }
-    }
+static bool stringlist_contains_substring(const stringlist_type * lst,
+                                          const char * substr) {
+  for (int i = 0; i < stringlist_get_size(lst); i++)
+    if (strstr(stringlist_iget(lst, i), substr))
+      return true;
+  return false;
+}
+
+static void assert_stringlist_contains_substring(const stringlist_type * lst,
+                                                 const char * substr,
+                                                 const char * caller) {
+  if (!stringlist_contains_substring(lst, substr)) {
+    printf("%s stringlist does not contain \"%s\" as substring\n",
+           caller, substr);
+    printf("\twas: %s\n", stringlist_alloc_joined_string(lst, " "));
+    exit(1);
+  }
+}
+
+
+void test_submit_with_select_resources() {
+  lsf_driver_type * driver = lsf_driver_alloc();
+
+  // mimic:  QUEUE_OPTION LSF LSF_RESOURCE span[hosts=1] (see ERT-1403)
+  lsf_driver_set_option(driver, "LSF_RESOURCE",
+                        "bs[yes] "
+                        "select[hname!='xxx' && hname!='yyy'] "
+                        "span[hosts=1]"
+    );
+
+  add_excluded(driver);
+  char * select =
+    "select[hname!='xxx' && hname!='yyy' && "
+    "hname!='enern' && hname!='toern' && hname!='tre-ern.statoil.org']";
+  stringlist_type * argv = lsf_driver_alloc_cmd(driver, "", "NAME", "bsub", 1, 0, NULL);
+  lsf_driver_free(driver);
+
+  assert_stringlist_contains_substring(argv, select, __func__);
+  assert_stringlist_contains_substring(argv, "span[hosts=1]", __func__);
+  assert_stringlist_contains_substring(argv, "bs[yes]", __func__);
+}
+
+
+void test_submit_with_resources() {
+  lsf_driver_type * driver = lsf_driver_alloc();
+  lsf_driver_set_option(driver, "LSF_RESOURCE", "span[hosts=1]");
+
+  char * select = add_excluded(driver);
+  stringlist_type * argv = lsf_driver_alloc_cmd(driver, "", "NAME", "bsub", 1, 0, NULL);
+  lsf_driver_free(driver);
+
+
+  assert_stringlist_contains_substring(argv, select, __func__);
+  assert_stringlist_contains_substring(argv, "span[hosts=1]", __func__);
+}
+
+void test_submit() {
+  lsf_driver_type * driver = lsf_driver_alloc();
+  char * select = add_excluded(driver);
+  stringlist_type * argv = lsf_driver_alloc_cmd(driver, "", "NAME", "bsub", 1, 0, NULL);
+  lsf_driver_free(driver);
+
+  if (!stringlist_contains(argv, select)) {
+    printf("%s lsf_driver_alloc_cmd argv does not contain %s\n", __func__, select);
+    printf("%s lsf_driver_alloc_cmd was %s\n", __func__, stringlist_alloc_joined_string(argv, " "));
+    exit(1);
   }
 }
 
@@ -82,11 +142,10 @@ void test_bjobs_parse_hosts() {
 }
 
 int main(int argc, char ** argv) {
-  {
-    lsf_driver_type * driver = lsf_driver_alloc();
-    test_submit(driver, argv[1]);
-    lsf_driver_free(driver);
-  }
+  test_submit();
+  test_submit_with_resources();
+  test_submit_with_select_resources();
+
   test_bjobs_parse_hosts();
   exit(0);
 }
