@@ -652,13 +652,9 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
                                                                                     GEN_DATA);
 
 
-  if (stringlist_get_size( keylist_GEN_DATA) > 0) {
-    if (last_report <= 0) {
-      res_log_add_message( LOG_ERROR, stderr, "Trying to load GEN_DATA without properly set last_report - THIS WILL FAIL.", false);
-      stringlist_free( keylist_GEN_DATA );
-      return;
-    }
-  }
+  if (stringlist_get_size( keylist_GEN_DATA) > 0) 
+    if (last_report <= 0)
+      res_log_add_message( LOG_WARNING, NULL , "Trying to load GEN_DATA without properly set last_report - will only look for step 0 data.", false);
 
 
   const run_arg_type * run_arg       = forward_load_context_get_run_arg( load_context );
@@ -670,7 +666,7 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
   for (int ikey=0; ikey < stringlist_get_size( keylist_GEN_DATA ); ikey++) {
     enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( keylist_GEN_DATA , ikey));
 
-    for (int report_step = run_arg_get_load_start( run_arg ); report_step <= last_report; report_step++) {
+    for (int report_step = run_arg_get_load_start( run_arg ); report_step <= util_int_max(0, last_report); report_step++) {
 
       if (!enkf_node_internalize(node , report_step))
         continue;
