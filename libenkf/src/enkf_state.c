@@ -657,23 +657,28 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
       res_log_add_message( LOG_WARNING, NULL , "Trying to load GEN_DATA without properly set last_report - will only look for step 0 data.", false);
 
 
-  const run_arg_type * run_arg       = forward_load_context_get_run_arg( load_context );
-  enkf_fs_type * sim_fs              = run_arg_get_sim_fs( run_arg );
-  member_config_type * my_config     = enkf_state->my_config;
-  const int  iens                    = member_config_get_iens( my_config );
-
+  const run_arg_type * run_arg            = forward_load_context_get_run_arg( load_context );
+  enkf_fs_type * sim_fs                   = run_arg_get_sim_fs( run_arg );
+  member_config_type * my_config          = enkf_state->my_config;
+  const int  iens                         = member_config_get_iens( my_config );
+  const ensemble_config_type * ens_config = enkf_state_get_ensemble_config( enkf_state );
 
   for (int ikey=0; ikey < stringlist_get_size( keylist_GEN_DATA ); ikey++) {
-    enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( keylist_GEN_DATA , ikey));
+    const enkf_config_node_type * config_node = ensemble_config_get_node( ens_config , stringlist_iget( keylist_GEN_DATA , ikey));
 
+    /* 
+       This for loop should probably be changed to use the report
+       steps configured in the gen_data_config object, instead of
+       spinning through them all.
+    */
+    printf("%s: %s \n",__func__ , stringlist_iget( keylist_GEN_DATA , ikey));
     for (int report_step = run_arg_get_load_start( run_arg ); report_step <= util_int_max(0, last_report); report_step++) {
-
-      if (!enkf_node_internalize(node , report_step))
-        continue;
-      if (!enkf_node_has_func(node, forward_load_func))
+      if (!enkf_config_node_internalize(config_node , report_step))
         continue;
 
       forward_load_context_select_step(load_context, report_step);
+      enkf_node_type * node = enkf_node_alloc( config_node );
+
       if (enkf_node_forward_load(node , load_context )) {
         node_id_type node_id = {.report_step = report_step ,
                                 .iens = iens };
@@ -693,6 +698,7 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
           free( msg );
         }
       }
+      enkf_node_free( node );
     }
   }
   stringlist_free( keylist_GEN_DATA );
