@@ -3,7 +3,7 @@ import argparse
 import socket
 import sys
 
-from ert.server.ertrpcserver import ErtRPCServer
+from res.server.ertrpcserver import ErtRPCServer
 
 default_port = 0
 
@@ -51,3 +51,4 @@ except KeyboardInterrupt:
     except Exception as e:
         print("Unable to stop server 'gracefully'!")
         raise e
+
