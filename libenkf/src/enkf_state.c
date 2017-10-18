@@ -1239,37 +1239,35 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, const run_arg_type * run
      -----------------------------------------------------------------------------------------
   */
 
+  const shared_info_type * shared_info   = enkf_state->shared_info;
+  const model_config_type * model_config = shared_info->model_config;
+  int iens                               = enkf_state_get_iens( enkf_state );
+  const char * base_name                 = model_config_get_gen_kw_export_name(model_config);
+  value_export_type * export             = value_export_alloc( run_arg_get_runpath( run_arg ), base_name );
+
   stringlist_type * key_list = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , PARAMETER );
-  if(stringlist_get_size( key_list ) > 0)
-  {
-    const shared_info_type * shared_info   = enkf_state->shared_info;
-    const model_config_type * model_config = shared_info->model_config;
-    int iens                               = enkf_state_get_iens( enkf_state );
-    const char * base_name                 = model_config_get_gen_kw_export_name(model_config);
-    value_export_type * export             = value_export_alloc( run_arg_get_runpath( run_arg ), base_name );
+  for (int ikey = 0; ikey < stringlist_get_size( key_list ); ikey++) {
+    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_state->ensemble_config, stringlist_iget( key_list , ikey));
+    enkf_node_type * enkf_node = enkf_node_alloc( config_node );
+    bool forward_init = enkf_node_use_forward_init( enkf_node );
+    node_id_type node_id = {.report_step = run_arg_get_step1(run_arg),
+                            .iens = iens };
 
-    for (int ikey = 0; ikey < stringlist_get_size( key_list ); ikey++) {
-      enkf_config_node_type * config_node = ensemble_config_get_node( enkf_state->ensemble_config, stringlist_iget( key_list , ikey));
-      enkf_node_type * enkf_node = enkf_node_alloc( config_node );
-      bool forward_init = enkf_node_use_forward_init( enkf_node );
-      node_id_type node_id = {.report_step = run_arg_get_step1(run_arg),
-                              .iens = iens };
+    if ((run_arg_get_step1(run_arg) == 0) && (forward_init)) {
 
-      if ((run_arg_get_step1(run_arg) == 0) && (forward_init)) {
-
-        if (enkf_node_has_data( enkf_node , fs , node_id))
-          enkf_node_load(enkf_node, fs, node_id);
-        else
-          continue;
-      } else
+      if (enkf_node_has_data( enkf_node , fs , node_id))
         enkf_node_load(enkf_node, fs, node_id);
+      else
+        continue;
+    } else
+      enkf_node_load(enkf_node, fs, node_id);
 
-      enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export , run_arg_get_step1(run_arg));
-      enkf_node_free(enkf_node);
-    }
-    value_export( export );
-    value_export_free( export );
+    enkf_node_ecl_write(enkf_node , run_arg_get_runpath( run_arg ) , export , run_arg_get_step1(run_arg));
+    enkf_node_free(enkf_node);
   }
+  value_export( export );
+
+  value_export_free( export );
   stringlist_free( key_list );
 }
 
