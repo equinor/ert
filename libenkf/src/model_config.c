@@ -507,10 +507,13 @@ void model_config_init(model_config_type * model_config ,
     }
 
     if (!model_config_select_history( model_config , source_type , sched_file , refcase ))
-      if (!model_config_select_history( model_config , DEFAULT_HISTORY_SOURCE , sched_file , refcase ))
-        if (!model_config_select_any_history( model_config , sched_file , refcase))
-          fprintf(stderr,"** Warning:: Do not have enough information to select a history source \n");
-
+      if (!model_config_select_history( model_config , DEFAULT_HISTORY_SOURCE , sched_file , refcase )) {
+        model_config_select_any_history( model_config , sched_file , refcase);
+        /* If even the last call return false, it means the configuration does not have any of
+         * these keys: HISTORY_SOURCE, SCHEDULE, REFCASE.
+         * History matching won't be supported for this configuration.
+         */
+      }
   }
 
   if (model_config->history != NULL) {
