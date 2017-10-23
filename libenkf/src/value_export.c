@@ -35,6 +35,14 @@ struct value_export_struct {
 };
 
 
+static void backup_if_existing(const char * filename) {
+  if(util_file_exists(filename)) {
+    char * backup_file_name = util_alloc_filename(NULL, filename, "old");
+    util_move_file(filename, backup_file_name);
+    free(backup_file_name);
+  }
+}
+
 
 value_export_type * value_export_alloc(const char * directory, const char * base_name) {
   value_export_type * export = util_malloc( sizeof * export );
@@ -76,18 +84,17 @@ void value_export_txt__(const value_export_type * export, const char * filename)
 }
 
 void value_export_txt(const value_export_type * export) {
-  const int size = double_vector_size( export->values );
-  if (size > 0) {
-    char * filename = util_alloc_filename( export->directory , export->base_name, "txt");
-    value_export_txt__( export, filename );
-    free( filename );
-  }
+  char * filename = util_alloc_filename( export->directory , export->base_name, "txt");
+  backup_if_existing(filename);
+  value_export_txt__( export, filename );
+  free( filename );
 }
 
 void value_export_json(const value_export_type * export) {
+  char * filename = util_alloc_filename( export->directory , export->base_name, "json");
+  backup_if_existing(filename);
   const int size = double_vector_size( export->values );
   if (size > 0) {
-    char * filename = util_alloc_filename( export->directory , export->base_name, "json");
     FILE * stream = util_fopen( filename , "w");
     fprintf(stream, "{\n");
     for (int i=0; i < size; i++) {
@@ -100,8 +107,8 @@ void value_export_json(const value_export_type * export) {
     }
     fprintf(stream, "}\n");
     fclose( stream );
-    free( filename );
   }
+  free( filename );
 }
 
 void value_export(const value_export_type * export) {
