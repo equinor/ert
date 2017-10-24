@@ -32,7 +32,9 @@ class EnkfObs(BaseCClass):
     _alloc                    = EnkfPrototype("void* enkf_obs_alloc( history , time_map , ecl_grid , ecl_sum , ens_config )", bind = False)
     _free                     = EnkfPrototype("void enkf_obs_free( enkf_obs )")
     _get_size                 = EnkfPrototype("int enkf_obs_get_size( enkf_obs )")
-    _load                     = EnkfPrototype("bool enkf_obs_load( enkf_obs , char*)")
+    _valid                    = EnkfPrototype("bool enkf_obs_is_valid(enkf_obs)")
+    _load                     = EnkfPrototype("void enkf_obs_load(enkf_obs, char*, double)")
+
     _clear                    = EnkfPrototype("void enkf_obs_clear( enkf_obs )")
     _alloc_typed_keylist      = EnkfPrototype("stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)")
     _alloc_matching_keylist   = EnkfPrototype("stringlist_obj enkf_obs_alloc_matching_keylist(enkf_obs, char*)")
@@ -159,10 +161,16 @@ class EnkfObs(BaseCClass):
     def localScaleStd( self , local_obsdata , scale_factor):
         return self._local_scale_std(local_obsdata, scale_factor)
 
-    def load(self , config_file):
+    @property
+    def valid(self):
+        return self._valid()
+
+    def load(self, config_file, std_cutoff=0.0):
         if not os.path.isfile( config_file ):
             raise IOError('The observation config file "%s" does not exist.' % config_file)
-        return self._load( config_file )
+        if not self.valid:
+            raise ValueError('Invalid enkf_obs instance.  Cannot load config file.')
+        self._load(config_file, std_cutoff)
 
     def clear(self):
         self._clear()
@@ -171,4 +179,5 @@ class EnkfObs(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return 'EnkfObs(len = %d) at 0x%x' % (len(self), self._address())
+        validity = 'valid' if self.valid else 'invalid'
+        return self._create_repr('%s, len=%d' % (validity, len(self)))

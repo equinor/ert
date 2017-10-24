@@ -161,7 +161,10 @@ class EnKFObsTest(ExtendedTestCase):
         ensemble_config = EnsembleConfig()
         obs = EnkfObs(ensemble_config)
         self.assertEqual( len(obs) , 0 )
-        self.assertFalse( obs.load(self.obs_config) )
+
+        self.assertFalse(obs.valid)
+        with self.assertRaises(ValueError):
+            obs.load(self.obs_config)
         self.assertEqual( len(obs) , 0 )
 
         
@@ -177,8 +180,9 @@ class EnKFObsTest(ExtendedTestCase):
         with self.assertRaises(IOError):
             obs.load("/does/not/exist")
 
-        self.assertTrue( obs.load(self.obs_config) )
-        self.assertEqual( len(obs) , 33 )
+        obs.load(self.obs_config)
+        self.assertTrue(obs.valid)
+        self.assertEqual(len(obs), 33)
         obs.clear()
         self.assertEqual( len(obs) , 0 )
         
