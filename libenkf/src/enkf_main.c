@@ -46,10 +46,11 @@
 #include <ert/util/node_ctype.h>
 #include <ert/util/string_util.h>
 #include <ert/util/type_vector_functions.h>
-#include <ert/res_util/subst_list.h>
 
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_io_config.h>
+
+#include <ert/res_util/subst_list.h>
 
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/job_queue_manager.h>
@@ -93,6 +94,7 @@
 #include <ert/enkf/misfit_ensemble.h>
 #include <ert/enkf/ert_template.h>
 #include <ert/enkf/rng_config.h>
+#include <ert/enkf/rng_manager.h>
 #include <ert/enkf/enkf_plot_data.h>
 #include <ert/enkf/ranking_table.h>
 #include <ert/enkf/enkf_defaults.h>
@@ -146,7 +148,8 @@ struct enkf_main_struct {
 
   const res_config_type  * res_config;
   local_config_type      * local_config;       /* Holding all the information about local analysis. */
-  rng_type               * rng;
+  rng_manager_type       * rng_manager;
+  rng_type               * shared_rng;
   ranking_table_type     * ranking_table;
 
   enkf_obs_type          * obs;
@@ -310,8 +313,11 @@ static void enkf_main_add_internal_subst_kw( enkf_main_type * enkf_main , const 
 }
 
 void enkf_main_free(enkf_main_type * enkf_main){
-  if (enkf_main->rng != NULL)
-    rng_free( enkf_main->rng );
+  if (enkf_main->rng_manager)
+    rng_manager_free( enkf_main->rng_manager );
+
+  if (enkf_main->shared_rng)
+    rng_free( enkf_main->shared_rng );
 
   if (enkf_main->obs)
     enkf_obs_free(enkf_main->obs);
@@ -1072,7 +1078,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   assert_size_equal( enkf_main_get_ensemble_size( enkf_main ) , ens_mask );
 
   if (analysis_module_check_option( module , ANALYSIS_NEED_ED)) {
-    E = obs_data_allocE( obs_data , enkf_main->rng , active_ens_size );
+    E = obs_data_allocE( obs_data , enkf_main->shared_rng , active_ens_size );
     D = obs_data_allocD( obs_data , E , S );
 
     assert_matrix_size( E , "E" , active_size , active_ens_size);
@@ -1087,7 +1093,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
   /*****************************************************************/
 
-  analysis_module_init_update( module , ens_mask , S , R , dObs , E , D, enkf_main->rng);
+  analysis_module_init_update( module , ens_mask , S , R , dObs , E , D, enkf_main->shared_rng);
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
@@ -1128,7 +1134,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     }
 
     if (localA == NULL)
-      analysis_module_initX( module , X , NULL , S , R , dObs , E , D, enkf_main->rng);
+      analysis_module_initX( module , X , NULL , S , R , dObs , E , D, enkf_main->shared_rng);
 
 
     while (!hash_iter_is_complete( dataset_iter )) {
@@ -1144,14 +1150,14 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
         if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
           if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
-            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->rng);
+            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->shared_rng);
           }
           else
-            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->rng);
+            analysis_module_updateA( module , localA , S , R , dObs , E , D , module_info, enkf_main->shared_rng);
         }
         else {
           if (analysis_module_check_option( module , ANALYSIS_USE_A)){
-            analysis_module_initX( module , X , localA , S , R , dObs , E , D, enkf_main->rng);
+            analysis_module_initX( module , X , localA , S , R , dObs , E , D, enkf_main->shared_rng);
           }
 
           matrix_inplace_matmul_mt2( A , X , tp );
@@ -1899,7 +1905,8 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   res_log_open_empty();
   enkf_main->ensemble           = NULL;
   enkf_main->local_config       = NULL;
-  enkf_main->rng                = NULL;
+  enkf_main->rng_manager        = NULL;
+  enkf_main->shared_rng         = NULL;
   enkf_main->ens_size           = 0;
   enkf_main->res_config         = NULL;
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
@@ -1954,10 +1961,8 @@ rng_config_type * enkf_main_get_rng_config( const enkf_main_type * enkf_main ) {
 
 
 void enkf_main_rng_init( enkf_main_type * enkf_main) {
-  if (enkf_main->rng != NULL)
-    rng_config_init_rng(enkf_main_get_rng_config(enkf_main), enkf_main->rng);
-  else
-    enkf_main->rng = rng_config_alloc_init_rng(enkf_main_get_rng_config(enkf_main));
+  enkf_main->rng_manager = rng_config_alloc_rng_manager( enkf_main_get_rng_config(enkf_main) );
+  enkf_main->shared_rng = rng_manager_alloc_rng( enkf_main->rng_manager );
 }
 
 

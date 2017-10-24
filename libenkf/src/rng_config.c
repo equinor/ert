@@ -20,13 +20,13 @@
 
 #include <ert/util/mzran.h>
 #include <ert/util/util.h>
-#include <ert/util/rng.h>
 #include <ert/util/test_util.h>
 
 #include <ert/config/config_parser.h>
 #include <ert/config/config_schema_item.h>
 
 #include <ert/enkf/rng_config.h>
+#include <ert/enkf/rng_manager.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/model_config.h>
@@ -104,45 +104,22 @@ void rng_config_free( rng_config_type * rng) {
   free( rng );
 }
 
-rng_type * rng_config_init_rng__(const rng_config_type * rng_config, rng_type * rng) {
-  const char * seed_load  = rng_config_get_seed_load_file( rng_config );
+
+rng_manager_type * rng_config_alloc_rng_manager( const rng_config_type * rng_config ) {
   const char * seed_store = rng_config_get_seed_store_file( rng_config );
+  const char * seed_load  = rng_config_get_seed_load_file( rng_config );
+  rng_manager_type * rng_manager;
 
-  if (seed_load != NULL) {
-    if (util_file_exists( seed_load)) 
-      rng_load_state( rng , seed_load );
-    else {
-      /*
-         In the special case that seed_load == seed_store; we accept a
-         seed_load argument pointing to a non-existant file.
-      */
-      if (seed_store) {
-        if (util_string_equal( seed_store , seed_load))
-          rng_init( rng , INIT_DEV_URANDOM );
-        else
-          util_abort("%s: tried to load random seed from non-existing file:%s \n",__func__ , seed_load);
-      }
-    }
-  } else
-    rng_init( rng , INIT_DEV_URANDOM );
+  if (seed_load && util_file_exists( seed_load ))
+    rng_manager = rng_manager_alloc( seed_load );
+  else
+    rng_manager = rng_manager_alloc_random( );
 
+  if (seed_store)
+    rng_manager_save_state( rng_manager , seed_store );
 
-  if (seed_store != NULL) 
-    rng_save_state( rng , seed_store );
-
-  return rng;
+  return rng_manager;
 }
-
-rng_type * rng_config_alloc_init_rng( const rng_config_type * rng_config ) {
-  rng_type * rng = rng_alloc(rng_config_get_type(rng_config) , INIT_DEFAULT);
-  return rng_config_init_rng__(rng_config, rng);
-}
-
-
-void rng_config_init_rng( const rng_config_type * rng_config, rng_type * rng ) {
-  rng_config_init_rng__(rng_config, rng);
-}
-
 
 
 /*****************************************************************/
