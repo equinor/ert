@@ -35,6 +35,7 @@ from res.enkf.observations.summary_observation import SummaryObservation
 class EnKFTest(ExtendedTestCase):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
+        self.case_directory_custom_kw = self.createTestPath("local/snake_oil/")
 
 
     def test_repr( self ):
@@ -231,4 +232,24 @@ class EnKFTest(ExtendedTestCase):
             arg0 = run_context[0]
             arg2 = run_context.iensGet( 2 )
             #self.assertEqual( arg0 , arg2 )
+    
+    
+    def test_run_context_from_external_folder(self):
+        with TestAreaContext('enkf_test') as work_area:
+            work_area.copy_directory(self.case_directory_custom_kw)
+            res_config = ResConfig('snake_oil/snake_oil.ert')
+            main = EnKFMain(res_config)
+            fs_manager = main.getEnkfFsManager()
+            fs = fs_manager.getCurrentFileSystem( )
+            
+            mask = BoolVector(default_value = False , initial_size = 10)
+            mask[0] = True
+            run_context = main.getRunContextENSEMPLE_EXPERIMENT( fs , mask )
 
+            self.assertEqual( len(run_context) , 1 )
+            
+            job_queue = main.get_queue_config().create_job_queue()
+            main.getEnkfSimulationRunner().createRunPath( run_context )
+            num = main.getEnkfSimulationRunner().runEnsembleExperiment(job_queue, run_context)
+            
+            self.assertEqual( num , 1 )

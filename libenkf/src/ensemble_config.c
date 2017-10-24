@@ -458,11 +458,11 @@ void ensemble_config_init_CUSTOM_KW(ensemble_config_type * ensemble_config, cons
             config_content_node_type * node = config_content_item_iget_node(custom_kw_item, i);
 
             const char * key         = config_content_node_iget(node, 0);
-            const char * result_file = config_content_node_iget_as_path(node, 1);
+            const char * result_file = config_content_node_iget(node, 1);
             const char * output_file = NULL;
 
             if(config_content_node_get_size(node) > 2) {
-                output_file = config_content_node_iget_as_path(node, 2);
+                output_file = config_content_node_iget(node, 2);
             }
 
             enkf_config_node_type * config_node = ensemble_config_add_custom_kw(ensemble_config, key, result_file, output_file);
