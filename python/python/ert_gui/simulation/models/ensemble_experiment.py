@@ -38,11 +38,10 @@ class EnsembleExperiment(BaseRunModel):
         
     def runSimulations(self, arguments ):
         self.runSimulations__(  arguments , "Running ensemble experiment...")
-               
+
 
     def create_context(self, arguments):
         fs_manager = self.ert().getEnkfFsManager()
-        init_fs = fs_manager.getCurrentFileSystem( )
         result_fs = fs_manager.getCurrentFileSystem( )
 
         model_config = self.ert().getModelConfig( )
@@ -50,5 +49,9 @@ class EnsembleExperiment(BaseRunModel):
         subst_list = self.ert().getDataKW( )
         itr = 0
         mask = arguments["active_realizations"]
-        run_context = ErtRunContext.ensemble_experiment( init_fs, result_fs, mask, runpath_fmt, subst_list, itr)
+        run_context = ErtRunContext.ensemble_experiment(result_fs,
+                                                        mask,
+                                                        runpath_fmt,
+                                                        subst_list,
+                                                        itr)
         return run_context
