@@ -38,7 +38,7 @@ int test_load_manually_to_new_case(enkf_main_type * enkf_main) {
 
 
   enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs, fs , iens , iter , "simulations/run0");
+  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs, iens , iter , "simulations/run0");
   {
     arg_pack_type * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , enkf_main_iget_state(enkf_main, 0));

@@ -33,9 +33,9 @@ bool check_ecl_sum_loaded(const enkf_main_type * enkf_main)
   enkf_fs_type    * fs       = enkf_main_get_fs( enkf_main );
   stringlist_type * msg_list = stringlist_alloc_new();
   enkf_state_type * state1   = enkf_main_iget_state( enkf_main , 0 );
-  run_arg_type * run_arg1    = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, fs , 0 , 0 , "simulations/run0");
+  run_arg_type * run_arg1    = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, 0 , 0 , "simulations/run0");
   enkf_state_type * state2   = enkf_main_iget_state( enkf_main , 1 );
-  run_arg_type * run_arg2    = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, fs , 0 , 0 , "simulations/run1");
+  run_arg_type * run_arg2    = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, 0 , 0 , "simulations/run1");
   
 
   state_map_type * state_map = enkf_fs_get_state_map(fs);
