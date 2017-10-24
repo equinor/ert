@@ -42,7 +42,9 @@ extern "C" {
 #include <ert/enkf/local_obsdata_node.h>
 #include <ert/enkf/local_obsdata.h>
 
-  bool            enkf_obs_have_obs( const enkf_obs_type * enkf_obs );
+  bool enkf_obs_have_obs(const enkf_obs_type * enkf_obs);
+  bool enkf_obs_is_valid(const enkf_obs_type*);
+
   enkf_obs_type * enkf_obs_alloc( const history_type * history ,
                                   time_map_type * external_time_map ,
                                   const ecl_grid_type * grid ,
@@ -56,9 +58,7 @@ extern "C" {
   void enkf_obs_add_obs_vector(enkf_obs_type * enkf_obs,
                                const obs_vector_type * vector);
 
-  bool              enkf_obs_load(enkf_obs_type * enkf_obs,
-                                  const char           * config_file,
-                                  double std_cutoff);
+  void enkf_obs_load(enkf_obs_type*, const char*, double);
   void enkf_obs_clear( enkf_obs_type * enkf_obs );
 
   void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,

@@ -1291,32 +1291,13 @@ bool conf_instance_validate_sub_instances(
 
 
 bool conf_instance_validate(
-  const conf_instance_type * conf_instance)
-{
-  bool ok = true;
-
-  if(conf_instance == NULL)
-  {
-    printf("%s: Trying to dereference NULL pointer.\n", __func__);
-    return false;
-  }
-
-  if(!conf_instance_has_required_items(conf_instance))
-    ok = false;
-
-  if(!conf_instance_has_valid_mutexes(conf_instance))
-    ok = false;
-
-  if(!conf_instance_has_valid_items(conf_instance))
-    ok = false;
-
-  if(!conf_instance_has_required_sub_instances(conf_instance))
-    ok = false;
-
-  if(!conf_instance_validate_sub_instances(conf_instance))
-    ok = false;
-
-  return ok;
+  const conf_instance_type * conf_instance) {
+  return conf_instance
+    && conf_instance_has_required_items(conf_instance)
+    && conf_instance_has_valid_mutexes(conf_instance)
+    && conf_instance_has_valid_items(conf_instance)
+    && conf_instance_has_required_sub_instances(conf_instance)
+    && conf_instance_validate_sub_instances(conf_instance);
 }
 
 

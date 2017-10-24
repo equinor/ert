@@ -51,7 +51,7 @@ class EnKFMain(BaseCClass):
     _add_data_kw = EnkfPrototype("void enkf_main_add_data_kw(enkf_main, char*, char*)")
     _resize_ensemble = EnkfPrototype("void enkf_main_resize_ensemble(enkf_main, int)")
     _get_obs = EnkfPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
-    _load_obs = EnkfPrototype("void enkf_main_load_obs(enkf_main, char* , bool)")
+    _load_obs = EnkfPrototype("bool enkf_main_load_obs(enkf_main, char* , bool)")
     _get_templates = EnkfPrototype("ert_templates_ref enkf_main_get_templates(enkf_main)")
     _get_site_config_file = EnkfPrototype("char* enkf_main_get_site_config_file(enkf_main)")
     _get_history_length = EnkfPrototype("int enkf_main_get_history_length(enkf_main)")
@@ -238,7 +238,7 @@ class EnKFMain(BaseCClass):
         return self._get_obs( ).setParent(self)
 
     def loadObservations(self , obs_config_file , clear = True):
-        self._load_obs(obs_config_file , clear)
+        return self._load_obs(obs_config_file , clear)
 
     def get_templates(self):
         return self._get_templates( ).setParent(self)

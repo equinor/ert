@@ -284,17 +284,26 @@ void enkf_main_alloc_obs( enkf_main_type * enkf_main ) {
                                    enkf_main_get_ensemble_config(enkf_main));
 }
 
-void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file , bool clear_existing) {
+bool enkf_main_load_obs(enkf_main_type * enkf_main,
+                        const char * obs_config_file,
+                        bool clear_existing) {
   if (clear_existing)
     enkf_obs_clear( enkf_main->obs );
 
-  if (enkf_obs_load(enkf_main->obs ,
-                    obs_config_file ,
-                    analysis_config_get_std_cutoff(enkf_main_get_analysis_config(enkf_main)))) {
-    enkf_main_update_local_updates( enkf_main );
-  } else
-      fprintf(stderr,"** Warning: failed to load observation data from: %s \n",obs_config_file);
+  if (!enkf_obs_is_valid(enkf_main->obs)) {
+    fprintf(stderr,
+            "** Warning: failed to load observation data from: %s \n",
+            obs_config_file);
+    return false;
+  }
+
+  enkf_obs_load(enkf_main->obs ,
+                obs_config_file ,
+                analysis_config_get_std_cutoff(enkf_main_get_analysis_config(enkf_main)));
+  enkf_main_update_local_updates( enkf_main );
+  return true;
 }
+
 
 static void enkf_main_add_internal_subst_kw( enkf_main_type * enkf_main , const char * key , const char * value, const char * help_text) {
   subst_config_add_internal_subst_kw(enkf_main_get_subst_config(enkf_main), key, value, help_text);

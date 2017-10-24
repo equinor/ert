@@ -135,7 +135,7 @@ extern "C" {
   model_config_type           * enkf_main_get_model_config( const enkf_main_type * );
   local_config_type           * enkf_main_get_local_config( const enkf_main_type * enkf_main );
   const config_settings_type  * enkf_main_get_plot_config( const enkf_main_type * enkf_main );
-  void                          enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file , bool clear_existing);
+  bool                          enkf_main_load_obs(enkf_main_type *, const char *, bool);
   enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
   bool                          enkf_main_have_obs( const enkf_main_type * enkf_main );
   const analysis_config_type  * enkf_main_get_analysis_config(const enkf_main_type * );
@@ -289,14 +289,14 @@ extern "C" {
   void              enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path );
   bool              enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case);
   const      char * enkf_main_get_mount_root( const enkf_main_type * enkf_main);
-  
+
 
   state_map_type  * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path);
   time_map_type   * enkf_main_alloc_readonly_time_map( const enkf_main_type * enkf_main , const char * case_path );
 
   runpath_list_type    * enkf_main_get_runpath_list( const enkf_main_type * enkf_main );
   ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter);
-  
+
   queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main );
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
