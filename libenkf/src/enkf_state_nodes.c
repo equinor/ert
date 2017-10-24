@@ -86,7 +86,7 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
 
   {
     const run_arg_type * run_arg = forward_load_context_get_run_arg( load_context );
-    enkf_fs_type * result_fs = run_arg_get_result_fs( run_arg );
+    enkf_fs_type * sim_fs = run_arg_get_sim_fs( run_arg );
 
     member_config_type * my_config     = enkf_state->my_config;
     const int  iens                    = member_config_get_iens( my_config );
@@ -106,7 +106,7 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
         if (enkf_node_forward_load(enkf_node , load_context)) {
           node_id_type node_id = {.report_step = report_step ,
                                   .iens = iens };
-          enkf_node_store( enkf_node , result_fs, store_vectors , node_id );
+          enkf_node_store( enkf_node , sim_fs, store_vectors , node_id );
         } else {
           forward_load_context_update_result(load_context, LOAD_FAILURE);
           res_log_add_fmt_message(LOG_ERROR, NULL , "[%03d:%04d] Failed load data for FIELD node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
@@ -135,7 +135,7 @@ int enkf_state_forward_init(enkf_state_type * enkf_state ,
     while ( !hash_iter_is_complete(iter) ) {
       enkf_node_type * node = hash_iter_get_next_value(iter);
       if (enkf_node_use_forward_init(node)) {
-        enkf_fs_type * result_fs = run_arg_get_result_fs( run_arg );
+        enkf_fs_type * sim_fs = run_arg_get_sim_fs( run_arg );
         node_id_type node_id = {.report_step = 0 ,
                                 .iens = iens };
 
@@ -146,9 +146,9 @@ int enkf_state_forward_init(enkf_state_type * enkf_state ,
            instance, and not from the current run of e.g. RMS.
         */
 
-        if (!enkf_node_has_data( node , result_fs , node_id)) {
+        if (!enkf_node_has_data( node , sim_fs , node_id)) {
           if (enkf_node_forward_init(node , run_arg_get_runpath( run_arg ) , iens ))
-            enkf_node_store( node , result_fs , false , node_id );
+            enkf_node_store( node , sim_fs , false , node_id );
           else {
             char * init_file = enkf_config_node_alloc_initfile( enkf_node_get_config( node ) , run_arg_get_runpath(run_arg) , iens );
 

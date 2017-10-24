@@ -95,7 +95,7 @@ int main(int argc , char ** argv) {
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ) , "PARAM" );
       enkf_node_type * gen_param_node = enkf_node_alloc( config_node );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, fs , 0 , 0 , "simulations/run0");
+      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs , 0 , 0 , "simulations/run0");
 
       node_id_type node_id = {.report_step = 0 ,
                               .iens = 0};

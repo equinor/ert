@@ -248,8 +248,8 @@ const char * forward_load_context_get_run_path( const forward_load_context_type 
 }
 
 
-enkf_fs_type * forward_load_context_get_result_fs( const forward_load_context_type * load_context ) {
-  return run_arg_get_result_fs( load_context->run_arg );
+enkf_fs_type * forward_load_context_get_sim_fs( const forward_load_context_type * load_context ) {
+  return run_arg_get_sim_fs( load_context->run_arg );
 }
 
 

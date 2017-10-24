@@ -1339,7 +1339,7 @@ void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * ru
 
   if (init_mode != INIT_NONE) {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
-    enkf_fs_type * init_fs = run_arg_get_init_fs( run_arg );
+    enkf_fs_type * init_fs = run_arg_get_sim_fs( run_arg );
     enkf_state_initialize( enkf_state , init_fs , param_list , init_mode);
     stringlist_free( param_list );
   }
@@ -1371,7 +1371,7 @@ void enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_contex
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
-                                      ert_run_context_get_init_fs( run_context ),
+                                      ert_run_context_get_sim_fs( run_context ),
                                       param_list ,
                                       ert_run_context_get_iactive( run_context ),
                                       init_mode);
@@ -1502,7 +1502,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
     bool     verbose_queue    = enkf_main->verbose;
     const int active_ens_size = util_int_min( bool_vector_size( ert_run_context_get_iactive( run_context )) , enkf_main_get_ensemble_size( enkf_main ));
 
-    state_map_deselect_matching( enkf_fs_get_state_map( ert_run_context_get_init_fs( run_context )) ,
+    state_map_deselect_matching( enkf_fs_get_state_map( ert_run_context_get_sim_fs( run_context )) ,
                                  ert_run_context_get_iactive( run_context ), STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
 
     job_size = bool_vector_count_equal( ert_run_context_get_iactive(run_context) , true );
@@ -1528,7 +1528,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
       }
     }
 
-    enkf_fs_fsync( ert_run_context_get_result_fs( run_context ) );
+    enkf_fs_fsync( ert_run_context_get_sim_fs( run_context ) );
     if (totalFailed == 0)
       res_log_add_fmt_message( LOG_INFO , NULL , "All jobs complete and data loaded.");
 
@@ -1594,7 +1594,7 @@ void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type 
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
-                                      ert_run_context_get_init_fs( run_context ),
+                                      ert_run_context_get_sim_fs( run_context ),
                                       param_list ,
                                       ert_run_context_get_iactive( run_context ),
                                       ert_run_context_get_init_mode( run_context ));
@@ -1792,7 +1792,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main,
 
 
 ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter) {
-  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs, fs , iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , iter );
+  return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main)) , enkf_main_get_data_kw(enkf_main) , iter );
 }
 
 
@@ -2285,7 +2285,7 @@ int enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int it
   int result[ens_size];
   model_config_type * model_config = enkf_main_get_model_config(enkf_main);
 
-  ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs, fs , iactive , model_config_get_runpath_fmt( model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
+  ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs , iactive , model_config_get_runpath_fmt( model_config ) , enkf_main_get_data_kw(enkf_main) , iter );
   arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
   thread_pool_type * tp     = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
 

@@ -42,36 +42,33 @@ typedef struct ert_run_context_struct ert_run_context_type;
 
   ert_run_context_type * ert_run_context_alloc(run_mode_type run_mode,
                                                init_mode_type init_mode,
-                                               enkf_fs_type * init_fs, 
-                                               enkf_fs_type * simulate_fs ,
+                                               enkf_fs_type * sim_fs ,
                                                enkf_fs_type * target_update_fs ,
                                                bool_vector_type * iactive ,
                                                path_fmt_type * runpath_fmt ,
                                                subst_list_type * subst_list ,
                                                int iter);
 
-  ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * init_fs ,
-                                                                   enkf_fs_type * result_fs ,
+  ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * sim_fs ,
                                                                    bool_vector_type * iactive ,
                                                                    const path_fmt_type * runpath_fmt ,
                                                                    const subst_list_type * subst_list ,
                                                                    int iter);
 
-  ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * init_fs,
+  ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * sim_fs,
                                                          init_mode_type init_mode,
                                                          bool_vector_type * iactive ,
                                                          const path_fmt_type * runpath_fmt ,
                                                          const subst_list_type * subst_list ,
                                                          int iter);
 
-  ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * simulate_fs , enkf_fs_type * target_update_fs ,
+  ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs ,
                                                             bool_vector_type * iactive ,
                                                             const path_fmt_type * runpath_fmt ,
                                                             const subst_list_type * subst_list ,
                                                             int iter);
 
-  void                     ert_run_context_set_init_fs(ert_run_context_type * context,  enkf_fs_type * init_fs);
-  void                     ert_run_context_set_result_fs(ert_run_context_type * context, enkf_fs_type * result_fs);
+  void                     ert_run_context_set_sim_fs(ert_run_context_type * context, enkf_fs_type * sim_fs);
   void                     ert_run_context_set_update_target_fs(ert_run_context_type * context, enkf_fs_type * update_target_fs);
 
   void                     ert_run_context_free( ert_run_context_type * );
@@ -89,8 +86,7 @@ typedef struct ert_run_context_struct ert_run_context_type;
   init_mode_type           ert_run_context_get_init_mode( const ert_run_context_type * context );
   char                   * ert_run_context_alloc_run_id( );
 
-  enkf_fs_type * ert_run_context_get_init_fs(const ert_run_context_type * run_context);
-  enkf_fs_type * ert_run_context_get_result_fs(const ert_run_context_type * run_context);
+  enkf_fs_type * ert_run_context_get_sim_fs(const ert_run_context_type * run_context);
   enkf_fs_type * ert_run_context_get_update_target_fs(const ert_run_context_type * run_context);
 
   UTIL_IS_INSTANCE_HEADER( ert_run_context );

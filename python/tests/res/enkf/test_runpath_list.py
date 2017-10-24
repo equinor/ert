@@ -135,7 +135,7 @@ class RunpathListTest(ExtendedTestCase):
             runpath_fmt = ert.getModelConfig().getRunpathFormat( )
             subst_list = SubstitutionList( )
             itr = 0
-            run_context1 = ErtRunContext( EnkfRunType.INIT_ONLY , init_fs, None,None , mask , runpath_fmt, subst_list , itr )
+            run_context1 = ErtRunContext( EnkfRunType.INIT_ONLY , init_fs, None , mask , runpath_fmt, subst_list , itr )
 
             runner.createRunPath( run_context1 )
 
@@ -159,7 +159,7 @@ class RunpathListTest(ExtendedTestCase):
             runpath_fmt = ert.getModelConfig().getRunpathFormat( )
             subst_list = SubstitutionList( )
             itr = 0
-            run_context = ErtRunContext( EnkfRunType.INIT_ONLY , init_fs, None,None , mask , runpath_fmt, subst_list , itr )
+            run_context = ErtRunContext( EnkfRunType.INIT_ONLY , init_fs, None , mask , runpath_fmt, subst_list , itr )
             runner.createRunPath( run_context )
 
             # replace field file with symlink
