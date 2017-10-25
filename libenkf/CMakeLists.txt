@@ -81,6 +81,7 @@ add_library(enkf src/active_list.c
                  src/run_arg.c
                  src/runpath_list.c
                  src/site_config.c
+                 src/rng_manager.c
                  src/res_config.c
                  src/state_map.c
                  src/state_map.c
@@ -152,6 +153,7 @@ foreach (test   enkf_active_list
                 obs_vector_tests
                 log_config_level_parse
                 value_export
+                rng_manager
     )
     add_executable(${test} tests/${test}.c)
     target_link_libraries(${test} enkf)

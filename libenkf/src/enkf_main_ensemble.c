@@ -62,7 +62,7 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
 
       /* Observe that due to the initialization of the rng - this function is currently NOT thread safe. */
       enkf_main->ensemble[iens] = enkf_state_alloc(iens,
-                                                   enkf_main->rng,
+                                                   rng_manager_iget( enkf_main->rng_manager, iens),
                                                    model_config_iget_casename(enkf_main_get_model_config(enkf_main), iens),
                                                    enkf_main_get_model_config(enkf_main),
                                                    enkf_main_get_ensemble_config(enkf_main),

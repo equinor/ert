@@ -23,27 +23,26 @@
 extern "C" {
 #endif
 
-#include <ert/util/rng.h>
-
 #include <ert/config/config_parser.h>
 #include <ert/config/config_content.h>
 
+#include <ert/enkf/rng_manager.h>
+
 typedef struct rng_config_struct rng_config_type;
 
-  void              rng_config_fprintf_config( rng_config_type * rng_config , FILE * stream );
-  void              rng_config_init(rng_config_type * rng_config, const config_content_type * config);
-  void              rng_config_set_type( rng_config_type * rng_config , rng_alg_type type);
-  rng_alg_type      rng_config_get_type(const rng_config_type * rng_config );
-  const char      * rng_config_get_seed_load_file( const rng_config_type * rng_config );
-  void              rng_config_set_seed_load_file( rng_config_type * rng_config , const char * seed_load_file);
-  const char      * rng_config_get_seed_store_file( const rng_config_type * rng_config );
-  void              rng_config_set_seed_store_file( rng_config_type * rng_config , const char * seed_store_file);
-  rng_config_type * rng_config_alloc_load_user_config(const char * user_config_file);
-  rng_config_type * rng_config_alloc(const config_content_type * config_content);
-  void              rng_config_free( rng_config_type * rng);
-  void              rng_config_add_config_items( config_parser_type * config );
-  rng_type *        rng_config_alloc_init_rng( const rng_config_type * rng_config);
-  void              rng_config_init_rng(const rng_config_type * rng_config, rng_type * rng );
+  void               rng_config_fprintf_config( rng_config_type * rng_config , FILE * stream );
+  void               rng_config_init(rng_config_type * rng_config, const config_content_type * config);
+  void               rng_config_set_type( rng_config_type * rng_config , rng_alg_type type);
+  rng_alg_type       rng_config_get_type(const rng_config_type * rng_config );
+  const char       * rng_config_get_seed_load_file( const rng_config_type * rng_config );
+  void               rng_config_set_seed_load_file( rng_config_type * rng_config , const char * seed_load_file);
+  const char       * rng_config_get_seed_store_file( const rng_config_type * rng_config );
+  void               rng_config_set_seed_store_file( rng_config_type * rng_config , const char * seed_store_file);
+  rng_config_type  * rng_config_alloc_load_user_config(const char * user_config_file);
+  rng_config_type  * rng_config_alloc(const config_content_type * config_content);
+  void               rng_config_free( rng_config_type * rng);
+  void               rng_config_add_config_items( config_parser_type * config );
+  rng_manager_type * rng_config_alloc_rng_manager( const rng_config_type * rng_config );
 
 #ifdef __cplusplus
 }

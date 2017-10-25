@@ -120,7 +120,7 @@ struct enkf_state_struct {
 
   shared_info_type      * shared_info;             /* Pointers to shared objects which is needed by the enkf_state object (read only). */
   member_config_type    * my_config;               /* Private config information for this member; not updated during a simulation. */
-  rng_type              * rng;
+  rng_type              * rng;                     /* This is owned and managed by the external rng_manager. */
 };
 
 /*****************************************************************/
@@ -319,7 +319,7 @@ static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_c
 
 
 enkf_state_type * enkf_state_alloc(int iens,
-                                   rng_type                  * main_rng ,
+                                   rng_type                  * rng ,
                                    const char                * casename ,
                                    model_config_type         * model_config,
                                    ensemble_config_type      * ensemble_config,
@@ -337,8 +337,7 @@ enkf_state_type * enkf_state_alloc(int iens,
 
   enkf_state->node_hash         = hash_alloc();
   enkf_state->subst_list        = subst_list_alloc( subst_parent );
-  enkf_state->rng               = rng_alloc( rng_get_type( main_rng ) , INIT_DEFAULT );
-  rng_rng_init( enkf_state->rng , main_rng );  /* <- Not thread safe */
+  enkf_state->rng               = rng;
   /*
     The user MUST specify an INIT_FILE, and for the first timestep the
     <INIT> tag in the data file will be replaced by an
@@ -846,7 +845,6 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
 
 
 void enkf_state_free(enkf_state_type *enkf_state) {
-  rng_free( enkf_state->rng );
   hash_free(enkf_state->node_hash);
   subst_list_free(enkf_state->subst_list);
   member_config_free(enkf_state->my_config);
