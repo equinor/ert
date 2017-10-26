@@ -398,9 +398,6 @@ def main(argv):
     max_runtime = 0
     job_manager = JobManager(error_url=LOG_URL, log_url=LOG_URL)
 
-
-    checkFileServerBlackList(job_manager)
-
     if len(sys.argv) <= 2:
         # Normal batch run.
 
@@ -446,51 +443,6 @@ def main(argv):
                 print "Job: %s does not exist. Available jobs:" % job_name
                 for j in jobs.jobList:
                     print "   %s" % j["name"]
-
-
-def checkFileServerBlackList(job_manager):
-    fs_info, usage = JobManager.fsInfo( )
-    file_server = fs_info[0]
-    if file_server in FILE_SERVER_BLACKLIST:
-        msg = """************************************************************************
-You are now running a forward model simulation in a runpath directory:
-which is served from the file server:
-
-           %s
-
-This file server is not suitable for large scale FMU usage. Please use
-a different RUNPATH setting in your ert configuration file.
-
-Please contact Ketil Nummedal if you do not understand how to proceed.
-************************************************************************
-""" % job_manager.file_server
-
-        payload = {"user" : job_manager.user,
-                   "ert_job" : "FILE_SERVER_CHECK",
-                   "executable" : "/bin/???",
-                   "arg_list" : "--",
-                   "error_msg" : "Simulation started on blacklisted file_server:%s" % job_manager.file_server,
-                   "cwd" : os.getcwd(),
-                   "file_server" : job_manager.isilon_node,
-                   "node" : job_manager.node,
-                   "fs_use" : "%s / %s / %s" % job_manager.fs_use,
-                   "stderr" : "???",
-                   "stdout" : "???" }
-
-        print json.dumps(payload)
-        try:
-            stat = requests.post(LOG_URL, headers={"Content-Type" :
-                                                     "application/json"},
-                                 data=json.dumps(payload))
-            print stat.text
-        except:
-            pass
-
-        with open("WARNING-ILLEGAL-FILESERVER.txt", "w") as f:
-            f.write(msg)
-
-        if block_illegal_fileserver:
-            illegal_fileserver_exit( msg , job_manager.user )
 
 
 #################################################################

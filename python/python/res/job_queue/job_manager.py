@@ -142,7 +142,6 @@ class JobManager(object):
             self._loadModule(module_file)
 
         self.start_time = dt.now()
-        ((self.file_server, self.isilon_node), self.fs_use) = JobManager.fsInfo()
         self.max_runtime = 0  # This option is currently sleeping
         self.short_sleep = 2  # Sleep between status checks
         self.node = socket.gethostname()
@@ -243,13 +242,10 @@ class JobManager(object):
 
     def __repr__(self):
         st = self.start_time
-        fs = self.file_server
-        is_node = self.isilon_node
-        fu = self.fs_use
         node = self.node
         us = self.user
-        cnt = 'len=%d, start=%s, file_server=%s, fs_use=%s, node=%s, isilon_node=%s, user=%s'
-        cnt = cnt % (len(self), st, fs, fu, node, is_node, us)
+        cnt = 'len=%d, start=%s, node=%s, user=%s'
+        cnt = cnt % (len(self), st, node, us)
         return 'JobManager(%s)' % cnt
 
 
@@ -262,8 +258,7 @@ class JobManager(object):
 
     def initStatusFile(self):
         with open(self.STATUS_file, "a") as f:
-            f.write("%-32s: %s/%s  file-server:%s \n" % ("Current host", self.node, os.uname()[4], self.isilon_node))
-
+            f.write("%-32s: %s/%s\n" % ("Current host", self.node, os.uname()[4]))
             if "LSF_JOBID" in os.environ:
                 f.write("LSF JOBID: %s\n" % os.environ.get("LSF_JOBID"))
             else:
@@ -305,10 +300,6 @@ class JobManager(object):
     def getRuntime(self):
         rt = dt.now() - self.start_time
         return rt.total_seconds()
-
-
-    def getFileServer(self):
-        return self.isilon_node
 
 
     def execJob(self, job):
@@ -383,11 +374,8 @@ class JobManager(object):
                    "cwd": os.getcwd(),
                    "application": "ert",
                    "subsystem": "ert_forward_model",
-                   "file_server": self.isilon_node,
                    "node": self.node,
                    "start_time": self.start_time.isoformat(),
-                   "fs_use": "%s / %s / %s" % self.fs_use,
-                   "fs_utilization": "%s" % (self.fs_use[2])[:-1], #remove the "%"
                    "node_timestamp": dt.now().isoformat(),
                    "simulation_id": self.simulation_id,
                    "ert_pid": self.ert_pid}
@@ -499,31 +487,6 @@ class JobManager(object):
                 return (file_server, isilon_node)
 
         return ('?', '?.?.?.?')
-
-    @staticmethod
-    def fsInfo(path = None):
-        if path is None:
-            path = os.getcwd()
-
-        if not os.path.isabs(path):
-            raise ValueError("Must have an absolute path")
-
-        if not os.path.exists(path):
-            raise ValueError("No such entry: %s" % path)
-
-        path_list = path.split("/")
-        if len(path_list) < 3:
-            raise ValueError("Must have at least two levels in directory name")
-
-        mount_point = "/%s/%s" % (path_list[1], path_list[2])
-        file_server, isilon_node = JobManager.mountPoint(mount_point)
-
-        df_stdout = subprocess.check_output(["df", "-Ph", path]).strip().split('\n')
-        line1 = df_stdout[1].split()
-        size = line1[1]
-        free = line1[3]
-        util = line1[4]
-        return ((file_server, isilon_node), (size, free, util))
 
 
     # This file will be read by the job_queue_node_fscanf_EXIT() function
