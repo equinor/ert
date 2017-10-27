@@ -119,7 +119,7 @@ class EnkfConfigNode(BaseCClass):
 
     # This method only exposes the details relevant for Everest usage.
     @classmethod
-    def create_gen_data(cls, key, file_fmt, report_steps = (1,)):
+    def create_gen_data(cls, key, file_fmt, report_steps = (0,)):
         active_steps = IntVector( )
         for step in report_steps:
             active_steps.append( step )

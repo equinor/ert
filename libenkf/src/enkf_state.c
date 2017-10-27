@@ -132,8 +132,6 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state ,
                                                  int report_step ,
                                                  bool store_vectors);
 
-static enkf_node_type * enkf_state_get_or_create_node(enkf_state_type * enkf_state, const enkf_config_node_type * config_node);
-
 static void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mask , int report_step );
 
 static enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const char * node_key);
@@ -446,17 +444,6 @@ static void enkf_state_log_custom_kw_load(const enkf_node_type * enkf_node, int 
   }
 }
 
-static bool enkf_state_report_step_compatible(const enkf_state_type * enkf_state, const ecl_sum_type * ecl_sum_simulated) {
-  bool ret = true;
-
-  const model_config_type * model_config = enkf_state->shared_info->model_config;
-  const ecl_sum_type * ecl_sum_reference = model_config_get_refcase(model_config);
-
-  if (ecl_sum_reference) //Can be NULL
-    ret = ecl_sum_report_step_compatible(ecl_sum_reference, ecl_sum_simulated);
-
-  return ret;
-}
 
 
 static int_vector_type * __enkf_state_get_time_index(enkf_fs_type * sim_fs, const ecl_sum_type * summary) {
@@ -510,9 +497,10 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
   bool load_summary = ensemble_config_has_impl_type(enkf_state->ensemble_config, SUMMARY);
   const run_arg_type * run_arg = forward_load_context_get_run_arg( load_context );
-  const summary_key_matcher_type * matcher = ensemble_config_get_summary_key_matcher(enkf_state->ensemble_config);
-  int matcher_size = summary_key_matcher_get_size(matcher);
+  ensemble_config_type * ens_config = enkf_state->ensemble_config;
+  const summary_key_matcher_type * matcher = ensemble_config_get_summary_key_matcher(ens_config);
   const ecl_sum_type * summary = forward_load_context_get_ecl_sum( load_context );
+  int matcher_size = summary_key_matcher_get_size(matcher);
 
   if (load_summary || matcher_size > 0 || summary) {
     int load_start = run_arg_get_load_start( run_arg );
@@ -532,16 +520,16 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
            Now there are two related / conflicting(?) systems for
            checking summary time consistency, both internally in the
            time_map and also through the
-           enkf_state_report_step_compatible() function.
+           model_config_report_step_compatible() function.
         */
 
         /*Check the loaded summary against the reference ecl_sum_type */
-        if (!enkf_state_report_step_compatible(enkf_state, summary))
+        if (!model_config_report_step_compatible(model_config, summary))
           forward_load_context_update_result(load_context, REPORT_STEP_INCOMPATIBLE);
 
 
         /* The actual loading internalizing - from ecl_sum -> enkf_node. */
-        const int iens   = member_config_get_iens( enkf_state->my_config );
+        const int iens   = run_arg_get_iens( run_arg );
         const int step2  = ecl_sum_get_last_report_step( summary );  /* Step2 is just taken from the number of steps found in the summary file. */
 
         int_vector_iset_block( time_index , 0 , load_start , -1 );
@@ -558,13 +546,14 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                 summary_key_set_type * key_set = enkf_fs_get_summary_key_set(sim_fs);
                 summary_key_set_add_summary_key(key_set, key);
 
-                enkf_config_node_type * config_node = ensemble_config_get_or_create_summary_node(enkf_state->ensemble_config, key);
-                enkf_node_type * node = enkf_state_get_or_create_node(enkf_state, config_node);
+                enkf_config_node_type * config_node = ensemble_config_get_or_create_summary_node(ens_config, key);
+                enkf_node_type * node = enkf_node_alloc( config_node );
 
                 enkf_node_try_load_vector( node , sim_fs , iens );  // Ensure that what is currently on file is loaded before we update.
 
                 enkf_node_forward_load_vector( node , load_context , time_index);
                 enkf_node_store_vector( node , sim_fs , iens );
+		enkf_node_free( node );
               }
             }
         }
@@ -652,32 +641,32 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
                                                                                     GEN_DATA);
 
 
-  if (stringlist_get_size( keylist_GEN_DATA) > 0) {
-    if (last_report <= 0) {
-      res_log_add_message( LOG_ERROR, stderr, "Trying to load GEN_DATA without properly set last_report - THIS WILL FAIL.", false);
-      stringlist_free( keylist_GEN_DATA );
-      return;
-    }
-  }
+  if (stringlist_get_size( keylist_GEN_DATA) > 0) 
+    if (last_report <= 0)
+      res_log_add_message( LOG_WARNING, NULL , "Trying to load GEN_DATA without properly set last_report - will only look for step 0 data.", false);
 
 
-  const run_arg_type * run_arg       = forward_load_context_get_run_arg( load_context );
-  enkf_fs_type * sim_fs              = run_arg_get_sim_fs( run_arg );
-  member_config_type * my_config     = enkf_state->my_config;
-  const int  iens                    = member_config_get_iens( my_config );
-
+  const run_arg_type * run_arg            = forward_load_context_get_run_arg( load_context );
+  enkf_fs_type * sim_fs                   = run_arg_get_sim_fs( run_arg );
+  member_config_type * my_config          = enkf_state->my_config;
+  const int  iens                         = member_config_get_iens( my_config );
+  const ensemble_config_type * ens_config = enkf_state_get_ensemble_config( enkf_state );
 
   for (int ikey=0; ikey < stringlist_get_size( keylist_GEN_DATA ); ikey++) {
-    enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( keylist_GEN_DATA , ikey));
+    const enkf_config_node_type * config_node = ensemble_config_get_node( ens_config , stringlist_iget( keylist_GEN_DATA , ikey));
 
-    for (int report_step = run_arg_get_load_start( run_arg ); report_step <= last_report; report_step++) {
-
-      if (!enkf_node_internalize(node , report_step))
-        continue;
-      if (!enkf_node_has_func(node, forward_load_func))
+    /*
+      This for loop should probably be changed to use the report
+      steps configured in the gen_data_config object, instead of
+      spinning through them all.
+    */
+    for (int report_step = run_arg_get_load_start( run_arg ); report_step <= util_int_max(0, last_report); report_step++) {
+      if (!enkf_config_node_internalize(config_node , report_step))
         continue;
 
       forward_load_context_select_step(load_context, report_step);
+      enkf_node_type * node = enkf_node_alloc( config_node );
+
       if (enkf_node_forward_load(node , load_context )) {
         node_id_type node_id = {.report_step = report_step ,
                                 .iens = iens };
@@ -697,6 +686,7 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
           free( msg );
         }
       }
+      enkf_node_free( node );
     }
   }
   stringlist_free( keylist_GEN_DATA );
@@ -1064,8 +1054,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
 */
 
 static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , run_arg_type * run_arg) {
-  const member_config_type  * my_config   = enkf_state->my_config;
-  const int iens                          = member_config_get_iens( my_config );
+  const int iens = run_arg_get_iens( run_arg );
   int result;
 
 
@@ -1118,8 +1107,7 @@ bool enkf_state_complete_forward_modelOK__(void * arg ) {
 
 static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state,
                                                              run_arg_type * run_arg) {
-  const member_config_type  * my_config   = enkf_state->my_config;
-  const int iens                          = member_config_get_iens( my_config );
+  const int iens = run_arg_get_iens( run_arg );
   res_log_add_fmt_message(LOG_ERROR, NULL,
                           "[%03d:%04d-%04d] FAILED COMPLETELY.",
                           iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));

@@ -43,13 +43,6 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
 }
 
 
-static enkf_node_type * enkf_state_get_or_create_node(enkf_state_type * enkf_state, const enkf_config_node_type * config_node) {
-    const char * key = enkf_config_node_get_key(config_node);
-    if(!enkf_state_has_node(enkf_state, key)) {
-        enkf_state_add_node(enkf_state, key, config_node);
-    }
-    return enkf_state_get_node(enkf_state, key);
-}
 
 /**
    This function loads the STATE from a forward simulation. In ECLIPSE
