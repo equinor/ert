@@ -578,14 +578,6 @@ void  * job_queue_iget_driver_data( job_queue_type * queue , int job_index) {
 
 
 
-static void job_queue_update_spinner( int * phase ) {
-  const char * spinner = "-\\|/";
-  int spinner_length   = strlen( spinner );
-
-  printf("%c\b" , spinner[ (*phase % spinner_length) ]);
-  fflush(stdout);
-  (*phase) += 1;
-}
 
 
 static void job_queue_print_summary(job_queue_type *queue, bool status_change ) {
@@ -812,6 +804,200 @@ bool job_queue_accept_jobs(const job_queue_type * queue) {
 }
 
 
+/* Submit new jobs and return whether we actually did.
+ *
+ * And we do if we have waiting jobs are allowed to submit jobs
+ */
+static bool submit_new_jobs(job_queue_type * queue) {
+
+  int max_submit     = 5; /* This is the maximum number of jobs submitted in one while() { ... } below.
+                             Only to ensure that the waiting time before a status update is not too long. */
+  int total_active   = job_queue_status_get_count(queue->status, JOB_QUEUE_PENDING)
+                     + job_queue_status_get_count(queue->status, JOB_QUEUE_RUNNING);
+
+
+  int max_running = job_queue_get_max_running(queue);
+  int num_submit_new = util_int_min(max_submit,  max_running - total_active);
+
+  // If max_running == 0 that should be interpreted as no limit; i.e. the queue
+  // layer will attempt to send an unlimited number of jobs to the driver - the
+  // driver can reject the jobs.
+  if (max_running == 0)
+    num_submit_new = util_int_min(max_submit,
+                                  job_queue_status_get_count(queue->status,
+                                                             JOB_QUEUE_WAITING));
+
+
+  bool new_jobs = false;
+  if (job_queue_status_get_count(queue->status, JOB_QUEUE_WAITING) > 0)   /* We have waiting jobs at all           */
+    if (num_submit_new > 0)                                               /* The queue can allow more running jobs */
+      new_jobs = true;
+
+  if (new_jobs) {
+    int submit_count = 0;
+    int queue_index  = 0;
+
+    while ((queue_index < job_list_get_size(queue->job_list)) && (num_submit_new > 0)) {
+      job_queue_node_type * node = job_list_iget_job(queue->job_list, queue_index);
+      if (job_queue_node_get_status(node) == JOB_QUEUE_WAITING) {
+        submit_status_type submit_status = job_queue_submit_job(queue, queue_index);
+
+        if (submit_status == SUBMIT_OK) {
+          num_submit_new--;
+          submit_count++;
+        } else if ((submit_status == SUBMIT_DRIVER_FAIL) || (submit_status == SUBMIT_QUEUE_CLOSED))
+          break;
+      }
+      queue_index++;
+    }
+  }
+
+  /*
+    Checking for complete / exited / overtime jobs
+  */
+  for (int i = 0; i < job_list_get_size(queue->job_list); ++i) {
+    job_queue_node_type * node = job_list_iget_job(queue->job_list, i);
+
+    switch (job_queue_node_get_status(node)) {
+    case(JOB_QUEUE_DONE):
+      job_queue_handle_DONE(queue, node);
+      break;
+    case(JOB_QUEUE_EXIT):
+      job_queue_handle_EXIT(queue, node);
+      break;
+    case(JOB_QUEUE_DO_KILL_NODE_FAILURE):
+      job_queue_handle_DO_KILL_NODE_FAILURE(queue, node);
+      break;
+    case(JOB_QUEUE_DO_KILL):
+      job_queue_handle_DO_KILL(queue, node);
+      break;
+    default:
+      break;
+    }
+  }
+  return new_jobs;
+}
+
+
+/*
+ * UI code: if verbose update spinner and print summary
+ */
+static void loop_status_spinner(job_queue_type * queue, bool update_status, bool new_jobs, int* phase, bool verbose) {
+  if (!verbose)
+    return;
+
+  if (update_status || new_jobs)
+    job_queue_print_summary(queue, update_status);
+
+  const char * spinner = "-\\|/";
+  int spinner_length   = strlen( spinner );
+
+  printf("%c\b" , spinner[ (*phase % spinner_length) ]);
+  fflush(stdout);
+  (*phase) += 1;
+}
+
+
+static void job_queue_loop(job_queue_type * queue, int num_total_run, bool verbose) {
+  bool new_jobs = false;
+  bool complete = false;  // we have submitted enough jobs
+  bool exit     = false;  // the user has indic
+
+  int phase = 0; // UI code: this is the visual spinner
+
+  do { // while !complete && !exit
+    res_log_add_message_str(LOG_DEBUG, "Entering inner secret (job_queue_loop)");
+    job_list_get_rdlock(queue->job_list);
+
+    if (queue->user_exit)  {/* An external thread has called the job_queue_user_exit() function, and we should kill
+                               all jobs, do some clearing up and go home. Observe that we will go through the
+                               queue handling codeblock below ONE LAST TIME before exiting. */
+      res_log_add_message_str(LOG_INFO,
+                              "Received queue->user_exit in inner loop of job_queue_run_jobs, exiting");
+      job_queue_user_exit__(queue);
+      exit = true;
+    }
+
+    job_queue_check_expired(queue);
+
+    bool update_status = job_queue_update_status(queue); // this has side effects
+    loop_status_spinner(queue, update_status, new_jobs, &phase, verbose); // UI code
+
+    int num_complete = job_queue_status_get_count(queue->status, JOB_QUEUE_SUCCESS)
+                     + job_queue_status_get_count(queue->status, JOB_QUEUE_FAILED)
+                     + job_queue_status_get_count(queue->status, JOB_QUEUE_IS_KILLED);
+
+    if ((num_total_run > 0) && (num_total_run == num_complete))
+      /* The number of jobs completed is equal to the number
+         of jobs we have said we want to run; so we are finished.
+      */
+      complete = true;
+    else if (num_total_run == 0) {
+      /* We have not informed about how many jobs we will
+         run. To check if we are complete we perform the two
+         tests:
+
+         1. All the jobs which have been added with
+         job_queue_add_job() have completed.
+
+         2. The user has used job_queue_complete_submit()
+         to signal that no more jobs will be forthcoming.
+      */
+      if ((num_complete == job_list_get_size(queue->job_list)) && queue->submit_complete)
+        complete = true;
+    }
+
+    if (!complete) {
+      new_jobs = submit_new_jobs(queue);
+    } else
+      /* print an updated status to stdout before exiting. */
+      if (verbose)
+        job_queue_print_summary(queue, true);
+
+    job_list_unlock(queue->job_list);
+
+    if (!exit) {
+      util_yield();
+      job_list_reader_wait(queue->job_list, queue->usleep_time, 8 * queue->usleep_time);
+    }
+
+  } while (!complete && !exit);
+
+  if (verbose)
+    printf("\n");
+
+}
+
+
+
+/* This is run from job_queue_run_jobs when we have got an exclusive lock to the
+ * run_jobs code.
+ *
+ * Its sole purpose is to set up the work_pool thread and initiate the main loop
+ */
+static void handle_run_jobs(job_queue_type * queue, int num_total_run, bool verbose) {
+
+  // Check if queue is open. Fails hard if not open
+  job_queue_check_open(queue);
+
+  /*
+    The number of threads in the thread pool running callbacks. Memory consumption can
+    potentially be quite high while running the DONE callback - should therefor not use
+    too many threads.
+  */
+  const int NUM_WORKER_THREADS = 4;
+  queue->work_pool = thread_pool_alloc(NUM_WORKER_THREADS, true);
+  res_log_add_message_str(LOG_DEBUG, "Allocated thread pool in job_queue_run_jobs");
+
+  queue->running = true;
+  job_queue_loop(queue, num_total_run, verbose);
+
+  thread_pool_join(queue->work_pool);
+  thread_pool_free(queue->work_pool);
+}
+
+
+
 /**
    If the total number of jobs is not known in advance the job_queue_run_jobs
    function can be called with @num_total_run == 0. In that case it is paramount
@@ -830,179 +1016,17 @@ bool job_queue_accept_jobs(const job_queue_type * queue) {
 
 */
 
-void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
-  int trylock = pthread_mutex_trylock( &queue->run_mutex );
+void job_queue_run_jobs(job_queue_type * queue, int num_total_run, bool verbose) {
+
+  int trylock = pthread_mutex_trylock(&queue->run_mutex);
   if (trylock != 0)
     util_abort("%s: another thread is already running the queue_manager\n",__func__);
-  else if (!queue->user_exit) {
-    /* OK - we have got an exclusive lock to the run_jobs code. */
 
-    //Check if queue is open. Fails hard if not open
-    job_queue_check_open(queue);
-
-    /*
-      The number of threads in the thread pool running callbacks. Memory consumption can
-      potentially be quite high while running the DONE callback - should therefor not use
-      too many threads.
-    */
-    const int NUM_WORKER_THREADS = 4;
-    queue->work_pool = thread_pool_alloc( NUM_WORKER_THREADS , true );
-    res_log_add_message_str(LOG_DEBUG,"Allocated thread pool in job_queue_run_jobs");
-    {
-      bool new_jobs         = false;
-      bool cont             = true;
-      int  phase = 0;
-
-      queue->running = true;
-      do {
-        res_log_add_message_str(LOG_DEBUG,"Entering inner loop in job_queue_run_jobs");
-        bool local_user_exit = false;
-        job_list_get_rdlock( queue->job_list );
-        /*****************************************************************/
-        if (queue->user_exit)  {/* An external thread has called the job_queue_user_exit() function, and we should kill
-                                   all jobs, do some clearing up and go home. Observe that we will go through the
-                                   queue handling codeblock below ONE LAST TIME before exiting. */
-          res_log_add_message_str(LOG_INFO,"Received queue->user_exit in inner loop of job_queue_run_jobs, exiting");
-          job_queue_user_exit__( queue );
-          local_user_exit = true;
-        }
-
-        job_queue_check_expired(queue);
-
-        /*****************************************************************/
-        {
-          bool update_status = job_queue_update_status( queue );
-          if (verbose) {
-            if (update_status || new_jobs)
-              job_queue_print_summary(queue , update_status );
-            job_queue_update_spinner( &phase );
-          }
-
-
-          {
-            int num_complete = job_queue_status_get_count(queue->status, JOB_QUEUE_SUCCESS) +
-                               job_queue_status_get_count(queue->status, JOB_QUEUE_FAILED) +
-                               job_queue_status_get_count(queue->status, JOB_QUEUE_IS_KILLED);
-
-            if ((num_total_run > 0) && (num_total_run == num_complete))
-              /* The number of jobs completed is equal to the number
-                 of jobs we have said we want to run; so we are finished.
-              */
-              cont = false;
-            else {
-              if (num_total_run == 0) {
-                /* We have not informed about how many jobs we will
-                   run. To check if we are complete we perform the two
-                   tests:
-
-                     1. All the jobs which have been added with
-                        job_queue_add_job() have completed.
-
-                     2. The user has used job_queue_complete_submit()
-                        to signal that no more jobs will be forthcoming.
-                */
-                if ((num_complete == job_list_get_size( queue->job_list )) && queue->submit_complete)
-                  cont = false;
-              }
-            }
-          }
-
-          if (cont) {
-            /* Submitting new jobs */
-            int max_submit     = 5; /* This is the maximum number of jobs submitted in one while() { ... } below.
-                                       Only to ensure that the waiting time before a status update is not too long. */
-            int total_active   = job_queue_status_get_count(queue->status, JOB_QUEUE_PENDING) + job_queue_status_get_count(queue->status, JOB_QUEUE_RUNNING);
-            int num_submit_new;
-
-            {
-              int max_running = job_queue_get_max_running( queue );
-              if (max_running > 0)
-                num_submit_new = util_int_min( max_submit ,  max_running - total_active );
-              else
-                /*
-                   If max_running == 0 that should be interpreted as no limit; i.e. the queue layer will
-                   attempt to send an unlimited number of jobs to the driver - the driver can reject the jobs.
-                */
-                num_submit_new = util_int_min( max_submit , job_queue_status_get_count(queue->status, JOB_QUEUE_WAITING));
-            }
-
-            new_jobs = false;
-            if (job_queue_status_get_count(queue->status, JOB_QUEUE_WAITING) > 0)   /* We have waiting jobs at all           */
-              if (num_submit_new > 0)                                               /* The queue can allow more running jobs */
-                new_jobs = true;
-
-            if (new_jobs) {
-              int submit_count = 0;
-              int queue_index  = 0;
-
-              while ((queue_index < job_list_get_size( queue->job_list )) && (num_submit_new > 0)) {
-                job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
-                if (job_queue_node_get_status(node) == JOB_QUEUE_WAITING) {
-                  {
-                    submit_status_type submit_status = job_queue_submit_job(queue , queue_index);
-
-                    if (submit_status == SUBMIT_OK) {
-                      num_submit_new--;
-                      submit_count++;
-                    } else if ((submit_status == SUBMIT_DRIVER_FAIL) || (submit_status == SUBMIT_QUEUE_CLOSED))
-                      break;
-                  }
-                }
-                queue_index++;
-              }
-            }
-
-
-            {
-              /*
-                Checking for complete / exited / overtime jobs
-               */
-              int queue_index;
-              for (queue_index = 0; queue_index < job_list_get_size( queue->job_list ); queue_index++) {
-                job_queue_node_type * node = job_list_iget_job( queue->job_list , queue_index );
-
-                switch (job_queue_node_get_status(node)) {
-                  case(JOB_QUEUE_DONE):
-                    job_queue_handle_DONE(queue, node);
-                    break;
-                  case(JOB_QUEUE_EXIT):
-                    job_queue_handle_EXIT(queue, node);
-                    break;
-                  case(JOB_QUEUE_DO_KILL_NODE_FAILURE):
-                    job_queue_handle_DO_KILL_NODE_FAILURE(queue, node);
-                    break;
-                  case(JOB_QUEUE_DO_KILL):
-                    job_queue_handle_DO_KILL(queue, node);
-                    break;
-                  default:
-                    break;
-                }
-
-
-              }
-            }
-          } else
-            /* print an updated status to stdout before exiting. */
-            if (verbose)
-              job_queue_print_summary(queue , true);
-        }
-        job_list_unlock( queue->job_list );
-        if (local_user_exit)
-          cont = false;    /* This is how we signal that we want to get out . */
-        else {
-          util_yield();
-          job_list_reader_wait( queue->job_list , queue->usleep_time , 8 * queue->usleep_time);
-        }
-      } while ( cont );
-    }
-    if (verbose)
-      printf("\n");
-    thread_pool_join( queue->work_pool );
-    thread_pool_free( queue->work_pool );
-  }
-  else{
+  /*   */
+  if (!queue->user_exit)
+    handle_run_jobs(queue, num_total_run, verbose);
+  else
     res_log_add_message_str(LOG_INFO,"queue->user_exit = true in job_queue, received external signal to abandon the whole thing");
-  }
 
   /*
     Set the queue's "open" flag to false to signal that the queue is
@@ -1013,7 +1037,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
   */
   queue->open = false;
   queue->running = false;
-  pthread_mutex_unlock( &queue->run_mutex );
+  pthread_mutex_unlock(&queue->run_mutex);
 }
 
 
@@ -1175,7 +1199,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   pthread_mutex_init( &queue->run_mutex    , NULL );
 
 
-  
+
 
   return queue;
 }

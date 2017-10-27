@@ -97,3 +97,11 @@ class JobQueueManager(BaseCClass):
         int_status = self._job_status(job_index)
         return JobStatusType( int_status )
         
+
+    def __repr__(self):
+        nw = self._get_num_waiting()
+        nr = self._get_num_running()
+        ns = self._get_num_success()
+        nf = self._get_num_failed()
+        ir = 'running' if self._is_running() else 'not running'
+        return 'JobQueueManager(waiting=%d, running=%d, success=%d, failed=%d, %s)' % (nw,nr,ns,nf,ir)
