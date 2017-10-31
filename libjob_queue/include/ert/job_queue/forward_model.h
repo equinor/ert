@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'forward_model.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'forward_model.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #ifndef ERT_FORWARD_MODEL_H
@@ -39,7 +39,7 @@ typedef struct  forward_model_struct forward_model_type ;
   void                     forward_model_fprintf(const forward_model_type *  , FILE * );
   forward_model_type     * forward_model_alloc(const ext_joblist_type * ext_joblist);
   void                     forward_model_parse_init(forward_model_type * forward_model , const char * input_string );
-  void                     forward_model_formatted_fprintf(const forward_model_type *  , const char * run_id, const char *, const char * , const subst_list_type * , 
+  void                     forward_model_formatted_fprintf(const forward_model_type *  , const char * run_id, const char *, const char * , const subst_list_type * ,
                                                            mode_t umask, const env_varlist_type * list);
   void                     forward_model_free( forward_model_type * );
   forward_model_type *     forward_model_alloc_copy(const forward_model_type * forward_model);

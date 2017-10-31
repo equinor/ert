@@ -26,28 +26,29 @@ class SimulationContext(object):
 
         subst_list = self._ert.getDataKW( )
         path_fmt = self._ert.getModelConfig().getRunpathFormat()
-        self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, sim_fs, None, mask, path_fmt, subst_list, itr)
+        jobname_fmt = self._ert.getModelConfig().getJobnameFormat()
+        self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, sim_fs, None, mask, path_fmt, jobname_fmt, subst_list, itr)
 
-        
-    def addSimulation(self, iens):
-        if iens >= len(self._mask):
-            raise UserWarning("Realization number out of range: %d >= %d" % (iens, len(self._mask)))
+
+    def addSimulation(self, iens, geo_id):
+        if not (0 <= iens < len(self._run_context)):
+            raise UserWarning("Realization number out of range: %d >= %d" % (iens, len(self._run_context)))
 
         if not self._mask[iens]:
             raise UserWarning("Realization number: '%d' is not active" % iens)
-        
+
         if iens in self._run_args:
             raise UserWarning("Realization number: '%d' already queued" % iens)
 
-        run_arg = self._run_context.iensGet( iens )
+        run_arg = self._run_context[iens]
         queue = self._queue_manager.get_job_queue()
         self._run_args[iens] = run_arg
-        self._thread_pool.submitJob(ArgPack(self._ert, run_arg, queue))
+        self._thread_pool.submitJob(ArgPack(self._ert, run_arg, queue, geo_id))
 
 
     def isRunning(self):
         return self._queue_manager.isRunning()
-    
+
 
     def getNumRunning(self):
         return self._queue_manager.getNumRunning()

@@ -406,11 +406,10 @@ static void enkf_main_export_runpath_file(enkf_main_type * enkf_main,
                                           const int_vector_type * realizations,
                                           const int_vector_type * iterations) {
 
-  const ecl_config_type * ecl_config      = enkf_main_get_ecl_config(enkf_main);
   const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
-  const char * basename_fmt               = ecl_config_get_eclbase(ecl_config);
+  const char * basename_fmt               = model_config_get_jobname_fmt( model_config );
   const char * runpath_fmt                = model_config_get_runpath_as_char(model_config);
-  const hook_manager_type * hook_manager        = enkf_main_get_hook_manager( enkf_main );
+  const hook_manager_type * hook_manager  = enkf_main_get_hook_manager( enkf_main );
 
   runpath_list_type * runpath_list = runpath_list_alloc( hook_manager_get_runpath_list_file( hook_manager ));
 
@@ -487,7 +486,7 @@ void * enkf_main_export_runpath_file_JOB(void * self, const stringlist_type * ar
 
   int_vector_free(realizations);
   int_vector_free(iterations);
-
+  
   return NULL;
 }
 
@@ -545,7 +544,7 @@ void * enkf_main_pre_simulation_copy_JOB( void * self , const stringlist_type * 
   if (!util_entry_exists( source_path )) {
     char * msg = util_alloc_sprintf("Error in workflow job PRE_SIMULATION_COPY - source argument: %s not existing\n",source_path);
     res_log_add_message(LOG_ERROR, stderr , msg , true );
-    return;
+    return NULL;
   }
 
 
@@ -554,7 +553,7 @@ void * enkf_main_pre_simulation_copy_JOB( void * self , const stringlist_type * 
   if (!model_config_data_root_is_set( model_config )) {
     char * msg = util_alloc_sprintf("Error in workflow job PRE_SIMULATION_COPY DATA_ROOT not set\n");
     res_log_add_message(LOG_ERROR, stderr , msg , true );
-    return;
+    return NULL;
   }
 
 
@@ -581,4 +580,5 @@ void * enkf_main_pre_simulation_copy_JOB( void * self , const stringlist_type * 
   }
 
   free( target_path );
+  return NULL;
 }

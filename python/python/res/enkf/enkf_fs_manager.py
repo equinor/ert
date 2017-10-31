@@ -75,7 +75,6 @@ class EnkfFsManager(BaseCClass):
     _switch_fs =      EnkfPrototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
     _fs_exists =      EnkfPrototype("bool enkf_main_fs_exists(enkf_fs_manager, char*)")
     _alloc_caselist = EnkfPrototype("stringlist_obj enkf_main_alloc_caselist(enkf_fs_manager)")
-    _set_case_table = EnkfPrototype("void enkf_main_set_case_table(enkf_fs_manager, char*)")
     _ensemble_size  = EnkfPrototype("int enkf_main_get_ensemble_size(enkf_fs_manager)")
 
     _is_initialized =                        EnkfPrototype("bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)")

@@ -1,0 +1,3 @@
+EXECUTABLE copy_ext_param
+STDERR copy_ext_param.stderr
+STDOUT copy_ext_param.stdout

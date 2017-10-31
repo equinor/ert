@@ -131,11 +131,12 @@ class RunpathListTest(ExtendedTestCase):
             fs_manager = ert.getEnkfFsManager( )
 
             init_fs = fs_manager.getFileSystem("init_fs")
-            mask = BoolVector( initial_size = 100 , default_value = True )
+            mask = BoolVector( initial_size = 25 , default_value = True )
             runpath_fmt = ert.getModelConfig().getRunpathFormat( )
             subst_list = SubstitutionList( )
             itr = 0
-            run_context1 = ErtRunContext( EnkfRunType.INIT_ONLY , init_fs, None , mask , runpath_fmt, subst_list , itr )
+            jobname_fmt = ert.getModelConfig().getJobnameFormat()
+            run_context1 = ErtRunContext( EnkfRunType.INIT_ONLY , init_fs, None , mask , runpath_fmt, jobname_fmt, subst_list , itr )
 
             runner.createRunPath( run_context1 )
 
@@ -146,21 +147,23 @@ class RunpathListTest(ExtendedTestCase):
 
     def test_assert_symlink_deleted(self):
         with ErtTestContext("create_runpath2" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
-            ert = tc.getErt( )
-            runpath_list = ert.getRunpathList( )
+            ert = tc.getErt()
+            runpath_list = ert.getRunpathList()
 
-            ens_size = ert.getEnsembleSize( )
-            runner = ert.getEnkfSimulationRunner( )
+            ens_size = ert.getEnsembleSize()
+            runner = ert.getEnkfSimulationRunner()
             mask = BoolVector( initial_size = ens_size , default_value = True )
-            fs_manager = ert.getEnkfFsManager( )
+            fs_manager = ert.getEnkfFsManager()
             init_fs = fs_manager.getFileSystem("init_fs")
 
             # create directory structure
             runpath_fmt = ert.getModelConfig().getRunpathFormat( )
             subst_list = SubstitutionList( )
             itr = 0
-            run_context = ErtRunContext( EnkfRunType.INIT_ONLY , init_fs, None , mask , runpath_fmt, subst_list , itr )
+            jobname_fmt = ert.getModelConfig().getJobnameFormat()
+            run_context = ErtRunContext( EnkfRunType.INIT_ONLY , init_fs, None , mask , runpath_fmt, jobname_fmt, subst_list , itr )
             runner.createRunPath( run_context )
+
 
             # replace field file with symlink
             linkpath = '%s/permx.grdcel' % str(runpath_list[0].runpath)

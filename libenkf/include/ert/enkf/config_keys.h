@@ -54,7 +54,6 @@ extern "C" {
 #define  ANALYSIS_LOAD_KEY                 "ANALYSIS_LOAD"
 #define  ANALYSIS_SET_VAR_KEY              "ANALYSIS_SET_VAR"
 #define  ANALYSIS_SELECT_KEY               "ANALYSIS_SELECT"
-#define  CASE_TABLE_KEY                    "CASE_TABLE"
 #define  CONTAINER_KEY                     "CONTAINER"
 #define  CUSTOM_KW_KEY                     "CUSTOM_KW"
 #define  DATA_ROOT_KEY                     "DATA_ROOT"

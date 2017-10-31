@@ -36,9 +36,9 @@ UTIL_SAFE_CAST_HEADER( run_arg );
 UTIL_IS_INSTANCE_HEADER( run_arg );
 
 
-  run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * sim_fs, int iens , int iter , const char * runpath);
+  run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * sim_fs, int iens , int iter , const char * runpath, const char * job_name);
   run_arg_type * run_arg_alloc_INIT_ONLY(const char * run_id, enkf_fs_type * sim_fs , int iens , int iter , const char * runpath);
-  run_arg_type * run_arg_alloc_SMOOTHER_RUN(const char * run_id , enkf_fs_type * sim_fs , enkf_fs_type * update_target_fs , int iens , int iter , const char * runpath);
+  run_arg_type * run_arg_alloc_SMOOTHER_RUN(const char * run_id , enkf_fs_type * sim_fs , enkf_fs_type * update_target_fs , int iens , int iter , const char * runpath, const char * job_name);
 
   int            run_arg_get_step1( const run_arg_type * run_arg );
   int            run_arg_get_step2( const run_arg_type * run_arg );
@@ -51,6 +51,7 @@ UTIL_IS_INSTANCE_HEADER( run_arg );
 
   void run_arg_free(run_arg_type * run_arg);
   void run_arg_free__(void * arg);
+  const char * run_arg_get_job_name( const run_arg_type * run_arg);
   const char * run_arg_get_runpath( const run_arg_type * run_arg);
   const char * run_arg_get_run_id( const run_arg_type * run_arg);
   void run_arg_complete_run(run_arg_type * run_arg);
@@ -66,6 +67,9 @@ UTIL_IS_INSTANCE_HEADER( run_arg );
 
   enkf_fs_type * run_arg_get_update_target_fs(const run_arg_type * run_arg);
   enkf_fs_type * run_arg_get_sim_fs(const run_arg_type * run_arg);
+
+  void run_arg_set_geo_id( run_arg_type * run_arg , int geo_id);
+  int run_arg_get_geo_id( const run_arg_type * run_arg);
 
 #ifdef __cplusplus
 }

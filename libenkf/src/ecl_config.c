@@ -61,12 +61,8 @@
 struct ecl_config_struct
 {
   ecl_io_config_type * io_config;       /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
-  path_fmt_type * eclbase;              /* A path_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be reflected. */
   sched_file_type * sched_file;         /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
   hash_type * fixed_length_kw;          /* Set of user-added SCHEDULE keywords with fixed length. */
-  bool include_all_static_kw;           /* If true all static keywords are stored.*/
-  set_type * static_kw_set;             /* Minimum set of static keywords which must be included to make valid restart files. */
-  stringlist_type * user_static_kw;
   char * data_file;                     /* Eclipse data file. */
   time_t start_date;                    /* The start date of the ECLIPSE simulation - parsed from the data_file. */
   time_t end_date;                      /* An optional date value which can be used to check if the ECLIPSE simulation has been 'long enough'. */
@@ -78,6 +74,7 @@ struct ecl_config_struct
   char * init_section;                  /* Equal to the full path of input_init_section IFF input_init_section points to an existing file - otherwise equal to input_init_section. */
   int last_history_restart;
   bool can_restart;                     /* Have we found the <INIT> tag in the data file? */
+  bool have_eclbase;
   int num_cpu;                          /* We should parse the ECLIPSE data file and determine how many cpus this eclipse file needs. */
   ert_ecl_unit_enum unit_system;        /* Either metric, field or lab */
 };
@@ -88,17 +85,20 @@ struct ecl_config_struct
  With this function we try to determine whether ECLIPSE is active
  for this case, i.e. if ECLIPSE is part of the forward model. This
  should ideally be inferred from the FORWARD model, but what we do
- here is just to check if the core field ->eclbase and ->data_file
+ here is just to check if the core field ->eclbase or ->data_file
  have been set. If they are both equal to NULL we assume that
  ECLIPSE is not active and return false, otherwise we return true.
  */
 
 bool ecl_config_active(const ecl_config_type * config)
 {
-  if ((config->eclbase == NULL )&& (config->data_file == NULL))
-    return false;
-  else
+  if (config->have_eclbase)
     return true;
+
+  if (config->data_file)
+    return true;
+
+  return false;
 }
 
   /**
@@ -253,7 +253,7 @@ ui_return_type * ecl_config_validate_schedule_file(const ecl_config_type * ecl_c
 void ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file, const char * schedule_target_file)
 {
   if (schedule_target_file)
-      ecl_config->schedule_target_file = util_alloc_string_copy(schedule_target_file);
+    ecl_config->schedule_target_file = util_alloc_string_copy(schedule_target_file);
   else {
     char * base; /* The schedule target file will be without any path component */
     char * ext;
@@ -308,30 +308,6 @@ ui_return_type * ecl_config_validate_eclbase(const ecl_config_type * ecl_config,
   }
 }
 
-/**
- The value of eclbase is in addition internalized in each enkf_state
- object, i.e. the _set routine must be called from enkf_main, and
- call enkf_state_update_eclbase() afterwards.
- */
-
-void ecl_config_set_eclbase(ecl_config_type * ecl_config, const char * eclbase_fmt)
-{
-  if (ecl_config->eclbase != NULL )
-    path_fmt_free(ecl_config->eclbase);
-  ecl_config->eclbase = path_fmt_alloc_path_fmt(eclbase_fmt);
-}
-
-
-/**
- Observe that this function returns a (char *) - corresponding to
- the argument used when calling the ecl_config_set_eclbase()
- function, and not a path_fmt instance.
- */
-
-const char * ecl_config_get_eclbase(const ecl_config_type * ecl_config)
-{
-  return path_fmt_get_fmt(ecl_config->eclbase);
-}
 
 /**
  Can be called with @refcase == NULL - which amounts to clearing the
@@ -369,26 +345,9 @@ const char * ecl_config_get_refcase_name(const ecl_config_type * ecl_config)
 
 }
 
-/**
- This function will clear the list of static keywords supplied by
- the user. The default built in keywords are not touched.
- */
 
-void ecl_config_clear_static_kw(ecl_config_type * ecl_config)
-{
-  ecl_config->include_all_static_kw = false;
-  stringlist_clear(ecl_config->user_static_kw);
-}
 
-/**
- Returns a stringlist of the user-defined static keywords.
- */
-stringlist_type * ecl_config_get_static_kw_list(const ecl_config_type * ecl_config)
-{
-  return ecl_config->user_static_kw;
-}
-
-  /* The semantic regarding INIT_SECTION is as follows:
+/* The semantic regarding INIT_SECTION is as follows:
 
    1. If the INIT_SECTION points to an existing file - the
    ecl_config->input_init_section is set to the absolute path of
@@ -503,13 +462,6 @@ const char * ecl_config_get_equil_init_file(const ecl_config_type * ecl_config)
 }
 
 
-static void ecl_config_init_static_kw(ecl_config_type * ecl_config)
-{
-  int i;
-  for (i = 0; i < NUM_STATIC_KW; i++)
-    set_add_key(ecl_config->static_kw_set, DEFAULT_STATIC_KW
-    [i]);
-}
 
 static ecl_config_type * ecl_config_alloc_empty(void)
 {
@@ -517,10 +469,7 @@ static ecl_config_type * ecl_config_alloc_empty(void)
 
   ecl_config->io_config = ecl_io_config_alloc(DEFAULT_FORMATTED, DEFAULT_UNIFIED, DEFAULT_UNIFIED);
   ecl_config->fixed_length_kw = hash_alloc();
-  ecl_config->eclbase = NULL;
-  ecl_config->include_all_static_kw = false;
-  ecl_config->static_kw_set = set_alloc_empty();
-  ecl_config->user_static_kw = stringlist_alloc_new();
+  ecl_config->have_eclbase = false;
   ecl_config->num_cpu = 1; /* This must get a valid default in case no ECLIPSE datafile is provided. */
   ecl_config->unit_system = ECL_METRIC_UNITS;
   ecl_config->data_file = NULL;
@@ -534,8 +483,6 @@ static ecl_config_type * ecl_config_alloc_empty(void)
   ecl_config->schedule_prediction_file = NULL;
   ecl_config->schedule_target_file = NULL;
   ecl_config->refcase_list = ecl_refcase_list_alloc();
-
-  ecl_config_init_static_kw(ecl_config);
 
   return ecl_config;
 }
@@ -563,24 +510,28 @@ ecl_config_type * ecl_config_alloc(const config_content_type * config_content) {
   return ecl_config;
 }
 
-
-
-
 static void handle_has_eclbase_key(ecl_config_type * ecl_config,
                                    const config_content_type * config) {
-  ui_return_type * ui_return = ecl_config_validate_eclbase(ecl_config,
-                                                           config_content_iget(config,
-                                                                               ECLBASE_KEY,
-                                                                               0, 0));
-  if (ui_return_get_status(ui_return) == UI_RETURN_OK)
-    ecl_config_set_eclbase(ecl_config, config_content_iget(config,
-                                                           ECLBASE_KEY,
-                                                           0, 0));
-  else
-    util_abort("%s: failed to set eclbase format. Error:%s\n",
-               __func__, ui_return_get_last_error(ui_return));
-  ui_return_free(ui_return);
+  /*
+     The eclbase is not internalized here; here we only flag that the
+     ECLBASE keyword has been present in the configuration. The
+     actualt value is internalized as a job_name in the model_config.
+   */
+
+  if (config_content_has_item(config, ECLBASE_KEY)) {
+    ui_return_type * ui_return = ecl_config_validate_eclbase(ecl_config, config_content_iget(config, ECLBASE_KEY, 0, 0));
+    if (ui_return_get_status(ui_return) == UI_RETURN_OK)
+      ecl_config->have_eclbase = true;
+    else
+      util_abort("%s: failed to set eclbase format. Error:%s\n", __func__ , ui_return_get_last_error(ui_return));
+    ui_return_free(ui_return);
+  }
 }
+
+
+
+
+
 
 static void handle_has_data_file_key(ecl_config_type * ecl_config,
                                      const config_content_type * config) {
@@ -604,27 +555,17 @@ static void handle_has_schedule_file_key(ecl_config_type * ecl_config,
   const char * schedule_target_file = NULL;
 
   if (config_content_node_get_size( schedule_node ) > 1) {
-    schedule_target_file = config_content_node_iget_as_abspath(schedule_node, 1);
-    ui_return_type * ui_return_sched_target_file = ecl_config_validate_schedule_file(ecl_config,
-                                                                                     schedule_target_file);
-    if (ui_return_get_status(ui_return_sched_target_file) != UI_RETURN_OK)
-      util_abort("%s: failed to set target schedule file. Error:%s\n",
+    const char * schedule_src_file = config_content_node_iget_as_abspath(schedule_node, 0);
+    ui_return_type * ui_return = ecl_config_validate_schedule_file(ecl_config,
+                                                                   schedule_src_file);
+    if (ui_return_get_status(ui_return) == UI_RETURN_OK)
+      ecl_config_set_schedule_file(ecl_config, schedule_src_file, schedule_target_file);
+    else
+      util_abort("%s: failed to set schedule file. Error:%s\n",
                  __func__,
-                 ui_return_get_last_error(ui_return_sched_target_file));
-
-    ui_return_free(ui_return_sched_target_file);
+                 ui_return_get_last_error(ui_return));
+    ui_return_free(ui_return);
   }
-
-  const char * schedule_src_file = config_content_node_iget_as_abspath(schedule_node, 0);
-  ui_return_type * ui_return = ecl_config_validate_schedule_file(ecl_config,
-                                                                 schedule_src_file);
-  if (ui_return_get_status(ui_return) == UI_RETURN_OK)
-    ecl_config_set_schedule_file(ecl_config, schedule_src_file, schedule_target_file);
-  else
-    util_abort("%s: failed to set schedule file. Error:%s\n",
-               __func__,
-               ui_return_get_last_error(ui_return));
-  ui_return_free(ui_return);
 }
 
 static void handle_has_grid_key(ecl_config_type * ecl_config,
@@ -642,6 +583,7 @@ static void handle_has_grid_key(ecl_config_type * ecl_config,
 
   ui_return_free(ui_return);
 }
+
 static void handle_has_add_fixed_length_schedule_kw_key(ecl_config_type * ecl_config,
                                                         const config_content_type * config) {
   for (int iocc = 0; iocc < config_content_get_occurences(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY); iocc++)
@@ -699,16 +641,7 @@ static void handle_has_schedule_prediction_file_key(ecl_config_type * ecl_config
   ecl_config_set_schedule_prediction_file(ecl_config, template_file);
 }
 
-static void handle_has_static_kw_key(ecl_config_type * ecl_config,
-                                     const config_content_type * config) {
-  const config_content_item_type * content_item = config_content_get_item(config, STATIC_KW_KEY);
-  for (int j = 0; j < config_content_item_get_size(content_item); j++) {
-    const config_content_node_type * content_node = config_content_item_iget_node(content_item, j);
 
-    for (int k = 0; k < config_content_node_get_size(content_node); k++)
-      ecl_config_add_static_kw(ecl_config, config_content_node_iget(content_node, k));
-  }
-}
 
 
 
@@ -771,9 +704,6 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
 
   if (config_content_has_item(config, SCHEDULE_PREDICTION_FILE_KEY))
      handle_has_schedule_prediction_file_key(ecl_config, config);
-
-  if (config_content_has_item(config, STATIC_KW_KEY))
-    handle_has_static_kw_key(ecl_config, config);
 }
 
 
@@ -781,11 +711,6 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_content_type * c
 void ecl_config_free(ecl_config_type * ecl_config)
 {
   ecl_io_config_free(ecl_config->io_config);
-  if (ecl_config->eclbase != NULL )
-    path_fmt_free(ecl_config->eclbase);
-
-  set_free(ecl_config->static_kw_set);
-  stringlist_free(ecl_config->user_static_kw);
   util_safe_free(ecl_config->data_file);
   if (ecl_config->sched_file != NULL )
     sched_file_free(ecl_config->sched_file);
@@ -805,47 +730,6 @@ void ecl_config_free(ecl_config_type * ecl_config)
   free(ecl_config);
 }
 
-/**
- This function adds a keyword to the list of restart keywords wich
- are included. Observe that ecl_util_escape_kw() is called prior to
- adding it.
-
- The kw __ALL__ is magic; and will result in a request to store all
- static kewyords. This wastes disk-space, but might be beneficial
- when debugging.
- */
-
-void ecl_config_add_static_kw(ecl_config_type * ecl_config, const char * _kw)
-{
-  if (strcmp(_kw, DEFAULT_ALL_STATIC_KW) == 0)
-    ecl_config->include_all_static_kw = true;
-  else
-  {
-    char * kw = util_alloc_string_copy(_kw);
-    ecl_util_escape_kw(kw);
-    if (!stringlist_contains(ecl_config->user_static_kw, kw))
-      stringlist_append_owned_ref(ecl_config->user_static_kw, kw);
-  }
-}
-
-/**
- This function checks whether the static kw should be
- included. Observe that it is __assumed__ that ecl_util_escape_kw()
- has already been called on the kw.
- */
-
-bool ecl_config_include_static_kw(const ecl_config_type * ecl_config, const char * kw)
-{
-  if (ecl_config->include_all_static_kw)
-    return true;
-  else
-  {
-    if (set_has_key(ecl_config->static_kw_set, kw))
-      return true;
-    else
-      return stringlist_contains(ecl_config->user_static_kw, kw);
-  }
-}
 
 ecl_grid_type * ecl_config_get_grid(const ecl_config_type * ecl_config)
 {
@@ -919,11 +803,6 @@ ecl_io_config_type * ecl_config_get_io_config(const ecl_config_type * ecl_config
   return ecl_config->io_config;
 }
 
-const path_fmt_type * ecl_config_get_eclbase_fmt(const ecl_config_type * ecl_config)
-{
-  return ecl_config->eclbase;
-}
-
 sched_file_type * ecl_config_get_sched_file(const ecl_config_type * ecl_config)
 {
   return ecl_config->sched_file;
@@ -953,17 +832,22 @@ bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)
   return ecl_io_config_get_unified_summary(ecl_config->io_config);
 }
 
+bool ecl_config_have_eclbase(const ecl_config_type * ecl_config) {
+  return ecl_config->have_eclbase;
+}
+
+
 void ecl_config_add_config_items(config_parser_type * config)
 {
   config_schema_item_type * item;
 
   item = config_add_schema_item(config, SCHEDULE_FILE_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 2);
+  config_schema_item_set_argc_minmax(item, 1, 1);
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
   /*
    Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
    GEN_KW is added in ensemble_config.c
-   */
+  */
 
   item = config_add_schema_item(config, IGNORE_SCHEDULE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
@@ -1003,82 +887,6 @@ void ecl_config_add_config_items(config_parser_type * config)
   config_schema_item_set_argc_minmax(item, 1, 1);
 }
 
-void ecl_config_fprintf_config(const ecl_config_type * ecl_config, FILE * stream)
-{
-  fprintf(stream, CONFIG_COMMENTLINE_FORMAT);
-  fprintf(stream, CONFIG_COMMENT_FORMAT, "Here comes configuration information related to the ECLIPSE model.");
-
-  fprintf(stream, CONFIG_KEY_FORMAT, DATA_FILE_KEY);
-  fprintf(stream, CONFIG_ENDVALUE_FORMAT, ecl_config->data_file);
-
-  fprintf(stream, CONFIG_KEY_FORMAT, SCHEDULE_FILE_KEY);
-  fprintf(stream, CONFIG_ENDVALUE_FORMAT, sched_file_iget_filename(ecl_config->sched_file, 0));
-
-  fprintf(stream, CONFIG_KEY_FORMAT, ECLBASE_KEY);
-  fprintf(stream, CONFIG_ENDVALUE_FORMAT, path_fmt_get_fmt(ecl_config->eclbase));
-
-  if (ecl_config->include_all_static_kw)
-  {
-    fprintf(stream, CONFIG_KEY_FORMAT, STATIC_KW_KEY);
-    fprintf(stream, CONFIG_ENDVALUE_FORMAT, DEFAULT_ALL_STATIC_KW);
-  }
-  {
-    int size = stringlist_get_size(ecl_config->user_static_kw);
-    if (size > 0)
-    {
-      int i;
-      fprintf(stream, CONFIG_KEY_FORMAT, STATIC_KW_KEY);
-      for (i = 0; i < size; i++)
-        if (i < (size - 1))
-          fprintf(stream, CONFIG_VALUE_FORMAT, stringlist_iget(ecl_config->user_static_kw, i));
-        else
-          fprintf(stream, CONFIG_ENDVALUE_FORMAT, stringlist_iget(ecl_config->user_static_kw, i));
-    }
-  }
-
-  /*
-   if (ecl_config->refcase != NULL) {
-   fprintf( stream , CONFIG_KEY_FORMAT      , REFCASE_KEY );
-   fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config_get_refcase_name( ecl_config ));
-   }
-   */
-
-  if (ecl_config->grid != NULL )
-  {
-    fprintf(stream, CONFIG_KEY_FORMAT, GRID_KEY);
-    fprintf(stream, CONFIG_ENDVALUE_FORMAT, ecl_config_get_gridfile(ecl_config));
-  }
-
-  if (ecl_config->schedule_prediction_file != NULL )
-  {
-    fprintf(stream, CONFIG_KEY_FORMAT, SCHEDULE_PREDICTION_FILE_KEY);
-    fprintf(stream, CONFIG_ENDVALUE_FORMAT, ecl_config_get_schedule_prediction_file(ecl_config));
-  }
-
-  if (ecl_config->init_section != NULL )
-  {
-    fprintf(stream, CONFIG_KEY_FORMAT, INIT_SECTION_KEY);
-    fprintf(stream, CONFIG_ENDVALUE_FORMAT, ecl_config_get_init_section(ecl_config));
-  }
-
-  {
-    hash_iter_type * iter = hash_iter_alloc(ecl_config->fixed_length_kw);
-    while (!hash_iter_is_complete(iter))
-    {
-      const char * kw = hash_iter_get_next_key(iter);
-      int length = hash_get_int(ecl_config->fixed_length_kw, kw);
-
-      fprintf(stream, CONFIG_KEY_FORMAT, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY);
-      fprintf(stream, CONFIG_VALUE_FORMAT, kw);
-      fprintf(stream, CONFIG_INT_FORMAT, length);
-      fprintf(stream, "\n");
-
-    }
-    hash_iter_free(iter);
-  }
-
-  fprintf(stream, "\n\n");
-}
 
 /* Units as specified in the ECLIPSE technical manual */
 const char * ecl_config_get_depth_unit(const ecl_config_type * ecl_config)

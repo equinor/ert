@@ -192,13 +192,10 @@ class ErtRPCServer(SimpleXMLRPCServer):
         if self._session.simulation_context.isRealizationQueued(iens):
             raise createFault(UserWarning, "Simulation with id: '%d' is already running." % iens)
 
-        state = self.ert.getRealisation(iens)
-        state.addSubstKeyword("GEO_ID", "%d" % geo_id)
-
         sim_fs = self._session.simulation_context.get_sim_fs( )
         self._initializeRealization(sim_fs, geo_id, iens, keywords)
         self.ert.createRunpath( self._session.simulation_context.get_run_context( ) , iens = iens)
-        self._session.simulation_context.addSimulation(iens)
+        self._session.simulation_context.addSimulation(iens, geo_id)
 
 
     def _initializeRealization(self, sim_fs, geo_id, iens, keywords):

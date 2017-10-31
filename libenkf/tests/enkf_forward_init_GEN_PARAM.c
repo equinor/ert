@@ -91,11 +91,12 @@ int main(int argc , char ** argv) {
     test_assert_bool_equal( forward_init, ensemble_config_have_forward_init( enkf_main_get_ensemble_config( enkf_main )));
 
     if (forward_init) {
+      const ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ) , "PARAM" );
       enkf_node_type * gen_param_node = enkf_node_alloc( config_node );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs , 0 , 0 , "simulations/run0");
+      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs , 0 , 0 , "simulations/run0", "BASE");
 
       node_id_type node_id = {.report_step = 0 ,
                               .iens = 0};
@@ -118,7 +119,7 @@ int main(int argc , char ** argv) {
 
         test_assert_true( enkf_node_forward_init( gen_param_node , "simulations/run0" , 0 ));
 
-        error = enkf_state_forward_init( state , run_arg );
+        error = ensemble_config_forward_init( ens_config , run_arg );
         test_assert_int_equal(0, error);
         {
           enkf_fs_type * fs = enkf_main_get_fs( enkf_main );

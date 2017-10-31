@@ -202,16 +202,13 @@ void job_queue_node_free_data(job_queue_node_type * node) {
 
 
 void job_queue_node_free(job_queue_node_type * node) {
+  /*
+    The callback_arg will not be freed; that will be the responsability of the
+    calling scope.
+  */
   job_queue_node_free_data(node);
   job_queue_node_free_error_info(node);
   util_safe_free(node->run_path);
-
-  // Since the type of the callback_arg is void* it should maybe be
-  // registered with a private destructor - or the type should be
-  // changed to arg_pack?
-  if (arg_pack_is_instance( node->callback_arg ))
-      arg_pack_free( node->callback_arg );
-
   free(node);
 }
 

@@ -40,9 +40,10 @@ struct run_arg_struct {
   int                     step2;
   int                     iter;
   char                  * run_path;             /* The currently used  runpath - is realloced / freed for every step. */
+  char                  * job_name;             /* Name of the job - will correspond to ECLBASE for eclipse jobs. */
   run_mode_type           run_mode;             /* What type of run this is */
   int                     queue_index;          /* The job will in general have a different index in the queue than the iens number. */
-
+  int                     geo_id;               /* This will be used by WPRO - and mapped to context key <GEO_ID>; set during submit. */
   enkf_fs_type          * sim_fs;
   enkf_fs_type          * update_target_fs;
 
@@ -65,7 +66,8 @@ static run_arg_type * run_arg_alloc(const char * run_id,
                                     int step1                       ,
                                     int step2                       ,
                                     int iter                        ,
-                                    const char * runpath) {
+                                    const char * runpath,
+				    const char * job_name) {
   if ((sim_fs != NULL) && (sim_fs == update_target_fs))
     util_abort("%s: internal error - can  not have sim_fs == update_target_fs \n",__func__);
   {
@@ -81,14 +83,12 @@ static run_arg_type * run_arg_alloc(const char * run_id,
     run_arg->step2 = step2;
     run_arg->iter = iter;
     run_arg->run_path = util_alloc_abs_path( runpath );
+    run_arg->job_name = util_alloc_string_copy( job_name );
     run_arg->num_internal_submit = 0;
     run_arg->queue_index = INVALID_QUEUE_INDEX;
     run_arg->run_status = JOB_NOT_STARTED;
-
-    if (step1 == 0)
-      run_arg->load_start = 1;
-    else
-      run_arg->load_start = step1;
+    run_arg->geo_id = -1;    // -1 corresponds to not set
+    run_arg->load_start = step1;
 
     return run_arg;
   }
@@ -98,24 +98,25 @@ static run_arg_type * run_arg_alloc(const char * run_id,
 
 
 
-run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * sim_fs, int iens , int iter , const char * runpath) {
-  return run_arg_alloc(run_id, sim_fs , NULL , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
+run_arg_type * run_arg_alloc_ENSEMBLE_EXPERIMENT(const char * run_id, enkf_fs_type * sim_fs, int iens , int iter , const char * runpath, const char * job_name) {
+  return run_arg_alloc(run_id, sim_fs , NULL , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath, job_name);
 }
 
 
 run_arg_type * run_arg_alloc_INIT_ONLY(const char * run_id, enkf_fs_type * sim_fs , int iens , int iter , const char * runpath) {
-  return run_arg_alloc(run_id , sim_fs , NULL , iens , INIT_ONLY , 0 , 0 , iter , runpath);
+  return run_arg_alloc(run_id , sim_fs , NULL , iens , INIT_ONLY , 0 , 0 , iter , runpath, NULL);
 }
 
 
-run_arg_type * run_arg_alloc_SMOOTHER_RUN(const char * run_id , enkf_fs_type * sim_fs , enkf_fs_type * update_target_fs , int iens , int iter , const char * runpath) {
-  return run_arg_alloc(run_id, sim_fs, update_target_fs , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath);
+run_arg_type * run_arg_alloc_SMOOTHER_RUN(const char * run_id , enkf_fs_type * sim_fs , enkf_fs_type * update_target_fs , int iens , int iter , const char * runpath, const char * job_name) {
+  return run_arg_alloc(run_id, sim_fs, update_target_fs , iens , ENSEMBLE_EXPERIMENT , 0 , 0 , iter , runpath, job_name);
 }
 
 
 
 void run_arg_free(run_arg_type * run_arg) {
-  util_safe_free(run_arg->run_path);
+  free( run_arg->job_name );
+  free(run_arg->run_path);
   free( run_arg->run_id );
   free(run_arg);
 }
@@ -152,6 +153,11 @@ void run_arg_set_queue_index( run_arg_type * run_arg , int queue_index) {
 
 const char * run_arg_get_runpath( const run_arg_type * run_arg) {
   return run_arg->run_path;
+}
+
+
+const char * run_arg_get_job_name( const run_arg_type * run_arg) {
+  return run_arg->job_name;
 }
 
 
@@ -224,7 +230,14 @@ void run_arg_set_run_status( run_arg_type * run_arg , run_status_type run_status
 }
 
 
+void run_arg_set_geo_id( run_arg_type * run_arg , int geo_id) {
+  run_arg->geo_id = geo_id;
+}
 
+
+int run_arg_get_geo_id( const run_arg_type * run_arg) {
+  return run_arg->geo_id;
+}
 
 
 enkf_fs_type * run_arg_get_sim_fs(const run_arg_type * run_arg) {

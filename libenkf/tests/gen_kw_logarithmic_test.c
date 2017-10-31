@@ -88,9 +88,11 @@ void test_write_gen_kw_export_file(enkf_main_type * enkf_main) {
   }
 
   {
-    enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
     run_arg_type * run_arg = run_arg_alloc_INIT_ONLY( "run_id", init_fs , 0 ,0 , "simulations/run0");
-    enkf_state_ecl_write(state, run_arg , init_fs);
+    enkf_state_ecl_write( enkf_main_get_ensemble_config( enkf_main ),
+                          enkf_main_get_model_config( enkf_main ),
+                          run_arg ,
+                          init_fs);
     test_assert_true(util_file_exists("simulations/run0/parameters.txt"));
     run_arg_free( run_arg );
   }

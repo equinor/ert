@@ -44,16 +44,3 @@ class EnKFLibraryTest(ExtendedTestCase):
             main.free()
 
 
-    def test_enkf_state(self):
-        with TestAreaContext("enkf_library_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-
-            res_config = ResConfig("simple_config/minimum_config")
-            main = EnKFMain(res_config)
-            state = main.getRealisation( 0 )
-            
-            with self.assertRaises(TypeError):
-                state.addSubstKeyword( "GEO_ID" , 45)
-            
-            state.addSubstKeyword("GEO_ID" , "45")
-            

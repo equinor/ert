@@ -69,8 +69,8 @@ typedef struct ensemble_config_struct ensemble_config_type;
   bool                     ensemble_config_has_key(const ensemble_config_type * , const char * );
   bool                     ensemble_config_has_impl_type(const  ensemble_config_type * config, const ert_impl_type impl_type);
   bool                     ensemble_config_have_forward_init( const ensemble_config_type * ensemble_config );
-  bool                     ensemble_config_has_GEN_DATA(const  ensemble_config_type * config);
-
+  bool                     ensemble_config_GEN_DATA_require_summary(const  ensemble_config_type * config);
+  bool                     ensemble_config_require_summary(const  ensemble_config_type * config);
   void                          ensemble_config_del_node(ensemble_config_type * , const char * );
   void                          ensemble_config_add_config_items(config_parser_type * );
 
@@ -87,7 +87,9 @@ typedef struct ensemble_config_struct ensemble_config_type;
   void                             ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FILE * stream );
   const summary_key_matcher_type * ensemble_config_get_summary_key_matcher(const ensemble_config_type * ensemble_config);
   int                      ensemble_config_get_size(const ensemble_config_type * ensemble_config );
-
+  hash_iter_type                 * ensemble_config_alloc_hash_iter(const ensemble_config_type * config);
+  int ensemble_config_forward_init(const ensemble_config_type * ens_config,
+                                   const run_arg_type * run_arg);
 
   UTIL_IS_INSTANCE_HEADER( ensemble_config );
   UTIL_SAFE_CAST_HEADER( ensemble_config );

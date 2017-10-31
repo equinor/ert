@@ -42,27 +42,15 @@ class EclConfigTest(ExtendedTestCase):
 
         ui = ec.validateGridFile( "Does/Not/Exist" )
         self.assertFalse( ui )
-        
-        self.assertTrue( os.path.exists( smspec_file )) 
+
+        self.assertTrue( os.path.exists( smspec_file ))
         ui = ec.validateGridFile( smspec_file )
         self.assertFalse( ui )
 
 
 
-    def test_eclbase(self):
-        ec = EclConfig()
-        ui = ec.validateEclBase( "MixedCase%d" )
-        self.assertFalse( ui )
 
-        ui = ec.validateEclBase( "CASE%s" )
-        self.assertFalse( ui )
 
-        ui = ec.validateEclBase( "CASE%d" )
-        self.assertTrue( ui )
-        ec.setEclBase("CASE%d")
-        self.assertEqual( "CASE%d" , ec.getEclBase())
-        
-    
 
     def test_datafile(self):
         ec = EclConfig()
@@ -102,10 +90,10 @@ class EclConfigTest(ExtendedTestCase):
         dfile = self.createTestPath( DATA_file )
         difile = self.createTestPath( DATA_INIT_file )
         ifile = self.createTestPath( INIT_file )
-        
+
         ui = ec.validateInitSection( ifile )
         self.assertFalse( ui )
-        
+
         ec.setDataFile( dfile )
         ui = ec.validateInitSection( ifile )
         self.assertFalse( ui )
@@ -131,5 +119,5 @@ class EclConfigTest(ExtendedTestCase):
         self.assertTrue( isinstance( refcase , EclSum ))
         refcaseName = ec.getRefcaseName() + ".DATA"
         self.assertEqual( dfile , refcaseName )
-        
-    
+
+

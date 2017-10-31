@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import os
+import os.path
 
 from ecl.test import ExtendedTestCase, TestAreaContext
 from ecl.util import BoolVector
@@ -211,31 +211,22 @@ class EnKFTest(ExtendedTestCase):
             iactive[1] = False
             run_context = main.getRunContextENSEMPLE_EXPERIMENT( fs , iactive )
 
-            self.assertEqual( len(run_context) , 8 )
+            self.assertEqual( len(run_context) , 10 )
 
             with self.assertRaises(IndexError):
-                run_context[8]
+                run_context[10]
 
             with self.assertRaises(TypeError):
                 run_context["String"]
 
-            run_arg = run_context[0]
+            self.assertIsNone( run_context[0] )
+            run_arg = run_context[2]
             self.assertTrue( isinstance( run_arg , RunArg ))
 
-            with self.assertRaises(ValueError):
-                run_context.iensGet(0)
-
-
-            with self.assertRaises(ValueError):
-                run_context.iensGet(1)
-
-            arg0 = run_context[0]
-            arg2 = run_context.iensGet( 2 )
-            #self.assertEqual( arg0 , arg2 )
 
 
     def test_run_context_from_external_folder(self):
-        with TestAreaContext('enkf_test') as work_area:
+        with TestAreaContext('enkf_test', store_area = True) as work_area:
             work_area.copy_directory(self.case_directory_custom_kw)
             res_config = ResConfig('snake_oil/snake_oil.ert')
             main = EnKFMain(res_config)
@@ -246,11 +237,11 @@ class EnKFTest(ExtendedTestCase):
             mask[0] = True
             run_context = main.getRunContextENSEMPLE_EXPERIMENT( fs , mask )
 
-            self.assertEqual( len(run_context) , 1 )
+            self.assertEqual( len(run_context) , 10 )
 
             job_queue = main.get_queue_config().create_job_queue()
             main.getEnkfSimulationRunner().createRunPath( run_context )
             num = main.getEnkfSimulationRunner().runEnsembleExperiment(job_queue, run_context)
-
+            self.assertTrue( os.path.isdir( "snake_oil/storage/snake_oil/runpath/realisation-0/iter-0"))
             self.assertEqual( num , 1 )
 

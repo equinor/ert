@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2017  Statoil ASA, Norway. 
-    
-   The file 'environment_varlist.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2017  Statoil ASA, Norway.
+
+   The file 'environment_varlist.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <ert/job_queue/environment_varlist.h>
@@ -41,11 +41,12 @@ void env_varlist_update_path(env_varlist_type * list, const char * path_var, con
 }
 
 void env_varlist_setenv(env_varlist_type * list, const char * key, const char * value) {
-  char * _value = util_interp_setenv(key, value);
-  hash_insert_string(list->varlist, key, _value);
+  const char * interp_value = util_interp_setenv(key, value);
+  hash_insert_string(list->varlist, key, interp_value);
 }
 
-static void env_varlist_fprintf_hash(hash_type * list, char * keystring, FILE * stream) {
+
+static void env_varlist_fprintf_hash(const hash_type * list, char * keystring, FILE * stream) {
   int size = hash_get_size(list);
   fprintf(stream, "\"%s\" : {", keystring);
   stringlist_type * stringlist = hash_alloc_stringlist(list);
@@ -60,7 +61,7 @@ static void env_varlist_fprintf_hash(hash_type * list, char * keystring, FILE * 
   stringlist_free(stringlist);
 }
 
-void env_varlist_json_fprintf(env_varlist_type * list, FILE * stream) { 
+void env_varlist_json_fprintf(const env_varlist_type * list, FILE * stream) {
   env_varlist_fprintf_hash(list->varlist,    ENV_VAR_KEY_STRING,     stream); fprintf(stream, ",\n");
   env_varlist_fprintf_hash(list->updatelist, UPDATE_PATH_KEY_STRING, stream);
 }

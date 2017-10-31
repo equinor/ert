@@ -27,6 +27,7 @@
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/run_arg.h>
+#include <ert/enkf/model_config.h>
 
 
 int test_load_manually_to_new_case(enkf_main_type * enkf_main) {
@@ -34,11 +35,12 @@ int test_load_manually_to_new_case(enkf_main_type * enkf_main) {
   int iens = 0;
   int iter = 0;
   const char * casename = "new_case";
+  char * job_name  = model_config_alloc_jobname( enkf_main_get_model_config( enkf_main ), 0);
   enkf_main_select_fs( enkf_main , casename );
 
 
   enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs, iens , iter , "simulations/run0");
+  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs, iens , iter , "simulations/run0", job_name);
   {
     arg_pack_type * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , enkf_main_iget_state(enkf_main, 0));
@@ -50,7 +52,7 @@ int test_load_manually_to_new_case(enkf_main_type * enkf_main) {
     enkf_state_load_from_forward_model_mt(arg_pack);
     arg_pack_free(arg_pack);
   }
-
+  free(job_name);
   return result;
 }
 

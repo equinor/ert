@@ -28,7 +28,6 @@ class ModelConfig(BaseCClass):
     _get_forward_model           = EnkfPrototype("forward_model_ref model_config_get_forward_model(model_config)")
     _get_max_internal_submit     = EnkfPrototype("int   model_config_get_max_internal_submit(model_config)")
     _set_max_internal_submit     = EnkfPrototype("void  model_config_set_max_internal_submit(model_config, int)")
-    _get_case_table_file         = EnkfPrototype("char* model_config_get_case_table_file(model_config)")
     _get_runpath_as_char         = EnkfPrototype("char* model_config_get_runpath_as_char(model_config)")
     _select_runpath              = EnkfPrototype("bool  model_config_select_runpath(model_config, char*)")
     _set_runpath                 = EnkfPrototype("void  model_config_set_runpath(model_config, char*)")
@@ -82,9 +81,6 @@ class ModelConfig(BaseCClass):
         """ @rtype: ForwardModel """
         return self._get_forward_model().setParent(self)
 
-    def get_case_table_file(self):
-        """ @rtype: str """
-        return self._get_case_table_file()
 
     def getRunpathAsString(self):
         """ @rtype: str """

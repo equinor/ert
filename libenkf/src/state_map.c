@@ -1,18 +1,18 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-   The file 'state_map.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-   
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+   The file 'state_map.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 
@@ -59,7 +59,7 @@ state_map_type * state_map_fread_alloc( const char * filename ) {
     FILE * stream = util_fopen( filename , "r");
     int_vector_fread( map->state , stream );
     fclose( stream );
-  } 
+  }
   return map;
 }
 
@@ -105,8 +105,8 @@ bool state_map_equal( state_map_type * map1 , state_map_type * map2) {
   {
     if (int_vector_size( map1->state) != int_vector_size( map2->state))
       equal = false;
-    
-    if (equal) 
+
+    if (equal)
       equal = int_vector_equal( map1->state , map2->state );
   }
   pthread_rwlock_unlock( &map1->rw_lock );
@@ -138,7 +138,7 @@ bool state_map_legal_transition( realisation_state_enum state1 , realisation_sta
     target_mask = STATE_HAS_DATA | STATE_INITIALIZED | STATE_LOAD_FAILURE;
   else if (state1 == STATE_PARENT_FAILURE)
     target_mask = STATE_INITIALIZED | STATE_PARENT_FAILURE;
-  
+
   if (state2 & target_mask)
     return true;
   else
@@ -152,7 +152,7 @@ static void state_map_assert_writable( const state_map_type * map) {
 
 static void state_map_iset__( state_map_type * map , int index , realisation_state_enum new_state) {
   realisation_state_enum current_state = int_vector_safe_iget( map->state , index );
-  
+
   if (state_map_legal_transition( current_state , new_state ))
     int_vector_iset( map->state , index , new_state);
   else
@@ -224,10 +224,10 @@ static void state_map_select_matching__( state_map_type * map , bool_vector_type
   {
     {
       const int * map_ptr = int_vector_get_ptr( map->state );
-      int size = util_int_min(int_vector_size( map->state ), bool_vector_size(select_target)); 
+      int size = util_int_min(int_vector_size( map->state ), bool_vector_size(select_target));
       for (int i=0; i < size; i++) {
         int state_value = map_ptr[i];
-        if (state_value & select_mask) 
+        if (state_value & select_mask)
           bool_vector_iset( select_target , i , select);
       }
     }
@@ -236,7 +236,7 @@ static void state_map_select_matching__( state_map_type * map , bool_vector_type
 }
 
 
-void state_map_select_matching( state_map_type * map , bool_vector_type * select_target , int select_mask) {    
+void state_map_select_matching( state_map_type * map , bool_vector_type * select_target , int select_mask) {
   state_map_select_matching__(map , select_target , select_mask , true );
 }
 
