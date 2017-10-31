@@ -178,6 +178,15 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
                                     }
                                   ],
 
+                                  "GEN_DATA" :
+                                  [
+                                    {
+                                      "NAME"         : "super_data",
+                                      "RESULT_FILE"  : "super_data_%d",
+                                      "REPORT_STEPS" : 1
+                                    }
+                                  ],
+
                                   "LOGGING" :
                                   {
                                     "LOG_LEVEL"       : "INFO",

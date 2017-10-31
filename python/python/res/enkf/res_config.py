@@ -250,6 +250,30 @@ class ResConfig(BaseCClass):
         return gen_kw_config
 
 
+    def _extract_gen_data(self, config):
+        if ConfigKeys.GEN_DATA not in config:
+            return []
+
+        gen_data_config = []
+        for gd in config[ConfigKeys.GEN_DATA]:
+            req_keys = [ConfigKeys.NAME,
+                        ConfigKeys.RESULT_FILE,
+                        ConfigKeys.REPORT_STEPS]
+
+            default_opt = {ConfigKeys.INPUT_FORMAT : "ASCII"}
+
+            if not sorted(req_keys) == sorted(gd.keys()):
+                err_msg = "Expected keys %r when creating GEN_DATA, received %r"
+                raise KeyError(err_msg % (req_keys, gd))
+
+            value = [gd[ConfigKeys.NAME]]
+            value += ["%s:%s" % (key, gd[key]) for key in req_keys[1:]]
+            value += ["%s:%s" % (key, val) for key, val in default_opt.iteritems()]
+            gen_data_config.append((ConfigKeys.GEN_DATA, value))
+
+        return gen_data_config
+
+
     def _extract_simulation(self, config):
         if ConfigKeys.SIMULATION not in config:
             return []
@@ -285,6 +309,10 @@ class ResConfig(BaseCClass):
         # Extract GEN_KW
         sim_filter.append(ConfigKeys.GEN_KW)
         simulation_config += self._extract_gen_kw(sc)
+
+        # Extract GEN_DATA
+        sim_filter.append(ConfigKeys.GEN_DATA)
+        simulation_config += self._extract_gen_data(sc)
 
         # Others
         for key, value in sc.iteritems():

@@ -64,6 +64,7 @@ config_data = {
                                "WWPT:PROD", "WBHP:PROD", "WWIR:INJ", "WWIT:INJ",
                                "WBHP:INJ", "ROE:1"],
         "GEN_KW"            : ["SIGMA"],
+        "GEN_DATA"          : ["super_data"],
         "ECLBASE"           : "eclipse/model/<ECLIPSE_NAME>-%d",
         "ENSPATH"           : "../output/storage/<CASE_DIR>",
         "PLOT_PATH"         : "../output/results/plot/<CASE_DIR>",
@@ -335,7 +336,7 @@ class ResConfigTest(ExtendedTestCase):
 
     def assert_ensemble_config(self, ensemble_config, config_data, working_dir):
         self.assertEqual(
-            set(config_data["SUMMARY"] + config_data["GEN_KW"]),
+            set(config_data["SUMMARY"] + config_data["GEN_KW"] + config_data["GEN_DATA"]),
             set(ensemble_config.alloc_keylist())
             )
 

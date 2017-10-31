@@ -137,3 +137,31 @@ const char * config_keys_get_obs_config_key() {
 const char * config_keys_get_time_map_key() {
   return TIME_MAP_KEY;
 }
+
+const char * config_keys_get_gen_data_key() {
+  return GEN_DATA_KEY;
+}
+
+const char * config_keys_get_result_file() {
+  return RESULT_FILE_KEY;
+}
+
+const char * config_keys_get_report_steps() {
+  return REPORT_STEPS_KEY;
+}
+
+const char * config_keys_get_input_format() {
+  return INPUT_FORMAT_KEY;
+}
+
+const char * config_keys_get_ecl_file() {
+  return ECL_FILE_KEY;
+}
+
+const char * config_keys_get_output_format() {
+  return OUTPUT_FORMAT_KEY;
+}
+
+const char * config_keys_get_init_files() {
+  return INIT_FILES_KEY;
+}
