@@ -31,7 +31,6 @@
 #include <ert/util/path_fmt.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/subst_func.h>
 #include <ert/util/type_macros.h>
 
 #include <ert/ecl/ecl_grid.h>

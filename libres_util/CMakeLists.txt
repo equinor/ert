@@ -10,6 +10,7 @@ endif ()
 
 add_library( res_util src/res_log.c
                       src/subst_list.c
+                      src/subst_func.c
                       src/template.c
                       src/template_loop.c
                       src/block_fs.c

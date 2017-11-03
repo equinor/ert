@@ -25,9 +25,9 @@
 #include <ert/util/vector.h>
 #include <ert/util/node_data.h>
 #include <ert/util/buffer.h>
-#include <ert/util/subst_func.h>
 #include <ert/util/parser.h>
 
+#include <ert/res_util/subst_func.h>
 #include <ert/res_util/subst_list.h>
 
 /**

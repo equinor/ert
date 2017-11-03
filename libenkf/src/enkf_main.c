@@ -32,7 +32,6 @@
 #define HAVE_THREAD_POOL 1
 #include <ert/util/matrix.h>
 #include <ert/util/rng.h>
-#include <ert/util/subst_func.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/util.h>
@@ -67,6 +66,10 @@
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/enkf_linalg.h>
 #include <ert/analysis/module_info.h>
+
+#include <ert/res_util/res_util_defaults.h>
+#include <ert/res_util/subst_func.h>
+#include <ert/res_util/res_log.h>
 
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_config_node.h>
@@ -104,10 +107,9 @@
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/field.h>
-#include <ert/res_util/res_log.h>
 #include <ert/enkf/ert_run_context.h>
 #include <ert/enkf/run_arg.h>
-#include <ert/res_util/res_util_defaults.h>
+
 
 /**/
 

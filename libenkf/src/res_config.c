@@ -16,7 +16,7 @@
    for more details.
 */
 
-#include <ert/util/subst_func.h>
+#include <ert/res_util/subst_func.h>
 #include <ert/res_util/subst_list.h>
 
 #include <ert/config/config_settings.h>
