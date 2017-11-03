@@ -26,7 +26,6 @@
 #include <ert/util/util.h>
 #include <ert/util/path_fmt.h>
 #include <ert/util/hash.h>
-#include <ert/util/menu.h>
 #include <ert/util/bool_vector.h>
 
 #include <ert/sched/history.h>
