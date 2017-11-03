@@ -4,6 +4,7 @@ import json
 from ecl.test import TestAreaContext, ExtendedTestCase
 from ecl.util import EclVersion, Version
 from res.util.substitution_list import SubstitutionList
+from res.job_queue.environment_varlist import EnvironmentVarlist
 from res.job_queue.forward_model import ForwardModel
 from res.job_queue.ext_job import ExtJob
 from res.job_queue.ext_joblist import ExtJoblist
@@ -341,15 +342,50 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
             run_id = "test_no_jobs_id"
             umask = 4
             global_args = SubstitutionList()
+            varlist = EnvironmentVarlist()
             forward_model.formatted_fprintf(
                 run_id,
                 os.getcwd(),
                 "data_root",
                 global_args,
-                umask)
+                umask,
+                varlist)
 
             self.verify_json_dump([], global_args, umask, run_id)
 
+    def test_env_varlist(self):
+        varlist_string = "global_environment"
+        first = "FIRST"
+        second = "SECOND"
+        third = "THIRD"
+        first_value = "TheFirstValue"
+        second_value = "TheSecondValue"
+        third_value = "$FIRST:$SECOND"
+        third_value_correct = "%s:%s" % (first_value, second_value)
+        varlist = EnvironmentVarlist()
+        varlist[first] = first_value
+        varlist[second] = second_value
+        varlist[third] = third_value
+        self.assertEqual(len(varlist), 3) 
+        with TestAreaContext("python/job_queue/env_varlist"):
+            forward_model = self.set_up_forward_model([])
+            run_id = "test_no_jobs_id"
+            umask = 4
+            global_args = SubstitutionList()
+            forward_model.formatted_fprintf(
+                run_id,
+                os.getcwd(),
+                "data_root",
+                global_args,
+                umask,
+                varlist)
+            config = load_configs(self.JOBS_JSON_FILE)
+            env_config = config[varlist_string]
+            self.assertEqual(first_value, env_config[first]  )
+            self.assertEqual(second_value, env_config[second] )
+            self.assertEqual(third_value_correct, env_config[third])
+            
+            
 
     def test_repr(self):
         with TestAreaContext("python/job_queue/forward_model_one_job"):
@@ -363,12 +399,14 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
                 run_id = "test_one_job"
                 umask = 11
                 global_args = SubstitutionList()
+                varlist = EnvironmentVarlist()
                 forward_model.formatted_fprintf(
                     run_id,
                     os.getcwd(),
                     "data_root",
                     global_args,
-                    umask)
+                    umask,
+                    varlist)
 
                 self.verify_json_dump([i], global_args, umask, run_id)
 
@@ -377,12 +415,14 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
         umask = 0
         run_id = "run_all"
         global_args = SubstitutionList()
+        varlist = EnvironmentVarlist()
         forward_model.formatted_fprintf(
             run_id,
             os.getcwd(),
             "data_root",
             global_args,
-            umask)
+            umask,
+            varlist)
 
         self.verify_json_dump(range(len(joblist)), global_args, umask, run_id)
 

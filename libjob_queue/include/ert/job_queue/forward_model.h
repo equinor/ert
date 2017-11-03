@@ -27,6 +27,7 @@ extern "C" {
 #include <ert/util/stringlist.h>
 #include <ert/res_util/subst_list.h>
 
+#include <ert/job_queue/environment_varlist.h>
 #include <ert/job_queue/ext_joblist.h>
 
 typedef struct  forward_model_struct forward_model_type ;
@@ -38,7 +39,8 @@ typedef struct  forward_model_struct forward_model_type ;
   void                     forward_model_fprintf(const forward_model_type *  , FILE * );
   forward_model_type     * forward_model_alloc(const ext_joblist_type * ext_joblist);
   void                     forward_model_parse_init(forward_model_type * forward_model , const char * input_string );
-  void                     forward_model_formatted_fprintf(const forward_model_type *  , const char * run_id, const char *, const char * , const subst_list_type * , mode_t umask);
+  void                     forward_model_formatted_fprintf(const forward_model_type *  , const char * run_id, const char *, const char * , const subst_list_type * , 
+                                                           mode_t umask, const env_varlist_type * list);
   void                     forward_model_free( forward_model_type * );
   forward_model_type *     forward_model_alloc_copy(const forward_model_type * forward_model);
   void                     forward_model_iset_job_arg( forward_model_type * forward_model , int job_index , const char * arg , const char * value);

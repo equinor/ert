@@ -17,6 +17,7 @@ set(PYTHON_SOURCES
     workflow_joblist.py
     workflow_runner.py
     job_manager.py
+    environment_varlist.py
 )
 
 add_python_package("python.res.job_queue"  ${PYTHON_INSTALL_PREFIX}/res/job_queue "${PYTHON_SOURCES}" True)

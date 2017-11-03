@@ -15,6 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 from res.job_queue import ExtJob, QueuePrototype, ExtJoblist
+from res.job_queue import EnvironmentVarlist
 from ecl.util import StringList
 from res.util.substitution_list import SubstitutionList
 
@@ -28,7 +29,7 @@ class ForwardModel(BaseCClass):
     _add_job       = QueuePrototype("ext_job_ref forward_model_add_job(forward_model, char*)")
     _alloc_joblist = QueuePrototype("stringlist_obj forward_model_alloc_joblist(forward_model)")
     _iget_job      = QueuePrototype("ext_job_ref forward_model_iget_job( forward_model, int)")
-    _formatted_fprintf = QueuePrototype("void forward_model_formatted_fprintf(forward_model, char*, char*, char*, subst_list, int)")
+    _formatted_fprintf = QueuePrototype("void forward_model_formatted_fprintf(forward_model, char*, char*, char*, subst_list, int, env_varlist)")
 
     def __init__(self, ext_joblist):
         c_ptr = self._alloc(ext_joblist)
@@ -55,8 +56,8 @@ class ForwardModel(BaseCClass):
     def free(self):
         self._free( )
 
-    def formatted_fprintf(self, run_id, path, data_root, global_args, umask):
-        self._formatted_fprintf(run_id, path, data_root, global_args, umask)
+    def formatted_fprintf(self, run_id, path, data_root, global_args, umask, env_varlist):
+        self._formatted_fprintf(run_id, path, data_root, global_args, umask, env_varlist)
 
     def __repr__(self):
         return self._create_repr('joblist=%s' % self.joblist())

@@ -48,6 +48,7 @@
 
 #include <ert/sched/sched_file.h>
 
+#include <ert/job_queue/environment_varlist.h>
 #include <ert/job_queue/forward_model.h>
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/queue_driver.h>
@@ -1034,12 +1035,15 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
 
 
   /* This is where the job script is created */
+  env_varlist_type * varlist = env_varlist_alloc();
   forward_model_formatted_fprintf( model_config_get_forward_model( enkf_state->shared_info->model_config ) ,
                                    run_arg_get_run_id( run_arg ),
                                    run_arg_get_runpath( run_arg ) ,
                                    model_config_get_data_root( enkf_state->shared_info->model_config ) ,
                                    enkf_state->subst_list,
-                                   umask);
+                                   umask,
+                                   varlist);
+  env_varlist_free(varlist);
 
 }
 
