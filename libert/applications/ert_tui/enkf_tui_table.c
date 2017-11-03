@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'enkf_tui_table.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'enkf_tui_table.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include <ert/util/util.h>
-#include <ert/util/menu.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/msg.h>
 
@@ -38,10 +37,10 @@
 #include <enkf_tui_util.h>
 #include <enkf_tui_help.h>
 #include <enkf_tui_fs.h>
+#include "menu.h"
 
 
-        
-           
+
 
 static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bool ens_plot) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
@@ -56,7 +55,7 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
   char ** user_keys;
   char ** index_keys;
   double ** data;
-  bool     * active;  
+  bool     * active;
   enkf_config_node_type ** config_nodes;
   enkf_node_type        ** nodes;
 
@@ -64,7 +63,7 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
   const char * keylist_prompt  = "Table headings: KEY1:INDEX1   KEY2:INDEX2 ....";
   const char * gen_kw_prompt   = "GEN_KW Parameter";
   const char * file_prompt     = "File to save in (blank for nothing) ";
-  
+
   if (gen_kw_table) {
     char * key;
     enkf_config_node_type * config_node;
@@ -75,11 +74,11 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
       if (enkf_config_node_get_impl_type( config_node ) == GEN_KW) {
         gen_kw_config_type *  gen_kw_config = enkf_config_node_get_ref( config_node );
         num_keys                            = gen_kw_config_get_data_size( gen_kw_config );
-        
+
         user_keys = util_calloc( num_keys , sizeof * user_keys );
-        for (int i=0; i < num_keys; i++) 
+        for (int i=0; i < num_keys; i++)
           user_keys[i] = gen_kw_config_alloc_user_key( gen_kw_config , i);
-        
+
       } else {
         fprintf(stderr,"wrong type of: %s \n",key);
         free( key );
@@ -98,7 +97,7 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
     util_split_string(input_keys , " " , &num_keys , &user_keys);
     free( input_keys );
   }
-  
+
 
   util_printf_prompt(file_prompt , prompt_len , '=' , "=> ");
   {
@@ -123,7 +122,7 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
       active[ikey] = false;
     }
   }
-  
+
   if (ens_plot) {
     iens1  = 0;
     iens2  = enkf_main_get_ensemble_size( enkf_main );
@@ -144,20 +143,20 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
     for (i = 0; i < num_keys; i++)
       data[i] = util_calloc( length , sizeof * data[i] );
   }
-  
+
   {
     int active_length = 0;
     int total_line_count = 0;
     double line[num_keys];
     int iens, step;
-    
+
     for (iens = iens1; iens < iens2; iens ++) {
       for (step = step1; step < step2; step++) {
         int line_count = 0;
-        
+
         for (ikey = 0; ikey < num_keys; ikey++) {
           if (active[ikey]) {
-            node_id_type node_id = {.report_step = step, 
+            node_id_type node_id = {.report_step = step,
                                     .iens = iens };
             if (enkf_node_user_get( nodes[ikey] , fs , index_keys[ikey] , node_id , &line[ikey]))
               line_count++;
@@ -165,28 +164,28 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
               line[ikey] = -1;
           }
         }
-        
+
         if (line_count > 0) {
-          for (ikey=0; ikey < num_keys; ikey++) 
+          for (ikey=0; ikey < num_keys; ikey++)
             data[ikey][active_length] = line[ikey];
           index[active_length] = total_line_count;
           active_length++;
         }
-        
+
         total_line_count++;
       }
     }
-    
+
     if (stream != NULL) {
-      if (ens_plot) 
+      if (ens_plot)
         enkf_util_fprintf_data( index , (const double **) data , "Realization"   , (const char **) user_keys , active_length , num_keys , active , true , stream);
       else
         enkf_util_fprintf_data( index , (const double **) data , "Report-step" , (const char **) user_keys , active_length , num_keys , active , false , stream);
       fclose(stream);
     }
 
-    printf("\n\n"); 
-    if (ens_plot) 
+    printf("\n\n");
+    if (ens_plot)
       enkf_util_fprintf_data( index , (const double **) data , "Realization"   , (const char **) user_keys , active_length , num_keys , active , true , stdout);
     else
       enkf_util_fprintf_data( index , (const double **) data , "Report-step" , (const char **) user_keys , active_length , num_keys , active , false , stdout);
@@ -213,19 +212,19 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
 
 
 static void enkf_tui_table_ensemble(void * arg) {
-  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   enkf_tui_table__(enkf_main , false , true);
 }
 
 
 static void enkf_tui_table_GEN_KW_ensemble(void * arg) {
-  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   enkf_tui_table__(enkf_main , true , true);
 }
 
 
 static void enkf_tui_table_time(void * arg) {
-  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   enkf_tui_table__(enkf_main , false , false);
 }
 
@@ -234,8 +233,8 @@ static void enkf_tui_table_time(void * arg) {
 
 
 void enkf_tui_table_menu(void * arg) {
-  
-  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   {
     menu_type * menu = menu_alloc("Table of results" , "Back" , "bB");
     menu_add_item(menu , "Ensemble of parameters"          , "eE"  , enkf_tui_table_ensemble        , enkf_main , NULL);
