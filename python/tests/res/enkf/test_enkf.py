@@ -133,7 +133,7 @@ class EnKFTest(ExtendedTestCase):
                 self.assertEqual(observation_vector.getNode(index), summary_observation_node)
                 self.assertEqual(value, summary_observation_node.getValue())
                 values.append((index, value, std))
-            
+
 
 
             observations = main.getObservations()
@@ -144,7 +144,7 @@ class EnKFTest(ExtendedTestCase):
                 self.assertEqual( node.getValue( ) , index * 10.5 )
                 index += 1
 
-                
+
             self.assertEqual(observation_vector, test_vector)
             for index, value, std in values:
                 self.assertTrue(test_vector.isActive(index))
@@ -159,7 +159,7 @@ class EnKFTest(ExtendedTestCase):
 
             main.free()
 
-            
+
 
     def test_config( self ):
         with TestAreaContext("enkf_test") as work_area:
@@ -183,15 +183,15 @@ class EnKFTest(ExtendedTestCase):
             # self.assertIsInstance(main.iget_member_config(0), MemberConfig)
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
-            self.assertEqual( "Ensemble" , main.getMountPoint())
+            self.assertEqual( "simple_config/Ensemble" , main.getMountPoint())
 
             main.free()
-            
+
     def test_enkf_create_config_file(self):
         config_file      = "test_new_config"
         dbase_type       = "BLOCK_FS"
         num_realizations = 42
-        
+
         with TestAreaContext("python/ens_condif/create_config" , store_area = True) as ta:
             EnKFMain.createNewConfig(config_file, "storage" , dbase_type, num_realizations)
             res_config = ResConfig(config_file)
@@ -210,9 +210,9 @@ class EnKFTest(ExtendedTestCase):
             iactive[0] = False
             iactive[1] = False
             run_context = main.getRunContextENSEMPLE_EXPERIMENT( fs , iactive )
-            
+
             self.assertEqual( len(run_context) , 8 )
-            
+
             with self.assertRaises(IndexError):
                 run_context[8]
 
@@ -221,19 +221,19 @@ class EnKFTest(ExtendedTestCase):
 
             run_arg = run_context[0]
             self.assertTrue( isinstance( run_arg , RunArg ))
-            
+
             with self.assertRaises(ValueError):
                 run_context.iensGet(0)
 
 
             with self.assertRaises(ValueError):
                 run_context.iensGet(1)
-                
+
             arg0 = run_context[0]
             arg2 = run_context.iensGet( 2 )
             #self.assertEqual( arg0 , arg2 )
-    
-    
+
+
     def test_run_context_from_external_folder(self):
         with TestAreaContext('enkf_test') as work_area:
             work_area.copy_directory(self.case_directory_custom_kw)
@@ -241,15 +241,15 @@ class EnKFTest(ExtendedTestCase):
             main = EnKFMain(res_config)
             fs_manager = main.getEnkfFsManager()
             fs = fs_manager.getCurrentFileSystem( )
-            
+
             mask = BoolVector(default_value = False , initial_size = 10)
             mask[0] = True
             run_context = main.getRunContextENSEMPLE_EXPERIMENT( fs , mask )
 
             self.assertEqual( len(run_context) , 1 )
-            
+
             job_queue = main.get_queue_config().create_job_queue()
             main.getEnkfSimulationRunner().createRunPath( run_context )
             num = main.getEnkfSimulationRunner().runEnsembleExperiment(job_queue, run_context)
-            
+
             self.assertEqual( num , 1 )

@@ -494,7 +494,7 @@ void model_config_init(model_config_type * model_config ,
   }
 
   if (config_content_has_item( config, RUNPATH_KEY)) {
-    model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , config_content_get_value(config , RUNPATH_KEY) );
+    model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , config_content_get_value_as_path(config , RUNPATH_KEY) );
     model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
   }
 
@@ -552,10 +552,10 @@ void model_config_init(model_config_type * model_config ,
     model_config_set_case_table( model_config , ens_size , config_content_iget( config , CASE_TABLE_KEY , 0,0));
 
   if (config_content_has_item( config , ENSPATH_KEY))
-    model_config_set_enspath( model_config , config_content_get_value(config , ENSPATH_KEY));
+    model_config_set_enspath( model_config , config_content_get_value_as_path(config , ENSPATH_KEY));
 
   if (config_content_has_item( config , DATA_ROOT_KEY))
-    model_config_set_data_root( model_config , config_content_get_value(config , DATA_ROOT_KEY));
+    model_config_set_data_root( model_config , config_content_get_value_as_path(config , DATA_ROOT_KEY));
 
   if (config_content_has_item( config , JOBNAME_KEY))
     model_config_set_jobname_fmt( model_config , config_content_get_value(config , JOBNAME_KEY));
@@ -837,11 +837,9 @@ static void model_config_init_user_config(config_parser_type * config ) {
   config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
   config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 
-  config_add_key_value(config, RUNPATH_KEY, false, CONFIG_STRING);
-  config_add_key_value(config, DATA_ROOT_KEY, false, CONFIG_STRING);
-
-  item = config_add_schema_item(config, ENSPATH_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
+  config_add_key_value(config, RUNPATH_KEY, false, CONFIG_PATH);
+  config_add_key_value(config, DATA_ROOT_KEY, false, CONFIG_PATH);
+  config_add_key_value(config, ENSPATH_KEY, false, CONFIG_PATH);
 
   item = config_add_schema_item(config, JOBNAME_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);

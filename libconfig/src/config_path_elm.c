@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'config_path_elm.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'config_path_elm.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 
@@ -107,16 +107,23 @@ char * config_path_elm_alloc_path(const config_path_elm_type * path_elm , const 
     /* This will be relative or absolute depending on the relative/absolute
        status of the root_path. */
     const char * input_root = config_root_path_get_input_path( path_elm->root_path );
+    char * tmp_path;
+    char * return_path;
     if (input_root == NULL)
-      return util_alloc_filename( path_elm->rel_path , path , NULL);
+      tmp_path = util_alloc_filename( path_elm->rel_path , path , NULL);
     else
-      return util_alloc_joined_string( (const char *[3]) { input_root , path_elm->rel_path , path } , 3 , UTIL_PATH_SEP_STRING );
+      tmp_path = util_alloc_joined_string( (const char *[3]) { input_root , path_elm->rel_path , path } , 3 , UTIL_PATH_SEP_STRING );
+
+    return_path = util_alloc_normal_path( tmp_path );
+    free( tmp_path );
+
+    return return_path;
   }
 }
 
 
 char * config_path_elm_alloc_relpath(const config_path_elm_type * path_elm , const char * input_path) {
-  if (util_is_abs_path( input_path )) 
+  if (util_is_abs_path( input_path ))
     return util_alloc_rel_path( config_root_path_get_rel_path( path_elm->root_path ) , input_path);
   else {
     char * abs_path = config_path_elm_alloc_abspath( path_elm , input_path );
@@ -134,6 +141,6 @@ char * config_path_elm_alloc_abspath(const config_path_elm_type * path_elm , con
     char * abs_path1 = util_alloc_filename( path_elm->abs_path , input_path , NULL );
     char * abs_path  = util_alloc_realpath__( abs_path1 );  // The util_alloc_realpath__() will work also for nonexsting paths
     free( abs_path1 );
-    return abs_path; 
+    return abs_path;
   }
 }
