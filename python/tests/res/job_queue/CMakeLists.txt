@@ -12,6 +12,7 @@ set(TEST_SOURCES
     test_workflow_runner.py
     test_jobmanager.py
     test_statoil_jobmanager.py
+    test_jobmanager_get_env.py
     workflow_common.py
 )
 
@@ -28,6 +29,7 @@ addPythonTest(tests.res.job_queue.test_function_ert_script.FunctionErtScriptTest
 addPythonTest(tests.res.job_queue.test_workflow_runner.WorkflowRunnerTest)
 addPythonTest(tests.res.job_queue.test_ext_job.ExtJobTest)
 addPythonTest(tests.res.job_queue.test_jobmanager.JobManagerTest)
+addPythonTest(tests.res.job_queue.test_jobmanager_get_env.JobManagerGetEnvTest)
 
 if (STATOIL_TESTDATA_ROOT)
     addPythonTest(tests.res.job_queue.test_statoil_jobmanager.JobManagerStatoilTest
