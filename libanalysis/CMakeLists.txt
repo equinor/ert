@@ -14,6 +14,8 @@ add_library(analysis src/analysis_module.c
                      src/null_enkf.c
                      src/sqrt_enkf.c
                      src/std_enkf.c
+                     src/lars.c
+                     src/stepwise.c
 )
 
 target_include_directories(analysis
