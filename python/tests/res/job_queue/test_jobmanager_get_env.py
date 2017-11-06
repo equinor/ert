@@ -47,27 +47,25 @@ class JobManagerGetEnvTest(TestCase):
 
     def test_get_env(self):
         with TestAreaContext("job_manager_get_env"):
-            #with open("x.py", "w") as f:
-            #    f.write("#!/usr/bin/env python\n")
-            #    f.write("import os\n")
-            #    f.write("print('Hello World!')\n")
-            #    f.write("print(os.environ['TARGET'])\n")
-            #    f.write("print(os.environ['ZXCVBN'])\n")
-            #os.chmod("x.py", stat.S_IEXEC + stat.S_IREAD)
+            with open("x.py", "w") as f:
+                f.write("#!/usr/bin/env python\n")
+                f.write("import os\n")
+                f.write("import sys\n")
+                f.write("assert(os.environ['KEY_ONE'] == 'FirstValue')\n")
+                f.write("assert(os.environ['KEY_TWO'] == 'SecondValue')\n")
 
-            executable = "ls"
+            os.chmod("x.py", stat.S_IEXEC + stat.S_IREAD)
 
-            joblist = {"name" : "TEST_GET_ENV",
+            executable = "./x.py"
+
+            joblist = {"name" : "TEST_GET_ENV1",
                         "executable" : executable,
                         "stdout" : "outfile.stdout",
                         "stderr" : "outfile.stderr",
-                        "environment" : {"TARGET" : "flatland", "ZXCVBN" : "zxcvbn"},
-                        "max_running_minutes" : 12,
-                        "max_running" : 30,
-                        "argList" : ["-l"] }
+                        "argList" : [] }    
 
             data = {"umask"              : "0000",
-                    "global_environment" : {"FIRST" : "FirstValue" },
+                    "global_environment" : {"KEY_ONE" : "FirstValue", "KEY_TWO" : "SecondValue" },
                     "DATA_ROOT"          : "/path/to/data",
                     "jobList"            : [joblist]}
 
@@ -75,10 +73,9 @@ class JobManagerGetEnvTest(TestCase):
             with open(jobs_file, "w") as f:
                f.write(json.dumps(data))
 
-
             jobm = JobManager()
-            jobm.runJob(jobm[0])
-            subprocess.call(["more", "outfile.stdout.0"])
+            exit_status, msg = jobm.runJob(jobm[0])
+            self.assertEqual(exit_status, 0)
 
 
 

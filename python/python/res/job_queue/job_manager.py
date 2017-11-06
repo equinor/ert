@@ -136,6 +136,7 @@ class JobManager(object):
         if log_url is None:
             self._log_url = error_url
         self._data_root = None
+        self.global_environment = None
         if json_file is not None and os.path.isfile(json_file):
             self._loadJson(json_file)
         else:
@@ -171,8 +172,16 @@ class JobManager(object):
         self.initStatusFile()
         if self._data_root:
             os.environ["DATA_ROOT"] = self._data_root
+        self.set_environment()
         self.information = logged_fields
 
+        
+    def set_environment(self):
+         if (self.global_environment):
+           data = self.global_environment
+           for key in data.keys():
+               os.environ[key] = data[key]
+             
 
     def data_root(self):
         return self._data_root
@@ -192,6 +201,8 @@ class JobManager(object):
             self.simulation_id = _jsonGet(jobs_data, "run_id")
         if "ert_pid" in jobs_data:
             self.ert_pid = _jsonGet(jobs_data, "ert_pid")
+        if "global_environment" in jobs_data:
+            self.global_environment = _jsonGet(jobs_data, "global_environment")
         self.job_list = _jsonGet(jobs_data, "jobList")
         self._ensureCompatibleJobList()
         self._buildJobMap()
