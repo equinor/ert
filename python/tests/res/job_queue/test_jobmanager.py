@@ -470,3 +470,34 @@ class JobManagerTest(TestCase):
             # self.assertTrue(os.path.isfile(""WARNING-ILLEGAL-FILESERVER.txt"))
 
             # TODO REMOVED test_load FROM jobmanager test!  Should be in ert-statoil
+
+
+    def test_get_env(self):
+        with TestAreaContext("job_manager_get_env"):
+            with open("x.py", "w") as f:
+                f.write("#!/usr/bin/env python\n")
+                f.write("import os\n")
+                f.write("import sys\n")
+                f.write("assert(os.environ['KEY_ONE'] == 'FirstValue')\n")
+                f.write("assert(os.environ['KEY_TWO'] == 'SecondValue')\n")
+            os.chmod("x.py", stat.S_IEXEC + stat.S_IREAD)
+
+            executable = "./x.py"
+            joblist = {"name" : "TEST_GET_ENV1",
+                        "executable" : executable,
+                        "stdout" : "outfile.stdout",
+                        "stderr" : "outfile.stderr",
+                        "argList" : [] }    
+            data = {"umask"              : "0000",
+                    "global_environment" : {"KEY_ONE" : "FirstValue", "KEY_TWO" : "SecondValue" },
+                    "DATA_ROOT"          : "/path/to/data",
+                    "jobList"            : [joblist]}
+
+            jobs_file = os.path.join(os.getcwd(), "jobs.json")
+            with open(jobs_file, "w") as f:
+               f.write(json.dumps(data))
+            jobm = JobManager()
+            exit_status, msg = jobm.runJob(jobm[0])
+            self.assertEqual(exit_status, 0)
+
+
