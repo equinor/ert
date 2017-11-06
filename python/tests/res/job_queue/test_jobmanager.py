@@ -477,9 +477,11 @@ class JobManagerTest(TestCase):
             with open("x.py", "w") as f:
                 f.write("#!/usr/bin/env python\n")
                 f.write("import os\n")
-                f.write("import sys\n")
                 f.write("assert(os.environ['KEY_ONE'] == 'FirstValue')\n")
                 f.write("assert(os.environ['KEY_TWO'] == 'SecondValue')\n")
+                f.write("assert(os.environ['PATH104'] == 'NewPath')\n")
+                f.write("assert(os.environ['KEY_THREE'] == 'ThirdValue:FourthValue')\n")
+                f.write("assert(os.environ['KEY_FOUR'] == 'ThirdValue:FourthValue:FifthValue:SixthValue')\n")
             os.chmod("x.py", stat.S_IEXEC + stat.S_IREAD)
 
             executable = "./x.py"
@@ -489,15 +491,18 @@ class JobManagerTest(TestCase):
                         "stderr" : "outfile.stderr",
                         "argList" : [] }    
             data = {"umask"              : "0000",
-                    "global_environment" : {"KEY_ONE" : "FirstValue", "KEY_TWO" : "SecondValue" },
+                    "global_environment" : {"KEY_ONE" : "FirstValue", "KEY_TWO" : "SecondValue", "KEY_THREE" : "ThirdValue", "KEY_FOUR" : "ThirdValue:FourthValue" },
+                    "global_update_path" : {"PATH104" : "NewPath",    "KEY_THREE" : "FourthValue", "KEY_FOUR" : "FifthValue:SixthValue"},
                     "DATA_ROOT"          : "/path/to/data",
-                    "jobList"            : [joblist]}
+                    "jobList"            : [joblist, joblist]}
 
             jobs_file = os.path.join(os.getcwd(), "jobs.json")
             with open(jobs_file, "w") as f:
                f.write(json.dumps(data))
             jobm = JobManager()
             exit_status, msg = jobm.runJob(jobm[0])
+            self.assertEqual(exit_status, 0)
+            exit_status, msg = jobm.runJob(jobm[1])
             self.assertEqual(exit_status, 0)
 
 

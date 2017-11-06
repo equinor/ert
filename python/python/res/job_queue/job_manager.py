@@ -137,6 +137,7 @@ class JobManager(object):
             self._log_url = error_url
         self._data_root = None
         self.global_environment = None
+        self.global_update_path = None
         if json_file is not None and os.path.isfile(json_file):
             self._loadJson(json_file)
         else:
@@ -173,6 +174,7 @@ class JobManager(object):
         if self._data_root:
             os.environ["DATA_ROOT"] = self._data_root
         self.set_environment()
+        self.update_path()
         self.information = logged_fields
 
         
@@ -181,6 +183,15 @@ class JobManager(object):
            data = self.global_environment
            for key in data.keys():
                os.environ[key] = data[key]
+
+    def update_path(self):
+        if (self.global_update_path):
+           data = self.global_update_path
+           for key in data.keys():
+               if (os.environ.get(key)):
+                  os.environ[key] = os.environ[key] + ':' + data[key]
+               else:
+                  os.environ[key] = data[key]
              
 
     def data_root(self):
@@ -203,6 +214,8 @@ class JobManager(object):
             self.ert_pid = _jsonGet(jobs_data, "ert_pid")
         if "global_environment" in jobs_data:
             self.global_environment = _jsonGet(jobs_data, "global_environment")
+        if "global_update_path" in jobs_data:
+            self.global_update_path = _jsonGet(jobs_data, "global_update_path")
         self.job_list = _jsonGet(jobs_data, "jobList")
         self._ensureCompatibleJobList()
         self._buildJobMap()
