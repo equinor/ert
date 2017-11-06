@@ -1035,7 +1035,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
 
 
   /* This is where the job script is created */
-  env_varlist_type * varlist = env_varlist_alloc();
+  const env_varlist_type * varlist = site_config_get_env_varlist( enkf_state->shared_info->site_config );
   forward_model_formatted_fprintf( model_config_get_forward_model( enkf_state->shared_info->model_config ) ,
                                    run_arg_get_run_id( run_arg ),
                                    run_arg_get_runpath( run_arg ) ,
@@ -1043,7 +1043,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const run_arg_type * r
                                    enkf_state->subst_list,
                                    umask,
                                    varlist);
-  env_varlist_free(varlist);
+  
 
 }
 

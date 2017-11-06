@@ -50,14 +50,13 @@ int main(int argc , char ** argv) {
   }
 
   const char * filename = util_alloc_filename(ert_test_context_get_cwd(test_context),
-                                              "simulations/run0/jobs.py", NULL);
+                                              "simulations/run0/jobs.json", NULL);
   const char * jobs_file_content = util_fread_alloc_file_content(filename, NULL);
 
-  test_assert_true  (strstr(jobs_file_content, "umask = 0022") != NULL);
-  test_assert_false (strstr(jobs_file_content, "umask = 0023") != NULL);
-  test_assert_false (strstr(jobs_file_content, "umask = 0032") != NULL);
-  test_assert_false (strstr(jobs_file_content, "umask = 0122") != NULL);
-  test_assert_false (strstr(jobs_file_content, "umask = 1022") != NULL);
+  test_assert_true  (strstr(jobs_file_content, "\"umask\" : \"0022\"") != NULL);
+  test_assert_false (strstr(jobs_file_content, "\"umask\" : \"0032\"") != NULL);
+  test_assert_false (strstr(jobs_file_content, "\"umask\" : \"0122\"") != NULL);
+  test_assert_false (strstr(jobs_file_content, "\"umask\" : \"1022\"") != NULL);
 
   ert_test_context_free(test_context);
   exit(0);

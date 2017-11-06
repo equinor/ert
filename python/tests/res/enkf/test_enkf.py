@@ -253,3 +253,4 @@ class EnKFTest(ExtendedTestCase):
             num = main.getEnkfSimulationRunner().runEnsembleExperiment(job_queue, run_context)
             
             self.assertEqual( num , 1 )
+
