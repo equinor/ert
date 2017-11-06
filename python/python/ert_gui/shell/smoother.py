@@ -72,7 +72,7 @@ class Smoother(ErtShellCollection):
         if len(arguments) == 1:
             case_name = arguments[0]
             ert = self.ert()
-            fs_manager = ert.getEnkfFsManager() 
+            fs_manager = ert.getEnkfFsManager()
 
             ert.getEnkfSimulationRunner().runWorkflows(HookRuntime.PRE_UPDATE)
 
@@ -81,10 +81,11 @@ class Smoother(ErtShellCollection):
             source_fs = fs_manager.getCurrentFileSystem( )
             model_config = ert.getModelConfig( )
             runpath_fmt = model_config.getRunpathFormat( )
+            jobname_fmt = model_config.getJobnameFormat( )
             subst_list = ert.getDataKW( )
             mask = BoolVector( default_value = True, initial_size = ert.getEnsembleSize( ) )
-            
-            run_context = ErtRunContext.ensemble_smoother( source_fs , target_fs , mask, runpath_fmt, subst_list, 0 )
+
+            run_context = ErtRunContext.ensemble_smoother( source_fs , target_fs , mask, runpath_fmt, jobname_fmt, subst_list, 0 )
             success = es_update.smootherUpdate( run_context  )
 
             if not success:
