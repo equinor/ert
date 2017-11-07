@@ -179,17 +179,17 @@ class JobManager(object):
 
         
     def set_environment(self):
-         if (self.global_environment):
+         if self.global_environment:
            data = self.global_environment
            for key in data.keys():
                os.environ[key] = data[key]
 
     def update_path(self):
-        if (self.global_update_path):
+        if self.global_update_path:
            data = self.global_update_path
            for key in data.keys():
                if (os.environ.get(key)):
-                  os.environ[key] = os.environ[key] + ':' + data[key]
+                  os.environ[key] = data[key] + ':' + os.environ[key]
                else:
                   os.environ[key] = data[key]
              

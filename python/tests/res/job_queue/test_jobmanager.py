@@ -385,12 +385,6 @@ class JobManagerTest(TestCase):
 
             # TODO REMOVED test_load FROM jobmanager test!  Should be in ert-statoil
 
-class JobManagerTestGetenv(TestCase):
-
-    def setUp(self):
-        self.dispatch_imp = None
-        if "DATA_ROOT" in os.environ:
-            del os.environ["DATA_ROOT"]
 
     def test_get_env(self):
         with TestAreaContext("job_manager_get_env"):
@@ -400,8 +394,8 @@ class JobManagerTestGetenv(TestCase):
                 f.write("assert(os.environ['KEY_ONE'] == 'FirstValue')\n")
                 f.write("assert(os.environ['KEY_TWO'] == 'SecondValue')\n")
                 f.write("assert(os.environ['PATH104'] == 'NewPath')\n")
-                f.write("assert(os.environ['KEY_THREE'] == 'ThirdValue:FourthValue')\n")
-                f.write("assert(os.environ['KEY_FOUR'] == 'ThirdValue:FourthValue:FifthValue:SixthValue')\n")
+                f.write("assert(os.environ['KEY_THREE'] == 'FourthValue:ThirdValue')\n")
+                f.write("assert(os.environ['KEY_FOUR'] == 'FifthValue:SixthValue:ThirdValue:FourthValue')\n")
             os.chmod("x.py", stat.S_IEXEC + stat.S_IREAD)
 
             executable = "./x.py"
