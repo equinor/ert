@@ -57,20 +57,6 @@ JSON_STRING_NO_DATA_ROOT = """
 def gen_area_name(base, f):
     return base + "_" + f.func_name.split("_")[-1]
 
-def create_jobs_py(jobList):
-    jobs_file = os.path.join(os.getcwd(), "jobs.py")
-    compiled_jobs_file = jobs_file + "c"
-
-    for fname in [jobs_file, compiled_jobs_file]:
-        if os.path.isfile(fname):
-            os.unlink(fname)
-
-    with open(jobs_file, "w") as f:
-        f.write("jobList = ")
-        f.write(json.dumps(jobList))
-        f.write("\n")
-
-    return jobs_file
 
 def create_jobs_json(jobList, umask="0000"):
     data = {"umask"     : umask,
@@ -163,40 +149,12 @@ class JobManagerTest(TestCase):
             self.assertTrue("COPY_FILE" in jobm)
             self.assertFalse("COPY_FILEX" in jobm)
 
-    def test_jobs_py(self):
-        with TestAreaContext("no_jobs_py"):
+    def test_jobs_zero(self):
+        with TestAreaContext("no_jobs_at_all"):
             with self.assertRaises(IOError):
                 jobm = JobManager(module_file="Does/not/exist")
 
-        with TestAreaContext("invalid_jobs"):
-            # Syntax error
-            with open("jobs.py", "w") as f:
-                f.write("Hello - this is not valid Python code ...")
-            with self.assertRaises(ImportError):
-                jobm = JobManager()
 
-            # Missing jobList attribute
-            if os.path.isfile("jobs.pyc"):
-                os.unlink("jobs.pyc")
-            with open("jobs.py", "w") as f:
-                f.write("A = 1")
-            with self.assertRaises(AttributeError):
-                jobm = JobManager()
-
-            create_jobs_py([{'name' : 'COPY_FILE', 'executable' : 'XYZ'}])
-            jobm = JobManager()
-            self.assertEqual(len(jobm), 1)
-
-            job0 = jobm[0]
-            with self.assertRaises(IndexError):
-                _ = jobm[1]
-
-            job0 = jobm["COPY_FILE"]
-            with self.assertRaises(KeyError):
-                _ = jobm["NO-SUCH-JOB"]
-
-            self.assertTrue("COPY_FILE" in jobm)
-            self.assertFalse("COPY_FILEX" in jobm)
 
     # This test breaks test_jobs_py if data is also
     # dumped as a python module
@@ -213,13 +171,8 @@ class JobManagerTest(TestCase):
 
 
     def test_post_error(self):
-        self._test_post_error(create_jobs_py)
-        for create_jobs in [create_jobs_py, create_jobs_json]:
-            self._test_post_error(create_jobs)
-
-    def _test_post_error(self, create_jobs):
-        with TestAreaContext(gen_area_name("test_post_error", create_jobs)):
-            create_jobs([{'name' : 'COPY_FILE', 'executable' : 'XYZ'}])
+        with TestAreaContext(gen_area_name("test_post_error", create_jobs_json)):
+            create_jobs_json([{'name' : 'COPY_FILE', 'executable' : 'XYZ'}])
             jobm = JobManager()
             job = {"name" : "TESTING",
                    "executable" : "/bin/testing/path",
@@ -235,25 +188,19 @@ class JobManagerTest(TestCase):
 
             jobm.postError(job, "TESTING: Error message")
 
-    def test_runtime(self):
-        for create_jobs in [create_jobs_py, create_jobs_json]:
-            self._test_runtime(create_jobs)
 
-    def _test_runtime(self, create_jobs):
-        with TestAreaContext(gen_area_name("runtime", create_jobs)):
-            create_jobs([{'name' : 'COPY_FILE', 'executable' : 'XYZ'}])
+    def test_runtime(self):
+        with TestAreaContext(gen_area_name("runtime", create_jobs_json)):
+            create_jobs_json([{'name' : 'COPY_FILE', 'executable' : 'XYZ'}])
             jobm = JobManager()
             start_time = jobm.getStartTime()
             time.sleep(5)
             run_time = jobm.getRuntime()
             self.assertTrue(run_time > 5)
 
-    def test_statusfile(self):
-        for create_jobs in [create_jobs_py, create_jobs_json]:
-            self._test_statusfile(create_jobs)
 
-    def _test_statusfile(self, create_jobs):
-        with TestAreaContext(gen_area_name("status_test", create_jobs)):
+    def test_statusfile(self):
+        with TestAreaContext(gen_area_name("status_test", create_jobs_json)):
             with open(JobManager.STATUS_file, "w") as f:
                 pass
 
@@ -263,7 +210,7 @@ class JobManagerTest(TestCase):
             with open(JobManager.EXIT_file, "w") as f:
                 pass
 
-            create_jobs([{'name' : 'COPY_FILE', 'executable' : 'XYZ'}])
+            create_jobs_json([{'name' : 'COPY_FILE', 'executable' : 'XYZ'}])
             jobm = JobManager()
             for f in [JobManager.EXIT_file, JobManager.OK_file]:
                 self.assertTrue(not os.path.exists(f))
@@ -273,12 +220,9 @@ class JobManagerTest(TestCase):
             jobm.createOKFile()
             self.assertTrue(os.path.exists(jobm.OK_file))
 
-    def test_run_job(self):
-        for create_jobs in [create_jobs_py, create_jobs_json]:
-            self._test_run_job(create_jobs)
 
-    def _test_run_job(self, create_jobs):
-        with TestAreaContext(gen_area_name("run_job_fail", create_jobs)):
+    def test_run_job(self):
+        with TestAreaContext(gen_area_name("run_job_fail", create_jobs_json)):
             with open("run.sh", "w") as f:
                 f.write("#!/bin/sh\n")
                 f.write("exit 1\n")
@@ -290,19 +234,16 @@ class JobManagerTest(TestCase):
                         "executable" : executable,
                         "argList" : ["A","B"]}]
 
-            create_jobs(joblist)
+            create_jobs_json(joblist)
             jobm = JobManager()
             self.assertTrue(os.path.isfile(executable))
 
             exit_status, msg = jobm.runJob(jobm[0])
             self.assertEqual(exit_status, 1)
 
-    def test_verify_executable(self):
-        for create_jobs in [create_jobs_py, create_jobs_json]:
-            self._test_verify_executable(create_jobs)
 
-    def _test_verify_executable(self, create_jobs):
-        with TestAreaContext(gen_area_name("no_executable", create_jobs)):
+    def test_verify_executable(self):
+        with TestAreaContext(gen_area_name("no_executable", create_jobs_json)):
             with self.assertRaises(IOError):
                 fname = "this/is/not/a/file"
                 executable = os.path.join(os.getcwd(), fname)
@@ -312,11 +253,11 @@ class JobManagerTest(TestCase):
                             "stderr" : "mkdir_err",
                             "argList" : []}]
 
-                create_jobs(joblist)
+                create_jobs_json(joblist)
                 jobm = JobManager()
                 jobm.runJob(jobm[0])
 
-        with TestAreaContext(gen_area_name("file_not_exec", create_jobs)):
+        with TestAreaContext(gen_area_name("file_not_exec", create_jobs_json)):
             with self.assertRaises(IOError):
                 fname = "not_executable"
                 with open(fname, "w") as f:
@@ -330,11 +271,11 @@ class JobManagerTest(TestCase):
                             "stderr" : "mkdir_err",
                             "argList" : []}]
 
-                create_jobs(joblist)
+                create_jobs_json(joblist)
                 jobm = JobManager()
                 jobm.runJob(jobm[0])
 
-        with TestAreaContext(gen_area_name("unix_cmd", create_jobs)):
+        with TestAreaContext(gen_area_name("unix_cmd", create_jobs_json)):
             executable = "ls"
             self.assertFalse(os.path.isfile(executable))
             joblist = [{"name" : "TEST_UNIX_CMD_FROM_PATH",
@@ -343,22 +284,19 @@ class JobManagerTest(TestCase):
                         "stderr" : "mkdir_err",
                         "argList" : []}]
 
-            create_jobs(joblist)
+            create_jobs_json(joblist)
             jobm = JobManager()
             jobm.runJob(jobm[0])
 
-    def test_run_output_rename(self):
-        for create_jobs in [create_jobs_py, create_jobs_json]:
-            self._test_run_output_rename(create_jobs)
 
-    def _test_run_output_rename(self, create_jobs):
-        with TestAreaContext(gen_area_name("output_rename", create_jobs)):
+    def test_run_output_rename(self):
+        with TestAreaContext(gen_area_name("output_rename", create_jobs_json)):
             job = {"name" : "TEST_JOB",
                    "executable" : "/bin/mkdir",
                    "stdout" : "out",
                    "stderr" : "err"}
             joblist = [ job,job, job, job, job ]
-            create_jobs(joblist)
+            create_jobs_json(joblist)
             jobm = JobManager()
 
             for (index,job) in enumerate(jobm):
@@ -367,10 +305,6 @@ class JobManagerTest(TestCase):
 
 
     def test_run_multiple_OK(self):
-        for create_jobs in [create_jobs_py, create_jobs_json]:
-            self._test_run_multiple_OK(create_jobs)
-
-    def _test_run_multiple_OK(self, create_jobs):
         with TestAreaContext("mkdir"):
             joblist = []
             dir_list = ["1","2","3","4","5"]
@@ -382,7 +316,7 @@ class JobManagerTest(TestCase):
                        "argList" : ["-p", "-v", d]}
                 joblist.append(job)
 
-            create_jobs(joblist)
+            create_jobs_json(joblist)
             jobm = JobManager()
 
             for (index,job) in enumerate(jobm):
@@ -394,12 +328,9 @@ class JobManagerTest(TestCase):
                 self.assertTrue(os.path.isfile("mkdir_err.%d" % index))
                 self.assertEqual(0, os.path.getsize("mkdir_err.%d" % index))
 
-    def test_run_multiple_fail(self):
-        for create_jobs in [create_jobs_py, create_jobs_json]:
-            self._test_run_multiple_fail(create_jobs)
 
-    def _test_run_multiple_fail(self, create_jobs):
-        with TestAreaContext(gen_area_name("mkdir", create_jobs)):
+    def test_run_multiple_fail(self):
+        with TestAreaContext(gen_area_name("mkdir", create_jobs_json)):
             joblist = []
             dir_list = ["1","2","3","4","5"]
             for d in dir_list:
@@ -410,7 +341,7 @@ class JobManagerTest(TestCase):
                        "argList" : ["-p", "-v", "read-only/%s" % d]}
                 joblist.append(job)
 
-            create_jobs(joblist)
+            create_jobs_json(joblist)
             jobm = JobManager()
             os.mkdir("read-only")
             os.chmod("read-only", stat.S_IRUSR + stat.S_IXUSR)
@@ -420,23 +351,6 @@ class JobManagerTest(TestCase):
                 self.assertEqual(exit_status, 1)
                 self.assertTrue(os.path.getsize("mkdir_err.%d" % index) > 0)
 
-    def test_json_over_py(self):
-        with TestAreaContext("json_wins"):
-            jobListPy = [{"name" : "PYTHON_JOB",
-                   "executable" : "/bin/mkdir",
-                   "stdout" : "out",
-                   "stderr" : "err"}]
-
-            jobListJson = [{"name" : "JSON_JOB",
-                   "executable" : "/bin/mkdir",
-                   "stdout" : "out",
-                   "stderr" : "err"}]
-
-            create_jobs_py(jobListPy)
-            create_jobs_json(jobListJson)
-
-            jobm = JobManager()
-            self.assertEquals(jobListJson[0]["name"], jobm[0]["name"])
 
     def test_data_from_forward_model_json(self):
         with TestAreaContext("json_from_forward_model"):
@@ -471,6 +385,12 @@ class JobManagerTest(TestCase):
 
             # TODO REMOVED test_load FROM jobmanager test!  Should be in ert-statoil
 
+class JobManagerTestGetenv(TestCase):
+
+    def setUp(self):
+        self.dispatch_imp = None
+        if "DATA_ROOT" in os.environ:
+            del os.environ["DATA_ROOT"]
 
     def test_get_env(self):
         with TestAreaContext("job_manager_get_env"):

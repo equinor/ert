@@ -141,7 +141,7 @@ class JobManager(object):
         if json_file is not None and os.path.isfile(json_file):
             self._loadJson(json_file)
         else:
-            self._loadModule(module_file)
+            raise IOError("'jobs.json' not found.")
 
         self.start_time = dt.now()
         self.max_runtime = 0  # This option is currently sleeping
@@ -220,26 +220,6 @@ class JobManager(object):
         self._ensureCompatibleJobList()
         self._buildJobMap()
 
-    def _loadModule(self, module_file):
-        if module_file is None:
-            self.job_list = []
-            return
-
-        try:
-            jobs_module = imp.load_source("jobs", module_file)
-        except SyntaxError:
-            raise ImportError
-
-        # The internalization of the job items is currently *EXTREMELY* basic.
-        self.job_list = jobs_module.jobList
-        self._ensureCompatibleJobList()
-        self._buildJobMap()
-
-        if hasattr(jobs_module, "umask"):
-            umask = jobs_module.umask
-        else:
-            umask = self.DEFAULT_UMASK
-        os.umask(umask)
 
     # To ensure compatibility with old versions.
     def _ensureCompatibleJobList(self):
