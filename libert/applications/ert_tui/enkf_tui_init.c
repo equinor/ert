@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'enkf_tui_init.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'enkf_tui_init.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include <ert/util/util.h>
-#include <ert/util/menu.h>
 #include <ert/util/msg.h>
 
 #include <ert/enkf/enkf_main.h>
@@ -35,7 +34,7 @@
 
 #include <enkf_tui_util.h>
 #include <enkf_tui_init.h>
-
+#include "menu.h"
 
 
 
@@ -46,7 +45,7 @@ void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_param
   int iens1, iens2;
   init_mode_type init_mode = INIT_FORCE;
   bool iens_valid = false;
-  
+
   /* iens2 should be interpreted as __inclusive__ */
   if ( all_members ) {
     iens1 = 0;
@@ -75,10 +74,10 @@ void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_param
       free(iens1char);
     }
   }
-  
+
   if (iens_valid) {
     stringlist_type * param_list = NULL;
-    if (all_parameters) 
+    if (all_parameters)
       param_list = ensemble_config_alloc_keylist_from_var_type( ensemble_config , PARAMETER );
     else {
       const enkf_config_node_type * config_node = NULL;
@@ -133,7 +132,7 @@ void enkf_tui_init_menu(void * arg) {
   menu_add_item(menu , "Initialize one member/all parameters"                   , "3" , enkf_tui_init3 , enkf_main , NULL);
   menu_add_item(menu , "Initialize one member/one parameter"                    , "4" , enkf_tui_init4 , enkf_main , NULL);
   menu_add_item(menu , "Initialize interval of ensemble members/all parameters" , "5" , enkf_tui_init5 , enkf_main , NULL);
-  menu_add_item(menu , "Initialize interval of ensemble members/one parameter"  , "6" , enkf_tui_init6 , enkf_main , NULL);  
+  menu_add_item(menu , "Initialize interval of ensemble members/one parameter"  , "6" , enkf_tui_init6 , enkf_main , NULL);
   menu_run(menu);
   menu_free(menu);
 

@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'enkf_tui_util.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'enkf_tui_util.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -24,7 +24,6 @@
 
 #include <ert/util/util.h>
 #include <ert/util/string_util.h>
-#include <ert/util/menu.h>
 #include <ert/util/arg_pack.h>
 
 #include <ert/enkf/enkf_node.h>
@@ -33,9 +32,9 @@
 #include <ert/enkf/enkf_state.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/enkf_types.h>
+#include "menu.h"
 
-
-/** 
+/**
     This file implements various small utility functions for the (text
     based) EnKF user interface.
 */
@@ -76,13 +75,13 @@ const enkf_config_node_type * enkf_tui_util_scanf_key(const ensemble_config_type
   }
     else if (ensemble_config_has_key(config , kw)) {
       config_node = ensemble_config_get_node(config , kw);
-      
-      if (impl_type != INVALID) 
-        if (enkf_config_node_get_impl_type(config_node) != impl_type) 
+
+      if (impl_type != INVALID)
+        if (enkf_config_node_get_impl_type(config_node) != impl_type)
           OK = false;
-      
+
       if (var_type != INVALID_VAR)
-        if (enkf_config_node_get_var_type(config_node) != var_type) 
+        if (enkf_config_node_get_var_type(config_node) != var_type)
           OK = false;
     } else OK = false;
     free(kw);
@@ -93,10 +92,10 @@ const enkf_config_node_type * enkf_tui_util_scanf_key(const ensemble_config_type
 
 /**
    Present the user with the queries:
-   
+
       First ensemble member ==>
       Last ensemble member ===>
-  
+
     It then allocates (bool *) pointer [0..ens_size-1], where the
     interval gven by the user is true (i.e. actve), and the rest is
     false. It s the responsiibility of the calling scope to free this.
@@ -109,10 +108,10 @@ bool * enkf_tui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int 
   int iens2 = util_scanf_int_with_limits("Last ensemble member" , prompt_len , iens1 , ens_size - 1);
   int iens;
 
-  for (iens = 0; iens < ens_size; iens++) 
+  for (iens = 0; iens < ens_size; iens++)
     iactive[iens] = false;
 
-  for (iens = iens1; iens <= iens2; iens++) 
+  for (iens = iens1; iens <= iens2; iens++)
     iactive[iens] = true;
 
 
@@ -135,13 +134,13 @@ bool * enkf_tui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int 
    string.
 */
 
-  
+
 void enkf_tui_util_scanf_iens_range(const char * prompt_fmt , int ens_size , int prompt_len , int * iens1 , int * iens2) {
   char * prompt = util_alloc_sprintf(prompt_fmt , ens_size - 1);
   bool OK = false;
 
   util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-  
+
   while (!OK) {
     char * input = util_alloc_stdin_line();
     const char * current_ptr = input;
@@ -151,8 +150,8 @@ void enkf_tui_util_scanf_iens_range(const char * prompt_fmt , int ens_size , int
       current_ptr = util_parse_int(current_ptr , iens1 , &OK);
       current_ptr = util_skip_sep(current_ptr , " ,-:" , &OK);
       current_ptr = util_parse_int(current_ptr , iens2 , &OK);
-      
-      if (!OK) 
+
+      if (!OK)
         printf("Failed to parse two integers from: \"%s\". Example: \"0 - 19\" to get the 20 first members.\n",input);
       free(input);
     } else {
@@ -169,7 +168,7 @@ void enkf_tui_util_scanf_report_steps(int last_report , int prompt_len , int * _
   bool OK = false;
 
   util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-  
+
   while (!OK) {
     char * input = util_alloc_stdin_line();
     const char * current_ptr = input;
@@ -184,17 +183,17 @@ void enkf_tui_util_scanf_report_steps(int last_report , int prompt_len , int * _
       current_ptr = util_skip_sep(current_ptr , " ,-:" , &OK);
       current_ptr = util_parse_int(current_ptr , &step2 , &OK);
     }
-    if (!OK) 
+    if (!OK)
       printf("Failed to parse two integers from: \"%s\". Example: \"0 - 19\" to get the 20 first report steps.\n",input);
     free(input);
 
     step1 = util_int_min(step1 , last_report);
     step2 = util_int_min(step2 , last_report);
-    if (step1 > step2) 
+    if (step1 > step2)
       util_exit("%s: ohh come on - must have a finite interval forward in time - no plots for you.\n",__func__);
     *__step1 = step1;
     *__step2 = step2;
-    
+
   }
   free(prompt);
 }
@@ -211,17 +210,17 @@ bool * enkf_tui_util_scanf_alloc_report_active(int last_step, int prompt_len) {
   int step2 = util_scanf_int_with_limits("Last report step" , prompt_len , step1 , last_step);
   int step;
 
-  for (step = 0; step <= last_step; step++) 
+  for (step = 0; step <= last_step; step++)
     iactive[step] = false;
 
-  for (step = step1; step <= step2; step++) 
+  for (step = step1; step <= step2; step++)
     iactive[step] = true;
 
   return iactive;
 }
 
 
-/** 
+/**
     This functions reads i,j,k and returns them be reference; if the
     reference pointer is NULL, that coordinate is skipped. I.e.
 
@@ -253,7 +252,7 @@ void enkf_tui_util_scanf_ijk__(const field_config_type * config, int prompt_len 
    The function will loop until the user has entered ijk corresponding
    to an active cell.
 */
-   
+
 int enkf_tui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
   int global_index;
   field_config_scanf_ijk(config , true , "Give (i,j,k) indices" , prompt_len , NULL , NULL , NULL , &global_index);
@@ -278,7 +277,7 @@ int enkf_tui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
    The value is returned (by reference) in y, and the corresponding
    time (currently report_step) is returned in 'x'.
 */
-   
+
 
 void enkf_tui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * config_node, enkf_node_type * node , int get_index , int step1 , int step2 , int iens , double * x , double * y ) {
   const char * key = enkf_config_node_get_key(config_node);
@@ -323,7 +322,7 @@ int enkf_tui_util_scanf_int_with_default(const char * prompt , int prompt_len , 
       OK = true;
       value = -1;
     } else {
-      OK = util_sscanf_int( input , &value ); 
+      OK = util_sscanf_int( input , &value );
       free( input );
     }
   } while (!OK);
@@ -349,7 +348,7 @@ int enkf_tui_util_scanf_int_with_default_return_to_menu(const char * prompt , in
       value = -2;
     }
     else {
-      OK = util_sscanf_int( input , &value ); 
+      OK = util_sscanf_int( input , &value );
       free( input );
     }
   } while (!OK);
@@ -364,8 +363,8 @@ bool enkf_tui_util_sscanf_active_list( bool_vector_type * iactive , const char *
   } else {
     bool OK;
     OK = string_util_init_active_mask( select_string , iactive );
-    
-    if (bool_vector_size( iactive ) < ens_size) 
+
+    if (bool_vector_size( iactive ) < ens_size)
       bool_vector_iset( iactive , ens_size - 1 , false );
     else if (bool_vector_size( iactive ) > ens_size)
       return false;
@@ -373,7 +372,7 @@ bool enkf_tui_util_sscanf_active_list( bool_vector_type * iactive , const char *
   }
 }
 
-/** 
+/**
     The limit is not inclusive
 */
 double enkf_tui_util_scanf_double_with_lower_limit(const char * prompt , int prompt_len , double min_value) {

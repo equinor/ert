@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'enkf_tui_analysis.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'enkf_tui_analysis.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include <ert/util/util.h>
-#include <ert/util/menu.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/stringlist.h>
@@ -37,7 +36,7 @@
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
 #include <ert_tui_const.h>
-
+#include "menu.h"
 
 
 void enkf_tui_analysis_scale_observation_std__(void * arg) {
@@ -109,12 +108,12 @@ void enkf_tui_analysis_update_module__(void * arg) {
     analysis_module_type * analysis_module = analysis_config_get_active_module( analysis_config );
     char var_name[256];
     char value[256];
-    
-    util_printf_prompt("Variable to modify" , prompt_len , '=' , "=> "); 
+
+    util_printf_prompt("Variable to modify" , prompt_len , '=' , "=> ");
     scanf("%s", var_name);
     {
       char * value_prompt = util_alloc_sprintf("New value for %s" , var_name);
-      util_printf_prompt(value_prompt , prompt_len , '=' , "=> "); 
+      util_printf_prompt(value_prompt , prompt_len , '=' , "=> ");
       free( value_prompt );
     }
     scanf("%s", value);
@@ -123,7 +122,7 @@ void enkf_tui_analysis_update_module__(void * arg) {
       printf("\'%s\' successfully set to \'%s\' \n",var_name , value);
     else
       printf("** Variable/type combination: %s/%s not recognized \n", var_name , value);
-    
+
   }
 }
 

@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include <ert/util/util.h>
-#include <ert/util/menu.h>
 #include <ert/util/msg.h>
 
 #include <ert/enkf/enkf_main.h>
@@ -37,6 +36,7 @@
 
 #include <enkf_tui_util.h>
 #include <enkf_tui_help.h>
+#include "menu.h"
 #define PROMPT_LEN  60
 
 
