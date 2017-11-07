@@ -136,10 +136,12 @@ class JobManager(object):
         if log_url is None:
             self._log_url = error_url
         self._data_root = None
+        self.global_environment = None
+        self.global_update_path = None
         if json_file is not None and os.path.isfile(json_file):
             self._loadJson(json_file)
         else:
-            self._loadModule(module_file)
+            raise IOError("'jobs.json' not found.")
 
         self.start_time = dt.now()
         self.max_runtime = 0  # This option is currently sleeping
@@ -171,8 +173,26 @@ class JobManager(object):
         self.initStatusFile()
         if self._data_root:
             os.environ["DATA_ROOT"] = self._data_root
+        self.set_environment()
+        self.update_path()
         self.information = logged_fields
 
+        
+    def set_environment(self):
+         if self.global_environment:
+           data = self.global_environment
+           for key in data.keys():
+               os.environ[key] = data[key]
+
+    def update_path(self):
+        if self.global_update_path:
+           data = self.global_update_path
+           for key in data.keys():
+               if (os.environ.get(key)):
+                  os.environ[key] = data[key] + ':' + os.environ[key]
+               else:
+                  os.environ[key] = data[key]
+             
 
     def data_root(self):
         return self._data_root
@@ -192,30 +212,14 @@ class JobManager(object):
             self.simulation_id = _jsonGet(jobs_data, "run_id")
         if "ert_pid" in jobs_data:
             self.ert_pid = _jsonGet(jobs_data, "ert_pid")
+        if "global_environment" in jobs_data:
+            self.global_environment = _jsonGet(jobs_data, "global_environment")
+        if "global_update_path" in jobs_data:
+            self.global_update_path = _jsonGet(jobs_data, "global_update_path")
         self.job_list = _jsonGet(jobs_data, "jobList")
         self._ensureCompatibleJobList()
         self._buildJobMap()
 
-    def _loadModule(self, module_file):
-        if module_file is None:
-            self.job_list = []
-            return
-
-        try:
-            jobs_module = imp.load_source("jobs", module_file)
-        except SyntaxError:
-            raise ImportError
-
-        # The internalization of the job items is currently *EXTREMELY* basic.
-        self.job_list = jobs_module.jobList
-        self._ensureCompatibleJobList()
-        self._buildJobMap()
-
-        if hasattr(jobs_module, "umask"):
-            umask = jobs_module.umask
-        else:
-            umask = self.DEFAULT_UMASK
-        os.umask(umask)
 
     # To ensure compatibility with old versions.
     def _ensureCompatibleJobList(self):
