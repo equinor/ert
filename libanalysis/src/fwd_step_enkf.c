@@ -30,10 +30,10 @@
 #include <ert/util/rng.h>
 #include <ert/util/matrix.h>
 #include <ert/util/matrix_blas.h>
-#include <ert/util/stepwise.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/double_vector.h>
 
+#include <ert/analysis/stepwise.h>
 #include <ert/analysis/fwd_step_enkf.h>
 #include <ert/analysis/fwd_step_log.h>
 #include <ert/analysis/analysis_table.h>
