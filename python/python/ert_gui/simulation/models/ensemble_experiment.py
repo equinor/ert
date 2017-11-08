@@ -18,7 +18,7 @@ class EnsembleExperiment(BaseRunModel):
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName( run_msg, indeterminate=False)
-        
+
         num_successful_realizations = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(self._job_queue, run_context)
         self.assertHaveSufficientRealizations(num_successful_realizations, active_realizations )
 
@@ -34,8 +34,7 @@ class EnsembleExperiment(BaseRunModel):
         elif (num_successful_realizations < active_realizations):
             raise ErtRunError("Too many simulations have failed! .\n\n"
                               "Check ERT log file '%s' or simulation folder for details." % ResLog.getFilename()) 
-        
-        
+
     def runSimulations(self, arguments ):
         self.runSimulations__(  arguments , "Running ensemble experiment...")
 
@@ -46,12 +45,14 @@ class EnsembleExperiment(BaseRunModel):
 
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
+        jobname_fmt = model_config.getJobnameFormat( )
         subst_list = self.ert().getDataKW( )
         itr = 0
         mask = arguments["active_realizations"]
         run_context = ErtRunContext.ensemble_experiment(result_fs,
                                                         mask,
                                                         runpath_fmt,
+                                                        jobname_fmt,
                                                         subst_list,
                                                         itr)
         return run_context
