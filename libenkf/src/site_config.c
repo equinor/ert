@@ -544,7 +544,7 @@ static void site_config_init_env(site_config_type * site_config, const config_co
         const char * path = config_content_node_iget(path_node, 0);
         const char * value = config_content_node_iget(path_node, 1);
 
-        site_config_update_pathvar(site_config, path, value);
+        env_varlist_update_path(site_config->env_varlist, path, value);
       }
     }
   }

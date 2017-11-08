@@ -355,6 +355,7 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
 
     def test_env_varlist(self):
         varlist_string = "global_environment"
+        update_string  = "global_update_path"
         first = "FIRST"
         second = "SECOND"
         third = "THIRD"
@@ -384,6 +385,7 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
             self.assertEqual(first_value, env_config[first]  )
             self.assertEqual(second_value, env_config[second] )
             self.assertEqual(third_value_correct, env_config[third])
+            update_config = config[update_string]
             
             
 
