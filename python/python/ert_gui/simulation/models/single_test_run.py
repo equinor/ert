@@ -4,15 +4,15 @@ from res.enkf import ErtRunContext
 from ert_gui.simulation.models import BaseRunModel, ErtRunError, EnsembleExperiment
 
 class SingleTestRun(EnsembleExperiment):
-    
+
     def __init__(self, queue_config):
         super(EnsembleExperiment, self).__init__("Single realization test-run" , queue_config)
 
 
-        
+
     def runSimulations(self, arguments):
         self.runSimulations__( arguments  , "Running single realisation test ...")
-        
+
 
     def create_context(self, arguments):
         fs_manager = self.ert().getEnkfFsManager()
@@ -20,6 +20,7 @@ class SingleTestRun(EnsembleExperiment):
 
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
+        jobname_fmt = model_config.getJobnameFormat( )
         subst_list = self.ert().getDataKW( )
         itr = 0
 
@@ -28,6 +29,7 @@ class SingleTestRun(EnsembleExperiment):
         run_context = ErtRunContext.ensemble_experiment(result_fs,
                                                         mask,
                                                         runpath_fmt,
+                                                        jobname_fmt,
                                                         subst_list,
                                                         itr)
         return run_context

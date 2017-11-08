@@ -18,7 +18,7 @@ class EnsembleSmoother(BaseRunModel):
 
     def runSimulations(self, arguments):
         prior_context = self.create_context( arguments )
-        
+
         self.checkMinimumActiveRealizations(prior_context)
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
@@ -40,7 +40,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...")
 
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_UPDATE )
-        es_update = self.ert().getESUpdate( ) 
+        es_update = self.ert().getESUpdate( )
         success = es_update.smootherUpdate( prior_context )
         if not success:
             raise ErtRunError("Analysis of simulation failed!")
@@ -48,11 +48,11 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhase(1, "Running simulations...")
         self.ert().getEnkfFsManager().switchFileSystem( prior_context.get_target_fs( ) )
-        
+
         self.setPhaseName("Pre processing...")
-        
+
         rerun_context = self.create_context( arguments, prior_context = prior_context )
-        self.ert().getEnkfSimulationRunner().createRunPath( rerun_context )  
+        self.ert().getEnkfSimulationRunner().createRunPath( rerun_context )
         self.ert().getEnkfSimulationRunner().runWorkflows( HookRuntime.PRE_SIMULATION )
 
         self.setPhaseName("Running forecast...", indeterminate=False)
@@ -72,6 +72,7 @@ class EnsembleSmoother(BaseRunModel):
     def create_context(self, arguments, prior_context = None):
         model_config = self.ert().getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
+        jobname_fmt = model_config.getJobnameFormat( )
         subst_list = self.ert().getDataKW( )
         fs_manager = self.ert().getEnkfFsManager()
         if prior_context is None:
@@ -84,8 +85,8 @@ class EnsembleSmoother(BaseRunModel):
             mask = prior_context.get_mask( )
             sim_fs = prior_context.get_target_fs( )
             target_fs = None
-            
-        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, subst_list, itr)
+
+        run_context = ErtRunContext.ensemble_smoother( sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         return run_context
 
 
