@@ -23,7 +23,7 @@ target_include_directories(analysis
            $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(analysis PUBLIC ecl)
+target_link_libraries(analysis PUBLIC ecl res_util)
 target_compile_definitions(analysis PRIVATE -DINTERNAL_LINK)
 set_target_properties(analysis PROPERTIES
     VERSION ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}
