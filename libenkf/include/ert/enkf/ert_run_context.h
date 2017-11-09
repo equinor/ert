@@ -46,12 +46,14 @@ typedef struct ert_run_context_struct ert_run_context_type;
                                                enkf_fs_type * target_update_fs ,
                                                bool_vector_type * iactive ,
                                                path_fmt_type * runpath_fmt ,
+					       const char * jobname_fmt,
                                                subst_list_type * subst_list ,
                                                int iter);
 
   ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * sim_fs ,
                                                                    bool_vector_type * iactive ,
                                                                    const path_fmt_type * runpath_fmt ,
+								   const char * jobname_fmt,
                                                                    const subst_list_type * subst_list ,
                                                                    int iter);
 
@@ -65,6 +67,7 @@ typedef struct ert_run_context_struct ert_run_context_type;
   ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs ,
                                                             bool_vector_type * iactive ,
                                                             const path_fmt_type * runpath_fmt ,
+							    const char * jobname_fmt,
                                                             const subst_list_type * subst_list ,
                                                             int iter);
 
@@ -88,6 +91,7 @@ typedef struct ert_run_context_struct ert_run_context_type;
 
   enkf_fs_type * ert_run_context_get_sim_fs(const ert_run_context_type * run_context);
   enkf_fs_type * ert_run_context_get_update_target_fs(const ert_run_context_type * run_context);
+  bool ert_run_context_iactive( const ert_run_context_type * context , int iens);
 
   UTIL_IS_INSTANCE_HEADER( ert_run_context );
 

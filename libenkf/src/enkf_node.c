@@ -445,14 +445,6 @@ bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const forward_loa
 
 
 
-/**
-   This function compares the internal __report_step with the input
-   report_step, and return true if they are equal. It is used in the
-   calling scope to discard static nodes which are no longer in use.
-*/
-
-
-
 static bool enkf_node_store_buffer( enkf_node_type * enkf_node , enkf_fs_type * fs , int report_step , int iens) {
   FUNC_ASSERT(enkf_node->write_to_buffer);
   {

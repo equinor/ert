@@ -30,7 +30,7 @@
 #include <ert/res_util/subst_list.h>
 
 #include <ert/enkf/enkf_main.h>
-
+#include <ert/enkf/ensemble_config.h>
 
 void create_runpath(enkf_main_type * enkf_main, int iter) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
@@ -96,7 +96,7 @@ int main(int argc , char ** argv) {
       const enkf_config_node_type * field_config_node = ensemble_config_get_node( ens_config , "PORO" );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
       enkf_node_type * field_node = enkf_node_alloc( field_config_node );
-      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, 0 ,0 , "simulations/run0");
+      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs, 0 ,0 , "simulations/run0", "BASE");
       node_id_type node_id = {.report_step = 0 ,
                               .iens = 0 };
 
@@ -114,7 +114,7 @@ int main(int argc , char ** argv) {
 
         test_assert_false(enkf_node_forward_init(field_node, "simulations/run0", 0));
         enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
-        result = enkf_state_forward_init(state, run_arg);
+        result = ensemble_config_forward_init(ens_config, run_arg);
         test_assert_true(LOAD_FAILURE & result);
 
         result = 0;
@@ -136,7 +136,7 @@ int main(int argc , char ** argv) {
         enkf_state_type * state = enkf_main_iget_state( enkf_main , 0 );
 
         test_assert_true( enkf_node_forward_init( field_node , "simulations/run0" , 0));
-        result = enkf_state_forward_init( state , run_arg);
+        result = ensemble_config_forward_init( ens_config , run_arg);
         test_assert_int_equal( result, 0 );
         result = enkf_state_load_from_forward_model( state , run_arg ,  msg_list );
 

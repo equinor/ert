@@ -182,7 +182,7 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
     free(job_name);
     if (*p1 == '\0')  /* we have parsed the whole string. */
       break;
-    
+
   }
 }
 

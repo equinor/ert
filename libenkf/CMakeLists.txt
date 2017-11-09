@@ -6,6 +6,7 @@ add_library(enkf src/active_list.c
                  src/analysis_iter_config.c
                  src/block_fs_driver.c
                  src/block_obs.c
+                 src/callback_arg.c
                  src/cases_config.c
                  src/container.c
                  src/container_config.c
@@ -63,7 +64,6 @@ add_library(enkf src/active_list.c
                  src/local_obsdata_node.c
                  src/local_updatestep.c
                  src/meas_data.c
-                 src/member_config.c
                  src/misfit_ensemble.c
                  src/misfit_member.c
                  src/misfit_ranking.c
@@ -290,11 +290,6 @@ target_link_libraries(enkf_umask_config_test enkf)
 add_config_test(enkf_umask_config_test
                 enkf_umask_config_test
                 ${CMAKE_SOURCE_DIR}/test-data/local/simple_config/config_umask)
-
-add_executable(enkf_rng tests/enkf_rng.c)
-target_link_libraries(enkf_rng enkf)
-add_config_test(enkf_rng
-                enkf_rng ${CMAKE_CURRENT_SOURCE_DIR}/tests/data/config rng)
 
 add_executable(enkf_forward_load_context tests/enkf_forward_load_context.c)
 target_link_libraries(enkf_forward_load_context enkf)

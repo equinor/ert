@@ -354,7 +354,7 @@ bool gen_data_forward_load(gen_data_type * gen_data , const char * ecl_file , co
 bool gen_data_initialize(gen_data_type * gen_data , int iens , const char * init_file , rng_type * rng) {
   bool ret = false;
   if (init_file) {
-    forward_load_context_type * load_context = forward_load_context_alloc( NULL , false , NULL , NULL , NULL );
+    forward_load_context_type * load_context = forward_load_context_alloc( NULL , false , NULL , NULL );
 
     forward_load_context_select_step(load_context, 0);
     if (!gen_data_fload_with_report_step(gen_data , init_file , load_context))

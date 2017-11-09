@@ -549,6 +549,12 @@ const int_vector_type * gen_data_config_get_active_report_steps( const gen_data_
   return config->active_report_steps;
 }
 
+
+int gen_data_config_get_max_report_step( const gen_data_config_type *config) {
+  return int_vector_get_max(config->active_report_steps);
+}
+
+
 void gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size) {
   config->ens_size = ens_size;
 }

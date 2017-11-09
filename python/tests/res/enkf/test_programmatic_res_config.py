@@ -337,9 +337,6 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
         self.assertEqual(loaded_ecl_config.get_gridfile(),
                          prog_ecl_config.get_gridfile())
 
-        self.assertEqual(loaded_ecl_config.getEclBase(),
-                         prog_ecl_config.getEclBase())
-
         self.assertEqual(loaded_ecl_config.getRefcaseName(),
                          prog_ecl_config.getRefcaseName())
 

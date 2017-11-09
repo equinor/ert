@@ -50,7 +50,6 @@ extern "C" {
 #include <ert/enkf/enkf_state.h>
 #include <ert/enkf/obs_data.h>
 #include <ert/enkf/enkf_fs.h>
-#include <ert/enkf/member_config.h>
 #include <ert/enkf/enkf_obs.h>
 #include <ert/enkf/misfit_ensemble.h>
 #include <ert/enkf/analysis_config.h>
@@ -61,6 +60,7 @@ extern "C" {
 #include <ert/enkf/ranking_table.h>
 #include <ert/enkf/hook_manager.h>
 #include <ert/enkf/rng_config.h>
+#include <ert/enkf/rng_manager.h>
 #include <ert/enkf/pca_plot_data.h>
 #include <ert/enkf/field_config.h>
 #include <ert/enkf/ert_run_context.h>
@@ -240,7 +240,6 @@ extern "C" {
   bool              enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path);
   char *            enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main);
   stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main );
-  void              enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file );
 
   void              enkf_main_initialize_from_scratch(enkf_main_type * enkf_main ,
 						      enkf_fs_type * init_fs,
@@ -298,6 +297,8 @@ extern "C" {
   ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter);
 
   queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main );
+
+  rng_manager_type  * enkf_main_get_rng_manager(const enkf_main_type * enkf_main );
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);

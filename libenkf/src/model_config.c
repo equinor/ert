@@ -40,6 +40,8 @@
 
 #include <ert/job_queue/forward_model.h>
 
+#include <ert/res_util/res_log.h>
+
 #include <ert/enkf/model_config.h>
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/fs_types.h>
@@ -83,15 +85,13 @@
 #define MODEL_CONFIG_TYPE_ID 661053
 struct model_config_struct {
   UTIL_TYPE_ID_DECLARATION;
-  stringlist_type      * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
-  char                 * case_table_file;
   forward_model_type   * forward_model;             /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */
   time_map_type        * external_time_map;
   history_type         * history;                   /* The history object. */
   path_fmt_type        * current_runpath;           /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/
   char                 * current_path_key;
   hash_type            * runpath_map;
-  char                 * jobname_fmt;               /* Format string with one '%d' for the jobname - can be NULL in which case the eclbase name will be used. */
+  char                 * jobname_fmt;
   char                 * enspath;
   char                 * rftpath;
   char                 * data_root;
@@ -112,6 +112,9 @@ struct model_config_struct {
 };
 
 
+char * model_config_alloc_jobname( const model_config_type * model_config , int iens) {
+  return util_alloc_sprintf( model_config->jobname_fmt, iens);
+}
 
 const char * model_config_get_jobname_fmt( const model_config_type * model_config ) {
   return model_config->jobname_fmt;
@@ -141,43 +144,6 @@ bool model_config_runpath_requires_iter( const model_config_type * model_config 
 }
 
 
-const char * model_config_get_case_table_file( const model_config_type * model_config ) {
-  return model_config->case_table_file;
-}
-
-void model_config_set_case_table( model_config_type * model_config , int ens_size , const char * case_table_file ) {
-  if (model_config->case_table_file != NULL) { /* Clear the current selection */
-    free( model_config->case_table_file );
-    stringlist_free( model_config->case_names );
-
-    model_config->case_table_file = NULL;
-    model_config->case_names      = NULL;
-  }
-
-  if (case_table_file != NULL) {
-    bool atEOF = false;
-    char casename[128];
-    int  case_size = 0;
-    FILE * stream = util_fopen( case_table_file , "r");
-    model_config->case_names = stringlist_alloc_new();
-    while (!atEOF) {
-      if (fscanf( stream , "%s" , casename) == 1) {
-        stringlist_append_copy( model_config->case_names , casename );
-        case_size++;
-      } else
-        atEOF = true;
-    }
-    fclose( stream );
-
-    if (case_size < ens_size) {
-      for (int i = case_size; i < ens_size; i++)
-        stringlist_append_owned_ref( model_config->case_names , util_alloc_sprintf("case_%04d" , i));
-      fprintf(stderr, "** Warning: mismatch between NUM_REALIZATIONS:%d and size of CASE_TABLE:%d - using \'case_nnnn\' for the last cases %d.\n", ens_size , case_size , ens_size - case_size);
-    } else if (case_size > ens_size)
-      fprintf(stderr, "** Warning: mismatch between NUM_REALIZATIONS:%d and CASE_TABLE:%d - only the %d realizations will be used.\n", ens_size , case_size , ens_size);
-
-  }
-}
 
 
 void model_config_add_runpath( model_config_type * model_config , const char * path_key , const char * fmt) {
@@ -321,7 +287,6 @@ model_config_type * model_config_alloc_empty() {
 
   */
   UTIL_TYPE_ID_INIT(model_config , MODEL_CONFIG_TYPE_ID);
-  model_config->case_names                = NULL;
   model_config->enspath                   = NULL;
   model_config->rftpath                   = NULL;
   model_config->data_root                 = NULL;
@@ -329,7 +294,6 @@ model_config_type * model_config_alloc_empty() {
   model_config->dbase_type                = INVALID_DRIVER_ID;
   model_config->current_runpath           = NULL;
   model_config->current_path_key          = NULL;
-  model_config->case_table_file           = NULL;
   model_config->history                   = NULL;
   model_config->jobname_fmt               = NULL;
   model_config->forward_model             = NULL;
@@ -546,18 +510,30 @@ void model_config_init(model_config_type * model_config ,
   else
     model_config->has_prediction = false;
 
-
-  if (config_content_has_item(config ,  CASE_TABLE_KEY))
-    model_config_set_case_table( model_config , ens_size , config_content_iget( config , CASE_TABLE_KEY , 0,0));
-
   if (config_content_has_item( config , ENSPATH_KEY))
     model_config_set_enspath( model_config , config_content_get_value_as_path(config , ENSPATH_KEY));
 
   if (config_content_has_item( config , DATA_ROOT_KEY))
     model_config_set_data_root( model_config , config_content_get_value_as_path(config , DATA_ROOT_KEY));
 
-  if (config_content_has_item( config , JOBNAME_KEY))
+  /*
+    The keywords ECLBASE and JOBNAME can be used as synonyms. But
+    observe that:
+
+      1. The ecl_config object will also pick up the ECLBASE keyword,
+         and set the have_eclbase flag of that object.
+
+      2. If both ECLBASE and JOBNAME are in the config file the
+         JOBNAME keyword will be preferred.
+  */
+  if (config_content_has_item( config , ECLBASE_KEY))
+    model_config_set_jobname_fmt( model_config , config_content_get_value(config , ECLBASE_KEY));
+
+  if (config_content_has_item( config , JOBNAME_KEY)) {
     model_config_set_jobname_fmt( model_config , config_content_get_value(config , JOBNAME_KEY));
+    if (config_content_has_item( config , ECLBASE_KEY))
+      res_log_add_message_str(LOG_WARNING, "Can not have both JOBNAME and ECLBASE keywords. The ECLBASE keyword will be ignored.");
+  }
 
   if (config_content_has_item( config , RFTPATH_KEY))
     model_config_set_rftpath( model_config , config_content_get_value(config , RFTPATH_KEY));
@@ -587,12 +563,6 @@ void model_config_init(model_config_type * model_config ,
 }
 
 
-const char * model_config_iget_casename( const model_config_type * model_config , int index) {
-  if (model_config->case_names == NULL)
-    return NULL;
-  else
-    return stringlist_iget( model_config->case_names , index );
-}
 
 
 
@@ -600,7 +570,6 @@ void model_config_free(model_config_type * model_config) {
   free( model_config->enspath );
   free( model_config->rftpath );
   util_safe_free( model_config->jobname_fmt );
-  util_safe_free( model_config->case_table_file );
   util_safe_free( model_config->current_path_key);
   util_safe_free( model_config->gen_kw_export_name);
   util_safe_free( model_config->obs_config_file );
@@ -619,9 +588,6 @@ void model_config_free(model_config_type * model_config) {
   bool_vector_free(model_config->internalize_state);
   bool_vector_free(model_config->__load_eclipse_restart);
   hash_free(model_config->runpath_map);
-
-  if (model_config->case_names)
-    stringlist_free( model_config->case_names );
   free(model_config);
 }
 
@@ -717,10 +683,6 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
   fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information related to this model.");
 
-  if (model_config->case_table_file != NULL) {
-    fprintf( stream , CONFIG_KEY_FORMAT      , CASE_TABLE_KEY );
-    fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->case_table_file );
-  }
   fprintf( stream , CONFIG_KEY_FORMAT      , FORWARD_MODEL_KEY);
   forward_model_fprintf( model_config->forward_model , stream );
 
@@ -806,10 +768,6 @@ static void model_config_init_user_config(config_parser_type * config ) {
 
   /*****************************************************************/
   /* Required keywords from the ordinary model_config file */
-
-  item = config_add_schema_item(config, CASE_TABLE_KEY, false);
-  config_schema_item_set_argc_minmax(item, 1, 1);
-  config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 
   config_add_key_value(config, LOG_LEVEL_KEY, false, CONFIG_STRING);
   config_add_key_value(config, LOG_FILE_KEY, false, CONFIG_PATH);
@@ -980,7 +938,7 @@ bool model_config_report_step_compatible(const model_config_type * model_config,
 
   if (ecl_sum_reference) //Can be NULL
     ret = ecl_sum_report_step_compatible(ecl_sum_reference, ecl_sum_simulated);
-  
+
   return ret;
 }
 

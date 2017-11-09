@@ -26,9 +26,6 @@ class EclConfig(BaseCClass):
 
     _alloc                  = EnkfPrototype("void* ecl_config_alloc(config_content)", bind = False)
     _free                   = EnkfPrototype("void  ecl_config_free( ecl_config )")
-    _get_eclbase            = EnkfPrototype("char* ecl_config_get_eclbase( ecl_config )")
-    _validate_eclbase       = EnkfPrototype("ui_return_obj ecl_config_validate_eclbase( ecl_config , char*)")
-    _set_eclbase            = EnkfPrototype("void  ecl_config_set_eclbase( ecl_config , char*)")
     _get_data_file          = EnkfPrototype("char* ecl_config_get_data_file(ecl_config)")
     _set_data_file          = EnkfPrototype("void  ecl_config_set_data_file(ecl_config , char*)")
     _validate_data_file     = EnkfPrototype("ui_return_obj ecl_config_validate_data_file(ecl_config , char*)")
@@ -48,12 +45,10 @@ class EclConfig(BaseCClass):
     _load_refcase           = EnkfPrototype("void  ecl_config_load_refcase(ecl_config, char*)")
     _validate_refcase       = EnkfPrototype("ui_return_obj ecl_config_validate_refcase(ecl_config, char*)")
     _has_refcase            = EnkfPrototype("bool  ecl_config_has_refcase(ecl_config)")
-    _get_static_kw_list     = EnkfPrototype("stringlist_ref ecl_config_get_static_kw_list(ecl_config)")
-    _clear_static_kw        = EnkfPrototype("void  ecl_config_clear_static_kw(ecl_config)")
-    _add_static_kw          = EnkfPrototype("void  ecl_config_add_static_kw(ecl_config, char*)")
     _get_depth_unit         = EnkfPrototype("char* ecl_config_get_depth_unit(ecl_config)")
     _get_pressure_unit      = EnkfPrototype("char* ecl_config_get_pressure_unit(ecl_config)")
     _get_start_date         = EnkfPrototype("time_t ecl_config_get_start_date(ecl_config)")
+    _active                 = EnkfPrototype("bool ecl_config_active(ecl_config)")
 
     def __init__(self):
         c_ptr = self._alloc(None)
@@ -64,21 +59,6 @@ class EclConfig(BaseCClass):
 
     def free(self):
         self._free()
-
-    #-----------------------------------------------------------------
-
-    def getEclBase(self):
-        """ @rtype: str """
-        return self._get_eclbase()
-
-    def validateEclBase(self , eclbase_fmt):
-        return self._validate_eclbase(eclbase_fmt)
-
-    # Warning: You should probably use the EnkFMain.setEclBase() method to update the Eclipse basename format
-    def setEclBase(self , eclbase):
-        self._set_eclbase(eclbase)
-
-    #-----------------------------------------------------------------
 
     def getDataFile(self):
         return self._get_data_file()
@@ -156,18 +136,6 @@ class EclConfig(BaseCClass):
 
     #-----------------------------------------------------------------
 
-    def get_static_kw_list(self):
-        """ @rtype: StringList """
-        return self._get_static_kw_list().setParent(self)
-
-    def clear_static_kw(self):
-        self._clear_static_kw()
-
-    def add_static_kw(self, kw):
-        self._add_static_kw(kw)
-
-    #-----------------------------------------------------------------
-
     def getDepthUnit(self):
         return self._get_depth_unit()
 
@@ -178,3 +146,10 @@ class EclConfig(BaseCClass):
 
     def getStartDate(self):
         return self._get_start_date()
+
+
+    def active(self):
+        """
+        Has ECLIPSE been configured?"
+        """
+        return self._active( )

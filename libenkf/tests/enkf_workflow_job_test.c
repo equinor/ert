@@ -301,9 +301,8 @@ static void test_export_runpath_file(ert_test_context_type * test_context,
     const hook_manager_type * hook_manager       = enkf_main_get_hook_manager( enkf_main );
     const char * runpath_file_name   = hook_manager_get_runpath_list_file(hook_manager);
 
-    const ecl_config_type * ecl_config      = enkf_main_get_ecl_config(enkf_main);
     const model_config_type * model_config  = enkf_main_get_model_config(enkf_main);
-    const char * base_fmt                   = ecl_config_get_eclbase(ecl_config);
+    const char * jobname_fmt                = model_config_get_jobname_fmt( model_config );
     const char * runpath_fmt                = model_config_get_runpath_as_char(model_config);
 
     test_assert_true(util_file_exists(runpath_file_name));
@@ -331,8 +330,8 @@ static void test_export_runpath_file(ert_test_context_type * test_context,
       test_assert_int_equal(file_iter, iter);
 
       char * base = util_alloc_sprintf("--%d", iens);
-      if (base_fmt && (util_int_format_count(base_fmt) == 1))
-        base = util_alloc_sprintf(base_fmt, iens);
+      if (jobname_fmt && (util_int_format_count(jobname_fmt) == 1))
+        base = util_alloc_sprintf(jobname_fmt, iens);
 
       test_assert_string_equal(base, file_base);
 

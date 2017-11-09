@@ -51,7 +51,6 @@ Keyword name                                                             Require
 :ref:`ANALYSIS_LOAD <analysis_load>`                                      NO                                                                     Load analysis module
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                                NO                                                                     Set analysis module internal state variable
 :ref:`ANALYSIS_SELECT <analysis_select>`                                  NO                                     STD_ENKF                        Select analysis module to use in update
-:ref:`CASE_TABLE <case_table>`                                            NO                                                                     For running sensitivities you can give the cases descriptive names
 :ref:`CONTAINER <container>`                                              NO                                                                     ...
 :ref:`CUSTOM_KW <custom_kw>`                                              NO                                                                     Ability to load arbitrary values from the forward model.
 :ref:`DATA_FILE <data_file>`                                              YES                                                                    Provide an ECLIPSE data file for the problem.
@@ -188,13 +187,17 @@ These keywords must be set to make the enkf function properly.
         -- and so on.
         ECLBASE MY_VERY_OWN_OIL_FIELD-%d
 
+    In addition to setting the name for jobs the ``ECLBASE`` keyword
+    will signal to ERT that Eclipse is indeed active for this
+    particular run and ERT will try to load the Eclipse summary
+    results at the end.
+
 .. _jobname:
 .. topic::  JOBNAME
 
     As an alternative to the ``ECLBASE`` keyword you can use the JOBNAME
     keyword; in particular in cases where your forward model does not include
-    ECLIPSE at all that makes more sense.  If JOBNAME is used instead of
-    ``ECLBASE`` the same rules of no-mixed-case apply.
+    ECLIPSE at all that makes more sense.
 
 .. _grid:
 .. topic:: GRID
@@ -232,15 +235,13 @@ These keywords must be set to make the enkf function properly.
     of the ECLIPSE data file. It should be prepared in accordance with the
     guidelines given in Preparing an ECLIPSE reservoir model for use with
     enkf. This SCHEDULE section will be used to control the ECLIPSE
-    simulations. You can optionally give a second filename, which is the name of
-    file which will be written into the directories for running ECLIPSE.
+    simulations.
 
     *Example:*
 
     ::
 
-        -- Parse MY_SCHEDULE.SCH, call the generated file ECLIPSE_SCHEDULE.SCH
-        SCHEDULE_FILE MY_SCHEDULE.SCH ECLIPSE_SCHEDULE.SCH
+        SCHEDULE_FILE MY_SCHEDULE.SCH
 
     Observe that the SCHEDULE_FILE keyword is only required when you need ERT to
     stop and restart your simulations; i.e. when you are using the EnKF

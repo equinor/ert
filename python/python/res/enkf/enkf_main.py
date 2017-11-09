@@ -311,7 +311,7 @@ class EnKFMain(BaseCClass):
         if iens is None:
             self._create_run_path( run_context )
         else:
-            run_arg = run_context.iensGet( iens )
+            run_arg = run_context[iens]
             self._icreate_run_path( run_arg, EnkfInitModeEnum.INIT_CONDITIONAL)
 
     def submitSimulation(self , run_arg, queue):

@@ -48,10 +48,9 @@ extern "C" {
   void                   model_config_set_data_root( model_config_type * model_config , const char * data_root);
   bool                   model_config_data_root_is_set( const model_config_type * model_config );
 
+  char                 * model_config_alloc_jobname( const model_config_type * model_config , int iens);
   const char *           model_config_get_jobname_fmt( const model_config_type * model_config );
   void                   model_config_set_jobname_fmt( model_config_type * model_config , const char * jobname_fmt);
-  const char *           model_config_get_case_table_file( const model_config_type * model_config );
-  void                   model_config_set_case_table( model_config_type * model_config , int ens_size , const char * case_table_file );
   void                   model_config_set_enspath( model_config_type * model_config , const char * enspath);
   void                   model_config_set_rftpath( model_config_type * model_config , const char * rftpath);
   void                   model_config_set_dbase_type( model_config_type * model_config , const char * dbase_type_string);

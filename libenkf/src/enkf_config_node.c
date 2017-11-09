@@ -932,13 +932,11 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const confi
     config_content_node_init_opt_hash( node , options , 1 );
     {
       gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
-      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
       const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
       const char * ecl_file                   = hash_safe_get( options , ECL_FILE_KEY);
       const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
       const char * data_key                   = hash_safe_get( options , KEY_KEY);
       const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
-      const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
       const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
       const char * report_steps_string        = hash_safe_get( options , REPORT_STEPS_KEY );
       int_vector_type * report_steps          = int_vector_alloc(0,0);

@@ -758,6 +758,11 @@ stringlist_type * ensemble_config_alloc_keylist(const ensemble_config_type * con
 }
 
 
+hash_iter_type * ensemble_config_alloc_hash_iter(const ensemble_config_type * config) {
+  return hash_iter_alloc( config->config_nodes );
+}
+
+
 /**
    observe that var_type here is an integer - naturally written as a
    sum of enkf_var_type values:
@@ -813,19 +818,29 @@ bool ensemble_config_has_impl_type(const  ensemble_config_type * config, const e
 }
 
 
-bool ensemble_config_has_GEN_DATA(const  ensemble_config_type * config) {
+bool ensemble_config_GEN_DATA_require_summary(const  ensemble_config_type * config) {
   bool ret = false;
   hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
   while (!hash_iter_is_complete( iter )) {
     const char * key = hash_iter_get_next_key(iter);
     const enkf_config_node_type * config_node = hash_get(config->config_nodes , key);
     if ((enkf_config_node_get_impl_type(config_node) == GEN_DATA) && (enkf_config_node_get_var_type( config_node ) != PARAMETER)) {
-      ret = true;
-      break;
+      const gen_data_config_type * gen_data_config_node = enkf_config_node_get_ref( config_node );
+      int report_step = gen_data_config_get_max_report_step( gen_data_config_node );
+      if (report_step > 0) {
+        ret = true;
+        break;
+      }
     }
   }
   hash_iter_free(iter);
   return ret;
+}
+
+
+bool ensemble_config_require_summary(const  ensemble_config_type * ens_config) {
+  return (ensemble_config_has_impl_type(ens_config, SUMMARY) ||
+          ensemble_config_GEN_DATA_require_summary(ens_config));
 }
 
 
@@ -1054,4 +1069,50 @@ void ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FI
 
 int ensemble_config_get_size(const ensemble_config_type * ensemble_config ) {
   return hash_get_size( ensemble_config->config_nodes );
+}
+
+
+int ensemble_config_forward_init(const ensemble_config_type * ens_config,
+                                 const run_arg_type * run_arg) {
+
+  int result = 0;
+  if (run_arg_get_step1(run_arg) == 0) {
+    int iens = run_arg_get_iens( run_arg );
+    hash_iter_type * iter = ensemble_config_alloc_hash_iter( ens_config );
+    while ( !hash_iter_is_complete(iter) ) {
+      enkf_config_node_type * config_node = hash_iter_get_next_value(iter);
+      if (enkf_config_node_use_forward_init(config_node)) {
+	enkf_node_type * node = enkf_node_alloc( config_node );
+        enkf_fs_type * sim_fs = run_arg_get_sim_fs( run_arg );
+        node_id_type node_id = {.report_step = 0 ,
+                                .iens = iens };
+
+
+        /*
+           Will not reinitialize; i.e. it is essential that the
+           forward model uses the state given from the stored
+           instance, and not from the current run of e.g. RMS.
+        */
+
+        if (!enkf_node_has_data( node , sim_fs , node_id)) {
+          if (enkf_node_forward_init(node , run_arg_get_runpath( run_arg ) , iens ))
+            enkf_node_store( node , sim_fs , false , node_id );
+          else {
+            char * init_file = enkf_config_node_alloc_initfile( enkf_node_get_config( node ) , run_arg_get_runpath(run_arg) , iens );
+
+            if (init_file && !util_file_exists( init_file ))
+              fprintf(stderr,"File not found: %s - failed to initialize node: %s\n", init_file , enkf_node_get_key( node ));
+            else
+              fprintf(stderr,"Failed to initialize node: %s\n", enkf_node_get_key( node ));
+
+            util_safe_free( init_file );
+            result |= LOAD_FAILURE;
+          }
+        }
+	enkf_node_free( node );
+      }
+    }
+    hash_iter_free( iter );
+  }
+  return result;
 }

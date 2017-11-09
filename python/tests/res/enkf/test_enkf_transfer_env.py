@@ -43,11 +43,11 @@ class EnKFTestTransferEnv(ExtendedTestCase):
     pass
 
   def test_transfer_var(self):
- 
+
     with TestAreaContext('enkf_test_transfer_env') as work_area:
       base_path = os.getcwd()
       source_path = self.createTestPath('local/snake_oil_no_data')
-      
+
       work_area.copy_directory(source_path)
       dir_ert = os.path.join(base_path, 'snake_oil_no_data');
       assert(os.path.isdir(  dir_ert  )  )
@@ -62,10 +62,11 @@ class EnKFTestTransferEnv(ExtendedTestCase):
 
         model_config = ert.getModelConfig( )
         runpath_fmt = model_config.getRunpathFormat( )
+        jobname_fmt = model_config.getJobnameFormat( )
         subst_list = ert.getDataKW( )
         itr = 0
         mask = BoolVector( default_value = True, initial_size = 1 )
-        run_context = ErtRunContext.ensemble_experiment( result_fs, mask, runpath_fmt, subst_list, itr)
+        run_context = ErtRunContext.ensemble_experiment( result_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr)
         ert.getEnkfSimulationRunner().createRunPath( run_context )
         os.chdir('storage/snake_oil/runpath/realisation-0/iter-0')
         assert(   os.path.isfile('jobs.json')   )
@@ -74,13 +75,7 @@ class EnKFTestTransferEnv(ExtendedTestCase):
           env_data = data["global_environment"]
           self.assertEqual('TheFirstValue', env_data["FIRST"])
           self.assertEqual('TheSecondValue', env_data["SECOND"])
+
           path_data = data["global_update_path"]
           self.assertEqual('TheThirdValue', path_data["THIRD"])
           self.assertEqual('TheFourthValue', path_data["FOURTH"])
-        
- 
-          
-      
-      
-      
-      

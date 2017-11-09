@@ -86,7 +86,7 @@ int main(int argc , char ** argv) {
   enkf_main_type * enkf_main = enkf_main_alloc(res_config, strict, true);
   ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
   enkf_fs_type * init_fs = enkf_main_get_fs(enkf_main);
-  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", init_fs , 0 ,0 , "simulations/run0");
+  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", init_fs , 0 ,0 , "simulations/run0", "base");
   enkf_config_node_type * config_node = ensemble_config_get_node( ens_config , "PORO");
   enkf_node_type * field_node = enkf_node_alloc( config_node );
 

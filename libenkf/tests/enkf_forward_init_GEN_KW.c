@@ -89,9 +89,10 @@ int main(int argc , char ** argv) {
     test_assert_bool_equal( forward_init, ensemble_config_have_forward_init( enkf_main_get_ensemble_config( enkf_main )));
 
     if (forward_init) {
+      const ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs , 0 , 0 , "simulations/run0");
+      run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", fs , 0 , 0 , "simulations/run0", "BASE");
       const enkf_config_node_type * gen_kw_config_node = ensemble_config_get_node( enkf_main_get_ensemble_config( enkf_main ), "MULTFLT");
       enkf_node_type * gen_kw_node = enkf_node_alloc( gen_kw_config_node );
       node_id_type node_id = {.report_step = 0 ,
@@ -110,7 +111,7 @@ int main(int argc , char ** argv) {
 
 
         test_assert_false( enkf_node_forward_init( gen_kw_node , "simulations/run0" , 0 ));
-        error = enkf_state_forward_init( state , run_arg  );
+        error = ensemble_config_forward_init( ens_config , run_arg  );
         test_assert_true(LOAD_FAILURE & error);
 
         {
@@ -137,7 +138,7 @@ int main(int argc , char ** argv) {
         stringlist_type * msg_list = stringlist_alloc_new();
 
         test_assert_true( enkf_node_forward_init( gen_kw_node , "simulations/run0" , 0 ));
-        error = enkf_state_forward_init( state , run_arg );
+        error = ensemble_config_forward_init( ens_config , run_arg );
         test_assert_int_equal(0, error);
         error = enkf_state_load_from_forward_model( state , run_arg , msg_list );
 
