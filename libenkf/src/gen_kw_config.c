@@ -23,6 +23,9 @@
 #include <ert/util/hash.h>
 #include <ert/util/vector.h>
 
+#include <ert/config/config_parser.h>
+#include <ert/config/config_content.h>
+
 #include <ert/enkf/enkf_util.h>
 #include <ert/enkf/enkf_macros.h>
 #include <ert/enkf/enkf_defaults.h>
@@ -129,24 +132,25 @@ void gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char 
   config->parameter_file = util_realloc_string_copy( config->parameter_file , parameter_file );
   vector_clear( config->parameters );
   if (parameter_file != NULL) {
-    FILE * stream = util_fopen(parameter_file , "r");
-
-    while (true) {
-      char parameter_name[256];
-      int  fscanf_return;
-
-      fscanf_return = fscanf(stream , "%s" , parameter_name);
-      if (fscanf_return == 1) {
-        gen_kw_parameter_type * parameter  = gen_kw_parameter_alloc( parameter_name , config->tag_fmt);
-        trans_func_type       * trans_func = trans_func_fscanf_alloc( stream, parameter_file );
-        gen_kw_parameter_set_trans_func( parameter , trans_func );
-
-        vector_append_owned_ref( config->parameters , parameter , gen_kw_parameter_free__ );
-      } else
-        break; /* OK - we are ate EOF. */
+    config_parser_type * parser = config_alloc();
+    config_content_type * content = config_parse(parser,
+                                                 parameter_file,
+                                                 "--",
+                                                 NULL,
+                                                 NULL,
+                                                 NULL,
+                                                 CONFIG_UNRECOGNIZED_ADD,
+                                                 false);
+    for (int item_index = 0; item_index < config_content_get_size( content); item_index++ ){
+      const config_content_node_type * node = config_content_iget_node(content, item_index);
+      const char * parameter_name = config_content_node_get_kw(node);
+      gen_kw_parameter_type * parameter = gen_kw_parameter_alloc(parameter_name, config->tag_fmt);
+      trans_func_type * trans_func = trans_func_alloc(config_content_node_get_stringlist(node));
+      gen_kw_parameter_set_trans_func(parameter, trans_func);
+      vector_append_owned_ref( config->parameters , parameter , gen_kw_parameter_free__ );
     }
-
-    fclose( stream );
+    config_content_free(content);
+    config_free(parser);
   }
 }
 

@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+import os
 from res.enkf import EnkfPrototype
 from ecl.util import StringList
 
@@ -40,27 +41,27 @@ class GenKwConfig(BaseCClass):
          @type key: str
          @type tag_fmt: str
         """
+        if not os.path.isfile(template_file):
+            raise IOError("No such file:%s" % template_file)
+
+        if not os.path.isfile(parameter_file):
+            raise IOError("No such file:%s" % parameter_file)
+
         c_ptr = self._alloc_empty(key, tag_fmt)
         if c_ptr:
             super(GenKwConfig, self).__init__(c_ptr)
         else:
             raise ValueError('Could not instantiate GenKwConfig with key="%s" and tag_fmt="%s"' % (key, tag_fmt))
-        self.setTemplateFile(template_file)
-        self.setParameterFile(parameter_file)
+        self._set_parameter_file(parameter_file)
+        self._set_template_file(template_file)
         self.__str__ = self.__repr__
 
-
-    def setTemplateFile(self, template_file):
-        self._set_template_file(template_file)
 
     def getTemplateFile(self):
         return self._get_template_file()
 
     def getParameterFile(self):
         return self._get_parameter_file()
-
-    def setParameterFile(self, parameter_file):
-        self._set_parameter_file(parameter_file)
 
     def getKeyWords(self):
         """ @rtype: StringList """
