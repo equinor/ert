@@ -285,7 +285,9 @@ const config_schema_item_type * config_content_item_get_schema( const config_con
   return item->schema;
 }
 
-
+const char* config_content_item_get_key( const config_content_item_type * item) {
+  return config_schema_item_get_kw(item->schema);
+}
 
 
 const config_path_elm_type * config_content_item_get_path_elm( const config_content_item_type * item ) {

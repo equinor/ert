@@ -374,3 +374,32 @@ class ConfigTest(ExtendedTestCase):
 
         with self.assertRaises(Exception):
             cs["A"] = "Hei"
+
+
+    def test_add_unknown_keyowrds(self):
+        parser = ConfigParser( )
+        with TestAreaContext("config/parse4"):
+            with open("config","w") as fileH:
+                fileH.write("SETTINGS A 100.1\n")
+                fileH.write("SETTINGS B 200  STRING1 STRING2\n")
+                fileH.write("SETTINGS C 300\n")
+                fileH.write("SETTINGS D False\n")
+
+            content = parser.parse("config", unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ADD)
+
+        self.assertIn("SETTINGS", content)
+        item = content["SETTINGS"]
+        self.assertEqual(len(item), 4)
+
+        nodeA = item[0]
+        self.assertEqual(nodeA[0], "A")
+        self.assertEqual(nodeA[1], "100.1")
+        self.assertEqual(len(nodeA), 2)
+
+        nodeB = item[1]
+        self.assertEqual(nodeB[0], "B")
+        self.assertEqual(nodeB[1], "200")
+        self.assertEqual(nodeB[3], "STRING2")
+        self.assertEqual(len(nodeB), 4)
+
+        self.assertEqual(len(content), 4)

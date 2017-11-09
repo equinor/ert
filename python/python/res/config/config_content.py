@@ -158,6 +158,7 @@ class ConfigContent(BaseCClass):
     _get_config_path = ConfigPrototype("char* config_content_get_config_path( config_content )")
     _create_path_elm = ConfigPrototype("config_path_elm_ref config_content_add_path_elm(config_content, char*)")
     _add_define = ConfigPrototype("void config_content_add_define(config_content, char*, char*)")
+    _size = ConfigPrototype("int config_content_get_size(config_content)")
 
     def __init__(self, filename):
         c_ptr = self._alloc(filename)
@@ -169,6 +170,10 @@ class ConfigContent(BaseCClass):
                     'Failed to construct ConfigContent instance from config file %s.'
                     % filename
                     )
+
+
+    def __len__(self):
+        return self._size()
 
 
     def __contains__(self , key):

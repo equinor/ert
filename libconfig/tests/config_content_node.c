@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-    
-   The file 'config_content_node.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+
+   The file 'config_content_node.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #include <stdlib.h>
 #include <stdbool.h>
@@ -38,13 +38,13 @@ int main(int argc , char ** argv) {
     config_content_node_add_value( node , "KEY2:VALUE2" );
     config_content_node_add_value( node , "KEY3:VALUE3" );
     config_content_node_add_value( node , "KEYVALUE" );
-    
+
     test_assert_int_equal( config_content_node_get_size( node ) , 4 );
     test_assert_string_equal( config_content_node_iget( node , 0 ) , "KEY1:VALUE1" );
     test_assert_string_equal( config_content_node_iget( node , 2 ) , "KEY3:VALUE3" );
-    
+
     test_assert_string_equal( config_content_node_get_full_string( node , ",") , "KEY1:VALUE1,KEY2:VALUE2,KEY3:VALUE3,KEYVALUE");
-    
+
     {
       hash_type * opt_hash = hash_alloc( );
       {
@@ -59,12 +59,12 @@ int main(int argc , char ** argv) {
       config_content_node_init_opt_hash( node , opt_hash , 1 );
       test_assert_int_equal( hash_get_size( opt_hash ) , 2 );
       test_assert_string_equal( hash_get( opt_hash , "KEY2" ) , "VALUE2" );
-      test_assert_string_equal( hash_get( opt_hash , "KEY3" ) , "VALUE3" );      
+      test_assert_string_equal( hash_get( opt_hash , "KEY3" ) , "VALUE3" );
       test_assert_false( hash_has_key( opt_hash , "KEY1" ) );
       test_assert_false( hash_has_key( opt_hash , "KEYVALUE" ) );
       hash_free( opt_hash );
     }
-    
+
 
     config_content_node_free( node );
   }
