@@ -207,16 +207,13 @@ class ResConfigTest(ExtendedTestCase):
                     )
 
 
-    def assert_model_config(self, model_config, config_data, working_dir):
-        self.assertEqual(
-                config_data["RUNPATH"],
-                model_config.getRunpathAsString()
-                )
+    def assert_path(self, rel_path, config_path, model_path):
+        self.assertEqual( os.path.normpath( os.path.join( rel_path , config_path )), model_path)
 
-        self.assertEqual(
-                config_data["ENSPATH"],
-                model_config.getEnspath()
-                )
+
+    def assert_model_config(self, model_config, config_data, working_dir):
+        self.assert_path( working_dir, config_data["RUNPATH"], model_config.getRunpathAsString())
+        self.assert_path( working_dir, config_data["ENSPATH"], model_config.getEnspath() )
 
         self.assertEqual(
                 config_data["JOBNAME"],
@@ -316,10 +313,6 @@ class ResConfigTest(ExtendedTestCase):
                 ecl_config.getStartDate()
                 )
 
-        self.assertEqual(
-                config_data["ECLBASE"],
-                ecl_config.getEclBase()
-                )
 
         for extension in ["SMSPEC", "UNSMRY"]:
             self.assert_same_config_file(
@@ -464,19 +457,10 @@ class ResConfigTest(ExtendedTestCase):
             run_dir = "i/ll/camp/here"
             os.makedirs(run_dir)
             os.chdir(run_dir)
-
-            rel_config_file = "/".join(
-                                   [".."] * len(run_dir.split("/")) +
-                                   [self.config_file]
-                                   )
-
-            res_config = ResConfig(rel_config_file)
-
+            inv_run_dir = "/".join([".."] * len(run_dir.split("/")))
+            rel_config_file = os.path.join( inv_run_dir, self.config_file )
             work_dir = os.path.split(rel_config_file)[0]
-            rel2workdir = lambda path : os.path.join(
-                                             work_dir,
-                                             path
-                                             )
+            res_config = ResConfig(rel_config_file)
 
             self.assert_model_config(res_config.model_config, config_data, work_dir)
             self.assert_analysis_config(res_config.analysis_config, config_data)

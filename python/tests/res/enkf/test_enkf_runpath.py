@@ -47,10 +47,10 @@ class EnKFRunpathTest(ExtendedTestCase):
             fs = main.getEnkfFsManager().getCurrentFileSystem()
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
             main.createRunpath(run_context)
-            self.assertFileExists('storage/snake_oil/runpath/realisation-0/iter-0/parameters.txt')
-            self.assertEqual(len(os.listdir('storage/snake_oil/runpath')), 1)
-            self.assertEqual(len(os.listdir('storage/snake_oil/runpath/realisation-0')), 1)
-            
+            self.assertFileExists('snake_oil_no_data/storage/snake_oil/runpath/realisation-0/iter-0/parameters.txt')
+            self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil/runpath')), 1)
+            self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil/runpath/realisation-0')), 1)
+
     def test_without_gen_kw(self):
         case_directory = self.createTestPath('local/snake_oil_no_data/')
         with TestAreaContext('test_enkf_runpath', store_area=True) as work_area:
@@ -62,9 +62,7 @@ class EnKFRunpathTest(ExtendedTestCase):
             fs = main.getEnkfFsManager().getCurrentFileSystem()
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
             main.createRunpath(run_context)
-            self.assertDirectoryExists('storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0')
-            self.assertFileDoesNotExist('storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0/parameters.txt')
-            self.assertEqual(len(os.listdir('storage/snake_oil_no_gen_kw/runpath')), 1)
-            self.assertEqual(len(os.listdir('storage/snake_oil_no_gen_kw/runpath/realisation-0')), 1)
-        
-# eof 
+            self.assertDirectoryExists('snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0')
+            self.assertFileDoesNotExist('snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0/parameters.txt')
+            self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath')), 1)
+            self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0')), 1)
