@@ -3,9 +3,10 @@
 
 #include <ert/util/util.h>
 #include <ert/util/matrix.h>
-#include <ert/util/regression.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/double_vector.h>
+
+#include <ert/res_util/regression.h>
 
 #include <ert/analysis/stepwise.h>
 
