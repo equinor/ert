@@ -154,6 +154,7 @@ foreach (test   enkf_active_list
                 log_config_level_parse
                 value_export
                 rng_manager
+                trans_func
     )
     add_executable(${test} tests/${test}.c)
     target_link_libraries(${test} enkf)

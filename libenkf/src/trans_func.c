@@ -297,17 +297,28 @@ trans_func_type * trans_func_alloc( const stringlist_type * args ) {
     trans_func->func = trans_raw;
 
 
-  if (trans_func->func == NULL)
-    util_exit("%s: Sorry: function name:%s not recognized \n",__func__ , func_name);
+  /* Parsing parameter values. */
+
+  if (!trans_func->func) {
+    trans_func_free( trans_func );
+    return NULL;
+  }
+
+  if (stringlist_get_size(args) - stringlist_get_size(trans_func->param_names) != 1) {
+    trans_func_free( trans_func );
+    return NULL;
+  }
 
   for (int iarg=0; iarg < stringlist_get_size(trans_func->param_names); iarg++) {
     double param_value;
 
     if (util_sscanf_double(stringlist_iget(args, iarg + 1), &param_value))
       double_vector_append(trans_func->params, param_value);
-    else
-      util_abort("%s: could not parse: as floating point value\n",__func__, stringlist_iget(args,iarg));
-
+    else {
+      fprintf(stderr,"%s: could not parse: %s as floating point value\n",__func__, stringlist_iget(args,iarg + 1));
+      trans_func_free(trans_func);
+      return NULL;
+    }
   }
 
   return trans_func;

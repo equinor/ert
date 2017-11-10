@@ -146,8 +146,11 @@ void gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char 
       const char * parameter_name = config_content_node_get_kw(node);
       gen_kw_parameter_type * parameter = gen_kw_parameter_alloc(parameter_name, config->tag_fmt);
       trans_func_type * trans_func = trans_func_alloc(config_content_node_get_stringlist(node));
-      gen_kw_parameter_set_trans_func(parameter, trans_func);
-      vector_append_owned_ref( config->parameters , parameter , gen_kw_parameter_free__ );
+      if (trans_func) {
+        gen_kw_parameter_set_trans_func(parameter, trans_func);
+        vector_append_owned_ref( config->parameters , parameter , gen_kw_parameter_free__ );
+      } else
+        util_abort("%s: failed to create tranformation function for %s\n",__func__, parameter_name);
     }
     config_content_free(content);
     config_free(parser);
