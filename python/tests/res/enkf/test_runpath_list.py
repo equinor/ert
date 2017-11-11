@@ -1,4 +1,4 @@
-from os import path, symlink, remove
+import unittest
 from ecl.test import ExtendedTestCase, TestAreaContext
 from res.test import ErtTestContext
 
@@ -6,6 +6,15 @@ from res.enkf import RunpathList, RunpathNode, ErtRunContext
 from res.enkf.enums import EnkfInitModeEnum,EnkfRunType
 from ecl.util import BoolVector
 from res.util.substitution_list import SubstitutionList
+
+
+
+
+def path(idx):
+    return 'path_%d' % idx
+
+def base(idx):
+    return 'base_%d' % idx
 
 class RunpathListTest(ExtendedTestCase):
 
@@ -46,11 +55,7 @@ class RunpathListTest(ExtendedTestCase):
 
     def test_collection(self):
         """Testing len, adding, getting (idx and slice), printing, clearing."""
-        def path(idx):
-            return 'path_%d' % idx
-        def base(idx):
-            return 'base_%d' % idx
-        with TestAreaContext("runpath_list"):
+        with TestAreaContext("runpath_list_collection"):
             runpath_list = RunpathList("EXPORT.txt")
             runpath_list.add( 3 , 1 , path(3) , base(3) )
             runpath_list.add( 1 , 1 , path(1) , base(1) )
@@ -87,7 +92,7 @@ class RunpathListTest(ExtendedTestCase):
 
 
     def test_sorted_export(self):
-        with TestAreaContext("runpath_list"):
+        with TestAreaContext("runpath_list_sorted"):
             runpath_list = RunpathList("EXPORT.txt")
             runpath_list.add( 3 , 1 , "path" , "base" )
             runpath_list.add( 1 , 1 , "path" , "base" )
@@ -103,7 +108,7 @@ class RunpathListTest(ExtendedTestCase):
 
             path_list = []
             with open("EXPORT.txt") as f:
-                for line in f.readlines():
+              for line in f.readlines():
                     tmp = line.split()
                     iens = int(tmp[0])
                     iteration = int(tmp[3])
@@ -121,10 +126,10 @@ class RunpathListTest(ExtendedTestCase):
 
 
     def test_assert_export(self):
-        with ErtTestContext("create_runpath1" , self.createTestPath("local/snake_oil_no_data/snake_oil.ert")) as tc:
+        with ErtTestContext("create_runpath_export" , self.createTestPath("local/snake_oil_no_data/snake_oil.ert")) as tc:
             ert = tc.getErt( )
             runpath_list = ert.getRunpathList( )
-            self.assertFalse( path.isfile( runpath_list.getExportFile( ) ))
+            self.assertFalse( os.path.isfile( runpath_list.getExportFile( ) ))
 
             ens_size = ert.getEnsembleSize( )
             runner = ert.getEnkfSimulationRunner( )
@@ -140,15 +145,14 @@ class RunpathListTest(ExtendedTestCase):
 
             runner.createRunPath( run_context1 )
 
-            self.assertTrue( path.isfile( runpath_list.getExportFile( ) ))
-            self.assertEqual( "test_runpath_list.txt" , path.basename( runpath_list.getExportFile( ) ))
-
+            self.assertTrue( os.path.isfile( runpath_list.getExportFile( ) ))
+            self.assertEqual( "test_runpath_list.txt" , os.path.basename( runpath_list.getExportFile( ) ))
 
 
     def test_assert_symlink_deleted(self):
-        with ErtTestContext("create_runpath2" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
-            ert = tc.getErt()
-            runpath_list = ert.getRunpathList()
+        with ErtTestContext("create_runpath_symlink_deleted" , self.createTestPath("local/snake_oil_field/snake_oil.ert")) as tc:
+            ert = tc.getErt( )
+            runpath_list = ert.getRunpathList( )
 
             ens_size = ert.getEnsembleSize()
             runner = ert.getEnkfSimulationRunner()
@@ -169,12 +173,13 @@ class RunpathListTest(ExtendedTestCase):
             linkpath = '%s/permx.grdcel' % str(runpath_list[0].runpath)
             targetpath = '%s/permx.grdcel.target' % str(runpath_list[0].runpath)
             open(targetpath, 'a').close()
-            remove(linkpath)
-            symlink(targetpath, linkpath)
+            os.remove(linkpath)
+            os.symlink(targetpath, linkpath)
 
             # recreate directory structure
             runner.createRunPath( run_context )
 
             # ensure field symlink is replaced by file
-            self.assertFalse( path.islink(linkpath) )
+            self.assertFalse( os.path.islink(linkpath) )
+
 
