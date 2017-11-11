@@ -177,6 +177,21 @@ static double trans_logunif(double x , const double_vector_type * arg) {
 }
 
 
+static double trans_triangular(double x, const double_vector_type * arg) {
+  double xmin = double_vector_iget(arg, 0);
+  double xmode = double_vector_iget(arg, 1);
+  double xmax = double_vector_iget(arg,2);
+
+  double inv_norm = (xmax - xmin) * (xmode- xmin);
+  double ymode = (xmode - xmin) / (xmax - xmin);
+  double y = 0.5*(1 + erf(x/sqrt(2.0)));           /* 0 - 1 */
+
+  if (y < ymode)
+    return xmin + sqrt(y * inv_norm);
+  else
+    return xmax - sqrt((1 - y)*inv_norm);
+}
+
 
 /*****************************************************************/
 
@@ -239,6 +254,14 @@ trans_func_type * trans_func_alloc( const stringlist_type * args ) {
     stringlist_append_ref( trans_func->param_names , "MAX" );
 
     trans_func->func = trans_truncated_normal;
+  }
+
+  if (util_string_equal(func_name, "TRIANGULAR")) {
+    stringlist_append_ref( trans_func->param_names, "XMIN");
+    stringlist_append_ref( trans_func->param_names, "XMODE");
+    stringlist_append_ref( trans_func->param_names, "XMAX");
+
+    trans_func->func = trans_triangular;
   }
 
   if (util_string_equal( func_name , "UNIFORM")) {

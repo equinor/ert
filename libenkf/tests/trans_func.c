@@ -28,7 +28,16 @@
 
 
 void test_triangular() {
+  stringlist_type * args = stringlist_alloc_new();
+  stringlist_append_ref(args , "TRIANGULAR");
+  stringlist_append_ref(args, "0");
+  stringlist_append_ref(args,"0.5");
+  stringlist_append_ref(args, "1.0");
 
+  trans_func_type * trans_func = trans_func_alloc(args);
+  test_assert_double_equal( trans_func_eval(trans_func, 0.0), 0.50);
+  trans_func_free( trans_func );
+  stringlist_free(args);
 }
 
 void test_create() {
