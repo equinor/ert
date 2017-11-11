@@ -40,6 +40,7 @@ set(TEST_SOURCES
     test_hook_workflow.py
     test_forward_load_context.py
     test_runpath_list.py
+    test_runpath_list_ert.py
     test_queue_config.py
     test_site_config.py
     test_res_config.py
