@@ -95,7 +95,7 @@ class CustomKWTest(ExtendedTestCase):
             job_queue = ert.get_queue_config().create_job_queue()
 
             iteration_count = 0
-            active = BoolVector(default_value = True, initial_size = ert.getEnsembleSize())
+            active = BoolVector(default_value = True, initial_size = 4)
             subst_list = ert.getDataKW( )
             runpath_fmt = ert.getModelConfig( ).getRunpathFormat( )
             fs_manager = ert.getEnkfFsManager( )
