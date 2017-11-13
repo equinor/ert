@@ -101,9 +101,9 @@ class CustomKWTest(ExtendedTestCase):
             fs_manager = ert.getEnkfFsManager( )
             fs = fs_manager.getFileSystem("fs")
             jobname_fmt = ert.getModelConfig( ).getJobnameFormat( )
-            
-            run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , fs, fs , active , runpath_fmt, jobname_fmt, subst_list , iteration_count)
-            
+
+            run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , fs, None , active , runpath_fmt, jobname_fmt, subst_list , iteration_count)
+
             simulation_runner.createRunPath( run_context )
             simulation_runner.runEnsembleExperiment(job_queue, run_context)
 

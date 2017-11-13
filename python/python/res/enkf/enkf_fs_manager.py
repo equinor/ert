@@ -32,7 +32,6 @@ class FileSystemRotator(object):
         if len(self._fs_list) > 0:
             case_name = self._fs_list[0]
             fs = self._fs_map[case_name]
-            fs.umount()
             del self._fs_list[0]
             del self._fs_map[case_name]
 
@@ -43,13 +42,17 @@ class FileSystemRotator(object):
     def __contains__(self, full_case_name):
         return full_case_name in self._fs_list
 
+    def __get_fs(self, name):
+        fs = self._fs_map[name]
+        return fs.weakref( )
+
     def __getitem__(self, case):
         """ @rtype: EnkfFs """
         if isinstance(case, str):
-            return self._fs_map[case]
+            return self.__get_fs(case)
         elif isinstance(case, int) and 0 <= case < len(self):
             case_name = self._fs_list[case]
-            return self._fs_map[case_name]
+            return self.__get_fs(case_name)
         else:
             raise IndexError("Value '%s' is not a proper index or case name." % case)
 
@@ -66,7 +69,7 @@ class FileSystemRotator(object):
 # the @mount_root field. Currently @mount_root is fixed to the value
 # returned by EnKFMain.getMountPoint(), but in principle a different
 # path could be sent as the the optional second argument to the
-# getFS() method. 
+# getFS() method.
 
 class EnkfFsManager(BaseCClass):
     TYPE_NAME = "enkf_fs_manager"
@@ -102,12 +105,15 @@ class EnkfFsManager(BaseCClass):
         self._fs_type = enkf_main.getModelConfig().getFSType()
         self._fs_arg = None
 
-        self.getCurrentFileSystem()
 
     def _createFullCaseName(self, mount_root, case_name):
         return os.path.join(mount_root, case_name)
 
 
+
+    # The return value from the getFileSystem will be a weak reference to the
+    # underlying enkf_fs object. That implies that the fs manager must be in
+    # scope for the return value to be valid.
     def getFileSystem(self, case_name, mount_root=None):
         """
         @rtype: EnkfFs
@@ -168,11 +174,8 @@ class EnkfFsManager(BaseCClass):
 
         if not full_name in self._fs_rotator:
             self._fs_rotator.addFileSystem(current_fs, full_name)
-        else:
-            current_fs.umount()
 
         return self.getFileSystem(case_name, self._mount_root)
-
 
     def umount(self):
         self._fs_rotator.umountAll()
@@ -185,7 +188,7 @@ class EnkfFsManager(BaseCClass):
     def getEnsembleSize(self):
         """ @rtype: int """
         return self._ensemble_size( )
-    
+
 
     def switchFileSystem(self, file_system):
         """
@@ -244,16 +247,16 @@ class EnkfFsManager(BaseCClass):
         mask = BoolVector( initial_size = self.getEnsembleSize(  ) , default_value = False )
         for iens in range(from_iens,to_iens+1):
             mask[iens] = True
-            
+
         if force_init:
             init_mode = EnkfInitModeEnum.INIT_FORCE
         else:
             init_mode = EnkfInitModeEnum.INIT_CONDITIONAL
-            
+
         self._initialize_from_scratch(case, parameter_list, mask , init_mode)
 
-        
-        
+
+
     def initializeFromScratch(self, parameter_list, from_iens, to_iens, force_init=True):
         """
         @type parameter_list: ecl.util.StringList
@@ -266,9 +269,9 @@ class EnkfFsManager(BaseCClass):
 
     def isCaseMounted(self, case_name, mount_root=None):
         """
-        @type case_name: str 
+        @type case_name: str
         @type mount_root: str
-        @rtype: bool 
+        @rtype: bool
         """
         if mount_root is None:
             mount_root = self._mount_root
@@ -278,9 +281,9 @@ class EnkfFsManager(BaseCClass):
         return full_case_name in self._fs_rotator
 
     def getStateMapForCase(self, case):
-        """        
+        """
         @type case: str
-        @rtype: StateMap 
+        @rtype: StateMap
         """
         if self.isCaseMounted(case):
             fs = self.getFileSystem(case)
@@ -289,9 +292,9 @@ class EnkfFsManager(BaseCClass):
             return self._alloc_readonly_state_map(case)
 
     def getTimeMapForCase(self, case):
-        """ 
+        """
         @type case: str
-        @rtype: TimeMap 
+        @rtype: TimeMap
         """
         return self._alloc_readonly_time_map(case)
 
