@@ -91,7 +91,7 @@ class RPCStorageTest(ExtendedTestCase):
             for sim_id in range(simulation_count):
                 self.assertEqual(data["Test:PI"][sim_id], 3.1415)
                 self.assertEqual(data["Test:DakotaVersion"][sim_id], "DAKOTA 6.2.0")
-                self.assertEqual(data["Test:Gradient"][sim_id], gradients[sim_id])
+                self.assertFloatEqual(data["Test:Gradient"][sim_id], gradients[sim_id])
                 self.assertEqual(data["Test:GradientDirection"][sim_id], gradient_directions[sim_id])
 
 

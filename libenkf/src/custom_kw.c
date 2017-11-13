@@ -70,7 +70,7 @@ bool custom_kw_key_is_null(const custom_kw_type * custom_kw, char * key) {
 
 void custom_kw_set_double(custom_kw_type * custom_kw, const char * key, double value) {
     char value_as_string[128];
-    sprintf(value_as_string, "%26.100f", value);
+    sprintf(value_as_string, "%26.10f", value);
     custom_kw_set_string(custom_kw, key, value_as_string);
 }
 
@@ -82,9 +82,8 @@ void custom_kw_set_string(custom_kw_type * custom_kw, const char * key, const ch
 
 
 double custom_kw_iget_as_double(const custom_kw_type * custom_kw, int index) {
-    double value;
-
-    util_sscanf_double(stringlist_iget(custom_kw->data, index), & value);
+    double value = 0;
+    util_sscanf_double(stringlist_iget(custom_kw->data, index), &value);
     return value;
 }
 
