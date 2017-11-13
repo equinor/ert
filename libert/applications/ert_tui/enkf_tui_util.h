@@ -42,4 +42,13 @@ int                           enkf_tui_util_scanf_int_with_default(const char * 
 int                           enkf_tui_util_scanf_int_with_default_return_to_menu(const char * prompt , int prompt_len , bool * default_used);
 double                        enkf_tui_util_scanf_double_with_lower_limit(const char * prompt , int prompt_len , double min_value);
 bool                          enkf_tui_util_sscanf_active_list( bool_vector_type * iactive , const char * select_string , int ens_size );
+
+
+char       * util_scanf_int_return_char(const char * , int);
+int          util_scanf_int_with_limits(const char * , int  , int  , int );
+char       * util_scanf_int_with_limits_return_char(const char * , int  , int  , int );
+void         util_printf_prompt(const char * , int , char , const char *);
+int          util_scanf_int(const char * , int);
+double       util_scanf_double(const char * prompt , int prompt_len);
+char       * util_scanf_alloc_string(const char * );
 #endif
