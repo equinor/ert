@@ -1199,7 +1199,7 @@ static bool field_fload_custom__(field_type * field , const char * filename , bo
   if (util_file_readable( filename )) {
     field_file_format_type file_type = field_config_guess_file_type( filename );
     if (file_type == UNDEFINED_FORMAT)
-      file_type = field_config_manual_file_type(filename , true);
+      util_abort("%s - could not automagically infer type for file: %s\n", __func__ , filename);
 
     return field_fload_typed(field , filename , file_type, keep_inactive);
   } else
