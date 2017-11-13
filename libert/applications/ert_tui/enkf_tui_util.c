@@ -39,6 +39,173 @@
     based) EnKF user interface.
 */
 
+/**
+   Prompt .........====>
+   <-------1------><-2->
+
+   The section marked with 1 above is the prompt length, i.e. the
+   input prompt is padded wth one blank, and then padded with
+   'fill_char' (in the case above that is '.') characters up to a
+   total length of prompt_len. Then the the termination string ("===>"
+   above) is added. Observe the following:
+
+   * A space is _always_ added after the prompt, before the fill char
+   comes, even if the prompt is too long in the first place.
+
+   * No space is added at the end of the termination string. If
+   you want a space, that should be included in the termination
+   string.
+
+*/
+
+
+void util_printf_prompt(const char * prompt , int prompt_len, char fill_char , const char * termination) {
+  int current_len = strlen(prompt) + 1;
+  printf("%s ",prompt);  /* Observe that one ' ' is forced in here. */
+
+  while (current_len < prompt_len) {
+    fputc(fill_char , stdout);
+    current_len++;
+  }
+  printf("%s" , termination);
+
+}
+
+/**
+   This functions presents the user with a prompt, and reads an
+   integer - the integer value is returned. The functions returns
+   NULL on empty input.
+*/
+
+int util_scanf_int(const char * prompt , int prompt_len) {
+  char input[256];
+  int  int_value;
+  bool OK;
+  do {
+    util_printf_prompt(prompt , prompt_len, '=', "=> ");
+    scanf("%s" , input);
+    OK = util_sscanf_int(input , &int_value);
+  } while (!OK);
+  getchar(); /* eating a \r left in the stdin input buffer. */
+  return int_value;
+}
+
+
+/**
+   This functions presents the user with a prompt, and reads an
+   integer - the integer value is returned. The functions will loop
+   indefinitely until a valid integer is entered.
+*/
+
+char * util_scanf_int_return_char(const char * prompt , int prompt_len) {
+  char input[256];
+  int  int_value;
+  bool OK = false;
+  while(!OK){
+    util_printf_prompt(prompt , prompt_len, '=', "=> ");
+    fgets(input, prompt_len, stdin);
+    {
+      char *newline = strchr(input,'\n');
+      if(newline)
+        *newline = 0;
+    }
+
+    if(strlen(input) !=0){
+      OK = util_sscanf_int(input , &int_value);
+    }
+    else {
+      OK = true;
+    }
+  }
+  return util_alloc_string_copy(input);
+}
+/**
+    The limits are inclusive.
+*/
+int util_scanf_int_with_limits(const char * prompt , int prompt_len , int min_value , int max_value) {
+  int value;
+  char * new_prompt = util_alloc_sprintf("%s [%d:%d]" , prompt , min_value , max_value);
+  do {
+    value = util_scanf_int(new_prompt , prompt_len);
+  } while (value < min_value || value > max_value);
+  free(new_prompt);
+  return value;
+}
+
+/**
+    The limits are inclusive, yet the function returns the input char and stops on empty string.
+*/
+char * util_scanf_int_with_limits_return_char(const char * prompt , int prompt_len , int min_value , int max_value) {
+  int value = min_value - 1;
+  char * value_char = NULL;
+  char * new_prompt = util_alloc_sprintf("%s [%d:%d]" , prompt , min_value , max_value);
+  while( value < min_value || value > max_value ){
+    value_char = util_scanf_int_return_char(new_prompt , prompt_len);
+    if (strlen(value_char) == 0)
+      value = min_value;
+    else
+      util_sscanf_int(value_char , &value);
+  }
+  free(new_prompt);
+  return value_char;
+}
+
+
+
+char * util_scanf_alloc_string(const char * prompt) {
+  char input[256];
+  printf("%s" , prompt);
+  scanf("%256s" , input);
+  return util_alloc_string_copy(input);
+}
+
+
+
+
+double util_scanf_double(const char * prompt , int prompt_len) {
+  char input[256];
+  double  double_value;
+  bool OK;
+  do {
+    util_printf_prompt(prompt , prompt_len, '=', "=> ");
+    scanf("%s" , input);
+    OK = util_sscanf_double(input , &double_value);
+  } while (!OK);
+  getchar(); /* eating a \r left in the stdin input buffer. */
+  return double_value;
+}
+
+/*
+  exist_status == 0: Just read a string; do not check if it exist or not.
+  exist_status == 1: Must be existing file.
+  exist_status == 2: Must NOT exist as entry.
+*/
+
+char * util_fscanf_alloc_filename(const char * prompt , int prompt_len , int exist_status) {
+  char * filename = NULL;
+  while (filename == NULL) {
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    filename = util_alloc_stdin_line();
+    if (filename != NULL) {
+      if (exist_status != 0) {
+        if (exist_status == 1) {
+          if (!util_file_exists(filename)) {
+            fprintf(stderr,"Sorry: %s does not exist. \n",filename);
+            free( filename );
+            filename = NULL;
+          }
+        } else if (exist_status == 2) {
+          if (util_entry_exists( filename )) {
+            fprintf(stderr,"Sorry: entry %s already exists. \n",filename);
+            free( filename );
+            filename = NULL;
+          }
+        }
+      }
+    }
+  }
+  return filename;
+}
 
 
 
@@ -243,21 +410,6 @@ void enkf_tui_util_scanf_ijk__(const field_config_type * config, int prompt_len 
 
 
 
-
-/**
-   The function reads ijk, but it returns a global 1D index. Observe
-   that the user is supposed to enter an index starting at one - whichs
-   is immediately shifted down to become zero based.
-
-   The function will loop until the user has entered ijk corresponding
-   to an active cell.
-*/
-
-int enkf_tui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
-  int global_index;
-  field_config_scanf_ijk(config , true , "Give (i,j,k) indices" , prompt_len , NULL , NULL , NULL , &global_index);
-  return global_index;
-}
 
 
 
