@@ -274,40 +274,6 @@ field_file_format_type field_config_default_export_format(const char * filename)
 
 
 
-/**
-   This function prompts the user for a file type.
-
-   If the parameter 'import' is true we provide the alternative
-   ecl_kw_file (in that case the program itself will determine
-   whether) the file contains all cells (i.e. PERMX) or only active
-   cells (i.e. pressure).
-
-   If the parameter 'import' is false the user must specify whether we
-   are considering all cells, or only active cells.
-*/
-
-field_file_format_type field_config_manual_file_type(const char * prompt , bool import) {
-  int int_file_type;
-  printf("\n%s\n",prompt);
-  printf("----------------------------------------------------------------\n");
-  printf(" %3d: %s.\n" , RMS_ROFF_FILE   , field_config_file_type_string(RMS_ROFF_FILE));
-  if (import)
-    printf(" %3d: %s.\n" , ECL_KW_FILE     , field_config_file_type_string(ECL_KW_FILE));
-  else {
-    printf(" %3d: %s.\n" , ECL_KW_FILE_ACTIVE_CELLS  , field_config_file_type_string(ECL_KW_FILE_ACTIVE_CELLS));
-    printf(" %3d: %s.\n" , ECL_KW_FILE_ALL_CELLS     , field_config_file_type_string(ECL_KW_FILE_ALL_CELLS));
-  }
-  printf(" %3d: %s.\n" , ECL_GRDECL_FILE , field_config_file_type_string(ECL_GRDECL_FILE));
-  printf("----------------------------------------------------------------\n");
-  do {
-    int_file_type = util_scanf_int("" , 2);
-    if (!field_config_valid_file_type(int_file_type, import))
-      int_file_type = UNDEFINED_FORMAT;
-  } while(int_file_type == UNDEFINED_FORMAT);
-  return int_file_type;
-}
-
-
 
 
 /**
@@ -752,85 +718,6 @@ int field_config_get_nz(const field_config_type * config ) {
 
 
 
-
-
-/**
-   This function reads a string with i,j,k from the user. All
-   characters in the constant sep_set are allowed to separate the
-   integers. The function will loop until:
-
-   * Three integers have been succesfully parsed.
-   * All numbers are in the (1-nx,1-ny,1-nz) intervals.
-   * IFF active_only - only active cells wll be allowed.
-
-   i,j,k and global_index are returned by reference. All pointers can
-   be NULL, if you are not interested. An invald global_index is
-   returned as -1 (if active_only == false).
-
-   Observe that the user is expected to enter numbers in the interval
-   [1..nx],[1..ny],[1..nz], but internaly they are immediately
-   converted to zero offset.
-*/
-
-
-void field_config_scanf_ijk(const field_config_type * config , bool active_only , const char * _prompt , int prompt_len , int *_i , int *_j , int *_k , int * _global_index) {
-  const char * sep_set = " ,.:";
-  char * prompt = util_alloc_sprintf("%s (%d,%d,%d)" , _prompt , config->nx , config->ny , config->nz);
-  bool OK;
-  int i,j,k,global_index;
-  global_index = -1; /* Keep the compiler happy. */
-
-  do {
-    char         *input;
-    const  char  *current_ptr;
-    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-    input = util_alloc_stdin_line();
-
-
-    i = -1;
-    j = -1;
-    k = -1;
-
-    OK = true;
-    current_ptr = input;
-    current_ptr = util_parse_int(current_ptr , &i , &OK);
-    current_ptr = util_skip_sep(current_ptr , sep_set , &OK);
-    current_ptr = util_parse_int(current_ptr , &j , &OK);
-    current_ptr = util_skip_sep(current_ptr , sep_set , &OK);
-    current_ptr = util_parse_int(current_ptr , &k , &OK);
-    if (OK)
-      if (current_ptr[0] != '\0') OK = false; /* There was something more at the end */
-
-    /* Now we have three valid integers. */
-
-    if (OK) {
-      if (i <= 0 || i > config->nx) OK = false;
-      if (j <= 0 || j > config->ny) OK = false;
-      if (k <= 0 || k > config->nz) OK = false;
-      i--; j--; k--;
-    }
-    /* Now we have three integers in the right interval. */
-
-
-    if (OK) {
-      global_index = field_config_active_index(config , i,j,k);
-      if (active_only) {
-        if (global_index < 0) {
-          OK = false;
-          printf("Sorry the point: (%d,%d,%d) corresponds to an inactive cell\n" , i + 1 , j+ 1 , k + 1);
-        }
-      }
-    }
-    free(input);
-  } while (!OK);
-
-  if (_i != NULL) *_i = i;
-  if (_j != NULL) *_j = j;
-  if (_k != NULL) *_k = k;
-  if (_global_index != NULL) *_global_index = global_index;
-
-  free(prompt);
-}
 
 
 

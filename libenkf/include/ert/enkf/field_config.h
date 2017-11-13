@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'field_config.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'field_config.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #ifndef ERT_FIELD_CONFIG_H
@@ -48,16 +48,16 @@ extern "C" {
    defualted.
 
 */
-    
+
 typedef enum {
   ECLIPSE_RESTART   = 1,
   ECLIPSE_PARAMETER = 2,
   GENERAL           = 3,
   UNKNOWN_FIELD_TYPE= 4
 } field_type_enum;
- 
 
-/** 
+
+/**
     The field_file_format_type denotes different ways to store a
     field. Unfortunately the different elements in the enum definition
     have somewhat different properties:
@@ -83,7 +83,7 @@ typedef enum {
      3. Treatment is not symmetric for input/output.
 
 */
-    
+
 
 
 
@@ -92,29 +92,29 @@ typedef enum { UNDEFINED_FORMAT         = 0,
                ECL_KW_FILE              = 2,       /* ecl_kw format either packed (i.e. active cells) *or* all cells - used when reading from file. */
                ECL_KW_FILE_ACTIVE_CELLS = 3,       /* ecl_kw format, only active cells - used writing to file. */
                ECL_KW_FILE_ALL_CELLS    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
-               ECL_GRDECL_FILE          = 5, 
+               ECL_GRDECL_FILE          = 5,
                ECL_FILE                 = 6,       /* Assumes packed on export. */
                FILE_FORMAT_NULL         = 7} field_file_format_type;  /* Used when the guess functions are given NULL to check -should never be read. */
 
-                
+
 /* active_cells currently not really implemented */
 
 
 
-  
+
 
 void                    field_config_update_state_field( field_config_type * config, int truncation, double min_value , double max_value);
 
 
-void field_config_update_parameter_field( field_config_type * config , int truncation, double min_value , double max_value, 
-                                          field_file_format_type export_format , 
+void field_config_update_parameter_field( field_config_type * config , int truncation, double min_value , double max_value,
+                                          field_file_format_type export_format ,
                                           const char * init_transform , const char * output_transform );
 
 
-void field_config_update_general_field( field_config_type * config , int truncation, double min_value , double max_value, 
+void field_config_update_general_field( field_config_type * config , int truncation, double min_value , double max_value,
                                         field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
-                                        const char * init_transform , 
-                                        const char * input_transform , 
+                                        const char * init_transform ,
+                                        const char * input_transform ,
                                         const char * output_transform );
 
 
@@ -126,7 +126,6 @@ field_type            * field_config_get_min_std( const field_config_type * fiel
 const char            * field_config_default_extension(field_file_format_type , bool );
 bool                    field_config_write_compressed(const field_config_type * );
 field_file_format_type  field_config_guess_file_type(const char * );
-field_file_format_type  field_config_manual_file_type(const char * , bool);
 ecl_data_type           field_config_get_ecl_data_type(const field_config_type *);
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
@@ -186,7 +185,7 @@ const char              * field_config_get_input_transform_name( const field_con
 const char              * field_config_get_output_transform_name( const field_config_type * field_config ) ;
 const char              * field_config_get_init_transform_name( const field_config_type * field_config ) ;
 
-void field_config_fprintf_config( const field_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile , 
+void field_config_fprintf_config( const field_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile ,
                                   const char * min_std_file , FILE * stream);
 
 
