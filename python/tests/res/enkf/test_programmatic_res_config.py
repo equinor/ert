@@ -43,6 +43,46 @@ class ProgrammaticResConfigTest(ResTest):
                                 }
                               }
 
+        self.minimum_config_extra_key = {
+                                "INTERNALS" :
+                                {
+                                  "CONFIG_DIRECTORY" : "simple_config",
+                                },
+                                "UNKNOWN_KEY" : "Have/not/got/a/clue",
+                                "SIMULATION" :
+                                {
+                                  "QUEUE_SYSTEM" :
+                                  {
+                                    "JOBNAME" : "Job%d",
+                                  },
+
+                                  "RUNPATH"            : "/tmp/simulations/run%d",
+                                  "NUM_REALIZATIONS"   : 1,
+                                  "JOB_SCRIPT"         : "script.sh",
+                                  "ENSPATH"            : "Ensemble"
+                                }
+                              }
+
+        self.minimum_config_error = {
+                                "INTERNALS" :
+                                {
+                                  "CONFIG_DIRECTORY" : "simple_config",
+                                },
+                                "SIMULATION" :
+                                {
+                                  "QUEUE_SYSTEM" :
+                                  {
+                                    "JOBNAME" : "Job%d",
+                                  },
+
+                                  "RUNPATH"            : "/tmp/simulations/run%d",
+                                  "NUM_REALIZATIONS"   : "/should/be/an/integer",
+                                  "JOB_SCRIPT"         : "script.sh",
+                                  "ENSPATH"            : "Ensemble"
+                                }
+                              }
+
+
         self.minimum_config_cwd = {
                                 "INTERNALS" :
                                 {
@@ -250,7 +290,6 @@ class ProgrammaticResConfigTest(ResTest):
                                   }
                                 }
                               }
-
     def test_minimum_config(self):
         case_directory = self.createTestPath("local/simple_config")
         config_file = "simple_config/minimum_config"
@@ -286,10 +325,9 @@ class ProgrammaticResConfigTest(ResTest):
 
         with TestAreaContext("res_config_prog_test") as work_area:
             work_area.copy_directory(case_directory)
-            del self.minimum_config[ConfigKeys.INTERNALS]
 
             with self.assertRaises(ValueError):
-                ResConfig(config=self.minimum_config)
+                ResConfig(config=self.minimum_config_cwd)
 
 
     def test_errors(self):
@@ -298,12 +336,11 @@ class ProgrammaticResConfigTest(ResTest):
 
         with TestAreaContext("res_config_prog_test") as work_area:
             work_area.copy_directory(case_directory)
-            del self.minimum_config[ConfigKeys.SIMULATION]["NUM_REALIZATIONS"]
 
             with self.assertRaises(ValueError):
-                res_config = ResConfig(config=self.minimum_config)
+                res_config = ResConfig(config=self.minimum_config_error)
 
-            res_config = ResConfig(config=self.minimum_config,
+            res_config = ResConfig(config=self.minimum_config_error,
                                    throw_on_error=False)
 
             self.assertTrue(len(res_config.errors) > 0)
@@ -316,14 +353,13 @@ class ProgrammaticResConfigTest(ResTest):
 
         with TestAreaContext("res_config_prog_test") as work_area:
             work_area.copy_directory(case_directory)
-            self.minimum_config["UNKNOWN_KEY"] = "???????????????"
 
-            res_config = ResConfig(config=self.minimum_config)
+            res_config = ResConfig(config=self.minimum_config_extra_key)
 
             self.assertTrue(len(res_config.failed_keys) == 1)
             self.assertEqual(["UNKNOWN_KEY"], res_config.failed_keys.keys())
-            self.assertEqual(self.minimum_config["UNKNOWN_KEY"],
-                             res_config.failed_keys["UNKNOWN_KEY"])
+            self.assertEqual(self.minimum_config_extra_key["UNKNOWN_KEY"],
+                            res_config.failed_keys["UNKNOWN_KEY"])
 
 
     def assert_equal_model_config(self, loaded_model_config, prog_model_config):
