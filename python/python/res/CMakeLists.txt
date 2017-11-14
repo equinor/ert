@@ -17,6 +17,7 @@ add_subdirectory(rms)
 add_subdirectory(sched)
 add_subdirectory(server)
 add_subdirectory(test)
+add_subdirectory(simulator)
 
 configure_file(res_lib_info_build.py.in   ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/res/__res_lib_info.py )
 configure_file(res_lib_info_install.py.in ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX}/res_lib_info_install.py )

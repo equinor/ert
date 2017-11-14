@@ -1,0 +1,4 @@
+STDOUT square_params.stdout
+STDERR square_params.stderr
+
+EXECUTABLE square_params.py
