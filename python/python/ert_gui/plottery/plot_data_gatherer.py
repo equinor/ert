@@ -72,7 +72,7 @@ class PlotDataGatherer(object):
         if not data.empty:
             data = data.reset_index()
 
-            if any(data.dupliated()):
+            if any(data.duplicated()):
                 print("** Warning: The simulation data contains duplicate "
                       "timestamps. A possible explanation is that your "
                       "simulation timestep is less than a second.")
