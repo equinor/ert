@@ -50,7 +50,8 @@ typedef enum {
 typedef enum {
     CONFIG_UNRECOGNIZED_IGNORE = 0,
     CONFIG_UNRECOGNIZED_WARN = 1,
-    CONFIG_UNRECOGNIZED_ERROR = 2
+    CONFIG_UNRECOGNIZED_ERROR = 2,
+    CONFIG_UNRECOGNIZED_ADD = 3
 } config_schema_unrecognized_enum;
 
 

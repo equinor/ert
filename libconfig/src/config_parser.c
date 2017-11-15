@@ -447,35 +447,48 @@ bool config_parser_add_key_values(config_parser_type * config,
                                   const char * config_filename,
                                   config_schema_unrecognized_enum unrecognized)
 {
-  if (hash_has_key(config->messages, kw))
-    printf("%s \n", (const char *) hash_get(config->messages, kw));
-
   if (!config_has_schema_item(config, kw)) {
-    if (unrecognized == CONFIG_UNRECOGNIZED_WARN)
-      fprintf(stderr,
-              "** Warning keyword: %s not recognized when parsing: %s --- \n",
+
+    if (unrecognized == CONFIG_UNRECOGNIZED_IGNORE)
+      return false;
+
+    if (unrecognized == CONFIG_UNRECOGNIZED_WARN) {
+      fprintf(stderr, "** Warning keyword: %s not recognized when parsing: %s --- \n",
               kw,
               config_filename);
-    else if (unrecognized == CONFIG_UNRECOGNIZED_ERROR) {
+      return false;
+    }
+
+    if (unrecognized == CONFIG_UNRECOGNIZED_ERROR) {
       char * error_message = util_alloc_sprintf("Keyword:%s is not recognized", kw);
       config_error_add(config_content_get_errors(content), error_message);
       free(error_message);
+      return false;
     }
 
-    return false;
+    /*
+      We allow unrecognized keywords - they are automatically added to the
+       current parser class.
+    */
+    if (unrecognized == CONFIG_UNRECOGNIZED_ADD) {
+      config_schema_item_type * item = config_add_schema_item(config, kw ,false);
+      config_schema_item_set_argc_minmax(item , 1, CONFIG_DEFAULT_ARG_MAX);
+    }
   }
-
   config_schema_item_type * schema_item = config_get_schema_item(config, kw);
+
+
+  if (hash_has_key(config->messages, kw))
+    printf("%s \n", (const char *) hash_get(config->messages, kw));
 
   if (!config_content_has_item(content, kw))
     config_content_add_item(content, schema_item, current_path_elm);
 
-  subst_list_type * define_list = config_content_get_define_list(content);
 
   config_content_item_type * content_item = config_content_get_item(content,
                                                                     config_schema_item_get_kw(schema_item));
 
-  config_content_node_type * new_node = config_content_item_set_arg__(define_list,
+  config_content_node_type * new_node = config_content_item_set_arg__(config_content_get_define_list(content),
                                                                       config_content_get_errors(content),
                                                                       content_item,
                                                                       values,

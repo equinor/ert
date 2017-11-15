@@ -7,6 +7,7 @@ set(TEST_SOURCES
     test_gen_data_config.py
     test_gen_kw.py
     test_gen_kw_config.py
+    test_gen_kw_config_statoil.py
     test_ext_param.py
     test_enkf_node.py
     test_enkf_config_node.py
@@ -19,9 +20,10 @@ addPythonTest(tests.res.enkf.data.test_gen_kw.GenKwTest)
 addPythonTest(tests.res.enkf.data.test_ext_param.ExtParamTest)
 addPythonTest(tests.res.enkf.data.test_enkf_node.EnkfNodeTest)
 addPythonTest(tests.res.enkf.data.test_enkf_config_node.EnkfConfigNodeTest)
+addPythonTest(tests.res.enkf.data.test_gen_kw_config.GenKwConfigTest)
 
 if (STATOIL_TESTDATA_ROOT)
-  addPythonTest(tests.res.enkf.data.test_gen_kw_config.GenKwConfigTest LABELS StatoilData)
+  addPythonTest(tests.res.enkf.data.test_gen_kw_config_statoil.GenKwConfigTest LABELS StatoilData)
   addPythonTest(tests.res.enkf.data.test_gen_data.GenDataTest LABELS StatoilData)
   addPythonTest(tests.res.enkf.data.test_gen_data_config.GenDataConfigTest LABELS StatoilData)
 endif()

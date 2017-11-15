@@ -59,6 +59,7 @@ typedef struct config_content_item_struct config_content_item_type;
   config_content_node_type       * config_content_item_alloc_node( const config_content_item_type * item , const config_path_elm_type * path_elm);
   const config_schema_item_type  * config_content_item_get_schema( const config_content_item_type * item );
   const config_path_elm_type     * config_content_item_get_path_elm( const config_content_item_type * item );
+  const char* config_content_item_get_key( const config_content_item_type * item);
 
   UTIL_IS_INSTANCE_HEADER( config_content_item );
 

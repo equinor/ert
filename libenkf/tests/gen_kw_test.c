@@ -91,7 +91,7 @@ void test_read_erroneous_gen_kw_file() {
   vector_append_ref( arg , gen_kw_config );
   vector_append_ref(arg, parameter_filename);
 
-  test_assert_util_abort("arg_pack_fscanf", read_erroneous_gen_kw_file,  arg);
+  test_assert_util_abort("gen_kw_config_set_parameter_file", read_erroneous_gen_kw_file,  arg);
 
   vector_free(arg);
   gen_kw_config_free(gen_kw_config);

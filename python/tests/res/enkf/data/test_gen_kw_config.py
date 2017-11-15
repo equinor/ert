@@ -1,57 +1,35 @@
-from ecl.test import ExtendedTestCase
+from ecl.test import ExtendedTestCase, TestAreaContext
 from res.test import ErtTestContext
 
 from res.enkf import ErtImplType, GenKwConfig
 
 class GenKwConfigTest(ExtendedTestCase):
 
-    def setUp(self):
-        self.config = self.createTestPath("Statoil/config/with_data/config")
-
 
     def test_gen_kw_config(self):
+        with TestAreaContext("gen_kw_config"):
+            with open("template.txt","w") as f:
+                f.write("Hello")
 
-        with ErtTestContext("python/enkf/data/gen_kw_config", self.config) as context:
+            with open("parameters.txt","w") as f:
+                f.write("KEY  UNIFORM 0 1 \n")
 
-            ert = context.getErt()
+            with open("parameters_with_comments.txt","w") as f:
+                f.write("KEY1  UNIFORM 0 1 -- COMMENT\n")
+                f.write("\n\n") # Two blank lines
+                f.write("KEY2  UNIFORM 0 1\n")
+                f.write("--KEY3  \n")
+                f.write("KEY3  UNIFORM 0 1\n")
 
-            gen_kw_keys = ert.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+            template_file = "template.txt"
+            parameter_file = "parameters.txt"
+            parameter_file_comments = "parameters_with_comments.txt"
+            with self.assertRaises(IOError):
+                conf = GenKwConfig("KEY", template_file, "does_not_exist")
 
-            self.assertEqual(gen_kw_keys[0], "GRID_PARAMS")
+            with self.assertRaises(IOError):
+                conf = GenKwConfig("Key", "does_not_exist", parameter_file)
 
-            node = ert.ensembleConfig().getNode(gen_kw_keys[0])
-            gen_kw_config = node.getModelConfig()
-            self.assertIsInstance(gen_kw_config, GenKwConfig)
-
-            self.assertEqual(gen_kw_config.getKey(), "GRID_PARAMS")
-            self.assertEqual(len(gen_kw_config), 2)
-
-            self.assertEqual(gen_kw_config[0], "MULTPV2")
-            self.assertEqual(gen_kw_config[1], "MULTPV3")
-
-            self.assertFalse(gen_kw_config.shouldUseLogScale(0))
-            self.assertFalse(gen_kw_config.shouldUseLogScale(1))
-
-
-            node = ert.ensembleConfig().getNode(gen_kw_keys[1])
-            gen_kw_config = node.getModelConfig()
-            self.assertIsInstance(gen_kw_config, GenKwConfig)
-
-            self.assertEqual(gen_kw_config.getKey(), "MULTFLT")
-
-            self.assertTrue(gen_kw_config.shouldUseLogScale(0))
-
-
-            node = ert.ensembleConfig().getNode(gen_kw_keys[2])
-            gen_kw_config = node.getModelConfig()
-            self.assertIsInstance(gen_kw_config, GenKwConfig)
-
-            self.assertEqual(gen_kw_config.getKey(), "FLUID_PARAMS")
-
-            self.assertFalse(gen_kw_config.shouldUseLogScale(0))
-            self.assertFalse(gen_kw_config.shouldUseLogScale(1))
-
-            expected = ["SWCR", "SGCR"]
-
-            for index, keyword in enumerate(gen_kw_config):
-                self.assertEqual(keyword, expected[index])
+            conf = GenKwConfig("KEY", template_file, parameter_file)
+            conf = GenKwConfig("KEY", template_file, parameter_file_comments)
+            self.assertEqual(len(conf), 3)
