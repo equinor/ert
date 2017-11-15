@@ -72,11 +72,12 @@ class PlotDataGatherer(object):
         if not data.empty:
             data = data.reset_index()
 
-            if True in data.duplicated():
-              print("** Warning: The simulation data contains duplicate "
-                    "timestamps. A possible explanation is that your "
-                    "simulation timestep is less than a second.")
-              data = data.drop_duplicates()
+            if any(data.dupliated()):
+                print("** Warning: The simulation data contains duplicate "
+                      "timestamps. A possible explanation is that your "
+                      "simulation timestep is less than a second.")
+                data = data.drop_duplicates()
+
 
             data = data.pivot(index="Date", columns="Realization", values=key)
 
