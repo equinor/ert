@@ -26,6 +26,7 @@ class JobQueueManager(BaseCClass):
     _free            = QueuePrototype("void job_queue_manager_free( job_queue_manager )")
     _start_queue     = QueuePrototype("void job_queue_manager_start_queue( job_queue_manager , int , bool)")
     _get_num_waiting = QueuePrototype("int job_queue_manager_get_num_waiting( job_queue_manager )")
+    _get_num_pending = QueuePrototype("int job_queue_manager_get_num_pending( job_queue_manager )")
     _get_num_running = QueuePrototype("int job_queue_manager_get_num_running( job_queue_manager )")
     _get_num_success = QueuePrototype("int job_queue_manager_get_num_success( job_queue_manager )")
     _get_num_failed  = QueuePrototype("int job_queue_manager_get_num_failed( job_queue_manager )")
@@ -62,6 +63,10 @@ class JobQueueManager(BaseCClass):
 
     def getNumWaiting(self):
         return self._get_num_waiting( )
+
+    def getNumPending(self):
+        return self._get_num_pending( )
+
 
     def getNumSuccess(self):
         return self._get_num_success( )
