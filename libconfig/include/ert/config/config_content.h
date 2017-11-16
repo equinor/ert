@@ -78,6 +78,9 @@ typedef struct config_content_struct config_content_type;
   const stringlist_type * config_content_get_warnings( const config_content_type * content);
   const char * config_content_get_config_path( const config_content_type * content );
   void config_content_pop_path_stack( config_content_type * content );
+  stringlist_type * config_content_alloc_keys(const config_content_type * content);
+
+
 
   UTIL_IS_INSTANCE_HEADER( config_content );
 

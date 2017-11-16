@@ -212,10 +212,27 @@ class ConfigTest(ResTest):
             os.makedirs("tmp")
             os.chdir("tmp")
             content = conf.parse("../config")
+            d = content.as_dict()
             self.assertTrue(content.isValid())
             self.assertTrue("KEY" in content)
             self.assertFalse("NOKEY" in content)
             self.assertEqual( cwd0, content.get_config_path( ))
+
+
+            keys = content.keys()
+            self.assertEqual(len(keys), 1)
+            self.assertIn("KEY", keys)
+            d = content.as_dict()
+            self.assertIn("KEY", d)
+            item_list = d["KEY"]
+            self.assertEqual(len(item_list), 1)
+            l = item_list[0]
+            self.assertEqual(l[0], "VALUE1")
+            self.assertEqual(l[1], "VALUE2")
+            self.assertEqual(l[2], 100)
+            self.assertEqual(l[3], True)
+            self.assertEqual(l[4], 3.14)
+            self.assertEqual(l[5], "../path/file.txt")
 
             self.assertFalse("NOT_IN_CONTENT" in content)
             item = content["NOT_IN_CONTENT"]
@@ -226,6 +243,7 @@ class ConfigTest(ResTest):
 
             item = content["KEY"]
             self.assertEqual(len(item), 1)
+
 
             line = item[0]
             with self.assertRaises(TypeError):
