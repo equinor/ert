@@ -385,8 +385,7 @@ class ResConfig(BaseCClass):
         self._failed_keys = {}
         defines, config_dir, config_list = self._extract_config(config)
 
-        config_parser  = ConfigParser()
-        ResConfig.init_config_parser(config_parser)
+        config_parser  = ResConfig.config_parser()
         config_content = ConfigContent(None)
         config_content.setParser(config_parser)
 
@@ -424,9 +423,12 @@ class ResConfig(BaseCClass):
     def free(self):
         self._free()
 
+
     @classmethod
-    def init_config_parser(cls, config_parser):
-        cls._init_parser(config_parser)
+    def config_parser(cls):
+        parser = ConfigParser( )
+        cls._init_parser(parser)
+        return parser
 
     @property
     def errors(self):
