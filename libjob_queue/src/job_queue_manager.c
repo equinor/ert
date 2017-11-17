@@ -115,6 +115,11 @@ int job_queue_manager_get_num_waiting( const job_queue_manager_type * manager) {
     return job_queue_get_num_waiting( manager->job_queue );
 }
 
+int job_queue_manager_get_num_pending( const job_queue_manager_type * manager) {
+  return job_queue_get_num_pending( manager->job_queue );
+}
+
+
 
 int job_queue_manager_get_num_running( const job_queue_manager_type * manager) {
   return job_queue_get_num_running( manager->job_queue );

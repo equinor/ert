@@ -28,7 +28,11 @@ class SimulationContext(object):
         path_fmt = self._ert.getModelConfig().getRunpathFormat()
         jobname_fmt = self._ert.getModelConfig().getJobnameFormat()
         self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, sim_fs, None, mask, path_fmt, jobname_fmt, subst_list, itr)
+        self._ert.createRunpath( self._run_context )
 
+
+    def __len__(self):
+        return self._mask.count()
 
     def addSimulation(self, iens, geo_id):
         if not (0 <= iens < len(self._run_context)):
@@ -48,6 +52,10 @@ class SimulationContext(object):
 
     def isRunning(self):
         return self._queue_manager.isRunning()
+
+
+    def getNumPending(self):
+        return self._queue_manager.getNumPending()
 
 
     def getNumRunning(self):
@@ -104,3 +112,5 @@ class SimulationContext(object):
 
     def get_run_context(self):
         return self._run_context
+
+

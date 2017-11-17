@@ -37,6 +37,7 @@ typedef struct job_queue_manager_struct job_queue_manager_type;
   int  job_queue_manager_get_num_success( const job_queue_manager_type * manager);
   int job_queue_manager_get_num_waiting( const job_queue_manager_type * manager);
   int job_queue_manager_get_num_failed( const job_queue_manager_type * manager);
+  int job_queue_manager_get_num_pending( const job_queue_manager_type * manager);
   bool job_queue_manager_is_running( const job_queue_manager_type * manager);
 
   bool job_queue_manager_job_success( const job_queue_manager_type * manager , int job_index);
