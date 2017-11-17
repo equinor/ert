@@ -243,7 +243,8 @@ struct enkf_fs_struct {
   path_fmt_type             * case_tstep_member_fmt;
 
   int                         refcount;
-  int                         writecount;
+  int                         runcount;  // Counts the number of simulations currently writing to this enkf_fs; the purpose is to
+                                         // be able to answer the question: Is this case currently 'running'? 
 };
 
 
@@ -302,7 +303,7 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point ) {
   fs->read_only              = true;
   fs->mount_point            = util_alloc_string_copy( mount_point );
   fs->refcount               = 0;
-  fs->writecount             = 0;
+  fs->runcount               = 0;
   fs->lock_fd                = 0;
 
   if (mount_point == NULL)
@@ -1044,15 +1045,15 @@ misfit_ensemble_type * enkf_fs_get_misfit_ensemble( const enkf_fs_type * fs ) {
   return fs->misfit_ensemble;
 }
 
-void enkf_fs_increase_write_count(enkf_fs_type * fs) {
-  fs->writecount = fs->writecount + 1;
+void enkf_fs_increase_run_count(enkf_fs_type * fs) {
+  fs->runcount = fs->runcount + 1;
 }
 
-void enkf_fs_decrease_write_count(enkf_fs_type * fs) {
-  fs->writecount = fs->writecount - 1;
+void enkf_fs_decrease_run_count(enkf_fs_type * fs) {
+  fs->runcount = fs->runcount - 1;
 }
 
-int enkf_fs_get_write_count(const enkf_fs_type * fs) {
-  return fs->writecount;
+bool enkf_fs_is_running(const enkf_fs_type * fs) {
+  return (fs->runcount > 0);
 }
 

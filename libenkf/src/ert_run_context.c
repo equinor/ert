@@ -278,12 +278,12 @@ const char * ert_run_context_get_id( const ert_run_context_type * context ) {
 
 void ert_run_context_free( ert_run_context_type * context ) {
   if (context->sim_fs) {
-    enkf_fs_decrease_write_count(context->sim_fs);
+    enkf_fs_decrease_run_count(context->sim_fs);
     enkf_fs_decref(context->sim_fs);
   }
 
   if (context->update_target_fs) {
-    enkf_fs_decrease_write_count(context->update_target_fs);
+    enkf_fs_decrease_run_count(context->update_target_fs);
     enkf_fs_decref(context->update_target_fs);
   }
 
@@ -375,7 +375,7 @@ enkf_fs_type * ert_run_context_get_update_target_fs(const ert_run_context_type *
 void ert_run_context_set_sim_fs(ert_run_context_type * context, enkf_fs_type * sim_fs) {
   if (sim_fs) {
     context->sim_fs = sim_fs;
-    enkf_fs_increase_write_count(sim_fs);
+    enkf_fs_increase_run_count(sim_fs);
     enkf_fs_incref(sim_fs);
   } else
     context->sim_fs = NULL;
@@ -384,7 +384,7 @@ void ert_run_context_set_sim_fs(ert_run_context_type * context, enkf_fs_type * s
 void ert_run_context_set_update_target_fs(ert_run_context_type * context, enkf_fs_type * update_target_fs) {
   if (update_target_fs) {
     context->update_target_fs = update_target_fs;
-    enkf_fs_increase_write_count(update_target_fs);
+    enkf_fs_increase_run_count(update_target_fs);
     enkf_fs_incref(update_target_fs);
   } else
     context->update_target_fs = NULL;

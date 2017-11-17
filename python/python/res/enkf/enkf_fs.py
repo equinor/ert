@@ -36,7 +36,7 @@ class EnkfFs(BaseCClass):
     _fread_vector         = EnkfPrototype("void  enkf_fs_fread_vector(enkf_fs, buffer, char*, int, int, int)")
     _get_case_name        = EnkfPrototype("char* enkf_fs_get_case_name(enkf_fs)")
     _is_read_only         = EnkfPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
-    _get_writecount       = EnkfPrototype("int   enkf_fs_get_write_count(enkf_fs)")
+    _is_running           = EnkfPrototype("bool  enkf_fs_is_running(enkf_fs)")
     _fsync                = EnkfPrototype("void  enkf_fs_fsync(enkf_fs)")
     _create               = EnkfPrototype("enkf_fs_ref   enkf_fs_create_fs(char* , enkf_fs_type_enum , void* , bool)", bind = False)
     _get_time_map         = EnkfPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
@@ -82,8 +82,8 @@ class EnkfFs(BaseCClass):
     def refCount(self):
         return self._get_refcount()
 
-    def writeCount(self):
-        return self._get_writecount()
+    def is_running(self):
+        return self._is_running()
 
     @classmethod
     def exists(cls, path):

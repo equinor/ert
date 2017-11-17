@@ -143,7 +143,7 @@ class EnkfFsManager(BaseCClass):
         """
         if self.isCaseMounted(case_name, mount_root):
             case_fs = self.getFileSystem(case_name, mount_root)
-            return case_fs.writeCount() > 0
+            return case_fs.is_running()
         return False
 
 
