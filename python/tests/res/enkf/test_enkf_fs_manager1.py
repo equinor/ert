@@ -10,7 +10,7 @@ from res.enkf import EnkfFsManager
 
 class EnKFFSManagerTest1(ExtendedTestCase):
     def setUp(self):
-        self.config_file = self.createTestPath("Statoil/config/with_data/config")
+        self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 
 
     def test_create(self):
@@ -22,12 +22,12 @@ class EnKFFSManagerTest1(ExtendedTestCase):
             ert = testContext.getErt()
             fsm = ert.getEnkfFsManager()
 
-            self.assertTrue(fsm.isCaseMounted("default"))
-            self.assertTrue(fsm.caseExists("default"))
-            self.assertTrue(fsm.caseHasData("default"))
-            self.assertFalse(fsm.isCaseRunning("default"))
-
             fs = fsm.getCurrentFileSystem()
+            self.assertTrue(fsm.isCaseMounted("default_0"))
+            self.assertTrue(fsm.caseExists("default_0"))
+            self.assertTrue(fsm.caseHasData("default_0"))
+            self.assertFalse(fsm.isCaseRunning("default_0"))
+
             self.assertEqual(2, fs.refCount())
             self.assertEqual(1, fsm.getFileSystemCount())
 
@@ -39,6 +39,9 @@ class EnKFFSManagerTest1(ExtendedTestCase):
             fs2 = fsm.getFileSystem("newFS")
             self.assertEqual(2, fsm.getFileSystemCount())
             self.assertEqual(1, fs2.refCount())
+
+            with self.assertRaises(AssertionError):
+                fs2.umount( )
 
             self.assertTrue(fsm.isCaseMounted("newFS"))
             self.assertTrue(fsm.caseExists("newFS"))

@@ -53,16 +53,3 @@ class EnKFFSTest(ExtendedTestCase):
             fs = EnkfFs("/does/not/exist")
 
 
-    def test_refcount(self):
-        with ErtTestContext("TEST", self.config_file) as testContext:
-            ert = testContext.getErt()
-            self.assertTrue(isinstance(ert, EnKFMain))
-
-            fsm = ert.getEnkfFsManager()
-            fs = fsm.getCurrentFileSystem()
-            self.assertEqual(2, fs.refCount())
-
-            fs.umount()
-
-            with self.assertRaises(AssertionError):
-                fs.refCount()

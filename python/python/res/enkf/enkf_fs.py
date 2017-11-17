@@ -1,18 +1,19 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'enkf_fs.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
+#  The file 'enkf_fs.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import sys
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
 from res.enkf import TimeMap, StateMap, SummaryKeySet, CustomKWConfigSet
@@ -27,6 +28,7 @@ class EnkfFs(BaseCClass):
     _disk_version         = EnkfPrototype("int   enkf_fs_disk_version(char*)", bind = False)
     _update_disk_version  = EnkfPrototype("bool  enkf_fs_update_disk_version(char*, int, int)", bind = False)
     _decref               = EnkfPrototype("int   enkf_fs_decref(enkf_fs)")
+    _incref               = EnkfPrototype("int   enkf_fs_incref(enkf_fs)")
     _get_refcount         = EnkfPrototype("int   enkf_fs_get_refcount(enkf_fs)")
     _has_node             = EnkfPrototype("bool  enkf_fs_has_node(enkf_fs,     char*,  int,   int, int, int)")
     _has_vector           = EnkfPrototype("bool  enkf_fs_has_vector(enkf_fs,   char*,  int,   int, int)")
@@ -34,7 +36,7 @@ class EnkfFs(BaseCClass):
     _fread_vector         = EnkfPrototype("void  enkf_fs_fread_vector(enkf_fs, buffer, char*, int, int, int)")
     _get_case_name        = EnkfPrototype("char* enkf_fs_get_case_name(enkf_fs)")
     _is_read_only         = EnkfPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
-    _get_writecount       = EnkfPrototype("int   enkf_fs_get_write_count(enkf_fs)")
+    _is_running           = EnkfPrototype("bool  enkf_fs_is_running(enkf_fs)")
     _fsync                = EnkfPrototype("void  enkf_fs_fsync(enkf_fs)")
     _create               = EnkfPrototype("enkf_fs_ref   enkf_fs_create_fs(char* , enkf_fs_type_enum , void* , bool)", bind = False)
     _get_time_map         = EnkfPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
@@ -46,58 +48,42 @@ class EnkfFs(BaseCClass):
         c_ptr = self._mount(mount_point)
         super(EnkfFs, self).__init__(c_ptr)
 
-        self.__umounted = False # Keep track of umounting so we only do it once
 
+    def copy(self):
+        fs = self.createPythonObject( self._address() )
+        self._incref()
+        return fs
 
-    @classmethod
-    def createCReference(cls, c_pointer, parent=None):
-        obj = super(EnkfFs, cls).createCReference(c_pointer, parent)
-        if not obj is None:
-            obj.__umounted = False
-        return obj
-
-
-    # def has_node(self, node_key, var_type, report_step, iens, state):
-    #     return self._has_node(node_key, var_type, report_step, iens, state)
-    #
-    # def has_vector(self, node_key, var_type, iens, state):
-    #     return self._has_vector(node_key, var_type, iens, state)
-    #
-    #
-    # def fread_node(self, key, type, step, member, value):
-    #     buffer = Buffer(100)
-    #     self._fread_node(buffer, key, type, step, member, value)
-    #
-    # def fread_vector(self, key, type, member, value):
-    #     buffer = Buffer(100)
-    #     self._fread_vector(buffer, key, type, member, value)
+    # This method will return a new Python object which shares the underlying
+    # enkf_fs instance as self. The name weakref is used because the Python
+    # object returned from this method does *not* manipulate the reference
+    # count of the underlying enkf_fs instance, and specifically it does not
+    # inhibit destruction of this object.
+    def weakref(self):
+        fs = self.createCReference( self._address() )
+        return fs
 
     def getTimeMap(self):
         """ @rtype: TimeMap """
-        self.__checkIfUmounted()
         return self._get_time_map().setParent(self)
 
     def getStateMap(self):
         """ @rtype: StateMap """
-        self.__checkIfUmounted()
         return self._get_state_map().setParent(self)
 
     def getCaseName(self):
         """ @rtype: str """
-        self.__checkIfUmounted()
         return self._get_case_name()
 
     def isReadOnly(self):
         """ @rtype: bool """
-        self.__checkIfUmounted()
         return self._is_read_only()
 
     def refCount(self):
-        self.__checkIfUmounted()
         return self._get_refcount()
 
-    def writeCount(self):
-        return self._get_writecount()
+    def is_running(self):
+        return self._is_running()
 
     @classmethod
     def exists(cls, path):
@@ -115,7 +101,7 @@ class EnkfFs(BaseCClass):
     def updateVersion(cls, path, src_version , target_version):
         return cls._update_disk_version(path , src_version  ,target_version)
 
-    
+
     @classmethod
     def createFileSystem(cls, path, fs_type, arg=None , mount = False):
         assert isinstance(path, str)
@@ -124,17 +110,25 @@ class EnkfFs(BaseCClass):
         return fs
 
 
-    def __checkIfUmounted(self):
-        if self.__umounted:
-            raise AssertionError("The EnkfFs instance has been umounted!")
-
+    # The umount( ) method should not normally be called explicitly by
+    # downstream code, but in situations where file descriptors is at premium
+    # it might be beneficial to call it explicitly. In that case it is solely
+    # the responsability of the calling scope to ensure that it is not called
+    # repeatedly - that will lead to hard failure!
     def umount(self):
-        if not self.__umounted:
+        if self.isReference():
+            raise AssertionError("Calling umount() on a reference is an application error")
+
+        if self:
             self._decref()
-            self.__umounted = True
+            self._invalidateCPointer()
+        else:
+            raise AssertionError("Tried to umount for second time - application error")
+
 
     def free(self):
-        self.umount()
+        if self:
+            self.umount( )
 
     def __repr__(self):
         cn = self.getCaseName()

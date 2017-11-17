@@ -95,15 +95,15 @@ class CustomKWTest(ExtendedTestCase):
             job_queue = ert.get_queue_config().create_job_queue()
 
             iteration_count = 0
-            active = BoolVector(default_value = True, initial_size = ert.getEnsembleSize())
+            active = BoolVector(default_value = True, initial_size = 4)
             subst_list = ert.getDataKW( )
             runpath_fmt = ert.getModelConfig( ).getRunpathFormat( )
             fs_manager = ert.getEnkfFsManager( )
             fs = fs_manager.getFileSystem("fs")
             jobname_fmt = ert.getModelConfig( ).getJobnameFormat( )
-            
-            run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , fs, fs , active , runpath_fmt, jobname_fmt, subst_list , iteration_count)
-            
+
+            run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , fs, None , active , runpath_fmt, jobname_fmt, subst_list , iteration_count)
+
             simulation_runner.createRunPath( run_context )
             simulation_runner.runEnsembleExperiment(job_queue, run_context)
 

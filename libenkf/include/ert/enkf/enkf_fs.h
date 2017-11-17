@@ -108,9 +108,9 @@ extern "C" {
   summary_key_set_type      * enkf_fs_get_summary_key_set( const enkf_fs_type * fs );
   custom_kw_config_set_type * enkf_fs_get_custom_kw_config_set( const enkf_fs_type * fs );
 
-  void             enkf_fs_increase_write_count(enkf_fs_type * fs);
-  void             enkf_fs_decrease_write_count(enkf_fs_type * fs);
-  int              enkf_fs_get_write_count(const enkf_fs_type * fs);
+  void             enkf_fs_increase_run_count(enkf_fs_type * fs);
+  void             enkf_fs_decrease_run_count(enkf_fs_type * fs);
+  bool             enkf_fs_is_running(const enkf_fs_type * fs);
 
 
   UTIL_SAFE_CAST_HEADER( enkf_fs );

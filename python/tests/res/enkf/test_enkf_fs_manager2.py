@@ -1,3 +1,4 @@
+import sys
 import os
 from ecl.test import ExtendedTestCase
 from res.test import ErtTestContext
@@ -9,7 +10,7 @@ from res.enkf import EnkfFsManager
 
 class EnKFFSManagerTest2(ExtendedTestCase):
     def setUp(self):
-        self.config_file = self.createTestPath("Statoil/config/with_data/config")
+        self.config_file = self.createTestPath("local/custom_kw/mini_config")
 
 
     def test_rotate(self):
@@ -21,18 +22,27 @@ class EnKFFSManagerTest2(ExtendedTestCase):
         with ErtTestContext("enkf_fs_manager_rotate_test", self.config_file) as testContext:
             ert = testContext.getErt()
             fsm = ert.getEnkfFsManager()
-            self.assertEqual(1, fsm.getFileSystemCount())
+            self.assertEqual(0, fsm.getFileSystemCount())
 
             fs_list = []
             for index in range(EnkfFsManager.DEFAULT_CAPACITY):
                 fs_list.append(fsm.getFileSystem("fs_fill_%d" % index))
 
+            for fs in fs_list:
+                self.assertEqual(1, fs.refCount())
+                fs_copy = fs.copy( )
+                self.assertEqual(2, fs.refCount())
+                self.assertEqual(2, fs_copy.refCount())
+
+                del fs_copy
+                self.assertEqual(1, fs.refCount())
+
+
             self.assertEqual(EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount())
 
-            for i in range(10):
-                fs = "fs_test_%d" % i
-                print("Mounting: %s" % fs)
-                fs_list.append(fsm.getFileSystem(fs))
+            for i in range(3 * EnkfFsManager.DEFAULT_CAPACITY):
+                fs_name = "fs_test_%d" % i
+                sys.stderr.write("Mounting: %s\n" % fs_name)
+                fs = fsm.getFileSystem(fs_name)
                 self.assertEqual(EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount())
 
-            
