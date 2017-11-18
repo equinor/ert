@@ -82,7 +82,7 @@ class EnkfFsManager(BaseCClass):
 
     _is_initialized =                        EnkfPrototype("bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)")
     _is_case_initialized =                   EnkfPrototype("bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)")
-    _initialize_from_scratch =               EnkfPrototype("void enkf_main_initialize_from_scratch(enkf_fs_manager, enkf_fs , stringlist, bool_vector, enkf_init_mode_enum)")
+    _initialize_from_scratch =               EnkfPrototype("void enkf_main_initialize_from_scratch(enkf_fs_manager, stringlist, ert_run_context)")
     _initialize_case_from_existing =         EnkfPrototype("void enkf_main_init_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_fs)")
     _custom_initialize_from_existing =       EnkfPrototype("void enkf_main_init_current_case_from_existing_custom(enkf_fs_manager, enkf_fs, int, stringlist, bool_vector)")
     _initialize_current_case_from_existing = EnkfPrototype("void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int)")
@@ -236,36 +236,11 @@ class EnkfFsManager(BaseCClass):
         """
         self._initialize_case_from_existing(source_fs, source_report_step, target_fs)
 
-    def initializeCaseFromScratch(self, case, parameter_list, from_iens, to_iens, force_init=True):
-        """
-        @type case: EnkfFs
-        @type parameter_list: ecl.util.StringList
-        @type to_iens: int
-        @type from_iens: int
-        @type force_init: bool
-        """
-        mask = BoolVector( initial_size = self.getEnsembleSize(  ) , default_value = False )
-        for iens in range(from_iens,to_iens+1):
-            mask[iens] = True
 
-        if force_init:
-            init_mode = EnkfInitModeEnum.INIT_FORCE
-        else:
-            init_mode = EnkfInitModeEnum.INIT_CONDITIONAL
-
-        self._initialize_from_scratch(case, parameter_list, mask , init_mode)
+    def initializeFromScratch(self, parameter_list, run_context):
+        self._initialize_from_scratch(parameter_list, run_context) 
 
 
-
-    def initializeFromScratch(self, parameter_list, from_iens, to_iens, force_init=True):
-        """
-        @type parameter_list: ecl.util.StringList
-        @type to_iens: int
-        @type from_iens: int
-        @type force_init: bool
-        """
-        case = self.getCurrentFileSystem()
-        self.initializeCaseFromScratch(case, parameter_list, from_iens, to_iens, force_init)
 
     def isCaseMounted(self, case_name, mount_root=None):
         """

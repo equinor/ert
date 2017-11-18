@@ -38,12 +38,6 @@
 struct ert_run_context_struct {
   UTIL_TYPE_ID_DECLARATION;
   vector_type      * run_args;
-
-  // Observe that the iactive mask is a shared reference which has
-  // lifetime longer than the ert_run_context instance. When
-  // simulations have failed elements in the iactive vector can be set
-  // to false during runtime. Hmmmmm - should try hard to have a private copy of this ....
-  bool_vector_type * iactive;
   run_mode_type      run_mode;
   init_mode_type     init_mode;
   int                iter;
@@ -51,7 +45,7 @@ struct ert_run_context_struct {
   int                step2;
   int                load_start;
   int_vector_type  * iens_map;
-
+  bool_vector_type * iactive;
   enkf_fs_type          * sim_fs;
   enkf_fs_type          * update_target_fs;
   char                  * run_id;
@@ -136,11 +130,11 @@ char * ert_run_context_alloc_run_id( ) {
   return util_alloc_sprintf("%d:%d:%4d-%0d-%02d-%02d-%02d-%02d:%ud" , getpid() , getuid(), year , month , day , hour , min , sec, random);
 }
 
-static ert_run_context_type * ert_run_context_alloc__(bool_vector_type * iactive , run_mode_type run_mode , init_mode_type init_mode, enkf_fs_type * sim_fs , enkf_fs_type * update_target_fs , int iter) {
+static ert_run_context_type * ert_run_context_alloc__(const bool_vector_type * iactive , run_mode_type run_mode , init_mode_type init_mode, enkf_fs_type * sim_fs , enkf_fs_type * update_target_fs , int iter) {
   ert_run_context_type * context = util_malloc( sizeof * context );
   UTIL_TYPE_ID_INIT( context , ERT_RUN_CONTEXT_TYPE_ID );
 
-  context->iactive = iactive;
+  context->iactive = bool_vector_alloc_copy( iactive );
   context->iens_map = bool_vector_alloc_active_index_list( iactive , -1 );
   context->run_args = vector_alloc_new();
   context->run_mode = run_mode;
@@ -289,6 +283,7 @@ void ert_run_context_free( ert_run_context_type * context ) {
 
   vector_free( context->run_args );
   int_vector_free( context->iens_map );
+  bool_vector_free( context->iactive );
   free( context->run_id );
   free( context );
 }
@@ -335,9 +330,6 @@ int ert_run_context_get_step2( const ert_run_context_type * context ) {
 }
 
 
-bool_vector_type * ert_run_context_get_iactive( const ert_run_context_type * context ) {
-  return context->iactive;
-}
 
 
 run_arg_type * ert_run_context_iget_arg( const ert_run_context_type * context , int index) {
@@ -398,5 +390,13 @@ void ert_run_context_deactivate_realization( ert_run_context_type * context , in
 
 
 bool ert_run_context_iactive( const ert_run_context_type * context , int iens) {
-  return bool_vector_iget( context->iactive , iens );
+  return bool_vector_safe_iget( context->iactive , iens );
+}
+
+int ert_run_context_get_active_size(const ert_run_context_type * context){
+  return bool_vector_count_equal(context->iactive, true);
+}
+
+bool_vector_type * ert_run_context_alloc_iactive(const ert_run_context_type * context) {
+  return bool_vector_alloc_copy(context->iactive);
 }

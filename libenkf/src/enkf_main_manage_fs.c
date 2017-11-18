@@ -117,29 +117,29 @@ static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
   return NULL;
 }
 
-void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , enkf_fs_type * init_fs , const stringlist_type * param_list ,const bool_vector_type * iens_mask , init_mode_type init_mode) {
+void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main ,
+                                       const stringlist_type * param_list ,
+                                       const ert_run_context_type * run_context) {
   int num_cpu = 4;
   int ens_size               = enkf_main_get_ensemble_size( enkf_main );
   thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
   arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
-  int i;
-  int iens;
 
-  for (iens = 0; iens < ens_size; iens++) {
+  for (int iens = 0; iens < ens_size; iens++) {
     arg_list[iens] = arg_pack_alloc();
-    if (bool_vector_safe_iget(iens_mask , iens)) {
+    if (ert_run_context_iactive(run_context, iens)) {
       arg_pack_append_ptr( arg_list[iens] , enkf_main );
-      arg_pack_append_ptr( arg_list[iens] , init_fs );
+      arg_pack_append_ptr( arg_list[iens] , ert_run_context_get_sim_fs(run_context));
       arg_pack_append_const_ptr( arg_list[iens] , param_list );
       arg_pack_append_int( arg_list[iens] , iens );
-      arg_pack_append_int( arg_list[iens] , init_mode );
-      
+      arg_pack_append_int( arg_list[iens] ,ert_run_context_get_init_mode(run_context));
+
       thread_pool_add_job( tp , enkf_main_initialize_from_scratch_mt , arg_list[iens]);
     }
   }
   thread_pool_join( tp );
-  for (i = 0; i < ens_size; i++){
-    arg_pack_free( arg_list[i] );
+  for (int iens = 0; iens < ens_size; iens++){
+    arg_pack_free( arg_list[iens] );
   }
   free( arg_list );
   thread_pool_free( tp );

@@ -102,27 +102,30 @@ void test_create_ENSEMBLE_EXPERIMENT() {
 
 
 void test_iactive_update() {
+  subst_list_type * subst_list = subst_list_alloc( NULL );
+  path_fmt_type * runpath_fmt = path_fmt_alloc_directory_fmt("/tmp/path/%04d/%d");
+  enkf_fs_type * fs = NULL;
   bool_vector_type * iactive = bool_vector_alloc(10,true);
+  ert_run_context_type * context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs, iactive , runpath_fmt , "Job%d", subst_list , 7 );
+
+  ert_run_context_deactivate_realization( context , 0 );
+  ert_run_context_deactivate_realization( context , 5 );
+  ert_run_context_deactivate_realization( context , 9 );
+
+  test_assert_not_NULL( ert_run_context_get_id( context ));
+  path_fmt_free( runpath_fmt );
+  subst_list_free( subst_list );
+  bool_vector_free(iactive);
   {
-    subst_list_type * subst_list = subst_list_alloc( NULL );
-    path_fmt_type * runpath_fmt = path_fmt_alloc_directory_fmt("/tmp/path/%04d/%d");
-    enkf_fs_type * fs = NULL;
-    ert_run_context_type * context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs, iactive , runpath_fmt , "Job%d", subst_list , 7 );
-
-    ert_run_context_deactivate_realization( context , 0 );
-    ert_run_context_deactivate_realization( context , 5 );
-    ert_run_context_deactivate_realization( context , 9 );
-
-    test_assert_not_NULL( ert_run_context_get_id( context ));
-    ert_run_context_free( context );
-    path_fmt_free( runpath_fmt );
-    subst_list_free( subst_list );
+    bool_vector_type * iactive = ert_run_context_alloc_iactive(context);
+    test_assert_int_equal( bool_vector_count_equal( iactive , true ) , 7 );
+    test_assert_int_equal( ert_run_context_get_active_size(context), 7);
+    test_assert_false( bool_vector_iget( iactive , 0 ));
+    test_assert_false( bool_vector_iget( iactive , 5 ));
+    test_assert_false( bool_vector_iget( iactive , 9 ));
+    bool_vector_free( iactive );
   }
-  test_assert_int_equal( bool_vector_count_equal( iactive , true ) , 7 );
-  test_assert_false( bool_vector_iget( iactive , 0 ));
-  test_assert_false( bool_vector_iget( iactive , 5 ));
-  test_assert_false( bool_vector_iget( iactive , 9 ));
-  bool_vector_free( iactive );
+  ert_run_context_free( context );
 }
 
 

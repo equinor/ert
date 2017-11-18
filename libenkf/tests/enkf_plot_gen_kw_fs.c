@@ -35,9 +35,11 @@ void test_load(const char * config_file) {
   stringlist_type * param_list = stringlist_alloc_new();
   enkf_fs_type * init_fs = enkf_fs_create_fs( "fs" , BLOCK_FS_DRIVER_ID , NULL , true );
   bool_vector_type * iens_mask = bool_vector_alloc( ens_size , true );
+  path_fmt_type * runpath_fmt = model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main));
+  ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY(init_fs, INIT_CONDITIONAL, iens_mask, runpath_fmt, NULL, 0);
 
   stringlist_append_ref( param_list , "GEN_KW");
-  enkf_main_initialize_from_scratch( enkf_main , init_fs , param_list , iens_mask , INIT_FORCE);
+  enkf_main_initialize_from_scratch( enkf_main , param_list, run_context );
   {
     ensemble_config_type  * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
     enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , "GEN_KW");
