@@ -104,7 +104,7 @@ UTIL_IS_INSTANCE_FUNCTION( subst_func_pool , SUBST_FUNC_POOL_TYPE_ID);
 subst_func_pool_type * subst_func_pool_alloc( ) {
   subst_func_pool_type * pool = (subst_func_pool_type*)util_malloc( sizeof * pool );
   UTIL_TYPE_ID_INIT( pool , SUBST_FUNC_POOL_TYPE_ID );
-  pool->func_table = hash_alloc_unlocked();
+  pool->func_table = hash_alloc();
   return pool;
 }
 
