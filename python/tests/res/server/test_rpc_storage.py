@@ -4,12 +4,13 @@ from random import random
 import sys
 import time
 
-from res.enkf.enums import ErtImplType
+from ecl.test import ExtendedTestCase
+from ecl.util import BoolVector
+from res.enkf.enums import ErtImplType, EnkfRunType
 from res.enkf.export.custom_kw_collector import CustomKWCollector
 from res.server import ErtRPCClient
-from ecl.test import ExtendedTestCase
 from tests.res.server import RPCServiceContext
-from res.enkf import EnkfFsManager, EnkfFs, EnkfVarType
+from res.enkf import EnkfFsManager, EnkfFs, EnkfVarType, ErtRunContext
 
 
 def initializeCase(ert, name, size):
@@ -19,14 +20,17 @@ def initializeCase(ert, name, size):
     @type size: int
     @rtype:
     """
-    current_fs = ert.getEnkfFsManager().getCurrentFileSystem()
     fs = ert.getEnkfFsManager().getFileSystem(name)
-    ert.getEnkfFsManager().switchFileSystem(fs)
+    mask = BoolVector( default_value = True, initial_size = size)
+    model_config = ert.getModelConfig()
+    runpath_fmt = model_config.getRunpathFormat()
+    jobname_fmt = model_config.getJobnameFormat()
+    subst_list = ert.getDataKW()
+    itr = 0
+    run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , fs , None , mask , runpath_fmt, jobname_fmt, subst_list , itr )
     parameters = ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
-    ert.getEnkfFsManager().initializeFromScratch(parameters, 0, size - 1)
+    ert.getEnkfFsManager().initializeFromScratch(parameters, run_context) 
 
-    ert.getEnkfFsManager().switchFileSystem(current_fs)
-    return fs
 
 
 

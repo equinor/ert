@@ -1343,7 +1343,7 @@ void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * ru
                       run_arg_get_iens( run_arg ),
                       run_arg_get_iter( run_arg ),
                       run_arg_get_runpath( run_arg ),
-		      run_arg_get_job_name( run_arg ));
+                      run_arg_get_job_name( run_arg ));
   }
 
   /* This block accesses enkf_state - can it be removed?? */
@@ -1382,10 +1382,8 @@ void enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_contex
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
-                                      ert_run_context_get_sim_fs( run_context ),
                                       param_list ,
-                                      ert_run_context_get_iactive( run_context ),
-                                      init_mode);
+                                      run_context);
     stringlist_free( param_list );
   }
 
@@ -1485,10 +1483,10 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
 static void enkf_main_start_queue(enkf_main_type * enkf_main,
                                   const ert_run_context_type * run_context,
                                   job_queue_type * job_queue,
-                                  int job_size,
                                   bool verbose_queue) {
 
   job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
+  int job_size = ert_run_context_get_active_size(run_context);
   job_queue_manager_start_queue( queue_manager , job_size , verbose_queue );
   enkf_main_submit_jobs( enkf_main , run_context, job_queue);
   job_queue_submit_complete( job_queue );
@@ -1516,20 +1514,22 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
     ecl_config_assert_restart( enkf_main_get_ecl_config( enkf_main ) );
 
   {
-    int job_size , iens;
-    bool     verbose_queue    = enkf_main->verbose;
-
-    state_map_deselect_matching( enkf_fs_get_state_map( ert_run_context_get_sim_fs( run_context )) ,
-                                 ert_run_context_get_iactive( run_context ), STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
-    job_size = bool_vector_count_equal( ert_run_context_get_iactive(run_context) , true );
-    enkf_main_start_queue(enkf_main, run_context, job_queue, job_size, verbose_queue);
+    bool verbose_queue    = enkf_main->verbose;
+    {
+      bool_vector_type * iactive = ert_run_context_alloc_iactive( run_context );
+      state_map_deselect_matching( enkf_fs_get_state_map( ert_run_context_get_sim_fs( run_context )) ,
+                                   iactive,
+                                   STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
+      bool_vector_free( iactive );
+    }
+    enkf_main_start_queue(enkf_main, run_context, job_queue, verbose_queue);
 
     /* This should be carefully checked for the situation where only a
        subset (with offset > 0) of realisations are simulated. */
 
     int totalOK = 0;
     int totalFailed = 0;
-    for (iens = 0; iens < ert_run_context_get_size( run_context ); iens++) {
+    for (int iens = 0; iens < ert_run_context_get_size( run_context ); iens++) {
       if (ert_run_context_iactive(run_context , iens)) {
         const run_arg_type * run_arg = ert_run_context_iget_arg( run_context , iens );
         run_status_type run_status = run_arg_get_run_status( run_arg );
@@ -1610,10 +1610,8 @@ void enkf_main_init_run( enkf_main_type * enkf_main, const ert_run_context_type 
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
     enkf_main_initialize_from_scratch(enkf_main ,
-                                      ert_run_context_get_sim_fs( run_context ),
                                       param_list ,
-                                      ert_run_context_get_iactive( run_context ),
-                                      ert_run_context_get_init_mode( run_context ));
+                                      run_context);
     stringlist_free( param_list );
   }
 }
@@ -1809,11 +1807,11 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main,
 ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter) {
   const model_config_type * model_config = enkf_main_get_model_config(enkf_main);
   return ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs,
-						    iactive,
-						    model_config_get_runpath_fmt(model_config),
-						    model_config_get_jobname_fmt(model_config),
-						    enkf_main_get_data_kw(enkf_main),
-						    iter );
+                                                    iactive,
+                                                    model_config_get_runpath_fmt(model_config),
+                                                    model_config_get_jobname_fmt(model_config),
+                                                    enkf_main_get_data_kw(enkf_main),
+                                                    iter );
 }
 
 
@@ -2305,16 +2303,15 @@ int enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int it
   model_config_type * model_config = enkf_main_get_model_config(enkf_main);
 
   ert_run_context_type * run_context = ert_run_context_alloc_ENSEMBLE_EXPERIMENT( fs,
-										  iactive,
-										  model_config_get_runpath_fmt( model_config ),
-										  model_config_get_jobname_fmt( model_config ),
-										  enkf_main_get_data_kw(enkf_main),
-										  iter );
+                                                                                  iactive,
+                                                                                  model_config_get_runpath_fmt( model_config ),
+                                                                                  model_config_get_jobname_fmt( model_config ),
+                                                                                  enkf_main_get_data_kw(enkf_main),
+                                                                                  iter );
   arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
   thread_pool_type * tp     = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
 
-  int iens = 0;
-  for (; iens < ens_size; ++iens) {
+  for (int iens = 0; iens < ens_size; ++iens) {
     printf("\tloading %d (realization %d/%d) ", iens, (1+iens), ens_size);
     result[iens] = 0;
     arg_pack_type * arg_pack = arg_pack_alloc();
@@ -2338,7 +2335,7 @@ int enkf_main_load_from_forward_model_with_fs(enkf_main_type * enkf_main, int it
   printf("\n");
 
   int loaded = 0;
-  for (iens = 0; iens < ens_size; ++iens) {
+  for (int iens = 0; iens < ens_size; ++iens) {
     if (bool_vector_iget(iactive, iens)) {
       if (result[iens] & LOAD_FAILURE)
         fprintf(stderr, "** Warning: Function %s: Realization %d load failure\n", __func__, iens);
@@ -2487,7 +2484,7 @@ void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_k
 queue_config_type * enkf_main_get_queue_config(enkf_main_type * enkf_main ) {
   return site_config_get_queue_config(
                 enkf_main_get_site_config(enkf_main)
-        );
+                                      );
 }
 
 rng_manager_type * enkf_main_get_rng_manager(const enkf_main_type * enkf_main ) {

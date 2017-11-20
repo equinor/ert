@@ -242,10 +242,8 @@ extern "C" {
   stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main );
 
   void              enkf_main_initialize_from_scratch(enkf_main_type * enkf_main ,
-						      enkf_fs_type * init_fs,
-						      const stringlist_type * param_list ,
-						      const bool_vector_type * iens_mask ,
-						      init_mode_type init_mode);
+                                                      const stringlist_type * param_list ,
+                                                      const ert_run_context_type * run_context);
 
   void              enkf_main_init_current_case_from_existing(enkf_main_type * enkf_main,
                                                               enkf_fs_type * source_case_fs,

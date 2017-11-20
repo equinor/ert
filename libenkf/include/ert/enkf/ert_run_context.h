@@ -46,14 +46,14 @@ typedef struct ert_run_context_struct ert_run_context_type;
                                                enkf_fs_type * target_update_fs ,
                                                bool_vector_type * iactive ,
                                                path_fmt_type * runpath_fmt ,
-					       const char * jobname_fmt,
+                                               const char * jobname_fmt,
                                                subst_list_type * subst_list ,
                                                int iter);
 
   ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * sim_fs ,
                                                                    bool_vector_type * iactive ,
                                                                    const path_fmt_type * runpath_fmt ,
-								   const char * jobname_fmt,
+                                                                   const char * jobname_fmt,
                                                                    const subst_list_type * subst_list ,
                                                                    int iter);
 
@@ -67,7 +67,7 @@ typedef struct ert_run_context_struct ert_run_context_type;
   ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs , enkf_fs_type * target_update_fs ,
                                                             bool_vector_type * iactive ,
                                                             const path_fmt_type * runpath_fmt ,
-							    const char * jobname_fmt,
+                                                            const char * jobname_fmt,
                                                             const subst_list_type * subst_list ,
                                                             int iter);
 
@@ -77,8 +77,9 @@ typedef struct ert_run_context_struct ert_run_context_type;
   void                     ert_run_context_free( ert_run_context_type * );
   int                      ert_run_context_get_size( const ert_run_context_type * context );
   run_mode_type            ert_run_context_get_mode( const ert_run_context_type * context );
-  bool_vector_type       * ert_run_context_get_iactive( const ert_run_context_type * context );
+  bool_vector_type       * ert_run_context_alloc_iactive(const ert_run_context_type * context);
   int                      ert_run_context_get_iter( const ert_run_context_type * context );
+  int                      ert_run_context_get_active_size(const ert_run_context_type * context);
   int                      ert_run_context_get_step1( const ert_run_context_type * context );
   int                      ert_run_context_get_step2( const ert_run_context_type * context );
   int                      ert_run_context_get_load_start( const ert_run_context_type * context );
