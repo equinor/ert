@@ -43,7 +43,6 @@ void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_param
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   int   ens_size                               = enkf_main_get_ensemble_size( enkf_main );
   int iens1, iens2;
-  init_mode_type init_mode = INIT_FORCE;
   bool iens_valid = false;
 
   /* iens2 should be interpreted as __inclusive__ */
@@ -90,10 +89,17 @@ void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_param
     if (param_list != NULL) {
       enkf_fs_type * init_fs = enkf_main_tui_get_fs( enkf_main );
       bool_vector_type * iens_mask = bool_vector_alloc( ens_size , false );
+      path_fmt_type * runpath_fmt = model_config_get_runpath_fmt(enkf_main_get_model_config(enkf_main));
+      subst_list_type * subst_list = enkf_main_get_data_kw(enkf_main);
+      int iter = 0;
       bool_vector_iset_block( iens_mask , iens1 , iens2 - iens1 + 1, true );
-      enkf_main_initialize_from_scratch(enkf_main , init_fs , param_list , iens_mask , init_mode);
-      bool_vector_free( iens_mask );
+      {
+        ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY(init_fs, INIT_CONDITIONAL, iens_mask, runpath_fmt, subst_list , iter );
+        enkf_main_initialize_from_scratch(enkf_main , param_list , run_context);
+        ert_run_context_free(run_context);
+      }
       stringlist_free( param_list );
+      bool_vector_free( iens_mask );
     }
   }
 }
