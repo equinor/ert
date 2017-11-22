@@ -258,7 +258,7 @@ static bool queue_config_init(queue_config_type * queue_config, const config_con
 
 
   if (config_content_has_item(config_content, JOB_SCRIPT_KEY))
-    queue_config_set_job_script(queue_config, config_content_get_value_as_abspath(config_content, JOB_SCRIPT_KEY));
+    queue_config_set_job_script(queue_config, config_content_get_value_as_executable(config_content, JOB_SCRIPT_KEY));
 
   if (config_content_has_item(config_content, MAX_SUBMIT_KEY))
     queue_config->max_submit = config_content_get_value_as_int(config_content, MAX_SUBMIT_KEY);
@@ -318,6 +318,6 @@ void queue_config_add_config_items(config_parser_type * parser, bool site_mode) 
   {
     config_schema_item_type * item = config_add_schema_item(parser, JOB_SCRIPT_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, 1);
-    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+    config_schema_item_iset_type(item, 0, CONFIG_EXECUTABLE);
   }
 }

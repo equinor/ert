@@ -866,7 +866,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
 
 
         {
-          const char * executable     = config_content_get_value_as_abspath(content  , "EXECUTABLE");
+          const char * executable     = config_content_get_value_as_executable(content  , "EXECUTABLE");
           const char * executable_raw = config_content_iget(content  , "EXECUTABLE" , 0,0);
           ext_job_set_executable(ext_job , executable, executable_raw, search_path);
         }

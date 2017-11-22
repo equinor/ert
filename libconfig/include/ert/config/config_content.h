@@ -60,6 +60,7 @@ typedef struct config_content_struct config_content_type;
   const char * config_content_get_value_as_path( const config_content_type * config , const char * kw);
   const char * config_content_get_value_as_abspath( const config_content_type * config , const char * kw);
   const char * config_content_get_value_as_relpath( const config_content_type * config , const char * kw);
+  const char * config_content_get_value_as_executable( const config_content_type * config , const char * kw);
   const char * config_content_get_value(const config_content_type * config , const char * kw);
   char * config_content_alloc_joined_string(const config_content_type * content , const char * kw, const char * sep);
   stringlist_type * config_content_alloc_complete_stringlist(const config_content_type * content , const char * kw);
