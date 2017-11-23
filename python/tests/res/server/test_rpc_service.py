@@ -160,3 +160,27 @@ class RPCServiceTest(ExtendedTestCase):
                 thread.join()
 
             self.assertTrue(all(success for success in thread_success_state.values()))
+
+
+    def test_runtime_geoid(self):
+        config_rel_path = "local/snake_oil_no_data/snake_oil_GEO_ID.ert"
+        geoid_config_path = self.createTestPath(config_rel_path)
+
+        runpath_root_fmt = "simulations/%s"
+        for geo_id in range(3):
+            with RPCServiceContext("ert/server/rpc/geoid", geoid_config_path, store_area=True) as server:
+                server.startSimulationBatch("testing_geoid_%d" % geo_id,
+                                            "results_geoid_%d" % geo_id,
+                                            1)
+
+                keywords = {"SNAKE_OIL_PARAM" : 10*[0.5]}
+                server.addSimulation(geo_id, 0, 0, keywords)
+
+                resolved_path = runpath_root_fmt % geo_id
+                self.assertTrue(os.path.isdir(resolved_path))
+
+                # TODO: This fails currently due to runpath creation both by
+                # init of simulation_context and when adding simulation to the
+                # ertrpcserver. Its the first one that is problematic
+                #unresolved_path = runpath_root_fmt % '<GEO_ID>'
+                #self.assertFalse(os.path.isdir(unresolved_path))
