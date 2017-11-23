@@ -793,7 +793,7 @@ void enkf_state_init_eclipse(const res_config_type * res_config,
       free( iens_str );
     }
 
-    if (run_arg_get_geo_id( run_arg ) > 0) {
+    if (run_arg_get_geo_id( run_arg ) >= 0) {
       char * geo_id_str = util_alloc_sprintf("%d" , run_arg_get_geo_id( run_arg ));
       subst_list_append_copy( subst_list , "<GEO_ID>", geo_id_str, NULL);
     }
