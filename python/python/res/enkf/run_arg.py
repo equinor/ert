@@ -25,6 +25,8 @@ class RunArg(BaseCClass):
     _get_queue_index           = EnkfPrototype("int  run_arg_get_queue_index(run_arg)")
     _is_submitted              = EnkfPrototype("bool run_arg_is_submitted(run_arg)")
     _get_run_id                = EnkfPrototype("char* run_arg_get_run_id(run_arg)")
+    _get_geo_id                = EnkfPrototype("int run_arg_get_geo_id(run_arg)")
+    _set_geo_id                = EnkfPrototype("void run_arg_set_geo_id(run_arg, int)")
 
     def __init__(self):
         raise NotImplementedError("Cannot instantiat RunArg directly!")
@@ -55,3 +57,11 @@ class RunArg(BaseCClass):
 
     def get_run_id(self):
         return self._get_run_id( )
+
+    @property
+    def geo_id(self):
+        return self._get_geo_id()
+
+    @geo_id.setter
+    def geo_id(self, value):
+        self._set_geo_id(value)
