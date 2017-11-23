@@ -1376,16 +1376,7 @@ static void * enkf_main_create_run_path__( enkf_main_type * enkf_main,
 }
 
 void enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_context_type * run_context) {
-  init_mode_type init_mode = ert_run_context_get_init_mode( run_context );
-
-  enkf_main_init_internalization(enkf_main , init_mode);
-  {
-    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type(enkf_main_get_ensemble_config(enkf_main), PARAMETER );
-    enkf_main_initialize_from_scratch(enkf_main ,
-                                      param_list ,
-                                      run_context);
-    stringlist_free( param_list );
-  }
+  enkf_main_init_run(enkf_main, run_context);
 
   enkf_main_create_run_path__( enkf_main , run_context );
 
