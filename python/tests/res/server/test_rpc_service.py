@@ -177,7 +177,8 @@ class RPCServiceTest(ExtendedTestCase):
                 server.addSimulation(geo_id, 0, 0, keywords)
 
                 resolved_path = runpath_root_fmt % geo_id
-                self.assertTrue(os.path.isdir(resolved_path))
+                self.assertTrue(os.path.isdir(resolved_path),
+                                "Runpath '%s/..' not created" % resolved_path)
 
                 # TODO: This fails currently due to runpath creation both by
                 # init of simulation_context and when adding simulation to the

@@ -34,6 +34,7 @@ class SimulationContext(object):
     def __len__(self):
         return self._mask.count()
 
+
     def addSimulation(self, iens, geo_id):
         if not (0 <= iens < len(self._run_context)):
             raise UserWarning("Realization number out of range: %d >= %d" % (iens, len(self._run_context)))
@@ -45,9 +46,13 @@ class SimulationContext(object):
             raise UserWarning("Realization number: '%d' already queued" % iens)
 
         run_arg = self._run_context[iens]
-        queue = self._queue_manager.get_job_queue()
+        run_arg.geo_id = geo_id
         self._run_args[iens] = run_arg
-        self._thread_pool.submitJob(ArgPack(self._ert, run_arg, queue, geo_id))
+
+        self._ert.createRunpath(self._run_context, iens=iens)
+
+        queue = self._queue_manager.get_job_queue()
+        self._thread_pool.submitJob(ArgPack(self._ert, run_arg, queue))
 
 
     def isRunning(self):

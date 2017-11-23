@@ -181,10 +181,6 @@ class ErtRPCServer(SimpleXMLRPCServer):
                 self._session.batch_number += 1
 
 
-
-
-
-
     def addSimulation(self, geo_id, pert_id, iens, keywords):
         if not self.isRunning():
             raise createFault(UserWarning, "The server is not ready to receive simulations. Have you called startSimulationBatch() first?")
@@ -194,7 +190,7 @@ class ErtRPCServer(SimpleXMLRPCServer):
 
         sim_fs = self._session.simulation_context.get_sim_fs( )
         self._initializeRealization(sim_fs, geo_id, iens, keywords)
-        self.ert.createRunpath( self._session.simulation_context.get_run_context( ) , iens = iens)
+
         self._session.simulation_context.addSimulation(iens, geo_id)
 
 

@@ -1411,16 +1411,6 @@ void * enkf_main_isubmit_job__( void * arg ) {
   run_arg_type * run_arg = run_arg_safe_cast( arg_pack_iget_ptr( arg_pack , 1));
   job_queue_type * job_queue = job_queue_safe_cast( arg_pack_iget_ptr( arg_pack , 2));
 
-  /*
-    If this is called from wpro the arg_pack has an additional third
-    integer argument corresponding to the geo_id. That is retrofitted
-    to the run_arg argument.
-  */
-  if (arg_pack_size( arg_pack ) > 3) {
-    int geo_id = arg_pack_iget_int( arg_pack , 3);
-    run_arg_set_geo_id( run_arg, geo_id );
-  }
-
   enkf_main_isubmit_job( enkf_main , run_arg , job_queue);
   return NULL;
 }

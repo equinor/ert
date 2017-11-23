@@ -1,7 +1,6 @@
 from ecl.util import BoolVector
 
 from res.enkf import ResConfig, ErtRunContext, EnKFMain, EnkfConfigNode, EnkfNode, NodeId
-from res.server import SimulationContext
 from .batch_simulator_context import BatchContext
 
 class BatchSimulator(object):
