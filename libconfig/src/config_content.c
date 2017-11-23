@@ -325,6 +325,10 @@ const char * config_content_get_value_as_relpath( const config_content_type * co
   return config_content_node_iget_as_relpath(node , 0);
 }
 
+const char * config_content_get_value_as_executable( const config_content_type * config , const char * kw) {
+  config_content_node_type * node = config_content_get_value_node__( config , kw );
+  return config_content_node_iget_as_executable(node , 0);
+}
 
 const char * config_content_get_value(const config_content_type * config , const char * kw) {
   config_content_node_type * node = config_content_get_value_node__( config , kw );

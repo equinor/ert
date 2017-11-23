@@ -227,19 +227,6 @@ config_schema_item_type * config_schema_item_alloc(const char * kw , bool requir
   return item;
 }
 
-
-
-static char * __alloc_relocated__(const config_path_elm_type * path_elm , const char * value) {
-  char * file;
-
-  if (util_is_abs_path(value))
-    file = util_alloc_string_copy( value );
-  else
-    file = util_alloc_filename(config_path_elm_get_relpath( path_elm ) , value , NULL);
-
-  return file;
-}
-
 bool config_schema_item_valid_string(config_item_types value_type , const char * value)
 {
   switch(value_type) {
@@ -375,8 +362,8 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
                  b. Else - try if the util_alloc_PATH_executable() exists.
             */
             if (!util_is_abs_path( value )) {
-              char * relocated  = __alloc_relocated__(path_elm , value);
-              char * path_exe   = util_alloc_PATH_executable( value );
+              char * relocated = config_path_elm_alloc_abspath( path_elm , value );
+              char * path_exe  = util_alloc_PATH_executable( value );
 
               if (util_file_exists(relocated)) {
                 if (util_is_executable(relocated))

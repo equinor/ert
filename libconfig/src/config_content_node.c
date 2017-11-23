@@ -186,6 +186,24 @@ const char * config_content_node_iget_as_relpath( config_content_node_type * nod
   }
 }
 
+const char * config_content_node_iget_as_executable( config_content_node_type * node, int index ) {
+  config_schema_item_assure_type(node->schema, index,
+        CONFIG_PATH + CONFIG_EXISTING_PATH + CONFIG_EXECUTABLE );
+  {
+    const char * config_value = config_content_node_iget(node , index);
+
+    char* path_value = NULL;
+    if( !util_file_exists( config_value ) )
+        path_value = util_alloc_PATH_executable( config_value );
+
+    if( !path_value )
+        path_value = config_path_elm_alloc_abspath( node->cwd , config_value );
+
+    config_content_node_push_string( node , path_value );
+    return path_value;
+  }
+}
+
 
 const stringlist_type * config_content_node_get_stringlist( const config_content_node_type * node ) {
   return node->stringlist;

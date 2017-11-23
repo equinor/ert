@@ -168,6 +168,10 @@ function( add_config_test name command )
     set_property( TEST ${name} PROPERTY ENVIRONMENT "ERT_ROOT=${ERT_ROOT}")
 endfunction()
 
+add_executable(enkf_executable_path tests/enkf_executable_path)
+target_link_libraries(enkf_executable_path enkf)
+add_test(NAME enkf_executable_path COMMAND enkf_executable_path)
+
 add_executable(enkf_queue_config tests/enkf_queue_config.c)
 target_link_libraries(enkf_queue_config enkf)
 add_config_test(enkf_queue_config

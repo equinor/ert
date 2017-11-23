@@ -101,7 +101,7 @@ config_parser_type * workflow_job_alloc_config() {
     /*****************************************************************/
     item = config_add_schema_item( config , EXECUTABLE_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 1 );
-    config_schema_item_iset_type( item , 0 , CONFIG_PATH );
+    config_schema_item_iset_type( item , 0 , CONFIG_EXECUTABLE );
 
     /*****************************************************************/
     item = config_add_schema_item( config , SCRIPT_KEY , false );
@@ -332,7 +332,7 @@ workflow_job_type * workflow_job_config_alloc( const char * name , config_parser
         workflow_job_set_function( workflow_job , config_content_get_value( content , FUNCTION_KEY));
 
       if (config_content_has_item( content , EXECUTABLE_KEY))
-        workflow_job_set_executable( workflow_job , config_content_get_value_as_abspath( content , EXECUTABLE_KEY));
+        workflow_job_set_executable( workflow_job , config_content_get_value_as_executable( content , EXECUTABLE_KEY));
 
       if (config_content_has_item( content , SCRIPT_KEY)) {
         workflow_job_set_internal_script( workflow_job , config_content_get_value_as_abspath( content , SCRIPT_KEY));

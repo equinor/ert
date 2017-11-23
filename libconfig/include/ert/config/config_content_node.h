@@ -46,6 +46,7 @@ typedef struct config_content_node_struct config_content_node_type;
          const char *                 config_content_node_iget_as_path(config_content_node_type * node , int index);
          const char *                 config_content_node_iget_as_abspath( config_content_node_type * node , int index);
          const char *                 config_content_node_iget_as_relpath( config_content_node_type * node , int index);
+         const char *                 config_content_node_iget_as_executable( config_content_node_type * node , int index);
          time_t                       config_content_node_iget_as_isodate(const config_content_node_type * node , int index);
          const stringlist_type      * config_content_node_get_stringlist( const config_content_node_type * node );
          const char                 * config_content_node_safe_iget(const config_content_node_type * node , int index);
