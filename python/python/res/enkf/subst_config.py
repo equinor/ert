@@ -34,3 +34,7 @@ class SubstConfig(BaseCClass):
     def __iter__(self):
         subst_list = self._get_subst_list( )
         return iter(subst_list)
+
+    @property
+    def subst_list(self):
+        return self._get_subst_list()

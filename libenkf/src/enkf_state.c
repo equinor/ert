@@ -755,81 +755,61 @@ void enkf_state_free(enkf_state_type *enkf_state) {
 void enkf_state_init_eclipse(const res_config_type * res_config,
                              const run_arg_type * run_arg ) {
 
-  ensemble_config_type * ens_config = res_config_get_ensemble_config( res_config );
-  const ecl_config_type * ecl_config = res_config_get_ecl_config( res_config );
-  model_config_type * model_config = res_config_get_model_config( res_config );
+  ensemble_config_type * ens_config = res_config_get_ensemble_config(res_config);
+  const ecl_config_type * ecl_config = res_config_get_ecl_config(res_config);
+  model_config_type * model_config = res_config_get_model_config(res_config);
 
-  util_make_path(run_arg_get_runpath( run_arg ));
-  if (ecl_config_get_schedule_target( ecl_config ) != NULL) {
-
-    char * schedule_file_target = util_alloc_filename(run_arg_get_runpath( run_arg ),
-                                                      ecl_config_get_schedule_target( ecl_config ),
+  util_make_path(run_arg_get_runpath(run_arg));
+  if (ecl_config_get_schedule_target(ecl_config)) {
+    char * schedule_file_target = util_alloc_filename(run_arg_get_runpath(run_arg),
+                                                      ecl_config_get_schedule_target(ecl_config),
                                                       NULL);
+
     char * schedule_file_target_path = util_split_alloc_dirname(schedule_file_target);
     util_make_path(schedule_file_target_path);
     free(schedule_file_target_path);
 
-    sched_file_fprintf( ecl_config_get_sched_file( ecl_config ) , schedule_file_target);
+    sched_file_fprintf(ecl_config_get_sched_file(ecl_config), schedule_file_target);
 
     free(schedule_file_target);
   }
 
+  ert_templates_instansiate(res_config_get_templates(res_config),
+                            run_arg_get_runpath(run_arg),
+                            run_arg_get_subst_list(run_arg));
 
-  /**
-     For reruns of various kinds the parameters and the state are
-     generally loaded from different timesteps:
-  */
-  {
-    subst_list_type * subst_list = subst_list_alloc( subst_config_get_subst_list( res_config_get_subst_config( res_config )));
-    const char * job_name = run_arg_get_job_name( run_arg );
-    const char * runpath = run_arg_get_runpath( run_arg );
+  enkf_state_ecl_write(ens_config,
+                       model_config,
+                       run_arg,
+                       run_arg_get_sim_fs(run_arg));
 
-    subst_list_append_ref( subst_list , "<ECL_BASE>", job_name, NULL );
-    subst_list_append_ref( subst_list , "<ECLBASE>", job_name, NULL );
-    subst_list_append_ref( subst_list , "<RUNPATH>", runpath, NULL );
-    {
-      char * iens_str = util_alloc_sprintf("%d" , run_arg_get_iens( run_arg ));
-      subst_list_append_copy( subst_list , "<IENS>", iens_str, NULL);
-      free( iens_str );
-    }
+  /* Writing the ECLIPSE data file. */
+  if (ecl_config_have_eclbase(ecl_config) && ecl_config_get_data_file(ecl_config)) {
+    char * data_file = ecl_util_alloc_filename(run_arg_get_runpath(run_arg),
+                                               run_arg_get_job_name(run_arg),
+                                               ECL_DATA_FILE,
+                                               true,
+                                               -1);
 
-    if (run_arg_get_geo_id( run_arg ) >= 0) {
-      char * geo_id_str = util_alloc_sprintf("%d" , run_arg_get_geo_id( run_arg ));
-      subst_list_append_copy( subst_list , "<GEO_ID>", geo_id_str, NULL);
-    }
+    subst_list_update_string(run_arg_get_subst_list(run_arg), &data_file);
+    subst_list_filter_file(run_arg_get_subst_list(run_arg),
+                           ecl_config_get_data_file(ecl_config),
+                           data_file);
 
-    ert_templates_instansiate( res_config_get_templates( res_config ) , run_arg_get_runpath( run_arg ) , subst_list );
-    enkf_state_ecl_write(ens_config, model_config , run_arg , run_arg_get_sim_fs( run_arg ));
-
-    if (ecl_config_have_eclbase( ecl_config )) {
-
-      /* Writing the ECLIPSE data file. */
-      if (ecl_config_get_data_file( ecl_config ) != NULL) {
-        char * data_file = ecl_util_alloc_filename(run_arg_get_runpath( run_arg ),
-                                                   run_arg_get_job_name( run_arg ),
-                                                   ECL_DATA_FILE,
-                                                   true,
-                                                   -1);
-        subst_list_filter_file(subst_list,
-                               ecl_config_get_data_file(ecl_config),
-                               data_file);
-        free( data_file );
-      }
-    }
-
-    mode_t umask = site_config_get_umask(res_config_get_site_config( res_config ));
-
-    /* This is where the job script is created */
-    const env_varlist_type * varlist = site_config_get_env_varlist( res_config_get_site_config( res_config ) );
-    forward_model_formatted_fprintf( model_config_get_forward_model( model_config ) ,
-                                     run_arg_get_run_id( run_arg ),
-                                     run_arg_get_runpath( run_arg ) ,
-                                     model_config_get_data_root( model_config ) ,
-                                     subst_list,
-                                     umask,
-                                     varlist);
-    subst_list_free( subst_list );
+    free(data_file);
   }
+
+  mode_t umask = site_config_get_umask(res_config_get_site_config( res_config ));
+
+  /* This is where the job script is created */
+  const env_varlist_type * varlist = site_config_get_env_varlist(res_config_get_site_config(res_config));
+  forward_model_formatted_fprintf(model_config_get_forward_model(model_config),
+                                  run_arg_get_run_id( run_arg ),
+                                  run_arg_get_runpath(run_arg),
+                                  model_config_get_data_root(model_config),
+                                  run_arg_get_subst_list(run_arg),
+                                  umask,
+                                  varlist);
 }
 
 
@@ -1010,6 +990,7 @@ const ensemble_config_type * enkf_state_get_ensemble_config( const enkf_state_ty
   The writing of restart file is delegated to enkf_state_write_restart_file().
 */
 
+// TODO: enkf_fs_type could be fetched from run_arg
 void enkf_state_ecl_write(const ensemble_config_type * ens_config, const model_config_type * model_config, const run_arg_type * run_arg , enkf_fs_type * fs) {
   /**
      This iteration manipulates the hash (thorugh the enkf_state_del_node() call)

@@ -40,7 +40,7 @@ void create_runpath(enkf_main_type * enkf_main, int iter ) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = bool_vector_alloc(ens_size, true);
   const path_fmt_type * runpath_fmt = model_config_get_runpath_fmt( enkf_main_get_model_config( enkf_main ));
-  const subst_list_type * subst_list = NULL;
+  const subst_list_type * subst_list = subst_config_get_subst_list(enkf_main_get_subst_config(enkf_main));
   enkf_fs_type * fs           =  enkf_main_get_fs(enkf_main);
   ert_run_context_type * run_context = ert_run_context_alloc_INIT_ONLY( fs, INIT_CONDITIONAL, iactive, runpath_fmt, subst_list , iter );
 
@@ -86,7 +86,8 @@ int main(int argc , char ** argv) {
   enkf_main_type * enkf_main = enkf_main_alloc(res_config, strict, true);
   ensemble_config_type * ens_config = enkf_main_get_ensemble_config( enkf_main );
   enkf_fs_type * init_fs = enkf_main_get_fs(enkf_main);
-  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", init_fs , 0 ,0 , "simulations/run0", "base");
+  const subst_list_type * subst_list = subst_config_get_subst_list(enkf_main_get_subst_config(enkf_main));
+  run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT( "run_id", init_fs , 0 ,0 , "simulations/run0", "base", subst_list);
   enkf_config_node_type * config_node = ensemble_config_get_node( ens_config , "PORO");
   enkf_node_type * field_node = enkf_node_alloc( config_node );
 

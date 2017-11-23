@@ -42,7 +42,8 @@ void test_queue_index() {
   test_work_area_type * test_area = test_work_area_alloc("run_arg/ENS");
   {
     enkf_fs_type * fs   = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
-    run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs , 0 , 6 , "path", "base");
+    subst_list_type * subst_list = subst_list_alloc(NULL);
+    run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs , 0 , 6 , "path", "base", subst_list);
 
     test_assert_false( run_arg_is_submitted( run_arg ) );
     test_assert_util_abort("run_arg_get_queue_index" , call_get_queue_index , run_arg );
@@ -53,6 +54,7 @@ void test_queue_index() {
 
     test_assert_util_abort("run_arg_set_queue_index" , call_set_queue_index , run_arg );
     run_arg_free( run_arg );
+    subst_list_free(subst_list);
     enkf_fs_decref( fs );
   }
   test_work_area_free( test_area );
@@ -76,11 +78,13 @@ void test_SMOOTHER_RUN( ) {
   {
     enkf_fs_type * sim_fs    = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
     enkf_fs_type * target_fs = enkf_fs_create_fs("target" , BLOCK_FS_DRIVER_ID , NULL , true);
-    run_arg_type * run_arg = run_arg_alloc_SMOOTHER_RUN("run_id", sim_fs , target_fs , 0 , 6 , "path", "BASE");
+    subst_list_type * subst_list = subst_list_alloc(NULL);
+    run_arg_type * run_arg = run_arg_alloc_SMOOTHER_RUN("run_id", sim_fs , target_fs , 0 , 6 , "path", "BASE", subst_list);
     test_assert_true( run_arg_is_instance( run_arg ));
     test_assert_ptr_equal( run_arg_get_sim_fs( run_arg ) , sim_fs );
     test_assert_ptr_equal( run_arg_get_update_target_fs( run_arg ) , target_fs );
     run_arg_free( run_arg );
+    subst_list_free(subst_list);
 
     enkf_fs_decref( sim_fs );
     enkf_fs_decref( target_fs );
@@ -93,8 +97,10 @@ void alloc_invalid_run_arg(void *arg) {
   test_work_area_type * test_area = test_work_area_alloc("run_arg/invalid");
   {
     enkf_fs_type * fs    = enkf_fs_create_fs("fs" , BLOCK_FS_DRIVER_ID , NULL , true);
-    run_arg_type * run_arg = run_arg_alloc_SMOOTHER_RUN("run_id", fs , fs , 0 , 6 , "path", "BASE"); // This should explode ...
+    subst_list_type * subst_list = subst_list_alloc(NULL);
+    run_arg_type * run_arg = run_arg_alloc_SMOOTHER_RUN("run_id", fs , fs , 0 , 6 , "path", "BASE", subst_list); // This should explode ...
     run_arg_free( run_arg );
+    subst_list_free(subst_list);
     enkf_fs_decref( fs );
   }
   test_work_area_free( test_area );
@@ -111,12 +117,14 @@ void test_INIT_ONLY( ) {
   {
     enkf_fs_type * init_fs   = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
 
-    run_arg_type * run_arg = run_arg_alloc_INIT_ONLY("run_id", init_fs , 0 , 6 , "path");
+    subst_list_type * subst_list = subst_list_alloc(NULL);
+    run_arg_type * run_arg = run_arg_alloc_INIT_ONLY("run_id", init_fs , 0 , 6 , "path", subst_list);
     test_assert_true( run_arg_is_instance( run_arg ));
     test_assert_ptr_equal( run_arg_get_sim_fs( run_arg ) , init_fs );
 
     test_assert_util_abort( "run_arg_get_update_target_fs" , call_get_update_target_fs , run_arg );
     run_arg_free( run_arg );
+    subst_list_free(subst_list);
 
     enkf_fs_decref( init_fs );
   }
@@ -129,7 +137,8 @@ void test_ENSEMBLE_EXPERIMENT( ) {
   {
     enkf_fs_type * fs   = enkf_fs_create_fs("sim" , BLOCK_FS_DRIVER_ID , NULL , true);
 
-    run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs , 0 , 6 , "path", "BASE");
+    subst_list_type * subst_list = subst_list_alloc(NULL);
+    run_arg_type * run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", fs , 0 , 6 , "path", "BASE", subst_list);
     test_assert_true( run_arg_is_instance( run_arg ));
 
     test_assert_ptr_equal( run_arg_get_sim_fs( run_arg ) , fs );
@@ -137,11 +146,13 @@ void test_ENSEMBLE_EXPERIMENT( ) {
 
     test_assert_string_equal( run_arg_get_run_id( run_arg ) , "run_id");
     run_arg_free( run_arg );
+    subst_list_free(subst_list);
     enkf_fs_decref( fs );
   }
   test_work_area_free( test_area );
 }
 
+// TODO: Write tests for the new functionality
 
 int main(int argc , char ** argv) {
   test_queue_index();

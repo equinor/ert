@@ -28,7 +28,7 @@ class SimulationContext(object):
         path_fmt = self._ert.getModelConfig().getRunpathFormat()
         jobname_fmt = self._ert.getModelConfig().getJobnameFormat()
         self._run_context = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT, sim_fs, None, mask, path_fmt, jobname_fmt, subst_list, itr)
-        self._ert.createRunpath( self._run_context )
+        self._ert.initRun(self._run_context)
 
 
     def __len__(self):

@@ -166,22 +166,31 @@ class RPCServiceTest(ExtendedTestCase):
         config_rel_path = "local/snake_oil_no_data/snake_oil_GEO_ID.ert"
         geoid_config_path = self.createTestPath(config_rel_path)
 
-        runpath_root_fmt = "simulations/%s"
+        def assert_all_resolved(self, geo_id):
+            runpath_root_fmt = "simulations/%s"
+            resolved_path = runpath_root_fmt % geo_id
+            unresolved_path = runpath_root_fmt % '<GEO_ID>'
+
+            self.assertTrue(os.path.isdir(resolved_path),
+                            "Runpath '%s/..' not created" % resolved_path)
+
+            self.assertFalse(os.path.isdir(unresolved_path),
+                             "Unresolved runpath '%s/..' was created" % unresolved_path)
+
+
         for geo_id in range(3):
             with RPCServiceContext("ert/server/rpc/geoid", geoid_config_path, store_area=True) as server:
+                pert_id, iens = 0, 0
                 server.startSimulationBatch("testing_geoid_%d" % geo_id,
                                             "results_geoid_%d" % geo_id,
                                             1)
 
                 keywords = {"SNAKE_OIL_PARAM" : 10*[0.5]}
-                server.addSimulation(geo_id, 0, 0, keywords)
+                server.addSimulation(geo_id, pert_id, iens, keywords)
 
-                resolved_path = runpath_root_fmt % geo_id
-                self.assertTrue(os.path.isdir(resolved_path),
-                                "Runpath '%s/..' not created" % resolved_path)
+                assert_all_resolved(self, geo_id)
 
-                # TODO: This fails currently due to runpath creation both by
-                # init of simulation_context and when adding simulation to the
-                # ertrpcserver. Its the first one that is problematic
-                #unresolved_path = runpath_root_fmt % '<GEO_ID>'
-                #self.assertFalse(os.path.isdir(unresolved_path))
+                while not server.isRunning():
+                    time.sleep(0.5)
+
+                assert_all_resolved(self, geo_id)

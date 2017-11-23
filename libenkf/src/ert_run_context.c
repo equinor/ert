@@ -168,7 +168,8 @@ ert_run_context_type * ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs_type * 
 								iens,
 								iter,
 								stringlist_iget( runpath_list , iens),
-								stringlist_iget( jobname_list, iens));
+								stringlist_iget( jobname_list, iens),
+                                subst_list);
         vector_append_owned_ref( context->run_args , arg , run_arg_free__);
       } else
         vector_append_ref( context->run_args, NULL );
@@ -191,7 +192,12 @@ ert_run_context_type * ert_run_context_alloc_INIT_ONLY(enkf_fs_type * sim_fs,
     stringlist_type * runpath_list = ert_run_context_alloc_runpath_list( iactive , runpath_fmt , subst_list , iter );
     for (int iens = 0; iens < bool_vector_size( iactive ); iens++) {
       if (bool_vector_iget( iactive , iens )) {
-        run_arg_type * arg = run_arg_alloc_INIT_ONLY( context->run_id, sim_fs , iens , iter , stringlist_iget( runpath_list , iens));
+        run_arg_type * arg = run_arg_alloc_INIT_ONLY(context->run_id,
+                                                     sim_fs,
+                                                     iens,
+                                                     iter,
+                                                     stringlist_iget(runpath_list, iens),
+                                                     subst_list);
         vector_append_owned_ref( context->run_args , arg , run_arg_free__);
       } else
         vector_append_ref( context->run_args, NULL );
@@ -222,7 +228,8 @@ ert_run_context_type * ert_run_context_alloc_SMOOTHER_RUN(enkf_fs_type * sim_fs 
 							 iens,
 							 iter,
 							 stringlist_iget( runpath_list , iens),
-							 stringlist_iget( jobname_list , iens));
+							 stringlist_iget( jobname_list , iens),
+                             subst_list);
         vector_append_owned_ref( context->run_args , arg , run_arg_free__);
       } else
         vector_append_ref( context->run_args, NULL );

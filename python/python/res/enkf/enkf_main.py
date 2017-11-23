@@ -72,6 +72,7 @@ class EnKFMain(BaseCClass):
     _get_runpath_list = EnkfPrototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
     _add_node = EnkfPrototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
     _get_res_config = EnkfPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
+    _init_run = EnkfPrototype("void enkf_main_init_run(enkf_main, ert_run_context)")
 
 
     def __init__(self, config, strict=True, verbose=True):
@@ -306,6 +307,9 @@ class EnKFMain(BaseCClass):
     def loadFromForwardModel(self, realization, iteration, fs):
         """Returns the number of loaded realizations"""
         return self._load_from_forward_model(iteration, realization, fs)
+
+    def initRun(self, run_context):
+        self._init_run(run_context)
 
     def createRunpath(self , run_context, iens = None):
         if iens is None:

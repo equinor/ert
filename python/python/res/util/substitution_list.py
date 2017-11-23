@@ -17,8 +17,12 @@ class SubstitutionList(BaseCClass):
 
 
     def __init__(self):
-        c_ptr = self._alloc(0)
-        super(SubstitutionList, self).__init__(c_ptr)
+        c_ptr = self._alloc(None)
+
+        if c_ptr:
+            super(SubstitutionList, self).__init__(c_ptr)
+        else:
+            raise ValueError('Failed to construct subst_list instance.')
 
     def __len__(self):
         return self._size()

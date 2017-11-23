@@ -12,7 +12,6 @@ from res.enkf import ForwardLoadContext
 class GenDataConfigTest(ExtendedTestCase):
     _get_active_mask    = EnkfPrototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind = False)
     _update_active_mask = EnkfPrototype("void gen_data_config_update_active( gen_data_config, forward_load_context , bool_vector)", bind = False)
-    _alloc_run_arg      = EnkfPrototype("run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT( char*, enkf_fs , int , int , char*) ", bind = False)
 
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/with_GEN_DATA/config")
@@ -20,6 +19,7 @@ class GenDataConfigTest(ExtendedTestCase):
     def load_active_masks(self, case1, case2 ):
         with ErtTestContext("gen_data_config_test", self.config_file) as test_context:
             ert = test_context.getErt()
+            subst_list = ert.resConfig().subst_config.subst_list
 
             fs1 =  ert.getEnkfFsManager().getFileSystem(case1)
             config_node = ert.ensembleConfig().getNode("TIMESHIFT")
@@ -44,7 +44,7 @@ class GenDataConfigTest(ExtendedTestCase):
             active_mask_modified = active_mask.copy()
             active_mask_modified[10] = False
 
-            self.updateMask(config_node.getDataModelConfig(),  60, fs2 , active_mask_modified)
+            self.updateMask(config_node.getDataModelConfig(),  60, fs2 , active_mask_modified, subst_list)
             active_mask = self._get_active_mask( config_node.getDataModelConfig() )
             self.assertFalse(active_mask[10])
 
@@ -69,7 +69,7 @@ class GenDataConfigTest(ExtendedTestCase):
     def test_create(self):
         conf = GenDataConfig("KEY")
 
-    def updateMask(self, gen_data_config , report_step , fs, active_mask):
-        run_arg = RunArg.createEnsembleExperimentRunArg("run_id", fs , 0, "Path")
+    def updateMask(self, gen_data_config , report_step , fs, active_mask, subst_list):
+        run_arg = RunArg.createEnsembleExperimentRunArg("run_id", fs , 0, "Path", "jobname", subst_list)
         load_context = ForwardLoadContext( run_arg = run_arg , report_step = report_step )
         self._update_active_mask( gen_data_config , load_context , active_mask )
