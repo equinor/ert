@@ -188,18 +188,22 @@ const char * config_content_node_iget_as_relpath( config_content_node_type * nod
 
 const char * config_content_node_iget_as_executable( config_content_node_type * node, int index ) {
   config_schema_item_assure_type(node->schema, index,
-        CONFIG_PATH + CONFIG_EXISTING_PATH + CONFIG_EXECUTABLE );
+          CONFIG_PATH + CONFIG_EXISTING_PATH + CONFIG_EXECUTABLE );
   {
     const char * config_value = config_content_node_iget(node , index);
+    char* path_value = config_path_elm_alloc_abspath( node->cwd , config_value );
 
-    char* path_value = NULL;
-    if( !util_file_exists( config_value ) )
-        path_value = util_alloc_PATH_executable( config_value );
-
-    if( !path_value )
-        path_value = config_path_elm_alloc_abspath( node->cwd , config_value );
+    if( !strstr( config_value, UTIL_PATH_SEP_STRING )
+     && !util_file_exists( path_value ) ) {
+        char* tmp = util_alloc_PATH_executable( config_value );
+        if( tmp ) {
+            free( path_value );
+            path_value = tmp;
+        }
+    }
 
     config_content_node_push_string( node , path_value );
+    printf( "%s ===> %s\n", config_value, path_value );
     return path_value;
   }
 }
