@@ -251,6 +251,13 @@ bool config_schema_item_valid_string(config_item_types value_type , const char *
 }
 
 
+static char * alloc_relocated__(const config_path_elm_type * path_elm , const char * value) {
+    if ( util_is_abs_path(value) )
+        return util_alloc_string_copy( value );
+
+    return util_alloc_filename( config_path_elm_get_abspath( path_elm ) , value , NULL);
+}
+
 bool config_schema_item_validate_set(const config_schema_item_type * item , stringlist_type * token_list , const char * config_file, const config_path_elm_type * path_elm , config_error_type * error_list) {
   bool OK = true;
   int argc = stringlist_get_size( token_list ) - 1;
@@ -354,26 +361,39 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
           break;
         case(CONFIG_EXECUTABLE):
           {
-            /*
-              1. If the supplied value is an abolute path - do nothing.
-              2. If the supplied is _not_ an absolute path:
-
-                 a. Try if the relocated exists - then use that.
-                 b. Else - try if the util_alloc_PATH_executable() exists.
-            */
             if (!util_is_abs_path( value )) {
-              char * relocated = config_path_elm_alloc_abspath( path_elm , value );
-              char * path_exe  = util_alloc_PATH_executable( value );
 
+              char * relocated = alloc_relocated__( path_elm , value );
               if (util_file_exists(relocated)) {
                 if (util_is_executable(relocated))
                   stringlist_iset_copy( token_list , iarg , relocated);
-              } else if (path_exe != NULL)
+
+                free( relocated );
+                break;
+              }
+
+              free( relocated );
+
+              if( strstr( value, "/" ) ) {
+                  /*
+                   * value not naked name, which means it was relative path
+                   * that wasn't found
+                   */
+
+                config_error_add( error_list , util_alloc_sprintf("Could not locate executable:%s ", value));
+                break;
+              }
+
+              /*
+               * util_alloc_PATH_executable aborts if some parts of the path is
+               * not an existing dir, so call it only when its an absolute path
+               */
+              char * path_exe  = util_alloc_PATH_executable( value );
+              if (path_exe != NULL)
                 stringlist_iset_copy( token_list , iarg , path_exe);
               else
                 config_error_add( error_list , util_alloc_sprintf("Could not locate executable:%s ", value));
 
-              free(relocated);
               util_safe_free(path_exe);
             } else {
               if (!util_is_executable( value ))
