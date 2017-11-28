@@ -210,6 +210,7 @@ class JobManager(object):
         os.umask(int(umask, 8))
         if "run_id" in jobs_data:
             self.simulation_id = _jsonGet(jobs_data, "run_id")
+            os.environ["ERT_RUN_ID"] = self.simulation_id
         if "ert_pid" in jobs_data:
             self.ert_pid = _jsonGet(jobs_data, "ert_pid")
         if "global_environment" in jobs_data:
