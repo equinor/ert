@@ -177,7 +177,7 @@ class JobManager(object):
         self.update_path()
         self.information = logged_fields
 
-        
+
     def set_environment(self):
          if self.global_environment:
            data = self.global_environment
@@ -192,7 +192,7 @@ class JobManager(object):
                   os.environ[key] = data[key] + ':' + os.environ[key]
                else:
                   os.environ[key] = data[key]
-             
+
 
     def data_root(self):
         return self._data_root
