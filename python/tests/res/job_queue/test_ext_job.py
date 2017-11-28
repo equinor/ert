@@ -6,6 +6,8 @@ from res.job_queue.ext_job import ExtJob
 
 def create_valid_config( config_file ):
     with open(config_file , "w") as f:
+        f.write("STDOUT null\n")
+        f.write("STDERR null\n")
         f.write("EXECUTABLE script.sh\n")
 
     with open("script.sh" , "w") as f:
@@ -43,6 +45,8 @@ class ExtJobTest(ExtendedTestCase):
             create_valid_config("CONFIG")
             job = ExtJob("CONFIG" , True)
             self.assertEqual( job.name() , "CONFIG")
+            self.assertEqual( job.get_stdout_file(), None)
+            self.assertEqual( job.get_stderr_file(), None)
 
             self.assertEqual( job.get_executable() , os.path.join( os.getcwd() , "script.sh"))
             self.assertTrue( os.access( job.get_executable() , os.X_OK ))

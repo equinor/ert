@@ -232,10 +232,12 @@ class JobManager(object):
         for index, job in enumerate(self.job_list):
             self._job_map[job["name"]] = job
             if "stderr" in job:
-                job["stderr"] = "%s.%d" % (job["stderr"], index)
+                if job["stderr"]:
+                   job["stderr"] = "%s.%d" % (job["stderr"], index)
 
             if "stdout" in job:
-                job["stdout"] = "%s.%d" % (job["stdout"], index)
+                if job["stdout"]:
+                   job["stdout"] = "%s.%d" % (job["stdout"], index)
 
     def __contains__(self, key):
         return key in self._job_map

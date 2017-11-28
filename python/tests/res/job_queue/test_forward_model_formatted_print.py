@@ -191,6 +191,21 @@ def load_configs(config_file):
 
     return jobs
 
+
+def create_stdout_file(config):
+    if config["stdout"]:
+        return config["stdout"]
+    else:
+        return (config["name"] + ".stdout")
+
+
+def create_stderr_file(config):
+    if config["stderr"]:
+        return config["stderr"]
+    else:
+        return (config["name"] + ".stderr")
+
+
 class ForwardModelFormattedPrintTest(ExtendedTestCase):
 
     JOBS_JSON_FILE = "jobs.json"
@@ -230,11 +245,11 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
                 )
         self.assertEqual(
                 ext_job.get_stdout_file(),
-                ext_job_config["stdout"]
+                create_stdout_file(ext_job_config)
                 )
         self.assertEqual(
                 ext_job.get_stderr_file(),
-                ext_job_config["stderr"]
+                create_stderr_file(ext_job_config)
                 )
         self.assertEqual(
                 ext_job.get_stdin_file(),
@@ -331,7 +346,12 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
             job["name"] = default_name_if_none(job["name"])
 
             for key in json_keywords:
-                self.assertEqual(job[key], loaded_job[key])
+                if (key == "stdout"):
+                  self.assertEqual(create_stdout_file(job), loaded_job[key])
+                elif (key == "stderr"):
+                  self.assertEqual(create_stderr_file(job), loaded_job[key])
+                else:
+                  self.assertEqual(job[key], loaded_job[key])
 
             job["argList"] = arg_list_back_up
             job["name"] = name_back_up

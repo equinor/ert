@@ -78,9 +78,15 @@
       COPY_FILE(SRC_FILE = file2 , TARGET_FILE = /tmp/file2)
 
 */
+/* 
+  More on STDOUT/STDERR
+  ---------------------
+  If STDOUT/STDERR is is not defined, output is directed to:
+  JOB_NAME.stdout.x or JOB_NAME.stderr.x, respectively
 
-
-
+  STDOUT null   directs output to screen
+  STDERR null   directs error messages to screen
+*/
 /*
 
 
@@ -97,6 +103,10 @@ jobList = [
 
 
 #define EXT_JOB_TYPE_ID 763012
+
+#define EXT_JOB_STDOUT        "stdout"
+#define EXT_JOB_STDERR        "stderr"
+#define EXT_JOB_NO_STD_FILE   "null"    //Setting STDOUT null or STDERR null in forward model directs output to screen
 
 
 struct ext_job_struct {
@@ -513,7 +523,8 @@ const char * ext_job_get_stdin_file(const ext_job_type * ext_job) {
 }
 
 void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
-  ext_job->stdout_file = util_realloc_string_copy(ext_job->stdout_file , stdout_file);
+  if (!util_string_equal(stdout_file, EXT_JOB_NO_STD_FILE))
+    ext_job->stdout_file = util_realloc_string_copy(ext_job->stdout_file , stdout_file);
 }
 
 const char * ext_job_get_stdout_file(const ext_job_type * ext_job) {
@@ -521,7 +532,8 @@ const char * ext_job_get_stdout_file(const ext_job_type * ext_job) {
 }
 
 void ext_job_set_stderr_file(ext_job_type * ext_job, const char * stderr_file) {
-  ext_job->stderr_file = util_realloc_string_copy(ext_job->stderr_file , stderr_file);
+  if (strcmp(stderr_file, EXT_JOB_NO_STD_FILE) != 0)
+    ext_job->stderr_file = util_realloc_string_copy(ext_job->stderr_file , stderr_file);
 }
 
 const char * ext_job_get_stderr_file(const ext_job_type * ext_job) {
@@ -696,26 +708,6 @@ static void __fprintf_python_argList(FILE * stream,
   fprintf(stream, "%s", suffix);
 }
 
-void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
-  const char * null_value = "None";
-  fprintf(stream," {");
-  {
-    __fprintf_python_string(  stream, "",   "name",                ext_job->name,                ",\n", ext_job->private_args, NULL,        null_value);
-    __fprintf_python_string(  stream, "  ", "executable",          ext_job->executable,          ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_string(  stream, "  ", "target_file",         ext_job->target_file,         ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_string(  stream, "  ", "error_file",          ext_job->error_file,          ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_string(  stream, "  ", "start_file",          ext_job->start_file,          ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_string(  stream, "  ", "stdout",              ext_job->stdout_file,         ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_string(  stream, "  ", "stderr",              ext_job->stderr_file,         ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_string(  stream, "  ", "stdin",               ext_job->stdin_file,          ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_argList( stream, "  ",                        ext_job,                      ",\n",                        global_args            );
-    __fprintf_python_hash(    stream, "  ", "environment",         ext_job->environment,         ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_string(  stream, "  ", "license_path",        ext_job->license_path,        ",\n", ext_job->private_args, global_args, null_value);
-    __fprintf_python_int(     stream, "  ", "max_running_minutes", ext_job->max_running_minutes, ",\n",                                     null_value);
-    __fprintf_python_int(     stream, "  ", "max_running",         ext_job->max_running,         ",\n",                                     null_value);
-  }
-  fprintf(stream,"}");
-}
 
 void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
   const char * null_value = "null";
@@ -817,10 +809,6 @@ void ext_job_fprintf_config(const ext_job_type * ext_job , const char * fmt , FI
 }
 
 
-
-
-
-
 ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_root_path , bool private_job , const char * config_file, bool search_path) {
   {
     mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;  /* u+rw  g+rw  o+r */
@@ -856,8 +844,12 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
 
 
         if (config_content_has_item(content , "STDIN"))                 ext_job_set_stdin_file(ext_job       , config_content_iget(content  , "STDIN" , 0,0));
-        if (config_content_has_item(content , "STDOUT"))                ext_job_set_stdout_file(ext_job      , config_content_iget(content  , "STDOUT" , 0,0));
+        if (config_content_has_item(content , "STDOUT"))                ext_job_set_stdout_file(ext_job , config_content_iget(content  , "STDOUT" , 0,0));
+           else                                                         ext_job->stdout_file = util_alloc_filename( NULL, ext_job->name, EXT_JOB_STDOUT);
+
         if (config_content_has_item(content , "STDERR"))                ext_job_set_stderr_file(ext_job      , config_content_iget(content  , "STDERR" , 0,0));
+           else                                                         ext_job->stderr_file = util_alloc_filename( NULL, ext_job->name, EXT_JOB_STDERR);
+
         if (config_content_has_item(content , "ERROR_FILE"))            ext_job_set_error_file(ext_job       , config_content_iget(content  , "ERROR_FILE" , 0,0));
         if (config_content_has_item(content , "TARGET_FILE"))           ext_job_set_target_file(ext_job      , config_content_iget(content  , "TARGET_FILE" , 0,0));
         if (config_content_has_item(content , "START_FILE"))            ext_job_set_start_file(ext_job       , config_content_iget(content  , "START_FILE" , 0,0));
