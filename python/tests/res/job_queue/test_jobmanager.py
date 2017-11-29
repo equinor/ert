@@ -75,6 +75,9 @@ class JobManagerTest(TestCase):
         if "DATA_ROOT" in os.environ:
             del os.environ["DATA_ROOT"]
 
+        if "ERT_RUN_ID" in os.environ:
+            del os.environ["ERT_RUN_ID"]
+
     def assert_clean_slate(self):
         self.assertFalse(os.path.isfile("jobs.py"))
         self.assertFalse(os.path.isfile("jobs.json"))
