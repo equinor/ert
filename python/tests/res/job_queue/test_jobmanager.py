@@ -13,6 +13,7 @@ from res.job_queue import JobManager
 JSON_STRING = """
 {
   "DATA_ROOT" : "/path/to/data",
+  "run_id"    : "ERT_RUN_ID",
   "umask" : "0000",
   "jobList" : [ {"name" : "PERLIN",
   "executable" : "perlin.py",
@@ -361,6 +362,7 @@ class JobManagerTest(TestCase):
             self.assertEquals("PERLIN", jobm[0]["name"])
             self.assertEqual( "/path/to/data" , jobm.data_root( ))
             self.assertEqual( "/path/to/data" , os.environ["DATA_ROOT"])
+            self.assertEqual( "ERT_RUN_ID", os.environ["ERT_RUN_ID"])
 
     def test_data_from_forward_model_json(self):
         with TestAreaContext("json_from_forward_model_NO_DATA_ROOT"):
@@ -370,20 +372,8 @@ class JobManagerTest(TestCase):
             jobm = JobManager()
             self.assertIsNone( jobm.data_root( ))
             self.assertNotIn( "DATA_ROOT" , os.environ )
+            self.assertNotIn( "ERT_RUN_ID", os.environ )
 
-
-    def test_blacklist(self):
-        with TestAreaContext("file_server"):
-            with open("jobs.json", "w") as f:
-                f.write(JSON_STRING)
-
-            jobm = JobManager()
-            #  TODO FILE_SERVER_BLACKLIST is moved to job_dispatch
-            # jobm.file_server = JobManager.FILE_SERVER_BLACKLIST[0]
-            # jobm.checkFileServerBlackList()
-            # self.assertTrue(os.path.isfile(""WARNING-ILLEGAL-FILESERVER.txt"))
-
-            # TODO REMOVED test_load FROM jobmanager test!  Should be in ert-statoil
 
 
     def test_get_env(self):
@@ -418,5 +408,3 @@ class JobManagerTest(TestCase):
             self.assertEqual(exit_status, 0)
             exit_status, msg = jobm.runJob(jobm[1])
             self.assertEqual(exit_status, 0)
-
-
