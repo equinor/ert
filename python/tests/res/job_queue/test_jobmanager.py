@@ -375,19 +375,6 @@ class JobManagerTest(TestCase):
             self.assertNotIn( "ERT_RUN_ID", os.environ )
 
 
-    def test_blacklist(self):
-        with TestAreaContext("file_server"):
-            with open("jobs.json", "w") as f:
-                f.write(JSON_STRING)
-
-            jobm = JobManager()
-            #  TODO FILE_SERVER_BLACKLIST is moved to job_dispatch
-            # jobm.file_server = JobManager.FILE_SERVER_BLACKLIST[0]
-            # jobm.checkFileServerBlackList()
-            # self.assertTrue(os.path.isfile(""WARNING-ILLEGAL-FILESERVER.txt"))
-
-            # TODO REMOVED test_load FROM jobmanager test!  Should be in ert-statoil
-
 
     def test_get_env(self):
         with TestAreaContext("job_manager_get_env"):
