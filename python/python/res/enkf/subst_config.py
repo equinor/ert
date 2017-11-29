@@ -37,4 +37,4 @@ class SubstConfig(BaseCClass):
 
     @property
     def subst_list(self):
-        return self._get_subst_list()
+        return self._get_subst_list().setParent(self)

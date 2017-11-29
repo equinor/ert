@@ -1358,6 +1358,9 @@ void * enkf_main_icreate_run_path( enkf_main_type * enkf_main, run_arg_type * ru
 
   enkf_state_init_eclipse( enkf_main->res_config,
                            run_arg );
+
+  runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
+  runpath_list_fprintf( runpath_list );
   return NULL;
 }
 
@@ -1377,21 +1380,7 @@ static void * enkf_main_create_run_path__( enkf_main_type * enkf_main,
 
 void enkf_main_create_run_path(enkf_main_type * enkf_main , const ert_run_context_type * run_context) {
   enkf_main_init_run(enkf_main, run_context);
-
   enkf_main_create_run_path__( enkf_main , run_context );
-
-  /*
-    The runpath_list is written to disk here, when all the simulation
-    folders have been created and filled with content. The
-    runpath_list instance is owned and managed by the hook manager;
-    could say that the responsability for writing that data should be
-    with the hook_manager?
-  */
-
-  {
-    runpath_list_type * runpath_list = enkf_main_get_runpath_list(enkf_main);
-    runpath_list_fprintf( runpath_list );
-  }
 }
 
 

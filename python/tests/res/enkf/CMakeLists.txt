@@ -46,6 +46,7 @@ set(TEST_SOURCES
     test_res_config.py
     test_log_config.py
     test_run_context.py
+    test_runpath_list_dump.py
     test_data_kw_define.py
     test_programmatic_res_config.py
 )
@@ -81,6 +82,7 @@ addPythonTest(tests.res.enkf.test_field_config.FieldConfigTest)
 addPythonTest(tests.res.enkf.test_queue_config.QueueConfigTest)
 addPythonTest(tests.res.enkf.test_log_config.LogConfigTest)
 addPythonTest(tests.res.enkf.test_run_context.ErtRunContextTest)
+addPythonTest(tests.res.enkf.test_runpath_list_dump.RunpathListDumpTest)
 addPythonTest(tests.res.enkf.test_enkf_runpath.EnKFRunpathTest)
 addPythonTest(tests.res.enkf.test_programmatic_res_config.ProgrammaticResConfigTest)
 addPythonTest(tests.res.enkf.test_enkf.EnKFTest)

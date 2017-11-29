@@ -421,7 +421,7 @@ class ResConfig(BaseCClass):
 
     @property
     def subst_config(self):
-        return self._subst_config( )
+        return self._subst_config().setParent(self)
 
     @property
     def model_config(self):
