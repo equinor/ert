@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2012  Statoil ASA, Norway. 
-    
-   The file 'data_ranking.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2012  Statoil ASA, Norway.
+
+   The file 'data_ranking.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@
 
 struct data_ranking_struct {
   UTIL_TYPE_ID_DECLARATION;
-  int                  ens_size;   
+  int                  ens_size;
   double_vector_type * data_ensemble;
   perm_vector_type   * sort_permutation;
   bool_vector_type   * valid;
@@ -69,18 +69,18 @@ void data_ranking_free( data_ranking_type * ranking ) {
 
 
 
-static void data_ranking_init(data_ranking_type * ranking , 
-                              enkf_fs_type * fs , 
-                              const enkf_config_node_type * config_node, 
-                              const char * key_index , 
-                              int step) { 
+static void data_ranking_init(data_ranking_type * ranking ,
+                              enkf_fs_type * fs ,
+                              const enkf_config_node_type * config_node,
+                              const char * key_index ,
+                              int step) {
 
   enkf_node_type * enkf_node = enkf_node_alloc( config_node );
   int iens;
   for (iens = 0; iens < ranking->ens_size; iens++) {
 
     double value;
-    node_id_type node_id = {.report_step = step , 
+    node_id_type node_id = {.report_step = step ,
                             .iens = iens };
 
     if (enkf_node_user_get( enkf_node , fs , key_index , node_id , &value)) {
@@ -89,11 +89,11 @@ static void data_ranking_init(data_ranking_type * ranking ,
     }
   }
 
-  if (ranking->sort_increasing) 
+  if (ranking->sort_increasing)
     ranking->sort_permutation = double_vector_alloc_sort_perm( ranking->data_ensemble );
-  else 
+  else
      ranking->sort_permutation = double_vector_alloc_rsort_perm( ranking->data_ensemble );
-  
+
   enkf_node_free( enkf_node );
 }
 
@@ -134,7 +134,7 @@ const perm_vector_type * data_ranking_get_permutation( const data_ranking_type *
 void data_ranking_display( const data_ranking_type * data_ranking , FILE * stream) {
   const int ens_size                    = data_ranking->ens_size;
   const perm_vector_type * permutations = data_ranking->sort_permutation;
-  
+
   {
     int i;
     fprintf(stream,"\n\n");
