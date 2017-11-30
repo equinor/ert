@@ -226,7 +226,6 @@ ext_job_type * ext_job_alloc(const char * name , const char * license_root_path 
 
 
 
-
 ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   ext_job_type * new_job  = ext_job_alloc__( src_job->name , src_job->license_root_path , true /* All copies are by default private jobs. */);
 
@@ -244,6 +243,10 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
 
   new_job->max_running_minutes   = src_job->max_running_minutes;
   new_job->max_running           = src_job->max_running;
+  new_job->min_arg               = src_job->min_arg;
+  new_job->max_arg               = src_job->max_arg;
+  new_job->arg_types             = int_vector_alloc_copy(src_job->arg_types);
+
   new_job->private_args          = subst_list_alloc_deep_copy( src_job->private_args );
 
   /* Copying over all the keys in the environment hash table */
@@ -301,6 +304,8 @@ void ext_job_free(ext_job_type * ext_job) {
   stringlist_free(ext_job->argv);
   stringlist_free(ext_job->deprecated_argv);
   subst_list_free( ext_job->private_args );
+
+  int_vector_free(ext_job->arg_types);
   free(ext_job);
 }
 
@@ -743,6 +748,40 @@ static void __fprintf_python_argList(FILE * stream,
 }
 
 
+static void __fprintf_python_arg_types(FILE * stream,
+                                       const char * prefix,
+                                       const char * key,
+                                       const ext_job_type * ext_job,
+                                       const char * suffix,
+                                       const char * null_value) {
+  fprintf(stream, "%s", prefix);
+  if (ext_job->arg_types) {
+    fprintf(stream, "\"%s\" : [", key);
+    int i;
+    for (i = 0; i < ext_job->max_arg; i++) {
+
+      char * arg_type;
+      int type = int_vector_iget(ext_job->arg_types, i);
+      switch(type) {
+        case CONFIG_INT:    arg_type = JOB_INT_TYPE; break;
+        case CONFIG_FLOAT:  arg_type = JOB_FLOAT_TYPE; break;
+        case CONFIG_STRING: arg_type = JOB_STRING_TYPE; break;
+        case CONFIG_BOOL:   arg_type = JOB_BOOL_TYPE; break;
+        default: util_abort("ERROR in %s", __func__);
+      }
+
+      fprintf(stream, "\"%s\"", arg_type);      
+      if ((i + 1) < ext_job->max_arg)
+        fprintf(stream, ", ");
+    }    
+    fprintf(stream, "]");
+  }
+  else
+    fprintf(stream , "\"%s\" : %s" , key, null_value);
+  fprintf(stream, "%s", suffix);
+}
+                                       
+
 void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
   const char * null_value = "null";
   fprintf(stream," {");
@@ -759,7 +798,13 @@ void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const sub
     __fprintf_python_hash(    stream, "  ", "environment",         ext_job->environment,         ",\n", ext_job->private_args, global_args, null_value);
     __fprintf_python_string(  stream, "  ", "license_path",        ext_job->license_path,        ",\n", ext_job->private_args, global_args, null_value);
     __fprintf_python_int(     stream, "  ", "max_running_minutes", ext_job->max_running_minutes, ",\n",                                     null_value);
-    __fprintf_python_int(     stream, "  ", "max_running",         ext_job->max_running,         "\n",                                     null_value);
+    __fprintf_python_int(     stream, "  ", "max_running",         ext_job->max_running,         ",\n",                                     null_value);
+    __fprintf_python_int(     stream, "  ", "min_arg",             ext_job->min_arg,             ",\n",                                     null_value);
+
+    __fprintf_python_arg_types( stream, "  ", "arg_types",           ext_job,                      ",\n",                                     null_value);
+
+    __fprintf_python_int(     stream, "  ", "max_arg",             ext_job->max_arg,             "\n",                                      null_value);
+    
   }
   fprintf(stream,"}");
 }

@@ -63,7 +63,7 @@ class ExtJobTest(ExtendedTestCase):
             self.assertEqual( job.get_executable() , os.path.join( os.getcwd() , "script.sh"))
             self.assertTrue( os.access( job.get_executable() , os.X_OK ))
 
-            self.assertEqual( job.minimumArgumentCount(), -1)
+            self.assertEqual( job.min_arg, -1)
 
             job = ExtJob("CONFIG" , True , name = "Job")
             self.assertEqual( job.name() , "Job")
@@ -73,9 +73,9 @@ class ExtJobTest(ExtendedTestCase):
         with TestAreaContext("python/job_queue/forward_model1a"):
             create_upgraded_valid_config("CONFIG")
             job = ExtJob("CONFIG" , True)
-            self.assertEqual( job.minimumArgumentCount(), 2 )
-            self.assertEqual( job.maximumArgumentCount(), 4 )
-            argTypes = job.argumentTypes()
+            self.assertEqual( job.min_arg, 2 )
+            self.assertEqual( job.max_arg, 4 )
+            argTypes = job.get_argument_types()
             self.assertEqual( argTypes , [int, float , str, bool] )
 
 
