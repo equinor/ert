@@ -33,6 +33,7 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
                   "-DBUILD_TESTS=ON",
                   "-DBUILD_PYTHON=ON",
                   "-DERT_BUILD_CXX=ON",
+                  "-DINSTALL_CWRAP=OFF",
                   "-DBUILD_APPLICATIONS=ON",
                   "-DCMAKE_INSTALL_PREFIX=%s" % install_dir,
                   "-DINSTALL_ERT_LEGACY=ON",
