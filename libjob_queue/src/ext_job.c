@@ -34,7 +34,9 @@
 #include <ert/config/config_content.h>
 #include <ert/config/config_error.h>
 
+#include <ert/job_queue/job_kw_definitions.h>
 #include <ert/job_queue/ext_job.h>
+
 
 /*
   About arguments
@@ -104,9 +106,14 @@ jobList = [
 
 #define EXT_JOB_TYPE_ID 763012
 
+
 #define EXT_JOB_STDOUT        "stdout"
 #define EXT_JOB_STDERR        "stderr"
 #define EXT_JOB_NO_STD_FILE   "null"    //Setting STDOUT null or STDERR null in forward model directs output to screen
+
+
+
+
 
 
 struct ext_job_struct {
@@ -124,11 +131,17 @@ struct ext_job_struct {
   char            * config_file;
   int               max_running;           /* 0 means unlimited. */
   int               max_running_minutes;   /* The maximum number of minutes this job is allowed to run - 0: unlimited. */
+
+  int               min_arg;
+  int               max_arg;
+  int_vector_type * arg_types;
+  stringlist_type * argv;                  /* Currently not in use, but will replace deprected_argv */
+
   subst_list_type * private_args;          /* A substitution list of input arguments which is performed before the external substitutions -
                                               these are the arguments supplied as key=value pairs in the forward model call. */
   char            * private_args_string;
   char            * argv_string;
-  stringlist_type * argv;                  /* This should *NOT* start with the executable */
+  stringlist_type * deprecated_argv;       /* This should *NOT* start with the executable */
   hash_type       * environment;
   hash_type       * default_mapping;
   char            * help_text;
@@ -161,13 +174,17 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->stderr_file         = NULL;
   ext_job->environment         = hash_alloc();
   ext_job->default_mapping     = hash_alloc();
-  ext_job->argv                = stringlist_alloc_new();
+  ext_job->argv                = stringlist_alloc_new();  //currently not in use
+  ext_job->deprecated_argv     = stringlist_alloc_new();
   ext_job->argv_string         = NULL;
   ext_job->__valid             = true;
   ext_job->license_path        = NULL;
   ext_job->config_file         = NULL;
   ext_job->max_running         = 0;                  /* 0 means unlimited. */
   ext_job->max_running_minutes = 0;                  /* 0 means unlimited. */
+  ext_job->min_arg             = -1;
+  ext_job->max_arg             = -1;
+  ext_job->arg_types           = int_vector_alloc( 0 , CONFIG_STRING );
   ext_job->private_job         = private_job;        /* If private_job == true the job is user editable. */
   ext_job->help_text           = NULL;
   ext_job->private_args_string = NULL;
@@ -256,7 +273,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
 
 
 
-  stringlist_deep_copy( new_job->argv , src_job->argv );
+  stringlist_deep_copy( new_job->deprecated_argv , src_job->deprecated_argv );
 
   return new_job;
 }
@@ -282,6 +299,7 @@ void ext_job_free(ext_job_type * ext_job) {
   hash_free( ext_job->default_mapping);
   hash_free( ext_job->environment );
   stringlist_free(ext_job->argv);
+  stringlist_free(ext_job->deprecated_argv);
   subst_list_free( ext_job->private_args );
   free(ext_job);
 }
@@ -558,6 +576,22 @@ int ext_job_get_max_running_minutes( const ext_job_type * ext_job ) {
   return ext_job->max_running_minutes;
 }
 
+static void ext_job_set_min_arg(ext_job_type * ext_job, int min_arg) {
+  ext_job->min_arg = min_arg;  
+}
+
+static void ext_job_set_max_arg(ext_job_type * ext_job, int max_arg) {
+  ext_job->max_arg = max_arg;
+}
+
+int ext_job_get_min_arg(const ext_job_type * ext_job) {
+  return ext_job->min_arg;
+}
+
+int ext_job_get_max_arg(const ext_job_type * ext_job) {
+  return ext_job->max_arg;
+}
+
 /*****************************************************************/
 
 void ext_job_set_private_arg(ext_job_type * ext_job, const char * key , const char * value) {
@@ -691,14 +725,14 @@ static void __fprintf_python_argList(FILE * stream,
   fprintf(stream, "%s", prefix);
   __fprintf_init_python_list( stream , "argList" );
   {
-    for (int index = 0; index < stringlist_get_size( ext_job->argv ); index++) {
-      const char * src_string = stringlist_iget( ext_job->argv , index );
+    for (int index = 0; index < stringlist_get_size( ext_job->deprecated_argv ); index++) {
+      const char * src_string = stringlist_iget( ext_job->deprecated_argv , index );
       char * filtered_string = __alloc_filtered_string(src_string , ext_job->private_args , global_args );
       if (hash_has_key( ext_job->default_mapping , filtered_string ))
         filtered_string = util_realloc_string_copy( filtered_string , hash_get( ext_job->default_mapping , filtered_string ));
 
       fprintf(stream , "\"%s\"" , filtered_string );
-      if (index < (stringlist_get_size( ext_job->argv) - 1))
+      if (index < (stringlist_get_size( ext_job->deprecated_argv) - 1))
         fprintf(stream , "," );
 
       free( filtered_string );
@@ -767,9 +801,9 @@ void ext_job_save( const ext_job_type * ext_job ) {
   PRINT_KEY_INT( stream , "MAX_RUNNING"         , ext_job->max_running);
   PRINT_KEY_INT( stream , "MAX_RUNNING_MINUTES" , ext_job->max_running_minutes);
 
-  if (stringlist_get_size( ext_job->argv ) > 0) {
+  if (stringlist_get_size( ext_job->deprecated_argv ) > 0) {
     fprintf(stream , "%16s" , "ARGLIST");
-    stringlist_fprintf( ext_job->argv , " " , stream );
+    stringlist_fprintf( ext_job->deprecated_argv , " " , stream );
     fprintf(stream , "\n");
   }
   if (hash_get_size( ext_job->environment ) > 0) {
@@ -808,6 +842,17 @@ void ext_job_fprintf_config(const ext_job_type * ext_job , const char * fmt , FI
   fprintf(stream , fmt , ext_job->name , ext_job->config_file );
 }
 
+config_item_types ext_job_iget_argtype( const ext_job_type * ext_job, int index) {
+  return int_vector_safe_iget( ext_job->arg_types , index );
+}
+
+
+static void ext_job_iset_argtype_string( ext_job_type * ext_job , int iarg , const char * arg_type) {
+  config_item_types type = job_kw_get_type(arg_type);
+  if (type != CONFIG_INVALID)
+    int_vector_iset( ext_job->arg_types , iarg , type );
+}
+
 
 ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_root_path , bool private_job , const char * config_file, bool search_path) {
   {
@@ -825,7 +870,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , "STDIN"               , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "STDOUT"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "STDERR"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
-      item = config_add_schema_item(config , "EXECUTABLE"          , true ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type(item, 0, CONFIG_PATH);
+      item = config_add_schema_item(config , EXECUTABLE_KEY        , true ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type(item, 0, CONFIG_PATH);
       item = config_add_schema_item(config , "TARGET_FILE"         , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "ERROR_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "START_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
@@ -833,6 +878,13 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , "DEFAULT"             , false ); config_schema_item_set_argc_minmax(item  , 2 , 2 );
       item = config_add_schema_item(config , "ARGLIST"             , false ); config_schema_item_set_argc_minmax(item  , 1 , CONFIG_DEFAULT_ARG_MAX );
       item = config_add_schema_item(config , "MAX_RUNNING_MINUTES" , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
+      item = config_add_schema_item(config , MIN_ARG_KEY           , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
+      item = config_add_schema_item(config , MAX_ARG_KEY           , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
+      item = config_add_schema_item(config , ARG_TYPE_KEY          , false ); config_schema_item_set_argc_minmax( item , 2 , 2 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
+
+      config_schema_item_set_indexed_selection_set( item , 1 , 4 , (const char *[4]) {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE});
+                                                                              
+      
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
 
@@ -855,11 +907,19 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
         if (config_content_has_item(content , "START_FILE"))            ext_job_set_start_file(ext_job       , config_content_iget(content  , "START_FILE" , 0,0));
         if (config_content_has_item(content , "MAX_RUNNING"))           ext_job_set_max_running(ext_job      , config_content_iget_as_int(content  , "MAX_RUNNING" , 0,0));
         if (config_content_has_item(content , "MAX_RUNNING_MINUTES"))   ext_job_set_max_time(ext_job         , config_content_iget_as_int(content  , "MAX_RUNNING_MINUTES" , 0,0));
+        if (config_content_has_item(content , MIN_ARG_KEY))             ext_job_set_min_arg(ext_job          , config_content_iget_as_int(content  , MIN_ARG_KEY , 0,0));
+        if (config_content_has_item(content , MAX_ARG_KEY))             ext_job_set_max_arg(ext_job          , config_content_iget_as_int(content  , MAX_ARG_KEY , 0,0));
 
+        for (int i = 0; i < config_content_get_occurences( content , ARG_TYPE_KEY); i++) {
+          int iarg = config_content_iget_as_int( content , ARG_TYPE_KEY , i , 0 );
+          const char * arg_type = config_content_iget( content , ARG_TYPE_KEY , i , 1 );
+
+          ext_job_iset_argtype_string( ext_job , iarg , arg_type );
+        }
 
         {
-          const char * executable     = config_content_get_value_as_executable(content  , "EXECUTABLE");
-          const char * executable_raw = config_content_iget(content  , "EXECUTABLE" , 0,0);
+          const char * executable     = config_content_get_value_as_executable(content  , EXECUTABLE_KEY);
+          const char * executable_raw = config_content_iget(content  , EXECUTABLE_KEY , 0,0);
           ext_job_set_executable(ext_job , executable, executable_raw, search_path);
         }
 
@@ -869,7 +929,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
             config_content_node_type * arg_node = config_content_get_value_node( content , "ARGLIST");
             int i;
             for (i=0; i < config_content_node_get_size( arg_node ); i++)
-              stringlist_append_copy( ext_job->argv , config_content_node_iget( arg_node , i ));
+              stringlist_append_copy( ext_job->deprecated_argv , config_content_node_iget( arg_node , i ));
           }
         }
 
@@ -933,7 +993,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
 
 
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
-  return ext_job->argv;
+  return ext_job->deprecated_argv;
 }
 
 

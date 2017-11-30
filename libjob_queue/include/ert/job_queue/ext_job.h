@@ -27,6 +27,8 @@ extern "C" {
 #include <ert/util/stringlist.h>
 #include <ert/res_util/subst_list.h>
 
+#include <ert/config/config_content.h>
+
 typedef struct ext_job_struct ext_job_type;
 
 
@@ -73,6 +75,11 @@ void                    ext_job_set_stdout_file(ext_job_type * ext_job, const ch
 const char *            ext_job_get_stdout_file(const ext_job_type * ext_job);
 void                    ext_job_set_stderr_file(ext_job_type * ext_job, const char * stderr_file);
 const char *            ext_job_get_stderr_file(const ext_job_type * ext_job);
+
+int                     ext_job_get_min_arg(const ext_job_type * ext_job);
+int                     ext_job_get_max_arg(const ext_job_type * ext_job);
+config_item_types       ext_job_iget_argtype( const ext_job_type * ext_job, int index);
+
 void                    ext_job_set_max_running( ext_job_type * ext_job , int max_running);
 int                     ext_job_get_max_running( const ext_job_type * ext_job );
 void                    ext_job_set_max_running_minutes( ext_job_type * ext_job , int max_running_minutes);

@@ -18,6 +18,7 @@ import os.path
 from cwrap import BaseCClass
 from res.job_queue import QueuePrototype
 from ecl.util import StringList, Hash
+from res.config import ContentTypeEnum
 
 class ExtJob(BaseCClass):
     TYPE_NAME                   = "ext_job"
@@ -47,6 +48,11 @@ class ExtJob(BaseCClass):
     _set_max_running            = QueuePrototype("void ext_job_set_max_running(ext_job, int)")
     _get_max_running_minutes    = QueuePrototype("int ext_job_get_max_running_minutes(ext_job)")
     _set_max_running_minutes    = QueuePrototype("void ext_job_set_max_running_minutes(ext_job, int)")
+
+    _min_arg                    = QueuePrototype("int ext_job_get_min_arg(ext_job)")
+    _max_arg                    = QueuePrototype("int ext_job_get_max_arg(ext_job)")
+    _arg_type                   = QueuePrototype("config_content_type_enum ext_job_iget_argtype(ext_job, int)")
+
     _get_environment            = QueuePrototype("string_hash_ref ext_job_get_environment(ext_job)")
     _set_environment            = QueuePrototype("void ext_job_add_environment(ext_job, char*, char*)")
     _get_license_path           = QueuePrototype("char* ext_job_get_license_path(ext_job)")
@@ -136,6 +142,31 @@ class ExtJob(BaseCClass):
 
     def set_max_running_minutes(self, min_value):
         self._set_max_running_minutes(min_value)
+
+    def minimumArgumentCount(self):
+        return self._min_arg()
+
+    def maximumArgumentCount(self):
+        return self._max_arg()
+
+    def argumentTypes(self):
+        """ @rtype: list of type """
+
+        result = []
+        for index in range(self.maximumArgumentCount()):
+            t = self._arg_type(index)
+            if t == ContentTypeEnum.CONFIG_BOOL:
+                result.append(bool)
+            elif t == ContentTypeEnum.CONFIG_FLOAT:
+                result.append(float)
+            elif t == ContentTypeEnum.CONFIG_INT:
+                result.append(int)
+            elif t == ContentTypeEnum.CONFIG_STRING:
+                result.append(str)
+            else:
+                result.append(None)
+
+        return result
 
     def get_environment(self):
         return self._get_environment( )

@@ -28,6 +28,7 @@ add_library(job_queue src/ext_job.c
                       src/workflow_job.c
                       src/workflow_joblist.c
                       src/environment_varlist.c
+                      src/job_kw_definitions.c
                       ${lsb}
 )
 

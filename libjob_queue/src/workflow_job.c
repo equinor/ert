@@ -29,27 +29,19 @@
 
 #include <ert/config/config_parser.h>
 
+#include <ert/job_queue/job_kw_definitions.h>
 #include <ert/job_queue/workflow_job.h>
 
 
 /* The default values are interepreted as no limit. */
 #define DEFAULT_INTERNAL false
 
-
-#define MIN_ARG_KEY    "MIN_ARG"
-#define MAX_ARG_KEY    "MAX_ARG"
-#define ARG_TYPE_KEY   "ARG_TYPE"
 #define INTERNAL_KEY   "INTERNAL"
 #define MODULE_KEY     "MODULE"
 #define FUNCTION_KEY   "FUNCTION"
 #define SCRIPT_KEY     "SCRIPT"
-#define EXECUTABLE_KEY "EXECUTABLE"
 
 #define NULL_STRING         "NULL"
-#define WORKFLOW_JOB_STRING_TYPE "STRING"
-#define WORKFLOW_JOB_INT_TYPE    "INT"
-#define WORKFLOW_JOB_FLOAT_TYPE  "FLOAT"
-#define WORKFLOW_JOB_BOOL_TYPE    "BOOL"
 
 #define WORKFLOW_JOB_TYPE_ID 614441
 
@@ -96,7 +88,7 @@ config_parser_type * workflow_job_alloc_config() {
     item = config_add_schema_item( config , ARG_TYPE_KEY , false );
     config_schema_item_set_argc_minmax( item , 2 , 2 );
     config_schema_item_iset_type( item , 0 , CONFIG_INT );
-    config_schema_item_set_indexed_selection_set( item , 1 , 4 , (const char *[4]) {WORKFLOW_JOB_STRING_TYPE , WORKFLOW_JOB_INT_TYPE , WORKFLOW_JOB_FLOAT_TYPE, WORKFLOW_JOB_BOOL_TYPE});
+    config_schema_item_set_indexed_selection_set( item , 1 , 4 , (const char *[4]) {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE});
 
     /*****************************************************************/
     item = config_add_schema_item( config , EXECUTABLE_KEY , false );
@@ -235,20 +227,9 @@ config_item_types workflow_job_iget_argtype( const workflow_job_type * workflow_
 
 
 static void workflow_job_iset_argtype_string( workflow_job_type * workflow_job , int iarg , const char * arg_type) {
-  config_item_types type = CONFIG_INVALID;
-
-  if (strcmp( arg_type , WORKFLOW_JOB_STRING_TYPE) == 0)
-    type = CONFIG_STRING;
-  else if (strcmp( arg_type , WORKFLOW_JOB_INT_TYPE) == 0)
-    type = CONFIG_INT;
-  else if (strcmp( arg_type , WORKFLOW_JOB_FLOAT_TYPE) == 0)
-    type = CONFIG_FLOAT;
-  else if (strcmp( arg_type , WORKFLOW_JOB_BOOL_TYPE) == 0)
-    type = CONFIG_BOOL;
-
+  config_item_types type = job_kw_get_type(arg_type);
   if (type != CONFIG_INVALID)
     workflow_job_iset_argtype( workflow_job , iarg , type );
-
 }
 
 
