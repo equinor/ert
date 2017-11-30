@@ -21,7 +21,6 @@
 
 #include <ert/util/arg_pack.h>
 #include <ert/util/util.h>
-#include <ert/util/msg.h>
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_types.h>
@@ -139,7 +138,6 @@ static void enkf_tui_fs_copy_ensemble__(
   int              report_step_to,
   bool             only_parameters)
 {
-  msg_type       * msg          = msg_alloc("Copying: " , false);
   ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
   int ens_size                  = enkf_main_get_ensemble_size(enkf_main);
   char * ranking_key;
@@ -178,11 +176,9 @@ static void enkf_tui_fs_copy_ensemble__(
 
     {
       int num_nodes = stringlist_get_size(nodes);
-      msg_show(msg);
       for(int i = 0; i < num_nodes; i++) {
         const char * key = stringlist_iget(nodes, i);
         enkf_config_node_type * config_node = ensemble_config_get_node(config , key);
-        msg_update(msg , key);
         enkf_node_copy_ensemble(config_node, src_fs , target_fs , report_step_from, report_step_to , ens_size , ranking_permutation);
       }
     }
@@ -190,7 +186,6 @@ static void enkf_tui_fs_copy_ensemble__(
     enkf_fs_decref( src_fs );
     enkf_fs_decref( target_fs );
 
-    msg_free(msg , true);
     stringlist_free(nodes);
   }
   free( identity_permutation_raw );
