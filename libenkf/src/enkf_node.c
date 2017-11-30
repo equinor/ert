@@ -23,7 +23,6 @@
 
 #include <ert/util/util.h>
 #include <ert/util/buffer.h>
-#include <ert/util/msg.h>
 #include <ert/util/rng.h>
 #include <ert/util/vector.h>
 #include <ert/util/path_fmt.h>

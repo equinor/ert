@@ -39,7 +39,6 @@
 #include <ert/util/path_fmt.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
-#include <ert/util/msg.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/set.h>
 #include <ert/util/node_ctype.h>

@@ -22,7 +22,6 @@
 
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
-#include <ert/util/msg.h>
 #include <ert/util/vector.h>
 #include <ert/util/type_vector_functions.h>
 

@@ -25,7 +25,6 @@
 #include <ert/util/hash.h>
 #include <ert/util/vector.h>
 #include <ert/util/double_vector.h>
-#include <ert/util/msg.h>
 #include <ert/util/buffer.h>
 
 #include <ert/enkf/enkf_obs.h>
@@ -88,7 +87,6 @@ void misfit_ensemble_initialize( misfit_ensemble_type * misfit_ensemble ,
   if (force_init || !misfit_ensemble->initialized) {
     misfit_ensemble_clear( misfit_ensemble );
 
-    msg_type * msg                 = msg_alloc("Evaluating misfit for observation: " , false);
     double ** chi2_work            = __2d_malloc( history_length + 1 , ens_size );
     bool_vector_type * iens_valid  = bool_vector_alloc( ens_size , true );
 
@@ -98,10 +96,8 @@ void misfit_ensemble_initialize( misfit_ensemble_type * misfit_ensemble ,
     misfit_ensemble->history_length = history_length;
     misfit_ensemble_set_ens_size( misfit_ensemble , ens_size );
 
-    msg_show( msg );
     while (obs_key != NULL) {
       obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-      msg_update( msg , obs_key );
 
       bool_vector_reset( iens_valid );
       bool_vector_iset( iens_valid , ens_size - 1 , true );
@@ -126,7 +122,6 @@ void misfit_ensemble_initialize( misfit_ensemble_type * misfit_ensemble ,
     }
 
     bool_vector_free( iens_valid );
-    msg_free(msg , true );
     hash_iter_free( obs_iter );
 
     __2d_free( chi2_work , misfit_ensemble->history_length + 1);
