@@ -1,18 +1,18 @@
-#  Copyright (C) 2011  Statoil ASA, Norway. 
-#   
-#  The file 'job_queue.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+#  Copyright (C) 2011  Statoil ASA, Norway.
+#
+#  The file 'job_queue.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+#  for more details.
 """
 Module implementing a queue for managing external jobs.
 
@@ -56,7 +56,7 @@ class JobQueue(BaseCClass):
     _run_jobs             = QueuePrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
     _sim_start            = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
     _iget_driver_data     = QueuePrototype("void* job_queue_iget_driver_data( job_queue , int)")
-    
+
     _num_running          = QueuePrototype("int  job_queue_get_num_running( job_queue )")
     _num_complete         = QueuePrototype("int  job_queue_get_num_complete( job_queue )")
     _num_waiting          = QueuePrototype("int  job_queue_get_num_waiting( job_queue )")
@@ -89,17 +89,17 @@ class JobQueue(BaseCClass):
     def __init__(self, driver , max_submit=1, size=0):
         """
         Short doc...
-        
+
         The @size argument is used to say how many jobs the queue will
         run, in total.
-    
+
               size = 0: That means that you do not tell the queue in
                 advance how many jobs you have. The queue will just run
                 all the jobs you add, but you have to inform the queue in
                 some way that all jobs have been submitted. To achieve
                 this you should call the submit_complete() method when all
                 jobs have been submitted.#
-    
+
               size > 0: The queue will know exactly how many jobs to run,
                 and will continue until this number of jobs have completed
                 - it is not necessary to call the submit_complete() method
@@ -117,7 +117,7 @@ class JobQueue(BaseCClass):
         self.driver = driver
         self._set_driver(driver.from_param(driver))
         self.start( blocking=False )
-            
+
 
     def kill_job(self, queue_index):
         """
@@ -125,7 +125,7 @@ class JobQueue(BaseCClass):
         """
         self._kill_job( queue_index )
 
-        
+
     def start( self, blocking=False):
         verbose = False
         self._run_jobs(self.size, verbose)
@@ -245,7 +245,7 @@ class JobQueue(BaseCClass):
 
     def igetSimStart(self, job_index):
         return self._iget_sim_start( self , job_index )
-        
+
 
     def getUserExit(self):
         # Will check if a user_exit has been initated on the job. The
@@ -276,4 +276,4 @@ class JobQueue(BaseCClass):
 
 
 
-    
+

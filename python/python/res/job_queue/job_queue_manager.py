@@ -1,18 +1,18 @@
-#  Copyright (C) 2014  Statoil ASA, Norway. 
-#   
-#  The file 'job_queue_manager.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+#  Copyright (C) 2014  Statoil ASA, Norway.
+#
+#  The file 'job_queue_manager.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+#  for more details.
 """
 Module implementing a queue for managing external jobs.
 
@@ -33,12 +33,12 @@ class JobQueueManager(BaseCClass):
     _is_running      = QueuePrototype("bool job_queue_manager_is_running( job_queue_manager )")
     _job_complete    = QueuePrototype("bool job_queue_manager_job_complete( job_queue_manager , int)")
     _job_running     = QueuePrototype("bool job_queue_manager_job_running( job_queue_manager , int)")
-    
-    # Note, even if all realizations have finished, they need not all be failed or successes. 
+
+    # Note, even if all realizations have finished, they need not all be failed or successes.
     # That is how Ert report things. They can be "killed", which is neither success nor failure.
-    _job_failed      = QueuePrototype("bool job_queue_manager_job_failed( job_queue_manager , int)") 
+    _job_failed      = QueuePrototype("bool job_queue_manager_job_failed( job_queue_manager , int)")
     _job_waiting     = QueuePrototype("bool job_queue_manager_job_waiting( job_queue_manager , int)")
-    _job_success     = QueuePrototype("bool job_queue_manager_job_success( job_queue_manager , int)") 
+    _job_success     = QueuePrototype("bool job_queue_manager_job_success( job_queue_manager , int)")
 
     # The return type of the job_queue_manager_iget_job_status should
     # really be the enum job_status_type_enum, but I just did not
@@ -73,7 +73,7 @@ class JobQueueManager(BaseCClass):
 
     def getNumFailed(self):
         return self._get_num_failed(  )
-    
+
     def isRunning(self):
         return self._is_running( )
 
@@ -101,7 +101,7 @@ class JobQueueManager(BaseCClass):
         """ @rtype: res.job_queue.job_status_type_enum.JobStatusType """
         int_status = self._job_status(job_index)
         return JobStatusType( int_status )
-        
+
 
     def __repr__(self):
         nw = self._get_num_waiting()
