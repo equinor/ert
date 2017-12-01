@@ -19,8 +19,7 @@ class BatchSimulatorTest(ExtendedTestCase):
 
     def test_create_simulator(self):
         config_file = self.createTestPath("local/batch_sim/batch_sim.ert")
-        with TestAreaContext("batch_sim", store_area = True) as ta:
-            sys.stderr.write("cwd:%s " % os.getcwd())
+        with TestAreaContext("batch_sim") as ta:
             ta.copy_parent_content( config_file )
 
             # Not valid ResConfig instance as first argument
@@ -102,6 +101,25 @@ class BatchSimulatorTest(ExtendedTestCase):
             on_off1 = res1["ON_OFF"]
             for i,x in enumerate(range(10,13)):
                 self.assertEqual(on_off1[i], x*x)
+
+
+    def test_stop_sim(self):
+        config_file = self.createTestPath("local/batch_sim/batch_sim.ert")
+        with TestAreaContext("batch_sim_stop") as ta:
+            ta.copy_parent_content( config_file )
+            res_config = ResConfig( user_config_file = os.path.basename( config_file ))
+            rsim = BatchSimulator( res_config,
+                                   {"WELL_ORDER" : ["W1", "W2", "W3"],
+                                    "WELL_ON_OFF" : ["W1","W2", "W3"]},
+                                   ["ORDER", "ON_OFF"])
+
+            # Starting a simulation which should actually run through.
+            ctx = rsim.start("case", [(2, {"WELL_ORDER" : [1, 2, 3], "WELL_ON_OFF" : [4,5,6]}),
+                                      (1, {"WELL_ORDER" : [7, 8, 9], "WELL_ON_OFF" : [10,11,12]})])
+            ctx.stop()
+            status = ctx.status
+            self.assertEqual(status.complete, 0)
+            self.assertEqual(status.running, 0)
 
 
 if __name__ == "__main__":

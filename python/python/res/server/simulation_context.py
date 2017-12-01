@@ -119,3 +119,5 @@ class SimulationContext(object):
         return self._run_context
 
 
+    def stop(self):
+        self._queue_manager.stop_queue( )
