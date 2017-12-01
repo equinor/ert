@@ -73,6 +73,7 @@ install:
     - bash miniconda.sh -b -p $HOME/miniconda
     - export CONDA_HOME="$HOME/miniconda"
     - export PATH="$CONDA_HOME/bin:$PATH"
+    - pip install cwrap
     - hash -r
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
