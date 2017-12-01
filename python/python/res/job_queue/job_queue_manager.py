@@ -25,6 +25,7 @@ class JobQueueManager(BaseCClass):
     _alloc           = QueuePrototype("void* job_queue_manager_alloc( job_queue)", bind = False)
     _free            = QueuePrototype("void job_queue_manager_free( job_queue_manager )")
     _start_queue     = QueuePrototype("void job_queue_manager_start_queue( job_queue_manager , int , bool)")
+    _stop_queue      = QueuePrototype("void job_queue_manager_stop_queue(job_queue_manager)")
     _get_num_waiting = QueuePrototype("int job_queue_manager_get_num_waiting( job_queue_manager )")
     _get_num_pending = QueuePrototype("int job_queue_manager_get_num_pending( job_queue_manager )")
     _get_num_running = QueuePrototype("int job_queue_manager_get_num_running( job_queue_manager )")
@@ -54,6 +55,9 @@ class JobQueueManager(BaseCClass):
 
     def get_job_queue(self):
         return self.queue
+
+    def stop_queue(self):
+        self._stop_queue( )
 
     def startQueue(self , total_size , verbose = False ):
         self._start_queue( total_size , verbose )
