@@ -75,7 +75,7 @@ class ExtJobTest(ExtendedTestCase):
             job = ExtJob("CONFIG" , True)
             self.assertEqual( job.min_arg, 2 )
             self.assertEqual( job.max_arg, 4 )
-            argTypes = job.get_argument_types()
+            argTypes = job.arg_types
             self.assertEqual( argTypes , [int, float , str, bool] )
 
 
