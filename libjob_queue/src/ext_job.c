@@ -761,7 +761,7 @@ static void __fprintf_python_arg_types(FILE * stream,
     for (i = 0; i < ext_job->max_arg; i++) {
 
       char * arg_type;
-      int type = int_vector_iget(ext_job->arg_types, i);
+      int type = int_vector_safe_iget(ext_job->arg_types, i);
       switch(type) {
         case CONFIG_INT:    arg_type = JOB_INT_TYPE; break;
         case CONFIG_FLOAT:  arg_type = JOB_FLOAT_TYPE; break;

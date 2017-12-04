@@ -17,7 +17,7 @@ def create_upgraded_valid_config( config_file ):
     with open(config_file , "w") as f:
         f.write("EXECUTABLE script.sh\n")
         f.write("MIN_ARG 2\n")
-        f.write("MAX_ARG 4\n")
+        f.write("MAX_ARG 5\n")
         f.write("ARG_TYPE 0 INT\n")
         f.write("ARG_TYPE 1 FLOAT\n")
         f.write("ARG_TYPE 2 STRING\n")
@@ -74,9 +74,9 @@ class ExtJobTest(ExtendedTestCase):
             create_upgraded_valid_config("CONFIG")
             job = ExtJob("CONFIG" , True)
             self.assertEqual( job.min_arg, 2 )
-            self.assertEqual( job.max_arg, 4 )
+            self.assertEqual( job.max_arg, 5 )
             argTypes = job.arg_types
-            self.assertEqual( argTypes , [int, float , str, bool] )
+            self.assertEqual( argTypes , [int, float , str, bool, str] )
 
 
         with TestAreaContext("python/job_queue/forward_model2"):
