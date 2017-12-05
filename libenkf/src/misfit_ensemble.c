@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'misfit_ensemble.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'misfit_ensemble.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -25,7 +25,6 @@
 #include <ert/util/hash.h>
 #include <ert/util/vector.h>
 #include <ert/util/double_vector.h>
-#include <ert/util/msg.h>
 #include <ert/util/buffer.h>
 
 #include <ert/enkf/enkf_obs.h>
@@ -56,7 +55,7 @@
 struct misfit_ensemble_struct {
   UTIL_TYPE_ID_DECLARATION;
   bool                  initialized;
-  int                   history_length;  
+  int                   history_length;
   vector_type         * ensemble;           /* Vector of misfit_member_type instances - one for each ensemble member. */
 };
 
@@ -88,33 +87,30 @@ void misfit_ensemble_initialize( misfit_ensemble_type * misfit_ensemble ,
   if (force_init || !misfit_ensemble->initialized) {
     misfit_ensemble_clear( misfit_ensemble );
 
-    msg_type * msg                 = msg_alloc("Evaluating misfit for observation: " , false);
     double ** chi2_work            = __2d_malloc( history_length + 1 , ens_size );
     bool_vector_type * iens_valid  = bool_vector_alloc( ens_size , true );
-    
+
     hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_obs );
     const char * obs_key      = hash_iter_get_next_key( obs_iter );
-    
+
     misfit_ensemble->history_length = history_length;
     misfit_ensemble_set_ens_size( misfit_ensemble , ens_size );
-    
-    msg_show( msg );
+
     while (obs_key != NULL) {
       obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-      msg_update( msg , obs_key );
-      
+
       bool_vector_reset( iens_valid );
       bool_vector_iset( iens_valid , ens_size - 1 , true );
-      obs_vector_ensemble_chi2( obs_vector , 
-                                fs , 
-                                iens_valid , 
-                                0 , 
-                                misfit_ensemble->history_length, 
-                                0 , 
-                                ens_size , 
+      obs_vector_ensemble_chi2( obs_vector ,
+                                fs ,
+                                iens_valid ,
+                                0 ,
+                                misfit_ensemble->history_length,
+                                0 ,
+                                ens_size ,
                                 chi2_work);
-      
-      /** 
+
+      /**
           Internalizing the results from the chi2_work table into the misfit structure.
       */
       for (int iens = 0; iens < ens_size; iens++) {
@@ -124,11 +120,10 @@ void misfit_ensemble_initialize( misfit_ensemble_type * misfit_ensemble ,
       }
       obs_key = hash_iter_get_next_key( obs_iter );
     }
-    
+
     bool_vector_free( iens_valid );
-    msg_free(msg , true );
     hash_iter_free( obs_iter );
-    
+
     __2d_free( chi2_work , misfit_ensemble->history_length + 1);
     misfit_ensemble->initialized = true;
   }
@@ -143,17 +138,17 @@ void misfit_ensemble_fwrite( const misfit_ensemble_type * misfit_ensemble , FILE
   /* Writing the nodes - one for each ensemble member */
   {
     int iens;
-    for (iens = 0; iens < ens_size; iens++) 
-      misfit_member_fwrite( vector_iget( misfit_ensemble->ensemble , iens ) , stream ); 
+    for (iens = 0; iens < ens_size; iens++)
+      misfit_member_fwrite( vector_iget( misfit_ensemble->ensemble , iens ) , stream );
   }
-  
+
 }
 
 
 
 
 /**
-   Observe that the object is NOT in a valid state when leaving this function, 
+   Observe that the object is NOT in a valid state when leaving this function,
    must finalize in either misfit_ensemble_alloc() or misfit_ensemble_fread_alloc().
 */
 
@@ -162,7 +157,7 @@ static misfit_ensemble_type * misfit_ensemble_alloc_empty() {
 
   table->initialized     = false;
   table->ensemble        = vector_alloc_new();
-  
+
   return table;
 }
 
@@ -178,13 +173,13 @@ static misfit_ensemble_type * misfit_ensemble_alloc_empty() {
 void misfit_ensemble_set_ens_size( misfit_ensemble_type * misfit_ensemble , int ens_size) {
   int iens;
   if (ens_size > vector_get_size( misfit_ensemble->ensemble )) {
-    /* The new ensemble is larger than what we have currently internalized, 
+    /* The new ensemble is larger than what we have currently internalized,
        we drop everything and add empty misfit_member instances. */
     vector_clear( misfit_ensemble->ensemble );
     for (iens = 0; iens < ens_size; iens++)
       vector_append_owned_ref( misfit_ensemble->ensemble , misfit_member_alloc( iens ) , misfit_member_free__);
-    
-  } else 
+
+  } else
     /* We shrink the vector by removing the last elements. */
     vector_shrink( misfit_ensemble->ensemble , ens_size);
 }
@@ -194,7 +189,7 @@ void misfit_ensemble_fread( misfit_ensemble_type * misfit_ensemble , FILE * stre
   misfit_ensemble_clear( misfit_ensemble );
   {
     int ens_size;
-    
+
     misfit_ensemble->history_length = util_fread_int( stream );
     ens_size                        = util_fread_int( stream );
     misfit_ensemble_set_ens_size( misfit_ensemble , ens_size );
@@ -204,7 +199,7 @@ void misfit_ensemble_fread( misfit_ensemble_type * misfit_ensemble , FILE * stre
         vector_iset_owned_ref( misfit_ensemble->ensemble , iens , node , misfit_member_free__);
       }
     }
-    
+
   }
 }
 

@@ -25,7 +25,6 @@
 #include <ert/util/vector.h>
 #include <ert/util/double_vector.h>
 #include <ert/util/type_macros.h>
-#include <ert/util/msg.h>
 #include <ert/util/buffer.h>
 #include <ert/util/perm_vector.h>
 

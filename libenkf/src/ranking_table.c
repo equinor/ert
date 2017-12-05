@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2012  Statoil ASA, Norway. 
-    
-   The file 'ranking_table.c' is part of ERT - Ensemble based Reservoir Tool. 
-   
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2012  Statoil ASA, Norway.
+
+   The file 'ranking_table.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -25,7 +25,6 @@
 #include <ert/util/hash.h>
 #include <ert/util/vector.h>
 #include <ert/util/double_vector.h>
-#include <ert/util/msg.h>
 #include <ert/util/buffer.h>
 #include <ert/util/type_macros.h>
 
@@ -97,7 +96,7 @@ int ranking_table_get_size( const ranking_table_type * ranking_table ) {
 bool ranking_table_display_ranking( const ranking_table_type * ranking_table , const char * ranking_key ) {
   if (hash_has_key( ranking_table->ranking_table , ranking_key)) {
     void * ranking = hash_get( ranking_table->ranking_table , ranking_key );
-    
+
     if (data_ranking_is_instance( ranking )) {
       data_ranking_type * data_ranking = data_ranking_safe_cast( ranking );
       data_ranking_display( data_ranking , stdout );
@@ -106,7 +105,7 @@ bool ranking_table_display_ranking( const ranking_table_type * ranking_table , c
       misfit_ranking_display( misfit_ranking , stdout );
     } else
       util_abort("%s: internal error \n",__func__);
-    
+
 
     return true;
   } else
@@ -142,7 +141,7 @@ bool ranking_table_fwrite_ranking( const ranking_table_type * ranking_table , co
 const perm_vector_type * ranking_table_get_permutation( const ranking_table_type * ranking_table , const char * ranking_key) {
   if (hash_has_key( ranking_table->ranking_table , ranking_key)) {
     void * ranking = hash_get( ranking_table->ranking_table , ranking_key );
-    
+
     if (data_ranking_is_instance( ranking )) {
       data_ranking_type * data_ranking = data_ranking_safe_cast( ranking );
       return data_ranking_get_permutation( data_ranking );

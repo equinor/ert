@@ -29,7 +29,6 @@
 #include <ert/util/vector.h>
 #include <ert/util/double_vector.h>
 #include <ert/util/bool_vector.h>
-#include <ert/util/msg.h>
 
 #include <ert/sched/history.h>
 
@@ -1056,29 +1055,17 @@ double obs_vector_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type *
 */
 
 void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , int ens_size , double * sum_chi2) {
-  const bool verbose = true;
-  msg_type * msg;
   int report_step;
   int iens;
-  char * msg_text = NULL;
 
   for (iens = 0; iens < ens_size; iens++)
     sum_chi2[iens] = 0;
-
-  if (verbose) {
-    msg = msg_alloc("Observation: " , false);
-    msg_show(msg);
-  }
 
   {
     node_id_type node_id = {.report_step = 0, .iens = iens };
     enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
     int vec_size = vector_get_size( obs_vector->nodes);
     for (report_step = 0; report_step < vec_size; report_step++) {
-      if (verbose) {
-        msg_text = util_realloc_sprintf( msg_text , "%s[%03d]" , obs_vector->obs_key , report_step);
-        msg_update(msg , msg_text);
-      }
       if (vector_iget(obs_vector->nodes , report_step) != NULL) {
         node_id.report_step = report_step;
         for (iens = 0; iens < ens_size; iens++) {
@@ -1091,11 +1078,6 @@ void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs
       }
     }
     enkf_node_free( enkf_node );
-  }
-
-  if (verbose) {
-    msg_free(msg , true);
-    util_safe_free( msg_text );
   }
 }
 
