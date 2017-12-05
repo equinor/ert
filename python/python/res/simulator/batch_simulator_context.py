@@ -43,8 +43,12 @@ class BatchContext(SimulationContext):
     def results(self):
         """Will return the results of the simulations.
 
-        This property will first block until all simulations have completed,
-        and then it will return all the results which were configured with the
+        Observe that this function will raise RuntimeError if the simulations
+        have not been completed. To be certain that the simulations have
+        completed you can call the join() method which will block until all
+        simulations have completed.
+
+        The function will return all the results which were configured with the
         @results when the simulator was created. The results will come as a
         list of dictionaries of arrays of double values, i.e. if the @results
         argument was:
