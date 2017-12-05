@@ -111,7 +111,7 @@ class WorkflowJob(BaseCClass):
             elif t == ContentTypeEnum.CONFIG_STRING:
                 result.append(str)
             else:
-                result.append(None)
+                result.append(NoneType)
 
         return result
 

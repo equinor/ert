@@ -346,6 +346,7 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
             job["name"] = default_name_if_none(job["name"])
 
             for key in json_keywords:
+
                 if (key == "stdout"):
                   self.assertEqual(create_stdout_file(job), loaded_job[key])
                 elif (key == "stderr"):
@@ -372,6 +373,44 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
                 varlist)
 
             self.verify_json_dump([], global_args, umask, run_id)
+
+    def test_transfer_arg_types(self):
+        with TestAreaContext("python/job_queue/forward_model_transfer_arg_types"):
+            with open("FWD_MODEL" , "w") as f:
+               f.write("EXECUTABLE ls\n")
+               f.write("MIN_ARG 2\n")
+               f.write("MAX_ARG 4\n")
+               f.write("ARG_TYPE 0 INT\n")
+               f.write("ARG_TYPE 1 FLOAT\n")
+               f.write("ARG_TYPE 2 STRING\n")
+               f.write("ARG_TYPE 3 BOOL\n")
+
+            job = ExtJob("FWD_MODEL" , True)
+
+            ext_joblist = ExtJoblist()
+            ext_joblist.add_job(job.name(), job)
+            forward_model = ForwardModel(ext_joblist)
+            forward_model.add_job("FWD_MODEL")
+
+            run_id = "test_no_jobs_id"
+            umask = 4
+            global_args = SubstitutionList()
+
+            forward_model.formatted_fprintf(
+                run_id,
+                os.getcwd(),
+                "data_root",
+                global_args,
+                umask,
+                EnvironmentVarlist())
+            config = load_configs(self.JOBS_JSON_FILE)
+            printed_job = config["jobList"][0]
+            self.assertEqual(printed_job["min_arg"], 2)
+            self.assertEqual(printed_job["max_arg"], 4)
+            self.assertEqual(printed_job["arg_types"], ["INT", "FLOAT", "STRING", "BOOL"])
+             
+
+        
 
     def test_env_varlist(self):
         varlist_string = "global_environment"

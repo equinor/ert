@@ -17,7 +17,7 @@ def create_upgraded_valid_config( config_file ):
     with open(config_file , "w") as f:
         f.write("EXECUTABLE script.sh\n")
         f.write("MIN_ARG 2\n")
-        f.write("MAX_ARG 4\n")
+        f.write("MAX_ARG 5\n")
         f.write("ARG_TYPE 0 INT\n")
         f.write("ARG_TYPE 1 FLOAT\n")
         f.write("ARG_TYPE 2 STRING\n")
@@ -63,7 +63,7 @@ class ExtJobTest(ExtendedTestCase):
             self.assertEqual( job.get_executable() , os.path.join( os.getcwd() , "script.sh"))
             self.assertTrue( os.access( job.get_executable() , os.X_OK ))
 
-            self.assertEqual( job.minimumArgumentCount(), -1)
+            self.assertEqual( job.min_arg, -1)
 
             job = ExtJob("CONFIG" , True , name = "Job")
             self.assertEqual( job.name() , "Job")
@@ -73,10 +73,10 @@ class ExtJobTest(ExtendedTestCase):
         with TestAreaContext("python/job_queue/forward_model1a"):
             create_upgraded_valid_config("CONFIG")
             job = ExtJob("CONFIG" , True)
-            self.assertEqual( job.minimumArgumentCount(), 2 )
-            self.assertEqual( job.maximumArgumentCount(), 4 )
-            argTypes = job.argumentTypes()
-            self.assertEqual( argTypes , [int, float , str, bool] )
+            self.assertEqual( job.min_arg, 2 )
+            self.assertEqual( job.max_arg, 5 )
+            argTypes = job.arg_types
+            self.assertEqual( argTypes , [int, float , str, bool, str] )
 
 
         with TestAreaContext("python/job_queue/forward_model2"):

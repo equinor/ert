@@ -143,17 +143,20 @@ class ExtJob(BaseCClass):
     def set_max_running_minutes(self, min_value):
         self._set_max_running_minutes(min_value)
 
-    def minimumArgumentCount(self):
+    @property
+    def min_arg(self):
         return self._min_arg()
-
-    def maximumArgumentCount(self):
+    
+    @property
+    def max_arg(self):
         return self._max_arg()
 
-    def argumentTypes(self):
+    @property
+    def arg_types(self):
         """ @rtype: list of type """
 
         result = []
-        for index in range(self.maximumArgumentCount()):
+        for index in range(self.max_arg):
             t = self._arg_type(index)
             if t == ContentTypeEnum.CONFIG_BOOL:
                 result.append(bool)
@@ -164,7 +167,7 @@ class ExtJob(BaseCClass):
             elif t == ContentTypeEnum.CONFIG_STRING:
                 result.append(str)
             else:
-                result.append(None)
+                result.append(NoneType)
 
         return result
 
