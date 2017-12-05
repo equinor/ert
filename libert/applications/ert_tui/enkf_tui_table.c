@@ -24,7 +24,6 @@
 
 #include <ert/util/util.h>
 #include <ert/util/arg_pack.h>
-#include <ert/util/msg.h>
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_obs.h>

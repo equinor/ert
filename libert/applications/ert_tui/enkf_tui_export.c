@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include <ert/util/util.h>
-#include <ert/util/msg.h>
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/field.h>
@@ -136,13 +135,11 @@ void enkf_tui_export_gen_data(void * arg) {
     }
 
     {
-      msg_type * msg = msg_alloc("Writing file: " , false);
       enkf_fs_type   * fs   = enkf_main_tui_get_fs(enkf_main);
       enkf_node_type * node = enkf_node_alloc(config_node);
       gen_data_file_format_type export_type = gen_data_guess_export_type( enkf_node_value_ptr(node) );
       int iens;
 
-      msg_show( msg );
       for (iens = iens1; iens <= iens2; iens++) {
         node_id_type node_id = {.report_step = report_step , .iens = iens};
         if (enkf_node_try_load(node , fs, node_id)) {
@@ -153,7 +150,6 @@ void enkf_tui_export_gen_data(void * arg) {
 
           {
             const gen_data_type * gen_data = enkf_node_value_ptr(node);
-            msg_update(msg , full_path);
             gen_data_export(gen_data , full_path , export_type);
           }
 
@@ -162,7 +158,6 @@ void enkf_tui_export_gen_data(void * arg) {
         }
       }
       enkf_node_free(node);
-      msg_free( msg , true );
     }
   }
 }
@@ -321,7 +316,6 @@ void enkf_tui_export_scalar2csv(void * arg) {
       enkf_fs_type * fs     = enkf_main_tui_get_fs(enkf_main);
       enkf_node_type * node = enkf_node_alloc( config_node );
       FILE * stream         = util_fopen( csv_file , "w");
-      msg_type * msg        = msg_alloc("Exporting report_step/member: " , false);
       node_id_type node_id;
 
 
@@ -331,7 +325,6 @@ void enkf_tui_export_scalar2csv(void * arg) {
         fprintf(stream , "%s\"%s(%d)\"" , CSV_SEP , user_key , iens);
       fprintf(stream , CSV_NEWLINE);
 
-      msg_show(msg);
       for (report_step = first_report; report_step <= last_report; report_step++) {
         fprintf(stream , "%6d" , report_step);
         node_id.report_step = report_step;
@@ -344,7 +337,6 @@ void enkf_tui_export_scalar2csv(void * arg) {
           */
           node_id.iens = iens;
           sprintf(label , "%03d/%03d" , report_step , iens);
-          msg_update( msg , label);
 
           if (enkf_node_user_get( node , fs , key_index , node_id ,  &value))
             fprintf(stream , "%s%g" , CSV_SEP , value);
@@ -355,7 +347,6 @@ void enkf_tui_export_scalar2csv(void * arg) {
         fprintf(stream , CSV_NEWLINE);
       }
 
-      msg_free( msg , true );
       enkf_node_free( node );
       fclose(stream);
     }
