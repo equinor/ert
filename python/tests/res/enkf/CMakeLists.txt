@@ -11,6 +11,7 @@ set(TEST_SOURCES
     test_es_update.py
     test_enkf.py
     test_enkf_transfer_env.py
+    test_enkf_sim_model.py
     test_enkf_fs.py
     test_enkf_fs_manager1.py
     test_enkf_fs_manager2.py
@@ -87,6 +88,7 @@ addPythonTest(tests.res.enkf.test_enkf_runpath.EnKFRunpathTest)
 addPythonTest(tests.res.enkf.test_programmatic_res_config.ProgrammaticResConfigTest)
 addPythonTest(tests.res.enkf.test_enkf.EnKFTest)
 addPythonTest(tests.res.enkf.test_enkf_transfer_env.EnKFTestTransferEnv)
+addPythonTest(tests.res.enkf.test_enkf_sim_model.EnKFTestSimModel)
 addPythonTest(tests.res.enkf.test_simulation_batch.SimulationBatchTest)
 addPythonTest(tests.res.enkf.test_model_config.ModelConfigTest)
 addPythonTest(tests.res.enkf.test_enkf_fs_manager1.EnKFFSManagerTest1)

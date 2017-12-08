@@ -38,7 +38,9 @@ typedef struct  forward_model_struct forward_model_type ;
   void                     forward_model_clear( forward_model_type * forward_model );
   void                     forward_model_fprintf(const forward_model_type *  , FILE * );
   forward_model_type     * forward_model_alloc(const ext_joblist_type * ext_joblist);
-  void                     forward_model_parse_init(forward_model_type * forward_model , const char * input_string );
+  void                     forward_model_parse_job_args(forward_model_type * model, const stringlist_type * list);
+  void                     forward_model_parse_job_deprecated_args(forward_model_type * forward_model, const char * input_string); //DEPRECATED
+  void                     forward_model_parse_init(forward_model_type * forward_model , const char * input_string ); //DEPRECATED
   void                     forward_model_formatted_fprintf(const forward_model_type *  , const char * run_id, const char *, const char * , const subst_list_type * ,
                                                            mode_t umask, const env_varlist_type * list);
   void                     forward_model_free( forward_model_type * );

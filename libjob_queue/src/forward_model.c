@@ -117,10 +117,48 @@ void forward_model_free( forward_model_type * forward_model) {
   free(forward_model);
 }
 
+/*
+  Used with SIMULATION_JOB keyword
+*/
 
+void forward_model_parse_job_args(forward_model_type * forward_model, const stringlist_type * list) {
 
+  stringlist_type * args = stringlist_alloc_deep_copy(list);
+  const char * job_name = stringlist_iget(args, 0);
+  ext_job_type * current_job = forward_model_add_job(forward_model , job_name);
+  ext_job_set_not_deprecated(current_job);
+  stringlist_idel(args, 0);
+  ext_job_set_args(current_job, args);
+}
+
+void forward_model_parse_job_deprecated_args(forward_model_type * forward_model, const char * input_string) {
+  char * p1 = (char *) input_string;
+  char * job_name;
+  {
+    int job_length  = strcspn(p1 , " (");  /* scanning until we meet ' ' or '(' */
+    job_name = util_alloc_substring_copy(p1 , 0 , job_length);
+    p1 += job_length;
+  }
+
+  ext_job_type * current_job = forward_model_add_job(forward_model , job_name);
+
+  if (*p1 == '(') {  /* the function has arguments. */
+    int arg_length = strcspn(p1 , ")");
+    if (arg_length == strlen(p1))
+      util_abort("%s: paranthesis not terminated for job:%s \n",__func__ , job_name);
+   {
+      char  * arg_string          = util_alloc_substring_copy((p1 + 1) , 0 , arg_length - 1);
+      ext_job_set_private_args_from_string( current_job , arg_string );
+      free( arg_string );
+    }
+  }
+  
+  free(job_name);
+}
 
 /**
+   DEPRECATED, used with FORWARD_MODEL keyword
+
    this function takes an input string of the type:
 
    job1  job2  job3(arg1 = value1, arg2 = value2, arg3= value3)
@@ -132,7 +170,6 @@ void forward_model_free( forward_model_type * forward_model) {
 
 */
 
-
 void forward_model_parse_init(forward_model_type * forward_model , const char * input_string ) {
   //tokenizer_type * tokenizer_alloc(" " , "\'\"" , ",=()" , null , null , null);
   //stringlist_type * tokens = tokenizer_buffer( tokenizer , input_string , true);
@@ -140,8 +177,11 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
   //tokenizer_free( tokenizer );
 
   char * p1                          = (char *) input_string;
+  int numi = 0;
   while (true) {
     ext_job_type *  current_job;
+    fprintf(stdout, " ********************* XXXX %s: job nr.: %d XXXXXXX *************'\n", __func__, numi);
+    numi++;
     char         * job_name;
     {
       int job_length  = strcspn(p1 , " (");  /* scanning until we meet ' ' or '(' */

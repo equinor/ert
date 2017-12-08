@@ -155,9 +155,9 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
 
                                   "FORWARD_MODEL" :
                                   [
-                                    "SNAKE_OIL_SIMULATOR",
-                                    "SNAKE_OIL_NPV",
-                                    "SNAKE_OIL_DIFF"
+                                      "SNAKE_OIL_SIMULATOR",
+                                      "SNAKE_OIL_NPV",
+                                      "SNAKE_OIL_DIFF"
                                   ],
 
                                   "RUN_TEMPLATE" :
@@ -418,6 +418,7 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
             work_area.copy_directory(case_directory)
 
             loaded_res_config = ResConfig(user_config_file=config_file)
+
             prog_res_config   = ResConfig(config=self.large_config)
 
             self.assert_equal_model_config(loaded_res_config.model_config,

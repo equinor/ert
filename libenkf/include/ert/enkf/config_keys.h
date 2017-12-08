@@ -82,6 +82,7 @@ extern "C" {
 #define  ITER_RETRY_COUNT_KEY              "ITER_RETRY_COUNT"
 #define  FIELD_KEY                         "FIELD"
 #define  FORWARD_MODEL_KEY                 "FORWARD_MODEL"
+#define  SIMULATION_MODEL_KEY              "SIMULATION_MODEL"
 #define  GEN_DATA_KEY                      "GEN_DATA"
 #define  GEN_KW_KEY                        "GEN_KW"
 #define  GEN_KW_TAG_FORMAT_KEY             "GEN_KW_TAG_FORMAT"
