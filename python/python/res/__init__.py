@@ -101,6 +101,9 @@ if env_lib_path:
 # Check that the final ert_lib_path setting corresponds to an existing
 # directory.
 if res_lib_path:
+    if not os.path.isabs(res_lib_path):
+        res_lib_path = os.path.abspath(os.path.join(os.path.dirname(__file__), res_lib_path))
+
     if not os.path.isdir( res_lib_path ):
         res_lib_path = None
 
