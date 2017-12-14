@@ -1335,6 +1335,23 @@ static void lsf_driver_shell_init( lsf_driver_type * lsf_driver ) {
 }
 
 
+/*
+  If the lsb library is compiled in and the runtime loading of the lsb libraries
+  has succeeded we default to submitting through internal library calls,
+  otherwise we will submit using shell commands on the local workstation.
+*/
+
+static void lsf_driver_init_submit_method( lsf_driver_type * driver ) {
+#ifdef HAVE_LSF_LIBRARY
+  if (lsb_ready(driver->lsb)) {
+    driver->submit_method = LSF_SUBMIT_INTERNAL;
+    return;
+  }
+#endif
+
+  driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
+}
+
 bool lsf_driver_has_project_code( const lsf_driver_type * driver ) {
   if (driver->project_code)
     return true;
@@ -1361,6 +1378,7 @@ void * lsf_driver_alloc( ) {
 
   lsf_driver_lib_init( lsf_driver );
   lsf_driver_shell_init( lsf_driver );
+  lsf_driver_init_submit_method( lsf_driver );
 
   lsf_driver_set_option( lsf_driver , LSF_SERVER    , NULL );
   lsf_driver_set_option( lsf_driver , LSF_RSH_CMD   , DEFAULT_RSH_CMD );

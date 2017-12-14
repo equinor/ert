@@ -147,6 +147,9 @@ void lsb_free( lsb_type * lsb) {
 
 
 bool lsb_ready( const lsb_type * lsb) {
+  if (!lsb)
+    return false;
+
   return lsb->ready;
 }
 
