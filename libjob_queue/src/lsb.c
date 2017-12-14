@@ -1,25 +1,25 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'lsb.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'lsb.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 /*
   This file implements a very small wrapper structure around the
   lsb_xxxx() functions from the libbat.so shared library which are
-  used to submit, monitor and control simulations with LSF. 
+  used to submit, monitor and control simulations with LSF.
 
   Loading and initializing the lsf libraries is quite painful, in an
   attempt to reduce unecessary dependencies the lsf libraries are
@@ -74,7 +74,7 @@ static void * lsb_dlsym( lsb_type * lsb , const char * function_name ) {
     lsb->ready = false;
     stringlist_append_owned_ref( lsb->error_list , util_alloc_sprintf( "Failed to locate symbol:%s  dlerror:%s" , function_name , dlerror()));
   }
-  
+
   return function;
 }
 
@@ -113,7 +113,7 @@ lsb_type * lsb_alloc() {
   lsb->lib_nsl = lsb_dlopen(lsb , "libnsl.so" );
   lsb->lib_lsf = lsb_dlopen(lsb , "liblsf.so" );
   lsb->lib_bat = lsb_dlopen(lsb , "libbat.so");
-  
+
   if (lsb->lib_bat) {
     lsb->submit    = (lsb_submit_ftype *) lsb_dlsym( lsb , "lsb_submit");
     lsb->open_job  = (lsb_openjobinfo_ftype *) lsb_dlsym( lsb , "lsb_openjobinfo");
@@ -122,7 +122,7 @@ lsb_type * lsb_alloc() {
     lsb->kill_job  = (lsb_forcekilljob_ftype *) lsb_dlsym( lsb , "lsb_forcekilljob");
     lsb->lsb_init  = (lsb_init_ftype *) lsb_dlsym( lsb , "lsb_init");
     lsb->sys_msg   = (lsb_sysmsg_ftype *) lsb_dlsym( lsb , "lsb_sysmsg");
-  } 
+  }
 
   return lsb;
 }
@@ -147,6 +147,9 @@ void lsb_free( lsb_type * lsb) {
 
 
 bool lsb_ready( const lsb_type * lsb) {
+  if (!lsb)
+    return false;
+
   return lsb->ready;
 }
 
@@ -170,7 +173,7 @@ int lsb_initialize( const lsb_type * lsb) {
       fprintf(stderr,"%s\n", getenv("LSF_ENVDIR"));
     else
       fprintf(stderr, "not set\n");
-    
+
     util_abort("%s failed to initialize LSF environment : %s  \n",__func__ , lsb->sys_msg() );
   }
   return 0;
