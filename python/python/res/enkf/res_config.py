@@ -203,7 +203,7 @@ class ResConfig(BaseCClass):
             job_options = [ConfigKeys.NAME, ConfigKeys.ARGLIST]
 
             self._assert_keys(ConfigKeys.SIMULATION_JOB, job_options, job.keys())
-            value = [job[ConfigKeys.NAME], " ".join(str(x) for x in job[ConfigKeys.ARGLIST])]
+            value = [job[ConfigKeys.NAME]] + job[ConfigKeys.ARGLIST]
             simulation_job.append((ConfigKeys.SIMULATION_JOB, value))
 
         return simulation_job

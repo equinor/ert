@@ -92,7 +92,7 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
                                   [
                                     {
                                       "NAME"    : "NEW_JOB_A",
-                                      "ARGLIST" : ["Hello", "TRUE", 3.14, 4]
+                                      "ARGLIST" : ["Hello", "TRUE", "3.14", "4"]
                                     },
                                     {
                                       "NAME"    : "NEW_JOB_B",
@@ -461,6 +461,11 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
             work_area.copy_directory(case_directory)
 
             prog_res_config   = ResConfig(config=self.new_config)
+            forward_model = prog_res_config.model_config.getForwardModel()
+            job_A = forward_model.iget_job(0)
+            job_B = forward_model.iget_job(1)
+            self.assertEqual( job_A.get_arglist(), ["Hello", "TRUE", "3.14", "4"])
+            self.assertEqual( job_B.get_arglist(), ["word"])
 
 
 
