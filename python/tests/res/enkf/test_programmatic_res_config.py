@@ -61,6 +61,50 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
                                 }
                               }
 
+        self.new_config    = {
+                                "INTERNALS" :
+                                {
+                                },
+
+                                "SIMULATION" :
+                                {
+                                  "QUEUE_SYSTEM" :
+                                  {
+                                    "QUEUE_SYSTEM"     : "LOCAL",
+                                    "JOBNAME"          : "SIM_KW",
+                                  },
+                                  "ECLBASE" : "SIM_KW",
+
+                                  "NUM_REALIZATIONS"   : 1,
+
+                                  "INSTALL_JOB" :
+                                  [
+                                    {
+                                      "NAME" : "NEW_JOB_A",
+                                      "PATH" : "simulation_model/jobs/NEW_TYPE_A"
+                                    },
+                                    {
+                                      "NAME" : "NEW_JOB_B",
+                                      "PATH" : "simulation_model/jobs/NEW_TYPE_B"
+                                    }
+                                  ],
+                                  "SIMULATION_JOB" : 
+                                  [
+                                    {
+                                      "NAME"    : "NEW_JOB_A",
+                                      "ARGLIST" : ["Hello", "TRUE", 3.14, 4]
+                                    },
+                                    {
+                                      "NAME"    : "NEW_JOB_B",
+                                      "ARGLIST" : ["word"]
+                                    }
+                                  ]
+                                  
+
+                                }
+                                
+                             }
+
 
         self.large_config  = {
                                 "DEFINES" :
@@ -408,6 +452,16 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
     def assert_equal_plot_config(self, loaded_plot_config, prog_plot_config):
         self.assertEqual(loaded_plot_config.getPath(),
                          prog_plot_config.getPath())
+
+    def test_new_config(self):
+        case_directory = self.createTestPath("local/simulation_model")
+        config_file = "simulation_model/sim_kw.ert"
+
+        with TestAreaContext("res_config_sim_job") as work_area:
+            work_area.copy_directory(case_directory)
+
+            prog_res_config   = ResConfig(config=self.new_config)
+
 
 
     def test_large_config(self):

@@ -460,10 +460,10 @@ void model_config_init(model_config_type * model_config ,
   
   for (int i = 0; i < config_content_get_size(config); i++) {
      config_content_node_type * node = config_content_iget_node( config , i);
-     if (strcmp(config_content_node_get_kw(node), SIMULATION_MODEL_KEY) == 0) {
+     if (util_string_equal(config_content_node_get_kw(node), SIMULATION_JOB_KEY) ) 
        forward_model_parse_job_args( model_config->forward_model , config_content_node_get_stringlist(node) );
-     }
-     if (strcmp(config_content_node_get_kw(node), FORWARD_MODEL_KEY) == 0) {
+     
+     if (util_string_equal(config_content_node_get_kw(node), FORWARD_MODEL_KEY) ) {
        const char * arg = config_content_node_get_full_string(node, "");
        forward_model_parse_job_deprecated_args( model_config->forward_model , arg );
      }
@@ -824,7 +824,7 @@ static void model_config_init_user_config(config_parser_type * config ) {
   item = config_add_schema_item(config, FORWARD_MODEL_KEY, false);
   config_schema_item_set_argc_minmax(item , 1, CONFIG_DEFAULT_ARG_MAX);
 
-  item = config_add_schema_item(config, SIMULATION_MODEL_KEY, false);
+  item = config_add_schema_item(config, SIMULATION_JOB_KEY, false);
   config_schema_item_set_argc_minmax(item , 1, CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item(config, DATA_KW_KEY, false);

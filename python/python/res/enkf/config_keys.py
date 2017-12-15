@@ -27,6 +27,7 @@ class ConfigKeys:
     _install_job_key      = EnkfPrototype("char* config_keys_get_install_job_key()", bind=False)
     _plot_settings_key    = EnkfPrototype("char* config_keys_get_plot_setting_key()", bind=False)
     _forward_model_key    = EnkfPrototype("char* config_keys_get_forward_model_key()", bind=False)
+    _simulation_job_key   = EnkfPrototype("char* config_keys_get_simulation_job_key()", bind=False)
     _log_file_key         = EnkfPrototype("char* config_keys_get_log_file_key()", bind=False)
     _log_level_key        = EnkfPrototype("char* config_keys_get_log_level_key()", bind=False)
     _update_log_path      = EnkfPrototype("char* config_keys_get_update_log_path_key()", bind=False)
@@ -57,6 +58,7 @@ class ConfigKeys:
     _output_format        = EnkfPrototype("char* config_keys_get_output_format()", bind=False)
     _init_files           = EnkfPrototype("char* config_keys_get_init_files()", bind=False)
 
+    ARGLIST          = "ARGLIST"
     CONFIG_DIRECTORY = _config_directory_key()
     DEFINES          = "DEFINES"
     INTERNALS        = "INTERNALS"
@@ -79,6 +81,7 @@ class ConfigKeys:
     INSTALL_JOB      = _install_job_key()
     PLOT_SETTINGS    = _plot_settings_key()
     FORWARD_MODEL    = _forward_model_key()
+    SIMULATION_JOB   = _simulation_job_key()
     LOG_FILE         = _log_file_key()
     LOG_LEVEL        = _log_level_key()
     UPDATE_LOG_PATH  = _update_log_path()

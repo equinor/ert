@@ -90,6 +90,10 @@ const char * config_keys_get_max_submit_key() {
   return MAX_SUBMIT_KEY;
 }
 
+const char * config_keys_get_simulation_job_key() {
+  return SIMULATION_JOB_KEY;
+}
+
 const char * config_keys_get_umask_key() {
   return UMASK_KEY;
 }
