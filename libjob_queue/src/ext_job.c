@@ -745,20 +745,24 @@ static void __fprintf_python_argList(FILE * stream,
                                      ext_job_type * ext_job,
                                      const char * suffix,
                                      const subst_list_type * global_args) {
+
+  stringlist_type * argv;  
   if (ext_job->deprecated_argv)
-    ext_job_transfer_deprecated_argv(ext_job);
+    argv = ext_job->deprecated_argv;
+  else
+    argv = ext_job->argv;
 
   fprintf(stream, "%s", prefix);
   __fprintf_init_python_list( stream , "argList" );
   {
-    for (int index = 0; index < stringlist_get_size( ext_job->argv ); index++) {
-      const char * src_string = stringlist_iget( ext_job->argv , index );
+    for (int index = 0; index < stringlist_get_size( argv ); index++) {
+      const char * src_string = stringlist_iget( argv , index );
       char * filtered_string = __alloc_filtered_string(src_string , ext_job->private_args , global_args );
       if (hash_has_key( ext_job->default_mapping , filtered_string ))
         filtered_string = util_realloc_string_copy( filtered_string , hash_get( ext_job->default_mapping , filtered_string ));
 
       fprintf(stream , "\"%s\"" , filtered_string );
-      if (index < (stringlist_get_size( ext_job->argv) - 1))
+      if (index < (stringlist_get_size( argv) - 1))
         fprintf(stream , "," );
 
       free( filtered_string );
