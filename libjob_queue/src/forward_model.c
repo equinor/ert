@@ -126,7 +126,7 @@ void forward_model_parse_job_args(forward_model_type * forward_model, const stri
   stringlist_type * args = stringlist_alloc_deep_copy(list);
   const char * job_name = stringlist_iget(args, 0);
   ext_job_type * current_job = forward_model_add_job(forward_model , job_name);
-  ext_job_set_not_deprecated(current_job);
+  ext_job_free_deprecated_argv(current_job);
   stringlist_idel(args, 0);
   ext_job_set_args(current_job, args);
 }

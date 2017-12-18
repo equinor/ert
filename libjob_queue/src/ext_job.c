@@ -147,7 +147,6 @@ struct ext_job_struct {
 
   bool              private_job;           /* Can the current user/delete this job? (private_job == true) means the user can edit it. */
   bool              __valid;               /* Temporary variable consulted during the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
-  bool              deprecated;
 };
 
 
@@ -175,7 +174,7 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->environment         = hash_alloc();
   ext_job->default_mapping     = hash_alloc();
   ext_job->argv                = stringlist_alloc_new();
-  ext_job->deprecated_argv     = stringlist_alloc_new();
+  ext_job->deprecated_argv     = NULL;
   ext_job->argv_string         = NULL;
   ext_job->__valid             = true;
   ext_job->license_path        = NULL;
@@ -188,7 +187,6 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->private_job         = private_job;        /* If private_job == true the job is user editable. */
   ext_job->help_text           = NULL;
   ext_job->private_args_string = NULL;
-  ext_job->deprecated          = true;
 
   /*
      ext_job->private_args is set explicitly in the ext_job_alloc()
@@ -198,8 +196,11 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
 }
 
 
-void ext_job_set_not_deprecated(ext_job_type * ext_job) {
-  ext_job->deprecated = false;
+void ext_job_free_deprecated_argv(ext_job_type * ext_job) {
+  if (ext_job->deprecated_argv) {
+    stringlist_free(ext_job->deprecated_argv);
+    ext_job->deprecated_argv = NULL;
+  }
 }
 
 const char * ext_job_get_help_text( const ext_job_type * job ) {
@@ -280,8 +281,10 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   }
 
 
-
-  stringlist_deep_copy( new_job->deprecated_argv , src_job->deprecated_argv );
+  if (src_job->deprecated_argv) {
+    new_job->deprecated_argv = stringlist_alloc_new();
+    stringlist_deep_copy( new_job->deprecated_argv , src_job->deprecated_argv );
+  }
 
   return new_job;
 }
@@ -312,7 +315,8 @@ void ext_job_free(ext_job_type * ext_job) {
   hash_free( ext_job->environment );
 
   stringlist_free(ext_job->argv);
-  stringlist_free(ext_job->deprecated_argv);
+  if (ext_job->deprecated_argv)
+    stringlist_free(ext_job->deprecated_argv);
   subst_list_free( ext_job->private_args );
 
   int_vector_free(ext_job->arg_types);
@@ -741,7 +745,7 @@ static void __fprintf_python_argList(FILE * stream,
                                      ext_job_type * ext_job,
                                      const char * suffix,
                                      const subst_list_type * global_args) {
-  if (ext_job->deprecated)
+  if (ext_job->deprecated_argv)
     ext_job_transfer_deprecated_argv(ext_job);
 
   fprintf(stream, "%s", prefix);
@@ -863,9 +867,15 @@ void ext_job_save( const ext_job_type * ext_job ) {
   PRINT_KEY_INT( stream , "MAX_RUNNING"         , ext_job->max_running);
   PRINT_KEY_INT( stream , "MAX_RUNNING_MINUTES" , ext_job->max_running_minutes);
 
-  if (stringlist_get_size( ext_job->deprecated_argv ) > 0) {
+  stringlist_type * list;
+  if (ext_job->deprecated_argv)
+    list = ext_job->deprecated_argv;
+  else
+    list = ext_job->argv;
+
+  if (stringlist_get_size( list) > 0) {
     fprintf(stream , "%16s" , "ARGLIST");
-    stringlist_fprintf( ext_job->deprecated_argv , " " , stream );
+    stringlist_fprintf( list , " " , stream );
     fprintf(stream , "\n");
   }
   if (hash_get_size( ext_job->environment ) > 0) {
@@ -988,6 +998,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
 
         {
           if (config_content_has_item( content , "ARGLIST")) {
+            ext_job->deprecated_argv = stringlist_alloc_new();
             config_content_node_type * arg_node = config_content_get_value_node( content , "ARGLIST");
             int i;
             for (i=0; i < config_content_node_get_size( arg_node ); i++)
@@ -1055,7 +1066,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
 
 
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
-  if (ext_job->deprecated)
+  if (ext_job->deprecated_argv)
     return ext_job->deprecated_argv;
   else
     return ext_job->argv;
