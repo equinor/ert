@@ -136,7 +136,6 @@ struct ext_job_struct {
   int               max_arg;
   int_vector_type * arg_types;
   stringlist_type * argv;                  /* Currently not in use, but will replace deprected_argv */
-
   subst_list_type * private_args;          /* A substitution list of input arguments which is performed before the external substitutions -
                                               these are the arguments supplied as key=value pairs in the forward model call. */
   char            * private_args_string;
@@ -174,8 +173,8 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->stderr_file         = NULL;
   ext_job->environment         = hash_alloc();
   ext_job->default_mapping     = hash_alloc();
-  ext_job->argv                = stringlist_alloc_new();  //currently not in use
-  ext_job->deprecated_argv     = stringlist_alloc_new();
+  ext_job->argv                = stringlist_alloc_new();
+  ext_job->deprecated_argv     = NULL;
   ext_job->argv_string         = NULL;
   ext_job->__valid             = true;
   ext_job->license_path        = NULL;
@@ -196,6 +195,13 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   return ext_job;
 }
 
+
+void ext_job_free_deprecated_argv(ext_job_type * ext_job) {
+  if (ext_job->deprecated_argv) {
+    stringlist_free(ext_job->deprecated_argv);
+    ext_job->deprecated_argv = NULL;
+  }
+}
 
 const char * ext_job_get_help_text( const ext_job_type * job ) {
   if (job->help_text != NULL)
@@ -275,12 +281,18 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   }
 
 
-
-  stringlist_deep_copy( new_job->deprecated_argv , src_job->deprecated_argv );
+  if (src_job->deprecated_argv) {
+    new_job->deprecated_argv = stringlist_alloc_new();
+    stringlist_deep_copy( new_job->deprecated_argv , src_job->deprecated_argv );
+  }
 
   return new_job;
 }
 
+//This function is deprecated
+static void ext_job_transfer_deprecated_argv( ext_job_type * ext_job) {
+  stringlist_deep_copy( ext_job->argv , ext_job->deprecated_argv );
+}
 
 
 
@@ -301,8 +313,10 @@ void ext_job_free(ext_job_type * ext_job) {
 
   hash_free( ext_job->default_mapping);
   hash_free( ext_job->environment );
+
   stringlist_free(ext_job->argv);
-  stringlist_free(ext_job->deprecated_argv);
+  if (ext_job->deprecated_argv)
+    stringlist_free(ext_job->deprecated_argv);
   subst_list_free( ext_job->private_args );
 
   int_vector_free(ext_job->arg_types);
@@ -489,6 +503,10 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable_abs,
 
 /*****************************************************************/
 /* Scalar set and get functions                                  */
+
+void ext_job_set_args(ext_job_type * ext_job, const stringlist_type * argv) {
+  stringlist_deep_copy(ext_job->argv, argv);
+}
 
 void ext_job_set_config_file(ext_job_type * ext_job, const char * config_file) {
   ext_job->config_file = util_realloc_string_copy(ext_job->config_file , config_file);
@@ -724,20 +742,27 @@ static void __fprintf_python_int(FILE * stream,
 
 static void __fprintf_python_argList(FILE * stream,
                                      const char * prefix,
-                                     const ext_job_type * ext_job,
+                                     ext_job_type * ext_job,
                                      const char * suffix,
                                      const subst_list_type * global_args) {
+
+  stringlist_type * argv;  
+  if (ext_job->deprecated_argv)
+    argv = ext_job->deprecated_argv;
+  else
+    argv = ext_job->argv;
+
   fprintf(stream, "%s", prefix);
   __fprintf_init_python_list( stream , "argList" );
   {
-    for (int index = 0; index < stringlist_get_size( ext_job->deprecated_argv ); index++) {
-      const char * src_string = stringlist_iget( ext_job->deprecated_argv , index );
+    for (int index = 0; index < stringlist_get_size( argv ); index++) {
+      const char * src_string = stringlist_iget( argv , index );
       char * filtered_string = __alloc_filtered_string(src_string , ext_job->private_args , global_args );
       if (hash_has_key( ext_job->default_mapping , filtered_string ))
         filtered_string = util_realloc_string_copy( filtered_string , hash_get( ext_job->default_mapping , filtered_string ));
 
       fprintf(stream , "\"%s\"" , filtered_string );
-      if (index < (stringlist_get_size( ext_job->deprecated_argv) - 1))
+      if (index < (stringlist_get_size( argv) - 1))
         fprintf(stream , "," );
 
       free( filtered_string );
@@ -846,9 +871,15 @@ void ext_job_save( const ext_job_type * ext_job ) {
   PRINT_KEY_INT( stream , "MAX_RUNNING"         , ext_job->max_running);
   PRINT_KEY_INT( stream , "MAX_RUNNING_MINUTES" , ext_job->max_running_minutes);
 
-  if (stringlist_get_size( ext_job->deprecated_argv ) > 0) {
+  stringlist_type * list;
+  if (ext_job->deprecated_argv)
+    list = ext_job->deprecated_argv;
+  else
+    list = ext_job->argv;
+
+  if (stringlist_get_size( list) > 0) {
     fprintf(stream , "%16s" , "ARGLIST");
-    stringlist_fprintf( ext_job->deprecated_argv , " " , stream );
+    stringlist_fprintf( list , " " , stream );
     fprintf(stream , "\n");
   }
   if (hash_get_size( ext_job->environment ) > 0) {
@@ -971,6 +1002,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
 
         {
           if (config_content_has_item( content , "ARGLIST")) {
+            ext_job->deprecated_argv = stringlist_alloc_new();
             config_content_node_type * arg_node = config_content_get_value_node( content , "ARGLIST");
             int i;
             for (i=0; i < config_content_node_get_size( arg_node ); i++)
@@ -1038,7 +1070,10 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
 
 
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
-  return ext_job->deprecated_argv;
+  if (ext_job->deprecated_argv)
+    return ext_job->deprecated_argv;
+  else
+    return ext_job->argv;
 }
 
 

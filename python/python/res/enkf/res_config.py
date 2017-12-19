@@ -193,6 +193,37 @@ class ResConfig(BaseCClass):
         return job_config
 
 
+    def _extract_simulation_job(self, config):
+        if ConfigKeys.SIMULATION_JOB not in config:
+            return []
+
+        ic = config[ConfigKeys.SIMULATION_JOB]
+        simulation_job = []
+        for job in ic:
+            job_options = [ConfigKeys.NAME, ConfigKeys.ARGLIST]
+
+            self._assert_keys(ConfigKeys.SIMULATION_JOB, job_options, job.keys())
+            arglist = []
+            for arg in job[ConfigKeys.ARGLIST]:
+              arglist.append(str(arg))
+            value = [job[ConfigKeys.NAME]] + arglist
+            simulation_job.append((ConfigKeys.SIMULATION_JOB, value))
+
+        return simulation_job
+
+   
+    def _extract_forward_model(self, config):
+        if ConfigKeys.FORWARD_MODEL not in config:
+            return []
+        
+        ic = config[ConfigKeys.FORWARD_MODEL]
+        forward_model_job = []
+        for job in ic:
+            forward_model_job.append((ConfigKeys.FORWARD_MODEL, job))
+        
+        return forward_model_job
+
+
     def _extract_logging(self, config):
         if ConfigKeys.LOGGING not in config:
             return []
@@ -294,6 +325,14 @@ class ResConfig(BaseCClass):
         sim_filter.append(ConfigKeys.INSTALL_JOB)
         simulation_config += self._extract_install_job(sc)
 
+        # Extract forward_model
+        sim_filter.append(ConfigKeys.FORWARD_MODEL)
+        simulation_config += self._extract_forward_model(sc)      
+
+        # Extract simulation_job
+        sim_filter.append(ConfigKeys.SIMULATION_JOB)
+        simulation_config += self._extract_simulation_job(sc)     
+
         # Extract logging
         sim_filter.append(ConfigKeys.LOGGING)
         simulation_config += self._extract_logging(sc)
@@ -381,6 +420,7 @@ class ResConfig(BaseCClass):
 
         config_parser.validate(config_content)
         self._errors = list(config_content.getErrors())
+
 
         return config_content
 

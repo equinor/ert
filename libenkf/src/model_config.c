@@ -449,12 +449,18 @@ void model_config_init(model_config_type * model_config ,
 
   if (config_content_has_item(config, NUM_REALIZATIONS_KEY))
     model_config->num_realizations = config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
-
-  if (config_content_has_item( config , FORWARD_MODEL_KEY )) {
-    char * config_string = config_content_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");
-    forward_model_parse_init( model_config->forward_model , config_string );
-    free(config_string);
+  
+  for (int i = 0; i < config_content_get_size(config); i++) {
+     config_content_node_type * node = config_content_iget_node( config , i);
+     if (util_string_equal(config_content_node_get_kw(node), SIMULATION_JOB_KEY) ) 
+       forward_model_parse_job_args( model_config->forward_model , config_content_node_get_stringlist(node) );
+     
+     if (util_string_equal(config_content_node_get_kw(node), FORWARD_MODEL_KEY) ) {
+       const char * arg = config_content_node_get_full_string(node, "");
+       forward_model_parse_job_deprecated_args( model_config->forward_model , arg );
+     }
   }
+
 
   if (config_content_has_item( config, RUNPATH_KEY)) {
     model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , config_content_get_value_as_path(config , RUNPATH_KEY) );
@@ -808,6 +814,9 @@ static void model_config_init_user_config(config_parser_type * config ) {
           );
 
   item = config_add_schema_item(config, FORWARD_MODEL_KEY, false);
+  config_schema_item_set_argc_minmax(item , 1, CONFIG_DEFAULT_ARG_MAX);
+
+  item = config_add_schema_item(config, SIMULATION_JOB_KEY, false);
   config_schema_item_set_argc_minmax(item , 1, CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item(config, DATA_KW_KEY, false);

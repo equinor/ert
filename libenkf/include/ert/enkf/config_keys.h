@@ -134,6 +134,7 @@ extern "C" {
 #define  SCHEDULE_FILE_KEY                 "SCHEDULE_FILE"
 #define  SCHEDULE_PREDICTION_FILE_KEY      "SCHEDULE_PREDICTION_FILE"
 #define  SETENV_KEY                        "SETENV"
+#define  SIMULATION_JOB_KEY                "SIMULATION_JOB"
 #define  STATIC_KW_KEY                     "ADD_STATIC_KW"
 #define  STD_CUTOFF_KEY                    "STD_CUTOFF"
 #define  SUMMARY_KEY                       "SUMMARY"
