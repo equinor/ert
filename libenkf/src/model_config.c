@@ -449,14 +449,6 @@ void model_config_init(model_config_type * model_config ,
 
   if (config_content_has_item(config, NUM_REALIZATIONS_KEY))
     model_config->num_realizations = config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
-
-  /*if (config_content_has_item( config , FORWARD_MODEL_KEY )) {
-    char * config_string = config_content_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");
-    fprintf(stdout, "XXXXXXX: %s: %s\n", __func__, config_string);
-    forward_model_parse_init( model_config->forward_model , config_string );
-    free(config_string);
-  }*/
-
   
   for (int i = 0; i < config_content_get_size(config); i++) {
      config_content_node_type * node = config_content_iget_node( config , i);
