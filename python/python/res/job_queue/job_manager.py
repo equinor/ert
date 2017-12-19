@@ -309,10 +309,26 @@ class JobManager(object):
         return rt.total_seconds()
 
 
+    def assertArgList(self, job):
+        if job.get('arg_types'):
+            argTypes = job["arg_types"]
+            argList = job.get("argList")
+            num_arg_types = len(argTypes)
+            for n in range(num_arg_types):
+                if (argTypes[n] == "RUNTIME_FILE"):
+                    file_path = os.path.join(os.getcwd(), argList[n])
+                    if not os.path.isfile(file_path):
+                        raise TypeError("In job \"%s\": RUNTIME_FILE \"%s\" does not exist." % (job["name"], argList[n]))
+                if (argTypes[n] == "RUNTIME_INT"):
+                    try:
+                        int(argList[n])
+                    except ValueError:
+                        raise ValueError("In job \"%s\": argument with index %d is of incorrect type, should be integer." % (job["name"], n))
+
     def execJob(self, job):
         executable = job.get('executable')
         assert_file_executable(executable)
-
+        
         start_time = time.time()
         if job.get("stdin"):
             redirect_input(job["stdin"] , 0)
@@ -327,6 +343,8 @@ class JobManager(object):
             env = job["environment"]
             for key in env.keys():
                 os.putenv(key, env[key])
+
+        self.assertArgList(job)
 
         argList = [executable]
         if job.get("argList"):
