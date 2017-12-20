@@ -291,6 +291,7 @@ extern "C" {
   state_map_type  * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path);
   time_map_type   * enkf_main_alloc_readonly_time_map( const enkf_main_type * enkf_main , const char * case_path );
 
+  runpath_list_type    * enkf_main_alloc_runpath_list(const enkf_main_type * enkf_main);
   runpath_list_type    * enkf_main_get_runpath_list( const enkf_main_type * enkf_main );
   ert_run_context_type * enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * iactive , int iter);
 

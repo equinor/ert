@@ -1907,6 +1907,10 @@ runpath_list_type * enkf_main_get_runpath_list(const enkf_main_type * enkf_main)
 }
 
 
+runpath_list_type * enkf_main_alloc_runpath_list(const enkf_main_type * enkf_main) {
+  return runpath_list_alloc( hook_manager_get_runpath_list_file(enkf_main_get_hook_manager(enkf_main)));
+}
+
 
 void enkf_main_add_node(enkf_main_type * enkf_main, enkf_config_node_type * enkf_config_node) {
     for (int iens = 0; iens < enkf_main_get_ensemble_size(enkf_main); iens++) {

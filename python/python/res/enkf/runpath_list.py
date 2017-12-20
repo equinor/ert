@@ -16,6 +16,7 @@ class RunpathList(BaseCClass):
     _runpath   = EnkfPrototype("char* runpath_list_iget_runpath(runpath_list, int)")
     _basename  = EnkfPrototype("char* runpath_list_iget_basename(runpath_list, int)")
     _export    = EnkfPrototype("void  runpath_list_fprintf(runpath_list)")
+    _load      = EnkfPrototype("bool  runpath_list_load(runpath_list)")
 
     _get_export_file = EnkfPrototype("char* runpath_list_get_export_file(runpath_list)")
     _set_export_file = EnkfPrototype("void runpath_list_set_export_file(runpath_list, char*)")
@@ -25,7 +26,7 @@ class RunpathList(BaseCClass):
         if c_ptr:
             super(RunpathList , self).__init__(c_ptr)
         else:
-            raise ValueError('Could not construct RunpathList with export_file "%s".' % export_file)
+            raise IOError('Could not construct RunpathList with export_file "%s".' % export_file)
 
     def __len__(self):
         return self._size( )
@@ -84,3 +85,8 @@ class RunpathList(BaseCClass):
 
     def export(self):
         self._export( )
+
+
+    def load(self):
+        if not self._load():
+            raise IOError("Could not load from:%s" % self._get_export_file())
