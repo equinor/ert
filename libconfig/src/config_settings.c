@@ -55,7 +55,7 @@ static void setting_node_assert_type( const setting_node_type * node , config_it
 UTIL_SAFE_CAST_FUNCTION( setting_node , SETTING_NODE_TYPE_ID )
 
 static setting_node_type * setting_node_alloc( const char * key, config_item_types value_type, const char * initial_value) {
-  if (!config_schema_item_valid_string( value_type , initial_value))
+  if (!config_schema_item_valid_string( value_type , initial_value, false))
     return NULL;
 
   {
@@ -83,7 +83,7 @@ static void setting_node_free__( void * arg ) {
 
 
 static bool setting_node_set_value( setting_node_type * node, const char * value) {
-  if (config_schema_item_valid_string(node->value_type , value)) {
+  if (config_schema_item_valid_string(node->value_type , value, false)) {
     node->string_value = util_realloc_string_copy( node->string_value , value );
     return true;
   } else

@@ -101,7 +101,7 @@ typedef enum {
   bool                      config_schema_item_is_deprecated( const config_schema_item_type * item);
   const char              * config_schema_item_get_deprecate_msg( const config_schema_item_type * item);
   void                      config_schema_item_set_deprecated( config_schema_item_type * item , const char * msg);
-  bool                      config_schema_item_valid_string(config_item_types value_type , const char * value);
+  bool                      config_schema_item_valid_string(config_item_types value_type , const char * value, bool runtime);
 
 #ifdef __cplusplus
 }
