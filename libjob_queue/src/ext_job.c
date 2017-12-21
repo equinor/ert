@@ -788,10 +788,13 @@ static void __fprintf_python_arg_types(FILE * stream,
       char * arg_type;
       int type = int_vector_safe_iget(ext_job->arg_types, i);
       switch(type) {
-        case CONFIG_INT:    arg_type = JOB_INT_TYPE; break;
-        case CONFIG_FLOAT:  arg_type = JOB_FLOAT_TYPE; break;
-        case CONFIG_STRING: arg_type = JOB_STRING_TYPE; break;
-        case CONFIG_BOOL:   arg_type = JOB_BOOL_TYPE; break;
+        case CONFIG_INT:          arg_type = JOB_INT_TYPE; break;
+        case CONFIG_FLOAT:        arg_type = JOB_FLOAT_TYPE; break;
+        case CONFIG_STRING:       arg_type = JOB_STRING_TYPE; break;
+        case CONFIG_BOOL:         arg_type = JOB_BOOL_TYPE; break;
+        case CONFIG_RUNTIME_FILE: arg_type = JOB_RUNTIME_FILE_TYPE; break;
+        case CONFIG_RUNTIME_INT:  arg_type = JOB_RUNTIME_INT_TYPE; break;
+        
         default: util_abort("ERROR in %s", __func__);
       }
 
@@ -958,15 +961,17 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , MAX_ARG_KEY           , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
       item = config_add_schema_item(config , ARG_TYPE_KEY          , false ); config_schema_item_set_argc_minmax( item , 2 , 2 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
 
-      config_schema_item_set_indexed_selection_set( item , 1 , 4 , (const char *[4]) {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE});
+      config_schema_item_set_indexed_selection_set( item , 1 , 6 , (const char *[6]) {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE, JOB_RUNTIME_FILE_TYPE, JOB_RUNTIME_INT_TYPE});
                                                                               
       
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
-
+    fprintf(stdout, "************************' %s: Here %d\n", __func__, 1);
     {
       config_content_type * content = config_parse(config , config_file , "--" , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
+      fprintf(stdout, "************************' %s: Here %d\n", __func__, 2);
       if (config_content_is_valid( content )) {
+        fprintf(stdout, "************************' %s: Here %d\n", __func__, 3);
         ext_job = ext_job_alloc(name , license_root_path , private_job);
         ext_job_set_config_file( ext_job , config_file );
 
@@ -989,6 +994,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
         for (int i = 0; i < config_content_get_occurences( content , ARG_TYPE_KEY); i++) {
           int iarg = config_content_iget_as_int( content , ARG_TYPE_KEY , i , 0 );
           const char * arg_type = config_content_iget( content , ARG_TYPE_KEY , i , 1 );
+          fprintf(stdout, " **** %s: %s\n", __func__, arg_type);
 
           ext_job_iset_argtype_string( ext_job , iarg , arg_type );
         }

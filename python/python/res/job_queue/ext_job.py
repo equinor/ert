@@ -166,6 +166,8 @@ class ExtJob(BaseCClass):
                 result.append(int)
             elif t == ContentTypeEnum.CONFIG_STRING:
                 result.append(str)
+            elif t == ContentTypeEnum.CONFIG_RUNTIME_FILE:
+                result.append(str)
             else:
                 result.append(NoneType)
 
