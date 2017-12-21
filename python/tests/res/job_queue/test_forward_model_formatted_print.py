@@ -379,11 +379,13 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
             with open("FWD_MODEL" , "w") as f:
                f.write("EXECUTABLE ls\n")
                f.write("MIN_ARG 2\n")
-               f.write("MAX_ARG 4\n")
+               f.write("MAX_ARG 6\n")
                f.write("ARG_TYPE 0 INT\n")
                f.write("ARG_TYPE 1 FLOAT\n")
                f.write("ARG_TYPE 2 STRING\n")
                f.write("ARG_TYPE 3 BOOL\n")
+               f.write("ARG_TYPE 4 RUNTIME_FILE\n")
+               f.write("ARG_TYPE 5 RUNTIME_INT\n")
 
             job = ExtJob("FWD_MODEL" , True)
 
@@ -406,8 +408,8 @@ class ForwardModelFormattedPrintTest(ExtendedTestCase):
             config = load_configs(self.JOBS_JSON_FILE)
             printed_job = config["jobList"][0]
             self.assertEqual(printed_job["min_arg"], 2)
-            self.assertEqual(printed_job["max_arg"], 4)
-            self.assertEqual(printed_job["arg_types"], ["INT", "FLOAT", "STRING", "BOOL"])
+            self.assertEqual(printed_job["max_arg"], 6)
+            self.assertEqual(printed_job["arg_types"], ["INT", "FLOAT", "STRING", "BOOL", "RUNTIME_FILE", "RUNTIME_INT"])
              
 
         
