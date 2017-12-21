@@ -966,12 +966,9 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
-    fprintf(stdout, "************************' %s: Here %d\n", __func__, 1);
     {
       config_content_type * content = config_parse(config , config_file , "--" , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true);
-      fprintf(stdout, "************************' %s: Here %d\n", __func__, 2);
       if (config_content_is_valid( content )) {
-        fprintf(stdout, "************************' %s: Here %d\n", __func__, 3);
         ext_job = ext_job_alloc(name , license_root_path , private_job);
         ext_job_set_config_file( ext_job , config_file );
 
@@ -994,7 +991,6 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
         for (int i = 0; i < config_content_get_occurences( content , ARG_TYPE_KEY); i++) {
           int iarg = config_content_iget_as_int( content , ARG_TYPE_KEY , i , 0 );
           const char * arg_type = config_content_iget( content , ARG_TYPE_KEY , i , 1 );
-          fprintf(stdout, " **** %s: %s\n", __func__, arg_type);
 
           ext_job_iset_argtype_string( ext_job , iarg , arg_type );
         }

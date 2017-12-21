@@ -23,7 +23,7 @@ def create_upgraded_valid_config( config_file ):
         f.write("ARG_TYPE 2 STRING\n")
         f.write("ARG_TYPE 3 BOOL\n")
         f.write("ARG_TYPE 4 RUNTIME_FILE\n")
-        #f.write("ARG_TYPE 5 RUNTIME_INT\n")
+        f.write("ARG_TYPE 5 RUNTIME_INT\n")
 
     with open("script.sh" , "w") as f:
         f.write("This is a script")
