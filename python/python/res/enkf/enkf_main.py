@@ -70,6 +70,7 @@ class EnKFMain(BaseCClass):
     _submit_simulation = EnkfPrototype("void enkf_main_isubmit_job(enkf_main , run_arg, job_queue)")
     _alloc_run_context_ENSEMBLE_EXPERIMENT= EnkfPrototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , int)")
     _get_runpath_list = EnkfPrototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
+    _create_runpath_list = EnkfPrototype("runpath_list_obj enkf_main_alloc_runpath_list(enkf_main)")
     _add_node = EnkfPrototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
     _get_res_config = EnkfPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _init_run = EnkfPrototype("void enkf_main_init_run(enkf_main, ert_run_context)")
@@ -325,6 +326,8 @@ class EnKFMain(BaseCClass):
     def getRunContextENSEMPLE_EXPERIMENT(self , fs , iactive , iteration = 0):
         return self._alloc_run_context_ENSEMBLE_EXPERIMENT( fs , iactive , iteration )
 
+    def create_runpath_list(self):
+        return self._create_runpath_list()
 
     def getRunpathList(self):
         return self._get_runpath_list( )

@@ -1,18 +1,18 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-   The file 'runpath_list.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-   
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+   The file 'runpath_list.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #ifndef ERT_RUNPATH_LIST_H
@@ -42,8 +42,8 @@ extern "C" {
   void                runpath_list_fprintf( runpath_list_type * list);
   const char *        runpath_list_get_export_file( const runpath_list_type * list );
   void                runpath_list_set_export_file( runpath_list_type * list , const char * export_file );
+  bool                runpath_list_load(runpath_list_type * list); 
 
-  
 
 #ifdef __cplusplus
 }

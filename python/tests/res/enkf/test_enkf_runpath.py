@@ -51,6 +51,10 @@ class EnKFRunpathTest(ExtendedTestCase):
             self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil/runpath')), 1)
             self.assertEqual(len(os.listdir('snake_oil_no_data/storage/snake_oil/runpath/realisation-0')), 1)
 
+            rp = main.create_runpath_list( )
+            self.assertEqual(len(rp), 0)
+            rp.load()
+            self.assertEqual(len(rp), 1)
 
     def test_without_gen_kw(self):
         case_directory = self.createTestPath('local/snake_oil_no_data/')

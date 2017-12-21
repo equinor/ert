@@ -115,6 +115,12 @@ static void runpath_node_fprintf( const runpath_node_type * node , const char * 
 
 
 runpath_list_type * runpath_list_alloc(const char * export_file) {
+  if (export_file == NULL)
+    return NULL;
+
+  if (strlen(export_file) == 0)
+    return NULL;
+
   runpath_list_type * list = util_malloc( sizeof * list );
   list->list     = vector_alloc_new();
   list->line_fmt = NULL;
@@ -237,3 +243,45 @@ void runpath_list_set_export_file( runpath_list_type * list , const char * expor
   list->export_file = util_realloc_string_copy( list->export_file , export_file );
 }
 
+
+bool runpath_list_load(runpath_list_type * list) {
+  FILE * stream = fopen(list->export_file, "r");
+  if (!stream)
+    return false;
+
+  {
+    vector_type * tmp_nodes = vector_alloc_new();
+    bool read_ok = true;
+    while (true) {
+      char basename[256], runpath[256];
+      int iens, iter;
+
+      int read_count = fscanf(stream, "%d %255s %255s %d", &iens, runpath, basename, &iter);
+      if (read_count == 4)
+        vector_append_ref(tmp_nodes, runpath_node_alloc(iens, iter, runpath, basename));
+      else {
+        if (read_count != EOF)
+          read_ok = false;
+
+        break;
+      }
+    }
+
+    if (read_ok) {
+      pthread_rwlock_wrlock( &list->lock);
+      for (int i=0; i < vector_get_size(tmp_nodes); i++) {
+        runpath_node_type * node = vector_iget(tmp_nodes, i);
+        vector_append_owned_ref(list->list, node, runpath_node_free__);
+      }
+      pthread_rwlock_unlock(&list->lock);
+    } else {
+      for (int i=0; i < vector_get_size(tmp_nodes); i++) {
+        runpath_node_type * node = vector_iget(tmp_nodes, i);
+        runpath_node_free(node);
+      }
+    }
+
+    vector_free(tmp_nodes);
+    return read_ok;
+  }
+}
