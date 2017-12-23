@@ -200,27 +200,24 @@ class ResConfig(BaseCClass):
         ic = config[ConfigKeys.SIMULATION_JOB]
         simulation_job = []
         for job in ic:
-            job_options = [ConfigKeys.NAME, ConfigKeys.ARGLIST]
-
-            self._assert_keys(ConfigKeys.SIMULATION_JOB, job_options, job.keys())
-            arglist = []
-            for arg in job[ConfigKeys.ARGLIST]:
-              arglist.append(str(arg))
-            value = [job[ConfigKeys.NAME]] + arglist
-            simulation_job.append((ConfigKeys.SIMULATION_JOB, value))
+            arglist = [ job[ConfigKeys.NAME] ]
+            if ConfigKeys.ARGLIST in job:
+                for arg in job[ConfigKeys.ARGLIST]:
+                    arglist.append(str(arg))
+            simulation_job.append((ConfigKeys.SIMULATION_JOB, arglist))
 
         return simulation_job
 
-   
+
     def _extract_forward_model(self, config):
         if ConfigKeys.FORWARD_MODEL not in config:
             return []
-        
+
         ic = config[ConfigKeys.FORWARD_MODEL]
         forward_model_job = []
         for job in ic:
             forward_model_job.append((ConfigKeys.FORWARD_MODEL, job))
-        
+
         return forward_model_job
 
 
@@ -327,11 +324,11 @@ class ResConfig(BaseCClass):
 
         # Extract forward_model
         sim_filter.append(ConfigKeys.FORWARD_MODEL)
-        simulation_config += self._extract_forward_model(sc)      
+        simulation_config += self._extract_forward_model(sc)
 
         # Extract simulation_job
         sim_filter.append(ConfigKeys.SIMULATION_JOB)
-        simulation_config += self._extract_simulation_job(sc)     
+        simulation_config += self._extract_simulation_job(sc)
 
         # Extract logging
         sim_filter.append(ConfigKeys.LOGGING)
@@ -400,7 +397,7 @@ class ResConfig(BaseCClass):
         # Insert key values
         if not os.path.exists( config_dir ):
             raise IOError("The configuration direcetory: %s does not exist" % config_dir)
-        
+
         path_elm = config_content.create_path_elm(config_dir)
         add_key_value = lambda key, value : config_parser.add_key_value(
                                                             config_content,
