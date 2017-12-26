@@ -8,6 +8,6 @@ set(libres_LIBRARIES -lenkf -lsched -lrms -lconfig -lanalysis -ljob_queue)
 link_directories( @CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@ )
 include_directories( @CMAKE_INSTALL_PREFIX@/include )
 
-if (@BUILD_PYTHON@)
+if (@ENABLE_PYTHON@)
    set(libres_PYTHONPATH @CMAKE_INSTALL_PREFIX@/@PYTHON_INSTALL_PREFIX@ )
 endif()
