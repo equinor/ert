@@ -1,4 +1,4 @@
-if (NOT BUILD_PYTHON)
+if (NOT ENABLE_PYTHON)
     return ()
 endif()
 

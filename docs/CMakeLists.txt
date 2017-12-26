@@ -1,4 +1,4 @@
-if (BUILD_PYTHON)
+if (ENABLE_PYTHON)
   find_package(Sphinx REQUIRED)
   if (SPHINX_FOUND)
     set( ERT_DOC_INSTALL_PATH  "" CACHE PATH "Absolute path to install documentation *in addition* to $PREFIX/documentation")
