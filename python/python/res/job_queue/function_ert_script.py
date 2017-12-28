@@ -1,12 +1,12 @@
 import ecl
-from cwrap import Prototype
+import cwrap
 
 from res.job_queue import ErtScript
 from ecl.util.stringlist import StringList
 
 
-class _NonePrototype(Prototype):
-    lib = ecl.load(None)
+class _NonePrototype(cwrap.Prototype):
+    lib = cwrap.load(None)
 
     def __init__(self, prototype, bind=True):
         super(_NonePrototype, self).__init__(_NonePrototype.lib, prototype, bind=bind)

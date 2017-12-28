@@ -15,7 +15,7 @@
 #  for more details.
 import ctypes
 
-from ecl.util import UtilPrototype
+from ecl import EclPrototype
 from res.config import ContentTypeEnum , ConfigPrototype
 from cwrap import BaseCClass
 
@@ -31,7 +31,7 @@ class SchemaItem(BaseCClass):
     _add_alternative = ConfigPrototype("void config_schema_item_add_indexed_alternative(schema_item , int , char*)")
     _set_deprecated = ConfigPrototype("void config_schema_item_set_deprecated(schema_item ,  char*)")
     _valid_string = ConfigPrototype("bool config_schema_item_valid_string(config_content_type_enum ,  char*)", bind = False)
-    _sscanf_bool = UtilPrototype("bool util_sscanf_bool( char* , bool*)", bind = False)
+    _sscanf_bool = EclPrototype("bool util_sscanf_bool( char* , bool*)", bind = False)
     
     def __init__(self, keyword, required=False):
         c_ptr = self._alloc(keyword, required)
