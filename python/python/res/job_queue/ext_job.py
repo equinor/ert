@@ -175,6 +175,14 @@ class ExtJob(BaseCClass):
 
         return result
 
+    @classmethod
+    def valid_args(cls, arg_types, arg_list, runtime = False):
+       for index, arg_type in enumerate(arg_types):
+          arg = arg_list[index] 
+          if not arg_type.valid_string(arg, runtime):
+                return False
+          return True
+
     def get_environment(self):
         return self._get_environment( )
 

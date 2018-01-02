@@ -397,8 +397,18 @@ class ConfigTest(ExtendedTestCase):
         self.assertEqual(len(content), 4)
 
 
+    def test_valid_string_runtime_file(self):
+        with TestAreaContext("assert_runtime_file"):
+            with open("some_file" , "w") as f:
+                f.write("This i.")
+            self.assertTrue(ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("no_file"))
+            self.assertTrue(ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("some_file", True))
+            self.assertFalse(ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("no_file", True))
+
     def test_valid_string(self):
         self.assertTrue(ContentTypeEnum.CONFIG_FLOAT.valid_string("1.25"))
+        self.assertTrue(ContentTypeEnum.CONFIG_RUNTIME_INT.valid_string("1.7"))
+        self.assertFalse(ContentTypeEnum.CONFIG_RUNTIME_INT.valid_string("1.7", runtime = True))
         self.assertTrue(ContentTypeEnum.CONFIG_FLOAT.valid_string("1.125", runtime = True))
         self.assertEqual(ContentTypeEnum.CONFIG_FLOAT.convert_string("1.25"), 1.25)
         self.assertEqual(ContentTypeEnum.CONFIG_INT.convert_string("100"), 100)

@@ -245,6 +245,18 @@ bool config_schema_item_valid_string(config_item_types value_type , const char *
   case(CONFIG_BYTESIZE):
     return util_sscanf_bytesize( value , NULL);
     break;
+  case(CONFIG_RUNTIME_INT):
+    if (runtime)
+      return util_sscanf_int( value , NULL );
+    else
+      return true;
+    break;
+  case(CONFIG_RUNTIME_FILE):
+    if(runtime)
+      return util_file_exists(value);
+    else
+      return true;
+    break;
   default:
     return true;
   }

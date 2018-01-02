@@ -2,6 +2,7 @@ import os.path
 
 from ecl.test import TestAreaContext, ExtendedTestCase
 from res.job_queue.ext_job import ExtJob
+from res.config import ContentTypeEnum
 
 
 def create_valid_config( config_file ):
@@ -103,4 +104,17 @@ class ExtJobTest(ExtendedTestCase):
             create_config_foreign_file( "CONFIG" )
             with self.assertRaises(ValueError):
                 job = ExtJob("CONFIG" , True)
+
+    def test_valid_args(self):
+        arg_types = [ContentTypeEnum.CONFIG_FLOAT, ContentTypeEnum.CONFIG_INT, ContentTypeEnum.CONFIG_BOOL, ContentTypeEnum.CONFIG_STRING]
+        run_arg_types = [ContentTypeEnum.CONFIG_RUNTIME_INT, ContentTypeEnum.CONFIG_RUNTIME_INT]
+
+        arg_list = ["5.6", "65", "True", "car"]
+        self.assertTrue( ExtJob.valid_args(arg_types, arg_list) )
+        arg_list2 = ["True", "True", "8", "car"]
+        self.assertFalse( ExtJob.valid_args(arg_types, arg_list2) )
+
+        run_arg_list = ["Trjue", "76"]
+        self.assertTrue( ExtJob.valid_args(run_arg_types, run_arg_list) )
+        self.assertFalse( ExtJob.valid_args(run_arg_types, run_arg_list, True) )
 

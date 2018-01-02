@@ -310,25 +310,25 @@ class JobManager(object):
 
 
     def assertArgList(self, job):
-        if job.get('arg_types'):
+        if "arg_types" in job:
             argTypes = job["arg_types"]
             argList = job.get("argList")
-            num_arg_types = len(argTypes)
-            for n in range(num_arg_types):
-                if (argTypes[n] == "RUNTIME_FILE"):
-                    file_path = os.path.join(os.getcwd(), argList[n])
+            for index, arg_type in enumerate(argTypes):
+                if (arg_type == "RUNTIME_FILE"):
+                    file_path = os.path.join(os.getcwd(), argList[index])
                     if not os.path.isfile(file_path):
-                        raise TypeError("In job \"%s\": RUNTIME_FILE \"%s\" does not exist." % (job["name"], argList[n]))
-                if (argTypes[n] == "RUNTIME_INT"):
+                        raise TypeError("In job \"%s\": RUNTIME_FILE \"%s\" does not exist." % (job["name"], argList[index]))
+                if (arg_type == "RUNTIME_INT"):
                     try:
-                        int(argList[n])
+                        int(argList[index])
                     except ValueError:
-                        raise ValueError("In job \"%s\": argument with index %d is of incorrect type, should be integer." % (job["name"], n))
+                        raise ValueError("In job \"%s\": argument with index %d is of incorrect type, should be integer." % (job["name"], index))
+
 
     def execJob(self, job):
         executable = job.get('executable')
         assert_file_executable(executable)
-        
+
         start_time = time.time()
         if job.get("stdin"):
             redirect_input(job["stdin"] , 0)
