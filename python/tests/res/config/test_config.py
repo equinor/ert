@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #  Copyright (C) 2012  Statoil ASA, Norway.
 #
 #  The file 'test_config.py' is part of ERT - Ensemble based Reservoir Tool.
@@ -288,13 +287,6 @@ class ConfigTest(ExtendedTestCase):
         self.assertEqual(schema_item.iget_type(0), ContentTypeEnum.CONFIG_INT)
         schema_item.set_argc_minmax(3, 6)
 
-        self.assertTrue(SchemaItem.validString(ContentTypeEnum.CONFIG_INT, "100"))
-        self.assertFalse(SchemaItem.validString(ContentTypeEnum.CONFIG_INT, "100.99"))
-        self.assertTrue(SchemaItem.validString(ContentTypeEnum.CONFIG_FLOAT, "100.99"))
-        self.assertFalse(SchemaItem.validString(ContentTypeEnum.CONFIG_FLOAT, "100.99X"))
-        self.assertTrue(SchemaItem.validString(ContentTypeEnum.CONFIG_STRING, "100.99XX"))
-        self.assertTrue(SchemaItem.validString(ContentTypeEnum.CONFIG_PATH, "100.99XX"))
-
 
         del schema_item
 
@@ -403,3 +395,25 @@ class ConfigTest(ExtendedTestCase):
         self.assertEqual(len(nodeB), 4)
 
         self.assertEqual(len(content), 4)
+
+
+    def test_valid_string(self):
+        self.assertTrue(ContentTypeEnum.CONFIG_FLOAT.valid_string("1.25"))
+        self.assertTrue(ContentTypeEnum.CONFIG_FLOAT.valid_string("1.125", runtime = True))
+        self.assertEqual(ContentTypeEnum.CONFIG_FLOAT.convert_string("1.25"), 1.25)
+        self.assertEqual(ContentTypeEnum.CONFIG_INT.convert_string("100"), 100)
+
+        with self.assertRaises(ValueError):
+            ContentTypeEnum.CONFIG_INT.convert_string("100x")
+
+        with self.assertRaises(ValueError):
+            ContentTypeEnum.CONFIG_FLOAT.convert_string("100X")
+
+        with self.assertRaises(ValueError):
+            ContentTypeEnum.CONFIG_BOOL.convert_string("WHAT_THE_FUCK")
+
+        self.assertTrue( ContentTypeEnum.CONFIG_BOOL.convert_string("TRUE"))
+        self.assertTrue( ContentTypeEnum.CONFIG_BOOL.convert_string("True"))
+        self.assertFalse( ContentTypeEnum.CONFIG_BOOL.convert_string("False"))
+        self.assertFalse( ContentTypeEnum.CONFIG_BOOL.convert_string("F"))
+

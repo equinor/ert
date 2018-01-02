@@ -227,7 +227,7 @@ config_schema_item_type * config_schema_item_alloc(const char * kw , bool requir
   return item;
 }
 
-bool config_schema_item_valid_string(config_item_types value_type , const char * value)
+bool config_schema_item_valid_string(config_item_types value_type , const char * value, bool runtime)
 {
   switch(value_type) {
   case(CONFIG_ISODATE):

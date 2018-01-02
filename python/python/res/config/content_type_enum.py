@@ -14,7 +14,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import ctypes
 from cwrap import BaseCEnum
+from ecl import EclPrototype
+from res.config import ConfigPrototype
+
 
 class ContentTypeEnum(BaseCEnum):
     TYPE_NAME = "config_content_type_enum"
@@ -29,6 +33,32 @@ class ContentTypeEnum(BaseCEnum):
     CONFIG_EXECUTABLE    = None
     CONFIG_ISODATE       = None
     CONFIG_INVALID       = None
+
+    _valid_string = ConfigPrototype("bool config_schema_item_valid_string(config_content_type_enum ,  char*, bool)")
+    _sscanf_bool = EclPrototype("bool util_sscanf_bool( char* , bool*)", bind = False)
+
+    def valid_string(self, string, runtime = False):
+        return self._valid_string(string, runtime)
+
+
+    def convert_string(self,string):
+        if not self.valid_string(string, runtime = True):
+            raise ValueError("Can not convert %s to %s" % (string,self))
+
+        if self == ContentTypeEnum.CONFIG_INT:
+            return int(string)
+
+        if self == ContentTypeEnum.CONFIG_FLOAT:
+            return float(string)
+
+        if self == ContentTypeEnum.CONFIG_BOOL:
+            bool_value = ctypes.c_bool()
+            ContentTypeEnum._sscanf_bool( string , ctypes.byref( bool_value ))
+            return bool_value.value
+
+        return string
+
+
 
 ContentTypeEnum.addEnum("CONFIG_STRING", 1)
 ContentTypeEnum.addEnum("CONFIG_INT", 2)
