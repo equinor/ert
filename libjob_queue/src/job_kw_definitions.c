@@ -19,6 +19,10 @@ config_item_types job_kw_get_type(const char * arg_type) {
     type = CONFIG_FLOAT;
   else if (strcmp( arg_type , JOB_BOOL_TYPE) == 0)
     type = CONFIG_BOOL;
+  else if (strcmp( arg_type , JOB_RUNTIME_FILE_TYPE) == 0)
+    type = CONFIG_RUNTIME_FILE;
+  else if (strcmp( arg_type , JOB_RUNTIME_INT_TYPE) == 0)
+    type = CONFIG_RUNTIME_INT;
 
   return type;
 }

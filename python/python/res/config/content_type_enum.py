@@ -33,6 +33,8 @@ class ContentTypeEnum(BaseCEnum):
     CONFIG_EXECUTABLE    = None
     CONFIG_ISODATE       = None
     CONFIG_INVALID       = None
+    CONFIG_RUNTIME_FILE  = None
+    CONFIG_RUNTIME_INT   = None
 
     _valid_string = ConfigPrototype("bool config_schema_item_valid_string(config_content_type_enum ,  char*, bool)")
     _sscanf_bool = EclPrototype("bool util_sscanf_bool( char* , bool*)", bind = False)
@@ -71,3 +73,5 @@ ContentTypeEnum.addEnum("CONFIG_BYTESIZE", 128)
 ContentTypeEnum.addEnum("CONFIG_EXECUTABLE", 256)
 ContentTypeEnum.addEnum("CONFIG_ISODATE", 512)
 ContentTypeEnum.addEnum("CONFIG_INVALID", 1024)
+ContentTypeEnum.addEnum("CONFIG_RUNTIME_INT", 2048)
+ContentTypeEnum.addEnum("CONFIG_RUNTIME_FILE", 4096)

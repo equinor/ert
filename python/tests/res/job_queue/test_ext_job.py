@@ -2,6 +2,7 @@ import os.path
 
 from ecl.test import TestAreaContext, ExtendedTestCase
 from res.job_queue.ext_job import ExtJob
+from res.config import ContentTypeEnum
 
 
 def create_valid_config( config_file ):
@@ -17,11 +18,13 @@ def create_upgraded_valid_config( config_file ):
     with open(config_file , "w") as f:
         f.write("EXECUTABLE script.sh\n")
         f.write("MIN_ARG 2\n")
-        f.write("MAX_ARG 5\n")
+        f.write("MAX_ARG 7\n")
         f.write("ARG_TYPE 0 INT\n")
         f.write("ARG_TYPE 1 FLOAT\n")
         f.write("ARG_TYPE 2 STRING\n")
         f.write("ARG_TYPE 3 BOOL\n")
+        f.write("ARG_TYPE 4 RUNTIME_FILE\n")
+        f.write("ARG_TYPE 5 RUNTIME_INT\n")
 
     with open("script.sh" , "w") as f:
         f.write("This is a script")
@@ -74,9 +77,12 @@ class ExtJobTest(ExtendedTestCase):
             create_upgraded_valid_config("CONFIG")
             job = ExtJob("CONFIG" , True)
             self.assertEqual( job.min_arg, 2 )
-            self.assertEqual( job.max_arg, 5 )
+            self.assertEqual( job.max_arg, 7 )
             argTypes = job.arg_types
-            self.assertEqual( argTypes , [int, float , str, bool, str] )
+            self.assertEqual( argTypes , [ContentTypeEnum.CONFIG_INT, ContentTypeEnum.CONFIG_FLOAT , 
+                                          ContentTypeEnum.CONFIG_STRING, ContentTypeEnum.CONFIG_BOOL, 
+                                          ContentTypeEnum.CONFIG_RUNTIME_FILE, ContentTypeEnum.CONFIG_RUNTIME_INT, 
+                                          ContentTypeEnum.CONFIG_STRING] )
 
 
         with TestAreaContext("python/job_queue/forward_model2"):
@@ -101,4 +107,17 @@ class ExtJobTest(ExtendedTestCase):
             create_config_foreign_file( "CONFIG" )
             with self.assertRaises(ValueError):
                 job = ExtJob("CONFIG" , True)
+
+    def test_valid_args(self):
+        arg_types = [ContentTypeEnum.CONFIG_FLOAT, ContentTypeEnum.CONFIG_INT, ContentTypeEnum.CONFIG_BOOL, ContentTypeEnum.CONFIG_STRING]
+        run_arg_types = [ContentTypeEnum.CONFIG_RUNTIME_INT, ContentTypeEnum.CONFIG_RUNTIME_INT]
+
+        arg_list = ["5.6", "65", "True", "car"]
+        self.assertTrue( ExtJob.valid_args(arg_types, arg_list) )
+        arg_list2 = ["True", "True", "8", "car"]
+        self.assertFalse( ExtJob.valid_args(arg_types, arg_list2) )
+
+        run_arg_list = ["Trjue", "76"]
+        self.assertTrue( ExtJob.valid_args(run_arg_types, run_arg_list) )
+        self.assertFalse( ExtJob.valid_args(run_arg_types, run_arg_list, True) )
 

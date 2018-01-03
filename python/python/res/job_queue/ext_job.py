@@ -157,19 +157,17 @@ class ExtJob(BaseCClass):
 
         result = []
         for index in range(self.max_arg):
-            t = self._arg_type(index)
-            if t == ContentTypeEnum.CONFIG_BOOL:
-                result.append(bool)
-            elif t == ContentTypeEnum.CONFIG_FLOAT:
-                result.append(float)
-            elif t == ContentTypeEnum.CONFIG_INT:
-                result.append(int)
-            elif t == ContentTypeEnum.CONFIG_STRING:
-                result.append(str)
-            else:
-                result.append(NoneType)
+            result.append(self._arg_type(index))
 
         return result
+
+    @staticmethod
+    def valid_args(arg_types, arg_list, runtime = False):
+       for index, arg_type in enumerate(arg_types):
+          arg = arg_list[index] 
+          if not arg_type.valid_string(arg, runtime):
+                return False
+          return True
 
     def get_environment(self):
         return self._get_environment( )
