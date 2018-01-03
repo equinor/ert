@@ -1,8 +1,8 @@
 from ert_gui.ide.keywords.definitions.range_string_argument import RangeStringArgument
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 
 
-class RangeStringArgumentTest(ExtendedTestCase):
+class RangeStringArgumentTest(ErtTest):
 
     def test_proper_name_argument(self):
 

@@ -1,8 +1,8 @@
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
 
 
-class ErtShellPlotSettingsTest(ExtendedTestCase):
+class ErtShellPlotSettingsTest(ErtTest):
     def checkStringProperties(self, shell, command, testFunction, allow_multiple_arguments=True):
         self.assertTrue(shell.invokeCommand(command))
 

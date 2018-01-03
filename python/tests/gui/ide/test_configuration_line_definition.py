@@ -1,11 +1,11 @@
 from ert_gui.ide.keywords.definitions import ArgumentDefinition, KeywordDefinition, ConfigurationLineDefinition, IntegerArgument
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 
 
 
 
 
-class ConfigurationLineDefinitionTest(ExtendedTestCase):
+class ConfigurationLineDefinitionTest(ErtTest):
 
     def test_keyword_definition(self):
         keyword = KeywordDefinition("KEYWORD")

@@ -1,9 +1,9 @@
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 from res.enkf import PlotSettings
 from ert_gui.plottery import PlotConfig, PlotConfigHistory
 
 
-class PlotConfigHistoryTest(ExtendedTestCase):
+class PlotConfigHistoryTest(ErtTest):
 
     def test_plot_config_history(self):
         ps = PlotSettings( )

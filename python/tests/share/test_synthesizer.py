@@ -1,11 +1,11 @@
 import sys
 import os
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 
 try:
     from synthesizer import OilSimulator
 except ImportError as e:
-    share_lib_path = os.path.join(ExtendedTestCase.createSharePath("lib"))
+    share_lib_path = os.path.join(ErtTest.createSharePath("lib"))
 
     sys.path.insert(0, share_lib_path)
     synthesizer_module =  __import__("synthesizer")
@@ -13,7 +13,7 @@ except ImportError as e:
     sys.path.pop(0)
 
 
-class SynthesizerTest(ExtendedTestCase):
+class SynthesizerTest(ErtTest):
 
     def test_oil_simulator(self):
         sim = OilSimulator()

@@ -1,7 +1,7 @@
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
 
-class ErtShellObservationsTest(ExtendedTestCase):
+class ErtShellObservationsTest(ErtTest):
 
     def test_load_observations(self):
         test_config = self.createTestPath("local/custom_kw/mini_config")

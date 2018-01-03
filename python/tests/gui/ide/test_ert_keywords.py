@@ -2,10 +2,10 @@ from ert_gui.ide.keywords.definitions import IntegerArgument, StringArgument, Bo
 from ert_gui.ide.keywords import ErtKeywords
 from ert_gui.ide.keywords.definitions.proper_name_argument import ProperNameArgument
 from ert_gui.ide.keywords.definitions.proper_name_format_argument import ProperNameFormatArgument
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 
 
-class ErtKeywordTest(ExtendedTestCase):
+class ErtKeywordTest(ErtTest):
 
     def setUp(self):
         self.keywords = ErtKeywords()

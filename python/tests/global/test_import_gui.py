@@ -21,6 +21,6 @@ import sys
 from ecl.test import ImportTestCase
 
 class ImportGUI(ImportTestCase):
-    
+
     def test_import_gui(self):
         self.assertTrue( self.import_package( "ert_gui" ))

@@ -1,10 +1,10 @@
 from __future__ import print_function
 import os
 from res.enkf.export import GenKwCollector
-from ecl.test.extended_testcase import ExtendedTestCase
+from tests import ErtTest
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
 
-class ErtShellSmootherTest(ExtendedTestCase):
+class ErtShellSmootherTest(ErtTest):
 
     def test_smoother(self):
         test_config = self.createTestPath("local/custom_kw/mini_config")
