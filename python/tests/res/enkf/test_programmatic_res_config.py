@@ -86,9 +86,13 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
                                     {
                                       "NAME" : "NEW_JOB_B",
                                       "PATH" : "simulation_model/jobs/NEW_TYPE_B"
-                                    }
-                                  ],
-                                  "SIMULATION_JOB" : 
+                                    },
+                                    {
+                                        "NAME" : "NEW_JOB_C",
+                                        "PATH" : "simulation_model/jobs/NEW_TYPE_C"
+                                      }
+                                   ],
+                                  "SIMULATION_JOB" :
                                   [
                                     {
                                       "NAME"    : "NEW_JOB_A",
@@ -97,12 +101,12 @@ class ProgrammaticResConfigTest(ExtendedTestCase):
                                     {
                                       "NAME"    : "NEW_JOB_B",
                                       "ARGLIST" : ["word"]
-                                    }
+                                    },
                                   ]
-                                  
+
 
                                 }
-                                
+
                              }
 
 
