@@ -1,9 +1,9 @@
 import os
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext, ShellCapturing
 
 
-class ErtShellContextTest(ExtendedTestCase):
+class ErtShellContextTest(ErtTest):
 
     def test_ertshell_context(self):
         test_config = self.createTestPath("local/custom_kw/mini_config")

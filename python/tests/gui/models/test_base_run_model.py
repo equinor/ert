@@ -1,10 +1,10 @@
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 from res.enkf import EnKFMain
 from res.test import ErtTestContext
 from ert_gui.simulation.models import BaseRunModel
 from ert_gui import configureErtNotifier
 
-class BaseRunModelTest(ExtendedTestCase):
+class BaseRunModelTest(ErtTest):
 
     def test_instantiation(self):
         config_file = self.createTestPath('local/simple_config/minimum_config')

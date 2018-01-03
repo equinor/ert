@@ -1,10 +1,10 @@
 from ert_gui.ide.keywords.data import ConfigurationLine, Keyword, Argument
 from ert_gui.ide.keywords.definitions import StringArgument
 from ert_gui.ide.keywords.definitions.keyword_definition import KeywordDefinition
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 
 
-class ConfigurationLineTest(ExtendedTestCase):
+class ConfigurationLineTest(ErtTest):
 
     def test_configuration_line_creation(self):
         line = "KEYWORD arg1"

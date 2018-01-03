@@ -1,8 +1,8 @@
 from ert_gui.ide.keywords.definitions import FloatArgument
-from ecl.test import ExtendedTestCase
+from tests import ErtTest
 
 
-class FloatArgumentTest(ExtendedTestCase):
+class FloatArgumentTest(ErtTest):
 
     def test_default_float_argument(self):
         f = FloatArgument()
