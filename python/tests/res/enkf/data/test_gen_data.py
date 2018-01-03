@@ -1,4 +1,4 @@
-from ecl.test.extended_testcase import ExtendedTestCase
+from tests import ResTest
 from ecl.util import BoolVector
 from res.test import ErtTestContext
 
@@ -6,7 +6,7 @@ from res.enkf.data.enkf_node import EnkfNode
 from res.enkf.node_id import NodeId
 
 
-class GenDataTest(ExtendedTestCase):
+class GenDataTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/with_GEN_DATA/config")
 

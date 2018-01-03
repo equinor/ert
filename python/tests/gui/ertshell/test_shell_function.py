@@ -1,4 +1,4 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ert_gui.shell.libshell import ShellFunction
 
 
@@ -37,7 +37,7 @@ def completeMock(line):
     return text, line, begin_index, end_index
 
 
-class ShellFunctionTest(ExtendedTestCase):
+class ShellFunctionTest(ResTest):
 
     def test_creation(self):
         target = TestTarget()

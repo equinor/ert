@@ -17,14 +17,14 @@
 
 import os
 from res.enkf import AnalysisIterConfig
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class AnalysisIterConfigTest(ExtendedTestCase):
+class AnalysisIterConfigTest(ResTest):
 
     def test_set(self):
         c = AnalysisIterConfig()
-        
+
         self.assertFalse( c.caseFormatSet() )
         c.setCaseFormat("case%d")
         self.assertTrue( c.caseFormatSet() )
@@ -33,5 +33,5 @@ class AnalysisIterConfigTest(ExtendedTestCase):
         c.setNumIterations(1)
         self.assertTrue( c.numIterationsSet() )
 
-        
+
 

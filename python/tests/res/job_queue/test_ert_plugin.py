@@ -1,5 +1,5 @@
 from res.enkf import ErtPlugin, CancelPluginException
-from ecl.test.extended_testcase import ExtendedTestCase
+from tests import ResTest
 
 
 class SimplePlugin(ErtPlugin):
@@ -46,7 +46,7 @@ class CanceledPlugin(ErtPlugin):
 #         assert arg2 == 6
 
 
-class ErtPluginTest(ExtendedTestCase):
+class ErtPluginTest(ResTest):
 
     def test_simple_ert_plugin(self):
 

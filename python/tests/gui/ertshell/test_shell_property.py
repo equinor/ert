@@ -1,4 +1,4 @@
-from ecl.test.extended_testcase import ExtendedTestCase
+from tests import ResTest
 from ert_gui.shell.libshell import ShellProperty, boolValidator, createListValidator, createFloatValidator
 
 
@@ -102,7 +102,7 @@ def completeMock(line):
     return text, line, begin_index, end_index
 
 
-class ShellPropertyTest(ExtendedTestCase):
+class ShellPropertyTest(ResTest):
     def setUp(self):
         self.properties = {
             "enabled": ("enabled", TestModel.isEnabled, TestModel.setEnabled),

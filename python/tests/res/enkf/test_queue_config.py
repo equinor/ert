@@ -16,11 +16,10 @@
 
 import os
 
-from ecl.test import ExtendedTestCase
-
+from tests import ResTest
 from res.enkf import QueueConfig
 
-class QueueConfigTest(ExtendedTestCase):
+class QueueConfigTest(ResTest):
 
     def test_get_queue_config(self):
         queue_config = QueueConfig(None)

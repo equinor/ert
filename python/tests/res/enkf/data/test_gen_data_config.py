@@ -1,4 +1,4 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.util import BoolVector
 from res.test import ErtTestContext
 
@@ -9,7 +9,7 @@ from res.enkf import NodeId, RunArg
 from res.enkf import ForwardLoadContext
 
 
-class GenDataConfigTest(ExtendedTestCase):
+class GenDataConfigTest(ResTest):
     _get_active_mask    = EnkfPrototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind = False)
     _update_active_mask = EnkfPrototype("void gen_data_config_update_active( gen_data_config, forward_load_context , bool_vector)", bind = False)
 

@@ -1,9 +1,9 @@
 from res.enkf.enums import HookRuntime
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class HookWorkFlowTest(ExtendedTestCase):
+class HookWorkFlowTest(ResTest):
 
     def test_enum(self):
         self.assertEnumIsFullyDefined(HookRuntime, "hook_run_mode_enum" , "libenkf/include/ert/enkf/hook_workflow.h", verbose=True)
-        
+

@@ -1,9 +1,10 @@
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import ErtImplType, GenKwConfig
 
-class GenKwConfigTest(ExtendedTestCase):
+class GenKwConfigTest(ResTest):
 
 
     def test_gen_kw_config(self):

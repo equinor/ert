@@ -16,9 +16,10 @@
 
 from res.enkf import SiteConfig
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 
-class SiteConfigTest(ExtendedTestCase):
+class SiteConfigTest(ResTest):
 
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")

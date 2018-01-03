@@ -1,8 +1,9 @@
 import os.path
 import json
 
-from ecl.test import TestAreaContext, ExtendedTestCase
+from ecl.test import TestAreaContext
 from ecl.util import EclVersion, Version
+from tests import ResTest
 from res.util.substitution_list import SubstitutionList
 from res.job_queue.environment_varlist import EnvironmentVarlist
 from res.job_queue.forward_model import ForwardModel
@@ -206,7 +207,7 @@ def create_stderr_file(config):
         return (config["name"] + ".stderr")
 
 
-class ForwardModelFormattedPrintTest(ExtendedTestCase):
+class ForwardModelFormattedPrintTest(ResTest):
 
     JOBS_JSON_FILE = "jobs.json"
 

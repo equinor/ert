@@ -1,10 +1,10 @@
 from res.enkf.config.custom_kw_config import CustomKWConfig
-from ecl.test.extended_testcase import ExtendedTestCase
+from tests import ResTest
 from ecl.test.test_area import TestAreaContext
 from ecl.util import StringList
 
 
-class CustomKWConfigTest(ExtendedTestCase):
+class CustomKWConfigTest(ResTest):
 
     def createResultFile(self, filename, data):
         with open(filename, "w") as output_file:

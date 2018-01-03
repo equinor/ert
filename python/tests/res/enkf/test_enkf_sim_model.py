@@ -19,7 +19,8 @@ import sys
 import json
 import subprocess
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from ecl.util import BoolVector
 
 from res.job_queue import ExtJob
@@ -39,7 +40,7 @@ from res.enkf.observations.summary_observation import SummaryObservation
 from res.test import ErtTestContext
 
 
-class EnKFTestSimModel(ExtendedTestCase):
+class EnKFTestSimModel(ResTest):
 
   def setUp(self):
     pass

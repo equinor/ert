@@ -1,8 +1,8 @@
 from res.enkf import LocalObsdataNode
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class LocalObsdataNodeTest(ExtendedTestCase):
+class LocalObsdataNodeTest(ResTest):
     def setUp(self):
         pass
 
@@ -11,12 +11,12 @@ class LocalObsdataNodeTest(ExtendedTestCase):
         self.assertTrue( node.allTimeStepActive() )
         self.assertTrue( node.tstepActive( 10 ))
         self.assertTrue( node.tstepActive( 0 ))
-        
+
         node.addTimeStep(10)
         self.assertFalse( node.allTimeStepActive() )
 
         self.assertTrue( node.tstepActive( 10 ))
         self.assertFalse( node.tstepActive( 0 ))
 
-        
+
 

@@ -1,11 +1,11 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.plot_data import PlotBlockData, PlotBlockDataLoader, PlotBlockVector
 from ecl.util import DoubleVector
 
 
-class PlotDataTest(ExtendedTestCase):
+class PlotDataTest(ResTest):
 
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/with_RFT/config")

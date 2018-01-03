@@ -1,10 +1,10 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.export import GenDataCollector
 
 
-class GenDataCollectorTest(ExtendedTestCase):
+class GenDataCollectorTest(ResTest):
     def test_gen_data_collector(self):
         config = self.createTestPath("local/snake_oil/snake_oil.ert")
         with ErtTestContext("python/enkf/export/gen_data_collector", config) as context:

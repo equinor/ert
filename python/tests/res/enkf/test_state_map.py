@@ -1,10 +1,10 @@
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.enkf.state_map import StateMap
 from ecl.test import TestAreaContext
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class StateMapTest(ExtendedTestCase):
+class StateMapTest(ResTest):
 
     def test_state_map(self):
         state_map = StateMap()

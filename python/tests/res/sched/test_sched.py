@@ -1,28 +1,28 @@
 #!/usr/bin/env python
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
 #  The file 'test_sched.py' is part of ERT - Ensemble based Reservoir Tool.
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import datetime
 import os
 from res.sched import SchedFile
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
 
 
-class SchedFileTest(ExtendedTestCase):
+class SchedFileTest(ResTest):
     def setUp(self):
         src_file = self.createTestPath("Statoil/ECLIPSE/Gurbat/target.SCH")
         self.start_time = datetime.date(2000, 1, 1)
@@ -34,7 +34,7 @@ class SchedFileTest(ExtendedTestCase):
         with self.assertRaises(IOError):
             SchedFile("/does/not/exist", datetime.date(2000 , 1 , 1))
 
-            
+
     def addFile( self, filename ):
         self.file_list.append(filename)
 

@@ -16,7 +16,7 @@
 
 import os.path
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.local_ministep import LocalMinistep
@@ -25,7 +25,7 @@ from res.enkf.local_updatestep import LocalUpdateStep
 from res.enkf.local_obsdata_node import LocalObsdataNode
 
 
-class LocalConfigTest(ExtendedTestCase):
+class LocalConfigTest(ResTest):
 
     def setUp(self):
         self.config = self.createTestPath("local/custom_kw/mini_config")

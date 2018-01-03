@@ -1,7 +1,8 @@
 import unittest
 import os.path
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import RunpathList, RunpathNode, ErtRunContext
@@ -18,7 +19,7 @@ def path(idx):
 def base(idx):
     return 'base_%d' % idx
 
-class RunpathListTest(ExtendedTestCase):
+class RunpathListTest(ResTest):
 
     def test_load(self):
         with TestAreaContext("runpath_list"):

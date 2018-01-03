@@ -2,7 +2,8 @@ import ecl
 import res.enkf  # noqa
 
 from res.job_queue import WorkflowJob
-from ecl.test import TestAreaContext, ExtendedTestCase
+from tests import ResTest
+from ecl.test import TestAreaContext
 from .workflow_common import WorkflowCommon
 
 from cwrap import Prototype
@@ -13,7 +14,7 @@ class _TestWorkflowJobPrototype(Prototype):
     def __init__(self, prototype, bind=True):
         super(_TestWorkflowJobPrototype, self).__init__(_TestWorkflowJobPrototype.lib, prototype, bind=bind)
 
-class WorkflowJobTest(ExtendedTestCase):
+class WorkflowJobTest(ResTest):
     _alloc_config    = _TestWorkflowJobPrototype("void* workflow_job_alloc_config()", bind = False)
     _alloc_from_file = _TestWorkflowJobPrototype("workflow_job_obj workflow_job_config_alloc(char*, void*, char*)", bind = False)
 

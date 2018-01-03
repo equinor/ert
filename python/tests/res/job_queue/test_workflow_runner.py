@@ -1,12 +1,13 @@
 import os
 import time
 from res.job_queue import WorkflowJoblist, Workflow, WorkflowRunner
-from ecl.test import TestAreaContext, ExtendedTestCase
+from tests import ResTest
+from ecl.test import TestAreaContext
 from res.util.substitution_list import SubstitutionList
 from .workflow_common import WorkflowCommon
 
 
-class WorkflowRunnerTest(ExtendedTestCase):
+class WorkflowRunnerTest(ResTest):
 
     def test_workflow_thread_cancel_ert_script(self):
         with TestAreaContext("python/job_queue/workflow_runner_ert_script") as work_area:

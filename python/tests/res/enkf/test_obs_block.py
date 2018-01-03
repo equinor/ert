@@ -1,13 +1,13 @@
-import datetime 
+import datetime
 
 from ecl.util import BoolVector
 from ecl.test import TestAreaContext
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.enkf import ObsBlock
 
 
 
-class ObsBlockTest(ExtendedTestCase):
+class ObsBlockTest(ResTest):
 
 
     def test_create(self):
@@ -15,9 +15,9 @@ class ObsBlockTest(ExtendedTestCase):
         self.assertTrue( isinstance( block , ObsBlock ))
         self.assertEqual( 1000 , block.totalSize())
         self.assertEqual( 0 , block.activeSize())
-        
-        
-        
+
+
+
     def test_access(self):
         obs_size = 10
         block = ObsBlock("OBS" , obs_size)

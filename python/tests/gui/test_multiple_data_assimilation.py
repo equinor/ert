@@ -1,8 +1,8 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ert_gui.simulation.models import MultipleDataAssimilation as mda
 
 
-class MDAWeightsTest(ExtendedTestCase):
+class MDAWeightsTest(ResTest):
 
     def test_weights(self):
         

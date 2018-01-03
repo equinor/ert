@@ -1,9 +1,9 @@
 from ert_gui.ide.keywords import ConfigurationLineParser
 from ert_gui.ide.keywords.data import Argument
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class ConfigurationLineParserTest(ExtendedTestCase):
+class ConfigurationLineParserTest(ResTest):
 
 
     def test_comments(self):

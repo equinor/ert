@@ -1,10 +1,10 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.export import GenKwCollector
 
 
-class GenKwCollectorTest(ExtendedTestCase):
+class GenKwCollectorTest(ResTest):
     def setUp(self):
         self.config = self.createTestPath("local/snake_oil/snake_oil.ert")
 

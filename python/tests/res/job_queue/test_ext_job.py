@@ -1,6 +1,7 @@
 import os.path
 
-from ecl.test import TestAreaContext, ExtendedTestCase
+from ecl.test import TestAreaContext
+from tests import ResTest
 from res.job_queue.ext_job import ExtJob
 from res.config import ContentTypeEnum
 
@@ -48,10 +49,9 @@ def create_config_foreign_file( config_file ):
     with open(config_file , "w") as f:
         f.write("EXECUTABLE /etc/passwd\n")
 
-        
 
 
-class ExtJobTest(ExtendedTestCase):
+class ExtJobTest(ResTest):
     def test_load_forward_model(self):
         with self.assertRaises(IOError):
             job = ExtJob("CONFIG_FILE" , True)

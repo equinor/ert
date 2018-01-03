@@ -16,7 +16,7 @@
 
 import os.path
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.active_list import ActiveList
@@ -26,7 +26,7 @@ from ecl.ecl import EclRegion
 from ecl.geo import Surface, GeoRegion
 
 
-class LocalDatasetTest(ExtendedTestCase):
+class LocalDatasetTest(ResTest):
 
     def setUp(self):
         self.config = self.createTestPath('local/custom_kw/mini_config')

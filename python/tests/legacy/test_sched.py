@@ -3,7 +3,7 @@ from ert.sched import HistorySourceEnum
 from ert.sched import History
 
 
-from  ecl.test import ExtendedTestCase
+from tests import ResTest
 
-class ErtLegacySchedTest(ExtendedTestCase):
+class ErtLegacySchedTest(ResTest):
     pass

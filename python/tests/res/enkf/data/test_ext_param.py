@@ -3,10 +3,11 @@ import json
 
 from res.enkf.data import ExtParam
 from res.enkf.config import ExtParamConfig
-from ecl.test import TestAreaContext, ExtendedTestCase
+from ecl.test import TestAreaContext
+from tests import ResTest
 
 
-class ExtParamTest(ExtendedTestCase):
+class ExtParamTest(ResTest):
 
     def test_config(self):
         input_keys = ["key1","key2","key3"]

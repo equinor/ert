@@ -15,14 +15,14 @@
 #  for more details.
 
 import res
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from res.analysis import AnalysisPrototype
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.rng import RandomNumberGenerator
 
 
-class StdEnKFDebugTest(ExtendedTestCase):
+class StdEnKFDebugTest(ResTest):
 
     def setUp(self):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)

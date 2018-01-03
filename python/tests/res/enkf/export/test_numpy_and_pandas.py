@@ -1,10 +1,10 @@
 import numpy
 from pandas import MultiIndex, DataFrame
 import pandas as pandas
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class NumpyAndPandasTest(ExtendedTestCase):
+class NumpyAndPandasTest(ResTest):
 
     def test_numpy(self):
         data = numpy.empty(shape=(10, 10), dtype=numpy.float64)

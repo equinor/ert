@@ -1,10 +1,10 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.export import CustomKWCollector
 
 
-class CustomKwCollectorTest(ExtendedTestCase):
+class CustomKwCollectorTest(ResTest):
 
     def test_custom_kw_collector_non_current_fs(self):
         config = self.createTestPath("local/custom_kw/mini_config")

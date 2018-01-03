@@ -1,5 +1,5 @@
 import os
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.test.test_area import TestAreaContext
 from res.test.ert_test_context import ErtTestContext
 
@@ -10,7 +10,7 @@ from res.enkf.enkf_main import EnKFMain
 from ecl.util.stringlist import StringList
 
 
-class CustomKWConfigSetTest(ExtendedTestCase):
+class CustomKWConfigSetTest(ResTest):
 
     def createCustomKWConfig(self, name, data):
         with TestAreaContext("python/enkf/custom_kw_config_set_config") as test_area:

@@ -1,9 +1,9 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import ErtImplType, GenKwConfig
 
-class GenKwConfigTest(ExtendedTestCase):
+class GenKwConfigTest(ResTest):
 
     def setUp(self):
         self.config = self.createTestPath("Statoil/config/with_data/config")

@@ -1,7 +1,7 @@
 import time
 import os.path
 import sys
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.util import BoolVector
 
 from res.test import ErtTestContext
@@ -10,7 +10,7 @@ from res.enkf.enums import RealizationStateEnum
 from res.server import SimulationContext
 
 
-class SimulationContextTest(ExtendedTestCase):
+class SimulationContextTest(ResTest):
 
 
     def test_simulation_context(self):

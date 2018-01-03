@@ -2,10 +2,11 @@ import os.path
 import json
 
 from res.enkf.config import EnkfConfigNode
-from ecl.test import TestAreaContext, ExtendedTestCase
+from ecl.test import TestAreaContext
+from tests import ResTest
 
 
-class EnkfConfigNodeTest(ExtendedTestCase):
+class EnkfConfigNodeTest(ResTest):
 
     def test_gen_data(self):
 

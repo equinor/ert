@@ -1,8 +1,8 @@
 from ert_gui.ide.keywords.definitions import BoolArgument
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class BoolArgumentTest(ExtendedTestCase):
+class BoolArgumentTest(ResTest):
 
 
 

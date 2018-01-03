@@ -1,8 +1,8 @@
-from ecl.test.extended_testcase import ExtendedTestCase
+import ResTest
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
 
 
-class ErtShellAnalysisModuleTest(ExtendedTestCase):
+class ErtShellAnalysisModuleTest(ResTest):
 
     def test_analysis_module(self):
         test_config = self.createTestPath("local/custom_kw/mini_config")

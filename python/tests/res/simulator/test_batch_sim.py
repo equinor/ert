@@ -3,7 +3,8 @@ import stat
 import time
 import sys
 import unittest
-from ecl.test import ExtendedTestCase, TestAreaContext
+from tests import ResTest
+from ecl.test import TestAreaContext
 from ecl.util import BoolVector
 
 from res.test import ErtTestContext
@@ -14,7 +15,7 @@ from tests.res.enkf.test_programmatic_res_config import ProgrammaticResConfigTes
 
 
 
-class BatchSimulatorTest(ExtendedTestCase):
+class BatchSimulatorTest(ResTest):
 
 
     def test_create_simulator(self):

@@ -1,8 +1,8 @@
 from ert_gui.ide.keywords.definitions import IntegerArgument
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class IntegerArgumentTest(ExtendedTestCase):
+class IntegerArgumentTest(ResTest):
 
     def test_default_integer_argument(self):
         integer = IntegerArgument()

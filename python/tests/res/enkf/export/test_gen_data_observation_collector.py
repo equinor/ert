@@ -1,10 +1,10 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.export import GenDataObservationCollector
 
 
-class GenDataObservationCollectorTest(ExtendedTestCase):
+class GenDataObservationCollectorTest(ResTest):
 
     def test_gen_data_collector(self):
         config = self.createTestPath("local/custom_kw/mini_config")

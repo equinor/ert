@@ -15,7 +15,8 @@
 #  for more details.
 
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from ecl.util import BoolVector
 
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
@@ -32,7 +33,7 @@ from res.enkf.observations.summary_observation import SummaryObservation
 
 import os
 
-class EnKFRunpathTest(ExtendedTestCase):
+class EnKFRunpathTest(ResTest):
     def setUp(self):
         pass
 

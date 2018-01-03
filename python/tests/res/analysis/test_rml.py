@@ -16,7 +16,7 @@
 
 import random
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util import Matrix, BoolVector , RandomNumberGenerator
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
@@ -76,7 +76,7 @@ def init_matrices(ens , mask , obs, rng):
     
 
 
-class RMLTest(ExtendedTestCase):
+class RMLTest(ResTest):
     def setUp(self):
         self.libname = res.res_lib_path + "/rml_enkf.so"
         self.user    = "TEST"

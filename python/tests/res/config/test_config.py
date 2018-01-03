@@ -16,7 +16,8 @@
 import os
 
 from cwrap import Prototype, clib
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 
 from res import load as resload
 from res.config import UnrecognizedEnum, SchemaItem
@@ -40,7 +41,7 @@ _iget_as_double = TestConfigPrototype("double config_content_iget_as_double(conf
 _get_occurences = TestConfigPrototype("int config_content_get_occurences(config_content, char*)")
 
 
-class ConfigTest(ExtendedTestCase):
+class ConfigTest(ResTest):
     def setUp(self):
         self.file_list = []
 

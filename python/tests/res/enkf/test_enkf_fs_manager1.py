@@ -1,6 +1,6 @@
 import os
-from ecl.test import ExtendedTestCase
 from res.test import ErtTestContext
+from tests import ResTest
 
 from res.enkf import EnkfFs
 from res.enkf import EnKFMain
@@ -8,7 +8,7 @@ from res.enkf import EnkfFsManager
 
 
 
-class EnKFFSManagerTest1(ExtendedTestCase):
+class EnKFFSManagerTest1(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 

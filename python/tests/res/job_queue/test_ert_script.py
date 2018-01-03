@@ -1,5 +1,6 @@
 from res.job_queue import ErtScript
-from ecl.test import TestAreaContext, ExtendedTestCase
+from ecl.test import TestAreaContext
+from tests import ResTest
 from .workflow_common import WorkflowCommon
 
 
@@ -20,7 +21,7 @@ class NoneScript(ErtScript):
         assert arg is None
 
 
-class ErtScriptTest(ExtendedTestCase):
+class ErtScriptTest(ResTest):
 
     @staticmethod
     def createScripts():

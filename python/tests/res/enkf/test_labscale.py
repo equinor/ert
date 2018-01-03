@@ -15,13 +15,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import ObsVector
 
 
-class LabScaleTest(ExtendedTestCase):
+class LabScaleTest(ResTest):
 
 
     def testObs(self):

@@ -17,11 +17,12 @@
 
 import os
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 
 from res.enkf import AnalysisConfig
 
-class AnalysisConfigTest(ExtendedTestCase):
+class AnalysisConfigTest(ResTest):
 
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
