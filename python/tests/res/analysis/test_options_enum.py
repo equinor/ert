@@ -15,11 +15,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.analysis import AnalysisModuleOptionsEnum
 
 
-class AnalysisOptionsEnumTest(ExtendedTestCase):
+class AnalysisOptionsEnumTest(ResTest):
     def test_items(self):
         source_file_path = "libanalysis/include/ert/analysis/analysis_module.h"
         self.assertEnumIsFullyDefined(AnalysisModuleOptionsEnum, "analysis_module_flag_enum", source_file_path)

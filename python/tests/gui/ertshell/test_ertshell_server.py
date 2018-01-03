@@ -1,8 +1,8 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from tests.gui.ertshell.ert_shell_test_context import ErtShellTestContext
 
 
-class ErtShellServerTest(ExtendedTestCase):
+class ErtShellServerTest(ResTest):
 
     def test_server(self):
         config = self.createTestPath("local/snake_oil_no_data/snake_oil.ert")

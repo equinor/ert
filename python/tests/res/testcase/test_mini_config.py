@@ -1,9 +1,9 @@
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.test import ErtTestContext
-from ecl.test.extended_testcase import ExtendedTestCase
+from tests import ResTest
 
 
-class MiniConfigTest(ExtendedTestCase):
+class MiniConfigTest(ResTest):
 
     def test_failed_realizations(self):
 

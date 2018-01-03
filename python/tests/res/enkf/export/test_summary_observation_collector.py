@@ -1,11 +1,11 @@
 import os
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.export import SummaryObservationCollector
 
 
-class SummaryObservationCollectorTest(ExtendedTestCase):
+class SummaryObservationCollectorTest(ResTest):
 
     def setUp(self):
         os.environ["TZ"] = "CET" # The ert_statoil case was generated in CET

@@ -1,8 +1,8 @@
 from ert_gui.ide.keywords.definitions import PathArgument
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class PathArgumentTest(ExtendedTestCase):
+class PathArgumentTest(ResTest):
 
     def test_path_argument(self):
 

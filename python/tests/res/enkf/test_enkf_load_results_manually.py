@@ -1,11 +1,11 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from ecl.util import BoolVector
 
 
-class LoadResultsManuallyTest(ExtendedTestCase):
+class LoadResultsManuallyTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/with_data/config")
 

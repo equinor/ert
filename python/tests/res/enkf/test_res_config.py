@@ -17,7 +17,8 @@ import os, os.path
 from copy import deepcopy
 from datetime import date
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from ecl.util import CTime
 from ecl.util.enums import RngAlgTypeEnum, MessageLevelEnum
 
@@ -135,7 +136,7 @@ def expand_config_data():
                                                         config_defines[define_key]
                                                         )
 
-class ResConfigTest(ExtendedTestCase):
+class ResConfigTest(ResTest):
 
     def set_up_simple(self):
         self.case_directory = self.createTestPath("local/simple_config/")

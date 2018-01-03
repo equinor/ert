@@ -2,11 +2,11 @@ import datetime
 
 from ecl.util import BoolVector
 from ecl.test import TestAreaContext
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.enkf import MeasBlock, MeasData
 
 
-class MeasDataTest(ExtendedTestCase):
+class MeasDataTest(ResTest):
 
 
     def test_create(self):
@@ -15,7 +15,7 @@ class MeasDataTest(ExtendedTestCase):
         data = MeasData( ens_mask )
         self.assertEqual( len(data) , 0)
         self.assertTrue( isinstance( data , MeasData ))
-        
+
         block1 = data.addBlock( "OBS1" , 10 , 5 )
         block2 = data.addBlock( "OBS2" , 27 , 10 )
 
@@ -24,7 +24,7 @@ class MeasDataTest(ExtendedTestCase):
 
         with self.assertRaises(KeyError):
             data["NO-this-does-not-exist"]
-            
+
         with self.assertRaises(IndexError):
             data[2]
 
@@ -38,7 +38,7 @@ class MeasDataTest(ExtendedTestCase):
 
         self.assertTrue( isinstance( block1 , MeasBlock ))
         self.assertTrue( isinstance( block2 , MeasBlock ))
-        
+
         self.assertEqual( block1.getObsSize() , 5 )
         self.assertEqual( block2.getObsSize() , 10 )
 
@@ -49,8 +49,8 @@ class MeasDataTest(ExtendedTestCase):
         self.assertEqual(len(l) , 2)
         self.assertEqual(l[0] , block1)
         self.assertEqual(l[1] , block2)
-        
-        
+
+
         with self.assertRaises(ValueError):
             S = data.createS()
 
@@ -63,7 +63,7 @@ class MeasDataTest(ExtendedTestCase):
         S = data.createS()
 
         self.assertEqual( S.dims() , (3 , ens_size) )
-        
+
         for iens in range(ens_size):
             self.assertEqual( S[0,iens] , 5 )
             self.assertEqual( S[1,iens] , 10 )

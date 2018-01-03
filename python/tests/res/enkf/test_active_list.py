@@ -16,11 +16,11 @@
 
 from res.enkf import ActiveList
 from res.enkf import ActiveMode
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
 
-class ActiveListTest(ExtendedTestCase):
+class ActiveListTest(ResTest):
 
     def test_active_mode_enum(self):
         self.assertEqual(ActiveMode.ALL_ACTIVE,    1)

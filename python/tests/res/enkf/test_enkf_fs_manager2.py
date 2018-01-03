@@ -1,6 +1,6 @@
 import sys
 import os
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import EnkfFs
@@ -8,7 +8,7 @@ from res.enkf import EnKFMain
 from res.enkf import EnkfFsManager
 
 
-class EnKFFSManagerTest2(ExtendedTestCase):
+class EnKFFSManagerTest2(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("local/custom_kw/mini_config")
 

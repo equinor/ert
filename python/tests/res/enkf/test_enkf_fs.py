@@ -1,5 +1,6 @@
 import os
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf import EnkfFs
@@ -7,7 +8,7 @@ from res.enkf import EnKFMain
 from res.enkf.enums import EnKFFSType
 
 
-class EnKFFSTest(ExtendedTestCase):
+class EnKFFSTest(ResTest):
     def setUp(self):
         self.mount_point = "storage/default"
         self.config_file = self.createTestPath("Statoil/config/with_data/config")

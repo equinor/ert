@@ -1,8 +1,8 @@
 from res.job_queue import JobStatusType
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class JobQueueTest(ExtendedTestCase):
+class JobQueueTest(ResTest):
 
     def testStatusEnum(self):
         source_path = "libjob_queue/include/ert/job_queue/queue_driver.h"

@@ -16,12 +16,13 @@
 
 import os, itertools
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from ecl.util.enums import MessageLevelEnum
 
 from res.enkf import LogConfig, ResConfig
 
-class LogConfigTest(ExtendedTestCase):
+class LogConfigTest(ResTest):
 
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")

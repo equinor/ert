@@ -1,7 +1,7 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.enkf import ForwardLoadContext
 
-class ForwardLoadContextTest(ExtendedTestCase):
+class ForwardLoadContextTest(ResTest):
 
     def test_create(self):
         ctx = ForwardLoadContext( report_step = 1 )

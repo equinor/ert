@@ -3,7 +3,7 @@ from ert.analysis import AnalysisModule
 from ert.analysis import Linalg
 
 
-from  ecl.test import ExtendedTestCase
+from tests import ResTest
 
-class ErtLegacyAnalysisTest(ExtendedTestCase):
+class ErtLegacyAnalysisTest(ResTest):
     pass

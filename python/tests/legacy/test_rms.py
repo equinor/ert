@@ -1,5 +1,5 @@
 
-from  ecl.test import ExtendedTestCase
+from tests import ResTest
 
-class ErtLegacyRmsTest(ExtendedTestCase):
+class ErtLegacyRmsTest(ResTest):
     pass

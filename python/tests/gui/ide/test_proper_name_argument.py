@@ -1,8 +1,8 @@
 from ert_gui.ide.keywords.definitions import ProperNameArgument
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class ProperNameArgumentTest(ExtendedTestCase):
+class ProperNameArgumentTest(ResTest):
 
     def test_proper_name_argument(self):
 

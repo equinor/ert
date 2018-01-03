@@ -9,7 +9,7 @@ from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
 from res.server import ErtRPCServer, ErtRPCClient
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext, ErtTest
 from tests.res.server import RPCServiceContext
 
@@ -22,7 +22,7 @@ def realizationIsInitialized(ert, case_name, realization_number):
     return state == RealizationStateEnum.STATE_INITIALIZED or state == RealizationStateEnum.STATE_HAS_DATA
 
 
-class RPCServiceTest(ExtendedTestCase):
+class RPCServiceTest(ResTest):
     def setUp(self):
         self.config = self.createTestPath("local/snake_oil_no_data/snake_oil.ert")
 

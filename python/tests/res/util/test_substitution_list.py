@@ -1,8 +1,8 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.util.substitution_list import SubstitutionList
 
 
-class SubstitutionListTest(ExtendedTestCase):
+class SubstitutionListTest(ResTest):
     def test_substitution_list(self):
         subst_list = SubstitutionList()
 

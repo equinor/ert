@@ -17,7 +17,7 @@ from ert.job_queue import WorkflowRunner
 from ert.job_queue import JobManager, assert_file_executable
 
 
-from  ecl.test import ExtendedTestCase
+from tests import ResTest
 
-class ErtLegacyJobQueueTest(ExtendedTestCase):
+class ErtLegacyJobQueueTest(ResTest):
     pass

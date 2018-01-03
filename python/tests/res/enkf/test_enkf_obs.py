@@ -1,4 +1,4 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from ecl.ecl import EclGrid, EclSum
@@ -10,7 +10,7 @@ from res.enkf import (ObsVector, LocalObsdata, EnkfObs, TimeMap,
                       LocalObsdataNode, ObsData, MeasData, ActiveList)
 
 
-class EnKFObsTest(ExtendedTestCase):
+class EnKFObsTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/obs_testing/config")
         self.obs_config = self.createTestPath("Statoil/config/obs_testing/observations")

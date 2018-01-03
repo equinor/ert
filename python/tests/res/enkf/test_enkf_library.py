@@ -1,5 +1,6 @@
 import os
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 
 from ecl.ecl import EclSum
 from res.enkf import AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig, ObsVector
@@ -10,7 +11,7 @@ from res.enkf import EnKFMain, ResConfig
 from res.enkf.util import TimeMap
 
 
-class EnKFLibraryTest(ExtendedTestCase):
+class EnKFLibraryTest(ResTest):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
 

@@ -15,7 +15,7 @@
 #  for more details.
 
 import random
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
@@ -34,47 +34,47 @@ def update(rng , mask , module , ert , meas_data , obs_data , state_size):
 
     A = Matrix(state_size , meas_data.getActiveEnsSize())
     A.randomInit( rng )
-    
+
     module.initUpdate( mask , S , R , dObs , E , D )
     module.updateA( A , S , R , dObs , E , D )
 
-    
 
 
-class UpdateTest(ExtendedTestCase):
-    def setUp(self):
-        self.libname = ert.ert_lib_path + "/rml_enkf.so"
-        self.config_file = self.createTestPath("Statoil/config/obs_testing2/config")
-        self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
+
+class UpdateTest(ResTest):
+  def setUp(self):
+      self.libname = ert.ert_lib_path + "/rml_enkf.so"
+      self.config_file = self.createTestPath("Statoil/config/obs_testing2/config")
+      self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)
 
 
-    def createAnalysisModule(self):
-        return AnalysisModule(self.rng, lib_name = self.libname)
-        
-        
-    def test_it(self):
-        state_size = 10
-        with ErtTestContext("update" , self.config_file) as tc: 
-            analysis = self.createAnalysisModule()
-            ert = tc.getErt()
-            obs = ert.getObservations()
-            local_obsdata = obs.getAllActiveLocalObsdata( )
-            
-            fs = ert.getEnkfFsManager().getCurrentFileSystem()
+  def createAnalysisModule(self):
+      return AnalysisModule(self.rng, lib_name = self.libname)
 
 
-            mask = BoolVector( initial_size = ert.getEnsembleSize() , default_value = True)
-            meas_data = MeasData(mask)
-            obs_data = ObsData()
-            obs.getObservationAndMeasureData( fs , local_obsdata , mask.createActiveList() , meas_data , obs_data )
-            update( self.rng , mask , analysis , ert , meas_data , obs_data , state_size)
-            
-            
-            mask[0] = False
-            mask[4] = False
-            meas_data = MeasData(mask)
-            obs_data = ObsData()
-            obs.getObservationAndMeasureData( fs , local_obsdata , mask.createActiveList() , meas_data , obs_data )
-            update( self.rng , mask , analysis , ert , meas_data , obs_data , state_size)
-            
-        
+  def test_it(self):
+      state_size = 10
+      with ErtTestContext("update" , self.config_file) as tc:
+          analysis = self.createAnalysisModule()
+          ert = tc.getErt()
+          obs = ert.getObservations()
+          local_obsdata = obs.getAllActiveLocalObsdata( )
+
+          fs = ert.getEnkfFsManager().getCurrentFileSystem()
+
+
+          mask = BoolVector( initial_size = ert.getEnsembleSize() , default_value = True)
+          meas_data = MeasData(mask)
+          obs_data = ObsData()
+          obs.getObservationAndMeasureData( fs , local_obsdata , mask.createActiveList() , meas_data , obs_data )
+          update( self.rng , mask , analysis , ert , meas_data , obs_data , state_size)
+
+
+          mask[0] = False
+          mask[4] = False
+          meas_data = MeasData(mask)
+          obs_data = ObsData()
+          obs.getObservationAndMeasureData( fs , local_obsdata , mask.createActiveList() , meas_data , obs_data )
+          update( self.rng , mask , analysis , ert , meas_data , obs_data , state_size)
+
+

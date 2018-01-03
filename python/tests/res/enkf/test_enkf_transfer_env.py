@@ -19,7 +19,8 @@ import sys
 import json
 import subprocess
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from ecl.util import BoolVector
 
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
@@ -37,7 +38,7 @@ from res.enkf.observations.summary_observation import SummaryObservation
 from res.test import ErtTestContext
 
 
-class EnKFTestTransferEnv(ExtendedTestCase):
+class EnKFTestTransferEnv(ResTest):
 
   def setUp(self):
     pass

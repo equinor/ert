@@ -1,13 +1,13 @@
-import datetime 
+import datetime
 
 from ecl.test import TestAreaContext
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.util import BoolVector
 from res.enkf import MeasBlock
 
 
 
-class MeasBlockTest(ExtendedTestCase):
+class MeasBlockTest(ResTest):
 
 
     def test_create(self):
@@ -21,10 +21,10 @@ class MeasBlockTest(ExtendedTestCase):
         self.assertEqual( block.getObsSize() , obs_size )
         self.assertEqual( block.getActiveEnsSize() , ens_size - 1)
         self.assertEqual( block.getTotalEnsSize() , ens_size )
-        
+
         self.assertTrue( block.iensActive( 66 ) )
         self.assertFalse( block.iensActive( 67 ) )
-        
+
 
 
 
@@ -46,7 +46,7 @@ class MeasBlockTest(ExtendedTestCase):
 
         with self.assertRaises(IndexError):
             block[0,ens_size] = 10
-            
+
         #-----------------------------------------------------------------
 
         with self.assertRaises(TypeError):
@@ -64,7 +64,7 @@ class MeasBlockTest(ExtendedTestCase):
         block[1,2] = 3
         self.assertEqual( 3 , block[1,2] )
 
-        
+
 
     def test_inactive(self):
         key = "OBS"
@@ -73,14 +73,14 @@ class MeasBlockTest(ExtendedTestCase):
         ens_mask = BoolVector( default_value = True , initial_size = ens_size )
         ens_mask[5] = False
         block = MeasBlock( key , obs_size , ens_mask)
-        
+
         self.assertFalse( block.iensActive( 5 ))
-        
+
         with self.assertRaises(ValueError):
             block[0,5] = 10
 
 
-            
+
 
     def test_stat(self):
         key = "OBS"
@@ -92,12 +92,12 @@ class MeasBlockTest(ExtendedTestCase):
         for iens in range(ens_size):
             block[0,iens] = iens
             block[1,iens] = iens + 1
-        
+
         self.assertEqual( 4.5 , block.igetMean( 0 ))
         self.assertEqual( 5.5 , block.igetMean( 1 ))
-        
+
         self.assertFloatEqual( 2.872281 , block.igetStd( 0 ))
         self.assertFloatEqual( 2.872281 , block.igetStd( 1 ))
 
-        
+
 

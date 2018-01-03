@@ -1,9 +1,9 @@
 from ert_gui.ide.keywords.data import Keyword, Argument, Token
 from ert_gui.ide.keywords.definitions import KeywordDefinition, StringArgument
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class TokenTest(ExtendedTestCase):
+class TokenTest(ResTest):
     def test_token(self):
         line = "some words in a line"
         token = Token(5, 10, line)

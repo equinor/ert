@@ -1,12 +1,13 @@
 from ecl.util import BoolVector, PathFormat
 from res.util.substitution_list import SubstitutionList
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from res.enkf import ErtRunContext
 from res.enkf.enums import EnkfRunType
 from res.enkf.enums import EnKFFSType
 from res.enkf import EnkfFs
 
-class ErtRunContextTest(ExtendedTestCase):
+class ErtRunContextTest(ResTest):
 
     def test_create(self):
         with TestAreaContext("run_context"):

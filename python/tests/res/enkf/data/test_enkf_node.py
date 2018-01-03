@@ -4,10 +4,11 @@ import os.path
 from res.enkf.data import ExtParam
 from res.enkf.data import EnkfNode
 from res.enkf.config import ExtParamConfig, EnkfConfigNode
-from ecl.test import TestAreaContext, ExtendedTestCase
+from ecl.test import TestAreaContext
+from tests import ResTest
 
 
-class EnkfNodeTest(ExtendedTestCase):
+class EnkfNodeTest(ResTest):
 
     def test_config(self):
         keys = ["Key1" , "Key2" , "Key3"]

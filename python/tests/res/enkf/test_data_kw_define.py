@@ -15,12 +15,12 @@
 #  for more details.
 import os
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 
 
-class DataKWTest(ExtendedTestCase):
+class DataKWTest(ResTest):
 
     def test_it(self):
         config = self.createTestPath("local/custom_kw/mini_config_define")

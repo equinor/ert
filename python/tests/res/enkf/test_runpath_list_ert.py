@@ -1,6 +1,7 @@
 import unittest
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
 from res.test import ErtTestContext
+from tests import ResTest
 
 from res.enkf import RunpathList, RunpathNode, ErtRunContext
 from res.enkf.enums import EnkfInitModeEnum,EnkfRunType
@@ -10,7 +11,7 @@ from res.util.substitution_list import SubstitutionList
 
 
 
-class RunpathListTestErt(ExtendedTestCase):
+class RunpathListTestErt(ResTest):
 
     def test_an_enkf_runpath(self):
         # TODO this test is flaky and we need to figure out why.  See #1370

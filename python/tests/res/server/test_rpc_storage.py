@@ -4,7 +4,7 @@ from random import random
 import sys
 import time
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.util import BoolVector
 from res.enkf.enums import ErtImplType, EnkfRunType
 from res.enkf.export.custom_kw_collector import CustomKWCollector
@@ -34,7 +34,7 @@ def initializeCase(ert, name, size):
 
 
 
-class RPCStorageTest(ExtendedTestCase):
+class RPCStorageTest(ResTest):
     def test_rpc_storage(self):
         config = self.createTestPath("local/snake_oil_no_data/snake_oil.ert")
 

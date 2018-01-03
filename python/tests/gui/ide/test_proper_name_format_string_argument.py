@@ -1,8 +1,8 @@
 from ert_gui.ide.keywords.definitions import ProperNameFormatStringArgument
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class ProperNameFormatStringArgumentTest(ExtendedTestCase):
+class ProperNameFormatStringArgumentTest(ResTest):
 
     def test_proper_name_format_string_argument(self):
 

@@ -1,10 +1,11 @@
 import os.path
 import random
-from ecl.test import TestRun , path_exists , ExtendedTestCase
-    
+from tests import ResTest
+from ecl.test import TestRun , path_exists
 
 
-class RunTest(ExtendedTestCase):
+
+class RunTest(ResTest):
     def setUp(self):
         # Slightly weird - tests need existing file,
         # but it can be empty ....
@@ -16,7 +17,7 @@ class RunTest(ExtendedTestCase):
     def test_init(self):
         with self.assertRaises(IOError):
             TestRun("Does/notExist")
-            
+
         tr = TestRun(self.testConfig)
         self.assertEqual( tr.config_file , os.path.split( self.testConfig)[1])
         self.assertEqual(tr.ert_version , "stable")
@@ -44,24 +45,24 @@ class RunTest(ExtendedTestCase):
     def test_workflows(self):
         tr = TestRun(self.testConfig)
         self.assertEqual( tr.get_workflows() , [])
-        
+
         tr.add_workflow( "wf1" )
         tr.add_workflow( "wf2" )
         self.assertEqual( tr.get_workflows() , ["wf1" , "wf2"])
 
-        
+
     def test_run_no_workflow(self):
         tr = TestRun(self.testConfig)
         with self.assertRaises(Exception):
             tr.run()
 
-                    
-        
+
+
 
     def test_runpath(self):
         tr = TestRun(self.testConfig , "Name")
         self.assertEqual( TestRun.default_path_prefix , tr.path_prefix )
-        
+
 
     def test_check(self):
         tr = TestRun(self.testConfig , "Name")

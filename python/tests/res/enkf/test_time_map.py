@@ -3,10 +3,10 @@ import datetime
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.enkf import TimeMap
 from ecl.test import TestAreaContext
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class TimeMapTest(ExtendedTestCase):
+class TimeMapTest(ResTest):
 
     def test_time_map(self):
         with self.assertRaises(IOError):

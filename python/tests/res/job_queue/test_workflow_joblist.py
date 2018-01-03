@@ -1,10 +1,11 @@
 import res.enkf  # noqa
 from res.job_queue import WorkflowJoblist, WorkflowJob
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from .workflow_common import WorkflowCommon
 
 
-class WorkflowJoblistTest(ExtendedTestCase):
+class WorkflowJoblistTest(ResTest):
 
     def test_workflow_joblist_creation(self):
         joblist = WorkflowJoblist()

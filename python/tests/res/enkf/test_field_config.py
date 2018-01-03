@@ -14,13 +14,14 @@
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
 from os.path import abspath
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 
 from ecl.ecl import EclGrid
 from res.enkf.config import FieldTypeEnum, FieldConfig
 from res.enkf.enums import EnkfFieldFileFormatEnum
 
-class FieldConfigTest(ExtendedTestCase):
+class FieldConfigTest(ResTest):
 
     def test_field_guess_filetype(self):
         with TestAreaContext('field_config') as test_context:

@@ -82,7 +82,7 @@ from ert.job_queue import ErtPlugin as ErtPlugin, CancelPluginException as Cance
 
 
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
-class ErtLegacyEnkfTest(ExtendedTestCase):
+class ErtLegacyEnkfTest(ResTest):
     pass

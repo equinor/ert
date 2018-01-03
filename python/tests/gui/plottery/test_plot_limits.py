@@ -1,10 +1,10 @@
 import datetime
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ert_gui.plottery import PlotLimits
 
 
-class PlotLimitsTest(ExtendedTestCase):
+class PlotLimitsTest(ResTest):
 
     def test_plot_limits_construction(self):
         plot_limits = PlotLimits()

@@ -1,5 +1,5 @@
 from res.enkf.export import DesignMatrixReader
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.test.test_area import TestAreaContext
 
 def dumpDesignMatrix1(path):
@@ -20,7 +20,7 @@ def dumpDesignMatrix2(path):
 
 
 
-class DesignMatrixTest(ExtendedTestCase):
+class DesignMatrixTest(ResTest):
 
     def test_read_design_matrix(self):
         with TestAreaContext("python/enkf/export/design_matrix"):

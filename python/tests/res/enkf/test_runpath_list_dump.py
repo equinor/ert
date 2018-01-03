@@ -1,6 +1,7 @@
 import unittest, os
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from res.test import ErtTestContext
 
 from ecl.util import BoolVector, PathFormat
@@ -8,7 +9,7 @@ from ecl.util import BoolVector, PathFormat
 from res.enkf import ResConfig, EnKFMain, EnkfFs, ErtRunContext
 from res.enkf.enums import EnKFFSType, EnkfRunType
 
-class RunpathListDumpTest(ExtendedTestCase):
+class RunpathListDumpTest(ResTest):
 
     def setUp(self):
         self.config_rel_path = "local/snake_oil_no_data/snake_oil_GEO_ID.ert"

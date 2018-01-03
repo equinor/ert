@@ -19,9 +19,9 @@
 from res.enkf import ObsVector
 from ecl.util import Matrix
 from res.analysis import Linalg
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
-class LinalgTest(ExtendedTestCase):
+class LinalgTest(ResTest):
 
     def test_num_PC(self):
         S = Matrix(3,3)

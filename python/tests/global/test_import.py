@@ -21,6 +21,6 @@ import sys
 from ecl.test import ImportTestCase
 
 class ImportRes(ImportTestCase):
-    
+
     def test_import(self):
         self.assertTrue( self.import_package( "res" ))

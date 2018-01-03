@@ -1,11 +1,11 @@
 import datetime
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.enkf import PlotSettings
 from ert_gui.plottery import PlotStyle, PlotConfig, PlotLimits
 
 
-class PlotStyleTest(ExtendedTestCase):
+class PlotStyleTest(ResTest):
 
     def test_plot_style_test_defaults(self):
         style = PlotStyle("Test")

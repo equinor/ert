@@ -1,6 +1,7 @@
 import os
 import sys
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from ecl.util import BoolVector
 
 from res.test import ErtTestContext
@@ -10,7 +11,7 @@ from res.enkf.enums import EnKFFSType
 from res.enkf.enums import RealizationStateEnum
 
 
-class SimulationBatchTest(ExtendedTestCase):
+class SimulationBatchTest(ResTest):
     def setUp(self):
         pass
 

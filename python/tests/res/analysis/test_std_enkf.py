@@ -14,14 +14,14 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.rng import RandomNumberGenerator
 
 
-class StdEnKFTest(ExtendedTestCase):
+class StdEnKFTest(ResTest):
 
     def setUp(self):
         self.rng = RandomNumberGenerator(RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT)

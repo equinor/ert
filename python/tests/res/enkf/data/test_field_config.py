@@ -18,10 +18,10 @@ import os
 
 from res.enkf import FieldConfig
 from res.enkf import ActiveList
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.ecl  import EclGrid
 
-class FieldConfigTest(ExtendedTestCase):
+class FieldConfigTest(ResTest):
 
     def test_create(self):
         grid = EclGrid.createRectangular( (10,10,5) , (1,1,1) )

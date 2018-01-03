@@ -16,7 +16,8 @@
 
 import os.path
 
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from ecl.util import BoolVector
 
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
@@ -32,7 +33,7 @@ from res.enkf.enums import (EnkfObservationImplementationType, LoadFailTypeEnum,
 from res.enkf.observations.summary_observation import SummaryObservation
 
 
-class EnKFTest(ExtendedTestCase):
+class EnKFTest(ResTest):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
         self.case_directory_custom_kw = self.createTestPath("local/snake_oil/")

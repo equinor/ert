@@ -1,10 +1,11 @@
 from res.job_queue import Workflow, WorkflowJoblist
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from res.util.substitution_list import SubstitutionList
 from .workflow_common import WorkflowCommon
 
 
-class WorkflowTest(ExtendedTestCase):
+class WorkflowTest(ResTest):
 
     def test_workflow(self):
         with TestAreaContext("python/job_queue/workflow") as work_area:

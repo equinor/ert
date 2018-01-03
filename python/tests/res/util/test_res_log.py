@@ -1,9 +1,10 @@
 import os
 from res.util import ResLog
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 
 
-class ResLogTest(ExtendedTestCase):
+class ResLogTest(ResTest):
 
     def test_log(self):
         with TestAreaContext("python/res_log/log") as work_area:

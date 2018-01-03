@@ -1,4 +1,4 @@
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from ecl.util import BoolVector,IntVector
@@ -6,7 +6,7 @@ from res.enkf import ActiveMode, EnsembleConfig
 from res.enkf import ObsVector , LocalObsdata
 
 
-class EnsembleConfigTest(ExtendedTestCase):
+class EnsembleConfigTest(ResTest):
 
     def test_create(self):
         conf = EnsembleConfig( )

@@ -1,7 +1,8 @@
 import os.path
 from res.enkf.data import GenKw
 from res.enkf.config import GenKwConfig
-from ecl.test import TestAreaContext, ExtendedTestCase
+from ecl.test import TestAreaContext
+from tests import ResTest
 
 
 def create_gen_kw():
@@ -24,7 +25,7 @@ def create_gen_kw():
 
 
 
-class GenKwTest(ExtendedTestCase):
+class GenKwTest(ResTest):
 
     def test_gen_kw_get_set(self):
         with TestAreaContext("enkf/data/gen_kwt"):

@@ -1,7 +1,7 @@
 from res.enkf import SummaryKeyMatcher
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
-class SummaryKeyMatcherTest(ExtendedTestCase):
+class SummaryKeyMatcherTest(ResTest):
 
     def test_creation(self):
         matcher = SummaryKeyMatcher()

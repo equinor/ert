@@ -1,8 +1,8 @@
 from ert_gui.ide.keywords.definitions import PercentArgument
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 
 
-class PercentArgumentTest(ExtendedTestCase):
+class PercentArgumentTest(ResTest):
 
     def test_default_percent_argument(self):
         percent = PercentArgument()

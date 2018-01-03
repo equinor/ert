@@ -1,5 +1,5 @@
 import os
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.test.test_area import TestAreaContext
 from res.test.ert_test_context import ErtTestContext
 
@@ -8,7 +8,7 @@ from res.enkf.enkf_fs import EnkfFs
 from res.enkf import EnKFMain, ResConfig
 
 
-class SummaryKeySetTest(ExtendedTestCase):
+class SummaryKeySetTest(ResTest):
 
     def test_creation(self):
 

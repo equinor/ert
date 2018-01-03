@@ -2,7 +2,7 @@ import pandas
 import numpy
 import os
 
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.export import (DesignMatrixReader, SummaryCollector,
@@ -38,7 +38,7 @@ def dumpDesignMatrix(path):
         dm.write("23	0.08	625	OFF\n")
         dm.write("24	0.08	725	ON\n")
 
-class ExportJoinTest(ExtendedTestCase):
+class ExportJoinTest(ResTest):
 
     def setUp(self):
         os.environ["TZ"] = "CET" # The ert_statoil case was generated in CET

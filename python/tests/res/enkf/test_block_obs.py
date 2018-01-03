@@ -18,11 +18,11 @@ import os
 
 from res.enkf import BlockObservation
 from res.enkf import ActiveList, FieldConfig
-from ecl.test import ExtendedTestCase
+from tests import ResTest
 from ecl.ecl import EclGrid
 
 
-class BlockObsTest(ExtendedTestCase):
+class BlockObsTest(ResTest):
 
     def test_create(self):
         grid = EclGrid.createRectangular( (10,20,5) , (1,1,1) )

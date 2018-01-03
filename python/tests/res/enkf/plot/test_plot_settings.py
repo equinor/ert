@@ -1,4 +1,5 @@
-from ecl.test import ExtendedTestCase, TestAreaContext
+from ecl.test import TestAreaContext
+from tests import ResTest
 from res.test import ErtTestContext
 
 from res.config import *
@@ -11,7 +12,7 @@ _plot_settings_config = EnkfPrototype("void plot_settings_add_config_items( conf
 
 
 
-class PlotSettingsTest(ExtendedTestCase):
+class PlotSettingsTest(ResTest):
 
 
     def test_create(self):

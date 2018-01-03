@@ -7,12 +7,12 @@ from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from res.enkf.export import custom_kw_collector
 from res.enkf.export.custom_kw_collector import CustomKWCollector
 from res.test.ert_test_context import ErtTestContext
-from ecl.test.extended_testcase import ExtendedTestCase
+from tests import ResTest
 from ecl.test.test_area import TestAreaContext
 from ecl.util import StringList
 from ecl.util import BoolVector
 
-class CustomKWTest(ExtendedTestCase):
+class CustomKWTest(ResTest):
 
     def createResultFile(self, filename, data):
         with open(filename, "w") as output_file:
