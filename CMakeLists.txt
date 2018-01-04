@@ -40,7 +40,7 @@ endif()
 #-----------------------------------------------------------------
 
 option( BUILD_TESTS         "Should the tests be built"             OFF)
-option( BUILD_PYTHON        "Run py_compile on the python wrappers" ON )
+option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
 option( ENABLE_PYTHON       "Enable the python wrappers"            ON )
 option( RST_DOC             "Build RST documentation"               OFF)
 option( USE_RPATH           "Should we embed path to libraries"     ON )
