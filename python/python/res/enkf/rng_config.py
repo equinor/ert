@@ -28,6 +28,7 @@ class RNGConfig(BaseCClass):
     _rng_alg_type = EnkfPrototype("rng_alg_type_enum rng_config_get_type(rng_config)")
     _load_file    = EnkfPrototype("char* rng_config_get_seed_load_file(rng_config)")
     _store_file   = EnkfPrototype("char* rng_config_get_seed_store_file(rng_config)")
+    _random_seed  = EnkfPrototype("char* rng_config_get_random_seed(rng_config)")
 
     def __init__(self, user_config_file):
         raise NotImplementedError(
@@ -46,3 +47,7 @@ class RNGConfig(BaseCClass):
     @property
     def store_filename(self):
         return self._store_file()
+
+    @property
+    def random_seed(self):
+        return self._random_seed()

@@ -143,6 +143,7 @@ extern "C" {
 #define  UPDATE_PATH_KEY                   "UPDATE_PATH"
 #define  SINGLE_NODE_UPDATE_KEY            "SINGLE_NODE_UPDATE"
 #define  STORE_SEED_KEY                    "STORE_SEED"
+#define  RANDOM_SEED_KEY                   "RANDOM_SEED"
 #define  UMASK_KEY                         "UMASK"
 #define  WORKFLOW_JOB_DIRECTORY_KEY        "WORKFLOW_JOB_DIRECTORY"
 #define  LOAD_WORKFLOW_KEY                 "LOAD_WORKFLOW"

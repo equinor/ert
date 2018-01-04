@@ -50,6 +50,7 @@ set(TEST_SOURCES
     test_runpath_list_dump.py
     test_data_kw_define.py
     test_programmatic_res_config.py
+    test_rng_config.py
 )
 
 add_python_package("python.tests.res.enkf" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf "${TEST_SOURCES}" False)
@@ -86,6 +87,7 @@ addPythonTest(tests.res.enkf.test_run_context.ErtRunContextTest)
 addPythonTest(tests.res.enkf.test_runpath_list_dump.RunpathListDumpTest)
 addPythonTest(tests.res.enkf.test_enkf_runpath.EnKFRunpathTest)
 addPythonTest(tests.res.enkf.test_programmatic_res_config.ProgrammaticResConfigTest)
+addPythonTest(tests.res.enkf.test_rng_config.RNGConfigTest)
 addPythonTest(tests.res.enkf.test_enkf.EnKFTest)
 addPythonTest(tests.res.enkf.test_enkf_transfer_env.EnKFTestTransferEnv)
 addPythonTest(tests.res.enkf.test_enkf_sim_model.EnKFTestSimModel)

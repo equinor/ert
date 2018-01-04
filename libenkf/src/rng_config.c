@@ -25,6 +25,8 @@
 #include <ert/config/config_parser.h>
 #include <ert/config/config_schema_item.h>
 
+#include <ert/res_util/res_log.h>
+
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/rng_manager.h>
 #include <ert/enkf/config_keys.h>
@@ -34,11 +36,21 @@
 
 struct rng_config_struct {
   rng_alg_type      type;
+  char            * random_seed;
   char            * seed_load_file;    /* NULL: Do not store the seed. */
   char            * seed_store_file;   /* NULL: Do not load a seed from file. */
 };
 
 
+static void rng_config_set_random_seed(rng_config_type * rng_config, const char * random_seed) {
+  util_safe_free(rng_config->random_seed);
+  // TODO: Handle odd sizes
+  rng_config->random_seed = util_alloc_string_copy(random_seed);
+}
+
+const char * rng_config_get_random_seed(const rng_config_type * rng_config) {
+  return rng_config->random_seed;
+}
 
 void rng_config_set_type( rng_config_type * rng_config , rng_alg_type type) {
   rng_config->type = type;
@@ -69,6 +81,7 @@ static rng_config_type * rng_config_alloc_default(void) {
   rng_config_type * rng_config = util_malloc( sizeof * rng_config);
 
   rng_config_set_type( rng_config , MZRAN );  /* Only type ... */
+  rng_config->random_seed = NULL;
   rng_config->seed_store_file = NULL;
   rng_config->seed_load_file = NULL;
 
@@ -101,6 +114,7 @@ rng_config_type * rng_config_alloc(const config_content_type * config_content) {
 void rng_config_free( rng_config_type * rng) {
   util_safe_free( rng->seed_load_file );
   util_safe_free( rng->seed_store_file );
+  util_safe_free( rng->random_seed );
   free( rng );
 }
 
@@ -134,15 +148,31 @@ void rng_config_add_config_items( config_parser_type * config ) {
   item = config_add_schema_item( config , LOAD_SEED_KEY , false );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_PATH );
+
+  config_add_key_value(config, RANDOM_SEED_KEY, false, CONFIG_STRING);
 }
 
 
 void rng_config_init(rng_config_type * rng_config, const config_content_type * config_content) {
-  if(config_content_has_item(config_content, STORE_SEED_KEY))
-    rng_config_set_seed_store_file(rng_config, config_content_iget(config_content, STORE_SEED_KEY, 0, 0));
+  if(config_content_has_item(config_content, RANDOM_SEED_KEY)) {
+    const char * random_seed = config_content_get_value(config_content, RANDOM_SEED_KEY);
+    rng_config_set_random_seed(rng_config, random_seed);
+    res_log_add_fmt_message(LOG_CRITICAL, stdout, "Using RANDOM_SEED: %s", random_seed);
+  }
 
-  if(config_content_has_item(config_content, LOAD_SEED_KEY))
-    rng_config_set_seed_load_file(rng_config, config_content_iget(config_content, LOAD_SEED_KEY,0 ,0));
+  if(config_content_has_item(config_content, STORE_SEED_KEY)) {
+    if(rng_config->random_seed)
+      res_log_add_fmt_message(LOG_ERROR, stdout, "Cannot have both RANDOM_SEED and STORE_SEED keywords. STORE_SEED will be ignored.");
+    else
+      rng_config_set_seed_store_file(rng_config, config_content_iget(config_content, STORE_SEED_KEY, 0, 0));
+  }
+
+  if(config_content_has_item(config_content, LOAD_SEED_KEY)) {
+    if(rng_config->random_seed)
+      res_log_add_fmt_message(LOG_ERROR, stdout, "Cannot have both RANDOM_SEED and LOAD_SEED keywords. LOAD_SEED will be ignored.");
+    else
+      rng_config_set_seed_load_file(rng_config, config_content_iget(config_content, LOAD_SEED_KEY, 0 ,0));
+  }
 }
 
 

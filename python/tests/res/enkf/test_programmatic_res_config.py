@@ -544,4 +544,3 @@ class ProgrammaticResConfigTest(ResTest):
             # Create minimum config in cwd:
             with ErtTestContext( "dict_test", config_dict = self.minimum_config_cwd, store_area = True):
                 pass
-
