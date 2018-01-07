@@ -24,7 +24,7 @@ extern "C" {
 #include <time.h>
 
 #include <ert/util/path_fmt.h>
-#include <ert/util/ui_return.h>
+#include <ert/res_util/ui_return.h>
 
 #include <ert/config/config_parser.h>
 #include <ert/config/config_content.h>

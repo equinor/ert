@@ -9,6 +9,7 @@ if (HAVE_PTHREAD)
 endif ()
 
 add_library( res_util src/res_log.c
+                      src/ui_return.c
                       src/subst_list.c
                       src/subst_func.c
                       src/template.c

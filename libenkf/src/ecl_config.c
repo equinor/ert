@@ -25,7 +25,7 @@
 #include <ert/util/path_fmt.h>
 #include <ert/util/util.h>
 #include <ert/util/parser.h>
-#include <ert/util/ui_return.h>
+#include <ert/res_util/ui_return.h>
 
 #include <ert/sched/sched_file.h>
 

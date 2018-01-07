@@ -18,8 +18,9 @@ from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
 from res.config import ConfigContent
 from ecl.ecl import EclSum, EclGrid
-from ecl.util import StringList, UIReturn
+from ecl.util import StringList
 from res.sched import SchedFile
+from res.util import UIReturn
 
 class EclConfig(BaseCClass):
     TYPE_NAME = "ecl_config"
