@@ -24,3 +24,4 @@ class ResUtilPrototype(Prototype):
 
 from .res_version import ResVersion
 from .res_log import ResLog
+from .ui_return import UIReturn

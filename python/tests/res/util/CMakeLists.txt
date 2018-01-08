@@ -1,5 +1,6 @@
 set(TEST_SOURCES
     __init__.py
+    test_ui_return.py
     test_res_log.py
     test_substitution_list.py
     test_version.py
