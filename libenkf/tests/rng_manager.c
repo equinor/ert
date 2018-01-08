@@ -28,7 +28,7 @@
 #define MAX_INT 999999
 
 void test_create() {
-  rng_manager_type * rng_manager = rng_manager_alloc("file/does/not/exist");
+  rng_manager_type * rng_manager = rng_manager_alloc_load("file/does/not/exist");
   test_assert_NULL( rng_manager );
 
   rng_manager = rng_manager_alloc_default( );
@@ -82,8 +82,8 @@ void test_state( ) {
   rng_manager_save_state( rng_manager , "seed.txt");
   test_assert_true( util_file_exists( "seed.txt" ));
   {
-    rng_manager_type * rng_manager1 = rng_manager_alloc( "seed.txt");
-    rng_manager_type * rng_manager2 = rng_manager_alloc( "seed.txt");
+    rng_manager_type * rng_manager1 = rng_manager_alloc_load( "seed.txt");
+    rng_manager_type * rng_manager2 = rng_manager_alloc_load( "seed.txt");
 
     rng_type * rng1_0   = rng_manager_iget( rng_manager1, 0 );
     rng_type * rng1_100 = rng_manager_iget( rng_manager1, 100 );
@@ -107,7 +107,7 @@ void test_state_restore( ) {
   rng_manager_save_state( rng_manager1 , "seed.txt");
   rng_type * rng1 = rng_manager_alloc_rng( rng_manager1 );
   {
-    rng_manager_type * rng_manager2 = rng_manager_alloc("seed.txt");
+    rng_manager_type * rng_manager2 = rng_manager_alloc_load("seed.txt");
 
     rng_type * rng1_0   = rng_manager_iget( rng_manager1, 0 );
     rng_type * rng1_100 = rng_manager_iget( rng_manager1, 100 );
@@ -148,7 +148,39 @@ void test_random( ) {
 }
 
 
+static void test_alloc() {
+  const char * random_seed1 = "apekatterbesting";
+  const char * random_seed2 = "apekatterbesxing";
+
+  rng_manager_type * rng_man0 = rng_manager_alloc(random_seed1);
+  rng_manager_type * rng_man1 = rng_manager_alloc(random_seed1);
+  rng_manager_type * rng_man_odd = rng_manager_alloc(random_seed2);
+
+  test_assert_not_NULL(rng_man0);
+
+  rng_type * rng0_0  = rng_manager_iget(rng_man0, 0);
+  rng_type * rng0_42 = rng_manager_iget(rng_man0, 42);
+
+  rng_type * rng1_0  = rng_manager_iget(rng_man1, 0);
+  rng_type * rng1_42 = rng_manager_iget(rng_man1, 42);
+
+  rng_type * rng_odd_0  = rng_manager_iget(rng_man_odd, 0);
+  rng_type * rng_odd_42 = rng_manager_iget(rng_man_odd, 42);
+
+  test_assert_int_equal(rng_get_int(rng0_0, MAX_INT), rng_get_int(rng1_0, MAX_INT));
+  test_assert_int_equal(rng_get_int(rng0_42, MAX_INT), rng_get_int(rng1_42, MAX_INT));
+
+  test_assert_int_not_equal(rng_get_int(rng0_0, MAX_INT), rng_get_int(rng_odd_0, MAX_INT));
+  test_assert_int_not_equal(rng_get_int(rng0_42, MAX_INT), rng_get_int(rng_odd_42, MAX_INT));
+
+  rng_manager_free(rng_man0);
+  rng_manager_free(rng_man1);
+  rng_manager_free(rng_man_odd);
+}
+
+
 int main(int argc , char ** argv) {
+  test_alloc();
   test_create();
   test_default();
   test_state();

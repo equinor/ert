@@ -125,7 +125,7 @@ rng_manager_type * rng_config_alloc_rng_manager( const rng_config_type * rng_con
   rng_manager_type * rng_manager;
 
   if (seed_load && util_file_exists( seed_load ))
-    rng_manager = rng_manager_alloc( seed_load );
+    rng_manager = rng_manager_alloc_load( seed_load );
   else
     rng_manager = rng_manager_alloc_random( );
 

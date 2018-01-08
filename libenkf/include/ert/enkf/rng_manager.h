@@ -28,7 +28,8 @@ extern "C" {
 
 typedef struct rng_manager_struct rng_manager_type;
 
-rng_manager_type * rng_manager_alloc( const char * seed_file );
+rng_manager_type * rng_manager_alloc(const char * random_seed);
+rng_manager_type * rng_manager_alloc_load( const char * seed_file );
 rng_manager_type * rng_manager_alloc_default( );
 rng_manager_type * rng_manager_alloc_random( );
 

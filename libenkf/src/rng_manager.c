@@ -36,7 +36,7 @@ struct rng_manager_struct {
 
 UTIL_IS_INSTANCE_FUNCTION( rng_manager, RNG_MANAGER_TYPE_ID )
 
-static rng_manager_type * rng_manager_alloc__( const char * seed_file, rng_init_mode init_mode) {
+static rng_manager_type * rng_manager_alloc__(rng_init_mode init_mode) {
   rng_manager_type * rng_manager = util_malloc( sizeof * rng_manager );
   UTIL_TYPE_ID_INIT( rng_manager, RNG_MANAGER_TYPE_ID );
   rng_manager->rng_list = vector_alloc_new( );
@@ -44,29 +44,49 @@ static rng_manager_type * rng_manager_alloc__( const char * seed_file, rng_init_
   rng_manager->internal_seed_rng = rng_alloc( rng_manager->rng_alg, init_mode );
   rng_manager->external_seed_rng = rng_alloc( rng_manager->rng_alg, init_mode );
 
-  if (seed_file) {
-    rng_load_state( rng_manager->internal_seed_rng , seed_file );
-    rng_load_state( rng_manager->external_seed_rng , seed_file );
-  }
   rng_rng_init( rng_manager->external_seed_rng, rng_manager->external_seed_rng );
 
   return rng_manager;
 }
 
+/**
+ * Allocates an rng_manager with the specified seed.
+ *
+ * NOTE: With random algorithm mzran the provided seed should contain 16
+ * characters, less will result in undefined behavour. Characters beyond
+ * the required 16 will be ignored.
+ */
+rng_manager_type * rng_manager_alloc(const char * random_seed) {
+  rng_manager_type * rng_manager = rng_manager_alloc_default();
 
-rng_manager_type * rng_manager_alloc( const char * seed_file ) {
-  if (!util_file_exists( seed_file ))
+  rng_set_state(rng_manager->internal_seed_rng, random_seed);
+  rng_set_state(rng_manager->external_seed_rng, random_seed);
+
+  rng_rng_init(rng_manager->external_seed_rng, rng_manager->external_seed_rng);
+
+  return rng_manager;
+}
+
+rng_manager_type * rng_manager_alloc_load(const char * seed_file) {
+  if (!util_file_exists(seed_file))
     return NULL;
 
-  return rng_manager_alloc__( seed_file, INIT_DEFAULT );
+  rng_manager_type * rng_manager = rng_manager_alloc_default();
+
+  rng_load_state(rng_manager->internal_seed_rng, seed_file);
+  rng_load_state(rng_manager->external_seed_rng, seed_file);
+
+  rng_rng_init(rng_manager->external_seed_rng, rng_manager->external_seed_rng);
+
+  return rng_manager;
 }
 
 rng_manager_type * rng_manager_alloc_default( ) {
-  return rng_manager_alloc__( NULL, INIT_DEFAULT );
+  return rng_manager_alloc__(INIT_DEFAULT );
 }
 
 rng_manager_type * rng_manager_alloc_random( ) {
-  return rng_manager_alloc__( NULL, INIT_DEV_URANDOM);
+  return rng_manager_alloc__(INIT_DEV_URANDOM);
 }
 
 
