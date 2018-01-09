@@ -18,7 +18,7 @@
 import os.path
 from res.enkf import EclConfig
 from tests import ResTest
-from ecl.util import UIReturn
+from res.util import UIReturn
 from ecl.ecl  import EclSum
 
 EGRID_file    = "Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
