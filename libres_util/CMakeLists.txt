@@ -9,6 +9,7 @@ if (HAVE_PTHREAD)
 endif ()
 
 add_library( res_util src/res_log.c
+                      src/log.c
                       src/ui_return.c
                       src/subst_list.c
                       src/subst_func.c
@@ -52,6 +53,10 @@ if (NOT BUILD_TESTS)
 endif()
 
 #Tests go below
+add_executable(ert_util_log tests/ert_util_logh.c)
+target_link_libraries(ert_util_log res_util)
+add_test(NAME ert_util_log COMMAND ert_util_log)
+
 add_executable(ert_util_subst_list tests/ert_util_subst_list.c)
 target_link_libraries(ert_util_subst_list res_util)
 add_test(NAME ert_util_subst_list COMMAND ert_util_subst_list)

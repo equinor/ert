@@ -20,7 +20,8 @@
 #define ERT_LOG_CONFIG_H
 
 #include <ert/config/config_content.h>
-#include <ert/util/log.h>
+
+#include <ert/res_util/log.h>
 
 
 #define LOG_CRITICAL_NAME "CRITICAL"
