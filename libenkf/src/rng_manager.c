@@ -21,6 +21,7 @@
 #include <ert/util/rng.h>
 #include <ert/util/vector.h>
 #include <ert/enkf/rng_manager.h>
+#include <ert/res_util/res_log.h>
 
 #define RNG_MANAGER_TYPE_ID 77250451
 
@@ -124,7 +125,26 @@ rng_type * rng_manager_iget(rng_manager_type * rng_manager, int index) {
 }
 
 
-
 void rng_manager_save_state(const rng_manager_type * rng_manager, const char * seed_file) {
   rng_save_state( rng_manager->internal_seed_rng, seed_file );
+}
+
+
+void rng_manager_log_state(const rng_manager_type * rng_manager) {
+  unsigned int random_seed [RNG_STATE_SIZE];
+  rng_get_state(rng_manager->internal_seed_rng, (char *) random_seed);
+
+  char random_seed_str[RNG_STATE_DIGITS*RNG_STATE_SIZE+1];
+  random_seed_str[0] = '\0';
+  char * uint_fmt = util_alloc_sprintf("%%0%du", RNG_STATE_DIGITS);
+
+  for(int i = 0; i < RNG_STATE_SIZE; ++i) {
+    char * elem = util_alloc_sprintf(uint_fmt, random_seed[i]);
+    strcat(random_seed_str, elem);
+    free(elem);
+  }
+  free(uint_fmt);
+
+  res_log_add_fmt_message(LOG_CRITICAL, stdout, "To repeat this experiment, add the following random seed to your config file:");
+  res_log_add_fmt_message(LOG_CRITICAL, stdout, "RANDOM_SEED %s", random_seed_str);
 }

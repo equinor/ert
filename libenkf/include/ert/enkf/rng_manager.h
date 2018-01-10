@@ -26,6 +26,20 @@
 extern "C" {
 #endif
 
+/*
+ * The number of unsigned int's necessary to represent the state of the rng
+ * algorithm. Since the current algorithm used is mzran, this value is set to
+ * 4.
+ */
+#define RNG_STATE_SIZE 4
+
+/**
+ * The number of digits used to print each unigned int representing the rng
+ * state.
+ */
+#define RNG_STATE_DIGITS 10
+
+
 typedef struct rng_manager_struct rng_manager_type;
 
 rng_manager_type * rng_manager_alloc(const char * random_seed);
@@ -37,6 +51,7 @@ rng_type         * rng_manager_alloc_rng(rng_manager_type * rng_manager);
 rng_type         * rng_manager_iget(rng_manager_type * rng_manager, int index);
 void               rng_manager_free( rng_manager_type * rng_manager );
 void               rng_manager_save_state(const rng_manager_type * rng_manager, const char * seed_file);
+void               rng_manager_log_state(const rng_manager_type * rng_manager);
 
 
 UTIL_IS_INSTANCE_HEADER( rng_manager );

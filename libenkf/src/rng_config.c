@@ -43,9 +43,24 @@ struct rng_config_struct {
 
 
 static void rng_config_set_random_seed(rng_config_type * rng_config, const char * random_seed) {
-  util_safe_free(rng_config->random_seed);
-  // TODO: Handle odd sizes
-  rng_config->random_seed = util_alloc_string_copy(random_seed);
+  rng_config->random_seed = util_realloc_string_copy(rng_config->random_seed, random_seed);
+}
+
+static char * rng_config_alloc_formatted_random_seed(const rng_config_type * rng_config) {
+  unsigned int * fseed = (unsigned int*) malloc(RNG_STATE_SIZE * sizeof(unsigned int*));
+
+  int seed_len = strlen(rng_config->random_seed);
+  int seed_pos = 0;
+  for (int i = 0; i < RNG_STATE_SIZE; ++i) {
+    fseed[i] = 0;
+    for (int k = 0; k < RNG_STATE_DIGITS; ++k) {
+      fseed[i] *= 10;
+      fseed[i] += rng_config->random_seed[seed_pos] - '0';
+      seed_pos = (seed_pos+1) % seed_len;
+    }
+  }
+
+  return (char *) fseed;
 }
 
 const char * rng_config_get_random_seed(const rng_config_type * rng_config) {
@@ -114,7 +129,7 @@ rng_config_type * rng_config_alloc(const config_content_type * config_content) {
 void rng_config_free( rng_config_type * rng) {
   util_safe_free( rng->seed_load_file );
   util_safe_free( rng->seed_store_file );
-  util_safe_free( rng->random_seed );
+  free( rng->random_seed );
   free( rng );
 }
 
@@ -124,11 +139,18 @@ rng_manager_type * rng_config_alloc_rng_manager( const rng_config_type * rng_con
   const char * seed_load  = rng_config_get_seed_load_file( rng_config );
   rng_manager_type * rng_manager;
 
-  if (seed_load && util_file_exists( seed_load ))
+  if (rng_config->random_seed) {
+    char * formatted_seed = rng_config_alloc_formatted_random_seed(rng_config);
+    rng_manager = rng_manager_alloc(formatted_seed);
+  }
+  else if (seed_load && util_file_exists( seed_load )) {
     rng_manager = rng_manager_alloc_load( seed_load );
-  else
+  }
+  else {
     rng_manager = rng_manager_alloc_random( );
+  }
 
+  rng_manager_log_state(rng_manager);
   if (seed_store)
     rng_manager_save_state( rng_manager , seed_store );
 
@@ -138,18 +160,20 @@ rng_manager_type * rng_config_alloc_rng_manager( const rng_config_type * rng_con
 
 /*****************************************************************/
 
-void rng_config_add_config_items( config_parser_type * config ) {
-  config_schema_item_type * item;
+void rng_config_add_config_items( config_parser_type * parser ) {
+  config_add_key_value(parser, STORE_SEED_KEY, false, CONFIG_PATH);
+  config_install_message(
+          parser,
+          STORE_SEED_KEY,
+          "WARNING: STORE_SEED is deprecated - for reproducibility, fetch logged RANDOM_SEED instead");
 
-  item= config_add_schema_item( config , STORE_SEED_KEY , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_PATH );
+  config_add_key_value(parser, LOAD_SEED_KEY, false, CONFIG_PATH);
+  config_install_message(
+          parser,
+          LOAD_SEED_KEY,
+          "WARNING: LOAD_SEED is deprecated - use RANDOM_SEED instead");
 
-  item = config_add_schema_item( config , LOAD_SEED_KEY , false );
-  config_schema_item_set_argc_minmax(item , 1 , 1 );
-  config_schema_item_iset_type( item , 0 , CONFIG_PATH );
-
-  config_add_key_value(config, RANDOM_SEED_KEY, false, CONFIG_STRING);
+  config_add_key_value(parser, RANDOM_SEED_KEY, false, CONFIG_STRING);
 }
 
 
@@ -157,7 +181,6 @@ void rng_config_init(rng_config_type * rng_config, const config_content_type * c
   if(config_content_has_item(config_content, RANDOM_SEED_KEY)) {
     const char * random_seed = config_content_get_value(config_content, RANDOM_SEED_KEY);
     rng_config_set_random_seed(rng_config, random_seed);
-    res_log_add_fmt_message(LOG_CRITICAL, stdout, "Using RANDOM_SEED: %s", random_seed);
   }
 
   if(config_content_has_item(config_content, STORE_SEED_KEY)) {

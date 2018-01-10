@@ -156,8 +156,6 @@ static void test_alloc() {
   rng_manager_type * rng_man1 = rng_manager_alloc(random_seed1);
   rng_manager_type * rng_man_odd = rng_manager_alloc(random_seed2);
 
-  test_assert_not_NULL(rng_man0);
-
   rng_type * rng0_0  = rng_manager_iget(rng_man0, 0);
   rng_type * rng0_42 = rng_manager_iget(rng_man0, 42);
 
