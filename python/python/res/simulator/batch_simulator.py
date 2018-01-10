@@ -3,6 +3,10 @@ from ecl.util import BoolVector
 from res.enkf import ResConfig, ErtRunContext, EnKFMain, EnkfConfigNode, EnkfNode, NodeId
 from .batch_simulator_context import BatchContext
 
+def _slug(entity):
+    entity = ' '.join(str(entity).split())
+    return ''.join([x if x.isalnum() else '_' for x in entity.strip()])
+
 class BatchSimulator(object):
 
     def __init__(self, res_config, controls, results):
@@ -95,6 +99,7 @@ class BatchSimulator(object):
         batch complete before you start a new batch.
         """
         ens_config = self.res_config.ensemble_config
+        self.ert.addDataKW("<CASE_NAME>", _slug(case_name))
         fsm = self.ert.getEnkfFsManager( )
         fs = fsm.getFileSystem(case_name)
 
