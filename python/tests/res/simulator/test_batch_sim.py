@@ -114,13 +114,21 @@ class BatchSimulatorTest(ResTest):
                                     "WELL_ON_OFF" : ["W1","W2", "W3"]},
                                    ["ORDER", "ON_OFF"])
 
+            case_name = 'MyCaseName_123'
             # Starting a simulation which should actually run through.
-            ctx = rsim.start("case", [(2, {"WELL_ORDER" : [1, 2, 3], "WELL_ON_OFF" : [4,5,6]}),
-                                      (1, {"WELL_ORDER" : [7, 8, 9], "WELL_ON_OFF" : [10,11,12]})])
+            ctx = rsim.start(case_name, [(2, {
+                "WELL_ORDER": [1, 2, 3],
+                "WELL_ON_OFF": [4, 5, 6]
+            }), (1, {
+                "WELL_ORDER": [7, 8, 9],
+                "WELL_ON_OFF": [10, 11, 12]
+            })])
             ctx.stop()
             status = ctx.status
             self.assertEqual(status.complete, 0)
             self.assertEqual(status.running, 0)
+            runpath = 'storage/batch_sim/runpath/%s/realisation-0' % case_name
+            self.assertTrue(os.path.exists(runpath))
 
 
 if __name__ == "__main__":
