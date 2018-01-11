@@ -20,7 +20,8 @@ from datetime import date
 from ecl.test import TestAreaContext
 from tests import ResTest
 from ecl.util import CTime
-from ecl.util.enums import RngAlgTypeEnum, MessageLevelEnum
+from ecl.util.enums import RngAlgTypeEnum
+from res.util.enums import MessageLevelEnum
 
 from res.sched import HistorySourceEnum
 

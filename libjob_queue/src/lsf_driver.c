@@ -26,12 +26,13 @@
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/util/stringlist.h>
+#include <ert/res_util/log.h>
 #include <ert/res_util/res_log.h>
 
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/lsf_driver.h>
 #include <ert/job_queue/lsf_job_stat.h>
-#include <ert/util/log.h>
+
 
 #ifdef HAVE_LSF_LIBRARY
 #include <ert/job_queue/lsb.h>

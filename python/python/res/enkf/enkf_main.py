@@ -17,7 +17,7 @@ import ctypes, warnings
 
 from os.path import isfile
 from cwrap import BaseCClass
-from ecl.util import Log
+from res.util import Log
 from res.util.substitution_list import SubstitutionList
 
 from res.enkf import (EnkfPrototype, EnkfObs, EnKFState, ENKF_LIB,

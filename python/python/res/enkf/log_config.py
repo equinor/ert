@@ -18,7 +18,7 @@ from os.path import isfile
 
 from cwrap import BaseCClass
 
-from ecl.util.enums import MessageLevelEnum
+from res.util.enums import MessageLevelEnum
 
 from res.enkf import EnkfPrototype
 

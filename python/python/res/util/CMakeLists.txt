@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    log.py
     res_log.py
     ui_return.py
     res_version.py
