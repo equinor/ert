@@ -15,6 +15,7 @@ add_library( res_util src/res_log.c
                       src/subst_func.c
                       src/template.c
                       src/template_loop.c
+                      src/path_fmt.c
                       src/block_fs.c
                       src/res_version.c
                       src/regression.c

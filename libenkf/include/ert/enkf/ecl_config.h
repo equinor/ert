@@ -23,7 +23,6 @@ extern "C" {
 #endif
 #include <time.h>
 
-#include <ert/util/path_fmt.h>
 #include <ert/res_util/ui_return.h>
 
 #include <ert/config/config_parser.h>
@@ -34,6 +33,8 @@ extern "C" {
 #include <ert/ecl/ecl_io_config.h>
 
 #include <ert/sched/sched_file.h>
+
+#include <ert/res_util/path_fmt.h>
 
 #include <ert/enkf/ecl_refcase_list.h>
 

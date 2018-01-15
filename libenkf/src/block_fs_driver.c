@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'block_fs_driver.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'block_fs_driver.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -21,11 +21,12 @@
 #include <stdio.h>
 
 #include <ert/util/util.h>
-#include <ert/util/path_fmt.h>
 #include <ert/util/buffer.h>
 #include <ert/util/timer.h>
 #include <ert/util/thread_pool.h>
+
 #include <ert/res_util/block_fs.h>
+#include <ert/res_util/path_fmt.h>
 
 #include <ert/enkf/fs_types.h>
 #include <ert/enkf/fs_driver.h>
@@ -54,7 +55,7 @@ struct bfs_struct  {
   /*-----------------------------------------------------------------*/
   /* New variables */
   block_fs_type * block_fs;
-  char          * mountfile;  // The full path to the file mounted by the block_fs layer - including extension. 
+  char          * mountfile;  // The full path to the file mounted by the block_fs layer - including extension.
 
   const bfs_config_type * config;
 };
@@ -66,10 +67,10 @@ struct block_fs_driver_struct {
   int                __id;
   int                num_fs;
   bfs_config_type  * config;
-  
+
   // New variables
   bfs_type        ** fs_list;
-}; 
+};
 
 /*****************************************************************/
 
@@ -82,7 +83,7 @@ bfs_config_type * bfs_config_alloc( fs_driver_enum driver_type , bool read_only,
   const bool DYNAMIC_preload       = true;
   const bool DEFAULT_preload       = false;
 
-  const int max_cache_size         = 512; 
+  const int max_cache_size         = 512;
   const int fsync_interval         =  10;     /* An fsync() call is issued for every 10'th write. */
   const double fragmentation_limit = 1.0;     /* 1.0 => NO defrag is run. */
 
@@ -93,7 +94,7 @@ bfs_config_type * bfs_config_alloc( fs_driver_enum driver_type , bool read_only,
     config->fragmentation_limit = fragmentation_limit;
     config->read_only           = read_only;
     config->bfs_lock            = bfs_lock;
-    
+
     switch (driver_type) {
     case( DRIVER_PARAMETER ):
       config->block_size = PARAMETER_blocksize;
@@ -130,7 +131,7 @@ static void bfs_close( bfs_type * bfs ) {
 static void * bfs_close__( void * arg ) {
   bfs_type * bfs = ( bfs_type * ) arg;
   bfs_close( bfs );
-  
+
   return NULL;
 }
 
@@ -138,10 +139,10 @@ static bfs_type * bfs_alloc( const bfs_config_type * config ) {
   bfs_type * fs = util_malloc( sizeof * fs );
   UTIL_TYPE_ID_INIT( fs , BFS_TYPE_ID );
   fs->config         = config;
-  
+
   // New init
   fs->mountfile = NULL;
-  
+
   return fs;
 }
 
@@ -156,12 +157,12 @@ static bfs_type * bfs_alloc_new( const bfs_config_type * config , char * mountfi
 
 static void bfs_mount( bfs_type * bfs) {
   const bfs_config_type * config = bfs->config;
-  bfs->block_fs = block_fs_mount( bfs->mountfile , 
-                                  config->block_size , 
-                                  config->max_cache_size , 
-                                  config->fragmentation_limit , 
-                                  config->fsync_interval , 
-                                  config->preload , 
+  bfs->block_fs = block_fs_mount( bfs->mountfile ,
+                                  config->block_size ,
+                                  config->max_cache_size ,
+                                  config->fragmentation_limit ,
+                                  config->fsync_interval ,
+                                  config->preload ,
                                   config->read_only,
                                   config->bfs_lock);
 }
@@ -170,7 +171,7 @@ static void bfs_mount( bfs_type * bfs) {
 static void * bfs_mount__( void * arg ) {
   bfs_type * bfs = bfs_safe_cast( arg );
   bfs_mount( bfs );
-  //printf("."); 
+  //printf(".");
   //fflush( stdout );
   return NULL;
 }
@@ -188,7 +189,7 @@ static void bfs_fsync( bfs_type * bfs ) {
 
 
 static void block_fs_driver_assert_cast(block_fs_driver_type * block_fs_driver) {
-  if (block_fs_driver->__id != BLOCK_FS_DRIVER_ID) 
+  if (block_fs_driver->__id != BLOCK_FS_DRIVER_ID)
     util_abort("%s: internal error - cast failed - aborting \n",__func__);
 }
 
@@ -215,7 +216,7 @@ static char * block_fs_driver_alloc_vector_key( const block_fs_driver_type * dri
    string.int.int, where string is the normal enkf key, and the two
    integers are report_step and ensemble number respectively. The
    storage for the enkf_key is allocated here in this function, and
-   must be freed by the calling scope.  
+   must be freed by the calling scope.
 
    If the parsing fails the function will return false, and *config_key
    will be set to NULL; in this case the report_step and iens poinyers
@@ -237,7 +238,7 @@ bool block_fs_sscanf_key(const char * key , char ** config_key , int * __report_
       *config_key    = util_alloc_joined_string((const char **) tmp , num_items - 2 , ".");  /* This must bee freed by the calling scope */
       util_free_stringlist( tmp , num_items );
       return true;
-    } else  
+    } else
       /* Failed to parse the two last items as integers. */
       return false;
   } else
@@ -250,7 +251,7 @@ bool block_fs_sscanf_key(const char * key , char ** config_key , int * __report_
 
 static bfs_type * block_fs_driver_get_fs( block_fs_driver_type * driver , int iens ) {
   int phase                = (iens % driver->num_fs);
-  
+
   return driver->fs_list[phase];
 }
 
@@ -261,9 +262,9 @@ static void block_fs_driver_load_node(void * _driver , const char * node_key , i
   {
     char * key          = block_fs_driver_alloc_node_key( driver , node_key , report_step , iens );
     bfs_type      * bfs = block_fs_driver_get_fs( driver , iens );
-    
+
     block_fs_fread_realloc_buffer( bfs->block_fs , key , buffer);
-    
+
     free( key );
   }
 }
@@ -274,7 +275,7 @@ static void block_fs_driver_load_vector(void * _driver , const char * node_key ,
   {
     char * key          = block_fs_driver_alloc_vector_key( driver , node_key , iens );
     bfs_type      * bfs = block_fs_driver_get_fs( driver , iens );
-    
+
     block_fs_fread_realloc_buffer( bfs->block_fs , key , buffer);
     free( key );
   }
@@ -372,7 +373,7 @@ void block_fs_driver_free(void *_driver) {
   {
     int driver_nr;
     thread_pool_type * tp         = thread_pool_alloc( 4 , true);
-    for (driver_nr = 0; driver_nr < driver->num_fs; driver_nr++) 
+    for (driver_nr = 0; driver_nr < driver->num_fs; driver_nr++)
       thread_pool_add_job( tp , bfs_close__ , driver->fs_list[driver_nr] );
 
     thread_pool_join( tp );
@@ -388,11 +389,11 @@ void block_fs_driver_free(void *_driver) {
 static void block_fs_driver_fsync( void * _driver ) {
   block_fs_driver_type * driver = (block_fs_driver_type *) _driver;
   block_fs_driver_assert_cast(driver);
-  
+
   {
     int driver_nr;
     block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
-    for (driver_nr = 0; driver_nr < driver->num_fs; driver_nr++)  
+    for (driver_nr = 0; driver_nr < driver->num_fs; driver_nr++)
       bfs_fsync( driver->fs_list[driver_nr] );
   }
 }
@@ -430,7 +431,7 @@ static void * block_fs_driver_alloc_new( fs_driver_enum driver_type , bool read_
   block_fs_driver_type * driver = block_fs_driver_alloc( num_fs);
   driver->config = bfs_config_alloc( driver_type , read_only, block_level_lock );
   {
-    for (int ifs = 0; ifs < driver->num_fs; ifs++) 
+    for (int ifs = 0; ifs < driver->num_fs; ifs++)
       driver->fs_list[ifs] = bfs_alloc_new( driver->config , util_alloc_sprintf( mountfile_fmt , ifs) );
   }
   return driver;
@@ -438,7 +439,7 @@ static void * block_fs_driver_alloc_new( fs_driver_enum driver_type , bool read_
 
 
 static void block_fs_driver_mount( block_fs_driver_type * driver ) {
-  thread_pool_type * tp = thread_pool_alloc( 4 , true ); 
+  thread_pool_type * tp = thread_pool_alloc( 4 , true );
 
   for (int ifs = 0; ifs < driver->num_fs; ifs++)
     thread_pool_add_job( tp , bfs_mount__ , driver->fs_list[ ifs ]);
@@ -453,13 +454,13 @@ static void block_fs_driver_mount( block_fs_driver_type * driver ) {
 
 /*****************************************************************/
 
-void block_fs_driver_create_fs( FILE * stream , 
-                                const char * mount_point , 
-                                fs_driver_enum driver_type , 
-                                int num_fs , 
-                                const char * ens_path_fmt, 
+void block_fs_driver_create_fs( FILE * stream ,
+                                const char * mount_point ,
+                                fs_driver_enum driver_type ,
+                                int num_fs ,
+                                const char * ens_path_fmt,
                                 const char * filename ) {
-  
+
   util_fwrite_int(driver_type , stream );
   util_fwrite_int(num_fs , stream );
   {
@@ -467,13 +468,13 @@ void block_fs_driver_create_fs( FILE * stream ,
     util_fwrite_string( mountfile_fmt , stream );
     free( mountfile_fmt );
   }
-  
+
   for (int ifs = 0; ifs < num_fs; ifs++) {
     char * path_fmt = util_alloc_sprintf("%s%c%s" , mount_point , UTIL_PATH_SEP_CHAR , ens_path_fmt);
     char * ens_path = util_alloc_sprintf(path_fmt , ifs);
-    
+
     util_make_path( ens_path );
-    
+
     free( path_fmt );
     free( ens_path );
   }
@@ -483,7 +484,7 @@ void block_fs_driver_create_fs( FILE * stream ,
 
 /*
   @path should contain both elements called root_path and case_path in
-  the block_fs_driver_create() function.  
+  the block_fs_driver_create() function.
 */
 
 void * block_fs_driver_open(FILE * fstab_stream , const char * mount_point , fs_driver_enum driver_type , bool read_only) {
@@ -491,11 +492,11 @@ void * block_fs_driver_open(FILE * fstab_stream , const char * mount_point , fs_
   char * tmp_fmt              = util_fread_alloc_string( fstab_stream );
   char * mountfile_fmt        = util_alloc_sprintf("%s%c%s" , mount_point , UTIL_PATH_SEP_CHAR , tmp_fmt );
   const bool block_level_lock = false;
-  
+
   block_fs_driver_type * driver = block_fs_driver_alloc_new( driver_type , read_only , num_fs , mountfile_fmt, block_level_lock );
-  
+
   block_fs_driver_mount( driver );
-  
+
   free( tmp_fmt );
   free( mountfile_fmt );
   return driver;

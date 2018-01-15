@@ -24,7 +24,6 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <ert/util/path_fmt.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/type_macros.h>
 

@@ -36,7 +36,7 @@
 #include <ert/util/bool_vector.h>
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
-#include <ert/util/path_fmt.h>
+#include <ert/res_util/path_fmt.h>
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/stringlist.h>
