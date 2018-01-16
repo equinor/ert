@@ -57,6 +57,7 @@ class ConfigKeys:
     _ecl_file             = EnkfPrototype("char* config_keys_get_ecl_file()", bind=False)
     _output_format        = EnkfPrototype("char* config_keys_get_output_format()", bind=False)
     _init_files           = EnkfPrototype("char* config_keys_get_init_files()", bind=False)
+    _random_seed          = EnkfPrototype("char* config_keys_get_random_seed()", bind=False)
 
     ARGLIST          = "ARGLIST"
     CONFIG_DIRECTORY = _config_directory_key()
@@ -87,6 +88,7 @@ class ConfigKeys:
     UPDATE_LOG_PATH  = _update_log_path()
     STORE_SEED       = _store_seed()
     LOAD_SEED        = _load_seed()
+    RANDOM_SEED      = _random_seed()
     SUMMARY          = _summary()
     JOBNAME          = _jobname()
     MAX_RUNTIME      = _max_runtime()

@@ -72,7 +72,7 @@ class RNGConfigTest(ResTest):
         config = self.create_base_config()
 
         random_seed = "abcdefghijklmnop"
-        config["SIMULATION"]["SEED"] = { "RANDOM_SEED" : random_seed }
+        config["SIMULATION"]["SEED"] = { ConfigKeys.RANDOM_SEED : random_seed }
 
         case_directory = self.createTestPath("local/simple_config")
         with TestAreaContext("rng_config") as work_area:
@@ -94,7 +94,7 @@ class RNGConfigTest(ResTest):
         random_seed = "abcdefghijklmnop"
         config["SIMULATION"]["SEED"] = { "STORE_SEED" : seed_store,
                                          "LOAD_SEED"  : seed_load,
-                                         "RANDOM_SEED" : random_seed }
+                                         ConfigKeys.RANDOM_SEED : random_seed }
 
         case_directory = self.createTestPath("local/simple_config")
         with TestAreaContext("rng_config") as work_area:

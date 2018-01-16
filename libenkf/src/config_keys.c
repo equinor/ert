@@ -169,3 +169,7 @@ const char * config_keys_get_output_format() {
 const char * config_keys_get_init_files() {
   return INIT_FILES_KEY;
 }
+
+const char * config_keys_get_random_seed() {
+  return RANDOM_SEED_KEY;
+}
