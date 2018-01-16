@@ -32,8 +32,6 @@ class EnkfFs(BaseCClass):
     _get_refcount         = EnkfPrototype("int   enkf_fs_get_refcount(enkf_fs)")
     _has_node             = EnkfPrototype("bool  enkf_fs_has_node(enkf_fs,     char*,  int,   int, int, int)")
     _has_vector           = EnkfPrototype("bool  enkf_fs_has_vector(enkf_fs,   char*,  int,   int, int)")
-    _fread_node           = EnkfPrototype("void  enkf_fs_fread_node(enkf_fs,   buffer, char*, int, int, int, int)")
-    _fread_vector         = EnkfPrototype("void  enkf_fs_fread_vector(enkf_fs, buffer, char*, int, int, int)")
     _get_case_name        = EnkfPrototype("char* enkf_fs_get_case_name(enkf_fs)")
     _is_read_only         = EnkfPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
     _is_running           = EnkfPrototype("bool  enkf_fs_is_running(enkf_fs)")
