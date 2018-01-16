@@ -25,8 +25,9 @@
 #include <ert/util/buffer.h>
 #include <ert/util/rng.h>
 #include <ert/util/vector.h>
-#include <ert/util/path_fmt.h>
 #include <ert/util/type_macros.h>
+
+#include <ert/res_util/path_fmt.h>
 
 #include <ert/enkf/enkf_node.h>
 #include <ert/enkf/enkf_config_node.h>

@@ -24,7 +24,7 @@ extern "C" {
 #include <pthread.h>
 #include <stdbool.h>
 
-#include <ert/util/path_fmt.h>
+#include <ert/res_util/path_fmt.h>
 
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/job_node.h>

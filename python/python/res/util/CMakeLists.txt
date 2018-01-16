@@ -2,6 +2,7 @@ set(PYTHON_SOURCES
     __init__.py
     log.py
     res_log.py
+    path_format.py
     ui_return.py
     res_version.py
     substitution_list.py

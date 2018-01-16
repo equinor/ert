@@ -28,10 +28,11 @@
 
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
-#include <ert/util/path_fmt.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/arg_pack.h>
+
+#include <ert/res_util/path_fmt.h>
 
 #include <ert/enkf/block_fs_driver.h>
 #include <ert/enkf/enkf_fs.h>

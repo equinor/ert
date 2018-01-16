@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'plain_driver.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'plain_driver.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -21,8 +21,9 @@
 #include <stdio.h>
 
 #include <ert/util/util.h>
-#include <ert/util/path_fmt.h>
 #include <ert/util/buffer.h>
+
+#include <ert/res_util/path_fmt.h>
 
 #include <ert/enkf/fs_driver.h>
 #include <ert/enkf/plain_driver.h>
@@ -66,7 +67,7 @@ struct plain_driver_struct {
 
 
 static void plain_driver_assert_cast(plain_driver_type * plain_driver) {
-  if (plain_driver->__id != PLAIN_DRIVER_ID) 
+  if (plain_driver->__id != PLAIN_DRIVER_ID)
     util_abort("%s: internal error - cast failed - aborting \n",__func__);
 }
 
@@ -197,7 +198,7 @@ void plain_driver_free(void *_driver) {
 
   path_fmt_free(driver->node_path);
   path_fmt_free(driver->vector_path);
-  
+
   free( driver->vector_fmt );
   free( driver->node_fmt );
   util_safe_free( driver->mount_point );
@@ -220,7 +221,7 @@ void * plain_driver_alloc(const char * mount_point , const char * node_fmt, cons
     fs_driver_type * fs_driver = (fs_driver_type *) driver;
     fs_driver_init(fs_driver);
   }
-  
+
   driver->load_node           = plain_driver_load_node;
   driver->save_node           = plain_driver_save_node;
   driver->unlink_node         = plain_driver_unlink_node;
@@ -236,7 +237,7 @@ void * plain_driver_alloc(const char * mount_point , const char * node_fmt, cons
   driver->mount_point         = util_alloc_string_copy( mount_point );
   driver->node_fmt            = util_alloc_sprintf( "%s%c%s" , mount_point , UTIL_PATH_SEP_CHAR , node_fmt );
   driver->vector_fmt          = util_alloc_sprintf( "%s%c%s" , mount_point , UTIL_PATH_SEP_CHAR , vector_fmt );
-  
+
   driver->node_path           = path_fmt_alloc_directory_fmt( driver->node_fmt );
   driver->vector_path         = path_fmt_alloc_directory_fmt( driver->vector_fmt );
   driver->__id                = PLAIN_DRIVER_ID;

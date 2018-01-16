@@ -22,9 +22,9 @@
 extern "C" {
 #endif
 
-#include <ert/util/path_fmt.h>
 #include <ert/util/type_macros.h>
 #include <ert/res_util/subst_list.h>
+#include <ert/res_util/path_fmt.h>
 
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_fs.h>

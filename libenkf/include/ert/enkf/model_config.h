@@ -25,7 +25,6 @@ extern "C" {
 #include <stdbool.h>
 #include <time.h>
 
-#include <ert/util/path_fmt.h>
 #include <ert/util/type_macros.h>
 
 #include <ert/config/config_parser.h>
@@ -38,6 +37,8 @@ extern "C" {
 #include <ert/sched/sched_file.h>
 
 #include <ert/ecl/ecl_sum.h>
+
+#include <ert/res_util/path_fmt.h>
 
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/fs_types.h>
