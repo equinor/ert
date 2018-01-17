@@ -14,11 +14,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+
 from ecl.ecl import EclSum
-from res.enkf import EnkfPrototype
-from res.sched import HistorySourceEnum, SchedFile
+
 from res.job_queue import ForwardModel
-from ecl.util import PathFormat
+from res.sched import HistorySourceEnum, SchedFile
+from res.util import PathFormat
+from res.enkf import EnkfPrototype
 
 
 class ModelConfig(BaseCClass):

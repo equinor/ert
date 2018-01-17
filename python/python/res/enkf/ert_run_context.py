@@ -14,10 +14,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+
+from ecl.util import StringList
+
+from res.util import PathFormat
 from res.enkf import EnkfPrototype
 from res.enkf import TimeMap, StateMap, RunArg
 from res.enkf.enums import EnkfInitModeEnum
-from ecl.util import PathFormat, StringList
 
 class ErtRunContext(BaseCClass):
     TYPE_NAME = "ert_run_context"
