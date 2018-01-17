@@ -14,11 +14,15 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+
+from ecl.ecl import EclGrid
+from ecl.util import StringList, IntVector
+
+from res.util import PathFormat
 from res.enkf import EnkfPrototype
 from res.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig, ExtParamConfig
 from res.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
-from ecl.ecl import EclGrid
-from ecl.util import PathFormat, StringList, IntVector
+
 
 class EnkfConfigNode(BaseCClass):
     TYPE_NAME = "enkf_config_node"

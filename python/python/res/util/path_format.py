@@ -15,7 +15,7 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from ecl import ResUtilPrototype
+from res.util import ResUtilPrototype
 
 # The path_fmt implementation hinges strongly on variable length
 # argument lists in C  not clear if/how that maps over to Python,

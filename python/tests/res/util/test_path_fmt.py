@@ -1,6 +1,6 @@
 import os
 from ecl.test import TestAreaContext
-from tests import EclTest
+from tests import ResTest
 from res.util import PathFormat
 
 class PathFmtTest(ResTest):
