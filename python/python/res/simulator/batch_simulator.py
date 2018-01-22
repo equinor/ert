@@ -1,6 +1,6 @@
 from ecl.util import BoolVector
 
-from res.enkf import ResConfig, ErtRunContext, EnKFMain, EnkfConfigNode, EnkfNode, NodeId
+from res.enkf import ResConfig, EnKFMain, EnkfConfigNode, EnkfNode, NodeId
 from .batch_simulator_context import BatchContext
 
 def _slug(entity):
@@ -50,21 +50,44 @@ class BatchSimulator(object):
             raise ValueError("The first argument must be valid ResConfig instance")
 
         self.res_config = res_config
-        self.ert = EnKFMain( self.res_config )
+        self.ert = EnKFMain(self.res_config)
         self.control_keys = tuple(controls.keys())
         self.result_keys = tuple(results)
 
         ens_config = self.res_config.ensemble_config
         for control_name, variable_names in controls.iteritems():
-            ens_config.addNode( EnkfConfigNode.create_ext_param( control_name , variable_names))
+            ens_config.addNode(EnkfConfigNode.create_ext_param(control_name, variable_names))
 
         for key in results:
-            ens_config.addNode( EnkfConfigNode.create_gen_data( key , "{}_%d".format(key)))
+            ens_config.addNode(EnkfConfigNode.create_gen_data(key, "{}_%d".format(key)))
 
 
+    def _setup_case(self, case, file_system):
+        for sim_id, (geo_id, controls)  in enumerate(case):
+            assert isinstance(geo_id, int)
+
+            node_id = NodeId(0, sim_id)
+            if set(controls.keys()) != set(self.control_keys):
+                err_msg = "Mismatch between initialized and provided control names."
+                raise KeyError(err_msg)
+
+            for control_name, control in controls.iteritems():
+                ens_config = self.res_config.ensemble_config
+                node = EnkfNode(ens_config[control_name])
+                ext_node = node.as_ext_param()
+
+                if len(ext_node) != len(control.keys()):
+                    err_msg = "Expected %d variables for control: %s, received %d."
+                    err_in = (len(ext_node), control_name, len(control.keys()))
+                    raise KeyError(err_msg % err_in)
+
+                for var_name, value in control.iteritems():
+                    ext_node[var_name] = value
+
+                node.save(file_system, node_id)
 
 
-    def start(self, case_name, controls):
+    def start(self, case_name, case_data):
         """Will start batch simulation, returning a handle to query status and results.
 
         The start method will submit simulations to the queue system and then
@@ -79,26 +102,30 @@ class BatchSimulator(object):
 
              controls = {"cmode": ["Well", "Group"], "order" : ["W1", "W2", "W3"]}
 
-        Then the following @controls argument can be used in the start method
+        Then the following @case_data argument can be used in the start method
         to simulate four simulations:
 
               [
-                  (1, {
-                          "cmode": {"Well": 2, "Group": 2},
-                          "order": {"W1": 2, "W2": 2, "W3": 5},
-                      }),
-                  (1, {
-                          "cmode": {"Well": 1, "Group": 3},
-                          "order": {"W1": 2, "W2": 2, "W3": 7},
-                      }),
-                  (1, {
-                          "cmode": {"Well": 1, "Group": 7},
-                          "order": {"W1": 2, "W2": 0, "W3": 5},
-                      }),
-                  (2, {
-                          "cmode": {"Well": 1, "Group": -1},
-                          "order": {"W1": 2, "W2": 2, "W3": 1},
-                      }),
+                  (1,
+                   {
+                       "cmode": {"Well": 2, "Group": 2},
+                       "order": {"W1": 2, "W2": 2, "W3": 5},
+                   }),
+                  (1,
+                   {
+                       "cmode": {"Well": 1, "Group": 3},
+                       "order": {"W1": 2, "W2": 2, "W3": 7},
+                   }),
+                  (1,
+                   {
+                       "cmode": {"Well": 1, "Group": 7},
+                       "order": {"W1": 2, "W2": 0, "W3": 5},
+                   }),
+                  (2,
+                   {
+                       "cmode": {"Well": 1, "Group": -1},
+                       "order": {"W1": 2, "W2": 2, "W3": 1},
+                   }),
               ]
 
         The first integer argument in the tuple is the realisation id, so this
@@ -110,46 +137,20 @@ class BatchSimulator(object):
         time, so when you have called the 'start' method you need to let that
         batch complete before you start a new batch.
         """
-        ens_config = self.res_config.ensemble_config
+
         self.ert.addDataKW("<CASE_NAME>", _slug(case_name))
-        fsm = self.ert.getEnkfFsManager( )
-        fs = fsm.getFileSystem(case_name)
-
-        for sim_id, (geo_id, control_dict)  in enumerate(controls):
-            assert isinstance(geo_id, int)
-
-            node_id = NodeId( 0, sim_id)
-            if set(control_dict.keys()) != set(self.control_keys):
-                err_msg = "Mismatch between initialized and provided control names."
-                raise KeyError(err_msg)
-
-            for control_name, control in control_dict.iteritems():
-                config_node = ens_config[control_name]
-                ext_config = config_node.getModelConfig( )
-                node = EnkfNode(config_node)
-                ext_node = node.as_ext_param( )
-
-                if len(ext_node) != len(control.keys()):
-                    err_msg = ("Expected %d variables for control: %s, "
-                               "received %d.")
-                    err_in = (len(ext_node), len(control.keys()), control_name)
-                    raise KeyError(err_msg % err_in)
-
-                for var_name, value in control.iteritems():
-                    ext_node[var_name] = value
-
-                node.save(fs, node_id)
-
+        file_system = self.ert.getEnkfFsManager().getFileSystem(case_name)
+        self._setup_case(case_data, file_system)
 
         # The input should be validated before we instantiate the BatchContext
         # object, at that stage a job_queue object with multiple threads is
         # started, and things will typically be in a quite sorry state if an
         # exception occurs.
         itr = 0
-        mask = BoolVector( default_value = True, initial_size = len(controls) )
-        sim_context = BatchContext(self.result_keys, self.ert, fs, mask, itr)
+        mask = BoolVector(default_value=True, initial_size=len(case_data))
+        sim_context = BatchContext(self.result_keys, self.ert, file_system, mask, itr)
 
-        for sim_id, (geo_id, control_dict)  in enumerate(controls):
+        for sim_id, (geo_id, _) in enumerate(case_data):
             sim_context.addSimulation(sim_id, geo_id)
 
         return sim_context
