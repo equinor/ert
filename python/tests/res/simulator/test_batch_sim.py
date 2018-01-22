@@ -42,30 +42,85 @@ class BatchSimulatorTest(ResTest):
 
             # The key for one of the controls is invalid => KeyError
             with self.assertRaises(KeyError):
-                rsim.start("case", [ (2, {"WELL_ORDERX" : [0,0,1], "WELL_ON_OFF" : [0,0,1]}),
-                                     (1, {"WELL_ORDER" : [0,0,0] , "WELL_ON_OFF" : [0,0,1]}) ])
+                rsim.start("case", [
+                                       (2, {
+                                               "WELL_ORDERX": {"W1": 0, "W2": 0, "W3": 1},
+                                               "WELL_ON_OFF": {"W1": 0, "W2": 0, "W3": 1},
+                                           }),
+                                       (1, {
+                                               "WELL_ORDER": {"W1": 0, "W2": 0, "W3": 0},
+                                               "WELL_ON_OFF": {"W1": 0, "W2": 0, "W3": 1},
+                                           }),
+                                   ])
+
+            # The key for one of the variables is invalid => KeyError
+            with self.assertRaises(KeyError):
+                rsim.start("case", [
+                                       (2, {
+                                               "WELL_ORDER": {"W1": 0, "W4": 0, "W3": 1},
+                                               "WELL_ON_OFF": {"W1": 0, "W2": 0, "W3": 1},
+                                           }),
+                                       (1, {
+                                               "WELL_ORDER": {"W1": 0, "W2": 0, "W3": 0},
+                                               "WELL_ON_OFF": {"W1": 0, "W2": 0, "W3": 1},
+                                           }),
+                                   ])
+
+            # The key for one of the variables is invalid => KeyError
+            with self.assertRaises(KeyError):
+                rsim.start("case", [
+                                       (2, {
+                                               "WELL_ORDER": {"W1": 0, "W2": 0, "W3": 1, "W0": 0},
+                                               "WELL_ON_OFF": {"W1": 0, "W2": 0, "W3": 1},
+                                           }),
+                                       (1, {
+                                               "WELL_ORDER": {"W1": 0, "W2": 0, "W3": 0},
+                                               "WELL_ON_OFF": {"W1": 0, "W2": 0, "W3": 1},
+                                           }),
+                                   ])
 
 
-            # Missing the key WELL_ON_OFF => ValueError
-            with self.assertRaises(ValueError):
-                rsim.start("case", [ (2, {"WELL_ORDER" : [0,0,1]}) ])
+            # Missing the key WELL_ON_OFF => KeyError
+            with self.assertRaises(KeyError):
+                rsim.start("case", [
+                    (2, {"WELL_ORDER" : {"W1": 0, "W2": 0, "W3": 1}}) ])
 
             # One of the numeric vectors has wrong length => ValueError:
-            with self.assertRaises(ValueError):
-                rsim.start("case", [ (2, {"WELL_ORDER" : [0,0,1], "WELL_ON_OFF" : [0]}) ])
+            with self.assertRaises(KeyError):
+                rsim.start("case", [ (2, {
+                                            "WELL_ORDER": {"W1": 0, "W2": 0, "W3": 1},
+                                            "WELL_ON_OFF": {"W2": 0}
+                                         })
+                                   ])
 
             # Not numeric values => Exception
             with self.assertRaises(Exception):
-                rsim.start("case", [ (2, {"WELL_ORDER" : [0,0,1], "WELL_ON_OFF" : [0,1,'X']}) ])
+                rsim.start("case", [ (2, {
+                                            "WELL_ORDER": {"W1": 0, "W2": 0, "W3": 1},
+                                            "WELL_ON_OFF": {"W1": 0, "W2": 1, "W3": 'X'}
+                                         })
+                                   ])
 
             # Not numeric values => Exception
             with self.assertRaises(Exception):
-               rsim.start("case", [ ('2', {"WELL_ORDER" : [0,0,1], "WELL_ON_OFF" : [0,1,4]}) ])
+               rsim.start("case", [ ('2', {
+                                              "WELL_ORDER": {"W1": 0, "W2": 0, "W3": 1},
+                                              "WELL_ON_OFF" : {"W1": 0, "W2": 1, "W3": 4},
+                                          }),
+                                  ])
 
 
             # Starting a simulation which should actually run through.
-            ctx = rsim.start("case", [(2, {"WELL_ORDER" : [1, 2, 3], "WELL_ON_OFF" : [4,5,6]}),
-                                      (1, {"WELL_ORDER" : [7, 8, 9], "WELL_ON_OFF" : [10,11,12]})])
+            ctx = rsim.start("case", [
+                (2, {
+                    "WELL_ORDER": {"W1": 1, "W2": 2, "W3": 3},
+                    "WELL_ON_OFF": {"W1": 4, "W2": 5, "W3": 6}
+                    }),
+                (1, {
+                    "WELL_ORDER": {"W1": 7, "W2": 8,  "W3": 9},
+                    "WELL_ON_OFF" : {"W1": 10, "W2": 11,"W3": 12}
+                    })
+                ])
 
             # Asking for results before it is complete.
             with self.assertRaises(RuntimeError):
@@ -117,11 +172,11 @@ class BatchSimulatorTest(ResTest):
             case_name = 'MyCaseName_123'
             # Starting a simulation which should actually run through.
             ctx = rsim.start(case_name, [(2, {
-                "WELL_ORDER": [1, 2, 3],
-                "WELL_ON_OFF": [4, 5, 6]
+                "WELL_ORDER": {"W1": 1, "W2": 2, "W3": 3},
+                "WELL_ON_OFF": {"W1": 4, "W2": 5, "W3": 6}
             }), (1, {
-                "WELL_ORDER": [7, 8, 9],
-                "WELL_ON_OFF": [10, 11, 12]
+                "WELL_ORDER": {"W1": 7, "W2": 8, "W3": 9},
+                "WELL_ON_OFF": {"W1": 10, "W2": 11, "W3": 12}
             })])
             ctx.stop()
             status = ctx.status

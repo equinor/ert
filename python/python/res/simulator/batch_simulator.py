@@ -51,17 +51,15 @@ class BatchSimulator(object):
 
         self.res_config = res_config
         self.ert = EnKFMain( self.res_config )
-        self.control_keys = []
-        self.result_keys = []
+        self.control_keys = tuple(controls.keys())
+        self.result_keys = tuple(results)
 
         ens_config = self.res_config.ensemble_config
-        for key in controls.keys():
-            ens_config.addNode( EnkfConfigNode.create_ext_param( key , controls[key] ))
-            self.control_keys.append(key)
+        for control_name, variable_names in controls.iteritems():
+            ens_config.addNode( EnkfConfigNode.create_ext_param( control_name , variable_names))
 
         for key in results:
             ens_config.addNode( EnkfConfigNode.create_gen_data( key , "{}_%d".format(key)))
-            self.result_keys.append(key)
 
 
 
@@ -84,10 +82,24 @@ class BatchSimulator(object):
         Then the following @controls argument can be used in the start method
         to simulate four simulations:
 
-              [ (1, {"cmode": [2 ,2], "order": [2,2,5]}),
-                (1, {"cmode": [1, 3], "order": [2,2,7]}),
-                (1, {"cmode": [1, 7], "order": [2,0,5]}),
-                (2, {"cmode": [1,-1], "order": [2,2,1]})]
+              [
+                  (1, {
+                          "cmode": {"Well": 2, "Group": 2},
+                          "order": {"W1": 2, "W2": 2, "W3": 5},
+                      }),
+                  (1, {
+                          "cmode": {"Well": 1, "Group": 3},
+                          "order": {"W1": 2, "W2": 2, "W3": 7},
+                      }),
+                  (1, {
+                          "cmode": {"Well": 1, "Group": 7},
+                          "order": {"W1": 2, "W2": 0, "W3": 5},
+                      }),
+                  (2, {
+                          "cmode": {"Well": 1, "Group": -1},
+                          "order": {"W1": 2, "W2": 2, "W3": 1},
+                      }),
+              ]
 
         The first integer argument in the tuple is the realisation id, so this
         simulation batch will consist of a total of four simulations, where the
@@ -107,20 +119,26 @@ class BatchSimulator(object):
             assert isinstance(geo_id, int)
 
             node_id = NodeId( 0, sim_id)
-            if len(control_dict) != len(self.control_keys):
-                raise ValueError("Not all keys supplied in controls")
+            if set(control_dict.keys()) != set(self.control_keys):
+                err_msg = "Mismatch between initialized and provided control names."
+                raise KeyError(err_msg)
 
-            for key in control_dict.keys():
-               config_node = ens_config[key]
-               ext_config = config_node.getModelConfig( )
-               values = control_dict[key]
-               if not len(values) == len(ext_config):
-                   raise ValueError("Wrong number of values for:%s" % key)
+            for control_name, control in control_dict.iteritems():
+                config_node = ens_config[control_name]
+                ext_config = config_node.getModelConfig( )
+                node = EnkfNode(config_node)
+                ext_node = node.as_ext_param( )
 
-               node = EnkfNode(config_node)
-               ext_node = node.as_ext_param( )
-               ext_node.set_vector(values)
-               node.save(fs, node_id)
+                if len(ext_node) != len(control.keys()):
+                    err_msg = ("Expected %d variables for control: %s, "
+                               "received %d.")
+                    err_in = (len(ext_node), len(control.keys()), control_name)
+                    raise KeyError(err_msg % err_in)
+
+                for var_name, value in control.iteritems():
+                    ext_node[var_name] = value
+
+                node.save(fs, node_id)
 
 
         # The input should be validated before we instantiate the BatchContext
