@@ -20,15 +20,15 @@ class BatchSimulator(object):
         get when actually simulating. The @controls argument should be a
         dictionary like this:
 
-            controls = {"cmode": ["Well","Group"], "order" : ["W1", "W2", "W3"]}
+            controls = {"cmode": ["Well", "Group"], "order": ["W1", "W2", "W3"]}
 
         In this example the simulator will expect two arrays 'cmode' and
         'order', consisting of two and three elements respectively. When
         actually simualating these values will be written to json files looking
         like:
 
-             cmode.json = {"Well" : 1.0, "Group" : 2.0}
-             order.json = {"W1" : 1, "W2" : 1.0, "W3": 1.0}
+             cmode.json = {"Well": 1.0, "Group": 2.0}
+             order.json = {"W1": 1, "W2": 1.0, "W3": 1.0}
 
         When later invoking the start() method the simulator expects to get
         values for all parameters configured with the @controls argument,
@@ -70,7 +70,7 @@ class BatchSimulator(object):
         """Will start batch simulation, returning a handle to query status and results.
 
         The start method will submit simulations to the queue system and then
-        return a RobustContext handle which can be used to query for simulation
+        return a BatchContext handle which can be used to query for simulation
         status and results. The @case_name argument should just be string which
         will be used as name for the storage of these simulations in the
         system. The @controls argument is the set of control values, and the
@@ -79,15 +79,15 @@ class BatchSimulator(object):
         simulator was instantiated. Assuming the following @control argument
         was passed to simulator construction:
 
-             controls = {"cmode": ["Well","Group"], "order" : ["W1", "W2", "W3"]}
+             controls = {"cmode": ["Well", "Group"], "order" : ["W1", "W2", "W3"]}
 
         Then the following @controls argument can be used in the start method
         to simulate four simulations:
 
-              [ (1, {"cmode" : [1 ,2], "order" : [2,2,5]}),
-                (1, {"cmode" : [1, 3], "order" : [2,2,7]}),
-                (1, {"cmode" : [1, 7], "order" : [2,0,5]}),
-                (2, {"cmode" : [1,-1], "order" : [2,2,1]})]
+              [ (1, {"cmode": [2 ,2], "order": [2,2,5]}),
+                (1, {"cmode": [1, 3], "order": [2,2,7]}),
+                (1, {"cmode": [1, 7], "order": [2,0,5]}),
+                (2, {"cmode": [1,-1], "order": [2,2,1]})]
 
         The first integer argument in the tuple is the realisation id, so this
         simulation batch will consist of a total of four simulations, where the
