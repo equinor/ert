@@ -29,32 +29,44 @@ extern "C" {
 
 //Same as pythons default log levels, but with different numeric values.
 typedef enum {
-  LOG_CRITICAL=0, //OOM.
-  LOG_ERROR=1, //When something we really expected to work does not, e.g. IO failure.
-  LOG_WARNING=2, //Important, but not error. E.g. combination of settings which can be intended, but probably are not.
-  LOG_INFO=3, //Entering functions/parts of the code
-  LOG_DEBUG=4 //Inside the for-loop, when you need the nitty gritty details. Think TRACE.
+  // A serious error, indicating that the program itself may be unable to
+  // continue running.
+  LOG_CRITICAL = 50,
+
+  // Due to a more serious problem, the software has not been able to perform
+  // some function.
+  LOG_ERROR    = 40,
+
+  // An indication that something unexpected happened, or indicative of some
+  // problem in the near future (e.g. "disk space low"). The software is still
+  // working as expected.
+  LOG_WARNING  = 30,
+
+  // Confirmation that things are working as expected.
+  LOG_INFO     = 20,
+
+  // Detailed information, typically of interest only when diagnosing problems.
+  LOG_DEBUG    = 10
 } message_level_type;
 
 
 typedef struct log_struct log_type;
 
   FILE       * log_get_stream(log_type * logh );
-  void         log_reopen( log_type * logh , const char * filename );
-  log_type   * log_open(const char *filename, int log_level);
-  void         log_add_message(log_type *logh, int message_level , FILE * dup_stream , char* message, bool free_message);
+  log_type   * log_open(const char *filename, message_level_type log_level);
+  void         log_add_message(log_type *logh, message_level_type message_level , FILE * dup_stream , const char* message);
   void         log_add_message_str(log_type *logh, message_level_type message_level , const char* message);
-  void         log_add_fmt_message(log_type * logh , int message_level , FILE * dup_stream , const char * fmt , ...);
-  int          log_get_level( const log_type * logh);
-  void         log_set_level( log_type * logh , int new_level);
+  void         log_add_fmt_message(log_type * logh , message_level_type message_level , FILE * dup_stream , const char * fmt , ...);
+  void         log_set_level( log_type * logh , message_level_type new_level);
   void         log_close( log_type * logh );
   void         log_sync(log_type * logh);
   const char * log_get_filename( const log_type * logh );
-  int          log_get_level( const log_type * logh);
-  void         log_set_level( log_type * logh , int log_level);
+  void         log_set_level( log_type * logh , message_level_type log_level);
   bool         log_is_open( const log_type * logh);
-  bool         log_include_message(const log_type *logh , int message_level);
+  bool         log_include_message(const log_type *logh , message_level_type message_level);
   int          log_get_msg_count(const log_type * logh);
+  message_level_type log_get_level( const log_type * logh);
+  message_level_type log_get_level( const log_type * logh);
 
 #ifdef __cplusplus
 }

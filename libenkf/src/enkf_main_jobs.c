@@ -542,8 +542,11 @@ void * enkf_main_pre_simulation_copy_JOB( void * self , const stringlist_type * 
   const char * source_path  = stringlist_iget( args , 0 );
 
   if (!util_entry_exists( source_path )) {
-    char * msg = util_alloc_sprintf("Error in workflow job PRE_SIMULATION_COPY - source argument: %s not existing\n",source_path);
-    res_log_add_message(LOG_ERROR, stderr , msg , true );
+    char * msg = util_alloc_sprintf("Error in workflow job PRE_SIMULATION_COPY"
+                                    "- source argument: %s not existing\n",
+                                    source_path);
+    res_log_error(msg);
+    free(msg);
     return NULL;
   }
 
@@ -551,8 +554,7 @@ void * enkf_main_pre_simulation_copy_JOB( void * self , const stringlist_type * 
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
   model_config_type * model_config = enkf_main_get_model_config( enkf_main );
   if (!model_config_data_root_is_set( model_config )) {
-    char * msg = util_alloc_sprintf("Error in workflow job PRE_SIMULATION_COPY DATA_ROOT not set\n");
-    res_log_add_message(LOG_ERROR, stderr , msg , true );
+    res_log_error("Error in workflow job PRE_SIMULATION_COPY DATA_ROOT not set");
     return NULL;
   }
 
@@ -567,13 +569,13 @@ void * enkf_main_pre_simulation_copy_JOB( void * self , const stringlist_type * 
   util_make_path( target_path );
   if (util_is_directory( source_path )) {
     util_copy_directory( source_path , target_path );
-    res_log_add_fmt_message( LOG_INFO, NULL, "Copying directory %s -> %s" , source_path, target_path );
+    res_log_finfo("Copying directory %s -> %s", source_path, target_path);
   } else {
     char * base_name = util_split_alloc_filename( source_path );
     char * target_file = util_alloc_filename( target_path, base_name, NULL );
 
     util_copy_file( source_path , target_file);
-    res_log_add_fmt_message( LOG_INFO, NULL, "Copying file %s -> %s" , source_path, target_path );
+    res_log_finfo("Copying file %s -> %s", source_path, target_path);
 
     free( base_name );
     free( target_file );

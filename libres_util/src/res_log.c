@@ -19,9 +19,6 @@
 /*TODO:
  * For libres:
  * - Go over the current log-calls and make sure they use reasonable log-levels
- * - Should we duplicate messages to stderr on errors? It should probably not be the callers job to decide as it is now.
- * -- Today this can be done with res_log_add_message or res_log_add_fmt_message. Erik wants to change the first
- * to no longer accept a secondary stream, so then res_log_add_fmt_message is the only option.
  * For libecl:
  * - Change log.h to use the normal semantics of log-levels, where higher means more important message.
  * - Change log.h to use the same numeric values for log-levels as Python
@@ -41,13 +38,95 @@
 
 static log_type * logh = NULL;               /* Handle to an open log file. */
 
+
+
+/**
+ * Adding a message with a given message_level.
+ *
+ * A higher message_level means "more important", as only messages with
+ * message_level above the configured log_level will be included.
+ */
+void res_log_add_message(message_level_type message_level,
+                         const char* message) {
+  if (!logh)
+    res_log_init_log_default(true);
+  log_add_message(logh, message_level, NULL, message);
+}
+
+
+static void res_log_va(message_level_type level, const char * fmt, va_list args) {
+  char * message = util_alloc_sprintf_va(fmt, args);
+  res_log_add_message(level, message);
+  free(message);
+}
+
+
+void res_log_debug(const char* msg) {
+  res_log_add_message(LOG_DEBUG, msg);
+}
+
+void res_log_info(const char* msg) {
+  res_log_add_message(LOG_INFO, msg);
+}
+
+void res_log_warning(const char* msg) {
+  res_log_add_message(LOG_WARNING, msg);
+}
+
+void res_log_error(const char* msg) {
+  res_log_add_message(LOG_ERROR, msg);
+}
+
+void res_log_critical(const char* msg) {
+  res_log_add_message(LOG_CRITICAL, msg);
+}
+
+
+void res_log_fdebug(const char * fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  res_log_va(LOG_DEBUG, fmt, ap);
+  va_end(ap);
+}
+
+void res_log_finfo(const char * fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  res_log_va(LOG_INFO, fmt, ap);
+  va_end(ap);
+}
+
+void res_log_fwarning(const char * fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  res_log_va(LOG_WARNING, fmt, ap);
+  va_end(ap);
+}
+
+void res_log_ferror(const char * fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  res_log_va(LOG_ERROR, fmt, ap);
+  va_end(ap);
+}
+
+void res_log_fcritical(const char * fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  res_log_va(LOG_CRITICAL, fmt, ap);
+  va_end(ap);
+}
+
+
 /**
  * The logging uses log_level to determine if an incoming message is to be included in the log.
  * A high log_level setting will include more messages.
  *
  * if log_file_name=NULL then DEFAULT_LOG_FILE is used
  */
-void res_log_init_log( message_level_type log_level , const char * log_file_name, bool verbose){
+void res_log_init_log(message_level_type log_level,
+                      const char * log_file_name,
+                      bool verbose) {
   // If a log is already open, close it
   if(logh)
      log_close(logh);
@@ -59,7 +138,7 @@ void res_log_init_log( message_level_type log_level , const char * log_file_name
 
   if (verbose)
     printf("Activity will be logged to ..............: %s \n",log_get_filename( logh ));
-  log_add_message(logh , LOG_INFO , NULL , "ert configuration loaded" , false);
+  log_add_message(logh, LOG_INFO, NULL, "ert configuration loaded");
 }
 
 /**
@@ -78,66 +157,13 @@ void res_log_init_log_default( bool verbose){
   res_log_init_log(DEFAULT_LOG_LEVEL, DEFAULT_LOG_FILE,verbose);
 }
 
-/**
- * Simplified method for adding a message to the log. Does not duplicate the message, and does not
- * attempt to free the message.
- * @param message_level Importance of the message.
- * @param message The message, will not be free'd
- */
-void res_log_add_message_str(message_level_type message_level, const char* message){
-  if(logh==NULL)
-    res_log_init_log_default(true);
-  log_add_message_str(logh, message_level, message);
-}
 
-void res_log_add_message_py(int message_level, char* message){
-    res_log_add_message(message_level, NULL, message, false);
-}
-
-/**
- * Adding a message with a given message_level.
- *
- * A low message_level means "more important", as only messages with
- * message_level below the configured log_level will be included.
- */
-void res_log_add_message(message_level_type message_level , FILE * dup_stream , char* message, bool free_message) {
-   if(logh==NULL)
-     res_log_init_log_default(true);
-   log_add_message(logh, message_level, dup_stream, message, free_message);
-}
-
-/**
- * Adding a message with a given message_level.
- *
- * Expects fmt to be a string with potential string-formatting, and "..." is the
- * required arguments to the string-formatting.
- */
-void res_log_add_fmt_message(message_level_type message_level , FILE * dup_stream , const char * fmt , ...) {
-  if(logh==NULL)
-    res_log_init_log_default(true);
-
-  if (log_include_message(logh,message_level)) {
-      char * message;
-      va_list ap;
-      va_start(ap , fmt);
-      message = util_alloc_sprintf_va( fmt , ap );
-      log_add_message( logh , message_level , dup_stream , message , true);
-      va_end(ap);
-    }
-}
-
-
-void res_log_close(){
-    if (log_is_open( logh ))
-      log_add_message( logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
+void res_log_close() {
+    if (log_is_open(logh))
+      log_add_message(logh, false, NULL, "Exiting ert application normally - "
+                                          "all is fine(?)");
     log_close( logh );
     logh = NULL;
-}
-
-bool res_log_is_open(){
-    if(logh==NULL)
-        return false;
-    return log_is_open(logh);
 }
 
 void res_log_set_log_level(message_level_type log_level){
@@ -156,12 +182,6 @@ const char * res_log_get_filename() {
   if(logh==NULL)
     res_log_init_log_default(true);
   return log_get_filename(logh);
-}
-
-log_type * res_log_get_logh() {
-  if(logh==NULL)
-    res_log_init_log_default(true);
-  return logh;
 }
 
 void res_log_open_empty() {

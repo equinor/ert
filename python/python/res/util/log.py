@@ -17,13 +17,13 @@
 from __future__ import print_function
 from cwrap import BaseCClass
 from res.util import ResUtilPrototype
+from res.util.enums import MessageLevelEnum
 
 
 class Log(BaseCClass):
     _get_filename = ResUtilPrototype("char* log_get_filename(log)")
-    _reopen = ResUtilPrototype("void log_reopen(log, char*)")
-    _get_level = ResUtilPrototype("int log_get_level(log)")
-    _set_level = ResUtilPrototype("void log_set_level(log, int)")
+    _get_level = ResUtilPrototype("message_level_enum log_get_level(log)")
+    _set_level = ResUtilPrototype("void log_set_level(log, message_level_enum)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -32,13 +32,8 @@ class Log(BaseCClass):
         return self._get_filename()
         # return "ert_config.log"
 
-    def reopen(self, filename):
-        print('Logfile cannot be reopened')
-        # cfunc.reopen( self , filename)
-
     def get_level(self):
         return self._get_level()
 
     def set_level(self, level):
-        pass
-        # self._set_level(self, level)
+        self._set_level(self, level)

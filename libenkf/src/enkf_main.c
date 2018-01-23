@@ -986,9 +986,8 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
         if (analysis_config_get_std_scale_correlated_obs(analysis_config)) {
           double scale_factor = enkf_obs_scale_correlated_std(enkf_main->obs, source_fs,
                                                               ens_active_list, obsdata);
-          res_log_add_fmt_message(LOG_INFO, NULL,
-                                  "Scaling standard deviation in obdsata set:%s with %g",
-                                  local_obsdata_get_name(obsdata), scale_factor);
+          res_log_finfo("Scaling standard deviation in obdsata set:%s with %g",
+                        local_obsdata_get_name(obsdata), scale_factor);
         }
         enkf_obs_get_obs_and_measure_data(enkf_main->obs, source_fs, obsdata,
                                           ens_active_list, meas_data, obs_data);
@@ -1015,8 +1014,8 @@ static void enkf_main_update__(enkf_main_type * enkf_main, const int_vector_type
                                       meas_data,
                                       obs_data);
         else if (target_fs != source_fs)
-          res_log_add_fmt_message(LOG_ERROR, stderr, "No active observations/parameters for MINISTEP: %s.",
-                                  local_ministep_get_name(ministep));
+          res_log_ferror("No active observations/parameters for MINISTEP: %s.",
+                         local_ministep_get_name(ministep));
       }
 
       enkf_main_inflate(enkf_main, source_fs, target_fs, current_step, use_count);
@@ -1459,7 +1458,7 @@ static void enkf_main_start_queue(enkf_main_type * enkf_main,
   job_queue_manager_start_queue( queue_manager , job_size , verbose_queue );
   enkf_main_submit_jobs( enkf_main , run_context, job_queue);
   job_queue_submit_complete( job_queue );
-  res_log_add_message_str(LOG_INFO , "All jobs submitted to internal queue - waiting for completion.");
+  res_log_info("All jobs submitted to internal queue - waiting for completion.");
 
   int max_runtime = analysis_config_get_max_runtime(enkf_main_get_analysis_config( enkf_main ));
   job_queue_set_max_job_duration(job_queue, max_runtime);
@@ -1515,7 +1514,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
 
     enkf_fs_fsync( ert_run_context_get_sim_fs( run_context ) );
     if (totalFailed == 0)
-      res_log_add_fmt_message( LOG_INFO , NULL , "All jobs complete and data loaded.");
+      res_log_info("All jobs complete and data loaded.");
 
 
     return totalOK;

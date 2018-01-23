@@ -538,7 +538,7 @@ void model_config_init(model_config_type * model_config ,
   if (config_content_has_item( config , JOBNAME_KEY)) {
     model_config_set_jobname_fmt( model_config , config_content_get_value(config , JOBNAME_KEY));
     if (config_content_has_item( config , ECLBASE_KEY))
-      res_log_add_message_str(LOG_WARNING, "Can not have both JOBNAME and ECLBASE keywords. The ECLBASE keyword will be ignored.");
+      res_log_warning("Can not have both JOBNAME and ECLBASE keywords. The ECLBASE keyword will be ignored.");
   }
 
   if (config_content_has_item( config , RFTPATH_KEY))

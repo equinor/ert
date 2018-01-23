@@ -905,14 +905,12 @@ static void job_queue_loop(job_queue_type * queue, int num_total_run, bool verbo
   int phase = 0; // UI code: this is the visual spinner
 
   do { // while !complete && !exit
-    res_log_add_message_str(LOG_DEBUG, "Entering inner secret (job_queue_loop)");
     job_list_get_rdlock(queue->job_list);
 
     if (queue->user_exit)  {/* An external thread has called the job_queue_user_exit() function, and we should kill
                                all jobs, do some clearing up and go home. Observe that we will go through the
                                queue handling codeblock below ONE LAST TIME before exiting. */
-      res_log_add_message_str(LOG_INFO,
-                              "Received queue->user_exit in inner loop of job_queue_run_jobs, exiting");
+      res_log_info("Received queue->user_exit in inner loop of job_queue_run_jobs, exiting");
       job_queue_user_exit__(queue);
       exit = true;
     }
@@ -986,7 +984,7 @@ static void handle_run_jobs(job_queue_type * queue, int num_total_run, bool verb
   */
   const int NUM_WORKER_THREADS = 4;
   queue->work_pool = thread_pool_alloc(NUM_WORKER_THREADS, true);
-  res_log_add_message_str(LOG_DEBUG, "Allocated thread pool in job_queue_run_jobs");
+  res_log_debug("Allocated thread pool in job_queue_run_jobs");
 
   queue->running = true;
   job_queue_loop(queue, num_total_run, verbose);
@@ -1025,7 +1023,7 @@ void job_queue_run_jobs(job_queue_type * queue, int num_total_run, bool verbose)
   if (!queue->user_exit)
     handle_run_jobs(queue, num_total_run, verbose);
   else
-    res_log_add_message_str(LOG_INFO,"queue->user_exit = true in job_queue, received external signal to abandon the whole thing");
+    res_log_info("queue->user_exit = true in job_queue, received external signal to abandon the whole thing");
 
   /*
     Set the queue's "open" flag to false to signal that the queue is

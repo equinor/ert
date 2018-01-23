@@ -28,19 +28,27 @@ extern "C" {
 
 #include <ert/res_util/log.h>
 
-void res_log_add_message_str(message_level_type message_level, const char* message);
 void res_log_init_log(message_level_type log_level,const char * log_file_name, bool verbose);
 void res_log_init_log_default_log_level(const char * log_file_name, bool verbose);
 void res_log_init_log_default( bool verbose);
-void res_log_add_fmt_message(message_level_type message_level , FILE * dup_stream , const char * fmt , ...);
-void res_log_add_message(message_level_type message_level , FILE * dup_stream , char* message, bool free_message);
-void res_log_add_message_py(int message_level, char* message);
 void res_log_close();
-bool res_log_is_open();
 int res_log_get_log_level();
 const char * res_log_get_filename();
-log_type * res_log_get_logh();
 void res_log_open_empty();
+
+void res_log_add_message(message_level_type message_level, const char* message);
+
+void res_log_debug(const char* msg);
+void res_log_info(const char* msg);
+void res_log_warning(const char* msg);
+void res_log_error(const char* msg);
+void res_log_critical(const char* msg);
+
+void res_log_fdebug(const char * fmt, ...);
+void res_log_finfo(const char * fmt, ...);
+void res_log_fwarning(const char * fmt, ...);
+void res_log_ferror(const char * fmt, ...);
+void res_log_fcritical(const char * fmt, ...);
 
 #ifdef __cplusplus
 }

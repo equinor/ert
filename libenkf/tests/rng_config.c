@@ -20,6 +20,9 @@
 #include <ert/util/test_work_area.h>
 
 #include <ert/enkf/rng_config.h>
+#include <ert/res_util/res_log.h>
+
+
 
 #define MAX_INT 999999
 
@@ -51,7 +54,7 @@ static char * alloc_read_random_seed(const char * log_file)
 void test_init()
 {
   test_work_area_type * work_area = test_work_area_alloc("rng_config");
-  res_log_init_log_default(true);
+  res_log_init_log(LOG_DEBUG, "log", true);
 
   const char * config_file = "my_rng_config";
   const char * random_seed = "13371338";
@@ -61,8 +64,9 @@ void test_init()
   rng_config_type * rng_config = rng_config_alloc_load_user_config(config_file);
   test_assert_string_equal(random_seed, rng_config_get_random_seed(rng_config));
 
-  // To get the random seed written to the log
   rng_manager_free(rng_config_alloc_rng_manager(rng_config));
+
+  // To get the random seed written to the log
 
   char * logged_random_seed = alloc_read_random_seed("log");
   test_assert_true(strlen(logged_random_seed) > 0);
@@ -80,7 +84,7 @@ static void alloc_reproduced_rng_config(
         rng_manager_type ** rep_rng_man)
 {
   test_work_area_type * work_area = test_work_area_alloc("rng_config");
-  res_log_init_log_default(true);
+  res_log_init_log(LOG_DEBUG, "log", true);
 
   const char * config_file = "my_rng_config";
   create_config(config_file, random_seed);

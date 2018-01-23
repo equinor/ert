@@ -29,18 +29,19 @@ class LogConfigTest(ResTest):
         self.config_file = "simple_config/minimum_config"
 
         self.log_files = [
-                            (None, "simple_config/log"),
+                            (None, "simple_config/log.txt"),
                             ("file_loglog", "simple_config/file_loglog"),
                             ("this/is/../my/log/file.loglog", "simple_config/this/my/log/file.loglog")
                          ]
 
-        self.log_levels = [(None, MessageLevelEnum.LOG_ERROR)]
-        for message_level in MessageLevelEnum.enums():
+        self.log_levels = [(None, MessageLevelEnum.LOG_WARNING)]
+        for message_level in [lev for lev in MessageLevelEnum.enums() if lev.value]:
             # Add new log level
             self.log_levels.append((message_level.name.split("_")[1], message_level))
 
             # Add old log level
-            self.log_levels.append((str(message_level.value), message_level))
+            self.log_levels.append((str(5-message_level.value/10), message_level))
+
 
     def assert_log_config_load(
             self,
@@ -71,19 +72,26 @@ class LogConfigTest(ResTest):
 
             self.assertTrue(os.path.isabs(log_config.log_file))
 
+
             self.assertEqual(
                     os.path.normpath(log_config.log_file),
                     os.path.normpath(os.path.abspath(exp_log_file))
                     )
 
+            if isinstance(log_config.log_level,int):
+                level = MessageLevelEnum.to_enum(log_config.log_level)
+            else:
+                level = log_config.log_level
+
             self.assertEqual(
-                    log_config.log_level,
+                    level,
                     exp_log_level
-                    )
+            )
 
 
     def test_log_config(self):
-        test_cases = itertools.product(self.log_files, self. log_levels)
+        test_cases = itertools.product(self.log_files, self.log_levels)
+
 
         for log_file_data, log_level_data in test_cases:
             self.assert_log_config_load(
