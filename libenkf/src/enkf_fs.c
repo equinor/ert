@@ -33,6 +33,7 @@
 #include <ert/util/arg_pack.h>
 
 #include <ert/res_util/path_fmt.h>
+#include <ert/res_util/res_log.h>
 
 #include <ert/enkf/block_fs_driver.h>
 #include <ert/enkf/enkf_fs.h>
@@ -648,40 +649,42 @@ bool enkf_fs_update_disk_version(const char * mount_point , int src_version , in
 }
 
 
-enkf_fs_type * enkf_fs_mount( const char * mount_point ) {
-  FILE * stream = fs_driver_open_fstab( mount_point , false );
+enkf_fs_type * enkf_fs_mount(const char * mount_point) {
+  FILE * stream = fs_driver_open_fstab(mount_point, false);
 
-  if (stream != NULL) {
-    enkf_fs_type * fs = NULL;
-    fs_driver_assert_magic( stream );
-    fs_driver_assert_version( stream , mount_point );
-    {
-      fs_driver_impl driver_id = util_fread_int( stream );
+  if (!stream)
+    return NULL;
 
-      switch( driver_id ) {
-      case( BLOCK_FS_DRIVER_ID ):
-        fs = enkf_fs_mount_block_fs( stream , mount_point);
-        break;
-      case( PLAIN_DRIVER_ID ):
-        fs = enkf_fs_mount_plain( stream , mount_point );
-        break;
-      default:
-        util_abort("%s: unrecognized driver_id:%d \n",__func__ , driver_id );
-      }
-    }
-    fclose( stream );
-    enkf_fs_init_path_fmt( fs );
-    enkf_fs_fread_time_map( fs );
-    enkf_fs_fread_cases_config( fs );
-    enkf_fs_fread_state_map( fs );
-    enkf_fs_fread_summary_key_set( fs );
-    enkf_fs_fread_custom_kw_config_set( fs );
-    enkf_fs_fread_misfit( fs );
+  enkf_fs_type * fs = NULL;
+  fs_driver_assert_magic(stream);
+  fs_driver_assert_version(stream, mount_point);
 
-    enkf_fs_get_ref( fs );
-    return fs;
+  fs_driver_impl driver_id = util_fread_int(stream);
+
+  switch(driver_id) {
+  case(BLOCK_FS_DRIVER_ID):
+    fs = enkf_fs_mount_block_fs(stream, mount_point);
+    res_log_fdebug("Mounting (block_fs) point %s.", mount_point);
+    break;
+  case(PLAIN_DRIVER_ID):
+    fs = enkf_fs_mount_plain(stream, mount_point);
+    res_log_fdebug("Mounting (plain) point %s.", mount_point);
+    break;
+  default:
+    util_abort("%s: unrecognized driver_id:%d \n", __func__, driver_id);
   }
-  return NULL;
+
+  fclose(stream);
+  enkf_fs_init_path_fmt(fs);
+  enkf_fs_fread_time_map(fs);
+  enkf_fs_fread_cases_config(fs);
+  enkf_fs_fread_state_map(fs);
+  enkf_fs_fread_summary_key_set(fs);
+  enkf_fs_fread_custom_kw_config_set(fs);
+  enkf_fs_fread_misfit(fs);
+
+  enkf_fs_get_ref(fs);
+  return fs;
 }
 
 
@@ -709,43 +712,45 @@ static void enkf_fs_free_driver(fs_driver_type * driver) {
 }
 
 
-static void enkf_fs_umount( enkf_fs_type * fs ) {
+static void enkf_fs_umount(enkf_fs_type * fs) {
   if (!fs->read_only) {
-    enkf_fs_fsync( fs );
-    enkf_fs_fwrite_misfit( fs );
+    enkf_fs_fsync(fs);
+    enkf_fs_fwrite_misfit(fs);
   }
 
-  {
-    int refcount = fs->refcount;
-    if (refcount == 0) {
-      enkf_fs_free_driver( fs->dynamic_forecast );
-      enkf_fs_free_driver( fs->parameter );
-      enkf_fs_free_driver( fs->index );
+  int refcount = fs->refcount;
+  if (refcount > 0)
+    util_abort("%s: internal fuckup - "
+               "tried to umount a filesystem with refcount:%d\n",
+               __func__, refcount);
 
-      if (fs->lock_fd > 0) {
-        close( fs->lock_fd );  // Closing the lock_file file descriptor - and releasing the lock.
-        util_unlink_existing( fs->lock_file );
-      }
+  res_log_fdebug("%s umount filesystem %s", __func__, fs->mount_point);
 
-      util_safe_free( fs->case_name );
-      util_safe_free( fs->root_path );
-      util_safe_free(fs->lock_file);
-      util_safe_free( fs->mount_point );
-      path_fmt_free( fs->case_fmt );
-      path_fmt_free( fs->case_member_fmt );
-      path_fmt_free( fs->case_tstep_fmt );
-      path_fmt_free( fs->case_tstep_member_fmt );
+  enkf_fs_free_driver(fs->dynamic_forecast);
+  enkf_fs_free_driver(fs->parameter);
+  enkf_fs_free_driver(fs->index);
 
-      custom_kw_config_set_free( fs->custom_kw_config_set );
-      state_map_free( fs->state_map );
-      summary_key_set_free(fs->summary_key_set);
-      time_map_free( fs->time_map );
-      cases_config_free( fs->cases_config );
-      misfit_ensemble_free( fs->misfit_ensemble );
-      free( fs );
-    } else
-      util_abort("%s: internal fuckup - tried to umount a filesystem with refcount:%d\n",__func__ , refcount);
+  if (fs->lock_fd > 0) {
+    close(fs->lock_fd);  // Closing the lock_file file descriptor - and releasing the lock.
+    util_unlink_existing(fs->lock_file);
   }
+
+  util_safe_free(fs->case_name);
+  util_safe_free(fs->root_path);
+  util_safe_free(fs->lock_file);
+  util_safe_free(fs->mount_point);
+  path_fmt_free(fs->case_fmt);
+  path_fmt_free(fs->case_member_fmt);
+  path_fmt_free(fs->case_tstep_fmt);
+  path_fmt_free(fs->case_tstep_member_fmt);
+
+  custom_kw_config_set_free(fs->custom_kw_config_set);
+  state_map_free(fs->state_map);
+  summary_key_set_free(fs->summary_key_set);
+  time_map_free(fs->time_map);
+  cases_config_free(fs->cases_config);
+  misfit_ensemble_free(fs->misfit_ensemble);
+  free(fs);
 }
 
 
