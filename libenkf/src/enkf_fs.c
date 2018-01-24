@@ -271,6 +271,7 @@ int enkf_fs_decref( enkf_fs_type * fs ) {
   if (fs->refcount < 0)
     util_abort("%s: internal fuckup. The filesystem refcount:%d is < 0 \n",__func__ , fs->refcount);
 
+  res_log_fdebug("Calling decref on: %s . Refcount after decref:%d", fs->mount_point, fs->refcount);
   if (refcount == 0)
     enkf_fs_umount( fs );
 
