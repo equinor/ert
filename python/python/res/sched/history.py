@@ -16,7 +16,7 @@
 
 from cwrap import BaseCClass
 from res.sched import SchedFile, HistorySourceEnum, SchedulePrototype
-from ecl.ecl import EclSum
+from ecl.summary import EclSum
 
 class History(BaseCClass):
     TYPE_NAME = "history"

@@ -18,7 +18,8 @@ import os.path
 from cwrap import BaseCClass
 from ecl.util import StringList, IntVector
 from res.sched import History
-from ecl.ecl import EclSum , EclGrid
+from ecl.grid import EclGrid
+from ecl.summary import EclSum
 from res.enkf import EnkfPrototype
 from res.enkf import EnkfFs, LocalObsdataNode , LocalObsdata, MeasData, ObsData
 from res.enkf.enums import EnkfObservationImplementationType

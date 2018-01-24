@@ -19,7 +19,7 @@ from cwrap import Prototype
 import res
 import ecl.util
 import ecl.geo
-import ecl.ecl
+import ecl
 import res.rms
 import res.analysis
 import res.sched

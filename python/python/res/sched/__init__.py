@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import res
-import ecl.ecl
+import ecl
 import ecl.util
 import ecl.geo
 
