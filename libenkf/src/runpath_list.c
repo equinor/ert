@@ -266,6 +266,7 @@ bool runpath_list_load(runpath_list_type * list) {
         break;
       }
     }
+    fclose(stream);
 
     if (read_ok) {
       pthread_rwlock_wrlock( &list->lock);

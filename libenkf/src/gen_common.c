@@ -109,6 +109,7 @@ void * gen_common_fread_alloc(const char * file , ecl_data_type load_data_type ,
       }
     } while (!feof(stream));
   }
+  fclose(stream);
   *size = current_size;
   return buffer;
 }

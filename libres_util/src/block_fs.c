@@ -1045,11 +1045,8 @@ size_t block_fs_get_cache_usage( const block_fs_type * block_fs ) {
 bool block_fs_is_mount( const char * mount_file ) {
   FILE * stream            = util_fopen( mount_file , "r");
   int id                   = util_fread_int( stream );
-
-  if (id == MOUNT_MAP_MAGIC_INT)
-    return true;
-  else
-    return false;
+  fclose(stream);
+  return id == MOUNT_MAP_MAGIC_INT;
 }
 
 
