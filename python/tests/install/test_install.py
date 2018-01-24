@@ -9,7 +9,8 @@ import sys
 
 from res.job_queue import JobQueue
 from res.enkf import EnKFMain
-from ecl.ecl import EclSum, EclGrid
+from ecl.grid import EclGrid
+from ecl.summary import EclSum
 
 
 

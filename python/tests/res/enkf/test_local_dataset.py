@@ -22,7 +22,7 @@ from res.test import ErtTestContext
 from res.enkf.active_list import ActiveList
 from res.enkf.local_dataset import LocalDataset
 
-from ecl.ecl import EclRegion
+from ecl.grid import EclRegion
 from ecl.geo import Surface, GeoRegion
 
 

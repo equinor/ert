@@ -20,6 +20,13 @@ import res
 import ecl.util
 import ecl.geo
 import ecl
+import ecl.eclfile
+import ecl.grid
+import ecl.grid.faults
+import ecl.gravimetry
+import ecl.summary
+import ecl.rft
+
 import res.rms
 import res.analysis
 import res.sched

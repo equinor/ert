@@ -19,7 +19,7 @@ import os
 from res.enkf import BlockObservation
 from res.enkf import ActiveList, FieldConfig
 from tests import ResTest
-from ecl.ecl import EclGrid
+from ecl.grid import EclGrid
 
 
 class BlockObsTest(ResTest):

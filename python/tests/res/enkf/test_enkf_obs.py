@@ -1,7 +1,8 @@
 from tests import ResTest
 from res.test import ErtTestContext
 
-from ecl.ecl import EclGrid, EclSum
+from ecl.grid import EclGrid
+from ecl.summary import EclSum
 from res.sched import History
 
 from ecl.util import BoolVector,IntVector
