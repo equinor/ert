@@ -289,12 +289,6 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   return new_job;
 }
 
-//This function is deprecated
-static void ext_job_transfer_deprecated_argv( ext_job_type * ext_job) {
-  stringlist_deep_copy( ext_job->argv , ext_job->deprecated_argv );
-}
-
-
 
 void ext_job_free(ext_job_type * ext_job) {
   free(ext_job->name);
@@ -742,7 +736,7 @@ static void __fprintf_python_int(FILE * stream,
 
 static void __fprintf_python_argList(FILE * stream,
                                      const char * prefix,
-                                     ext_job_type * ext_job,
+                                     const ext_job_type * ext_job,
                                      const char * suffix,
                                      const subst_list_type * global_args) {
 

@@ -276,7 +276,7 @@ static bool gen_data_fload_active__(gen_data_type * gen_data, const char * filen
         res_log_finfo("GEN_DATA(%s): active information loaded from:%s.",
                       gen_data_get_key(gen_data), active_file);
       } else
-        res_log_fwarning("GEN_DATA(%s): active information NOT loaded.",
+        res_log_finfo("GEN_DATA(%s): active information NOT loaded.",
                          gen_data_get_key(gen_data));
       free( active_file );
     }
