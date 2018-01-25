@@ -107,7 +107,7 @@ class ObsVector(BaseCClass):
         than one report step the method will raise an exception.
         """
         step_list = self.getStepList()
-        if len(step_list):
+        if len(step_list) == 1:
             return step_list[0]
         else:
             raise ValueError("The activeStep() method can *ONLY* be called for obervations with one active step")
