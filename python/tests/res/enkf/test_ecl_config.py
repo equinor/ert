@@ -19,7 +19,7 @@ import os.path
 from res.enkf import EclConfig
 from tests import ResTest
 from res.util import UIReturn
-from ecl.ecl  import EclSum
+from ecl.summary  import EclSum
 
 EGRID_file    = "Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
 SMSPEC_file   = "Statoil/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
