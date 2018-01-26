@@ -526,10 +526,14 @@ static void enkf_state_internalize_GEN_DATA(const ensemble_config_type * ens_con
   stringlist_type * keylist_GEN_DATA = ensemble_config_alloc_keylist_from_impl_type(ens_config, GEN_DATA);
 
 
-  if (stringlist_get_size( keylist_GEN_DATA) > 0)
+  if (stringlist_get_size(keylist_GEN_DATA) > 0)
     if (last_report <= 0)
-      res_log_warning("Trying to load GEN_DATA without properly "
-                      "set last_report - will only look for step 0 data.");
+      res_log_fwarning("Trying to load GEN_DATA %s without properly "
+                       "set last_report (was %d) - will only look for step 0 data: %s",
+                       ensemble_config_get_gen_kw_format(ens_config),
+                       last_report,
+                       stringlist_iget(keylist_GEN_DATA, 0)
+        );
 
   const run_arg_type * run_arg            = forward_load_context_get_run_arg( load_context );
   enkf_fs_type * sim_fs                   = run_arg_get_sim_fs( run_arg );
