@@ -11,61 +11,16 @@ import random
 import subprocess
 import shutil
 import datetime
-import smtplib
-from email.mime.text import MIMEText
 
-
-#-----------------------------------------------------------------
-# Here is some initial fencing which will add a an entry to the load
-# path, both the sys.path variable and the PYTHONPATH environment
-# variable. The logic below is based on the assumption:
-#
-# ${ROOT}/bin/job_dispatch.py            <-- This script
-# ${ROOT}/lib/pythonX.Y/site-packages    <-- Add this lib path
-#
-# The reason for going through these hoops is that if the user has
-# invoked some non-standard PYTHONPATH to start the main application
-# on the workstation host, that PYTHONPATH setting will not be passed
-# all the way through the SSH + LSF quagmire.
-#-----------------------------------------------------------------
-
-tmp_list = os.path.abspath( os.path.dirname( __file__ ) ).split( os.path.sep )
-root = os.path.sep.join( tmp_list[:-1] )
-path = os.path.join( root , "lib" , "python%d.%d" % (sys.version_info.major, sys.version_info.minor) , "site-packages")
-
-pythonpath = os.environ.get("PYTHONPATH")
-if pythonpath is None:
-    pythonpath = path
-else:
-    pythonpath = "%s:%s" % (path, pythonpath)
-os.environ["PYTHONPATH"] = pythonpath
-sys.path.insert( 0 , path)
 
 try:
     from res.job_queue import JobManager, assert_file_executable
 except ImportError:
     from ert_statoil.job_manager import JobManager, assert_file_executable
 
-block_illegal_fileserver = False
-
 REQUESTED_HEXVERSION  =  0x02070000
 
-FILE_SERVER_BLACKLIST = ["stfv-fsi01-nfs.st.statoil.no"]
 LOG_URL       = "http://devnull.statoil.no:4444"
-
-def illegal_fileserver_exit(msg_txt , user):
-    from_ = "no-reply@statoil.com"
-    to = "%s@statoil.com" % user
-    msg = MIMEText( msg_txt )
-    msg['to'] = to
-    msg['from'] = from_
-    msg['subject'] = "Illegal fil-server"
-
-    s = smtplib.SMTP('localhost')
-    s.sendmail(from_, [to], msg.as_string())
-    s.quit()
-
-    sys.exit(1)
 
 
 def check_version():
