@@ -11,8 +11,6 @@ import random
 import subprocess
 import shutil
 import datetime
-import smtplib
-from email.mime.text import MIMEText
 
 
 try:
@@ -20,26 +18,9 @@ try:
 except ImportError:
     from ert_statoil.job_manager import JobManager, assert_file_executable
 
-block_illegal_fileserver = False
-
 REQUESTED_HEXVERSION  =  0x02070000
 
-FILE_SERVER_BLACKLIST = ["stfv-fsi01-nfs.st.statoil.no"]
 LOG_URL       = "http://devnull.statoil.no:4444"
-
-def illegal_fileserver_exit(msg_txt , user):
-    from_ = "no-reply@statoil.com"
-    to = "%s@statoil.com" % user
-    msg = MIMEText( msg_txt )
-    msg['to'] = to
-    msg['from'] = from_
-    msg['subject'] = "Illegal fil-server"
-
-    s = smtplib.SMTP('localhost')
-    s.sendmail(from_, [to], msg.as_string())
-    s.quit()
-
-    sys.exit(1)
 
 
 def check_version():
