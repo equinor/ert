@@ -17,7 +17,7 @@
 
 import os.path
 from res.enkf import EclConfig
-from tests import ResTest
+from tests import ResTest, statoil_test
 from res.util import UIReturn
 from ecl.summary  import EclSum
 
@@ -29,6 +29,7 @@ DATA_INIT_file= "Statoil/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
 SCHEDULE_file = "Statoil/ECLIPSE/Gurbat/target.SCH"
 
 
+@statoil_test()
 class EclConfigTest(ResTest):
 
 

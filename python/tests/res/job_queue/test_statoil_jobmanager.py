@@ -5,7 +5,7 @@ import os.path
 import stat
 import time
 import datetime
-from unittest import TestCase
+from tests import ResTest, statoil_test
 
 from ecl.util.test import TestAreaContext
 from res.job_queue import JobManager
@@ -73,7 +73,9 @@ def create_jobs_json(jobList, umask="0000"):
     with open(jobs_file, "w") as f:
         f.write(json.dumps(data))
 
-class JobManagerStatoilTest(TestCase):
+
+@statoil_test()
+class JobManagerStatoilTest(ResTest):
 
     def assert_ip_address(self, ip):
         try:

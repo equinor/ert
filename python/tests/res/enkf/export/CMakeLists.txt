@@ -26,6 +26,4 @@ addPythonTest(tests.res.enkf.export.test_misfit_collector.MisfitCollectorTest)
 addPythonTest(tests.res.enkf.export.test_summary_collector.SummaryCollectorTest)
 addPythonTest(tests.res.enkf.export.test_summary_observation_collector.SummaryObservationCollectorTest)
 
-if (STATOIL_TESTDATA_ROOT)
-   addPythonTest(tests.res.enkf.export.test_arg_loader.ArgLoaderTest LABELS StatoilData)
-endif()
+addPythonTest(tests.res.enkf.export.test_arg_loader.ArgLoaderTest)

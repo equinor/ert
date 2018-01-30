@@ -1,10 +1,11 @@
 import math
-from tests import ResTest
+from tests import ResTest, statoil_test
 from res.test import ErtTestContext
 
 from res.enkf.export import ArgLoader
 
 
+@statoil_test()
 class ArgLoaderTest(ResTest):
 
 

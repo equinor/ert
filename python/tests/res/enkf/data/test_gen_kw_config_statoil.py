@@ -1,8 +1,9 @@
-from tests import ResTest
+from tests import ResTest, statoil_test
 from res.test import ErtTestContext
 
 from res.enkf import ErtImplType, GenKwConfig
 
+@statoil_test()
 class GenKwConfigTest(ResTest):
 
     def setUp(self):
