@@ -15,7 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 
-from ecl.ecl import EclGrid
+from ecl.grid import EclGrid
 from ecl.util import StringList, IntVector
 
 from res.util import PathFormat

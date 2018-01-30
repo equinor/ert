@@ -15,7 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 
-from ecl.ecl import EclSum
+from ecl.summary import EclSum
 
 from res.job_queue import ForwardModel
 from res.sched import HistorySourceEnum, SchedFile

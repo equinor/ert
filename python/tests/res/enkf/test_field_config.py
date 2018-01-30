@@ -17,7 +17,7 @@ from os.path import abspath
 from ecl.test import TestAreaContext
 from tests import ResTest
 
-from ecl.ecl import EclGrid
+from ecl.grid import EclGrid
 from res.enkf.config import FieldTypeEnum, FieldConfig
 from res.enkf.enums import EnkfFieldFileFormatEnum
 

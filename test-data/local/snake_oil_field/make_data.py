@@ -2,7 +2,9 @@
 import os
 import os.path
 
-from ecl.ecl import EclGrid, EclKW, EclTypeEnum
+from ecl import EclTypeEnum
+from ecl.eclfile import EclKW
+from ecl.grid import EclGrid
 from ecl.util import RandomNumberGenerator
 
 # This little script is used as a one-shot operation to generate the

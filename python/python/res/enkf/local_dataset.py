@@ -1,6 +1,6 @@
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
-from ecl.ecl import EclRegion
+from ecl.grid import EclRegion
 from ecl.geo import GeoRegion
 
 class LocalDataset(BaseCClass):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from ecl.ecl import EclSum
+from ecl.summary import EclSum
 
 OIL_PRICES = {"2010-01-01": 78.33,
               "2010-02-01": 76.39,

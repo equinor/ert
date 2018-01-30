@@ -15,7 +15,8 @@
 #  for more details.
 from cwrap import BaseCClass
 from ecl.util import StringList
-from ecl.ecl import EclGrid, EclSum
+from ecl.grid import EclGrid
+from ecl.summary import EclSum
 from res.enkf import EnkfPrototype, SummaryKeyMatcher
 from res.config import ConfigContent
 from res.enkf.config import EnkfConfigNode, CustomKWConfig
