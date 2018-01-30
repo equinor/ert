@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 import sys
 
-from ecl.ecl import EclSum, EclSumTStep
+from ecl.summary import EclSum, EclSumTStep
 from res.test.synthesizer import OilSimulator
 
 
