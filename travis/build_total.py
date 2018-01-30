@@ -50,7 +50,7 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
         if test_flags is None:
             test_flags = []
 
-        call(["ctest", "--output-on-failure"] + test_flags)
+        call(["ctest", "-VV"] + test_flags)
     call(["make", "install"])
 
     call(["bin/test_install"])
