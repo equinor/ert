@@ -333,6 +333,7 @@ time_t conf_instance_get_item_value_time_t(
 bool conf_instance_validate(
   const conf_instance_type * conf_instance);
 
+bool conf_instance_has_path_error(const conf_instance_type * conf_instance);
 
 
 /** A L L O C   F R O M   F I L E */

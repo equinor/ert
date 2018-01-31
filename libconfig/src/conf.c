@@ -1276,18 +1276,53 @@ bool conf_instance_validate_sub_instances(
   char ** sub_instance_keys = hash_alloc_keylist(conf_instance->sub_instances);
 
   for(int sub_instance_nr = 0; sub_instance_nr < num_sub_instances; sub_instance_nr++)
-  {
-    const char * sub_instances_key = sub_instance_keys[sub_instance_nr];
-    const conf_instance_type * sub_conf_instance = hash_get(conf_instance->sub_instances, sub_instances_key);
-    if(!conf_instance_validate(sub_conf_instance))
-      ok = false;
-  }
+    {
+      const char * sub_instances_key = sub_instance_keys[sub_instance_nr];
+      const conf_instance_type * sub_conf_instance = hash_get(conf_instance->sub_instances, sub_instances_key);
+      if(!conf_instance_validate(sub_conf_instance))
+        ok = false;
+    }
 
   util_free_stringlist(sub_instance_keys, num_sub_instances);
 
-  return ok;
+ return ok;
 }
 
+
+bool conf_instance_get_path_error(const conf_instance_type * conf_instance) {
+  bool path_errors = false;
+  {
+    int     num_items = hash_get_size(conf_instance->items);
+    char ** item_keys = hash_alloc_keylist(conf_instance->items);
+
+    for(int item_nr = 0; item_nr < num_items; item_nr++) {
+      const conf_item_type * conf_item = hash_get(conf_instance->items, item_keys[item_nr]);
+      const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
+      if (conf_item_spec->dt == DT_FILE) {
+        if (!util_file_exists(conf_item->value))
+          path_errors = true;
+      }
+    }
+    util_free_stringlist(item_keys, num_items);
+  }
+
+  {
+    int     num_sub_instances = hash_get_size(conf_instance->sub_instances);
+    char ** sub_instance_keys = hash_alloc_keylist(conf_instance->sub_instances);
+
+    for(int sub_instance_nr = 0; sub_instance_nr < num_sub_instances; sub_instance_nr++)
+      {
+        const char * sub_instances_key = sub_instance_keys[sub_instance_nr];
+        const conf_instance_type * sub_conf_instance = hash_get(conf_instance->sub_instances, sub_instances_key);
+        if (conf_instance_get_path_error(sub_conf_instance))
+          path_errors = true;
+      }
+
+    util_free_stringlist(sub_instance_keys, num_sub_instances);
+  }
+
+  return path_errors;
+}
 
 
 bool conf_instance_validate(
