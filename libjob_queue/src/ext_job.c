@@ -774,35 +774,35 @@ static void __fprintf_python_arg_types(FILE * stream,
                                        const char * suffix,
                                        const char * null_value) {
   fprintf(stream, "%s", prefix);
-  if (ext_job->arg_types) {
-    fprintf(stream, "\"%s\" : [", key);
-    int i;
-    for (i = 0; i < ext_job->max_arg; i++) {
-
-      char * arg_type;
-      int type = int_vector_safe_iget(ext_job->arg_types, i);
-      switch(type) {
-        case CONFIG_INT:          arg_type = JOB_INT_TYPE; break;
-        case CONFIG_FLOAT:        arg_type = JOB_FLOAT_TYPE; break;
-        case CONFIG_STRING:       arg_type = JOB_STRING_TYPE; break;
-        case CONFIG_BOOL:         arg_type = JOB_BOOL_TYPE; break;
-        case CONFIG_RUNTIME_FILE: arg_type = JOB_RUNTIME_FILE_TYPE; break;
-        case CONFIG_RUNTIME_INT:  arg_type = JOB_RUNTIME_INT_TYPE; break;
-        
-        default: util_abort("ERROR in %s", __func__);
-      }
-
-      fprintf(stream, "\"%s\"", arg_type);      
-      if ((i + 1) < ext_job->max_arg)
-        fprintf(stream, ", ");
-    }    
-    fprintf(stream, "]");
-  }
-  else
+  if (!ext_job->arg_types) {
     fprintf(stream , "\"%s\" : %s" , key, null_value);
-  fprintf(stream, "%s", suffix);
+    goto postfix;
+  }
+
+  fprintf(stream, "\"%s\" : [", key);
+  for (int i = 0; i < ext_job->max_arg; i++) {
+
+    char * arg_type = NULL;
+    int type = int_vector_safe_iget(ext_job->arg_types, i);
+    switch(type) {
+    case CONFIG_INT:          arg_type = JOB_INT_TYPE; break;
+    case CONFIG_FLOAT:        arg_type = JOB_FLOAT_TYPE; break;
+    case CONFIG_STRING:       arg_type = JOB_STRING_TYPE; break;
+    case CONFIG_BOOL:         arg_type = JOB_BOOL_TYPE; break;
+    case CONFIG_RUNTIME_FILE: arg_type = JOB_RUNTIME_FILE_TYPE; break;
+    case CONFIG_RUNTIME_INT:  arg_type = JOB_RUNTIME_INT_TYPE; break;
+    default: util_abort("%s unknown config type %d", __func__, type);
+    }
+
+    fprintf(stream, "\"%s\"", arg_type);
+    if ((i + 1) < ext_job->max_arg)
+      fprintf(stream, ", ");
+  }
+  fprintf(stream, "]");
+
+  postfix: fprintf(stream, "%s", suffix);
 }
-                                       
+
 
 void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
   const char * null_value = "null";

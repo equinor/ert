@@ -172,32 +172,6 @@ void field_config_set_ecl_data_type(field_config_type * config , ecl_data_type d
 }
 
 
-
-static const char * field_config_file_type_string(field_file_format_type file_type) {
-  switch (file_type) {
-  case(RMS_ROFF_FILE):
-    return "Binary ROFF file from RMS";
-    break;
-  case(ECL_KW_FILE):
-    return "ECLIPSE file in restart format";
-    break;
-  case(ECL_KW_FILE_ALL_CELLS):
-    return "ECLIPSE file in restart format (all cells)";
-    break;
-  case(ECL_KW_FILE_ACTIVE_CELLS):
-    return "ECLIPSE file in restart format (active cells)";
-    break;
-  case(ECL_GRDECL_FILE):
-    return "ECLIPSE file in grdecl format";
-    break;
-  default:
-    fprintf(stderr,"%s: invalid file type \n",__func__);
-    abort();
-  }
-}
-
-
-
 /**
    This function takes a field_file_format_type variable, and returns
    a string containing a default extension for files of this type. For
@@ -227,22 +201,6 @@ const char * field_config_default_extension(field_file_format_type file_type, bo
     return NULL;
 }
 
-
-
-
-static bool field_config_valid_file_type(field_file_format_type file_type, bool import) {
-  if (import) {
-    if (file_type == RMS_ROFF_FILE || file_type == ECL_KW_FILE || file_type == ECL_GRDECL_FILE)
-      return true;
-    else
-      return false;
-  } else {
-    if (file_type == RMS_ROFF_FILE || file_type == ECL_KW_FILE_ACTIVE_CELLS || file_type == ECL_KW_FILE_ALL_CELLS || file_type == ECL_GRDECL_FILE)
-      return true;
-    else
-      return false;
-  }
-}
 
 
 field_file_format_type field_config_default_export_format(const char * filename) {
