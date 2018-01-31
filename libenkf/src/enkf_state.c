@@ -26,7 +26,6 @@
 #include <stdarg.h>
 #include <pthread.h>
 
-#include <ert/util/thread_pool.h>
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
 #include <ert/util/arg_pack.h>

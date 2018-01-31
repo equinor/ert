@@ -23,13 +23,13 @@
 #include <ert/util/test_work_area.h>
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
-#include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/vector.h>
 #include <ert/util/test_work_area.h>
 
 #include <ert/ecl/ecl_sum.h>
 
+#include <ert/res_util/thread_pool.h>
 #include <ert/enkf/time_map.h>
 #include <ert/enkf/enkf_fs.h>
 #include <ert/res_util/res_log.h>

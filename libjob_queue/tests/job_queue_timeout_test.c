@@ -25,9 +25,10 @@
 #include <ert/util/rng.h>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.h>
-#include <ert/util/thread_pool.h>
 #include <ert/util/type_macros.h>
 #include <ert/util/util.h>
+
+#include <ert/res_util/thread_pool.h>
 
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/job_queue_manager.h>

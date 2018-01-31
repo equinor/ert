@@ -23,10 +23,10 @@
 #include <ert/util/util.h>
 #include <ert/util/buffer.h>
 #include <ert/util/timer.h>
-#include <ert/util/thread_pool.h>
 
 #include <ert/res_util/block_fs.h>
 #include <ert/res_util/path_fmt.h>
+#include <ert/res_util/thread_pool.h>
 
 #include <ert/enkf/fs_types.h>
 #include <ert/enkf/fs_driver.h>

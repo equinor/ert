@@ -30,3 +30,4 @@ from .ui_return import UIReturn
 from .path_format import PathFormat
 from .matrix import Matrix
 from .stat import quantile, quantile_sorted, polyfit
+from .cthread_pool import CThreadPool, startCThreadPool

@@ -1,7 +1,7 @@
-from ecl.util.util import ArgPack, CThreadPool,BoolVector
+from ecl.util.util import ArgPack, BoolVector
 
 from res.job_queue import JobQueueManager
-
+from res.util import CThreadPool
 from res.enkf import ENKF_LIB
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.run_arg import RunArg

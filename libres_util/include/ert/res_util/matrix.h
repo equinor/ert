@@ -28,7 +28,7 @@
 #include <ert/util/bool_vector.h>
 
 #ifdef HAVE_THREAD_POOL
-#include <ert/util/thread_pool.h>
+#include <ert/res_util/thread_pool.h>
 #endif
 
 #ifdef _MSC_VER

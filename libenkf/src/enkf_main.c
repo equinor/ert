@@ -30,14 +30,12 @@
 #include <sys/types.h>
 
 #define HAVE_THREAD_POOL 1
-#include <ert/res_util/matrix.h>
 #include <ert/util/rng.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/res_util/path_fmt.h>
-#include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/set.h>
@@ -48,9 +46,11 @@
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_io_config.h>
 
+#include <ert/res_util/thread_pool.h>
 #include <ert/res_util/subst_list.h>
 #include <ert/res_util/res_log.h>
 #include <ert/res_util/res_util_defaults.h>
+#include <ert/res_util/matrix.h>
 
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/job_queue_manager.h>
