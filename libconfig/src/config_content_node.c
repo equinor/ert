@@ -92,9 +92,12 @@ static void config_content_node_push_string( config_content_node_type * node , c
   stringlist_append_owned_ref( node->string_storage , string );
 }
 
-const char * config_content_node_get_full_string( config_content_node_type * node , const char * sep ) {
+const char * config_content_node_get_full_string(const config_content_node_type * node,
+                                                 const char * sep) {
   char * full_string = stringlist_alloc_joined_string(node->stringlist , sep);
-  config_content_node_push_string( node , full_string );
+
+  // casting node to non-const, just to take ownership of full_string
+  config_content_node_push_string((config_content_node_type *)node, full_string );
   return full_string;
 }
 

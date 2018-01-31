@@ -451,14 +451,15 @@ void model_config_init(model_config_type * model_config ,
     model_config->num_realizations = config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
   
   for (int i = 0; i < config_content_get_size(config); i++) {
-     config_content_node_type * node = config_content_iget_node( config , i);
-     if (util_string_equal(config_content_node_get_kw(node), SIMULATION_JOB_KEY) ) 
-       forward_model_parse_job_args( model_config->forward_model , config_content_node_get_stringlist(node) );
-     
-     if (util_string_equal(config_content_node_get_kw(node), FORWARD_MODEL_KEY) ) {
-       const char * arg = config_content_node_get_full_string(node, "");
-       forward_model_parse_job_deprecated_args( model_config->forward_model , arg );
-     }
+    const config_content_node_type * node = config_content_iget_node( config , i);
+    if (util_string_equal(config_content_node_get_kw(node), SIMULATION_JOB_KEY))
+      forward_model_parse_job_args(model_config->forward_model,
+                                   config_content_node_get_stringlist(node));
+
+    if (util_string_equal(config_content_node_get_kw(node), FORWARD_MODEL_KEY) ) {
+      const char * arg = config_content_node_get_full_string(node, "");
+      forward_model_parse_job_deprecated_args( model_config->forward_model , arg );
+    }
   }
 
 
@@ -467,23 +468,21 @@ void model_config_init(model_config_type * model_config ,
     model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
   }
 
-  {
-    history_source_type source_type = DEFAULT_HISTORY_SOURCE;
+  history_source_type source_type = DEFAULT_HISTORY_SOURCE;
 
-    if (config_content_has_item( config , HISTORY_SOURCE_KEY)) {
-      const char * history_source = config_content_iget(config , HISTORY_SOURCE_KEY, 0,0);
-      source_type = history_get_source_type( history_source );
-    }
-
-    if (!model_config_select_history( model_config , source_type , sched_file , refcase ))
-      if (!model_config_select_history( model_config , DEFAULT_HISTORY_SOURCE , sched_file , refcase )) {
-        model_config_select_any_history( model_config , sched_file , refcase);
-        /* If even the last call return false, it means the configuration does not have any of
-         * these keys: HISTORY_SOURCE, SCHEDULE, REFCASE.
-         * History matching won't be supported for this configuration.
-         */
-      }
+  if (config_content_has_item( config , HISTORY_SOURCE_KEY)) {
+    const char * history_source = config_content_iget(config , HISTORY_SOURCE_KEY, 0,0);
+    source_type = history_get_source_type( history_source );
   }
+
+  if (!model_config_select_history( model_config , source_type , sched_file , refcase ))
+    if (!model_config_select_history( model_config , DEFAULT_HISTORY_SOURCE , sched_file , refcase )) {
+      model_config_select_any_history( model_config , sched_file , refcase);
+      /* If even the last call return false, it means the configuration does not have any of
+       * these keys: HISTORY_SOURCE, SCHEDULE, REFCASE.
+       * History matching won't be supported for this configuration.
+       */
+    }
 
   if (model_config->history != NULL) {
     int num_restart = model_config_get_last_history_restart(model_config);

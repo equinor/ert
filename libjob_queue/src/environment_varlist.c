@@ -52,7 +52,7 @@ static void env_varlist_fprintf_hash(const hash_type * list, char * keystring, F
   stringlist_type * stringlist = hash_alloc_stringlist(list);
   int i_max = size - 1;
   for (int i = 0; i < size; i++) {
-    char * key = stringlist_iget(stringlist, i);
+    const char * key = stringlist_iget(stringlist, i);
     fprintf(stream, "\"%s\" : \"%s\"", key, (char*)hash_get(list, key)   );
     if (i < i_max)
       fprintf(stream, ", ");

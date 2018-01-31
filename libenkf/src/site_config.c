@@ -577,9 +577,9 @@ static bool site_config_init(site_config_type * site_config, const config_conten
 
   if (config_content_has_item(config, UMASK_KEY)) {
     const char * string_mask = config_content_get_value(config, UMASK_KEY);
-    mode_t umask_value;
+    int umask_value;
     if (util_sscanf_octal_int(string_mask, &umask_value))
-      site_config_set_umask(site_config, umask_value);
+      site_config_set_umask(site_config, (mode_t)umask_value);
     else
       util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n", __func__, string_mask);
   }
