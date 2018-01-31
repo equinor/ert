@@ -434,3 +434,9 @@ const char * config_content_get_config_path( const config_content_type * content
 void config_content_pop_path_stack( config_content_type * content ) {
   config_path_stack_pop( content->path_stack );
 }
+
+
+
+stringlist_type * config_content_alloc_keys(const config_content_type * content) {
+  return hash_alloc_stringlist(content->items); 
+}

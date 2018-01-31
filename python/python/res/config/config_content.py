@@ -159,6 +159,7 @@ class ConfigContent(BaseCClass):
     _create_path_elm = ConfigPrototype("config_path_elm_ref config_content_add_path_elm(config_content, char*)")
     _add_define = ConfigPrototype("void config_content_add_define(config_content, char*, char*)")
     _size = ConfigPrototype("int config_content_get_size(config_content)")
+    _keys = ConfigPrototype("stringlist_obj config_content_alloc_keys(config_content)")
 
     def __init__(self, filename):
         c_ptr = self._alloc(filename)
@@ -232,3 +233,16 @@ class ConfigContent(BaseCClass):
 
     def add_define(self, key, value):
         self._add_define(key, value)
+
+    def keys(self):
+        return self._keys()
+
+
+    def as_dict(self):
+        d = {}
+        for key in self.keys():
+            d[key] = []
+            item = self[key]
+            for node in item:
+                d[key].append( [ x for x in node ])
+        return d
