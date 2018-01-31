@@ -18,7 +18,7 @@
 from cwrap import Prototype
 import res
 import ecl.util
-import ecl.geo
+import ecl.util.geometry
 import ecl
 import ecl.eclfile
 import ecl.grid
