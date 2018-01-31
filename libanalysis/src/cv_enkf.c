@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'cv_enkf.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'cv_enkf.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -23,8 +23,8 @@
 
 #include <ert/util/util.h>
 #include <ert/util/rng.h>
-#include <ert/util/matrix.h>
-#include <ert/util/matrix_blas.h>
+#include <ert/res_util/matrix.h>
+#include <ert/res_util/matrix_blas.h>
 
 #include <ert/analysis/enkf_linalg.h>
 #include <ert/analysis/analysis_table.h>
@@ -99,7 +99,7 @@ void * cv_enkf_data_alloc( ) {
   data->option_flags    = ANALYSIS_NEED_ED + ANALYSIS_USE_A + ANALYSIS_SCALE_DATA;
   data->nfolds          = DEFAULT_NFOLDS;
   cv_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
-  
+
   return data;
 }
 
@@ -120,12 +120,12 @@ void cv_enkf_data_free( void * arg ) {
 
 
 
-void cv_enkf_init_update( void * arg , 
-                          const bool_vector_type * ens_mask , 
-                          const matrix_type * S , 
-                          const matrix_type * R , 
-                          const matrix_type * dObs , 
-                          const matrix_type * E , 
+void cv_enkf_init_update( void * arg ,
+                          const bool_vector_type * ens_mask ,
+                          const matrix_type * S ,
+                          const matrix_type * R ,
+                          const matrix_type * dObs ,
+                          const matrix_type * E ,
                           const matrix_type * D,
                           rng_type * rng) {
 
@@ -139,35 +139,35 @@ void cv_enkf_init_update( void * arg ,
     cv_data->Z   = matrix_alloc( nrmin , nrens );
     cv_data->Rp  = matrix_alloc( nrmin , nrmin );
     cv_data->Dp  = matrix_alloc( nrmin , nrens );
-    
+
     /*
       Compute SVD(S)
     */
     matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
     matrix_type * V0T  = matrix_alloc( nrmin , nrens );    /* Right singular vectors. */
-    
+
     double * inv_sig0  = util_calloc( nrmin , sizeof * inv_sig0 );
     double * sig0      = inv_sig0;
-    
+
     printf("Computing svd using truncation %0.4f\n",cv_data->truncation);
 
     enkf_linalg_svdS(S , cv_data->truncation , cv_data->subspace_dimension , DGESVD_MIN_RETURN , inv_sig0 , U0 , V0T);
-    
+
     /* Need to use the original non-inverted singular values. */
-    for(i = 0; i < nrmin; i++) 
-      if ( inv_sig0[i] > 0 ) 
+    for(i = 0; i < nrmin; i++)
+      if ( inv_sig0[i] > 0 )
         sig0[i] = 1.0 / inv_sig0[i];
-    
+
    /*
-      Compute the actual principal components, Z = sig0 * VOT 
-      NOTE: Z contains potentially alot of redundant zeros, but 
+      Compute the actual principal components, Z = sig0 * VOT
+      NOTE: Z contains potentially alot of redundant zeros, but
       we do not care about this for now
     */
-    
-    for(i = 0; i < nrmin; i++) 
-      for(j = 0; j < nrens; j++) 
+
+    for(i = 0; i < nrmin; i++)
+      for(j = 0; j < nrens; j++)
         matrix_iset( cv_data->Z , i , j , sig0[i] * matrix_iget( V0T , i , j ) );
-    
+
     /* Also compute Rp */
     {
       matrix_type * X0 = matrix_alloc( nrmin , matrix_get_rows( R ));
@@ -178,25 +178,25 @@ void cv_enkf_init_update( void * arg ,
 
     /*We also need to compute the reduced "Innovation matrix" Dp = U0' * D    */
     matrix_dgemm(cv_data->Dp , U0 , D , true , false , 1.0 , 0.0);
-    
-    
+
+
     free(inv_sig0);
     matrix_free(U0);
     matrix_free(V0T);
-    
-    /* 
+
+    /*
        2: Diagonalize the S matrix; singular vectors etc. needed later in the local CV:
-       (V0T = transposed right singular vectors of S, Z = scaled principal components, 
+       (V0T = transposed right singular vectors of S, Z = scaled principal components,
        eig = scaled, inverted singular vectors, U0 = left singular vectors of S
        eig = inv(I+Lambda1),(Eq.14.30, and 14.29, Evensen, 2007, respectively)
-    */ 
+    */
   }
 }
 
 
 
 /*Function that computes the PRESS for different subspace dimensions using
-  m-fold CV 
+  m-fold CV
   INPUT :
   A   : State-Vector ensemble matrix
   Z   : Ensemble matrix of principal components
@@ -206,66 +206,66 @@ void cv_enkf_init_update( void * arg ,
   nTest : number of members in the training ensemble
   nTrain . number of members in the test ensemble
   foldIndex: integer specifying which "cv-fold" we are considering
-  
+
   OUTPUT:
   cvErr : UPDATED MATRIX OF PRESS VALUES
-  
+
 */
 
-static void cv_enkf_get_cv_error_prin_comp( cv_enkf_data_type * cv_data , 
-                                                  matrix_type * cvErr , 
-                                                  const matrix_type * A ,  
-                                                  const int * indexTest, 
-                                                  const int * indexTrain , 
-                                                  const int nTest , 
-                                                  const int nTrain , 
-                                                  const int foldIndex, 
-                                                  const int maxP) { 
-  /*  
+static void cv_enkf_get_cv_error_prin_comp( cv_enkf_data_type * cv_data ,
+                                                  matrix_type * cvErr ,
+                                                  const matrix_type * A ,
+                                                  const int * indexTest,
+                                                  const int * indexTrain ,
+                                                  const int nTest ,
+                                                  const int nTrain ,
+                                                  const int foldIndex,
+                                                  const int maxP) {
+  /*
       We need to predict ATest(p), for p = 1,...,nens -1, based on the estimated regression model:
       AHatTest(p) = A[:,indexTrain] * Z[1:p,indexTrain]'* inv( Z[1:p,indexTrain] * Z[1:p,indexTrain]' + (nens-1) * Rp[1:p,1:p] ) * Z[1:p,indexTest];
   */
-  
+
 
   const int nx         = matrix_get_rows( A );
   matrix_type * AHat   = matrix_alloc(nx , nTest );
   matrix_type * ATrain = matrix_alloc( nx , nTrain );
-  
+
   int p,i,j;
-    
-  
+
+
   /* Copy elements*/
-  for (i = 0; i < nx; i++) 
-    for (j = 0; j < nTrain; j++) 
+  for (i = 0; i < nx; i++)
+    for (j = 0; j < nTrain; j++)
       matrix_iset(ATrain , i , j , matrix_iget( A , i , indexTrain[j]));
-  
-  
+
+
   for (p = 0; p < maxP; p++) {
     matrix_type * ZpTrain = matrix_alloc( p + 1, nTrain );
     matrix_type *SigDp    = matrix_alloc( p + 1 , p + 1);
-    
-    
-    for (i = 0; i <= p ; i++) 
-      for (j = 0; j < nTrain; j++) 
+
+
+    for (i = 0; i <= p ; i++)
+      for (j = 0; j < nTrain; j++)
         matrix_iset(ZpTrain , i , j , matrix_iget(cv_data->Z , i , indexTrain[j]));
-    
+
     /* SigDp = ZpTrain * ZpTrain' */
     matrix_dgemm( SigDp , ZpTrain , ZpTrain, false , true , 1.0, 0.0);
 
     /* SigDp += (nTrain - 1) * Rp */
-    for(i = 0; i <= p; i++) 
-      for( j = 0; j <= p; j++) 
+    for(i = 0; i <= p; i++)
+      for( j = 0; j <= p; j++)
         matrix_iadd( SigDp , i , j , (nTrain - 1) * matrix_iget(cv_data->Rp, i, j));
-    
-    
+
+
     /* Invert the covariance matrix for the principal components  */
     {
       int inv_ok = matrix_inv( SigDp );
-      if ( inv_ok != 0 ) 
-        util_abort("%s: inversion of covariance matrix for the principal components failed for subspace dimension p = %d\n - aborting \n",__func__,p+1); 
+      if ( inv_ok != 0 )
+        util_abort("%s: inversion of covariance matrix for the principal components failed for subspace dimension p = %d\n - aborting \n",__func__,p+1);
     }
 
-    
+
     {
       matrix_type * W  = matrix_alloc(p + 1 , nTest );
       matrix_type * W2 = matrix_alloc(nTrain , nTest );
@@ -274,16 +274,16 @@ static void cv_enkf_get_cv_error_prin_comp( cv_enkf_data_type * cv_data ,
       for (i = 0; i <= p; i++) {
         for (j = 0; j < nTest; j++) {
           double ksum = 0.0;
-          for (int k = 0; k <= p; k++) 
+          for (int k = 0; k <= p; k++)
             ksum += matrix_iget(SigDp , i , k) * matrix_iget(cv_data->Z , k , indexTest[j]);
-          
+
           matrix_iset(W , i , j , ksum);
         }
       }
 
       /* W2 = ZpTrain' * W */
       matrix_dgemm( W2 , ZpTrain , W , true , false , 1.0 , 0.0);
-      
+
       /* Estimate the state-vector */
       matrix_matmul( AHat , ATrain , W2 );
 
@@ -291,7 +291,7 @@ static void cv_enkf_get_cv_error_prin_comp( cv_enkf_data_type * cv_data ,
       matrix_free( W );
     }
 
-    
+
     /*Compute Press Statistic: */
     {
       double R2Sum = 0;
@@ -304,13 +304,13 @@ static void cv_enkf_get_cv_error_prin_comp( cv_enkf_data_type * cv_data ,
       }
       matrix_iset( cvErr , p , foldIndex , R2Sum );
     }
-    
-    
-    
+
+
+
     matrix_free( ZpTrain );
     matrix_free( SigDp );
   } /*end for p */
-  
+
   matrix_free( AHat );
   matrix_free( ATrain );
 }
@@ -320,10 +320,10 @@ static void cv_enkf_get_cv_error_prin_comp( cv_enkf_data_type * cv_data ,
 
 
 
-int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data , 
-                                        const matrix_type * cvErr , 
+int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
+                                        const matrix_type * cvErr ,
                                         const int maxP ) {
-                                        
+
 
   double * cvMean = util_calloc( maxP , sizeof * cvMean );
   double * cvStd  = util_calloc( maxP , sizeof * cvStd  );
@@ -334,24 +334,24 @@ int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
       double err_sum = 0;
       for (int folds = 0; folds < cv_data->nfolds; folds++ )
         err_sum += matrix_iget( cvErr , p, folds );
-      
+
       cvMean[p] = err_sum / cv_data->nfolds;
     }
-    
+
     for ( int p = 0; p < maxP; p++){
       double err_sum2 = 0;
       for ( int folds = 0; folds < cv_data->nfolds; folds++)
         err_sum2 += pow( matrix_iget( cvErr , p , folds ) - cvMean[p] , 2);
-      
+
       cvStd[p] = sqrt( err_sum2 / (cv_data->nfolds - 1) );
     }
   }
-  
+
   {
     double minErr = cvMean[0];
     int i;
     optP = 1;
-    
+
     printf("PRESS:\n");
     printf("%f\n",cvMean[0]);
     for (i = 1; i < maxP; i++) {
@@ -364,7 +364,7 @@ int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
 
 
 
-  
+
     if (cv_data->penalised_press) {
       for ( i = 0; i < optP; i++){
         if( cvMean[i] - cvStd[i] <= minErr ){
@@ -373,8 +373,8 @@ int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
         }
       }
     }
-  }    
-  
+  }
+
   free( cvStd );
   free( cvMean );
   return optP;
@@ -388,10 +388,10 @@ int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
 /* Function that performs cross-validation to find the optimal subspace dimension,  */
 
 
-static int get_optimal_principal_components( cv_enkf_data_type * cv_data , 
+static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
                                              const matrix_type * A,
                                              rng_type * rng) {
-  
+
 
   const int nrens = matrix_get_columns( cv_data->Z );
   const int nrmin = matrix_get_rows( cv_data->Z );
@@ -400,11 +400,11 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
 
   matrix_type * cvError;
   int * randperms     = util_calloc( nrens , sizeof * randperms);
-  
+
   int maxP  = nrmin;
   int optP;
-      
-  
+
+
   /* We only want to search the non-zero eigenvalues */
   for (int i = 0; i < nrmin; i++) {
     if (matrix_iget(cv_data->Z,i,1) == 0.0) {
@@ -412,25 +412,25 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
       break;
     }
   }
-  
-  if (maxP > nrmin) 
-    maxP = nrmin - 1;      // <- Change by Joakim; using nrmin here will load to out 
+
+  if (maxP > nrmin)
+    maxP = nrmin - 1;      // <- Change by Joakim; using nrmin here will load to out
                            // bounds access oc cv_data->Z at line 460.
 
-  
+
 
 
   if ( nrens < cv_data->nfolds )
     util_abort("%s: number of ensemble members %d need to be larger than the number of cv-folds - aborting \n",
                __func__,
                nrens,
-               cv_data->nfolds); 
-  
+               cv_data->nfolds);
+
   for (int i=0; i < nrens; i++)
     randperms[i] = i;
 
   rng_shuffle_int( rng , randperms , nrens );
-  
+
   cvError = matrix_alloc( maxP , cv_data->nfolds );
   {
     int ntest, ntrain, k,j,i;
@@ -458,7 +458,7 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
     free( indexTest );
     free( indexTrain );
   }
-  
+
 
   /* find optimal truncation value for the cv-scheme */
   optP = cv_enkf_get_optimal_numb_comp( cv_data , cvError , maxP);
@@ -471,20 +471,20 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
 
 
 /*NB! HERE WE COUNT optP from 0,1,2,... */
-static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const int optP) { 
+static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const int optP) {
 
   int i, j;
   double tmp2;
   int nrens = matrix_get_columns( cv_data->Z );
-  
+
   /* Finally, compute W = Z(1:p,:)' * inv(Z(1:p,:) * Z(1:p,:)' + (n -1) * Rp) */
   matrix_type *Zp    = matrix_alloc( optP, nrens );
   matrix_type *SigZp = matrix_alloc( optP ,optP);
 
   // This loop will fail with i to large whcn accessing cv_data->Z
   // if we do not limit maxP to nrmin - 1?
-  for (i = 0; i < optP ; i++) 
-    for (j = 0; j < nrens; j++) 
+  for (i = 0; i < optP ; i++)
+    for (j = 0; j < nrens; j++)
       matrix_iset_safe(Zp , i , j , matrix_iget_safe(cv_data->Z , i ,j));
 
   // Matrix copy_block should be used in stead of the double (i,j) loop;
@@ -493,7 +493,7 @@ static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const 
 
   /*Compute SigZp = Zp * Zp' */
   matrix_dgemm( SigZp , Zp , Zp, false , true , 1.0, 0.0);
-  
+
   /*Add (ntrain-1) * Rp*/
   for(i = 0; i < optP; i++) {
     for( j = 0; j < optP; j++) {
@@ -501,18 +501,18 @@ static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const 
       matrix_iset( SigZp , i , j , tmp2 );
     }
   }
-  
+
 
   /* Invert the covariance matrix for the principal components  */
   int inv_ok = matrix_inv( SigZp );
-  
+
   /*Check if the inversion went ok */
-  if ( inv_ok != 0 ) 
-    util_abort("%s: inversion of covariance matrix for the principal components failed for subspace dimension p = %d\n - aborting \n",__func__,optP); 
-  
+  if ( inv_ok != 0 )
+    util_abort("%s: inversion of covariance matrix for the principal components failed for subspace dimension p = %d\n - aborting \n",__func__,optP);
 
 
-  
+
+
   /*Compute W = Zp' * inv(SigZp) */
   matrix_dgemm( W , Zp , SigZp , true , false , 1.0 , 0.0);
 
@@ -523,28 +523,28 @@ static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const 
 
 
 
-void cv_enkf_initX(void * module_data , 
-                   matrix_type * X , 
-                   matrix_type * A , 
-                   matrix_type * S , 
-                   matrix_type * R , 
-                   matrix_type * dObs , 
+void cv_enkf_initX(void * module_data ,
+                   matrix_type * X ,
+                   matrix_type * A ,
+                   matrix_type * S ,
+                   matrix_type * R ,
+                   matrix_type * dObs ,
                    matrix_type * E ,
                    matrix_type * D,
                    rng_type * rng) {
 
-  
+
   cv_enkf_data_type * cv_data = cv_enkf_data_safe_cast( module_data );
   printf("Running CV\n");
   {
     int optP;
     int ens_size = matrix_get_columns( S );
-    
-    /* Get the optimal number of principal components 
+
+    /* Get the optimal number of principal components
        where p is found minimizing the PRESS statistic */
-        
+
     {
-      matrix_type * workA = matrix_alloc_copy( A ); 
+      matrix_type * workA = matrix_alloc_copy( A );
       matrix_subtract_row_mean( workA );
       optP = get_optimal_principal_components(cv_data , workA, rng);
       printf("Optimal subspace dimension found %d\n",optP);
@@ -552,25 +552,25 @@ void cv_enkf_initX(void * module_data ,
     }
 
     {
-      matrix_type * W          = matrix_alloc(ens_size , optP);                      
+      matrix_type * W          = matrix_alloc(ens_size , optP);
 
       /* Compute  W = Z(1:p,:)' * inv(Z(1:p,:) * Z(1:p,:)' + (ens_size-1) * Rp(1:p,1:p))*/
       getW_prin_comp( cv_data , W , optP);
-      
+
       /*Compute the actual X5 matrix: */
       /*Compute X5 = W * Dp (The hard way) */
       for( int i = 0; i < ens_size; i++) {
         for( int j = 0; j < ens_size; j++) {
           double tmp = 0.0;
-          
-          for( int k = 0; k < optP; k++) 
+
+          for( int k = 0; k < optP; k++)
             tmp += matrix_iget( W , i , k) * matrix_iget( cv_data->Dp , k , j);
-          
+
           matrix_iset(X , i , j ,tmp);
         }
         matrix_iadd( X , i , i , 1.0);  /* X5 = I + X5 */
       }
-      
+
       matrix_free( W );
     }
   }
@@ -612,14 +612,14 @@ bool cv_enkf_set_int( void * arg , const char * var_name , int value) {
   cv_enkf_data_type * module_data = cv_enkf_data_safe_cast( arg );
   {
     bool name_recognized = true;
-    
+
     if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
       cv_enkf_set_subspace_dimension( module_data , value );
     else if (strcmp( var_name , NFOLDS_KEY) == 0)
       cv_enkf_set_nfolds( module_data , value);
     else
       name_recognized = false;
-    
+
     return name_recognized;
   }
 }
@@ -633,7 +633,7 @@ bool cv_enkf_set_bool( void * arg , const char * var_name , bool value) {
       cv_enkf_set_pen_press( module_data , value );
     else
       name_recognized = false;
-    
+
     return name_recognized;
   }
 }
@@ -705,18 +705,18 @@ analysis_table_type LINK_NAME = {
   .name            = "CV_ENKF",
   .alloc           = cv_enkf_data_alloc,
   .freef           = cv_enkf_data_free,
-  .set_int         = cv_enkf_set_int , 
-  .set_double      = cv_enkf_set_double , 
-  .set_bool        = cv_enkf_set_bool , 
-  .set_string      = NULL , 
-  .get_options     = cv_enkf_get_options , 
-  .initX           = cv_enkf_initX , 
+  .set_int         = cv_enkf_set_int ,
+  .set_double      = cv_enkf_set_double ,
+  .set_bool        = cv_enkf_set_bool ,
+  .set_string      = NULL ,
+  .get_options     = cv_enkf_get_options ,
+  .initX           = cv_enkf_initX ,
   .updateA         = NULL,
-  .init_update     = cv_enkf_init_update , 
+  .init_update     = cv_enkf_init_update ,
   .complete_update = cv_enkf_complete_update ,
   .has_var         = cv_enkf_has_var,
   .get_int         = cv_enkf_get_int,
   .get_double      = cv_enkf_get_double,
   .get_bool        = cv_enkf_get_bool,
-  .get_ptr         = NULL, 
+  .get_ptr         = NULL,
 };

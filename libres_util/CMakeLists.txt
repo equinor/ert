@@ -13,6 +13,10 @@ add_library( res_util src/res_log.c
                       src/ui_return.c
                       src/subst_list.c
                       src/subst_func.c
+                      src/matrix_stat.c
+                      src/matrix_blas.c
+                      src/matrix_lapack.c
+                      src/matrix.c
                       src/template.c
                       src/template_loop.c
                       src/path_fmt.c
@@ -22,7 +26,8 @@ add_library( res_util src/res_log.c
                       ${opt_srcs})
 
 
-target_link_libraries( res_util PUBLIC ecl )
+find_package(LAPACK REQUIRED)
+target_link_libraries( res_util PUBLIC ecl ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS})
 
 target_include_directories(res_util
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -65,4 +70,12 @@ add_test(NAME ert_util_subst_list COMMAND ert_util_subst_list)
 add_executable(ert_util_block_fs tests/ert_util_block_fs.c)
 target_link_libraries(ert_util_block_fs res_util)
 add_test(NAME ert_util_block_fs COMMAND ert_util_block_fs)
+
+add_executable(ert_util_matrix_lapack tests/ert_util_matrix_lapack.c)
+target_link_libraries(ert_util_matrix_lapack res_util)
+add_test(NAME ert_util_matrix_lapack COMMAND ert_util_matrix_lapack)
+
+add_executable(ert_util_matrix_stat tests/ert_util_matrix_stat.c)
+target_link_libraries(ert_util_matrix_stat res_util)
+add_test(NAME ert_util_matrix_stat COMMAND ert_util_matrix_stat)
 

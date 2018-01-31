@@ -30,7 +30,7 @@
 #include <sys/types.h>
 
 #define HAVE_THREAD_POOL 1
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 #include <ert/util/rng.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>

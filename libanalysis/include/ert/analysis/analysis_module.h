@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #include <ert/util/type_macros.h>
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 #include <ert/util/bool_vector.h>
 
 #include <ert/analysis/module_info.h>

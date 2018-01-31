@@ -23,7 +23,6 @@
 
 #include <ert/util/arg_pack.h>
 #include <ert/util/buffer.h>
-#include <ert/util/matrix.h>
 #include <ert/util/rng.h>
 #include <ert/util/hash.h>
 #include <ert/util/int_vector.h>
@@ -33,6 +32,8 @@
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/fortio.h>
+
+#include <ert/res_util/matrix.h>
 
 #include <ert/enkf/enkf_serialize.h>
 #include <ert/enkf/active_list.h>

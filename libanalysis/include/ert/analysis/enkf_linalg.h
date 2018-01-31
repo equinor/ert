@@ -1,9 +1,10 @@
 #ifndef ERT_ENKF_LINALG_H
 #define ERT_ENKF_LINALG_H
 
-#include <ert/util/matrix_lapack.h>
-#include <ert/util/matrix.h>
 #include <ert/util/double_vector.h>
+
+#include <ert/res_util/matrix_lapack.h>
+#include <ert/res_util/matrix.h>
 
 
 int enkf_linalg_get_PC( const matrix_type * S0, 

@@ -1,26 +1,26 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-    
-   The file 'enkf_pca_plot.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+
+   The file 'enkf_pca_plot.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/matrix.h>
 #include <ert/util/rng.h>
 
+#include <ert/res_util/matrix.h>
 #include <ert/enkf/pca_plot_data.h>
 #include <ert/enkf/pca_plot_vector.h>
 
@@ -70,7 +70,7 @@ void test_create_vector() {
   matrix_type * PC = matrix_alloc( 3 , 10);
   matrix_type * PC_obs = matrix_alloc( 3 , 1 );
   double_vector_type * singular_values = double_vector_alloc(3 , 1);
-  
+
   {
     pca_plot_vector_type * vector = pca_plot_vector_alloc(0 , PC , PC_obs, singular_values);
     test_assert_true( pca_plot_vector_is_instance( vector ));
@@ -101,16 +101,16 @@ void test_content() {
     pca_plot_data_type * data = pca_plot_data_alloc("KEY" , PC , PC_obs, singular_values);
     for (int i=0; i < matrix_get_rows( PC ); i++) {
       const pca_plot_vector_type * vector = pca_plot_data_iget_vector( data , i );
-      
-      test_assert_double_equal( matrix_iget( PC_obs , i , 0) , 
+
+      test_assert_double_equal( matrix_iget( PC_obs , i , 0) ,
                                 pca_plot_vector_get_obs_value( vector ) );
 
       test_assert_double_equal( double_vector_iget( singular_values , i),
                                 pca_plot_vector_get_singular_value( vector ) );
 
-      for (int j=0; j < matrix_get_columns( PC ); j++) 
+      for (int j=0; j < matrix_get_columns( PC ); j++)
         test_assert_double_equal( matrix_iget( PC , i , j ) , pca_plot_vector_iget_sim_value( vector , j ));
-      
+
       test_assert_int_equal( matrix_get_columns( PC ) , pca_plot_vector_get_size( vector ));
 
     }

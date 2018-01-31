@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
 

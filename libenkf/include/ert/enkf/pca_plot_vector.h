@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-    
+   Copyright (C) 2013  Statoil ASA, Norway.
+
    The file 'pca_plot_vector.h'
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #ifndef ERT_PCA_PLOT_VECTOR_H
 #define ERT_PCA_PLOT_VECTOR_H
@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #include <ert/util/type_macros.h>
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 #include <ert/util/double_vector.h>
 
   typedef struct pca_plot_vector_struct pca_plot_vector_type;
@@ -41,6 +41,6 @@ extern "C" {
   UTIL_IS_INSTANCE_HEADER( pca_plot_vector );
 
 #ifdef __cplusplus
-} 
+}
 #endif
 #endif

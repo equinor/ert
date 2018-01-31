@@ -25,13 +25,14 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/matrix.h>
 #include <ert/util/rng.h>
 #include <ert/util/double_vector.h>
 #include <ert/util/int_vector.h>
 
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_sum.h>
+
+#include <ert/res_util/matrix.h>
 
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_serialize.h>

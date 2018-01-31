@@ -1,6 +1,7 @@
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
-from ecl.util.util import Matrix , DoubleVector
+from ecl.util.util import DoubleVector
+from res.util import Matrix
 
 class EnkfLinalg(BaseCClass):
     TYPE_NAME = "EnkfLinalg"

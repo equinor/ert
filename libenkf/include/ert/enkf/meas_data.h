@@ -25,10 +25,11 @@ extern "C" {
 
 #include <stdbool.h>
 
-#include <ert/util/matrix.h>
 #include <ert/util/hash.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/type_macros.h>
+
+#include <ert/res_util/matrix.h>
 
 typedef struct meas_data_struct   meas_data_type;
 typedef struct meas_block_struct  meas_block_type;

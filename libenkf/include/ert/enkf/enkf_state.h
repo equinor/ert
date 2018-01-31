@@ -27,9 +27,9 @@ extern "C" {
 #include <ert/util/hash.h>
 #include <ert/util/rng.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/matrix.h>
 #include <ert/util/rng.h>
 #include <ert/res_util/subst_list.h>
+#include <ert/res_util/matrix.h>
 
 #include <ert/sched/sched_file.h>
 

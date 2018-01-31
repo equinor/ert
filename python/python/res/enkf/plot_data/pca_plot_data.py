@@ -1,7 +1,7 @@
 from cwrap import BaseCClass
 
 from res.enkf import EnkfPrototype
-from ecl.util.util import Matrix
+from res.util import Matrix
 from res.enkf.plot_data import PcaPlotVector
 
 

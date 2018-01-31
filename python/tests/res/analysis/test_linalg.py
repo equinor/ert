@@ -17,7 +17,7 @@
 
 
 from res.enkf import ObsVector
-from ecl.util.util import Matrix
+from res.util import Matrix
 from res.analysis import Linalg
 from tests import ResTest
 
@@ -34,14 +34,14 @@ class LinalgTest(ResTest):
 
         with self.assertRaises(ValueError):
             num_pc = Linalg.numPC( S , 1.5 )
-    
+
         num_pc = Linalg.numPC( S , 0.20 )
         self.assertEqual( num_pc , 1 )
 
         num_pc = Linalg.numPC( S , 0.50 )
         self.assertEqual( num_pc , 2 )
-        
+
         num_pc = Linalg.numPC( S , 0.80 )
         self.assertEqual( num_pc , 3 )
-        
-        
+
+
