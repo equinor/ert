@@ -3,7 +3,7 @@ import res.enkf  # noqa
 
 from res.job_queue import WorkflowJob
 from tests import ResTest
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from .workflow_common import WorkflowCommon
 
 from cwrap import Prototype

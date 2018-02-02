@@ -1,6 +1,6 @@
 from ecl.util import BoolVector
 from res.util.substitution_list import SubstitutionList
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.enkf import ErtRunContext
 from res.enkf.enums import EnkfRunType

@@ -1,6 +1,6 @@
 import res.enkf  # noqa
 from res.job_queue import WorkflowJoblist, WorkflowJob
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 from .workflow_common import WorkflowCommon
 

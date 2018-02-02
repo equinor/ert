@@ -1,7 +1,7 @@
 import os.path
 import json
 
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from ecl.util import EclVersion, Version
 from tests import ResTest
 from res.util.substitution_list import SubstitutionList

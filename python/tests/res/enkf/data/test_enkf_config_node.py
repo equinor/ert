@@ -2,7 +2,7 @@ import os.path
 import json
 
 from res.enkf.config import EnkfConfigNode
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 
 

@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.test import ErtTestContext
 from res.enkf import ResConfig, ConfigKeys

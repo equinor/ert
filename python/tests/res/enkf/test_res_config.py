@@ -17,7 +17,7 @@ import os, os.path
 from copy import deepcopy
 from datetime import date
 
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 from ecl.util import CTime
 from ecl.util.enums import RngAlgTypeEnum

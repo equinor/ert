@@ -1,6 +1,6 @@
 import os
 from res.util import ResLog
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 
 

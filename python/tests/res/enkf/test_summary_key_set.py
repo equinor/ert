@@ -1,6 +1,6 @@
 import os
 from tests import ResTest
-from ecl.test.test_area import TestAreaContext
+from ecl.util.test.test_area import TestAreaContext
 from res.test.ert_test_context import ErtTestContext
 
 from res.enkf import SummaryKeySet
