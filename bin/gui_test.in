@@ -5,7 +5,7 @@ import subprocess
 from argparse import ArgumentParser
 import inspect
 
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 
 config_file = "${PROJECT_SOURCE_DIR}/test-data/local/snake_oil_no_data/snake_oil.ert"
 ERT_ROOT = "${ERT_ROOT}"

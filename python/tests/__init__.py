@@ -1,5 +1,5 @@
 import os.path
-from ecl.test import ExtendedTestCase
+from ecl.util.test import ExtendedTestCase
 
 
 def source_root():
