@@ -17,7 +17,7 @@ import os
 import sys
 import glob
 
-from ecl.test import ImportTestCase
+from ecl.util.test import ImportTestCase
 
 class ImportPlugins(ImportTestCase):
 
