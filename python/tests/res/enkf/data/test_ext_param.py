@@ -3,7 +3,7 @@ import json
 
 from res.enkf.data import ExtParam
 from res.enkf.config import ExtParamConfig
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 
 

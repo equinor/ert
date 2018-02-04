@@ -1,7 +1,7 @@
 import os.path
 from res.enkf.data import GenKw
 from res.enkf.config import GenKwConfig
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 
 

@@ -15,7 +15,7 @@
 #  for more details.
 
 
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 from ecl.util import BoolVector
 

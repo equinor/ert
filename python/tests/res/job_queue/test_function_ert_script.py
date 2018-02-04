@@ -1,5 +1,5 @@
 from cwrap import clib
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from res.job_queue import WorkflowJob
 from .workflow_common import WorkflowCommon
 from tests import ResTest

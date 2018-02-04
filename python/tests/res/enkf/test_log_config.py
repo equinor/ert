@@ -16,7 +16,7 @@
 
 import os, itertools
 
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.util.enums import MessageLevelEnum
 

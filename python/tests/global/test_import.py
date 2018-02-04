@@ -18,7 +18,7 @@ import os
 import sys
 
 
-from ecl.test import ImportTestCase
+from ecl.util.test import ImportTestCase
 
 class ImportRes(ImportTestCase):
 

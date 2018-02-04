@@ -16,7 +16,7 @@
 import os
 
 from cwrap import Prototype, clib
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 
 from res import load as resload

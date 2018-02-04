@@ -3,7 +3,7 @@ import time
 import sys
 import unittest
 
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 
 from res.simulator import BatchSimulator
 from res.enkf import ResConfig

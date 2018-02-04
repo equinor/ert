@@ -7,7 +7,7 @@ import datetime
 import subprocess
 from unittest import TestCase
 
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from res.job_queue import JobManager
 
 

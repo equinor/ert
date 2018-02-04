@@ -1,7 +1,7 @@
 import datetime
 
 from ecl.util import BoolVector, Matrix
-from ecl.test import TestAreaContext
+from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.enkf import ObsData, ObsBlock
 
