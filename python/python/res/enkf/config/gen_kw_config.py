@@ -16,7 +16,7 @@
 from cwrap import BaseCClass
 import os
 from res.enkf import EnkfPrototype
-from ecl.util import StringList
+from ecl.util.util import StringList
 
 
 class GenKwConfig(BaseCClass):

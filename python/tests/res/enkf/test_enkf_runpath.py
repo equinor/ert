@@ -17,7 +17,7 @@
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
                       EclConfig, PlotSettings, EnkfObs, ErtTemplates, EnkfFs,

@@ -15,7 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 
-from ecl.util import StringList
+from ecl.util.util import StringList
 
 from res.util import PathFormat
 from res.enkf import EnkfPrototype

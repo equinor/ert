@@ -2,7 +2,7 @@ from pandas import DataFrame
 import numpy
 from res.enkf import EnKFMain, EnkfFs, RealizationStateEnum
 from res.enkf.key_manager import KeyManager
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 
 
 class MisfitCollector(object):

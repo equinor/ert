@@ -1,4 +1,4 @@
-from ecl.util import ArgPack, CThreadPool,BoolVector
+from ecl.util.util import ArgPack, CThreadPool,BoolVector
 
 from res.job_queue import JobQueueManager
 

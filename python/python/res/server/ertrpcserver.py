@@ -12,7 +12,7 @@ except ImportError:
 import warnings
 from res.util import ResVersion
 from res.enkf import EnKFMain, NodeId, ResConfig
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 from res.enkf.config import CustomKWConfig
 from res.enkf.data import EnkfNode, CustomKW
 from res.enkf.enums import RealizationStateEnum, EnkfVarType, ErtImplType

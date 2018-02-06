@@ -18,7 +18,7 @@ from os.path import isfile
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
 from res.job_queue import JobQueue, ExtJoblist
-from ecl.util import StringList, Hash
+from ecl.util.util import StringList, Hash
 
 
 class SiteConfig(BaseCClass):

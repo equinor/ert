@@ -7,7 +7,7 @@ from res.enkf import CustomKWConfigSet
 from res.enkf.config import CustomKWConfig
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enkf_main import EnKFMain
-from ecl.util.stringlist import StringList
+from ecl.util.util.stringlist import StringList
 
 
 class CustomKWConfigSetTest(ResTest):

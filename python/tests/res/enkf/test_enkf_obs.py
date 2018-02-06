@@ -5,7 +5,7 @@ from ecl.grid import EclGrid
 from ecl.summary import EclSum
 from res.sched import History
 
-from ecl.util import BoolVector,IntVector
+from ecl.util.util import BoolVector,IntVector
 from res.enkf import ActiveMode, EnsembleConfig
 from res.enkf import (ObsVector, LocalObsdata, EnkfObs, TimeMap,
                       LocalObsdataNode, ObsData, MeasData, ActiveList)

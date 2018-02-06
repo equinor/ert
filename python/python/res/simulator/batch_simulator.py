@@ -1,4 +1,4 @@
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 
 from res.enkf import ResConfig, EnKFMain, EnkfConfigNode, EnkfNode, NodeId
 from .batch_simulator_context import BatchContext

@@ -9,8 +9,8 @@ from res.enkf.export.custom_kw_collector import CustomKWCollector
 from res.test.ert_test_context import ErtTestContext
 from tests import ResTest
 from ecl.util.test.test_area import TestAreaContext
-from ecl.util import StringList
-from ecl.util import BoolVector
+from ecl.util.util import StringList
+from ecl.util.util import BoolVector
 
 class CustomKWTest(ResTest):
 

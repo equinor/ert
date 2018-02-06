@@ -1,7 +1,7 @@
 from tests import ResTest
 from res.test import ErtTestContext
 
-from ecl.util import BoolVector,IntVector
+from ecl.util.util import BoolVector,IntVector
 from res.enkf import ActiveMode, EnsembleConfig
 from res.enkf import ObsVector , LocalObsdata
 

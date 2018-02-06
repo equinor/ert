@@ -1,4 +1,4 @@
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 from res.util.substitution_list import SubstitutionList
 from ecl.util.test import TestAreaContext
 from tests import ResTest

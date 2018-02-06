@@ -17,7 +17,7 @@ import sys
 
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
-from ecl.util import StringList, IntegerHash
+from ecl.util.util import StringList, IntegerHash
 
 
 class CustomKWConfig(BaseCClass):

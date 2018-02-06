@@ -19,7 +19,7 @@ import os.path
 import warnings
 
 from cwrap import BaseCClass
-from ecl.util import StringList
+from ecl.util.util import StringList
 from res.config import (ContentTypeEnum, ConfigContent, ConfigPrototype,
                         UnrecognizedEnum, ConfigPathElm)
 

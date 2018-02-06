@@ -18,7 +18,7 @@ import random
 
 from tests import ResTest
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ecl.util import Matrix, BoolVector , RandomNumberGenerator
+from ecl.util.util import Matrix, BoolVector , RandomNumberGenerator
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from res.enkf import MeasData , ObsData
 

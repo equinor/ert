@@ -16,7 +16,7 @@
 import os.path
 
 from cwrap import BaseCClass
-from ecl.util import StringList, IntVector
+from ecl.util.util import StringList, IntVector
 from res.sched import History
 from ecl.grid import EclGrid
 from ecl.summary import EclSum

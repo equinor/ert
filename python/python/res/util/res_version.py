@@ -1,4 +1,4 @@
-from ecl.util import Version
+from ecl.util.util import Version
 from res.util import ResUtilPrototype
 
 class ResVersion(Version):

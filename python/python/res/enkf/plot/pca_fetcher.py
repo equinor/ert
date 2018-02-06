@@ -2,7 +2,7 @@ from res.enkf.plot import DataFetcher, ObservationGenDataFetcher, BlockObservati
 from res.enkf.plot_data import PcaPlotData
 from res.enkf.enums import RealizationStateEnum, EnkfObservationImplementationType
 from res.enkf import LocalObsdata, LocalObsdataNode, EnkfLinalg, MeasData, ObsData
-from ecl.util import Matrix, BoolVector, DoubleVector
+from ecl.util.util import Matrix, BoolVector, DoubleVector
 
 
 class PcaDataFetcher(DataFetcher):

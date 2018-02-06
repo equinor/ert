@@ -2,7 +2,7 @@ from cwrap import BaseCClass
 from res.enkf import EnkfFs
 from res.enkf import EnkfPrototype, ErtRunContext
 from res.enkf.enums import EnkfInitModeEnum
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 
 
 class EnkfSimulationRunner(BaseCClass):

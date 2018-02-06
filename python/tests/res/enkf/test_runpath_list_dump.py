@@ -4,7 +4,7 @@ from ecl.util.test import TestAreaContext
 from tests import ResTest
 from res.test import ErtTestContext
 
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 
 from res.enkf import ResConfig, EnKFMain, EnkfFs, ErtRunContext
 from res.enkf.enums import EnKFFSType, EnkfRunType

@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division,
 
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
-from ecl.util import Matrix
+from ecl.util.util import Matrix
 
 
 class ObsData(BaseCClass):
