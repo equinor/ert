@@ -118,7 +118,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QFileDialog
 
 import ert_gui.ertwidgets
-from ecl.util import EclVersion
+from ecl.util.util import EclVersion
 from res.util import ResVersion
 from res.enkf import EnKFMain, ResConfig
 from res.util import ResLog
