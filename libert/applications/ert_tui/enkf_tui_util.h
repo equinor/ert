@@ -51,4 +51,5 @@ void         util_printf_prompt(const char * , int , char , const char *);
 int          util_scanf_int(const char * , int);
 double       util_scanf_double(const char * prompt , int prompt_len);
 char       * util_scanf_alloc_string(const char * );
+char       * util_alloc_stdin_line(void);
 #endif
