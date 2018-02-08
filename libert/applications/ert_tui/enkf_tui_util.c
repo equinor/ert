@@ -175,6 +175,12 @@ double util_scanf_double(const char * prompt , int prompt_len) {
   return double_value;
 }
 
+static bool EOL_CHAR(char c) {
+   if (c == '\r' || c == '\n')
+     return true;
+   else
+     return false;
+}
 
 /**
    Reads characters from stdin until EOL/EOF is detected. A '\0' is
