@@ -175,6 +175,50 @@ double util_scanf_double(const char * prompt , int prompt_len) {
   return double_value;
 }
 
+
+/**
+   Reads characters from stdin until EOL/EOF is detected. A '\0' is
+   appended to the resulting string before it is returned. If the
+   function reads an immediate EOF/EOL, i.e. the user enters an empty
+   input string, NULL (and not "") is returned.
+
+   Observe that is this function does *not* cooperate very nicely with
+   fscanf() based input, because fscanf will leave a EOL character in
+   the input buffer, which will lead to immediate return from this
+   function. Hence if this function is called after a fscanf() based
+   function it is essential to preceede this function with one call to
+   getchar() to clear the EOL character.
+*/
+
+char * util_alloc_stdin_line(void) {
+  int input_size = 256;
+  char * input   = (char*)util_calloc(input_size , sizeof * input );
+  int index = 0;
+  bool end = false;
+  int c;
+  do {
+    c = getchar();
+    if ((!EOL_CHAR(c)) && (c != EOF)) {
+      input[index] = c;
+      index++;
+      if (index == (input_size - 1)) { /* Reserve space for terminating \0 */
+        input_size *= 2;
+        input = (char*)util_realloc(input , input_size );
+      }
+    } else end = true;
+  } while (!end);
+  if (index == 0) {
+    free(input);
+    input = NULL;
+  } else {
+    input[index] = '\0';
+    input = (char*)util_realloc(input , strlen(input) + 1 );
+  }
+
+  return input;
+}
+
+
 /*
   exist_status == 0: Just read a string; do not check if it exist or not.
   exist_status == 1: Must be existing file.
