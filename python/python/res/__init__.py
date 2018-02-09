@@ -119,7 +119,7 @@ def load(name):
 
 
 from res.util import ResVersion
-from ecl.util import updateAbortSignals
+from ecl.util.util import updateAbortSignals
 
 updateAbortSignals( )
 

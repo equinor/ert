@@ -19,7 +19,7 @@ from res.enkf import EnkfPrototype
 from res.config import ConfigContent
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from ecl.util import StringList
+from ecl.util.util import StringList
 from res.sched import SchedFile
 from res.util import UIReturn
 

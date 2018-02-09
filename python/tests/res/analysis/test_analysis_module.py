@@ -19,9 +19,9 @@ from tests import ResTest
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ecl.util.rng import RandomNumberGenerator
+from ecl.util.util.rng import RandomNumberGenerator
 
-from ecl.util import Matrix
+from ecl.util.util import Matrix
 
 class AnalysisModuleTest(ResTest):
     def setUp(self):

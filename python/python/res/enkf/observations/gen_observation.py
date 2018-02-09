@@ -16,7 +16,7 @@
 import os.path
 
 from cwrap import BaseCClass
-from ecl.util import IntVector
+from ecl.util.util import IntVector
 from res.enkf import EnkfPrototype
 from res.enkf import GenDataConfig
 

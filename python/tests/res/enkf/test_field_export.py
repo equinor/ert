@@ -2,7 +2,7 @@ import os
 from tests import ResTest
 from res.test import ErtTestContext
 
-from ecl.util import IntVector
+from ecl.util.util import IntVector
 from ecl.grid import EclGrid
 
 from res.enkf.config import FieldTypeEnum, FieldConfig

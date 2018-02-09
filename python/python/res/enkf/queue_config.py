@@ -16,7 +16,7 @@
 
 from cwrap import BaseCClass
 
-from ecl.util import StringList, Hash
+from ecl.util.util import StringList, Hash
 
 from res.enkf import EnkfPrototype
 from res.job_queue import JobQueue, ExtJoblist, Driver

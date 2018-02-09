@@ -1,5 +1,5 @@
 from res.enkf.plot_data import PlotBlockVector
-from ecl.util import DoubleVector
+from ecl.util.util import DoubleVector
 
 
 class PlotBlockData(object):

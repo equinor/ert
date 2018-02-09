@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from ecl.util import StringList
+from ecl.util.util import StringList
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
 from res.enkf import EnkfPrototype, SummaryKeyMatcher

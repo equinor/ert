@@ -16,7 +16,7 @@
 from cwrap import BaseCClass
 from res.job_queue import ExtJob, QueuePrototype, ExtJoblist
 from res.job_queue import EnvironmentVarlist
-from ecl.util import StringList
+from ecl.util.util import StringList
 from res.util.substitution_list import SubstitutionList
 
 

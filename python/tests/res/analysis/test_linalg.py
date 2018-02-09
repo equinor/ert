@@ -17,7 +17,7 @@
 
 
 from res.enkf import ObsVector
-from ecl.util import Matrix
+from ecl.util.util import Matrix
 from res.analysis import Linalg
 from tests import ResTest
 

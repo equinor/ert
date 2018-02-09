@@ -17,7 +17,7 @@ import os.path
 
 from cwrap import BaseCClass
 from res.job_queue import QueuePrototype
-from ecl.util import StringList, Hash
+from ecl.util.util import StringList, Hash
 from res.config import ContentTypeEnum
 
 class ExtJob(BaseCClass):

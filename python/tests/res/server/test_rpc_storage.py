@@ -5,7 +5,7 @@ import sys
 import time
 
 from tests import ResTest
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 from res.enkf.enums import ErtImplType, EnkfRunType
 from res.enkf.export.custom_kw_collector import CustomKWCollector
 from res.server import ErtRPCClient

@@ -18,7 +18,7 @@ from os.path import isfile
 
 from cwrap import BaseCClass
 
-from ecl.util import StringList
+from ecl.util.util import StringList
 
 from res.enkf import EnkfPrototype
 from res.enkf import AnalysisIterConfig

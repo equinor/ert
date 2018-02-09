@@ -1,7 +1,7 @@
 import os.path
 from cwrap import BaseCClass
 from res.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfInitModeEnum, EnkfPrototype
-from ecl.util import StringList, BoolVector
+from ecl.util.util import StringList, BoolVector
 
 import re
 

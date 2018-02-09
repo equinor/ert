@@ -7,7 +7,7 @@ from res.test import ErtTestContext
 
 from res.enkf import RunpathList, RunpathNode, ErtRunContext
 from res.enkf.enums import EnkfInitModeEnum,EnkfRunType
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 from res.util.substitution_list import SubstitutionList
 
 

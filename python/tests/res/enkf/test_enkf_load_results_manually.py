@@ -2,7 +2,7 @@ from tests import ResTest
 from res.test import ErtTestContext
 
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 
 
 class LoadResultsManuallyTest(ResTest):

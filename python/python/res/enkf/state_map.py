@@ -16,7 +16,7 @@
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
 from res.enkf.enums import RealizationStateEnum
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 
 
 class StateMap(BaseCClass):

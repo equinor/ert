@@ -19,7 +19,7 @@ from tests import ResTest
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from res.analysis import AnalysisPrototype
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ecl.util.rng import RandomNumberGenerator
+from ecl.util.util.rng import RandomNumberGenerator
 
 
 class StdEnKFDebugTest(ResTest):

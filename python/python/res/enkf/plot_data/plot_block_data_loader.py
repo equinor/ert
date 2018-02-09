@@ -1,6 +1,6 @@
 from res.enkf import RealizationStateEnum, EnkfNode, ErtImplType, NodeId
 from res.enkf.plot_data import PlotBlockData, PlotBlockVector
-from ecl.util import DoubleVector, BoolVector, ThreadPool
+from ecl.util.util import DoubleVector, BoolVector, ThreadPool
 
 
 class PlotBlockDataLoader(object):

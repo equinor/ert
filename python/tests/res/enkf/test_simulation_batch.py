@@ -2,7 +2,7 @@ import os
 import sys
 from ecl.util.test import TestAreaContext
 from tests import ResTest
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 
 from res.test import ErtTestContext
 from res.enkf import EnkfFs, EnkfConfigNode, NodeId, EnkfNode
