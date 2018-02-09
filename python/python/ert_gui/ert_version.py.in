@@ -1,4 +1,4 @@
-from ecl.util import Version,EclVersion
+from ecl.util.util import Version,EclVersion
 from res.util import ResVersion
 
 class ErtVersion(Version):

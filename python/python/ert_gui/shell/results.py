@@ -1,4 +1,4 @@
-from ecl.util import BoolVector
+from ecl.util.util import BoolVector
 from ert_gui.shell import assertConfigLoaded, ErtShellCollection
 from ert_gui.shell.libshell import splitArguments
 
