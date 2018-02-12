@@ -1,7 +1,7 @@
 from tests import ResTest
-from ecl.util import DoubleVector
+from ecl.util.util import DoubleVector
 from res.util import quantile, quantile_sorted, polyfit
-from ecl.util.rng import RandomNumberGenerator
+from ecl.util.util.rng import RandomNumberGenerator
 
 
 class StatTest(ResTest):
