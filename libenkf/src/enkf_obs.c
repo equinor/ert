@@ -172,13 +172,7 @@ In the following example we have two observations
  */
 
 
-/**
-TODO
 
-    This static function header shall be removed when the
-    configuration is unified....
-*/
-static conf_class_type * enkf_obs_get_obs_conf_class();
 
 
 
@@ -735,9 +729,22 @@ static void handle_general_observation(enkf_obs_type * enkf_obs,
 }
 
 
+static enkf_obs_reinterpret_DT_FILE(const char * config_file) {
+  fprintf(stderr,"**********************************************************************\n");
+  fprintf(stderr,"* In ert version 2.3 we have changed how filepaths are interpreted   *\n");
+  fprintf(stderr,"* in the observation file. When using the keywords OBS_FILE,         *\n");
+  fprintf(stderr,"* ERROR_COVAR and INDEX_FILE in the category GENERAL_OBSERVATION     *\n");
+  fprintf(stderr,"* the filenames will be interpreted relative to the main observation *\n");
+  fprintf(stderr,"* file.                                                              *\n");
+  fprintf(stderr,"*                                                                    *\n");
+  fprintf(stderr,"* Please update the OBS_FILE, ERROR_COVAR and INDEX_FILE keywords    *\n");
+  fprintf(stderr,"* by removing the path to the main observation file.                 *\n");
+  fprintf(stderr,"**********************************************************************\n");
+}
+
 
 /**
-   This function will load an observation configuration from the
+ This function will load an observation configuration from the
    observation file @config_file.
 
    If called several times during one invocation the function will
@@ -757,6 +764,11 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
                                                                  "enkf_conf",
                                                                  config_file);
 
+  if (conf_instance_get_path_error(enkf_conf)) {
+    enkf_obs_reinterpret_DT_FILE(config_file);
+    exit(1);
+  }
+
   if(!conf_instance_validate(enkf_conf))
     util_abort("%s: Can not proceed with this configuration: %s\n",
                __func__, config_file);
@@ -773,7 +785,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
 }
 
 
-static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
+conf_class_type * enkf_obs_get_obs_conf_class( void ) {
   const char * enkf_conf_help = "An instance of the class ENKF_CONFIG shall contain neccessary infomation to run the enkf.";
   conf_class_type * enkf_conf_class = conf_class_alloc_empty("ENKF_CONFIG", true , false , enkf_conf_help);
   conf_class_set_help(enkf_conf_class, enkf_conf_help);

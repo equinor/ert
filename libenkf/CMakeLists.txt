@@ -139,6 +139,7 @@ foreach (test   enkf_active_list
                 enkf_local_obsdata_node
                 enkf_meas_data
                 enkf_model_config
+                enkf_obs_invalid_path
                 enkf_obs_tests
                 enkf_obs_vector
                 enkf_pca_plot
