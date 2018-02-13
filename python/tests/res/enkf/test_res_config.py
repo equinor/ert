@@ -195,7 +195,7 @@ class ResConfigTest(ResTest):
 
             subst_config = res_config.subst_config
             for t in subst_config:
-                print t
+                print(t)
             self.assertEqual( subst_config["<CONFIG_PATH>"], os.path.join( cwd , "simple_config"))
 
 

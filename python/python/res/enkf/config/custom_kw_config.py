@@ -111,7 +111,7 @@ class CustomKWConfig(BaseCClass):
         """ @rtype: IntegerHash """
         type_hash = IntegerHash()
 
-        for key, value_type in definition.iteritems():
+        for key, value_type in definition.items():
             if value_type == float:
                 value_type = 1
             else:

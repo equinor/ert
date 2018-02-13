@@ -132,7 +132,7 @@ class ResConfig(BaseCClass):
                 config_dir = os.path.realpath(intercon[dir_key])
 
             internal_filter = [dir_key]
-            for key, value in intercon.iteritems():
+            for key, value in intercon.items():
                 if key not in internal_filter:
                     internal_config.append((key, self._parse_value(value)))
 
@@ -158,7 +158,7 @@ class ResConfig(BaseCClass):
                 queue_config.append((ConfigKeys.QUEUE_OPTION, value))
 
         queue_system_filter = [ConfigKeys.QUEUE_OPTION]
-        for key, value in qc.iteritems():
+        for key, value in qc.items():
             if not key in queue_system_filter:
                 queue_config.append((key, self._parse_value(value)))
 
@@ -226,7 +226,7 @@ class ResConfig(BaseCClass):
             return []
 
         logging_config = []
-        for key, value in config[ConfigKeys.LOGGING].iteritems():
+        for key, value in config[ConfigKeys.LOGGING].items():
             logging_config.append((key, self._parse_value(value)))
 
         return logging_config
@@ -237,7 +237,7 @@ class ResConfig(BaseCClass):
             return []
 
         seed_config = []
-        for key, value in config[ConfigKeys.SEED].iteritems():
+        for key, value in config[ConfigKeys.SEED].items():
             seed_config.append((key, self._parse_value(value)))
 
         return seed_config
@@ -296,7 +296,7 @@ class ResConfig(BaseCClass):
 
             value = [gd[ConfigKeys.NAME]]
             value += ["%s:%s" % (key, gd[key]) for key in req_keys[1:]]
-            value += ["%s:%s" % (key, val) for key, val in default_opt.iteritems()]
+            value += ["%s:%s" % (key, val) for key, val in default_opt.items()]
             gen_data_config.append((ConfigKeys.GEN_DATA, value))
 
         return gen_data_config
@@ -351,7 +351,7 @@ class ResConfig(BaseCClass):
         simulation_config += self._extract_gen_data(sc)
 
         # Others
-        for key, value in sc.iteritems():
+        for key, value in sc.items():
             if not key in sim_filter:
                 simulation_config.append((key, self._parse_value(value)))
 
@@ -374,7 +374,7 @@ class ResConfig(BaseCClass):
         new_config += self._extract_simulation(config)
 
         # Unrecognized keys
-        for key, value in config.iteritems():
+        for key, value in config.items():
             if key not in key_filter:
                 self._failed_keys[key] = value
 

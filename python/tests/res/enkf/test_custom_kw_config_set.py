@@ -12,6 +12,14 @@ from ecl.util.util.stringlist import StringList
 
 class CustomKWConfigSetTest(ResTest):
 
+    def assertItemsEqual(self, data1, data2):
+        if len(data1) != len(data2):
+            raise AssertionError("Element count not equal.")
+
+        for value in data1:
+            if not value in data2:
+                raise AssertionError(value, "not in", data2)
+
     def createCustomKWConfig(self, name, data):
         with TestAreaContext("python/enkf/custom_kw_config_set_config") as test_area:
             self.createResultFile("result_file", data)

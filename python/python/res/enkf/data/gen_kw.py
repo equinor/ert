@@ -121,7 +121,7 @@ class GenKw(BaseCClass):
             else:
                 d = DoubleVector()
                 for (index,v) in enumerate(values):
-                    if isinstance(v, (int,long,float)):
+                    if isinstance(v, (int,float)):
                         d[index] = v
                     else:
                         raise TypeError("Values must numeric: %s is invalid" % v)

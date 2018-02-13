@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import sys
 import ctypes, warnings
 from os.path import isfile
 
@@ -228,10 +229,14 @@ class _RealEnKFMain(BaseCClass):
         # The res_config argument can be None; the only reason to
         # allow that possibility is to be able to test that the
         # site-config loads correctly.
-        if config is None or isinstance(config, basestring):
+        if config is None or isinstance(config, str):
             user_config_file = None
 
-            if isinstance(config, basestring):
+            if sys.version_info[0] == 2:
+               check = isinstance(config, basestring)
+            else:
+               check = isinstance(config, str)
+            if check:
                 if not isfile(config):
                     raise IOError('No such configuration file "%s".' % res_config)
 

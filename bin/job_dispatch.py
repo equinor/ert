@@ -146,7 +146,7 @@ def cleanup( job ):
 
 def license_check( job ):
     job["license_link"] = None
-    if job.has_key("max_running"):
+    if "max_running" in job:
         if job["max_running"]:
             job["license_file"] = "%s/%s" % (job["license_path"] , job["name"])
             max_running         = job["max_running"]
@@ -377,27 +377,27 @@ def main(argv):
             # the same name.
             if job_name in job_manager:
                 job = job_manager[job_name]
-                print "Running job: %s ... " % job_name,
+                print("Running job: %s ... " % job_name)
                 sys.stdout.flush()
                 (OK , exit_status, error_msg) = run_one( job_manager, job )
                 if OK:
-                    print "OK"
+                    print("OK")
                 else:
-                    print "failed ...."
-                    print "-----------------------------------------------------------------"
+                    print("failed ....")
+                    print("-----------------------------------------------------------------")
                     if job.get("stderr"):
-                        print "Error:%s " % error_msg
+                        print("Error:%s " % error_msg)
                         if os.path.exists(job["stderr"]):
                             fileH = open(job["stderr"],"r")
                             for line in fileH.readlines():
-                                print line,
+                                print(line),
                             fileH.close()
-                    print "-----------------------------------------------------------------"
+                    print("-----------------------------------------------------------------")
                     sys.exit()
             else:
-                print "Job: %s does not exist. Available jobs:" % job_name
+                print("Job: %s does not exist. Available jobs:" % job_name)
                 for j in jobs.jobList:
-                    print "   %s" % j["name"]
+                    print("   %s" % j["name"])
 
 
 #################################################################

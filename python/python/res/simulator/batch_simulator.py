@@ -55,7 +55,7 @@ class BatchSimulator(object):
         self.result_keys = tuple(results)
 
         ens_config = self.res_config.ensemble_config
-        for control_name, variable_names in controls.iteritems():
+        for control_name, variable_names in controls.items():
             ens_config.addNode(EnkfConfigNode.create_ext_param(control_name, variable_names))
 
         for key in results:
@@ -71,7 +71,7 @@ class BatchSimulator(object):
                 err_msg = "Mismatch between initialized and provided control names."
                 raise KeyError(err_msg)
 
-            for control_name, control in controls.iteritems():
+            for control_name, control in controls.items():
                 ens_config = self.res_config.ensemble_config
                 node = EnkfNode(ens_config[control_name])
                 ext_node = node.as_ext_param()
@@ -81,7 +81,7 @@ class BatchSimulator(object):
                     err_in = (len(ext_node), control_name, len(control.keys()))
                     raise KeyError(err_msg % err_in)
 
-                for var_name, value in control.iteritems():
+                for var_name, value in control.items():
                     ext_node[var_name] = value
 
                 node.save(file_system, node_id)

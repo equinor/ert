@@ -177,16 +177,16 @@ class ErtRPCClient(object):
         """
 
         converted = {}
-        for key, value in storage_definition.iteritems():
+        for key, value in storage_definition.items():
             if value in (float, str):
                 value_name = value.__name__
             else:
                 raise TypeError("Unsupported data type for key: '%s', not one of (float, str): '%s'" % (key, value))
             converted[key] = value_name
         try:
-            self._server_proxy.prototypeStorage(group_name, converted)
+           self._server_proxy.prototypeStorage(group_name, converted)
         except Fault as f:
-            raise convertFault(f)
+           raise convertFault(f)
 
 
     def storeGlobalData(self, target_case_name, group_name, keyword, value):

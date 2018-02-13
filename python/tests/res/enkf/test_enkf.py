@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import sys, os
 import os.path
 from tests import ResTest
 
@@ -46,12 +47,14 @@ class EnKFTest(ResTest):
             pfx = 'EnKFMain(ensemble_size'
             self.assertEqual(pfx, repr(main)[:len(pfx)])
 
+
     def test_bootstrap( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
             work_area.copy_directory(self.case_directory)
             res_config = ResConfig("simple_config/minimum_config")
             main = EnKFMain(res_config)
             self.assertTrue(main, "Load failed")
+
 
     def test_site_condif(self):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
@@ -155,6 +158,7 @@ class EnKFTest(ResTest):
                 self.assertEqual(summary_key, summary_observation_node.getSummaryKey())
 
 
+
     def test_config( self ):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
@@ -178,6 +182,7 @@ class EnKFTest(ResTest):
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
             self.assertEqual( "simple_config/Ensemble" , main.getMountPoint())
+
 
     def test_enkf_create_config_file(self):
         config_file      = "test_new_config"

@@ -1,6 +1,6 @@
 import time
 import os.path
-import sys
+import sys, os
 from tests import ResTest
 from ecl.util.util import BoolVector
 
@@ -22,7 +22,7 @@ class SimulationContextTest(ResTest):
             mask1 = BoolVector( initial_size = size )
             mask2 = BoolVector( initial_size = size )
 
-            for iens_2 in range(size/2):
+            for iens_2 in range(size//2):
                 mask1[2*iens_2] = True
                 mask1[2*iens_2 + 1] = False
 

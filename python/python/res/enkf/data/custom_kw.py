@@ -13,6 +13,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import numbers
 from cwrap import BaseCClass
 from res.enkf import EnkfPrototype
 from res.enkf.config import CustomKWConfig
@@ -75,7 +76,7 @@ class CustomKW(BaseCClass):
         if not key in config:
             raise KeyError("The key: '%s' is not available!" % key)
 
-        if isinstance(value, (float, int, long)):
+        if isinstance(value, numbers.Number):
             self._set_double(key, value)
         else:
             self._set_string(key, str(value))

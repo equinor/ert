@@ -57,7 +57,7 @@ class RunpathListDumpTest(ResTest):
             exp_runpaths = map(os.path.realpath, exp_runpaths)
 
             with open(runpath_list_path, 'r') as f:
-                dumped_runpaths = zip(*[line.split() for line in f.readlines()])[1]
+                dumped_runpaths = list(zip(*[line.split() for line in f.readlines()]))[1]
 
             self.assertEqual(list(exp_runpaths), list(dumped_runpaths))
 
@@ -102,6 +102,6 @@ class RunpathListDumpTest(ResTest):
             exp_runpaths = map(os.path.realpath, exp_runpaths)
 
             with open(runpath_list_path, 'r') as f:
-                dumped_runpaths = zip(*[line.split() for line in f.readlines()])[1]
+                dumped_runpaths = list(zip(*[line.split() for line in f.readlines()]))[1]
 
             self.assertEqual(list(exp_runpaths), list(dumped_runpaths))

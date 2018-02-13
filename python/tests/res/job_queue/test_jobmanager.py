@@ -56,8 +56,7 @@ JSON_STRING_NO_DATA_ROOT = """
 """
 
 def gen_area_name(base, f):
-    return base + "_" + f.func_name.split("_")[-1]
-
+    return base + "_" + f.__name__.split("_")[-1]
 
 def create_jobs_json(jobList, umask="0000"):
     data = {"umask"     : umask,
@@ -127,7 +126,7 @@ class JobManagerTest(TestCase):
 
     def test_missing_umask_json(self):
         with TestAreaContext("test_missing_umask_json"):
-            print os.getcwd()
+            print(os.getcwd())
             self.assert_clean_slate()
             with open("jobs.json", "w") as f:
                 f.write(json.dumps({"jobList" : "[]"}))

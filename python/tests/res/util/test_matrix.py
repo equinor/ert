@@ -3,6 +3,7 @@ from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.test import TestAreaContext
 from res.util import Matrix
 from tests import ResTest
+from cwrap import CFILE, BaseCClass, load, open as copen
 
 class MatrixTest(ResTest):
     def test_matrix(self):
@@ -112,7 +113,7 @@ class MatrixTest(ResTest):
         m[1,1] = 3
         
         with TestAreaContext("matrix_fprint"):
-            with open("matrix.txt", "w") as f:
+            with copen("matrix.txt", "w") as f:
                 m.fprint( f )
 
             with open("matrix.txt") as f:
