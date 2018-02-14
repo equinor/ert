@@ -1,18 +1,18 @@
-#  Copyright (C) 2011  Statoil ASA, Norway. 
-#   
-#  The file 'gert_main.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+#  Copyright (C) 2011  Statoil ASA, Norway.
+#
+#  The file 'gert_main.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+#  for more details.
 
 # --------------------------------------------------------------------------------
 # This file is the main script of the ert with graphical UI, e.g. gert or
@@ -40,7 +40,7 @@
 #         LSF_BINDIR must also be set. That is an LSF requirement and not
 #         related to ert as such. These variables can naturally be set from the
 #         site config file.
-#  
+#
 #
 #  3. The program must be able to locate all the necessary Python modules, in
 #     short this means that the directory containing the ert/ and ert_gui/
@@ -48,7 +48,7 @@
 #
 #        import ert
 #        import ert_gui
-#    
+#
 #     should just work.
 #
 #  4. The environment variable GERT_SHARE_PATH should be set to point to the
@@ -84,7 +84,7 @@
 #  # directory must be included in the LD_LIBRARY_PATH variable. Furthermore we
 #  # assume that the ERT libraries like libecl.so and libenkf.so are located in
 #  # /opt/ert/lib, then LD_LIBRARY_PATH will be updated as:
-#  
+#
 #  export LD_LIBRARY_PATH=/site/LSF/7.0/linux/lib:/opt/ert/lib:$LD_LIBRARY_PATH
 #
 #  # The python modules ert and ert_gui are located in /opt/ert/python, so we
