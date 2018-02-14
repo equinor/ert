@@ -69,7 +69,7 @@ class PrBuilder(object):
         self.repository = rep
         if rep == 'ecl':
             self.rep_name = 'libecl'
-            self.build_ert = False
+            self.build_ert = True
         if rep == 'res':
             self.rep_name = 'libres'
         if rep == 'ert':
