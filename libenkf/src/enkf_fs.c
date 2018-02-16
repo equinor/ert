@@ -245,7 +245,7 @@ struct enkf_fs_struct {
 
   int                         refcount;
   int                         runcount;  // Counts the number of simulations currently writing to this enkf_fs; the purpose is to
-                                         // be able to answer the question: Is this case currently 'running'? 
+                                         // be able to answer the question: Is this case currently 'running'?
 };
 
 
@@ -259,6 +259,9 @@ static void enkf_fs_umount( enkf_fs_type * fs );
 
 int enkf_fs_incref( enkf_fs_type * fs ) {
   fs->refcount++;
+
+  res_log_fdebug("Calling incref on: %s . Refcount after incref:%d", fs->mount_point, fs->refcount);
+
   return fs->refcount;
 }
 
@@ -467,7 +470,7 @@ static enkf_fs_type *  enkf_fs_mount_plain( FILE * fstab_stream , const char * m
           enkf_fs_assign_driver( fs , driver , driver_type );
         } else
           plain_driver_fskip( fstab_stream );
-        
+
       } else
         break;
     }
