@@ -26,7 +26,7 @@ extern "C" {
 
 #include <stdio.h>
 
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 #include <ert/util/int_vector.h>
 
 #include <ert/enkf/obs_data.h>

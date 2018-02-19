@@ -1,25 +1,25 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-   The file 'pca_plot_data.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-   
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+   The file 'pca_plot_data.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 
 #include <stdbool.h>
 
 #include <ert/util/type_macros.h>
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
 
@@ -49,13 +49,13 @@ static void pca_plot_data_add_vectors(pca_plot_data_type * plot_data , const mat
 }
 
 
-pca_plot_data_type * pca_plot_data_alloc( const char * name, 
-                                          const matrix_type * PC , 
+pca_plot_data_type * pca_plot_data_alloc( const char * name,
+                                          const matrix_type * PC ,
                                           const matrix_type * PC_obs,
                                           const double_vector_type * singular_values) {
   pca_plot_data_type * plot_data = NULL;
 
-  if (pca_plot_assert_input( PC , PC_obs , singular_values)) {    
+  if (pca_plot_assert_input( PC , PC_obs , singular_values)) {
     plot_data = util_malloc( sizeof * plot_data );
     UTIL_TYPE_ID_INIT( plot_data , PCA_PLOT_DATA_TYPE_ID );
     plot_data->name = util_alloc_string_copy( name );

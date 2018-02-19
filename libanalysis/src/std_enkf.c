@@ -21,8 +21,8 @@
 #include <stdio.h>
 
 #include <ert/util/util.h>
-#include <ert/util/matrix.h>
-#include <ert/util/matrix_blas.h>
+#include <ert/res_util/matrix.h>
+#include <ert/res_util/matrix_blas.h>
 
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>

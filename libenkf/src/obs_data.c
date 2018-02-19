@@ -68,7 +68,7 @@ Matrices: S, D, E and various internal variables.
 
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 #include <ert/util/rng.h>
 
 #include <ert/enkf/obs_data.h>

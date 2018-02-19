@@ -18,7 +18,8 @@ import random
 
 from tests import ResTest
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ecl.util.util import Matrix, BoolVector , RandomNumberGenerator
+from ecl.util.util import BoolVector , RandomNumberGenerator
+from res.util import Matrix
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
 from res.enkf import MeasData , ObsData
 
@@ -31,7 +32,7 @@ def forward_model(params , model_error = False):
     B = -1
     C = 1
     D = 0.1
-    state = [A*params[0] + B*params[1] , C*params[0] - D*params[1]*params[0]] 
+    state = [A*params[0] + B*params[1] , C*params[0] - D*params[1]*params[0]]
     return state
 
 
@@ -51,29 +52,29 @@ def init_matrices(ens , mask , obs, rng):
         if mask[iens]:
             state = forward_model( params )
             meas_block[0,iens] = measure( state )
-            
+
             A[0 , active_iens] = params[0]
             A[1 , active_iens] = params[1]
-            
+
             active_iens += 1
 
-            
+
     S = meas_data.createS()
-        
+
     obs_data = ObsData()
     obs_block = obs_data.addBlock("OBS" , 1)
     for iobs,obs_value in enumerate(obs):
         obs_block[iobs] = obs_value
-    
+
 
     R = obs_data.createR()
     dObs = obs_data.createDObs()
     E = obs_data.createE( rng , meas_data.getActiveEnsSize() )
     D = obs_data.createD(E , S)
-        
+
     obs_data.scale(S , E = E , D = D , R = R , D_obs = dObs)
     return (A , S , E , D , R , dObs)
-    
+
 
 
 class RMLTest(ResTest):
@@ -103,12 +104,12 @@ class RMLTest(ResTest):
         true_state  = forward_model( true_params )
         obs         = [(measure( true_state ) , 0.75)]
         A           = Matrix( state_size , ens_size )
-        
+
         ens = []
         for iens in range(ens_size):
             param = [ random.gauss( 1.00 , 1.00 ) , random.gauss(1.00 , 1.00)]
             ens.append( param )
-            
+
         mask = BoolVector(default_value = True , initial_size = ens_size)
         mask[2] = False
         (A , S , E , D , R , dObs) = init_matrices( ens , mask , obs, rng)
@@ -123,7 +124,7 @@ class RMLTest(ResTest):
         self.assertEqual( S.dims() , (obs_size , mask.countEqual( True )))
         self.assertEqual( E.dims() , (obs_size , mask.countEqual( True )))
         self.assertEqual( D.dims() , (obs_size , mask.countEqual( True )))
-        
+
         module.initUpdate(mask, S, R, dObs, E, D, rng)
         module.updateA(A, S, R, dObs, E ,D, rng)
 

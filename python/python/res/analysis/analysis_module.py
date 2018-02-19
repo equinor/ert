@@ -1,28 +1,28 @@
 #  Copyright (C) 2013  Statoil ASA, Norway.
-#   
+#
 #  The file 'analysis_module.py' is part of ERT - Ensemble based Reservoir Tool.
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
 from cwrap import BaseCClass
 from ecl.util.util.rng import RandomNumberGenerator
 from res.analysis import AnalysisPrototype
 
-from ecl.util.util import Matrix
+from res.util import Matrix
 
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
-    
+
     _alloc_external      = AnalysisPrototype("void* analysis_module_alloc_external(char*)" , bind = False)
     _alloc_internal      = AnalysisPrototype("void* analysis_module_alloc_internal(char*)" , bind = False)
     _free                = AnalysisPrototype("void analysis_module_free(analysis_module)")
@@ -73,10 +73,10 @@ class AnalysisModule(BaseCClass):
             c_ptr = self._alloc_internal(name)
             if not c_ptr:
                 raise KeyError("Failed to load internal module:%s" % name)
-            
+
         super(AnalysisModule, self).__init__(c_ptr)
 
-        
+
     def getVariableNames(self):
         """ @rtype: list of str """
         items = []
@@ -84,7 +84,7 @@ class AnalysisModule(BaseCClass):
             if self.hasVar(name):
                 items.append(name)
         return items
-    
+
     def getVariableValue(self, name):
         """ @rtype: int or float or bool or str """
         variable_type = self.getVariableType(name)
@@ -96,7 +96,7 @@ class AnalysisModule(BaseCClass):
             return self.getStr(name)
         elif variable_type == int:
             return self.getInt(name)
-    
+
     def getVariableType(self, name):
         """ :rtype: type """
         return AnalysisModule.VARIABLE_NAMES[name]["type"]
@@ -107,7 +107,7 @@ class AnalysisModule(BaseCClass):
 
     def getVar(self, name):
         return self.getVariableValue( name )
-    
+
     def free(self):
         self._free( )
 
@@ -129,13 +129,13 @@ class AnalysisModule(BaseCClass):
     def __assertVar(self , var_name):
         if not self.hasVar(var_name):
             raise KeyError("Module does not support key:%s" % var_name)
-    
+
     def setVar(self, var_name, value):
         self.__assertVar( var_name )
         string_value = str(value)
         return self._set_var(var_name, string_value)
 
-    
+
     def getTableName(self):
         return self._get_table_name( )
 
@@ -173,15 +173,15 @@ class AnalysisModule(BaseCClass):
         self.__assertVar( var )
         return self._get_str(var)
 
-    
+
     def initUpdate(self, mask, S, R, dObs, E, D, rng):
         self._init_update(mask, S, R, dObs, E, D, rng)
 
-        
+
     def updateA(self, A, S, R, dObs, E, D, rng):
         self._updateA(A, S, R, dObs, E, D, None, rng)
 
-        
+
     def initX(self, A, S, R, dObs, E, D, rng):
         X = Matrix( A.columns() , A.columns())
         self._initX(X, A, S, R, dObs, E, D, rng)

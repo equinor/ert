@@ -17,7 +17,7 @@
 */
 
 #include <ert/util/rng.h>
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 
 #include <ert/analysis/module_data_block_vector.h>
 #include <ert/analysis/module_info.h>

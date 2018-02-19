@@ -1,25 +1,25 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-   The file 'pca_plot_vector.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-   
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+   The file 'pca_plot_vector.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 
 #include <stdbool.h>
 
 #include <ert/util/type_macros.h>
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 #include <ert/util/util.h>
 
 #include <ert/enkf/pca_plot_vector.h>
@@ -39,17 +39,17 @@ UTIL_IS_INSTANCE_FUNCTION( pca_plot_vector , PCA_PLOT_VECTOR_TYPE_ID )
 static UTIL_SAFE_CAST_FUNCTION( pca_plot_vector , PCA_PLOT_VECTOR_TYPE_ID )
 
 bool pca_plot_assert_input( const matrix_type * PC, const matrix_type * PC_obs, const double_vector_type * singular_values) {
-  if ((matrix_get_rows(PC) == matrix_get_rows( PC_obs )) && 
+  if ((matrix_get_rows(PC) == matrix_get_rows( PC_obs )) &&
       (matrix_get_columns(PC_obs) == 1) &&
       (double_vector_size( singular_values ) >= matrix_get_rows(PC)))
     return true;
-  else 
+  else
     return false;
 }
 
 static void pca_plot_vector_init_data( pca_plot_vector_type * plot_vector , int component, const matrix_type * PC , const matrix_type * PC_obs, const double_vector_type * singular_values) {
   int iens;
-  
+
   for (iens = 0; iens < matrix_get_columns( PC ); iens++)
     plot_vector->sim_data[iens] = matrix_iget( PC, component , iens );
 
@@ -57,14 +57,14 @@ static void pca_plot_vector_init_data( pca_plot_vector_type * plot_vector , int 
   plot_vector->singular_value = double_vector_iget( singular_values , component );
 }
 
-pca_plot_vector_type * pca_plot_vector_alloc( int component , 
-                                              const matrix_type * PC , 
-                                              const matrix_type * PC_obs, 
+pca_plot_vector_type * pca_plot_vector_alloc( int component ,
+                                              const matrix_type * PC ,
+                                              const matrix_type * PC_obs,
                                               const double_vector_type * singular_values) {
   pca_plot_vector_type * plot_vector = NULL;
 
   if (pca_plot_assert_input( PC , PC_obs , singular_values ) && (component < matrix_get_rows( PC ))) {
-    
+
     plot_vector = util_malloc( sizeof * plot_vector );
     UTIL_TYPE_ID_INIT( plot_vector , PCA_PLOT_VECTOR_TYPE_ID );
     plot_vector->obs_value = matrix_iget( PC_obs , component , 0 );

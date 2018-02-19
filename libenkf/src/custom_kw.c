@@ -5,7 +5,6 @@
 #include <math.h>
 
 #include <ert/util/util.h>
-#include <ert/util/matrix.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/rng.h>
 #include <ert/util/stringlist.h>
@@ -15,6 +14,7 @@
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_util.h>
 
+#include <ert/res_util/matrix.h>
 #include <ert/enkf/enkf_serialize.h>
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_macros.h>

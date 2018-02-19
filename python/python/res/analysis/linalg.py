@@ -27,7 +27,7 @@ class Linalg(BaseCClass):
     methods.
     """
     _get_num_PC = AnalysisPrototype("int enkf_linalg_num_PC( matrix , double)" , bind = False)
-    
+
     @staticmethod
     def numPC(S , truncation):
         if 0 < truncation <= 1:

@@ -24,10 +24,10 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <ert/util/matrix.h>
 #include <ert/util/hash.h>
 #include <ert/util/rng.h>
 
+#include <ert/res_util/matrix.h>
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/meas_data.h>
 

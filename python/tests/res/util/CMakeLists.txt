@@ -5,6 +5,7 @@ set(TEST_SOURCES
     test_res_log.py
     test_substitution_list.py
     test_version.py
+    test_matrix.py
     test_path_fmt.py
     test_stat.py
 )
@@ -17,3 +18,4 @@ addPythonTest(tests.res.util.test_substitution_list.SubstitutionListTest)
 addPythonTest(tests.res.util.test_version.VersionTest)
 addPythonTest(tests.res.util.test_path_fmt.PathFmtTest)
 addPythonTest(tests.res.util.test_stat.StatTest )
+addPythonTest(tests.res.util.test_matrix.MatrixTest )

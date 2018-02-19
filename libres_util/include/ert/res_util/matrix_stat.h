@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway.
+   Copyright (C) 2015  Statoil ASA, Norway.
 
-   The file 'regression.h' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'matrix_stat.h' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,19 +16,28 @@
    for more details.
 */
 
-#ifndef ERT_REGRESSION_H
-#define ERT_REGRESSION_H
+
+#ifndef ERT_MATRIX_STAT_H
+#define ERT_MATRIX_STAT_H
 
 #include <ert/res_util/matrix.h>
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-double  regression_scale( matrix_type * X ,  matrix_type * Y , matrix_type * X_mean , matrix_type * X_norm);
-double  regression_unscale(const matrix_type * beta , const matrix_type * X_norm , const matrix_type * X_mean , double Y_mean , matrix_type * beta0);
-void    regression_augmented_OLS(const matrix_type * X , const matrix_type * Y , const matrix_type *E, matrix_type * beta);
+#endif //__cplusplus
+
+typedef enum {
+  LLSQ_SUCCESS = 0,
+  LLSQ_INVALID_DIM = 1,
+  LLSQ_UNDETERMINED = 2
+} llsq_result_enum;
+
+
+llsq_result_enum matrix_stat_llsq_estimate( matrix_type * beta , const matrix_type * X , const matrix_type * Y , const matrix_type * S);
+llsq_result_enum matrix_stat_polyfit( matrix_type * beta , const matrix_type * X0 , const matrix_type * Y0 , const matrix_type * S);
 
 #ifdef __cplusplus
 }
-#endif
+#endif //__cplusplus
+
 #endif

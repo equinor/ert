@@ -21,10 +21,10 @@
 #include <math.h>
 
 #include <ert/util/util.h>
-#include <ert/util/matrix.h>
-#include <ert/util/matrix_blas.h>
-#include <ert/util/matrix_lapack.h>
 
+#include <ert/res_util/matrix.h>
+#include <ert/res_util/matrix_blas.h>
+#include <ert/res_util/matrix_lapack.h>
 #include <ert/res_util/regression.h>
 
 

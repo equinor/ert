@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'null_enkf.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'null_enkf.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -21,8 +21,8 @@
 #include <stdio.h>
 
 #include <ert/util/util.h>
-#include <ert/util/matrix.h>
-#include <ert/util/matrix_blas.h>
+#include <ert/res_util/matrix.h>
+#include <ert/res_util/matrix_blas.h>
 
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
@@ -31,13 +31,13 @@
 
 
 
-void null_enkf_initX(void * module_data , 
-                    matrix_type * X , 
-                    matrix_type * A , 
-                    matrix_type * S , 
-                    matrix_type * R , 
-                    matrix_type * dObs , 
-                    matrix_type * E , 
+void null_enkf_initX(void * module_data ,
+                    matrix_type * X ,
+                    matrix_type * A ,
+                    matrix_type * S ,
+                    matrix_type * R ,
+                    matrix_type * dObs ,
+                    matrix_type * E ,
                     matrix_type * D,
                     rng_type * rng) {
 
@@ -71,16 +71,15 @@ analysis_table_type LINK_NAME = {
     .freef           = NULL ,
     .set_int         = NULL ,
     .set_double      = NULL ,
-    .set_bool        = NULL , 
-    .set_string      = NULL , 
+    .set_bool        = NULL ,
+    .set_string      = NULL ,
     .get_options     = null_enkf_get_options,
-    .initX           = null_enkf_initX , 
+    .initX           = null_enkf_initX ,
     .updateA         = NULL,
     .init_update     = NULL,
     .complete_update = NULL,
     .has_var         = NULL,
     .get_int         = NULL,
     .get_double      = NULL,
-    .get_ptr         = NULL, 
+    .get_ptr         = NULL,
 };
-

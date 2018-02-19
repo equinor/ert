@@ -23,7 +23,7 @@
 
 #include <ert/util/util.h>
 #include <ert/util/buffer.h>
-#include <ert/util/matrix.h>
+#include <ert/res_util/matrix.h>
 #include <ert/util/rng.h>
 #include <ert/res_util/subst_list.h>
 
