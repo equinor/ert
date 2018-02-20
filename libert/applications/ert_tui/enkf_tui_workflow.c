@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include <ert/util/util.h>
-#include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/bool_vector.h>
 
