@@ -23,7 +23,7 @@
 #include <math.h>
 
 #include <ert/util/ert_api_config.h>
-#include <ert/util/thread_pool.h>
+#include <ert/res_util/thread_pool.h>
 #include <ert/util/util.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/rng.h>

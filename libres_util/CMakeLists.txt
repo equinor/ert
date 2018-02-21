@@ -17,12 +17,14 @@ add_library( res_util src/res_log.c
                       src/matrix_blas.c
                       src/matrix_lapack.c
                       src/matrix.c
+                      src/thread_pool.c
                       src/template.c
                       src/template_loop.c
                       src/path_fmt.c
                       src/block_fs.c
                       src/res_version.c
                       src/regression.c
+                      src/thread_pool.c
                       ${opt_srcs})
 
 
@@ -71,11 +73,12 @@ add_executable(ert_util_block_fs tests/ert_util_block_fs.c)
 target_link_libraries(ert_util_block_fs res_util)
 add_test(NAME ert_util_block_fs COMMAND ert_util_block_fs)
 
-add_executable(ert_util_matrix_lapack tests/ert_util_matrix_lapack.c)
-target_link_libraries(ert_util_matrix_lapack res_util)
-add_test(NAME ert_util_matrix_lapack COMMAND ert_util_matrix_lapack)
+find_library( VALGRIND NAMES valgr )
+if (VALGRIND)
+    set(valgrind_cmd valgrind --error-exitcode=1 --tool=memcheck)
+endif ()
 
-add_executable(ert_util_matrix_stat tests/ert_util_matrix_stat.c)
-target_link_libraries(ert_util_matrix_stat res_util)
-add_test(NAME ert_util_matrix_stat COMMAND ert_util_matrix_stat)
+add_executable(test_thread_pool tests/test_thread_pool.c)
+target_link_libraries(test_thread_pool res_util)
+add_test(NAME test_thread_pool COMMAND ${valgrind_cmd} test_thread_pool)
 

@@ -8,6 +8,7 @@ set(TEST_SOURCES
     test_matrix.py
     test_path_fmt.py
     test_stat.py
+    test_cthread_pool.py
 )
 
 add_python_package("python.tests.res.util" ${PYTHON_INSTALL_PREFIX}/tests/res/util "${TEST_SOURCES}" False)
@@ -19,3 +20,4 @@ addPythonTest(tests.res.util.test_version.VersionTest)
 addPythonTest(tests.res.util.test_path_fmt.PathFmtTest)
 addPythonTest(tests.res.util.test_stat.StatTest )
 addPythonTest(tests.res.util.test_matrix.MatrixTest )
+addPythonTest(tests.res.util.test_cthread_pool.CThreadPoolTest)

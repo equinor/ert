@@ -22,9 +22,9 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <ert/util/thread_pool.h>
 #include <ert/util/util.h>
 
+#include <ert/res_util/thread_pool.h>
 #include <ert/res_util/matrix.h>
 #include <ert/res_util/matrix_blas.h>
 #include <ert/res_util/matrix_lapack.h>

@@ -7,6 +7,7 @@ set(PYTHON_SOURCES
     ui_return.py
     res_version.py
     substitution_list.py
+    cthread_pool.py
     matrix.py
 )
 

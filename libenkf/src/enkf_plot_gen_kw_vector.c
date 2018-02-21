@@ -20,9 +20,10 @@
 
 #include <ert/util/double_vector.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/thread_pool.h>
 #include <ert/util/type_macros.h>
 #include <ert/util/vector.h>
+
+#include <ert/res_util/thread_pool.h>
 
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_node.h>

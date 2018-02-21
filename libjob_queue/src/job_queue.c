@@ -25,9 +25,9 @@
 #include <unistd.h>
 
 #include <ert/util/util.h>
-#include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 #include <ert/res_util/res_log.h>
+#include <ert/res_util/thread_pool.h>
 
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/job_node.h>

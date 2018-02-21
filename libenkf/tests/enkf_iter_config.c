@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-    
-   The file 'enkf_iter_config.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+
+   The file 'enkf_iter_config.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 #include <stdlib.h>
 #include <stdbool.h>
@@ -24,7 +24,6 @@
 
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
-#include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 
 #include <ert/enkf/enkf_defaults.h>
@@ -46,7 +45,7 @@ char * create_config_file( const char * enspath_fmt , const char * runpath_fmt ,
 
 void test_set() {
   analysis_iter_config_type * iter_config = analysis_iter_config_alloc();
-  
+
   test_assert_false( analysis_iter_config_case_fmt_set( iter_config ));
   analysis_iter_config_set_case_fmt( iter_config , "case%d");
   test_assert_true( analysis_iter_config_case_fmt_set( iter_config ));
