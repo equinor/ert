@@ -2,6 +2,8 @@ import time
 from collections import namedtuple
 from res.server import SimulationContext
 from res.enkf import NodeId, EnkfNode
+import logging
+import numpy as np
 
 Status = namedtuple("Status", "waiting pending running complete failed")
 
@@ -58,11 +60,15 @@ class BatchContext(SimulationContext):
         when the simulator was created the results will be returned as:
 
 
-          [  {"CMODE" : [1,2,3], "order" : [1,1,3]},
-             {"CMODE" : [1,4,1], "order" : [0,7,8]},
-             {"CMODE" : [6,1,0], "order" : [0,0,8] ]
+          [ {"CMODE" : [1,2,3], "order" : [1,1,3]},
+            {"CMODE" : [1,4,1], "order" : [0,7,8]},
+            None,
+            {"CMODE" : [6,1,0], "order" : [0,0,8]} ]
 
-        For a simulation which consist of a total of three "sub-simulations".
+        For a simulation which consist of a total of four simulations, where the
+        None value indicates that the simulator was unable to compute a request.
+        The order of the list corresponds to case_data provided in the start
+        call.
 
         """
         if self.running():
@@ -72,11 +78,15 @@ class BatchContext(SimulationContext):
         nodes = [ EnkfNode(self.res_config.ensemble_config[key]) for key in self.result_keys ]
         for sim_id in range(len(self)):
             node_id = NodeId( 0, sim_id)
+            if not self._queue_manager.didJobSucceed(sim_id):
+                logging.error('Simulation %d (node %s) failed.' % (sim_id, str(node_id)))
+                res.append(None)
+                continue
             d = {}
             for node in nodes:
                 node.load(self.get_sim_fs(), node_id)
-                gen_data = node.asGenData( )
-                d[node.name()] = gen_data.getData( )
+                data = node.asGenData().getData()
+                d[node.name()] = np.array(data)
             res.append(d)
 
         return res
