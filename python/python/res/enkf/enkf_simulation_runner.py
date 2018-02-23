@@ -1,8 +1,8 @@
 from cwrap import BaseCClass
+from ecl.util.util import BoolVector
 from res.enkf import EnkfFs
 from res.enkf import EnkfPrototype, ErtRunContext
 from res.enkf.enums import EnkfInitModeEnum
-from ecl.util.util import BoolVector
 
 
 class EnkfSimulationRunner(BaseCClass):
@@ -13,9 +13,15 @@ class EnkfSimulationRunner(BaseCClass):
 
     def __init__(self, enkf_main):
         assert isinstance(enkf_main, BaseCClass)
-        super(EnkfSimulationRunner, self).__init__(enkf_main.from_param(enkf_main).value, parent=enkf_main, is_reference=True)
-        self.ert = enkf_main
-        """:type: res.enkf.EnKFMain """
+        # enkf_main should be an EnKFMain, get the _RealEnKFMain object
+        real_enkf_main = enkf_main.parent()
+        super(EnkfSimulationRunner, self).__init__(
+            real_enkf_main.from_param(real_enkf_main).value ,
+            parent=real_enkf_main ,
+            is_reference=True)
+
+    def _enkf_main(self):
+        return self.parent()
 
     def runSimpleStep(self, job_queue, run_context):
         """ @rtype: int """
@@ -32,5 +38,5 @@ class EnkfSimulationRunner(BaseCClass):
 
     def runWorkflows(self , runtime):
         """:type res.enkf.enum.HookRuntimeEnum"""
-        hook_manager = self.ert.getHookManager()
-        hook_manager.runWorkflows( runtime  , self.ert )
+        hook_manager = self._enkf_main().getHookManager()
+        hook_manager.runWorkflows(runtime  , self._enkf_main())

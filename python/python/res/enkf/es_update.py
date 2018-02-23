@@ -5,31 +5,35 @@ class ESUpdate(BaseCClass):
     TYPE_NAME="es_update"
     _smoother_update = EnkfPrototype("bool enkf_main_smoother_update(es_update, enkf_fs, enkf_fs)")
 
-    def __init__(self , ert):
-        assert isinstance(ert , BaseCClass)
-        super(ESUpdate, self).__init__(ert.from_param(ert).value , parent=ert , is_reference=True)
-        self.ert = ert
-        self.analysis_config = self.ert.analysisConfig( )
+    def __init__(self , enkf_main):
+        assert isinstance(enkf_main , BaseCClass)
 
+        # enkf_main should be an EnKFMain, get the _RealEnKFMain object
+        real_enkf_main = enkf_main.parent()
+
+        super(ESUpdate, self).__init__(
+            real_enkf_main.from_param(real_enkf_main).value ,
+            parent=real_enkf_main ,
+            is_reference=True)
+
+    def _analysis_config(self):
+        return self.parent().analysisConfig()
 
     def hasModule(self, name):
         """
         Will check if we have analysis module @name.
         """
-        return self.analysis_config.hasModule( name )
-
+        return self._analysis_config().hasModule(name)
 
     def getModule(self,name):
         if self.hasModule( name ):
-            self.analysis_config.getModule( name )
+            self._analysis_config().getModule(name)
         else:
             raise KeyError("No such module:%s " % name)
 
 
     def setGlobalStdScaling(self , weight):
-        self.analysis_config.setGlobalStdScaling( weight )
-
-
+        self._analysis_config().setGlobalStdScaling(weight)
 
     def smootherUpdate( self , run_context):
         data_fs   = run_context.get_sim_fs( )

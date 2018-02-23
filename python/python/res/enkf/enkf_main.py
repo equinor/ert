@@ -14,24 +14,140 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import ctypes, warnings
-
 from os.path import isfile
-from cwrap import BaseCClass
-from res.util import Log
-from res.util.substitution_list import SubstitutionList
 
+from cwrap import BaseCClass
+from res.enkf import (AnalysisConfig, EclConfig, LocalConfig, ModelConfig,
+                      EnsembleConfig, SiteConfig, ResConfig, QueueConfig)
 from res.enkf import (EnkfPrototype, EnkfObs, EnKFState, ENKF_LIB,
                       EnkfSimulationRunner, EnkfFsManager)
 from res.enkf import (PlotSettings, ErtWorkflowList, HookManager, HookWorkflow,
                       ESUpdate)
-from res.enkf import (AnalysisConfig, EclConfig, LocalConfig, ModelConfig,
-                      EnsembleConfig, SiteConfig, ResConfig, QueueConfig)
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.key_manager import KeyManager
+from res.util import Log
+from res.util.substitution_list import SubstitutionList
 
 
 class EnKFMain(BaseCClass):
+
     TYPE_NAME = "enkf_main"
+
+    @classmethod
+    def createPythonObject(cls, c_pointer):
+        if c_pointer is not None:
+            real_enkf_main = _RealEnKFMain.createPythonObject(c_pointer)
+            new_obj = cls.__new__(cls)
+            EnKFMain._init_from_real_enkf_main(new_obj, real_enkf_main)
+            EnKFMain._monkey_patch_methods(new_obj, real_enkf_main)
+            return new_obj
+        else:
+            return None
+
+    @classmethod
+    def createCReference(cls, c_pointer, parent=None):
+        if c_pointer is not None:
+            real_enkf_main = _RealEnKFMain.createCReference(c_pointer, parent)
+            new_obj = cls.__new__(cls)
+            EnKFMain._init_from_real_enkf_main(new_obj, real_enkf_main)
+            EnKFMain._monkey_patch_methods(new_obj, real_enkf_main)
+            return new_obj
+        else:
+            return None
+
+    def __init__(self, config, strict=True, verbose=True):
+        """ Initializes an instance of EnkfMain.
+
+        Note: @config ought to be the ResConfig instance holding the
+        configuration. It also accepts that config is the name of a
+        configuration file, this is however deprecated.
+        """
+
+        real_enkf_main = _RealEnKFMain(config, strict, verbose)
+        assert isinstance(real_enkf_main, BaseCClass)
+        self._init_from_real_enkf_main(real_enkf_main)
+        self._monkey_patch_methods(real_enkf_main)
+
+    def _init_from_real_enkf_main(self, real_enkf_main):
+        super(EnKFMain, self).__init__(
+            real_enkf_main.from_param(real_enkf_main).value,
+            parent=real_enkf_main,
+            is_reference=True)
+
+#         if config is None:
+#             self.__simulation_runner = None
+#             self.__fs_manager = None
+#             self.__es_update = None
+#         else:
+        self.__simulation_runner = EnkfSimulationRunner(self)
+        self.__fs_manager = EnkfFsManager(self)
+        self.__es_update = ESUpdate(self)
+    
+    def _real_enkf_main(self):
+        return self.parent()
+
+    def getESUpdate(self):
+        """ @rtype: ESUpdate """
+        return self.__es_update
+
+    def getEnkfSimulationRunner(self):
+        """ @rtype: EnkfSimulationRunner """
+        return self.__simulation_runner
+
+    def getEnkfFsManager(self):
+        """ @rtype: EnkfFsManager """
+        return self.__fs_manager
+
+    def umount(self):
+        if self.__fs_manager is not None:
+            self.__fs_manager.umount()
+
+
+    # --- Overridden methods --------------------
+
+    def _monkey_patch_methods(self, real_enkf_main):
+        # As a general rule, EnKFMain methods should be implemented on
+        # _RealEnKFMain because the other references (such as __es_update)
+        # may need to use them.
+        # The public methods should be also exposed in this class, forwarding
+        # the call to the real method on the real_enkf_main object. That's done
+        # via monkey patching, so we don't need to manually keep the classes
+        # synchronized
+        from inspect import getmembers, ismethod
+        from functools import partial
+        methods = getmembers(_RealEnKFMain, predicate=ismethod)
+        dont_patch = [name for name, _ in getmembers(BaseCClass,
+                                                     predicate=ismethod)]
+        for name, method in methods:
+            if name.startswith('_') or name in dont_patch:
+                continue  # skip private methods
+            setattr(self, name, partial(method, real_enkf_main))
+
+    @staticmethod
+    def createNewConfig(config_file, storage_path, dbase_type, num_realizations):
+        return _RealEnKFMain.createNewConfig(config_file, storage_path, dbase_type, num_realizations)
+
+    def __repr__(self):
+        repr = self._real_enkf_main().__repr__()
+        assert repr.startswith('_RealEnKFMain')
+        return repr[5:]
+
+
+class _RealEnKFMain(BaseCClass):
+    """ Access to the C EnKFMain interface.
+
+    The python interface of EnKFMain is split between 4 classes, ie
+    - EnKFMain: main entry point, defined further down
+    - EnkfSimulationRunner, EnkfFsManager and ESUpdate: access specific
+      functionalities
+
+    EnKFMain owns an instance of each of the last 3 classes. Also, all
+    of these classes need to access the same underlying C object.
+    So, in order to avoid circular dependencies, we make _RealEnKF main
+    the only "owner" of the C object, and all the classes that need to
+    access it set _RealEnKFMain as parent.
+    """
+
     _alloc = EnkfPrototype("void* enkf_main_alloc(res_config, bool, bool)", bind = False)
     _create_new_config = EnkfPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
 
@@ -77,13 +193,7 @@ class EnKFMain(BaseCClass):
 
 
     def __init__(self, config, strict=True, verbose=True):
-        """
-        Initializes an instance of EnkfMain.
-
-        Note: @config ought to be the ResConfig instance holding the
-        configuration. It also accepts that config is the name of a
-        configuration file, this is however deprecated.
-        """
+        """ Please don't use this class directly. See EnKFMain instead """
 
         res_config = self._init_res_config(config)
         if res_config is None:
@@ -91,19 +201,9 @@ class EnKFMain(BaseCClass):
 
         c_ptr = self._alloc(res_config, strict, verbose)
         if c_ptr:
-            super(EnKFMain, self).__init__(c_ptr)
+            super(_RealEnKFMain, self).__init__(c_ptr)
         else:
             raise ValueError('Failed to construct EnKFMain instance from config %s.' % res_config)
-
-        if config is None:
-            self.__simulation_runner = None
-            self.__fs_manager = None
-            self.__es_update = None
-        else:
-            self.__simulation_runner = EnkfSimulationRunner(self)
-            self.__fs_manager = EnkfFsManager(self)
-            self.__es_update = ESUpdate(self)
-
 
         self.__key_manager = KeyManager(self)
 
@@ -141,18 +241,9 @@ class EnKFMain(BaseCClass):
     def get_queue_config(self):
         return self._get_queue_config()
 
-
-    @classmethod
-    def createCReference(cls, c_pointer, parent=None):
-        obj = super(EnKFMain, cls).createCReference(c_pointer, parent)
-        obj.__simulation_runner = EnkfSimulationRunner(obj)
-        obj.__fs_manager = EnkfFsManager(obj)
-        return obj
-
-
     @staticmethod
     def createNewConfig(config_file, storage_path, dbase_type, num_realizations):
-        return EnKFMain._create_new_config(config_file, storage_path, dbase_type, num_realizations)
+        return _RealEnKFMain._create_new_config(config_file, storage_path, dbase_type, num_realizations)
 
     def getRealisation(self , iens):
         """ @rtype: EnKFState """
@@ -161,12 +252,7 @@ class EnKFMain(BaseCClass):
         else:
             raise IndexError("iens value:%d invalid Valid range: [0,%d)" % (iens , self.getEnsembleSize()))
 
-    def umount(self):
-        if not self.__fs_manager is None:
-            self.__fs_manager.umount()
-
     def free(self):
-        self.umount()
         self._free( )
 
     def __repr__(self):
@@ -267,19 +353,6 @@ class EnKFMain(BaseCClass):
     def get_observation_count(self, user_key):
         return self._get_observation_count(user_key)
 
-
-    def getESUpdate(self):
-        """ @rtype: ESUpdate """
-        return self.__es_update
-
-    def getEnkfSimulationRunner(self):
-        """ @rtype: EnkfSimulationRunner """
-        return self.__simulation_runner
-
-    def getEnkfFsManager(self):
-        """ @rtype: EnkfFsManager """
-        return self.__fs_manager
-
     def getKeyManager(self):
         """ :rtype: KeyManager """
         return self.__key_manager
@@ -334,3 +407,4 @@ class EnKFMain(BaseCClass):
 
     def addNode(self, enkf_config_node):
         self._add_node(enkf_config_node)
+

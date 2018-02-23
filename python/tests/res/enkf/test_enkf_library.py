@@ -1,13 +1,13 @@
 import os
-from ecl.util.test import TestAreaContext
+
 from tests import ResTest
 
 from ecl.summary import EclSum
+from ecl.util.test import TestAreaContext
 from res.enkf import AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig, ObsVector
-from res.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, EnsembleConfig
-from res.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig
 from res.enkf import EnKFMain, ResConfig
-
+from res.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig
+from res.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, EnsembleConfig
 from res.enkf.util import TimeMap
 
 
@@ -41,7 +41,4 @@ class EnKFLibraryTest(ResTest):
             self.assertEqual(file_system.getCaseName(), "default")
             time_map = file_system.getTimeMap()
             self.assertIsInstance(time_map, TimeMap)
-
-            main.free()
-
 
