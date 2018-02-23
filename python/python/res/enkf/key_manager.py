@@ -1,3 +1,5 @@
+import weakref
+
 from res.enkf import ErtImplType, GenKwConfig, CustomKWConfig
 
 
@@ -8,7 +10,7 @@ class KeyManager(object):
         """
         @type ert: res.enkf.EnKFMain
         """
-        self.__ert = ert
+        self.__ert_ref = weakref.ref(ert)
 
         self.__all_keys = None
         self.__all_keys_with_observations = None
@@ -20,14 +22,17 @@ class KeyManager(object):
         self.__custom_kw_keys = None
         self.__misfit_keys = None
 
-
-    def ert(self):
+    def _ert(self):
         """ :rtype:  res.enkf.EnKFMain """
-        return self.__ert
+        ert = self.__ert_ref()
+        if ert is None:
+            raise RuntimeError(
+                "The reference EnKFMain instance has been deleted")
+        return ert
 
     def ensembleConfig(self):
         """ :rtype: res.enkf.EnsembleConfig """
-        return self.ert().ensembleConfig()
+        return self._ert().ensembleConfig()
 
     def summaryKeys(self):
         """ :rtype: list of str """
@@ -46,12 +51,12 @@ class KeyManager(object):
     def genKwKeys(self):
         """ :rtype: list of str """
         if self.__gen_kw_keys is None:
-            gen_kw_keys = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
+            gen_kw_keys = self._ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
             gen_kw_keys = [key for key in gen_kw_keys]
 
             gen_kw_list = []
             for key in gen_kw_keys:
-                enkf_config_node = self.ert().ensembleConfig().getNode(key)
+                enkf_config_node = self._ert().ensembleConfig().getNode(key)
                 gen_kw_config = enkf_config_node.getModelConfig()
                 assert isinstance(gen_kw_config, GenKwConfig)
 
@@ -69,11 +74,11 @@ class KeyManager(object):
     def customKwKeys(self):
         """ :rtype: list of str """
         if self.__custom_kw_keys is None:
-            custom_kw_keys = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.CUSTOM_KW)
+            custom_kw_keys = self._ert().ensembleConfig().getKeylistFromImplType(ErtImplType.CUSTOM_KW)
 
             keys = []
             for name in custom_kw_keys:
-                enkf_config_node = self.ert().ensembleConfig().getNode(name)
+                enkf_config_node = self._ert().ensembleConfig().getNode(name)
                 custom_kw_config = enkf_config_node.getModelConfig()
                 assert isinstance(custom_kw_config, CustomKWConfig)
 
@@ -88,10 +93,10 @@ class KeyManager(object):
     def genDataKeys(self):
         """ :rtype: list of str """
         if self.__gen_data_keys is None:
-            gen_data_keys = self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA)
+            gen_data_keys = self._ert().ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_DATA)
             gen_data_list = []
             for key in gen_data_keys:
-                enkf_config_node = self.ert().ensembleConfig().getNode(key)
+                enkf_config_node = self._ert().ensembleConfig().getNode(key)
                 gen_data_config = enkf_config_node.getDataModelConfig()
 
                 for report_step in gen_data_config.getReportSteps():
@@ -104,7 +109,7 @@ class KeyManager(object):
     def genDataKeysWithObservations(self):
         """ :rtype: list of str """
         if self.__gen_data_keys_with_observations is None:
-            enkf_obs = self.ert().getObservations()
+            enkf_obs = self._ert().getObservations()
             gen_data_obs_keys = []
             for obs_vector in enkf_obs:
                 report_step = obs_vector.activeStep()
@@ -122,7 +127,7 @@ class KeyManager(object):
         """ @rtype: list of str """
         if self.__misfit_keys is None:
             keys = []
-            for obs_vector in self.ert().getObservations():
+            for obs_vector in self._ert().getObservations():
                 key = "MISFIT:%s" % obs_vector.getObservationKey()
                 keys.append(key)
 
