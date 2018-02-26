@@ -110,22 +110,15 @@
 #
 # -------------------- </Example shell script> --------------------
 
-import os
-import sys
-import time
-
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QFileDialog
-
-import ert_gui.ertwidgets
 from ecl.util.util import EclVersion
-from res.util import ResVersion
-from res.enkf import EnKFMain, ResConfig
-from res.util import ResLog
 from ert_gui import ErtVersion
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
+import ert_gui.ertwidgets
 from ert_gui.main_window import GertMainWindow
+from ert_gui.newconfig import NewConfigurationDialog
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools import HelpCenter
 from ert_gui.tools.export import ExportTool
@@ -137,6 +130,12 @@ from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.run_analysis import RunAnalysisTool
 from ert_gui.tools.workflows import WorkflowsTool
+import os
+from res.enkf import EnKFMain, ResConfig
+from res.util import ResLog
+from res.util import ResVersion
+import sys
+import time
 
 if os.getenv("ERT_SHARE_PATH"):
     ert_share_path = os.getenv("ERT_SHARE_PATH")
@@ -149,7 +148,6 @@ else:
 
 ert_gui.ertwidgets.img_prefix = ert_share_path + "/gui/img/"
 
-from ert_gui.newconfig import NewConfigurationDialog
 
 
 def main(argv):
@@ -253,8 +251,6 @@ def main(argv):
     window.raise_()
     ResLog.log(3, "Versions ecl:%s  res:%s   ert:%s" % (EclVersion( ), ResVersion( ), ErtVersion( )))
     finished_code = app.exec_()
-    ert.free()
-
     sys.exit(finished_code)
 
 

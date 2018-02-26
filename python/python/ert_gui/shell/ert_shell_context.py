@@ -14,10 +14,6 @@ class ErtShellContext(ShellContext):
 
     def setErt(self, ert):
         """ @type ert: res.enkf.enkf_main.EnKFMain """
-        if self.__ert is not None and self.__ert != ert:
-            self.__ert.free()
-            self.__ert = None
-
         self.__ert = ert
 
     @property
