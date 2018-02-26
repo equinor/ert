@@ -1,16 +1,14 @@
 
-import sys
-import os
 from PyQt4.QtGui import QApplication
-import time
-from res.enkf import EnKFMain, ResConfig
 from ecl.util.util import Version
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import resourceIcon
-from ert_gui.tools.plot.plot_window import PlotWindow
-
-
 import ert_gui.ertwidgets
+from ert_gui.tools.plot.plot_window import PlotWindow
+import os
+from res.enkf import EnKFMain, ResConfig
+import sys
+import time
 
 if os.getenv("ERT_SHARE_PATH"):
     ert_share_path = os.getenv("ERT_SHARE_PATH")
@@ -70,9 +68,6 @@ def main(argv):
     window.activateWindow()
     window.raise_()
     finished_code = app.exec_()
-
-    ert.free()
-
     sys.exit(finished_code)
 
 

@@ -1,5 +1,6 @@
-from res.enkf import EnKFMain
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
+from res.enkf import EnKFMain
+
 
 class ErtNotifier(QObject):
     ertChanged = pyqtSignal()
@@ -38,7 +39,7 @@ class ErtNotifier(QObject):
         python_executable = sys.executable
         ert_gui_main = sys.argv[0]
 
-        self._ert.free()
+        self._ert = None
         os.execl(python_executable, python_executable, ert_gui_main, config_file)
 
 
