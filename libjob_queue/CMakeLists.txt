@@ -14,6 +14,7 @@ endif ()
 add_library(job_queue src/ext_job.c
                       src/ext_joblist.c
                       src/forward_model.c
+                      src/job_status.c
                       src/job_list.c
                       src/job_node.c
                       src/job_queue.c
