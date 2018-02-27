@@ -135,12 +135,30 @@ class _RealEnKFMain(BaseCClass):
     - EnKFMain: main entry point, defined further down
     - EnkfSimulationRunner, EnkfFsManager and ESUpdate: access specific
       functionalities
-
     EnKFMain owns an instance of each of the last 3 classes. Also, all
     of these classes need to access the same underlying C object.
     So, in order to avoid circular dependencies, we make _RealEnKF main
     the only "owner" of the C object, and all the classes that need to
     access it set _RealEnKFMain as parent.
+    
+    The situation can be summarized as follows (show only EnkfFSManager,
+    classes EnkfSimulationRunner and ESUpdate are treated analogously)
+     ------------------------------------
+    |   real EnKFMain object in memory   |
+     ------------------------------------
+          ^                 ^          ^
+          |                 |          |
+       (c_ptr)           (c_ptr)       |
+          |                 |          |
+    _RealEnKFMain           |          |
+       ^   ^                |          |
+       |   ^--(parent)-- EnKFMain      |
+       |                    |          |
+       |                  (owns)       |
+    (parent)                |       (c_ptr)
+       |                    v          |
+        ------------ EnkfFSManager ----
+    
     """
 
     _alloc = EnkfPrototype("void* enkf_main_alloc(res_config, bool, bool)", bind = False)
