@@ -74,11 +74,6 @@ class EnKFMain(BaseCClass):
             parent=real_enkf_main,
             is_reference=True)
 
-#         if config is None:
-#             self.__simulation_runner = None
-#             self.__fs_manager = None
-#             self.__es_update = None
-#         else:
         self.__simulation_runner = EnkfSimulationRunner(self)
         self.__fs_manager = EnkfFsManager(self)
         self.__es_update = ESUpdate(self)
