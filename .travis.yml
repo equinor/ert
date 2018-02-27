@@ -16,15 +16,17 @@ env:
   global:
     - ERT_SHOW_BACKTRACE=1
   matrix:
-    - TEST_SUITE="-LE SLOW"  # Run all tests not labeled as slow
-    - TEST_SUITE="-L SLOW_1" # Run all tests labeled as SLOW in group 1
-    - TEST_SUITE="-L SLOW_2" # Run all tests labeled as SLOW in group 2
-    - TEST_SUITE=""          # TODO: Can be removed when libres is MacOS compliant
+    - PYTHON_VERSION=2.7 TEST_SUITE="-LE SLOW"  # Run all tests not labeled as slow
+    - PYTHON_VERSION=2.7 TEST_SUITE="-L SLOW_1" # Run all tests labeled as SLOW in group 1
+    - PYTHON_VERSION=2.7 TEST_SUITE="-L SLOW_2" # Run all tests labeled as SLOW in group 2
+    - PYTHON_VERSION=2.7 TEST_SUITE=""          # TODO: Can be removed when libres is MacOS compliant
+    - PYTHON_VERSION=3.6                        # Run all testsliant
 
 matrix:
   fast_finish: true
   allow_failures:
     - os: osx
+    - env: PYTHON_VERSION=3.6
   exclude:
     - os: osx
       compiler: gcc
@@ -32,13 +34,13 @@ matrix:
       compiler: clang
     # TODO: The excludes below should be removed after MacOS is supported
     - os: linux
-      env: TEST_SUITE=""
+      env: PYTHON_VERSION=2.7 TEST_SUITE=""
     - os: osx
-      env: TEST_SUITE="-LE SLOW"
+      env: PYTHON_VERSION=2.7 TEST_SUITE="-LE SLOW"
     - os: osx
-      env: TEST_SUITE="-L SLOW_1"
+      env: PYTHON_VERSION=2.7 TEST_SUITE="-L SLOW_1"
     - os: osx
-      env: TEST_SUITE="-L SLOW_2"
+      env: PYTHON_VERSION=2.7 TEST_SUITE="-L SLOW_2"
 
 
 addons:
@@ -63,7 +65,11 @@ install:
       else
         export CONDA_OS=Linux;
       fi
-    - export TRAVIS_PYTHON_VERSION="2.7"
+    - if [[ $PYTHON_VERSION == 2.7 ]]; then
+        export TRAVIS_PYTHON_VERSION="2.7";
+      else
+        export TRAVIS_PYTHON_VERSION="3.6";
+      fi
     # We do this conditionally because it saves us some downloading if the version is the same.
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
         wget https://repo.continuum.io/miniconda/Miniconda2-latest-${CONDA_OS}-x86_64.sh -O miniconda.sh;
@@ -79,10 +85,13 @@ install:
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
-    - conda install pyqt=4 scipy=0.16.1 pylint numpy pandas matplotlib future
+    - wget https://raw.githubusercontent.com/Statoil/ert/master/travis/install_python_packages.py
+    - python install_python_packages.py
 
 before_script:
   - wget https://raw.githubusercontent.com/Statoil/ert/master/travis/build_total.py
 
 script:
+  - python --version
   - python build_total.py res ${TEST_SUITE}
+
