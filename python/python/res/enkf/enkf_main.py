@@ -229,14 +229,21 @@ class _RealEnKFMain(BaseCClass):
         # The res_config argument can be None; the only reason to
         # allow that possibility is to be able to test that the
         # site-config loads correctly.
-        if config is None or isinstance(config, str):
+        if not config:
+            check = True
+        else:
+            if sys.version_info[0] == 2:
+                check = isinstance(config, basestring)
+            else:
+                check = isinstance(config, str)
+        if check:
             user_config_file = None
 
             if sys.version_info[0] == 2:
-               check = isinstance(config, basestring)
+               check2 = isinstance(config, basestring)
             else:
-               check = isinstance(config, str)
-            if check:
+               check2 = isinstance(config, str)
+            if check2:
                 if not isfile(config):
                     raise IOError('No such configuration file "%s".' % res_config)
 

@@ -1,4 +1,4 @@
-import random
+import random, numbers
 
 def rwh_primes2(n):
     # http://stackoverflow.com/questions/2068372/fastest-way-to-list-all-primes-below-n-in-python/3035188#3035188
@@ -26,7 +26,7 @@ class PrimeGenerator(object):
         random.seed(seed)
 
     def __getitem__(self, index):
-        if not isinstance(index, int) or index < 0:
+        if not isinstance(index, numbers.Rational) or index < 0:
             raise IndexError("Index must be a positive integer: %d" % index)
 
         if not index in self.__primes:

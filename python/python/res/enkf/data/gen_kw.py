@@ -16,6 +16,7 @@
 import os.path
 
 from cwrap import BaseCClass, CFILE
+import numbers
 
 from ecl.util.util import DoubleVector
 from res.enkf import EnkfPrototype
@@ -121,7 +122,7 @@ class GenKw(BaseCClass):
             else:
                 d = DoubleVector()
                 for (index,v) in enumerate(values):
-                    if isinstance(v, (int,float)):
+                    if isinstance(v, numbers.Number):
                         d[index] = v
                     else:
                         raise TypeError("Values must numeric: %s is invalid" % v)
