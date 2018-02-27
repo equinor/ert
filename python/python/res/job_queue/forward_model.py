@@ -39,6 +39,9 @@ class ForwardModel(BaseCClass):
         else:
             raise ValueError('Failed to construct forward model from provided ext_joblist %s' % ext_joblist)
 
+    def __len__(self):
+        return self._get_length()
+
     def joblist(self):
         """ @rtype: StringList """
         return self._alloc_joblist( )
@@ -64,4 +67,4 @@ class ForwardModel(BaseCClass):
         return self._create_repr('joblist=%s' % self.joblist())
 
     def get_size(self):
-        return self._get_length()
+       return len(self)
