@@ -870,7 +870,6 @@ static bool enkf_state_complete_forward_modelOK(const res_config_type * res_conf
     res_log_finfo("[%03d:%04d-%04d] Results loaded successfully.",
                   iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
 
-    run_arg_complete_run(run_arg);              /* free() on runpath */
   }
 
   return (result == 0) ? true : false;

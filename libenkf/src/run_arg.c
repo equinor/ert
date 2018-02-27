@@ -185,12 +185,6 @@ void run_arg_free__(void * arg) {
 }
 
 
-void run_arg_complete_run(run_arg_type * run_arg) {
-  if (run_arg->run_status == JOB_RUN_OK) {
-    util_safe_free(run_arg->run_path);
-    run_arg->run_path = NULL;
-  }
-}
 
 
 
