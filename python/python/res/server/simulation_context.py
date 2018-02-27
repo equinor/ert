@@ -1,6 +1,7 @@
+import os.path
 from ecl.util.util import ArgPack, BoolVector
 
-from res.job_queue import JobQueueManager
+from res.job_queue import JobQueueManager, ForwardModelStatus
 from res.util import CThreadPool
 from res.enkf import ENKF_LIB
 from res.enkf.ert_run_context import ErtRunContext

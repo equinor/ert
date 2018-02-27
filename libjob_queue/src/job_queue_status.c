@@ -41,9 +41,9 @@ static int STATUS_INDEX(const job_queue_status_type * status_count, job_status_t
         return index;
 
     index++;
-    if (index == JOB_QUEUE_MAX_STATE)                 
+    if (index == JOB_QUEUE_MAX_STATE)
       util_abort("%s: failed to get index from status:%d \n",__func__ , status);
-    
+
   }
   return 0;
 }
@@ -59,8 +59,8 @@ job_queue_status_type * job_queue_status_alloc() {
   pthread_rwlock_init( &status->rw_lock , NULL);
   job_queue_status_clear( status );
 
-    
- 
+
+
 
     status->status_index[0] = JOB_QUEUE_NOT_ACTIVE; // Initial, allocated job state, job not added - controlled by job_queue
     status->status_index[1] = JOB_QUEUE_WAITING; // The job is ready to be started - controlled by job_queue
@@ -78,10 +78,10 @@ job_queue_status_type * job_queue_status_alloc() {
     status->status_index[13] = JOB_QUEUE_FAILED; // Job has failed, no more retries, FINAL STATE
     status->status_index[14] = JOB_QUEUE_DO_KILL_NODE_FAILURE; // Job has failed, node should be blacklisted
 
-    
-    
-    
-    
+
+
+
+
   return status;
 }
 
