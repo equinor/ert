@@ -167,7 +167,7 @@ void forward_model_parse_job_deprecated_args(forward_model_type * forward_model,
       free( arg_string );
     }
   }
-  
+
   free(job_name);
 }
 
