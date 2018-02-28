@@ -2,13 +2,24 @@ import os
 import time
 import sys
 import unittest
+from functools import partial
 
 from ecl.util.test import TestAreaContext
 
-from res.simulator import BatchSimulator
+from res.simulator import BatchSimulator, BatchContext
 from res.enkf import ResConfig
 
 from tests import ResTest
+
+class TestMonitor(object):
+
+    def __init__(self):
+        self.sim_context = None
+
+    def start_callback(self, *args, **kwargs): 
+        self.sim_context = args[0]
+
+
 
 class BatchSimulatorTest(ResTest):
 
@@ -156,7 +167,8 @@ class BatchSimulatorTest(ResTest):
                  }),
             ]
 
-            ctx = rsim.start("case", case_data)
+            monitor = TestMonitor()
+            ctx = rsim.start("case", case_data, callback=partial(TestMonitor.start_callback, monitor))
 
             # Asking for results before it is complete.
             with self.assertRaises(RuntimeError):
@@ -188,6 +200,8 @@ class BatchSimulatorTest(ResTest):
                         [controls[ctrl_key][var_name]**2 for var_name in ["W1", "W2", "W3"]],
                         list(result[res_key])
                         )
+
+            self.assertTrue( isinstance(monitor.sim_context, BatchContext))
 
 
     def test_stop_sim(self):
