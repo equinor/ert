@@ -50,7 +50,6 @@ class JobQueue(BaseCClass):
     _set_max_job_duration = QueuePrototype("void job_queue_set_max_job_duration( job_queue , int)")
     _get_max_job_duration = QueuePrototype("int  job_queue_get_max_job_duration( job_queue )")
     _set_driver           = QueuePrototype("void job_queue_set_driver( job_queue , void* )")
-    _add_job              = QueuePrototype("int  job_queue_add_job( job_queue , char* , void* , void* , void* , void* , int , char* , char* , int , char**)")
     _kill_job             = QueuePrototype("bool job_queue_kill_job( job_queue , int )")
     _start_queue          = QueuePrototype("void job_queue_run_jobs( job_queue , int , bool)")
     _run_jobs             = QueuePrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
@@ -129,29 +128,6 @@ class JobQueue(BaseCClass):
     def start( self, blocking=False):
         verbose = False
         self._run_jobs(self.size, verbose)
-
-
-    def submit( self, cmd, run_path, job_name, argv, num_cpu=1):
-        c_argv = (ctypes.c_char_p * len(argv))()
-        c_argv[:] = argv
-
-        done_callback = None
-        callback_arg = None
-        retry_callback = None
-        exit_callback = None
-
-        queue_index = self._add_job(cmd,
-                                    done_callback,
-                                    retry_callback,
-                                    exit_callback,
-                                    callback_arg,
-                                    num_cpu,
-                                    run_path,
-                                    job_name,
-                                    len(argv),
-                                    c_argv)
-
-        return queue_index
 
 
     def clear( self ):
