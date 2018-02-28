@@ -78,7 +78,7 @@ class BatchContext(SimulationContext):
         nodes = [ EnkfNode(self.res_config.ensemble_config[key]) for key in self.result_keys ]
         for sim_id in range(len(self)):
             node_id = NodeId( 0, sim_id)
-            if not self._queue_manager.didJobSucceed(sim_id):
+            if not self.didRealizationSucceed(sim_id):
                 logging.error('Simulation %d (node %s) failed.' % (sim_id, str(node_id)))
                 res.append(None)
                 continue
