@@ -473,7 +473,19 @@ class JobManager(object):
         pid = os.fork()
         exit_status, err_msg = 0, ''
         if pid == 0:
-            self.execJob(job)
+            # This code block should exec into the actual executable we are
+            # running, and execution should not come back here. However - if
+            # the code fails with an exception before actually reaching the
+            # exec() call we suddenly have two Python processes running the
+            # current code; one waiting for the exit status and one unrolling
+            # an exception. The latter will incorrectly "steal" the
+            # finalization of with statements. So - in the case of an exception
+            # before the exec() call we call the hard exit: os._exit(1).
+            try:
+                self.execJob(job)
+            except Exception as e:
+                sys.stderr.write("Failed to exec:%s error:%s\n" % (job["name"], str(e)))
+                os._exit(1)
         else:
             _, exit_status = os.waitpid(pid, 0)
             # The exit_status returned from os.waitpid encodes
