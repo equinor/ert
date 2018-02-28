@@ -15,6 +15,7 @@ dist: trusty
 env:
   global:
     - ERT_SHOW_BACKTRACE=1
+    - LD_LIBRARY_PATH="$(pwd)/install/lib64"
   matrix:
     - PYTHON_VERSION=2.7 TEST_SUITE="-LE SLOW"  # Run all tests not labeled as slow
     - PYTHON_VERSION=2.7 TEST_SUITE="-L SLOW_1" # Run all tests labeled as SLOW in group 1
