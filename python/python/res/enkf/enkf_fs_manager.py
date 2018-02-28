@@ -1,9 +1,10 @@
 import os.path
-from cwrap import BaseCClass
-from res.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfInitModeEnum, EnkfPrototype
-from ecl.util.util import StringList, BoolVector
-
 import re
+
+from cwrap import BaseCClass
+from ecl.util.util import StringList, BoolVector
+from res.enkf import EnkfFs, StateMap, TimeMap, RealizationStateEnum, EnkfInitModeEnum, EnkfPrototype
+
 
 def naturalSortKey(s, _nsre=re.compile('([0-9]+)')):
     return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
@@ -97,14 +98,25 @@ class EnkfFsManager(BaseCClass):
         @type enkf_main: res.enkf.EnKFMain
         @type capacity: int
         """
-        super(EnkfFsManager, self).__init__(enkf_main.from_param(enkf_main).value, parent=enkf_main, is_reference=True)
+        # enkf_main should be an EnKFMain, get the _RealEnKFMain object
+        real_enkf_main = enkf_main.parent()
+
+        super(EnkfFsManager, self).__init__(
+            real_enkf_main.from_param(real_enkf_main).value ,
+            parent=real_enkf_main ,
+            is_reference=True)
 
         self._fs_rotator = FileSystemRotator(capacity)
-        self._mount_root = enkf_main.getMountPoint()
+        self._mount_root = real_enkf_main.getMountPoint()
 
-        self._fs_type = enkf_main.getModelConfig().getFSType()
+        self._fs_type = real_enkf_main.getModelConfig().getFSType()
         self._fs_arg = None
 
+    def __del__(self):
+        # This object is a reference, so free() won't be called on it
+        # Any clean-up must be done here
+        self.umount()
+        super(EnkfFsManager, self).__del__()
 
     def _createFullCaseName(self, mount_root, case_name):
         return os.path.join(mount_root, case_name)

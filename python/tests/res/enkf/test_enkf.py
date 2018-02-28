@@ -15,11 +15,9 @@
 #  for more details.
 
 import os.path
-
-from ecl.util.test import TestAreaContext
 from tests import ResTest
-from ecl.util.util import BoolVector
 
+from ecl.util.util import BoolVector
 from res.enkf import (EnsembleConfig, AnalysisConfig, ModelConfig, SiteConfig,
                       EclConfig, PlotSettings, EnkfObs, ErtTemplates, EnkfFs,
                       EnKFState, EnkfVarType, ObsVector, RunArg, ResConfig)
@@ -30,6 +28,7 @@ from res.enkf.enums import (EnkfObservationImplementationType, LoadFailTypeEnum,
                             EnkfRunType, EnkfFieldFileFormatEnum,
                             EnkfTruncationType, ActiveMode)
 
+from ecl.util.test import TestAreaContext
 from res.enkf.observations.summary_observation import SummaryObservation
 
 
@@ -46,7 +45,6 @@ class EnKFTest(ResTest):
             main = EnKFMain(res_config)
             pfx = 'EnKFMain(ensemble_size'
             self.assertEqual(pfx, repr(main)[:len(pfx)])
-            main.free()
 
     def test_bootstrap( self ):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
@@ -54,7 +52,6 @@ class EnKFTest(ResTest):
             res_config = ResConfig("simple_config/minimum_config")
             main = EnKFMain(res_config)
             self.assertTrue(main, "Load failed")
-            main.free()
 
     def test_site_condif(self):
         with TestAreaContext("enkf_test", store_area=True) as work_area:
@@ -158,10 +155,6 @@ class EnKFTest(ResTest):
                 self.assertEqual(summary_key, summary_observation_node.getSummaryKey())
 
 
-            main.free()
-
-
-
     def test_config( self ):
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
@@ -185,8 +178,6 @@ class EnKFTest(ResTest):
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
             self.assertEqual( "simple_config/Ensemble" , main.getMountPoint())
-
-            main.free()
 
     def test_enkf_create_config_file(self):
         config_file      = "test_new_config"
