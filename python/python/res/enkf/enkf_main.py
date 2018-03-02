@@ -111,13 +111,12 @@ class EnKFMain(BaseCClass):
         # synchronized
         from inspect import getmembers, ismethod
         from functools import partial
-        methods = getmembers(_RealEnKFMain, predicate=ismethod)
-        dont_patch = [name for name, _ in getmembers(BaseCClass,
-                                                     predicate=ismethod)]
+        methods = getmembers(self._real_enkf_main(), predicate=ismethod)
+        dont_patch = [name for name, _ in getmembers(BaseCClass)]
         for name, method in methods:
             if name.startswith('_') or name in dont_patch:
                 continue  # skip private methods
-            setattr(self, name, partial(method, real_enkf_main))
+            setattr(self, name, method)
 
     @staticmethod
     def createNewConfig(config_file, storage_path, dbase_type, num_realizations):
