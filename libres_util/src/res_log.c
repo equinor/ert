@@ -49,7 +49,7 @@ static log_type * logh = NULL;               /* Handle to an open log file. */
 void res_log_add_message(message_level_type message_level,
                          const char* message) {
   if (!logh)
-    res_log_init_log_default(true);
+    res_log_init_log_default(false);
   log_add_message(logh, message_level, NULL, message);
 }
 
@@ -137,7 +137,7 @@ void res_log_init_log(message_level_type log_level,
   logh = log_open(log_file_name , log_level );
 
   if (verbose)
-    printf("Activity will be logged to ..............: %s \n",log_get_filename( logh ));
+    printf("Activity will be logged to %s \n",log_get_filename( logh ));
   log_add_message(logh, LOG_INFO, NULL, "ert configuration loaded");
 }
 
@@ -168,19 +168,19 @@ void res_log_close() {
 
 void res_log_set_log_level(message_level_type log_level){
     if(logh==NULL)
-      res_log_init_log_default(true);
+      res_log_init_log_default(false);
     log_set_level(logh, log_level);
 }
 
 int res_log_get_log_level(){
   if(logh==NULL)
-    res_log_init_log_default(true);
+    res_log_init_log_default(false);
   return log_get_level(logh);
 }
 
 const char * res_log_get_filename() {
   if(logh==NULL)
-    res_log_init_log_default(true);
+    res_log_init_log_default(false);
   return log_get_filename(logh);
 }
 

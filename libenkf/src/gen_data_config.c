@@ -26,6 +26,7 @@
 #include <ert/util/bool_vector.h>
 #include <ert/util/string_util.h>
 #include <ert/util/type_macros.h>
+#include <ert/res_util/res_log.h>
 
 #include <ert/config/config_parser.h>
 #include <ert/ecl/ecl_util.h>
@@ -478,49 +479,50 @@ bool gen_data_config_has_active_mask( const gen_data_config_type * config , enkf
 */
 void gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type * fs,  int report_step , bool force_load) {
   if (!config->dynamic)
-    return;                /* This is used as a GEN_PARAM instance - and the loading of mask is not an option. */
+    return;  /* Used as GEN_PARAM instance; loading of mask is not an option. */
 
-  {
-    bool fs_changed = false;
-    if (fs != config->last_read_fs) {
-      config->last_read_fs = fs;
-      fs_changed = true;
-    }
-
-    pthread_mutex_lock( &config->update_lock );
-    {
-      if ( force_load || (int_vector_iget( config->data_size_vector , report_step ) > 0)) {
-	if (config->active_report_step != report_step || fs_changed) {
-	  char * filename = util_alloc_sprintf("%s_active" , config->key );
-	  FILE * stream   = enkf_fs_open_excase_tstep_file( fs , filename , report_step);
-	  
-	  if (stream != NULL) {
-	    bool_vector_fread( config->active_mask , stream );
-	    fclose( stream );
-	  } else {
-	    int gen_data_size = int_vector_safe_iget( config->data_size_vector, report_step );
-	    if (gen_data_size < 0) {
-	      fprintf(stderr,"** Fatal internal error in function:%s \n",__func__);
-	      fprintf(stderr,"\n");
-	      fprintf(stderr,"   1: The active mask file:%s was not found \n",filename);
-	      fprintf(stderr,"   2: The size of the gen_data vectors has not been set\n");
-	      fprintf(stderr,"\n");
-	      fprintf(stderr,"We can not create a suitable active_mask. Code should call gen_data_config_has_active_mask()\n\n");
-	      
-	      util_abort("%s: fatal internal error - could not create a suitable active_mask \n",__func__);
-	    } else {
-	      fprintf(stdout,"** Info: could not locate active data elements file %s, filling active vector with true all elements active \n",filename);
-	      bool_vector_reset( config->active_mask );
-	      bool_vector_iset( config->active_mask, gen_data_size - 1, true);
-	    }
-	  }
-	  free( filename );
-	}
-      }
-      config->active_report_step = report_step;
-    }
-    pthread_mutex_unlock( &config->update_lock );
+  bool fs_changed = false;
+  if (fs != config->last_read_fs) {
+    config->last_read_fs = fs;
+    fs_changed = true;
   }
+
+  pthread_mutex_lock( &config->update_lock );
+
+  if ( force_load || (int_vector_iget( config->data_size_vector , report_step ) > 0)) {
+    if (config->active_report_step != report_step || fs_changed) {
+      char * filename = util_alloc_sprintf("%s_active" , config->key );
+      FILE * stream   = enkf_fs_open_excase_tstep_file( fs , filename , report_step);
+
+      if (stream != NULL) {
+        bool_vector_fread( config->active_mask , stream );
+        fclose( stream );
+      } else {
+        int gen_data_size = int_vector_safe_iget( config->data_size_vector, report_step );
+        if (gen_data_size < 0) {
+          fprintf(stderr,"** Fatal internal error in function:%s \n",__func__);
+          fprintf(stderr,"\n");
+          fprintf(stderr,"   1: The active mask file:%s was not found \n", filename);
+          fprintf(stderr,"   2: The size of the gen_data vectors has not been set\n");
+          fprintf(stderr,"\n");
+          fprintf(stderr, "We can not create a suitable active_mask. ");
+          fprintf(stderr, "Code should call gen_data_config_has_active_mask()\n\n");
+
+          util_abort("%s: fatal internal error - could not create a suitable active_mask\n",
+                     __func__);
+        } else {
+          res_log_finfo("Could not locate active data elements file %s, "
+                        "filling active vector with true all elements active.",
+                        filename);
+          bool_vector_reset( config->active_mask );
+          bool_vector_iset( config->active_mask, gen_data_size - 1, true);
+        }
+      }
+      free( filename );
+    }
+  }
+  config->active_report_step = report_step;
+  pthread_mutex_unlock( &config->update_lock );
 }
 
 int gen_data_config_num_report_step( const gen_data_config_type * config ) {

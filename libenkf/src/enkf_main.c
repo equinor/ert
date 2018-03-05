@@ -1450,12 +1450,11 @@ void enkf_main_submit_jobs( enkf_main_type * enkf_main ,
 
 static void enkf_main_start_queue(enkf_main_type * enkf_main,
                                   const ert_run_context_type * run_context,
-                                  job_queue_type * job_queue,
-                                  bool verbose_queue) {
+                                  job_queue_type * job_queue) {
 
   job_queue_manager_type * queue_manager = job_queue_manager_alloc( job_queue );
   int job_size = ert_run_context_get_active_size(run_context);
-  job_queue_manager_start_queue( queue_manager , job_size , verbose_queue );
+  job_queue_manager_start_queue( queue_manager, job_size, enkf_main->verbose);
   enkf_main_submit_jobs( enkf_main , run_context, job_queue);
   job_queue_submit_complete( job_queue );
   res_log_info("All jobs submitted to internal queue - waiting for completion.");
@@ -1482,7 +1481,6 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
     ecl_config_assert_restart( enkf_main_get_ecl_config( enkf_main ) );
 
   {
-    bool verbose_queue    = enkf_main->verbose;
     {
       bool_vector_type * iactive = ert_run_context_alloc_iactive( run_context );
       state_map_deselect_matching( enkf_fs_get_state_map( ert_run_context_get_sim_fs( run_context )) ,
@@ -1490,7 +1488,7 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
                                    STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
       bool_vector_free( iactive );
     }
-    enkf_main_start_queue(enkf_main, run_context, job_queue, verbose_queue);
+    enkf_main_start_queue(enkf_main, run_context, job_queue);
 
     /* This should be carefully checked for the situation where only a
        subset (with offset > 0) of realisations are simulated. */
@@ -1514,7 +1512,9 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
 
     enkf_fs_fsync( ert_run_context_get_sim_fs( run_context ) );
     if (totalFailed == 0)
-      res_log_info("All jobs complete and data loaded.");
+      res_log_finfo("All %d active jobs complete and data loaded.", totalOK);
+    else
+      res_log_fwarning("%d active job(s) failed.", totalFailed);
 
 
     return totalOK;
@@ -1894,7 +1894,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->obs                = NULL;
   enkf_main->local_config       = local_config_alloc( );
 
-  enkf_main_set_verbose( enkf_main , true );
+  enkf_main_set_verbose( enkf_main, false );
   enkf_main_init_fs( enkf_main );
 
   return enkf_main;

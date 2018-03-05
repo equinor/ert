@@ -63,7 +63,6 @@ typedef struct log_struct log_type;
   const char * log_get_filename( const log_type * logh );
   void         log_set_level( log_type * logh , message_level_type log_level);
   bool         log_is_open( const log_type * logh);
-  bool         log_include_message(const log_type *logh , message_level_type message_level);
   int          log_get_msg_count(const log_type * logh);
   message_level_type log_get_level( const log_type * logh);
   message_level_type log_get_level( const log_type * logh);

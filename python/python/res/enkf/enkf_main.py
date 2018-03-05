@@ -55,7 +55,7 @@ class EnKFMain(BaseCClass):
         else:
             return None
 
-    def __init__(self, config, strict=True, verbose=True):
+    def __init__(self, config, strict=True, verbose=False):
         """ Initializes an instance of EnkfMain.
 
         Note: @config ought to be the ResConfig instance holding the
@@ -205,7 +205,7 @@ class _RealEnKFMain(BaseCClass):
     _init_run = EnkfPrototype("void enkf_main_init_run(enkf_main, ert_run_context)")
 
 
-    def __init__(self, config, strict=True, verbose=True):
+    def __init__(self, config, strict=True, verbose=False):
         """ Please don't use this class directly. See EnKFMain instead """
 
         res_config = self._init_res_config(config)

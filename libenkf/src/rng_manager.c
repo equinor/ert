@@ -145,8 +145,6 @@ void rng_manager_log_state(const rng_manager_type * rng_manager) {
   }
   free(uint_fmt);
 
-  printf("\nTo repeat this experiment, add the following random seed to your config file:\n");
-  printf("RANDOM_SEED %s\n", random_seed_str);
   res_log_info("To repeat this experiment, add the following random seed to your config file:");
   res_log_finfo("RANDOM_SEED %s", random_seed_str);
 }

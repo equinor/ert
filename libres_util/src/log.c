@@ -46,6 +46,7 @@ struct log_struct {
   FILE             * stream;
   int                fd;
   message_level_type log_level;
+  message_level_type log_level_stdout;
   int                msg_count;
 #ifdef HAVE_PTHREAD
   pthread_mutex_t    mutex;
@@ -118,6 +119,7 @@ log_type * log_open(const char * filename , message_level_type log_level) {
 
   logh->msg_count     = 0;
   logh->log_level     = log_level;
+  logh->log_level_stdout = LOG_ERROR;  // non-configurable default
   logh->filename      = NULL;
   logh->stream        = NULL;
 #ifdef HAVE_PTHREAD
@@ -130,11 +132,12 @@ log_type * log_open(const char * filename , message_level_type log_level) {
 }
 
 
-/**
- * The message_level is compared to the configured log_level.  Higher
- * message_level means "more important".
- */
-bool log_include_message(const log_type *logh , message_level_type message_level) {
+static bool log_include_message_stdout(const log_type *logh,
+                                message_level_type message_level) {
+  return message_level >= logh->log_level_stdout;
+}
+
+static bool log_include_message(const log_type *logh, message_level_type message_level) {
   return message_level >= logh->log_level;
 }
 
@@ -150,12 +153,21 @@ void log_add_message_str(log_type *logh, message_level_type message_level, const
 
 
 /**
-   If dup_stream != NULL the message (without the date/time header) is duplicated on this stream.
-*/
+ *  If dup_stream != NULL the message (without the date/time header) is
+ *  duplicated on this stream.
+ *
+ *  TODO: We will in the future have two logging levels, one for file (default
+ *  to INFO), and one for stdout (default to WARNING).  The regular user will
+ *  normally just configure the stdout level, and will probably choose between
+ *  (INFO, WARNING, ERROR).
+ */
 void log_add_message(log_type *logh,
                      message_level_type message_level,
                      FILE * dup_stream,
                      const char* message) {
+  if (log_include_message_stdout(logh, message_level))
+    printf("%s\n", message);  // temporary implementation of logging to terminal
+
   if (!log_include_message(logh, message_level))
     return;
 
