@@ -102,12 +102,24 @@ void summary_copy(const summary_type *src, summary_type * target) {
 
 
 
+
+
 void summary_read_from_buffer(summary_type * summary,
                               buffer_type * buffer,
                               enkf_fs_type * fs,
                               int report_step) {
   enkf_util_assert_buffer_type( buffer, SUMMARY );
-  double_vector_buffer_fread( summary->data_vector, buffer );
+  {
+    int size = buffer_fread_int(buffer);
+    double default_value = buffer_fread_double(buffer);
+
+    double_vector_set_default(summary->data_vector, default_value);
+    double_vector_resize(summary->data_vector, size);
+    buffer_fread(buffer,
+                 double_vector_get_ptr(summary->data_vector),
+                 double_vector_element_size(summary->data_vector),
+                 size);
+  }
 }
 
 
@@ -115,7 +127,11 @@ bool summary_write_to_buffer(const summary_type * summary,
                              buffer_type * buffer,
                              int report_step) {
   buffer_fwrite_int( buffer, SUMMARY );
-  double_vector_buffer_fwrite( summary->data_vector, buffer );
+  buffer_fwrite_int( buffer, double_vector_size(summary->data_vector));
+  buffer_fwrite( buffer,
+                 double_vector_get_ptr(summary->data_vector),
+                 double_vector_element_size(summary->data_vector),
+                 double_vector_size(summary->data_vector));
   return true;
 }
 
