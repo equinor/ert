@@ -48,7 +48,6 @@ class Driver(BaseCClass):
     _free = QueuePrototype("void queue_driver_free( driver )")
     _set_option = QueuePrototype("void queue_driver_set_option( driver , char* , char*)")
     _get_option = QueuePrototype("char* queue_driver_get_option(driver, char*)")
-    _submit = QueuePrototype("void* queue_driver_submit_job( driver , char* , int , char* , char* , int , char**)")
     _free_job = QueuePrototype("void   queue_driver_free_job( driver , job )")
     _get_status = QueuePrototype("int queue_driver_get_status( driver , job)")
     _kill_job = QueuePrototype("void queue_driver_kill_job( driver , job )")
@@ -84,19 +83,6 @@ class Driver(BaseCClass):
     
     def is_driver_instance( self ):
         return True
-
-    
-    def submit( self, name, cmd, run_path, argList, num_cpu=1, blocking=False):
-        argc = len(argList)
-        argv = (ctypes.c_char_p * argc)()
-        argv[:] = map(str, argList)
-    
-        c_ptr = self._submit(cmd, num_cpu, run_path, name, argc, argv)
-        job = Job( c_ptr , self )
-        if blocking:
-            job.block()
-            job = None
-        return job
 
 
     def free_job( self, job ):

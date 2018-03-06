@@ -40,7 +40,7 @@ class PerlinNoise(object):
     def perlinNoise1D(self, x):
         total = 0.0
 
-        for octave in range(self.number_of_octaves - 1):
+        for octave in range(int(self.number_of_octaves) - 1):
             frequency = math.pow(2, octave)
             amplitude = math.pow(self.persistence, octave)
 

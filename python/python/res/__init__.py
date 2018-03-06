@@ -76,10 +76,10 @@ __version__ = "0.0.0"
 #    module should contain the variable lib_path pointing to the
 #    directory with shared object files.
 try:
-    import __res_lib_info
-    res_lib_path = __res_lib_info.lib_path
-    ert_so_version = __res_lib_info.so_version
-    __version__ = __res_lib_info.__version__
+    from .__res_lib_info import ResLibInfo
+    res_lib_path = ResLibInfo.lib_path
+    ert_so_version = ResLibInfo.so_version
+    __version__ = ResLibInfo.__version__
 except ImportError:
     pass
 except AttributeError:

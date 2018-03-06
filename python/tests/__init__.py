@@ -23,6 +23,13 @@ class ResTest(ExtendedTestCase):
     TESTDATA_ROOT = os.path.join(SOURCE_ROOT, "test-data")
     SHARE_ROOT = os.path.join(SOURCE_ROOT,"share")
 
+    def assertItemsEqual(self, data1, data2):
+        if len(data1) != len(data2):
+            raise AssertionError("Element count not equal.")
+
+        for value in data1:
+            if not value in data2:
+                raise AssertionError(value, "not in", data2)
 
     @classmethod
     def createSharePath(cls, path):

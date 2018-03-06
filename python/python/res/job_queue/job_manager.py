@@ -225,7 +225,7 @@ class JobManager(object):
     # To ensure compatibility with old versions.
     def _ensureCompatibleJobList(self):
         for job in self.job_list:
-            if not job.has_key("max_running_minutes"):
+            if not "max_running_minutes" in job.keys():
                 job["max_running_minutes"] = None
 
     def _buildJobMap(self):

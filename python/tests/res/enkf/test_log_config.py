@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import os, itertools
+import os, itertools, sys
 
 from ecl.util.test import TestAreaContext
 from tests import ResTest
@@ -66,7 +66,11 @@ class LogConfigTest(ResTest):
                     cf.write("\nLOG_FILE %s\n" % log_file)
 
                 if log_level:
-                    cf.write("\nLOG_LEVEL %s\n" % log_level)
+                    level = log_level
+                    if sys.version_info[0] >= 3:
+                        if not log_level.isalpha():
+                            level = int(float(level))
+                    cf.write("\nLOG_LEVEL %s\n" % level)
 
             log_config = LogConfig(self.config_file)
 

@@ -98,7 +98,7 @@ class ErtScript(object):
             return ErtScript.__findErtScriptImplementations(m)
         except Exception as e:
             sys.stderr.write("The script '%s' caused an error during load:\n" % path)
-            traceback.print_exception(sys.exc_type, sys.exc_value, None)
+            traceback.print_exception(sys.exc_info()[0], sys.exc_info()[1], None)
             return None
 
     @staticmethod

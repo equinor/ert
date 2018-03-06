@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import sys
 import ctypes, warnings
 from os.path import isfile
 
@@ -110,13 +111,12 @@ class EnKFMain(BaseCClass):
         # synchronized
         from inspect import getmembers, ismethod
         from functools import partial
-        methods = getmembers(_RealEnKFMain, predicate=ismethod)
-        dont_patch = [name for name, _ in getmembers(BaseCClass,
-                                                     predicate=ismethod)]
+        methods = getmembers(self._real_enkf_main(), predicate=ismethod)
+        dont_patch = [name for name, _ in getmembers(BaseCClass)]
         for name, method in methods:
             if name.startswith('_') or name in dont_patch:
                 continue  # skip private methods
-            setattr(self, name, partial(method, real_enkf_main))
+            setattr(self, name, method)
 
     @staticmethod
     def createNewConfig(config_file, storage_path, dbase_type, num_realizations):
@@ -228,10 +228,21 @@ class _RealEnKFMain(BaseCClass):
         # The res_config argument can be None; the only reason to
         # allow that possibility is to be able to test that the
         # site-config loads correctly.
-        if config is None or isinstance(config, basestring):
+        if not config:
+            check = True
+        else:
+            if sys.version_info[0] == 2:
+                check = isinstance(config, basestring)
+            else:
+                check = isinstance(config, str)
+        if check:
             user_config_file = None
 
-            if isinstance(config, basestring):
+            if sys.version_info[0] == 2:
+               check2 = isinstance(config, basestring)
+            else:
+               check2 = isinstance(config, str)
+            if check2:
                 if not isfile(config):
                     raise IOError('No such configuration file "%s".' % res_config)
 

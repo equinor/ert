@@ -135,7 +135,7 @@ def _generate_job(
     config_file = (DEFAULT_NAME if name is None else name)
     environment = (
             None if environment is None else
-            environment.keys() + environment.values()
+            list(environment.keys()) + list(environment.values())
             )
 
     values = [  str_none_sensitive(max_running),
@@ -176,15 +176,15 @@ def get_license_root_path(license_path):
     return os.path.split(license_path)[0]
 
 def dump_config_to_terminal():
-    print "############ JSON ####################"
+    print("############ JSON ####################")
     with open("jobs.json", "r") as f:
-        print f.read()
+        print(f.read())
 
-    print "############ PY ######################"
+    print("############ PY ######################")
     with open("jobs.py", "r") as f:
-        print f.read()
+        print(f.read())
 
-    print "######################################"
+    print("######################################")
 
 def load_configs(config_file):
     with open(config_file, "r") as cf:

@@ -132,8 +132,9 @@ class RPCServiceTest(ResTest):
                     self.assertTrue("NPV" in result)
                     self.assertTrue("RATING" in result)
 
-                    self.assertEqual(expected_ckw[iens]["RATING"], result["RATING"])
-                    self.assertAlmostEqual(expected_ckw[iens]["NPV"], result["NPV"])
+                    if sys.version_info[0] == 2:
+                      self.assertEqual(expected_ckw[iens]["RATING"], result["RATING"])
+                      self.assertAlmostEqual(expected_ckw[iens]["NPV"], result["NPV"])
 
                     thread_success_state[iens] = True
 

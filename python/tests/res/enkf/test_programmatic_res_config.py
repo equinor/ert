@@ -357,7 +357,7 @@ class ProgrammaticResConfigTest(ResTest):
             res_config = ResConfig(config=self.minimum_config_extra_key)
 
             self.assertTrue(len(res_config.failed_keys) == 1)
-            self.assertEqual(["UNKNOWN_KEY"], res_config.failed_keys.keys())
+            self.assertEqual(["UNKNOWN_KEY"], list(res_config.failed_keys.keys()))
             self.assertEqual(self.minimum_config_extra_key["UNKNOWN_KEY"],
                             res_config.failed_keys["UNKNOWN_KEY"])
 

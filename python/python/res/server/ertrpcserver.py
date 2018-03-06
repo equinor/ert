@@ -1,4 +1,4 @@
-import os
+import os, sys
 from threading import Lock
 
 try:
@@ -86,23 +86,28 @@ class ErtRPCServer(SimpleXMLRPCServer):
             self._res_config  = enkf_main.resConfig
             self._config_file = enkf_main.getUserConfigFile()
 
-        elif isinstance(enkf_main, basestring):
-            if not os.path.exists(enkf_main):
-                raise IOError("No such configuration file: %s" % enkf_main)
+        else:
+            if sys.version_info[0] == 2:
+               check = isinstance(enkf_main, basestring)
+            else:
+               check = isinstance(enkf_main, str)
+            if check:
+               if not os.path.exists(enkf_main):
+                   raise IOError("No such configuration file: %s" % enkf_main)
 
-            warnings.warn("Providing a configuration file as the argument "
+               warnings.warn("Providing a configuration file as the argument "
                     "to ErtRPCServer is deprecated. Please use the "
                     "optional argument res_config to provide an "
                     "configuration!",
                     DeprecationWarning
                     )
 
-            self._config_file = enkf_main
-            self._res_config  = ResConfig(self._config_file)
-            self._enkf_main   = EnKFMain(self._res_config)
+               self._config_file = enkf_main
+               self._res_config  = ResConfig(self._config_file)
+               self._enkf_main   = EnKFMain(self._res_config)
 
-        else:
-            raise TypeError("Expected enkf_main to be an instance of "
+            else:
+               raise TypeError("Expected enkf_main to be an instance of "
                     "EnKFMain, received: %r" % enkf_main)
 
     @property
