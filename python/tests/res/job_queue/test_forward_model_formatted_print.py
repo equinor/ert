@@ -7,6 +7,7 @@ from tests import ResTest
 from res.util.substitution_list import SubstitutionList
 from res.job_queue.environment_varlist import EnvironmentVarlist
 from res.job_queue.forward_model import ForwardModel
+from res.job_queue.forward_model_status import ForwardModelStatus
 from res.job_queue.ext_job import ExtJob
 from res.job_queue.ext_joblist import ExtJoblist
 
@@ -527,3 +528,26 @@ class ForwardModelFormattedPrintTest(ResTest):
                     joblist[0][key] = None
                     self.run_all()
                     joblist[0][key] = back_up
+
+
+    def test_status_file(self):
+        with TestAreaContext("status_json"):
+            forward_model = self.set_up_forward_model()
+            run_id = "test_no_jobs_id"
+            umask = 4
+            global_args = SubstitutionList()
+            varlist = EnvironmentVarlist()
+            forward_model.formatted_fprintf(
+                run_id,
+                os.getcwd(),
+                "data_root",
+                global_args,
+                umask,
+                varlist)
+
+            s = '{"start_time": null, "jobs": [{"status": "Success", "start_time": 1519653419.0, "end_time": 1519653419.0, "name": "SQUARE_PARAMS", "error": null}], "end_time": null, "run_id": ""}' 
+
+            with open("status.json", "w") as f:
+                f.write(s)
+
+            status = ForwardModelStatus.try_load("status.json")

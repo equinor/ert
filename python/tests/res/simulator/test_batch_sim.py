@@ -174,11 +174,24 @@ class BatchSimulatorTest(ResTest):
             with self.assertRaises(RuntimeError):
                 ctx.results()
 
+            # Ask for status of simulation we do not have.
+            with self.assertRaises(KeyError):
+                ctx.job_status(1973)
+
+            with self.assertRaises(KeyError):
+                ctx.job_progress(1987)
+
             # Carry out simulations..
             while ctx.running():
                 status = ctx.status
                 time.sleep(1)
                 sys.stderr.write("status: %s\n" % str(status))
+                for job_index in range(len(case_data)):
+                    status = ctx.job_status(job_index)
+                    progress = ctx.job_progress(job_index)
+                    if progress:
+                        for job in progress.jobs:
+                            sys.stderr.write("   %s \n" % str(job))
 
             # Fetch and validate results
             results = ctx.results()

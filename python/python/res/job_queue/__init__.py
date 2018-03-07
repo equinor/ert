@@ -89,6 +89,7 @@ from .ext_job import ExtJob
 from .ext_joblist import ExtJoblist
 from .environment_varlist import EnvironmentVarlist
 from .forward_model import ForwardModel
+from .forward_model_status import ForwardModelJobStatus, ForwardModelStatus
 
 from .ert_script import ErtScript
 from .ert_plugin import ErtPlugin, CancelPluginException
