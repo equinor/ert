@@ -2,18 +2,18 @@
    Copyright (C) 2011  Statoil ASA, Norway.
 
    The file 'local_driver.c' is part of ERT - Ensemble based Reservoir Tool.
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <sys/wait.h>
@@ -79,7 +79,7 @@ static void local_job_free(local_job_type * job) {
 
 
 job_status_type local_driver_get_job_status(void * __driver, void * __job) {
-  if (__job == NULL) 
+  if (__job == NULL)
     /* The job has not been registered at all ... */
     return JOB_QUEUE_NOT_ACTIVE;
   else {
@@ -98,11 +98,11 @@ void local_driver_free_job( void * __job ) {
 
 void local_driver_kill_job( void * __driver , void * __job) {
   local_job_type    * job  = local_job_safe_cast( __job );
-  
+
   if (job->active) {
-    pthread_cancel( job->run_thread ); 
+    pthread_cancel( job->run_thread );
   }
-  
+
   kill( job->child_process , SIGTERM );
 }
 
@@ -139,10 +139,10 @@ void * submit_job_thread__(void * __arg) {
 
 
 
-void * local_driver_submit_job(void * __driver           , 
-                               const char *  submit_cmd  , 
+void * local_driver_submit_job(void * __driver           ,
+                               const char *  submit_cmd  ,
                                int           num_cpu     , /* Ignored */
-                               const char *  run_path    , 
+                               const char *  run_path    ,
                                const char *  job_name    ,
                                int           argc        ,
                                const char ** argv ) {
@@ -155,14 +155,14 @@ void * local_driver_submit_job(void * __driver           ,
     arg_pack_append_int( arg_pack , argc );
     arg_pack_append_ptr( arg_pack , util_alloc_stringlist_copy( argv , argc ));   /* Due to conflict with threads and python GC we take a local copy. */
     arg_pack_append_ptr( arg_pack , job );
-    
+
     pthread_mutex_lock( &driver->submit_lock );
     job->active = true;
     job->status = JOB_QUEUE_RUNNING;
-    
-    if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread__ , arg_pack) != 0) 
+
+    if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread__ , arg_pack) != 0)
       util_abort("%s: failed to create run thread - aborting \n",__func__);
-    
+
     pthread_mutex_unlock( &driver->submit_lock );
     return job;
   }
@@ -189,12 +189,12 @@ void * local_driver_alloc() {
   pthread_mutex_init( &local_driver->submit_lock , NULL );
   pthread_attr_init( &local_driver->thread_attr );
   pthread_attr_setdetachstate( &local_driver->thread_attr , PTHREAD_CREATE_DETACHED );
-  
+
   return local_driver;
 }
 
 
-bool local_driver_set_option( void * __driver , const char * option_key , const void * value){ 
+bool local_driver_set_option( void * __driver , const char * option_key , const void * value){
   return false;
 }
 
@@ -202,8 +202,8 @@ void local_driver_init_option_list(stringlist_type * option_list) {
   //No options specific for local driver; do nothing
 }
 
-#undef LOCAL_DRIVER_ID  
-#undef LOCAL_JOB_ID    
+#undef LOCAL_DRIVER_ID
+#undef LOCAL_JOB_ID
 
 /*****************************************************************/
 
