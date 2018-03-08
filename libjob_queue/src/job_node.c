@@ -193,9 +193,6 @@ void job_queue_node_free_data(job_queue_node_type * node) {
   util_safe_free( node->status_file );
   util_safe_free( node->run_cmd );
   util_free_stringlist( node->argv , node->argc );
-
-  if (node->job_data != NULL)
-    util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
 }
 
 
@@ -593,7 +590,7 @@ bool job_queue_node_kill( job_queue_node_type * node , job_queue_status_type * s
 void job_queue_node_free_driver_data( job_queue_node_type * node , queue_driver_type * driver) {
   pthread_mutex_lock( &node->data_mutex );
   {
-    if (node->job_data != NULL)
+    if (node->job_data)
       queue_driver_free_job( driver , node->job_data );
     node->job_data = NULL;
   }

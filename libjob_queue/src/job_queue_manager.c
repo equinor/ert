@@ -184,9 +184,11 @@ job_status_type job_queue_manager_iget_job_status(const job_queue_manager_type *
 }
 
 
-void job_queue_manager_stop_queue(const job_queue_manager_type * manager) {
+void job_queue_manager_stop_queue(job_queue_manager_type * manager) {
   job_queue_start_user_exit(manager->job_queue);
 
   while(job_queue_is_running(manager->job_queue))
     usleep(100000);
+
+  job_queue_manager_wait(manager);
 }
