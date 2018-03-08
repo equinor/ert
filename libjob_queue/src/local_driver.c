@@ -36,7 +36,6 @@ typedef struct local_job_struct local_job_type;
 struct local_job_struct {
   UTIL_TYPE_ID_DECLARATION;
   bool            active;
-  bool            free_when_finished;
   job_status_type status;
   pthread_t       run_thread;
   pid_t           child_process;
@@ -64,16 +63,8 @@ static local_job_type * local_job_alloc() {
   job = util_malloc(sizeof * job );
   UTIL_TYPE_ID_INIT( job , LOCAL_JOB_TYPE_ID );
   job->active = false;
-  job->free_when_finished = false;
   job->status = JOB_QUEUE_WAITING;
   return job;
-}
-
-static void local_job_free(local_job_type * job) {
-   if (job->active)
-      job->free_when_finished = true;
-   else
-      free(job);
 }
 
 
@@ -92,7 +83,8 @@ job_status_type local_driver_get_job_status(void * __driver, void * __job) {
 
 void local_driver_free_job( void * __job ) {
   local_job_type    * job    = local_job_safe_cast( __job );
-  local_job_free(job);
+  if (!job->active)
+    free(job);
 }
 
 
@@ -101,6 +93,13 @@ void local_driver_kill_job( void * __driver , void * __job) {
   kill( job->child_process , SIGTERM );
 }
 
+
+
+/*
+  This function needs to dereference the job pointer after the waitpid() call is
+  complete, it is therefor essential that no other threads have called free(job)
+  while the external process is running.
+*/
 
 void * submit_job_thread__(void * __arg) {
   arg_pack_type *arg_pack = arg_pack_safe_cast(__arg);
