@@ -193,9 +193,6 @@ void job_queue_node_free_data(job_queue_node_type * node) {
   util_safe_free( node->status_file );
   util_safe_free( node->run_cmd );
   util_free_stringlist( node->argv , node->argc );
-
-  if (node->job_data)
-    util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
 }
 
 
