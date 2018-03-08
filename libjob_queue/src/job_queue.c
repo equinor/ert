@@ -851,6 +851,11 @@ static bool submit_new_jobs(job_queue_type * queue) {
     }
   }
 
+  return new_jobs;
+}
+
+
+static void run_handlers(job_queue_type * queue) {
   /*
     Checking for complete / exited / overtime jobs
   */
@@ -874,7 +879,7 @@ static bool submit_new_jobs(job_queue_type * queue) {
       break;
     }
   }
-  return new_jobs;
+
 }
 
 
@@ -946,6 +951,7 @@ static void job_queue_loop(job_queue_type * queue, int num_total_run, bool verbo
 
     if (!complete) {
       new_jobs = submit_new_jobs(queue);
+      run_handlers(queue);
     } else
       /* print an updated status to stdout before exiting. */
       if (verbose)
