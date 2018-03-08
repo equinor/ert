@@ -98,11 +98,6 @@ void local_driver_free_job( void * __job ) {
 
 void local_driver_kill_job( void * __driver , void * __job) {
   local_job_type    * job  = local_job_safe_cast( __job );
-
-  if (job->active) {
-    pthread_cancel( job->run_thread );
-  }
-
   kill( job->child_process , SIGTERM );
 }
 
@@ -133,7 +128,6 @@ void * submit_job_thread__(void * __arg) {
        job->status = WIFEXITED(wait_status) ? JOB_QUEUE_DONE : JOB_QUEUE_IS_KILLED;
     }
   }
-  pthread_exit(NULL);
   return NULL;
 }
 
