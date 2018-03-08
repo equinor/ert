@@ -121,12 +121,12 @@ void * submit_job_thread__(void * __arg) {
     arg_pack_free(arg_pack);
     waitpid(job->child_process, &wait_status, 0);
 
-    if(job->free_when_finished) // A request to free the job sent while its thread was still running
-       free(job);
-    else {
-       job->active = false;
-       job->status = WIFEXITED(wait_status) ? JOB_QUEUE_DONE : JOB_QUEUE_IS_KILLED;
-    }
+    job->active = false;
+    job->status = JOB_QUEUE_EXIT;
+    if (WIFEXITED(wait_status))
+      if (WEXITSTATUS(wait_status) == 0)
+        job->status = JOB_QUEUE_DONE;
+
   }
   return NULL;
 }
