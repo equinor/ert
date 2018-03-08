@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'ext_job.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'ext_job.h' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #ifndef ERT_EXT_JOB_H
@@ -89,7 +89,7 @@ void                    ext_job_add_environment(ext_job_type *ext_job , const ch
 void                    ext_job_clear_environment( ext_job_type * ext_job );
 hash_type             * ext_job_get_environment( ext_job_type * ext_job );
 int                     ext_job_set_private_args_from_string( ext_job_type * ext_job , const char * arg_string );
-const char            * ext_job_get_private_args_as_string( ext_job_type * ext_job ); 
+const char            * ext_job_get_private_args_as_string( ext_job_type * ext_job );
 const char *            ext_job_get_license_path(const ext_job_type*);
 //const char            * ext_job_get_arglist_as_string( ext_job_type * ext_job );
 //void                    ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string );

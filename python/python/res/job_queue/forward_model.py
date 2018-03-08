@@ -1,17 +1,17 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'forward_model.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
+#  The file 'forward_model.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
 from res.job_queue import ExtJob, QueuePrototype, ExtJoblist
@@ -39,6 +39,9 @@ class ForwardModel(BaseCClass):
         else:
             raise ValueError('Failed to construct forward model from provided ext_joblist %s' % ext_joblist)
 
+    def __len__(self):
+        return self._get_length()
+
     def joblist(self):
         """ @rtype: StringList """
         return self._alloc_joblist( )
@@ -64,4 +67,4 @@ class ForwardModel(BaseCClass):
         return self._create_repr('joblist=%s' % self.joblist())
 
     def get_size(self):
-        return self._get_length()
+       return len(self)

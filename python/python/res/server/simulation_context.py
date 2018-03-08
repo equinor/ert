@@ -1,6 +1,7 @@
+import os.path
 from ecl.util.util import ArgPack, BoolVector
 
-from res.job_queue import JobQueueManager
+from res.job_queue import JobQueueManager, ForwardModelStatus
 from res.util import CThreadPool
 from res.enkf import ENKF_LIB
 from res.enkf.ert_run_context import ErtRunContext
@@ -121,3 +122,49 @@ class SimulationContext(object):
 
     def stop(self):
         self._queue_manager.stop_queue( )
+
+
+    def job_progress(self, iens):
+        """Will return a detailed progress of the job.
+
+        The progress report is obtained by reading a file from the filesystem,
+        that file is typically created by another process running on another
+        machine, and reading might fail due to NFS issues, simultanoues write
+        and so on. If loading valid json fails the function will sleep 0.10
+        seconds and retry - eventually giving up and returning None. Also for
+        jobs which have not yet started the method will return None.
+
+        When the method succeeds in reading the progress file from the file
+        system the return value will be an object with properties like this:|
+
+           progress.start_time
+           progress.end_time
+           progress.run_id
+           progress.jobs =[ (job1.name, job1.start_time, job1.end_time, job1.status, job1.error_msg),
+                             (job2.name, job2.start_time, job2.end_time, job2.status, job2.error_msg),
+                              ....
+                             (jobN.name, jobN.start_time, jobN.end_time, jobN.status, jobN.error_msg) ]
+
+        """
+        if not iens in self._run_args:
+            raise KeyError("No such simulation: %s" % iens)
+
+        run_arg = self._run_args[iens]
+        queue_index = run_arg.getQueueIndex()
+        if self._queue_manager.isJobWaiting(queue_index):
+            return None
+
+        return ForwardModelStatus.load(run_arg.runpath)
+
+
+
+
+    def job_status(self, iens):
+        """Will query the queue system for the status of the job.
+        """
+        if not iens in self._run_args:
+            raise KeyError("No such simulation: %s" % iens)
+
+        run_arg = self._run_args[iens]
+        queue_index = run_arg.getQueueIndex()
+        return self._queue_manager.getJobStatus(queue_index)

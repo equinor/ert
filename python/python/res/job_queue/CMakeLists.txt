@@ -7,6 +7,7 @@ set(PYTHON_SOURCES
     ext_joblist.py
     external_ert_script.py
     forward_model.py
+    forward_model_status.py
     function_ert_script.py
     job.py
     job_status_type_enum.py

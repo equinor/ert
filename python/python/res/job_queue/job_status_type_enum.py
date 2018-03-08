@@ -35,6 +35,9 @@ class JobStatusType(BaseCEnum):
     JOB_QUEUE_FAILED = None
     JOB_QUEUE_DO_KILL_NODE_FAILURE = None
 
+    @classmethod
+    def from_string(cls, string):
+        pass
 
 
 JobStatusType.addEnum("JOB_QUEUE_NOT_ACTIVE", 1)

@@ -29,6 +29,7 @@ import json
 import imp
 from ecl import EclVersion
 from res import ResVersion
+from res.job_queue import ForwardModelStatus, ForwardModelJobStatus
 from sys import version as sys_version
 
 def redirect(file, fd, open_mode):
@@ -139,7 +140,9 @@ class JobManager(object):
         self.global_environment = None
         self.global_update_path = None
         if json_file is not None and os.path.isfile(json_file):
+            self.job_status = ForwardModelStatus("????")
             self._loadJson(json_file)
+            self.job_status.run_id = self.simulation_id
         else:
             raise IOError("'jobs.json' not found.")
 
@@ -177,6 +180,9 @@ class JobManager(object):
         self.update_path()
         self.information = logged_fields
 
+
+    def dump_status(self):
+        self.job_status.dump(ForwardModelStatus.STATUS_FILE)
 
     def set_environment(self):
          if self.global_environment:
@@ -221,6 +227,13 @@ class JobManager(object):
         self._ensureCompatibleJobList()
         self._buildJobMap()
 
+        for job in self.job_list:
+            self.job_status.add_job( ForwardModelJobStatus(job.get("name")))
+
+        # "Monkey-patching" the job object by attaching a status object.
+        status_list = self.job_status.jobs
+        for i in range(len(self.job_list)):
+            self.job_list[i]["status"] = status_list[i]
 
     # To ensure compatibility with old versions.
     def _ensureCompatibleJobList(self):
@@ -470,10 +483,28 @@ class JobManager(object):
     def runJob(self, job):
         assert_file_executable(job.get('executable'))
         self.addLogLine(job)
+
+        status = job["status"]
+        status.start_time = dt.now()
+        status.status = "Running"
+        self.job_status.dump()
+
         pid = os.fork()
         exit_status, err_msg = 0, ''
         if pid == 0:
-            self.execJob(job)
+            # This code block should exec into the actual executable we are
+            # running, and execution should not come back here. However - if
+            # the code fails with an exception before actually reaching the
+            # exec() call we suddenly have two Python processes running the
+            # current code; one waiting for the exit status and one unrolling
+            # an exception. The latter will incorrectly "steal" the
+            # finalization of with statements. So - in the case of an exception
+            # before the exec() call we call the hard exit: os._exit(1).
+            try:
+                self.execJob(job)
+            except Exception as e:
+                sys.stderr.write("Failed to exec:%s error:%s\n" % (job["name"], str(e)))
+                os._exit(1)
         else:
             _, exit_status = os.waitpid(pid, 0)
             # The exit_status returned from os.waitpid encodes
@@ -481,10 +512,19 @@ class JobManager(object):
             # and in case the job was killed by a signal - the
             # number of that signal.
             exit_status = os.WEXITSTATUS(exit_status)
+
+        status.end_time = dt.now()
+
         if exit_status != 0:
             err_msg = "Executable: %s failed with exit code: %s" % (job.get('executable'),
                                                                     exit_status)
 
+            status.status = "Failure"
+            status.error = err_msg
+        else:
+            status.status = "Success"
+
+        self.job_status.dump()
         return exit_status, err_msg
 
 

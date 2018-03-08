@@ -30,6 +30,7 @@
 #include <ert/job_queue/ext_job.h>
 #include <ert/job_queue/ext_joblist.h>
 #include <ert/job_queue/forward_model.h>
+#include <ert/job_queue/job_status.h>
 
 #include <ert/util/ecl_version.h>
 
@@ -166,7 +167,7 @@ void forward_model_parse_job_deprecated_args(forward_model_type * forward_model,
       free( arg_string );
     }
   }
-  
+
   free(job_name);
 }
 
