@@ -628,35 +628,33 @@ static void job_queue_user_exit__( job_queue_type * queue ) {
 }
 
 
-static bool job_queue_check_node_status_files( const job_queue_type * job_queue , job_queue_node_type * node) {
+static bool job_queue_check_node_status_files(const job_queue_type * job_queue,
+                                              job_queue_node_type * node) {
   const char * exit_file = job_queue_node_get_exit_file( node );
-  if ((exit_file != NULL) && util_file_exists(exit_file))
-    return false;                /* It has failed. */
-  else {
-    const char * ok_file = job_queue_node_get_ok_file( node );
-    if (ok_file == NULL)
-      return true;               /* If the ok-file has not been set we just return true immediately. */
-    else {
-      int ok_sleep_time    =  1; /* Time to wait between checks for OK|EXIT file.                         */
-      int  total_wait_time =  0;
+  if (exit_file && util_file_exists(exit_file))
+    return false;  // job has failed
 
-      while (true) {
-        if (util_file_exists( ok_file )) {
-          return true;
-          break;
-        } else {
-          if (total_wait_time <  job_queue->max_ok_wait_time) {
-            sleep( ok_sleep_time );
-            total_wait_time += ok_sleep_time;
-          } else {
-            /* We have waited long enough - this does not seem to give any OK file. */
-            return false;
-            break;
-          }
-        }
-      }
-    }
+  const char * ok_file = job_queue_node_get_ok_file( node );
+
+  // If the ok-file has not been set we just return true immediately.
+  if (!ok_file)
+    return true;
+
+  int ok_sleep_time   = 1; // Time to wait between checks for OK|EXIT file
+  int total_wait_time = 0;
+
+  /* Wait for OK file */
+  while (total_wait_time < job_queue->max_ok_wait_time) {
+    if (util_file_exists( ok_file ))
+      return true;
+
+    if (exit_file && util_file_exists(exit_file))
+      return false;  // job has failed
+
+    sleep( ok_sleep_time );
+    total_wait_time += ok_sleep_time;
   }
+  return false;
 }
 
 
