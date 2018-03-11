@@ -729,7 +729,7 @@ static void handle_general_observation(enkf_obs_type * enkf_obs,
 }
 
 
-static enkf_obs_reinterpret_DT_FILE(const char * config_file) {
+static void enkf_obs_reinterpret_DT_FILE(const char * config_file) {
   fprintf(stderr,"**********************************************************************\n");
   fprintf(stderr,"* In ert version 2.3 we have changed how filepaths are interpreted   *\n");
   fprintf(stderr,"* in the observation file. When using the keywords OBS_FILE,         *\n");
