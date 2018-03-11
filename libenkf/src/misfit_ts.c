@@ -16,6 +16,7 @@
    for more details.
 */
 
+#include <stdlib.h>
 
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
