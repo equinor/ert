@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'conf_util.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'conf_util.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <assert.h>
@@ -85,7 +85,7 @@ char * conf_util_fscanf_alloc_token_buffer(
   of the next token in the string. Furthermore, the position in the string is
   moved to the position after the token. Strings inside quotations " and ' are
   treated as one token, and the quotations removed.
-  
+
   Note: Quoted strings with no content, e.g. "   "  are NOT considered as tokens!
 
 */
@@ -153,7 +153,7 @@ char * conf_util_alloc_next_token(
   memmove(token, *buff_pos, len_token);
   token[len_token] = '\0';
   *buff_pos += len_token;
-  
+
   if(quoted)
     *buff_pos += 1;
 
