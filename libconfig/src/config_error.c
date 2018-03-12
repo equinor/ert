@@ -16,6 +16,7 @@
    for more details.
 */
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>

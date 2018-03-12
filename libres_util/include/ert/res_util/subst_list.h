@@ -26,7 +26,7 @@ extern "C" {
 #include <stdbool.h>
 
 #include <ert/util/type_macros.h>
-
+#include <ert/util/buffer.h>
 #include <ert/res_util/subst_func.h>
 
   typedef struct          subst_list_struct subst_list_type;

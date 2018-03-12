@@ -22,11 +22,13 @@
    for more details.
 */
 #include <stdlib.h>
+#include <string.h>
 
+#include <ert/util/stringlist.h>
 #include <ert/util/type_macros.h>
 #include <ert/util/util.h>
+
 #include <ert/res_util/ui_return.h>
-#include <ert/util/stringlist.h>
 
 
 #define UI_RETURN_TYPE_ID 6122209

@@ -326,6 +326,9 @@ time_t conf_instance_get_item_value_time_t(
   const conf_instance_type * conf_instance,
   const char               * item_name);
 
+bool conf_instance_get_path_error(
+  const conf_instance_type * conf_instance);
+
 /** V A L I D A T O R S */
 
 

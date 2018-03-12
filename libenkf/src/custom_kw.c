@@ -104,12 +104,18 @@ bool custom_kw_forward_load(custom_kw_type * custom_kw, const char * ecl_file, c
 }
 
 bool custom_kw_write_to_buffer(const custom_kw_type * custom_kw, buffer_type * buffer, int report_step) {
-  stringlist_buffer_fwrite(custom_kw->data, buffer);
+  int size = stringlist_get_size(custom_kw->data);
+  buffer_fwrite_int(buffer, size);
+  for (int i=0; i < size; i++)
+    buffer_fwrite_string(buffer, stringlist_iget(custom_kw->data, i));
   return true;
 }
 
 void custom_kw_read_from_buffer(const custom_kw_type * custom_kw, buffer_type * buffer, enkf_fs_type * fs, int report_step) {
-    stringlist_buffer_fread(custom_kw->data, buffer);
+  int size = buffer_fread_int(buffer);
+  stringlist_clear(custom_kw->data);
+  for (int i=0; i < size; i++)
+    stringlist_append_owned_ref(custom_kw->data, buffer_fread_alloc_string(buffer));
 }
 
 

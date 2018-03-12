@@ -17,6 +17,7 @@
 */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <ert/util/rng.h>
 #include <ert/util/vector.h>

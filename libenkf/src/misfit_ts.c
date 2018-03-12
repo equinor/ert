@@ -1,21 +1,22 @@
 /*
-   Copyright (C) 2012  Statoil ASA, Norway. 
-    
-   The file 'misfit_ts.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2012  Statoil ASA, Norway.
+
+   The file 'misfit_ts.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
+#include <stdlib.h>
 
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
@@ -35,9 +36,9 @@ struct misfit_ts_struct {
 static UTIL_SAFE_CAST_FUNCTION(misfit_ts , MISFIT_TS_TYPE_ID);
 
 /******************************************************************/
-/* 
+/*
    Implementation of the misfit_ts type. Contains the full
-   timeseries of misfit for one member/one observation key. 
+   timeseries of misfit for one member/one observation key.
 */
 
 misfit_ts_type * misfit_ts_alloc(int history_length) {
@@ -94,7 +95,7 @@ double misfit_ts_eval( const misfit_ts_type * vector , const int_vector_type * s
     step = int_vector_iget(steps, i);
     misfit_sum += double_vector_iget(vector->data , step );
   }
-  
+
   return misfit_sum;
 }
 
