@@ -64,9 +64,6 @@ void enkf_welcome(const char * config_file) {
     char * abs_path              = util_alloc_realpath(config_file);
     char * config_file_msg       = util_alloc_sprintf("Configuration file...: %s \n",abs_path);
 
-    /* This will be printed if/when util_abort() is called on a later stage. */
-    /* The svn_version and compile_time are added with the functione enkf_main_init_debug(). */
-    util_abort_append_version_info(config_file_msg);
 
     free(config_file_msg);
     free(abs_path);
@@ -96,19 +93,6 @@ void enkf_usage() {
 
 
 
-static void init_debug(const char * argv0) {
-  char * git_commit       = util_alloc_sprintf("git commit...........: %s \n",GIT_COMMIT);
-  char * compile_time     = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
-
-  /* This will be printed if/when util_abort() is called on a later stage. */
-  util_abort_append_version_info(git_commit);
-  util_abort_append_version_info(compile_time);
-
-  free(git_commit);
-  free(compile_time);
-
-  util_abort_set_executable(argv0);
-}
 
 
 
@@ -134,7 +118,6 @@ void parse_workflows(int argc, char ** argv, stringlist_type * workflows) {
 
 int main (int argc, char ** argv) {
   text_splash();
-  init_debug(argv[0]);
   printf("\n");
   printf("Documentation : %s \n","http://ert.nr.no");
   printf("git commit    : %s \n",ert_version_get_git_commit( ));
@@ -173,7 +156,6 @@ int main (int argc, char ** argv) {
     }
 
     stringlist_free(workflow_list);
-    util_abort_free_version_info(); /* No fucking leaks ... */
   }
   exit(0);
 }
