@@ -18,7 +18,8 @@
 
 #include <ert/job_queue/environment_varlist.h>
 
-#include <ert/util/util_env.h>
+#include <ert/res_util/res_env.h>
+
 #include <ert/util/hash.h>
 
 #define ENV_VAR_KEY_STRING     "global_environment"
@@ -37,11 +38,11 @@ env_varlist_type * env_varlist_alloc() {
 }
 
 void env_varlist_update_path(env_varlist_type * list, const char * path_var, const char * new_path)  {
-  hash_insert_string( list->updatelist, path_var , util_update_path_var( path_var , new_path , false));
+  hash_insert_string( list->updatelist, path_var , res_env_update_path_var( path_var , new_path , false));
 }
 
 void env_varlist_setenv(env_varlist_type * list, const char * key, const char * value) {
-  const char * interp_value = util_interp_setenv(key, value);
+  const char * interp_value = res_env_interp_setenv(key, value);
   hash_insert_string(list->varlist, key, interp_value);
 }
 

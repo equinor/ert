@@ -40,6 +40,8 @@
 #include <ert/config/config_content_node.h>
 #include <ert/config/config_schema_item.h>
 
+#include <ert/res_util/res_env.h>
+
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/queue_config.h>
 #include <ert/enkf/enkf_defaults.h>
@@ -344,9 +346,9 @@ void site_config_clear_pathvar(site_config_type * site_config) {
       const char * site_value = hash_get(site_config->path_variables_site, var);
 
       if (site_value == NULL)
-        util_unsetenv(var);
+        res_env_unsetenv(var);
       else
-        util_setenv(var, site_value);
+        res_env_setenv(var, site_value);
     }
   }
 }
@@ -361,7 +363,7 @@ void site_config_update_pathvar(site_config_type * site_config, const char * pat
                                                                               site_config. We store a NULL, so can roll back
                                                                               (i.e. call unsetenv()). */
   }
-  util_update_path_var(pathvar, value, false);
+  res_env_update_path_var(pathvar, value, false);
 }
 
 /*****************************************************************/

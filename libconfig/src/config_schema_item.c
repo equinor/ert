@@ -29,6 +29,7 @@
 #include <ert/util/set.h>
 #include <ert/util/vector.h>
 #include <ert/res_util/subst_list.h>
+#include <ert/res_util/res_env.h>
 
 #include <ert/config/config_error.h>
 #include <ert/config/config_schema_item.h>
@@ -404,7 +405,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
                * util_alloc_PATH_executable aborts if some parts of the path is
                * not an existing dir, so call it only when its an absolute path
                */
-              char * path_exe  = util_alloc_PATH_executable( value );
+              char * path_exe  = res_env_alloc_PATH_executable( value );
               if (path_exe != NULL)
                 stringlist_iset_copy( token_list , iarg , path_exe);
               else
