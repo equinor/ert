@@ -1524,27 +1524,32 @@ static int enkf_main_run_step(enkf_main_type * enkf_main,
 /**
    The special value stride == 0 means to just include step2.
 */
-int_vector_type * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride) {
-  int_vector_type * step_list = int_vector_alloc( 0 , 0 );
+int_vector_type * enkf_main_update_alloc_step_list(const enkf_main_type * enkf_main,
+                                                   int load_start,
+                                                   int step2,
+                                                   int stride) {
+  int_vector_type * step_list = int_vector_alloc(0, 0);
 
   if (step2 < load_start)
-    util_abort("%s: fatal internal error: Tried to make step list %d ... %d \n",__func__ , load_start , step2);
+    util_abort("%s: fatal internal error: Tried to make step list %d ... %d\n",
+               __func__, load_start, step2);
 
-  if (stride == 0)
+  if (stride == 0) {
     int_vector_append( step_list , step2 );
-  else {
-    int step = util_int_max( 1 , load_start );
-    while (true) {
-      int_vector_append( step_list , step );
+    return step_list;
+  }
 
-      if (step == step2)
+  int step = util_int_max( 1 , load_start );
+  while (true) {
+    int_vector_append( step_list , step );
+
+    if (step == step2)
+      break;
+    else {
+      step += stride;
+      if (step >= step2) {
+        int_vector_append( step_list , step2 );
         break;
-      else {
-        step += stride;
-        if (step >= step2) {
-          int_vector_append( step_list , step2 );
-          break;
-        }
       }
 
     }

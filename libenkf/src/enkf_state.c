@@ -516,6 +516,43 @@ static void enkf_state_internalize_custom_kw(const ensemble_config_type * ens_co
 }
 
 
+static void enkf_state_load_gen_data_node(
+  forward_load_context_type * load_context,
+  enkf_fs_type * sim_fs,
+  int iens,
+  const enkf_config_node_type * config_node,
+  int start,
+  int stop)
+{
+  for (int report_step = start; report_step <= stop; report_step++) {
+    if (!enkf_config_node_internalize(config_node, report_step))
+      continue;
+
+    forward_load_context_select_step(load_context, report_step);
+    enkf_node_type * node = enkf_node_alloc(config_node);
+
+    if (enkf_node_forward_load(node, load_context)) {
+      node_id_type node_id = {.report_step = report_step,
+                              .iens = iens };
+
+      enkf_node_store(node, sim_fs, false, node_id);
+      enkf_state_log_GEN_DATA_load(node, report_step, load_context);
+    } else {
+      forward_load_context_update_result(load_context, LOAD_FAILURE);
+      res_log_ferror("[%03d:%04d] Failed load data for GEN_DATA node:%s.",
+                     iens, report_step, enkf_node_get_key(node));
+
+      if (forward_load_context_accept_messages(load_context)) {
+        char * msg = util_alloc_sprintf("Failed to load: %s at step:%d",
+                                        enkf_node_get_key(node), report_step);
+        forward_load_context_add_message(load_context, msg);
+        free(msg);
+      }
+    }
+    enkf_node_free(node);
+  }
+}
+
 
 static void enkf_state_internalize_GEN_DATA(const ensemble_config_type * ens_config,
                                             forward_load_context_type * load_context ,
@@ -524,55 +561,38 @@ static void enkf_state_internalize_GEN_DATA(const ensemble_config_type * ens_con
 
   stringlist_type * keylist_GEN_DATA = ensemble_config_alloc_keylist_from_impl_type(ens_config, GEN_DATA);
 
+  int numkeys = stringlist_get_size(keylist_GEN_DATA);
 
-  if (stringlist_get_size(keylist_GEN_DATA) > 0)
+  if (numkeys > 0)
     if (last_report <= 0)
-      res_log_fwarning("Trying to load GEN_DATA %s without properly "
+      res_log_fwarning("Trying to load GEN_DATA without properly "
                        "set last_report (was %d) - will only look for step 0 data: %s",
-                       ensemble_config_get_gen_kw_format(ens_config),
                        last_report,
                        stringlist_iget(keylist_GEN_DATA, 0)
         );
 
-  const run_arg_type * run_arg            = forward_load_context_get_run_arg( load_context );
-  enkf_fs_type * sim_fs                   = run_arg_get_sim_fs( run_arg );
-  const int  iens                         = run_arg_get_iens( run_arg );
+  const run_arg_type * run_arg = forward_load_context_get_run_arg(load_context);
+  enkf_fs_type * sim_fs        = run_arg_get_sim_fs(run_arg);
+  const int iens               = run_arg_get_iens(run_arg);
 
-  for (int ikey=0; ikey < stringlist_get_size( keylist_GEN_DATA ); ikey++) {
-    const enkf_config_node_type * config_node = ensemble_config_get_node( ens_config , stringlist_iget( keylist_GEN_DATA , ikey));
+  for (int ikey=0; ikey < numkeys; ikey++) {
+    const enkf_config_node_type * config_node = ensemble_config_get_node(ens_config,
+                                                                         stringlist_iget(keylist_GEN_DATA,
+                                                                                         ikey));
 
     /*
       This for loop should probably be changed to use the report
       steps configured in the gen_data_config object, instead of
       spinning through them all.
     */
-    for (int report_step = run_arg_get_load_start( run_arg ); report_step <= util_int_max(0, last_report); report_step++) {
-      if (!enkf_config_node_internalize(config_node , report_step))
-        continue;
-
-      forward_load_context_select_step(load_context, report_step);
-      enkf_node_type * node = enkf_node_alloc( config_node );
-
-      if (enkf_node_forward_load(node , load_context )) {
-        node_id_type node_id = {.report_step = report_step ,
-                                .iens = iens };
-
-        enkf_node_store( node , sim_fs, false , node_id );
-        enkf_state_log_GEN_DATA_load( node , report_step , load_context);
-      } else {
-        forward_load_context_update_result(load_context, LOAD_FAILURE);
-        res_log_ferror("[%03d:%04d] Failed load data for GEN_DATA node:%s.",
-                       iens, report_step, enkf_node_get_key(node));
-
-        if (forward_load_context_accept_messages(load_context)) {
-          char * msg = util_alloc_sprintf("Failed to load: %s at step:%d",
-                                          enkf_node_get_key(node), report_step);
-          forward_load_context_add_message(load_context, msg);
-          free( msg );
-        }
-      }
-      enkf_node_free( node );
-    }
+    int start = run_arg_get_load_start(run_arg);
+    int stop  = util_int_max(0, last_report);  // inclusive
+    enkf_state_load_gen_data_node(load_context,
+                                  sim_fs,
+                                  iens,
+                                  config_node,
+                                  start,
+                                  stop);
   }
   stringlist_free( keylist_GEN_DATA );
 }

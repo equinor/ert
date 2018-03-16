@@ -397,6 +397,48 @@ void gen_data_config_assert_size(gen_data_config_type * config , int data_size, 
   pthread_mutex_unlock( &config->update_lock );
 }
 
+
+static void update_config_to_datamask(
+  gen_data_config_type * config,
+  const forward_load_context_type * load_context,
+  const bool_vector_type * data_mask,
+  int report_step)
+{
+  // Is this the first ensemble member loading for this particular report_step?
+  if (config->active_report_step != report_step) {
+    bool_vector_reset(config->active_mask);
+    bool_vector_iset(config->active_mask,
+                     int_vector_iget(config->data_size_vector, report_step) - 1,
+                     true);
+    config->mask_modified = true;
+  }
+
+  // set config inactive according to data_mask
+  for (int i = 0; i < bool_vector_size(data_mask); ++i) {
+    if (bool_vector_iget(data_mask, i))
+      continue;
+    bool_vector_iset(config->active_mask, i, false);
+    config->mask_modified = true;
+  }
+
+  if (!config->mask_modified)
+    return; // nothing to do
+
+  // The global mask has been modified after the last load;
+  // i.e. we update the on-disk representation.
+  char * filename = util_alloc_sprintf("%s_active", config->key);
+  FILE * stream = enkf_fs_open_case_tstep_file(forward_load_context_get_sim_fs(load_context),
+                                               filename,
+                                               report_step,
+                                               "w");
+  free(filename);
+
+  bool_vector_fwrite(config->active_mask, stream);
+  fclose(stream);
+  config->mask_modified = false;
+}
+
+
 /**
    When the forward model is creating results for GEN_DATA instances,
    it can optionally signal that not all elements in the gen_data
@@ -407,69 +449,30 @@ void gen_data_config_assert_size(gen_data_config_type * config , int data_size, 
 
    This MUST be called after gen_data_config_assert_size().
 */
-
-void gen_data_config_update_active(gen_data_config_type * config, const forward_load_context_type * load_context, const bool_vector_type * data_mask) {
-  pthread_mutex_lock( &config->update_lock );
-  {
-    int report_step = forward_load_context_get_load_step( load_context );
-    if ( int_vector_iget( config->data_size_vector , report_step ) > 0) {
-      if (config->active_report_step != report_step) {
-        /* This is the first ensemeble member loading for this
-           particular report_step. */
-        bool_vector_reset( config->active_mask );
-        bool_vector_iset( config->active_mask , int_vector_iget( config->data_size_vector , report_step ) - 1 , true );
-        config->mask_modified = true;
-      }
-
-      {
-        int i;
-        for (i=0; i < bool_vector_size( data_mask ); i++) {
-          if (!bool_vector_iget( data_mask , i )) {
-            bool_vector_iset( config->active_mask , i , false );
-            config->mask_modified = true;
-          }
-        }
-      }
-
-      if (config->mask_modified) {
-        /**
-           The global mask has been modified after the last load;
-           i.e. we update the on-disk representation.
-        */
-        char * filename = util_alloc_sprintf("%s_active" , config->key );
-        FILE * stream   = enkf_fs_open_case_tstep_file( forward_load_context_get_sim_fs( load_context ) , 
-							filename , 
-							report_step , 
-							"w");
-
-        bool_vector_fwrite( config->active_mask , stream );
-	
-        fclose( stream );
-        free( filename );
-        config->mask_modified = false;
-      }
-    }
-    config->active_report_step = report_step;
-  }
-  pthread_mutex_unlock( &config->update_lock );
+void gen_data_config_update_active(gen_data_config_type * config,
+                                   const forward_load_context_type * load_context,
+                                   const bool_vector_type * data_mask) {
+  pthread_mutex_lock(&config->update_lock);
+  int report_step = forward_load_context_get_load_step(load_context);
+  if (int_vector_iget(config->data_size_vector, report_step) > 0)
+    update_config_to_datamask(config, load_context, data_mask, report_step);
+  config->active_report_step = report_step;
+  pthread_mutex_unlock(&config->update_lock);
 }
 
 
-bool gen_data_config_has_active_mask( const gen_data_config_type * config , enkf_fs_type * fs , int report_step) {
-  bool   has_mask;
-  {
-    char * filename = util_alloc_sprintf("%s_active" , config->key );
-    FILE * stream   = enkf_fs_open_excase_tstep_file( fs , filename , report_step);
+bool gen_data_config_has_active_mask(const gen_data_config_type * config,
+                                     enkf_fs_type * fs,
+                                     int report_step) {
+  char * filename = util_alloc_sprintf("%s_active", config->key );
+  FILE * stream = enkf_fs_open_excase_tstep_file(fs, filename, report_step);
 
-    if (stream == NULL)
-      has_mask = false;
-    else {
-      has_mask = true;
-      fclose( stream );
-    }
-
-    free( filename );
+  bool has_mask = false;
+  if (stream) {
+    has_mask = true;
+    fclose(stream);
   }
+  free(filename);
   return has_mask;
 }
 
@@ -477,7 +480,10 @@ bool gen_data_config_has_active_mask( const gen_data_config_type * config , enkf
 /**
    This function will load an active map from the enkf_fs filesystem.
 */
-void gen_data_config_load_active( gen_data_config_type * config , enkf_fs_type * fs,  int report_step , bool force_load) {
+void gen_data_config_load_active(gen_data_config_type * config,
+                                 enkf_fs_type * fs,
+                                 int report_step,
+                                 bool force_load) {
   if (!config->dynamic)
     return;  /* Used as GEN_PARAM instance; loading of mask is not an option. */
 
