@@ -145,13 +145,14 @@ class BatchSimulatorTest(ResTest):
             test_area.copy_parent_content(config_file)
 
             res_config = ResConfig(user_config_file=os.path.basename(config_file))
-
+            monitor = TestMonitor()
             rsim = BatchSimulator(res_config,
                                   {
                                       "WELL_ORDER" : ["W1", "W2", "W3"],
                                       "WELL_ON_OFF" : ["W1", "W2", "W3"]
                                   },
-                                  ["ORDER", "ON_OFF"])
+                                  ["ORDER", "ON_OFF"],
+                                  callback=partial(TestMonitor.start_callback, monitor)) 
 
             # Starting a simulation which should actually run through.
             case_data = [
@@ -167,8 +168,7 @@ class BatchSimulatorTest(ResTest):
                  }),
             ]
 
-            monitor = TestMonitor()
-            ctx = rsim.start("case", case_data, callback=partial(TestMonitor.start_callback, monitor))
+            ctx = rsim.start("case", case_data)
 
             # Asking for results before it is complete.
             with self.assertRaises(RuntimeError):

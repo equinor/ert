@@ -9,7 +9,7 @@ def _slug(entity):
 
 class BatchSimulator(object):
 
-    def __init__(self, res_config, controls, results):
+    def __init__(self, res_config, controls, results, callback = None):
         """Will create simulator which can be used to run multiple simulations.
 
         The @res_config argument should be a ResConfig object, representing the
@@ -45,6 +45,18 @@ class BatchSimulator(object):
         The simulator will look for the files 'CMODE_0' and 'order_0' in the
         simulation folder. If those files are not produced by the simulator an
         exception will be raised.
+
+        The optional argument callback can be used to provide a callable
+        which will be called as:
+
+              callback(run_context)
+
+        When the simulator has started. For the callable passed as
+        callback you are encouraged to use the future proof signature:
+
+             def callback(*args, **kwargs):
+                 ....
+
         """
         if not isinstance(res_config, ResConfig):
             raise ValueError("The first argument must be valid ResConfig instance")
@@ -53,6 +65,7 @@ class BatchSimulator(object):
         self.ert = EnKFMain(self.res_config)
         self.control_keys = tuple(controls.keys())
         self.result_keys = tuple(results)
+        self.callback = callback
 
         ens_config = self.res_config.ensemble_config
         for control_name, variable_names in controls.items():
@@ -87,7 +100,7 @@ class BatchSimulator(object):
                 node.save(file_system, node_id)
 
 
-    def start(self, case_name, case_data, callback=None):
+    def start(self, case_name, case_data):
         """Will start batch simulation, returning a handle to query status and results.
 
         The start method will submit simulations to the queue system and then
@@ -136,18 +149,6 @@ class BatchSimulator(object):
         Observe that only one BatchSimulator should actually be running at a
         time, so when you have called the 'start' method you need to let that
         batch complete before you start a new batch.
-
-        The optional argument callback can be used to provide a callable
-        which will be called as:
-
-              callback(run_context)
-
-        When the simulator has started. For the callable passed as callback you
-        are encouraged to use the future proof signature:
-
-             def callback(*args, **kwargs):
-                 ....
-
         """
 
         self.ert.addDataKW("<CASE_NAME>", _slug(case_name))
@@ -165,6 +166,6 @@ class BatchSimulator(object):
         for sim_id, (geo_id, _) in enumerate(case_data):
             sim_context.addSimulation(sim_id, geo_id)
 
-        if callback:
-            callback(sim_context)
+        if self.callback:
+            self.callback(sim_context)
         return sim_context
