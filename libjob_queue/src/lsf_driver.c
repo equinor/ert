@@ -28,6 +28,7 @@
 #include <ert/util/stringlist.h>
 #include <ert/res_util/log.h>
 #include <ert/res_util/res_log.h>
+#include <ert/res_util/res_env.h>
 
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/lsf_driver.h>
@@ -1116,7 +1117,7 @@ static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char 
 #endif
   } else {
     driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , remote_server );
-    util_unsetenv( "BSUB_QUIET" );
+    res_env_unsetenv( "BSUB_QUIET" );
     {
       char * tmp_server = util_alloc_strupr_copy( remote_server );
 

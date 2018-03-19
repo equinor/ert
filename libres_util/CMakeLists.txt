@@ -21,6 +21,7 @@ add_library( res_util src/res_log.c
                       src/template.c
                       src/template_loop.c
                       src/path_fmt.c
+                      src/res_env.c
                       src/block_fs.c
                       src/res_version.c
                       src/regression.c
@@ -72,6 +73,10 @@ add_test(NAME ert_util_subst_list COMMAND ert_util_subst_list)
 add_executable(ert_util_block_fs tests/ert_util_block_fs.c)
 target_link_libraries(ert_util_block_fs res_util)
 add_test(NAME ert_util_block_fs COMMAND ert_util_block_fs)
+
+add_executable(res_util_PATH tests/res_util_PATH.c)
+target_link_libraries(res_util_PATH res_util)
+add_test(NAME res_util_PATH COMMAND res_util_PATH)
 
 find_library( VALGRIND NAMES valgr )
 if (VALGRIND)

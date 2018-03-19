@@ -29,6 +29,7 @@
 #include <ert/util/stringlist.h>
 #include <ert/util/parser.h>
 #include <ert/res_util/subst_list.h>
+#include <ert/res_util/res_env.h>
 
 #include <ert/config/config_parser.h>
 #include <ert/config/config_content.h>
@@ -451,7 +452,7 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable_abs,
   } else {
       if (search_path){
         /* Go through the PATH variable to try to locate the executable. */
-        char * path_executable = util_alloc_PATH_executable( executable_input );
+        char * path_executable = res_env_alloc_PATH_executable( executable_input );
 
         if (path_executable != NULL) {
           ext_job_set_executable( ext_job , path_executable, NULL, search_path );

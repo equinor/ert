@@ -23,6 +23,8 @@
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
 
+#include <ert/res_util/res_env.h>
+
 #include <ert/config/config_schema_item.h>
 #include <ert/config/config_content_node.h>
 #include <ert/config/config_path_elm.h>
@@ -199,7 +201,7 @@ const char * config_content_node_iget_as_executable( config_content_node_type * 
 
     if( !strstr( config_value, UTIL_PATH_SEP_STRING )
      && !util_file_exists( path_value ) ) {
-        char* tmp = util_alloc_PATH_executable( config_value );
+        char* tmp = res_env_alloc_PATH_executable( config_value );
         if( tmp ) {
             free( path_value );
             path_value = tmp;

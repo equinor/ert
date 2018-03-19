@@ -30,6 +30,7 @@
 #include <ert/util/vector.h>
 #include <ert/util/path_stack.h>
 #include <ert/res_util/subst_list.h>
+#include <ert/res_util/res_env.h>
 
 #include <ert/config/config_parser.h>
 #include <ert/config/config_error.h>
@@ -193,7 +194,7 @@ static config_content_node_type * config_content_item_set_arg__(subst_list_type 
       for (iarg = 0; iarg < argc; iarg++) {
         int    env_offset = 0;
         while (true) {
-          char * env_var = util_isscanf_alloc_envvar(  stringlist_iget(token_list , iarg + 1) , env_offset );
+          char * env_var = res_env_isscanf_alloc_envvar(  stringlist_iget(token_list , iarg + 1) , env_offset );
           if (env_var == NULL)
             break;
 

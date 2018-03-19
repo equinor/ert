@@ -25,6 +25,7 @@
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/util/vector.h>
+#include <ert/res_util/res_env.h>
 
 #include <ert/job_queue/lsf_driver.h>
 
