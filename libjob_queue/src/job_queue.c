@@ -228,6 +228,7 @@ struct job_queue_struct {
   int                        max_ok_wait_time;                  /* Seconds to wait for an OK file - when the job itself has said all OK. */
   int                        max_duration;                      /* Maximum allowed time for a job to run, 0 = unlimited */
   time_t                     stop_time;                         /* A job is only allowed to run until this time. 0 = no time set, ignore stop_time */
+  time_t                     progress_timestamp;                /* Global timestamp for last progress update. */
   unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
   pthread_mutex_t            run_mutex;                         /* This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
   thread_pool_type         * work_pool;
@@ -281,9 +282,8 @@ static bool job_queue_update_status(job_queue_type * queue ) {
 
   for (ijob = 0; ijob < job_list_get_size( queue->job_list ); ijob++) {
     job_queue_node_type * node = job_list_iget_job( queue->job_list , ijob );
-    bool node_update = job_queue_node_update_status( node , queue->status , queue->driver );
-    if (node_update)
-      update = true;
+    update |= job_queue_node_update_status( node , queue->status , queue->driver );
+    queue->progress_timestamp = util_time_t_max(queue->progress_timestamp, job_queue_node_get_timestamp(node));
   }
   return update;
 }
@@ -505,6 +505,12 @@ job_status_type job_queue_iget_job_status( job_queue_type * queue , int job_inde
   return job_status;
 }
 
+
+time_t job_queue_iget_progress_timestamp(job_queue_type *queue, int job_index) {
+  time_t timestamp;
+  ASSIGN_LOCKED_ATTRIBUTE(timestamp, job_queue_node_get_timestamp, node);
+  return timestamp;
+}
 
 void job_queue_iset_max_confirm_wait_time(job_queue_type * queue, int job_index, time_t time) {
   job_list_get_rdlock( queue->job_list );
@@ -1196,6 +1202,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   queue->work_pool        = NULL;
   queue->job_list         = job_list_alloc(  );
   queue->status           = job_queue_status_alloc( );
+  queue->progress_timestamp = time(NULL);
 
   pthread_mutex_init( &queue->run_mutex    , NULL );
 
@@ -1357,4 +1364,9 @@ void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
 
 time_t job_queue_get_status_timestamp(const job_queue_type * queue) {
   return job_queue_status_get_timestamp(queue->status);
+}
+
+
+time_t job_queue_get_progress_timestamp(const job_queue_type * queue) {
+  return queue->progress_timestamp;
 }

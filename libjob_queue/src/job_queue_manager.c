@@ -194,6 +194,15 @@ void job_queue_manager_stop_queue(job_queue_manager_type * manager) {
 }
 
 
-time_t job_queue_manager_get_timestamp(const job_queue_manager_type * manager) {
+time_t job_queue_manager_get_status_timestamp(const job_queue_manager_type * manager) {
   return job_queue_get_status_timestamp(manager->job_queue);
+}
+
+
+time_t job_queue_manager_get_progress_timestamp(const job_queue_manager_type * manager) {
+  return job_queue_get_progress_timestamp(manager->job_queue);
+}
+
+time_t job_queue_manager_iget_progress_timestamp(const job_queue_manager_type * manager, int job_index) {
+  return job_queue_iget_progress_timestamp(manager->job_queue, job_index);
 }

@@ -34,7 +34,9 @@ class JobQueueManager(BaseCClass):
     _is_running      = QueuePrototype("bool job_queue_manager_is_running( job_queue_manager )")
     _job_complete    = QueuePrototype("bool job_queue_manager_job_complete( job_queue_manager , int)")
     _job_running     = QueuePrototype("bool job_queue_manager_job_running( job_queue_manager , int)")
-    _status_timestamp= QueuePrototype("time_t job_queue_manager_get_timestamp(job_queue_manager)")
+    _status_timestamp= QueuePrototype("time_t job_queue_manager_get_status_timestamp(job_queue_manager)")
+    _global_progress_timestamp = QueuePrototype("time_t job_queue_manager_get_progress_timestamp(job_queue_manager)")
+    _iget_progress_timestamp = QueuePrototype("time_t job_queue_manager_iget_progress_timestamp(job_queue_manager, int)")
 
     # Note, even if all realizations have finished, they need not all be failed or successes.
     # That is how Ert report things. They can be "killed", which is neither success nor failure.
@@ -54,13 +56,27 @@ class JobQueueManager(BaseCClass):
         self.queue = queue
         super(JobQueueManager, self).__init__(c_ptr)
 
-    @property
-    def timestamp(self):
+    def status_timestamp(self):
         """
         Will return a datetime object corresponding to the last status change
         """
         ts = self._status_timestamp()
         return ts.datetime()
+
+    def progress_timestamp(self, job_index = None):
+        """Will return the timestamp of last progress update.
+
+        By default the timestamp will be global, i.e. for all jobs, but if you
+        pass a job_index as optional argument the timestamp will correspond to
+        that job.
+        """
+        if job_index is None:
+            ts = self._global_progress_timestamp()
+        else:
+            ts = self._iget_progress_timestamp(job_index)
+
+        return ts.datetime()
+
 
     def get_job_queue(self):
         return self.queue

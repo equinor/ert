@@ -194,12 +194,12 @@ class SimulationContext(object):
 
         if iens is None:
             return self._queue_manager.progress_timestamp()
-        else:
-            if not iens in self._run_args:
-                raise KeyError("No such simulation: %s" % iens)
 
-            run_arg = self._run_args[iens]
-            queue_index = run_arg.getQueueIndex()
-            return self._queue_manager.pregress_timestamp(queue_index)
+        if not iens in self._run_args:
+            raise KeyError("No such simulation: %s" % iens)
+
+        run_arg = self._run_args[iens]
+        queue_index = run_arg.getQueueIndex()
+        return self._queue_manager.progress_timestamp(queue_index)
 
 
