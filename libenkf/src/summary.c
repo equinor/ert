@@ -128,6 +128,7 @@ bool summary_write_to_buffer(const summary_type * summary,
                              int report_step) {
   buffer_fwrite_int( buffer, SUMMARY );
   buffer_fwrite_int( buffer, double_vector_size(summary->data_vector));
+  buffer_fwrite_double( buffer, double_vector_get_default(summary->data_vector));
   buffer_fwrite( buffer,
                  double_vector_get_ptr(summary->data_vector),
                  double_vector_element_size(summary->data_vector),
