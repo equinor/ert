@@ -26,7 +26,6 @@
 #include <ert/res_util/res_env.h>
 #include <ert/util/buffer.h>
 
-#ifdef HAVE_POSIX_SETENV
 #define PATHVAR_SPLIT ":"
 
 void res_env_unsetenv( const char * variable ) {
@@ -37,20 +36,6 @@ void res_env_setenv( const char * variable , const char * value) {
   int overwrite = 1;
   setenv( variable , value , overwrite );
 }
-
-#else
-
-#include <Windows.h>
-
-#define PATHVAR_SPLIT ";"
-void res_env_setenv( const char * variable , const char * value) {
-  SetEnvironmentVariable( variable , NULL );
-}
-
-void res_env_unsetenv( const char * variable ) {
-  res_env_setenv( variable , NULL );
-}
-#endif
 
 /**
    Will return a NULL terminated list char ** of the paths in the PATH
