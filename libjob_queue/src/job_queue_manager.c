@@ -192,3 +192,8 @@ void job_queue_manager_stop_queue(job_queue_manager_type * manager) {
 
   job_queue_manager_wait(manager);
 }
+
+
+time_t job_queue_manager_get_timestamp(const job_queue_manager_type * manager) {
+  return job_queue_get_status_timestamp(manager->job_queue);
+}

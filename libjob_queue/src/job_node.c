@@ -493,6 +493,18 @@ static bool job_queue_node_status_update_confirmed_running__(job_queue_node_type
   return node->confirmed_running;
 }
 
+
+static void job_queue_node_update_timestamp(job_queue_node_type * node) {
+  if (node->job_status == JOB_QUEUE_RUNNING) {
+    if (node->status_file) {
+      time_t mtime = util_file_mtime( node->status_file );
+      if (mtime > 0)
+        node->progress_timestamp = mtime;
+    }
+  }
+}
+
+
 // if status = running, and current_time > sim_start + max_confirm_wait
 // (usually 2 min), check if job is confirmed running (status_file exists).
 // If not confirmed, set job to JOB_QUEUE_FAILED.

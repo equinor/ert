@@ -1353,3 +1353,8 @@ int job_queue_get_max_running( const job_queue_type * queue ) {
 void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
   job_queue_set_max_running_option(queue->driver, max_running);
 }
+
+
+time_t job_queue_get_status_timestamp(const job_queue_type * queue) {
+  return job_queue_status_get_timestamp(queue->status);
+}

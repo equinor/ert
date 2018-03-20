@@ -34,6 +34,7 @@ class JobQueueManager(BaseCClass):
     _is_running      = QueuePrototype("bool job_queue_manager_is_running( job_queue_manager )")
     _job_complete    = QueuePrototype("bool job_queue_manager_job_complete( job_queue_manager , int)")
     _job_running     = QueuePrototype("bool job_queue_manager_job_running( job_queue_manager , int)")
+    _status_timestamp= QueuePrototype("time_t job_queue_manager_get_timestamp(job_queue_manager)")
 
     # Note, even if all realizations have finished, they need not all be failed or successes.
     # That is how Ert report things. They can be "killed", which is neither success nor failure.
@@ -52,6 +53,14 @@ class JobQueueManager(BaseCClass):
         c_ptr = self._alloc(queue)
         self.queue = queue
         super(JobQueueManager, self).__init__(c_ptr)
+
+    @property
+    def timestamp(self):
+        """
+        Will return a datetime object corresponding to the last status change
+        """
+        ts = self._status_timestamp()
+        return ts.datetime()
 
     def get_job_queue(self):
         return self.queue

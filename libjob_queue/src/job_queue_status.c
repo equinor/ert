@@ -30,6 +30,7 @@ struct job_queue_status_struct {
   int status_list[JOB_QUEUE_MAX_STATE];
   pthread_rwlock_t rw_lock;
   int status_index[JOB_QUEUE_MAX_STATE];
+  time_t timestamp;
 };
 
 
@@ -58,6 +59,7 @@ job_queue_status_type * job_queue_status_alloc() {
   UTIL_TYPE_ID_INIT( status ,   JOB_QUEUE_STATUS_TYPE_ID );
   pthread_rwlock_init( &status->rw_lock , NULL);
   job_queue_status_clear( status );
+  status->timestamp = time(NULL);
 
   status->status_index[0] = JOB_QUEUE_NOT_ACTIVE; // Initial, allocated job state, job not added - controlled by job_queue
   status->status_index[1] = JOB_QUEUE_WAITING; // The job is ready to be started - controlled by job_queue
@@ -125,6 +127,7 @@ void job_queue_status_inc( job_queue_status_type * status_count , job_status_typ
     int count = status_count->status_list[index];
     status_count->status_list[index] = count + 1;
   }
+  status_count->timestamp = time(NULL);
   pthread_rwlock_unlock( &status_count->rw_lock );
 }
 
@@ -170,4 +173,9 @@ int job_queue_status_get_total_count( const job_queue_status_type * status ) {
   for (int index = 0; index < JOB_QUEUE_MAX_STATE; index++)
     total_count += status->status_list[ index ];
   return total_count;
+}
+
+
+time_t job_queue_status_get_timestamp(const job_queue_status_type * status) {
+  return status->timestamp;
 }
