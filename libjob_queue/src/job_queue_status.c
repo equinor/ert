@@ -59,28 +59,21 @@ job_queue_status_type * job_queue_status_alloc() {
   pthread_rwlock_init( &status->rw_lock , NULL);
   job_queue_status_clear( status );
 
-
-
-
-    status->status_index[0] = JOB_QUEUE_NOT_ACTIVE; // Initial, allocated job state, job not added - controlled by job_queue
-    status->status_index[1] = JOB_QUEUE_WAITING; // The job is ready to be started - controlled by job_queue
-    status->status_index[2] = JOB_QUEUE_SUBMITTED; // Job is submitted to driver - temporary state - controlled by job_queue
-    status->status_index[3] = JOB_QUEUE_PENDING; // Job is pending, before actual execution - controlled by queue_driver
-    status->status_index[4] = JOB_QUEUE_RUNNING; // Job is executing - controlled by queue_driver
-    status->status_index[5] = JOB_QUEUE_DONE; // Job is done (successful or not), temporary state - controlled/returned by by queue_driver
-    status->status_index[6] = JOB_QUEUE_EXIT; //Job is done, with exit status != 0, temporary state - controlled/returned by by queue_driver
-    status->status_index[7] = JOB_QUEUE_IS_KILLED; // Job has been killed, due to JOB_QUEUE_DO_KILL, FINAL STATE - controlled by job_queue
-    status->status_index[8] = JOB_QUEUE_DO_KILL; // User / queue system has requested killing of job - controlled by job_queue / external scope
-    status->status_index[9] = JOB_QUEUE_SUCCESS; // All good, comes after JOB_QUEUE_DONE, with additional checks, FINAL STATE - controlled by job_queue
-    status->status_index[10] = JOB_QUEUE_RUNNING_DONE_CALLBACK; // Temporary state, while running requested callbacks after an ended job -                                                               controlled by job_queue
-    status->status_index[11] = JOB_QUEUE_RUNNING_EXIT_CALLBACK; // Temporary state, while running requested callbacks after an ended job -                                                               controlled by job_queue
-    status->status_index[12] = JOB_QUEUE_STATUS_FAILURE; //The driver call to get status has failed, job status remains unchanged
-    status->status_index[13] = JOB_QUEUE_FAILED; // Job has failed, no more retries, FINAL STATE
-    status->status_index[14] = JOB_QUEUE_DO_KILL_NODE_FAILURE; // Job has failed, node should be blacklisted
-
-
-
-
+  status->status_index[0] = JOB_QUEUE_NOT_ACTIVE; // Initial, allocated job state, job not added - controlled by job_queue
+  status->status_index[1] = JOB_QUEUE_WAITING; // The job is ready to be started - controlled by job_queue
+  status->status_index[2] = JOB_QUEUE_SUBMITTED; // Job is submitted to driver - temporary state - controlled by job_queue
+  status->status_index[3] = JOB_QUEUE_PENDING; // Job is pending, before actual execution - controlled by queue_driver
+  status->status_index[4] = JOB_QUEUE_RUNNING; // Job is executing - controlled by queue_driver
+  status->status_index[5] = JOB_QUEUE_DONE; // Job is done (successful or not), temporary state - controlled/returned by by queue_driver
+  status->status_index[6] = JOB_QUEUE_EXIT; //Job is done, with exit status != 0, temporary state - controlled/returned by by queue_driver
+  status->status_index[7] = JOB_QUEUE_IS_KILLED; // Job has been killed, due to JOB_QUEUE_DO_KILL, FINAL STATE - controlled by job_queue
+  status->status_index[8] = JOB_QUEUE_DO_KILL; // User / queue system has requested killing of job - controlled by job_queue / external scope
+  status->status_index[9] = JOB_QUEUE_SUCCESS; // All good, comes after JOB_QUEUE_DONE, with additional checks, FINAL STATE - controlled by job_queue
+  status->status_index[10] = JOB_QUEUE_RUNNING_DONE_CALLBACK; // Temporary state, while running requested callbacks after an ended job - controlled by job_queue
+  status->status_index[11] = JOB_QUEUE_RUNNING_EXIT_CALLBACK; // Temporary state, while running requested callbacks after an ended job - controlled by job_queue
+  status->status_index[12] = JOB_QUEUE_STATUS_FAILURE; //The driver call to get status has failed, job status remains unchanged
+  status->status_index[13] = JOB_QUEUE_FAILED; // Job has failed, no more retries, FINAL STATE
+  status->status_index[14] = JOB_QUEUE_DO_KILL_NODE_FAILURE; // Job has failed, node should be blacklisted
 
   return status;
 }
@@ -153,8 +146,9 @@ static void job_queue_status_dec( job_queue_status_type * status_count , job_sta
   atomic, if the different status counts do not add up perfectly at
   all times that is ok.
 */
-bool job_queue_status_transition(job_queue_status_type * status_count, job_status_type src_status,
-        job_status_type target_status) {
+bool job_queue_status_transition(job_queue_status_type * status_count,
+                                 job_status_type src_status,
+                                 job_status_type target_status) {
   if (src_status == target_status)
     return false;
 
