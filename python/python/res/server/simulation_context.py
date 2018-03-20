@@ -150,7 +150,11 @@ class SimulationContext(object):
             raise KeyError("No such simulation: %s" % iens)
 
         run_arg = self._run_args[iens]
-        queue_index = run_arg.getQueueIndex()
+        try:
+            # will throw if not yet submitted (is in a limbo state)
+            queue_index = run_arg.getQueueIndex()
+        except ValueError:
+            return None
         if self._queue_manager.isJobWaiting(queue_index):
             return None
 
@@ -166,5 +170,8 @@ class SimulationContext(object):
             raise KeyError("No such simulation: %s" % iens)
 
         run_arg = self._run_args[iens]
-        queue_index = run_arg.getQueueIndex()
+        try:
+            queue_index = run_arg.getQueueIndex()
+        except ValueError:
+            return None
         return self._queue_manager.getJobStatus(queue_index)

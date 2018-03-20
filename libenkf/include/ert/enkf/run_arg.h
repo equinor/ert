@@ -76,6 +76,7 @@ UTIL_IS_INSTANCE_HEADER( run_arg );
   const char * run_arg_get_run_id( const run_arg_type * run_arg);
   run_status_type run_arg_get_run_status( const run_arg_type * run_arg );
 
+  int  run_arg_get_queue_index_safe( const run_arg_type * run_arg );
   int  run_arg_get_queue_index( const run_arg_type * run_arg );
   bool run_arg_is_submitted( const run_arg_type * run_arg );
 

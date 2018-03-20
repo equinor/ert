@@ -48,6 +48,9 @@ void test_queue_index() {
     test_assert_false( run_arg_is_submitted( run_arg ) );
     test_assert_util_abort("run_arg_get_queue_index" , call_get_queue_index , run_arg );
 
+    int qi = run_arg_get_queue_index_safe( run_arg );
+    test_assert_int_equal( -1, qi );  // not submitted: index == -1
+
     run_arg_set_queue_index(run_arg, 78);
     test_assert_true( run_arg_is_submitted( run_arg ) );
     test_assert_int_equal( 78 , run_arg_get_queue_index( run_arg ));

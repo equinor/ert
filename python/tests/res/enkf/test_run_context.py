@@ -26,6 +26,9 @@ class ErtRunContextTest(ResTest):
             run_id1 = run_context1.get_id( )
 
             run_arg0 = run_context1[0]
+            with self.assertRaises(ValueError):
+                run_arg0.getQueueIndex()
+
             self.assertEqual( run_id1 , run_arg0.get_run_id( ))
 
             run_context2 = ErtRunContext( EnkfRunType.ENSEMBLE_EXPERIMENT , sim_fs , target_fs, mask , runpath_fmt, jobname_fmt, subst_list , itr )
