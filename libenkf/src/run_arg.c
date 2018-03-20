@@ -256,6 +256,13 @@ run_mode_type run_arg_get_run_mode( const run_arg_type * run_arg ) {
 }
 
 
+int run_arg_get_queue_index_safe( const run_arg_type * run_arg ) {
+  if (run_arg->queue_index == INVALID_QUEUE_INDEX)
+    return -1;
+
+  return run_arg->queue_index;
+}
+
 int run_arg_get_queue_index( const run_arg_type * run_arg ) {
   if (run_arg->queue_index == INVALID_QUEUE_INDEX)
     util_abort("%s: sorry internal error - asking for the queue_index in a not-initialized run_arg object.\n" , __func__);

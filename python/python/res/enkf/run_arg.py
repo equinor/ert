@@ -22,7 +22,7 @@ class RunArg(BaseCClass):
 
     _alloc_ENSEMBLE_EXPERIMENT = EnkfPrototype("run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT(char*, enkf_fs, int, int, char*, char*, subst_list)", bind = False)
     _free                      = EnkfPrototype("void run_arg_free(run_arg)")
-    _get_queue_index           = EnkfPrototype("int  run_arg_get_queue_index(run_arg)")
+    _get_queue_index_safe      = EnkfPrototype("int  run_arg_get_queue_index_safe(run_arg)")
     _is_submitted              = EnkfPrototype("bool run_arg_is_submitted(run_arg)")
     _get_run_id                = EnkfPrototype("char* run_arg_get_run_id(run_arg)")
     _get_geo_id                = EnkfPrototype("int run_arg_get_geo_id(run_arg)")
@@ -40,7 +40,10 @@ class RunArg(BaseCClass):
         self._free()
 
     def getQueueIndex(self):
-        return self._get_queue_index()
+        qi = self._get_queue_index_safe()
+        if qi < 0:
+            raise ValueError('Cannot get queue index before job is submitted.')
+        return qi
 
     def isSubmitted(self):
         return self._is_submitted()
