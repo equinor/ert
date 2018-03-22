@@ -1,4 +1,5 @@
 import os.path
+import datetime
 import json
 
 from ecl.util.test import TestAreaContext
@@ -551,3 +552,6 @@ class ForwardModelFormattedPrintTest(ResTest):
                 f.write(s)
 
             status = ForwardModelStatus.try_load("status.json")
+            for job in status.jobs:
+                self.assertTrue( isinstance(job.start_time, datetime.datetime))
+                self.assertTrue( isinstance(job.end_time, datetime.datetime))
