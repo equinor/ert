@@ -162,6 +162,16 @@ class SimulationContext(object):
 
 
 
+    def run_path(self, iens):
+        """
+        Will return the path to the simulation.
+        """
+        if not iens in self._run_args:
+            raise KeyError("No such simulation: %s" % iens)
+
+        run_arg = self._run_args[iens]
+        return run_arg.runpath
+
 
     def job_status(self, iens):
         """Will query the queue system for the status of the job.
