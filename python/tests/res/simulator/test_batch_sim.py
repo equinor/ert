@@ -152,7 +152,7 @@ class BatchSimulatorTest(ResTest):
                                       "WELL_ON_OFF" : ["W1", "W2", "W3"]
                                   },
                                   ["ORDER", "ON_OFF"],
-                                  callback=partial(TestMonitor.start_callback, monitor)) 
+                                  callback=monitor.start_callback)
 
             # Starting a simulation which should actually run through.
             case_data = [
