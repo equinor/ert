@@ -66,6 +66,7 @@ struct job_queue_node_struct {
   time_t                 sim_start;       /* When did the job change status -> RUNNING - the LAST TIME. */
   time_t                 sim_end ;        /* When did the job finish successfully */
   time_t                 max_confirm_wait;/* Max waiting between sim_start and confirmed_running is 2 minutes */
+  time_t                 progress_timestamp; /* Timestamp of the status update update file. */
 };
 
 
@@ -272,7 +273,7 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
 
   if (util_is_directory( run_path )) {
     job_queue_node_type * node = util_malloc(sizeof * node );
-
+    node->progress_timestamp = time(NULL);
     UTIL_TYPE_ID_INIT( node , JOB_QUEUE_NODE_TYPE_ID );
     {
       /* The data initialized in this block should *NEVER* change. */
@@ -429,12 +430,14 @@ static void job_queue_node_set_status(job_queue_node_type * node , job_status_ty
     if (new_status == JOB_QUEUE_RUNNING)
       node->sim_start = time( NULL );
 
-    if (new_status == JOB_QUEUE_SUCCESS)
+
+    if (new_status & JOB_QUEUE_COMPLETE_STATUS) {
       node->sim_end = time( NULL );
+      node->progress_timestamp = node->sim_end;
 
-    if (new_status == JOB_QUEUE_FAILED)
-      job_queue_node_fscanf_EXIT( node );
-
+      if (new_status == JOB_QUEUE_FAILED)
+        job_queue_node_fscanf_EXIT( node );
+    }
   }
 }
 
@@ -493,6 +496,20 @@ static bool job_queue_node_status_update_confirmed_running__(job_queue_node_type
   return node->confirmed_running;
 }
 
+
+static void job_queue_node_update_timestamp(job_queue_node_type * node) {
+  if (node->job_status != JOB_QUEUE_RUNNING)
+    return;
+
+  if (!node->status_file)
+    return;
+
+  time_t mtime = util_file_mtime( node->status_file );
+  if (mtime > 0)
+    node->progress_timestamp = mtime;
+}
+
+
 // if status = running, and current_time > sim_start + max_confirm_wait
 // (usually 2 min), check if job is confirmed running (status_file exists).
 // If not confirmed, set job to JOB_QUEUE_FAILED.
@@ -523,6 +540,7 @@ bool job_queue_node_update_status( job_queue_node_type * node , job_queue_status
       }
     }
   }
+  job_queue_node_update_timestamp(node);
   pthread_mutex_unlock( &node->data_mutex );
   return status_change;
 }
@@ -621,3 +639,10 @@ void job_queue_node_restart( job_queue_node_type * node , job_queue_status_type 
   }
   pthread_mutex_unlock( &node->data_mutex );
 }
+
+
+time_t job_queue_node_get_timestamp(const job_queue_node_type * node) {
+  return node->progress_timestamp;
+}
+
+

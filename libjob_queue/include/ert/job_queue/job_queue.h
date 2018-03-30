@@ -23,6 +23,7 @@ extern "C" {
 #endif
 #include <pthread.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include <ert/res_util/path_fmt.h>
 
@@ -31,8 +32,9 @@ extern "C" {
 
 
   typedef struct job_queue_struct      job_queue_type;
-
-
+  time_t              job_queue_get_progress_timestamp(const job_queue_type * queue);
+  time_t              job_queue_iget_progress_timestamp(job_queue_type *queue, int job_index);
+  time_t              job_queue_get_status_timestamp(const job_queue_type * queue);
   void                job_queue_submit_complete( job_queue_type * queue );
   job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
   void                job_queue_set_driver(job_queue_type * queue , queue_driver_type * driver);

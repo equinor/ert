@@ -2,6 +2,7 @@ import os
 import time
 import sys
 import unittest
+import datetime
 from functools import partial
 
 from ecl.util.test import TestAreaContext
@@ -169,6 +170,9 @@ class BatchSimulatorTest(ResTest):
             ]
 
             ctx = rsim.start("case", case_data)
+            self.assertTrue( isinstance(ctx.status_timestamp(), datetime.datetime))
+            start_time = ctx.status_timestamp()
+            progress_ts = ctx.progress_timestamp()
 
             # Asking for results before it is complete.
             with self.assertRaises(RuntimeError):
@@ -191,11 +195,12 @@ class BatchSimulatorTest(ResTest):
                     progress = ctx.job_progress(job_index)
                     if progress:
                         for job in progress.jobs:
-                            sys.stderr.write("   %s \n" % str(job))
+                            sys.stderr.write("   %s ts: %s \n" % (str(job), ctx.progress_timestamp(job_index)))
 
             # Fetch and validate results
             results = ctx.results()
             self.assertEqual(len(results), 2)
+            self.assertTrue( ctx.status_timestamp() > start_time )
 
             for result, (_, controls) in zip(results, case_data):
                 self.assertEqual(sorted(["ORDER", "ON_OFF"]),

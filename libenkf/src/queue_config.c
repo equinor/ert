@@ -123,8 +123,13 @@ queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_con
     return queue_config_copy;
 }
 
+
+/*
+  The filenames "OK", "status.json" and "ERROR" passed to the job_queue_alloc
+  function must be syncronized with the script running the forward model.
+*/
 job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config) {
-  job_queue_type * job_queue = job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "STATUS", "ERROR");
+  job_queue_type * job_queue = job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "status.json", "ERROR");
   const char * driver_name = queue_config_get_queue_name(queue_config);
   if (driver_name != NULL)
     {

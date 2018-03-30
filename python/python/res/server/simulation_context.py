@@ -162,6 +162,16 @@ class SimulationContext(object):
 
 
 
+    def run_path(self, iens):
+        """
+        Will return the path to the simulation.
+        """
+        if not iens in self._run_args:
+            raise KeyError("No such simulation: %s" % iens)
+
+        run_arg = self._run_args[iens]
+        return run_arg.runpath
+
 
     def job_status(self, iens):
         """Will query the queue system for the status of the job.
@@ -175,3 +185,31 @@ class SimulationContext(object):
         except ValueError:
             return None
         return self._queue_manager.getJobStatus(queue_index)
+
+
+    def status_timestamp(self):
+        """Will return a timestamp for the last status change of the simulations.
+
+        The timestamp is related to status changes when a simulation has
+        started, completed and failed.
+
+        """
+        return self._queue_manager.status_timestamp()
+
+
+    def progress_timestamp(self, iens = None):
+        """
+        Will return a timestamp for when the simulation has progressed to a new forward model step.
+        """
+
+        if iens is None:
+            return self._queue_manager.progress_timestamp()
+
+        if not iens in self._run_args:
+            raise KeyError("No such simulation: %s" % iens)
+
+        run_arg = self._run_args[iens]
+        queue_index = run_arg.getQueueIndex()
+        return self._queue_manager.progress_timestamp(queue_index)
+
+
