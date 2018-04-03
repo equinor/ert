@@ -3,7 +3,6 @@ set(TEST_SOURCES
     test_enkf.py
     test_job_queue.py
     test_sched.py
-    test_rms.py
     test_analysis.py
     test_config.py
     test_server.py
@@ -14,7 +13,6 @@ add_python_package("python.tests.legacy.ert"  ${PYTHON_INSTALL_PREFIX}/tests/leg
 addPythonTest(tests.legacy.test_enkf.ErtLegacyEnkfTest)
 addPythonTest(tests.legacy.test_job_queue.ErtLegacyJobQueueTest)
 addPythonTest(tests.legacy.test_sched.ErtLegacySchedTest)
-addPythonTest(tests.legacy.test_rms.ErtLegacyRmsTest)
 addPythonTest(tests.legacy.test_analysis.ErtLegacyAnalysisTest)
 addPythonTest(tests.legacy.test_config.ErtLegacyConfigTest)
 addPythonTest(tests.legacy.test_server.ErtLegacyServerTest)

@@ -27,7 +27,6 @@ import ecl.gravimetry
 import ecl.summary
 import ecl.rft
 
-import res.rms
 import res.analysis
 import res.sched
 import res.config
