@@ -14,26 +14,26 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.enums import GenDataFileType
 
 
 class GenDataConfig(BaseCClass):
     TYPE_NAME = "gen_data_config"
 
-    _alloc               = EnkfPrototype("void* gen_data_config_alloc_GEN_DATA_result( char* , gen_data_file_format_type)", bind = False)
-    _free                = EnkfPrototype("void  gen_data_config_free( gen_data_config )")
-    _get_output_format   = EnkfPrototype("gen_data_file_format_type gen_data_config_get_output_format(gen_data_config)")
-    _get_input_format    = EnkfPrototype("gen_data_file_format_type gen_data_config_get_input_format(gen_data_config)")
-    _get_template_file   = EnkfPrototype("char* gen_data_config_get_template_file(gen_data_config)")
-    _get_template_key    = EnkfPrototype("char* gen_data_config_get_template_key(gen_data_config)")
-    _get_initial_size    = EnkfPrototype("int   gen_data_config_get_initial_size(gen_data_config)")
-    _has_report_step     = EnkfPrototype("bool  gen_data_config_has_report_step(gen_data_config, int)")
-    _get_data_size       = EnkfPrototype("int   gen_data_config_get_data_size__(gen_data_config , int)")
-    _get_key             = EnkfPrototype("char* gen_data_config_get_key(gen_data_config)")
-    _get_active_mask     = EnkfPrototype("bool_vector_ref gen_data_config_get_active_mask(gen_data_config)")
-    _get_num_report_step = EnkfPrototype("int   gen_data_config_num_report_step(gen_data_config)")
-    _iget_report_step    = EnkfPrototype("int   gen_data_config_iget_report_step(gen_data_config, int)")
+    _alloc               = ResPrototype("void* gen_data_config_alloc_GEN_DATA_result( char* , gen_data_file_format_type)", bind = False)
+    _free                = ResPrototype("void  gen_data_config_free( gen_data_config )")
+    _get_output_format   = ResPrototype("gen_data_file_format_type gen_data_config_get_output_format(gen_data_config)")
+    _get_input_format    = ResPrototype("gen_data_file_format_type gen_data_config_get_input_format(gen_data_config)")
+    _get_template_file   = ResPrototype("char* gen_data_config_get_template_file(gen_data_config)")
+    _get_template_key    = ResPrototype("char* gen_data_config_get_template_key(gen_data_config)")
+    _get_initial_size    = ResPrototype("int   gen_data_config_get_initial_size(gen_data_config)")
+    _has_report_step     = ResPrototype("bool  gen_data_config_has_report_step(gen_data_config, int)")
+    _get_data_size       = ResPrototype("int   gen_data_config_get_data_size__(gen_data_config , int)")
+    _get_key             = ResPrototype("char* gen_data_config_get_key(gen_data_config)")
+    _get_active_mask     = ResPrototype("bool_vector_ref gen_data_config_get_active_mask(gen_data_config)")
+    _get_num_report_step = ResPrototype("int   gen_data_config_num_report_step(gen_data_config)")
+    _iget_report_step    = ResPrototype("int   gen_data_config_iget_report_step(gen_data_config, int)")
 
 
     def __init__(self, key , input_format = GenDataFileType.ASCII):

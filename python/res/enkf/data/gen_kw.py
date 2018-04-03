@@ -19,25 +19,25 @@ from cwrap import BaseCClass, CFILE
 import numbers
 
 from ecl.util.util import DoubleVector
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.config import GenKwConfig
 
 
 class GenKw(BaseCClass):
     TYPE_NAME = "gen_kw"
-    _alloc             = EnkfPrototype("void*  gen_kw_alloc(gen_kw_config)", bind = False)
-    _free              = EnkfPrototype("void   gen_kw_free(gen_kw_config)")
-    _export_parameters = EnkfPrototype("void   gen_kw_write_export_file(gen_kw , char*)")
-    _export_template   = EnkfPrototype("void   gen_kw_ecl_write_template(gen_kw , char* )")
-    _data_iget         = EnkfPrototype("double gen_kw_data_iget(gen_kw, int, bool)")
-    _data_iset         = EnkfPrototype("void   gen_kw_data_iset(gen_kw, int, double)")
-    _set_values        = EnkfPrototype("void   gen_kw_data_set_vector(gen_kw, double_vector)")
-    _data_get          = EnkfPrototype("double gen_kw_data_get(gen_kw, char*, bool)")
-    _data_set          = EnkfPrototype("void   gen_kw_data_set(gen_kw, char*, double)")
-    _size              = EnkfPrototype("int    gen_kw_data_size(gen_kw)")
-    _has_key           = EnkfPrototype("bool   gen_kw_data_has_key(gen_kw, char*)")
-    _ecl_write         = EnkfPrototype("void   gen_kw_ecl_write(gen_kw,    char* , char* , void*)")
-    _iget_key          = EnkfPrototype("char*  gen_kw_get_name(gen_kw, int)")
+    _alloc             = ResPrototype("void*  gen_kw_alloc(gen_kw_config)", bind = False)
+    _free              = ResPrototype("void   gen_kw_free(gen_kw_config)")
+    _export_parameters = ResPrototype("void   gen_kw_write_export_file(gen_kw , char*)")
+    _export_template   = ResPrototype("void   gen_kw_ecl_write_template(gen_kw , char* )")
+    _data_iget         = ResPrototype("double gen_kw_data_iget(gen_kw, int, bool)")
+    _data_iset         = ResPrototype("void   gen_kw_data_iset(gen_kw, int, double)")
+    _set_values        = ResPrototype("void   gen_kw_data_set_vector(gen_kw, double_vector)")
+    _data_get          = ResPrototype("double gen_kw_data_get(gen_kw, char*, bool)")
+    _data_set          = ResPrototype("void   gen_kw_data_set(gen_kw, char*, double)")
+    _size              = ResPrototype("int    gen_kw_data_size(gen_kw)")
+    _has_key           = ResPrototype("bool   gen_kw_data_has_key(gen_kw, char*)")
+    _ecl_write         = ResPrototype("void   gen_kw_ecl_write(gen_kw,    char* , char* , void*)")
+    _iget_key          = ResPrototype("char*  gen_kw_get_name(gen_kw, int)")
 
 
     def __init__(self, gen_kw_config):

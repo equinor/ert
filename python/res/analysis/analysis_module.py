@@ -16,30 +16,30 @@
 
 from cwrap import BaseCClass
 from ecl.util.util.rng import RandomNumberGenerator
-from res.analysis import AnalysisPrototype
+from res import ResPrototype
 
 from res.util import Matrix
 
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
 
-    _alloc_external      = AnalysisPrototype("void* analysis_module_alloc_external(char*)" , bind = False)
-    _alloc_internal      = AnalysisPrototype("void* analysis_module_alloc_internal(char*)" , bind = False)
-    _free                = AnalysisPrototype("void analysis_module_free(analysis_module)")
-    _get_lib_name        = AnalysisPrototype("char* analysis_module_get_lib_name(analysis_module)")
-    _get_module_internal = AnalysisPrototype("bool analysis_module_internal(analysis_module)")
-    _set_var             = AnalysisPrototype("bool analysis_module_set_var(analysis_module, char*, char*)")
-    _get_table_name      = AnalysisPrototype("char* analysis_module_get_table_name(analysis_module)")
-    _get_name            = AnalysisPrototype("char* analysis_module_get_name(analysis_module)")
-    _check_option        = AnalysisPrototype("bool analysis_module_check_option(analysis_module, long)")
-    _has_var             = AnalysisPrototype("bool analysis_module_has_var(analysis_module, char*)")
-    _get_double          = AnalysisPrototype("double analysis_module_get_double(analysis_module, char*)")
-    _get_int             = AnalysisPrototype("int analysis_module_get_int(analysis_module, char*)")
-    _get_bool            = AnalysisPrototype("bool analysis_module_get_bool(analysis_module, char*)")
-    _get_str             = AnalysisPrototype("char* analysis_module_get_ptr(analysis_module, char*)")
-    _init_update         = AnalysisPrototype("void analysis_module_init_update(analysis_module, bool_vector, matrix, matrix, matrix, matrix, matrix, rng)")
-    _updateA             = AnalysisPrototype("void analysis_module_updateA(analysis_module, matrix, matrix, matrix, matrix, matrix, matrix, void*, rng)")
-    _initX               = AnalysisPrototype("void analysis_module_initX(analysis_module, matrix, matrix, matrix, matrix, matrix, matrix, matrix, rng)")
+    _alloc_external      = ResPrototype("void* analysis_module_alloc_external(char*)" , bind = False)
+    _alloc_internal      = ResPrototype("void* analysis_module_alloc_internal(char*)" , bind = False)
+    _free                = ResPrototype("void analysis_module_free(analysis_module)")
+    _get_lib_name        = ResPrototype("char* analysis_module_get_lib_name(analysis_module)")
+    _get_module_internal = ResPrototype("bool analysis_module_internal(analysis_module)")
+    _set_var             = ResPrototype("bool analysis_module_set_var(analysis_module, char*, char*)")
+    _get_table_name      = ResPrototype("char* analysis_module_get_table_name(analysis_module)")
+    _get_name            = ResPrototype("char* analysis_module_get_name(analysis_module)")
+    _check_option        = ResPrototype("bool analysis_module_check_option(analysis_module, long)")
+    _has_var             = ResPrototype("bool analysis_module_has_var(analysis_module, char*)")
+    _get_double          = ResPrototype("double analysis_module_get_double(analysis_module, char*)")
+    _get_int             = ResPrototype("int analysis_module_get_int(analysis_module, char*)")
+    _get_bool            = ResPrototype("bool analysis_module_get_bool(analysis_module, char*)")
+    _get_str             = ResPrototype("char* analysis_module_get_ptr(analysis_module, char*)")
+    _init_update         = ResPrototype("void analysis_module_init_update(analysis_module, bool_vector, matrix, matrix, matrix, matrix, matrix, rng)")
+    _updateA             = ResPrototype("void analysis_module_updateA(analysis_module, matrix, matrix, matrix, matrix, matrix, matrix, void*, rng)")
+    _initX               = ResPrototype("void analysis_module_initX(analysis_module, matrix, matrix, matrix, matrix, matrix, matrix, matrix, rng)")
 
 
     # The VARIABLE_NAMES field is a completly broken special case

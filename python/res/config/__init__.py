@@ -16,11 +16,6 @@
 from cwrap import Prototype
 import res
 
-class ConfigPrototype(Prototype):
-    lib = res.load("libconfig")
-
-    def __init__(self, prototype, bind=True):
-        super(ConfigPrototype, self).__init__(ConfigPrototype.lib, prototype, bind=bind)
 
 from .config_path_elm import ConfigPathElm
 from .unrecognized_enum import UnrecognizedEnum

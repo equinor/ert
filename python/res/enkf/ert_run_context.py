@@ -18,27 +18,27 @@ from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from res.util import PathFormat
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf import TimeMap, StateMap, RunArg
 from res.enkf.enums import EnkfInitModeEnum
 
 class ErtRunContext(BaseCClass):
     TYPE_NAME = "ert_run_context"
-    _alloc              = EnkfPrototype("void* ert_run_context_alloc( enkf_run_mode_enum , enkf_init_mode_enum, enkf_fs , enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
-    _alloc_ensemble_experiment = EnkfPrototype("ert_run_context_obj ert_run_context_alloc_ENSEMBLE_EXPERIMENT( enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
-    _alloc_ensemble_smoother = EnkfPrototype("ert_run_context_obj ert_run_context_alloc_SMOOTHER_RUN( enkf_fs , enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
-    _alloc_runpath_list = EnkfPrototype("stringlist_obj ert_run_context_alloc_runpath_list(bool_vector, path_fmt, subst_list, int)", bind = False)
-    _alloc_runpath      = EnkfPrototype("char* ert_run_context_alloc_runpath(int, path_fmt, subst_list, int)", bind = False)
-    _get_size           = EnkfPrototype("int ert_run_context_get_size( ert_run_context )")
-    _free               = EnkfPrototype("void ert_run_context_free( ert_run_context )")
-    _iactive            = EnkfPrototype("bool ert_run_context_iactive( ert_run_context , int)")
-    _iget               = EnkfPrototype("run_arg_ref ert_run_context_iget_arg( ert_run_context , int)")
-    _get_id             = EnkfPrototype("char* ert_run_context_get_id( ert_run_context )")
-    _get_mask           = EnkfPrototype("bool_vector_obj ert_run_context_alloc_iactive( ert_run_context )")
-    _get_iter           = EnkfPrototype("int ert_run_context_get_iter( ert_run_context )")
-    _get_target_fs      = EnkfPrototype("enkf_fs_ref ert_run_context_get_update_target_fs( ert_run_context )")
-    _get_sim_fs         = EnkfPrototype("enkf_fs_ref ert_run_context_get_sim_fs( ert_run_context )")
-    _get_init_mode      = EnkfPrototype("enkf_init_mode_enum ert_run_context_get_init_mode( ert_run_context )")
+    _alloc              = ResPrototype("void* ert_run_context_alloc( enkf_run_mode_enum , enkf_init_mode_enum, enkf_fs , enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
+    _alloc_ensemble_experiment = ResPrototype("ert_run_context_obj ert_run_context_alloc_ENSEMBLE_EXPERIMENT( enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
+    _alloc_ensemble_smoother = ResPrototype("ert_run_context_obj ert_run_context_alloc_SMOOTHER_RUN( enkf_fs , enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)", bind = False)
+    _alloc_runpath_list = ResPrototype("stringlist_obj ert_run_context_alloc_runpath_list(bool_vector, path_fmt, subst_list, int)", bind = False)
+    _alloc_runpath      = ResPrototype("char* ert_run_context_alloc_runpath(int, path_fmt, subst_list, int)", bind = False)
+    _get_size           = ResPrototype("int ert_run_context_get_size( ert_run_context )")
+    _free               = ResPrototype("void ert_run_context_free( ert_run_context )")
+    _iactive            = ResPrototype("bool ert_run_context_iactive( ert_run_context , int)")
+    _iget               = ResPrototype("run_arg_ref ert_run_context_iget_arg( ert_run_context , int)")
+    _get_id             = ResPrototype("char* ert_run_context_get_id( ert_run_context )")
+    _get_mask           = ResPrototype("bool_vector_obj ert_run_context_alloc_iactive( ert_run_context )")
+    _get_iter           = ResPrototype("int ert_run_context_get_iter( ert_run_context )")
+    _get_target_fs      = ResPrototype("enkf_fs_ref ert_run_context_get_update_target_fs( ert_run_context )")
+    _get_sim_fs         = ResPrototype("enkf_fs_ref ert_run_context_get_sim_fs( ert_run_context )")
+    _get_init_mode      = ResPrototype("enkf_init_mode_enum ert_run_context_get_init_mode( ert_run_context )")
 
     def __init__(self , run_type , sim_fs, target_fs , mask , path_fmt , jobname_fmt, subst_list , itr, init_mode = EnkfInitModeEnum.INIT_CONDITIONAL):
         c_ptr = self._alloc( run_type, init_mode, sim_fs, target_fs, mask , path_fmt , jobname_fmt, subst_list, itr)

@@ -1,9 +1,9 @@
 import os.path
 from ecl.util.util import ArgPack, BoolVector
 
+from res import RES_LIB
 from res.job_queue import JobQueueManager, ForwardModelStatus
 from res.util import CThreadPool
-from res.enkf import ENKF_LIB
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.run_arg import RunArg
 from res.enkf.enums import EnkfRunType, EnkfInitModeEnum
@@ -23,7 +23,7 @@ class SimulationContext(object):
         """ :type: dict[int, RunArg] """
 
         self._thread_pool = CThreadPool(8)
-        self._thread_pool.addTaskFunction("submitJob", ENKF_LIB, "enkf_main_isubmit_job__")
+        self._thread_pool.addTaskFunction("submitJob", RES_LIB, "enkf_main_isubmit_job__")
 
         subst_list = self._ert.getDataKW( )
         path_fmt = self._ert.getModelConfig().getRunpathFormat()

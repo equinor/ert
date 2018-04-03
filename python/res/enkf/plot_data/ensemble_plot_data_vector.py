@@ -1,5 +1,5 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from ecl.util.util import CTime
 
 
@@ -7,10 +7,10 @@ from ecl.util.util import CTime
 class EnsemblePlotDataVector(BaseCClass):
     TYPE_NAME = "ensemble_plot_data_vector"
 
-    _size      = EnkfPrototype("int    enkf_plot_tvector_size(ensemble_plot_data_vector)")
-    _get_value = EnkfPrototype("double enkf_plot_tvector_iget_value(ensemble_plot_data_vector, int)")
-    _get_time  = EnkfPrototype("time_t enkf_plot_tvector_iget_time(ensemble_plot_data_vector, int)")
-    _is_active = EnkfPrototype("bool   enkf_plot_tvector_iget_active(ensemble_plot_data_vector, int)")
+    _size      = ResPrototype("int    enkf_plot_tvector_size(ensemble_plot_data_vector)")
+    _get_value = ResPrototype("double enkf_plot_tvector_iget_value(ensemble_plot_data_vector, int)")
+    _get_time  = ResPrototype("time_t enkf_plot_tvector_iget_time(ensemble_plot_data_vector, int)")
+    _is_active = ResPrototype("bool   enkf_plot_tvector_iget_active(ensemble_plot_data_vector, int)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")

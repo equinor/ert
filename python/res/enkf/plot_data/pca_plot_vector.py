@@ -1,18 +1,18 @@
 from cwrap import BaseCClass
 
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.util import Matrix
 
 
 class PcaPlotVector(BaseCClass):
     TYPE_NAME = "pca_plot_vector"
 
-    _alloc              = EnkfPrototype("void*  pca_plot_vector_alloc(int, matrix, matrix)", bind = False)
-    _size               = EnkfPrototype("int    pca_plot_vector_get_size(pca_plot_vector)")
-    _get                = EnkfPrototype("double pca_plot_vector_iget_sim_value(pca_plot_vector, int)")
-    _get_obs            = EnkfPrototype("double pca_plot_vector_get_obs_value(pca_plot_vector)")
-    _get_singular_value = EnkfPrototype("double pca_plot_vector_get_singular_value(pca_plot_vector)")
-    _free               = EnkfPrototype("void   pca_plot_vector_free(pca_plot_vector)")
+    _alloc              = ResPrototype("void*  pca_plot_vector_alloc(int, matrix, matrix)", bind = False)
+    _size               = ResPrototype("int    pca_plot_vector_get_size(pca_plot_vector)")
+    _get                = ResPrototype("double pca_plot_vector_iget_sim_value(pca_plot_vector, int)")
+    _get_obs            = ResPrototype("double pca_plot_vector_get_obs_value(pca_plot_vector)")
+    _get_singular_value = ResPrototype("double pca_plot_vector_get_singular_value(pca_plot_vector)")
+    _free               = ResPrototype("void   pca_plot_vector_free(pca_plot_vector)")
 
 
     def __init__(self, component, principal_component_matrix, observation_principal_component_matrix):
@@ -32,7 +32,7 @@ class PcaPlotVector(BaseCClass):
     def __getitem__(self, index):
         """
         @type index: int
-        @rtype: float 
+        @rtype: float
         """
         assert isinstance(index, int)
         return self._get(index)
@@ -50,7 +50,7 @@ class PcaPlotVector(BaseCClass):
     def getSingularValue(self):
         """ @rtype: float """
         return self._get_singular_value()
-        
+
 
     def free(self):
         self._free()

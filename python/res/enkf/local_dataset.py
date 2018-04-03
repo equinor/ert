@@ -1,19 +1,19 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from ecl.grid import EclRegion
 from ecl.util.geometry import GeoRegion
 
 class LocalDataset(BaseCClass):
     TYPE_NAME = "local_dataset"
 
-    _alloc       = EnkfPrototype("void* local_dataset_alloc(char*)", bind = False)
-    _size        = EnkfPrototype("int   local_dataset_get_size(local_dataset)")
-    _has_key     = EnkfPrototype("bool  local_dataset_has_key(local_dataset, char*)")
-    _free        = EnkfPrototype("void  local_dataset_free(local_dataset)")
-    _name        = EnkfPrototype("char* local_dataset_get_name(local_dataset)")
-    _add_node    = EnkfPrototype("void  local_dataset_add_node(local_dataset, char*)")
-    _del_node    = EnkfPrototype("void  local_dataset_del_node(local_dataset, char*)")
-    _active_list = EnkfPrototype("active_list_ref local_dataset_get_node_active_list(local_dataset, char*)")
+    _alloc       = ResPrototype("void* local_dataset_alloc(char*)", bind = False)
+    _size        = ResPrototype("int   local_dataset_get_size(local_dataset)")
+    _has_key     = ResPrototype("bool  local_dataset_has_key(local_dataset, char*)")
+    _free        = ResPrototype("void  local_dataset_free(local_dataset)")
+    _name        = ResPrototype("char* local_dataset_get_name(local_dataset)")
+    _add_node    = ResPrototype("void  local_dataset_add_node(local_dataset, char*)")
+    _del_node    = ResPrototype("void  local_dataset_del_node(local_dataset, char*)")
+    _active_list = ResPrototype("active_list_ref local_dataset_get_node_active_list(local_dataset, char*)")
 
     def __init__(self, name):
         raise NotImplementedError("Class can not be instantiated directly!")

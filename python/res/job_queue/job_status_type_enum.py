@@ -14,7 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCEnum
-from res.job_queue import JOB_QUEUE_LIB
 
 
 class JobStatusType(BaseCEnum):

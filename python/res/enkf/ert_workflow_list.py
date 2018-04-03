@@ -1,5 +1,5 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from ecl.util.util import StringList
 from res.util.substitution_list import SubstitutionList
 from res.job_queue import Workflow, WorkflowJob
@@ -8,15 +8,15 @@ from res.job_queue import Workflow, WorkflowJob
 class ErtWorkflowList(BaseCClass):
     TYPE_NAME = "ert_workflow_list"
 
-    _alloc_namelist = EnkfPrototype("stringlist_obj ert_workflow_list_alloc_namelist(ert_workflow_list)")
-    _has_workflow   = EnkfPrototype("bool ert_workflow_list_has_workflow(ert_workflow_list, char*)")
-    _get_workflow   = EnkfPrototype("workflow_ref ert_workflow_list_get_workflow(ert_workflow_list, char*)")
-    _get_context    = EnkfPrototype("subst_list_ref ert_workflow_list_get_context(ert_workflow_list)")
-    _add_job        = EnkfPrototype("void ert_workflow_list_add_job(ert_workflow_list, char*, char*)")
-    _has_job        = EnkfPrototype("bool ert_workflow_list_has_job(ert_workflow_list, char*)")
-    _get_job        = EnkfPrototype("workflow_job_ref ert_workflow_list_get_job(ert_workflow_list, char*)")
-    _get_job_names  = EnkfPrototype("stringlist_obj ert_workflow_list_get_job_names(ert_workflow_list)")
-    _free           = EnkfPrototype("void ert_workflow_list_free(ert_workflow_list)")
+    _alloc_namelist = ResPrototype("stringlist_obj ert_workflow_list_alloc_namelist(ert_workflow_list)")
+    _has_workflow   = ResPrototype("bool ert_workflow_list_has_workflow(ert_workflow_list, char*)")
+    _get_workflow   = ResPrototype("workflow_ref ert_workflow_list_get_workflow(ert_workflow_list, char*)")
+    _get_context    = ResPrototype("subst_list_ref ert_workflow_list_get_context(ert_workflow_list)")
+    _add_job        = ResPrototype("void ert_workflow_list_add_job(ert_workflow_list, char*, char*)")
+    _has_job        = ResPrototype("bool ert_workflow_list_has_job(ert_workflow_list, char*)")
+    _get_job        = ResPrototype("workflow_job_ref ert_workflow_list_get_job(ert_workflow_list, char*)")
+    _get_job_names  = ResPrototype("stringlist_obj ert_workflow_list_get_job_names(ert_workflow_list)")
+    _free           = ResPrototype("void ert_workflow_list_free(ert_workflow_list)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")

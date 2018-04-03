@@ -15,7 +15,7 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res.util import ResUtilPrototype
+from res import ResPrototype
 
 # The path_fmt implementation hinges strongly on variable length
 # argument lists in C  not clear if/how that maps over to Python,
@@ -24,9 +24,9 @@ from res.util import ResUtilPrototype
 
 class PathFormat(BaseCClass):
     TYPE_NAME = "path_fmt"
-    _alloc = ResUtilPrototype("void* path_fmt_alloc_directory_fmt(char*)", bind = False)
-    _str  = ResUtilPrototype("char* path_fmt_get_fmt(path_fmt)")
-    _free = ResUtilPrototype("void path_fmt_free(path_fmt)")
+    _alloc = ResPrototype("void* path_fmt_alloc_directory_fmt(char*)", bind = False)
+    _str  = ResPrototype("char* path_fmt_get_fmt(path_fmt)")
+    _free = ResPrototype("void path_fmt_free(path_fmt)")
 
     def __init__(self, path_fmt):
         c_ptr = self._alloc( path_fmt )

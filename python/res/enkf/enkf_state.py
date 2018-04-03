@@ -14,16 +14,16 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.enums import EnkfInitModeEnum, EnkfVarType
 from res.job_queue import JobStatusType
 
 
 class EnKFState(BaseCClass):
     TYPE_NAME       = "enkf_state"
-    _free           = EnkfPrototype("void* enkf_state_free( enkf_state )")
-    _get_ens_config = EnkfPrototype("ens_config_ref enkf_state_get_ensemble_config( enkf_state )")
-    _initialize     = EnkfPrototype("void enkf_state_initialize( enkf_state , enkf_fs , stringlist , enkf_init_mode_enum)")
+    _free           = ResPrototype("void* enkf_state_free( enkf_state )")
+    _get_ens_config = ResPrototype("ens_config_ref enkf_state_get_ensemble_config( enkf_state )")
+    _initialize     = ResPrototype("void enkf_state_initialize( enkf_state , enkf_fs , stringlist , enkf_init_mode_enum)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")

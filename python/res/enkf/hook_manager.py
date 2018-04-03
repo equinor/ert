@@ -1,15 +1,15 @@
 import os
 import sys
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 class HookManager(BaseCClass):
     TYPE_NAME = "hook_manager"
 
-    _get_runpath_list_file = EnkfPrototype("char* hook_manager_get_runpath_list_file(hook_manager)")
-    _get_runpath_list      = EnkfPrototype("runpath_list_ref  hook_manager_get_runpath_list(hook_manager)")
-    _iget_hook_workflow    = EnkfPrototype("hook_workflow_ref hook_manager_iget_hook_workflow(hook_manager, int)")
-    _size                  = EnkfPrototype("int hook_manager_get_size(hook_manager)")
+    _get_runpath_list_file = ResPrototype("char* hook_manager_get_runpath_list_file(hook_manager)")
+    _get_runpath_list      = ResPrototype("runpath_list_ref  hook_manager_get_runpath_list(hook_manager)")
+    _iget_hook_workflow    = ResPrototype("hook_workflow_ref hook_manager_iget_hook_workflow(hook_manager, int)")
+    _size                  = ResPrototype("int hook_manager_get_size(hook_manager)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")

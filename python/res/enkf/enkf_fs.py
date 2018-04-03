@@ -15,7 +15,7 @@
 #  for more details.
 import sys
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf import TimeMap, StateMap, SummaryKeySet, CustomKWConfigSet
 from res.enkf.enums import EnKFFSType
 
@@ -23,24 +23,24 @@ from res.enkf.enums import EnKFFSType
 class EnkfFs(BaseCClass):
     TYPE_NAME = "enkf_fs"
 
-    _mount                = EnkfPrototype("void* enkf_fs_mount(char* )", bind = False)
-    _exists               = EnkfPrototype("bool  enkf_fs_exists(char*)", bind = False)
-    _disk_version         = EnkfPrototype("int   enkf_fs_disk_version(char*)", bind = False)
-    _update_disk_version  = EnkfPrototype("bool  enkf_fs_update_disk_version(char*, int, int)", bind = False)
-    _decref               = EnkfPrototype("int   enkf_fs_decref(enkf_fs)")
-    _incref               = EnkfPrototype("int   enkf_fs_incref(enkf_fs)")
-    _get_refcount         = EnkfPrototype("int   enkf_fs_get_refcount(enkf_fs)")
-    _has_node             = EnkfPrototype("bool  enkf_fs_has_node(enkf_fs,     char*,  int,   int, int, int)")
-    _has_vector           = EnkfPrototype("bool  enkf_fs_has_vector(enkf_fs,   char*,  int,   int, int)")
-    _get_case_name        = EnkfPrototype("char* enkf_fs_get_case_name(enkf_fs)")
-    _is_read_only         = EnkfPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
-    _is_running           = EnkfPrototype("bool  enkf_fs_is_running(enkf_fs)")
-    _fsync                = EnkfPrototype("void  enkf_fs_fsync(enkf_fs)")
-    _create               = EnkfPrototype("enkf_fs_ref   enkf_fs_create_fs(char* , enkf_fs_type_enum , void* , bool)", bind = False)
-    _get_time_map         = EnkfPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
-    _get_state_map        = EnkfPrototype("state_map_ref enkf_fs_get_state_map(enkf_fs)")
-    _summary_key_set      = EnkfPrototype("summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)")
-    _config_kw_config_set = EnkfPrototype("custom_kw_config_set_ref enkf_fs_get_custom_kw_config_set(enkf_fs)")
+    _mount                = ResPrototype("void* enkf_fs_mount(char* )", bind = False)
+    _exists               = ResPrototype("bool  enkf_fs_exists(char*)", bind = False)
+    _disk_version         = ResPrototype("int   enkf_fs_disk_version(char*)", bind = False)
+    _update_disk_version  = ResPrototype("bool  enkf_fs_update_disk_version(char*, int, int)", bind = False)
+    _decref               = ResPrototype("int   enkf_fs_decref(enkf_fs)")
+    _incref               = ResPrototype("int   enkf_fs_incref(enkf_fs)")
+    _get_refcount         = ResPrototype("int   enkf_fs_get_refcount(enkf_fs)")
+    _has_node             = ResPrototype("bool  enkf_fs_has_node(enkf_fs,     char*,  int,   int, int, int)")
+    _has_vector           = ResPrototype("bool  enkf_fs_has_vector(enkf_fs,   char*,  int,   int, int)")
+    _get_case_name        = ResPrototype("char* enkf_fs_get_case_name(enkf_fs)")
+    _is_read_only         = ResPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
+    _is_running           = ResPrototype("bool  enkf_fs_is_running(enkf_fs)")
+    _fsync                = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
+    _create               = ResPrototype("enkf_fs_ref   enkf_fs_create_fs(char* , enkf_fs_type_enum , void* , bool)", bind = False)
+    _get_time_map         = ResPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
+    _get_state_map        = ResPrototype("state_map_ref enkf_fs_get_state_map(enkf_fs)")
+    _summary_key_set      = ResPrototype("summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)")
+    _config_kw_config_set = ResPrototype("custom_kw_config_set_ref enkf_fs_get_custom_kw_config_set(enkf_fs)")
 
     def __init__(self, mount_point):
         c_ptr = self._mount(mount_point)

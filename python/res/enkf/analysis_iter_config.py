@@ -14,20 +14,20 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 class AnalysisIterConfig(BaseCClass):
     TYPE_NAME = "analysis_iter_config"
 
-    _alloc              = EnkfPrototype("void* analysis_iter_config_alloc( )", bind = False)
-    _free               = EnkfPrototype("void  analysis_iter_config_free( analysis_iter_config )")
-    _set_num_iterations = EnkfPrototype("void  analysis_iter_config_set_num_iterations(analysis_iter_config, int)")
-    _get_num_iterations = EnkfPrototype("int   analysis_iter_config_get_num_iterations(analysis_iter_config)")
-    _get_num_retries    = EnkfPrototype("int   analysis_iter_config_get_num_retries_per_iteration(analysis_iter_config)")
-    _num_iterations_set = EnkfPrototype("bool  analysis_iter_config_num_iterations_set(analysis_iter_config)")
-    _set_case_fmt       = EnkfPrototype("void  analysis_iter_config_set_case_fmt( analysis_iter_config , char* )")
-    _get_case_fmt       = EnkfPrototype("char* analysis_iter_config_get_case_fmt( analysis_iter_config)")
-    _case_fmt_set       = EnkfPrototype("bool  analysis_iter_config_case_fmt_set(analysis_iter_config)")
+    _alloc              = ResPrototype("void* analysis_iter_config_alloc( )", bind = False)
+    _free               = ResPrototype("void  analysis_iter_config_free( analysis_iter_config )")
+    _set_num_iterations = ResPrototype("void  analysis_iter_config_set_num_iterations(analysis_iter_config, int)")
+    _get_num_iterations = ResPrototype("int   analysis_iter_config_get_num_iterations(analysis_iter_config)")
+    _get_num_retries    = ResPrototype("int   analysis_iter_config_get_num_retries_per_iteration(analysis_iter_config)")
+    _num_iterations_set = ResPrototype("bool  analysis_iter_config_num_iterations_set(analysis_iter_config)")
+    _set_case_fmt       = ResPrototype("void  analysis_iter_config_set_case_fmt( analysis_iter_config , char* )")
+    _get_case_fmt       = ResPrototype("char* analysis_iter_config_get_case_fmt( analysis_iter_config)")
+    _case_fmt_set       = ResPrototype("bool  analysis_iter_config_case_fmt_set(analysis_iter_config)")
 
     def __init__(self):
         c_ptr = self._alloc()

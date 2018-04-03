@@ -15,17 +15,18 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res.sched import SchedFile, HistorySourceEnum, SchedulePrototype
+from res import ResPrototype
+from res.sched import SchedFile, HistorySourceEnum
 from ecl.summary import EclSum
 
 class History(BaseCClass):
     TYPE_NAME = "history"
 
-    _alloc_from_refcase    = SchedulePrototype("void* history_alloc_from_refcase(ecl_sum, bool)", bind = False)
-    _alloc_from_sched_file = SchedulePrototype("void* history_alloc_from_sched_file(char*, sched_file)", bind = False)
-    _get_source_string     = SchedulePrototype("char* history_get_source_string(history_source_enum)", bind = False)
-    _free                  = SchedulePrototype("void  history_free( history )")
-    # _history_get_source_type = SchedulePrototype("history_source_type_enum history_get_source_type(char*)", bind = False)
+    _alloc_from_refcase    = ResPrototype("void* history_alloc_from_refcase(ecl_sum, bool)", bind = False)
+    _alloc_from_sched_file = ResPrototype("void* history_alloc_from_sched_file(char*, sched_file)", bind = False)
+    _get_source_string     = ResPrototype("char* history_get_source_string(history_source_enum)", bind = False)
+    _free                  = ResPrototype("void  history_free( history )")
+    # _history_get_source_type = ResPrototype("history_source_type_enum history_get_source_type(char*)", bind = False)
 
     def __init__(self, refcase = None, use_history = False, sched_file = None):
         """

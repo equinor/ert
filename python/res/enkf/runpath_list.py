@@ -1,25 +1,25 @@
 from collections import namedtuple
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 RunpathNode = namedtuple("RunpathNode", ["realization", "iteration", "runpath", "basename"])
 
 class RunpathList(BaseCClass):
     TYPE_NAME = "runpath_list"
-    _alloc     = EnkfPrototype("void* runpath_list_alloc(char*)" , bind = False)
-    _free      = EnkfPrototype("void  runpath_list_free(runpath_list)")
-    _add       = EnkfPrototype("void  runpath_list_add(runpath_list, int, int, char*, char*)")
-    _clear     = EnkfPrototype("void  runpath_list_clear(runpath_list)")
-    _size      = EnkfPrototype("int   runpath_list_size(runpath_list)")
-    _iens      = EnkfPrototype("int   runpath_list_iget_iens(runpath_list, int)")
-    _iteration = EnkfPrototype("int   runpath_list_iget_iter(runpath_list, int)")
-    _runpath   = EnkfPrototype("char* runpath_list_iget_runpath(runpath_list, int)")
-    _basename  = EnkfPrototype("char* runpath_list_iget_basename(runpath_list, int)")
-    _export    = EnkfPrototype("void  runpath_list_fprintf(runpath_list)")
-    _load      = EnkfPrototype("bool  runpath_list_load(runpath_list)")
+    _alloc     = ResPrototype("void* runpath_list_alloc(char*)" , bind = False)
+    _free      = ResPrototype("void  runpath_list_free(runpath_list)")
+    _add       = ResPrototype("void  runpath_list_add(runpath_list, int, int, char*, char*)")
+    _clear     = ResPrototype("void  runpath_list_clear(runpath_list)")
+    _size      = ResPrototype("int   runpath_list_size(runpath_list)")
+    _iens      = ResPrototype("int   runpath_list_iget_iens(runpath_list, int)")
+    _iteration = ResPrototype("int   runpath_list_iget_iter(runpath_list, int)")
+    _runpath   = ResPrototype("char* runpath_list_iget_runpath(runpath_list, int)")
+    _basename  = ResPrototype("char* runpath_list_iget_basename(runpath_list, int)")
+    _export    = ResPrototype("void  runpath_list_fprintf(runpath_list)")
+    _load      = ResPrototype("bool  runpath_list_load(runpath_list)")
 
-    _get_export_file = EnkfPrototype("char* runpath_list_get_export_file(runpath_list)")
-    _set_export_file = EnkfPrototype("void runpath_list_set_export_file(runpath_list, char*)")
+    _get_export_file = ResPrototype("char* runpath_list_get_export_file(runpath_list)")
+    _set_export_file = ResPrototype("void runpath_list_set_export_file(runpath_list, char*)")
 
     def __init__(self, export_file):
         c_ptr = self._alloc( export_file )

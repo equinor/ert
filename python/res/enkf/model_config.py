@@ -17,36 +17,36 @@ from cwrap import BaseCClass
 
 from ecl.summary import EclSum
 
+from res import ResPrototype
 from res.job_queue import ForwardModel
 from res.sched import HistorySourceEnum, SchedFile
 from res.util import PathFormat
-from res.enkf import EnkfPrototype
 
 
 class ModelConfig(BaseCClass):
     TYPE_NAME = "model_config"
 
-    _free                        = EnkfPrototype("void  model_config_free( model_config )")
-    _get_forward_model           = EnkfPrototype("forward_model_ref model_config_get_forward_model(model_config)")
-    _get_max_internal_submit     = EnkfPrototype("int   model_config_get_max_internal_submit(model_config)")
-    _set_max_internal_submit     = EnkfPrototype("void  model_config_set_max_internal_submit(model_config, int)")
-    _get_runpath_as_char         = EnkfPrototype("char* model_config_get_runpath_as_char(model_config)")
-    _select_runpath              = EnkfPrototype("bool  model_config_select_runpath(model_config, char*)")
-    _set_runpath                 = EnkfPrototype("void  model_config_set_runpath(model_config, char*)")
-    _get_enspath                 = EnkfPrototype("char* model_config_get_enspath(model_config)")
-    _get_fs_type                 = EnkfPrototype("enkf_fs_type_enum model_config_get_dbase_type(model_config)")
-    _get_history                 = EnkfPrototype("history_ref model_config_get_history(model_config)")
-    _get_history_source          = EnkfPrototype("history_source_enum model_config_get_history_source(model_config)")
-    _select_history              = EnkfPrototype("bool  model_config_select_history(model_config, history_source_enum, sched_file, ecl_sum)")
-    _has_history                 = EnkfPrototype("bool  model_config_has_history(model_config)")
-    _gen_kw_export_name          = EnkfPrototype("char* model_config_get_gen_kw_export_name(model_config)")
-    _runpath_requires_iterations = EnkfPrototype("bool  model_config_runpath_requires_iter(model_config)")
-    _get_jobname_fmt             = EnkfPrototype("char* model_config_get_jobname_fmt(model_config)")
-    _get_runpath_fmt             = EnkfPrototype("path_fmt_ref model_config_get_runpath_fmt(model_config)")
-    _get_num_realizations        = EnkfPrototype("int model_config_get_num_realizations(model_config)")
-    _get_obs_config_file         = EnkfPrototype("char* model_config_get_obs_config_file(model_config)")
-    _get_data_root               = EnkfPrototype("char* model_config_get_data_root(model_config)")
-    _set_data_root               = EnkfPrototype("void model_config_get_data_root(model_config, char*)")
+    _free                        = ResPrototype("void  model_config_free( model_config )")
+    _get_forward_model           = ResPrototype("forward_model_ref model_config_get_forward_model(model_config)")
+    _get_max_internal_submit     = ResPrototype("int   model_config_get_max_internal_submit(model_config)")
+    _set_max_internal_submit     = ResPrototype("void  model_config_set_max_internal_submit(model_config, int)")
+    _get_runpath_as_char         = ResPrototype("char* model_config_get_runpath_as_char(model_config)")
+    _select_runpath              = ResPrototype("bool  model_config_select_runpath(model_config, char*)")
+    _set_runpath                 = ResPrototype("void  model_config_set_runpath(model_config, char*)")
+    _get_enspath                 = ResPrototype("char* model_config_get_enspath(model_config)")
+    _get_fs_type                 = ResPrototype("enkf_fs_type_enum model_config_get_dbase_type(model_config)")
+    _get_history                 = ResPrototype("history_ref model_config_get_history(model_config)")
+    _get_history_source          = ResPrototype("history_source_enum model_config_get_history_source(model_config)")
+    _select_history              = ResPrototype("bool  model_config_select_history(model_config, history_source_enum, sched_file, ecl_sum)")
+    _has_history                 = ResPrototype("bool  model_config_has_history(model_config)")
+    _gen_kw_export_name          = ResPrototype("char* model_config_get_gen_kw_export_name(model_config)")
+    _runpath_requires_iterations = ResPrototype("bool  model_config_runpath_requires_iter(model_config)")
+    _get_jobname_fmt             = ResPrototype("char* model_config_get_jobname_fmt(model_config)")
+    _get_runpath_fmt             = ResPrototype("path_fmt_ref model_config_get_runpath_fmt(model_config)")
+    _get_num_realizations        = ResPrototype("int model_config_get_num_realizations(model_config)")
+    _get_obs_config_file         = ResPrototype("char* model_config_get_obs_config_file(model_config)")
+    _get_data_root               = ResPrototype("char* model_config_get_data_root(model_config)")
+    _set_data_root               = ResPrototype("void model_config_get_data_root(model_config, char*)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")

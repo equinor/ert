@@ -16,15 +16,15 @@
 
 
 from cwrap import BaseCClass
-from res.config import ConfigPrototype
+from res import ResPrototype
 
 
 class ConfigPathElm(BaseCClass):
     TYPE_NAME = "config_path_elm"
 
-    _free      = ConfigPrototype("void config_path_elm_free(config_path_elm)")
-    _rel_path  = ConfigPrototype("char* config_path_elm_get_relpath(config_path_elm)")
-    _abs_path  = ConfigPrototype("char* config_path_elm_get_abspath(config_path_elm)")
+    _free      = ResPrototype("void config_path_elm_free(config_path_elm)")
+    _rel_path  = ResPrototype("char* config_path_elm_get_relpath(config_path_elm)")
+    _abs_path  = ResPrototype("char* config_path_elm_get_abspath(config_path_elm)")
 
 
     def __init__(self):

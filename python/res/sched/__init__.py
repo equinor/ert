@@ -20,14 +20,6 @@ import ecl.util.geometry
 
 from cwrap import Prototype
 
-class SchedulePrototype(Prototype):
-    lib = res.load("libsched")
-
-    def __init__(self, prototype, bind=True):
-        super(SchedulePrototype, self).__init__(SchedulePrototype.lib, prototype, bind=bind)
-
-SCHED_LIB = res.load("libsched")
-
 from .sched_file import SchedFile
 from .history_source_enum import HistorySourceEnum
 from .history import History

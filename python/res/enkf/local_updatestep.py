@@ -1,15 +1,16 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype, LocalMinistep
+from res import ResPrototype
+from res.enkf import LocalMinistep
 
 class LocalUpdateStep(BaseCClass):
     TYPE_NAME = "local_updatestep"
 
-    _alloc           = EnkfPrototype("void  local_updatestep_alloc(char*)", bind = False)
-    _size            = EnkfPrototype("int   local_updatestep_get_num_ministep(local_updatestep)")
-    _iget_ministep   = EnkfPrototype("local_ministep_ref local_updatestep_iget_ministep(local_updatestep, int)")
-    _free            = EnkfPrototype("void  local_updatestep_free(local_updatestep)")
-    _attach_ministep = EnkfPrototype("void  local_updatestep_add_ministep(local_updatestep, local_ministep)")
-    _name            = EnkfPrototype("char* local_updatestep_get_name(local_updatestep)")
+    _alloc           = ResPrototype("void  local_updatestep_alloc(char*)", bind = False)
+    _size            = ResPrototype("int   local_updatestep_get_num_ministep(local_updatestep)")
+    _iget_ministep   = ResPrototype("local_ministep_ref local_updatestep_iget_ministep(local_updatestep, int)")
+    _free            = ResPrototype("void  local_updatestep_free(local_updatestep)")
+    _attach_ministep = ResPrototype("void  local_updatestep_add_ministep(local_updatestep, local_ministep)")
+    _name            = ResPrototype("char* local_updatestep_get_name(local_updatestep)")
 
     def __init__(self, updatestep_key):
         raise NotImplementedError("Class can not be instantiated directly!")

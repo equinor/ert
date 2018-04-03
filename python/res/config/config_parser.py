@@ -20,22 +20,23 @@ import warnings
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
-from res.config import (ContentTypeEnum, ConfigContent, ConfigPrototype,
+from res import ResPrototype
+from res.config import (ContentTypeEnum, ConfigContent,
                         UnrecognizedEnum, ConfigPathElm)
 
 
 class ConfigParser(BaseCClass):
     TYPE_NAME = "config_parser"
 
-    _alloc = ConfigPrototype("void* config_alloc()", bind=False)
-    _add   = ConfigPrototype("schema_item_ref config_add_schema_item(config_parser, char*, bool)")
-    _free  = ConfigPrototype("void config_free(config_parser)")
-    _parse = ConfigPrototype("config_content_obj config_parse(config_parser, char*, char*, char*, char*, hash, config_unrecognized_enum, bool)")
-    _size  = ConfigPrototype("int config_get_schema_size(config_parser)");
-    _get_schema_item = ConfigPrototype("schema_item_ref config_get_schema_item(config_parser, char*)")
-    _has_schema_item = ConfigPrototype("bool config_has_schema_item(config_parser, char*)")
-    _add_key_value   = ConfigPrototype("bool config_parser_add_key_values(config_parser, config_content, char*, stringlist, config_path_elm, char*, config_unrecognized_enum)")
-    _validate        = ConfigPrototype("void config_validate(config_parser, config_content)")
+    _alloc = ResPrototype("void* config_alloc()", bind=False)
+    _add   = ResPrototype("schema_item_ref config_add_schema_item(config_parser, char*, bool)")
+    _free  = ResPrototype("void config_free(config_parser)")
+    _parse = ResPrototype("config_content_obj config_parse(config_parser, char*, char*, char*, char*, hash, config_unrecognized_enum, bool)")
+    _size  = ResPrototype("int config_get_schema_size(config_parser)");
+    _get_schema_item = ResPrototype("schema_item_ref config_get_schema_item(config_parser, char*)")
+    _has_schema_item = ResPrototype("bool config_has_schema_item(config_parser, char*)")
+    _add_key_value   = ResPrototype("bool config_parser_add_key_values(config_parser, config_content, char*, stringlist, config_path_elm, char*, config_unrecognized_enum)")
+    _validate        = ResPrototype("void config_validate(config_parser, config_content)")
 
 
     def __init__(self):

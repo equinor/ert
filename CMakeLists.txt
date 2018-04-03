@@ -39,6 +39,7 @@ endif()
 
 #-----------------------------------------------------------------
 
+option( BUILD_APPLICATIONS  "Build some small - mostly stale  -applications" OFF)
 option( BUILD_TESTS         "Should the tests be built"             OFF)
 option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
 option( ENABLE_PYTHON       "Enable the python wrappers"            ON )
@@ -122,13 +123,7 @@ include(CheckFunctionExists)
 check_function_exists( regexec ERT_HAVE_REGEXP )
 #-----------------------------------------------------------------
 
-add_subdirectory(libres_util)
-add_subdirectory(libconfig)
-add_subdirectory(libsched)
-add_subdirectory(librms)
-add_subdirectory(libanalysis)
-add_subdirectory(libjob_queue)
-add_subdirectory(libenkf)
+add_subdirectory(lib)
 add_subdirectory(python)
 add_subdirectory(applications)
 
@@ -142,7 +137,7 @@ install(PROGRAMS bin/job_dispatch.py DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 install(EXPORT res-config
         DESTINATION share/cmake/res
         NAMESPACE res::)
-export(TARGETS res_util analysis config enkf job_queue rms sched
+export(TARGETS res
         NAMESPACE res::
         FILE resConfig.cmake)
 export(PACKAGE res)

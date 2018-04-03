@@ -87,7 +87,7 @@ class RMLTest(ResTest):
         return AnalysisModule(lib_name = self.libname)
 
     def test_load_status_enum(self):
-        source_file_path = "libanalysis/include/ert/analysis/analysis_module.h"
+        source_file_path = "lib/include/ert/analysis/analysis_module.h"
         self.assertEnumIsFullyDefined(AnalysisModuleLoadStatusEnum, "analysis_module_load_status_enum", source_file_path)
 
 

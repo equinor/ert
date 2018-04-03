@@ -15,17 +15,17 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf import ActiveMode
 
 class ActiveList(BaseCClass):
     TYPE_NAME = "active_list"
 
-    _alloc     = EnkfPrototype("void* active_list_alloc()", bind = False)
-    _free      = EnkfPrototype("void  active_list_free(active_list)")
-    _add_index = EnkfPrototype("void  active_list_add_index(active_list , int)")
-    _asize     = EnkfPrototype("int   active_list_get_active_size(active_list, int)")
-    _get_mode  = EnkfPrototype("active_mode_enum active_list_get_mode(active_list)")
+    _alloc     = ResPrototype("void* active_list_alloc()", bind = False)
+    _free      = ResPrototype("void  active_list_free(active_list)")
+    _add_index = ResPrototype("void  active_list_add_index(active_list , int)")
+    _asize     = ResPrototype("int   active_list_get_active_size(active_list, int)")
+    _get_mode  = ResPrototype("active_mode_enum active_list_get_mode(active_list)")
 
     def __init__(self):
         c_ptr = self._alloc()

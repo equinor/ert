@@ -1,19 +1,19 @@
 from cwrap import BaseCClass
-from res.util import ResUtilPrototype
+from res import ResPrototype
 
 
 class SubstitutionList(BaseCClass):
     TYPE_NAME = "subst_list"
 
-    _alloc = ResUtilPrototype("void* subst_list_alloc(void*)" , bind = False)
-    _free = ResUtilPrototype("void subst_list_free(subst_list)")
-    _size = ResUtilPrototype("int subst_list_get_size(subst_list)")
-    _iget_key = ResUtilPrototype("char* subst_list_iget_key(subst_list, int)")
-    _iget_value = ResUtilPrototype("char* subst_list_iget_value(subst_list, int)")
-    _get_value = ResUtilPrototype("char* subst_list_get_value(subst_list, char*)")
-    _has_key = ResUtilPrototype("bool subst_list_has_key(subst_list, char*)")
-    _get_doc = ResUtilPrototype("char* subst_list_get_doc_string(subst_list, char*)")
-    _append_copy = ResUtilPrototype("void subst_list_append_copy(subst_list, char*, char*, char*)")
+    _alloc = ResPrototype("void* subst_list_alloc(void*)" , bind = False)
+    _free = ResPrototype("void subst_list_free(subst_list)")
+    _size = ResPrototype("int subst_list_get_size(subst_list)")
+    _iget_key = ResPrototype("char* subst_list_iget_key(subst_list, int)")
+    _iget_value = ResPrototype("char* subst_list_iget_value(subst_list, int)")
+    _get_value = ResPrototype("char* subst_list_get_value(subst_list, char*)")
+    _has_key = ResPrototype("bool subst_list_has_key(subst_list, char*)")
+    _get_doc = ResPrototype("char* subst_list_get_doc_string(subst_list, char*)")
+    _append_copy = ResPrototype("void subst_list_append_copy(subst_list, char*, char*, char*)")
 
 
     def __init__(self):

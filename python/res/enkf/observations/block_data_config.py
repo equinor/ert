@@ -15,7 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 from res.enkf import NodeId, FieldConfig
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 import ctypes
 
 class BlockDataConfig(BaseCClass):

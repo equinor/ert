@@ -2,16 +2,16 @@ from tests import ResTest
 from ecl.util.util import BoolVector
 from res.test import ErtTestContext
 
+from res import ResPrototype
 from res.enkf.data import EnkfNode
 from res.enkf.config import GenDataConfig
-from res.enkf import EnkfPrototype
 from res.enkf import NodeId, RunArg
 from res.enkf import ForwardLoadContext
 
 
 class GenDataConfigTest(ResTest):
-    _get_active_mask    = EnkfPrototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind = False)
-    _update_active_mask = EnkfPrototype("void gen_data_config_update_active( gen_data_config, forward_load_context , bool_vector)", bind = False)
+    _get_active_mask    = ResPrototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind = False)
+    _update_active_mask = ResPrototype("void gen_data_config_update_active( gen_data_config, forward_load_context , bool_vector)", bind = False)
 
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/with_GEN_DATA/config")

@@ -10,11 +10,11 @@ add_executable(rms_stat    rms/rms_stat.c)
 add_executable(rms_test    rms/rms_test.c)
 add_executable(tag_list    rms/tag_list.c)
 
-target_link_libraries(rms_extract rms)
-target_link_libraries(rms_setname rms)
-target_link_libraries(rms_stat    rms)
-target_link_libraries(rms_test    rms)
-target_link_libraries(tag_list    rms)
+target_link_libraries(rms_extract res)
+target_link_libraries(rms_setname res)
+target_link_libraries(rms_stat    res)
+target_link_libraries(rms_test    res)
+target_link_libraries(tag_list    res)
 
 install(TARGETS rms_extract
                 rms_setname
@@ -24,7 +24,7 @@ install(TARGETS rms_extract
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_executable(ert_module_test analysis/ert_module_test.c)
-target_link_libraries(ert_module_test analysis)
+target_link_libraries(ert_module_test res)
 install(TARGETS ert_module_test RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if (BUILD_TESTS)
@@ -34,10 +34,10 @@ endif ()
 
 if (LSF_LIBRARY)
    add_executable(block_node job_queue/block_node.c)
-   target_link_libraries(block_node job_queue)
+   target_link_libraries(block_node res)
    install(TARGETS block_node RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
 add_executable(sched_summary.x sched/sched_summary.c)
-target_link_libraries(sched_summary.x sched ecl)
+target_link_libraries(sched_summary.x res)
 install(TARGETS sched_summary.x RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

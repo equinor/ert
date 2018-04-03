@@ -1,46 +1,46 @@
-#  Copyright (C) 2013  Statoil ASA, Norway. 
-#   
-#  The file 'time_map.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2013  Statoil ASA, Norway.
+#
+#  The file 'time_map.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-import errno 
+import errno
 
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from ecl.util.util import CTime
 
 
 class TimeMap(BaseCClass):
     TYPE_NAME = "time_map"
 
-    _fread_alloc_readonly       = EnkfPrototype("void*  time_map_fread_alloc_readonly(char*)", bind = False)
-    _alloc                      = EnkfPrototype("void*  time_map_alloc()", bind = False)
-    _load                       = EnkfPrototype("bool   time_map_fread(time_map , char*)")
-    _save                       = EnkfPrototype("void   time_map_fwrite(time_map , char*)")
-    _fload                      = EnkfPrototype("bool   time_map_fscanf(time_map , char*)")
-    _iget_sim_days              = EnkfPrototype("double time_map_iget_sim_days(time_map, int)")
-    _iget                       = EnkfPrototype("time_t time_map_iget(time_map, int)")
-    _size                       = EnkfPrototype("int    time_map_get_size(time_map)")
-    _try_update                 = EnkfPrototype("bool   time_map_try_update(time_map , int , time_t)")
-    _is_strict                  = EnkfPrototype("bool   time_map_is_strict( time_map )")
-    _set_strict                 = EnkfPrototype("void   time_map_set_strict( time_map , bool)")
-    _lookup_time                = EnkfPrototype("int    time_map_lookup_time( time_map , time_t)")
-    _lookup_time_with_tolerance = EnkfPrototype("int    time_map_lookup_time_with_tolerance( time_map , time_t , int , int)")
-    _lookup_days                = EnkfPrototype("int    time_map_lookup_days( time_map ,         double)")
-    _last_step                  = EnkfPrototype("int    time_map_get_last_step( time_map )")
-    _upgrade107                 = EnkfPrototype("void   time_map_summary_upgrade107( time_map , ecl_sum )")
-    _free                       = EnkfPrototype("void   time_map_free( time_map )")
+    _fread_alloc_readonly       = ResPrototype("void*  time_map_fread_alloc_readonly(char*)", bind = False)
+    _alloc                      = ResPrototype("void*  time_map_alloc()", bind = False)
+    _load                       = ResPrototype("bool   time_map_fread(time_map , char*)")
+    _save                       = ResPrototype("void   time_map_fwrite(time_map , char*)")
+    _fload                      = ResPrototype("bool   time_map_fscanf(time_map , char*)")
+    _iget_sim_days              = ResPrototype("double time_map_iget_sim_days(time_map, int)")
+    _iget                       = ResPrototype("time_t time_map_iget(time_map, int)")
+    _size                       = ResPrototype("int    time_map_get_size(time_map)")
+    _try_update                 = ResPrototype("bool   time_map_try_update(time_map , int , time_t)")
+    _is_strict                  = ResPrototype("bool   time_map_is_strict( time_map )")
+    _set_strict                 = ResPrototype("void   time_map_set_strict( time_map , bool)")
+    _lookup_time                = ResPrototype("int    time_map_lookup_time( time_map , time_t)")
+    _lookup_time_with_tolerance = ResPrototype("int    time_map_lookup_time_with_tolerance( time_map , time_t , int , int)")
+    _lookup_days                = ResPrototype("int    time_map_lookup_days( time_map ,         double)")
+    _last_step                  = ResPrototype("int    time_map_get_last_step( time_map )")
+    _upgrade107                 = ResPrototype("void   time_map_summary_upgrade107( time_map , ecl_sum )")
+    _free                       = ResPrototype("void   time_map_free( time_map )")
 
     def __init__(self, filename = None):
         c_ptr = self._alloc()
@@ -79,7 +79,7 @@ class TimeMap(BaseCClass):
 
     def setStrict(self , strict):
         return self._set_strict(strict)
-        
+
 
     def getSimulationDays(self, step):
         """ @rtype: double """
@@ -134,15 +134,15 @@ class TimeMap(BaseCClass):
 
     def lookupTime(self , time , tolerance_seconds_before = 0, tolerance_seconds_after = 0):
         """Will look up the report step corresponding to input @time.
-        
+
         If the tolerance arguments tolerance_seconds_before and
         tolerance_seconds_after have the default value zero we require
         an exact match between input time argument and the content of
-        the time map. 
+        the time map.
 
         If the tolerance arguments are supplied the function will
         search through the time_map for the report step closest to the
-        time argument, which satisfies the tolerance criteria.  
+        time argument, which satisfies the tolerance criteria.
 
         With the call:
 
@@ -173,7 +173,7 @@ class TimeMap(BaseCClass):
             return index
         else:
             raise ValueError("The days: %s was not found in the time_map instance" % days)
-            
+
 
     def __len__(self):
         """ @rtype: int """
@@ -190,7 +190,7 @@ class TimeMap(BaseCClass):
         return self._create_repr(cnt)
 
     def dump(self):
-        """ 
+        """
         Will return a list of tuples (step , CTime , days).
         """
         step_list = []

@@ -1,22 +1,22 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'site_config.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
+#  The file 'site_config.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from os.path import isfile
 
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.job_queue import JobQueue, ExtJoblist
 from ecl.util.util import StringList, Hash
 
@@ -24,37 +24,37 @@ from ecl.util.util import StringList, Hash
 class SiteConfig(BaseCClass):
     TYPE_NAME = "site_config"
 
-    _alloc                 = EnkfPrototype("void* site_config_alloc_load_user_config(char*)", bind=False)
-    _free                  = EnkfPrototype("void site_config_free( site_config )")
-    _get_lsf_queue         = EnkfPrototype("char* site_config_get_lsf_queue(site_config)")
-    _set_lsf_queue         = EnkfPrototype("void site_config_set_lsf_queue(site_config, char*)")
-    _get_max_running_lsf   = EnkfPrototype("int site_config_get_max_running_lsf(site_config)")
-    _set_max_running_lsf   = EnkfPrototype("void site_config_set_max_running_lsf(site_config, int)")
-    _get_lsf_request       = EnkfPrototype("char* site_config_get_lsf_request(site_config)")
-    _set_lsf_request       = EnkfPrototype("void site_config_set_lsf_request(site_config, char*)")
-    _get_rsh_command       = EnkfPrototype("char* site_config_get_rsh_command(site_config)")
-    _set_rsh_command       = EnkfPrototype("void site_config_set_rsh_command(site_config, char*)")
-    _get_max_running_rsh   = EnkfPrototype("int site_config_get_max_running_rsh(site_config)")
-    _set_max_running_rsh   = EnkfPrototype("void site_config_set_max_running_rsh(site_config, int)")
-    _get_rsh_host_list     = EnkfPrototype("integer_hash_ref site_config_get_rsh_host_list(site_config)")
-    _clear_rsh_host_list   = EnkfPrototype("void site_config_clear_rsh_host_list(site_config)")
-    _add_rsh_host          = EnkfPrototype("void site_config_add_rsh_host(site_config, char*, int)")
-    _get_max_running_local = EnkfPrototype("int site_config_get_max_running_local(site_config)")
-    _set_max_running_local = EnkfPrototype("void site_config_set_max_running_local(site_config, int)")
-    _get_installed_jobs    = EnkfPrototype("ext_joblist_ref site_config_get_installed_jobs(site_config)")
-    _get_license_root_path = EnkfPrototype("char* site_config_get_license_root_path(site_config)")
-    _set_license_root_path = EnkfPrototype("void site_config_set_license_root_path(site_config, char*)")
-    _get_path_variables    = EnkfPrototype("stringlist_ref site_config_get_path_variables(site_config)")
-    _get_path_values       = EnkfPrototype("stringlist_ref site_config_get_path_values(site_config)")
-    _clear_pathvar         = EnkfPrototype("void site_config_clear_pathvar(site_config)")
-    _update_pathvar        = EnkfPrototype("void site_config_update_pathvar(site_config, char*, char*)")
-    _get_location          = EnkfPrototype("char* site_config_get_location(site_config)")
-    _has_driver            = EnkfPrototype("bool site_config_has_queue_driver(site_config, char*)")
-    _get_config_file       = EnkfPrototype("char* site_config_get_config_file(site_config)")
-    _get_queue_config      = EnkfPrototype("queue_config_ref site_config_get_queue_config(site_config)")
-    _get_umask             = EnkfPrototype("int site_config_get_umask(site_config)")
+    _alloc                 = ResPrototype("void* site_config_alloc_load_user_config(char*)", bind=False)
+    _free                  = ResPrototype("void site_config_free( site_config )")
+    _get_lsf_queue         = ResPrototype("char* site_config_get_lsf_queue(site_config)")
+    _set_lsf_queue         = ResPrototype("void site_config_set_lsf_queue(site_config, char*)")
+    _get_max_running_lsf   = ResPrototype("int site_config_get_max_running_lsf(site_config)")
+    _set_max_running_lsf   = ResPrototype("void site_config_set_max_running_lsf(site_config, int)")
+    _get_lsf_request       = ResPrototype("char* site_config_get_lsf_request(site_config)")
+    _set_lsf_request       = ResPrototype("void site_config_set_lsf_request(site_config, char*)")
+    _get_rsh_command       = ResPrototype("char* site_config_get_rsh_command(site_config)")
+    _set_rsh_command       = ResPrototype("void site_config_set_rsh_command(site_config, char*)")
+    _get_max_running_rsh   = ResPrototype("int site_config_get_max_running_rsh(site_config)")
+    _set_max_running_rsh   = ResPrototype("void site_config_set_max_running_rsh(site_config, int)")
+    _get_rsh_host_list     = ResPrototype("integer_hash_ref site_config_get_rsh_host_list(site_config)")
+    _clear_rsh_host_list   = ResPrototype("void site_config_clear_rsh_host_list(site_config)")
+    _add_rsh_host          = ResPrototype("void site_config_add_rsh_host(site_config, char*, int)")
+    _get_max_running_local = ResPrototype("int site_config_get_max_running_local(site_config)")
+    _set_max_running_local = ResPrototype("void site_config_set_max_running_local(site_config, int)")
+    _get_installed_jobs    = ResPrototype("ext_joblist_ref site_config_get_installed_jobs(site_config)")
+    _get_license_root_path = ResPrototype("char* site_config_get_license_root_path(site_config)")
+    _set_license_root_path = ResPrototype("void site_config_set_license_root_path(site_config, char*)")
+    _get_path_variables    = ResPrototype("stringlist_ref site_config_get_path_variables(site_config)")
+    _get_path_values       = ResPrototype("stringlist_ref site_config_get_path_values(site_config)")
+    _clear_pathvar         = ResPrototype("void site_config_clear_pathvar(site_config)")
+    _update_pathvar        = ResPrototype("void site_config_update_pathvar(site_config, char*, char*)")
+    _get_location          = ResPrototype("char* site_config_get_location(site_config)")
+    _has_driver            = ResPrototype("bool site_config_has_queue_driver(site_config, char*)")
+    _get_config_file       = ResPrototype("char* site_config_get_config_file(site_config)")
+    _get_queue_config      = ResPrototype("queue_config_ref site_config_get_queue_config(site_config)")
+    _get_umask             = ResPrototype("int site_config_get_umask(site_config)")
 
-    
+
     def __init__(self, user_config_file=None):
         if user_config_file is not None and not isfile(user_config_file):
             raise IOError('No such configuration file "%s".' % user_config_file)
@@ -86,7 +86,7 @@ class SiteConfig(BaseCClass):
     def hasDriver(self, driver_name):
         return self._has_driver( driver_name )
 
-    
+
     def getLsfQueue(self):
         """ @rtype: str """
         return self._get_lsf_queue( )

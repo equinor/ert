@@ -1,18 +1,18 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.util import Matrix
 
 
 class ObsBlock(BaseCClass):
     TYPE_NAME = "obs_block"
 
-    _alloc       = EnkfPrototype("void*  obs_block_alloc(char*, int, matrix, bool, double)", bind = False)
-    _free        = EnkfPrototype("void   obs_block_free(obs_block)")
-    _total_size  = EnkfPrototype("int    obs_block_get_size( obs_block )")
-    _active_size = EnkfPrototype("int    obs_block_get_active_size( obs_block )")
-    _iset        = EnkfPrototype("void   obs_block_iset( obs_block , int , double , double)")
-    _iget_value  = EnkfPrototype("double obs_block_iget_value( obs_block , int)")
-    _iget_std    = EnkfPrototype("double obs_block_iget_std( obs_block , int)")
+    _alloc       = ResPrototype("void*  obs_block_alloc(char*, int, matrix, bool, double)", bind = False)
+    _free        = ResPrototype("void   obs_block_free(obs_block)")
+    _total_size  = ResPrototype("int    obs_block_get_size( obs_block )")
+    _active_size = ResPrototype("int    obs_block_get_active_size( obs_block )")
+    _iset        = ResPrototype("void   obs_block_iset( obs_block , int , double , double)")
+    _iget_value  = ResPrototype("double obs_block_iget_value( obs_block , int)")
+    _iget_std    = ResPrototype("double obs_block_iget_std( obs_block , int)")
 
     def __init__(self , obs_key , obs_size , global_std_scaling=1.0):
         error_covar = None

@@ -1,18 +1,18 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 class LocalObsdataNode(BaseCClass):
     TYPE_NAME = "local_obsdata_node"
 
-    _alloc                   = EnkfPrototype("void* local_obsdata_node_alloc(char* , bool)", bind = False)
-    _free                    = EnkfPrototype("void  local_obsdata_node_free(local_obsdata_node)")
-    _get_key                 = EnkfPrototype("char* local_obsdata_node_get_key(local_obsdata_node)")
-    _add_range               = EnkfPrototype("void  local_obsdata_node_add_range(local_obsdata_node, int, int)")
-    _add_step                = EnkfPrototype("void  local_obsdata_node_add_tstep(local_obsdata_node, int)")
-    _tstep_active            = EnkfPrototype("bool  local_obsdata_node_tstep_active(local_obsdata_node, int)")
-    _all_timestep_active     = EnkfPrototype("bool  local_obsdata_node_all_timestep_active(local_obsdata_node)")
-    _set_all_timestep_active = EnkfPrototype("void  local_obsdata_node_set_all_timestep_active(local_obsdata_node, bool)")
-    _get_active_list         = EnkfPrototype("active_list_ref local_obsdata_node_get_active_list(local_obsdata_node)")
+    _alloc                   = ResPrototype("void* local_obsdata_node_alloc(char* , bool)", bind = False)
+    _free                    = ResPrototype("void  local_obsdata_node_free(local_obsdata_node)")
+    _get_key                 = ResPrototype("char* local_obsdata_node_get_key(local_obsdata_node)")
+    _add_range               = ResPrototype("void  local_obsdata_node_add_range(local_obsdata_node, int, int)")
+    _add_step                = ResPrototype("void  local_obsdata_node_add_tstep(local_obsdata_node, int)")
+    _tstep_active            = ResPrototype("bool  local_obsdata_node_tstep_active(local_obsdata_node, int)")
+    _all_timestep_active     = ResPrototype("bool  local_obsdata_node_all_timestep_active(local_obsdata_node)")
+    _set_all_timestep_active = ResPrototype("void  local_obsdata_node_set_all_timestep_active(local_obsdata_node, bool)")
+    _get_active_list         = ResPrototype("active_list_ref local_obsdata_node_get_active_list(local_obsdata_node)")
 
     def __init__(self, obs_key , all_timestep_active = True):
         if isinstance(obs_key, str):

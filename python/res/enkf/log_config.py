@@ -20,17 +20,17 @@ from cwrap import BaseCClass
 
 from res.util.enums import MessageLevelEnum
 
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 class LogConfig(BaseCClass):
 
     TYPE_NAME = "log_config"
 
-    _alloc     = EnkfPrototype("void* log_config_alloc_load(char*)", bind=False)
-    _free      = EnkfPrototype("void log_config_free(log_config)")
+    _alloc     = ResPrototype("void* log_config_alloc_load(char*)", bind=False)
+    _free      = ResPrototype("void log_config_free(log_config)")
 
-    _log_file  = EnkfPrototype("char* log_config_get_log_file(log_config)")
-    _log_level = EnkfPrototype("message_level_enum log_config_get_log_level(log_config)")
+    _log_file  = ResPrototype("char* log_config_get_log_file(log_config)")
+    _log_level = ResPrototype("message_level_enum log_config_get_log_level(log_config)")
 
     def __init__(self, user_config_file):
         if user_config_file is not None and not isfile(user_config_file):

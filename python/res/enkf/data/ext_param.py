@@ -17,22 +17,22 @@ import os.path
 
 from cwrap import BaseCClass, CFILE
 
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.config import ExtParamConfig
 
 
 class ExtParam(BaseCClass):
     TYPE_NAME = "ext_param"
-    _alloc    = EnkfPrototype("void*  ext_param_alloc( ext_param_config )", bind = False)
-    _free     = EnkfPrototype("void   ext_param_free( ext_param )")
-    _size     = EnkfPrototype("int    ext_param_get_size( ext_param )")
-    _has_key  = EnkfPrototype("bool   ext_param_has_key( ext_param , char*)")
-    _iset     = EnkfPrototype("void   ext_param_iset( ext_param, int, double)")
-    _key_set  = EnkfPrototype("void   ext_param_key_set( ext_param, char*, double)")
-    _iget     = EnkfPrototype("double ext_param_iget( ext_param, int)")
-    _key_get  = EnkfPrototype("double ext_param_key_get( ext_param, char*)")
-    _iget_key = EnkfPrototype("char*  ext_param_iget_key( ext_param, int)")
-    _export   = EnkfPrototype("void   ext_param_json_export( ext_param, char*)")
+    _alloc    = ResPrototype("void*  ext_param_alloc( ext_param_config )", bind = False)
+    _free     = ResPrototype("void   ext_param_free( ext_param )")
+    _size     = ResPrototype("int    ext_param_get_size( ext_param )")
+    _has_key  = ResPrototype("bool   ext_param_has_key( ext_param , char*)")
+    _iset     = ResPrototype("void   ext_param_iset( ext_param, int, double)")
+    _key_set  = ResPrototype("void   ext_param_key_set( ext_param, char*, double)")
+    _iget     = ResPrototype("double ext_param_iget( ext_param, int)")
+    _key_get  = ResPrototype("double ext_param_key_get( ext_param, char*)")
+    _iget_key = ResPrototype("char*  ext_param_iget_key( ext_param, int)")
+    _export   = ResPrototype("void   ext_param_json_export( ext_param, char*)")
 
     def __init__(self, config):
         c_ptr = self._alloc( config )

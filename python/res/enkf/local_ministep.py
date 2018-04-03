@@ -1,20 +1,21 @@
 import ecl.util
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype, LocalObsdata, LocalObsdataNode, LocalDataset
+from res import ResPrototype
+from res.enkf import LocalObsdata, LocalObsdataNode, LocalDataset
 
 class LocalMinistep(BaseCClass):
     TYPE_NAME = "local_ministep"
 
-    _alloc               = EnkfPrototype("void* local_ministep_alloc(char*)", bind = False)
-    _add_node            = EnkfPrototype("void local_ministep_add_obsdata_node(local_ministep, local_obsdata_node)")
-    _get_local_obs_data  = EnkfPrototype("local_obsdata_ref local_ministep_get_obsdata(local_ministep)")
-    _get_local_data      = EnkfPrototype("local_dataset_ref local_ministep_get_dataset(local_ministep , char*)")
-    _has_local_data      = EnkfPrototype("bool              local_ministep_has_dataset(local_ministep , char*)")
-    _free                = EnkfPrototype("void local_ministep_free(local_ministep)")
-    _attach_obsdata      = EnkfPrototype("void local_ministep_add_obsdata(local_ministep, local_obsdata)")
-    _attach_dataset      = EnkfPrototype("void local_ministep_add_dataset(local_ministep, local_dataset)")
-    _name                = EnkfPrototype("char* local_ministep_get_name(local_ministep)")
-    _data_size           = EnkfPrototype("int local_ministep_get_num_dataset(local_ministep)")
+    _alloc               = ResPrototype("void* local_ministep_alloc(char*)", bind = False)
+    _add_node            = ResPrototype("void local_ministep_add_obsdata_node(local_ministep, local_obsdata_node)")
+    _get_local_obs_data  = ResPrototype("local_obsdata_ref local_ministep_get_obsdata(local_ministep)")
+    _get_local_data      = ResPrototype("local_dataset_ref local_ministep_get_dataset(local_ministep , char*)")
+    _has_local_data      = ResPrototype("bool              local_ministep_has_dataset(local_ministep , char*)")
+    _free                = ResPrototype("void local_ministep_free(local_ministep)")
+    _attach_obsdata      = ResPrototype("void local_ministep_add_obsdata(local_ministep, local_obsdata)")
+    _attach_dataset      = ResPrototype("void local_ministep_add_dataset(local_ministep, local_dataset)")
+    _name                = ResPrototype("char* local_ministep_get_name(local_ministep)")
+    _data_size           = ResPrototype("int local_ministep_get_num_dataset(local_ministep)")
 
     def __init__(self, ministep_key):
         raise NotImplementedError("Class can not be instantiated directly!")

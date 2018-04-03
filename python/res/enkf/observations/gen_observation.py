@@ -17,25 +17,25 @@ import os.path
 
 from cwrap import BaseCClass
 from ecl.util.util import IntVector
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf import GenDataConfig
 
 
 class GenObservation(BaseCClass):
     TYPE_NAME = "gen_obs"
 
-    _alloc              = EnkfPrototype("void*  gen_obs_alloc__(gen_data_config , char*)", bind = False)
-    _free               = EnkfPrototype("void   gen_obs_free(gen_obs)")
-    _load               = EnkfPrototype("void   gen_obs_load_observation(gen_obs , char*)")
-    _scalar_set         = EnkfPrototype("void   gen_obs_set_scalar(gen_obs , double , double)")
-    _get_std            = EnkfPrototype("double gen_obs_iget_std(gen_obs, int)")
-    _get_value          = EnkfPrototype("double gen_obs_iget_value(gen_obs, int)")
-    _get_std_scaling    = EnkfPrototype("double gen_obs_iget_std_scaling(gen_obs, int)")
-    _get_size           = EnkfPrototype("int    gen_obs_get_size(gen_obs)")
-    _get_data_index     = EnkfPrototype("int    gen_obs_get_obs_index(gen_obs, int)")
-    _load_data_index    = EnkfPrototype("void   gen_obs_load_data_index(gen_obs , char*)")
-    _add_data_index     = EnkfPrototype("void   gen_obs_attach_data_index(gen_obs , int_vector)")
-    _update_std_scaling = EnkfPrototype("void   gen_obs_update_std_scale(gen_obs , double , active_list)")
+    _alloc              = ResPrototype("void*  gen_obs_alloc__(gen_data_config , char*)", bind = False)
+    _free               = ResPrototype("void   gen_obs_free(gen_obs)")
+    _load               = ResPrototype("void   gen_obs_load_observation(gen_obs , char*)")
+    _scalar_set         = ResPrototype("void   gen_obs_set_scalar(gen_obs , double , double)")
+    _get_std            = ResPrototype("double gen_obs_iget_std(gen_obs, int)")
+    _get_value          = ResPrototype("double gen_obs_iget_value(gen_obs, int)")
+    _get_std_scaling    = ResPrototype("double gen_obs_iget_std_scaling(gen_obs, int)")
+    _get_size           = ResPrototype("int    gen_obs_get_size(gen_obs)")
+    _get_data_index     = ResPrototype("int    gen_obs_get_obs_index(gen_obs, int)")
+    _load_data_index    = ResPrototype("void   gen_obs_load_data_index(gen_obs , char*)")
+    _add_data_index     = ResPrototype("void   gen_obs_attach_data_index(gen_obs , int_vector)")
+    _update_std_scaling = ResPrototype("void   gen_obs_update_std_scale(gen_obs , double , active_list)")
 
     def __init__(self , obs_key , data_config , scalar_value = None , obs_file = None , data_index = None):
         c_ptr = self._alloc( data_config , obs_key )

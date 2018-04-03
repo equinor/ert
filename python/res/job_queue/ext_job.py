@@ -1,64 +1,64 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'ext_job.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
+#  The file 'ext_job.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os.path
 
 from cwrap import BaseCClass
-from res.job_queue import QueuePrototype
+from res import ResPrototype
 from ecl.util.util import StringList, Hash
 from res.config import ContentTypeEnum
 
 class ExtJob(BaseCClass):
     TYPE_NAME                   = "ext_job"
-    _alloc                      = QueuePrototype("void* ext_job_alloc(char*,char*, bool)", bind = False)
-    _fscanf_alloc               = QueuePrototype("void* ext_job_fscanf_alloc(char*, char*, bool, char* , bool)", bind = False)
-    _free                       = QueuePrototype("void ext_job_free( ext_job )")
-    _get_help_text              = QueuePrototype("char* ext_job_get_help_text(ext_job)")
-    _get_name                   = QueuePrototype("char* ext_job_get_name(ext_job)")
-    _get_private_args_as_string = QueuePrototype("char* ext_job_get_private_args_as_string(ext_job)")
-    _set_private_args_as_string = QueuePrototype("void ext_job_set_private_args_from_string(ext_job, char*)")
-    _is_private                 = QueuePrototype("int ext_job_is_private(ext_job)")
-    _get_config_file            = QueuePrototype("char* ext_job_get_config_file(ext_job)")
-    _set_config_file            = QueuePrototype("void ext_job_set_config_file(ext_job, char*)")
-    _get_stdin_file             = QueuePrototype("char* ext_job_get_stdin_file(ext_job)")
-    _set_stdin_file             = QueuePrototype("void ext_job_set_stdin_file(ext_job, char*)")
-    _get_stdout_file            = QueuePrototype("char* ext_job_get_stdout_file(ext_job)")
-    _set_stdout_file            = QueuePrototype("void ext_job_set_stdout_file(ext_job, char*)")
-    _get_stderr_file            = QueuePrototype("char* ext_job_get_stderr_file(ext_job)")
-    _set_stderr_file            = QueuePrototype("void ext_job_set_stderr_file(ext_job, char*)")
-    _get_target_file            = QueuePrototype("char* ext_job_get_target_file(ext_job)")
-    _set_target_file            = QueuePrototype("void ext_job_set_target_file(ext_job, char*)")
-    _get_executable             = QueuePrototype("char* ext_job_get_executable(ext_job)")
-    _set_executable             = QueuePrototype("void ext_job_set_executable(ext_job, char*)")
-    _get_error_file             = QueuePrototype("char* ext_job_get_error_file(ext_job)")
-    _get_start_file             = QueuePrototype("char* ext_job_get_start_file(ext_job)")
-    _get_max_running            = QueuePrototype("int ext_job_get_max_running(ext_job)")
-    _set_max_running            = QueuePrototype("void ext_job_set_max_running(ext_job, int)")
-    _get_max_running_minutes    = QueuePrototype("int ext_job_get_max_running_minutes(ext_job)")
-    _set_max_running_minutes    = QueuePrototype("void ext_job_set_max_running_minutes(ext_job, int)")
+    _alloc                      = ResPrototype("void* ext_job_alloc(char*,char*, bool)", bind = False)
+    _fscanf_alloc               = ResPrototype("void* ext_job_fscanf_alloc(char*, char*, bool, char* , bool)", bind = False)
+    _free                       = ResPrototype("void ext_job_free( ext_job )")
+    _get_help_text              = ResPrototype("char* ext_job_get_help_text(ext_job)")
+    _get_name                   = ResPrototype("char* ext_job_get_name(ext_job)")
+    _get_private_args_as_string = ResPrototype("char* ext_job_get_private_args_as_string(ext_job)")
+    _set_private_args_as_string = ResPrototype("void ext_job_set_private_args_from_string(ext_job, char*)")
+    _is_private                 = ResPrototype("int ext_job_is_private(ext_job)")
+    _get_config_file            = ResPrototype("char* ext_job_get_config_file(ext_job)")
+    _set_config_file            = ResPrototype("void ext_job_set_config_file(ext_job, char*)")
+    _get_stdin_file             = ResPrototype("char* ext_job_get_stdin_file(ext_job)")
+    _set_stdin_file             = ResPrototype("void ext_job_set_stdin_file(ext_job, char*)")
+    _get_stdout_file            = ResPrototype("char* ext_job_get_stdout_file(ext_job)")
+    _set_stdout_file            = ResPrototype("void ext_job_set_stdout_file(ext_job, char*)")
+    _get_stderr_file            = ResPrototype("char* ext_job_get_stderr_file(ext_job)")
+    _set_stderr_file            = ResPrototype("void ext_job_set_stderr_file(ext_job, char*)")
+    _get_target_file            = ResPrototype("char* ext_job_get_target_file(ext_job)")
+    _set_target_file            = ResPrototype("void ext_job_set_target_file(ext_job, char*)")
+    _get_executable             = ResPrototype("char* ext_job_get_executable(ext_job)")
+    _set_executable             = ResPrototype("void ext_job_set_executable(ext_job, char*)")
+    _get_error_file             = ResPrototype("char* ext_job_get_error_file(ext_job)")
+    _get_start_file             = ResPrototype("char* ext_job_get_start_file(ext_job)")
+    _get_max_running            = ResPrototype("int ext_job_get_max_running(ext_job)")
+    _set_max_running            = ResPrototype("void ext_job_set_max_running(ext_job, int)")
+    _get_max_running_minutes    = ResPrototype("int ext_job_get_max_running_minutes(ext_job)")
+    _set_max_running_minutes    = ResPrototype("void ext_job_set_max_running_minutes(ext_job, int)")
 
-    _min_arg                    = QueuePrototype("int ext_job_get_min_arg(ext_job)")
-    _max_arg                    = QueuePrototype("int ext_job_get_max_arg(ext_job)")
-    _arg_type                   = QueuePrototype("config_content_type_enum ext_job_iget_argtype(ext_job, int)")
+    _min_arg                    = ResPrototype("int ext_job_get_min_arg(ext_job)")
+    _max_arg                    = ResPrototype("int ext_job_get_max_arg(ext_job)")
+    _arg_type                   = ResPrototype("config_content_type_enum ext_job_iget_argtype(ext_job, int)")
 
-    _get_environment            = QueuePrototype("string_hash_ref ext_job_get_environment(ext_job)")
-    _set_environment            = QueuePrototype("void ext_job_add_environment(ext_job, char*, char*)")
-    _get_license_path           = QueuePrototype("char* ext_job_get_license_path(ext_job)")
-    _get_arglist                = QueuePrototype("stringlist_ref ext_job_get_arglist(ext_job)") 
-    _clear_environment          = QueuePrototype("void ext_job_clear_environment(ext_job)")
-    _save                       = QueuePrototype("void ext_job_save(ext_job)")
+    _get_environment            = ResPrototype("string_hash_ref ext_job_get_environment(ext_job)")
+    _set_environment            = ResPrototype("void ext_job_add_environment(ext_job, char*, char*)")
+    _get_license_path           = ResPrototype("char* ext_job_get_license_path(ext_job)")
+    _get_arglist                = ResPrototype("stringlist_ref ext_job_get_arglist(ext_job)")
+    _clear_environment          = ResPrototype("void ext_job_clear_environment(ext_job)")
+    _save                       = ResPrototype("void ext_job_save(ext_job)")
 
     def __init__(self, config_file, private, name = None , license_root_path = None , search_PATH = True):
         if os.path.isfile( config_file ):
@@ -146,7 +146,7 @@ class ExtJob(BaseCClass):
     @property
     def min_arg(self):
         return self._min_arg()
-    
+
     @property
     def max_arg(self):
         return self._max_arg()
@@ -164,7 +164,7 @@ class ExtJob(BaseCClass):
     @staticmethod
     def valid_args(arg_types, arg_list, runtime = False):
        for index, arg_type in enumerate(arg_types):
-          arg = arg_list[index] 
+          arg = arg_list[index]
           if not arg_type.valid_string(arg, runtime):
                 return False
           return True
@@ -192,6 +192,6 @@ class ExtJob(BaseCClass):
 
     def name(self):
         return self._get_name( )
-        
+
 
 

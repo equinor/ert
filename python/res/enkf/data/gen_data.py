@@ -1,16 +1,16 @@
 from cwrap import BaseCClass
 from ecl.util.util import DoubleVector
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 
 class GenData(BaseCClass):
     TYPE_NAME = "gen_data"
-    _alloc       = EnkfPrototype("void*  gen_data_alloc()", bind = False)
-    _free        = EnkfPrototype("void   gen_data_free(gen_data)")
-    _size        = EnkfPrototype("int    gen_data_get_size(gen_data)")
-    _iget        = EnkfPrototype("double gen_data_iget_double(gen_data , int)");
-    _export      = EnkfPrototype("void   gen_data_export(gen_data , char*, gen_data_file_format_type, fortio)")
-    _export_data = EnkfPrototype("void   gen_data_export_data(gen_data , double_vector)")
+    _alloc       = ResPrototype("void*  gen_data_alloc()", bind = False)
+    _free        = ResPrototype("void   gen_data_free(gen_data)")
+    _size        = ResPrototype("int    gen_data_get_size(gen_data)")
+    _iget        = ResPrototype("double gen_data_iget_double(gen_data , int)");
+    _export      = ResPrototype("void   gen_data_export(gen_data , char*, gen_data_file_format_type, fortio)")
+    _export_data = ResPrototype("void   gen_data_export_data(gen_data , double_vector)")
 
     def __init__(self):
         c_ptr = self._alloc()
@@ -24,7 +24,7 @@ class GenData(BaseCClass):
         """ @rtype: int """
         return self._size()
 
-    
+
     def free(self):
         self._free( )
 
@@ -39,7 +39,7 @@ class GenData(BaseCClass):
         """
         self._export(file_name, file_format_type, fortio)
 
-        
+
     def getData(self):
         data = DoubleVector()
         self._export_data( data )

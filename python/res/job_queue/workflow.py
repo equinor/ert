@@ -1,21 +1,22 @@
 import time
 from res.config import ConfigError
 from cwrap import BaseCClass
-from res.job_queue import QueuePrototype, WorkflowJoblist, WorkflowJob
+from res import ResPrototype
+from res.job_queue import WorkflowJoblist, WorkflowJob
 from res.util.substitution_list import SubstitutionList
 
 
 class Workflow(BaseCClass):
     TYPE_NAME = "workflow"
-    _alloc          = QueuePrototype("void* workflow_alloc(char*, workflow_joblist)" , bind = False)
-    _free           = QueuePrototype("void     workflow_free(workflow)")
-    _count          = QueuePrototype("int      workflow_size(workflow)")
-    _iget_job       = QueuePrototype("workflow_job_ref workflow_iget_job(workflow, int)")
-    _iget_args      = QueuePrototype("stringlist_ref   workflow_iget_arguments(workflow, int)")
+    _alloc          = ResPrototype("void* workflow_alloc(char*, workflow_joblist)" , bind = False)
+    _free           = ResPrototype("void     workflow_free(workflow)")
+    _count          = ResPrototype("int      workflow_size(workflow)")
+    _iget_job       = ResPrototype("workflow_job_ref workflow_iget_job(workflow, int)")
+    _iget_args      = ResPrototype("stringlist_ref   workflow_iget_arguments(workflow, int)")
 
-    _try_compile    = QueuePrototype("bool workflow_try_compile(workflow, subst_list)")
-    _get_last_error = QueuePrototype("config_error_ref workflow_get_last_error(workflow)")
-    _get_src_file   = QueuePrototype("char* worflow_get_src_file(workflow)")
+    _try_compile    = ResPrototype("bool workflow_try_compile(workflow, subst_list)")
+    _get_last_error = ResPrototype("config_error_ref workflow_get_last_error(workflow)")
+    _get_src_file   = ResPrototype("char* worflow_get_src_file(workflow)")
 
     def __init__(self, src_file, job_list):
         """
@@ -41,7 +42,7 @@ class Workflow(BaseCClass):
         args = self._iget_args(index)
         return job, args
 
-    
+
     def __iter__(self):
         for index in range(len(self)):
             yield self[index]
@@ -65,7 +66,7 @@ class Workflow(BaseCClass):
                 self.__current_job = job
                 if not self.__cancelled:
                     return_value = job.run(ert, args, verbose)
-                    
+
                     if job.hasFailed():
                         print(return_value)
 

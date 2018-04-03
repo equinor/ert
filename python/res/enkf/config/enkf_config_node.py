@@ -19,7 +19,7 @@ from ecl.grid import EclGrid
 from ecl.util.util import StringList, IntVector
 
 from res.util import PathFormat
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.config import FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, CustomKWConfig, ExtParamConfig
 from res.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, EnkfVarType
 
@@ -27,21 +27,21 @@ from res.enkf.enums import EnkfTruncationType, ErtImplType, LoadFailTypeEnum, En
 class EnkfConfigNode(BaseCClass):
     TYPE_NAME = "enkf_config_node"
 
-    _alloc_gen_data_everest = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_everest(char*, char* , int_vector)", bind = False)
-    _alloc_summary_node = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)", bind = False)
-    _alloc_field_node   = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, void*, bool)", bind = False)
-    _alloc_ext_param_node = EnkfPrototype("enkf_config_node_obj enkf_config_node_alloc_EXT_PARAM(char*, stringlist, char*)", bind = False)
-    _get_ref            = EnkfPrototype("void* enkf_config_node_get_ref(enkf_config_node)") #todo: fix return type
-    _get_impl_type      = EnkfPrototype("ert_impl_type_enum enkf_config_node_get_impl_type(enkf_config_node)")
-    _get_enkf_outfile   = EnkfPrototype("char* enkf_config_node_get_enkf_outfile(enkf_config_node)")
-    _get_min_std_file   = EnkfPrototype("char* enkf_config_node_get_min_std_file(enkf_config_node)")
-    _get_enkf_infile    = EnkfPrototype("char* enkf_config_node_get_enkf_infile(enkf_config_node)")
-    _get_init_file      = EnkfPrototype("char* enkf_config_node_get_FIELD_fill_file(enkf_config_node, path_fmt)")
-    _get_init_file_fmt  = EnkfPrototype("char* enkf_config_node_get_init_file_fmt(enkf_config_node)")
-    _get_var_type       = EnkfPrototype("enkf_var_type_enum enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
-    _get_key            = EnkfPrototype("char* enkf_config_node_get_key(enkf_config_node)")
-    _get_obs_keys       = EnkfPrototype("stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)")
-    _free               = EnkfPrototype("void enkf_config_node_free(enkf_config_node)")
+    _alloc_gen_data_everest = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_everest(char*, char* , int_vector)", bind = False)
+    _alloc_summary_node = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)", bind = False)
+    _alloc_field_node   = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, void*, bool)", bind = False)
+    _alloc_ext_param_node = ResPrototype("enkf_config_node_obj enkf_config_node_alloc_EXT_PARAM(char*, stringlist, char*)", bind = False)
+    _get_ref            = ResPrototype("void* enkf_config_node_get_ref(enkf_config_node)") #todo: fix return type
+    _get_impl_type      = ResPrototype("ert_impl_type_enum enkf_config_node_get_impl_type(enkf_config_node)")
+    _get_enkf_outfile   = ResPrototype("char* enkf_config_node_get_enkf_outfile(enkf_config_node)")
+    _get_min_std_file   = ResPrototype("char* enkf_config_node_get_min_std_file(enkf_config_node)")
+    _get_enkf_infile    = ResPrototype("char* enkf_config_node_get_enkf_infile(enkf_config_node)")
+    _get_init_file      = ResPrototype("char* enkf_config_node_get_FIELD_fill_file(enkf_config_node, path_fmt)")
+    _get_init_file_fmt  = ResPrototype("char* enkf_config_node_get_init_file_fmt(enkf_config_node)")
+    _get_var_type       = ResPrototype("enkf_var_type_enum enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
+    _get_key            = ResPrototype("char* enkf_config_node_get_key(enkf_config_node)")
+    _get_obs_keys       = ResPrototype("stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)")
+    _free               = ResPrototype("void enkf_config_node_free(enkf_config_node)")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")

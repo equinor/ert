@@ -16,19 +16,19 @@
 from collections import Sequence
 
 from cwrap import PrototypeError
-from res.util import ResUtilPrototype
+from res import ResPrototype
 from res.util import LLSQResultEnum
 from res.util import Matrix
 
 
-quantile = ResUtilPrototype("double statistics_empirical_quantile(double_vector, double)")
+quantile = ResPrototype("double statistics_empirical_quantile(double_vector, double)")
 """@type: (ecl.util.DoubleVector, float)->float"""
 
-quantile_sorted = ResUtilPrototype("double statistics_empirical_quantile(double_vector, double)")
+quantile_sorted = ResPrototype("double statistics_empirical_quantile(double_vector, double)")
 """@type: (ecl.util.DoubleVector, float)->float"""
 
 try:
-    _polyfit = ResUtilPrototype("llsq_result_enum matrix_stat_polyfit(matrix, matrix, matrix, matrix)")
+    _polyfit = ResPrototype("llsq_result_enum matrix_stat_polyfit(matrix, matrix, matrix, matrix)")
 except PrototypeError:
     _polyfit = None
 

@@ -15,26 +15,26 @@
 #  for more details.
 
 import os.path
-
-from res.config import UnrecognizedEnum, ContentTypeEnum, ConfigError, ConfigPrototype, SchemaItem
+from res import ResPrototype
+from res.config import UnrecognizedEnum, ContentTypeEnum, ConfigError, SchemaItem
 from cwrap import BaseCClass
 
 
 class ContentNode(BaseCClass):
     TYPE_NAME = "content_node"
 
-    _iget = ConfigPrototype("char* config_content_node_iget( content_node , int)")
-    _size = ConfigPrototype("int config_content_node_get_size( content_node )")
-    _get_full_string = ConfigPrototype("char* config_content_node_get_full_string( content_node , char* )")
-    _iget_type = ConfigPrototype("config_content_type_enum config_content_node_iget_type( content_node , int)")
-    _iget_as_abspath = ConfigPrototype("char* config_content_node_iget_as_abspath( content_node , int)")
-    _iget_as_relpath = ConfigPrototype("char* config_content_node_iget_as_relpath( content_node , int)")
-    _iget_as_string = ConfigPrototype("char* config_content_node_iget( content_node , int)")
-    _iget_as_int = ConfigPrototype("int config_content_node_iget_as_int( content_node , int)")
-    _iget_as_double = ConfigPrototype("double config_content_node_iget_as_double( content_node , int)")
-    _iget_as_path = ConfigPrototype("char* config_content_node_iget_as_path( content_node , int)")
-    _iget_as_bool = ConfigPrototype("bool config_content_node_iget_as_bool( content_node , int)")
-    _iget_as_isodate = ConfigPrototype("time_t config_content_node_iget_as_isodate( content_node , int)")
+    _iget = ResPrototype("char* config_content_node_iget( content_node , int)")
+    _size = ResPrototype("int config_content_node_get_size( content_node )")
+    _get_full_string = ResPrototype("char* config_content_node_get_full_string( content_node , char* )")
+    _iget_type = ResPrototype("config_content_type_enum config_content_node_iget_type( content_node , int)")
+    _iget_as_abspath = ResPrototype("char* config_content_node_iget_as_abspath( content_node , int)")
+    _iget_as_relpath = ResPrototype("char* config_content_node_iget_as_relpath( content_node , int)")
+    _iget_as_string = ResPrototype("char* config_content_node_iget( content_node , int)")
+    _iget_as_int = ResPrototype("int config_content_node_iget_as_int( content_node , int)")
+    _iget_as_double = ResPrototype("double config_content_node_iget_as_double( content_node , int)")
+    _iget_as_path = ResPrototype("char* config_content_node_iget_as_path( content_node , int)")
+    _iget_as_bool = ResPrototype("bool config_content_node_iget_as_bool( content_node , int)")
+    _iget_as_isodate = ResPrototype("time_t config_content_node_iget_as_isodate( content_node , int)")
 
     typed_get = {
         ContentTypeEnum.CONFIG_STRING: _iget_as_string,
@@ -104,10 +104,10 @@ class ContentNode(BaseCClass):
 class ContentItem(BaseCClass):
     TYPE_NAME = "content_item"
 
-    _alloc = ConfigPrototype("void* config_content_item_alloc( schema_item , void* )" , bind = False )
-    _size = ConfigPrototype("int config_content_item_get_size( content_item )")
-    _iget_content_node = ConfigPrototype("content_node_ref config_content_item_iget_node( content_item , int)")
-    _free = ConfigPrototype("void config_content_item_free( content_item )")
+    _alloc = ResPrototype("void* config_content_item_alloc( schema_item , void* )" , bind = False )
+    _size = ResPrototype("int config_content_item_get_size( content_item )")
+    _iget_content_node = ResPrototype("content_node_ref config_content_item_iget_node( content_item , int)")
+    _free = ResPrototype("void config_content_item_free( content_item )")
 
     def __init__(self , schema_item):
         path_elm = None
@@ -148,18 +148,18 @@ class ContentItem(BaseCClass):
 class ConfigContent(BaseCClass):
     TYPE_NAME = "config_content"
 
-    _alloc = ConfigPrototype("void* config_content_alloc(char*)", bind=False)
-    _free = ConfigPrototype("void config_content_free( config_content )")
-    _is_valid = ConfigPrototype("bool config_content_is_valid( config_content )")
-    _has_key = ConfigPrototype("bool config_content_has_item( config_content , char*)")
-    _get_item = ConfigPrototype("content_item_ref config_content_get_item( config_content , char*)")
-    _get_errors = ConfigPrototype("config_error_ref config_content_get_errors( config_content )")
-    _get_warnings =  ConfigPrototype("stringlist_ref config_content_get_warnings( config_content )")
-    _get_config_path = ConfigPrototype("char* config_content_get_config_path( config_content )")
-    _create_path_elm = ConfigPrototype("config_path_elm_ref config_content_add_path_elm(config_content, char*)")
-    _add_define = ConfigPrototype("void config_content_add_define(config_content, char*, char*)")
-    _size = ConfigPrototype("int config_content_get_size(config_content)")
-    _keys = ConfigPrototype("stringlist_obj config_content_alloc_keys(config_content)")
+    _alloc = ResPrototype("void* config_content_alloc(char*)", bind=False)
+    _free = ResPrototype("void config_content_free( config_content )")
+    _is_valid = ResPrototype("bool config_content_is_valid( config_content )")
+    _has_key = ResPrototype("bool config_content_has_item( config_content , char*)")
+    _get_item = ResPrototype("content_item_ref config_content_get_item( config_content , char*)")
+    _get_errors = ResPrototype("config_error_ref config_content_get_errors( config_content )")
+    _get_warnings =  ResPrototype("stringlist_ref config_content_get_warnings( config_content )")
+    _get_config_path = ResPrototype("char* config_content_get_config_path( config_content )")
+    _create_path_elm = ResPrototype("config_path_elm_ref config_content_add_path_elm(config_content, char*)")
+    _add_define = ResPrototype("void config_content_add_define(config_content, char*, char*)")
+    _size = ResPrototype("int config_content_get_size(config_content)")
+    _keys = ResPrototype("stringlist_obj config_content_alloc_keys(config_content)")
 
     def __init__(self, filename):
         c_ptr = self._alloc(filename)

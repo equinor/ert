@@ -17,7 +17,6 @@
 import res
 from tests import ResTest
 from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum, AnalysisModuleOptionsEnum
-from res.analysis import AnalysisPrototype
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
 
@@ -29,7 +28,7 @@ class StdEnKFDebugTest(ResTest):
         self.libname = res.res_lib_path + "/std_enkf_debug.so"
         self.module = AnalysisModule(lib_name = self.libname)
 
-        
+
     def toggleKey(self, key):
         self.assertTrue( self.module.hasVar( key ))
 
@@ -44,7 +43,7 @@ class StdEnKFDebugTest(ResTest):
     def test_EE_option(self):
         self.toggleKey( 'USE_EE' )
 
-    
+
     def test_scaledata_option(self):
         self.toggleKey( 'ANALYSIS_SCALE_DATA' )
 

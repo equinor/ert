@@ -15,25 +15,25 @@
 #  for more details.
 from cwrap import BaseCClass
 import os
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from ecl.util.util import StringList
 
 
 class GenKwConfig(BaseCClass):
     TYPE_NAME = "gen_kw_config"
 
-    _free                 = EnkfPrototype("void  gen_kw_config_free( gen_kw_config )")
-    _alloc_empty          = EnkfPrototype("void* gen_kw_config_alloc_empty( char*, char* )", bind = False)
-    _get_template_file    = EnkfPrototype("char* gen_kw_config_get_template_file(gen_kw_config)")
-    _set_template_file    = EnkfPrototype("void  gen_kw_config_set_template_file(gen_kw_config , char*)")
-    _get_parameter_file   = EnkfPrototype("char* gen_kw_config_get_parameter_file(gen_kw_config)")
-    _set_parameter_file   = EnkfPrototype("void  gen_kw_config_set_parameter_file(gen_kw_config, char*)")
-    _alloc_name_list      = EnkfPrototype("stringlist_obj gen_kw_config_alloc_name_list(gen_kw_config)")
-    _should_use_log_scale = EnkfPrototype("bool  gen_kw_config_should_use_log_scale(gen_kw_config, int)")
-    _get_key              = EnkfPrototype("char* gen_kw_config_get_key(gen_kw_config)")
-    _get_tag_fmt          = EnkfPrototype("char* gen_kw_config_get_tag_fmt(gen_kw_config)")
-    _size                 = EnkfPrototype("int   gen_kw_config_get_data_size(gen_kw_config)")
-    _iget_name            = EnkfPrototype("char* gen_kw_config_iget_name(gen_kw_config, int)")
+    _free                 = ResPrototype("void  gen_kw_config_free( gen_kw_config )")
+    _alloc_empty          = ResPrototype("void* gen_kw_config_alloc_empty( char*, char* )", bind = False)
+    _get_template_file    = ResPrototype("char* gen_kw_config_get_template_file(gen_kw_config)")
+    _set_template_file    = ResPrototype("void  gen_kw_config_set_template_file(gen_kw_config , char*)")
+    _get_parameter_file   = ResPrototype("char* gen_kw_config_get_parameter_file(gen_kw_config)")
+    _set_parameter_file   = ResPrototype("void  gen_kw_config_set_parameter_file(gen_kw_config, char*)")
+    _alloc_name_list      = ResPrototype("stringlist_obj gen_kw_config_alloc_name_list(gen_kw_config)")
+    _should_use_log_scale = ResPrototype("bool  gen_kw_config_should_use_log_scale(gen_kw_config, int)")
+    _get_key              = ResPrototype("char* gen_kw_config_get_key(gen_kw_config)")
+    _get_tag_fmt          = ResPrototype("char* gen_kw_config_get_tag_fmt(gen_kw_config)")
+    _size                 = ResPrototype("int   gen_kw_config_get_data_size(gen_kw_config)")
+    _iget_name            = ResPrototype("char* gen_kw_config_iget_name(gen_kw_config, int)")
 
 
     def __init__(self, key, template_file , parameter_file , tag_fmt = "<%s>"):

@@ -26,7 +26,7 @@ from res.config import ConfigContent, ConfigParser, ConfigSettings
 
 
 class TestConfigPrototype(Prototype):
-    lib = resload("libconfig")
+    lib = resload("libres")
 
     def __init__(self, prototype, bind=False):
         super(TestConfigPrototype, self).__init__(TestConfigPrototype.lib, prototype, bind=bind)
@@ -47,7 +47,7 @@ class ConfigTest(ResTest):
 
 
     def test_enums(self):
-        source_file_path = "libconfig/include/ert/config/config_schema_item.h"
+        source_file_path = "lib/include/ert/config/config_schema_item.h"
         self.assertEnumIsFullyDefined(ContentTypeEnum, "config_item_types", source_file_path)
         self.assertEnumIsFullyDefined(UnrecognizedEnum, "config_schema_unrecognized_enum", source_file_path)
 

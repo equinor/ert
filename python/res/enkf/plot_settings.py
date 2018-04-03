@@ -14,22 +14,24 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+from res import ResPrototype
 from res.config import ConfigSettings
-from res.enkf import EnkfPrototype
+
+
 
 class PlotSettings(ConfigSettings):
     TYPE_NAME    = "plot_settings"
-    _init        = EnkfPrototype("void plot_settings_init(plot_settings)")
-    
+    _init        = ResPrototype("void plot_settings_init(plot_settings)")
+
     def __init__(self):
         super(PlotSettings, self).__init__("PLOT_SETTING")
         self._init( )
-        
+
     def getPath(self):
         """ @rtype: str """
         return self["PATH"]
-        
+
     def setPath(self, path):
         self["PATH"] = path
 
-    
+

@@ -17,7 +17,8 @@ from cwrap import BaseCClass
 from ecl.util.util import StringList
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from res.enkf import EnkfPrototype, SummaryKeyMatcher
+from res import ResPrototype
+from res.enkf import SummaryKeyMatcher
 from res.config import ConfigContent
 from res.enkf.config import EnkfConfigNode, CustomKWConfig
 from res.enkf.enums import EnkfVarType, ErtImplType
@@ -26,20 +27,20 @@ from res.enkf.enums import EnkfVarType, ErtImplType
 
 class EnsembleConfig(BaseCClass):
     TYPE_NAME = "ens_config"
-    _alloc = EnkfPrototype("void* ensemble_config_alloc(config_content, ecl_grid, ecl_sum)", bind = False)
-    _free = EnkfPrototype("void ensemble_config_free( ens_config )")
-    _has_key = EnkfPrototype("bool ensemble_config_has_key( ens_config , char* )")
-    _size = EnkfPrototype("int ensemble_config_get_size( ens_config)")
-    _get_node = EnkfPrototype("enkf_config_node_ref ensemble_config_get_node( ens_config , char*)")
-    _alloc_keylist = EnkfPrototype("stringlist_obj ensemble_config_alloc_keylist( ens_config )")
-    _add_summary = EnkfPrototype("enkf_config_node_ref ensemble_config_add_summary( ens_config, char*, int)")
-    _add_gen_kw = EnkfPrototype("enkf_config_node_ref ensemble_config_add_gen_kw( ens_config, char*)")
-    _add_field = EnkfPrototype("enkf_config_node_ref ensemble_config_add_field( ens_config, char*, ecl_grid)")
-    _alloc_keylist_from_var_type = EnkfPrototype("stringlist_obj ensemble_config_alloc_keylist_from_var_type(ens_config, enkf_var_type_enum)")
-    _alloc_keylist_from_impl_type = EnkfPrototype("stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, ert_impl_type_enum)")
-    _add_node = EnkfPrototype("void ensemble_config_add_node( ens_config , enkf_config_node )")
-    _summary_key_matcher = EnkfPrototype("summary_key_matcher_ref ensemble_config_get_summary_key_matcher(ens_config)")
-    _add_defined_custom_kw = EnkfPrototype("enkf_config_node_ref ensemble_config_add_defined_custom_kw(ens_config, char*, integer_hash)")
+    _alloc = ResPrototype("void* ensemble_config_alloc(config_content, ecl_grid, ecl_sum)", bind = False)
+    _free = ResPrototype("void ensemble_config_free( ens_config )")
+    _has_key = ResPrototype("bool ensemble_config_has_key( ens_config , char* )")
+    _size = ResPrototype("int ensemble_config_get_size( ens_config)")
+    _get_node = ResPrototype("enkf_config_node_ref ensemble_config_get_node( ens_config , char*)")
+    _alloc_keylist = ResPrototype("stringlist_obj ensemble_config_alloc_keylist( ens_config )")
+    _add_summary = ResPrototype("enkf_config_node_ref ensemble_config_add_summary( ens_config, char*, int)")
+    _add_gen_kw = ResPrototype("enkf_config_node_ref ensemble_config_add_gen_kw( ens_config, char*)")
+    _add_field = ResPrototype("enkf_config_node_ref ensemble_config_add_field( ens_config, char*, ecl_grid)")
+    _alloc_keylist_from_var_type = ResPrototype("stringlist_obj ensemble_config_alloc_keylist_from_var_type(ens_config, enkf_var_type_enum)")
+    _alloc_keylist_from_impl_type = ResPrototype("stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, ert_impl_type_enum)")
+    _add_node = ResPrototype("void ensemble_config_add_node( ens_config , enkf_config_node )")
+    _summary_key_matcher = ResPrototype("summary_key_matcher_ref ensemble_config_get_summary_key_matcher(ens_config)")
+    _add_defined_custom_kw = ResPrototype("enkf_config_node_ref ensemble_config_add_defined_custom_kw(ens_config, char*, integer_hash)")
 
 
 

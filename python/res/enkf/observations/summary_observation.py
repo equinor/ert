@@ -15,19 +15,19 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 
 class SummaryObservation(BaseCClass):
     TYPE_NAME = "summary_obs"
 
-    _alloc            = EnkfPrototype("void*  summary_obs_alloc(char*, char*, double, double, char*, double)", bind = False)
-    _free             = EnkfPrototype("void   summary_obs_free(summary_obs)")
-    _get_value        = EnkfPrototype("double summary_obs_get_value(summary_obs)")
-    _get_std          = EnkfPrototype("double summary_obs_get_std(summary_obs)")
-    _get_std_scaling  = EnkfPrototype("double summary_obs_get_std_scaling(summary_obs)")
-    _get_summary_key  = EnkfPrototype("char*  summary_obs_get_summary_key(summary_obs)")
-    _update_std_scale = EnkfPrototype("void   summary_obs_update_std_scale(summary_obs , double , active_list)")
+    _alloc            = ResPrototype("void*  summary_obs_alloc(char*, char*, double, double, char*, double)", bind = False)
+    _free             = ResPrototype("void   summary_obs_free(summary_obs)")
+    _get_value        = ResPrototype("double summary_obs_get_value(summary_obs)")
+    _get_std          = ResPrototype("double summary_obs_get_std(summary_obs)")
+    _get_std_scaling  = ResPrototype("double summary_obs_get_std_scaling(summary_obs)")
+    _get_summary_key  = ResPrototype("char*  summary_obs_get_summary_key(summary_obs)")
+    _update_std_scale = ResPrototype("void   summary_obs_update_std_scale(summary_obs , double , active_list)")
 
 
     def __init__(self, summary_key, observation_key, value, std, auto_corrf_name=None, auto_corrf_param=0.0):

@@ -14,17 +14,17 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from ecl.util.util import StringList
 
 
 class ExtParamConfig(BaseCClass):
     TYPE_NAME = "ext_param_config"
-    _alloc     = EnkfPrototype("void*   ext_param_config_alloc( char*, stringlist )", bind = False)
-    _size      = EnkfPrototype("int     ext_param_config_get_data_size( ext_param_config )")
-    _iget_key  = EnkfPrototype("char*   ext_param_config_iget_key( ext_param_config , int)")
-    _free      = EnkfPrototype("void    ext_param_config_free( ext_param_config )")
-    _has_key   = EnkfPrototype("bool    ext_param_config_has_key( ext_param_config , char* )")
+    _alloc     = ResPrototype("void*   ext_param_config_alloc( char*, stringlist )", bind = False)
+    _size      = ResPrototype("int     ext_param_config_get_data_size( ext_param_config )")
+    _iget_key  = ResPrototype("char*   ext_param_config_iget_key( ext_param_config , int)")
+    _free      = ResPrototype("void    ext_param_config_free( ext_param_config )")
+    _has_key   = ResPrototype("bool    ext_param_config_has_key( ext_param_config , char* )")
 
     def __init__(self, key, input_keys):
         keys = StringList( initial = input_keys )

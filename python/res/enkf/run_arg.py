@@ -15,19 +15,19 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 class RunArg(BaseCClass):
     TYPE_NAME = "run_arg"
 
-    _alloc_ENSEMBLE_EXPERIMENT = EnkfPrototype("run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT(char*, enkf_fs, int, int, char*, char*, subst_list)", bind = False)
-    _free                      = EnkfPrototype("void run_arg_free(run_arg)")
-    _get_queue_index_safe      = EnkfPrototype("int  run_arg_get_queue_index_safe(run_arg)")
-    _is_submitted              = EnkfPrototype("bool run_arg_is_submitted(run_arg)")
-    _get_run_id                = EnkfPrototype("char* run_arg_get_run_id(run_arg)")
-    _get_geo_id                = EnkfPrototype("int run_arg_get_geo_id(run_arg)")
-    _set_geo_id                = EnkfPrototype("void run_arg_set_geo_id(run_arg, int)")
-    _get_runpath               = EnkfPrototype("char* run_arg_get_runpath(run_arg)")
+    _alloc_ENSEMBLE_EXPERIMENT = ResPrototype("run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT(char*, enkf_fs, int, int, char*, char*, subst_list)", bind = False)
+    _free                      = ResPrototype("void run_arg_free(run_arg)")
+    _get_queue_index_safe      = ResPrototype("int  run_arg_get_queue_index_safe(run_arg)")
+    _is_submitted              = ResPrototype("bool run_arg_is_submitted(run_arg)")
+    _get_run_id                = ResPrototype("char* run_arg_get_run_id(run_arg)")
+    _get_geo_id                = ResPrototype("int run_arg_get_geo_id(run_arg)")
+    _set_geo_id                = ResPrototype("void run_arg_set_geo_id(run_arg, int)")
+    _get_runpath               = ResPrototype("char* run_arg_get_runpath(run_arg)")
 
     def __init__(self):
         raise NotImplementedError("Cannot instantiat RunArg directly!")

@@ -16,15 +16,15 @@
 
 
 from cwrap import BaseCClass
-from res.job_queue import QueuePrototype
+from res import ResPrototype
 
 class EnvironmentVarlist(BaseCClass):
   TYPE_NAME      = "env_varlist"
-  
-  _alloc                    = QueuePrototype("void* env_varlist_alloc()", bind=False)
-  _free                     = QueuePrototype("void env_varlist_free( env_varlist )")
-  _setenv                   = QueuePrototype("void env_varlist_setenv(env_varlist, char*, char*)")
-  _get_size                 = QueuePrototype("int env_varlist_get_size(env_varlist)")
+
+  _alloc                    = ResPrototype("void* env_varlist_alloc()", bind=False)
+  _free                     = ResPrototype("void env_varlist_free( env_varlist )")
+  _setenv                   = ResPrototype("void env_varlist_setenv(env_varlist, char*, char*)")
+  _get_size                 = ResPrototype("int env_varlist_get_size(env_varlist)")
 
   def __init__(self):
     c_ptr = self._alloc()

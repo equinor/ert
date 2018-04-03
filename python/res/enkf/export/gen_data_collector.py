@@ -40,6 +40,6 @@ class GenDataCollector(object):
                     if active_mask[data_index]:
                         value = realization_vector[data_index]
                         data_array[data_index][realization_index] = value
-        
+
         return DataFrame( data = data_array , columns = realizations )
-        
+

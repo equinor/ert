@@ -1,6 +1,6 @@
 from cwrap import BaseCClass
 
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.util import Matrix
 from res.enkf.plot_data import PcaPlotVector
 
@@ -8,13 +8,13 @@ from res.enkf.plot_data import PcaPlotVector
 class PcaPlotData(BaseCClass):
     TYPE_NAME = "pca_plot_data"
 
-    _alloc               = EnkfPrototype("void* pca_plot_data_alloc(char*, matrix, matrix , double_vector)", bind = False)
-    _component_count     = EnkfPrototype("int   pca_plot_data_get_size(pca_plot_data)")
-    _realization_count   = EnkfPrototype("int   pca_plot_data_get_ens_size(pca_plot_data)")
-    _get                 = EnkfPrototype("pca_plot_vector_ref pca_plot_data_iget_vector(pca_plot_data, int)")
-    _get_name            = EnkfPrototype("char* pca_plot_data_get_name(pca_plot_data)")
-    _get_singular_values = EnkfPrototype("double_vector_ref pca_plot_data_get_singular_values(pca_plot_data)")
-    _free                = EnkfPrototype("void  pca_plot_data_free(pca_plot_data)")
+    _alloc               = ResPrototype("void* pca_plot_data_alloc(char*, matrix, matrix , double_vector)", bind = False)
+    _component_count     = ResPrototype("int   pca_plot_data_get_size(pca_plot_data)")
+    _realization_count   = ResPrototype("int   pca_plot_data_get_ens_size(pca_plot_data)")
+    _get                 = ResPrototype("pca_plot_vector_ref pca_plot_data_iget_vector(pca_plot_data, int)")
+    _get_name            = ResPrototype("char* pca_plot_data_get_name(pca_plot_data)")
+    _get_singular_values = ResPrototype("double_vector_ref pca_plot_data_get_singular_values(pca_plot_data)")
+    _free                = ResPrototype("void  pca_plot_data_free(pca_plot_data)")
 
     def __init__(self, name, principal_component_matrix, observation_principal_component_matrix, singular_values):
         assert isinstance(name, str)

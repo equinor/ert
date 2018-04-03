@@ -15,7 +15,7 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums.ert_impl_type_enum import ErtImplType
@@ -26,14 +26,14 @@ from res.enkf.plot_data import EnsemblePlotGenKWVector
 class EnsemblePlotGenKW(BaseCClass):
     TYPE_NAME = "ensemble_plot_gen_kw"
 
-    _alloc                = EnkfPrototype("void* enkf_plot_gen_kw_alloc(enkf_config_node)", bind = False)
-    _size                 = EnkfPrototype("int   enkf_plot_gen_kw_get_size(ensemble_plot_gen_kw)")
-    _load                 = EnkfPrototype("void  enkf_plot_gen_kw_load(ensemble_plot_gen_kw, enkf_fs, bool, int, bool_vector)")
-    _get                  = EnkfPrototype("ensemble_plot_gen_kw_vector_ref enkf_plot_gen_kw_iget(ensemble_plot_gen_kw, int)")
-    _iget_key             = EnkfPrototype("char* enkf_plot_gen_kw_iget_key(ensemble_plot_gen_kw, int)")
-    _get_keyword_count    = EnkfPrototype("int   enkf_plot_gen_kw_get_keyword_count(ensemble_plot_gen_kw)")
-    _should_use_log_scale = EnkfPrototype("bool  enkf_plot_gen_kw_should_use_log_scale(ensemble_plot_gen_kw, int)")
-    _free                 = EnkfPrototype("void  enkf_plot_gen_kw_free(ensemble_plot_gen_kw)")
+    _alloc                = ResPrototype("void* enkf_plot_gen_kw_alloc(enkf_config_node)", bind = False)
+    _size                 = ResPrototype("int   enkf_plot_gen_kw_get_size(ensemble_plot_gen_kw)")
+    _load                 = ResPrototype("void  enkf_plot_gen_kw_load(ensemble_plot_gen_kw, enkf_fs, bool, int, bool_vector)")
+    _get                  = ResPrototype("ensemble_plot_gen_kw_vector_ref enkf_plot_gen_kw_iget(ensemble_plot_gen_kw, int)")
+    _iget_key             = ResPrototype("char* enkf_plot_gen_kw_iget_key(ensemble_plot_gen_kw, int)")
+    _get_keyword_count    = ResPrototype("int   enkf_plot_gen_kw_get_keyword_count(ensemble_plot_gen_kw)")
+    _should_use_log_scale = ResPrototype("bool  enkf_plot_gen_kw_should_use_log_scale(ensemble_plot_gen_kw, int)")
+    _free                 = ResPrototype("void  enkf_plot_gen_kw_free(ensemble_plot_gen_kw)")
 
     def __init__(self, ensemble_config_node, file_system, input_mask=None):
         assert isinstance(ensemble_config_node, EnkfConfigNode)

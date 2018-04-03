@@ -20,7 +20,7 @@ from ecl.util.util import StringList, IntVector
 from res.sched import History
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf import EnkfFs, LocalObsdataNode , LocalObsdata, MeasData, ObsData
 from res.enkf.enums import EnkfObservationImplementationType
 
@@ -30,25 +30,25 @@ from res.enkf.observations import ObsVector
 class EnkfObs(BaseCClass):
     TYPE_NAME = "enkf_obs"
 
-    _alloc                    = EnkfPrototype("void* enkf_obs_alloc( history , time_map , ecl_grid , ecl_sum , ens_config )", bind = False)
-    _free                     = EnkfPrototype("void enkf_obs_free( enkf_obs )")
-    _get_size                 = EnkfPrototype("int enkf_obs_get_size( enkf_obs )")
-    _valid                    = EnkfPrototype("bool enkf_obs_is_valid(enkf_obs)")
-    _load                     = EnkfPrototype("void enkf_obs_load(enkf_obs, char*, double)")
+    _alloc                    = ResPrototype("void* enkf_obs_alloc( history , time_map , ecl_grid , ecl_sum , ens_config )", bind = False)
+    _free                     = ResPrototype("void enkf_obs_free( enkf_obs )")
+    _get_size                 = ResPrototype("int enkf_obs_get_size( enkf_obs )")
+    _valid                    = ResPrototype("bool enkf_obs_is_valid(enkf_obs)")
+    _load                     = ResPrototype("void enkf_obs_load(enkf_obs, char*, double)")
 
-    _clear                    = EnkfPrototype("void enkf_obs_clear( enkf_obs )")
-    _alloc_typed_keylist      = EnkfPrototype("stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)")
-    _alloc_matching_keylist   = EnkfPrototype("stringlist_obj enkf_obs_alloc_matching_keylist(enkf_obs, char*)")
-    _has_key                  = EnkfPrototype("bool enkf_obs_has_key(enkf_obs, char*)")
-    _obs_type                 = EnkfPrototype("enkf_obs_impl_type enkf_obs_get_type(enkf_obs, char*)")
-    _get_vector               = EnkfPrototype("obs_vector_ref enkf_obs_get_vector(enkf_obs, char*)")
-    _iget_vector              = EnkfPrototype("obs_vector_ref enkf_obs_iget_vector(enkf_obs, int)")
-    _iget_obs_time            = EnkfPrototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
-    _add_obs_vector           = EnkfPrototype("void enkf_obs_add_obs_vector(enkf_obs, obs_vector)")
-    _get_obs_and_measure_data = EnkfPrototype("void enkf_obs_get_obs_and_measure_data(enkf_obs, enkf_fs, local_obsdata, int_vector, meas_data, obs_data)")
-    _create_all_active_obs    = EnkfPrototype("local_obsdata_obj enkf_obs_alloc_all_active_local_obs( enkf_obs , char*)");
-    _scale_correlated_std     = EnkfPrototype("double  enkf_obs_scale_correlated_std( enkf_obs , enkf_fs ,       int_vector , local_obsdata)");
-    _local_scale_std          = EnkfPrototype("void  enkf_obs_local_scale_std( enkf_obs ,        local_obsdata , double)");
+    _clear                    = ResPrototype("void enkf_obs_clear( enkf_obs )")
+    _alloc_typed_keylist      = ResPrototype("stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)")
+    _alloc_matching_keylist   = ResPrototype("stringlist_obj enkf_obs_alloc_matching_keylist(enkf_obs, char*)")
+    _has_key                  = ResPrototype("bool enkf_obs_has_key(enkf_obs, char*)")
+    _obs_type                 = ResPrototype("enkf_obs_impl_type enkf_obs_get_type(enkf_obs, char*)")
+    _get_vector               = ResPrototype("obs_vector_ref enkf_obs_get_vector(enkf_obs, char*)")
+    _iget_vector              = ResPrototype("obs_vector_ref enkf_obs_iget_vector(enkf_obs, int)")
+    _iget_obs_time            = ResPrototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
+    _add_obs_vector           = ResPrototype("void enkf_obs_add_obs_vector(enkf_obs, obs_vector)")
+    _get_obs_and_measure_data = ResPrototype("void enkf_obs_get_obs_and_measure_data(enkf_obs, enkf_fs, local_obsdata, int_vector, meas_data, obs_data)")
+    _create_all_active_obs    = ResPrototype("local_obsdata_obj enkf_obs_alloc_all_active_local_obs( enkf_obs , char*)");
+    _scale_correlated_std     = ResPrototype("double  enkf_obs_scale_correlated_std( enkf_obs , enkf_fs ,       int_vector , local_obsdata)");
+    _local_scale_std          = ResPrototype("void  enkf_obs_local_scale_std( enkf_obs ,        local_obsdata , double)");
 
     def __init__(self , ensemble_config , history = None , external_time_map = None , grid = None , refcase = None ):
         c_ptr = self._alloc( history , external_time_map , grid , refcase , ensemble_config )
