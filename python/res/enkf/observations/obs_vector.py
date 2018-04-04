@@ -1,20 +1,20 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'obs_vector.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
+#  The file 'obs_vector.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enums import EnkfObservationImplementationType
 from res.enkf.observations import BlockObservation, SummaryObservation, GenObservation
@@ -23,22 +23,22 @@ from res.enkf.observations import BlockObservation, SummaryObservation, GenObser
 class ObsVector(BaseCClass):
     TYPE_NAME = "obs_vector"
 
-    _alloc                = EnkfPrototype("void* obs_vector_alloc(enkf_obs_impl_type, char*, enkf_config_node, int)", bind = False)
-    _free                 = EnkfPrototype("void  obs_vector_free( obs_vector )")
-    _get_state_kw         = EnkfPrototype("char* obs_vector_get_state_kw( obs_vector )")
-    _get_key              = EnkfPrototype("char* obs_vector_get_key( obs_vector )")
-    _iget_node            = EnkfPrototype("void* obs_vector_iget_node( obs_vector, int)")
-    _get_num_active       = EnkfPrototype("int   obs_vector_get_num_active( obs_vector )")
-    _iget_active          = EnkfPrototype("bool  obs_vector_iget_active( obs_vector, int)")
-    _get_impl_type        = EnkfPrototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
-    _install_node         = EnkfPrototype("void  obs_vector_install_node(obs_vector, int, void*)")
-    _get_next_active_step = EnkfPrototype("int   obs_vector_get_next_active_step(obs_vector, int)")
-    _has_data             = EnkfPrototype("bool  obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
-    _get_config_node      = EnkfPrototype("enkf_config_node_ref obs_vector_get_config_node(obs_vector)")
-    _get_total_chi2       = EnkfPrototype("double obs_vector_total_chi2(obs_vector, enkf_fs, int)")
-    _get_obs_key          = EnkfPrototype("char*  obs_vector_get_obs_key(obs_vector)")
-    _get_step_list        = EnkfPrototype("int_vector_ref obs_vector_get_step_list(obs_vector)")
-    _create_local_node    = EnkfPrototype("local_obsdata_node_obj obs_vector_alloc_local_node(obs_vector)")
+    _alloc                = ResPrototype("void* obs_vector_alloc(enkf_obs_impl_type, char*, enkf_config_node, int)", bind = False)
+    _free                 = ResPrototype("void  obs_vector_free( obs_vector )")
+    _get_state_kw         = ResPrototype("char* obs_vector_get_state_kw( obs_vector )")
+    _get_key              = ResPrototype("char* obs_vector_get_key( obs_vector )")
+    _iget_node            = ResPrototype("void* obs_vector_iget_node( obs_vector, int)")
+    _get_num_active       = ResPrototype("int   obs_vector_get_num_active( obs_vector )")
+    _iget_active          = ResPrototype("bool  obs_vector_iget_active( obs_vector, int)")
+    _get_impl_type        = ResPrototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
+    _install_node         = ResPrototype("void  obs_vector_install_node(obs_vector, int, void*)")
+    _get_next_active_step = ResPrototype("int   obs_vector_get_next_active_step(obs_vector, int)")
+    _has_data             = ResPrototype("bool  obs_vector_has_data(obs_vector , bool_vector , enkf_fs)")
+    _get_config_node      = ResPrototype("enkf_config_node_ref obs_vector_get_config_node(obs_vector)")
+    _get_total_chi2       = ResPrototype("double obs_vector_total_chi2(obs_vector, enkf_fs, int)")
+    _get_obs_key          = ResPrototype("char*  obs_vector_get_obs_key(obs_vector)")
+    _get_step_list        = ResPrototype("int_vector_ref obs_vector_get_step_list(obs_vector)")
+    _create_local_node    = ResPrototype("local_obsdata_node_obj obs_vector_alloc_local_node(obs_vector)")
 
     def __init__(self, observation_type, observation_key, config_node, num_reports):
         """
@@ -85,16 +85,16 @@ class ObsVector(BaseCClass):
         else:
             raise AssertionError("Node type '%s' currently not supported!" % node_type)
 
-    
+
     def __iter__(self):
         """ Iterate over active report steps; return node"""
         cur = -1
         run = True
         for step in self.getStepList():
             yield self.getNode( step )
-            
 
-        
+
+
     def getStepList(self):
         """
         Will return an IntVector with the active report steps.
@@ -111,7 +111,7 @@ class ObsVector(BaseCClass):
             return step_list[0]
         else:
             raise ValueError("The activeStep() method can *ONLY* be called for obervations with one active step")
-            
+
 
     def getActiveCount(self):
         """ @rtype: int """
@@ -140,14 +140,14 @@ class ObsVector(BaseCClass):
         """ @rtype: EnkfConfigNode """
         return self._get_config_node().setParent(self)
 
-    
+
     def createLocalObs(self):
         """
         Will create a LocalObsDataNode instance with all timesteps set.
         """
         return self._create_local_node()
 
-    
+
     def hasData(self, active_mask, fs):
         """ @rtype: bool """
         return self._has_data(active_mask, fs)

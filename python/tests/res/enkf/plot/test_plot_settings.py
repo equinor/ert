@@ -3,11 +3,12 @@ from tests import ResTest
 from res.test import ErtTestContext
 
 from res.config import *
+from res import ResPrototype
 from res.enkf import PlotSettings
-from res.enkf import EnkfPrototype
 
-#_plot_settings_init = EnkfPrototype("void plot_settings_init( plot_settings, config_content)", bind = False)
-_plot_settings_config = EnkfPrototype("void plot_settings_add_config_items( config_parser)", bind = False)
+
+
+_plot_settings_config = ResPrototype("void plot_settings_add_config_items( config_parser)", bind = False)
 
 
 
@@ -17,7 +18,7 @@ class PlotSettingsTest(ResTest):
 
     def test_create(self):
         ps = PlotSettings( )
-        
+
 
     def test_keys(self):
         ps = PlotSettings( )
@@ -25,7 +26,7 @@ class PlotSettingsTest(ResTest):
         self.assertFalse( "XXX" in keys )
         self.assertTrue( "PATH" in keys )
         self.assertTrue( "SHOW_REFCASE" in keys )
-    
+
 
     def test_set_get(self):
         ps = PlotSettings( )
@@ -42,7 +43,7 @@ class PlotSettingsTest(ResTest):
         self.assertEqual( ps["SHOW_REFCASE"] , True )
 
 
-        
+
     def test_config(self):
         parser = ConfigParser( )
         ps = PlotSettings( )

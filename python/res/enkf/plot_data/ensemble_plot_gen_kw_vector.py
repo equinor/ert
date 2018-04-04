@@ -15,13 +15,13 @@
 # for more details.
 
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 class EnsemblePlotGenKWVector(BaseCClass):
     TYPE_NAME = "ensemble_plot_gen_kw_vector"
 
-    _size      = EnkfPrototype("int    enkf_plot_gen_kw_vector_get_size(ensemble_plot_gen_kw_vector)")
-    _get_value = EnkfPrototype("double enkf_plot_gen_kw_vector_iget(ensemble_plot_gen_kw_vector, int)")
+    _size      = ResPrototype("int    enkf_plot_gen_kw_vector_get_size(ensemble_plot_gen_kw_vector)")
+    _get_value = ResPrototype("double enkf_plot_gen_kw_vector_iget(ensemble_plot_gen_kw_vector, int)")
 
 
     def __init__(self):

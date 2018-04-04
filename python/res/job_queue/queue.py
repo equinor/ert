@@ -26,7 +26,7 @@ import ctypes
 
 from cwrap import BaseCClass
 
-from res.job_queue import QueuePrototype
+from res import ResPrototype
 from res.job_queue import Job, JobStatusType
 
 
@@ -41,39 +41,39 @@ class JobQueue(BaseCClass):
     # necessary to explitly inform the queue layer when all jobs have
     # been submitted.
     TYPE_NAME             = "job_queue"
-    _alloc                = QueuePrototype("void* job_queue_alloc( int , char* , char* , char* )" , bind      = False)
-    _start_user_exit      = QueuePrototype("bool job_queue_start_user_exit( job_queue )")
-    _get_user_exit        = QueuePrototype("bool job_queue_get_user_exit( job_queue )")
-    _free                 = QueuePrototype("void job_queue_free( job_queue )")
-    _set_max_running      = QueuePrototype("void job_queue_set_max_running( job_queue , int)")
-    _get_max_running      = QueuePrototype("int  job_queue_get_max_running( job_queue )")
-    _set_max_job_duration = QueuePrototype("void job_queue_set_max_job_duration( job_queue , int)")
-    _get_max_job_duration = QueuePrototype("int  job_queue_get_max_job_duration( job_queue )")
-    _set_driver           = QueuePrototype("void job_queue_set_driver( job_queue , void* )")
-    _kill_job             = QueuePrototype("bool job_queue_kill_job( job_queue , int )")
-    _start_queue          = QueuePrototype("void job_queue_run_jobs( job_queue , int , bool)")
-    _run_jobs             = QueuePrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
-    _sim_start            = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
-    _iget_driver_data     = QueuePrototype("void* job_queue_iget_driver_data( job_queue , int)")
+    _alloc                = ResPrototype("void* job_queue_alloc( int , char* , char* , char* )" , bind      = False)
+    _start_user_exit      = ResPrototype("bool job_queue_start_user_exit( job_queue )")
+    _get_user_exit        = ResPrototype("bool job_queue_get_user_exit( job_queue )")
+    _free                 = ResPrototype("void job_queue_free( job_queue )")
+    _set_max_running      = ResPrototype("void job_queue_set_max_running( job_queue , int)")
+    _get_max_running      = ResPrototype("int  job_queue_get_max_running( job_queue )")
+    _set_max_job_duration = ResPrototype("void job_queue_set_max_job_duration( job_queue , int)")
+    _get_max_job_duration = ResPrototype("int  job_queue_get_max_job_duration( job_queue )")
+    _set_driver           = ResPrototype("void job_queue_set_driver( job_queue , void* )")
+    _kill_job             = ResPrototype("bool job_queue_kill_job( job_queue , int )")
+    _start_queue          = ResPrototype("void job_queue_run_jobs( job_queue , int , bool)")
+    _run_jobs             = ResPrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
+    _sim_start            = ResPrototype("time_t job_queue_iget_sim_start( job_queue , int)")
+    _iget_driver_data     = ResPrototype("void* job_queue_iget_driver_data( job_queue , int)")
 
-    _num_running          = QueuePrototype("int  job_queue_get_num_running( job_queue )")
-    _num_complete         = QueuePrototype("int  job_queue_get_num_complete( job_queue )")
-    _num_waiting          = QueuePrototype("int  job_queue_get_num_waiting( job_queue )")
-    _num_pending          = QueuePrototype("int  job_queue_get_num_pending( job_queue )")
+    _num_running          = ResPrototype("int  job_queue_get_num_running( job_queue )")
+    _num_complete         = ResPrototype("int  job_queue_get_num_complete( job_queue )")
+    _num_waiting          = ResPrototype("int  job_queue_get_num_waiting( job_queue )")
+    _num_pending          = ResPrototype("int  job_queue_get_num_pending( job_queue )")
 
-    _is_running           = QueuePrototype("bool job_queue_is_running( job_queue )")
-    _submit_complete      = QueuePrototype("void job_queue_submit_complete( job_queue )")
-    _iget_sim_start       = QueuePrototype("time_t job_queue_iget_sim_start( job_queue , int)")
-    _get_active_size      = QueuePrototype("int  job_queue_get_active_size( job_queue )")
-    _get_pause            = QueuePrototype("bool job_queue_get_pause(job_queue)")
-    _set_pause_on         = QueuePrototype("void job_queue_set_pause_on(job_queue)")
-    _set_pause_off        = QueuePrototype("void job_queue_set_pause_off(job_queue)")
+    _is_running           = ResPrototype("bool job_queue_is_running( job_queue )")
+    _submit_complete      = ResPrototype("void job_queue_submit_complete( job_queue )")
+    _iget_sim_start       = ResPrototype("time_t job_queue_iget_sim_start( job_queue , int)")
+    _get_active_size      = ResPrototype("int  job_queue_get_active_size( job_queue )")
+    _get_pause            = ResPrototype("bool job_queue_get_pause(job_queue)")
+    _set_pause_on         = ResPrototype("void job_queue_set_pause_on(job_queue)")
+    _set_pause_off        = ResPrototype("void job_queue_set_pause_off(job_queue)")
 
     # The return type of the job_queue_iget_job_status should really
     # be the enum job_status_type_enum, but I just did not manage to
     # get the prototyping right. Have therefor taken the return as an
     # integer and convert it in the getJobStatus() method.
-    _get_job_status  = QueuePrototype("int job_queue_iget_job_status(job_queue, int)")
+    _get_job_status  = ResPrototype("int job_queue_iget_job_status(job_queue, int)")
 
 
     def __repr__(self):

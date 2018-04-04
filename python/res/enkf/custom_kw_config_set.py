@@ -1,19 +1,19 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.config.custom_kw_config import CustomKWConfig
 
 
 class CustomKWConfigSet(BaseCClass):
     TYPE_NAME = "custom_kw_config_set"
 
-    _alloc           = EnkfPrototype("void* custom_kw_config_set_alloc()", bind = False)
-    _alloc_from_file = EnkfPrototype("void* custom_kw_config_set_alloc_from_file(char*)", bind = False)
-    _free            = EnkfPrototype("void  custom_kw_config_set_free(custom_kw_config_set)")
-    _reset           = EnkfPrototype("void  custom_kw_config_set_reset(custom_kw_config_set)")
-    _add_config      = EnkfPrototype("void  custom_kw_config_set_add_config(custom_kw_config_set, custom_kw_config)")
-    _update_config   = EnkfPrototype("void  custom_kw_config_set_update_config(custom_kw_config_set, custom_kw_config)")
-    _fwrite          = EnkfPrototype("void  custom_kw_config_set_fwrite(custom_kw_config_set, char*)")
-    _get_keys        = EnkfPrototype("stringlist_obj custom_kw_config_set_get_keys_alloc(custom_kw_config_set)")
+    _alloc           = ResPrototype("void* custom_kw_config_set_alloc()", bind = False)
+    _alloc_from_file = ResPrototype("void* custom_kw_config_set_alloc_from_file(char*)", bind = False)
+    _free            = ResPrototype("void  custom_kw_config_set_free(custom_kw_config_set)")
+    _reset           = ResPrototype("void  custom_kw_config_set_reset(custom_kw_config_set)")
+    _add_config      = ResPrototype("void  custom_kw_config_set_add_config(custom_kw_config_set, custom_kw_config)")
+    _update_config   = ResPrototype("void  custom_kw_config_set_update_config(custom_kw_config_set, custom_kw_config)")
+    _fwrite          = ResPrototype("void  custom_kw_config_set_fwrite(custom_kw_config_set, char*)")
+    _get_keys        = ResPrototype("stringlist_obj custom_kw_config_set_get_keys_alloc(custom_kw_config_set)")
 
     def __init__(self, filename=None):
         if filename is None:

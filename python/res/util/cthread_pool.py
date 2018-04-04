@@ -17,7 +17,7 @@
 import ctypes
 
 from cwrap import BaseCClass
-from res.util import ResUtilPrototype
+from res import ResPrototype
 
 import weakref
 
@@ -25,10 +25,10 @@ import weakref
 class CThreadPool(BaseCClass):
     TYPE_NAME = "thread_pool"
 
-    _alloc   = ResUtilPrototype("void* thread_pool_alloc(int, bool)", bind = False)
-    _free    = ResUtilPrototype("void thread_pool_free(thread_pool)")
-    _add_job = ResUtilPrototype("void thread_pool_add_job(thread_pool, void*, void*)")
-    _join    = ResUtilPrototype("void thread_pool_join(thread_pool)")
+    _alloc   = ResPrototype("void* thread_pool_alloc(int, bool)", bind = False)
+    _free    = ResPrototype("void thread_pool_free(thread_pool)")
+    _add_job = ResPrototype("void thread_pool_add_job(thread_pool, void*, void*)")
+    _join    = ResPrototype("void thread_pool_join(thread_pool)")
 
     def __init__(self, pool_size, start=True):
         c_ptr = self._alloc(pool_size, start)

@@ -1,9 +1,9 @@
 import ctypes
-from res.util import ResUtilPrototype
+from res import ResPrototype
 from tests import ResTest
 from res.util import CThreadPool, startCThreadPool
 
-TEST_LIB = ResUtilPrototype.lib
+TEST_LIB = ResPrototype.lib
 
 
 class CThreadPoolTest(ResTest):

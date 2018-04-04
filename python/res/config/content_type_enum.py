@@ -17,7 +17,7 @@
 import ctypes
 from cwrap import BaseCEnum
 from ecl import EclPrototype
-from res.config import ConfigPrototype
+from res import ResPrototype
 
 
 class ContentTypeEnum(BaseCEnum):
@@ -36,7 +36,7 @@ class ContentTypeEnum(BaseCEnum):
     CONFIG_RUNTIME_FILE  = None
     CONFIG_RUNTIME_INT   = None
 
-    _valid_string = ConfigPrototype("bool config_schema_item_valid_string(config_content_type_enum ,  char*, bool)")
+    _valid_string = ResPrototype("bool config_schema_item_valid_string(config_content_type_enum ,  char*, bool)")
     _sscanf_bool = EclPrototype("bool util_sscanf_bool( char* , bool*)", bind = False)
 
     def valid_string(self, string, runtime = False):

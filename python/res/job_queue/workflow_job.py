@@ -1,26 +1,27 @@
 import os
 
 from cwrap import BaseCClass
-from res.job_queue import QueuePrototype, ErtScript, FunctionErtScript, ErtPlugin, ExternalErtScript
+from res import ResPrototype
+from res.job_queue import ErtScript, FunctionErtScript, ErtPlugin, ExternalErtScript
 from res.config import ContentTypeEnum
 
 
 class WorkflowJob(BaseCClass):
     TYPE_NAME = "workflow_job"
-    _alloc               = QueuePrototype("void* workflow_job_alloc(char*, bool)", bind= False)
-    _alloc_parser        = QueuePrototype("config_parser_obj workflow_job_alloc_config( )", bind= False)
-    _alloc_from_file     = QueuePrototype("workflow_job_obj workflow_job_config_alloc( char* , config_parser , char*)", bind= False)
-    _free                = QueuePrototype("void     workflow_job_free(workflow_job)")
-    _name                = QueuePrototype("char*    workflow_job_get_name(workflow_job)")
-    _internal            = QueuePrototype("bool     workflow_job_internal(workflow_job)")
-    _is_internal_script  = QueuePrototype("bool   workflow_job_is_internal_script(workflow_job)")
-    _get_internal_script = QueuePrototype("char*  workflow_job_get_internal_script_path(workflow_job)")
-    _get_function        = QueuePrototype("char*  workflow_job_get_function(workflow_job)")
-    _get_module          = QueuePrototype("char*  workflow_job_get_module(workflow_job)")
-    _get_executable      = QueuePrototype("char*  workflow_job_get_executable(workflow_job)")
-    _min_arg             = QueuePrototype("int  workflow_job_get_min_arg(workflow_job)")
-    _max_arg             = QueuePrototype("int  workflow_job_get_max_arg(workflow_job)")
-    _arg_type            = QueuePrototype("config_content_type_enum workflow_job_iget_argtype(workflow_job, int)")
+    _alloc               = ResPrototype("void* workflow_job_alloc(char*, bool)", bind= False)
+    _alloc_parser        = ResPrototype("config_parser_obj workflow_job_alloc_config( )", bind= False)
+    _alloc_from_file     = ResPrototype("workflow_job_obj workflow_job_config_alloc( char* , config_parser , char*)", bind= False)
+    _free                = ResPrototype("void     workflow_job_free(workflow_job)")
+    _name                = ResPrototype("char*    workflow_job_get_name(workflow_job)")
+    _internal            = ResPrototype("bool     workflow_job_internal(workflow_job)")
+    _is_internal_script  = ResPrototype("bool   workflow_job_is_internal_script(workflow_job)")
+    _get_internal_script = ResPrototype("char*  workflow_job_get_internal_script_path(workflow_job)")
+    _get_function        = ResPrototype("char*  workflow_job_get_function(workflow_job)")
+    _get_module          = ResPrototype("char*  workflow_job_get_module(workflow_job)")
+    _get_executable      = ResPrototype("char*  workflow_job_get_executable(workflow_job)")
+    _min_arg             = ResPrototype("int  workflow_job_get_min_arg(workflow_job)")
+    _max_arg             = ResPrototype("int  workflow_job_get_max_arg(workflow_job)")
+    _arg_type            = ResPrototype("config_content_type_enum workflow_job_iget_argtype(workflow_job, int)")
 
 
 
@@ -40,9 +41,9 @@ class WorkflowJob(BaseCClass):
             # NB: Observe argument reoredring.
             return cls._alloc_from_file( name , parser , config_file )
         else:
-            raise IOError("Could not open config_file:%s" % config_file)   
-    
-    
+            raise IOError("Could not open config_file:%s" % config_file)
+
+
     def __init__(self, name, internal=True):
         c_ptr = self._alloc(name, internal)
         super(WorkflowJob, self).__init__(c_ptr)
@@ -178,4 +179,4 @@ class WorkflowJob(BaseCClass):
         workflow.__running = False
         return workflow
 
-    
+

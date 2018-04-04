@@ -16,20 +16,21 @@
 import sys
 from res.enkf.enums import ErtImplType
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype, EnkfFs, NodeId
+from res import ResPrototype
+from res.enkf import EnkfFs, NodeId
 from res.enkf.data import GenKw, GenData, CustomKW, Field, ExtParam
 
 class EnkfNode(BaseCClass):
     TYPE_NAME = "enkf_node"
-    _alloc         = EnkfPrototype("void* enkf_node_alloc(enkf_config_node)", bind = False)
-    _alloc_private = EnkfPrototype("void* enkf_node_alloc_private_container(enkf_config_node)", bind = False)
-    _free          = EnkfPrototype("void  enkf_node_free(enkf_node)")
-    _get_name      = EnkfPrototype("char* enkf_node_get_key(enkf_node)")
-    _value_ptr     = EnkfPrototype("void* enkf_node_value_ptr(enkf_node)")
-    _try_load      = EnkfPrototype("bool  enkf_node_try_load(enkf_node, enkf_fs, node_id)")
-    _store         = EnkfPrototype("bool  enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
-    _get_impl_type = EnkfPrototype("ert_impl_type_enum enkf_node_get_impl_type(enkf_node)")
-    _ecl_write     = EnkfPrototype("void enkf_node_ecl_write(enkf_node, char*, void*, int)")
+    _alloc         = ResPrototype("void* enkf_node_alloc(enkf_config_node)", bind = False)
+    _alloc_private = ResPrototype("void* enkf_node_alloc_private_container(enkf_config_node)", bind = False)
+    _free          = ResPrototype("void  enkf_node_free(enkf_node)")
+    _get_name      = ResPrototype("char* enkf_node_get_key(enkf_node)")
+    _value_ptr     = ResPrototype("void* enkf_node_value_ptr(enkf_node)")
+    _try_load      = ResPrototype("bool  enkf_node_try_load(enkf_node, enkf_fs, node_id)")
+    _store         = ResPrototype("bool  enkf_node_store(enkf_node, enkf_fs, bool, node_id)")
+    _get_impl_type = ResPrototype("ert_impl_type_enum enkf_node_get_impl_type(enkf_node)")
+    _ecl_write     = ResPrototype("void enkf_node_ecl_write(enkf_node, char*, void*, int)")
 
     def __init__(self, config_node, private=False):
         self._private = private

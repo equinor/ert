@@ -14,21 +14,22 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res.job_queue import QueuePrototype, ExtJob
+from res import ResPrototype
+from res.job_queue import ExtJob
 from ecl.util.util import StringList
 
 
 class ExtJoblist(BaseCClass):
     TYPE_NAME = "ext_joblist"
-    _alloc      = QueuePrototype("void* ext_joblist_alloc( )", bind=False)
-    _free       = QueuePrototype("void ext_joblist_free( ext_joblist )")
-    _alloc_list = QueuePrototype("stringlist_ref ext_joblist_alloc_list(ext_joblist)")
-    _get_job    = QueuePrototype("ext_job_ref ext_joblist_get_job(ext_joblist, char*)")
-    _del_job    = QueuePrototype("int ext_joblist_del_job(ext_joblist, char*)")
-    _has_job    = QueuePrototype("int ext_joblist_has_job(ext_joblist, char*)")
-    _add_job    = QueuePrototype("void ext_joblist_add_job(ext_joblist, char*, ext_job)")
-    _get_jobs   = QueuePrototype("hash_ref ext_joblist_get_jobs(ext_joblist)")
-    _size       = QueuePrototype("int ext_joblist_get_size(ext_joblist)")
+    _alloc      = ResPrototype("void* ext_joblist_alloc( )", bind=False)
+    _free       = ResPrototype("void ext_joblist_free( ext_joblist )")
+    _alloc_list = ResPrototype("stringlist_ref ext_joblist_alloc_list(ext_joblist)")
+    _get_job    = ResPrototype("ext_job_ref ext_joblist_get_job(ext_joblist, char*)")
+    _del_job    = ResPrototype("int ext_joblist_del_job(ext_joblist, char*)")
+    _has_job    = ResPrototype("int ext_joblist_has_job(ext_joblist, char*)")
+    _add_job    = ResPrototype("void ext_joblist_add_job(ext_joblist, char*, ext_job)")
+    _get_jobs   = ResPrototype("hash_ref ext_joblist_get_jobs(ext_joblist)")
+    _size       = ResPrototype("int ext_joblist_get_size(ext_joblist)")
 
     def __init__(self):
         c_ptr = self._alloc()

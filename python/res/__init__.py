@@ -57,6 +57,7 @@ import warnings
 warnings.simplefilter('always', DeprecationWarning) # see #1437
 
 from cwrap import load as cwrapload
+from cwrap import Prototype
 
 try:
     import ert_site_init
@@ -117,6 +118,13 @@ if sys.hexversion < required_version_hex:
 def load(name):
     return cwrapload(name, path=res_lib_path, so_version=ert_so_version)
 
+class ResPrototype(Prototype):
+    lib = load("libres")
+
+    def __init__(self, prototype, bind=True):
+        super(ResPrototype, self).__init__(ResPrototype.lib, prototype, bind=bind)
+
+RES_LIB = ResPrototype.lib
 
 from res.util import ResVersion
 from ecl.util.util import updateAbortSignals

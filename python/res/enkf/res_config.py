@@ -20,10 +20,10 @@ from os.path import isfile
 from cwrap import BaseCClass
 
 from ecl.util.util import StringList
-
+from res import ResPrototype
 from res.config import (ConfigParser, ConfigContent, ConfigSettings,
                         UnrecognizedEnum)
-from res.enkf import EnkfPrototype
+
 from res.enkf import (SiteConfig, AnalysisConfig, SubstConfig, ModelConfig, EclConfig,
                       EnsembleConfig, RNGConfig, ConfigKeys)
 
@@ -31,27 +31,27 @@ class ResConfig(BaseCClass):
 
     TYPE_NAME = "res_config"
 
-    _alloc_load = EnkfPrototype("void* res_config_alloc_load(char*)", bind=False)
-    _alloc      = EnkfPrototype("void* res_config_alloc(config_content)", bind=False)
-    _free       = EnkfPrototype("void res_config_free(res_config)")
+    _alloc_load = ResPrototype("void* res_config_alloc_load(char*)", bind=False)
+    _alloc      = ResPrototype("void* res_config_alloc(config_content)", bind=False)
+    _free       = ResPrototype("void res_config_free(res_config)")
 
-    _user_config_file  = EnkfPrototype("char* res_config_get_user_config_file(res_config)")
+    _user_config_file  = ResPrototype("char* res_config_get_user_config_file(res_config)")
 
-    _config_path       = EnkfPrototype("char* res_config_get_config_directory(res_config)")
-    _site_config       = EnkfPrototype("site_config_ref res_config_get_site_config(res_config)")
-    _analysis_config   = EnkfPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
-    _subst_config      = EnkfPrototype("subst_config_ref res_config_get_subst_config(res_config)")
-    _model_config      = EnkfPrototype("model_config_ref res_config_get_model_config(res_config)")
-    _ecl_config        = EnkfPrototype("ecl_config_ref res_config_get_ecl_config(res_config)")
-    _ensemble_config   = EnkfPrototype("ens_config_ref res_config_get_ensemble_config(res_config)")
-    _plot_config       = EnkfPrototype("plot_settings_ref res_config_get_plot_config(res_config)")
-    _hook_manager      = EnkfPrototype("hook_manager_ref res_config_get_hook_manager(res_config)")
-    _ert_workflow_list = EnkfPrototype("ert_workflow_list_ref res_config_get_workflow_list(res_config)")
-    _rng_config        = EnkfPrototype("rng_config_ref res_config_get_rng_config(res_config)")
-    _ert_templates     = EnkfPrototype("ert_templates_ref res_config_get_templates(res_config)")
-    _log_config        = EnkfPrototype("log_config_ref res_config_get_log_config(res_config)")
-    _add_config_items  = EnkfPrototype("void res_config_add_config_items(config_parser)")
-    _init_parser       = EnkfPrototype("void res_config_init_config_parser(config_parser)", bind=False)
+    _config_path       = ResPrototype("char* res_config_get_config_directory(res_config)")
+    _site_config       = ResPrototype("site_config_ref res_config_get_site_config(res_config)")
+    _analysis_config   = ResPrototype("analysis_config_ref res_config_get_analysis_config(res_config)")
+    _subst_config      = ResPrototype("subst_config_ref res_config_get_subst_config(res_config)")
+    _model_config      = ResPrototype("model_config_ref res_config_get_model_config(res_config)")
+    _ecl_config        = ResPrototype("ecl_config_ref res_config_get_ecl_config(res_config)")
+    _ensemble_config   = ResPrototype("ens_config_ref res_config_get_ensemble_config(res_config)")
+    _plot_config       = ResPrototype("plot_settings_ref res_config_get_plot_config(res_config)")
+    _hook_manager      = ResPrototype("hook_manager_ref res_config_get_hook_manager(res_config)")
+    _ert_workflow_list = ResPrototype("ert_workflow_list_ref res_config_get_workflow_list(res_config)")
+    _rng_config        = ResPrototype("rng_config_ref res_config_get_rng_config(res_config)")
+    _ert_templates     = ResPrototype("ert_templates_ref res_config_get_templates(res_config)")
+    _log_config        = ResPrototype("log_config_ref res_config_get_log_config(res_config)")
+    _add_config_items  = ResPrototype("void res_config_add_config_items(config_parser)")
+    _init_parser       = ResPrototype("void res_config_init_config_parser(config_parser)", bind=False)
 
 
     def __init__(self, user_config_file=None, config=None, throw_on_error=True):

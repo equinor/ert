@@ -29,37 +29,37 @@
 
 
 from cwrap import BaseCClass,CFILE
-from res.util import ResUtilPrototype
+from res import ResPrototype
 
 
 class Matrix(BaseCClass):
-    _matrix_alloc      = ResUtilPrototype("void*  matrix_alloc(int, int )" , bind = False)
-    _matrix_alloc_identity = ResUtilPrototype("matrix_obj  matrix_alloc_identity( int )" , bind = False)
-    _alloc_transpose   = ResUtilPrototype("matrix_obj  matrix_alloc_transpose(matrix)")
-    _inplace_transpose = ResUtilPrototype("void        matrix_inplace_transpose(matrix)")
-    _copy              = ResUtilPrototype("matrix_obj  matrix_alloc_copy(matrix)" )
-    _sub_copy          = ResUtilPrototype("matrix_obj  matrix_alloc_sub_copy(matrix, int , int , int , int)" )
-    _free              = ResUtilPrototype("void   matrix_free(matrix)")
-    _iget              = ResUtilPrototype("double matrix_iget( matrix , int , int )")
-    _iset              = ResUtilPrototype("void   matrix_iset( matrix , int , int , double)")
-    _set_all           = ResUtilPrototype("void   matrix_scalar_set( matrix , double)")
-    _scale_column      = ResUtilPrototype("void matrix_scale_column(matrix , int , double)")
-    _scale_row         = ResUtilPrototype("void matrix_scale_row(matrix , int , double)")
-    _copy_column       = ResUtilPrototype("void matrix_copy_column(matrix , matrix , int , int)" , bind = False)
-    _rows              = ResUtilPrototype("int matrix_get_rows(matrix)")
-    _columns           = ResUtilPrototype("int matrix_get_columns(matrix)")
-    _equal             = ResUtilPrototype("bool matrix_equal(matrix, matrix)")
-    _pretty_print      = ResUtilPrototype("void matrix_pretty_print(matrix, char*, char*)")
-    _fprint            = ResUtilPrototype("void matrix_fprintf(matrix, char*, FILE)")
-    _random_init       = ResUtilPrototype("void matrix_random_init(matrix, rng)")
-    _dump_csv          = ResUtilPrototype("void matrix_dump_csv(matrix, char*)")
+    _matrix_alloc      = ResPrototype("void*  matrix_alloc(int, int )" , bind = False)
+    _matrix_alloc_identity = ResPrototype("matrix_obj  matrix_alloc_identity( int )" , bind = False)
+    _alloc_transpose   = ResPrototype("matrix_obj  matrix_alloc_transpose(matrix)")
+    _inplace_transpose = ResPrototype("void        matrix_inplace_transpose(matrix)")
+    _copy              = ResPrototype("matrix_obj  matrix_alloc_copy(matrix)" )
+    _sub_copy          = ResPrototype("matrix_obj  matrix_alloc_sub_copy(matrix, int , int , int , int)" )
+    _free              = ResPrototype("void   matrix_free(matrix)")
+    _iget              = ResPrototype("double matrix_iget( matrix , int , int )")
+    _iset              = ResPrototype("void   matrix_iset( matrix , int , int , double)")
+    _set_all           = ResPrototype("void   matrix_scalar_set( matrix , double)")
+    _scale_column      = ResPrototype("void matrix_scale_column(matrix , int , double)")
+    _scale_row         = ResPrototype("void matrix_scale_row(matrix , int , double)")
+    _copy_column       = ResPrototype("void matrix_copy_column(matrix , matrix , int , int)" , bind = False)
+    _rows              = ResPrototype("int matrix_get_rows(matrix)")
+    _columns           = ResPrototype("int matrix_get_columns(matrix)")
+    _equal             = ResPrototype("bool matrix_equal(matrix, matrix)")
+    _pretty_print      = ResPrototype("void matrix_pretty_print(matrix, char*, char*)")
+    _fprint            = ResPrototype("void matrix_fprintf(matrix, char*, FILE)")
+    _random_init       = ResPrototype("void matrix_random_init(matrix, rng)")
+    _dump_csv          = ResPrototype("void matrix_dump_csv(matrix, char*)")
 
     # Requires BLAS. If the library does not have the
     # matrix_alloc_matmul() function the prototype will have _func =
     # None, and NotImplementedError( ) will be raised int the
     # __call__() method if we try to use this function.
     try:
-        _alloc_matmul = ResUtilPrototype("matrix_obj  matrix_alloc_matmul(matrix, matrix)" , bind = False)
+        _alloc_matmul = ResPrototype("matrix_obj  matrix_alloc_matmul(matrix, matrix)" , bind = False)
     except AttributeError:
         _alloc_matmul = None
 

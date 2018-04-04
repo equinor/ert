@@ -14,7 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCEnum
-from res.analysis import ANALYSIS_LIB
 
 
 class AnalysisModuleOptionsEnum(BaseCEnum):
@@ -24,7 +23,7 @@ class AnalysisModuleOptionsEnum(BaseCEnum):
     ANALYSIS_UPDATE_A = None
     ANALYSIS_SCALE_DATA = None
     ANALYSIS_ITERABLE = None
- 
+
 AnalysisModuleOptionsEnum.addEnum("ANALYSIS_NEED_ED" , 1)
 AnalysisModuleOptionsEnum.addEnum("ANALYSIS_USE_A" , 4)
 AnalysisModuleOptionsEnum.addEnum("ANALYSIS_UPDATE_A" , 8)
@@ -33,4 +32,4 @@ AnalysisModuleOptionsEnum.addEnum("ANALYSIS_ITERABLE" , 32)
 
 
 
-    
+

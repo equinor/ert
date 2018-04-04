@@ -1,21 +1,22 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype, LocalObsdataNode
+from res import ResPrototype
+from res.enkf import LocalObsdataNode
 
 
 class LocalObsdata(BaseCClass):
     TYPE_NAME = "local_obsdata"
 
-    _alloc       = EnkfPrototype("void* local_obsdata_alloc(char*)", bind = False)
-    _free        = EnkfPrototype("void  local_obsdata_free(local_obsdata)")
-    _size        = EnkfPrototype("int   local_obsdata_get_size(local_obsdata)")
-    _has_node    = EnkfPrototype("bool  local_obsdata_has_node(local_obsdata, char*)")
-    _add_node    = EnkfPrototype("bool  local_obsdata_add_node(local_obsdata, local_obsdata_node)")
-    _del_node    = EnkfPrototype("void  local_obsdata_del_node(local_obsdata, char*)")
-    _clear       = EnkfPrototype("void  local_dataset_clear(local_obsdata)")
-    _name        = EnkfPrototype("char* local_obsdata_get_name(local_obsdata)")
-    _iget_node   = EnkfPrototype("local_obsdata_node_ref local_obsdata_iget(local_obsdata, int)")
-    _get_node    = EnkfPrototype("local_obsdata_node_ref local_obsdata_get(local_obsdata, char*)")
-    _active_list = EnkfPrototype("active_list_ref local_obsdata_get_node_active_list(local_obsdata, char*)")
+    _alloc       = ResPrototype("void* local_obsdata_alloc(char*)", bind = False)
+    _free        = ResPrototype("void  local_obsdata_free(local_obsdata)")
+    _size        = ResPrototype("int   local_obsdata_get_size(local_obsdata)")
+    _has_node    = ResPrototype("bool  local_obsdata_has_node(local_obsdata, char*)")
+    _add_node    = ResPrototype("bool  local_obsdata_add_node(local_obsdata, local_obsdata_node)")
+    _del_node    = ResPrototype("void  local_obsdata_del_node(local_obsdata, char*)")
+    _clear       = ResPrototype("void  local_dataset_clear(local_obsdata)")
+    _name        = ResPrototype("char* local_obsdata_get_name(local_obsdata)")
+    _iget_node   = ResPrototype("local_obsdata_node_ref local_obsdata_iget(local_obsdata, int)")
+    _get_node    = ResPrototype("local_obsdata_node_ref local_obsdata_get(local_obsdata, char*)")
+    _active_list = ResPrototype("active_list_ref local_obsdata_get_node_active_list(local_obsdata, char*)")
 
     def __init__(self, name , obs = None):
         # The obs instance should be a EnkFObs instance; some circular dependency problems

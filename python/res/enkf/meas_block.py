@@ -1,5 +1,5 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.obs_data import ObsData
 from ecl.util.util import IntVector , BoolVector
 from res.util import Matrix
@@ -8,16 +8,16 @@ from res.util import Matrix
 class MeasBlock(BaseCClass):
     TYPE_NAME = "meas_block"
 
-    _alloc               = EnkfPrototype("void*  meas_block_alloc( char* , bool_vector , int)", bind = False)
-    _free                = EnkfPrototype("void   meas_block_free( meas_block )")
-    _get_active_ens_size = EnkfPrototype("int    meas_block_get_active_ens_size( meas_block )")
-    _get_total_ens_size  = EnkfPrototype("int    meas_block_get_total_ens_size( meas_block )")
-    _get_total_obs_size  = EnkfPrototype("int    meas_block_get_total_obs_size( meas_block )")
-    _iget_value          = EnkfPrototype("double meas_block_iget( meas_block , int , int)")
-    _iset_value          = EnkfPrototype("void   meas_block_iset( meas_block , int , int , double)")
-    _iget_mean           = EnkfPrototype("double meas_block_iget_ens_mean( meas_block , int )")
-    _iget_std            = EnkfPrototype("double meas_block_iget_ens_std( meas_block , int )")
-    _iens_active         = EnkfPrototype("bool   meas_block_iens_active( meas_block , int )")
+    _alloc               = ResPrototype("void*  meas_block_alloc( char* , bool_vector , int)", bind = False)
+    _free                = ResPrototype("void   meas_block_free( meas_block )")
+    _get_active_ens_size = ResPrototype("int    meas_block_get_active_ens_size( meas_block )")
+    _get_total_ens_size  = ResPrototype("int    meas_block_get_total_ens_size( meas_block )")
+    _get_total_obs_size  = ResPrototype("int    meas_block_get_total_obs_size( meas_block )")
+    _iget_value          = ResPrototype("double meas_block_iget( meas_block , int , int)")
+    _iset_value          = ResPrototype("void   meas_block_iset( meas_block , int , int , double)")
+    _iget_mean           = ResPrototype("double meas_block_iget_ens_mean( meas_block , int )")
+    _iget_std            = ResPrototype("double meas_block_iget_ens_std( meas_block , int )")
+    _iens_active         = ResPrototype("bool   meas_block_iens_active( meas_block , int )")
 
     def __init__(self , obs_key , obs_size , ens_mask):
         assert(isinstance(ens_mask , BoolVector))

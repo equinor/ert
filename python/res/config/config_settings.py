@@ -16,39 +16,40 @@
 
 from cwrap import BaseCClass
 
-from res.config import ConfigPrototype, ContentTypeEnum
+from res import ResPrototype
+from res.config import ContentTypeEnum
 from res.config import SchemaItem
 
 
 class ConfigSettings(BaseCClass):
     TYPE_NAME = "config_settings"
-    _alloc = ConfigPrototype("void* config_settings_alloc(char*)", bind = False)
-    _free  = ConfigPrototype("void  config_settings_free(config_settings)")
+    _alloc = ResPrototype("void* config_settings_alloc(char*)", bind = False)
+    _free  = ResPrototype("void  config_settings_free(config_settings)")
 
-    _add_setting = ConfigPrototype("bool config_settings_add_setting(config_settings , char* , config_content_type_enum, char*)")
-    _add_double_setting = ConfigPrototype("void config_settings_add_double_setting(config_settings , char* , double)")
-    _add_int_setting = ConfigPrototype("void config_settings_add_int_setting(config_settings , char* , int)")
-    _add_string_setting = ConfigPrototype("void config_settings_add_string_setting(config_settings , char* , char*)")
-    _add_bool_setting = ConfigPrototype("void config_settings_add_bool_setting(config_settings , char* , bool)")
-    _has_key = ConfigPrototype("bool config_settings_has_key(config_settings , char*)")
-    _get_type    = ConfigPrototype("config_content_type_enum config_settings_get_value_type(config_settings, char*)")
-    _init_parser = ConfigPrototype("void config_settings_init_parser(config_settings, config_parser, bool)")
-    _apply       = ConfigPrototype("void config_settings_apply(config_settings, config_content)")
-    _alloc_keys  = ConfigPrototype("stringlist_obj config_settings_alloc_keys(config_settings)")
+    _add_setting = ResPrototype("bool config_settings_add_setting(config_settings , char* , config_content_type_enum, char*)")
+    _add_double_setting = ResPrototype("void config_settings_add_double_setting(config_settings , char* , double)")
+    _add_int_setting = ResPrototype("void config_settings_add_int_setting(config_settings , char* , int)")
+    _add_string_setting = ResPrototype("void config_settings_add_string_setting(config_settings , char* , char*)")
+    _add_bool_setting = ResPrototype("void config_settings_add_bool_setting(config_settings , char* , bool)")
+    _has_key = ResPrototype("bool config_settings_has_key(config_settings , char*)")
+    _get_type    = ResPrototype("config_content_type_enum config_settings_get_value_type(config_settings, char*)")
+    _init_parser = ResPrototype("void config_settings_init_parser(config_settings, config_parser, bool)")
+    _apply       = ResPrototype("void config_settings_apply(config_settings, config_content)")
+    _alloc_keys  = ResPrototype("stringlist_obj config_settings_alloc_keys(config_settings)")
 
-    _get         = ConfigPrototype("char* config_settings_get_value(config_settings, char*)")
-    _get_int     = ConfigPrototype("int config_settings_get_int_value(config_settings, char*)")
-    _get_double  = ConfigPrototype("double config_settings_get_double_value(config_settings, char*)")
-    _get_bool    = ConfigPrototype("bool config_settings_get_bool_value(config_settings, char*)")
+    _get         = ResPrototype("char* config_settings_get_value(config_settings, char*)")
+    _get_int     = ResPrototype("int config_settings_get_int_value(config_settings, char*)")
+    _get_double  = ResPrototype("double config_settings_get_double_value(config_settings, char*)")
+    _get_bool    = ResPrototype("bool config_settings_get_bool_value(config_settings, char*)")
 
-    _set         = ConfigPrototype("bool config_settings_set_value(config_settings, char*, char*)")
-    _set_int     = ConfigPrototype("bool config_settings_set_int_value(config_settings, char*, int)")
-    _set_double  = ConfigPrototype("bool config_settings_set_double_value(config_settings, char*, double)")
-    _set_bool    = ConfigPrototype("bool config_settings_set_bool_value(config_settings, char*, bool)")
+    _set         = ResPrototype("bool config_settings_set_value(config_settings, char*, char*)")
+    _set_int     = ResPrototype("bool config_settings_set_int_value(config_settings, char*, int)")
+    _set_double  = ResPrototype("bool config_settings_set_double_value(config_settings, char*, double)")
+    _set_bool    = ResPrototype("bool config_settings_set_bool_value(config_settings, char*, bool)")
 
-    
-    
-    
+
+
+
     def __init__(self , root_key):
         c_ptr = ConfigSettings._alloc( root_key )
         super(ConfigSettings, self).__init__(c_ptr)
@@ -82,29 +83,29 @@ class ConfigSettings(BaseCClass):
             if value_type == ContentTypeEnum.CONFIG_INT:
                 self._set_int( key , value)
                 return
-                
+
             if value_type == ContentTypeEnum.CONFIG_FLOAT:
                 self._set_double( key , value)
                 return
-                
+
             if value_type == ContentTypeEnum.CONFIG_BOOL:
                 if type(value) is bool:
                     self._set_bool( key , value )
-                    return 
+                    return
                 else:
                     raise TypeError("Type of %s should be boolean" % key)
-                
+
             if not self._set( key , value ):
                 raise TypeError("Setting %s=%s failed \n" % (key , value))
         else:
             raise KeyError("Settings object does not support key:%s" % key)
 
-        
-        
+
+
     def free(self):
         self._free( )
 
-        
+
     def addSetting(self, key , value_type, initial_value):
         if not self._add_setting( key , value_type , str(initial_value) ):
             raise TypeError("Failed to add setting %s with initial value %s" % (key , initial_value))
@@ -121,7 +122,7 @@ class ConfigSettings(BaseCClass):
 
     def addBoolSetting(self, key , initial_value):
         self._add_bool_setting( key , initial_value )
-    
+
     def initParser(self , parser, required = False):
         self._init_parser( parser , required )
 

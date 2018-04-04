@@ -15,7 +15,7 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums.ert_impl_type_enum import ErtImplType
@@ -25,13 +25,13 @@ from ecl.util.util import BoolVector, DoubleVector
 class EnsemblePlotGenData(BaseCClass):
     TYPE_NAME = "ensemble_plot_gen_data"
 
-    _alloc      = EnkfPrototype("void* enkf_plot_gendata_alloc(enkf_config_node)", bind = False)
-    _size       = EnkfPrototype("int   enkf_plot_gendata_get_size(ensemble_plot_gen_data)")
-    _load       = EnkfPrototype("void  enkf_plot_gendata_load(ensemble_plot_gen_data, enkf_fs, int, bool_vector)")
-    _get        = EnkfPrototype("ensemble_plot_gen_data_vector_ref enkf_plot_gendata_iget(ensemble_plot_gen_data, int)")
-    _min_values = EnkfPrototype("double_vector_ref enkf_plot_gendata_get_min_values(ensemble_plot_gen_data)")
-    _max_values = EnkfPrototype("double_vector_ref enkf_plot_gendata_get_max_values(ensemble_plot_gen_data)")
-    _free       = EnkfPrototype("void  enkf_plot_gendata_free(ensemble_plot_gen_data)")
+    _alloc      = ResPrototype("void* enkf_plot_gendata_alloc(enkf_config_node)", bind = False)
+    _size       = ResPrototype("int   enkf_plot_gendata_get_size(ensemble_plot_gen_data)")
+    _load       = ResPrototype("void  enkf_plot_gendata_load(ensemble_plot_gen_data, enkf_fs, int, bool_vector)")
+    _get        = ResPrototype("ensemble_plot_gen_data_vector_ref enkf_plot_gendata_iget(ensemble_plot_gen_data, int)")
+    _min_values = ResPrototype("double_vector_ref enkf_plot_gendata_get_min_values(ensemble_plot_gen_data)")
+    _max_values = ResPrototype("double_vector_ref enkf_plot_gendata_get_max_values(ensemble_plot_gen_data)")
+    _free       = ResPrototype("void  enkf_plot_gendata_free(ensemble_plot_gen_data)")
 
     def __init__(self, ensemble_config_node, file_system, report_step, input_mask=None):
         assert isinstance(ensemble_config_node, EnkfConfigNode)

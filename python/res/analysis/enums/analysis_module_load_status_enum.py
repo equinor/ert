@@ -17,7 +17,6 @@
 
 
 from cwrap import BaseCEnum
-from res.analysis import ANALYSIS_LIB
 
 
 class AnalysisModuleLoadStatusEnum(BaseCEnum):

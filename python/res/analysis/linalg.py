@@ -15,7 +15,7 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res.analysis import AnalysisPrototype
+from res import ResPrototype
 
 
 __all__ = ["numPC"]
@@ -26,7 +26,7 @@ class Linalg(BaseCClass):
     namespace for a collection of ensemble based linear algebra
     methods.
     """
-    _get_num_PC = AnalysisPrototype("int enkf_linalg_num_PC( matrix , double)" , bind = False)
+    _get_num_PC = ResPrototype("int enkf_linalg_num_PC( matrix , double)" , bind = False)
 
     @staticmethod
     def numPC(S , truncation):

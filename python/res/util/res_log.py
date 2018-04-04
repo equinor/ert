@@ -1,11 +1,11 @@
-from res.util import ResUtilPrototype
+from res import ResPrototype
 from res.util.enums import MessageLevelEnum
 
 
 class ResLog(object):
-    _init = ResUtilPrototype("void res_log_init_log(message_level_enum, char*, bool)", bind=False)
-    _write_log = ResUtilPrototype("void res_log_add_message(message_level_enum, char*)", bind=False)
-    _get_filename = ResUtilPrototype("char* res_log_get_filename()", bind=False)
+    _init = ResPrototype("void res_log_init_log(message_level_enum, char*, bool)", bind=False)
+    _write_log = ResPrototype("void res_log_add_message(message_level_enum, char*)", bind=False)
+    _get_filename = ResPrototype("char* res_log_get_filename()", bind=False)
 
     @classmethod
     def init(cls, log_level, log_filename, verbose):

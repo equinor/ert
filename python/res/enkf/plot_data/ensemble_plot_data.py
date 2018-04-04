@@ -1,5 +1,5 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_fs import EnkfFs
 from ecl.util.util import BoolVector
@@ -8,11 +8,11 @@ from ecl.util.util import BoolVector
 class EnsemblePlotData(BaseCClass):
     TYPE_NAME = "ensemble_plot_data"
 
-    _alloc = EnkfPrototype("void* enkf_plot_data_alloc(enkf_config_node)", bind = False)
-    _load  = EnkfPrototype("void  enkf_plot_data_load(ensemble_plot_data, enkf_fs, char*, bool_vector)")
-    _size  = EnkfPrototype("int   enkf_plot_data_get_size(ensemble_plot_data)")
-    _get   = EnkfPrototype("ensemble_plot_data_vector_ref enkf_plot_data_iget(ensemble_plot_data, int)")
-    _free  = EnkfPrototype("void  enkf_plot_data_free(ensemble_plot_data)")
+    _alloc = ResPrototype("void* enkf_plot_data_alloc(enkf_config_node)", bind = False)
+    _load  = ResPrototype("void  enkf_plot_data_load(ensemble_plot_data, enkf_fs, char*, bool_vector)")
+    _size  = ResPrototype("int   enkf_plot_data_get_size(ensemble_plot_data)")
+    _get   = ResPrototype("ensemble_plot_data_vector_ref enkf_plot_data_iget(ensemble_plot_data, int)")
+    _free  = ResPrototype("void  enkf_plot_data_free(ensemble_plot_data)")
 
 
     def __init__(self, ensemble_config_node, file_system=None, user_index=None, input_mask=None):

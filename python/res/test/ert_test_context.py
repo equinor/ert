@@ -18,16 +18,17 @@ import os.path
 from ecl.util.test import TestArea
 
 from cwrap import BaseCClass
-from res.enkf import EnKFMain, EnkfPrototype, ResConfig
+from res import ResPrototype
+from res.enkf import EnKFMain, ResConfig
 
 class ErtTest(BaseCClass):
     TYPE_NAME = "ert_test"
 
-    _alloc         = EnkfPrototype("void* ert_test_context_alloc_python( test_area , res_config)", bind = False)
-    _set_store     = EnkfPrototype("void* ert_test_context_set_store( ert_test , bool)")
-    _free          = EnkfPrototype("void  ert_test_context_free( ert_test )")
-    _get_cwd       = EnkfPrototype("char* ert_test_context_get_cwd( ert_test )")
-    _get_enkf_main = EnkfPrototype("enkf_main_ref ert_test_context_get_main( ert_test )")
+    _alloc         = ResPrototype("void* ert_test_context_alloc_python( test_area , res_config)", bind = False)
+    _set_store     = ResPrototype("void* ert_test_context_set_store( ert_test , bool)")
+    _free          = ResPrototype("void  ert_test_context_free( ert_test )")
+    _get_cwd       = ResPrototype("char* ert_test_context_get_cwd( ert_test )")
+    _get_enkf_main = ResPrototype("enkf_main_ref ert_test_context_get_main( ert_test )")
 
 
 

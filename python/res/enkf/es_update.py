@@ -1,9 +1,9 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 
 class ESUpdate(BaseCClass):
     TYPE_NAME="es_update"
-    _smoother_update = EnkfPrototype("bool enkf_main_smoother_update(es_update, enkf_fs, enkf_fs)")
+    _smoother_update = ResPrototype("bool enkf_main_smoother_update(es_update, enkf_fs, enkf_fs)")
 
     def __init__(self , enkf_main):
         assert isinstance(enkf_main , BaseCClass)

@@ -1,39 +1,39 @@
-#  Copyright (C) 2017  Statoil ASA, Norway. 
-#   
-#  The file 'site_config.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2017  Statoil ASA, Norway.
+#
+#  The file 'site_config.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
 from cwrap import BaseCClass
 
 from ecl.util.util import StringList, Hash
 
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.job_queue import JobQueue, ExtJoblist, Driver
 
 class QueueConfig(BaseCClass):
 
     TYPE_NAME = "queue_config"
 
-    _free                  = EnkfPrototype("void queue_config_free( queue_config )")
-    _alloc_job_queue       = EnkfPrototype("job_queue_obj queue_config_alloc_job_queue( queue_config )")
-    _alloc                 = EnkfPrototype("void* queue_config_alloc_load(char*)", bind=False)
-    _alloc_local_copy      = EnkfPrototype("queue_config_obj queue_config_alloc_local_copy( queue_config )")
-    _has_job_script        = EnkfPrototype("bool queue_config_has_job_script( queue_config )")
-    _get_job_script        = EnkfPrototype("char* queue_config_get_job_script(queue_config)")
-    _max_submit            = EnkfPrototype("int queue_config_get_max_submit(queue_config)")
-    _queue_name            = EnkfPrototype("char* queue_config_get_queue_name(queue_config)")
-    _queue_driver          = EnkfPrototype("driver_ref queue_config_get_queue_driver(queue_config, char*)")
+    _free                  = ResPrototype("void queue_config_free( queue_config )")
+    _alloc_job_queue       = ResPrototype("job_queue_obj queue_config_alloc_job_queue( queue_config )")
+    _alloc                 = ResPrototype("void* queue_config_alloc_load(char*)", bind=False)
+    _alloc_local_copy      = ResPrototype("queue_config_obj queue_config_alloc_local_copy( queue_config )")
+    _has_job_script        = ResPrototype("bool queue_config_has_job_script( queue_config )")
+    _get_job_script        = ResPrototype("char* queue_config_get_job_script(queue_config)")
+    _max_submit            = ResPrototype("int queue_config_get_max_submit(queue_config)")
+    _queue_name            = ResPrototype("char* queue_config_get_queue_name(queue_config)")
+    _queue_driver          = ResPrototype("driver_ref queue_config_get_queue_driver(queue_config, char*)")
 
     def __init__(self, user_config_file=None):
         c_ptr = self._alloc(user_config_file)

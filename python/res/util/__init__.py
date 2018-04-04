@@ -16,12 +16,6 @@
 from cwrap import Prototype
 import res
 
-class ResUtilPrototype(Prototype):
-    lib = res.load("libres_util")
-
-    def __init__(self, prototype, bind=True):
-        super(ResUtilPrototype, self).__init__(ResUtilPrototype.lib, prototype, bind=bind)
-
 from .enums import LLSQResultEnum
 from .log import Log
 from .res_version import ResVersion

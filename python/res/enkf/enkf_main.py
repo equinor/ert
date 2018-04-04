@@ -18,9 +18,10 @@ import ctypes, warnings
 from os.path import isfile
 
 from cwrap import BaseCClass
+from res import ResPrototype
 from res.enkf import (AnalysisConfig, EclConfig, LocalConfig, ModelConfig,
                       EnsembleConfig, SiteConfig, ResConfig, QueueConfig)
-from res.enkf import (EnkfPrototype, EnkfObs, EnKFState, ENKF_LIB,
+from res.enkf import (EnkfObs, EnKFState,
                       EnkfSimulationRunner, EnkfFsManager)
 from res.enkf import (PlotSettings, ErtWorkflowList, HookManager, HookWorkflow,
                       ESUpdate)
@@ -78,7 +79,7 @@ class EnKFMain(BaseCClass):
         self.__simulation_runner = EnkfSimulationRunner(self)
         self.__fs_manager = EnkfFsManager(self)
         self.__es_update = ESUpdate(self)
-    
+
     def _real_enkf_main(self):
         return self.parent()
 
@@ -140,7 +141,7 @@ class _RealEnKFMain(BaseCClass):
     So, in order to avoid circular dependencies, we make _RealEnKF main
     the only "owner" of the C object, and all the classes that need to
     access it set _RealEnKFMain as parent.
-    
+
     The situation can be summarized as follows (show only EnkfFSManager,
     classes EnkfSimulationRunner and ESUpdate are treated analogously)
      ------------------------------------
@@ -158,51 +159,51 @@ class _RealEnKFMain(BaseCClass):
     (parent)                |       (c_ptr)
        |                    v          |
         ------------ EnkfFSManager ----
-    
+
     """
 
-    _alloc = EnkfPrototype("void* enkf_main_alloc(res_config, bool, bool)", bind = False)
-    _create_new_config = EnkfPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
+    _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool, bool)", bind = False)
+    _create_new_config = ResPrototype("void enkf_main_create_new_config(char* , char*, char* , int)", bind = False)
 
-    _free = EnkfPrototype("void enkf_main_free(enkf_main)")
-    _get_queue_config = EnkfPrototype("queue_config_ref enkf_main_get_queue_config(enkf_main)")
-    _get_ensemble_size = EnkfPrototype("int enkf_main_get_ensemble_size( enkf_main )")
-    _get_ens_config = EnkfPrototype("ens_config_ref enkf_main_get_ensemble_config( enkf_main )")
-    _get_model_config = EnkfPrototype("model_config_ref enkf_main_get_model_config( enkf_main )")
-    _get_local_config = EnkfPrototype("local_config_ref enkf_main_get_local_config( enkf_main )")
-    _get_analysis_config = EnkfPrototype("analysis_config_ref enkf_main_get_analysis_config( enkf_main)")
-    _get_site_config = EnkfPrototype("site_config_ref enkf_main_get_site_config( enkf_main)")
-    _get_ecl_config = EnkfPrototype("ecl_config_ref enkf_main_get_ecl_config( enkf_main)")
-    _get_plot_config = EnkfPrototype("plot_settings_ref enkf_main_get_plot_config( enkf_main)")
-    _get_schedule_prediction_file = EnkfPrototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
-    _get_data_kw = EnkfPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
-    _clear_data_kw = EnkfPrototype("void enkf_main_clear_data_kw(enkf_main)")
-    _add_data_kw = EnkfPrototype("void enkf_main_add_data_kw(enkf_main, char*, char*)")
-    _resize_ensemble = EnkfPrototype("void enkf_main_resize_ensemble(enkf_main, int)")
-    _get_obs = EnkfPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
-    _load_obs = EnkfPrototype("bool enkf_main_load_obs(enkf_main, char* , bool)")
-    _get_templates = EnkfPrototype("ert_templates_ref enkf_main_get_templates(enkf_main)")
-    _get_site_config_file = EnkfPrototype("char* enkf_main_get_site_config_file(enkf_main)")
-    _get_history_length = EnkfPrototype("int enkf_main_get_history_length(enkf_main)")
-    _get_observations = EnkfPrototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)")
-    _get_observation_count = EnkfPrototype("int enkf_main_get_observation_count(enkf_main, char*)")
-    _iget_state = EnkfPrototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
-    _get_workflow_list = EnkfPrototype("ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)")
-    _get_hook_manager = EnkfPrototype("hook_manager_ref enkf_main_get_hook_manager(enkf_main)")
-    _get_user_config_file = EnkfPrototype("char* enkf_main_get_user_config_file(enkf_main)")
-    _get_mount_point = EnkfPrototype("char* enkf_main_get_mount_root( enkf_main )")
-    _export_field = EnkfPrototype("bool enkf_main_export_field(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int)")
-    _export_field_with_fs = EnkfPrototype("bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_fs_manager)")
-    _load_from_forward_model = EnkfPrototype("int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)")
-    _create_run_path = EnkfPrototype("void enkf_main_create_run_path(enkf_main , ert_run_context)")
-    _icreate_run_path = EnkfPrototype("void enkf_main_icreate_run_path(enkf_main , run_arg, enkf_init_mode_enum)")
-    _submit_simulation = EnkfPrototype("void enkf_main_isubmit_job(enkf_main , run_arg, job_queue)")
-    _alloc_run_context_ENSEMBLE_EXPERIMENT= EnkfPrototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , int)")
-    _get_runpath_list = EnkfPrototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
-    _create_runpath_list = EnkfPrototype("runpath_list_obj enkf_main_alloc_runpath_list(enkf_main)")
-    _add_node = EnkfPrototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
-    _get_res_config = EnkfPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
-    _init_run = EnkfPrototype("void enkf_main_init_run(enkf_main, ert_run_context)")
+    _free = ResPrototype("void enkf_main_free(enkf_main)")
+    _get_queue_config = ResPrototype("queue_config_ref enkf_main_get_queue_config(enkf_main)")
+    _get_ensemble_size = ResPrototype("int enkf_main_get_ensemble_size( enkf_main )")
+    _get_ens_config = ResPrototype("ens_config_ref enkf_main_get_ensemble_config( enkf_main )")
+    _get_model_config = ResPrototype("model_config_ref enkf_main_get_model_config( enkf_main )")
+    _get_local_config = ResPrototype("local_config_ref enkf_main_get_local_config( enkf_main )")
+    _get_analysis_config = ResPrototype("analysis_config_ref enkf_main_get_analysis_config( enkf_main)")
+    _get_site_config = ResPrototype("site_config_ref enkf_main_get_site_config( enkf_main)")
+    _get_ecl_config = ResPrototype("ecl_config_ref enkf_main_get_ecl_config( enkf_main)")
+    _get_plot_config = ResPrototype("plot_settings_ref enkf_main_get_plot_config( enkf_main)")
+    _get_schedule_prediction_file = ResPrototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
+    _get_data_kw = ResPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
+    _clear_data_kw = ResPrototype("void enkf_main_clear_data_kw(enkf_main)")
+    _add_data_kw = ResPrototype("void enkf_main_add_data_kw(enkf_main, char*, char*)")
+    _resize_ensemble = ResPrototype("void enkf_main_resize_ensemble(enkf_main, int)")
+    _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
+    _load_obs = ResPrototype("bool enkf_main_load_obs(enkf_main, char* , bool)")
+    _get_templates = ResPrototype("ert_templates_ref enkf_main_get_templates(enkf_main)")
+    _get_site_config_file = ResPrototype("char* enkf_main_get_site_config_file(enkf_main)")
+    _get_history_length = ResPrototype("int enkf_main_get_history_length(enkf_main)")
+    _get_observations = ResPrototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)")
+    _get_observation_count = ResPrototype("int enkf_main_get_observation_count(enkf_main, char*)")
+    _iget_state = ResPrototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
+    _get_workflow_list = ResPrototype("ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)")
+    _get_hook_manager = ResPrototype("hook_manager_ref enkf_main_get_hook_manager(enkf_main)")
+    _get_user_config_file = ResPrototype("char* enkf_main_get_user_config_file(enkf_main)")
+    _get_mount_point = ResPrototype("char* enkf_main_get_mount_root( enkf_main )")
+    _export_field = ResPrototype("bool enkf_main_export_field(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int)")
+    _export_field_with_fs = ResPrototype("bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_fs_manager)")
+    _load_from_forward_model = ResPrototype("int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)")
+    _create_run_path = ResPrototype("void enkf_main_create_run_path(enkf_main , ert_run_context)")
+    _icreate_run_path = ResPrototype("void enkf_main_icreate_run_path(enkf_main , run_arg, enkf_init_mode_enum)")
+    _submit_simulation = ResPrototype("void enkf_main_isubmit_job(enkf_main , run_arg, job_queue)")
+    _alloc_run_context_ENSEMBLE_EXPERIMENT= ResPrototype("ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , int)")
+    _get_runpath_list = ResPrototype("runpath_list_ref enkf_main_get_runpath_list(enkf_main)")
+    _create_runpath_list = ResPrototype("runpath_list_obj enkf_main_alloc_runpath_list(enkf_main)")
+    _add_node = ResPrototype("void enkf_main_add_node(enkf_main, enkf_config_node)")
+    _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
+    _init_run = ResPrototype("void enkf_main_init_run(enkf_main, ert_run_context)")
 
 
     def __init__(self, config, strict=True, verbose=False):

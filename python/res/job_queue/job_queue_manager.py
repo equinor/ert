@@ -18,38 +18,39 @@ Module implementing a queue for managing external jobs.
 
 """
 from cwrap import BaseCClass
-from res.job_queue import QueuePrototype, Job, JobStatusType
+from res import ResPrototype
+from res.job_queue import Job, JobStatusType
 
 class JobQueueManager(BaseCClass):
     TYPE_NAME = "job_queue_manager"
-    _alloc           = QueuePrototype("void* job_queue_manager_alloc( job_queue)", bind = False)
-    _free            = QueuePrototype("void job_queue_manager_free( job_queue_manager )")
-    _start_queue     = QueuePrototype("void job_queue_manager_start_queue( job_queue_manager , int , bool)")
-    _stop_queue      = QueuePrototype("void job_queue_manager_stop_queue(job_queue_manager)")
-    _get_num_waiting = QueuePrototype("int job_queue_manager_get_num_waiting( job_queue_manager )")
-    _get_num_pending = QueuePrototype("int job_queue_manager_get_num_pending( job_queue_manager )")
-    _get_num_running = QueuePrototype("int job_queue_manager_get_num_running( job_queue_manager )")
-    _get_num_success = QueuePrototype("int job_queue_manager_get_num_success( job_queue_manager )")
-    _get_num_failed  = QueuePrototype("int job_queue_manager_get_num_failed( job_queue_manager )")
-    _is_running      = QueuePrototype("bool job_queue_manager_is_running( job_queue_manager )")
-    _job_complete    = QueuePrototype("bool job_queue_manager_job_complete( job_queue_manager , int)")
-    _job_running     = QueuePrototype("bool job_queue_manager_job_running( job_queue_manager , int)")
-    _status_timestamp= QueuePrototype("time_t job_queue_manager_get_status_timestamp(job_queue_manager)")
-    _global_progress_timestamp = QueuePrototype("time_t job_queue_manager_get_progress_timestamp(job_queue_manager)")
-    _iget_progress_timestamp = QueuePrototype("time_t job_queue_manager_iget_progress_timestamp(job_queue_manager, int)")
+    _alloc           = ResPrototype("void* job_queue_manager_alloc( job_queue)", bind = False)
+    _free            = ResPrototype("void job_queue_manager_free( job_queue_manager )")
+    _start_queue     = ResPrototype("void job_queue_manager_start_queue( job_queue_manager , int , bool)")
+    _stop_queue      = ResPrototype("void job_queue_manager_stop_queue(job_queue_manager)")
+    _get_num_waiting = ResPrototype("int job_queue_manager_get_num_waiting( job_queue_manager )")
+    _get_num_pending = ResPrototype("int job_queue_manager_get_num_pending( job_queue_manager )")
+    _get_num_running = ResPrototype("int job_queue_manager_get_num_running( job_queue_manager )")
+    _get_num_success = ResPrototype("int job_queue_manager_get_num_success( job_queue_manager )")
+    _get_num_failed  = ResPrototype("int job_queue_manager_get_num_failed( job_queue_manager )")
+    _is_running      = ResPrototype("bool job_queue_manager_is_running( job_queue_manager )")
+    _job_complete    = ResPrototype("bool job_queue_manager_job_complete( job_queue_manager , int)")
+    _job_running     = ResPrototype("bool job_queue_manager_job_running( job_queue_manager , int)")
+    _status_timestamp= ResPrototype("time_t job_queue_manager_get_status_timestamp(job_queue_manager)")
+    _global_progress_timestamp = ResPrototype("time_t job_queue_manager_get_progress_timestamp(job_queue_manager)")
+    _iget_progress_timestamp = ResPrototype("time_t job_queue_manager_iget_progress_timestamp(job_queue_manager, int)")
 
     # Note, even if all realizations have finished, they need not all be failed or successes.
     # That is how Ert report things. They can be "killed", which is neither success nor failure.
-    _job_failed      = QueuePrototype("bool job_queue_manager_job_failed( job_queue_manager , int)")
-    _job_waiting     = QueuePrototype("bool job_queue_manager_job_waiting( job_queue_manager , int)")
-    _job_success     = QueuePrototype("bool job_queue_manager_job_success( job_queue_manager , int)")
+    _job_failed      = ResPrototype("bool job_queue_manager_job_failed( job_queue_manager , int)")
+    _job_waiting     = ResPrototype("bool job_queue_manager_job_waiting( job_queue_manager , int)")
+    _job_success     = ResPrototype("bool job_queue_manager_job_success( job_queue_manager , int)")
 
     # The return type of the job_queue_manager_iget_job_status should
     # really be the enum job_status_type_enum, but I just did not
     # manage to get the prototyping right. Have therefor taken the
     # return as an integer and convert it in the getJobStatus()
     # method.
-    _job_status      = QueuePrototype("int job_queue_manager_iget_job_status(job_queue_manager, int)")
+    _job_status      = ResPrototype("int job_queue_manager_iget_job_status(job_queue_manager, int)")
 
     def __init__(self, queue):
         c_ptr = self._alloc(queue)

@@ -1,20 +1,20 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
-#   
-#  The file 'enkf_fs.py' is part of ERT - Ensemble based Reservoir Tool. 
-#   
-#  ERT is free software: you can redistribute it and/or modify 
-#  it under the terms of the GNU General Public License as published by 
-#  the Free Software Foundation, either version 3 of the License, or 
-#  (at your option) any later version. 
-#   
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#  FITNESS FOR A PARTICULAR PURPOSE.   
-#   
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  Copyright (C) 2012  Statoil ASA, Norway.
+#
+#  The file 'enkf_fs.py' is part of ERT - Ensemble based Reservoir Tool.
+#
+#  ERT is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.enums import RealizationStateEnum
 from ecl.util.util import BoolVector
 
@@ -22,17 +22,17 @@ from ecl.util.util import BoolVector
 class StateMap(BaseCClass):
     TYPE_NAME = "state_map"
 
-    _alloc               = EnkfPrototype("void* state_map_alloc()", bind = False)
-    _fread               = EnkfPrototype("bool  state_map_fread(state_map , char*)")
-    _fwrite              = EnkfPrototype("void  state_map_fwrite(state_map , char*)")
-    _equal               = EnkfPrototype("bool  state_map_equal(state_map , state_map)")
-    _free                = EnkfPrototype("void  state_map_free(state_map)")
-    _size                = EnkfPrototype("int   state_map_get_size(state_map)")
-    _iget                = EnkfPrototype("realisation_state_enum state_map_iget(state_map, int)")
-    _iset                = EnkfPrototype("void  state_map_iset(state_map, int, realisation_state_enum)")
-    _select_matching     = EnkfPrototype("void  state_map_select_matching(state_map, bool_vector, realisation_state_enum)")
-    _is_read_only        = EnkfPrototype("bool  state_map_is_readonly(state_map)")
-    _is_legal_transition = EnkfPrototype("bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)", bind = False)
+    _alloc               = ResPrototype("void* state_map_alloc()", bind = False)
+    _fread               = ResPrototype("bool  state_map_fread(state_map , char*)")
+    _fwrite              = ResPrototype("void  state_map_fwrite(state_map , char*)")
+    _equal               = ResPrototype("bool  state_map_equal(state_map , state_map)")
+    _free                = ResPrototype("void  state_map_free(state_map)")
+    _size                = ResPrototype("int   state_map_get_size(state_map)")
+    _iget                = ResPrototype("realisation_state_enum state_map_iget(state_map, int)")
+    _iset                = ResPrototype("void  state_map_iset(state_map, int, realisation_state_enum)")
+    _select_matching     = ResPrototype("void  state_map_select_matching(state_map, bool_vector, realisation_state_enum)")
+    _is_read_only        = ResPrototype("bool  state_map_is_readonly(state_map)")
+    _is_legal_transition = ResPrototype("bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)", bind = False)
 
 
 

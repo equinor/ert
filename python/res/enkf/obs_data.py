@@ -18,26 +18,26 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.util import Matrix
 
 
 class ObsData(BaseCClass):
     TYPE_NAME = "obs_data"
 
-    _alloc         = EnkfPrototype("void*  obs_data_alloc(double)", bind = False)
-    _free          = EnkfPrototype("void   obs_data_free(obs_data)")
-    _total_size    = EnkfPrototype("int    obs_data_get_total_size(obs_data)")
-    _scale         = EnkfPrototype("void   obs_data_scale(obs_data, matrix, matrix, matrix, matrix, matrix)")
-    _scale_matrix  = EnkfPrototype("void   obs_data_scale_matrix(obs_data, matrix)")
-    _scale_Rmatrix = EnkfPrototype("void   obs_data_scale_Rmatrix(obs_data, matrix)")
-    _iget_value    = EnkfPrototype("double obs_data_iget_value(obs_data, int)")
-    _iget_std      = EnkfPrototype("double obs_data_iget_std(obs_data, int)")
-    _add_block     = EnkfPrototype("obs_block_ref obs_data_add_block(obs_data , char* , int , matrix , bool)")
-    _allocdObs     = EnkfPrototype("matrix_obj obs_data_allocdObs(obs_data)")
-    _allocR        = EnkfPrototype("matrix_obj obs_data_allocR(obs_data)")
-    _allocD        = EnkfPrototype("matrix_obj obs_data_allocD(obs_data , matrix , matrix)")
-    _allocE        = EnkfPrototype("matrix_obj obs_data_allocE(obs_data , rng , int)")
+    _alloc         = ResPrototype("void*  obs_data_alloc(double)", bind = False)
+    _free          = ResPrototype("void   obs_data_free(obs_data)")
+    _total_size    = ResPrototype("int    obs_data_get_total_size(obs_data)")
+    _scale         = ResPrototype("void   obs_data_scale(obs_data, matrix, matrix, matrix, matrix, matrix)")
+    _scale_matrix  = ResPrototype("void   obs_data_scale_matrix(obs_data, matrix)")
+    _scale_Rmatrix = ResPrototype("void   obs_data_scale_Rmatrix(obs_data, matrix)")
+    _iget_value    = ResPrototype("double obs_data_iget_value(obs_data, int)")
+    _iget_std      = ResPrototype("double obs_data_iget_std(obs_data, int)")
+    _add_block     = ResPrototype("obs_block_ref obs_data_add_block(obs_data , char* , int , matrix , bool)")
+    _allocdObs     = ResPrototype("matrix_obj obs_data_allocdObs(obs_data)")
+    _allocR        = ResPrototype("matrix_obj obs_data_allocR(obs_data)")
+    _allocD        = ResPrototype("matrix_obj obs_data_allocD(obs_data , matrix , matrix)")
+    _allocE        = ResPrototype("matrix_obj obs_data_allocE(obs_data , rng , int)")
 
     def __init__(self, global_std_scaling=1.0):
         c_pointer = self._alloc(global_std_scaling)

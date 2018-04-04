@@ -1,5 +1,5 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from res.enkf.obs_data import ObsData
 from ecl.util.util import IntVector
 from res.util import Matrix
@@ -7,19 +7,19 @@ from res.util import Matrix
 class MeasData(BaseCClass):
     TYPE_NAME = "meas_data"
 
-    _alloc               = EnkfPrototype("void* meas_data_alloc(bool_vector)", bind = False)
-    _free                = EnkfPrototype("void  meas_data_free(meas_data)")
-    _get_active_obs_size = EnkfPrototype("int   meas_data_get_active_obs_size(meas_data)")
-    _get_active_ens_size = EnkfPrototype("int   meas_data_get_active_ens_size( meas_data )")
-    _get_total_ens_size  = EnkfPrototype("int   meas_data_get_total_ens_size( meas_data )")
-    _get_num_blocks      = EnkfPrototype("int   meas_data_get_num_blocks( meas_data )")
-    _has_block           = EnkfPrototype("bool  meas_data_has_block( meas_data , char* )")
-    _get_block           = EnkfPrototype("meas_block_ref meas_data_get_block( meas_data , char*)")
-    _allocS              = EnkfPrototype("matrix_obj     meas_data_allocS(meas_data)")
-    _add_block           = EnkfPrototype("meas_block_ref meas_data_add_block(meas_data, char* , int , int)")
-    _iget_block          = EnkfPrototype("meas_block_ref meas_data_iget_block( meas_data , int)")
+    _alloc               = ResPrototype("void* meas_data_alloc(bool_vector)", bind = False)
+    _free                = ResPrototype("void  meas_data_free(meas_data)")
+    _get_active_obs_size = ResPrototype("int   meas_data_get_active_obs_size(meas_data)")
+    _get_active_ens_size = ResPrototype("int   meas_data_get_active_ens_size( meas_data )")
+    _get_total_ens_size  = ResPrototype("int   meas_data_get_total_ens_size( meas_data )")
+    _get_num_blocks      = ResPrototype("int   meas_data_get_num_blocks( meas_data )")
+    _has_block           = ResPrototype("bool  meas_data_has_block( meas_data , char* )")
+    _get_block           = ResPrototype("meas_block_ref meas_data_get_block( meas_data , char*)")
+    _allocS              = ResPrototype("matrix_obj     meas_data_allocS(meas_data)")
+    _add_block           = ResPrototype("meas_block_ref meas_data_add_block(meas_data, char* , int , int)")
+    _iget_block          = ResPrototype("meas_block_ref meas_data_iget_block( meas_data , int)")
 
-    _deactivate_outliers = EnkfPrototype("void  enkf_analysis_deactivate_std_zero(obs_data, meas_data)", bind = False)
+    _deactivate_outliers = ResPrototype("void  enkf_analysis_deactivate_std_zero(obs_data, meas_data)", bind = False)
 
     def __init__(self, ens_mask):
         c_ptr = self._alloc(ens_mask)

@@ -16,17 +16,17 @@
 import os.path
 
 from cwrap import BaseCClass
-from res.sched import SchedulePrototype
+from res import ResPrototype
 from ecl.util.util import CTime
 
 
 class SchedFile(BaseCClass):
     TYPE_NAME = "sched_file"
 
-    _parse  = SchedulePrototype("void* sched_file_parse_alloc( char*, time_t )", bind = False)
-    _write  = SchedulePrototype("void  sched_file_fprintf_i( sched_file , int , char* , bool)")
-    _length = SchedulePrototype("int   sched_file_get_num_restart_files( sched_file )")
-    _free   = SchedulePrototype("void  sched_file_free( sched_file )")
+    _parse  = ResPrototype("void* sched_file_parse_alloc( char*, time_t )", bind = False)
+    _write  = ResPrototype("void  sched_file_fprintf_i( sched_file , int , char* , bool)")
+    _length = ResPrototype("int   sched_file_get_num_restart_files( sched_file )")
+    _free   = ResPrototype("void  sched_file_free( sched_file )")
 
     def __init__(self, filename, start_time):
         if os.path.isfile(filename):

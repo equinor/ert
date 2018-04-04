@@ -1,12 +1,12 @@
 from cwrap import BaseCClass
-from res.enkf import EnkfPrototype
+from res import ResPrototype
 from ecl.util.util import DoubleVector
 from res.util import Matrix
 
 class EnkfLinalg(BaseCClass):
     TYPE_NAME = "EnkfLinalg"
 
-    _get_PC = EnkfPrototype("void enkf_linalg_get_PC(matrix, matrix, double, int, matrix, matrix, double_vector)", bind = False)
+    _get_PC = ResPrototype("void enkf_linalg_get_PC(matrix, matrix, double, int, matrix, matrix, double_vector)", bind = False)
 
     @classmethod
     def calculatePrincipalComponents(cls, S0, D_obs, truncation, ncomp, PC, PC_obs, singular_values):
