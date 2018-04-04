@@ -6,7 +6,7 @@ set( src_list main.c enkf_tui_main.c  enkf_tui_fs.c  enkf_tui_ranking.c  enkf_tu
 set_source_files_properties( main.c PROPERTIES COMPILE_DEFINITIONS "COMPILE_TIME_STAMP=\"${ERT_BUILD_TIME}\";GIT_COMMIT=\"${GIT_COMMIT}\"")
 
 add_executable( ert_tui ${src_list} )
-target_link_libraries( ert_tui res::enkf ert )
+target_link_libraries( ert_tui res::res ert )
 if (USE_RUNPATH)
    add_runpath( ert_tui )
 endif()
