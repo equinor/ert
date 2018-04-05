@@ -139,14 +139,14 @@ class JobManager(object):
         self._data_root = None
         self.global_environment = None
         self.global_update_path = None
+        self.start_time = dt.now()
         if json_file is not None and os.path.isfile(json_file):
-            self.job_status = ForwardModelStatus("????")
+            self.job_status = ForwardModelStatus("????", self.start_time)
             self._loadJson(json_file)
             self.job_status.run_id = self.simulation_id
         else:
             raise IOError("'jobs.json' not found.")
 
-        self.start_time = dt.now()
         self.max_runtime = 0  # This option is currently sleeping
         self.short_sleep = 2  # Sleep between status checks
         self.node = socket.gethostname()
@@ -180,6 +180,9 @@ class JobManager(object):
         self.update_path()
         self.information = logged_fields
 
+
+    def complete(self):
+        self.job_status.complete()
 
     def dump_status(self):
         self.job_status.dump(ForwardModelStatus.STATUS_FILE)

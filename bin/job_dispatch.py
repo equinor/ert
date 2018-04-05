@@ -366,6 +366,7 @@ def main(argv):
             if not OK:
                 job_manager.exit( job, exit_status , error_msg )
 
+        job_manager.complete()
         if OK:
             job_manager.createOKFile( )
 
