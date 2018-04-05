@@ -30,7 +30,7 @@ def _deserialize_date(serial_dt):
     if serial_dt is None:
         return None
 
-    time_struct = time.gmtime(serial_dt)
+    time_struct = time.localtime(serial_dt)
     return datetime.datetime(*time_struct[0:6])
 
 
@@ -74,7 +74,7 @@ class ForwardModelStatus(object):
     STATUS_FILE = "status.json"
 
 
-    def __init__(self, run_id, start_time = None, end_time = None):
+    def __init__(self, run_id, start_time, end_time = None):
         self.run_id = run_id
         self.start_time = start_time
         self.end_time = end_time
@@ -88,7 +88,7 @@ class ForwardModelStatus(object):
         start_time = _deserialize_date(data["start_time"])
         end_time = _deserialize_date(data["end_time"])
         status = cls(data["run_id"],
-                     start_time=start_time,
+                     start_time,
                      end_time=end_time)
 
         for job in data["jobs"]:
@@ -139,3 +139,8 @@ class ForwardModelStatus(object):
         data["jobs"] = jobs
         with open(status_file, "w") as fp:
             json.dump(data, fp)
+
+
+    def complete(self):
+        self.end_time = datetime.datetime.now()
+        self.dump( )
