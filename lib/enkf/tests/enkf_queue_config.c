@@ -72,7 +72,7 @@ void test_parse() {
    }
 
    test_assert_true(queue_config_has_job_script(queue_config));
-   test_assert_string_equal(queue_config_get_queue_name(queue_config), LSF_DRIVER_NAME);
+   test_assert_string_equal(queue_config_get_queue_system(queue_config), LSF_DRIVER_NAME);
 
    //test for licence path
    job_queue_type * job_queue = queue_config_alloc_job_queue(queue_config);

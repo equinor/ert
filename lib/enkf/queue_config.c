@@ -46,7 +46,6 @@ struct queue_config_struct {
     hash_type * queue_drivers;
     bool user_mode;
     int max_submit;
-    char * lsf_resource;
 };
 
 static void queue_config_add_queue_driver(queue_config_type * queue_config, const char * driver_name, queue_driver_type * driver);
@@ -59,7 +58,6 @@ static queue_config_type * queue_config_alloc_empty() {
     queue_config->driver_type = NULL_DRIVER;
     queue_config->user_mode = false;
     queue_config->max_submit = 2; // Default value
-    queue_config->lsf_resource = NULL;
 
     return queue_config;
 }
@@ -122,11 +120,6 @@ queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_con
 
     queue_config_copy->max_submit = queue_config->max_submit;
 
-    if (queue_config_has_lsf_resource(queue_config))
-      queue_config_copy->lsf_resource = util_alloc_string_copy(queue_config->lsf_resource);
-    else
-      queue_config_copy->lsf_resource = NULL;
-
     return queue_config_copy;
 }
 
@@ -137,7 +130,7 @@ queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_con
 */
 job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config) {
   job_queue_type * job_queue = job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "status.json", "ERROR");
-  const char * driver_name = queue_config_get_queue_name(queue_config);
+  const char * driver_name = queue_config_get_queue_system(queue_config);
   if (driver_name != NULL) {
     queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
     job_queue_set_driver(job_queue, driver);
@@ -154,7 +147,7 @@ void queue_config_free(queue_config_type * queue_config) {
   free(queue_config);
 }
 
-const char * queue_config_get_queue_name(const queue_config_type * queue_config) {
+const char * queue_config_get_queue_system(const queue_config_type * queue_config) {
     switch(queue_config->driver_type) {
         case LSF_DRIVER:
             return LSF_DRIVER_NAME;
@@ -197,21 +190,6 @@ bool queue_config_set_job_script(queue_config_type * queue_config, const char * 
 }
 
 
-const char* queue_config_get_lsf_resource(const queue_config_type * queue_config) {
-  return queue_config->lsf_resource;
-}
-
-
-bool queue_config_has_lsf_resource(const queue_config_type * queue_config) {
-  return queue_config->lsf_resource;
-}
-
-void queue_config_set_lsf_resource(queue_config_type * queue_config,
-                                   const char * lsf_resource) {
-  queue_config->lsf_resource = util_alloc_string_copy(lsf_resource);
-}
-
-
 static void queue_config_set_queue_option(queue_config_type * queue_config, const char * driver_name, const char * option_key, const char * option_value) {
   if (queue_config_has_queue_driver(queue_config, driver_name)) {
     queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
@@ -246,7 +224,7 @@ void queue_config_create_queue_drivers(queue_config_type * queue_config) {
   queue_config_add_queue_driver(queue_config,
                                 LSF_DRIVER_NAME,
                                 queue_driver_alloc_LSF(NULL,
-                                                       queue_config->lsf_resource,
+                                                       NULL,
                                                        NULL));
   queue_config_add_queue_driver(queue_config, TORQUE_DRIVER_NAME, queue_driver_alloc_TORQUE());
   queue_config_add_queue_driver(queue_config, RSH_DRIVER_NAME, queue_driver_alloc_RSH(NULL, NULL));

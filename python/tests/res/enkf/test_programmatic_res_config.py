@@ -175,7 +175,6 @@ class ProgrammaticResConfigTest(ResTest):
                                     "MIN_REALIZATIONS" : "50%",
                                     "MAX_SUBMIT"       : 13,
                                     "UMASK"            : "007",
-                                    "LSF_SERVER"       : "simulacrum",
                                     "QUEUE_OPTION"     :
                                     [
                                       {
@@ -186,7 +185,17 @@ class ProgrammaticResConfigTest(ResTest):
                                       {
                                         "DRIVER_NAME" : "LSF",
                                         "OPTION"      : "LSF_RESOURCE",
-                                        "VALUE"       : "long & complicated str",
+                                        "VALUE"       : "select[x86_64Linux] same[type:model]",
+                                      },
+                                      {
+                                        "DRIVER_NAME" : "LSF",
+                                        "OPTION"      : "LSF_SERVER",
+                                        "VALUE"       : "simulacrum",
+                                      },
+                                      {
+                                        "DRIVER_NAME" : "LSF",
+                                        "OPTION"      : "LSF_QUEUE",
+                                        "VALUE"       : "mr",
                                       },
                                     ]
                                   },
@@ -401,9 +410,8 @@ class ProgrammaticResConfigTest(ResTest):
         self.assertEqual(loaded_site_config.queue_config.lsf_resource,
                          prog_site_config.queue_config.lsf_resource)
 
-        # TODO
-        #self.assertEqual(loaded_site_config.lsf_server,
-        #                 prog_site_config.lsf_server)
+        self.assertEqual(loaded_site_config.queue_config.lsf_server,
+                         prog_site_config.queue_config.lsf_server)
 
         self.assertEqual(loaded_site_config.umask,
                          prog_site_config.umask)

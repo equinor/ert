@@ -19,6 +19,7 @@ from cwrap import BaseCClass
 from ecl.util.util import StringList, Hash
 
 from res import ResPrototype
+from res.enkf import ConfigKeys
 from res.job_queue import JobQueue, ExtJoblist, Driver
 
 class QueueConfig(BaseCClass):
@@ -32,10 +33,8 @@ class QueueConfig(BaseCClass):
     _has_job_script        = ResPrototype("bool queue_config_has_job_script( queue_config )")
     _get_job_script        = ResPrototype("char* queue_config_get_job_script(queue_config)")
     _max_submit            = ResPrototype("int queue_config_get_max_submit(queue_config)")
-    _queue_name            = ResPrototype("char* queue_config_get_queue_name(queue_config)")
+    _queue_system          = ResPrototype("char* queue_config_get_queue_system(queue_config)")
     _queue_driver          = ResPrototype("driver_ref queue_config_get_queue_driver(queue_config, char*)")
-
-    _get_lsf_resource      = ResPrototype("char* queue_config_get_lsf_resource(queue_config)")
 
     def __init__(self, user_config_file=None):
         c_ptr = self._alloc(user_config_file)
@@ -59,11 +58,16 @@ class QueueConfig(BaseCClass):
 
     @property
     def queue_name(self):
-        return self._queue_name()
+        return self.driver.get_option(ConfigKeys.LSF_QUEUE_NAME_KEY)
+
+    @property
+    def queue_system(self):
+        """The queue system in use, e.g. LSF or LOCAL"""
+        return self._queue_system()
 
     @property
     def driver(self):
-        return self._queue_driver(self.queue_name).setParent(self)
+        return self._queue_driver(self.queue_system).setParent(self)
 
     @property
     def job_script(self):
@@ -71,7 +75,8 @@ class QueueConfig(BaseCClass):
 
     @property
     def lsf_resource(self):
-        res = self._get_lsf_resource()
-        if not res:
-            return None
-        return res
+        return self.driver.get_option(ConfigKeys.LSF_RESOURCE_KEY)
+
+    @property
+    def lsf_server(self):
+        return self.driver.get_option(ConfigKeys.LSF_SERVER_KEY)

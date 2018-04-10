@@ -464,6 +464,7 @@ void site_config_set_lsf_server(site_config_type * site_config, const char * lsf
   queue_driver_set_option(lsf_driver, LSF_SERVER, lsf_server);
 }
 
+// TODO LSF resources requirement or lsf_request?
 void site_config_set_lsf_request(site_config_type * site_config, const char * lsf_request) {
   queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
   queue_driver_set_option(lsf_driver, LSF_RESOURCE, lsf_request);
@@ -477,8 +478,8 @@ const char * site_config_get_lsf_request(const site_config_type * site_config) {
 /*****************************************************************/
 
 
-const char * site_config_get_queue_name(const site_config_type * site_config) {
-  return queue_config_get_queue_name(site_config->queue_config); //based on driver_type
+const char * site_config_get_queue_system(const site_config_type * site_config) {
+  return queue_config_get_queue_system(site_config->queue_config); //based on driver_type
 }
 
 
@@ -684,7 +685,7 @@ void site_config_add_config_items(config_parser_type * config, bool site_mode) {
   item = config_add_schema_item(config, LSF_QUEUE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
 
-  item = config_add_schema_item(config, LSF_RESOURCES_KEY, false);
+  item = config_add_schema_item(config, LSF_RESOURCE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item(config, MAX_RUNNING_LSF_KEY, false);

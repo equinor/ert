@@ -24,7 +24,7 @@ ECLBASE             eclipse/model/<ECLIPSE_NAME>-%d                       -- Nam
 ENSPATH             ../output/storage/<CASE_DIR>                          -- Storage of internal ert data
 PLOT_SETTINGS PATH  ../output/results/plot/<CASE_DIR>                     -- Storage of workflow qc plots
 RUNPATH_FILE        ../output/run_path_file/.ert-runpath-list_<CASE_DIR>  -- Ert runpath file for workflows
- 
+
 REFCASE             ../input/refcase/SNAKE_OIL_FIELD                      -- Used for plotting and neccessary for AHM for reading historical production, files needed by ert: .SMSPEC and .UNSMRY
 
 LOG_LEVEL           INFO
@@ -46,8 +46,9 @@ MIN_REALIZATIONS              50%   -- Set minimum number of realization that
 QUEUE_SYSTEM                  LSF
 QUEUE_OPTION LSF MAX_RUNNING  100
 QUEUE_OPTION LSF LSF_RESOURCE select[x86_64Linux] same[type:model] -- arbitrary IBM LSF string
-LSF_SERVER                    simulacrum  -- name of server
-LSF_QUEUE                     mr  -- name of queue, mr=multiple realizations
+QUEUE_OPTION LSF LSF_SERVER   simulacrum  -- name of server
+QUEUE_OPTION LSF LSF_QUEUE    mr  -- name of queue, mr=multiple realizations
+
 MAX_SUBMIT                    13  -- How many times should the queue system
                                   -- retry a simulation.  Default == 2.  Use
                                   -- 1 when debugging)
@@ -55,7 +56,7 @@ MAX_SUBMIT                    13  -- How many times should the queue system
 UMASK                         007  -- umask == chmod o-xrw
 
 -- ------------------------------------------------------------------------
--- -- SECTION: Uncertainty parameters 
+-- -- SECTION: Uncertainty parameters
 -- ------------------------------------------------------------------------
 
 GEN_DATA super_data INPUT_FORMAT:ASCII RESULT_FILE:super_data_%d  REPORT_STEPS:1
@@ -93,7 +94,7 @@ OBS_CONFIG ../input/observations/obsfiles/observations.txt
 TIME_MAP   ../input/refcase/time_map.txt
 
 -- --------------------------------------
--- -- SECTION: Plotting 
+-- -- SECTION: Plotting
 -- --------------------------------------
 
 SUMMARY WOPR:PROD
