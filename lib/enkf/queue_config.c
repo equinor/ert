@@ -321,7 +321,7 @@ job_driver_type queue_config_get_driver_type(const queue_config_type * queue_con
 }
 
 void queue_config_add_queue_config_items(config_parser_type * parser, bool site_mode) {
-  
+
 }
 
 
