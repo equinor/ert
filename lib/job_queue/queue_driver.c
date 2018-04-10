@@ -332,12 +332,28 @@ void queue_driver_init_option_list(queue_driver_type * driver, stringlist_type *
  }
 
 
-queue_driver_type * queue_driver_alloc_LSF(const char * queue_name, const char * resource_request, const char * remote_lsf_server) {
+/*
+  Beware that the lsf resource is defined differently than lsf_resource and
+  lsf_server:
+
+    QUEUE_SYSTEM                  LSF
+    LSF_SERVER                    be-grid01
+    LSF_QUEUE                     mr
+    QUEUE_OPTION LSF LSF_RESOURCE select[x86_64Linux] same[type:model]
+
+    -- optional (related) settings
+    QUEUE_OPTION LSF MAX_RUNNING  100
+    MAX_SUBMIT                    13
+
+ */
+queue_driver_type * queue_driver_alloc_LSF(const char * queue_name,
+                                           const char * lsf_resource,
+                                           const char * lsf_server) {
   queue_driver_type * driver = queue_driver_alloc(LSF_DRIVER);
 
-  queue_driver_set_option(driver, LSF_QUEUE, queue_name);
-  queue_driver_set_option(driver, LSF_RESOURCE, resource_request);
-  queue_driver_set_option(driver, LSF_SERVER, remote_lsf_server);
+  queue_driver_set_option(driver, LSF_QUEUE,    queue_name);
+  queue_driver_set_option(driver, LSF_RESOURCE, lsf_resource);
+  queue_driver_set_option(driver, LSF_SERVER,   lsf_server);
 
   return driver;
 }

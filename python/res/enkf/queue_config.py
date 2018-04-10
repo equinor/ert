@@ -35,6 +35,8 @@ class QueueConfig(BaseCClass):
     _queue_name            = ResPrototype("char* queue_config_get_queue_name(queue_config)")
     _queue_driver          = ResPrototype("driver_ref queue_config_get_queue_driver(queue_config, char*)")
 
+    _get_lsf_resource      = ResPrototype("char* queue_config_get_lsf_resource(queue_config)")
+
     def __init__(self, user_config_file=None):
         c_ptr = self._alloc(user_config_file)
         super(QueueConfig, self).__init__(c_ptr)
@@ -66,3 +68,10 @@ class QueueConfig(BaseCClass):
     @property
     def job_script(self):
         return self._get_job_script()
+
+    @property
+    def lsf_resource(self):
+        res = self._get_lsf_resource()
+        if not res:
+            return None
+        return res

@@ -175,13 +175,19 @@ class ProgrammaticResConfigTest(ResTest):
                                     "MIN_REALIZATIONS" : "50%",
                                     "MAX_SUBMIT"       : 13,
                                     "UMASK"            : "007",
+                                    "LSF_SERVER"       : "simulacrum",
                                     "QUEUE_OPTION"     :
                                     [
                                       {
                                         "DRIVER_NAME" : "LSF",
                                         "OPTION"      : "MAX_RUNNING",
                                         "VALUE"       : 100
-                                      }
+                                      },
+                                      {
+                                        "DRIVER_NAME" : "LSF",
+                                        "OPTION"      : "LSF_RESOURCE",
+                                        "VALUE"       : "long & complicated str",
+                                      },
                                     ]
                                   },
 
@@ -392,8 +398,16 @@ class ProgrammaticResConfigTest(ResTest):
         self.assertEqual(loaded_site_config.queue_config.max_submit,
                          prog_site_config.queue_config.max_submit)
 
+        self.assertEqual(loaded_site_config.queue_config.lsf_resource,
+                         prog_site_config.queue_config.lsf_resource)
+
+        # TODO
+        #self.assertEqual(loaded_site_config.lsf_server,
+        #                 prog_site_config.lsf_server)
+
         self.assertEqual(loaded_site_config.umask,
                          prog_site_config.umask)
+
 
         self.assertEqual(loaded_site_config.queue_config.driver.get_option("MAX_RUNNING"),
                          prog_site_config.queue_config.driver.get_option("MAX_RUNNING"))
@@ -494,6 +508,10 @@ class ProgrammaticResConfigTest(ResTest):
         self.assertEqual(loaded_plot_config.getPath(),
                          prog_plot_config.getPath())
 
+    def assert_equal_simulation_config(self, loaded_simulation_config, prog_simulation_config):
+        self.assertEqual(loaded_simulation_config.getPath(),
+                         prog_simulation_config.getPath())
+
     def test_new_config(self):
         case_directory = self.createTestPath("local/simulation_model")
         config_file = "simulation_model/sim_kw.ert"
@@ -518,7 +536,6 @@ class ProgrammaticResConfigTest(ResTest):
             work_area.copy_directory(case_directory)
 
             loaded_res_config = ResConfig(user_config_file=config_file)
-
             prog_res_config   = ResConfig(config=self.large_config)
 
             self.assert_equal_model_config(loaded_res_config.model_config,

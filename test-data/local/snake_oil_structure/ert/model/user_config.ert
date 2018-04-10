@@ -36,15 +36,23 @@ LOAD_SEED           ../input/rng/SEED
 -- --------------------------------------------------
 -- -- SECTION: LSF settings, AHM configuration etc
 -- --------------------------------------------------
-NUM_REALIZATIONS                  10                                      -- Set number of realizations to run
-MAX_RUNTIME                    23400                                      -- Set the maximum allowed runtime in seconds. (Killed when exceeding)
-MIN_REALIZATIONS                  50%                                     -- Set minimum number of realization that must be completed before moving to next iteration
+NUM_REALIZATIONS              10    -- Set number of realizations to run
+MAX_RUNTIME                   23400 -- Set the maximum allowed runtime in
+                                    -- seconds. (Killed when exceeding)
+MIN_REALIZATIONS              50%   -- Set minimum number of realization that
+                                    -- must be completed before moving to next
+                                    -- iteration
 
-QUEUE_OPTION LSF MAX_RUNNING     100
-MAX_SUBMIT                        13                                      -- How many times should the queue system retry a simulation. Default = 2 (use 1 when debugging)
+QUEUE_SYSTEM                  LSF
+QUEUE_OPTION LSF MAX_RUNNING  100
+QUEUE_OPTION LSF LSF_RESOURCE select[x86_64Linux] same[type:model] -- arbitrary IBM LSF string
+LSF_SERVER                    simulacrum  -- name of server
+LSF_QUEUE                     mr  -- name of queue, mr=multiple realizations
+MAX_SUBMIT                    13  -- How many times should the queue system
+                                  -- retry a simulation.  Default == 2.  Use
+                                  -- 1 when debugging)
 
-QUEUE_SYSTEM                     LSF
-UMASK                            007                                      -- Make the simulation run not available for others (chmod o-xrw)
+UMASK                         007  -- umask == chmod o-xrw
 
 -- ------------------------------------------------------------------------
 -- -- SECTION: Uncertainty parameters 

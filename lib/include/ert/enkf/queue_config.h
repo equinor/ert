@@ -45,16 +45,22 @@ typedef struct queue_config_struct queue_config_type;
 
     int queue_config_get_max_submit(queue_config_type * queue_config);
     bool queue_config_has_job_script( const queue_config_type * queue_config );
-    const char * queue_config_get_job_script(const queue_config_type * queue_config);
     bool queue_config_set_job_script(queue_config_type * queue_config, const char * job_script);
+    const char * queue_config_get_job_script(const queue_config_type * queue_config);
+
+    const char * queue_config_get_lsf_resource(const queue_config_type * queue_config);
+    bool queue_config_has_lsf_resource(const queue_config_type * queue_config);
+    void queue_config_set_lsf_resource(queue_config_type * queue_config,
+                                       const char * lsf_resource);
 
     job_driver_type queue_config_get_driver_type(const queue_config_type * queue_config);
 
-    queue_driver_type * queue_config_get_queue_driver(const queue_config_type * queue_config, const char * driver_name);
-    bool queue_config_has_queue_driver(const queue_config_type * queue_config, const char * driver_name);
+    queue_driver_type * queue_config_get_queue_driver(const queue_config_type * queue_config,
+                                                      const char * driver_name);
+    bool queue_config_has_queue_driver(const queue_config_type * queue_config,
+                                       const char * driver_name);
     void queue_config_create_queue_drivers(queue_config_type * queue_config);
     const char * queue_config_get_queue_name(const queue_config_type * queue_config);
-    const char * queue_config_get_job_script(const queue_config_type * queue_config);
 
     void queue_config_add_config_items(config_parser_type * parser, bool site_mode);
 
@@ -67,4 +73,3 @@ UTIL_IS_INSTANCE_HEADER(queue_config);
 }
 #endif
 #endif
-

@@ -46,6 +46,7 @@ struct queue_config_struct {
     hash_type * queue_drivers;
     bool user_mode;
     int max_submit;
+    char * lsf_resource;
 };
 
 static void queue_config_add_queue_driver(queue_config_type * queue_config, const char * driver_name, queue_driver_type * driver);
@@ -58,6 +59,7 @@ static queue_config_type * queue_config_alloc_empty() {
     queue_config->driver_type = NULL_DRIVER;
     queue_config->user_mode = false;
     queue_config->max_submit = 2; // Default value
+    queue_config->lsf_resource = NULL;
 
     return queue_config;
 }
@@ -117,8 +119,13 @@ queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_con
         queue_config_copy->driver_type = NULL_DRIVER;
     else
         queue_config_copy->driver_type = LOCAL_DRIVER;
-    
+
     queue_config_copy->max_submit = queue_config->max_submit;
+
+    if (queue_config_has_lsf_resource(queue_config))
+      queue_config_copy->lsf_resource = util_alloc_string_copy(queue_config->lsf_resource);
+    else
+      queue_config_copy->lsf_resource = NULL;
 
     return queue_config_copy;
 }
@@ -131,11 +138,10 @@ queue_config_type * queue_config_alloc_local_copy( queue_config_type * queue_con
 job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_config) {
   job_queue_type * job_queue = job_queue_alloc(DEFAULT_MAX_SUBMIT, "OK", "status.json", "ERROR");
   const char * driver_name = queue_config_get_queue_name(queue_config);
-  if (driver_name != NULL)
-    {
-        queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
-        job_queue_set_driver(job_queue, driver);
-    }
+  if (driver_name != NULL) {
+    queue_driver_type * driver = queue_config_get_queue_driver(queue_config, driver_name);
+    job_queue_set_driver(job_queue, driver);
+  }
 
   job_queue_set_max_submit(job_queue, queue_config->max_submit);
 
@@ -181,7 +187,6 @@ bool queue_config_has_job_script( const queue_config_type * queue_config ) {
     return false;
 }
 
-
 bool queue_config_set_job_script(queue_config_type * queue_config, const char * job_script) {
   if (util_is_executable(job_script)) {
     char * job_script_full_path = util_alloc_realpath(job_script);
@@ -191,6 +196,21 @@ bool queue_config_set_job_script(queue_config_type * queue_config, const char * 
   }
   else
     return false;
+}
+
+
+const char* queue_config_get_lsf_resource(const queue_config_type * queue_config) {
+  return queue_config->lsf_resource;
+}
+
+
+bool queue_config_has_lsf_resource(const queue_config_type * queue_config) {
+  return queue_config->lsf_resource;
+}
+
+void queue_config_set_lsf_resource(queue_config_type * queue_config,
+                                   const char * lsf_resource) {
+  queue_config->lsf_resource = util_alloc_string_copy(lsf_resource);
 }
 
 
@@ -225,7 +245,11 @@ queue_driver_type * queue_config_get_queue_driver(const queue_config_type * queu
 
 
 void queue_config_create_queue_drivers(queue_config_type * queue_config) {
-  queue_config_add_queue_driver(queue_config, LSF_DRIVER_NAME, queue_driver_alloc_LSF(NULL, NULL, NULL));
+  queue_config_add_queue_driver(queue_config,
+                                LSF_DRIVER_NAME,
+                                queue_driver_alloc_LSF(NULL,
+                                                       queue_config->lsf_resource,
+                                                       NULL));
   queue_config_add_queue_driver(queue_config, TORQUE_DRIVER_NAME, queue_driver_alloc_TORQUE());
   queue_config_add_queue_driver(queue_config, RSH_DRIVER_NAME, queue_driver_alloc_RSH(NULL, NULL));
   queue_config_add_queue_driver(queue_config, LOCAL_DRIVER_NAME, queue_driver_alloc_local());
