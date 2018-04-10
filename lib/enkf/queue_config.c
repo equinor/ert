@@ -188,14 +188,12 @@ bool queue_config_has_job_script( const queue_config_type * queue_config ) {
 }
 
 bool queue_config_set_job_script(queue_config_type * queue_config, const char * job_script) {
-  if (util_is_executable(job_script)) {
-    char * job_script_full_path = util_alloc_realpath(job_script);
-    queue_config->job_script = util_realloc_string_copy(queue_config->job_script, job_script_full_path);
-    free(job_script_full_path);
-    return true;
-  }
-  else
+  if (!util_is_executable(job_script))
     return false;
+  char * job_script_full_path = util_alloc_realpath(job_script);
+  queue_config->job_script = util_realloc_string_copy(queue_config->job_script, job_script_full_path);
+  free(job_script_full_path);
+  return true;
 }
 
 
