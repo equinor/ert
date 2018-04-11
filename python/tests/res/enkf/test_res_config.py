@@ -273,9 +273,8 @@ class ResConfigTest(ResTest):
         ]
         for key, act in corresponding:
             exp = config_data[key]
-            errmsg = 'Error for key {key}, was: {act}, expected: {exp} '.format(key=key,
-                                                                                act=act,
-                                                                                exp=exp)
+            errmsg = 'Error for key {key}, expected: "{exp}", was: "{act}".'
+            errmsg = errmsg.format(key=key, act=act, exp=exp)
             self.assertEqual(exp, act, msg=errmsg)
 
         job_list = site_config.get_installed_jobs()

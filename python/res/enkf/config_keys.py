@@ -89,7 +89,7 @@ class ConfigKeys:
     LOG_FILE         = _log_file_key()
     LOG_LEVEL        = _log_level_key()
     LSF_RESOURCE_KEY = _lsf_resource_key()
-    LSF_QUEUE_NAME_KEY = _lsf_resource_key()
+    LSF_QUEUE_NAME_KEY = _lsf_queue_key()
     LSF_SERVER_KEY   = _lsf_server_key()
     UPDATE_LOG_PATH  = _update_log_path()
     STORE_SEED       = _store_seed()
