@@ -126,12 +126,14 @@ config_data = {
         }
 
 def expand_config_data():
-    '''
-    Expands all strings in config_data according to config_defines. This is to
-    enable one to copy the expected data directly from the configuration file
-    without having to do manual expantion (that is what we have computers for
-    anyway).
-    '''
+    """Expands all strings in config_data according to config_defines.
+
+    This is to enable one to copy the expected data directly from the
+    configuration file without having to do manual expantion (that is what we
+    have computers for anyway).
+
+    """
+
     for define_key in config_defines:
         for data_key in config_data:
             if isinstance(config_data[data_key], str):
