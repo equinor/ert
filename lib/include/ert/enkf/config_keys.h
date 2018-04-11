@@ -102,8 +102,8 @@ extern "C" {
 #define  LOCAL_CONFIG_KEY                  "LOCAL_CONFIG"
 #define  LOG_FILE_KEY                      "LOG_FILE"
 #define  LOG_LEVEL_KEY                     "LOG_LEVEL"
-#define  LSF_QUEUE_KEY                     "LSF_QUEUE"
-#define  LSF_RESOURCES_KEY                 "LSF_RESOURCES"
+#define  LSF_QUEUE_KEY                     "LSF_QUEUE" // The queue name, e.g. "mr"
+#define  LSF_RESOURCES_KEY                 "LSF_RESOURCE" // LSF resource requirements
 #define  LSF_SERVER_KEY                    "LSF_SERVER"
 #define  TORQUE_QUEUE_KEY                  "TORQUE_QUEUE"
 #define  MAX_RESAMPLE_KEY                  "MAX_RESAMPLE"

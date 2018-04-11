@@ -58,6 +58,9 @@ config_data = {
         "MIN_REALIZATIONS"  : "50%",
         "MAX_SUBMIT"        : 13,
         "QUEUE_SYSTEM"      : "LSF",
+        "LSF_QUEUE"         : "mr",
+        "LSF_SERVER"        : "simulacrum",
+        "LSF_RESOURCE"      : "select[x86_64Linux] same[type:model]",
         "UMASK"             : int("007", 8),
         "MAX_RUNNING"       : "100",
         "DATA_FILE"         : "../../eclipse/model/SNAKE_OIL.DATA",
@@ -123,12 +126,14 @@ config_data = {
         }
 
 def expand_config_data():
-    '''
-    Expands all strings in config_data according to config_defines. This is to
-    enable one to copy the expected data directly from the configuration file
-    without having to do manual expantion (that is what we have computers for
-    anyway).
-    '''
+    """Expands all strings in config_data according to config_defines.
+
+    This is to enable one to copy the expected data directly from the
+    configuration file without having to do manual expantion (that is what we
+    have computers for anyway).
+
+    """
+
     for define_key in config_defines:
         for data_key in config_data:
             if isinstance(config_data[data_key], str):
@@ -256,30 +261,21 @@ class ResConfigTest(ResTest):
                 )
 
     def assert_site_config(self, site_config, config_data, working_dir):
-        self.assertEqual(
-                config_data["MAX_SUBMIT"],
-                site_config.queue_config.max_submit
-                )
-
-        self.assertEqual(
-                config_data["QUEUE_SYSTEM"],
-                site_config.queue_config.queue_name
-                )
-
-        self.assertEqual(
-                config_data["QUEUE_SYSTEM"],
-                site_config.queue_config.driver.name
-                )
-
-        self.assertEqual(
-                config_data["MAX_RUNNING"],
-                site_config.queue_config.driver.get_option("MAX_RUNNING")
-                )
-
-        self.assertEqual(
-                config_data["UMASK"],
-                site_config.umask
-                )
+        corresponding = [
+            ('MAX_SUBMIT',    site_config.queue_config.max_submit),
+            ('LSF_QUEUE',     site_config.queue_config.queue_name),
+            ('LSF_SERVER',    site_config.queue_config.lsf_server),
+            ('LSF_RESOURCE',  site_config.queue_config.lsf_resource),
+            ('QUEUE_SYSTEM',  site_config.queue_config.queue_system),
+            ('QUEUE_SYSTEM',  site_config.queue_config.driver.name),
+            ('MAX_RUNNING',   site_config.queue_config.driver.get_option('MAX_RUNNING')),
+            ('UMASK',         site_config.umask),
+        ]
+        for key, act in corresponding:
+            exp = config_data[key]
+            errmsg = 'Error for key {key}, expected: "{exp}", was: "{act}".'
+            errmsg = errmsg.format(key=key, act=act, exp=exp)
+            self.assertEqual(exp, act, msg=errmsg)
 
         job_list = site_config.get_installed_jobs()
         for job_name in config_data["INSTALL_JOB"]:
