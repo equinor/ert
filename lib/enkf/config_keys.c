@@ -38,8 +38,8 @@ const char * config_keys_get_queue_option_key() {
   return QUEUE_OPTION_KEY;
 }
 
-const char * config_keys_get_lsf_resource_key() {
-  return LSF_RESOURCE_KEY;
+const char * config_keys_get_lsf_resources_key() {
+  return LSF_RESOURCES_KEY;
 }
 
 const char * config_keys_get_lsf_server_key() {

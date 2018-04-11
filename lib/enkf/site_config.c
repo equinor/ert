@@ -685,7 +685,7 @@ void site_config_add_config_items(config_parser_type * config, bool site_mode) {
   item = config_add_schema_item(config, LSF_QUEUE_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, 1);
 
-  item = config_add_schema_item(config, LSF_RESOURCE_KEY, false);
+  item = config_add_schema_item(config, LSF_RESOURCES_KEY, false);
   config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item(config, MAX_RUNNING_LSF_KEY, false);
