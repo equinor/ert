@@ -91,6 +91,7 @@ class ConfigKeys:
     LSF_RESOURCE_KEY = _lsf_resource_key()
     LSF_QUEUE_NAME_KEY = _lsf_queue_key()
     LSF_SERVER_KEY   = _lsf_server_key()
+    LSF_KEY          = 'LSF'
     UPDATE_LOG_PATH  = _update_log_path()
     STORE_SEED       = _store_seed()
     LOAD_SEED        = _load_seed()

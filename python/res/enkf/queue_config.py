@@ -66,17 +66,32 @@ class QueueConfig(BaseCClass):
         return self._queue_system()
 
     @property
-    def driver(self):
-        return self._queue_driver(self.queue_system).setParent(self)
-
-    @property
     def job_script(self):
         return self._get_job_script()
 
     @property
+    def driver(self):
+        return self._queue_driver(self.queue_system).setParent(self)
+
+    def _assert_lsf(self, key='driver'):
+        sys = self.queue_system
+        if sys != ConfigKeys.LSF_KEY:
+            fmt = 'Cannot fetch LSF {key}, current queue is {system}'
+            raise ValueError(fmt.format(key=key,
+                                        system=self.queue_system))
+
+    @property
+    def _lsf_driver(self):
+        self._assert_lsf()
+        driver = self._queue_driver(ConfigKeys.LSF_KEY)
+        return driver.setParent(self)
+
+    @property
     def lsf_resource(self):
-        return self.driver.get_option(ConfigKeys.LSF_RESOURCE_KEY)
+        self._assert_lsf(key=ConfigKeys.LSF_RESOURCE_KEY)
+        return self._lsf_driver.get_option(ConfigKeys.LSF_RESOURCE_KEY)
 
     @property
     def lsf_server(self):
-        return self.driver.get_option(ConfigKeys.LSF_SERVER_KEY)
+        self._assert_lsf(key=ConfigKeys.LSF_SERVER_KEY)
+        return self._lsf_driver.get_option(ConfigKeys.LSF_SERVER_KEY)
