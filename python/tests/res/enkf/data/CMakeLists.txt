@@ -11,6 +11,7 @@ set(TEST_SOURCES
     test_ext_param.py
     test_enkf_node.py
     test_enkf_config_node.py
+    test_summary.py
 )
 
 add_python_package("python.tests.res.enkf.data" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf/data "${TEST_SOURCES}" False)
@@ -21,6 +22,7 @@ addPythonTest(tests.res.enkf.data.test_ext_param.ExtParamTest)
 addPythonTest(tests.res.enkf.data.test_enkf_node.EnkfNodeTest)
 addPythonTest(tests.res.enkf.data.test_enkf_config_node.EnkfConfigNodeTest)
 addPythonTest(tests.res.enkf.data.test_gen_kw_config.GenKwConfigTest)
+addPythonTest(tests.res.enkf.data.test_summary.SummaryTest)
 
 if (STATOIL_TESTDATA_ROOT)
   addPythonTest(tests.res.enkf.data.test_gen_kw_config_statoil.GenKwConfigTest LABELS StatoilData)

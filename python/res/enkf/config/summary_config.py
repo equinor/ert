@@ -15,17 +15,28 @@
 #  for more details.
 from cwrap import BaseCClass
 from res import ResPrototype
-
+from res.enkf import LoadFailTypeEnum
 
 class SummaryConfig(BaseCClass):
     TYPE_NAME = "summary_config"
-    _alloc = ResPrototype("summary_config_obj summary_config_alloc()")
+    _alloc   = ResPrototype("void* summary_config_alloc(char*, load_fail_type)", bind=False)
+    _free    = ResPrototype("void  summary_config_free(summary_config)")
+    _get_var = ResPrototype("char* summary_config_get_var(summary_config)")
 
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+
+    def __init__(self, key, load_fail = LoadFailTypeEnum.LOAD_FAIL_WARN):
+      c_ptr = self._alloc(key, load_fail)
+      super(SummaryConfig, self).__init__(c_ptr)
+
 
     def __repr__(self):
         return 'SummaryConfig() %s' % self._ad_str()
 
+
     def free(self):
-        pass
+       self._free( )
+
+
+    @property
+    def key(self):
+        return self._get_var()
