@@ -14,9 +14,12 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+from res import ResPrototype
+
 
 class SummaryConfig(BaseCClass):
     TYPE_NAME = "summary_config"
+    _alloc = ResPrototype("summary_config_obj summary_config_alloc()")
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
