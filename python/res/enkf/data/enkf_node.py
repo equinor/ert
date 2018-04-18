@@ -105,6 +105,13 @@ class EnkfNode(BaseCClass):
 
         return Field.createCReference(self.valuePointer(), self)
 
+    def as_summary(self):
+        """ @rtype: CustomKW """
+        impl_type = self.getImplType( )
+        assert impl_type == ErtImplType.SUMMARY
+
+        return Summary.createCReference(self.valuePointer(), self)
+
     def as_ext_param(self):
         """ @rtype: CustomKW """
         impl_type = self.getImplType( )

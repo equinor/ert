@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'summary_config.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'summary_config.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -39,7 +39,7 @@ struct summary_config_struct {
   load_fail_type        load_fail;
   ecl_smspec_var_type   var_type;         /* The type of the variable - according to ecl_summary nomenclature. */
   char * var;                             /* This is ONE variable of summary.x format - i.e. WOPR:OP_2, RPR:4, ... */
-  set_type            * obs_set;          /* Set of keys (which fit in enkf_obs) which are observations of this node. */ 
+  set_type            * obs_set;          /* Set of keys (which fit in enkf_obs) which are observations of this node. */
 };
 
 
@@ -68,10 +68,10 @@ load_fail_type summary_config_get_load_fail_mode( const summary_config_type * co
    partial summary case the results will not be there, and the loader
    will incorrectly(?) signal failure.
 */
-   
+
 void summary_config_set_load_fail_mode( summary_config_type * config , load_fail_type load_fail) {
   if ((config->var_type == ECL_SMSPEC_WELL_VAR) || (config->var_type == ECL_SMSPEC_GROUP_VAR))
-    // For well and group variables load_fail will be LOAD_FAIL_SILENT anyway. 
+    // For well and group variables load_fail will be LOAD_FAIL_SILENT anyway.
     config->load_fail = LOAD_FAIL_SILENT;
   else
     config->load_fail = load_fail;
@@ -93,10 +93,11 @@ summary_config_type * summary_config_alloc(const char * var , load_fail_type loa
   config->__type_id            = SUMMARY_CONFIG_TYPE_ID;
   config->var                  = util_alloc_string_copy( var );
   config->var_type             = ecl_smspec_identify_var_type( var );
-  config->obs_set              = set_alloc_empty(); 
+  config->obs_set              = set_alloc_empty();
   summary_config_set_load_fail_mode( config , load_fail);
   return config;
 }
+
 
 
 void summary_config_add_obs_key(summary_config_type * config, const char * obs_key) {

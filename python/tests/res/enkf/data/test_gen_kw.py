@@ -16,11 +16,11 @@ def create_gen_kw():
     with open(template_file, "w") as f:
         f.write("<MULTFLT1> <MULTFLT2> <MULTFLT3>\n")
         f.write("/\n")
-        
+
 
     gen_kw_config = GenKwConfig("MULTFLT", template_file , parameter_file)
     gen_kw = GenKw( gen_kw_config )
-    
+
     return (gen_kw_config , gen_kw)
 
 
@@ -29,7 +29,7 @@ class GenKwTest(ResTest):
 
     def test_gen_kw_get_set(self):
         with TestAreaContext("enkf/data/gen_kwt"):
-            
+
             (gen_kw_config , gen_kw) = create_gen_kw()
             self.assertIsInstance(gen_kw, GenKw)
 
@@ -71,18 +71,18 @@ class GenKwTest(ResTest):
             self.assertEqual( items[1][1] ,  8)
             self.assertEqual( items[2][1] ,  12)
 
-            
+
 
     def test_gen_kw_get_set_vector(self):
         with TestAreaContext("enkf/data/gen_kwt"):
-            
+
             (gen_kw_config , gen_kw) = create_gen_kw()
             with self.assertRaises(ValueError):
                 gen_kw.setValues([0])
 
             with self.assertRaises(TypeError):
                 gen_kw.setValues(["A","B","C"])
-                
+
             gen_kw.setValues([0,1,2])
             self.assertEqual(gen_kw[0], 0)
             self.assertEqual(gen_kw[1], 1)
@@ -91,10 +91,10 @@ class GenKwTest(ResTest):
             self.assertEqual(gen_kw["MULTFLT1"] , 0)
             self.assertEqual(gen_kw["MULTFLT2"] , 1)
             self.assertEqual(gen_kw["MULTFLT3"] , 2)
-    
 
-        
-    
+
+
+
 
     def test_gen_kw_ecl_write(self):
         with TestAreaContext("enkf/data/gen_kwt"):
