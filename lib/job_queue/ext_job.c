@@ -826,7 +826,7 @@ void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const sub
     __fprintf_python_arg_types( stream, "  ", "arg_types",           ext_job,                      ",\n",                                     null_value);
 
     __fprintf_python_int(     stream, "  ", "max_arg",             ext_job->max_arg,             "\n",                                      null_value);
-    
+
   }
   fprintf(stream,"}");
 }
