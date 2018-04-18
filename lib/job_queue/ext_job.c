@@ -708,6 +708,7 @@ static void __fprintf_python_hash(FILE * stream,
         fprintf(stream,",");
 
       key = hash_iter_get_next_key(iter);
+      counter += 1;
     }
     fprintf(stream,"}");
   } else

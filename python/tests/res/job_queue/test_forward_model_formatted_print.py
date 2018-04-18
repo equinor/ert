@@ -389,6 +389,8 @@ class ForwardModelFormattedPrintTest(ResTest):
                f.write("ARG_TYPE 3 BOOL\n")
                f.write("ARG_TYPE 4 RUNTIME_FILE\n")
                f.write("ARG_TYPE 5 RUNTIME_INT\n")
+               f.write("ENV KEY1 VALUE2\n")
+               f.write("ENV KEY2 VALUE2\n")
 
             job = ExtJob("FWD_MODEL" , True)
 
