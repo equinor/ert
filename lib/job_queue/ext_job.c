@@ -708,6 +708,7 @@ static void __fprintf_python_hash(FILE * stream,
         fprintf(stream,",");
 
       key = hash_iter_get_next_key(iter);
+      counter += 1;
     }
     fprintf(stream,"}");
   } else
@@ -826,7 +827,7 @@ void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const sub
     __fprintf_python_arg_types( stream, "  ", "arg_types",           ext_job,                      ",\n",                                     null_value);
 
     __fprintf_python_int(     stream, "  ", "max_arg",             ext_job->max_arg,             "\n",                                      null_value);
-    
+
   }
   fprintf(stream,"}");
 }

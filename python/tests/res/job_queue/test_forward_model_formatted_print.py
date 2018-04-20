@@ -389,6 +389,8 @@ class ForwardModelFormattedPrintTest(ResTest):
                f.write("ARG_TYPE 3 BOOL\n")
                f.write("ARG_TYPE 4 RUNTIME_FILE\n")
                f.write("ARG_TYPE 5 RUNTIME_INT\n")
+               f.write("ENV KEY1 VALUE2\n")
+               f.write("ENV KEY2 VALUE2\n")
 
             job = ExtJob("FWD_MODEL" , True)
 
@@ -413,9 +415,9 @@ class ForwardModelFormattedPrintTest(ResTest):
             self.assertEqual(printed_job["min_arg"], 2)
             self.assertEqual(printed_job["max_arg"], 6)
             self.assertEqual(printed_job["arg_types"], ["INT", "FLOAT", "STRING", "BOOL", "RUNTIME_FILE", "RUNTIME_INT"])
-             
 
-        
+
+
 
     def test_env_varlist(self):
         varlist_string = "global_environment"
@@ -431,7 +433,7 @@ class ForwardModelFormattedPrintTest(ResTest):
         varlist[first] = first_value
         varlist[second] = second_value
         varlist[third] = third_value
-        self.assertEqual(len(varlist), 3) 
+        self.assertEqual(len(varlist), 3)
         with TestAreaContext("python/job_queue/env_varlist"):
             forward_model = self.set_up_forward_model([])
             run_id = "test_no_jobs_id"
@@ -450,8 +452,8 @@ class ForwardModelFormattedPrintTest(ResTest):
             self.assertEqual(second_value, env_config[second] )
             self.assertEqual(third_value_correct, env_config[third])
             update_config = config[update_string]
-            
-            
+
+
 
     def test_repr(self):
         with TestAreaContext("python/job_queue/forward_model_one_job"):
@@ -546,7 +548,7 @@ class ForwardModelFormattedPrintTest(ResTest):
                 umask,
                 varlist)
 
-            s = '{"start_time": null, "jobs": [{"status": "Success", "start_time": 1519653419.0, "end_time": 1519653419.0, "name": "SQUARE_PARAMS", "error": null}], "end_time": null, "run_id": ""}' 
+            s = '{"start_time": null, "jobs": [{"status": "Success", "start_time": 1519653419.0, "end_time": 1519653419.0, "name": "SQUARE_PARAMS", "error": null}], "end_time": null, "run_id": ""}'
 
             with open("status.json", "w") as f:
                 f.write(s)
