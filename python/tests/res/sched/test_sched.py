@@ -17,11 +17,11 @@
 import datetime
 import os
 from res.sched import SchedFile
-from tests import ResTest
+from tests import ResTest, statoil_test
 
 
 
-
+@statoil_test()
 class SchedFileTest(ResTest):
     def setUp(self):
         src_file = self.createTestPath("Statoil/ECLIPSE/Gurbat/target.SCH")

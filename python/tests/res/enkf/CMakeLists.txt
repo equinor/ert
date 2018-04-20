@@ -97,24 +97,22 @@ addPythonTest(tests.res.enkf.test_enkf_fs_manager1.EnKFFSManagerTest1)
 addPythonTest(tests.res.enkf.test_enkf_fs_manager2.EnKFFSManagerTest2)
 
 
-if (STATOIL_TESTDATA_ROOT)
-  addPythonTest(tests.res.enkf.test_enkf_obs.EnKFObsTest LABELS StatoilData)
-  addPythonTest(tests.res.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest LABELS StatoilData)
-  addPythonTest(tests.res.enkf.test_enkf_fs.EnKFFSTest LABELS StatoilData)
-  addPythonTest(tests.res.enkf.test_enkf_library.EnKFLibraryTest)
-  addPythonTest(tests.res.enkf.test_summary_key_set.SummaryKeySetTest LABELS StatoilData)
-  addPythonTest(tests.res.enkf.test_ecl_config.EclConfigTest LABELS StatoilData)
-  addPythonTest(tests.res.enkf.test_ert_context.ErtTestContextTest LABELS StatoilData)
-  addPythonTest(tests.res.enkf.test_field_export.FieldExportTest LABELS StatoilData)
+addPythonTest(tests.res.enkf.test_enkf_obs.EnKFObsTest)
+addPythonTest(tests.res.enkf.test_enkf_load_results_manually.LoadResultsManuallyTest)
+addPythonTest(tests.res.enkf.test_enkf_fs.EnKFFSTest)
+addPythonTest(tests.res.enkf.test_enkf_library.EnKFLibraryTest)
+addPythonTest(tests.res.enkf.test_summary_key_set.SummaryKeySetTest)
+addPythonTest(tests.res.enkf.test_ecl_config.EclConfigTest)
+addPythonTest(tests.res.enkf.test_ert_context.ErtTestContextTest)
+addPythonTest(tests.res.enkf.test_field_export.FieldExportTest)
 
-  # The following two tests involve loading the rml module as part of
-  # the bootup process. That fails with a dlopen( ) error I just can
-  # not understand; when the libraries have been installed with 'make
-  # install' the tests seem to work.
+# The following two tests involve loading the rml module as part of
+# the bootup process. That fails with a dlopen( ) error I just can
+# not understand; when the libraries have been installed with 'make
+# install' the tests seem to work.
 
-  # addPythonTest(tests.res.enkf.test_labscale.LabScaleTest LABELS StatoilData)
-  # addPythonTest(tests.res.enkf.test_update.UpdateTest LABELS StatoilData)
-endif()
+# addPythonTest(tests.res.enkf.test_labscale.LabScaleTest)
+# addPythonTest(tests.res.enkf.test_update.UpdateTest)
 
 add_subdirectory(data)
 add_subdirectory(export)

@@ -1,6 +1,6 @@
 import os
 from ecl.util.test import TestAreaContext
-from tests import ResTest
+from tests import ResTest, statoil_test
 from res.test import ErtTestContext
 
 from res.enkf import EnkfFs
@@ -8,6 +8,7 @@ from res.enkf import EnKFMain
 from res.enkf.enums import EnKFFSType
 
 
+@statoil_test()
 class EnKFFSTest(ResTest):
     def setUp(self):
         self.mount_point = "storage/default"

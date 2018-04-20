@@ -1,8 +1,8 @@
-from tests import ResTest
+from tests import ResTest, statoil_test
 from res.test import ErtTestContext
 
 
-
+@statoil_test()
 class ErtTestContextTest(ResTest):
     def setUp(self):
         self.config = self.createTestPath("Statoil/config/with_data/config")

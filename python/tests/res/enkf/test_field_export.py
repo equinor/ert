@@ -1,5 +1,5 @@
 import os
-from tests import ResTest
+from tests import ResTest, statoil_test
 from res.test import ErtTestContext
 
 from ecl.util.util import IntVector
@@ -11,6 +11,7 @@ from res.enkf.enums import EnkfFieldFileFormatEnum
 from res.enkf import NodeId
 
 
+@statoil_test()
 class FieldExportTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/obs_testing/config")

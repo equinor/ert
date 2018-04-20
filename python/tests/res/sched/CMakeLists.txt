@@ -5,6 +5,4 @@ set(TEST_SOURCES
 
 add_python_package("python.tests.res.sched" ${PYTHON_INSTALL_PREFIX}/tests/res/sched "${TEST_SOURCES}" False)
 
-if (STATOIL_TESTDATA_ROOT)
-  addPythonTest(tests.res.sched.test_sched.SchedFileTest LABELS StatoilData)
-endif()
+addPythonTest(tests.res.sched.test_sched.SchedFileTest)

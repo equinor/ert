@@ -1,10 +1,11 @@
-from tests import ResTest
+from tests import ResTest, statoil_test
 from res.test import ErtTestContext
 
 from res.enkf.plot_data import PlotBlockData, PlotBlockDataLoader, PlotBlockVector
 from ecl.util.util import DoubleVector
 
 
+@statoil_test()
 class PlotDataTest(ResTest):
 
     def setUp(self):

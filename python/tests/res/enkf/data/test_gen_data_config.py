@@ -1,5 +1,5 @@
-from tests import ResTest
 from ecl.util.util import BoolVector
+from tests import ResTest, statoil_test
 from res.test import ErtTestContext
 
 from res import ResPrototype
@@ -9,6 +9,8 @@ from res.enkf import NodeId, RunArg
 from res.enkf import ForwardLoadContext
 
 
+
+@statoil_test()
 class GenDataConfigTest(ResTest):
     _get_active_mask    = ResPrototype("bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind = False)
     _update_active_mask = ResPrototype("void gen_data_config_update_active( gen_data_config, forward_load_context , bool_vector)", bind = False)

@@ -1,4 +1,4 @@
-from tests import ResTest
+from tests import ResTest, statoil_test
 from res.test import ErtTestContext
 
 from ecl.grid import EclGrid
@@ -10,7 +10,7 @@ from res.enkf import ActiveMode, EnsembleConfig
 from res.enkf import (ObsVector, LocalObsdata, EnkfObs, TimeMap,
                       LocalObsdataNode, ObsData, MeasData, ActiveList)
 
-
+@statoil_test()
 class EnKFObsTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("Statoil/config/obs_testing/config")

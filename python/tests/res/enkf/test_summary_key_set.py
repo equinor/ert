@@ -1,6 +1,6 @@
 import os
-from tests import ResTest
 from ecl.util.test.test_area import TestAreaContext
+from tests import ResTest, statoil_test
 from res.test.ert_test_context import ErtTestContext
 
 from res.enkf import SummaryKeySet
@@ -8,6 +8,7 @@ from res.enkf.enkf_fs import EnkfFs
 from res.enkf import EnKFMain, ResConfig
 
 
+@statoil_test()
 class SummaryKeySetTest(ResTest):
 
     def test_creation(self):

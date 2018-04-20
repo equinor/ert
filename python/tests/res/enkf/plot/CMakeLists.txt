@@ -7,6 +7,4 @@ set(TEST_SOURCES
 add_python_package("python.tests.res.enkf.plot" ${PYTHON_INSTALL_PREFIX}/tests/res/enkf/plot "${TEST_SOURCES}" False)
 
 addPythonTest(tests.res.enkf.plot.test_plot_settings.PlotSettingsTest)
-if (STATOIL_TESTDATA_ROOT)
-  addPythonTest(tests.res.enkf.plot.test_plot_data.PlotDataTest LABELS StatoilData)
-endif()
+addPythonTest(tests.res.enkf.plot.test_plot_data.PlotDataTest)

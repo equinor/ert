@@ -30,8 +30,4 @@ addPythonTest(tests.res.job_queue.test_workflow_runner.WorkflowRunnerTest)
 addPythonTest(tests.res.job_queue.test_ext_job.ExtJobTest)
 addPythonTest(tests.res.job_queue.test_jobmanager.JobManagerTest)
 addPythonTest(tests.res.job_queue.test_job_manager_runtime_kw.JobManagerTestRuntimeKW)
-
-if (STATOIL_TESTDATA_ROOT)
-    addPythonTest(tests.res.job_queue.test_statoil_jobmanager.JobManagerStatoilTest
-                  LABELS StatoilData)
-endif()
+addPythonTest(tests.res.job_queue.test_statoil_jobmanager.JobManagerStatoilTest)
