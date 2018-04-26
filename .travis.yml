@@ -27,7 +27,6 @@ matrix:
   fast_finish: true
   allow_failures:
     - os: osx
-    - env: PYTHON_VERSION=3.6
   exclude:
     - os: osx
       compiler: gcc
