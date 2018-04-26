@@ -43,19 +43,13 @@ class UIReturn(BaseCClass):
         else:
             raise ValueError('Unable to construct UIReturn with status = %s' % str(status))
 
-
+    #For python 3, corresponds to __nonzero__
     def __bool__(self):
-        if self.status() == UIReturnStatusEnum.UI_RETURN_OK:
-            return True
-        else:
-            return False
+        return self.status() == UIReturnStatusEnum.UI_RETURN_OK
 
-
+    #For python 2
     def __nonzero__(self):
-        if self.status() == UIReturnStatusEnum.UI_RETURN_OK:
-            return True
-        else:
-            return False
+        return self.__bool__()
 
 
     def __len__(self):
