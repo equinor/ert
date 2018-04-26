@@ -54,7 +54,7 @@ def statoil_test():
     Will mark a test method or an entire test class as dependent on Statoil testdata.
     """
     def decorator(test_item):
-        if not isinstance(test_item, (type, types.ClassType)):
+        if not isinstance(test_item, type):
             if not ResTest.STATOIL_DATA:
                 @functools.wraps(test_item)
                 def skip_wrapper(*args, **kwargs):
