@@ -289,8 +289,13 @@ void obs_vector_install_node(obs_vector_type * obs_vector , int index , void * n
    observation key - the two can be different.
 */
 
-static void obs_vector_add_summary_obs( obs_vector_type * obs_vector , int obs_index , const char * summary_key , const char * obs_key , double value , double std , const char * auto_corrf_name , double auto_corrf_param) {
-  summary_obs_type * summary_obs = summary_obs_alloc( summary_key , obs_key , value , std , auto_corrf_name , auto_corrf_param);
+static void obs_vector_add_summary_obs( obs_vector_type * obs_vector,
+                                        int obs_index,
+                                        const char * summary_key,
+                                        const char * obs_key,
+                                        double value,
+                                        double std) {
+  summary_obs_type * summary_obs = summary_obs_alloc( summary_key , obs_key , value , std);
   obs_vector_install_node( obs_vector , obs_index , summary_obs );
 }
 
@@ -442,7 +447,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
       else if (strcmp( error_mode , "RELMIN") == 0)
         obs_error  = util_double_max( min_error , obs_error * obs_value );
 
-      obs_vector_add_summary_obs( obs_vector , obs_restart_nr , sum_key , obs_key , obs_value , obs_error , NULL , 0);
+      obs_vector_add_summary_obs( obs_vector , obs_restart_nr , sum_key , obs_key , obs_value , obs_error);
     }
   }
 }
@@ -533,24 +538,10 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector ,
     double_vector_type * std                = double_vector_alloc(0,0);
     bool_vector_type   * valid              = bool_vector_alloc(0 , false);
 
-    /* The auto_corrf parameters can not be "segmentized" */
-    double auto_corrf_param                 = -1;
-    const char * auto_corrf_name            = NULL;
-
-
     double         error      = conf_instance_get_item_value_double(conf_instance, "ERROR"     );
     double         error_min  = conf_instance_get_item_value_double(conf_instance, "ERROR_MIN" );
     const char *   error_mode = conf_instance_get_item_value_ref(   conf_instance, "ERROR_MODE");
     const char *   sum_key    = conf_instance_get_name_ref(         conf_instance              );
-
-    if(conf_instance_has_item(conf_instance, "AUTO_CORRF")) {
-      auto_corrf_name  = conf_instance_get_item_value_ref( conf_instance , "AUTO_CORRF");
-      auto_corrf_param = conf_instance_get_item_value_double(conf_instance, "AUTO_CORRF_PARAM");
-      if(conf_instance_has_item(conf_instance, "AUTO_CORRF_PARAM"))
-        auto_corrf_param = conf_instance_get_item_value_double(conf_instance, "AUTO_CORRF_PARAM");
-      else
-        util_abort("%s: When specifying AUTO_CORRF you must also give a vlaue for AUTO_CORRF_PARAM",__func__);
-    }
 
 
     // Get time series data from history object and allocate
@@ -635,8 +626,7 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector ,
         if (bool_vector_safe_iget( valid , restart_nr)) {
           if (double_vector_iget( std , restart_nr) > std_cutoff) {
             obs_vector_add_summary_obs( obs_vector , restart_nr , sum_key , sum_key ,
-                                        double_vector_iget( value ,restart_nr) , double_vector_iget( std , restart_nr ) ,
-                                        auto_corrf_name , auto_corrf_param);
+                                        double_vector_iget( value ,restart_nr) , double_vector_iget( std , restart_nr ));
           } else
             fprintf(stderr,"** Warning: to small observation error in observation %s:%d - ignored. \n", sum_key , restart_nr);
         }

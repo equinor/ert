@@ -45,38 +45,9 @@ struct summary_obs_struct {
   double    value;          /** Observation value. */
   double    std;            /** Standard deviation of observation. */
   double    std_scaling;
-
-  auto_corrf_ftype   * auto_corrf;
-  double               auto_corrf_param;
 };
 
 
-
-static double auto_corrf_exp( double tlag , double param ) {
-  return exp(-fabs(tlag) / param );
-}
-
-static double auto_corrf_gauss( double tlag , double param ) {
-  double x = tlag / param;
-  return exp(-0.5 * x * x);
-}
-
-
-
-static auto_corrf_ftype * summary_obs_lookup_auto_corrf( const char * fname ) {
-  if (fname == NULL)
-    return NULL;
-  else {
-    if (strcmp( fname , AUTO_CORRF_EXP) == 0)
-      return auto_corrf_exp;
-    else if (strcmp( fname , AUTO_CORRF_GAUSS) == 0)
-      return auto_corrf_gauss;
-    else {
-      util_abort("%s: correlation function:%s not recognized \n",__func__ , fname);
-      return NULL;  /* Compiler shut up. */
-    }
-  }
-}
 
 
 
@@ -95,9 +66,7 @@ static auto_corrf_ftype * summary_obs_lookup_auto_corrf( const char * fname ) {
 summary_obs_type * summary_obs_alloc(const char   * summary_key,
                                      const char   * obs_key ,
                                      double value ,
-                                     double std   ,
-                                     const char * auto_corrf_name ,
-                                     double auto_corrf_param) {
+                                     double std) {
 
   summary_obs_type * obs = util_malloc(sizeof * obs );
   UTIL_TYPE_ID_INIT( obs , SUMMARY_OBS_TYPE_ID )
@@ -107,8 +76,6 @@ summary_obs_type * summary_obs_alloc(const char   * summary_key,
   obs->value            = value;
   obs->std              = std;
   obs->std_scaling      = 1.0;
-  obs->auto_corrf       = summary_obs_lookup_auto_corrf( auto_corrf_name );
-  obs->auto_corrf_param = auto_corrf_param;
 
   return obs;
 }
@@ -128,14 +95,6 @@ void summary_obs_free(summary_obs_type * summary_obs) {
 
 
 
-
-auto_corrf_ftype * summary_obs_get_auto_corrf( const summary_obs_type * summary_obs ) {
-  return summary_obs->auto_corrf;
-}
-
-double summary_obs_get_auto_corrf_param( const summary_obs_type * summary_obs ) {
-  return summary_obs->auto_corrf_param;
-}
 
 
 
