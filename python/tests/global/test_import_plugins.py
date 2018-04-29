@@ -24,8 +24,8 @@ class ImportPlugins(ImportTestCase):
     def test_import(self):
 
         plugin_path = os.path.abspath( os.path.join( os.path.dirname( __file__) , "../../../../../../share/workflows/jobs/internal-gui/scripts") )
-        print plugin_path
+        print(plugin_path)
         self.assertTrue( os.path.isdir( plugin_path ))
         for path in glob.glob("%s/*.py" % plugin_path):
-            print "Importing: %s" % path
+            print("Importing: %s" % path)
             self.import_file( path )
