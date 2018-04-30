@@ -1,5 +1,11 @@
-from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt, QSize
+  from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
+else:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
@@ -101,7 +107,11 @@ class SimulationPanel(QWidget):
 
     def getCurrentSimulationModel(self):
         data = self._simulation_mode_combo.itemData(self._simulation_mode_combo.currentIndex(), Qt.UserRole)
-        return data.toPyObject()
+        if sys.version_info[0] == 2:
+            return data.toPyObject()
+        else:
+            return data
+
 
     def getSimulationArguments(self):
         """ @rtype: dict[str,object]"""

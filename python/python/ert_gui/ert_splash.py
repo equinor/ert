@@ -1,5 +1,13 @@
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QSplashScreen, QApplication, QColor, QPen, QFont
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt
+  from PyQt4.QtGui import QSplashScreen, QApplication, QColor, QPen, QFont
+else:
+  from PyQt5.QtCore import Qt
+  from PyQt5.QtWidgets import QSplashScreen, QApplication
+  from PyQt5.QtGui import QColor, QPen, QFont
+
 
 from ert_gui.ertwidgets import resourceImage
 

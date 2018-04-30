@@ -13,9 +13,16 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import sys
 
-from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import  QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QFont
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt, QSize
+  from PyQt4.QtGui import  QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QFont
+else:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtWidgets import  QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel
+  from PyQt5.QtGui import  QFont
+
 from ert_gui import ErtVersion
 from ert_gui.ertwidgets import resourceImage
 

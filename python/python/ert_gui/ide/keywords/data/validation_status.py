@@ -26,8 +26,11 @@ class ValidationStatus(object):
     def value(self):
         return self.__value
 
-    def __nonzero__(self):
+    def __bool__(self):
         return not self.__fail
+
+    def __nonzero__(self):
+        return self.__bool__()
 
     def __str__(self):
         return self.__message

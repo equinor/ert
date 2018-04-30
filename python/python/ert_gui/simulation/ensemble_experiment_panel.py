@@ -1,4 +1,9 @@
-from PyQt4.QtGui import QFormLayout, QLabel
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QFormLayout, QLabel
+else:
+  from PyQt5.QtWidgets import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector

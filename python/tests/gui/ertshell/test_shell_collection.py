@@ -84,13 +84,13 @@ class ShellCollectionTest(ErtTest):
         self.assertTrue(root.didLastCommandFail())
 
         result = root.complete_level_1(*completeMock("level_1 "))
-        self.assertListEqual(result, [l2])
+        self.assertListEqual(list(result), [l2])
 
         result = root.complete_level_1(*completeMock("level_1 lev"))
         self.assertListEqual(result, [l2])
 
         result = root.complete_level_1(*completeMock("level_1 level_2 "))
-        self.assertListEqual(result, [l3])
+        self.assertListEqual(list(result), [l3])
 
         root.help_level_1()
         level_1.help_level_2()

@@ -1,4 +1,9 @@
-from PyQt4.QtCore import QObject, pyqtSignal
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QObject, pyqtSignal
+else:
+  from PyQt5.QtCore import QObject, pyqtSignal
 
 
 class SelectableListModel(QObject):

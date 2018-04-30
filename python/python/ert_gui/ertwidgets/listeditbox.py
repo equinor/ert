@@ -13,8 +13,14 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt, QSize
+  from PyQt4.QtGui import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
+else:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtWidgets import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.validationsupport import ValidationSupport

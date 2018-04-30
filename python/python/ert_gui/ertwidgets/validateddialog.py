@@ -13,8 +13,15 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-from PyQt4.QtCore import Qt, QSize, SIGNAL
-from PyQt4.QtGui import QDialog, QColor, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLineEdit, QComboBox, QLayout
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt, QSize
+  from PyQt4.QtGui import QDialog, QColor, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLineEdit, QComboBox, QLayout
+else:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtWidgets import QDialog, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLineEdit, QComboBox, QLayout
+  from PyQt5.QtGui import QColor
 
 
 class ValidatedDialog(QDialog):
@@ -55,14 +62,14 @@ class ValidatedDialog(QDialog):
 
         if choose_from_list:
             self.param_name_combo = QComboBox()
-            self.connect(self.param_name_combo, SIGNAL('currentIndexChanged(QString)'), self.validateChoice)
+            self.param_name.currentIndexChanged.connect(self.validateChoice)
             for item in unique_names:
                 self.param_name_combo.addItem(item)
             self.layout.addRow("Job:", self.param_name_combo)
         else:
             self.param_name = QLineEdit(self)
             self.param_name.setFocus()
-            self.connect(self.param_name, SIGNAL('textChanged(QString)'), self.validateName)
+            self.param_name.textChanged.connect(self.validateName)
             self.validColor = self.param_name.palette().color(self.param_name.backgroundRole())
 
             self.layout.addRow("Name:", self.param_name)
@@ -71,8 +78,8 @@ class ValidatedDialog(QDialog):
 
         self.layout.addRow(buttons)
 
-        self.connect(buttons, SIGNAL('accepted()'), self.accept)
-        self.connect(buttons, SIGNAL('rejected()'), self.reject)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
 
         self.setLayout(self.layout)
 

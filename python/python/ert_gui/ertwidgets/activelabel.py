@@ -1,4 +1,10 @@
-from PyQt4.QtGui import QLabel, QFont
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QLabel, QFont
+else:
+  from PyQt5.QtWidgets import QLabel
+  from PyQt5.QtGui import QFont
 
 from ert_gui.ertwidgets import addHelpToWidget
 

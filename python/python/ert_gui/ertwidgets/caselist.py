@@ -1,6 +1,11 @@
-from PyQt4.QtCore import QSize
-from PyQt4.QtGui import QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel
-from PyQt4.QtGui import QToolButton, QHBoxLayout
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QSize
+  from PyQt4.QtGui import QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel, QToolButton, QHBoxLayout
+else:
+  from PyQt5.QtCore import QSize
+  from PyQt5.QtWidgets import QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel, QToolButton, QHBoxLayout
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget

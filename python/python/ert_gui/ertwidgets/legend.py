@@ -1,6 +1,12 @@
-from PyQt4.QtCore import QSize
-from PyQt4.QtGui import QWidget, QPainter, QHBoxLayout, QLabel
+import sys
 
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QSize
+  from PyQt4.QtGui import QWidget, QPainter, QHBoxLayout, QLabel
+else:
+  from PyQt5.QtCore import QSize
+  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel
+  from PyQt5.QtGui import QPainter
 
 class LegendMarker(QWidget):
     """A widget that shows a colored box"""

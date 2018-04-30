@@ -1,5 +1,11 @@
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import pyqtSignal
+  from PyQt4.QtGui import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
+else:
+  from PyQt5.QtCore import pyqtSignal
+  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
 
 from ert_gui.ertwidgets import SearchBox, resourceIcon, Legend
 from ert_gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel, FilterPopup

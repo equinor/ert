@@ -1,5 +1,11 @@
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QWidget
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import pyqtSignal
+  from PyQt4.QtGui import QWidget
+else:
+  from PyQt5.QtCore import pyqtSignal
+  from PyQt5.QtWidgets import QWidget
 
 
 class SimulationConfigPanel(QWidget):

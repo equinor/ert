@@ -1,8 +1,12 @@
 import sys
 import traceback
 
-from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QAction
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt, pyqtSignal
+  from PyQt4.QtGui import QWidget, QVBoxLayout, QAction
+else:
+  from PyQt5.QtCore import Qt, pyqtSignal
+  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QAction
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT

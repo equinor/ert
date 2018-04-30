@@ -15,8 +15,14 @@
 #  for more details.
 import os
 import re
-from PyQt4.QtCore import QSize
-from PyQt4.QtGui import QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QSize
+  from PyQt4.QtGui import QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
+else:
+  from PyQt5.QtCore import QSize
+  from PyQt5.QtWidgets import QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
 
 from ert_gui.ertwidgets import resourceIcon, addHelpToWidget
 from ert_gui.ertwidgets.validationsupport import ValidationSupport

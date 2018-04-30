@@ -14,7 +14,12 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from PyQt4.QtGui import QFormLayout, QLabel
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QFormLayout, QLabel
+else:
+  from PyQt5.QtWidgets import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget, CaseSelector, ActiveLabel, AnalysisModuleSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel

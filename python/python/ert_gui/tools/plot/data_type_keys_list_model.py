@@ -1,5 +1,11 @@
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
-from PyQt4.QtGui import QColor
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+  from PyQt4.QtGui import QColor
+else:
+  from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+  from PyQt5.QtGui import QColor
 
 from ert_gui.ertwidgets import resourceIcon
 

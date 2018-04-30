@@ -67,7 +67,7 @@ class PlotConfig(object):
         return self._current_color
 
     def nextColor(self):
-        self._current_color = self._line_color_cycle.next()
+        self._current_color = next(self._line_color_cycle)
         return self._current_color
 
     def setLineColorCycle(self, color_list):

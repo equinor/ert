@@ -1,4 +1,11 @@
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QVariant, Qt
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QVariant, Qt
+else:
+  from PyQt5.QtCore import QAbstractItemModel, QModelIndex, QVariant, Qt
+
+
 from ert_gui.ide.wizards import TreeItem
 
 

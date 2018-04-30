@@ -1,4 +1,10 @@
-from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
+else:
+  from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+
 from res.enkf import EnKFMain
 
 

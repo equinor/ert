@@ -1,5 +1,11 @@
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt
+  from PyQt4.QtGui import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
+else:
+  from PyQt5.QtCore import Qt
+  from PyQt5.QtWidgets import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QGridLayout
 
 from ert_gui.ertwidgets.models.ertsummary import ErtSummary
 

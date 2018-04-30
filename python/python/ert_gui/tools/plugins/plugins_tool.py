@@ -1,4 +1,10 @@
-from PyQt4.QtGui import QMenu
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QMenu
+else:
+  from PyQt5.QtWidgets import QMenu
+
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import resourceIcon

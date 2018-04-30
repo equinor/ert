@@ -1,5 +1,12 @@
-from PyQt4.QtCore import Qt, pyqtSignal, QSize
-from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout, QWidget, QLabel, QMessageBox, QSizePolicy, QSpacerItem
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt, pyqtSignal, QSize
+  from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout, QWidget, QLabel, QMessageBox, QSizePolicy
+else:
+  from PyQt5.QtCore import Qt, pyqtSignal, QSize
+  from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout, QWidget, QLabel, QMessageBox, QSizePolicy, QSpacerItem
+ 
 
 from ert_gui.ertwidgets import resourceMovie
 

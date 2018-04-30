@@ -1,4 +1,9 @@
-from PyQt4.QtGui import QComboBox
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QComboBox
+else:
+  from PyQt5.QtWidgets import QComboBox
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget

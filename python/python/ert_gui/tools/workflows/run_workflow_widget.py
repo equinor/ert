@@ -1,8 +1,14 @@
 import time
 from threading import Thread
+import sys
 
-from PyQt4.QtCore import QSize, Qt, pyqtSignal
-from PyQt4.QtGui import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QSize, Qt, pyqtSignal
+  from PyQt4.QtGui import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
+else:
+  from PyQt5.QtCore import QSize, Qt, pyqtSignal
+  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
+
 
 from ert_gui.ertwidgets import addHelpToWidget, resourceMovie, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getWorkflowNames, createWorkflowRunner

@@ -1,4 +1,10 @@
-from PyQt4.QtGui import QHBoxLayout, QLabel, QComboBox
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QHBoxLayout, QLabel, QComboBox
+else:
+  from PyQt5.QtWidgets import QHBoxLayout, QLabel, QComboBox
+
 
 from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
 from ert_gui.tools.plot import style_chooser as sc

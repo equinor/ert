@@ -1,4 +1,10 @@
-from PyQt4.QtGui import QWidget, QFormLayout, QSpacerItem, QCheckBox, QHBoxLayout, QSpinBox
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QWidget, QFormLayout, QSpacerItem, QCheckBox, QHBoxLayout, QSpinBox
+else:
+  from PyQt5.QtWidgets import QWidget, QFormLayout, QSpacerItem, QCheckBox, QHBoxLayout, QSpinBox
+
 
 from ert_gui.plottery import PlotConfig
 from ert_gui.tools.plot import StyleChooser

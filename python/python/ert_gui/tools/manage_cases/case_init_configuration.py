@@ -1,5 +1,11 @@
-from PyQt4.QtGui import QToolButton, QTextEdit, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
-from PyQt4.QtCore import Qt
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt
+  from PyQt4.QtGui import QToolButton, QTextEdit, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
+else:
+  from PyQt5.QtCore import Qt
+  from PyQt5.QtWidgets import QToolButton, QTextEdit, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting

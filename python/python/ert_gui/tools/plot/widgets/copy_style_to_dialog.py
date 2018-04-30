@@ -1,4 +1,11 @@
-from PyQt4.QtGui import QFormLayout, QWidget, QDialog, QPushButton, QHBoxLayout, QToolButton
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QFormLayout, QWidget, QDialog, QPushButton, QHBoxLayout, QToolButton
+else:
+  from PyQt5.QtWidgets import QFormLayout, QWidget, QDialog, QPushButton, QHBoxLayout, QToolButton
+
+
 from ert_gui.ertwidgets import CheckList, resourceIcon
 from ert_gui.tools.plot import FilterPopup, FilterableKwListModel
 from ert_gui import ERT

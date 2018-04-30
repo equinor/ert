@@ -15,8 +15,15 @@
 #  for more details.
 import os
 import sys
-from PyQt4.QtCore import QDir
-from PyQt4.QtGui import QMessageBox
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QDir
+  from PyQt4.QtGui import QMessageBox
+else:
+  from PyQt5.QtCore import QDir
+  from PyQt5.QtWidgets import QMessageBox
+
+
 from res.enkf import EnkfFieldFileFormatEnum
 from ert_gui.tools.export import ExportModel, ExportKeywordModel
 

@@ -1,5 +1,12 @@
-from PyQt4.QtCore import pyqtSignal, QSignalMapper, Qt
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import pyqtSignal, QSignalMapper, Qt
+  from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
+else:
+  from PyQt5.QtCore import pyqtSignal, QSignalMapper, Qt
+  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
+
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools.plot import PlotCaseModel

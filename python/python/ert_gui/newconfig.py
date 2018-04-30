@@ -16,9 +16,14 @@
 
 
 import os
+import sys
 
-from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QSpinBox, QLineEdit, QWidget
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt, QSize
+  from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QSpinBox, QLineEdit, QWidget
+else:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtWidgets import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QSpinBox, QLineEdit, QWidget
 
 
 def createSpace(size=5):
@@ -67,7 +72,7 @@ class NewConfigurationDialog(QDialog):
 
         self.storage_path = QLineEdit()
         self.storage_path.setText("Storage")
-        self.connect(self.storage_path, SIGNAL('textChanged(QString)'), self._validateName)
+        self.storage_path.textChanged.connect(self._validateName)
 
         layout.addRow(createSpace(10))
         layout.addRow("Configuration name:", configuration_name)
@@ -82,8 +87,8 @@ class NewConfigurationDialog(QDialog):
 
         layout.addRow(buttons)
 
-        self.connect(buttons, SIGNAL('accepted()'), self.accept)
-        self.connect(buttons, SIGNAL('rejected()'), self.reject)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
 
         self.setLayout(layout)
 

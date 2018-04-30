@@ -1,6 +1,15 @@
 import re
-from PyQt4.QtCore import Qt, QEvent, QDir, QRegExp, QChar
-from PyQt4.QtGui import QPlainTextEdit, QTextOption, QCompleter, QStringListModel, QFont, QColor, QShortcut, QKeySequence, QTextCursor, QFileSystemModel, QTextDocument
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt, QEvent, QDir, QRegExp, QChar
+  from PyQt4.QtGui import QPlainTextEdit, QTextOption, QCompleter, QStringListModel, QFont, QColor, QShortcut, QKeySequence, QTextCursor, QFileSystemModel, QTextDocument
+else:
+  from PyQt5.QtCore import Qt, QEvent, QDir, QRegExp, QStringListModel
+  from PyQt5.QtWidgets import QPlainTextEdit, QCompleter, QShortcut, QFileSystemModel
+  from PyQt5.QtGui import QFont, QColor, QTextOption, QKeySequence, QTextCursor, QTextDocument
+
+
 from ert_gui.tools import HelpCenter
 
 

@@ -13,8 +13,15 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from PyQt4.QtCore import QDir, pyqtSignal
-from PyQt4.QtGui import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QDir, pyqtSignal
+  from PyQt4.QtGui import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
+else:
+  from PyQt5.QtCore import QDir, pyqtSignal
+  from PyQt5.QtWidgets import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
+
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.all_cases_model import AllCasesModel

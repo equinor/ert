@@ -1,4 +1,11 @@
-from PyQt4.QtGui import QTreeView
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QTreeView
+else:
+  from PyQt5.QtWidgets import QTreeView
+
+
 from ert_gui.ide.wizards import TreeItem
 from ert_gui.ide.wizards.tree_model import TreeModel
 

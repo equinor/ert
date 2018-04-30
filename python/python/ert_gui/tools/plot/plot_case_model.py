@@ -1,4 +1,10 @@
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+else:
+  from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+
 
 from ert_gui.ertwidgets.models.ertmodel import getAllCasesNotRunning
 

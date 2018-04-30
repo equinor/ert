@@ -1,4 +1,9 @@
-from PyQt4.QtGui import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
+else:
+  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
 
 from ert_gui.plottery import PlotStyle
 

@@ -1,4 +1,11 @@
-from PyQt4.QtGui import QAction
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QAction
+else:
+  from PyQt5.QtWidgets import QAction
+
+
 from ert_gui.tools import HelpCenter
 
 

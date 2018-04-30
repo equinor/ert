@@ -109,9 +109,16 @@
 #  exec python /opt/ert/python/ert_gui/gert_main.py $@
 #
 # -------------------- </Example shell script> --------------------
+import sys
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication, QFileDialog
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt
+  from PyQt4.QtGui import QApplication, QFileDialog
+else:
+  from PyQt5.QtCore import Qt
+  from PyQt5.QtWidgets import QApplication, QFileDialog
+
+
 from ecl.util.util import EclVersion
 from ert_gui import ErtVersion
 from ert_gui.ert_splash import ErtSplash

@@ -1,7 +1,14 @@
 from threading import Thread
+import sys
 
-from PyQt4.QtCore import Qt, QTimer, QSize
-from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
+if sys.version_info[0] == 2:
+  from PyQt4.QtCore import Qt, QTimer, QSize
+  from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
+else:
+  from PyQt5.QtCore import Qt, QTimer, QSize
+  from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QLabel
+  from PyQt5.QtGui import QColor
+
 
 from ert_gui.ertwidgets import resourceMovie, Legend
 from ert_gui.simulation import Progress, SimpleProgress

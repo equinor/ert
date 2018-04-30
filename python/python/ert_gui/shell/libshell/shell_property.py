@@ -62,7 +62,7 @@ class ShellProperty(object):
                 else:
                     self.lastCommandFailed("Property '%s' is set to read only" % self.__pretty_attribute)
             except ValueError as e:
-                self.lastCommandFailed(e.message)
+                self.lastCommandFailed(str(e))
 
 
     def completeFunction(self, text, line, begidx, endidx):

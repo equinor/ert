@@ -14,9 +14,12 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from functools import partial
+import sys
 
-from PyQt4.QtCore import QString
-from PyQt4.QtGui import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
+else:
+  from PyQt5.QtWidgets import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
 
 from ert_gui.ertwidgets.models.analysismodulevariablesmodel import AnalysisModuleVariablesModel
 
@@ -31,7 +34,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         variable_names = AnalysisModuleVariablesModel.getVariableNames(self._analysis_module_name)
 
         if len(variable_names) == 0:
-            label = QString("No variables found to edit")
+            label = QLabel("No variables found to edit")
             boxlayout = QHBoxLayout()
             layout.addRow(label, boxlayout)
 
