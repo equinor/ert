@@ -18,7 +18,7 @@ class FilterPopup(QDialog):
         self.filter_items = {}
 
         layout = QVBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         frame = QFrame()
         frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
         layout.addWidget(frame)

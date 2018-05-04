@@ -59,7 +59,10 @@ class KeywordHighlighter(QSyntaxHighlighter):
 
 
     def highlightBlock(self, complete_block):
-        block = unicode(complete_block)
+        if sys.version_info[0] == 2:
+            block = unicode(complete_block)
+        else:
+            block = complete_block
 
         self.clb.processLine(block)
 
@@ -101,9 +104,14 @@ class KeywordHighlighter(QSyntaxHighlighter):
 
 
     def setSearchString(self, string):
-        if self.search_string != unicode(string):
-            self.search_string = unicode(string)
-            self.rehighlight()
+        if sys.version_info[0] == 2:
+            if self.search_string != unicode(string):
+                self.search_string = unicode(string)
+                self.rehighlight()
+        else:
+            if self.search_string != string:
+                self.search_string = string
+                self.rehighlight()
 
 
     def formatToken(self, token, highlight_format):

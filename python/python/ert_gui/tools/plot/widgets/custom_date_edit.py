@@ -32,7 +32,7 @@ class CustomDateEdit(QWidget):
         self._calendar_button.setMenu(tool_menu)
 
         layout = QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._line_edit)
         layout.addWidget(self._calendar_button)
         self.setLayout(layout)

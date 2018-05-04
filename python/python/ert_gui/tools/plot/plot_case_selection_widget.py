@@ -41,7 +41,7 @@ class CaseSelectionWidget(QWidget):
         layout.addLayout(add_button_layout)
 
         self.__case_layout = QVBoxLayout()
-        self.__case_layout.setMargin(0)
+        self.__case_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(self.__case_layout)
 
         self.addCaseSelector(disabled=True, current_case=current_case)
@@ -74,7 +74,7 @@ class CaseSelectionWidget(QWidget):
         widget = QWidget()
 
         layout = QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         widget.setLayout(layout)
 
         combo = QComboBox()

@@ -56,7 +56,11 @@ class StyleChooser(QWidget):
         self.setMaximumHeight(25)
 
         layout = QHBoxLayout()
-        layout.setMargin(0)
+
+        if sys.version_info[0] == 2:
+            layout.setMargin(0)
+        else:
+            layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
         self.line_chooser = QComboBox()
@@ -135,8 +139,12 @@ class StyleChooser(QWidget):
         thickness = float(self.thickness_spinner.value())
         size = float(self.size_spinner.value())
 
-        self._style.line_style = str(line_style.toString())
-        self._style.marker = str(marker_style.toString())
+        if sys.version_info[0] == 2:
+            self._style.line_style = str(line_style.toString())
+            self._style.marker = str(marker_style.toString())
+        else:
+            self._style.line_style = line_style
+            self._style.marker = marker_style
         self._style.width = thickness
         self._style.size = size
 

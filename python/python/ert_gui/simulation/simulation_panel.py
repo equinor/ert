@@ -92,7 +92,7 @@ class SimulationPanel(QWidget):
 
         self._simulation_mode_combo.clear()
 
-        for model, panel in self._simulation_widgets.iteritems():
+        for model, panel in self._simulation_widgets.items():
             if show_advanced or not panel.is_advanced_option:
                 self._simulation_mode_combo.addItem(str(model), model)
 

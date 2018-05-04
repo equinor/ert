@@ -2,10 +2,11 @@ import sys
 
 if sys.version_info[0] == 2:
   from PyQt4 import QtCore
-  from PyQt4 import QtGui as Gui
+  from PyQt4 import QtGui
 else:
   from PyQt5 import QtCore
-  from PyQt5 import QtGui as Gui
+  from PyQt5 import QtGui
+  from PyQt5 import QtWidgets
 
 img_prefix = ""
 
@@ -27,14 +28,20 @@ def showWaitCursorWhileWaiting(func):
     """A function decorator to show the wait cursor while the function is working."""
 
     def wrapper(*arg):
-        Gui.QApplication.setOverrideCursor(Gui.QCursor(QtCore.Qt.WaitCursor))
+        if sys.version_info[0] == 2:
+            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
+        else:
+            QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
         try:
             res = func(*arg)
             return res
         except:
             raise
         finally:
-            Gui.QApplication.restoreOverrideCursor()
+            if sys.version_info[0] == 2:
+                QtGui.QApplication.restoreOverrideCursor()
+            else:
+                QtWidgets.QApplication.restoreOverrideCursor()
 
     return wrapper
 
@@ -42,25 +49,25 @@ def showWaitCursorWhileWaiting(func):
 def resourceIcon(name):
     """Load an image as an icon"""
     # print("Icon used: %s" % name)
-    return Gui.QIcon(img_prefix + name)
+    return QtGui.QIcon(img_prefix + name)
 
 
 def resourceStateIcon(on, off):
     """Load two images as an icon with on and off states"""
-    icon = Gui.QIcon()
-    icon.addPixmap(resourceImage(on), state=Gui.QIcon.On)
-    icon.addPixmap(resourceImage(off), state=Gui.QIcon.Off)
+    icon = QtGui.QIcon()
+    icon.addPixmap(resourceImage(on), state=QtGui.QIcon.On)
+    icon.addPixmap(resourceImage(off), state=QtGui.QIcon.Off)
     return icon
 
 
 def resourceImage(name):
     """Load an image as a Pixmap"""
-    return Gui.QPixmap(img_prefix + name)
+    return QtGui.QPixmap(img_prefix + name)
 
 
 def resourceMovie(name):
     """ @rtype: QMovie """
-    movie = Gui.QMovie(img_prefix + name)
+    movie = QtGui.QMovie(img_prefix + name)
     movie.start()
     return movie
 

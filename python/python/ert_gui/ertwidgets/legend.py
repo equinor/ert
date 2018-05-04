@@ -42,7 +42,7 @@ class Legend(QWidget):
         self.legend = legend
 
         layout = QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.legend_marker = LegendMarker(color)
         self.legend_marker.setToolTip(legend)

@@ -38,7 +38,7 @@ class AddRemoveWidget(QWidget):
         else:
             self.buttonLayout = QVBoxLayout()
 
-        self.buttonLayout.setMargin(0)
+        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
 
         if horizontal:
             self.buttonLayout.addStretch(1)
