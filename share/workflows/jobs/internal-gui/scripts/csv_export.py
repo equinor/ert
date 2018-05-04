@@ -2,7 +2,13 @@ import os
 import re
 
 import pandas
-from PyQt4.QtGui import QCheckBox
+import sys
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QCheckBox
+else:
+  from PyQt5.QtWidgets import QCheckBox
+
 
 from res.enkf import ErtPlugin, CancelPluginException
 from res.enkf.export import SummaryCollector, GenKwCollector, MisfitCollector, DesignMatrixReader, CustomKWCollector
