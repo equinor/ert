@@ -40,21 +40,21 @@ void test_create(enkf_config_node_type * config_node ) {
     const int_vector_type * step_list = obs_vector_get_step_list( obs_vector );
 
     {
-      summary_obs_type * obs_node = summary_obs_alloc( "FOPT" , "FOPT" , 10 , 1 , NULL , 0);
+      summary_obs_type * obs_node = summary_obs_alloc( "FOPT" , "FOPT" , 10 , 1);
       obs_vector_install_node( obs_vector , 10 , obs_node );
       test_assert_int_equal( 1 , int_vector_size( step_list ));
       test_assert_int_equal( 10 , int_vector_iget( step_list , 0));
     }
 
     {
-      summary_obs_type * obs_node = summary_obs_alloc( "FOPT" , "FOPT" , 10 , 1 , NULL , 0);
+      summary_obs_type * obs_node = summary_obs_alloc( "FOPT" , "FOPT" , 10 , 1 );
       obs_vector_install_node( obs_vector , 10 , obs_node );
       test_assert_int_equal( 1 , int_vector_size( step_list ));
       test_assert_int_equal( 10 , int_vector_iget( step_list , 0));
     }
 
     {
-      summary_obs_type * obs_node = summary_obs_alloc( "FOPT" , "FOPT" , 10 , 1 , NULL , 0);
+      summary_obs_type * obs_node = summary_obs_alloc( "FOPT" , "FOPT" , 10 , 1);
       obs_vector_install_node( obs_vector , 5 , obs_node );
       test_assert_int_equal( 2 , int_vector_size( step_list ));
       test_assert_int_equal( 5 , int_vector_iget( step_list , 0));
@@ -62,7 +62,7 @@ void test_create(enkf_config_node_type * config_node ) {
     }
 
     {
-      summary_obs_type * obs_node = summary_obs_alloc( "FOPT" , "FOPT" , 10 , 1 , NULL , 0);
+      summary_obs_type * obs_node = summary_obs_alloc( "FOPT" , "FOPT" , 10 , 1);
       obs_vector_install_node( obs_vector , 15 , obs_node );
       test_assert_int_equal( 3 , int_vector_size( step_list ));
       test_assert_int_equal( 5 , int_vector_iget( step_list , 0));

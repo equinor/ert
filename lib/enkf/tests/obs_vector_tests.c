@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2013  Statoil ASA, Norway. 
-    
-   The file 'enkf_obs_vector_tests.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2013  Statoil ASA, Norway.
+
+   The file 'enkf_obs_vector_tests.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
  */
 
 #include <ert/util/test_util.h>
@@ -41,7 +41,7 @@ bool scale_std_summary_nodata_no_errors() {
 
 bool scale_std_summarysingleobservation_no_errors() {
   obs_vector_type * obs_vector = obs_vector_alloc(SUMMARY_OBS, "WHAT", NULL, 1);
-  summary_obs_type * summary_obs = summary_obs_alloc("SummaryKey", "ObservationKey", 43.2, 2.0, AUTO_CORRF_EXP, 42);
+  summary_obs_type * summary_obs = summary_obs_alloc("SummaryKey", "ObservationKey", 43.2, 2.0);
   obs_vector_install_node(obs_vector, 0, summary_obs);
   test_assert_double_equal(2.0, summary_obs_get_std(summary_obs));
   test_assert_double_equal(1.0, summary_obs_get_std_scaling(summary_obs));
@@ -67,7 +67,7 @@ bool scale_std_summarymanyobservations_no_errors() {
 
   summary_obs_type * observations[num_observations];
   for (int i = 0; i < num_observations; i++) {
-    summary_obs_type * summary_obs = summary_obs_alloc("SummaryKey", "ObservationKey", 43.2, i, AUTO_CORRF_EXP, 42);
+    summary_obs_type * summary_obs = summary_obs_alloc("SummaryKey", "ObservationKey", 43.2, i);
     obs_vector_install_node(obs_vector, i, summary_obs);
     observations[i] = summary_obs;
   }
@@ -127,17 +127,17 @@ block_obs_type * create_block_obs(ecl_grid_type * grid, int size, double value, 
   free(obs_value);
   free(obs_std);
   field_config_free( field_config );
-        
+
   return block_obs;
 }
 
 bool scale_std_block100observations_no_errors() {
   int num_observations = 100;
   int num_points = 10;
-  
+
   obs_vector_type * obs_vector = obs_vector_alloc(BLOCK_OBS, "WHAT", NULL, num_observations);
   ecl_grid_type * grid = ecl_grid_alloc_rectangular(num_points, num_points, num_points, 1.0, 1.0, 1.0, NULL);
-  
+
   double scale_factor = 3.3;
   double obs_value = 44;
   double obs_std = 3.2;

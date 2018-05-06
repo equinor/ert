@@ -325,38 +325,6 @@ int enkf_obs_get_size( const enkf_obs_type * obs ) {
 }
 
 
-static matrix_type * estimate_covar_alloc_matrix(const enkf_obs_type * enkf_obs,
-                                                 obs_vector_type     * obs_vector,
-                                                 double_vector_type  * obs_std,
-                                                 int step, int size) {
-  matrix_type * error_covar = NULL;
-  auto_corrf_ftype * auto_corrf;
-  double auto_corrf_param;
-  {
-    const summary_obs_type * summary_obs = obs_vector_iget_node( obs_vector , step );
-    auto_corrf       = summary_obs_get_auto_corrf( summary_obs );
-    auto_corrf_param = summary_obs_get_auto_corrf_param( summary_obs );
-  }
-
-  if (size <= 1 || auto_corrf == NULL)
-    return NULL;
-
-  int i,j;
-  error_covar = matrix_alloc( size, size );
-  for (i = 0; i < size; i++) {
-    for (j=0; j <= i; j++) {
-      double covar = sqrt( double_vector_iget( obs_std , i ) * double_vector_iget( obs_std , j ));
-      double delta_t = enkf_obs_iget_obs_time( enkf_obs , i ) - enkf_obs_iget_obs_time( enkf_obs , j );
-      double corr  = auto_corrf(delta_t / (24.00 * 3600) , auto_corrf_param );
-
-      matrix_iset(error_covar , i , j  , covar * corr );
-      if (i != j)
-        matrix_iset(error_covar , j , i  , covar * corr );
-    }
-  }
-  return error_covar;
-}
-
 
 static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
                                                  obs_vector_type          * obs_vector ,
@@ -370,7 +338,6 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
 
   const active_list_type * active_list = local_obsdata_node_get_active_list( obs_node );
 
-  matrix_type * error_covar = NULL;
   int active_count          = 0;
   int last_step = -1;
   int step = -1;
@@ -399,20 +366,12 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
     return;
 
   /*
-    2: Estimate a covariance matrix.
-    Will be owned by the obs_block instance.
-  */
-  error_covar = estimate_covar_alloc_matrix(enkf_obs, obs_vector, obs_std,
-                                            last_step, active_count);
-
-  /*
     3: Fill up the obs_block and meas_block structures with this
-    time-aggregated summary observation.  Passing in the error_covar
-    matrix (which can be NULL) to the obs_block instance.
+    time-aggregated summary observation.
   */
 
   {
-    obs_block_type  * obs_block  = obs_data_add_block( obs_data , obs_vector_get_obs_key( obs_vector ) , active_count , error_covar , true);
+    obs_block_type  * obs_block  = obs_data_add_block( obs_data , obs_vector_get_obs_key( obs_vector ) , active_count , NULL, true);
     meas_block_type * meas_block = meas_data_add_block( meas_data, obs_vector_get_obs_key( obs_vector ) , last_step , active_count );
 
     enkf_node_type  * work_node  = enkf_node_alloc( obs_vector_get_config_node( obs_vector ));
@@ -799,13 +758,6 @@ conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     conf_class_type * history_observation_class = conf_class_alloc_empty("HISTORY_OBSERVATION", false , false, help_class_history_observation);
 
     conf_item_spec_type * item_spec_error_mode = conf_item_spec_alloc("ERROR_MODE", true, DT_STR , "The string ERROR_MODE gives the error mode for the observation.");
-    conf_item_spec_type * item_spec_auto_corrf_param = conf_item_spec_alloc("AUTO_CORRF_PARAM", false, DT_FLOAT , "A parameter passed to the auto correlation function.");
-    const char * help_item_spec_auto_corrf = "The name of the auto correlation function used for smoother updates.";
-    conf_item_spec_type * item_spec_auto_corrf = conf_item_spec_alloc("AUTO_CORRF", false , DT_STR , help_item_spec_auto_corrf);
-    conf_item_spec_add_restriction( item_spec_auto_corrf , AUTO_CORRF_EXP);
-    conf_item_spec_add_restriction( item_spec_auto_corrf , AUTO_CORRF_GAUSS);
-
-
     conf_item_spec_add_restriction(item_spec_error_mode, "REL");
     conf_item_spec_add_restriction(item_spec_error_mode, "ABS");
     conf_item_spec_add_restriction(item_spec_error_mode, "RELMIN");
@@ -820,8 +772,6 @@ conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     conf_class_insert_owned_item_spec(history_observation_class, item_spec_error_mode);
     conf_class_insert_owned_item_spec(history_observation_class, item_spec_error);
     conf_class_insert_owned_item_spec(history_observation_class, item_spec_error_min);
-    conf_class_insert_owned_item_spec(history_observation_class, item_spec_auto_corrf);
-    conf_class_insert_owned_item_spec(history_observation_class, item_spec_auto_corrf_param);
 
     /** Sub class segment. */
     {
