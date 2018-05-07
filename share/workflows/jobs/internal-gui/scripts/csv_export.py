@@ -4,9 +4,9 @@ import re
 import pandas
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QCheckBox
-else:
+except ImportError:
   from PyQt5.QtWidgets import QCheckBox
 
 

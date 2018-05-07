@@ -5,9 +5,9 @@ import numpy
 import pandas
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QCheckBox
-else:
+except ImportError:
   from PyQt5.QtWidgets import QCheckBox
 
 from ecl.rft import WellTrajectory
