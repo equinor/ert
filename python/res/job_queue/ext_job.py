@@ -192,6 +192,3 @@ class ExtJob(BaseCClass):
 
     def name(self):
         return self._get_name( )
-
-
-

@@ -144,6 +144,7 @@ struct ext_job_struct {
   stringlist_type * deprecated_argv;       /* This should *NOT* start with the executable */
   hash_type       * environment;
   hash_type       * default_mapping;
+  hash_type       * exec_env;
   char            * help_text;
 
   bool              private_job;           /* Can the current user/delete this job? (private_job == true) means the user can edit it. */
@@ -174,6 +175,7 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->stderr_file         = NULL;
   ext_job->environment         = hash_alloc();
   ext_job->default_mapping     = hash_alloc();
+  ext_job->exec_env            = hash_alloc();
   ext_job->argv                = stringlist_alloc_new();
   ext_job->deprecated_argv     = NULL;
   ext_job->argv_string         = NULL;
@@ -262,7 +264,24 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
       char * value = hash_get( src_job->environment , key);
-      hash_insert_hash_owned_ref( new_job->environment , key , util_alloc_string_copy(value) , free);
+      if (value)
+        hash_insert_hash_owned_ref( new_job->environment , key , util_alloc_string_copy(value) , free);
+      else
+        hash_insert_ref(new_job->environment, key, NULL);
+      key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter);
+  }
+
+  {
+    hash_iter_type * iter     = hash_iter_alloc( src_job->exec_env );
+    const char * key = hash_iter_get_next_key(iter);
+    while (key != NULL) {
+      char * value = hash_get( src_job->exec_env , key);
+      if (value)
+        hash_insert_hash_owned_ref( new_job->exec_env , key , util_alloc_string_copy(value) , free);
+      else
+        hash_insert_ref(new_job->exec_env, key, NULL);
       key = hash_iter_get_next_key(iter);
     }
     hash_iter_free(iter);
@@ -308,6 +327,7 @@ void ext_job_free(ext_job_type * ext_job) {
 
   hash_free( ext_job->default_mapping);
   hash_free( ext_job->environment );
+  hash_free( ext_job->exec_env);
 
   stringlist_free(ext_job->argv);
   if (ext_job->deprecated_argv)
@@ -702,7 +722,10 @@ static void __fprintf_python_hash(FILE * stream,
       const char * value = hash_get(hash , key);
 
       fprintf(stream,"\"%s\" : " , key);
-      __fprintf_string(stream , value , private_args , global_args);
+      if (value)
+        __fprintf_string(stream , value , private_args , global_args);
+      else
+          fprintf(stream, "%s", null_value);
 
       if (counter < (hash_size - 1))
         fprintf(stream,",");
@@ -819,6 +842,7 @@ void ext_job_json_fprintf(const ext_job_type * ext_job, FILE * stream, const sub
     __fprintf_python_string(  stream, "  ", "stdin",               ext_job->stdin_file,          ",\n", ext_job->private_args, global_args, null_value);
     __fprintf_python_argList( stream, "  ",                        ext_job,                      ",\n",                        global_args            );
     __fprintf_python_hash(    stream, "  ", "environment",         ext_job->environment,         ",\n", ext_job->private_args, global_args, null_value);
+    __fprintf_python_hash(    stream, "  ", "exec_env",            ext_job->exec_env,            ",\n", ext_job->private_args, global_args, null_value);
     __fprintf_python_string(  stream, "  ", "license_path",        ext_job->license_path,        ",\n", ext_job->private_args, global_args, null_value);
     __fprintf_python_int(     stream, "  ", "max_running_minutes", ext_job->max_running_minutes, ",\n",                                     null_value);
     __fprintf_python_int(     stream, "  ", "max_running",         ext_job->max_running,         ",\n",                                     null_value);
@@ -948,7 +972,8 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , "TARGET_FILE"         , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "ERROR_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
       item = config_add_schema_item(config , "START_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
-      item = config_add_schema_item(config , "ENV"                 , false ); config_schema_item_set_argc_minmax(item  , 2 , 2 );
+      item = config_add_schema_item(config , "ENV"                 , false ); config_schema_item_set_argc_minmax(item  , 1 , 2 );
+      item = config_add_schema_item(config , "EXEC_ENV"            , false ); config_schema_item_set_argc_minmax(item  , 1 , 2 );
       item = config_add_schema_item(config , "DEFAULT"             , false ); config_schema_item_set_argc_minmax(item  , 2 , 2 );
       item = config_add_schema_item(config , "ARGLIST"             , false ); config_schema_item_set_argc_minmax(item  , 1 , CONFIG_DEFAULT_ARG_MAX );
       item = config_add_schema_item(config , "MAX_RUNNING_MINUTES" , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
@@ -957,8 +982,6 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , ARG_TYPE_KEY          , false ); config_schema_item_set_argc_minmax( item , 2 , 2 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
 
       config_schema_item_set_indexed_selection_set( item , 1 , 6 , (const char *[6]) {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE, JOB_RUNTIME_FILE_TYPE, JOB_RUNTIME_INT_TYPE});
-                                                                              
-      
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
     {
@@ -1008,22 +1031,32 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
         }
 
 
-        /**
-           The code assumes that the hash tables are valid, can not be NULL:
-        */
-        {
-          if (config_content_has_item( content , "ENV")) {
-            const config_content_item_type * env_item = config_content_get_item( content , "ENV" );
-            for (int ivar = 0; ivar < config_content_item_get_size( env_item ); ivar++) {
-              const config_content_node_type * env_node = config_content_item_iget_node( env_item , ivar );
-              for (int i=0; i < config_content_node_get_size( env_node ); i+= 2) {
-                const char * key   = config_content_node_iget( env_node , i );
-                const char * value = config_content_node_iget( env_node , i + 1);
-                hash_insert_hash_owned_ref( ext_job->environment, key , util_alloc_string_copy( value ) , free);
-              }
-            }
+        if (config_content_has_item( content , "ENV")) {
+          const config_content_item_type * env_item = config_content_get_item( content , "ENV" );
+          for (int ivar = 0; ivar < config_content_item_get_size( env_item ); ivar++) {
+            const config_content_node_type * env_node = config_content_item_iget_node( env_item , ivar );
+            const char * key   = config_content_node_iget( env_node, 0);
+            if (config_content_node_get_size( env_node ) > 1) {
+              const char * value = config_content_node_iget( env_node , 1);
+              hash_insert_hash_owned_ref( ext_job->environment, key , util_alloc_string_copy( value ) , free);
+            } else
+              hash_insert_ref(ext_job->environment, key, NULL);
           }
         }
+
+        if (config_content_has_item( content , "EXEC_ENV")) {
+          const config_content_item_type * env_item = config_content_get_item( content , "EXEC_ENV" );
+          for (int ivar = 0; ivar < config_content_item_get_size( env_item ); ivar++) {
+            const config_content_node_type * env_node = config_content_item_iget_node( env_item , ivar );
+            const char * key   = config_content_node_iget( env_node, 0);
+            if (config_content_node_get_size( env_node ) > 1) {
+              const char * value = config_content_node_iget( env_node , 1);
+              hash_insert_hash_owned_ref( ext_job->exec_env, key , util_alloc_string_copy( value ) , free);
+            } else
+              hash_insert_ref(ext_job->exec_env, key, NULL);
+          }
+        }
+
 
         /* Default mappings; these are used to set values in the argList
            which have not been supplied by the calling context. */

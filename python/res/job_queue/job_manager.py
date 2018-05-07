@@ -492,6 +492,11 @@ class JobManager(object):
         status.status = "Running"
         self.job_status.dump()
 
+        exec_env = job.get("exec_env")
+        if exec_env:
+            with open("%s_exec_env.json" % job.get("name"), "w") as f:
+                f.write(json.dumps(exec_env))
+
         pid = os.fork()
         exit_status, err_msg = 0, ''
         if pid == 0:
