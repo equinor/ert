@@ -1,10 +1,10 @@
 from math import floor
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import QTimer
   from PyQt4.QtGui import QWidget, QPainter, QColor, QFrame, QLinearGradient
-else:
+except ImportError:
   from PyQt5.QtCore import QTimer
   from PyQt5.QtWidgets import QWidget, QFrame
   from PyQt5.QtGui import QPainter, QColor, QLinearGradient

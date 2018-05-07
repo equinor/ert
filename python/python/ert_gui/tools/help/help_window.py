@@ -1,9 +1,9 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import Qt, QUrl, pyqtSignal, QSettings
   from PyQt4.QtGui import QLabel, QVBoxLayout, QColor, QDesktopServices, QDialog, QMainWindow, QWidget
-else:
+except ImportError:
   from PyQt5.QtCore import Qt, QUrl, pyqtSignal, QSettings
   from PyQt5.QtWidgets import QLabel, QVBoxLayout, QDialog, QMainWindow, QWidget
   from PyQt5.QtGui import QColor, QDesktopServices

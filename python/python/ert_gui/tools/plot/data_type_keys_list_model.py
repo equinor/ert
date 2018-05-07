@@ -1,9 +1,9 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
   from PyQt4.QtGui import QColor
-else:
+except ImportError:
   from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
   from PyQt5.QtGui import QColor
 

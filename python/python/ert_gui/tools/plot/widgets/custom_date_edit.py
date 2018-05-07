@@ -1,10 +1,10 @@
 import datetime
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import QDate
   from PyQt4.QtGui import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
-else:
+except ImportError:
   from PyQt5.QtCore import QDate
   from PyQt5.QtWidgets import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
 

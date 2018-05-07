@@ -1,8 +1,8 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
-else:
+except ImportError:
   from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 from ert_gui.ertwidgets.models.ertmodel import getAllCases

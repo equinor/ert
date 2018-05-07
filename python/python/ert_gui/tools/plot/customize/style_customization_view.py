@@ -1,8 +1,8 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QHBoxLayout, QLabel, QColor
-else:
+except ImportError:
   from PyQt5.QtWidgets import QHBoxLayout, QLabel
   from PyQt5.QtGui import QColor
 

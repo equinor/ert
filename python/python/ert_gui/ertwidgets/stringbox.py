@@ -16,9 +16,9 @@
 
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QPalette, QLineEdit
-else:
+except ImportError:
   from PyQt5.QtWidgets import QLineEdit
   from PyQt5.QtGui import QPalette
 

@@ -15,9 +15,9 @@
 #  for more details.
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QTextEdit
-else:
+except ImportError:
   from PyQt5.QtWidgets import QWidget, QFormLayout, QComboBox, QTextEdit
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel

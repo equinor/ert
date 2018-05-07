@@ -1,8 +1,8 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
-else:
+except ImportError:
   from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
 class ValueModel(QObject):

@@ -1,9 +1,9 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import Qt, QPoint, QObject, pyqtSignal
   from PyQt4.QtGui import QWidget, QVBoxLayout, QSizePolicy, QFrame, QColor, QLabel
-else:
+except ImportError:
   from PyQt5.QtCore import Qt, QPoint, QObject, pyqtSignal
   from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSizePolicy, QFrame, QLabel
   from PyQt5.QtGui import QColor
@@ -22,7 +22,7 @@ class ErrorPopup(QWidget):
 
         self.setContentsMargins(0, 0, 0, 0)
         layout = QVBoxLayout()
-        #layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self._error_widget = QLabel("")
         self._error_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)

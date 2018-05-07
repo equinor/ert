@@ -1,8 +1,8 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
-else:
+except ImportError:
   from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QHBoxLayout
 
 from ert_gui.plottery import PlotStyle
@@ -57,10 +57,7 @@ class StyleChooser(QWidget):
 
         layout = QHBoxLayout()
 
-        if sys.version_info[0] == 2:
-            layout.setMargin(0)
-        else:
-            layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
         self.line_chooser = QComboBox()

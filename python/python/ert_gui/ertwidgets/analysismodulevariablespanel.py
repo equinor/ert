@@ -16,9 +16,9 @@
 from functools import partial
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
-else:
+except ImportError:
   from PyQt5.QtWidgets import QDoubleSpinBox, QWidget, QFormLayout, QCheckBox, QLineEdit, QHBoxLayout, QSpinBox, QLabel
 
 from ert_gui.ertwidgets.models.analysismodulevariablesmodel import AnalysisModuleVariablesModel

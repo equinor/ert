@@ -16,10 +16,10 @@
 import os
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import QDir
   from PyQt4.QtGui import QMessageBox
-else:
+except ImportError:
   from PyQt5.QtCore import QDir
   from PyQt5.QtWidgets import QMessageBox
 

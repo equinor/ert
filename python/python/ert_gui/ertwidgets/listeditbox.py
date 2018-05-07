@@ -15,10 +15,10 @@
 #  for more details.
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import Qt, QSize
   from PyQt4.QtGui import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
-else:
+except ImportError:
   from PyQt5.QtCore import Qt, QSize
   from PyQt5.QtWidgets import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
 
@@ -91,7 +91,7 @@ class ListEditBox(QWidget):
         self._list_edit_line.setMinimumWidth(350)
 
         layout = QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         layout.addWidget(self._list_edit_line)
 

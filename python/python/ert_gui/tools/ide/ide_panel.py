@@ -1,10 +1,10 @@
 import re
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import Qt, QEvent, QDir, QRegExp, QChar
   from PyQt4.QtGui import QPlainTextEdit, QTextOption, QCompleter, QStringListModel, QFont, QColor, QShortcut, QKeySequence, QTextCursor, QFileSystemModel, QTextDocument
-else:
+except ImportError:
   from PyQt5.QtCore import Qt, QEvent, QDir, QRegExp, QStringListModel
   from PyQt5.QtWidgets import QPlainTextEdit, QCompleter, QShortcut, QFileSystemModel
   from PyQt5.QtGui import QFont, QColor, QTextOption, QKeySequence, QTextCursor, QTextDocument

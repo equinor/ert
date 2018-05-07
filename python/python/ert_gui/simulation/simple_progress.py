@@ -1,9 +1,9 @@
 from math import floor
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QPainter, QColor, QFrame, QLinearGradient
-else:
+except ImportError:
   from PyQt5.QtWidgets import QFrame
   from PyQt5.QtGui import QPainter, QColor, QLinearGradient
 

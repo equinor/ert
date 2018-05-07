@@ -1,8 +1,8 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QFormLayout, QLabel
-else:
+except ImportError:
   from PyQt5.QtWidgets import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector

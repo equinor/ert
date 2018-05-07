@@ -1,8 +1,8 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QFormLayout, QWidget, QDialog, QPushButton, QHBoxLayout, QToolButton
-else:
+except ImportError:
   from PyQt5.QtWidgets import QFormLayout, QWidget, QDialog, QPushButton, QHBoxLayout, QToolButton
 
 

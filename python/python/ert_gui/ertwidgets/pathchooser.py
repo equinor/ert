@@ -17,10 +17,10 @@ import os
 import re
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import QSize
   from PyQt4.QtGui import QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
-else:
+except ImportError:
   from PyQt5.QtCore import QSize
   from PyQt5.QtWidgets import QLineEdit, QToolButton, QFileDialog, QWidget, QHBoxLayout
 
@@ -60,7 +60,7 @@ class PathChooser(QWidget):
         self._editing = True
 
         layout = QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self._path_line = QLineEdit()
         self._path_line.setMinimumWidth(250)

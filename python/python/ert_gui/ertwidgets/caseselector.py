@@ -1,8 +1,8 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QComboBox
-else:
+except ImportError:
   from PyQt5.QtWidgets import QComboBox
 
 from ert_gui import ERT

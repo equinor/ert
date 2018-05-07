@@ -1,10 +1,10 @@
 import sys
 import traceback
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import Qt, pyqtSignal
   from PyQt4.QtGui import QWidget, QVBoxLayout, QAction
-else:
+except ImportError:
   from PyQt5.QtCore import Qt, pyqtSignal
   from PyQt5.QtWidgets import QWidget, QVBoxLayout, QAction
 

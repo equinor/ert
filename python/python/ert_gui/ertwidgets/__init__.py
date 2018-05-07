@@ -1,9 +1,9 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4 import QtCore
   from PyQt4 import QtGui
-else:
+except ImportError:
   from PyQt5 import QtCore
   from PyQt5 import QtGui
   from PyQt5 import QtWidgets
@@ -28,9 +28,9 @@ def showWaitCursorWhileWaiting(func):
     """A function decorator to show the wait cursor while the function is working."""
 
     def wrapper(*arg):
-        if sys.version_info[0] == 2:
+        try:
             QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
-        else:
+        except AttributeError:
             QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
         try:
             res = func(*arg)
@@ -38,9 +38,9 @@ def showWaitCursorWhileWaiting(func):
         except:
             raise
         finally:
-            if sys.version_info[0] == 2:
+            try:
                 QtGui.QApplication.restoreOverrideCursor()
-            else:
+            except AttributeError:
                 QtWidgets.QApplication.restoreOverrideCursor()
 
     return wrapper

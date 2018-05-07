@@ -1,9 +1,9 @@
 import re
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
-else:
+except ImportError:
   from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
 
 from ert_gui.ide.keywords import ErtKeywords
@@ -59,9 +59,9 @@ class KeywordHighlighter(QSyntaxHighlighter):
 
 
     def highlightBlock(self, complete_block):
-        if sys.version_info[0] == 2:
+        try:
             block = unicode(complete_block)
-        else:
+        except NameError:
             block = complete_block
 
         self.clb.processLine(block)
@@ -104,11 +104,11 @@ class KeywordHighlighter(QSyntaxHighlighter):
 
 
     def setSearchString(self, string):
-        if sys.version_info[0] == 2:
+        try:
             if self.search_string != unicode(string):
                 self.search_string = unicode(string)
                 self.rehighlight()
-        else:
+        except NameError:
             if self.search_string != string:
                 self.search_string = string
                 self.rehighlight()

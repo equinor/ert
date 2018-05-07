@@ -1,8 +1,8 @@
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtGui import QDoubleValidator, QStackedWidget, QIntValidator, QLabel
-else:
+except ImportError:
   from PyQt5.QtWidgets import QStackedWidget, QLabel
   from PyQt5.QtGui import QDoubleValidator, QIntValidator
 

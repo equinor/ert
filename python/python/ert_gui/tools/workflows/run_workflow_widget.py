@@ -2,10 +2,10 @@ import time
 from threading import Thread
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import QSize, Qt, pyqtSignal
   from PyQt4.QtGui import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
-else:
+except ImportError:
   from PyQt5.QtCore import QSize, Qt, pyqtSignal
   from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton, QMessageBox, QComboBox
 

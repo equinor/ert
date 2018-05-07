@@ -2,10 +2,10 @@ import re
 import shutil
 import sys
 
-if sys.version_info[0] == 2:
+try:
   from PyQt4.QtCore import pyqtSignal
   from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
-else:
+except ImportError:
   from PyQt5.QtCore import pyqtSignal
   from PyQt5.QtWidgets import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
 
