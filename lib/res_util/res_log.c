@@ -45,7 +45,16 @@ void res_log_add_message(message_level_type message_level,
                          const char* message) {
   if (!logh)
     res_log_init_log_default(false);
-  log_add_message(logh, message_level, NULL, message);
+
+  /* We have not managed to open log handle, if the message is critical we write to stderr. */
+  if (!logh) {
+    if (message_level >= LOG_ERROR )
+      log_add_message_stream(stderr, message_level, false, message);
+    return;
+  }
+
+
+  log_add_message(logh, message_level, message);
 }
 
 
@@ -121,44 +130,50 @@ void res_log_fcritical(const char * fmt, ...) {
  *
  *  if log_file_name=NULL then DEFAULT_LOG_FILE is used
  */
-void res_log_init_log(message_level_type log_level,
+bool res_log_init_log(message_level_type log_level,
                       const char * log_file_name,
                       bool verbose) {
   // If a log is already open, close it
   if(logh)
      log_close(logh);
 
-  if(log_file_name==NULL){
+  if(log_file_name==NULL)
     log_file_name=DEFAULT_LOG_FILE;
-  }
+
   logh = log_open(log_file_name , log_level );
+  if (!logh) {
+    fprintf(stderr,"Failed to open log handle to %s\n", log_file_name);
+    return false;
+  }
+
 
   if (verbose)
     printf("Activity will be logged to %s \n",log_get_filename( logh ));
-  log_add_message(logh, LOG_INFO, NULL, "ert configuration loaded");
+  log_add_message(logh, LOG_INFO, "ert configuration loaded");
+  return true;
 }
 
 /**
  * Initializes the log with log level DEFAULT_LOG_LEVEL.
  * If log_file_name=NULL then DEFAULT_LOG_FILE is used
  */
-void res_log_init_log_default_log_level(const char * log_file_name, bool verbose){
-  res_log_init_log(DEFAULT_LOG_LEVEL,log_file_name,verbose);
+bool res_log_init_log_default_log_level(const char * log_file_name, bool verbose){
+  return res_log_init_log(DEFAULT_LOG_LEVEL,log_file_name,verbose);
 }
 
 
 /**
  * Initializes the log with default filename and default log level.
  */
-void res_log_init_log_default( bool verbose){
-  res_log_init_log(DEFAULT_LOG_LEVEL, DEFAULT_LOG_FILE,verbose);
+bool res_log_init_log_default( bool verbose){
+  return res_log_init_log(DEFAULT_LOG_LEVEL, DEFAULT_LOG_FILE,verbose);
 }
 
 
 void res_log_close() {
   if (logh) {
-    log_add_message(logh, false, NULL, "Exiting ert application normally - "
-                                          "all is fine(?)");
+    log_add_message(logh, false,
+                    "Exiting ert application normally - all is fine(?)");
     log_close( logh );
   }
   logh = NULL;

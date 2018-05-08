@@ -1,10 +1,12 @@
 import os
-from res.util import ResLog
+from res.util import ResLog, Log
 from ecl.util.test import TestAreaContext
 from tests import ResTest
+from res.util.enums import MessageLevelEnum
 
 
 class ResLogTest(ResTest):
+
 
     def test_log(self):
         with TestAreaContext("python/res_log/log") as work_area:
@@ -29,4 +31,22 @@ class ResLogTest(ResTest):
             ResLog.log(1, message)
 
             self.assertEqual(ResLog.getFilename(), test_log_filename)
+
+
+    def test_log(self):
+        with TestAreaContext("python/log"):
+            logh = Log("logfile", MessageLevelEnum.LOG_DEBUG)
+
+            os.mkdir("read_only")
+            os.chmod("read_only", 0o500)
+            with self.assertRaises(IOError):
+                logh = Log("read_only/logfile.txt", MessageLevelEnum.LOG_DEBUG)
+
+
+    def test_init_perm_denied(self):
+        with TestAreaContext("python/res_log"):
+            os.mkdir("read_only")
+            os.chmod("read_only", 0o500)
+            with self.assertRaises(IOError):
+                ResLog.init(1, "read_only/logfile.txt", True)
 
