@@ -90,10 +90,10 @@
    a spesific enkf_object, like e.g. the field objects shown
    here. In general we have an ensemble of enkf_node objects.
 
-   * The enkf_node objects contain a pointer to a enkf_config_node
+   * The enkf_node objects contain a pointer to an enkf_config_node
    object.
 
-   * The enkf_config_node object contains a pointer to the spesific
+   * The enkf_config_node object contains a pointer to the specific
    config object, i.e. field_config in this case.
 
    * All the field objects contain a pointer to a field_config object.
@@ -111,7 +111,7 @@
 
    The enkf_nodes can consume large amounts of memory, and for large
    models/ensembles we have a situation where not all the
-   members/fields can be in memory simultanouesly - such low-memory
+   members/fields can be in memory simultaneously - such low-memory
    situations are not really supported at the moment, but we have
    implemented some support for such problems:
 
@@ -160,7 +160,7 @@
    =============================
 
    To keep track of the state of the node's data (actually the data of
-   the contained enkf_object, i.e. a field) we have three higly
+   the contained enkf_object, i.e. a field) we have three highly
    internal variables __state, __modified , __iens, and
    __report_step. These three variables are used/updated in the
    following manner:
@@ -188,7 +188,7 @@
    report_step and state arguments agree with the current
    values. IN THAT CASE WE JUST RETURN WITHOUT ACTUALLY HITTING
    THE FILESYSTEM. This performance gain is the main point of the
-   whole excercise.
+   whole exercise.
 */
 
 

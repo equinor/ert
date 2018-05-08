@@ -94,7 +94,7 @@
   are higher level functions enkf_fs_fread_alloc_ensemble() to load an ensemble of
   nodes and enkf_fs_fread_alloc_ts() to load a time series of nodes. The driver can
   implement these functions (to get a performance gain when loading many nodes). It
-  is not necceasry to implement these functions, the enkf_fs layer has simple
+  is not necessary to implement these functions, the enkf_fs layer has simple
   functions doing repeated calls to the enkf_fs_fread_node() function.
 
 
@@ -110,7 +110,7 @@
     2. The appropriate driver is called to implement e.g. the fread_node
        functions.
 
-  The different types of data have different characteristcs, which the driver is
+  The different types of data have different characteristics, which the driver is
   implemented to support. The characteristics the drivers support are the
   following:
 
@@ -133,13 +133,13 @@
 
   static driver
   -------------
-  Like the parameter driver this also only stores one version od the data,
-  however in addition it has to query the node for a ID to support multiply
-  occuring keywords in ECLIPSE restart files.
+  Like the parameter driver this also only stores one version of the data,
+  however in addition it has to query the node for an ID to support multiple
+  occurring keywords in ECLIPSE restart files.
 
   Currently only the plain_driver_xxx family has been implemented. Observe that
   there is no dependencies between the drivers, it is perfectly possible to
-  implement a new driver for storage of static datat only. (There is probably a
+  implement a new driver for storage of static data only. (There is probably a
   large amount of static data which is common both between members and for
   several consecutive report steps; utilizing that one could write a static
   driver which was admittedly slower, but leaner on the storage.)
@@ -157,7 +157,7 @@
   those drivers+++. To ensure this I see two possibilities:
 
     1. We can freeze the filesystem drivers, and the layout on disk
-       indefinetly.
+       indefinitely.
 
     2. We can store the information needed to bootstrap the drivers,
        according to the current layout on disk, in the
@@ -179,7 +179,7 @@
      int               int          void *
 
   The driver category should be one of the four integer values in
-  fs_driver_type (fs_types.h) and DRIVER_ID is one the integer
+  fs_driver_type (fs_types.h) and DRIVER_ID is one of the integer
   values in fs_driver_impl. The last void * data is whatever
   (serialized) info the driver needs to bootstrap. This info is
   written by the drivers xxxx_fwrite_mount_info() function, and it is
