@@ -56,37 +56,11 @@ struct log_struct {
 
 
 static void log_delete_empty(const log_type * logh) {
-  if (logh->filename && util_file_exists( logh->filename ) ) {
+  if (util_file_exists( logh->filename ) ) {
     size_t file_size = util_file_size( logh->filename );
     if (file_size == 0)
       remove( logh->filename );
   }
-}
-
-static void log_reopen(log_type *logh , const char *filename) {
-  if (logh->stream != NULL)  { /* Close the existing file descriptor. */
-    fclose( logh->stream );
-    log_delete_empty( logh );
-  }
-
-  logh->filename = util_realloc_string_copy( logh->filename , filename );
-#ifdef HAVE_PTHREAD
-  pthread_mutex_lock( &logh->mutex );
-#endif
-
-  if (filename != NULL) {
-    logh->stream = util_mkdir_fopen( filename , "a+");
-    logh->fd     = fileno( logh->stream );
-  } else {  /* It is ~OK to open a log with NULL filename, but then
-               log_reopen() with a VALID filename must be
-               called before it is actually used. */
-    logh->stream = NULL;
-    logh->fd     = -1;
-  }
-  logh->msg_count = 0;
-#ifdef HAVE_PTHREAD
-  pthread_mutex_unlock( &logh->mutex );
-#endif
 }
 
 
@@ -125,8 +99,10 @@ log_type * log_open(const char * filename , message_level_type log_level) {
 #ifdef HAVE_PTHREAD
   pthread_mutex_init( &logh->mutex , NULL );
 #endif
-  if (filename != NULL)
-    log_reopen(logh, filename);
+  logh->filename = util_realloc_string_copy( logh->filename , filename );
+  logh->stream = util_mkdir_fopen( filename , "a+");
+  logh->fd     = fileno( logh->stream );
+  logh->msg_count = 0;
 
   return logh;
 }
@@ -262,15 +238,10 @@ void log_sync(log_type * logh) {
 
 
 void log_close( log_type * logh ) {
-  if ((logh->stream != stdout) && (logh->stream != stderr) && (logh->stream != NULL))
-    fclose( logh->stream );  /* This closes BOTH the FILE * stream and the integer file descriptor. */
-
+  fclose( logh->stream );  /* This closes BOTH the FILE * stream and the integer file descriptor. */
   log_delete_empty( logh );
   free( (char*) logh->filename );
   free( logh );
 }
 
 
-bool log_is_open( const log_type * logh) {
-  return logh->stream != NULL;
-}
