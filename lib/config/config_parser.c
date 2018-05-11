@@ -31,6 +31,7 @@
 #include <ert/util/path_stack.h>
 #include <ert/res_util/subst_list.h>
 #include <ert/res_util/res_env.h>
+#include <ert/res_util/res_log.h>
 
 #include <ert/config/config_parser.h>
 #include <ert/config/config_error.h>
@@ -205,7 +206,8 @@ static config_content_node_type * config_content_item_set_arg__(subst_list_type 
               stringlist_iset_owned_ref( token_list , iarg + 1 , new_value );
             } else {
               env_offset += 1;
-              fprintf(stderr,"** Warning: environment variable: %s is not defined \n", env_var);
+              res_log_fwarning("Environment variable: %s is not defined",
+                               env_var);
             }
           }
 
