@@ -1,6 +1,7 @@
 import weakref
 
 from res.enkf import ErtImplType, GenKwConfig, CustomKWConfig
+from res.enkf.enums import EnkfObservationImplementationType
 
 
 class KeyManager(object):
@@ -112,12 +113,13 @@ class KeyManager(object):
             enkf_obs = self._ert().getObservations()
             gen_data_obs_keys = []
             for obs_vector in enkf_obs:
-                report_step = obs_vector.activeStep()
-                key = obs_vector.getDataKey()
+                if obs_vector is EnkfObservationImplementationType.GEN_OBS:
+                    report_step = obs_vector.activeStep()
+                    key = obs_vector.getDataKey()
 
-                gen_data_key = "%s@%d" % (key, report_step)
-                if gen_data_key in self.genDataKeys():
-                    gen_data_obs_keys.append(gen_data_key)
+                    gen_data_key = "%s@%d" % (key, report_step)
+                    if gen_data_key in self.genDataKeys():
+                        gen_data_obs_keys.append(gen_data_key)
 
             self.__gen_data_keys_with_observations = gen_data_obs_keys
 
