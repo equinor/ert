@@ -14,23 +14,28 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from __future__ import print_function
 from cwrap import BaseCClass
+
 from res import ResPrototype
 from res.util.enums import MessageLevelEnum
 
 
 class Log(BaseCClass):
+    _open_log = ResPrototype("void* log_open(char*, message_level_enum)", bind=False)
     _get_filename = ResPrototype("char* log_get_filename(log)")
     _get_level = ResPrototype("message_level_enum log_get_level(log)")
     _set_level = ResPrototype("void log_set_level(log, message_level_enum)")
 
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self, log_filename, log_level):
+        c_ptr = self._open_log(log_filename, log_level)
+        if c_ptr:
+            super(Log, self).__init__(c_ptr)
+        else:
+            raise IOError("Failed to open log handle at:%s" % log_filename)
+
 
     def get_filename(self):
         return self._get_filename()
-        # return "ert_config.log"
 
     def get_level(self):
         return self._get_level()

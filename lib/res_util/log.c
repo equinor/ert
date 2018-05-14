@@ -56,39 +56,12 @@ struct log_struct {
 
 
 static void log_delete_empty(const log_type * logh) {
-  if (logh->filename && util_file_exists( logh->filename ) ) {
+  if (util_file_exists( logh->filename ) ) {
     size_t file_size = util_file_size( logh->filename );
     if (file_size == 0)
       remove( logh->filename );
   }
 }
-
-static void log_reopen(log_type *logh , const char *filename) {
-  if (logh->stream != NULL)  { /* Close the existing file descriptor. */
-    fclose( logh->stream );
-    log_delete_empty( logh );
-  }
-
-  logh->filename = util_realloc_string_copy( logh->filename , filename );
-#ifdef HAVE_PTHREAD
-  pthread_mutex_lock( &logh->mutex );
-#endif
-
-  if (filename != NULL) {
-    logh->stream = util_mkdir_fopen( filename , "a+");
-    logh->fd     = fileno( logh->stream );
-  } else {  /* It is ~OK to open a log with NULL filename, but then
-               log_reopen() with a VALID filename must be
-               called before it is actually used. */
-    logh->stream = NULL;
-    logh->fd     = -1;
-  }
-  logh->msg_count = 0;
-#ifdef HAVE_PTHREAD
-  pthread_mutex_unlock( &logh->mutex );
-#endif
-}
-
 
 const char * log_get_filename( const log_type * logh ) {
   return logh->filename;
@@ -113,20 +86,41 @@ void log_set_level( log_type * logh , message_level_type log_level) {
 
 
 log_type * log_open(const char * filename , message_level_type log_level) {
-  log_type * logh;
+  if (!filename)
+    return NULL;
 
-  logh = (log_type*)util_malloc(sizeof *logh);
+  {
+    char * path = util_split_alloc_dirname(filename);
+    if (path) {
 
+      if (!util_is_directory(path)) {
+        if (!util_mkdir_p(path)) {
+          free(path);
+          return NULL;
+        }
+      }
+
+      free(path);
+    }
+  }
+
+
+  FILE * stream = fopen( filename, "a+");
+  if (!stream)
+    return NULL;
+
+
+  log_type * logh = (log_type *) util_malloc(sizeof * logh);
   logh->msg_count     = 0;
   logh->log_level     = log_level;
   logh->log_level_stdout = LOG_ERROR;  // non-configurable default
-  logh->filename      = NULL;
-  logh->stream        = NULL;
+  logh->filename      = util_alloc_string_copy(filename);
+  logh->stream        = stream;
+  logh->fd     = fileno( logh->stream );
+
 #ifdef HAVE_PTHREAD
   pthread_mutex_init( &logh->mutex , NULL );
 #endif
-  if (filename != NULL)
-    log_reopen(logh, filename);
 
   return logh;
 }
@@ -148,22 +142,43 @@ static bool log_include_message(const log_type *logh, message_level_type message
  * string literal.
  */
 void log_add_message_str(log_type *logh, message_level_type message_level, const char* message) {
-  log_add_message(logh, message_level, NULL, message);
+  log_add_message(logh, message_level, message);
 }
 
 
-/**
- *  If dup_stream != NULL the message (without the date/time header) is
- *  duplicated on this stream.
- *
- *  TODO: We will in the future have two logging levels, one for file (default
- *  to INFO), and one for stdout (default to WARNING).  The regular user will
- *  normally just configure the stdout level, and will probably choose between
- *  (INFO, WARNING, ERROR).
- */
+
+void log_add_message_stream(FILE * stream, bool add_timestamp, message_level_type message_level, const char * message) {
+  struct tm time_fields;
+  time_t    epoch_time;
+
+  time(&epoch_time);
+  util_time_utc(&epoch_time , &time_fields);
+
+  if (message_level >= LOG_CRITICAL)
+    fprintf(stream, "CRITICAL: ");
+  else if (message_level >= LOG_ERROR)
+    fprintf(stream, "ERROR:    ");
+  else if (message_level >= LOG_WARNING)
+    fprintf(stream, "WARNING:  ");
+  else if (message_level >= LOG_INFO)
+    fprintf(stream, "INFO:     ");
+  else if (message_level >= LOG_DEBUG)
+    fprintf(stream, "DEBUG:    ");
+
+  if (add_timestamp) {
+    if (message)
+      fprintf(stream,"%02d/%02d - %02d:%02d:%02d  %s\n",time_fields.tm_mday, time_fields.tm_mon + 1, time_fields.tm_hour , time_fields.tm_min , time_fields.tm_sec , message);
+    else
+      fprintf(stream,"%02d/%02d - %02d:%02d:%02d   \n",time_fields.tm_mday, time_fields.tm_mon + 1, time_fields.tm_hour , time_fields.tm_min , time_fields.tm_sec);
+  } else
+    if (message)
+      fprintf(stream, "%s\n", message);
+
+
+}
+
 void log_add_message(log_type *logh,
                      message_level_type message_level,
-                     FILE * dup_stream,
                      const char* message) {
   if (log_include_message_stdout(logh, message_level))
     printf("%s\n", message);  // temporary implementation of logging to terminal
@@ -178,32 +193,7 @@ void log_add_message(log_type *logh,
     pthread_mutex_lock( &logh->mutex );
 #endif
 
-  struct tm time_fields;
-  time_t    epoch_time;
-
-  time(&epoch_time);
-  util_time_utc(&epoch_time , &time_fields);
-
-  if (message_level >= LOG_CRITICAL)
-    fprintf(logh->stream, "CRITICAL: ");
-  else if (message_level >= LOG_ERROR)
-    fprintf(logh->stream, "ERROR:    ");
-  else if (message_level >= LOG_WARNING)
-    fprintf(logh->stream, "WARNING:  ");
-  else if (message_level >= LOG_INFO)
-    fprintf(logh->stream, "INFO:     ");
-  else if (message_level >= LOG_DEBUG)
-    fprintf(logh->stream, "DEBUG:    ");
-
-  if (message != NULL)
-    fprintf(logh->stream,"%02d/%02d - %02d:%02d:%02d  %s\n",time_fields.tm_mday, time_fields.tm_mon + 1, time_fields.tm_hour , time_fields.tm_min , time_fields.tm_sec , message);
-  else
-    fprintf(logh->stream,"%02d/%02d - %02d:%02d:%02d   \n",time_fields.tm_mday, time_fields.tm_mon + 1, time_fields.tm_hour , time_fields.tm_min , time_fields.tm_sec);
-
-  /** We duplicate the message to the stream 'dup_stream'. */
-  if ((dup_stream != NULL) && (message != NULL))
-    fprintf(dup_stream , "%s\n", message);
-
+  log_add_message_stream(logh->stream, true, message_level, message);
   log_sync( logh );
   logh->msg_count++;
 
@@ -220,7 +210,7 @@ void log_add_message(log_type *logh,
  * Adds a formated log message if message_level is below the threshold, fmt is expected to be the format string,
  * and "..." contains any arguments to it.
  */
-void log_add_fmt_message(log_type * logh , message_level_type message_level , FILE * dup_stream , const char * fmt , ...) {
+void log_add_fmt_message(log_type * logh, message_level_type message_level, const char * fmt, ...) {
   if (!log_include_message(logh,message_level))
       return;
 
@@ -228,7 +218,7 @@ void log_add_fmt_message(log_type * logh , message_level_type message_level , FI
   va_list ap;
   va_start(ap , fmt);
   message = util_alloc_sprintf_va( fmt , ap );
-  log_add_message(logh, message_level, dup_stream, message);
+  log_add_message(logh, message_level, message);
   free(message);
   va_end(ap);
 }
@@ -262,15 +252,10 @@ void log_sync(log_type * logh) {
 
 
 void log_close( log_type * logh ) {
-  if ((logh->stream != stdout) && (logh->stream != stderr) && (logh->stream != NULL))
-    fclose( logh->stream );  /* This closes BOTH the FILE * stream and the integer file descriptor. */
-
+  fclose( logh->stream );  /* This closes BOTH the FILE * stream and the integer file descriptor. */
   log_delete_empty( logh );
   free( (char*) logh->filename );
   free( logh );
 }
 
 
-bool log_is_open( const log_type * logh) {
-  return logh->stream != NULL;
-}
