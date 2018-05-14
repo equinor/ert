@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include <ert/res_util/thread_pool.h>
+#include <ert/res_util/res_portability.h>
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
 
@@ -264,7 +265,7 @@ static void * thread_pool_main_loop( void * arg ) {
         } while (!slot_found && (counter < tp->max_running));
 
         if (!slot_found) {
-            util_yield();
+            res_yield();
         }
       } else
         util_usleep(usleep_init);    /* There are no jobs wanting to run. */
@@ -387,7 +388,7 @@ bool thread_pool_try_join(thread_pool_type * pool, int timeout_seconds) {
 
     while(true) {
         if (pthread_kill(pool->dispatch_thread, 0) == 0){
-            util_yield();
+            res_yield();
         } else {
             pthread_join(pool->dispatch_thread, NULL);
             pool->accepting_jobs = false;
