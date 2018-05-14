@@ -23,6 +23,7 @@ add_library(res res_util/res_log.c
                 res_util/template_loop.c
                 res_util/path_fmt.c
                 res_util/res_env.c
+                res_util/res_portability.c
                 res_util/block_fs.c
                 res_util/res_version.c
                 res_util/regression.c

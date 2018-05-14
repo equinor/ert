@@ -27,6 +27,8 @@
 
 #include <ert/util/type_macros.h>
 
+#include <ert/res_util/res_portability.h>
+
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/job_queue_manager.h>
@@ -89,7 +91,7 @@ bool job_queue_manager_try_wait( job_queue_manager_type * manager , int timeout_
 #else
     while(true) {
         if (pthread_kill(manager->queue_thread, 0) == 0){
-            util_yield();
+            res_yield();
         } else {
             return true;
         }

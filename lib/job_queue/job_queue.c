@@ -28,6 +28,7 @@
 #include <ert/util/arg_pack.h>
 #include <ert/res_util/res_log.h>
 #include <ert/res_util/thread_pool.h>
+#include <ert/res_util/res_portability.h>
 
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/job_node.h>
@@ -964,7 +965,7 @@ static void job_queue_loop(job_queue_type * queue, int num_total_run, bool verbo
     job_list_unlock(queue->job_list);
 
     if (!exit) {
-      util_yield();
+      res_yield();
       job_list_reader_wait(queue->job_list, queue->usleep_time, 8 * queue->usleep_time);
     }
 
