@@ -1312,9 +1312,9 @@ bool job_queue_get_user_exit( const job_queue_type * queue) {
 }
 
 void job_queue_free(job_queue_type * queue) {
-  util_safe_free( queue->ok_file );
-  util_safe_free( queue->exit_file );
-  util_safe_free( queue->status_file );
+  free( queue->ok_file );
+  free( queue->exit_file );
+  free( queue->status_file );
   job_list_free( queue->job_list );
   job_queue_status_free( queue->status );
   free(queue);

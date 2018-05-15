@@ -94,7 +94,7 @@ static sum_pair_type * sum_pair_alloc( const char * case_name , bool strict_load
     if (strict_load) 
       ecl_sum = ecl_sum_fread_alloc_case( use_case , ":");
 
-    util_safe_free( path );
+    free( path );
     free( basename );
     if (strict_load && (ecl_sum == NULL)) {
       free( use_case );
@@ -110,8 +110,8 @@ static sum_pair_type * sum_pair_alloc( const char * case_name , bool strict_load
       return pair;
     }
   } else {
-    util_safe_free( path );
-    util_safe_free( basename );
+    free( path );
+    free( basename );
     return NULL;
   }
 }

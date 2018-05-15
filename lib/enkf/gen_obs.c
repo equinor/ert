@@ -88,11 +88,11 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(gen_obs , GEN_OBS_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION(gen_obs , GEN_OBS_TYPE_ID)
 
 void gen_obs_free(gen_obs_type * gen_obs) {
-  util_safe_free(gen_obs->obs_data);
-  util_safe_free(gen_obs->obs_std);
-  util_safe_free(gen_obs->data_index_list);
-  util_safe_free(gen_obs->obs_key);
-  util_safe_free(gen_obs->std_scaling);
+  free(gen_obs->obs_data);
+  free(gen_obs->obs_std);
+  free(gen_obs->data_index_list);
+  free(gen_obs->obs_key);
+  free(gen_obs->std_scaling);
   if (gen_obs->error_covar != NULL)
     matrix_free( gen_obs->error_covar );
 
@@ -167,7 +167,7 @@ void gen_obs_set_scalar( gen_obs_type * gen_obs , double scalar_value , double s
 }
 
 void gen_obs_attach_data_index( gen_obs_type * obs , const int_vector_type * data_index ) {
-  util_safe_free( obs->data_index_list );
+  free( obs->data_index_list );
   obs->data_index_list = int_vector_alloc_data_copy( data_index );
   obs->observe_all_data = false;
 }
@@ -175,7 +175,7 @@ void gen_obs_attach_data_index( gen_obs_type * obs , const int_vector_type * dat
 
 void gen_obs_load_data_index( gen_obs_type * obs , const char * data_index_file) {
   /* Parsing an a file with integers. */
-  util_safe_free( obs->data_index_list );
+  free( obs->data_index_list );
   obs->data_index_list = gen_common_fscanf_alloc( data_index_file , ECL_INT , &obs->obs_size);
   obs->observe_all_data = false;
 }  

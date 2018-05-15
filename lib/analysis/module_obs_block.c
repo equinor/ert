@@ -57,7 +57,7 @@ const int  * module_obs_block_get_active_indices(const module_obs_block_type * m
 }
 
 void module_obs_block_free( module_obs_block_type * module_obs_block ) {
-  util_safe_free(module_obs_block->key);
+  free(module_obs_block->key);
   free( module_obs_block );
 }
 

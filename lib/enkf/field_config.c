@@ -601,10 +601,10 @@ double field_config_get_truncation_max( const field_config_type * config ) {
 
 
 void field_config_free(field_config_type * config) {
-  util_safe_free(config->ecl_kw_name);
-  util_safe_free(config->input_transform_name);
-  util_safe_free(config->output_transform_name);
-  util_safe_free(config->init_transform_name);
+  free(config->ecl_kw_name);
+  free(config->input_transform_name);
+  free(config->output_transform_name);
+  free(config->init_transform_name);
   if ((config->private_grid) && (config->grid != NULL)) ecl_grid_free( config->grid );
   free(config);
 }

@@ -86,10 +86,10 @@ custom_kw_config_type * custom_kw_config_alloc_with_definition(const char * key,
 
 
 void custom_kw_config_free(custom_kw_config_type * config) {
-    util_safe_free(config->name);
-    util_safe_free(config->result_file);
-    util_safe_free(config->output_file);
-    util_safe_free(config->key_definition_file);
+    free(config->name);
+    free(config->result_file);
+    free(config->output_file);
+    free(config->key_definition_file);
 
     hash_free(config->custom_keys);
     hash_free(config->custom_key_types);
@@ -103,7 +103,7 @@ static void custom_kw_config_reset__(custom_kw_config_type * config) {
     config->undefined = true;
     hash_clear(config->custom_keys);
     hash_clear(config->custom_key_types);
-    util_safe_free(config->key_definition_file);
+    free(config->key_definition_file);
     config->key_definition_file = NULL;
 }
 

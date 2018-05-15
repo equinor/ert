@@ -312,18 +312,18 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
 
 void ext_job_free(ext_job_type * ext_job) {
   free(ext_job->name);
-  util_safe_free(ext_job->executable);
-  util_safe_free(ext_job->stdout_file);
-  util_safe_free(ext_job->stdin_file);
-  util_safe_free(ext_job->target_file);
-  util_safe_free(ext_job->error_file);
-  util_safe_free(ext_job->stderr_file);
-  util_safe_free(ext_job->license_path);
-  util_safe_free(ext_job->license_root_path);
-  util_safe_free(ext_job->config_file);
-  util_safe_free(ext_job->argv_string);
-  util_safe_free(ext_job->help_text);
-  util_safe_free(ext_job->private_args_string);
+  free(ext_job->executable);
+  free(ext_job->stdout_file);
+  free(ext_job->stdin_file);
+  free(ext_job->target_file);
+  free(ext_job->error_file);
+  free(ext_job->stderr_file);
+  free(ext_job->license_path);
+  free(ext_job->license_root_path);
+  free(ext_job->config_file);
+  free(ext_job->argv_string);
+  free(ext_job->help_text);
+  free(ext_job->private_args_string);
 
   hash_free( ext_job->default_mapping);
   hash_free( ext_job->environment );
@@ -1135,7 +1135,7 @@ const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
 //        buffer_fwrite_char_ptr( buffer , sep );
 //
 //    buffer_fwrite_char( buffer , '\0');
-//    util_safe_free(ext_job->argv_string);
+//    free(ext_job->argv_string);
 //    ext_job->argv_string = buffer_alloc_data_copy( buffer );
 //    buffer_free( buffer );
 //
@@ -1153,7 +1153,7 @@ const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
 
 
 const char * ext_job_get_private_args_as_string( ext_job_type * ext_job ) {
-  util_safe_free( ext_job->private_args_string );
+  free( ext_job->private_args_string );
   ext_job->private_args_string = subst_list_alloc_string_representation( ext_job->private_args );
   return ext_job->private_args_string;
 }

@@ -739,10 +739,10 @@ static void enkf_fs_umount(enkf_fs_type * fs) {
     util_unlink_existing(fs->lock_file);
   }
 
-  util_safe_free(fs->case_name);
-  util_safe_free(fs->root_path);
-  util_safe_free(fs->lock_file);
-  util_safe_free(fs->mount_point);
+  free(fs->case_name);
+  free(fs->root_path);
+  free(fs->lock_file);
+  free(fs->mount_point);
   path_fmt_free(fs->case_fmt);
   path_fmt_free(fs->case_member_fmt);
   path_fmt_free(fs->case_tstep_fmt);

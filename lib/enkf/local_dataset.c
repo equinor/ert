@@ -70,7 +70,7 @@ local_dataset_type * local_dataset_alloc_copy( local_dataset_type * src_dataset 
 
 
 void local_dataset_free( local_dataset_type * dataset ) {
-  util_safe_free(dataset->name);
+  free(dataset->name);
   hash_free( dataset->nodes );
   free( dataset );
 }

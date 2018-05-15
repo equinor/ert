@@ -88,7 +88,7 @@ ert_template_type * ert_template_alloc( const char * template_file , const char 
 
 
 void ert_template_free( ert_template_type * template ) {
-  util_safe_free( template->target_file );
+  free( template->target_file );
   template_free( template->template );
   free( template );
 }
@@ -261,7 +261,7 @@ void ert_templates_init( ert_templates_type * templates , const config_content_t
           fprintf(stderr,"** Warning - failed to parse argument:%s as key:value - ignored \n",config_content_iget( config , "RUN_TEMPLATE" , i , iarg ));
 
         free( key );
-        util_safe_free( value );
+        free( value );
       }
     }
   }

@@ -125,7 +125,7 @@ void conf_class_free(
   conf_class_type * conf_class)
 {
   free(conf_class->class_name);
-  util_safe_free(conf_class->help);
+  free(conf_class->help);
   hash_free(conf_class->sub_classes);
   hash_free(conf_class->item_specs);
   vector_free(conf_class->item_mutexes);
@@ -285,8 +285,8 @@ void conf_item_spec_free(
   conf_item_spec_type * conf_item_spec)
 {
   free(conf_item_spec->name);
-  util_safe_free(conf_item_spec->default_value);
-  util_safe_free(conf_item_spec->help);
+  free(conf_item_spec->default_value);
+  free(conf_item_spec->help);
   set_free(conf_item_spec->restriction);
   free(conf_item_spec);
 }

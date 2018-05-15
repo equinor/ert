@@ -324,7 +324,7 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , va
       do "the right thing".
     */
     enkf_node->ecl_write(enkf_node->data , path , node_eclfile , export);
-    util_safe_free( node_eclfile );
+    free( node_eclfile );
   }
 }
 
@@ -416,7 +416,7 @@ bool enkf_node_forward_load(enkf_node_type *enkf_node , const forward_load_conte
       } else
         loadOK = enkf_node->forward_load(enkf_node->data , NULL , load_context);
 
-      util_safe_free( input_file );
+      free( input_file );
     }
   }
   return loadOK;
@@ -426,7 +426,7 @@ bool enkf_node_forward_load(enkf_node_type *enkf_node , const forward_load_conte
 bool enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path , int iens) {
   char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , run_path , iens );
   bool init = enkf_node->initialize(enkf_node->data , iens , init_file, NULL);
-  util_safe_free( init_file );
+  free( init_file );
   return init;
 }
 
@@ -775,7 +775,7 @@ bool enkf_node_initialize(enkf_node_type *enkf_node, int iens , rng_type * rng) 
     if (enkf_node->initialize != NULL) {
       char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , NULL , iens );
       bool   init = enkf_node->initialize(enkf_node->data , iens , init_file, rng);
-      util_safe_free( init_file );
+      free( init_file );
       return init;
     } else
       return false;  /* No init performed */

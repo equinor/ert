@@ -574,12 +574,12 @@ void model_config_init(model_config_type * model_config ,
 void model_config_free(model_config_type * model_config) {
   free( model_config->enspath );
   free( model_config->rftpath );
-  util_safe_free( model_config->jobname_fmt );
-  util_safe_free( model_config->current_path_key);
-  util_safe_free( model_config->gen_kw_export_name);
-  util_safe_free( model_config->obs_config_file );
-  util_safe_free( model_config->data_root );
-  util_safe_free( model_config->default_data_root );
+  free( model_config->jobname_fmt );
+  free( model_config->current_path_key);
+  free( model_config->gen_kw_export_name);
+  free( model_config->obs_config_file );
+  free( model_config->data_root );
+  free( model_config->default_data_root );
 
   if (model_config->history)
     history_free(model_config->history);

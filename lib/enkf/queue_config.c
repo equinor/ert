@@ -143,7 +143,7 @@ job_queue_type * queue_config_alloc_job_queue(const queue_config_type * queue_co
 
 void queue_config_free(queue_config_type * queue_config) {
   hash_free(queue_config->queue_drivers);
-  util_safe_free(queue_config->job_script);
+  free(queue_config->job_script);
   free(queue_config);
 }
 

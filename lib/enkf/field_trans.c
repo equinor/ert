@@ -66,7 +66,7 @@ static field_func_node_type * field_func_node_alloc(const char * key , const cha
 
 static void field_func_node_free(field_func_node_type * node) {
   free(node->key);
-  util_safe_free( node->description );
+  free( node->description );
   free(node);
 }
 

@@ -82,7 +82,7 @@ subst_func_type * subst_func_alloc( const char * func_name , const char * doc_st
 
 
 void subst_func_free( subst_func_type * subst_func ) {
-  util_safe_free( subst_func->doc_string );
+  free( subst_func->doc_string );
   free( subst_func->name );
   free( subst_func );
 }

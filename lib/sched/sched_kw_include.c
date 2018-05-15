@@ -85,7 +85,7 @@ sched_kw_include_type * sched_kw_include_alloc(const stringlist_type * tokens , 
 
 
 void sched_kw_include_free( sched_kw_include_type * kw ) {
-  util_safe_free( kw->include_file );
+  free( kw->include_file );
   free( kw );
 }
 

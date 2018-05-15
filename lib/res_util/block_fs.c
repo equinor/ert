@@ -267,7 +267,7 @@ static void file_node_clear_cache( file_node_type * file_node ) {
 static void file_node_free( file_node_type * file_node ) {
   free( file_node );
 #ifdef ENABLE_CACHE
-  util_safe_free( file_node->cache );
+  free( file_node->cache );
 #endif
 }
 
@@ -302,7 +302,7 @@ static file_node_type * file_node_fread_alloc( FILE * stream , char ** key) {
       if (status == NODE_IN_USE)
         *key = util_fread_realloc_string( *key , stream );
       else {
-        util_safe_free( *key );  /* Explicitly set to NULL for free nodes. */
+        free( *key );  /* Explicitly set to NULL for free nodes. */
         *key = NULL;
       }
 
@@ -607,9 +607,9 @@ static void block_fs_set_filenames( block_fs_type * block_fs ) {
   char * lock_ext  = util_alloc_sprintf("lock_%d" , block_fs->version );
   const char * index_ext = "index";
 
-  util_safe_free( block_fs->data_file );
-  util_safe_free( block_fs->lock_file );
-  util_safe_free( block_fs->index_file );
+  free( block_fs->data_file );
+  free( block_fs->lock_file );
+  free( block_fs->index_file );
 
   block_fs->data_file  = util_alloc_filename( block_fs->path , block_fs->base_name , data_ext);
   block_fs->lock_file  = util_alloc_filename( block_fs->path , block_fs->base_name , lock_ext);
@@ -914,7 +914,7 @@ static void block_fs_fix_nodes( block_fs_type * block_fs , long_vector_type * of
         if (!new_node)
           file_node_free( file_node );
       }
-      util_safe_free( key );
+      free( key );
     }
     fsync( block_fs->data_fd );
   }
@@ -970,7 +970,7 @@ static void block_fs_build_index( block_fs_type * block_fs , long_vector_type * 
       }
     }
   } while (file_node != NULL);
-  util_safe_free( filename );
+  free( filename );
 }
 
 
@@ -1678,7 +1678,7 @@ static user_file_node_type * user_file_node_alloc( const char * name , const fil
 
 
 static void user_file_node_free( user_file_node_type * node ) {
-  util_safe_free( node->filename );
+  free( node->filename );
   free( node );
 }
 

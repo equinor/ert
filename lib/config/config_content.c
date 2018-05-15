@@ -129,9 +129,9 @@ void config_content_free( config_content_type * content ) {
   hash_free( content->items );
   config_error_free( content->parse_errors );
   subst_list_free( content->define_list );
-  util_safe_free( content->config_file );
-  util_safe_free( content->abs_path );
-  util_safe_free( content->config_path );
+  free( content->config_file );
+  free( content->abs_path );
+  free( content->config_path );
   set_free( content->parsed_files );
   if (content->invoke_path != NULL)
     config_root_path_free( content->invoke_path );
@@ -418,7 +418,7 @@ config_path_elm_type * config_content_add_path_elm( config_content_type * conten
           rel_path = config_path_elm_alloc_relpath( current_path_elm , path );
       }
       new_path_elm = config_path_elm_alloc( invoke_path , rel_path );
-      util_safe_free( rel_path );
+      free( rel_path );
     }
     config_path_stack_append( content->path_stack , new_path_elm );
     return new_path_elm;

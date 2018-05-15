@@ -118,7 +118,7 @@ void gen_data_copy(const gen_data_type * src , gen_data_type * target) {
 
 
 void gen_data_free(gen_data_type * gen_data) {
-  util_safe_free(gen_data->data);
+  free(gen_data->data);
   bool_vector_free( gen_data->active_mask );
   free(gen_data);
 }
@@ -320,7 +320,7 @@ bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * fi
       bool_vector_reset( gen_data->active_mask );
     }
     gen_data_set_data__(gen_data , size , load_context , load_type , buffer );
-    util_safe_free(buffer);
+    free(buffer);
   } else
     res_log_fwarning("GEN_DATA(%s): missing file: %s",
                      gen_data_get_key(gen_data), filename);

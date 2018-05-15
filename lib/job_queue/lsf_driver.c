@@ -193,7 +193,7 @@ static lsf_job_type * lsf_job_alloc( const char * job_name ) {
 
 
 void lsf_job_free(lsf_job_type * job) {
-  util_safe_free(job->lsf_jobnr_char);
+  free(job->lsf_jobnr_char);
   util_free_stringlist(job->exec_host , job->num_exec_host);
   free( job->job_name );
   free(job);
@@ -467,7 +467,7 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
     stringlist_append_ref( argv , job_argv[ iarg ]);
 
   free( num_cpu_string );
-  util_safe_free( quoted_resource_request );
+  free( quoted_resource_request );
   return argv;
 }
 
@@ -1030,11 +1030,11 @@ void * lsf_driver_submit_job(void * __driver ,
 
 
 void lsf_driver_free(lsf_driver_type * driver ) {
-  util_safe_free(driver->login_shell);
-  util_safe_free(driver->queue_name);
-  util_safe_free(driver->resource_request );
-  util_safe_free(driver->remote_lsf_server );
-  util_safe_free(driver->rsh_cmd );
+  free(driver->login_shell);
+  free(driver->queue_name);
+  free(driver->resource_request );
+  free(driver->remote_lsf_server );
+  free(driver->rsh_cmd );
   stringlist_free(driver->exclude_hosts);
   free( driver->bhist_cmd );
   free( driver->bkill_cmd );
@@ -1102,7 +1102,7 @@ static void lsf_driver_set_internal_submit( lsf_driver_type * driver) {
 
   util_setenv("BSUB_QUIET" , "yes");
   driver->submit_method = LSF_SUBMIT_INTERNAL;
-  util_safe_free( driver->remote_lsf_server );
+  free( driver->remote_lsf_server );
   driver->remote_lsf_server = NULL;
 }
 #endif

@@ -242,7 +242,7 @@ int template_eval_loop( const template_type * template , buffer_type * buffer , 
         }
         
         buffer_free( var_expansion );
-        util_safe_free( body );
+        free( body );
       }
       {
         int tag_length = loop->endtag_offset + loop->endtag_length - loop->opentag_offset;

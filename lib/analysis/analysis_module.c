@@ -231,7 +231,7 @@ void analysis_module_free( analysis_module_type * module ) {
   if (module->freef != NULL)
     module->freef( module->module_data );
 
-  util_safe_free( module->lib_name );
+  free( module->lib_name );
   free( module->user_name );
   free( module->symbol_table );
   dlclose( module->lib_handle );

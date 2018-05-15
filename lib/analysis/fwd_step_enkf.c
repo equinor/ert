@@ -234,8 +234,8 @@ static void fwd_step_enkf_write_iter_info( fwd_step_enkf_data_type * data , step
   printf("\n");
 
   stringlist_free(obs_list);
-  util_safe_free(data_active_index_str);
-  util_safe_free(cat);
+  free(data_active_index_str);
+  free(cat);
 }
 
 /*Main function: */

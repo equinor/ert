@@ -184,9 +184,9 @@ int main( int argc , char ** argv ) {
         util_exit("Hmmmm - failed to change to directory:%s \n",run_path);
     }
     config_file = util_alloc_filename(NULL , config_base , config_ext);
-    util_safe_free( config_base );
-    util_safe_free( config_ext );
-    util_safe_free( run_path );
+    free( config_base );
+    free( config_ext );
+    free( run_path );
   }
   
   config_init( config );

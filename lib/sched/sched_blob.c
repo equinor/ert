@@ -70,7 +70,7 @@ int sched_blob_get_size( const sched_blob_type * blob ) {
 
 
 void sched_blob_free( sched_blob_type * blob ) {
-  util_safe_free( blob->buffer );
+  free( blob->buffer );
   if (blob->time_step != NULL)
     sched_time_free( blob->time_step );
   free( blob );

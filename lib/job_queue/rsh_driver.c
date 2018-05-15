@@ -316,7 +316,7 @@ void rsh_driver_clear_host_list( rsh_driver_type * driver ) {
   int ihost;
   for (ihost =0; ihost < driver->num_hosts; ihost++)
     rsh_host_free(driver->host_list[ihost]);
-  util_safe_free(driver->host_list);
+  free(driver->host_list);
 
   driver->num_hosts            = 0;
   driver->host_list            = NULL;
@@ -327,7 +327,7 @@ void rsh_driver_clear_host_list( rsh_driver_type * driver ) {
 void rsh_driver_free(rsh_driver_type * driver) {
   rsh_driver_clear_host_list( driver );
   pthread_attr_destroy ( &driver->thread_attr );
-  util_safe_free(driver->rsh_command );
+  free(driver->rsh_command );
   hash_free( driver->__host_hash );
   free(driver);
   driver = NULL;

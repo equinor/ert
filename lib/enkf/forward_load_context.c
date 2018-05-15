@@ -122,8 +122,8 @@ static void forward_load_context_load_ecl_sum(forward_load_context_type * load_c
       }
     }
     stringlist_free( data_files );
-    util_safe_free( header_file );
-    util_safe_free( unified_file );
+    free( header_file );
+    free( unified_file );
   }
 
   if (summary)

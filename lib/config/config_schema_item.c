@@ -411,7 +411,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
               else
                 config_error_add( error_list , util_alloc_sprintf("Could not locate executable:%s ", value));
 
-              util_safe_free(path_exe);
+              free(path_exe);
             } else {
               if (!util_is_executable( value ))
                 config_error_add( error_list , util_alloc_sprintf("Could not locate executable:%s ", value));

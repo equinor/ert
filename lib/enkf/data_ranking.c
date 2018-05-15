@@ -60,7 +60,7 @@ void data_ranking_free( data_ranking_type * ranking ) {
   if (ranking->sort_permutation)
     perm_vector_free( ranking->sort_permutation );
 
-  util_safe_free( ranking->user_key );
+  free( ranking->user_key );
   free( ranking );
 }
 

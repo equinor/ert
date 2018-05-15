@@ -56,7 +56,7 @@ ui_return_type * ui_return_alloc(ui_return_status_enum status) {
 
 void ui_return_free( ui_return_type * ui_return ) {
   stringlist_free(ui_return->error_list);
-  util_safe_free( ui_return->help_text);
+  free( ui_return->help_text);
   free( ui_return);
 }
 
