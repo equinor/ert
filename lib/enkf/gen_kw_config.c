@@ -84,8 +84,8 @@ static gen_kw_parameter_type * gen_kw_parameter_alloc( const char * parameter_na
 
 
 static void gen_kw_parameter_free( gen_kw_parameter_type * parameter ) {
-  util_safe_free( parameter->name );
-  util_safe_free( parameter->tagged_name );
+  free( parameter->name );
+  free( parameter->tagged_name );
   if (parameter->trans_func != NULL)
     trans_func_free( parameter->trans_func );
   free( parameter );
@@ -227,9 +227,9 @@ bool gen_kw_config_should_use_log_scale(const gen_kw_config_type * config, int i
 }
 
 void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
-  util_safe_free( gen_kw_config->key );
-  util_safe_free( gen_kw_config->template_file );
-  util_safe_free( gen_kw_config->parameter_file );
+  free( gen_kw_config->key );
+  free( gen_kw_config->template_file );
+  free( gen_kw_config->parameter_file );
 
   vector_free( gen_kw_config->parameters );
   free(gen_kw_config);

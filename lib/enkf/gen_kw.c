@@ -51,7 +51,7 @@ struct gen_kw_struct {
 
 
 void gen_kw_free(gen_kw_type *gen_kw) {
-  util_safe_free( gen_kw->data );
+  free( gen_kw->data );
   subst_list_free( gen_kw->subst_list );
   free(gen_kw);
 }

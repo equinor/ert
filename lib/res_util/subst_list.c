@@ -129,13 +129,13 @@ static subst_list_string_type * subst_list_string_alloc(const char * key) {
 
 static void subst_list_string_free_content( subst_list_string_type * node ) {
   if (node->value_owner)
-    util_safe_free( node->value );
+    free( node->value );
 }
 
 
 static void subst_list_string_free(subst_list_string_type * node) {
   subst_list_string_free_content( node );
-  util_safe_free( node->doc_string );
+  free( node->doc_string );
   free(node->key);
   free(node);
 }

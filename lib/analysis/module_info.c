@@ -47,7 +47,7 @@ module_info_type * module_info_alloc( const char* ministep_name ) {
 
 
 void module_info_free( module_info_type * module_info ) {
-  util_safe_free(module_info->ministep_name);
+  free(module_info->ministep_name);
   module_data_block_vector_free( module_info->data_block_vector );
   module_obs_block_vector_free( module_info->obs_block_vector );
   free( module_info );

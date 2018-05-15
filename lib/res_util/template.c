@@ -61,7 +61,7 @@ static char * template_load( const template_type * template , const subst_list_t
 void template_set_template_file( template_type * template , const char * template_file) {
   template->template_file = util_realloc_string_copy( template->template_file , template_file );
   if (template->internalize_template) {
-    util_safe_free( template->template_buffer );
+    free( template->template_buffer );
     template->template_buffer = template_load( template , NULL );
   }
 }
@@ -106,9 +106,9 @@ template_type * template_alloc( const char * template_file , bool internalize_te
 
 void template_free( template_type * template ) {
   subst_list_free( template->arg_list );
-  util_safe_free( template->template_file );
-  util_safe_free( template->template_buffer );
-  util_safe_free( template->arg_string );
+  free( template->template_file );
+  free( template->template_buffer );
+  free( template->arg_string );
 
 #ifdef ERT_HAVE_REGEXP
   regfree( &template->start_regexp );
@@ -218,7 +218,7 @@ int template_add_args_from_string( template_type * template , const char * arg_s
 
 
 char * template_get_args_as_string( template_type * template ) {
-  util_safe_free( template->arg_string );
+  free( template->arg_string );
   template->arg_string = subst_list_alloc_string_representation( template->arg_list );
   return template->arg_string;
 }

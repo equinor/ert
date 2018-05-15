@@ -72,8 +72,8 @@ config_path_elm_type * config_path_elm_alloc( const config_root_path_type * root
 
 
 void config_path_elm_free( config_path_elm_type * path_elm ) {
-  util_safe_free( path_elm->rel_path );
-  util_safe_free( path_elm->abs_path );
+  free( path_elm->rel_path );
+  free( path_elm->abs_path );
   free( path_elm );
 }
 

@@ -73,7 +73,7 @@ void scalar_config_free(scalar_config_type * scalar_config) {
   for (i=0; i < scalar_config->data_size; i++) 
     trans_func_free( scalar_config->transform[i] );
                      
-  util_safe_free( scalar_config->transform );
+  free( scalar_config->transform );
   free(scalar_config);
 }
 

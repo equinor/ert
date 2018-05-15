@@ -63,7 +63,7 @@ const char * rml_enkf_log_get_log_file( const rml_enkf_log_type * data) {
 
 void rml_enkf_log_free(rml_enkf_log_type * rml_log) {
   rml_enkf_log_close( rml_log );
-  util_safe_free( rml_log->log_file );
+  free( rml_log->log_file );
   free( rml_log );
 }
 

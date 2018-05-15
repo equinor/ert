@@ -615,12 +615,12 @@ void site_config_free(site_config_type * site_config) {
   if (site_config->__license_root_path != NULL)
     util_clear_directory(site_config->__license_root_path, true, true);
 
-  util_safe_free(site_config->config_file);
-  util_safe_free(site_config->manual_url);
-  util_safe_free(site_config->default_browser);
-  util_safe_free(site_config->license_root_path);
-  util_safe_free(site_config->license_root_path_site);
-  util_safe_free(site_config->__license_root_path);
+  free(site_config->config_file);
+  free(site_config->manual_url);
+  free(site_config->default_browser);
+  free(site_config->license_root_path);
+  free(site_config->license_root_path_site);
+  free(site_config->__license_root_path);
 
   queue_config_free(site_config->queue_config);
   free(site_config);

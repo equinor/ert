@@ -84,7 +84,7 @@ void rms_export_roff_from_keyword(const char *filename, ecl_grid_type *ecl_grid,
         rms_file_get_FILE(rms_file));
     rms_tagkey_free(data_key);
     
-    util_safe_free(target_data);
+    free(target_data);
   }
 
   rms_file_complete_fwrite(rms_file);

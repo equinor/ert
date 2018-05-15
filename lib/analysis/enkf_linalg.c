@@ -283,10 +283,10 @@ void enkf_linalg_lowrankE(const matrix_type * S , /* (nrobs x nrens) */
 
    matrix_free( X0 );
    matrix_free( U0 );
-   util_safe_free( inv_sig0 );
+   free( inv_sig0 );
 
    matrix_free( U1 );
-   util_safe_free( sig1 );
+   free( sig1 );
 
 }
 
@@ -362,7 +362,7 @@ void enkf_linalg_lowrankCinv__(const matrix_type * S ,
       for (i=0; i < nrmin; i++)
         matrix_imul(Z , i , j , inv_sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
   }
-  util_safe_free( inv_sig0 );
+  free( inv_sig0 );
 }
 
 

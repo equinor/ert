@@ -108,7 +108,7 @@ static point_obs_type * point_obs_alloc( block_obs_source_type   source_type , i
 
 
 static void point_obs_free( point_obs_type * point_obs ) {
-  util_safe_free( point_obs->sum_key );
+  free( point_obs->sum_key );
   free( point_obs );
 }
 

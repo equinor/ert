@@ -127,8 +127,8 @@ rng_config_type * rng_config_alloc(const config_content_type * config_content) {
 }
 
 void rng_config_free( rng_config_type * rng) {
-  util_safe_free( rng->seed_load_file );
-  util_safe_free( rng->seed_store_file );
+  free( rng->seed_load_file );
+  free( rng->seed_store_file );
   free( rng->random_seed );
   free( rng );
 }

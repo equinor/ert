@@ -137,9 +137,9 @@ int gen_data_config_get_byte_size( const gen_data_config_type * config , int rep
 
 
 static void gen_data_config_reset_template( gen_data_config_type * config ) {
-  util_safe_free( config->template_buffer );
-  util_safe_free( config->template_key );
-  util_safe_free( config->template_file );
+  free( config->template_buffer );
+  free( config->template_key );
+  free( config->template_file );
 
   config->template_file = NULL;
   config->template_buffer = NULL;
@@ -347,10 +347,10 @@ void gen_data_config_free(gen_data_config_type * config) {
   int_vector_free( config->data_size_vector );
   int_vector_free( config->active_report_steps );
 
-  util_safe_free( config->key );
-  util_safe_free( config->template_buffer );
-  util_safe_free( config->template_file );
-  util_safe_free( config->template_key );
+  free( config->key );
+  free( config->template_buffer );
+  free( config->template_file );
+  free( config->template_key );
   bool_vector_free( config->active_mask );
 
   free(config);

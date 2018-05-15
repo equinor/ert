@@ -71,9 +71,9 @@ config_root_path_type * config_root_path_alloc( const char * input_path ) {
 
 
 void config_root_path_free( config_root_path_type * root_path ) {
-  util_safe_free( root_path->rel_path );
-  util_safe_free( root_path->abs_path );
-  util_safe_free( root_path->input_path );
+  free( root_path->rel_path );
+  free( root_path->abs_path );
+  free( root_path->input_path );
   free( root_path );
 }
 

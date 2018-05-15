@@ -62,7 +62,7 @@ const char * fwd_step_log_get_log_file( const fwd_step_log_type * data) {
 
 void fwd_step_log_free(fwd_step_log_type * fwd_step_log) {
   fwd_step_log_close( fwd_step_log );
-  util_safe_free( fwd_step_log->log_file );
+  free( fwd_step_log->log_file );
   free( fwd_step_log );
 }
 

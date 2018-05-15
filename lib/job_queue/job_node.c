@@ -73,10 +73,10 @@ struct job_queue_node_struct {
 
 
 void job_queue_node_free_error_info( job_queue_node_type * node ) {
-  util_safe_free(node->error_reason);
-  util_safe_free(node->stderr_capture);
-  util_safe_free(node->stderr_file);
-  util_safe_free(node->failed_job);
+  free(node->error_reason);
+  free(node->stderr_capture);
+  free(node->stderr_file);
+  free(node->failed_job);
 }
 
 
@@ -189,11 +189,11 @@ void job_queue_node_set_queue_index( job_queue_node_type * node , int queue_inde
 */
 
 void job_queue_node_free_data(job_queue_node_type * node) {
-  util_safe_free( node->job_name );
-  util_safe_free( node->exit_file );
-  util_safe_free( node->ok_file );
-  util_safe_free( node->status_file );
-  util_safe_free( node->run_cmd );
+  free( node->job_name );
+  free( node->exit_file );
+  free( node->ok_file );
+  free( node->status_file );
+  free( node->run_cmd );
   util_free_stringlist( node->argv , node->argc );
 }
 
@@ -205,7 +205,7 @@ void job_queue_node_free(job_queue_node_type * node) {
   */
   job_queue_node_free_data(node);
   job_queue_node_free_error_info(node);
-  util_safe_free(node->run_path);
+  free(node->run_path);
   free(node);
 }
 

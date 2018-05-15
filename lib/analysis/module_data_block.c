@@ -57,7 +57,7 @@ const int  * module_data_block_get_active_indices(const module_data_block_type *
 }
 
 void module_data_block_free( module_data_block_type * module_data_block ) {
-  util_safe_free(module_data_block->key);
+  free(module_data_block->key);
   free( module_data_block );
 }
 

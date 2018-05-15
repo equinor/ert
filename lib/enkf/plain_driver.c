@@ -201,7 +201,7 @@ void plain_driver_free(void *_driver) {
 
   free( driver->vector_fmt );
   free( driver->node_fmt );
-  util_safe_free( driver->mount_point );
+  free( driver->mount_point );
   free(driver);
 }
 

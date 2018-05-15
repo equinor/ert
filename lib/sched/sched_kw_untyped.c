@@ -157,7 +157,7 @@ void sched_kw_untyped_fprintf(const sched_kw_untyped_type *kw , FILE *stream) {
 
 
 void sched_kw_untyped_free(sched_kw_untyped_type * kw) {
-  util_safe_free(kw->buffer);
+  free(kw->buffer);
   free(kw->kw_name);
   free(kw);
 }

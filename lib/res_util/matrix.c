@@ -489,8 +489,8 @@ void matrix_full_size( matrix_type * matrix ) {
 
 static void matrix_free_content(matrix_type * matrix) {
   if (matrix->data_owner)
-    util_safe_free(matrix->data);
-  util_safe_free( matrix->name );
+    free(matrix->data);
+  free( matrix->name );
 }
 
 void matrix_free(matrix_type * matrix) {

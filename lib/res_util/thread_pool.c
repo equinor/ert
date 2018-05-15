@@ -474,8 +474,8 @@ void thread_pool_add_job(thread_pool_type * pool , start_func_ftype * start_func
 
 
 void thread_pool_free(thread_pool_type * pool) {
-  util_safe_free( pool->job_slots );
-  util_safe_free( pool->queue );
+  free( pool->job_slots );
+  free( pool->queue );
   free(pool);
 }
 

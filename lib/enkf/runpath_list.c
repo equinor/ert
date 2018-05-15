@@ -133,8 +133,8 @@ runpath_list_type * runpath_list_alloc(const char * export_file) {
 
 void runpath_list_free( runpath_list_type * list ) {
   vector_free( list->list );
-  util_safe_free( list->line_fmt );
-  util_safe_free( list->export_file);
+  free( list->line_fmt );
+  free( list->export_file);
   free( list );
 }
 

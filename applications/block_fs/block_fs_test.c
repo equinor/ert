@@ -33,12 +33,12 @@ action_node_type * action_node_alloc_new() {
 }
 
 void action_node_free(action_node_type * node) {
-  util_safe_free( node->filename );
+  free( node->filename );
   free( node );
 }
 
 void action_node_update(action_node_type * node, test_action_enum action , char * filename) {
-  util_safe_free( node->filename );
+  free( node->filename );
   node->filename = filename;  /* Node takes ownership of filename. */
   node->action   = action;
 }

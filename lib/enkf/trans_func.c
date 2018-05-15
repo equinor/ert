@@ -209,7 +209,7 @@ const stringlist_type * trans_func_get_param_names( const trans_func_type * tran
 void trans_func_free( trans_func_type * trans_func ) {
   stringlist_free( trans_func->param_names );
   double_vector_free( trans_func->params );
-  util_safe_free( trans_func->name );
+  free( trans_func->name );
   free( trans_func );
 }
 

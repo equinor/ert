@@ -398,8 +398,8 @@ void queue_driver_free_driver(queue_driver_type * driver) {
 
 void queue_driver_free(queue_driver_type * driver) {
   queue_driver_free_driver(driver);
-  util_safe_free(driver->name);
-  util_safe_free(driver->max_running_string);
+  free(driver->name);
+  free(driver->max_running_string);
   free(driver);
 }
 

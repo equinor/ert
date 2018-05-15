@@ -659,8 +659,8 @@ static void ensemble_config_init_PRED(ensemble_config_type * ensemble_config, co
   char * ext;
   util_alloc_file_components(template_file, NULL, &base, &ext);
   char * target_file = util_alloc_filename(NULL , base, ext);
-  util_safe_free(base);
-  util_safe_free(ext);
+  free(base);
+  free(ext);
 
   enkf_config_node_type * config_node = ensemble_config_add_gen_kw(ensemble_config, PRED_KEY, false);
   enkf_config_node_update_gen_kw(config_node, target_file, template_file, parameters, min_std, init_files);
@@ -855,7 +855,7 @@ int ensemble_config_get_observations( const ensemble_config_type * config , enkf
   const enkf_config_node_type * config_node = ensemble_config_user_get_node( config , user_key , &index_key);
   if (config_node != NULL) {
     num_obs = enkf_config_node_load_obs( config_node , enkf_obs , index_key , obs_count , obs_time , y , std);
-    util_safe_free( index_key );
+    free( index_key );
   }
   return num_obs;
 }
@@ -1103,7 +1103,7 @@ int ensemble_config_forward_init(const ensemble_config_type * ens_config,
             else
               fprintf(stderr,"Failed to initialize node: %s\n", enkf_node_get_key( node ));
 
-            util_safe_free( init_file );
+            free( init_file );
             result |= LOAD_FAILURE;
           }
         }

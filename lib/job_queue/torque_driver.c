@@ -400,7 +400,7 @@ static int torque_driver_submit_shell_job(torque_driver_type * driver,
 
 void torque_job_free(torque_job_type * job) {
 
-  util_safe_free(job->torque_jobnr_char);
+  free(job->torque_jobnr_char);
   free(job);
 }
 
@@ -554,7 +554,7 @@ void torque_driver_kill_job(void * __driver, void * __job) {
 
 void torque_driver_free(torque_driver_type * driver) {
   torque_driver_set_debug_output(driver, NULL);
-  util_safe_free(driver->queue_name);
+  free(driver->queue_name);
   free(driver->qdel_cmd);
   free(driver->qstat_cmd);
   free(driver->qsub_cmd);
