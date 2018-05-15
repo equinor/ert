@@ -455,9 +455,3 @@ void * analysis_module_get_ptr( const analysis_module_type * module , const char
 }
 
 
-/*****************************************************************/
-
-const char * analysis_module_flag_enum_iget( int index, int * value) {
-  return util_enum_iget( index , ANALYSIS_MODULE_FLAG_ENUM_SIZE , (const util_enum_element_type []) { ANALYSIS_MODULE_FLAG_ENUM_DEFS }, value);
-}
-
