@@ -17,10 +17,10 @@ import sys
 
 try:
   from PyQt4.QtCore import QDir, pyqtSignal
-  from PyQt4.QtGui import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
+  from PyQt4.QtGui import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
 except ImportError:
   from PyQt5.QtCore import QDir, pyqtSignal
-  from PyQt5.QtWidgets import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox
+  from PyQt5.QtWidgets import QFormLayout, QWidget, QLineEdit, QToolButton, QHBoxLayout, QFileDialog, QComboBox, QMessageBox
 
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
@@ -125,7 +125,12 @@ class ExportPanel(QWidget):
 
     def export(self):
         keyword = self._kw_model[self._keywords.currentIndex()]
-        report_step = self.getReportStep(keyword)
+        try:
+           report_step = self.getReportStep(keyword)
+        except IndexError as e:
+           QMessageBox.question(self, 'Error', e.args[0], QMessageBox.NoButton)
+           return
+
         all_cases = self._case_model.getAllItems()
         selected_case = all_cases[self._case_combo.currentIndex()]
         path = self._file_name.text()
