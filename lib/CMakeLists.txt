@@ -10,7 +10,7 @@ else ()
 endif ()
 
 add_library(res res_util/res_log.c
-                res_util/log.c
+                res_util/log.cpp
                 res_util/ui_return.c
                 res_util/subst_list.c
                 res_util/subst_func.c
