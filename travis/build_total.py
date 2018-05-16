@@ -40,7 +40,7 @@ def build(source_dir, install_dir, test, c_flags="", test_flags=None):
                   "-DCMAKE_PREFIX_PATH=%s" % install_dir,
                   "-DCMAKE_MODULE_PATH=%s/share/cmake/Modules" % install_dir,
                   "-DERT_USE_OPENMP=ON",
-                  "-DCMAKE_CXX_FLAGS=-Werror",
+                  "-DCMAKE_CXX_FLAGS=-Werror -Wno-unused-result",
                   "-DCMAKE_C_FLAGS=%s" % c_flags
                  ]
 
