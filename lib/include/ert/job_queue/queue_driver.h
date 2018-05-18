@@ -33,13 +33,6 @@ extern "C" {
     TORQUE_DRIVER = 4
   } job_driver_type;
 
-#define JOB_DRIVER_ENUM_DEFS                                    \
-{.value = 0 , .name = "NULL_DRIVER"},                           \
-{.value = 1 , .name = "LSF_DRIVER"},                            \
-{.value = 2 , .name = "LOCAL_DRIVER"},                          \
-{.value = 3 , .name = "RSH_DRIVER"},                            \
-{.value = 4 , .name = "TORQUE_DRIVER"}
-
 #define JOB_DRIVER_ENUM_SIZE 5
 
   /*
@@ -83,7 +76,6 @@ extern "C" {
 
   void queue_driver_free(queue_driver_type * driver);
   void queue_driver_free__(void * driver);
-  const char * queue_driver_type_enum_iget(int index, int * value);
 
   typedef enum {SUBMIT_OK           = 0 ,
                 SUBMIT_JOB_FAIL     = 1 , /* Typically no more attempts. */
