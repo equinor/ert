@@ -28,7 +28,7 @@ int main( int argc , char ** argv) {
   if (util_file_exists(argv[1])) {
     FILE * file = util_fopen(filename, "w");
     fprintf(file, "All good");
-    util_fclose(file);
+    fclose(file);
     exit(0);
   } else 
     exit(1); 

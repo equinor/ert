@@ -60,8 +60,8 @@ bool check_original_exported_data_equal(const enkf_node_type * field_node) {
 
   bool ret = ecl_kw_numeric_equal(kw_original, kw_exported, 1e-5 , 1e-5);
 
-  util_fclose(original_stream);
-  util_fclose(exported_stream);
+  fclose(original_stream);
+  fclose(exported_stream);
   ecl_kw_free(kw_original);
   ecl_kw_free(kw_exported);
 

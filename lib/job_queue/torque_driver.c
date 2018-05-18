@@ -333,7 +333,7 @@ void torque_job_create_submit_script(const char * script_filename, const char * 
     fprintf(script_file, " %s", job_argv[i]);
   }
 
-  util_fclose(script_file);
+  fclose(script_file);
 }
 
 static void torque_debug_spawn_status_info(torque_driver_type *driver, int status) {
