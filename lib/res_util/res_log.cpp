@@ -26,10 +26,10 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/res_util/res_log.h>
-#include <ert/res_util/res_util_defaults.h>
+#include <ert/res_util/res_log.hpp>
+#include <ert/res_util/res_util_defaults.hpp>
 
 static log_type * logh = NULL;               /* Handle to an open log file. */
 

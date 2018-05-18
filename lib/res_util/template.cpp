@@ -22,13 +22,13 @@
 
 #include <ert/util/ert_api_config.h>
 
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/res_util/subst_func.h>
-#include <ert/res_util/subst_list.h>
-#include <ert/res_util/template.h>
-#include <ert/res_util/template_type.h>
+#include <ert/res_util/subst_func.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/template.hpp>
+#include <ert/res_util/template_type.hpp>
 
 /**
    Iff the template is set up with internaliz_template == false the

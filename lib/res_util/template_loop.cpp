@@ -22,11 +22,11 @@
 #include <sys/types.h>
 #include <regex.h>
 
-#include <ert/util/parser.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/parser.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/res_util/template_type.h>
-#include <ert/res_util/template.h>
+#include <ert/res_util/template_type.hpp>
+#include <ert/res_util/template.hpp>
 
 #define END_REGEXP           "[{]%[[:space:]]+endfor[[:space:]]+%[}]"
 #define LOOP_REGEXP          "[{]%[[:space:]]+for[[:space:]]+([$]?[[:alpha:]][[:alnum:]]*)[[:space:]]+in[[:space:]]+[[]([^]]*)[]][[:space:]]+%[}]"

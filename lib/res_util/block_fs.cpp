@@ -29,12 +29,13 @@
 #include <time.h>
 #include <fnmatch.h>
 
-#include <ert/util/hash.h>
-#include <ert/util/util.h>
-#include <ert/util/vector.h>
-#include <ert/util/buffer.h>
-#include <ert/util/long_vector.h>
-#include <ert/res_util/block_fs.h>
+#include <ert/util/hash.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/util/buffer.hpp>
+#include <ert/util/long_vector.hpp>
+
+#include <ert/res_util/block_fs.hpp>
 
 
 #define MOUNT_MAP_MAGIC_INT  8861290

@@ -19,11 +19,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "ert/util/build_config.h"
-
-#include <ert/util/util.h>
-#include <ert/util/util_env.h>
-#include <ert/util/buffer.h>
+#include "ert/util/build_config.hpp"
+#include <ert/util/util.hpp>
+#include <ert/util/util_env.hpp>
+#include <ert/util/buffer.hpp>
 
 #ifdef HAVE_POSIX_SETENV
 #define PATHVAR_SPLIT ":"

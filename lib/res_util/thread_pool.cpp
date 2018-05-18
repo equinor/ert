@@ -28,10 +28,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <ert/res_util/thread_pool.h>
-#include <ert/res_util/res_portability.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/res_util/thread_pool.hpp>
+#include <ert/res_util/res_portability.hpp>
+
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
 
 /**

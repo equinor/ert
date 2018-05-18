@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_blas.h>
-#include <ert/res_util/matrix_lapack.h>
-#include <ert/res_util/regression.h>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_blas.hpp>
+#include <ert/res_util/matrix_lapack.hpp>
+#include <ert/res_util/regression.hpp>
 
 
 

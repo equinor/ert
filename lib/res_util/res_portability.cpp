@@ -18,9 +18,9 @@
 
 #include <pthread.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/res_util/res_portability.h>
+#include <ert/res_util/res_portability.hpp>
 #include "ert/util/build_config.h"
 
 void res_yield() {

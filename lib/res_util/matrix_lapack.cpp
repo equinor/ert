@@ -18,10 +18,10 @@
 
 #include <math.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_lapack.h>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_lapack.hpp>
 
 #ifdef __cplusplus
 extern "C" {
