@@ -14,14 +14,14 @@ add_library(res res_util/res_log.c
                 res_util/ui_return.c
                 res_util/subst_list.c
                 res_util/subst_func.c
-                res_util/matrix_stat.c
+                res_util/matrix_stat.cpp
                 res_util/matrix_blas.cpp
-                res_util/matrix_lapack.c
+                res_util/matrix_lapack.cpp
                 res_util/matrix.cpp
                 res_util/thread_pool.c
                 res_util/template.c
                 res_util/template_loop.c
-                res_util/path_fmt.c
+                res_util/path_fmt.cpp
                 res_util/res_env.c
                 res_util/res_portability.c
                 res_util/block_fs.cpp
