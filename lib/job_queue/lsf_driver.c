@@ -922,9 +922,9 @@ static void lsf_driver_node_failure(lsf_driver_type * driver, const lsf_job_type
     driver->debug_output = true;
     res_log_info("Have turned lsf debug info ON.");
   }
-  util_free(hostnames);
+  free(hostnames);
   stringlist_free(hosts);
-  util_free(fname);
+  free(fname);
 }
 
 
