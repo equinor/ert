@@ -118,7 +118,7 @@ typedef struct {
 
 /** Allocates an empty instance with no values. */
 static subst_list_string_type * subst_list_string_alloc(const char * key) {
-  subst_list_string_type * node = util_malloc(sizeof * node );
+  subst_list_string_type * node = (subst_list_string_type*)util_malloc(sizeof * node );
   node->value_owner       = false;
   node->value             = NULL;
   node->doc_string        = NULL;
@@ -179,7 +179,7 @@ static void subst_list_string_set_value(subst_list_string_type * node, const cha
 */
 
 static subst_list_func_type * subst_list_func_alloc( const char * func_name, subst_func_type * func) {
-  subst_list_func_type * subst_func = util_malloc( sizeof * subst_func );
+  subst_list_func_type * subst_func = (subst_list_func_type*)util_malloc( sizeof * subst_func );
   subst_func->name      = util_alloc_string_copy( func_name );
   subst_func->func      = func;
   return subst_func;
@@ -212,7 +212,7 @@ static subst_list_string_type * subst_list_get_string_node(const subst_list_type
 
   /* Linear search ... */  /*Should use map*/
   while ((index < vector_get_size(subst_list->string_data)) && (node == NULL)) {
-    subst_list_string_type * inode = vector_iget( subst_list->string_data , index);
+    subst_list_string_type * inode = (subst_list_string_type*)vector_iget( subst_list->string_data , index);
 
     if (strcmp(inode->key , key) == 0)  /* Found it */
       node = inode;
@@ -281,7 +281,7 @@ bool subst_list_has_key( const subst_list_type * subst_list , const char * key) 
 
 
 subst_list_type * subst_list_alloc(const void * input_arg) {
-  subst_list_type * subst_list = util_malloc(sizeof * subst_list );
+  subst_list_type * subst_list = (subst_list_type*)util_malloc(sizeof * subst_list );
   UTIL_TYPE_ID_INIT( subst_list , SUBST_LIST_TYPE_ID);
   subst_list->parent           = NULL;
   subst_list->func_pool        = NULL;
@@ -291,9 +291,9 @@ subst_list_type * subst_list_alloc(const void * input_arg) {
 
   if (input_arg != NULL) {
     if (subst_list_is_instance( input_arg ))
-      subst_list_set_parent( subst_list , input_arg );
+      subst_list_set_parent( subst_list , (const subst_list_type*)input_arg );
     else if (subst_func_pool_is_instance( input_arg ))
-      subst_list->func_pool = input_arg;
+      subst_list->func_pool = (const subst_func_pool_type*)input_arg;
     else
       util_abort("%s: run_time cast failed - invalid type on input argument.\n",__func__);
   }
@@ -434,7 +434,7 @@ static bool subst_list_replace_strings__(const subst_list_type * subst_list , bu
   int index;
   bool global_match = false;
   for (index = 0; index < vector_get_size( subst_list->string_data ); index++) {
-    const subst_list_string_type * node = vector_iget_const( subst_list->string_data , index );
+    const subst_list_string_type * node = (const subst_list_string_type*)vector_iget_const( subst_list->string_data , index );
     if (node->value != NULL) {
       bool match;
       buffer_rewind( buffer );
@@ -485,7 +485,7 @@ static bool subst_list_eval_funcs____(const subst_list_type * subst_list , const
   bool global_match = false;
   int index;
   for (index = 0; index < vector_get_size( subst_list->func_data); index++) {
-    const subst_list_func_type * subst_func = vector_iget_const( subst_list->func_data , index );
+    const subst_list_func_type * subst_func = (const subst_list_func_type*)vector_iget_const( subst_list->func_data , index );
     const char                 * func_name  = subst_func->name;
 
     bool match;
@@ -497,7 +497,7 @@ static bool subst_list_eval_funcs____(const subst_list_type * subst_list , const
 
       if (match) {
         bool   update     = false;
-        char * arg_start  = buffer_get_data( buffer );
+        char * arg_start  = (char*)buffer_get_data( buffer );
         arg_start        += buffer_get_offset( buffer ) + strlen( func_name );
 
         if (arg_start[0] == '(') {  /* We require that an opening paren follows immediately behind the function name. */
@@ -696,7 +696,7 @@ bool subst_list_update_file(const subst_list_type * subst_list , const char * fi
 bool subst_list_update_string(const subst_list_type * subst_list , char ** string) {
   buffer_type * buffer = buffer_alloc_private_wrapper( *string , strlen( *string ) + 1);
   bool match = subst_list_update_buffer(subst_list , buffer);
-  *string = buffer_get_data( buffer );
+  *string = (char*)buffer_get_data( buffer );
   buffer_free_container( buffer );
 
   return match;
@@ -779,12 +779,12 @@ subst_list_type * subst_list_alloc_deep_copy(const subst_list_type * src) {
   {
     int index;
     for (index = 0; index < vector_get_size( src->string_data ); index++) {
-      const subst_list_string_type * node = vector_iget_const( src->string_data , index );
+      const subst_list_string_type * node = (const subst_list_string_type*)vector_iget_const( src->string_data , index );
       subst_list_insert__( copy , node->key , node->value , node->doc_string , true , SUBST_DEEP_COPY);
     }
 
     for (index = 0; index < vector_get_size( src->func_data ); index++) {
-      const subst_list_func_type * src_node  = vector_iget_const( src->func_data , index );
+      const subst_list_func_type * src_node  = (const subst_list_func_type*)vector_iget_const( src->func_data , index );
       subst_list_func_type       * copy_node = subst_list_func_alloc( src_node->name , src_node->func );
       vector_append_owned_ref( copy->func_data , copy_node , subst_list_func_free__ );
     }
@@ -801,7 +801,7 @@ int subst_list_get_size( const subst_list_type * subst_list) {
 
 const char * subst_list_iget_key( const subst_list_type * subst_list , int index) {
   if (index < vector_get_size(subst_list->string_data)) {
-    const subst_list_string_type * node = vector_iget_const( subst_list->string_data , index );
+    const subst_list_string_type * node = (const subst_list_string_type*)vector_iget_const( subst_list->string_data , index );
     return node->key;
   } else {
     util_abort("%s: index:%d to large \n",__func__ , index);
@@ -812,7 +812,7 @@ const char * subst_list_iget_key( const subst_list_type * subst_list , int index
 
 const char * subst_list_iget_value( const subst_list_type * subst_list , int index) {
   if (index < vector_get_size(subst_list->string_data)) {
-    const subst_list_string_type * node = vector_iget_const( subst_list->string_data , index );
+    const subst_list_string_type * node = (const subst_list_string_type*)vector_iget_const( subst_list->string_data , index );
     return node->value;
   } else {
     util_abort("%s: index:%d to large \n",__func__ , index);
@@ -821,21 +821,21 @@ const char * subst_list_iget_value( const subst_list_type * subst_list , int ind
 }
 
 const char * subst_list_get_value( const subst_list_type * subst_list , const char * key) {
-  const subst_list_string_type * node = hash_get( subst_list->map , key );
+  const subst_list_string_type * node = (const subst_list_string_type*)hash_get( subst_list->map , key );
   return node->value;
 }
 
 
 
 const char * subst_list_get_doc_string( const subst_list_type * subst_list , const char * key) {
-  const subst_list_string_type * node = hash_get( subst_list->map , key );
+  const subst_list_string_type * node = (const subst_list_string_type*)hash_get( subst_list->map , key );
   return node->doc_string;
 }
 
 
 const char * subst_list_iget_doc_string( const subst_list_type * subst_list , int index) {
   if (index < vector_get_size(subst_list->string_data)) {
-    const subst_list_string_type * node = vector_iget_const( subst_list->string_data , index );
+    const subst_list_string_type * node = (const subst_list_string_type*)vector_iget_const( subst_list->string_data , index );
     return node->doc_string;
   } else {
     util_abort("%s: index:%d to large \n",__func__ , index);
@@ -848,7 +848,7 @@ const char * subst_list_iget_doc_string( const subst_list_type * subst_list , in
 void subst_list_fprintf(const subst_list_type * subst_list , FILE * stream) {
   int index;
   for (index=0; index < vector_get_size( subst_list->string_data ); index++) {
-    const subst_list_string_type * node = vector_iget_const( subst_list->string_data , index );
+    const subst_list_string_type * node = (const subst_list_string_type*)vector_iget_const( subst_list->string_data , index );
     fprintf(stream , "%s = %s\n" , node->key , node->value);
   }
 }
@@ -879,7 +879,7 @@ char * subst_list_alloc_string_representation( const subst_list_type * subst_lis
         buffer_strcat( buffer , ", ");
     }
     buffer_shrink_to_fit( buffer );
-    return_string = buffer_get_data( buffer );
+    return_string = (char*)buffer_get_data( buffer );
     buffer_free_container( buffer );
   }
   return return_string;
