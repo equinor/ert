@@ -11,6 +11,10 @@
 
 #define TEMPLATE_TYPE_ID 7781045
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
 struct template_struct {
   UTIL_TYPE_ID_DECLARATION;
   char            * template_file;           /* The template file - if internalize_template == false this filename can contain keys which will be replaced at instantiation time. */
@@ -28,7 +32,12 @@ struct template_struct {
 typedef struct loop_struct loop_type;
 void template_init_loop_regexp( struct template_struct* );
 int template_eval_loop( const struct template_struct* , buffer_type * buffer , int global_offset , struct loop_struct * );
-void template_eval_loops( const struct template_struct* template , buffer_type * buffer );
+void template_eval_loops( const struct template_struct* template_ , buffer_type * buffer );
 #endif //ERT_HAVE_REGEXP
 
 #endif //ERT_TEMPLATE_TYPE_H
+
+
+#ifdef __cplusplus
+}
+#endif

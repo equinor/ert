@@ -16,7 +16,11 @@
    for more details.
 */
 
+#ifndef _GNU_SOURCE
 #define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
+#endif
+
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

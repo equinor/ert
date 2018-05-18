@@ -71,7 +71,7 @@ static void regcompile(regex_t * reg , const char * reg_string , int flags) {
 
 
 static loop_type * loop_alloc( const char * buffer , int global_offset , regmatch_t tag_offset , regmatch_t __var_offset , regmatch_t __items_offset) {
-  loop_type * loop  = util_malloc( sizeof * loop);
+  loop_type * loop  = (loop_type*)util_malloc( sizeof * loop);
 
   loop->opentag_offset  = global_offset + tag_offset.rm_so;
   loop->opentag_length  = tag_offset.rm_eo - tag_offset.rm_so;
@@ -139,7 +139,7 @@ static void loop_eval( const loop_type * loop , const char * body , buffer_type 
     
     
     while (true) {
-      char * data = buffer_get_data( var_expansion );
+      char * data = (char*)buffer_get_data( var_expansion );
       char * match_ptr = strstr( &data[search_offset] , loop->loop_var );
       
       if (match_ptr == NULL) 
@@ -188,7 +188,7 @@ static void loop_eval( const loop_type * loop , const char * body , buffer_type 
 }
 
 
-int template_eval_loop( const template_type * template , buffer_type * buffer , int global_offset , loop_type * loop) {
+int template_eval_loop( const template_type * _template , buffer_type * buffer , int global_offset , loop_type * loop) {
   int flags = 0;
   int NMATCH = 3;
   regmatch_t match_list_loop[NMATCH];
@@ -197,9 +197,9 @@ int template_eval_loop( const template_type * template , buffer_type * buffer , 
   {
     int end_match , loop_match;
     {
-      char * search_data = buffer_get_data( buffer );  // This pointer must be refetched because the buffer can realloc and move it.
-      loop_match  = regexec( &template->start_regexp , &search_data[search_offset] , NMATCH , match_list_loop , flags );
-      end_match   = regexec( &template->end_regexp   , &search_data[search_offset] , NMATCH , match_list_end , flags );
+      char * search_data = (char*)buffer_get_data( buffer );  // This pointer must be refetched because the buffer can realloc and move it.
+      loop_match  = regexec( &_template->start_regexp , &search_data[search_offset] , NMATCH , match_list_loop , flags );
+      end_match   = regexec( &_template->end_regexp   , &search_data[search_offset] , NMATCH , match_list_end , flags );
     }
 
     if (end_match == REG_NOMATCH)
@@ -208,9 +208,9 @@ int template_eval_loop( const template_type * template , buffer_type * buffer , 
     if (loop_match == 0) {
       if (match_list_loop[0].rm_so < match_list_end[0].rm_so) {
         // This is a nested sub loop - evaluate that recursively.
-        char * search_data = buffer_get_data( buffer );
+        char * search_data = (char*)buffer_get_data( buffer );
         loop_type * sub_loop = loop_alloc( search_data , search_offset , match_list_loop[0] , match_list_loop[1] , match_list_loop[2]);
-        global_offset = template_eval_loop( template , buffer , global_offset , sub_loop );
+        global_offset = template_eval_loop( _template , buffer , global_offset , sub_loop );
       }
     } 
 
@@ -219,9 +219,9 @@ int template_eval_loop( const template_type * template , buffer_type * buffer , 
        changed so we must search for the end again - to get the right
        offset. */
     {
-      char * search_data = buffer_get_data( buffer );
+      char * search_data = (char*)buffer_get_data( buffer );
       search_offset = global_offset;
-      end_match   = regexec( &template->end_regexp   , &search_data[search_offset] , NMATCH , match_list_end , flags );
+      end_match   = regexec( &_template->end_regexp   , &search_data[search_offset] , NMATCH , match_list_end , flags );
       if (end_match == REG_NOMATCH)
         util_exit("Fatal error - have lost a {% endfor %} marker \n");
     }
@@ -231,14 +231,14 @@ int template_eval_loop( const template_type * template , buffer_type * buffer , 
     {
       buffer_type * loop_expansion = buffer_alloc( loop->body_length * stringlist_get_size( loop->items) );
       {
-        char * src_data = buffer_get_data( buffer );
+        char * src_data = (char*)buffer_get_data( buffer );
         char * body = util_alloc_substring_copy( src_data , loop->body_offset , loop->body_length );
         buffer_type * var_expansion = buffer_alloc( 0 );
         int ivar;
         
         for (ivar =0; ivar < stringlist_get_size( loop->items ); ivar++) {
           loop_eval(loop , body , var_expansion , ivar );
-          buffer_strcat( loop_expansion , buffer_get_data( var_expansion ));
+          buffer_strcat( loop_expansion , (const char*)buffer_get_data( var_expansion ));
         }
         
         buffer_free( var_expansion );
@@ -265,23 +265,23 @@ int template_eval_loop( const template_type * template , buffer_type * buffer , 
 
 
 
-void template_init_loop_regexp( template_type * template ) {
-  regcompile( &template->start_regexp , LOOP_REGEXP , LOOP_OPTIONS );
-  regcompile( &template->end_regexp , END_REGEXP , END_OPTIONS );
+void template_init_loop_regexp( template_type * _template ) {
+  regcompile( &_template->start_regexp , LOOP_REGEXP , LOOP_OPTIONS );
+  regcompile( &_template->end_regexp , END_REGEXP , END_OPTIONS );
 }
 
 
-void template_eval_loops( const template_type * template , buffer_type * buffer ) {
+void template_eval_loops( const template_type * _template , buffer_type * buffer ) {
   int NMATCH = 10;
   regmatch_t match_list[NMATCH];
   {
     int global_offset = 0;
     while( true ) {
-      char * src_data = buffer_get_data( buffer );
-      int match = regexec(&template->start_regexp , &src_data[global_offset] , NMATCH , match_list , 0);
+      char * src_data = (char*)buffer_get_data( buffer );
+      int match = regexec(&_template->start_regexp , &src_data[global_offset] , NMATCH , match_list , 0);
       if (match == 0) {
         loop_type * loop = loop_alloc( src_data , global_offset , match_list[0] , match_list[1] , match_list[2]);
-        global_offset = template_eval_loop( template , buffer , global_offset , loop );
+        global_offset = template_eval_loop( _template , buffer , global_offset , loop );
         if (global_offset < 0) {
           fprintf(stderr,"** Warning ** : found {%% for .... %%} loop construct without mathcing {%% endfor %%}\n");
           break;
