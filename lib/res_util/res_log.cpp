@@ -49,7 +49,7 @@ void res_log_add_message(message_level_type message_level,
   /* We have not managed to open log handle, if the message is critical we write to stderr. */
   if (!logh) {
     if (message_level >= LOG_ERROR )
-      log_add_message_stream(stderr, message_level, false, message);
+      log_add_message_stream(stderr, message_level, (message_level_type)false, message);
     return;
   }
 
@@ -172,7 +172,7 @@ bool res_log_init_log_default( bool verbose){
 
 void res_log_close() {
   if (logh) {
-    log_add_message(logh, false,
+    log_add_message(logh, (message_level_type)false,
                     "Exiting ert application normally - all is fine(?)");
     log_close( logh );
   }

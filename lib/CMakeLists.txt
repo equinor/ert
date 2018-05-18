@@ -9,7 +9,7 @@ else ()
    message(STATUS "LSF not found")
 endif ()
 
-add_library(res res_util/res_log.c
+add_library(res res_util/res_log.cpp
                 res_util/log.cpp
                 res_util/ui_return.c
                 res_util/subst_list.c
@@ -22,11 +22,11 @@ add_library(res res_util/res_log.c
                 res_util/template.c
                 res_util/template_loop.c
                 res_util/path_fmt.cpp
-                res_util/res_env.c
+                res_util/res_env.cpp
                 res_util/res_portability.c
                 res_util/block_fs.cpp
                 res_util/res_version.c
-                res_util/regression.c
+                res_util/regression.cpp
                 res_util/thread_pool.c
                 res_util/template_loop.c  # Highly deprecated
 
