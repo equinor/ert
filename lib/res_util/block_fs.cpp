@@ -16,7 +16,9 @@
    for more details.
 */
 
+#ifndef _GNU_SOURCE
 #define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -199,7 +201,7 @@ static inline void block_fs_fseek(block_fs_type * block_fs , long offset) {
 
 
 static file_node_type * file_node_alloc( node_status_type status , long int offset , int node_size) {
-  file_node_type * file_node = util_malloc( sizeof * file_node );
+  file_node_type * file_node = (file_node_type*)util_malloc( sizeof * file_node );
 
   file_node->node_offset = offset;    /* These should NEVER change. */
   file_node->node_size   = node_size; /* -------------------------  */
@@ -440,7 +442,7 @@ static file_node_type * file_node_index_fread_alloc( FILE * stream ) {
 */
 
 static file_node_type * file_node_index_buffer_fread_alloc( buffer_type * buffer) {
-  node_status_type status = buffer_fread_int( buffer );
+  node_status_type status = (node_status_type)buffer_fread_int( buffer );
   long int node_offset    = buffer_fread_long( buffer );
   int node_size           = buffer_fread_int( buffer );
   {
@@ -457,7 +459,7 @@ static file_node_type * file_node_index_buffer_fread_alloc( buffer_type * buffer
 /*****************************************************************/
 
 static free_node_type * free_node_alloc( file_node_type * file_node ) {
-  free_node_type * free_node = util_malloc( sizeof * free_node );
+  free_node_type * free_node = (free_node_type*)util_malloc( sizeof * free_node );
 
   free_node->file_node = file_node;
   free_node->next = NULL;
@@ -544,13 +546,13 @@ static file_node_type * block_fs_lookup_free_node( const block_fs_type * block_f
 */
 
 static void block_fs_insert_free_node( block_fs_type * block_fs , file_node_type * file_node ) {
-  free_node_type * new = free_node_alloc( file_node );
+  free_node_type * _new = free_node_alloc( file_node );
 
   /* Special case: starting with a empty list. */
   if (block_fs->free_nodes == NULL) {
-    new->next = NULL;
-    new->prev = NULL;
-    block_fs->free_nodes = new;
+    _new->next = NULL;
+    _new->prev = NULL;
+    block_fs->free_nodes = _new;
   } else {
     free_node_type * current = block_fs->free_nodes;
     free_node_type * prev    = NULL;
@@ -565,30 +567,30 @@ static void block_fs_insert_free_node( block_fs_type * block_fs , file_node_type
          The new node should be added at the end of the list - i.e. it
          will not have a next node.
       */
-      new->next = NULL;
-      new->prev = prev;
-      prev->next = new;
+      _new->next = NULL;
+      _new->prev = prev;
+      prev->next = _new;
     } else {
       /*
         The new node should be placed BEFORE the current node.
       */
       if (prev == NULL) {
         /* The new node should become the new list head. */
-        block_fs->free_nodes = new;
-        new->prev = NULL;
+        block_fs->free_nodes = _new;
+        _new->prev = NULL;
       } else {
-        prev->next = new;
-        new->prev  = prev;
+        prev->next = _new;
+        _new->prev  = prev;
       }
-      current->prev = new;
-      new->next  = current;
+      current->prev = _new;
+      _new->next  = current;
     }
-    if (new != NULL)     if (new->next == new) util_abort("%s: broken LIST1 \n",__func__);
+    if (_new != NULL)     if (_new->next == _new) util_abort("%s: broken LIST1 \n",__func__);
     if (prev != NULL)    if (prev->next == prev) util_abort("%s: broken LIST2 \n",__func__);
     if (current != NULL) if (current->next == current) util_abort("%s: Broken LIST3 \n",__func__);
   }
   block_fs->num_free_nodes++;
-  block_fs->free_size += new->file_node->node_size;
+  block_fs->free_size += _new->file_node->node_size;
 }
 
 
@@ -649,7 +651,7 @@ static block_fs_type * block_fs_alloc_empty( const char * mount_file ,
                                              int fsync_interval ,
                                              bool read_only,
                                              bool use_lockfile) {
-  block_fs_type * block_fs      = util_malloc( sizeof * block_fs );
+  block_fs_type * block_fs      = (block_fs_type*)util_malloc( sizeof * block_fs );
   UTIL_TYPE_ID_INIT(block_fs , BLOCK_FS_TYPE_ID);
 
   block_fs->mount_file           = util_alloc_string_copy( mount_file );
@@ -1187,7 +1189,7 @@ bool block_fs_has_file( block_fs_type * block_fs , const char * filename) {
 
 
 static void block_fs_unlink_file__( block_fs_type * block_fs , const char * filename ) {
-  file_node_type * node = hash_pop( block_fs->index , filename );
+  file_node_type * node = (file_node_type*)hash_pop( block_fs->index , filename );
   block_fs_clear_cache_node( block_fs , node );
 
   node->status      = NODE_FREE;
@@ -1332,7 +1334,7 @@ static void block_fs_fwrite_file_unlocked(block_fs_type * block_fs , const char 
   size_t min_size = data_size + file_node_header_size( filename );
 
   if (block_fs_has_file__( block_fs , filename )) {
-    file_node = hash_get( block_fs->index , filename );
+    file_node = (file_node_type*)hash_get( block_fs->index , filename );
     if (file_node->node_size < min_size) {
       /*
          The current node is too small for the new content:
@@ -1416,7 +1418,7 @@ static void block_fs_fread__(block_fs_type * block_fs , const file_node_type * f
 void block_fs_fread_realloc_buffer( block_fs_type * block_fs , const char * filename , buffer_type * buffer) {
   block_fs_aquire_rlock( block_fs );
   {
-    file_node_type * node = hash_get( block_fs->index , filename);
+    file_node_type * node = (file_node_type*)hash_get( block_fs->index , filename);
 
     buffer_clear( buffer );   /* Setting: content_size = 0; pos = 0;  */
     {
@@ -1464,7 +1466,7 @@ void block_fs_fread_realloc_buffer( block_fs_type * block_fs , const char * file
 void block_fs_fread_file( block_fs_type * block_fs , const char * filename , void * ptr) {
   block_fs_aquire_rlock( block_fs );
   {
-    file_node_type * node = hash_get( block_fs->index , filename);
+    file_node_type * node = (file_node_type*)hash_get( block_fs->index , filename);
     block_fs_fread__( block_fs , node , ptr , node->data_size);
   }
   block_fs_release_rwlock( block_fs );
@@ -1476,7 +1478,7 @@ int block_fs_get_filesize( block_fs_type * block_fs , const char * filename) {
   int data_size;
   block_fs_aquire_rlock( block_fs );
   {
-    file_node_type * node = hash_get( block_fs->index , filename );
+    file_node_type * node = (file_node_type*)hash_get( block_fs->index , filename );
     data_size = node->data_size;
   }
   block_fs_release_rwlock( block_fs );
@@ -1504,7 +1506,7 @@ static void block_fs_dump_index( block_fs_type * block_fs ) {
         util_fwrite_int( hash_get_size( block_fs->index ) , index_stream);
         while (!hash_iter_is_complete( index_iter )) {
           const char * key = hash_iter_get_next_key( index_iter );
-          const file_node_type * file_node = hash_get( block_fs->index , key );
+          const file_node_type * file_node = (const file_node_type*)hash_get( block_fs->index , key );
 
           util_fwrite_string( key , index_stream);
           file_node_dump_index( file_node , index_stream );
@@ -1616,7 +1618,7 @@ static void block_fs_rotate__( block_fs_type * block_fs ) {
 
       while (!hash_iter_is_complete( iter )) {
         const char * key          = hash_iter_get_next_key( iter );
-        file_node_type * old_node = hash_get( old_index , key );
+        file_node_type * old_node = (file_node_type*)hash_get( old_index , key );
         buffer_clear( buffer );
 
         /* Low level read of the old file. */
@@ -1668,7 +1670,7 @@ struct user_file_node_struct {
 
 
 static user_file_node_type * user_file_node_alloc( const char * name , const file_node_type * file_node) {
-  user_file_node_type * user_node = util_malloc( sizeof * user_node );
+  user_file_node_type * user_node = (user_file_node_type*)util_malloc( sizeof * user_node );
 
   user_node->filename = util_alloc_string_copy( name );   /* name can be NULL */
   user_node->file_node = file_node;
@@ -1772,7 +1774,7 @@ vector_type * block_fs_alloc_filelist( block_fs_type * block_fs  , const char * 
     hash_iter_type * iter        = hash_iter_alloc( block_fs->index );
     while ( !hash_iter_is_complete( iter )) {
       const char * key            = hash_iter_get_next_key( iter );
-      file_node_type * node = hash_get( block_fs->index , key );
+      file_node_type * node = (file_node_type*)hash_get( block_fs->index , key );
       if (pattern_match( pattern , key )) {
         user_file_node_type * unode = user_file_node_alloc( key , node );
         vector_append_owned_ref( sort_vector , unode , user_file_node_free__ );

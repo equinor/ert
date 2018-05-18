@@ -15,21 +15,20 @@ add_library(res res_util/res_log.c
                 res_util/subst_list.c
                 res_util/subst_func.c
                 res_util/matrix_stat.c
-                res_util/matrix_blas.c
+                res_util/matrix_blas.cpp
                 res_util/matrix_lapack.c
-                res_util/matrix.c
+                res_util/matrix.cpp
                 res_util/thread_pool.c
                 res_util/template.c
                 res_util/template_loop.c
                 res_util/path_fmt.c
                 res_util/res_env.c
                 res_util/res_portability.c
-                res_util/block_fs.c
+                res_util/block_fs.cpp
                 res_util/res_version.c
                 res_util/regression.c
                 res_util/thread_pool.c
                 res_util/template_loop.c  # Highly deprecated
-                res_util/block_fs.c
 
                 config/conf_util.c
                 config/conf.c
