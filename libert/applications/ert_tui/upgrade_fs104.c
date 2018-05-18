@@ -280,7 +280,7 @@ int main (int argc , char ** argv) {
           printf("Changing to directory:%s\n" , path);
           chdir(path);
         }
-        util_safe_free( path );
+        free( path );
       }
 
       ens_size = config_get_value_as_int( config , NUM_REALIZATIONS_KEY );

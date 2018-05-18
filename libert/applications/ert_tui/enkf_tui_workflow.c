@@ -59,7 +59,7 @@ void enkf_tui_workflow_run( void * arg ) {
           }
         }
       }
-      util_safe_free( workflow_name );
+      free( workflow_name );
     }
   }
 }

@@ -212,7 +212,7 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
     enkf_main_init_current_case_from_existing(enkf_main, source_fs , src_step);
     enkf_fs_decref(source_fs);
   }
-  util_safe_free( source_case );
+  free( source_case );
 }
 
 
