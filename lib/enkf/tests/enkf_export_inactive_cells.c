@@ -106,12 +106,12 @@ void check_exported_data(const char * exported_file,
 
 
   if (init_file) {
-    util_fclose(original_stream);
+    fclose(original_stream);
     ecl_kw_free(kw_original);
   }
 
   if (ECL_GRDECL_FILE == file_type) {
-    util_fclose(exported_stream);
+    fclose(exported_stream);
     ecl_kw_free(kw_exported);
   } else
     field_free(exported_field);

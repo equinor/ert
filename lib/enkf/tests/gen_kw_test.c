@@ -79,12 +79,12 @@ void test_read_erroneous_gen_kw_file() {
     FILE * stream = util_fopen(parameter_filename, "w");
     const char * data = util_alloc_sprintf("MULTFLT1 NORMAL 0\nMULTFLT2 RAW\nMULTFLT3 NORMAL 0");
     util_fprintf_string(data, 30, true, stream);
-    util_fclose(stream);
+    fclose(stream);
 
     FILE * tmpl_stream = util_fopen(tmpl_filename, "w");
     const char * tmpl_data = util_alloc_sprintf("<MULTFLT1> <MULTFLT2> <MULTFLT3>\n");
     util_fprintf_string(tmpl_data, 30, true, tmpl_stream);
-    util_fclose(tmpl_stream);
+    fclose(tmpl_stream);
   }
 
   gen_kw_config_type * gen_kw_config = gen_kw_config_alloc_empty("MULTFLT", "<%s>");

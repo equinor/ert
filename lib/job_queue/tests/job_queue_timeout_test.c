@@ -105,13 +105,13 @@ job_type ** alloc_jobs(int num_jobs, const char * cmd) {
 
 void free_jobs(job_type ** jobs, int num_jobs) {
   for (int i = 0; i < num_jobs; i++) {
-    util_free(jobs[i]->run_path);
-    util_free(jobs[i]->cmd);
-    util_free(jobs[i]->argv[3]);
-    util_free(jobs[i]->argv);
-    util_free(jobs[i]);
+    free(jobs[i]->run_path);
+    free(jobs[i]->cmd);
+    free(jobs[i]->argv[3]);
+    free(jobs[i]->argv);
+    free(jobs[i]);
   }
-  util_free(jobs);
+  free(jobs);
 }
 
 

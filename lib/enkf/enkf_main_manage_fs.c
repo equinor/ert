@@ -60,7 +60,7 @@ char* enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main) {
   if (enkf_main_current_case_file_exists(enkf_main)) {
     FILE * stream = util_fopen( current_case_file  , "r");
     current_case = util_fscanf_alloc_token(stream);
-    util_fclose(stream);
+    fclose(stream);
   } else {
     util_abort("%s: File: storage/current_case not found, aborting! \n",__func__);
   }
@@ -387,7 +387,7 @@ static void enkf_main_write_current_case_file( const enkf_main_type * enkf_main,
   char * current_case_file = util_alloc_filename(ens_path , base, NULL);
   FILE * stream = util_fopen( current_case_file  , "w");
   fprintf(stream, "%s", case_path);
-  util_fclose(stream);
+  fclose(stream);
   free(current_case_file);
 }
 

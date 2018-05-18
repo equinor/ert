@@ -128,7 +128,7 @@ bool ranking_table_fwrite_ranking( const ranking_table_type * ranking_table , co
     } else
       util_abort("%s: internal error \n",__func__);
 
-    util_fclose(file);
+    fclose(file);
 
     return true;
   } else
