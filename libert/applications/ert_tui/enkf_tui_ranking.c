@@ -101,7 +101,7 @@ static void enkf_tui_ranking_create_obs( void * arg ) {
     free( obs_keys_input );
     stringlist_free( ranking_keys );
     free( ranking_key );
-    util_safe_free( ranking_file );
+    free( ranking_file );
   }
 }
 
@@ -149,12 +149,12 @@ static void enkf_tui_ranking_create_data__( void * arg , bool sort_increasing) {
             ranking_table_add_data_ranking( ranking_table , sort_increasing , ranking_key , user_key , key_index , fs , config_node, step );
             ranking_table_display_ranking( ranking_table , ranking_key );
           }
-          util_safe_free( ranking_key );
+          free( ranking_key );
         }
       }
     }
   }
-  util_safe_free( user_key );
+  free( user_key );
 }
 
 static void enkf_tui_ranking_create_data_increasing( void * arg ) {

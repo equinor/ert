@@ -154,7 +154,7 @@ void enkf_tui_export_gen_data(void * arg) {
           }
 
           free(full_path);
-          util_safe_free(path);
+          free(path);
         }
       }
       enkf_node_free(node);
