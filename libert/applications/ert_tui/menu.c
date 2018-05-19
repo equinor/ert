@@ -62,6 +62,42 @@
    save is not an option'
 */
 
+static char * alloc_sprintf_escape(const char * src , int max_escape) {
+  if (src == NULL)
+    return NULL;
+
+  if (max_escape == 0)
+    max_escape = strlen( src );
+
+  {
+    const int src_len = strlen( src );
+    char * target = (char*)util_calloc( max_escape + strlen(src) + 1 , sizeof * target);
+
+    int escape_count = 0;
+    int src_offset = 0;
+    int target_offset = 0;
+
+    while (true) {
+      if (src[src_offset] == '%') {
+        if (escape_count < max_escape) {
+          target[target_offset] = '%';
+          target_offset++;
+          escape_count++;
+        }
+      }
+      target[target_offset] = src[src_offset];
+      target_offset++;
+      src_offset++;
+      if (src_offset == src_len)
+        break;
+    }
+    target[target_offset] = '\0';
+    target = (char*)util_realloc( target , (target_offset + 1) * sizeof * target);
+    return target;
+  }
+}
+
+
 
 
 
@@ -142,7 +178,7 @@ static bool __string_contains(const char * string , const char * char_set) {
 menu_type * menu_alloc(const char * title , const char * quit_label , const char * quit_keys) {
   menu_type * menu = (menu_type*)util_malloc(sizeof * menu );
 
-  menu->title     = util_alloc_sprintf_escape( title , 0 );
+  menu->title     = alloc_sprintf_escape( title , 0 );
   menu->quit_keys = util_alloc_string_copy( quit_keys );
   menu->items     = vector_alloc_new();
   menu->complete_key_set = util_alloc_string_copy( quit_keys );
