@@ -55,7 +55,7 @@ add_library(res res_util/res_log.c
 
                 sched/group_history.c
                 sched/group_index.c
-                sched/gruptree.c
+                sched/gruptree.cpp
                 sched/history.c
                 sched/sched_blob.c
                 sched/sched_file.c
