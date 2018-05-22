@@ -45,7 +45,7 @@ static void sched_blob_append_buffer( sched_blob_type * blob , const char * new_
 
 
 void sched_blob_append_token( sched_blob_type * blob , const char * token ) {
-  char * new_buffer = util_calloc( (strlen(token) + 2) , sizeof * new_buffer );
+  char * new_buffer = (char*)util_calloc( (strlen(token) + 2) , sizeof * new_buffer );
   sched_blob_append_buffer( blob , new_buffer );
   free( new_buffer );
 }
@@ -53,7 +53,7 @@ void sched_blob_append_token( sched_blob_type * blob , const char * token ) {
 
 
 sched_blob_type * sched_blob_alloc() {
-  sched_blob_type * blob = util_malloc( sizeof * blob );
+  sched_blob_type * blob = (sched_blob_type*)util_malloc( sizeof * blob );
   blob->buffer    = NULL;
   blob->time_step = NULL;
   return blob;

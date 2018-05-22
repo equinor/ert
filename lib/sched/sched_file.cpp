@@ -92,7 +92,7 @@ struct sched_file_struct {
 
 static sched_block_type * sched_block_alloc_empty()
 {
-  sched_block_type * block = util_malloc(sizeof * block);
+  sched_block_type * block = (sched_block_type*)util_malloc(sizeof * block);
   block->kw_list = vector_alloc_new();
   block->kw_hash = hash_alloc();
   return block;
@@ -125,7 +125,7 @@ static void sched_block_add_kw(sched_block_type * block, const sched_kw_type * k
     hash_insert_hash_owned_ref( block->kw_hash , sched_kw_get_name( kw ) , vector_alloc_new() , vector_free__);
   
   {
-    vector_type * kw_vector = hash_get( block->kw_hash , sched_kw_get_name( kw ));
+    vector_type * kw_vector = (vector_type*)hash_get( block->kw_hash , sched_kw_get_name( kw ));
     vector_append_ref( kw_vector , kw );
   }
 }
@@ -133,7 +133,7 @@ static void sched_block_add_kw(sched_block_type * block, const sched_kw_type * k
 
 sched_kw_type * sched_block_iget_kw(sched_block_type * block, int i)
 {
-  return vector_iget( block->kw_list , i);
+  return (sched_kw_type*)vector_iget( block->kw_list , i);
 }
 
 
@@ -144,7 +144,7 @@ static void sched_block_fprintf(const sched_block_type * block, FILE * stream)
 {
   int i;
   for (i=0; i < vector_get_size(block->kw_list); i++) {
-    const sched_kw_type * sched_kw = vector_iget_const( block->kw_list , i);
+    const sched_kw_type * sched_kw = (const sched_kw_type*)vector_iget_const( block->kw_list , i);
     sched_kw_fprintf(sched_kw, stream);
   }
 }
@@ -177,7 +177,7 @@ static void sched_file_add_block(sched_file_type * sched_file, sched_block_type 
 
 sched_block_type * sched_file_iget_block(const sched_file_type * sched_file, int i)
 {
-  return vector_iget(sched_file->blocks , i);
+  return (sched_block_type*)vector_iget(sched_file->blocks , i);
 }
 
 /**
@@ -247,10 +247,10 @@ static void sched_file_update_index( sched_file_type * sched_file ) {
       vector_free( sched_file->kw_list_by_type );
     sched_file->kw_list_by_type = vector_alloc_NULL_initialized( NUM_SCHED_KW_TYPES );
     for (ikw = 0; ikw < vector_get_size( sched_file->kw_list ); ikw++) {
-      const sched_kw_type * kw = vector_iget_const( sched_file->kw_list , ikw );
+      const sched_kw_type * kw = (const sched_kw_type*)vector_iget_const( sched_file->kw_list , ikw );
       sched_kw_type_enum type  = sched_kw_get_type( kw );
       {
-        vector_type * tmp      = vector_iget( sched_file->kw_list_by_type , type );
+        vector_type * tmp      = (vector_type*)vector_iget( sched_file->kw_list_by_type , type );
         
         if (tmp == NULL) {
           tmp = vector_alloc_new();
@@ -274,17 +274,17 @@ static void sched_file_update_index( sched_file_type * sched_file ) {
        Adding a pseudo block at the start which runs from the start of
        time (i.e. EPOCH start 01/01/1970) to simulation start.
     */
-    current_block = sched_block_alloc_empty( 0 );
+    current_block = sched_block_alloc_empty( );
     current_block->block_start_time  = sched_file->start_time;//-1;     /* Need this funny node - hhmmmmmm */
     current_block->block_end_time    = sched_file->start_time;
     sched_file_add_block( sched_file , current_block );
     
-    current_block = sched_block_alloc_empty( 0 );
+    current_block = sched_block_alloc_empty( );
     current_block->block_start_time  = sched_file->start_time;
     current_time = sched_file->start_time;
     
     for (ikw = 0; ikw < vector_get_size( sched_file->kw_list ); ikw++) {
-      const sched_kw_type * kw = vector_iget_const( sched_file->kw_list , ikw );
+      const sched_kw_type * kw = (const sched_kw_type*)vector_iget_const( sched_file->kw_list , ikw );
       sched_kw_type_enum type  = sched_kw_get_type( kw );
       {
         sched_block_add_kw( current_block , kw );
@@ -313,7 +313,7 @@ static void sched_file_update_index( sched_file_type * sched_file ) {
           sched_file_add_block( sched_file , current_block );
           
           /* Creating a new block - not yet added to the sched_file. */
-          current_block = sched_block_alloc_empty( vector_get_size( sched_file->blocks ));
+          current_block = (sched_block_type*)sched_block_alloc_empty();
           current_block->block_start_time = current_time;
         }
       }
@@ -357,7 +357,7 @@ static void sched_file_init_fixed_length( sched_file_type * sched_file ) {
 
 sched_file_type * sched_file_alloc(time_t start_time)
 {
-  sched_file_type * sched_file = util_malloc(sizeof * sched_file);
+  sched_file_type * sched_file = (sched_file_type*)util_malloc(sizeof * sched_file);
   UTIL_TYPE_ID_INIT( sched_file , SCHED_FILE_TYPE_ID);
   sched_file->kw_list            = vector_alloc_new();
   sched_file->kw_list_by_type    = NULL;
@@ -415,7 +415,7 @@ time_t_vector_type * sched_file_alloc_time_t_vector( const sched_file_type * sch
   int i;
   time_t_vector_append( vector , sched_file->start_time );
   for (i=1; i < vector_get_size( sched_file->blocks ); i++) {
-    const sched_block_type * block = vector_iget_const( sched_file->blocks , i );
+    const sched_block_type * block = (const sched_block_type*)vector_iget_const( sched_file->blocks , i );
     time_t_vector_append( vector , block->block_end_time );
   }
   return vector;
@@ -534,7 +534,7 @@ static void sched_file_fprintf_i__(const sched_file_type * sched_file, int last_
   
   for(int i=0; i<= last_restart_file; i++)
   {
-    const sched_block_type * sched_block = vector_iget_const( sched_file->blocks , i);
+    const sched_block_type * sched_block = (const sched_block_type*)vector_iget_const( sched_file->blocks , i);
     sched_block_fprintf(sched_block, stream);
   }
 
@@ -704,7 +704,7 @@ sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_
   sched_file_type * target = sched_file_alloc(src->start_time);
   
   for (ikw = 0; ikw < vector_get_size( src->kw_list ); ikw++) {
-    sched_kw_type * kw = vector_iget( src->kw_list , ikw );
+    sched_kw_type * kw = (sched_kw_type*)vector_iget( src->kw_list , ikw );
     sched_file_add_kw( target , kw );
   }
                                                                 
@@ -834,12 +834,12 @@ int sched_file_step_count( const char * filename ) {
 
     if (kw_type == DATES) {
       sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL , NULL);
-      const sched_kw_dates_type * dates_kw = sched_kw_get_data( sched_kw );
+      const sched_kw_dates_type * dates_kw = (const sched_kw_dates_type*)sched_kw_get_data( sched_kw );
       step_count += sched_kw_dates_get_size( dates_kw );
       sched_kw_free( sched_kw );
     } else if (kw_type == TSTEP ) {
       sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL , NULL);
-      const sched_kw_tstep_type * tstep_kw = sched_kw_get_data( sched_kw );
+      const sched_kw_tstep_type * tstep_kw = (const sched_kw_tstep_type*)sched_kw_get_data( sched_kw );
       step_count += sched_kw_tstep_get_length( tstep_kw );
       sched_kw_free( sched_kw );
     } else 
@@ -921,10 +921,10 @@ bool sched_file_well_open( const sched_file_type * sched_file ,
     sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
     
     if (hash_has_key( block->kw_hash , "WCONHIST")) {
-      const vector_type * wconhist_vector = hash_get( block->kw_hash , "WCONHIST");
+      const vector_type * wconhist_vector = (const vector_type*)hash_get( block->kw_hash , "WCONHIST");
       int i;
       for (i=0; i < vector_get_size( wconhist_vector ); i++) {
-        const sched_kw_type * kw = vector_iget_const( wconhist_vector , i );
+        const sched_kw_type * kw = (const sched_kw_type*)vector_iget_const( wconhist_vector , i );
         if (sched_kw_has_well( kw , well_name )) {
           well_found = true;
           well_open = sched_kw_well_open( kw , well_name );
@@ -934,10 +934,10 @@ bool sched_file_well_open( const sched_file_type * sched_file ,
 
     
     if (hash_has_key( block->kw_hash , "WCONINJE")) {
-      const vector_type * wconinje_vector = hash_get( block->kw_hash , "WCONINJE");
+      const vector_type * wconinje_vector = (const vector_type*)hash_get( block->kw_hash , "WCONINJE");
       int i;
       for (i=0; i < vector_get_size( wconinje_vector ); i++) {
-        const sched_kw_type * kw = vector_iget_const( wconinje_vector , i );
+        const sched_kw_type * kw = (const sched_kw_type*)vector_iget_const( wconinje_vector , i );
         if (sched_kw_has_well( kw , well_name )) {
           well_found = true;
           well_open  = sched_kw_well_open( kw , well_name );
@@ -967,13 +967,13 @@ double sched_file_well_wconhist_rate( const sched_file_type * sched_file ,
     sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
     
     if (hash_has_key( block->kw_hash , "WCONHIST")) {
-      const vector_type * wconhist_vector = hash_get( block->kw_hash , "WCONHIST");
+      const vector_type * wconhist_vector = (const vector_type*)hash_get( block->kw_hash , "WCONHIST");
       int i;
       for (i=0; i < vector_get_size( wconhist_vector ); i++) {
-        sched_kw_type * kw = vector_iget( wconhist_vector , i );
+        sched_kw_type * kw = (sched_kw_type*)vector_iget( wconhist_vector , i );
         if (sched_kw_has_well( kw , well_name )) {
           well_found = true;
-          rate = sched_kw_wconhist_get_orat( sched_kw_get_data( kw ) , well_name );
+          rate = sched_kw_wconhist_get_orat( (sched_kw_wconhist_type*)sched_kw_get_data( kw ) , well_name );
         }
       }
     }
@@ -995,13 +995,13 @@ double sched_file_well_wconinje_rate( const sched_file_type * sched_file ,
     sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
     
     if (hash_has_key( block->kw_hash , "WCONINJE")) {
-      const vector_type * wconhist_vector = hash_get( block->kw_hash , "WCONINJE");
+      const vector_type * wconhist_vector = (const vector_type*)hash_get( block->kw_hash , "WCONINJE");
       int i;
       for (i=0; i < vector_get_size( wconhist_vector ); i++) {
-        sched_kw_type * kw = vector_iget( wconhist_vector , i );
+        sched_kw_type * kw = (sched_kw_type*)vector_iget( wconhist_vector , i );
         if (sched_kw_has_well( kw , well_name )) {
           well_found = true;
-          rate = sched_kw_wconinje_get_surface_flow( sched_kw_get_data( kw ) , well_name );
+          rate = sched_kw_wconinje_get_surface_flow( (const sched_kw_wconinje_type*)sched_kw_get_data( kw ) , well_name );
         }
       }
     }

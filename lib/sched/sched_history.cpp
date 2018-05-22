@@ -120,7 +120,7 @@ static void sched_history_install_group_index( sched_history_type * sched_histor
 
 
 
-#define VAR_LIST(...) (const char *[]) { __VA_ARGS__ , NULL  }
+
 
 void sched_history_install_index( sched_history_type * sched_history ) {
   /*1: Installing well based keys like WOPRH. */
@@ -128,63 +128,72 @@ void sched_history_install_index( sched_history_type * sched_history ) {
     hash_iter_type * well_iter = hash_iter_alloc( sched_history->well_history );
     while (!hash_iter_is_complete( well_iter )) {
       const char * well_name         = hash_iter_get_next_key( well_iter );
-      const well_history_type * well = hash_get( sched_history->well_history , well_name );
+      const well_history_type * well = (const well_history_type*)hash_get( sched_history->well_history , well_name );
       
       /* WOPR */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WOPRH" , well , WCONHIST , wconhist_state_iget_WOPRH );
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WOPR" , "WOPRH") , well_name);
+        const char * varlist[3] = {"WOPR" , "WOPRH", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
       
       
       /* WGPR */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WGPRH" , well , WCONHIST , wconhist_state_iget_WGPRH );
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WGPR" , "WGPRH") , well_name);
+        const char * varlist[3] = {"WGPR" , "WGPRH", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
       
       
       /* WWPR */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WWPRH" , well , WCONHIST , wconhist_state_iget_WWPRH );
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WWPR" , "WWPRH") , well_name);
+        const char * varlist[3] = {"WWPR" , "WWPRH", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
       
       
       /* WWCT */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WWCTH" , well , WCONHIST , wconhist_state_iget_WWCTH );
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WWCT" , "WWCTH") , well_name);
+        const char * varlist[3] = {"WWCT" , "WWCTH", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
 
       /* WGOR */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WGORH" , well , WCONHIST , wconhist_state_iget_WGORH );
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WGOR" , "WGORH") , well_name);
+        const char * varlist[3] = {"WGOR" , "WGORH", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
 
       /* WGPT */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WGPTH" , well , WCONHIST , wconhist_state_iget_WGPTH );
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WGPT" , "WGPTH") , well_name);
+        const char * varlist[3] = {"WGPT" , "WGPTH", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
 
       /* WOPT */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WOPTH" , well , WCONHIST , wconhist_state_iget_WOPTH );
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WOPT" , "WOPTH") , well_name);
+        const char * varlist[3] = {"WOPT" , "WOPTH", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
       
       /* WWPT */
       {
         well_index_type * well_index = well_index_alloc( well_name , "WWPTH" , well , WCONHIST , wconhist_state_iget_WWPTH );
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WWPT" , "WWPTH") , well_name);
+        const char * varlist[3] = {"WWPT" , "WWPTH", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
 
       /* STAT */
       {
         well_index_type * well_index = well_index_alloc( well_name , "STAT" , well , WCONHIST , wconhist_state_iget_STAT );
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("STAT" ) , well_name);
+        const char * varlist[2] = {"STAT", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
 
       
@@ -194,7 +203,8 @@ void sched_history_install_index( sched_history_type * sched_history ) {
       {
         well_index_type * well_index = well_index_alloc( well_name , "WWIRH" , well , WCONINJH , wconinjh_state_iget_WWIRH );   /* The first type */
         well_index_add_type( well_index , WCONINJE , wconinje_state_iget_WWIRH );                         /* The second type */
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WWIRH" , "WWIR") , well_name);
+        const char * varlist[3] = {"WWIRH" , "WWIR", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
       
       /* WGIRH - this can be got from _either_ the WCONINJH keyowrord
@@ -203,7 +213,8 @@ void sched_history_install_index( sched_history_type * sched_history ) {
       {
         well_index_type * well_index = well_index_alloc( well_name , "WGIRH" , well , WCONINJH , wconinjh_state_iget_WGIRH );   /* The first type */
         well_index_add_type( well_index , WCONINJE , wconinje_state_iget_WGIRH );                         /* The second type */
-        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WGIRH" , "WGIR") , well_name);
+        const char * varlist[3] = {"WGIRH" , "WGIR", NULL};
+        sched_history_install_well_index( sched_history , well_index , varlist , well_name);
       }
     }
     hash_iter_free( well_iter );
@@ -216,54 +227,62 @@ void sched_history_install_index( sched_history_type * sched_history ) {
     hash_iter_type * group_iter = hash_iter_alloc( sched_history->group_history );
     while (!hash_iter_is_complete( group_iter )) {
       const char * group_name          = hash_iter_get_next_key( group_iter );
-      const group_history_type * group = hash_get( sched_history->group_history , group_name );
+      const group_history_type * group = (const group_history_type*)hash_get( sched_history->group_history , group_name );
       
       /* GOPR */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GOPRH" , group , group_history_iget_GOPRH );
-        sched_history_install_group_index( sched_history , group_index , VAR_LIST("GOPR" , "GOPRH") , group_name);
+        const char * varlist[3] = {"GOPR" , "GOPRH", NULL};
+        sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
 
       /* GGPR */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GGPRH" , group , group_history_iget_GGPRH );
-        sched_history_install_group_index( sched_history , group_index , VAR_LIST("GGPR" , "GGPRH") , group_name);
+        const char * varlist[3] = {"GGPR" , "GGPRH", NULL};
+        sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
 
       /* GWPR */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GWPRH" , group , group_history_iget_GWPRH );
-        sched_history_install_group_index( sched_history , group_index , VAR_LIST("GWPR" , "GWPRH") , group_name);
+        const char * varlist[3] = {"GWPR" , "GWPRH", NULL}; 
+        sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
 
       /* GWCT */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GWCTH" , group , group_history_iget_GWCTH );
-        sched_history_install_group_index( sched_history , group_index , VAR_LIST("GWCT" , "GWCTH") , group_name);
+        const char * varlist[3] = {"GWCT" , "GWCTH", NULL};
+        sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
 
       /* GGOR */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GGORH" , group , group_history_iget_GGORH );
-        sched_history_install_group_index( sched_history , group_index , VAR_LIST("GGOR" , "GGORH") , group_name);
+        const char * varlist[3] = {"GGOR" , "GGORH", NULL};
+        sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
 
       /* GOPT */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GOPTH" , group , group_history_iget_GOPTH );
-        sched_history_install_group_index( sched_history , group_index , VAR_LIST("GOPT" , "GOPTH") , group_name);
+        const char * varlist[3] = {"GOPT" , "GOPTH", NULL};
+        sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
 
       /* GGPT */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GGPTH" , group , group_history_iget_GGPTH );
-        sched_history_install_group_index( sched_history , group_index , VAR_LIST("GGPT" , "GGPTH") , group_name);
+        const char * varlist[3] = {"GGPT" , "GGPTH", NULL};
+        sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
       
       /* GWPT */
       {
         group_index_type * group_index = group_index_alloc( group_name , "GWPTH" , group , group_history_iget_GWPTH );
-        sched_history_install_group_index( sched_history , group_index , VAR_LIST("GWPT" , "GWPTH") , group_name);
+        const char * varlist[3] = {"GWPT" , "GWPTH", NULL};
+        sched_history_install_group_index( sched_history , group_index , varlist , group_name);
       }
     }
     hash_iter_free( group_iter );
@@ -272,7 +291,7 @@ void sched_history_install_index( sched_history_type * sched_history ) {
 
   /*3: Installing field based indices (which is just an alias to the FIELD group); */
   {
-    const group_history_type * group = hash_get( sched_history->group_history , FIELD_GROUP );
+    const group_history_type * group = (const group_history_type*)hash_get( sched_history->group_history , FIELD_GROUP );
     const char * group_name          = FIELD_GROUP;
     
     /* FWPRH */
@@ -343,7 +362,7 @@ double sched_history_iget( const sched_history_type * sched_history , const char
     fprintf(stderr,"** Warning - report step:%d is in the prediction phase - can NOT ask for historical data! \n",report_step);
   
   if (well_index_is_instance( index ))
-    return well_history_iget( index , report_step );
+    return well_history_iget( (well_index_type*)index , report_step );
   else if (group_index_is_instance( index ))
     return group_history_iget( index , report_step );
   else {
@@ -397,7 +416,7 @@ time_t sched_history_iget_time_t( const sched_history_type * sched_history , int
 
 
 sched_history_type * sched_history_alloc( const char * sep_string ) {
-  sched_history_type * sched_history = util_malloc( sizeof * sched_history );
+  sched_history_type * sched_history = (sched_history_type*)util_malloc( sizeof * sched_history );
 
   sched_history->well_history  = NULL;
   sched_history->group_history = NULL;
@@ -425,12 +444,12 @@ void sched_history_free( sched_history_type * sched_history ) {
 
 
 well_history_type * sched_history_get_well( const sched_history_type * sched_history , const char * well_name ) {
-  return hash_get( sched_history->well_history , well_name );
+  return (well_history_type*)hash_get( sched_history->well_history , well_name );
 }
 
 
 group_history_type * sched_history_get_group( const sched_history_type * sched_history , const char * group_name ) {
-  return hash_get( sched_history->group_history , group_name );
+  return (group_history_type*)hash_get( sched_history->group_history , group_name );
 }
 
 
@@ -560,7 +579,7 @@ void sched_history_update( sched_history_type * sched_history, const sched_file_
         switch( kw_type ) {
         case(WCONHIST):
           {
-            const sched_kw_wconhist_type * wconhist = sched_kw_get_data( kw );
+            const sched_kw_wconhist_type * wconhist = (const sched_kw_wconhist_type*)sched_kw_get_data( kw );
             sched_kw_wconhist_init_well_list( wconhist , well_list );
             int iw;
             for (iw = 0; iw < stringlist_get_size( well_list ); iw++) {
@@ -575,7 +594,7 @@ void sched_history_update( sched_history_type * sched_history, const sched_file_
                               possible to query the well for anything when it is in WCONPROD state. */
 
           { 
-            const sched_kw_wconprod_type * wconprod = sched_kw_get_data( kw ); 
+            const sched_kw_wconprod_type * wconprod = (const sched_kw_wconprod_type*)sched_kw_get_data( kw ); 
             sched_kw_wconprod_init_well_list( wconprod , well_list );
             int iw;
             for (iw = 0; iw < stringlist_get_size( well_list ); iw++) {
@@ -588,7 +607,7 @@ void sched_history_update( sched_history_type * sched_history, const sched_file_
           break;
         case(WCONINJE):
           {
-            const sched_kw_wconinje_type * wconinje = sched_kw_get_data( kw );
+            const sched_kw_wconinje_type * wconinje = (const sched_kw_wconinje_type*)sched_kw_get_data( kw );
             sched_kw_wconinje_init_well_list( wconinje , well_list );
             int iw;
             for (iw = 0; iw < stringlist_get_size( well_list ); iw++) {
@@ -606,7 +625,7 @@ void sched_history_update( sched_history_type * sched_history, const sched_file_
           break;
         case(WELSPECS):
           {
-            const sched_kw_welspecs_type * welspecs = sched_kw_get_data( kw );
+            const sched_kw_welspecs_type * welspecs = (const sched_kw_welspecs_type*)sched_kw_get_data( kw );
             sched_kw_welspecs_init_child_parent_list( welspecs , well_list , group_list );
             sched_history_add_wells( sched_history , welspecs , well_list );
             sched_history_add_groups_welspecs( sched_history , welspecs , report_step , well_list , group_list );
@@ -619,7 +638,7 @@ void sched_history_update( sched_history_type * sched_history, const sched_file_
           break;
         case(GRUPTREE):
           {
-            const sched_kw_gruptree_type * gruptree = sched_kw_get_data( kw );
+            const sched_kw_gruptree_type * gruptree = (const sched_kw_gruptree_type*)sched_kw_get_data( kw );
             stringlist_type * parent_group_list = group_list;
             stringlist_type * child_group_list  = well_list;
 
