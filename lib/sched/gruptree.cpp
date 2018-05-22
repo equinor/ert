@@ -140,7 +140,7 @@ struct gruptree_struct{
 
 static grup_type * grup_alloc(const char * name, const grup_type * parent)
 {
-   grup_type * grup = util_malloc(sizeof * grup);
+   grup_type * grup = (grup_type*)util_malloc(sizeof * grup);
 
    grup->isleaf   = true;
    grup->isfield  = false;
@@ -181,7 +181,7 @@ static const char * grup_get_parent_name(const grup_type * grup)
 
 static well_type * well_alloc(const char * name, const grup_type * parent)
 {
-  well_type * well = util_malloc(sizeof * well);
+  well_type * well = (well_type*)util_malloc(sizeof * well);
   well->name = util_alloc_string_copy(name);
   well->parent = parent;
   return well;
@@ -219,7 +219,7 @@ static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * gru
   if(!hash_has_key(gruptree->grups, grupname))
     util_abort("%s: Internal error - grupname %s is not in hash.\n", __func__, grupname);
   
-  grup_type * grup = hash_get(gruptree->grups, grupname);
+  grup_type * grup = (grup_type*)hash_get(gruptree->grups, grupname);
   if(grup->isfield)
     util_abort("%s: Internal error - no support for grups with isfield flag.\n", __func__);
 
@@ -239,7 +239,7 @@ static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * gru
     char ** keylist = hash_alloc_keylist(grup->children);
     for(int i=0; i<size; i++)
     {
-      well_type * well = hash_get(gruptree->wells, keylist[i]);
+      well_type * well = (well_type*)hash_get(gruptree->wells, keylist[i]);
       hash_insert_ref(well_hash, keylist[i], well);
     }
     util_free_stringlist(keylist, size);
@@ -250,7 +250,7 @@ static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * gru
 
 static gruptree_type * gruptree_alloc_empty()
 {
-  gruptree_type * gruptree = util_malloc(sizeof * gruptree);
+  gruptree_type * gruptree = (gruptree_type*)util_malloc(sizeof * gruptree);
   gruptree->grups = hash_alloc();
   gruptree->wells = hash_alloc();
   return gruptree;
@@ -305,7 +305,7 @@ void gruptree_register_grup(gruptree_type * gruptree, const char * name, const c
   if(!hash_has_key(gruptree->grups, parent_name))
     gruptree_register_grup(gruptree, parent_name, "FIELD");
 
-  parent = hash_get(gruptree->grups, parent_name);
+  parent = (grup_type*)hash_get(gruptree->grups, parent_name);
 
   if(parent->isleaf && !parent->isfield && hash_get_size(parent->children) > 0)
   {
@@ -314,7 +314,7 @@ void gruptree_register_grup(gruptree_type * gruptree, const char * name, const c
 
   if(hash_has_key(gruptree->grups, name))
   {
-    newgrp = hash_get(gruptree->grups, name);
+    newgrp = (grup_type*)hash_get(gruptree->grups, name);
     hash_del(newgrp->parent->children, name);
 
     newgrp->parent = parent;
@@ -339,14 +339,14 @@ void gruptree_register_well(gruptree_type * gruptree, const char * name, const c
   if(!hash_has_key(gruptree->grups, parent_name))
     gruptree_register_grup(gruptree, parent_name, "FIELD");
 
-  parent = hash_get(gruptree->grups, parent_name);
+  parent = (grup_type*)hash_get(gruptree->grups, parent_name);
 
   if(!parent->isleaf && !parent->isfield)
     util_abort("%s: Group %s is not FIELD and contains other groups, cannot contain wells.\n", __func__, parent_name);
 
   if(hash_has_key(gruptree->wells, name))
   {
-    well = hash_get(gruptree->wells, name);
+    well = (well_type*)hash_get(gruptree->wells, name);
     hash_del(well->parent->children, name);
     well->parent = parent;
   }
@@ -413,7 +413,7 @@ gruptree_type * gruptree_copyc(const gruptree_type * gruptree)
       if(strcmp(grup_list[i], "FIELD") == 0)
         continue;
 
-      grup_type * grup  = hash_get(gruptree->grups, grup_list[i]);
+      grup_type * grup  = (grup_type*)hash_get(gruptree->grups, grup_list[i]);
       gruptree_register_grup(gruptree_new, grup_list[i], grup_get_parent_name(grup));
     }
     util_free_stringlist(grup_list, num_grups);
@@ -424,7 +424,7 @@ gruptree_type * gruptree_copyc(const gruptree_type * gruptree)
     char ** well_list = hash_alloc_keylist(gruptree->wells);
     for(int i=0; i<num_wells; i++)
     {
-      well_type * well  = hash_get(gruptree->wells, well_list[i]);
+      well_type * well  = (well_type*)hash_get(gruptree->wells, well_list[i]);
       gruptree_register_well(gruptree_new, well_list[i], well_get_parent_name(well));
     }
     util_free_stringlist(well_list, num_wells);
@@ -449,7 +449,7 @@ void gruptree_fwrite(const gruptree_type * gruptree, FILE * stream)
       if(strcmp(grup_list[i], "FIELD") == 0) /* Skipping FIELD. */
         continue;
 
-      grup_type * grup  = hash_get(gruptree->grups, grup_list[i]);
+      grup_type * grup  = (grup_type*)hash_get(gruptree->grups, grup_list[i]);
       const char * parent_name = grup_get_parent_name(grup);
 
       util_fwrite_string(grup_list[i], stream);
@@ -466,7 +466,7 @@ void gruptree_fwrite(const gruptree_type * gruptree, FILE * stream)
 
     for(int i=0; i<num_wells; i++)
     {
-      well_type * well  = hash_get(gruptree->wells, well_list[i]);
+      well_type * well  = (well_type*)hash_get(gruptree->wells, well_list[i]);
       const char * parent_name = well_get_parent_name(well);
       util_fwrite_string(well_list[i], stream);
       util_fwrite_string(parent_name,  stream);
