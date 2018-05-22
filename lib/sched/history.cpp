@@ -83,7 +83,7 @@ UTIL_IS_INSTANCE_FUNCTION( history , HISTORY_TYPE_ID )
 
 static history_type * history_alloc_empty(  )
 {
-  history_type * history = util_malloc(sizeof * history);
+  history_type * history = (history_type*)util_malloc(sizeof * history);
   UTIL_TYPE_ID_INIT( history , HISTORY_TYPE_ID );
   history->refcase       = NULL; 
   history->sched_history = NULL;
@@ -119,7 +119,7 @@ history_type * history_alloc_from_sched_file(const char * sep_string , const sch
 
 
 history_type * history_alloc_from_refcase(const ecl_sum_type * refcase , bool use_h_keywords) {
-  history_type * history = history_alloc_empty( true );
+  history_type * history = history_alloc_empty( );
 
   history->refcase = refcase;     /* This function does not really do anthing - it just sets the ecl_sum field of the history instance. */
   if (use_h_keywords)

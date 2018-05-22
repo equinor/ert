@@ -53,10 +53,10 @@ add_library(res res_util/res_log.c
                 rms/rms_type.c
                 rms/rms_util.c
 
-                sched/group_history.c
-                sched/group_index.c
+                sched/group_history.cpp
+                sched/group_index.cpp
                 sched/gruptree.cpp
-                sched/history.c
+                sched/history.cpp
                 sched/sched_blob.c
                 sched/sched_file.c
                 sched/sched_history.c

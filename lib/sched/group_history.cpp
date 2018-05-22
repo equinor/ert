@@ -48,7 +48,7 @@ UTIL_SAFE_CAST_FUNCTION_CONST( group_history , GROUP_HISTORY_TYPE_ID )
 UTIL_IS_INSTANCE_FUNCTION( group_history , GROUP_HISTORY_TYPE_ID)
 
 group_history_type * group_history_alloc( const char * group_name , const time_t_vector_type * time , int report_step) {
-  group_history_type * group_history = util_malloc( sizeof * group_history );
+  group_history_type * group_history = (group_history_type*)util_malloc( sizeof * group_history );
 
   UTIL_TYPE_ID_INIT( group_history , GROUP_HISTORY_TYPE_ID );
 
@@ -185,7 +185,7 @@ void group_history_fprintf(const group_history_type * group_history , int report
         const char * name  = hash_iter_get_next_key( child_iter );
         const void * child = hash_get( child_hash , name );
         if ( group_history_is_instance( child ))
-          group_history_fprintf( child , report_step , recursive , stream );
+          group_history_fprintf( (const group_history_type*)child , report_step , recursive , stream );
       }
     }
     hash_iter_free( child_iter );
@@ -205,9 +205,9 @@ void group_history_add_child(group_history_type * group_history , void * child_h
   {
     group_history_type * old_parent;
     if (well_child)
-      old_parent = well_history_get_parent( child_history , report_step );
+      old_parent = well_history_get_parent( (well_history_type*)child_history , report_step );
     else
-      old_parent = group_history_get_parent( child_history , report_step );
+      old_parent = group_history_get_parent( (group_history_type*)child_history , report_step );
 
     if (old_parent != NULL) 
       group_history_del_child( old_parent , child_name , report_step );
@@ -225,9 +225,9 @@ void group_history_add_child(group_history_type * group_history , void * child_h
 
   /*2: Setting the opposite, i.e. parent <- child relationship. */
   if (well_child) 
-    well_history_set_parent( child_history , report_step , group_history );
+    well_history_set_parent( (well_history_type*)child_history , report_step , group_history );
   else if (group_history_is_instance( child_history ))
-    group_history_set_parent( child_history , report_step , group_history );
+    group_history_set_parent( (group_history_type*)child_history , report_step , group_history );
 
 }
 
@@ -266,7 +266,7 @@ double group_history_iget_GOPRH( const void * __group_history , int report_step 
       if (group_history_is_instance( child ))
         GOPRH += group_history_iget_GOPRH( child , report_step );
       else {
-        double WOPRH = well_history_iget_WOPRH( child , report_step );
+        double WOPRH = well_history_iget_WOPRH( (const well_history_type*)child , report_step );
         GOPRH += WOPRH;
       }
     }
@@ -291,7 +291,7 @@ double group_history_iget_GWPRH( const void * __group_history , int report_step 
       if (group_history_is_instance( child ))
         GWPRH += group_history_iget_GWPRH( child , report_step );
       else
-        GWPRH += well_history_iget_WWPRH( child , report_step );
+        GWPRH += well_history_iget_WWPRH( (const well_history_type*)child , report_step );
     }
     hash_iter_free( child_iter );
     
@@ -315,7 +315,7 @@ double group_history_iget_GGPRH( const void * __group_history , int report_step 
       if (group_history_is_instance( child ))
         GGPRH += group_history_iget_GGPRH( child , report_step );
       else
-        GGPRH += well_history_iget_WGPRH( child , report_step );
+        GGPRH += well_history_iget_WGPRH( (const well_history_type*)child , report_step );
     }
     hash_iter_free( child_iter );
     
@@ -384,8 +384,8 @@ double group_history_iget_GWCTH( const void * __group_history , int report_step 
 
 
 double group_history_iget( const void * index , int report_step ) {
-  const group_history_type * group_history  = group_index_get_state__( index );
-  sched_history_callback_ftype * func = group_index_get_callback( index );
+  const group_history_type * group_history  = (const group_history_type*)group_index_get_state__( index );
+  sched_history_callback_ftype * func = group_index_get_callback( (const group_index_type*)index );
   
   return func( group_history , report_step );
 }
