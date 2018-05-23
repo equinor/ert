@@ -51,7 +51,7 @@ sched_phase_enum sched_phase_type_from_string(const char * type_string) {
     return OIL;
   else {
     util_abort("%s: Could not recognize:%s as injector phase. Valid values are: [%s, %s, %s] \n",__func__ , type_string , TYPE_WATER_STRING , TYPE_GAS_STRING , TYPE_OIL_STRING);
-    return 0;
+    return (sched_phase_enum)0;
   }
 }
 
@@ -171,7 +171,7 @@ well_status_enum sched_types_get_status_from_string(const char * st_string)
   else
   {
     util_abort("%s: Could not recognize %s as a well status.\n", __func__, st_string);
-    return 0;
+    return (well_status_enum)0;
   }
 }
 
@@ -239,7 +239,7 @@ well_cm_enum sched_types_get_cm_from_string(const char * cm_string , bool wconhi
       return RESV;
     else {
       util_abort("%s: Could not recognize %s as a control mode.\n", __func__, cm_string);
-      return 0;
+      return (well_cm_enum)0;
     }
   } else {
     if(     strncmp(cm_string, CM_RATE_STRING , 4) == 0)
@@ -255,7 +255,7 @@ well_cm_enum sched_types_get_cm_from_string(const char * cm_string , bool wconhi
     else {
       util_abort("%s: Could not recognize \'%s\' as a control mode. Valid values are: [%s, %s, %s, %s, %s] \n", __func__, cm_string, 
                  CM_RATE_STRING , CM_RESV_STRING , CM_BHP_STRING, CM_THP_STRING, CM_GRUP_STRING);
-      return 0;
+      return (well_cm_enum)0;
     }
   }
 }
