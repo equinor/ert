@@ -18,6 +18,9 @@
 
 #ifndef ERT_SCHED_KW_INCLUDE_H
 #define ERT_SCHED_KW_INCLDUE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <ert/util/stringlist.h>
 
@@ -34,4 +37,7 @@ sched_kw_include_type  * sched_kw_include_fread_alloc( FILE *);
 
 KW_HEADER(include)
 
+#ifdef __cplusplus
+}
+#endif
 #endif
