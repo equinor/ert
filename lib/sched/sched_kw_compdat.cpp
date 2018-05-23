@@ -136,7 +136,7 @@ static well_dir_type comp_get_well_dir_from_string(const char * well_dir) {
     return FY;
   else {
     util_abort("%s: internal fuckup \n",__func__);
-    return -1;
+    return (well_dir_type)-1;
   }
 }
 
@@ -151,7 +151,7 @@ static comp_state_type comp_get_state_from_string(const char * state) {
     return SHUT;
   else {
     util_abort("%s: did not recognize:%s as valid completion state: (%s|%s|%s) \n",__func__ , state , COMP_AUTO_STRING , COMP_OPEN_STRING , COMP_SHUT_STRING);
-    return -1;
+    return (comp_state_type)-1;
   }
 }
 
@@ -183,7 +183,7 @@ static void comp_sched_fprintf(const comp_type * comp , FILE *stream) {
 
 
 static comp_type * comp_alloc_empty( ) {
-  comp_type *node = util_malloc(sizeof * node);
+  comp_type *node = (comp_type*)util_malloc(sizeof * node);
   node->well      = NULL;
   return node;
 }
@@ -243,7 +243,7 @@ void sched_kw_compdat_fprintf(const sched_kw_compdat_type *kw , FILE *stream) {
   {
     int index;
     for (index = 0; index < vector_get_size( kw->completions ); index++) {
-      const comp_type * comp = vector_iget_const( kw->completions , index );
+      const comp_type * comp = (const comp_type*)vector_iget_const( kw->completions , index );
       comp_sched_fprintf(comp , stream);
     }
   }
@@ -253,7 +253,7 @@ void sched_kw_compdat_fprintf(const sched_kw_compdat_type *kw , FILE *stream) {
 
 
 sched_kw_compdat_type * sched_kw_compdat_alloc_empty( ) {
-  sched_kw_compdat_type * kw = util_malloc(sizeof *kw );
+  sched_kw_compdat_type * kw = (sched_kw_compdat_type*)util_malloc(sizeof *kw );
   kw->completions = vector_alloc_new();
   UTIL_TYPE_ID_INIT( kw , SCHED_KW_COMPDAT_ID );
   return kw;

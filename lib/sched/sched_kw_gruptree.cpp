@@ -45,7 +45,7 @@ static void sched_kw_gruptree_add_well(sched_kw_gruptree_type * kw , const char 
 
 static sched_kw_gruptree_type * sched_kw_gruptree_alloc_empty()
 {
-  sched_kw_gruptree_type * kw = util_malloc(sizeof * kw);
+  sched_kw_gruptree_type * kw = (sched_kw_gruptree_type*)util_malloc(sizeof * kw);
   kw->gruptree_hash = hash_alloc();
   
   return kw;
@@ -131,7 +131,7 @@ void sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type * kw
 {
   *num_pairs = hash_get_size(kw->gruptree_hash);
   char ** children = hash_alloc_keylist(kw->gruptree_hash);
-  char ** parents  = util_malloc(*num_pairs * sizeof * parents);
+  char ** parents  = (char**)util_malloc(*num_pairs * sizeof * parents);
 
   for(int child_nr = 0; child_nr < *num_pairs; child_nr++)
   {

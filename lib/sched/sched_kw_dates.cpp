@@ -46,7 +46,7 @@ struct sched_kw_dates_struct {
 
 static sched_kw_dates_type * sched_kw_dates_alloc_empty()
 {
-  sched_kw_dates_type *dates = util_malloc(sizeof *dates);
+  sched_kw_dates_type *dates = (sched_kw_dates_type*)util_malloc(sizeof *dates);
   dates->time_list           = vector_alloc_new();
   return dates;
 }
@@ -139,7 +139,7 @@ void sched_kw_dates_fprintf(const sched_kw_dates_type *kw , FILE *stream) {
   {
     int i;
     for (i=0; i < vector_get_size( kw->time_list ); i++) {
-      const sched_time_type * time_node = vector_iget_const( kw->time_list , i );
+      const sched_time_type * time_node = (const sched_time_type*)vector_iget_const( kw->time_list , i );
       if (sched_time_get_type( time_node ) == DATES_TIME) {
         time_t date          = sched_time_get_date( time_node );
         int day, month, year;
@@ -180,7 +180,7 @@ sched_kw_dates_type * sched_kw_dates_alloc_from_time_t(time_t date)
 
 time_t sched_kw_dates_iget_date(const sched_kw_dates_type * kw, int i)
 {
-  const sched_time_type * time_node = vector_iget_const( kw->time_list , i );
+  const sched_time_type * time_node = (const sched_time_type*)vector_iget_const( kw->time_list , i );
   return sched_time_get_date( time_node );
 }
 
