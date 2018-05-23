@@ -121,7 +121,7 @@ struct sched_kw_struct {
 */
 
 static sched_kw_type * sched_kw_alloc_empty( const char * kw_name ) {
-  sched_kw_type * kw = util_malloc(sizeof * kw);
+  sched_kw_type * kw = (sched_kw_type*)util_malloc(sizeof * kw);
   kw->kw_name = util_alloc_string_copy( kw_name );
   kw->type    = sched_kw_type_from_string( kw_name );
   
@@ -255,8 +255,8 @@ static void sched_kw_name_assert(const char * kw_name , FILE * stream)
 
 static sched_kw_type ** sched_kw_tstep_split_alloc(const sched_kw_type * sched_kw, int * num_steps)
 {
-  *num_steps = sched_kw_tstep_get_size(sched_kw->data);
-  sched_kw_type ** sched_kw_tsteps = util_malloc(*num_steps * sizeof * sched_kw_tsteps);
+  *num_steps = sched_kw_tstep_get_size((const sched_kw_tstep_type*)sched_kw->data);
+  sched_kw_type ** sched_kw_tsteps = (sched_kw_type**)util_malloc(*num_steps * sizeof * sched_kw_tsteps);
   
   for(int i=0; i<*num_steps; i++) {
     sched_kw_tsteps[i] = sched_kw_alloc_empty( "TSTEP" );
@@ -271,8 +271,8 @@ static sched_kw_type ** sched_kw_tstep_split_alloc(const sched_kw_type * sched_k
 
 static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_kw, int * num_steps) 
 {
-  *num_steps = sched_kw_dates_get_size(sched_kw->data);
-  sched_kw_type ** sched_kw_dates = util_malloc(*num_steps * sizeof * sched_kw_dates);
+  *num_steps = sched_kw_dates_get_size((const sched_kw_dates_type*)sched_kw->data);
+  sched_kw_type ** sched_kw_dates = (sched_kw_type**)util_malloc(*num_steps * sizeof * sched_kw_dates);
   
   for(int i=0; i<*num_steps; i++) {
     sched_kw_dates[i] = sched_kw_alloc_empty( "DATES" );
@@ -516,9 +516,9 @@ void sched_kw_alloc_child_parent_list(const sched_kw_type * sched_kw, char *** c
 bool sched_kw_has_well( const sched_kw_type * sched_kw , const char * well ) {
   sched_kw_type_enum type = sched_kw_get_type( sched_kw );
   if (type == WCONHIST)
-    return sched_kw_wconhist_has_well( sched_kw->data , well);
+    return sched_kw_wconhist_has_well( (const sched_kw_wconhist_type*)sched_kw->data , well);
   else if (type == WCONINJE)
-    return sched_kw_wconinje_has_well( sched_kw->data , well);
+    return sched_kw_wconinje_has_well( (const sched_kw_wconinje_type*)sched_kw->data , well);
   else
     return false;
 }
@@ -532,9 +532,9 @@ bool sched_kw_has_well( const sched_kw_type * sched_kw , const char * well ) {
 bool sched_kw_well_open( const sched_kw_type * sched_kw , const char * well ) {
   sched_kw_type_enum type = sched_kw_get_type( sched_kw );
   if (type == WCONHIST)
-    return sched_kw_wconhist_well_open( sched_kw->data , well);
+    return sched_kw_wconhist_well_open( (const sched_kw_wconhist_type*)sched_kw->data , well);
   else if (type == WCONINJE)
-    return sched_kw_wconinje_well_open( sched_kw->data , well);
+    return sched_kw_wconinje_well_open( (const sched_kw_wconinje_type*)sched_kw->data , well);
   else
     return false;
 }
