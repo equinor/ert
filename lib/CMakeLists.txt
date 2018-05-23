@@ -76,8 +76,8 @@ add_library(res res_util/res_log.c
                 sched/sched_time.cpp
                 sched/sched_types.cpp
                 sched/sched_util.cpp
-                sched/well_history.c
-                sched/well_index.c
+                sched/well_history.cpp
+                sched/well_index.cpp
 
                 analysis/analysis_module.c
                 analysis/bootstrap_enkf.c

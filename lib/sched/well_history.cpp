@@ -107,7 +107,7 @@ UTIL_IS_INSTANCE_FUNCTION( well_history , WELL_HISTORY_TYPE_ID)
 
 
 well_history_type * well_history_alloc( const char * well_name , const time_t_vector_type * time) {
-   well_history_type * well_history = util_malloc( sizeof * well_history );
+   well_history_type * well_history = (well_history_type*)util_malloc( sizeof * well_history );
    UTIL_TYPE_ID_INIT( well_history , WELL_HISTORY_TYPE_ID );
    well_history->well_name       = util_alloc_string_copy( well_name );
    well_history->kw_type         = int_vector_alloc(0 , NONE);
@@ -155,7 +155,7 @@ void well_history_free__( void * arg ) {
 
  void well_history_add_keyword( well_history_type * well_history, const sched_kw_type * sched_kw , int  report_step ) {
    sched_kw_type_enum new_type     = sched_kw_get_type( sched_kw );
-   sched_kw_type_enum current_type = int_vector_safe_iget( well_history->kw_type , report_step );
+   sched_kw_type_enum current_type = (sched_kw_type_enum)int_vector_safe_iget( well_history->kw_type , report_step );
    
    if ((new_type != current_type) && (current_type != NONE)) {
      /* 
@@ -181,17 +181,17 @@ void well_history_free__( void * arg ) {
    switch( new_type ) {
    case(WCONHIST):
      size_t_vector_iset_default( well_history->active_state , report_step , ( long ) well_history->wconhist_state );
-     bool_vector_iset_default( well_history->well_open , report_step , sched_kw_wconhist_well_open( sched_kw_get_const_data( sched_kw ) , well_history->well_name ));
-     sched_kw_wconhist_update_state(sched_kw_get_const_data( sched_kw ) , well_history->wconhist_state , well_history->well_name , report_step );
+     bool_vector_iset_default( well_history->well_open , report_step , sched_kw_wconhist_well_open( (const sched_kw_wconhist_type*)sched_kw_get_const_data( sched_kw ) , well_history->well_name ));
+     sched_kw_wconhist_update_state((const sched_kw_wconhist_type*)sched_kw_get_const_data( sched_kw ) , well_history->wconhist_state , well_history->well_name , report_step );
      break;
    case(WCONINJH):
      size_t_vector_iset_default( well_history->active_state , report_step , ( long ) well_history->wconinjh_state );
-     sched_kw_wconinjh_update_state(sched_kw_get_const_data( sched_kw ) , well_history->wconinjh_state , well_history->well_name , report_step );
+     sched_kw_wconinjh_update_state((const sched_kw_wconinjh_type*)sched_kw_get_const_data( sched_kw ) , well_history->wconinjh_state , well_history->well_name , report_step );
      break;
    case(WCONINJE):
      size_t_vector_iset_default( well_history->active_state , report_step , ( long ) well_history->wconinje_state );
-     bool_vector_iset_default( well_history->well_open , report_step , sched_kw_wconinje_well_open( sched_kw_get_const_data( sched_kw ) , well_history->well_name ));
-     sched_kw_wconinje_update_state(sched_kw_get_const_data( sched_kw ) , well_history->wconinje_state , well_history->well_name , report_step );
+     bool_vector_iset_default( well_history->well_open , report_step , sched_kw_wconinje_well_open( (const sched_kw_wconinje_type*)sched_kw_get_const_data( sched_kw ) , well_history->well_name ));
+     sched_kw_wconinje_update_state((const sched_kw_wconinje_type*)sched_kw_get_const_data( sched_kw ) , well_history->wconinje_state , well_history->well_name , report_step );
      break;
    default:
      break;
@@ -209,7 +209,7 @@ wconhist_state_type * well_history_get_wconhist( well_history_type * well_histor
 
 
 sched_kw_type_enum well_history_iget_active_kw( const well_history_type * well_history , int report_step ) {
-  return int_vector_safe_iget( well_history->kw_type , report_step );
+  return (sched_kw_type_enum)int_vector_safe_iget( well_history->kw_type , report_step );
 }
 
 
@@ -246,7 +246,7 @@ bool well_history_well_open( const well_history_type * well_history , int report
 
 double well_history_iget( well_index_type * index , int report_step ) {
   const well_history_type * well_history  = well_history_safe_cast_const( well_index_get_state( index ));
-  sched_kw_type_enum current_type         = int_vector_safe_iget( well_history->kw_type , report_step );
+  sched_kw_type_enum current_type         = (sched_kw_type_enum)int_vector_safe_iget( well_history->kw_type , report_step );
   sched_history_callback_ftype * func     = well_index_get_callback( index , current_type );
   
   if (func != NULL) {
@@ -260,7 +260,7 @@ double well_history_iget( well_index_type * index , int report_step ) {
 
 
 double well_history_iget_WOPRH( const well_history_type * well_history , int report_step ) {
-  sched_kw_type_enum current_type = int_vector_safe_iget( well_history->kw_type , report_step );
+  sched_kw_type_enum current_type = (sched_kw_type_enum)int_vector_safe_iget( well_history->kw_type , report_step );
   if (current_type == WCONHIST) {
     void * state_ptr = (void *) size_t_vector_safe_iget( well_history->active_state , report_step );
     return wconhist_state_iget_WOPRH( state_ptr , report_step );
@@ -270,7 +270,7 @@ double well_history_iget_WOPRH( const well_history_type * well_history , int rep
 
 
 double well_history_iget_WWPRH( const well_history_type * well_history , int report_step ) {
-  sched_kw_type_enum current_type = int_vector_safe_iget( well_history->kw_type , report_step );
+  sched_kw_type_enum current_type = (sched_kw_type_enum)int_vector_safe_iget( well_history->kw_type , report_step );
   if (current_type == WCONHIST) {
     void * state_ptr = (void *) size_t_vector_safe_iget( well_history->active_state , report_step );
     return wconhist_state_iget_WWPRH( state_ptr , report_step );
@@ -280,7 +280,7 @@ double well_history_iget_WWPRH( const well_history_type * well_history , int rep
 
 
 double well_history_iget_WGPRH( const well_history_type * well_history , int report_step ) {
-  sched_kw_type_enum current_type = int_vector_safe_iget( well_history->kw_type , report_step );
+  sched_kw_type_enum current_type = (sched_kw_type_enum)int_vector_safe_iget( well_history->kw_type , report_step );
   if (current_type == WCONHIST) {
     void * state_ptr = (void *) size_t_vector_safe_iget( well_history->active_state , report_step );
     return wconhist_state_iget_WGPRH( state_ptr , report_step );
@@ -291,7 +291,7 @@ double well_history_iget_WGPRH( const well_history_type * well_history , int rep
 
 bool well_history_is_producer( const well_history_type * well_history , int report_step ) {
   bool producer = false;
-  sched_kw_type_enum current_type = int_vector_safe_iget( well_history->kw_type , report_step );
+  sched_kw_type_enum current_type = (sched_kw_type_enum)int_vector_safe_iget( well_history->kw_type , report_step );
   switch( current_type ) {
   case( WCONHIST ):
     producer = true;
