@@ -3,7 +3,12 @@ import re
 
 import numpy
 import pandas
-from PyQt4.QtGui import QCheckBox
+import sys
+
+try:
+  from PyQt4.QtGui import QCheckBox
+except ImportError:
+  from PyQt5.QtWidgets import QCheckBox
 
 from ecl.rft import WellTrajectory
 from res.enkf import ErtPlugin, CancelPluginException
