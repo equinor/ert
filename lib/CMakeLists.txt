@@ -65,9 +65,9 @@ add_library(res res_util/res_log.c
                 sched/sched_kw_dates.cpp
                 sched/sched_kw_gruptree.cpp
                 sched/sched_kw_include.cpp
-                sched/sched_kw_tstep.c
-                sched/sched_kw_untyped.c
-                sched/sched_kw_wconhist.c
+                sched/sched_kw_tstep.cpp
+                sched/sched_kw_untyped.cpp
+                sched/sched_kw_wconhist.cpp
                 sched/sched_kw_wconinj.c
                 sched/sched_kw_wconinje.c
                 sched/sched_kw_wconinjh.c

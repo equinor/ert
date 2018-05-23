@@ -106,7 +106,7 @@ struct wconhist_state_struct {
 
 static wconhist_well_type * wconhist_well_alloc_empty( ) 
 {
-  wconhist_well_type * well = util_malloc(sizeof * well);
+  wconhist_well_type * well = (wconhist_well_type*)util_malloc(sizeof * well);
   well->name   = NULL;
   well->status = WCONHIST_DEFAULT_STATUS;
   return well;
@@ -241,7 +241,7 @@ static void sched_kw_wconhist_add_well( sched_kw_wconhist_type * kw , wconhist_w
 
 static sched_kw_wconhist_type * sched_kw_wconhist_alloc_empty()
 {
-  sched_kw_wconhist_type * kw = util_malloc(sizeof * kw);
+  sched_kw_wconhist_type * kw = (sched_kw_wconhist_type*)util_malloc(sizeof * kw);
   UTIL_TYPE_ID_INIT( kw , SCHED_KW_WCONHIST_ID );
   kw->wells     = vector_alloc_new();
   return kw;
@@ -298,7 +298,7 @@ void sched_kw_wconhist_fprintf(const sched_kw_wconhist_type * kw, FILE * stream)
   fprintf(stream, "WCONHIST\n");
   for(int i=0; i<size; i++)
   {
-    const wconhist_well_type * well = vector_iget_const(kw->wells, i);
+    const wconhist_well_type * well = (const wconhist_well_type*)vector_iget_const(kw->wells, i);
     wconhist_well_fprintf(well, stream);
   }
   fprintf(stream,"/\n\n");
@@ -317,7 +317,7 @@ hash_type * sched_kw_wconhist_alloc_well_obs_hash(const sched_kw_wconhist_type *
   
   for(int well_nr=0; well_nr<num_wells; well_nr++)
   {
-    wconhist_well_type * well = vector_iget(kw->wells, well_nr);
+    wconhist_well_type * well = (wconhist_well_type*)vector_iget(kw->wells, well_nr);
     hash_type * obs_hash = wconhist_well_export_obs_hash(well);
     hash_insert_hash_owned_ref(well_hash, well->name, obs_hash, hash_free__);
   }
@@ -343,7 +343,7 @@ static wconhist_well_type * sched_kw_wconhist_get_well( const sched_kw_wconhist_
   wconhist_well_type * well = NULL;
   int index = 0;
   do {
-    wconhist_well_type * iwell = vector_iget( kw->wells , index);
+    wconhist_well_type * iwell = (wconhist_well_type*)vector_iget( kw->wells , index);
     if (strcmp( well_name , iwell->name ) == 0) 
       well = iwell;
     
@@ -503,7 +503,7 @@ void sched_kw_wconhist_init_well_list( const sched_kw_wconhist_type * kw , strin
   {
     int iw;
     for (iw = 0; iw < vector_get_size( kw->wells ); iw++) {
-      const wconhist_well_type * well = vector_iget_const( kw->wells , iw );
+      const wconhist_well_type * well = (const wconhist_well_type*)vector_iget_const( kw->wells , iw );
       stringlist_append_ref( well_list , well->name );
     }
   }
@@ -599,7 +599,7 @@ double wconhist_state_iget_WGORH(const void * state , int report_step ) {
 
 well_cm_enum wconhist_state_iget_WMCTLH( const void * state , int report_step ) {
   const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return int_vector_iget( wconhist_state->cmode , report_step );
+  return (well_cm_enum)int_vector_iget( wconhist_state->cmode , report_step );
 }
 
 
@@ -614,7 +614,7 @@ double wconhist_state_iget_STAT( const void * state , int report_step ) {
 
 
 wconhist_state_type * wconhist_state_alloc( const time_t_vector_type * time) {
-  wconhist_state_type * wconhist = util_malloc( sizeof * wconhist );
+  wconhist_state_type * wconhist = (wconhist_state_type*)util_malloc( sizeof * wconhist );
   UTIL_TYPE_ID_INIT( wconhist , WCONHIST_TYPE_ID );
   
   wconhist->time       = time;
