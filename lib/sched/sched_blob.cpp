@@ -19,13 +19,13 @@
 #include <string.h>
 #include <time.h>
 
-#include <ert/util/buffer.h>
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/buffer.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/sched/sched_util.h>
-#include <ert/sched/sched_blob.h>
-#include <ert/sched/sched_time.h>
+#include <ert/sched/sched_util.hpp>
+#include <ert/sched/sched_blob.hpp>
+#include <ert/sched/sched_time.hpp>
 
 
 

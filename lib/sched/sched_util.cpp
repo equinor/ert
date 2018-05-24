@@ -20,10 +20,10 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <ert/util/util.h>
-#include <ert/util/buffer.h>
+#include <ert/util/util.hpp>
+#include <ert/util/buffer.hpp>
 
-#include <ert/sched/sched_util.h>
+#include <ert/sched/sched_util.hpp>
 
 /**
    This file implements small utility functions used by the rest of

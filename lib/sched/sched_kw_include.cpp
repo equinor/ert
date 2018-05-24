@@ -21,13 +21,13 @@
 #include <ctype.h>
 #include <time.h>
 
-#include <ert/util/util.h>
-#include <ert/util/parser.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/util.hpp>
+#include <ert/util/parser.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/sched/sched_util.h>
-#include <ert/sched/sched_kw_include.h>
-#include <ert/sched/sched_macros.h>
+#include <ert/sched/sched_util.hpp>
+#include <ert/sched/sched_kw_include.hpp>
+#include <ert/sched/sched_macros.hpp>
 
 
 /**

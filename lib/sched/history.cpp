@@ -18,19 +18,19 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/bool_vector.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/bool_vector.hpp>
 
-#include <ert/ecl/ecl_sum.h>
-#include <ert/ecl/ecl_util.h>
-#include <ert/ecl/ecl_smspec.h>
+#include <ert/ecl/ecl_sum.hpp>
+#include <ert/ecl/ecl_util.hpp>
+#include <ert/ecl/ecl_smspec.hpp>
 
-#include <ert/sched/gruptree.h>
-#include <ert/sched/sched_history.h>
-#include <ert/sched/history.h>
+#include <ert/sched/gruptree.hpp>
+#include <ert/sched/sched_history.hpp>
+#include <ert/sched/history.hpp>
 
 
 #define HISTORY_TYPE_ID 66143109

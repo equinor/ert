@@ -19,14 +19,14 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <ert/util/util.h>
-#include <ert/util/size_t_vector.h>
-#include <ert/util/time_t_vector.h>
-#include <ert/util/vector.h>
+#include <ert/util/util.hpp>
+#include <ert/util/size_t_vector.hpp>
+#include <ert/util/time_t_vector.hpp>
+#include <ert/util/vector.hpp>
 
-#include <ert/sched/group_history.h>
-#include <ert/sched/well_history.h>
-#include <ert/sched/group_index.h>
+#include <ert/sched/group_history.hpp>
+#include <ert/sched/well_history.hpp>
+#include <ert/sched/group_index.hpp>
 
 #define GROUP_HISTORY_TYPE_ID 5100635
 

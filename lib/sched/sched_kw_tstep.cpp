@@ -20,12 +20,12 @@
 #include <string.h>
 #include <time.h>
 
-#include <ert/util/double_vector.h>
-#include <ert/util/util.h>
+#include <ert/util/double_vector.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/sched/sched_util.h>
-#include <ert/sched/sched_kw_tstep.h>
-#include <ert/sched/sched_macros.h>
+#include <ert/sched/sched_util.hpp>
+#include <ert/sched/sched_kw_tstep.hpp>
+#include <ert/sched/sched_macros.hpp>
 
 
 

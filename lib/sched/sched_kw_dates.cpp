@@ -20,16 +20,16 @@
 #include <string.h>
 #include <time.h>
 
-#include <ert/util/vector.h>
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/ecl/ecl_util.h>
+#include <ert/ecl/ecl_util.hpp>
 
-#include <ert/sched/sched_util.h>
-#include <ert/sched/sched_kw_dates.h>
-#include <ert/sched/sched_types.h>
-#include <ert/sched/sched_time.h>
+#include <ert/sched/sched_util.hpp>
+#include <ert/sched/sched_kw_dates.hpp>
+#include <ert/sched/sched_types.hpp>
+#include <ert/sched/sched_time.hpp>
 
 
 #define DATES_FMT          "  %d \'%s\' %4d  /  \n"    // The format string used when writing dates the arguments are (day , month_string , year).

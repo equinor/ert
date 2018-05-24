@@ -20,12 +20,12 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <ert/util/stringlist.h>
-#include <ert/util/util.h>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/sched/sched_kw_wconinj.h>
-#include <ert/sched/sched_kw_untyped.h>
-#include <ert/sched/sched_util.h>
+#include <ert/sched/sched_kw_wconinj.hpp>
+#include <ert/sched/sched_kw_untyped.hpp>
+#include <ert/sched/sched_util.hpp>
 
 
 

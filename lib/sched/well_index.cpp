@@ -18,12 +18,12 @@
 
 #include <stdlib.h>
 
-#include <ert/util/size_t_vector.h>
-#include <ert/util/int_vector.h>
-#include <ert/util/util.h>  
+#include <ert/util/size_t_vector.hpp>
+#include <ert/util/int_vector.hpp>
+#include <ert/util/util.hpp>  
 
-#include <ert/sched/sched_types.h>
-#include <ert/sched/well_index.h>
+#include <ert/sched/sched_types.hpp>
+#include <ert/sched/well_index.hpp>
 
 
 #define WELL_INDEX_TYPE_ID 99780634

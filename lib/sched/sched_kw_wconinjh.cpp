@@ -19,17 +19,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/vector.h>
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/int_vector.h>
-#include <ert/util/time_t_vector.h>
-#include <ert/util/double_vector.h>
+#include <ert/util/vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/int_vector.hpp>
+#include <ert/util/time_t_vector.hpp>
+#include <ert/util/double_vector.hpp>
 
-#include <ert/sched/sched_kw_wconinjh.h>
-#include <ert/sched/sched_util.h>
-#include <ert/sched/sched_types.h>
+#include <ert/sched/sched_kw_wconinjh.hpp>
+#include <ert/sched/sched_util.hpp>
+#include <ert/sched/sched_types.hpp>
 
 #define WCONINJH_TYPE_ID 88163977
 #define WCONINJH_NUM_KW  8

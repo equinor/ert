@@ -19,10 +19,10 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
 
-#include <ert/sched/gruptree.h>
+#include <ert/sched/gruptree.hpp>
 
 
 /*
