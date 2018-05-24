@@ -55,7 +55,7 @@ void rms_export_roff_from_keyword(const char *filename, ecl_grid_type *ecl_grid,
     float *target_data;
 
     src_data = (float *) ecl_kw_get_void_ptr(ecl_kw[n]);
-    target_data = util_calloc(global_size , sizeof * target_data );
+    target_data = (float*)util_calloc(global_size , sizeof * target_data );
 
     for (k=0; k < nz; k++) {
       for (j=0; j < ny; j++) {

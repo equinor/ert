@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(res C)
+project(res C CXX)
 
 include(GNUInstallDirs)
 enable_testing()

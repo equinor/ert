@@ -86,7 +86,7 @@ void rms_stats_update_ens(const char *prior_path , const char *posterior_path , 
     abort();
   }
 
-  prior = malloc(ens_size * sizeof * prior);
+  prior = (rms_tagkey_type**)malloc(ens_size * sizeof * prior);
   printf("Loading: ");
   for (iens = 0; iens < ens_size; iens++) {
     char * file_name         = util_alloc_filename(prior_path , file_list[iens] , NULL);
