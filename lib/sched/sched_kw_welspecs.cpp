@@ -122,7 +122,7 @@ typedef struct
 
 
 
-static char * get_phase_string(phase_type phase)
+static const char * get_phase_string(phase_type phase)
 {
   switch(phase)
   {
@@ -141,7 +141,7 @@ static char * get_phase_string(phase_type phase)
 
 
 
-static char * get_inflow_eq_string(inflow_eq_type eq)
+static const char * get_inflow_eq_string(inflow_eq_type eq)
 {
   switch(eq)
   {
@@ -164,7 +164,7 @@ static char * get_inflow_eq_string(inflow_eq_type eq)
 
 
 
-static char * get_auto_shut_string(auto_shut_type as)
+static const char * get_auto_shut_string(auto_shut_type as)
 {
   switch(as)
   {
@@ -179,7 +179,7 @@ static char * get_auto_shut_string(auto_shut_type as)
 
 
 
-static char * get_crossflow_string(crossflow_type cf)
+static const char * get_crossflow_string(crossflow_type cf)
 {
   switch(cf)
   {
@@ -194,7 +194,7 @@ static char * get_crossflow_string(crossflow_type cf)
 
 
 
-static char * get_hdstat_head_string(hdstat_head_type hd)
+static const char * get_hdstat_head_string(hdstat_head_type hd)
 {
   switch(hd)
   {

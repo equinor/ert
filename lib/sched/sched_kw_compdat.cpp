@@ -88,7 +88,7 @@ struct sched_kw_compdat_struct {
 
 
 
-static char * comp_get_state_string(comp_state_type state) {
+static const char * comp_get_state_string(comp_state_type state) {
   switch(state) {
   case(AUTO):
     return COMP_AUTO_STRING;
@@ -104,7 +104,7 @@ static char * comp_get_state_string(comp_state_type state) {
 
 
 
-static char * comp_get_dir_string(well_dir_type dir) {
+static const char * comp_get_dir_string(well_dir_type dir) {
   switch(dir) {
   case(X):
     return WELL_DIR_X_STRING;
@@ -123,7 +123,7 @@ static char * comp_get_dir_string(well_dir_type dir) {
 }
 
 
-static well_dir_type comp_get_well_dir_from_string(const char * well_dir) {
+static const well_dir_type comp_get_well_dir_from_string(const char * well_dir) {
   if (strcmp(well_dir , WELL_DIR_X_STRING) == 0)
     return X;
   else if (strcmp(well_dir , WELL_DIR_Y_STRING) == 0)
