@@ -19,12 +19,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/rms/rms_stats.h>
-#include <ert/rms/rms_tagkey.h>
-#include <ert/rms/rms_tag.h>
-#include <ert/rms/rms_file.h>
+#include <ert/rms/rms_stats.hpp>
+#include <ert/rms/rms_tagkey.hpp>
+#include <ert/rms/rms_tag.hpp>
+#include <ert/rms/rms_file.hpp>
 
 
 

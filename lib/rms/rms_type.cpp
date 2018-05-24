@@ -17,7 +17,7 @@
 */
 
 #include <stdlib.h>
-#include <ert/rms/rms_type.h>
+#include <ert/rms/rms_type.hpp>
 
 /*****************************************************************/
 /* A microscopic (purely internal) type object only used 
