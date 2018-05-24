@@ -98,7 +98,7 @@ struct wconinje_state_struct {
 
 static wconinje_well_type * wconinje_well_alloc_empty()
 {
-  wconinje_well_type * well = util_malloc(sizeof * well);
+  wconinje_well_type * well = (wconinje_well_type*)util_malloc(sizeof * well);
   well->name = NULL;
   return well;
 }
@@ -167,7 +167,7 @@ static void wconinje_well_fprintf(const wconinje_well_type * well, FILE * stream
 
 
 static sched_kw_wconinje_type * sched_kw_wconinje_alloc_empty() {
-  sched_kw_wconinje_type * kw = util_malloc(sizeof * kw);
+  sched_kw_wconinje_type * kw = (sched_kw_wconinje_type*)util_malloc(sizeof * kw);
   kw->wells     = vector_alloc_new();
   kw->__type_id = SCHED_KW_WCONINJE_ID;
   return kw;
@@ -225,7 +225,7 @@ void sched_kw_wconinje_fprintf(const sched_kw_wconinje_type * kw , FILE * stream
   fprintf(stream, "WCONINJE\n");
   for(int i=0; i<size; i++)
   {
-    const wconinje_well_type * well = vector_iget_const(kw->wells, i);
+    const wconinje_well_type * well = (const wconinje_well_type*)vector_iget_const(kw->wells, i);
     wconinje_well_fprintf(well, stream);
   }
   fprintf(stream,"/\n\n");
@@ -236,10 +236,10 @@ void sched_kw_wconinje_fprintf(const sched_kw_wconinje_type * kw , FILE * stream
 char ** sched_kw_wconinje_alloc_wells_copy( const sched_kw_wconinje_type * kw , int * num_wells) {
   int size = vector_get_size(kw->wells);
   
-  char ** well_names = util_malloc( size * sizeof * well_names );
+  char ** well_names = (char**)util_malloc( size * sizeof * well_names );
   for(int i=0; i<size; i++)
   {
-    const wconinje_well_type * well = vector_iget_const(kw->wells, i);
+    const wconinje_well_type * well = (const wconinje_well_type*)vector_iget_const(kw->wells, i);
     well_names[i] = util_alloc_string_copy(well->name);
   }
   *num_wells = size;
@@ -259,7 +259,7 @@ static wconinje_well_type * sched_kw_wconinje_get_well( const sched_kw_wconinje_
   wconinje_well_type * well = NULL;
   int index = 0;
   do {
-    wconinje_well_type * iwell = vector_iget( kw->wells , index);
+    wconinje_well_type * iwell = (wconinje_well_type*)vector_iget( kw->wells , index);
     if (strcmp( well_name , iwell->name ) == 0) 
       well = iwell;
     
@@ -304,7 +304,7 @@ sched_phase_enum sched_kw_wconinje_get_phase( const sched_kw_wconinje_type * kw 
   if (well != NULL)
     return well->injector_type;
   else
-    return -1;
+    return (sched_phase_enum)-1;
 }
 
 
@@ -347,7 +347,7 @@ bool sched_kw_wconinje_well_open( const sched_kw_wconinje_type * kw, const char 
 /*****************************************************************/
 
 wconinje_state_type * wconinje_state_alloc( const char * well_name , const time_t_vector_type * time) {
-  wconinje_state_type * wconinje = util_malloc( sizeof * wconinje);
+  wconinje_state_type * wconinje = (wconinje_state_type*)util_malloc( sizeof * wconinje);
   UTIL_TYPE_ID_INIT( wconinje , WCONINJE_TYPE_ID );
 
   wconinje->phase          = int_vector_alloc( 0 , 0 );
@@ -409,8 +409,8 @@ void wconinje_state_free__( void * arg ) {
 
 double wconinje_state_iget_WWIRH( const void * __state , int report_step ) {
   const wconinje_state_type * state = wconinje_state_safe_cast_const( __state );
-  sched_phase_enum phase = int_vector_safe_iget( state->phase , report_step );
-  well_cm_enum cmode     = int_vector_safe_iget( state->cmode , report_step);
+  sched_phase_enum phase = (sched_phase_enum)int_vector_safe_iget( state->phase , report_step );
+  well_cm_enum cmode     = (well_cm_enum)int_vector_safe_iget( state->cmode , report_step);
 
   if (( phase == WATER) && (cmode == RATE))
     return double_vector_safe_iget( state->surface_flow , report_step);
@@ -430,8 +430,8 @@ double wconinje_state_iget_WWIRH( const void * __state , int report_step ) {
 */
 double wconinje_state_iget_WGIRH( const void * __state , int report_step ) {
   const wconinje_state_type * state = wconinje_state_safe_cast_const( __state );
-  sched_phase_enum phase = int_vector_safe_iget( state->phase , report_step );
-  well_cm_enum cmode     = int_vector_safe_iget( state->cmode , report_step);
+  sched_phase_enum phase = (sched_phase_enum)int_vector_safe_iget( state->phase , report_step );
+  well_cm_enum cmode     = (well_cm_enum)int_vector_safe_iget( state->cmode , report_step);
 
   if (( phase == GAS) && (cmode == RATE))
     return double_vector_safe_iget( state->surface_flow , report_step);
@@ -456,7 +456,7 @@ void sched_kw_wconinje_init_well_list( const sched_kw_wconinje_type * kw , strin
   {
     int iw;
     for (iw = 0; iw < vector_get_size( kw->wells ); iw++) {
-      const wconinje_well_type * well = vector_iget_const( kw->wells , iw );
+      const wconinje_well_type * well = (const wconinje_well_type*)vector_iget_const( kw->wells , iw );
       stringlist_append_ref( well_list , well->name );
     }
   }
@@ -480,7 +480,7 @@ bool sched_kw_wconinje_historical( const sched_kw_wconinje_type * kw ) {
   bool historical = false;
   int iw;
   for (iw = 0; iw < vector_get_size( kw->wells ); iw++) {
-    const wconinje_well_type * well = vector_iget_const( kw->wells , iw );
+    const wconinje_well_type * well = (const wconinje_well_type*)vector_iget_const( kw->wells , iw );
     if (well->cmode == RATE) {
       historical = true;
       break;

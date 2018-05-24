@@ -77,7 +77,7 @@ struct wconinjh_state_struct {
 
 static wconinjh_well_type * wconinjh_well_alloc_empty()
 {
-  wconinjh_well_type * well = util_malloc(sizeof * well);
+  wconinjh_well_type * well = (wconinjh_well_type*)util_malloc(sizeof * well);
   well->name = NULL;
   return well;
 }
@@ -105,7 +105,7 @@ static wconinjh_well_type * sched_kw_wconinjh_get_well( const sched_kw_wconinjh_
   wconinjh_well_type * well = NULL;
   int index = 0;
   do {
-    wconinjh_well_type * iwell = vector_iget( kw->wells , index);
+    wconinjh_well_type * iwell = (wconinjh_well_type*)vector_iget( kw->wells , index);
     if (strcmp( well_name , iwell->name ) == 0) 
       well = iwell;
     
@@ -193,7 +193,7 @@ static void sched_kw_wconinjh_add_well( sched_kw_wconinjh_type * kw , wconinjh_w
 
 static sched_kw_wconinjh_type * sched_kw_wconinjh_alloc_empty()
 {
-  sched_kw_wconinjh_type * kw = util_malloc(sizeof * kw);
+  sched_kw_wconinjh_type * kw = (sched_kw_wconinjh_type*)util_malloc(sizeof * kw);
   kw->wells = vector_alloc_new();
   return kw;
 }
@@ -235,7 +235,7 @@ void sched_kw_wconinjh_fprintf(const sched_kw_wconinjh_type * kw, FILE * stream)
   fprintf(stream, "WCONINJH\n");
   for(int i=0; i<size; i++)
   {
-    const wconinjh_well_type * well = vector_iget_const( kw->wells, i );
+    const wconinjh_well_type * well = (const wconinjh_well_type*)vector_iget_const( kw->wells, i );
     wconinjh_well_fprintf(well, stream);
   }
   fprintf(stream,"/\n\n");
@@ -256,7 +256,7 @@ hash_type * sched_kw_wconinjh_alloc_well_obs_hash(const sched_kw_wconinjh_type *
   
   for(int well_nr=0; well_nr<num_wells; well_nr++)
   {
-    const wconinjh_well_type * well = vector_iget_const(kw->wells, well_nr);
+    const wconinjh_well_type * well = (const wconinjh_well_type*)vector_iget_const(kw->wells, well_nr);
     hash_type * obs_hash = wconinjh_well_export_obs_hash(well);
     hash_insert_hash_owned_ref(well_hash, well->name, obs_hash, hash_free__);
   }
@@ -277,7 +277,7 @@ void sched_kw_wconinjh_init_well_list( const sched_kw_wconinjh_type * kw , strin
   {
     int iw;
     for (iw = 0; iw < stringlist_get_size( well_list ); iw++) {
-      const wconinjh_well_type * well = vector_iget_const( kw->wells , iw );
+      const wconinjh_well_type * well = (const wconinjh_well_type*)vector_iget_const( kw->wells , iw );
       stringlist_append_ref( well_list , well->name );
     }
   }
@@ -289,7 +289,7 @@ void sched_kw_wconinjh_init_well_list( const sched_kw_wconinjh_type * kw , strin
 /*****************************************************************/
 
 wconinjh_state_type * wconinjh_state_alloc( const time_t_vector_type* time) {
-  wconinjh_state_type * wconinjh = util_malloc( sizeof * wconinjh);
+  wconinjh_state_type * wconinjh = (wconinjh_state_type*)util_malloc( sizeof * wconinjh);
   UTIL_TYPE_ID_INIT( wconinjh , WCONINJH_TYPE_ID );
 
   wconinjh->time           = time;
@@ -333,12 +333,12 @@ void wconinjh_state_free__( void * arg ) {
 
 
 sched_phase_enum wconinjh_state_iget_phase( const wconinjh_state_type * state , int report_step) {
-  return int_vector_safe_iget( state->phase , report_step );
+  return (sched_phase_enum)int_vector_safe_iget( state->phase , report_step );
 }
 
 
 well_status_enum wconinjh_state_iget_status( const wconinjh_state_type * state , int report_step ) {
-  return int_vector_safe_iget( state->state , report_step );
+  return (well_status_enum)int_vector_safe_iget( state->state , report_step );
 }
 
 /**
