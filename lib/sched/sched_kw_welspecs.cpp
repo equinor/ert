@@ -245,7 +245,7 @@ static phase_type get_phase_from_string(const char * string)
       return PH_LIQ;
     else
       util_abort("%s: Phase %s not recognized - aborting.\n",__func__,string);
-      return 0;
+      return (phase_type)0;
 }
 
 
@@ -260,7 +260,7 @@ static auto_shut_type get_auto_shut_from_string(const char * string)
     return DEFAULT_AUTO_SHUT_TYPE;
   else
     util_abort("%s: Automatic shut-in mode %s not recognized - aborting.\n",__func__,string);
-  return 0;
+  return (auto_shut_type)0;
 }
 
 
@@ -275,7 +275,7 @@ static crossflow_type get_crossflow_from_string(const char * string)
     return DEFAULT_CROSSFLOW_ABILITY;
   else
     util_abort("%s: Crossflow ability mode %s not recognized - aborting.\n",__func__,string);
-  return 0;
+  return (crossflow_type)0;
 }
 
 
@@ -290,7 +290,7 @@ static hdstat_head_type get_hdstat_head_from_string(const char * string)
     return DEFAULT_HDSTAT_TYPE;
   else
     util_abort("%s: Hydrostatic head model %s not recognized - aborting.\n",__func__,string);
-  return 0;
+  return (hdstat_head_type)0;
 }
 
 
@@ -323,7 +323,7 @@ static void welspec_sched_fprintf(const welspec_type * ws, FILE * stream)
 
 static welspec_type * welspec_alloc_empty()
 {
-  welspec_type *ws = util_malloc(sizeof *ws);
+  welspec_type *ws = (welspec_type*)util_malloc(sizeof *ws);
   
   ws->name      = NULL;
   ws->group     = NULL;
@@ -397,7 +397,7 @@ static welspec_type * welspec_alloc_from_tokens(const stringlist_type * line_tok
 
 static sched_kw_welspecs_type * sched_kw_welspecs_alloc_empty()
 {
-  sched_kw_welspecs_type * kw = util_malloc(sizeof * kw );
+  sched_kw_welspecs_type * kw = (sched_kw_welspecs_type*)util_malloc(sizeof * kw );
   kw->welspec_list = vector_alloc_new();
   return kw;
 };
@@ -444,7 +444,7 @@ void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type * kw, FILE * stream)
   fprintf(stream, "WELSPECS\n");
   int i;
   for (i=0; i < vector_get_size( kw->welspec_list ); i++) {
-    const welspec_type * ws = vector_iget_const( kw->welspec_list , i );
+    const welspec_type * ws = (const welspec_type*)vector_iget_const( kw->welspec_list , i );
     welspec_sched_fprintf(ws, stream);
   }
   fprintf(stream,"/\n\n");
@@ -458,7 +458,7 @@ void sched_kw_welspecs_init_child_parent_list( const sched_kw_welspecs_type * kw
   stringlist_clear( parent );
   {
     for (int i=0; i < vector_get_size( kw->welspec_list ); i++) {
-      const welspec_type * well = vector_iget_const(kw->welspec_list , i);
+      const welspec_type * well = (const welspec_type*)vector_iget_const(kw->welspec_list , i);
       stringlist_append_ref( child , well->name );
 
       if (!well->def[1])
@@ -476,13 +476,13 @@ void sched_kw_welspecs_init_child_parent_list( const sched_kw_welspecs_type * kw
 void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw, char *** __children, char *** __parents, int * num_pairs)
 {
   int num_wells    = vector_get_size(kw->welspec_list);
-  char ** children = util_malloc(num_wells * sizeof * children);
-  char ** parents  = util_malloc(num_wells * sizeof * parents);
+  char ** children = (char**)util_malloc(num_wells * sizeof * children);
+  char ** parents  = (char**)util_malloc(num_wells * sizeof * parents);
 
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
   {
-    const welspec_type * well = vector_iget_const(kw->welspec_list , well_nr);
-    children[well_nr] = util_alloc_string_copy(well->name);
+    const welspec_type * well = (const welspec_type*)vector_iget_const(kw->welspec_list , well_nr);
+    children[well_nr] = (char*)util_alloc_string_copy(well->name);
     if(!well->def[1])
       parents[well_nr] = util_alloc_string_copy(well->group);
     else

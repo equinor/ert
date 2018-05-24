@@ -71,8 +71,8 @@ add_library(res res_util/res_log.c
                 sched/sched_kw_wconinj.cpp
                 sched/sched_kw_wconinje.cpp
                 sched/sched_kw_wconinjh.cpp
-                sched/sched_kw_wconprod.c
-                sched/sched_kw_welspecs.c
+                sched/sched_kw_wconprod.cpp
+                sched/sched_kw_welspecs.cpp
                 sched/sched_time.cpp
                 sched/sched_types.cpp
                 sched/sched_util.cpp
