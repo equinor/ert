@@ -19,15 +19,15 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/res_util/res_env.h>
+#include <ert/res_util/res_env.hpp>
 
-#include <ert/config/config_schema_item.h>
-#include <ert/config/config_content_node.h>
-#include <ert/config/config_path_elm.h>
+#include <ert/config/config_schema_item.hpp>
+#include <ert/config/config_content_node.hpp>
+#include <ert/config/config_path_elm.hpp>
 
 
 #define CONFIG_CONTENT_NODE_ID 6752887
@@ -45,7 +45,7 @@ static UTIL_SAFE_CAST_FUNCTION( config_content_node , CONFIG_CONTENT_NODE_ID )
 
 
 config_content_node_type * config_content_node_alloc( const config_schema_item_type * schema , const config_path_elm_type * cwd) {
-  config_content_node_type * node = util_malloc(sizeof * node );
+  config_content_node_type * node = (config_content_node_type*)util_malloc(sizeof * node );
   UTIL_TYPE_ID_INIT( node , CONFIG_CONTENT_NODE_ID );
   node->stringlist = stringlist_alloc_new();
   node->cwd = cwd;

@@ -22,7 +22,7 @@
 #include <ert/config/config_path_elm.h>
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
 
 typedef struct config_path_stack_struct config_path_stack_type;
@@ -37,5 +37,4 @@ void                      config_path_stack_pop( config_path_stack_type * path_s
 #ifdef __cplusplus
 }
 #endif
-
 #endif

@@ -21,19 +21,19 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/util.h>
-#include <ert/util/parser.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/set.h>
-#include <ert/util/vector.h>
-#include <ert/res_util/subst_list.h>
-#include <ert/res_util/res_env.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/parser.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/set.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/res_env.hpp>
 
-#include <ert/config/config_error.h>
-#include <ert/config/config_schema_item.h>
-#include <ert/config/config_path_elm.h>
+#include <ert/config/config_error.hpp>
+#include <ert/config/config_schema_item.hpp>
+#include <ert/config/config_path_elm.hpp>
 
 typedef struct validate_struct validate_type;
 
@@ -110,7 +110,7 @@ static void validate_set_default_type( validate_type * validate , config_item_ty
 }
 
 static validate_type * validate_alloc() {
-  validate_type * validate = util_malloc(sizeof * validate );
+  validate_type * validate = (validate_type*)util_malloc(sizeof * validate );
   validate->argc_min                = CONFIG_DEFAULT_ARG_MIN;
   validate->argc_max                = CONFIG_DEFAULT_ARG_MAX;
   validate->common_selection_set    = NULL;
@@ -140,7 +140,7 @@ static void validate_iset_type( validate_type * validate , int index , config_it
 
 
 static config_item_types validate_iget_type( const validate_type * validate , int index) {
-  return int_vector_safe_iget( validate->type_map , index );
+  return (config_item_types)int_vector_safe_iget( validate->type_map , index );
 }
 
 
@@ -168,7 +168,7 @@ static void validate_set_common_selection_set(validate_type * validate , int arg
 
 
 static set_type * validate_iget_selection_set( validate_type * validate , int index) {
-  return vector_safe_iget( validate->indexed_selection_set , index);
+  return (set_type*)vector_safe_iget( validate->indexed_selection_set , index);
 }
 
 static void validate_add_indexed_alternative(validate_type * validate , int index , const char * value) {
@@ -176,7 +176,7 @@ static void validate_add_indexed_alternative(validate_type * validate , int inde
 
   if (!set) {
     vector_safe_iset_owned_ref( validate->indexed_selection_set , index , set_alloc(0,NULL) , set_free__ );
-    set = vector_safe_iget( validate->indexed_selection_set , index);
+    set = (set_type*)vector_safe_iget( validate->indexed_selection_set , index);
   }
 
   set_add_key( set , value );
@@ -213,7 +213,7 @@ void config_schema_item_assure_type(const config_schema_item_type * item , int i
 
 
 config_schema_item_type * config_schema_item_alloc(const char * kw , bool required) {
-  config_schema_item_type * item = util_malloc(sizeof * item );
+  config_schema_item_type * item = (config_schema_item_type*)util_malloc(sizeof * item );
   UTIL_TYPE_ID_INIT( item , CONFIG_SCHEMA_ITEM_ID);
   item->kw         = util_alloc_string_copy(kw);
 
@@ -575,7 +575,7 @@ bool config_schema_item_has_required_children_value( const config_schema_item_ty
 
 
 stringlist_type * config_schema_item_get_required_children_value(const config_schema_item_type * item , const char * value) {
-  return hash_safe_get( item->required_children_value , value );
+  return (stringlist_type*)hash_safe_get( item->required_children_value , value );
 }
 
 bool config_schema_item_is_deprecated( const config_schema_item_type * item) {

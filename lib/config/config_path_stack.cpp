@@ -17,12 +17,12 @@
 */
 #include <stdlib.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/vector.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/vector.hpp>
 
-#include <ert/config/config_root_path.h>
-#include <ert/config/config_path_elm.h>
-#include <ert/config/config_path_stack.h>
+#include <ert/config/config_root_path.hpp>
+#include <ert/config/config_path_elm.hpp>
+#include <ert/config/config_path_stack.hpp>
 
 #define CONFIG_PATH_STACK_TYPE_ID 86751520
 
@@ -35,7 +35,7 @@ struct config_path_stack_struct {
 
 
 config_path_stack_type * config_path_stack_alloc( ) {
-  config_path_stack_type * path_stack = util_malloc( sizeof * path_stack);
+  config_path_stack_type * path_stack = (config_path_stack_type*)util_malloc( sizeof * path_stack);
   UTIL_TYPE_ID_INIT( path_stack , CONFIG_PATH_STACK_TYPE_ID );
   path_stack->storage  = vector_alloc_new();
   path_stack->stack    = vector_alloc_new();
@@ -60,7 +60,7 @@ int config_path_stack_size( const config_path_stack_type * path_stack ) {
 }
 
 const config_path_elm_type * config_path_stack_get_last( const config_path_stack_type * path_stack ) {
-  return vector_get_last_const(path_stack->stack);
+  return (const config_path_elm_type*)vector_get_last_const(path_stack->stack);
 }
 
 

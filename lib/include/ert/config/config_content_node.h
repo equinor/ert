@@ -21,7 +21,7 @@
 #define ERT_CONFIG_CONTENT_NODE_H
 
 #ifdef __cplusplus
-define extern "C" {
+extern "C" {
 #endif
 
 #include <ert/util/hash.h>
@@ -61,5 +61,4 @@ typedef struct config_content_node_struct config_content_node_type;
 #ifdef __cplusplus
 }
 #endif
-
 #endif

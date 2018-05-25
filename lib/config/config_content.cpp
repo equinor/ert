@@ -55,7 +55,7 @@ struct config_content_struct {
 UTIL_IS_INSTANCE_FUNCTION( config_content , CONFIG_CONTENT_TYPE_ID )
 
 config_content_type * config_content_alloc(const char * filename) {
-  config_content_type * content = util_malloc( sizeof * content );
+  config_content_type * content = (config_content_type*)util_malloc( sizeof * content );
   UTIL_TYPE_ID_INIT( content , CONFIG_CONTENT_TYPE_ID );
   content->valid = false;
   content->items = hash_alloc();
@@ -81,7 +81,7 @@ bool config_content_has_item( const config_content_type * content , const char *
 
 
 config_content_item_type * config_content_get_item( const config_content_type * content , const char * key) {
-  return hash_get( content->items , key );
+  return (config_content_item_type*)hash_get( content->items , key );
 }
 
 
@@ -254,7 +254,7 @@ int config_content_get_occurences(const config_content_type * content, const cha
 
 
 const config_content_node_type * config_content_iget_node( const config_content_type * content , int index) {
-  const config_content_node_type * node = vector_iget_const(content->nodes , index );
+  const config_content_node_type * node = (const config_content_node_type*)vector_iget_const(content->nodes , index );
   return node;
 }
 

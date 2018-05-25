@@ -28,19 +28,19 @@ add_library(res res_util/res_log.cpp
                 res_util/thread_pool.cpp
                 res_util/template_loop.cpp  # Highly deprecated
 
-                config/conf_util.c
-                config/conf.c
-                config/conf_data.c
-                config/config_parser.c
-                config/config_content.c
-                config/config_path_stack.c
-                config/config_content_item.c
-                config/config_content_node.c
-                config/config_error.c
-                config/config_path_elm.c
-                config/config_root_path.c
-                config/config_schema_item.c
-                config/config_settings.c
+                config/conf_util.cpp
+                config/conf.cpp
+                config/conf_data.cpp
+                config/config_parser.cpp
+                config/config_content.cpp
+                config/config_path_stack.cpp
+                config/config_content_item.cpp
+                config/config_content_node.cpp
+                config/config_error.cpp
+                config/config_path_elm.cpp
+                config/config_root_path.cpp
+                config/config_schema_item.cpp
+                config/config_settings.cpp
 
                 rms/rms_export.c
                 rms/rms_file.c

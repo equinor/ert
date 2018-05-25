@@ -19,14 +19,14 @@
 #include <assert.h>
 #include <string.h>
 
-#include <ert/util/hash.h>
-#include <ert/util/set.h>
-#include <ert/util/util.h>
-#include <ert/util/vector.h>
-#include <ert/util/path_stack.h>
+#include <ert/util/hash.hpp>
+#include <ert/util/set.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/util/path_stack.hpp>
 
-#include <ert/config/conf.h>
-#include <ert/config/conf_util.h>
+#include <ert/config/conf.hpp>
+#include <ert/config/conf_util.hpp>
 
 
 
@@ -103,7 +103,7 @@ conf_class_type * conf_class_alloc_empty(
 {
   assert(class_name != NULL);
 
-  conf_class_type * conf_class = util_malloc(sizeof *conf_class);
+  conf_class_type * conf_class = (conf_class_type*)util_malloc(sizeof *conf_class);
 
   conf_class->super_class      = NULL;
   conf_class->class_name       = util_alloc_string_copy(class_name);
@@ -149,7 +149,7 @@ static conf_instance_type * conf_instance_alloc_default(
   assert(conf_class != NULL);
   assert(name       != NULL);
 
-  conf_instance_type * conf_instance = util_malloc(sizeof * conf_instance);
+  conf_instance_type * conf_instance = (conf_instance_type*)util_malloc(sizeof * conf_instance);
 
   conf_instance->conf_class    = conf_class;
   conf_instance->name          = util_alloc_string_copy(name);
@@ -163,7 +163,7 @@ static conf_instance_type * conf_instance_alloc_default(
     for(int item_spec_nr = 0; item_spec_nr < num_item_specs; item_spec_nr++)
     {
       const char * item_spec_name = item_spec_keys[item_spec_nr];
-      const conf_item_spec_type * conf_item_spec = hash_get(conf_class->item_specs, item_spec_name);
+      const conf_item_spec_type * conf_item_spec = (const conf_item_spec_type*)hash_get(conf_class->item_specs, item_spec_name);
       if(conf_item_spec->default_value != NULL)
       {
         conf_item_type * conf_item = conf_item_alloc(conf_item_spec, conf_item_spec->default_value);
@@ -190,7 +190,7 @@ void conf_instance_copy_items(
   for(int item_nr = 0; item_nr < num_items; item_nr++)
   {
     const char * item_name = item_keys[item_nr];
-    const conf_item_type * conf_item      = hash_get(conf_instance_source->items, item_name);
+    const conf_item_type * conf_item      = (const conf_item_type*)hash_get(conf_instance_source->items, item_name);
     conf_item_type       * conf_item_copy = conf_item_copyc(conf_item);
     conf_instance_insert_owned_item(conf_instance_target, conf_item_copy);
   }
@@ -211,7 +211,7 @@ void conf_instance_copy_sub_instances(
   for(int sub_nr = 0; sub_nr < num_sub_instances; sub_nr++)
   {
     const char * sub_name = sub_instance_keys[sub_nr];
-    const conf_instance_type * sub_conf_instance      = hash_get(conf_instance_source->sub_instances, sub_name);
+    const conf_instance_type * sub_conf_instance      = (const conf_instance_type*)hash_get(conf_instance_source->sub_instances, sub_name);
     conf_instance_type       * sub_conf_instance_copy = conf_instance_copyc(sub_conf_instance);
     conf_instance_insert_owned_sub_instance(conf_instance_target, sub_conf_instance_copy);
   }
@@ -224,7 +224,7 @@ void conf_instance_copy_sub_instances(
 conf_instance_type * conf_instance_copyc(
   const conf_instance_type * conf_instance)
 {
-  conf_instance_type * conf_instance_copy = util_malloc(sizeof * conf_instance_copy);
+  conf_instance_type * conf_instance_copy = (conf_instance_type*)util_malloc(sizeof * conf_instance_copy);
 
   conf_instance_copy->conf_class  = conf_instance->conf_class;
   conf_instance_copy->name          = util_alloc_string_copy(conf_instance->name);
@@ -266,7 +266,7 @@ conf_item_spec_type * conf_item_spec_alloc(
 {
   assert(name != NULL);
 
-  conf_item_spec_type * conf_item_spec = util_malloc(sizeof * conf_item_spec);
+  conf_item_spec_type * conf_item_spec = (conf_item_spec_type*)util_malloc(sizeof * conf_item_spec);
 
   conf_item_spec->super_class   = NULL;
   conf_item_spec->name          = util_alloc_string_copy(name);
@@ -305,7 +305,7 @@ conf_item_type * conf_item_alloc(
   const conf_item_spec_type * conf_item_spec,
   const char                * value)
 {
-  conf_item_type * conf_item = util_malloc(sizeof * conf_item);
+  conf_item_type * conf_item = (conf_item_type*)util_malloc(sizeof * conf_item);
 
   assert(conf_item_spec != NULL);
   assert(value          != NULL);
@@ -352,7 +352,7 @@ conf_item_mutex_type * conf_item_mutex_alloc(
   bool require_one,
   bool inverse)
 {
-  conf_item_mutex_type * conf_item_mutex = util_malloc(sizeof * conf_item_mutex);
+  conf_item_mutex_type * conf_item_mutex = (conf_item_mutex_type*)util_malloc(sizeof * conf_item_mutex);
 
   conf_item_mutex->super_class    = super_class;
   conf_item_mutex->require_one    = require_one;
@@ -537,7 +537,7 @@ void conf_instance_insert_owned_item(
   /** Check that the inserted item is of known type. */
   {
     const hash_type             * item_spec_hash   = conf_instance->conf_class->item_specs;
-    const conf_item_spec_type * conf_item_spec = hash_get(item_spec_hash, item_name);
+    const conf_item_spec_type * conf_item_spec = (const conf_item_spec_type*)hash_get(item_spec_hash, item_name);
     if(conf_item_spec != conf_item->conf_item_spec)
       util_abort("%s: Internal error.\n", __func__);
   }
@@ -605,7 +605,7 @@ void conf_item_mutex_add_item_spec(
     }
     else
     {
-      const conf_item_spec_type * conf_item_spec_class = hash_get(conf_class->item_specs, item_key);
+      const conf_item_spec_type * conf_item_spec_class = (const conf_item_spec_type*)hash_get(conf_class->item_specs, item_key);
       if(conf_item_spec_class != conf_item_spec)
       {
         util_abort("Internal error. Trying to insert a mutex on item \"%s\", which class \"%s\" has a different implementation of.\n",
@@ -704,7 +704,7 @@ const conf_item_spec_type * conf_class_get_item_spec_ref(
   if(!hash_has_key(conf_class->item_specs, item_name))
     util_abort("%s: Internal error.\n", __func__);
 
-  return hash_get(conf_class->item_specs, item_name);
+  return (const conf_item_spec_type*)hash_get(conf_class->item_specs, item_name);
 }
 
 
@@ -716,7 +716,7 @@ const conf_class_type * conf_class_get_sub_class_ref(
   if(!hash_has_key(conf_class->sub_classes, sub_class_name))
     util_abort("%s: Internal error.\n", __func__);
 
-  return hash_get(conf_class->sub_classes, sub_class_name);
+  return (const conf_class_type*)hash_get(conf_class->sub_classes, sub_class_name);
 }
 
 
@@ -776,7 +776,7 @@ const conf_instance_type * conf_instance_get_sub_instance_ref(
                conf_instance->conf_class->class_name,
                sub_instance_name);
   }
-  return hash_get(conf_instance->sub_instances, sub_instance_name);
+  return (const conf_instance_type*)hash_get(conf_instance->sub_instances, sub_instance_name);
 }
 
 
@@ -791,8 +791,8 @@ stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class(
 
   for(int key_nr = 0; key_nr < num_sub_instances; key_nr++)
   {
-    const conf_instance_type * sub_instance = hash_get(conf_instance->sub_instances,
-                                                         sub_instance_keys[key_nr]);
+    const conf_instance_type * sub_instance = (const conf_instance_type*)hash_get(conf_instance->sub_instances,
+                                                                         sub_instance_keys[key_nr]);
 
     const conf_class_type * sub_instance_class = sub_instance->conf_class;
 
@@ -849,7 +849,7 @@ const char * conf_instance_get_item_value_ref(
                conf_instance->conf_class->class_name,
                item_name);
   }
-  const conf_item_type * conf_item = hash_get(conf_instance->items, item_name);
+  const conf_item_type * conf_item = (const conf_item_type*)hash_get(conf_instance->items, item_name);
   return conf_item->value;
 }
 
@@ -868,7 +868,7 @@ int conf_instance_get_item_value_int(
                conf_instance->conf_class->class_name,
                item_name);
 
-  const conf_item_type      * conf_item      = hash_get(conf_instance->items, item_name);
+  const conf_item_type      * conf_item      = (const conf_item_type*)hash_get(conf_instance->items, item_name);
   const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
 
   return conf_data_get_int_from_string(conf_item_spec->dt, conf_item->value);
@@ -889,8 +889,8 @@ double conf_instance_get_item_value_double(
                conf_instance->conf_class->class_name,
                item_name);
 
-  const conf_item_type      * conf_item      = hash_get(conf_instance->items, item_name);
-  const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
+  const conf_item_type      * conf_item      = (const conf_item_type*)hash_get(conf_instance->items, item_name);
+  const conf_item_spec_type * conf_item_spec = (const conf_item_spec_type*)conf_item->conf_item_spec;
 
   return conf_data_get_double_from_string(conf_item_spec->dt, conf_item->value);
 }
@@ -910,7 +910,7 @@ time_t conf_instance_get_item_value_time_t(
                conf_instance->conf_class->class_name,
                item_name);
 
-  const conf_item_type      * conf_item      = hash_get(conf_instance->items, item_name);
+  const conf_item_type      * conf_item      = (const conf_item_type*)hash_get(conf_instance->items, item_name);
   const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
 
   return conf_data_get_time_t_from_string(conf_item_spec->dt, conf_item->value);
@@ -1047,7 +1047,7 @@ bool conf_instance_has_required_items(
   for(int item_spec_nr = 0; item_spec_nr < num_item_specs; item_spec_nr++)
   {
     const char * item_spec_name = item_spec_keys[item_spec_nr];
-    const conf_item_spec_type * conf_item_spec = hash_get(conf_class->item_specs, item_spec_name);
+    const conf_item_spec_type * conf_item_spec = (const conf_item_spec_type*)hash_get(conf_class->item_specs, item_spec_name);
     if(conf_item_spec->required_set)
     {
       if(!hash_has_key(conf_instance->items, item_spec_name))
@@ -1078,7 +1078,7 @@ bool conf_instance_has_valid_items(
 
   for(int item_nr = 0; item_nr < num_items; item_nr++)
   {
-    const conf_item_type * conf_item = hash_get(conf_instance->items, item_keys[item_nr]);
+    const conf_item_type * conf_item = (const conf_item_type*)hash_get(conf_instance->items, item_keys[item_nr]);
     if(!conf_item_validate(conf_item))
       ok = false;
   }
@@ -1185,7 +1185,7 @@ bool conf_instance_has_valid_mutexes(
 
   for(int mutex_nr = 0; mutex_nr < num_mutexes; mutex_nr++)
   {
-    const conf_item_mutex_type * conf_item_mutex = vector_iget( item_mutexes, mutex_nr );
+    const conf_item_mutex_type * conf_item_mutex = (const conf_item_mutex_type*)vector_iget( item_mutexes, mutex_nr );
     if(!conf_instance_check_item_mutex(conf_instance, conf_item_mutex))
       ok = false;
   }
@@ -1217,13 +1217,13 @@ bool conf_instance_has_required_sub_instances(
 
   /** This first part is just concerned with creating the function __instance_has_sub_instance_of_type. */
   int                   num_sub_instances = hash_get_size(conf_instance->sub_instances);
-  conf_class_type  ** class_signatures  = util_calloc(num_sub_instances , sizeof * class_signatures);
+  conf_class_type  ** class_signatures  = (conf_class_type**)util_calloc(num_sub_instances , sizeof * class_signatures);
   {
     char ** sub_instance_keys = hash_alloc_keylist(conf_instance->sub_instances);
     for(int sub_instance_nr = 0; sub_instance_nr < num_sub_instances; sub_instance_nr++)
     {
       const char * sub_instance_name = sub_instance_keys[sub_instance_nr];
-      const conf_instance_type * sub_conf_instance = hash_get(conf_instance->sub_instances, sub_instance_name);
+      const conf_instance_type * sub_conf_instance = (const conf_instance_type*)hash_get(conf_instance->sub_instances, sub_instance_name);
       class_signatures[sub_instance_nr] = (conf_class_type *) sub_conf_instance->conf_class;
     }
     util_free_stringlist(sub_instance_keys, num_sub_instances);
@@ -1243,7 +1243,7 @@ bool conf_instance_has_required_sub_instances(
     for(int sub_class_nr = 0; sub_class_nr < num_sub_classes; sub_class_nr ++)
     {
       const char * sub_class_name = sub_class_keys[sub_class_nr];
-      const conf_class_type * sub_conf_class = hash_get(conf_class->sub_classes, sub_class_name);
+      const conf_class_type * sub_conf_class = (const conf_class_type*)hash_get(conf_class->sub_classes, sub_class_name);
       if(sub_conf_class->require_instance)
       {
         if(!__instance_has_sub_instance_of_type(sub_conf_class, num_sub_instances, class_signatures))
@@ -1278,7 +1278,7 @@ bool conf_instance_validate_sub_instances(
   for(int sub_instance_nr = 0; sub_instance_nr < num_sub_instances; sub_instance_nr++)
     {
       const char * sub_instances_key = sub_instance_keys[sub_instance_nr];
-      const conf_instance_type * sub_conf_instance = hash_get(conf_instance->sub_instances, sub_instances_key);
+      const conf_instance_type * sub_conf_instance = (const conf_instance_type*)hash_get(conf_instance->sub_instances, sub_instances_key);
       if(!conf_instance_validate(sub_conf_instance))
         ok = false;
     }
@@ -1296,7 +1296,7 @@ bool conf_instance_get_path_error(const conf_instance_type * conf_instance) {
     char ** item_keys = hash_alloc_keylist(conf_instance->items);
 
     for(int item_nr = 0; item_nr < num_items; item_nr++) {
-      const conf_item_type * conf_item = hash_get(conf_instance->items, item_keys[item_nr]);
+      const conf_item_type * conf_item = (const conf_item_type*)hash_get(conf_instance->items, item_keys[item_nr]);
       const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
       if (conf_item_spec->dt == DT_FILE) {
         if (!util_file_exists(conf_item->value))
@@ -1313,7 +1313,7 @@ bool conf_instance_get_path_error(const conf_instance_type * conf_instance) {
     for(int sub_instance_nr = 0; sub_instance_nr < num_sub_instances; sub_instance_nr++)
       {
         const char * sub_instances_key = sub_instance_keys[sub_instance_nr];
-        const conf_instance_type * sub_conf_instance = hash_get(conf_instance->sub_instances, sub_instances_key);
+        const conf_instance_type * sub_conf_instance = (const conf_instance_type*)hash_get(conf_instance->sub_instances, sub_instances_key);
         if (conf_instance_get_path_error(sub_conf_instance))
           path_errors = true;
       }
