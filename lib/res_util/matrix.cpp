@@ -22,13 +22,13 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <ert/util/ert_api_config.h>
-#include <ert/res_util/thread_pool.h>
-#include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
-#include <ert/util/rng.h>
+#include <ert/util/ert_api_config.hpp>
+#include <ert/res_util/thread_pool.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/arg_pack.hpp>
+#include <ert/util/rng.hpp>
 
-#include <ert/res_util/matrix.h>
+#include <ert/res_util/matrix.hpp>
 /**
    This is V E R Y  S I M P L E matrix implementation. It is not
    designed to be fast/efficient or anything. It is purely a minor

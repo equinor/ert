@@ -37,9 +37,9 @@
 #include <pthread.h>
 #endif
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/res_util/log.h>
+#include <ert/res_util/log.hpp>
 
 struct log_struct {
   char             * filename;

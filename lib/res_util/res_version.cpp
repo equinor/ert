@@ -1,5 +1,6 @@
-#include <ert/util/util.h>
-#include <ert/res_util/res_version.h>
+#include <ert/util/util.hpp>
+
+#include <ert/res_util/res_version.hpp>
 
 #define xstr(s) #s
 #define str(s) xstr(s)

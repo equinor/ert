@@ -9,27 +9,24 @@ else ()
    message(STATUS "LSF not found")
 endif ()
 
-add_library(res res_util/res_log.c
-                res_util/log.c
-                res_util/ui_return.c
-                res_util/subst_list.c
-                res_util/subst_func.c
-                res_util/matrix_stat.c
-                res_util/matrix_blas.c
-                res_util/matrix_lapack.c
-                res_util/matrix.c
-                res_util/thread_pool.c
-                res_util/template.c
-                res_util/template_loop.c
-                res_util/path_fmt.c
-                res_util/res_env.c
-                res_util/res_portability.c
-                res_util/block_fs.c
-                res_util/res_version.c
-                res_util/regression.c
-                res_util/thread_pool.c
-                res_util/template_loop.c  # Highly deprecated
-                res_util/block_fs.c
+add_library(res res_util/res_log.cpp
+                res_util/log.cpp
+                res_util/ui_return.cpp
+                res_util/subst_list.cpp
+                res_util/subst_func.cpp
+                res_util/matrix_stat.cpp
+                res_util/matrix_blas.cpp
+                res_util/matrix_lapack.cpp
+                res_util/matrix.cpp
+                res_util/template.cpp
+                res_util/path_fmt.cpp
+                res_util/res_env.cpp
+                res_util/res_portability.cpp
+                res_util/block_fs.cpp
+                res_util/res_version.cpp
+                res_util/regression.cpp
+                res_util/thread_pool.cpp
+                res_util/template_loop.cpp  # Highly deprecated
 
                 config/conf_util.c
                 config/conf.c

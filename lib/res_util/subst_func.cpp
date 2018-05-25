@@ -20,12 +20,12 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/hash.h>
-#include <ert/util/rng.h>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/rng.hpp>
 
-#include <ert/res_util/subst_func.h>
+#include <ert/res_util/subst_func.hpp>
 
 
 #define SUBST_FUNC_TYPE_ID      646781

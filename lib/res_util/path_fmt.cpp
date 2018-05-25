@@ -22,12 +22,12 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-#include "ert/util/build_config.h"
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
-#include <ert/util/node_ctype.h>
+#include "ert/util/build_config.hpp"
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/node_ctype.hpp>
 
-#include <ert/res_util/path_fmt.h>
+#include <ert/res_util/path_fmt.hpp>
 
 /**
 The basic idea of the path_fmt_type is that it should be possible for

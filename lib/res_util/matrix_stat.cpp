@@ -22,13 +22,13 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/res_util/thread_pool.h>
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_blas.h>
-#include <ert/res_util/matrix_lapack.h>
-#include <ert/res_util/matrix_stat.h>
+#include <ert/res_util/thread_pool.hpp>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_blas.hpp>
+#include <ert/res_util/matrix_lapack.hpp>
+#include <ert/res_util/matrix_stat.hpp>
 
 
 llsq_result_enum matrix_stat_llsq_estimate( matrix_type * beta , const matrix_type * X0 , const matrix_type * Y0 , const matrix_type * S) {

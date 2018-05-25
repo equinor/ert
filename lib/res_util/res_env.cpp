@@ -22,9 +22,9 @@
 
 #include "ert/util/build_config.h"
 
-#include <ert/util/util.h>
-#include <ert/res_util/res_env.h>
-#include <ert/util/buffer.h>
+#include <ert/util/util.hpp>
+#include <ert/res_util/res_env.hpp>
+#include <ert/util/buffer.hpp>
 
 #define PATHVAR_SPLIT ":"
 

@@ -33,6 +33,12 @@ int    	     ecl_version_get_minor_version();
 const char * ecl_version_get_micro_version();
 bool         ecl_version_is_ert_devel_version();
 
+int          res_version_get_major_version();
+int          res_version_get_minor_version();
+const char * res_version_get_micro_version();
+const char * res_version_get_git_commit();
+const char * res_version_get_build_time();
+
 #ifdef __cplusplus
 }
 #endif

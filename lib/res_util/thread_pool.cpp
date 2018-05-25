@@ -16,7 +16,11 @@
    for more details.
 */
 
+#ifndef _GNU_SOURCE
 #define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
+#endif
+
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,10 +28,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <ert/res_util/thread_pool.h>
-#include <ert/res_util/res_portability.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/res_util/thread_pool.hpp>
+#include <ert/res_util/res_portability.hpp>
+
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
 
 /**

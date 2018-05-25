@@ -22,13 +22,13 @@
 
 #include <ert/util/ert_api_config.h>
 
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/res_util/subst_func.h>
-#include <ert/res_util/subst_list.h>
-#include <ert/res_util/template.h>
-#include <ert/res_util/template_type.h>
+#include <ert/res_util/subst_func.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/template.hpp>
+#include <ert/res_util/template_type.hpp>
 
 /**
    Iff the template is set up with internaliz_template == false the
@@ -41,12 +41,12 @@
    state of the template object.
 */
 
-static char * template_load( const template_type * template , const subst_list_type * ext_arg_list) {
+static char * template_load( const template_type * _template , const subst_list_type * ext_arg_list) {
   int buffer_size;
-  char * template_file = util_alloc_string_copy( template->template_file );
+  char * template_file = util_alloc_string_copy( _template->template_file );
   char * template_buffer;
 
-  subst_list_update_string( template->arg_list , &template_file);
+  subst_list_update_string( _template->arg_list , &template_file);
   if (ext_arg_list != NULL)
     subst_list_update_string( ext_arg_list , &template_file);
 
@@ -58,17 +58,17 @@ static char * template_load( const template_type * template , const subst_list_t
 
 
 
-void template_set_template_file( template_type * template , const char * template_file) {
-  template->template_file = util_realloc_string_copy( template->template_file , template_file );
-  if (template->internalize_template) {
-    free( template->template_buffer );
-    template->template_buffer = template_load( template , NULL );
+void template_set_template_file( template_type * _template , const char * template_file) {
+  _template->template_file = util_realloc_string_copy( _template->template_file , template_file );
+  if (_template->internalize_template) {
+    free( _template->template_buffer );
+    _template->template_buffer = template_load( _template , NULL );
   }
 }
 
 /** This will not instantiate */
-const char * template_get_template_file( const template_type * template ) {
-  return template->template_file;
+const char * template_get_template_file( const template_type * _template ) {
+  return _template->template_file;
 }
 
 
@@ -83,19 +83,19 @@ const char * template_get_template_file( const template_type * template ) {
 
 
 template_type * template_alloc( const char * template_file , bool internalize_template , subst_list_type * parent_subst) {
-  template_type * template = util_malloc( sizeof * template );
-  UTIL_TYPE_ID_INIT(template , TEMPLATE_TYPE_ID);
-  template->arg_list             = subst_list_alloc( parent_subst );
-  template->template_buffer      = NULL;
-  template->template_file        = NULL;
-  template->internalize_template = internalize_template;
-  template->arg_string           = NULL;
-  template_set_template_file( template , template_file );
+  template_type * _template = (template_type*)util_malloc( sizeof * _template );
+  UTIL_TYPE_ID_INIT(_template , TEMPLATE_TYPE_ID);
+  _template->arg_list             = subst_list_alloc( parent_subst );
+  _template->template_buffer      = NULL;
+  _template->template_file        = NULL;
+  _template->internalize_template = internalize_template;
+  _template->arg_string           = NULL;
+  template_set_template_file( _template , template_file );
 
 #ifdef ERT_HAVE_REGEXP
-  template_init_loop_regexp( template );
+  template_init_loop_regexp( _template );
 #endif
-  return template;
+  return _template;
 }
 
 
@@ -104,18 +104,18 @@ template_type * template_alloc( const char * template_file , bool internalize_te
 
 
 
-void template_free( template_type * template ) {
-  subst_list_free( template->arg_list );
-  free( template->template_file );
-  free( template->template_buffer );
-  free( template->arg_string );
+void template_free( template_type * _template ) {
+  subst_list_free( _template->arg_list );
+  free( _template->template_file );
+  free( _template->template_buffer );
+  free( _template->arg_string );
 
 #ifdef ERT_HAVE_REGEXP
-  regfree( &template->start_regexp );
-  regfree( &template->end_regexp );
+  regfree( &_template->start_regexp );
+  regfree( &_template->end_regexp );
 #endif
 
-  free( template );
+  free( _template );
 }
 
 
@@ -147,31 +147,31 @@ void template_free( template_type * template ) {
 
 
 
-void template_instantiate( const template_type * template , const char * __target_file , const subst_list_type * arg_list , bool override_symlink) {
+void template_instantiate( const template_type * template_ , const char * __target_file , const subst_list_type * arg_list , bool override_symlink) {
   char * target_file = util_alloc_string_copy( __target_file );
 
   /* Finding the name of the target file. */
-  subst_list_update_string( template->arg_list , &target_file);
+  subst_list_update_string( template_->arg_list , &target_file);
   if (arg_list != NULL) subst_list_update_string( arg_list , &target_file );
 
   {
     char * char_buffer;
     /* Loading the template - possibly expanding keys in the filename */
-    if (template->internalize_template)
-      char_buffer = util_alloc_string_copy( template->template_buffer);
+    if (template_->internalize_template)
+      char_buffer = util_alloc_string_copy( template_->template_buffer);
     else
-      char_buffer = template_load( template , arg_list );
+      char_buffer = template_load( template_ , arg_list );
 
     /* Substitutions on the content. */
-    subst_list_update_string( template->arg_list , &char_buffer );
+    subst_list_update_string( template_->arg_list , &char_buffer );
     if (arg_list != NULL) subst_list_update_string( arg_list , &char_buffer );
 
 
 #ifdef ERT_HAVE_REGEXP
     {
       buffer_type * buffer = buffer_alloc_private_wrapper( char_buffer , strlen( char_buffer ) + 1);
-      template_eval_loops( template , buffer );
-      char_buffer = buffer_get_data( buffer );
+      template_eval_loops( template_ , buffer );
+      char_buffer = (char*)buffer_get_data( buffer );
       buffer_free_container( buffer );
     }
 #endif
@@ -202,25 +202,25 @@ void template_instantiate( const template_type * template , const char * __targe
    Add an internal key_value pair. This substitution will be performed
    before the internal substitutions.
 */
-void template_add_arg( template_type * template , const char * key , const char * value ) {
-  subst_list_append_copy( template->arg_list , key , value , NULL /* No doc_string */);
+void template_add_arg( template_type * _template , const char * key , const char * value ) {
+  subst_list_append_copy( _template->arg_list , key , value , NULL /* No doc_string */);
 }
 
 
-void template_clear_args( template_type * template ) {
-  subst_list_clear( template->arg_list );
+void template_clear_args( template_type * _template ) {
+  subst_list_clear( _template->arg_list );
 }
 
 
-int template_add_args_from_string( template_type * template , const char * arg_string) {
-  return subst_list_add_from_string( template->arg_list , arg_string , true);
+int template_add_args_from_string( template_type * _template , const char * arg_string) {
+  return subst_list_add_from_string( _template->arg_list , arg_string , true);
 }
 
 
-char * template_get_args_as_string( template_type * template ) {
-  free( template->arg_string );
-  template->arg_string = subst_list_alloc_string_representation( template->arg_list );
-  return template->arg_string;
+char * template_get_args_as_string( template_type * _template ) {
+  free( _template->arg_string );
+  _template->arg_string = subst_list_alloc_string_representation( _template->arg_list );
+  return _template->arg_string;
 }
 
 /*****************************************************************/
