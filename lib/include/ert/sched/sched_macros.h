@@ -65,7 +65,7 @@ void   sched_kw_## KW ##_free__(void * kw)              \
 
 #define KW_COPYC_IMPL(KW)                             \
 void * sched_kw_## KW ##_copyc__(const void * kw)  {  \
-   return sched_kw_ ## KW ## _copyc(kw);              \
+   return sched_kw_ ## KW ## _copyc( (const sched_kw_## KW ##_type *)kw );\
 }
 
 #define KW_IMPL(KW)      \

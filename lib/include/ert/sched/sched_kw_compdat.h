@@ -18,6 +18,9 @@
 
 #ifndef ERT_SCHED_KW_COMPDAT_H
 #define ERT_SCHED_KW_COMPDAT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 
 #include <ert/util/set.h>
@@ -37,4 +40,7 @@ void                    sched_kw_compdat_fwrite(const sched_kw_compdat_type * , 
 KW_HEADER(compdat)
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif
