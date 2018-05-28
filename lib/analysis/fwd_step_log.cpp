@@ -20,9 +20,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/analysis/fwd_step_log.h>
+#include <ert/analysis/fwd_step_log.hpp>
 
 #define DEFAULT_LOG_FILE               "fwd_step.out"
 #define DEFAULT_CLEAR_LOG              false

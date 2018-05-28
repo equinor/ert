@@ -25,23 +25,23 @@
 #include <omp.h>
 #endif
 
-#include <ert/util/type_macros.h>
-#include <ert/util/util.h>
-#include <ert/util/rng.h>
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_blas.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/double_vector.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/rng.hpp>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_blas.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/double_vector.hpp>
 
-#include <ert/analysis/stepwise.h>
-#include <ert/analysis/fwd_step_enkf.h>
-#include <ert/analysis/fwd_step_log.h>
-#include <ert/analysis/analysis_table.h>
-#include <ert/analysis/analysis_module.h>
-#include <ert/analysis/module_data_block.h>
-#include <ert/analysis/module_data_block_vector.h>
-#include <ert/analysis/module_obs_block.h>
-#include <ert/analysis/module_obs_block_vector.h>
+#include <ert/analysis/stepwise.hpp>
+#include <ert/analysis/fwd_step_enkf.hpp>
+#include <ert/analysis/fwd_step_log.hpp>
+#include <ert/analysis/analysis_table.hpp>
+#include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/module_data_block.hpp>
+#include <ert/analysis/module_data_block_vector.hpp>
+#include <ert/analysis/module_obs_block.hpp>
+#include <ert/analysis/module_obs_block_vector.hpp>
 
 #define FWD_STEP_ENKF_TYPE_ID 765524
 
@@ -527,17 +527,20 @@ void * fwd_step_enkf_get_ptr( const void * arg , const char * var_name ) {
 
 analysis_table_type LINK_NAME = {
   .name            = "FWD_STEP_ENKF",
-  .alloc           = fwd_step_enkf_data_alloc,
+  .updateA         = fwd_step_enkf_updateA,
+  .initX           = NULL ,
+  .init_update     = NULL ,
+  .complete_update = NULL ,
+
   .freef           = fwd_step_enkf_data_free,
+  .alloc           = fwd_step_enkf_data_alloc,
+
   .set_int         = fwd_step_enkf_set_int ,
   .set_double      = fwd_step_enkf_set_double ,
   .set_bool        = fwd_step_enkf_set_bool ,
   .set_string      = fwd_step_enkf_set_string ,
   .get_options     = fwd_step_enkf_get_options ,
-  .initX           = NULL ,
-  .updateA         = fwd_step_enkf_updateA,
-  .init_update     = NULL ,
-  .complete_update = NULL ,
+
   .has_var         = fwd_step_enkf_has_var,
   .get_int         = fwd_step_enkf_get_int ,
   .get_double      = fwd_step_enkf_get_double ,

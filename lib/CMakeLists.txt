@@ -79,9 +79,9 @@ add_library(res res_util/res_log.cpp
                 analysis/analysis_module.cpp
                 analysis/bootstrap_enkf.cpp
                 analysis/cv_enkf.cpp
-                analysis/enkf_linalg.c
-                analysis/fwd_step_enkf.c
-                analysis/fwd_step_log.c
+                analysis/enkf_linalg.cpp
+                analysis/fwd_step_enkf.cpp
+                analysis/fwd_step_log.cpp
                 analysis/module_data_block.c
                 analysis/module_data_block_vector.c
                 analysis/module_info.c
