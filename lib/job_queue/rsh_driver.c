@@ -91,7 +91,7 @@ static rsh_host_type * rsh_host_alloc(const char * host_name , int max_running) 
   if (max_running > 0) {
     struct addrinfo * result;
     if (getaddrinfo(host_name , NULL , NULL , &result) == 0) {
-      rsh_host_type * host = util_malloc(sizeof * host );
+      rsh_host_type * host = (rsh_host_type*)util_malloc(sizeof * host );
 
       host->host_name   = util_alloc_string_copy(host_name);
       host->max_running = max_running;
@@ -142,7 +142,7 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
      in the rsh_host_available function.
   */
   int argc           = job_argc + 2;
-  const char ** argv = util_malloc( argc * sizeof * argv );
+  const char ** argv = (const char**)util_malloc( argc * sizeof * argv );
 
   argv[0] = rsh_host->host_name;
   argv[1] = submit_cmd;
@@ -362,7 +362,7 @@ void rsh_driver_set_host_list( rsh_driver_type * rsh_driver , const hash_type * 
 */
 
 void * rsh_driver_alloc( ) {
-  rsh_driver_type * rsh_driver = util_malloc( sizeof * rsh_driver );
+  rsh_driver_type * rsh_driver = (rsh_driver_type*)util_malloc( sizeof * rsh_driver );
   UTIL_TYPE_ID_INIT( rsh_driver , RSH_DRIVER_TYPE_ID );
   pthread_mutex_init( &rsh_driver->submit_lock , NULL );
   pthread_attr_init( &rsh_driver->thread_attr );

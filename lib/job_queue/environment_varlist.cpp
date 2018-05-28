@@ -16,9 +16,9 @@
    for more details.
 */
 
-#include <ert/job_queue/environment_varlist.h>
+#include <ert/job_queue/environment_varlist.hpp>
 
-#include <ert/res_util/res_env.h>
+#include <ert/res_util/res_env.hpp>
 
 #include <ert/util/hash.h>
 
@@ -31,7 +31,7 @@ struct env_varlist_struct {
 };
 
 env_varlist_type * env_varlist_alloc() {
-  env_varlist_type * list = util_malloc( sizeof * list );
+  env_varlist_type * list = (env_varlist_type*)util_malloc( sizeof * list );
   list->varlist = hash_alloc();
   list->updatelist = hash_alloc();
   return list;

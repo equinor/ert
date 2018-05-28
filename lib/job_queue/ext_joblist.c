@@ -82,7 +82,7 @@ struct ext_joblist_struct {
 
 
 ext_joblist_type * ext_joblist_alloc( ) {
-  ext_joblist_type * joblist = util_malloc( sizeof * joblist );
+  ext_joblist_type * joblist = (ext_joblist_type*)util_malloc( sizeof * joblist );
   joblist->jobs = hash_alloc();
   return joblist;
 }
@@ -159,7 +159,7 @@ void ext_joblist_add_jobs_in_directory(ext_joblist_type * joblist  , const char 
       struct dirent * entry = readdir( dirH );
       if (entry != NULL) {
         if ((strcmp(entry->d_name , ".") != 0) && (strcmp(entry->d_name , "..") != 0)) {
-          char * full_path = util_alloc_filename( path , entry->d_name , NULL );
+          char * full_path = (char*)util_alloc_filename( path , entry->d_name , NULL );
           if (util_is_file( full_path )) {
               ext_job_type * new_job = ext_job_fscanf_alloc(entry->d_name, license_root_path, user_mode, full_path, search_path);
               if (new_job != NULL) {

@@ -52,7 +52,7 @@ struct forward_model_struct {
 
 
 forward_model_type * forward_model_alloc(const ext_joblist_type * ext_joblist) {
-  forward_model_type * forward_model = util_malloc( sizeof * forward_model );
+  forward_model_type * forward_model = (forward_model_type*)util_malloc( sizeof * forward_model );
 
   forward_model->jobs        = vector_alloc_new();
   forward_model->ext_joblist = ext_joblist;
@@ -69,7 +69,7 @@ stringlist_type * forward_model_alloc_joblist( const forward_model_type * forwar
   stringlist_type * names = stringlist_alloc_new( );
   int i;
   for (i=0; i < vector_get_size( forward_model->jobs ); i++) {
-    const ext_job_type * job = vector_iget_const( forward_model->jobs , i);
+    const ext_job_type * job = (const ext_job_type*)vector_iget_const( forward_model->jobs , i);
     stringlist_append_ref( names , ext_job_get_name( job ));
   }
 
@@ -102,7 +102,7 @@ ext_job_type * forward_model_add_job(forward_model_type * forward_model , const 
 */
 
 void forward_model_iset_job_arg( forward_model_type * forward_model , int job_index , const char * arg , const char * value) {
-  ext_job_type * job = vector_iget( forward_model->jobs , job_index );
+  ext_job_type * job = (ext_job_type*)vector_iget( forward_model->jobs , job_index );
   ext_job_set_private_arg(job , arg , value);
 }
 
@@ -162,7 +162,7 @@ void forward_model_parse_job_deprecated_args(forward_model_type * forward_model,
     if (arg_length == strlen(p1))
       util_abort("%s: paranthesis not terminated for job:%s \n",__func__ , job_name);
    {
-      char  * arg_string          = util_alloc_substring_copy((p1 + 1) , 0 , arg_length - 1);
+      char  * arg_string          = (char *)util_alloc_substring_copy((p1 + 1) , 0 , arg_length - 1);
       ext_job_set_private_args_from_string( current_job , arg_string );
       free( arg_string );
     }
@@ -180,7 +180,7 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
                                        const subst_list_type * global_args,
                                        mode_t umask,
                                        const env_varlist_type * varlist) {
-  char * json_file = util_alloc_filename(path , DEFAULT_JOB_JSON, NULL);
+  char * json_file = (char*)util_alloc_filename(path , DEFAULT_JOB_JSON, NULL);
   FILE * stream    = util_fopen(json_file, "w");
   int i;
 
@@ -191,7 +191,7 @@ static void forward_model_json_fprintf(const forward_model_type * forward_model,
   env_varlist_json_fprintf(varlist, stream); fprintf(stream, ",\n");
   fprintf(stream, "\"jobList\" : [");
   for (i=0; i < vector_get_size(forward_model->jobs); i++) {
-    const ext_job_type * job = vector_iget_const(forward_model->jobs , i);
+    const ext_job_type * job = (const ext_job_type*)vector_iget_const(forward_model->jobs , i);
     ext_job_json_fprintf(job , stream , global_args);
     if (i < (vector_get_size( forward_model->jobs ) - 1))
       fprintf(stream,",\n");
@@ -233,7 +233,7 @@ forward_model_type * forward_model_alloc_copy(const forward_model_type * forward
 
   new = forward_model_alloc(forward_model->ext_joblist );
   for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
-    const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
+    const ext_job_type * job = (const ext_job_type*)vector_iget_const( forward_model->jobs , ijob);
     vector_append_owned_ref( new->jobs , ext_job_alloc_copy( job ) , ext_job_free__);
   }
 

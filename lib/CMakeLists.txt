@@ -109,7 +109,7 @@ add_library(res res_util/res_log.cpp
                 job_queue/workflow.c
                 job_queue/workflow_job.c
                 job_queue/workflow_joblist.c
-                job_queue/environment_varlist.c
+                job_queue/environment_varlist.cpp
                 job_queue/job_kw_definitions.c
                 ${lsb}
 

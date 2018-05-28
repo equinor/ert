@@ -55,7 +55,7 @@ UTIL_SAFE_CAST_FUNCTION( job_queue_status , JOB_QUEUE_STATUS_TYPE_ID )
 
 
 job_queue_status_type * job_queue_status_alloc() {
-  job_queue_status_type * status = util_malloc( sizeof * status );
+  job_queue_status_type * status = (job_queue_status_type*)util_malloc( sizeof * status );
   UTIL_TYPE_ID_INIT( status ,   JOB_QUEUE_STATUS_TYPE_ID );
   pthread_rwlock_init( &status->rw_lock , NULL);
   job_queue_status_clear( status );

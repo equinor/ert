@@ -1169,7 +1169,7 @@ int job_queue_add_job(job_queue_type * queue ,
       job_list_unlock( queue->job_list );
       return queue_index;   /* Handle used by the calling scope. */
     } else {
-      char * cwd = util_alloc_cwd();
+      char * cwd = (char*)util_alloc_cwd();
       util_abort("%s: failed to create job: %s in path:%s[%d]  cwd:%s\n",__func__ , job_name , run_path , util_is_directory(run_path), cwd);
       return -1;
     }
@@ -1194,7 +1194,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
 
 
 
-  job_queue_type * queue  = util_malloc(sizeof * queue );
+  job_queue_type * queue  = (job_queue_type*)util_malloc(sizeof * queue );
   UTIL_TYPE_ID_INIT( queue , JOB_QUEUE_TYPE_ID);
   queue->usleep_time      = 250000; /* 1000000 : 1 second */
   queue->max_ok_wait_time = 60;
@@ -1346,7 +1346,7 @@ int job_queue_get_max_running_option(queue_driver_type * driver) {
 
 
 void job_queue_set_max_running_option(queue_driver_type * driver, int max_running) {
-  char * max_running_string = util_alloc_sprintf("%d", max_running);
+  char * max_running_string = (char*)util_alloc_sprintf("%d", max_running);
   queue_driver_set_option(driver, MAX_RUNNING, max_running_string);
   free(max_running_string);
 }

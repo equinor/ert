@@ -161,7 +161,7 @@ static UTIL_SAFE_CAST_FUNCTION( ext_job , EXT_JOB_TYPE_ID)
 
 
 static ext_job_type * ext_job_alloc__(const char * name , const char * license_root_path , bool private_job) {
-  ext_job_type * ext_job = util_malloc(sizeof * ext_job );
+  ext_job_type * ext_job = (ext_job_type*)util_malloc(sizeof * ext_job );
 
   UTIL_TYPE_ID_INIT( ext_job , EXT_JOB_TYPE_ID);
   ext_job->name                = util_alloc_string_copy( name );
@@ -263,7 +263,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
     hash_iter_type * iter     = hash_iter_alloc( src_job->environment );
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      char * value = hash_get( src_job->environment , key);
+      char * value = (char*)hash_get( src_job->environment , key);
       if (value)
         hash_insert_hash_owned_ref( new_job->environment , key , util_alloc_string_copy(value) , free);
       else
@@ -277,7 +277,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
     hash_iter_type * iter     = hash_iter_alloc( src_job->exec_env );
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      char * value = hash_get( src_job->exec_env , key);
+      char * value = (char*)hash_get( src_job->exec_env , key);
       if (value)
         hash_insert_hash_owned_ref( new_job->exec_env , key , util_alloc_string_copy(value) , free);
       else
@@ -293,7 +293,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
     hash_iter_type * iter     = hash_iter_alloc( src_job->default_mapping );
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      char * value = hash_get( src_job->default_mapping , key);
+      char * value = (char*)hash_get( src_job->default_mapping , key);
       hash_insert_hash_owned_ref( new_job->default_mapping , key , util_alloc_string_copy(value) , free);
       key = hash_iter_get_next_key(iter);
     }
@@ -416,7 +416,7 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable_abs,
        to update the mode of the full_path executable to make sure it
        is executable.
     */
-    char * full_path = util_alloc_realpath( executable_abs );
+    char * full_path = (char*)util_alloc_realpath( executable_abs );
     __update_mode( full_path , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH);  /* u:rwx  g:rwx  o:rx */
     ext_job->executable = util_realloc_string_copy(ext_job->executable , full_path);
     free( full_path );
@@ -426,11 +426,11 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable_abs,
        to the current working directory. This is deprecated behaviour,
        support will be removed
     */
-    char * full_path                  = util_alloc_abs_path(executable_input);
+    char * full_path                  = (char*)util_alloc_abs_path(executable_input);
     const char * job_description_file = ext_job_get_config_file(ext_job);
     char * path_to_job_descr_file     = util_split_alloc_dirname(job_description_file);
-    char * new_relative_path_to_exe   = util_alloc_rel_path(path_to_job_descr_file, full_path);
-    char * relative_config_file       = util_alloc_rel_path(NULL , ext_job->config_file);
+    char * new_relative_path_to_exe   = (char*)util_alloc_rel_path(path_to_job_descr_file, full_path);
+    char * relative_config_file       = (char*)util_alloc_rel_path(NULL , ext_job->config_file);
 
     fprintf(stderr,"/----------------------------------------------------------------\n");
     fprintf(stderr,"|                        ** WARNING **                            \n");
@@ -719,7 +719,7 @@ static void __fprintf_python_hash(FILE * stream,
     hash_iter_type * iter = hash_iter_alloc(hash);
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      const char * value = hash_get(hash , key);
+      const char * value = (const char*)hash_get(hash , key);
 
       fprintf(stream,"\"%s\" : " , key);
       if (value)

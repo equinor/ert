@@ -48,7 +48,7 @@ UTIL_IS_INSTANCE_FUNCTION( job_queue_manager , JOB_QUEUE_MANAGER_TYPE_ID )
 
 
 job_queue_manager_type * job_queue_manager_alloc( job_queue_type * job_queue ) {
-  job_queue_manager_type * manager = util_malloc( sizeof * manager );
+  job_queue_manager_type * manager = (job_queue_manager_type*)util_malloc( sizeof * manager );
   UTIL_TYPE_ID_INIT( manager , JOB_QUEUE_MANAGER_TYPE_ID );
   manager->job_queue = job_queue;
   return manager;

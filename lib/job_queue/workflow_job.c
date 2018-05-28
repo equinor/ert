@@ -137,7 +137,7 @@ void workflow_job_update_config_compiler( const workflow_job_type * workflow_job
 
 
 workflow_job_type * workflow_job_alloc( const char * name , bool internal ) {
-  workflow_job_type * workflow_job = util_malloc( sizeof * workflow_job );
+  workflow_job_type * workflow_job = (workflow_job_type*)util_malloc( sizeof * workflow_job );
   UTIL_TYPE_ID_INIT( workflow_job , WORKFLOW_JOB_TYPE_ID );
   workflow_job->internal   = internal;      // this can not be changed run-time.
   workflow_job->min_arg    = CONFIG_DEFAULT_ARG_MIN;

@@ -177,7 +177,7 @@ void local_driver_free__(void * __driver) {
 
 
 void * local_driver_alloc() {
-  local_driver_type * local_driver = util_malloc(sizeof * local_driver );
+  local_driver_type * local_driver = (local_driver_type*)util_malloc(sizeof * local_driver );
   UTIL_TYPE_ID_INIT( local_driver , LOCAL_DRIVER_TYPE_ID);
   pthread_mutex_init( &local_driver->submit_lock , NULL );
   pthread_attr_init( &local_driver->thread_attr );

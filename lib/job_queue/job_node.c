@@ -112,8 +112,8 @@ void job_queue_node_free_error_info( job_queue_node_type * node ) {
 */
 
 static char * __alloc_tag_content( const char * xml_buffer , const char * tag) {
-  char * open_tag    = util_alloc_sprintf("<%s>"  , tag);
-  char * close_tag   = util_alloc_sprintf("</%s>" , tag);
+  char * open_tag    = (char*)util_alloc_sprintf("<%s>"  , tag);
+  char * close_tag   = (char*)util_alloc_sprintf("</%s>" , tag);
 
   char * start_ptr   = strstr( xml_buffer , open_tag );
   char * end_ptr     = strstr( xml_buffer , close_tag );
@@ -275,7 +275,7 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
   if (!util_is_directory( run_path ))
     return NULL;
 
-  job_queue_node_type * node = util_malloc(sizeof * node );
+  job_queue_node_type * node = (job_queue_node_type*)util_malloc(sizeof * node );
   node->confirmed_running  = false;
   node->progress_timestamp = time(NULL);
   UTIL_TYPE_ID_INIT( node , JOB_QUEUE_NODE_TYPE_ID );

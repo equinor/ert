@@ -198,7 +198,7 @@ bool queue_driver_unset_option(queue_driver_type * driver, const char * option_k
  */
 
 static queue_driver_type * queue_driver_alloc_empty() {
-  queue_driver_type * driver = util_malloc(sizeof * driver);
+  queue_driver_type * driver = (queue_driver_type*)util_malloc(sizeof * driver);
   UTIL_TYPE_ID_INIT(driver, QUEUE_DRIVER_ID);
   driver->driver_type = NULL_DRIVER;
   driver->submit = NULL;

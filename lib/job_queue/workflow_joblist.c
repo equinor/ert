@@ -41,7 +41,7 @@ struct workflow_joblist_struct {
 
 
 workflow_joblist_type * workflow_joblist_alloc( ) {
-  workflow_joblist_type * joblist = util_malloc( sizeof * joblist );
+  workflow_joblist_type * joblist = (workflow_joblist_type*)util_malloc( sizeof * joblist );
 
   joblist->job_config = workflow_job_alloc_config();
   joblist->workflow_compiler = config_alloc();
