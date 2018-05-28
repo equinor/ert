@@ -26,7 +26,7 @@
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
 
-#include <ert/analysis/analysis_module.h>
+#include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/analysis_table.h>
 
 #define ANALYSIS_MODULE_TYPE_ID 6610123
