@@ -54,7 +54,7 @@ void module_obs_block_vector_add_obs_block( module_obs_block_vector_type * modul
 
 
 module_obs_block_type * module_obs_block_vector_iget_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int block_index){
- return vector_iget(module_obs_block_vector->obs_block_vector, block_index);
+ return (module_obs_block_type*)vector_iget(module_obs_block_vector->obs_block_vector, block_index);
 }
 
 const module_obs_block_type * module_obs_block_vector_search_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int global_index){
