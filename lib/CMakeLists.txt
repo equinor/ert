@@ -83,7 +83,7 @@ add_library(res res_util/res_log.cpp
                 analysis/fwd_step_enkf.cpp
                 analysis/fwd_step_log.cpp
                 analysis/module_data_block.cpp
-                analysis/module_data_block_vector.c
+                analysis/module_data_block_vector.cpp
                 analysis/module_info.cpp
                 analysis/module_obs_block.c
                 analysis/module_obs_block_vector.c

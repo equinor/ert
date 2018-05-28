@@ -19,12 +19,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/analysis/module_data_block.h>
-#include <ert/analysis/module_data_block_vector.h>
+#include <ert/analysis/module_data_block.hpp>
+#include <ert/analysis/module_data_block_vector.hpp>
 
 #define MODULE_DATA_BLOCK_VECTOR_TYPE_ID 732178012
 
