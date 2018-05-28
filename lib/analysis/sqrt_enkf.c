@@ -51,7 +51,7 @@ static UTIL_SAFE_CAST_FUNCTION_CONST( sqrt_enkf_data , SQRT_ENKF_TYPE_ID )
 
 
 void * sqrt_enkf_data_alloc( ) {
-  sqrt_enkf_data_type * data = util_malloc( sizeof * data );
+  sqrt_enkf_data_type * data = (sqrt_enkf_data_type*)util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , SQRT_ENKF_TYPE_ID );
 
   data->std_data = std_enkf_data_alloc( );

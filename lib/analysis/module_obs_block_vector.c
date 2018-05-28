@@ -36,7 +36,7 @@ struct module_obs_block_vector_struct {
 UTIL_IS_INSTANCE_FUNCTION( module_obs_block_vector , MODULE_OBS_BLOCK_VECTOR_TYPE_ID)
 
 module_obs_block_vector_type * module_obs_block_vector_alloc() {
-  module_obs_block_vector_type * module_obs_block_vector = util_malloc( sizeof * module_obs_block_vector );
+  module_obs_block_vector_type * module_obs_block_vector = (module_obs_block_vector_type*)util_malloc( sizeof * module_obs_block_vector );
   UTIL_TYPE_ID_INIT( module_obs_block_vector , MODULE_OBS_BLOCK_VECTOR_TYPE_ID );
   module_obs_block_vector->obs_block_vector = vector_alloc_new();
   return module_obs_block_vector;

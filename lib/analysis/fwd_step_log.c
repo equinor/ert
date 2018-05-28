@@ -35,7 +35,7 @@ struct fwd_step_log_struct {
 
 
 fwd_step_log_type * fwd_step_log_alloc() {
-  fwd_step_log_type * fwd_step_log = util_malloc( sizeof * fwd_step_log );
+  fwd_step_log_type * fwd_step_log = (fwd_step_log_type*)util_malloc( sizeof * fwd_step_log );
   fwd_step_log->log_file = NULL;
   fwd_step_log->log_stream = NULL;
   fwd_step_log_set_log_file( fwd_step_log , DEFAULT_LOG_FILE);

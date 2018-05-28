@@ -92,7 +92,7 @@ void fwd_step_enkf_set_num_threads( fwd_step_enkf_data_type * data , int threads
 
 
 void * fwd_step_enkf_data_alloc( ) {
-  fwd_step_enkf_data_type * data = util_malloc( sizeof * data );
+  fwd_step_enkf_data_type * data = (fwd_step_enkf_data_type*)util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , FWD_STEP_ENKF_TYPE_ID );
 
   data->stepwise_data = NULL;
@@ -168,8 +168,8 @@ static void fwd_step_enkf_write_iter_info( fwd_step_enkf_data_type * data , step
   bool_vector_type * active_set = stepwise_get_active_set(stepwise);
   bool has_log = fwd_step_log_is_open( data->fwd_step_log );
   module_obs_block_vector_type * module_obs_block_vector  = module_info_get_obs_block_vector(module_info);
-  char * loc_key = util_alloc_string_copy(key);
-  char * data_active_index_str = util_alloc_sprintf( "(%d)" , data_active_index );
+  char * loc_key = (char*)util_alloc_string_copy(key);
+  char * data_active_index_str = (char*)util_alloc_sprintf( "(%d)" , data_active_index );
   char * cat = util_strcat_realloc(loc_key , data_active_index_str );
   if (has_log)
     fwd_step_log_line( data->fwd_step_log , format, cat, global_index, n_active);
@@ -207,7 +207,7 @@ static void fwd_step_enkf_write_iter_info( fwd_step_enkf_data_type * data , step
       local_index ++;
     }
 
-    char * obs_list_entry = util_alloc_sprintf(format1 , obs_key, obs_active_index,var_beta_percent);
+    char * obs_list_entry = (char*)util_alloc_sprintf(format1 , obs_key, obs_active_index,var_beta_percent);
     stringlist_append_copy(obs_list, obs_list_entry);
     double_vector_append(r_list, var_beta_percent);
     free( obs_list_entry );

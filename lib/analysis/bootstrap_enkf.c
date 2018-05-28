@@ -78,7 +78,7 @@ void bootstrap_enkf_set_subspace_dimension( bootstrap_enkf_data_type * boot_data
 
 
 void * bootstrap_enkf_data_alloc( ) {
-  bootstrap_enkf_data_type * boot_data = util_malloc( sizeof * boot_data );
+  bootstrap_enkf_data_type * boot_data = (bootstrap_enkf_data_type*)util_malloc( sizeof * boot_data );
   UTIL_TYPE_ID_INIT( boot_data , BOOTSTRAP_ENKF_TYPE_ID );
 
   boot_data->std_enkf_data = std_enkf_data_alloc( NULL );

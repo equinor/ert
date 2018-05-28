@@ -37,7 +37,7 @@ struct module_info_struct {
 UTIL_IS_INSTANCE_FUNCTION( module_info , MODULE_INFO_TYPE_ID)
 
 module_info_type * module_info_alloc( const char* ministep_name ) {
-  module_info_type * module_info = util_malloc( sizeof * module_info );
+  module_info_type * module_info = (module_info_type*)util_malloc( sizeof * module_info );
   UTIL_TYPE_ID_INIT( module_info , MODULE_INFO_TYPE_ID );
   module_info->ministep_name     = util_alloc_string_copy( ministep_name );
   module_info->data_block_vector = module_data_block_vector_alloc();

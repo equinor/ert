@@ -127,7 +127,7 @@ void std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_d
 
 
 void * std_enkf_data_alloc( ) {
-  std_enkf_data_type * data = util_malloc( sizeof * data );
+  std_enkf_data_type * data = (std_enkf_data_type*)util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , STD_ENKF_TYPE_ID );
 
   std_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );

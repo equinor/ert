@@ -88,7 +88,7 @@ void cv_enkf_set_pen_press( cv_enkf_data_type * data , bool value ) {
 
 
 void * cv_enkf_data_alloc( ) {
-  cv_enkf_data_type * data = util_malloc( sizeof * data);
+  cv_enkf_data_type * data = (cv_enkf_data_type*)util_malloc( sizeof * data);
   UTIL_TYPE_ID_INIT( data , CV_ENKF_TYPE_ID );
 
   data->Z            = NULL;
