@@ -1,5 +1,11 @@
-from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
+import sys
+
+try:
+  from PyQt4.QtCore import Qt, QSize
+  from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
+except ImportError:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton, QMessageBox, QComboBox
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
@@ -86,7 +92,7 @@ class SimulationPanel(QWidget):
 
         self._simulation_mode_combo.clear()
 
-        for model, panel in self._simulation_widgets.iteritems():
+        for model, panel in self._simulation_widgets.items():
             if show_advanced or not panel.is_advanced_option:
                 self._simulation_mode_combo.addItem(str(model), model)
 
@@ -101,7 +107,11 @@ class SimulationPanel(QWidget):
 
     def getCurrentSimulationModel(self):
         data = self._simulation_mode_combo.itemData(self._simulation_mode_combo.currentIndex(), Qt.UserRole)
-        return data.toPyObject()
+        if sys.version_info[0] == 2:
+            return data.toPyObject()
+        else:
+            return data
+
 
     def getSimulationArguments(self):
         """ @rtype: dict[str,object]"""

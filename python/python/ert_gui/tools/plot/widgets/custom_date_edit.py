@@ -1,7 +1,13 @@
 import datetime
+import sys
 
-from PyQt4.QtCore import QDate
-from PyQt4.QtGui import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
+try:
+  from PyQt4.QtCore import QDate
+  from PyQt4.QtGui import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
+except ImportError:
+  from PyQt5.QtCore import QDate
+  from PyQt5.QtWidgets import QWidget, QHBoxLayout, QCalendarWidget, QToolButton, QMenu, QWidgetAction
+
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
@@ -26,7 +32,7 @@ class CustomDateEdit(QWidget):
         self._calendar_button.setMenu(tool_menu)
 
         layout = QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._line_edit)
         layout.addWidget(self._calendar_button)
         self.setLayout(layout)

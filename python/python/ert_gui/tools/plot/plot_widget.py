@@ -1,8 +1,12 @@
 import sys
 import traceback
 
-from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QAction
+try:
+  from PyQt4.QtCore import Qt, pyqtSignal
+  from PyQt4.QtGui import QWidget, QVBoxLayout, QAction
+except ImportError:
+  from PyQt5.QtCore import Qt, pyqtSignal
+  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QAction
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT
@@ -84,12 +88,12 @@ class PlotWidget(QWidget):
             try:
                 self._plotFunction(plot_context)
                 self._canvas.draw()
-            except StandardError as e:
+            except Exception as e:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 sys.stderr.write("%s\n" % ("-" * 80))
                 traceback.print_tb(exc_tb)
                 sys.stderr.write("Exception type: %s\n" % exc_type.__name__)
-                sys.stderr.write("%s\n" % e.message)
+                sys.stderr.write("%s\n" % e)
                 sys.stderr.write("%s\n" % ("-" * 80))
                 sys.stderr.write("An error occurred during plotting. This stack trace is helpful for diagnosing the problem.")
 

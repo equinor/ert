@@ -1,4 +1,12 @@
-from PyQt4 import QtGui, QtCore
+import sys
+
+try:
+  from PyQt4 import QtCore
+  from PyQt4 import QtGui
+except ImportError:
+  from PyQt5 import QtCore
+  from PyQt5 import QtGui
+  from PyQt5 import QtWidgets
 
 img_prefix = ""
 
@@ -20,14 +28,20 @@ def showWaitCursorWhileWaiting(func):
     """A function decorator to show the wait cursor while the function is working."""
 
     def wrapper(*arg):
-        QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
+        try:
+            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
+        except AttributeError:
+            QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
         try:
             res = func(*arg)
             return res
         except:
             raise
         finally:
-            QtGui.QApplication.restoreOverrideCursor()
+            try:
+                QtGui.QApplication.restoreOverrideCursor()
+            except AttributeError:
+                QtWidgets.QApplication.restoreOverrideCursor()
 
     return wrapper
 

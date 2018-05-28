@@ -1,4 +1,10 @@
-from PyQt4.QtGui import QFormLayout, QLabel, QSpinBox
+import sys
+
+try:
+  from PyQt4.QtGui import QFormLayout, QLabel, QSpinBox
+except ImportError:
+  from PyQt5.QtWidgets import QFormLayout, QLabel, QSpinBox
+
 
 from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector, CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel

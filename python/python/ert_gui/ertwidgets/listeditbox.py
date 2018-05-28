@@ -13,8 +13,14 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
+import sys
+
+try:
+  from PyQt4.QtCore import Qt, QSize
+  from PyQt4.QtGui import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
+except ImportError:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtWidgets import QHBoxLayout, QLineEdit, QCompleter, QToolButton, QInputDialog, QMessageBox, QWidget
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.validationsupport import ValidationSupport
@@ -85,7 +91,7 @@ class ListEditBox(QWidget):
         self._list_edit_line.setMinimumWidth(350)
 
         layout = QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         layout.addWidget(self._list_edit_line)
 

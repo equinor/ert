@@ -1,6 +1,11 @@
-from PyQt4.QtCore import QSize
-from PyQt4.QtGui import QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel
-from PyQt4.QtGui import QToolButton, QHBoxLayout
+import sys
+
+try:
+  from PyQt4.QtCore import QSize
+  from PyQt4.QtGui import QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel, QToolButton, QHBoxLayout
+except ImportError:
+  from PyQt5.QtCore import QSize
+  from PyQt5.QtWidgets import QListWidget, QMessageBox, QAbstractItemView, QWidget, QVBoxLayout, QLabel, QToolButton, QHBoxLayout
 
 from ert_gui import ERT
 from ert_gui.ertwidgets import addHelpToWidget
@@ -33,7 +38,7 @@ class AddRemoveWidget(QWidget):
         else:
             self.buttonLayout = QVBoxLayout()
 
-        self.buttonLayout.setMargin(0)
+        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
 
         if horizontal:
             self.buttonLayout.addStretch(1)

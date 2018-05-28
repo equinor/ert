@@ -1,6 +1,12 @@
-from PyQt4.QtCore import Qt, pyqtSignal, QObject
-from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayout, QPushButton, QToolButton, QMenu, \
-    QWidgetAction, QListWidget
+import sys
+
+try:
+  from PyQt4.QtCore import Qt, pyqtSignal, QObject
+  from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayout, QPushButton, QToolButton, QMenu, QWidgetAction, QListWidget
+except ImportError:
+  from PyQt5.QtCore import Qt, pyqtSignal, QObject
+  from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QTabWidget, QHBoxLayout, QPushButton, QToolButton, QMenu, QWidgetAction, QListWidget
+
 
 from ert_gui import ERT
 from ert_gui.tools.plot.widgets import CopyStyleToDialog

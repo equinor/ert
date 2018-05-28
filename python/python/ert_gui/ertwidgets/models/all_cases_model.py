@@ -1,4 +1,9 @@
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+import sys
+
+try:
+  from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
+except ImportError:
+  from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, QVariant
 
 from ert_gui.ertwidgets.models.ertmodel import getAllCases
 

@@ -76,7 +76,7 @@ class ExportKeywordModel(object):
         return sorted(self.getFieldKeyWords() + self.getGenKwKeyWords() + self.getGenDataKeyWords())
 
     def hasKeywords(self):
-        return self.getKeyWords().count > 0
+        return len(self.getKeyWords()) > 0
 
     def isGenKw(self, key):
         if self.__gen_kw is None:

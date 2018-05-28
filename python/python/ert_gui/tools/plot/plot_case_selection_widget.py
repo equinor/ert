@@ -1,5 +1,12 @@
-from PyQt4.QtCore import pyqtSignal, QSignalMapper, Qt
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
+import sys
+
+try:
+  from PyQt4.QtCore import pyqtSignal, QSignalMapper, Qt
+  from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
+except ImportError:
+  from PyQt5.QtCore import pyqtSignal, QSignalMapper, Qt
+  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
+
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools.plot import PlotCaseModel
@@ -34,7 +41,7 @@ class CaseSelectionWidget(QWidget):
         layout.addLayout(add_button_layout)
 
         self.__case_layout = QVBoxLayout()
-        self.__case_layout.setMargin(0)
+        self.__case_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(self.__case_layout)
 
         self.addCaseSelector(disabled=True, current_case=current_case)
@@ -67,7 +74,7 @@ class CaseSelectionWidget(QWidget):
         widget = QWidget()
 
         layout = QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         widget.setLayout(layout)
 
         combo = QComboBox()

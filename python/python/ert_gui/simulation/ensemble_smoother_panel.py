@@ -1,4 +1,9 @@
-from PyQt4.QtGui import QFormLayout, QLabel
+import sys
+
+try:
+  from PyQt4.QtGui import QFormLayout, QLabel
+except ImportError:
+  from PyQt5.QtWidgets import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector
 from ert_gui.ertwidgets.caseselector import CaseSelector

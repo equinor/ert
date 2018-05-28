@@ -77,8 +77,6 @@ class PrBuilder(object):
         if rep == 'ert':
             self.rep_name = 'ert'
 
-        if sys.version_info[0] > 2:
-            self.build_ert = False
         self.pr_map = {}
         self.access_pr()
         self.test_flags = argv[2:]  # argv = [exec, repo, [L|LE, LABEL]]

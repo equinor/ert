@@ -1,5 +1,13 @@
-from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
+import sys
+
+try:
+  from PyQt4.QtCore import QSettings, Qt
+  from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
+except ImportError:
+  from PyQt5.QtCore import QSettings, Qt
+  from PyQt5.QtWidgets import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction, QToolButton
+
+
 from ert_gui.about_dialog import AboutDialog
 
 
@@ -98,8 +106,13 @@ class GertMainWindow(QMainWindow):
 
     def __fetchSettings(self):
         settings = QSettings("Statoil", "Ert-Gui")
-        self.restoreGeometry(settings.value("geometry").toByteArray())
-        self.restoreState(settings.value("windowState").toByteArray())
+        if sys.version_info[0] == 2:
+            self.restoreGeometry(settings.value("geometry").toByteArray())
+            self.restoreState(settings.value("windowState").toByteArray())
+        else:
+            self.restoreGeometry(settings.value("geometry"))
+            self.restoreState(settings.value("windowState"))
+
 
     def toggleAdvancedMode(self, advanced_mode):
         if hasattr(self.__main_widget, "toggleAdvancedMode"):

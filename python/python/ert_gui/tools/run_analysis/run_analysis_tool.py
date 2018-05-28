@@ -13,8 +13,13 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import sys
 
-from PyQt4.QtGui import QMessageBox
+try:
+  from PyQt4.QtGui import QMessageBox
+except ImportError:
+  from PyQt5.QtWidgets import QMessageBox
+
 
 from ert_gui import ERT
 from res.enkf import ESUpdate

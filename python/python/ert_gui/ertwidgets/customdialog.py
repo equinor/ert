@@ -13,8 +13,15 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
-from PyQt4.QtCore import Qt, QSize, SIGNAL
-from PyQt4.QtGui import QDialog, QColor, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLayout
+import sys
+
+try:
+  from PyQt4.QtCore import Qt, QSize
+  from PyQt4.QtGui import QDialog, QColor, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLayout
+except ImportError:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtWidgets import QDialog, QFormLayout, QLabel, QWidget, QDialogButtonBox, QLayout
+  from PyQt5.QtGui import QColor
 
 
 class CustomDialog(QDialog):
@@ -111,5 +118,5 @@ class CustomDialog(QDialog):
         self.layout.addRow(self.createSpace(10))
         self.layout.addRow(buttons)
 
-        self.connect(buttons, SIGNAL('accepted()'), self.accept)
-        self.connect(buttons, SIGNAL('rejected()'), self.reject)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)

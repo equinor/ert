@@ -1,8 +1,13 @@
 import re
 import shutil
+import sys
 
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
+try:
+  from PyQt4.QtCore import pyqtSignal
+  from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
+except ImportError:
+  from PyQt5.QtCore import pyqtSignal
+  from PyQt5.QtWidgets import QWidget, QVBoxLayout, QToolBar, QMessageBox, QSizePolicy, QFileDialog
 
 from ert_gui.ertwidgets import SearchBox, resourceIcon
 from ert_gui.ide.highlighter import KeywordHighlighter

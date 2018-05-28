@@ -1,6 +1,11 @@
-from PyQt4.QtCore import QSize, Qt
-from PyQt4.QtGui import QToolButton, QHBoxLayout, QLabel, QListWidget
-from PyQt4.QtGui import QWidget, QVBoxLayout, QListWidgetItem, QMenu, QAbstractItemView
+import sys
+
+try:
+  from PyQt4.QtCore import QSize, Qt
+  from PyQt4.QtGui import QToolButton, QHBoxLayout, QLabel, QListWidget, QWidget, QVBoxLayout, QListWidgetItem, QMenu, QAbstractItemView
+except ImportError:
+  from PyQt5.QtCore import QSize, Qt
+  from PyQt5.QtWidgets import QToolButton, QHBoxLayout, QLabel, QListWidget, QWidget, QVBoxLayout, QListWidgetItem, QMenu, QAbstractItemView
 
 from ert_gui.ertwidgets import addHelpToWidget, SearchBox, resourceIcon
 
@@ -31,7 +36,7 @@ class CheckList(QWidget):
 
         check_button_layout = QHBoxLayout()
 
-        check_button_layout.setMargin(0)
+        check_button_layout.setContentsMargins(0, 0, 0, 0)
         check_button_layout.setSpacing(0)
         check_button_layout.addWidget(QLabel(label))
         check_button_layout.addStretch(1)

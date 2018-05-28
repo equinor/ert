@@ -1,4 +1,9 @@
-from PyQt4.QtGui import QTreeView
+try:
+  from PyQt4.QtGui import QTreeView
+except ImportError:
+  from PyQt5.QtWidgets import QTreeView
+
+
 from ert_gui.ide.wizards import TreeItem
 from ert_gui.ide.wizards.tree_model import TreeModel
 

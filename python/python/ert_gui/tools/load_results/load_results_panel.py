@@ -13,7 +13,12 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QTextEdit
+import sys
+
+try:
+  from PyQt4.QtGui import QWidget, QFormLayout, QComboBox, QTextEdit
+except ImportError:
+  from PyQt5.QtWidgets import QWidget, QFormLayout, QComboBox, QTextEdit
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.all_cases_model import AllCasesModel

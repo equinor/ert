@@ -1,4 +1,12 @@
-from PyQt4.QtGui import QDoubleValidator, QStackedWidget, QIntValidator, QLabel
+import sys
+
+try:
+  from PyQt4.QtGui import QDoubleValidator, QStackedWidget, QIntValidator, QLabel
+except ImportError:
+  from PyQt5.QtWidgets import QStackedWidget, QLabel
+  from PyQt5.QtGui import QDoubleValidator, QIntValidator
+
+
 from ert_gui.tools.plot.widgets.custom_date_edit import CustomDateEdit
 
 from ert_gui.plottery import PlotContext

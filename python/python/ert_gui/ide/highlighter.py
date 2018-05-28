@@ -1,5 +1,10 @@
 import re
-from PyQt4.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
+import sys
+
+try:
+  from PyQt4.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
+except ImportError:
+  from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
 
 from ert_gui.ide.keywords import ErtKeywords
 from ert_gui.ide.keywords.configuration_line_builder import ConfigurationLineBuilder
@@ -54,7 +59,10 @@ class KeywordHighlighter(QSyntaxHighlighter):
 
 
     def highlightBlock(self, complete_block):
-        block = unicode(complete_block)
+        try:
+            block = unicode(complete_block)
+        except NameError:
+            block = complete_block
 
         self.clb.processLine(block)
 
@@ -96,9 +104,14 @@ class KeywordHighlighter(QSyntaxHighlighter):
 
 
     def setSearchString(self, string):
-        if self.search_string != unicode(string):
-            self.search_string = unicode(string)
-            self.rehighlight()
+        try:
+            if self.search_string != unicode(string):
+                self.search_string = unicode(string)
+                self.rehighlight()
+        except NameError:
+            if self.search_string != string:
+                self.search_string = string
+                self.rehighlight()
 
 
     def formatToken(self, token, highlight_format):

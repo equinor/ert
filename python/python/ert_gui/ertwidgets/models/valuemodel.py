@@ -1,4 +1,9 @@
-from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
+import sys
+
+try:
+  from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
+except ImportError:
+  from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
 class ValueModel(QObject):
     valueChanged = pyqtSignal(str)

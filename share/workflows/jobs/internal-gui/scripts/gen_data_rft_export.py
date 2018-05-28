@@ -1,9 +1,14 @@
 import os
 import re
+import sys
 
 import numpy
 import pandas
-from PyQt4.QtGui import QCheckBox
+
+if sys.version_info[0] == 2:
+  from PyQt4.QtGui import QCheckBox
+else:
+  from PyQt5.QtWidgets import QCheckBox
 
 from ecl.rft import WellTrajectory
 from res.enkf import ErtPlugin, CancelPluginException

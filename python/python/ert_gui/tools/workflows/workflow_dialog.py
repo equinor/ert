@@ -1,5 +1,11 @@
-from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
+import sys
+
+try:
+  from PyQt4.QtCore import Qt, pyqtSignal
+  from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
+except ImportError:
+  from PyQt5.QtCore import Qt, pyqtSignal
+  from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
 
 
 class WorkflowDialog(QDialog):

@@ -1,5 +1,13 @@
-from PyQt4.QtCore import QString, QSize, Qt
-from PyQt4.QtGui import QPushButton, QColor, QLineEdit, QStyle
+import sys
+
+try:
+  from PyQt4.QtCore import QString, QSize, Qt
+  from PyQt4.QtGui import QPushButton, QColor, QLineEdit, QStyle
+except ImportError:
+  from PyQt5.QtCore import QSize, Qt
+  from PyQt5.QtWidgets import QPushButton, QLineEdit, QStyle
+  from PyQt5.QtGui import QColor
+
 
 from ert_gui.ertwidgets import resourceIcon
 
@@ -30,7 +38,7 @@ class ClearableLineEdit(QLineEdit):
 
 
     def toggleClearButtonVisibility(self):
-        self._clear_button.setVisible(len(str(self.text())) > 0 and not self._placeholder_active)
+        self._clear_button.setVisible(len(self.text()) > 0 and not self._placeholder_active)
 
     def sizeHint(self):
         size = QLineEdit.sizeHint(self)
@@ -92,6 +100,9 @@ class ClearableLineEdit(QLineEdit):
 
     def text(self):
         if self._placeholder_active:
-            return QString("")
+            if sys.version_info[0] == 2:
+                return QString("")
+            else:
+                return ""
         else:
             return QLineEdit.text(self)

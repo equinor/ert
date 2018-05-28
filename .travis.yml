@@ -1,15 +1,35 @@
 language: c
 
+compiler:
+  - gcc
+  - clang
+
+os:
+  - linux
+  - osx
+
+osx_image: xcode7.3
+sudo: false
+dist: trusty
+
+env:
+  global:
+    - ERT_SHOW_BACKTRACE=1
+    - LD_LIBRARY_PATH="$(pwd)/install/lib64"
+  matrix:
+    - PYTHON_VERSION=2.7
+    - PYTHON_VERSION=3.6
+
 matrix:
   fast_finish: true
   allow_failures:
     - os: osx
-  include:
+  exclude:
     - os: osx
-      osx_image: xcode7.3
-      compiler: clang
-    - os: linux
       compiler: gcc
+    - os: linux
+      compiler: clang
+
 
 addons:
   apt:
@@ -28,7 +48,11 @@ addons:
 install:
     - if [[ "$CC" == "gcc" ]]; then export CXX="g++-4.8"; fi
 
-    - export TRAVIS_PYTHON_VERSION="2.7"
+    - if [[ $PYTHON_VERSION == 2.7 ]]; then
+        export TRAVIS_PYTHON_VERSION="2.7";
+      else
+        export TRAVIS_PYTHON_VERSION="3.6";
+      fi
     # We do this conditionally because it saves us some downloading if the version is the same.
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
         if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -55,9 +79,6 @@ install:
     - conda info -a
     - travis/install_python_packages.py
 
-env:
-  global:
-     - ERT_SHOW_BACKTRACE=1
 
 script:
   - travis/build_total.py ert

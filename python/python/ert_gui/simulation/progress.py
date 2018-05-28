@@ -1,6 +1,13 @@
 from math import floor
-from PyQt4.QtCore import QTimer
-from PyQt4.QtGui import QWidget, QPainter, QColor, QFrame, QLinearGradient
+import sys
+
+try:
+  from PyQt4.QtCore import QTimer
+  from PyQt4.QtGui import QWidget, QPainter, QColor, QFrame, QLinearGradient
+except ImportError:
+  from PyQt5.QtCore import QTimer
+  from PyQt5.QtWidgets import QWidget, QFrame
+  from PyQt5.QtGui import QPainter, QColor, QLinearGradient
 
 
 class StateTracker(object):

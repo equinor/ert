@@ -1,5 +1,11 @@
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QMainWindow
+import sys
+
+try:
+  from PyQt4.QtCore import pyqtSignal
+  from PyQt4.QtGui import QMainWindow
+except ImportError:
+  from PyQt5.QtCore import pyqtSignal
+  from PyQt5.QtWidgets import QMainWindow
 
 from ert_gui.tools.ide.configuration_panel import ConfigurationPanel
 

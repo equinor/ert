@@ -14,8 +14,14 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+import sys
 
-from PyQt4.QtGui import QPalette, QLineEdit
+try:
+  from PyQt4.QtGui import QPalette, QLineEdit
+except ImportError:
+  from PyQt5.QtWidgets import QLineEdit
+  from PyQt5.QtGui import QPalette
+
 from ert_gui.ertwidgets import ValidationSupport, addHelpToWidget
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 

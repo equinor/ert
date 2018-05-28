@@ -1,6 +1,12 @@
-from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtGui import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout, QCursor
+import sys
 
+try:
+  from PyQt4.QtCore import Qt, pyqtSignal
+  from PyQt4.QtGui import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout, QCursor
+except ImportError:
+  from PyQt5.QtCore import Qt, pyqtSignal
+  from PyQt5.QtWidgets import QWidget, QFrame, QDialog, QVBoxLayout, QCheckBox, QLabel, QLayout
+  from PyQt5.QtGui import QCursor
 
 class FilterPopup(QDialog):
     filterSettingsChanged = pyqtSignal(dict)
@@ -12,7 +18,7 @@ class FilterPopup(QDialog):
         self.filter_items = {}
 
         layout = QVBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         frame = QFrame()
         frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
         layout.addWidget(frame)
