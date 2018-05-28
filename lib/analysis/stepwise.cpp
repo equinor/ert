@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/res_util/matrix.h>
-#include <ert/util/bool_vector.h>
-#include <ert/util/double_vector.h>
+#include <ert/util/util.hpp>
+#include <ert/res_util/matrix.hpp>
+#include <ert/util/bool_vector.hpp>
+#include <ert/util/double_vector.hpp>
 
-#include <ert/res_util/regression.h>
+#include <ert/res_util/regression.hpp>
 
-#include <ert/analysis/stepwise.h>
+#include <ert/analysis/stepwise.hpp>
 
 
 #define STEPWISE_TYPE_ID 8722106

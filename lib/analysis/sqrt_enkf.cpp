@@ -20,14 +20,14 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <ert/util/util.h>
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_blas.h>
+#include <ert/util/util.hpp>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_blas.hpp>
 
-#include <ert/analysis/analysis_table.h>
-#include <ert/analysis/analysis_module.h>
-#include <ert/analysis/enkf_linalg.h>
-#include <ert/analysis/std_enkf.h>
+#include <ert/analysis/analysis_table.hpp>
+#include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/enkf_linalg.hpp>
+#include <ert/analysis/std_enkf.hpp>
 
 
 /*
@@ -54,7 +54,7 @@ void * sqrt_enkf_data_alloc( ) {
   sqrt_enkf_data_type * data = (sqrt_enkf_data_type*)util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , SQRT_ENKF_TYPE_ID );
 
-  data->std_data = std_enkf_data_alloc( );
+  data->std_data = (std_enkf_data_type*)std_enkf_data_alloc( );
   data->randrot  = NULL;
   data->options  = ANALYSIS_SCALE_DATA;
 
@@ -120,7 +120,7 @@ void sqrt_enkf_initX(void * module_data ,
     int ens_size      = matrix_get_columns( S );
     int nrmin         = util_int_min( ens_size , nrobs);
     matrix_type * W   = matrix_alloc(nrobs , nrmin);
-    double      * eig = util_calloc( nrmin , sizeof * eig );
+    double      * eig = (double*)util_calloc( nrmin , sizeof * eig );
 
     matrix_subtract_row_mean( S );   /* Shift away the mean */
     enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);
@@ -200,20 +200,22 @@ int sqrt_enkf_get_int( const void * arg, const char * var_name) {
 #endif
 
 
-
 analysis_table_type LINK_NAME = {
   .name            = "SQRT_ENKF",
-  .alloc           = sqrt_enkf_data_alloc,
+  .updateA         = NULL,
+  .initX           = sqrt_enkf_initX ,
+  .init_update     = sqrt_enkf_init_update,
+  .complete_update = sqrt_enkf_complete_update,
+
   .freef           = sqrt_enkf_data_free,
+  .alloc           = sqrt_enkf_data_alloc,
+
   .set_int         = sqrt_enkf_set_int ,
   .set_double      = sqrt_enkf_set_double ,
   .set_bool        = NULL ,
   .set_string      = NULL ,
-  .initX           = sqrt_enkf_initX ,
-  .updateA         = NULL,
-  .init_update     = sqrt_enkf_init_update,
-  .complete_update = sqrt_enkf_complete_update,
   .get_options     = sqrt_enkf_get_options,
+
   .has_var         = sqrt_enkf_has_var,
   .get_int         = sqrt_enkf_get_int,
   .get_double      = sqrt_enkf_get_double,

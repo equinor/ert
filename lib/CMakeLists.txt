@@ -87,10 +87,10 @@ add_library(res res_util/res_log.cpp
                 analysis/module_info.cpp
                 analysis/module_obs_block.cpp
                 analysis/module_obs_block_vector.cpp
-                analysis/null_enkf.c
-                analysis/sqrt_enkf.c
-                analysis/std_enkf.c
-                analysis/stepwise.c
+                analysis/null_enkf.cpp
+                analysis/sqrt_enkf.cpp
+                analysis/std_enkf.cpp
+                analysis/stepwise.cpp
 
                 job_queue/ext_job.c
                 job_queue/ext_joblist.c

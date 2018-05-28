@@ -20,13 +20,13 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <ert/util/util.h>
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_blas.h>
+#include <ert/util/util.hpp>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_blas.hpp>
 
-#include <ert/analysis/analysis_module.h>
-#include <ert/analysis/analysis_table.h>
-#include <ert/analysis/enkf_linalg.h>
+#include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/analysis_table.hpp>
+#include <ert/analysis/enkf_linalg.hpp>
 
 
 
@@ -65,21 +65,27 @@ long null_enkf_get_options( void * arg , long flag ) {
 #define LINK_NAME EXTERNAL_MODULE_SYMBOL
 #endif
 
+
+
 analysis_table_type LINK_NAME = {
     .name            = "NULL_ENKF",
-    .alloc           = NULL ,
+    .updateA         = NULL,
+    .initX           = null_enkf_initX ,
+    .init_update     = NULL,
+    .complete_update = NULL,
+
     .freef           = NULL ,
+    .alloc           = NULL ,
+
     .set_int         = NULL ,
     .set_double      = NULL ,
     .set_bool        = NULL ,
     .set_string      = NULL ,
     .get_options     = null_enkf_get_options,
-    .initX           = null_enkf_initX ,
-    .updateA         = NULL,
-    .init_update     = NULL,
-    .complete_update = NULL,
+
     .has_var         = NULL,
     .get_int         = NULL,
     .get_double      = NULL,
+    .get_bool        = NULL,
     .get_ptr         = NULL,
 };
