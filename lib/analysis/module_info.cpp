@@ -19,11 +19,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/analysis/module_info.h>
+#include <ert/analysis/module_info.hpp>
 
 #define MODULE_INFO_TYPE_ID 73780123
 

@@ -20,10 +20,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/analysis/module_data_block.h>
+#include <ert/analysis/module_data_block.hpp>
 
 #define MODULE_DATA_BLOCK_TYPE_ID 73217801
 static UTIL_SAFE_CAST_FUNCTION( module_data_block , MODULE_DATA_BLOCK_TYPE_ID);

@@ -29,7 +29,7 @@ extern "C" {
   typedef struct module_info_struct module_info_type;
 
   module_info_type                * module_info_alloc(const char* ministep_name);
-  void                              module_info_free();
+  void                              module_info_free(module_info_type * module_info);
   char                          *   module_info_get_ministep_name(const module_info_type * module_info);
   module_data_block_vector_type *   module_info_get_data_block_vector(const module_info_type * module_info);
   module_obs_block_vector_type  *   module_info_get_obs_block_vector(const module_info_type * module_info);

@@ -29,7 +29,7 @@ extern "C" {
   typedef struct module_obs_block_vector_struct module_obs_block_vector_type;
 
   module_obs_block_vector_type    * module_obs_block_vector_alloc();
-  void                              module_obs_block_vector_free();
+  void                              module_obs_block_vector_free( module_obs_block_vector_type * module_obs_block_vector );
   void                              module_obs_block_vector_add_obs_block( module_obs_block_vector_type * module_obs_block_vector , module_obs_block_type * obs_block);
   module_obs_block_type           * module_obs_block_vector_iget_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int index);
   const  module_obs_block_type    * module_obs_block_vector_search_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int global_index);
