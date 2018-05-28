@@ -76,9 +76,9 @@ add_library(res res_util/res_log.cpp
                 sched/well_history.cpp
                 sched/well_index.cpp
 
-                analysis/analysis_module.c
-                analysis/bootstrap_enkf.c
-                analysis/cv_enkf.c
+                analysis/analysis_module.cpp
+                analysis/bootstrap_enkf.cpp
+                analysis/cv_enkf.cpp
                 analysis/enkf_linalg.c
                 analysis/fwd_step_enkf.c
                 analysis/fwd_step_log.c

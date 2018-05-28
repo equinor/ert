@@ -20,6 +20,10 @@
 #include <ert/res_util/matrix.h>
 #include <ert/util/bool_vector.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct cv_enkf_data_struct cv_enkf_data_type;
 
 void * cv_enkf_data_alloc( );
@@ -51,3 +55,7 @@ bool        cv_enkf_set_bool(  void * arg , const char * var_name , bool value )
 void        cv_enkf_set_truncation( cv_enkf_data_type * data , double truncation );
 void        cv_enkf_set_pen_press( cv_enkf_data_type * data , bool value );
 void        cv_enkf_set_subspace_dimension( cv_enkf_data_type * data , int subspace_dimension);
+
+#ifdef __cplusplus
+}
+#endif

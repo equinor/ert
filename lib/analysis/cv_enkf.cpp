@@ -21,16 +21,16 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <ert/util/util.h>
-#include <ert/util/rng.h>
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_blas.h>
+#include <ert/util/util.hpp>
+#include <ert/util/rng.hpp>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_blas.hpp>
 
-#include <ert/analysis/enkf_linalg.h>
-#include <ert/analysis/analysis_table.h>
-#include <ert/analysis/analysis_module.h>
-#include <ert/analysis/std_enkf.h>
-#include <ert/analysis/cv_enkf.h>
+#include <ert/analysis/enkf_linalg.hpp>
+#include <ert/analysis/analysis_table.hpp>
+#include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/std_enkf.hpp>
+#include <ert/analysis/cv_enkf.hpp>
 
 #define CV_ENKF_TYPE_ID 765523
 
@@ -146,7 +146,7 @@ void cv_enkf_init_update( void * arg ,
     matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
     matrix_type * V0T  = matrix_alloc( nrmin , nrens );    /* Right singular vectors. */
 
-    double * inv_sig0  = util_calloc( nrmin , sizeof * inv_sig0 );
+    double * inv_sig0  = (double*)util_calloc( nrmin , sizeof * inv_sig0 );
     double * sig0      = inv_sig0;
 
     printf("Computing svd using truncation %0.4f\n",cv_data->truncation);
@@ -325,8 +325,8 @@ int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
                                         const int maxP ) {
 
 
-  double * cvMean = util_calloc( maxP , sizeof * cvMean );
-  double * cvStd  = util_calloc( maxP , sizeof * cvStd  );
+  double * cvMean = (double*)util_calloc( maxP , sizeof * cvMean );
+  double * cvStd  = (double*)util_calloc( maxP , sizeof * cvStd  );
   int optP;
 
   {
@@ -399,7 +399,7 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
 
 
   matrix_type * cvError;
-  int * randperms     = util_calloc( nrens , sizeof * randperms);
+  int * randperms     = (int*)util_calloc( nrens , sizeof * randperms);
 
   int maxP  = nrmin;
   int optP;
@@ -434,8 +434,8 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
   cvError = matrix_alloc( maxP , cv_data->nfolds );
   {
     int ntest, ntrain, k,j,i;
-    int * indexTest  = util_calloc( nrens , sizeof * indexTest  );
-    int * indexTrain = util_calloc( nrens , sizeof * indexTrain );
+    int * indexTest  = (int*)util_calloc( nrens , sizeof * indexTest  );
+    int * indexTrain = (int*)util_calloc( nrens , sizeof * indexTrain );
     for (i = 0; i < cv_data->nfolds; i++) {
       ntest = 0;
       ntrain = 0;
@@ -703,17 +703,20 @@ bool cv_enkf_get_bool( const void * arg, const char * var_name) {
 
 analysis_table_type LINK_NAME = {
   .name            = "CV_ENKF",
-  .alloc           = cv_enkf_data_alloc,
+  .updateA         = NULL,
+  .initX           = cv_enkf_initX ,
+  .init_update     = cv_enkf_init_update ,
+  .complete_update = cv_enkf_complete_update ,
+
   .freef           = cv_enkf_data_free,
+  .alloc           = cv_enkf_data_alloc,
+
   .set_int         = cv_enkf_set_int ,
   .set_double      = cv_enkf_set_double ,
   .set_bool        = cv_enkf_set_bool ,
   .set_string      = NULL ,
   .get_options     = cv_enkf_get_options ,
-  .initX           = cv_enkf_initX ,
-  .updateA         = NULL,
-  .init_update     = cv_enkf_init_update ,
-  .complete_update = cv_enkf_complete_update ,
+
   .has_var         = cv_enkf_has_var,
   .get_int         = cv_enkf_get_int,
   .get_double      = cv_enkf_get_double,

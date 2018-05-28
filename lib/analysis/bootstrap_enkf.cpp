@@ -21,17 +21,17 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <ert/util/int_vector.h>
-#include <ert/util/util.h>
-#include <ert/util/rng.h>
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_blas.h>
+#include <ert/util/int_vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/rng.hpp>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_blas.hpp>
 
-#include <ert/analysis/std_enkf.h>
-#include <ert/analysis/cv_enkf.h>
-#include <ert/analysis/analysis_table.h>
-#include <ert/analysis/analysis_module.h>
-#include <ert/analysis/enkf_linalg.h>
+#include <ert/analysis/std_enkf.hpp>
+#include <ert/analysis/cv_enkf.hpp>
+#include <ert/analysis/analysis_table.hpp>
+#include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/enkf_linalg.hpp>
 
 
 #define BOOTSTRAP_ENKF_TYPE_ID 741223
@@ -81,8 +81,8 @@ void * bootstrap_enkf_data_alloc( ) {
   bootstrap_enkf_data_type * boot_data = (bootstrap_enkf_data_type*)util_malloc( sizeof * boot_data );
   UTIL_TYPE_ID_INIT( boot_data , BOOTSTRAP_ENKF_TYPE_ID );
 
-  boot_data->std_enkf_data = std_enkf_data_alloc( NULL );
-  boot_data->cv_enkf_data = cv_enkf_data_alloc( );
+  boot_data->std_enkf_data = (std_enkf_data_type*)std_enkf_data_alloc(  );
+  boot_data->cv_enkf_data = (cv_enkf_data_type*)cv_enkf_data_alloc( );
 
   bootstrap_enkf_set_truncation( boot_data , DEFAULT_TRUNCATION );
   bootstrap_enkf_set_subspace_dimension( boot_data , DEFAULT_NCOMP );
@@ -109,9 +109,9 @@ static int ** alloc_iens_resample( rng_type * rng , int ens_size ) {
   int ** iens_resample;
   int iens;
 
-  iens_resample = util_calloc( ens_size , sizeof * iens_resample );
+  iens_resample = (int**)util_calloc( ens_size , sizeof * iens_resample );
   for (iens = 0; iens < ens_size; iens++)
-    iens_resample[iens] = util_calloc( ens_size , sizeof( ** iens_resample ) );
+    iens_resample[iens] = (int*)util_calloc( ens_size , sizeof( ** iens_resample ) );
 
   {
     int i,j;
@@ -276,19 +276,20 @@ int bootstrap_enkf_get_int( const void * arg, const char * var_name) {
 #endif
 
 
+
 analysis_table_type LINK_NAME = {
   .name            = "BOOTSTRAP_ENKF",
-  .alloc           = bootstrap_enkf_data_alloc,
+  .updateA         = bootstrap_enkf_updateA,
+  .initX           = NULL,
+  .init_update     = NULL,
+  .complete_update = NULL,
   .freef           = bootstrap_enkf_data_free,
+  .alloc           = bootstrap_enkf_data_alloc,
   .set_int         = bootstrap_enkf_set_int ,
   .set_double      = bootstrap_enkf_set_double ,
   .set_bool        = bootstrap_enkf_set_bool ,
   .set_string      = NULL ,
   .get_options     = bootstrap_enkf_get_options ,
-  .initX           = NULL,
-  .updateA         = bootstrap_enkf_updateA,
-  .init_update     = NULL,
-  .complete_update = NULL,
   .has_var         = bootstrap_enkf_has_var,
   .get_int         = bootstrap_enkf_get_int,
   .get_double      = bootstrap_enkf_get_double,

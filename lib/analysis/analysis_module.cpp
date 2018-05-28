@@ -22,9 +22,9 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
-#include <ert/res_util/matrix.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/res_util/matrix.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/analysis_table.h>
