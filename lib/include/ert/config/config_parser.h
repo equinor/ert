@@ -99,6 +99,16 @@ typedef struct config_parser_struct              config_parser_type;
   config_content_node_type       * config_get_value_node( const config_parser_type * config , const char * kw);
   void                             config_parser_deprecate(config_parser_type * config , const char * kw, const char * msg);
 
+  void config_validate(config_parser_type * config, config_content_type * content);
+
+  bool config_parser_add_key_values(config_parser_type * config,
+                                    config_content_type * content,
+                                    const char * kw,
+                                    stringlist_type * values,
+                                    const config_path_elm_type * current_path_elm,
+                                    const char * config_filename,
+                                    config_schema_unrecognized_enum unrecognized);
+
 #ifdef __cplusplus
 }
 #endif

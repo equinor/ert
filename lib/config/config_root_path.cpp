@@ -22,9 +22,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/config/config_root_path.h>
+#include <ert/config/config_root_path.hpp>
 
 struct config_root_path_struct {
   char * input_path;
@@ -41,9 +41,9 @@ struct config_root_path_struct {
 
 config_root_path_type * config_root_path_alloc( const char * input_path ) {
   if (input_path == NULL || util_is_directory( input_path )) {
-    config_root_path_type * root_path = util_malloc( sizeof * root_path );
+    config_root_path_type * root_path = (config_root_path_type*)util_malloc( sizeof * root_path );
     {
-      char * cwd = util_alloc_cwd();
+      char * cwd = (char*)util_alloc_cwd();
 
       root_path->input_path = util_alloc_string_copy( input_path );
       if (input_path == NULL) {
@@ -56,7 +56,7 @@ config_root_path_type * config_root_path_alloc( const char * input_path ) {
         } else {
           root_path->rel_path = util_alloc_string_copy( input_path );
           {
-            char * abs_path = util_alloc_filename( cwd , input_path , NULL );
+            char * abs_path = (char*)util_alloc_filename( cwd , input_path , NULL );
             root_path->abs_path = util_alloc_realpath( abs_path );
             free( abs_path );
           }

@@ -18,10 +18,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/config/config_error.h>
+#include <ert/config/config_error.hpp>
 
 struct config_error_struct {
   stringlist_type * error_list;
@@ -30,7 +30,7 @@ struct config_error_struct {
 
 
 config_error_type * config_error_alloc() {
-  config_error_type * error = util_malloc( sizeof * error );
+  config_error_type * error = (config_error_type*)util_malloc( sizeof * error );
   error->error_list = stringlist_alloc_new();
   return error;
 }

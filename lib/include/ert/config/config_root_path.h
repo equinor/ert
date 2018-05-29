@@ -20,7 +20,7 @@
 #define ERT_CONFIG_ROOT_PATH_H
 
 #ifdef __cplusplus
-extern "C" 
+extern "C" {
 #endif
 
 
@@ -36,5 +36,4 @@ const char *            config_root_path_get_abs_path( const config_root_path_ty
 #ifdef __cplusplus
 }
 #endif
-
 #endif

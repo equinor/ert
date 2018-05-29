@@ -20,7 +20,7 @@
 #define ERT_CONFIG_PATH_ELM_H
 
 #ifdef __cplusplus
-extern "C" 
+extern "C" {
 #endif
 
 #include <ert/config/config_root_path.h>
@@ -40,5 +40,4 @@ char *                 config_path_elm_alloc_path(const config_path_elm_type * p
 #ifdef __cplusplus
 }
 #endif
-
 #endif

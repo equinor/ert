@@ -21,10 +21,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/util/parser.h>
+#include <ert/util/util.hpp>
+#include <ert/util/parser.hpp>
 
-#include <ert/config/conf_util.h>
+#include <ert/config/conf_util.hpp>
 
 
 /*
@@ -47,13 +47,13 @@ char * __conf_util_fscanf_alloc_token_buffer(
   const char ** pad_keys)
 {
   char * buffer_wrk   = basic_parser_fread_alloc_file_content( file , NULL /* quote_set */  , NULL /* delete_set */ , "--" /* Comment start*/ , "\n" /* Comment end */);
-  char ** padded_keys = util_calloc(num_pad_keys , sizeof * padded_keys);
+  char ** padded_keys = (char**)util_calloc(num_pad_keys , sizeof * padded_keys);
   for(int key_nr = 0; key_nr < num_pad_keys; key_nr++)
   {
     assert(pad_keys[key_nr] != NULL);
 
     int key_len = strlen(pad_keys[key_nr]);
-    padded_keys[key_nr] = util_calloc((key_len + 3) , sizeof * padded_keys[key_nr]);
+    padded_keys[key_nr] = (char*)util_calloc((key_len + 3) , sizeof * padded_keys[key_nr]);
     padded_keys[key_nr][0] = ' ';
     for(int i=0; i<key_len; i++)
     {
@@ -75,7 +75,7 @@ char * __conf_util_fscanf_alloc_token_buffer(
 char * conf_util_fscanf_alloc_token_buffer(
   const char * file_name)
 {
-  char * pad_keys[] = {"{","}","=",";"};
+  const char * pad_keys[] = {"{","}","=",";"};
   char * buffer = __conf_util_fscanf_alloc_token_buffer(file_name, "--", 4, (const char **) pad_keys);
   return buffer;
 }
@@ -94,7 +94,7 @@ char * conf_util_fscanf_alloc_token_buffer(
 char * conf_util_alloc_next_token(
   char ** buff_pos)
 {
-  char * sep = " \t\r\n";
+  const char * sep = " \t\r\n";
 
   int len_token = 0;
   bool found    = false;
@@ -151,7 +151,7 @@ char * conf_util_alloc_next_token(
       *buff_pos += 1;
   }
 
-  char * token = util_calloc( (len_token + 1) , sizeof * token);
+  char * token = (char*)util_calloc( (len_token + 1) , sizeof * token);
   memmove(token, *buff_pos, len_token);
   token[len_token] = '\0';
   *buff_pos += len_token;

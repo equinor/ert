@@ -20,9 +20,9 @@
 #include <assert.h>
 #include <string.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/config/conf_data.h>
+#include <ert/config/conf_data.hpp>
 
 
 
@@ -49,7 +49,7 @@ dt_enum conf_data_get_dt_from_string(
   RETURN_TYPE_IF_MATCH(str, DT_DATE);
 
   util_abort("%s: Data type \"%s\" is unkown.\n", __func__, str);
-  return 0;
+  return (dt_enum)0;
 }
 #undef RETURN_TYPE_IF_MATCH
 

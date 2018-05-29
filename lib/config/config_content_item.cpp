@@ -18,16 +18,16 @@
 
 #include <stdbool.h>
 
-#include <ert/util/vector.h>
-#include <ert/util/type_macros.h>
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/vector.hpp>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/config/config_schema_item.h>
-#include <ert/config/config_content_node.h>
-#include <ert/config/config_content_item.h>
-#include <ert/config/config_error.h>
-#include <ert/config/config_path_elm.h>
+#include <ert/config/config_schema_item.hpp>
+#include <ert/config/config_content_node.hpp>
+#include <ert/config/config_content_item.hpp>
+#include <ert/config/config_error.hpp>
+#include <ert/config/config_path_elm.hpp>
 
 
 #define CONFIG_CONTENT_ITEM_ID 8876752
@@ -64,19 +64,19 @@ int config_content_item_get_size(const config_content_item_type * item) {
 
 
 config_content_node_type * config_content_item_get_last_node(const config_content_item_type * item) {
-  return vector_get_last( item->nodes );
+  return (config_content_node_type*)vector_get_last( item->nodes );
 }
 
 config_content_node_type * config_content_item_iget_node(const config_content_item_type * item , int index) {
-  return vector_iget( item->nodes , index );
+  return (config_content_node_type*)vector_iget( item->nodes , index );
 }
 
 const config_content_node_type * config_content_item_get_last_node_const(const config_content_item_type * item) {
-  return vector_get_last( item->nodes );
+  return (const config_content_node_type*)vector_get_last( item->nodes );
 }
 
 const config_content_node_type * config_content_item_iget_node_const(const config_content_item_type * item , int index) {
-  return vector_iget( item->nodes , index );
+  return (const config_content_node_type*)vector_iget( item->nodes , index );
 }
 
 
@@ -261,7 +261,7 @@ void config_content_item_free__( void * arg ) {
 
 
 config_content_item_type * config_content_item_alloc( const config_schema_item_type * schema , const config_path_elm_type * path_elm) {
-  config_content_item_type * content_item = util_malloc( sizeof * content_item );
+  config_content_item_type * content_item = (config_content_item_type*)util_malloc( sizeof * content_item );
   UTIL_TYPE_ID_INIT( content_item , CONFIG_CONTENT_ITEM_ID );
   content_item->schema = schema;
   content_item->nodes = vector_alloc_new();

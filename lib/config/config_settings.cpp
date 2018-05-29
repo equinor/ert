@@ -18,12 +18,12 @@
 
 #include <stdlib.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
 
-#include <ert/config/config_schema_item.h>
-#include <ert/config/config_settings.h>
+#include <ert/config/config_schema_item.hpp>
+#include <ert/config/config_settings.hpp>
 
 
 #define CONFIG_SETTINGS_TYPE_ID 68621527
@@ -59,7 +59,7 @@ static setting_node_type * setting_node_alloc( const char * key, config_item_typ
     return NULL;
 
   {
-    setting_node_type * node = util_malloc( sizeof * node );
+    setting_node_type * node = (setting_node_type*)util_malloc( sizeof * node );
     UTIL_TYPE_ID_INIT( node , SETTING_NODE_TYPE_ID );
     node->value_type = value_type;
     node->string_value = util_alloc_string_copy( initial_value );
@@ -100,7 +100,7 @@ static void setting_node_set_string_value( setting_node_type * node, const char 
 static void setting_node_set_int_value( setting_node_type * node, int value) {
   setting_node_assert_type( node , CONFIG_INT );
   {
-    char * string_value = util_alloc_sprintf("%d" , value);
+    char * string_value = (char*)util_alloc_sprintf("%d" , value);
     setting_node_set_value( node , string_value );
     free( string_value );
   }
@@ -109,7 +109,7 @@ static void setting_node_set_int_value( setting_node_type * node, int value) {
 static void setting_node_set_double_value( setting_node_type * node, double value) {
   setting_node_assert_type( node , CONFIG_FLOAT );
   {
-    char * string_value = util_alloc_sprintf("%g" , value);
+    char * string_value = (char*)util_alloc_sprintf("%g" , value);
     setting_node_set_value( node , string_value );
     free( string_value );
   }
@@ -159,7 +159,7 @@ static bool setting_node_get_bool_value( const setting_node_type * node) {
 /*****************************************************************/
 
 config_settings_type * config_settings_alloc( const char * root_key ) {
-  config_settings_type * settings = util_malloc( sizeof * settings );
+  config_settings_type * settings = (config_settings_type*)util_malloc( sizeof * settings );
   settings->root_key = util_alloc_string_copy( root_key );
   settings->settings = hash_alloc();
   return settings;
@@ -193,14 +193,14 @@ void config_settings_add_bool_setting(config_settings_type * settings , const ch
 
 
 void config_settings_add_int_setting(config_settings_type * settings , const char* key, int initial_value) {
-  char * string_value = util_alloc_sprintf("%d" , initial_value);
+  char * string_value = (char*)util_alloc_sprintf("%d" , initial_value);
   config_settings_add_setting( settings , key , CONFIG_INT , string_value);
   free( string_value );
 }
 
 
 void config_settings_add_double_setting(config_settings_type * settings , const char* key, double initial_value) {
-  char * string_value = util_alloc_sprintf("%g" , initial_value);
+  char * string_value = (char*)util_alloc_sprintf("%g" , initial_value);
   config_settings_add_setting( settings , key , CONFIG_FLOAT , string_value);
   free( string_value );
 }
@@ -218,7 +218,7 @@ bool config_settings_has_key( const config_settings_type * settings , const char
 }
 
 static setting_node_type * config_settings_get_node( const config_settings_type * config_settings, const char * key){
-  return hash_get( config_settings->settings , key );
+  return (setting_node_type*)hash_get( config_settings->settings , key );
 }
 
 

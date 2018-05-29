@@ -22,24 +22,24 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/util.h>
-#include <ert/util/parser.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/vector.h>
-#include <ert/util/path_stack.h>
-#include <ert/res_util/subst_list.h>
-#include <ert/res_util/res_env.h>
-#include <ert/res_util/res_log.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/parser.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/util/path_stack.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/res_env.hpp>
+#include <ert/res_util/res_log.hpp>
 
-#include <ert/config/config_parser.h>
-#include <ert/config/config_error.h>
-#include <ert/config/config_schema_item.h>
-#include <ert/config/config_content_node.h>
-#include <ert/config/config_content_item.h>
-#include <ert/config/config_path_elm.h>
-#include <ert/config/config_root_path.h>
+#include <ert/config/config_parser.hpp>
+#include <ert/config/config_error.hpp>
+#include <ert/config/config_schema_item.hpp>
+#include <ert/config/config_content_node.hpp>
+#include <ert/config/config_content_item.hpp>
+#include <ert/config/config_path_elm.hpp>
+#include <ert/config/config_root_path.hpp>
 
 #define  CLEAR_STRING "__RESET__"
 
@@ -235,7 +235,7 @@ static config_content_node_type * config_content_item_set_arg__(subst_list_type 
 
 
 config_parser_type * config_alloc() {
-  config_parser_type *config       = util_malloc(sizeof * config );
+  config_parser_type *config       = (config_parser_type*)util_malloc(sizeof * config );
   config->schema_items    = hash_alloc();
   config->messages        = hash_alloc();
   return config;
@@ -312,7 +312,7 @@ bool config_has_schema_item(const config_parser_type * config , const char * kw)
 
 
 config_schema_item_type * config_get_schema_item(const config_parser_type * config , const char * kw) {
-  return hash_get(config->schema_items , kw);
+  return (config_schema_item_type*)hash_get(config->schema_items , kw);
 }
 
 /*
@@ -337,7 +337,7 @@ static void config_validate_content_item(const config_parser_type * config , con
     for (i = 0; i < config_schema_item_num_required_children(schema_item); i++) {
       const char * required_child = config_schema_item_iget_required_child( schema_item , i );
       if (!config_content_has_item(content , required_child)) {
-        char * error_message = util_alloc_sprintf("When:%s is set - you also must set:%s.",schema_kw , required_child);
+        char * error_message = (char*)util_alloc_sprintf("When:%s is set - you also must set:%s.",schema_kw , required_child);
         config_error_add( config_content_get_errors( content ) , error_message );
         free( error_message );
       }
@@ -359,7 +359,7 @@ static void config_validate_content_item(const config_parser_type * config , con
             for (ic = 0; ic < stringlist_get_size( required_children ); ic++) {
               const char * req_child = stringlist_iget( required_children , ic );
               if (!config_content_has_item(content , req_child )) {
-                char * error_message = util_alloc_sprintf("When:%s is set to:%s - you also must set:%s.",schema_kw , value , req_child );
+                char * error_message = (char*)util_alloc_sprintf("When:%s is set to:%s - you also must set:%s.",schema_kw , value , req_child );
                 config_error_add( config_content_get_errors( content ) , error_message );
                 free( error_message );
               }
@@ -385,7 +385,7 @@ void config_validate(config_parser_type * config, config_content_type * content)
       config_validate_content_item(config , content , item );
     } else {
       if (config_schema_item_required( schema_item)) {  /* The item is not set ... */
-        char * error_message = util_alloc_sprintf("Item:%s must be set - parsing:%s",content_key , config_content_get_config_file( content , true ));
+        char * error_message = (char*)util_alloc_sprintf("Item:%s must be set - parsing:%s",content_key , config_content_get_config_file( content , true ));
         config_error_add( config_content_get_errors( content ) , error_message );
         free( error_message );
       }
@@ -401,7 +401,7 @@ void config_validate(config_parser_type * config, config_content_type * content)
 static void assert_no_circular_includes(config_content_type * config_content,
                                         const char * config_filename)
 {
-  char * abs_filename = util_alloc_realpath(config_filename);
+  char * abs_filename = (char*)util_alloc_realpath(config_filename);
   if (!config_content_add_file(config_content, abs_filename))
       util_exit(
               "%s: file (%s) already parsed - circular include?",
@@ -463,7 +463,7 @@ bool config_parser_add_key_values(config_parser_type * config,
     }
 
     if (unrecognized == CONFIG_UNRECOGNIZED_ERROR) {
-      char * error_message = util_alloc_sprintf("Keyword:%s is not recognized", kw);
+      char * error_message = (char*)util_alloc_sprintf("Keyword:%s is not recognized", kw);
       config_error_add(config_content_get_errors(content), error_message);
       free(error_message);
       return false;
@@ -552,7 +552,7 @@ bool config_parser_add_key_values(config_parser_type * config,
    --------
 
    char * add_angular_brackets(const char * key) {
-       char * new_key = util_alloc_sprintf("<%s>" , key);
+       char * new_key = (char*)util_alloc_sprintf("<%s>" , key);
    }
 
 
@@ -623,7 +623,7 @@ static void config_parse__(config_parser_type * config,
         const char * include_file = stringlist_iget(token_list, 1);
 
         if (!util_file_exists(include_file)) {
-          char * error_message = util_alloc_sprintf("%s file:%s not found", include_kw, include_file);
+          char * error_message = (char*)util_alloc_sprintf("%s file:%s not found", include_kw, include_file);
           config_error_add(config_content_get_errors(content), error_message);
           free(error_message);
         }
@@ -644,7 +644,7 @@ static void config_parse__(config_parser_type * config,
         if (active_tokens < 3)
           util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n", __func__, define_kw);
 
-        char * key   = util_alloc_string_copy(stringlist_iget(token_list, 1));
+        char * key   = (char*)util_alloc_string_copy(stringlist_iget(token_list, 1));
         char * value = stringlist_alloc_joined_substring(token_list, 2, active_tokens, " ");
 
         config_content_add_define(content, key, value);
@@ -690,7 +690,7 @@ config_content_type * config_parse(config_parser_type * config ,
 
     while(!hash_iter_is_complete(keys)) {
       const char * key = hash_iter_get_next_key(keys);
-      const char * value = hash_get(pre_defined_kw_map, key);
+      const char * value = (const char*)hash_get(pre_defined_kw_map, key);
       config_content_add_define( content , key , value );
     }
 
@@ -703,7 +703,7 @@ config_content_type * config_parse(config_parser_type * config ,
     config_parse__(config , content , path_stack , filename , comment_string , include_kw , define_kw , unrecognized_behaviour , validate);
     path_stack_free( path_stack );
   } else {
-    char * error_message = util_alloc_sprintf("Could not open file:%s for parsing" , filename);
+    char * error_message = (char*)util_alloc_sprintf("Could not open file:%s for parsing" , filename);
     config_error_add( config_content_get_errors( content ) , error_message );
     free( error_message );
   }
@@ -752,6 +752,6 @@ void config_parser_deprecate(config_parser_type * config , const char * kw, cons
 }
 
 
-#include "config_get.c"
+#include "config_get.cpp"
 
 
