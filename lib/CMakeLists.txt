@@ -76,21 +76,21 @@ add_library(res res_util/res_log.cpp
                 sched/well_history.cpp
                 sched/well_index.cpp
 
-                analysis/analysis_module.c
-                analysis/bootstrap_enkf.c
-                analysis/cv_enkf.c
-                analysis/enkf_linalg.c
-                analysis/fwd_step_enkf.c
-                analysis/fwd_step_log.c
-                analysis/module_data_block.c
-                analysis/module_data_block_vector.c
-                analysis/module_info.c
-                analysis/module_obs_block.c
-                analysis/module_obs_block_vector.c
-                analysis/null_enkf.c
-                analysis/sqrt_enkf.c
-                analysis/std_enkf.c
-                analysis/stepwise.c
+                analysis/analysis_module.cpp
+                analysis/bootstrap_enkf.cpp
+                analysis/cv_enkf.cpp
+                analysis/enkf_linalg.cpp
+                analysis/fwd_step_enkf.cpp
+                analysis/fwd_step_log.cpp
+                analysis/module_data_block.cpp
+                analysis/module_data_block_vector.cpp
+                analysis/module_info.cpp
+                analysis/module_obs_block.cpp
+                analysis/module_obs_block_vector.cpp
+                analysis/null_enkf.cpp
+                analysis/sqrt_enkf.cpp
+                analysis/std_enkf.cpp
+                analysis/stepwise.cpp
 
                 job_queue/ext_job.c
                 job_queue/ext_joblist.c

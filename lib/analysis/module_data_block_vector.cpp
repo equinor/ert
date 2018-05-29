@@ -19,12 +19,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/analysis/module_data_block.h>
-#include <ert/analysis/module_data_block_vector.h>
+#include <ert/analysis/module_data_block.hpp>
+#include <ert/analysis/module_data_block_vector.hpp>
 
 #define MODULE_DATA_BLOCK_VECTOR_TYPE_ID 732178012
 
@@ -36,7 +36,7 @@ struct module_data_block_vector_struct {
 UTIL_IS_INSTANCE_FUNCTION( module_data_block_vector , MODULE_DATA_BLOCK_VECTOR_TYPE_ID)
 
 module_data_block_vector_type * module_data_block_vector_alloc( ) {
-  module_data_block_vector_type * module_data_block_vector = util_malloc( sizeof * module_data_block_vector );
+  module_data_block_vector_type * module_data_block_vector = (module_data_block_vector_type*)util_malloc( sizeof * module_data_block_vector );
   UTIL_TYPE_ID_INIT( module_data_block_vector , MODULE_DATA_BLOCK_VECTOR_TYPE_ID );
   module_data_block_vector->data_block_vector = vector_alloc_new();
   return module_data_block_vector;
@@ -54,7 +54,7 @@ void module_data_block_vector_add_data_block( module_data_block_vector_type * mo
 
 
 module_data_block_type * module_data_block_vector_iget_module_data_block(const module_data_block_vector_type * module_data_block_vector, int index){
- return vector_iget(module_data_block_vector->data_block_vector, index);
+ return (module_data_block_type*)vector_iget(module_data_block_vector->data_block_vector, index);
 }
 
 int module_data_block_vector_get_size(const module_data_block_vector_type * module_data_block_vector){

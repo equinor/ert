@@ -20,9 +20,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/analysis/fwd_step_log.h>
+#include <ert/analysis/fwd_step_log.hpp>
 
 #define DEFAULT_LOG_FILE               "fwd_step.out"
 #define DEFAULT_CLEAR_LOG              false
@@ -35,7 +35,7 @@ struct fwd_step_log_struct {
 
 
 fwd_step_log_type * fwd_step_log_alloc() {
-  fwd_step_log_type * fwd_step_log = util_malloc( sizeof * fwd_step_log );
+  fwd_step_log_type * fwd_step_log = (fwd_step_log_type*)util_malloc( sizeof * fwd_step_log );
   fwd_step_log->log_file = NULL;
   fwd_step_log->log_stream = NULL;
   fwd_step_log_set_log_file( fwd_step_log , DEFAULT_LOG_FILE);

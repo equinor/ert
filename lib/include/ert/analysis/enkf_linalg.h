@@ -6,6 +6,10 @@
 #include <ert/res_util/matrix_lapack.h>
 #include <ert/res_util/matrix.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 int enkf_linalg_get_PC( const matrix_type * S0, 
                          const matrix_type * dObs , 
@@ -113,4 +117,7 @@ void enkf_linalg_rml_enkfAm(matrix_type * Um, const double * Wm,int nsign1);
 
 void enkf_linalg_rml_enkfX7(matrix_type * X7, matrix_type * VdT, double * Wdr, double a,matrix_type * X6);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

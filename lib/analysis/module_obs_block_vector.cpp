@@ -19,12 +19,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/analysis/module_obs_block.h>
-#include <ert/analysis/module_obs_block_vector.h>
+#include <ert/analysis/module_obs_block.hpp>
+#include <ert/analysis/module_obs_block_vector.hpp>
 
 #define MODULE_OBS_BLOCK_VECTOR_TYPE_ID 732188012
 
@@ -36,7 +36,7 @@ struct module_obs_block_vector_struct {
 UTIL_IS_INSTANCE_FUNCTION( module_obs_block_vector , MODULE_OBS_BLOCK_VECTOR_TYPE_ID)
 
 module_obs_block_vector_type * module_obs_block_vector_alloc() {
-  module_obs_block_vector_type * module_obs_block_vector = util_malloc( sizeof * module_obs_block_vector );
+  module_obs_block_vector_type * module_obs_block_vector = (module_obs_block_vector_type*)util_malloc( sizeof * module_obs_block_vector );
   UTIL_TYPE_ID_INIT( module_obs_block_vector , MODULE_OBS_BLOCK_VECTOR_TYPE_ID );
   module_obs_block_vector->obs_block_vector = vector_alloc_new();
   return module_obs_block_vector;
@@ -54,7 +54,7 @@ void module_obs_block_vector_add_obs_block( module_obs_block_vector_type * modul
 
 
 module_obs_block_type * module_obs_block_vector_iget_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int block_index){
- return vector_iget(module_obs_block_vector->obs_block_vector, block_index);
+ return (module_obs_block_type*)vector_iget(module_obs_block_vector->obs_block_vector, block_index);
 }
 
 const module_obs_block_type * module_obs_block_vector_search_module_obs_block(const module_obs_block_vector_type * module_obs_block_vector, int global_index){

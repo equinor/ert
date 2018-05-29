@@ -20,14 +20,14 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <ert/util/util.h>
-#include <ert/res_util/matrix.h>
-#include <ert/res_util/matrix_blas.h>
+#include <ert/util/util.hpp>
+#include <ert/res_util/matrix.hpp>
+#include <ert/res_util/matrix_blas.hpp>
 
-#include <ert/analysis/analysis_module.h>
-#include <ert/analysis/analysis_table.h>
-#include <ert/analysis/enkf_linalg.h>
-#include <ert/analysis/std_enkf.h>
+#include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/analysis_table.hpp>
+#include <ert/analysis/enkf_linalg.hpp>
+#include <ert/analysis/std_enkf.hpp>
 
 
 /*
@@ -127,7 +127,7 @@ void std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_d
 
 
 void * std_enkf_data_alloc( ) {
-  std_enkf_data_type * data = util_malloc( sizeof * data );
+  std_enkf_data_type * data = (std_enkf_data_type*)util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , STD_ENKF_TYPE_ID );
 
   std_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
@@ -163,7 +163,7 @@ static void std_enkf_initX__( matrix_type * X ,
   int nrmin         = util_int_min( ens_size , nrobs);
 
   matrix_type * W   = matrix_alloc(nrobs , nrmin);
-  double      * eig = util_calloc( nrmin , sizeof * eig);
+  double      * eig = (double*)util_calloc( nrmin , sizeof * eig);
 
   matrix_subtract_row_mean( S );           /* Shift away the mean */
 
@@ -348,17 +348,20 @@ bool std_enkf_get_bool( const void * arg, const char * var_name) {
 
 analysis_table_type LINK_NAME = {
     .name            = "STD_ENKF",
-    .alloc           = std_enkf_data_alloc,
+    .updateA         = NULL,
+    .initX           = std_enkf_initX ,
+    .init_update     = NULL,
+    .complete_update = NULL,
+
     .freef           = std_enkf_data_free,
+    .alloc           = std_enkf_data_alloc,
+
     .set_int         = std_enkf_set_int ,
     .set_double      = std_enkf_set_double ,
     .set_bool        = std_enkf_set_bool,
     .set_string      = NULL ,
     .get_options     = std_enkf_get_options ,
-    .initX           = std_enkf_initX ,
-    .updateA         = NULL,
-    .init_update     = NULL,
-    .complete_update = NULL,
+
     .has_var         = std_enkf_has_var,
     .get_int         = std_enkf_get_int,
     .get_double      = std_enkf_get_double,
