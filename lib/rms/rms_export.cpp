@@ -21,14 +21,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/ecl_grid.hpp>
+#include <ert/ecl/ecl_kw.hpp>
 
-#include <ert/rms/rms_file.h>
-#include <ert/rms/rms_util.h>
-#include <ert/rms/rms_export.h>
+#include <ert/rms/rms_file.hpp>
+#include <ert/rms/rms_util.hpp>
+#include <ert/rms/rms_export.hpp>
 
 
 void rms_export_roff_from_keyword(const char *filename, ecl_grid_type *ecl_grid, 
@@ -55,7 +55,7 @@ void rms_export_roff_from_keyword(const char *filename, ecl_grid_type *ecl_grid,
     float *target_data;
 
     src_data = (float *) ecl_kw_get_void_ptr(ecl_kw[n]);
-    target_data = util_calloc(global_size , sizeof * target_data );
+    target_data = (float*)util_calloc(global_size , sizeof * target_data );
 
     for (k=0; k < nz; k++) {
       for (j=0; j < ny; j++) {

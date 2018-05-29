@@ -17,7 +17,7 @@
 */
 
 #include <stdlib.h>
-#include <ert/rms/rms_type.h>
+#include <ert/rms/rms_type.hpp>
 
 /*****************************************************************/
 /* A microscopic (purely internal) type object only used 
@@ -40,7 +40,7 @@ static __rms_type * rms_type_set(__rms_type *rms_t , rms_type_enum rms_type , in
 
 
 __rms_type * rms_type_alloc(rms_type_enum rms_type, int sizeof_ctype) {
-  __rms_type *rms_t   = malloc(sizeof *rms_t);
+  __rms_type *rms_t   = (__rms_type*)malloc(sizeof *rms_t);
   rms_type_set(rms_t , rms_type , sizeof_ctype);
   return rms_t;
 }

@@ -21,11 +21,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/rms/rms_util.h>
+#include <ert/rms/rms_util.hpp>
 
-#include <ert/ecl/ecl_util.h>
+#include <ert/ecl/ecl_util.hpp>
 
 
 

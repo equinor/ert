@@ -20,13 +20,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ert/util/hash.h>
-#include <ert/util/vector.h>
-#include <ert/util/util.h>
+#include <ert/util/hash.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/rms/rms_tag.h>
-#include <ert/rms/rms_util.h>
-#include <ert/rms/rms_tagkey.h>
+#include <ert/rms/rms_tag.hpp>
+#include <ert/rms/rms_util.hpp>
+#include <ert/rms/rms_tagkey.hpp>
 
 static const char * rms_eof_tag           = "eof";
 static const char * rms_starttag_string   = "tag";
@@ -50,7 +50,7 @@ struct rms_tag_struct {
 
 
 rms_tag_type * rms_tag_alloc(const char * name) {
-  rms_tag_type *tag = malloc(sizeof *tag);
+  rms_tag_type *tag = (rms_tag_type*)malloc(sizeof *tag);
   UTIL_TYPE_ID_INIT( tag , RMS_TAG_TYPE_ID )
   tag->name = NULL;
   tag->key_hash = hash_alloc();
@@ -87,14 +87,14 @@ const char * rms_tag_get_name(const rms_tag_type *tag) {
 void rms_tag_fread_header(rms_tag_type *tag, FILE *stream, bool *eof_tag) {
   char *buffer;
   *eof_tag = false;
-  buffer = util_calloc( 4 , sizeof * buffer);
+  buffer = (char*)util_calloc( 4 , sizeof * buffer);
   if (!rms_util_fread_string(buffer , 4 , stream ))
     util_abort("%s: not at tag - header aborting \n",__func__);
 
   if (strcmp(buffer , rms_starttag_string) != 0)
     util_abort("%s: not at tag - header aborting \n",__func__);
 
-  char *tmp = util_calloc(rms_util_fread_strlen(stream) + 1, sizeof * tmp);
+  char *tmp = (char*)util_calloc(rms_util_fread_strlen(stream) + 1, sizeof * tmp);
   rms_util_fread_string(tmp , 0 , stream);
   tag->name = tmp;
   if (strcmp(tag->name , rms_eof_tag) == 0)
@@ -124,7 +124,7 @@ bool rms_tag_name_eq(const rms_tag_type *tag,
     return true;
 
   if (hash_has_key(tag->key_hash , tagkey_name)) {
-    const rms_tagkey_type *tagkey = hash_get(tag->key_hash, tagkey_name);
+    const rms_tagkey_type *tagkey = (const rms_tagkey_type*)hash_get(tag->key_hash, tagkey_name);
     return rms_tagkey_char_eq(tagkey, keyvalue);
   }
 
@@ -135,7 +135,7 @@ bool rms_tag_name_eq(const rms_tag_type *tag,
 rms_tagkey_type * rms_tag_get_key(const rms_tag_type *tag,
                                   const char *keyname) {
   if (hash_has_key(tag->key_hash , keyname))
-    return hash_get(tag->key_hash, keyname);
+    return (rms_tagkey_type*)hash_get(tag->key_hash, keyname);
   return NULL;
 }
 
@@ -151,7 +151,7 @@ const char * rms_tag_get_namekey_name(const rms_tag_type * tag) {
     util_abort("%s: no name tagkey defined for this tag - aborting \n",
                __func__);
 
-  return rms_tagkey_get_data_ref(name_key);
+  return (const char*)rms_tagkey_get_data_ref(name_key);
 }
 
 
@@ -246,7 +246,7 @@ void rms_tag_fwrite(const rms_tag_type * tag , FILE * stream) {
 
   int size = vector_get_size(tag->key_list);
   for (int i = 0; i < size; i++) {
-    const rms_tagkey_type * tagkey = vector_iget_const( tag->key_list , i );
+    const rms_tagkey_type * tagkey = (const rms_tagkey_type*)vector_iget_const( tag->key_list , i );
     rms_tagkey_fwrite( tagkey , stream);
   }
 
@@ -259,7 +259,7 @@ void rms_tag_fprintf(const rms_tag_type * tag , FILE * stream) {
 
   int size = vector_get_size( tag->key_list );
   for (int i=0; i < size; i++) {
-    const rms_tagkey_type * tagkey = vector_iget_const( tag->key_list , i );
+    const rms_tagkey_type * tagkey = (const rms_tagkey_type*)vector_iget_const( tag->key_list , i );
     rms_tagkey_fprintf( tagkey , stream);
   }
 

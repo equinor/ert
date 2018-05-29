@@ -42,13 +42,13 @@ add_library(res res_util/res_log.cpp
                 config/config_schema_item.c
                 config/config_settings.c
 
-                rms/rms_export.c
-                rms/rms_file.c
-                rms/rms_stats.c
-                rms/rms_tag.c
-                rms/rms_tagkey.c
-                rms/rms_type.c
-                rms/rms_util.c
+                rms/rms_export.cpp
+                rms/rms_file.cpp
+                rms/rms_stats.cpp
+                rms/rms_tag.cpp
+                rms/rms_tagkey.cpp
+                rms/rms_type.cpp
+                rms/rms_util.cpp
 
                 sched/group_history.cpp
                 sched/group_index.cpp

@@ -19,12 +19,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/rms/rms_stats.h>
-#include <ert/rms/rms_tagkey.h>
-#include <ert/rms/rms_tag.h>
-#include <ert/rms/rms_file.h>
+#include <ert/rms/rms_stats.hpp>
+#include <ert/rms/rms_tagkey.hpp>
+#include <ert/rms/rms_tag.hpp>
+#include <ert/rms/rms_file.hpp>
 
 
 
@@ -86,7 +86,7 @@ void rms_stats_update_ens(const char *prior_path , const char *posterior_path , 
     abort();
   }
 
-  prior = malloc(ens_size * sizeof * prior);
+  prior = (rms_tagkey_type**)malloc(ens_size * sizeof * prior);
   printf("Loading: ");
   for (iens = 0; iens < ens_size; iens++) {
     char * file_name         = util_alloc_filename(prior_path , file_list[iens] , NULL);

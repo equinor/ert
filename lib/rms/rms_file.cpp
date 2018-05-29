@@ -21,18 +21,18 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <ert/util/hash.h>
-#include <ert/util/vector.h>
-#include <ert/util/util.h>
+#include <ert/util/hash.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/rms/rms_type.h>
-#include <ert/rms/rms_util.h>
-#include <ert/rms/rms_tag.h>
-#include <ert/rms/rms_file.h>
-#include <ert/rms/rms_tagkey.h>
+#include <ert/rms/rms_type.hpp>
+#include <ert/rms/rms_util.hpp>
+#include <ert/rms/rms_tag.hpp>
+#include <ert/rms/rms_file.hpp>
+#include <ert/rms/rms_tagkey.hpp>
 
-#include <ert/ecl/ecl_kw.h>
-#include <ert/ecl/ecl_type.h>
+#include <ert/ecl/ecl_kw.hpp>
+#include <ert/ecl/ecl_type.hpp>
 
 /*****************************************************************/
 static const char * rms_ascii_header      = "roff-asc";
@@ -97,7 +97,7 @@ rms_tag_type * rms_file_get_tag_ref(const rms_file_type *rms_file ,
 
   int size = vector_get_size( rms_file->tag_list );
   for (int index = 0; index < size; ++index) {
-    rms_tag_type *tag = vector_iget( rms_file->tag_list , index );
+    rms_tag_type *tag = (rms_tag_type*)vector_iget( rms_file->tag_list , index );
     if (rms_tag_name_eq(tag , tagname , keyname , keyvalue)) {
       return_tag = tag;
       break;
@@ -119,7 +119,7 @@ rms_tag_type * rms_file_get_tag_ref(const rms_file_type *rms_file ,
     not load the file content.
 */
 rms_file_type * rms_file_alloc(const char *filename, bool fmt_file) {
-  rms_file_type *rms_file   = malloc(sizeof *rms_file);
+  rms_file_type *rms_file   = (rms_file_type*)malloc(sizeof *rms_file);
   rms_file->endian_convert  = false;
   rms_file->type_map        = hash_alloc();
   rms_file->tag_list        = vector_alloc_new();
@@ -360,7 +360,7 @@ void rms_file_fwrite(rms_file_type * rms_file, const char * filetype) {
 
   int size = vector_get_size(rms_file->tag_list);
   for (int tag_index = 0; tag_index < size; tag_index++) {
-    const rms_tag_type *tag = vector_iget_const( rms_file->tag_list , tag_index );
+    const rms_tag_type *tag = (const rms_tag_type*)vector_iget_const( rms_file->tag_list , tag_index );
     rms_tag_fwrite(tag , rms_file->stream);
   }
 
@@ -374,7 +374,7 @@ void rms_file_fprintf(const rms_file_type *rms_file , FILE *stream) {
 
   int size = vector_get_size(rms_file->tag_list);
   for (int tag_index = 0; tag_index < size; tag_index++) {
-    const rms_tag_type *tag = vector_iget_const(rms_file->tag_list, tag_index);
+    const rms_tag_type *tag = (const rms_tag_type*)vector_iget_const(rms_file->tag_list, tag_index);
     rms_tag_fprintf(tag , rms_file->stream);
   }
 
@@ -399,14 +399,14 @@ void rms_file_2eclipse(const char * rms_file,
 
   util_alloc_file_components(rms_file , NULL , &rms_base_file , NULL);
 
-  float * ecl_data = malloc(size * sizeof * ecl_data);
+  float * ecl_data = (float*)malloc(size * sizeof * ecl_data);
   int tag_list_size = vector_get_size(file->tag_list);
   for (int tag_index = 0; tag_index < tag_list_size; tag_index++) {
-    rms_tag_type * rms_tag = vector_iget( file->tag_list , tag_index );
+    rms_tag_type * rms_tag = (rms_tag_type*)vector_iget( file->tag_list , tag_index );
 
     if (rms_tag_name_eq(rms_tag, "parameter", NULL, NULL)) {
       rms_tagkey_type * rms_tagkey = rms_tag_get_datakey(rms_tag);
-      const float * data = rms_tagkey_get_data_ref(rms_tagkey);
+      const float * data = (const float*)rms_tagkey_get_data_ref(rms_tagkey);
       rms_util_set_fortran_data(ecl_data, data, sizeof * ecl_data,
                                 dims[0], dims[1], dims[2]);
 
@@ -420,7 +420,7 @@ void rms_file_2eclipse(const char * rms_file,
 
 
       const char * tagname  = rms_tag_get_namekey_name(rms_tag);
-      char       * ecl_base = malloc(4 + strlen(tagname) + 2);
+      char       * ecl_base = (char*)malloc(4 + strlen(tagname) + 2);
       char       * ecl_file;
 
       sprintf(ecl_base , "%s_%04d" , tagname , ecl_file_nr);
@@ -445,7 +445,7 @@ void rms_file_2eclipse(const char * rms_file,
 
 bool rms_file_is_roff(FILE * stream) {
   const int len              = strlen(rms_comment1);
-  char *header               = malloc(strlen(rms_comment1) + 1);
+  char *header               = (char*)malloc(strlen(rms_comment1) + 1);
   const long int current_pos = util_ftell(stream);
   bool roff_file             = false;
 

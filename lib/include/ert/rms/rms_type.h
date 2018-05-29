@@ -24,10 +24,9 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
+enum rms_type_enum_def {rms_char_type , rms_float_type , rms_double_type , rms_bool_type , rms_byte_type , rms_int_type};
 
 typedef enum   rms_type_enum_def rms_type_enum;
-
-enum rms_type_enum_def {rms_char_type , rms_float_type , rms_double_type , rms_bool_type , rms_byte_type , rms_int_type};
 
 /* This *really* should not be exported ... */
 
