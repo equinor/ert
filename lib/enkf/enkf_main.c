@@ -681,7 +681,8 @@ static int enkf_main_serialize_dataset( const ensemble_config_type * ens_config 
   return matrix_get_rows( A );
 }
 
-static void deserialize_node( enkf_fs_type * fs,
+static void deserialize_node( enkf_fs_type * target_fs,
+                              enkf_fs_type * src_fs,
                               const ensemble_config_type * ensemble_config,
                               const char * key ,
                               int iens,
@@ -691,10 +692,17 @@ static void deserialize_node( enkf_fs_type * fs,
                               const active_list_type * active_list,
                               matrix_type * A) {
   const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , key );
-  enkf_node_type * node = enkf_node_alloc( config_node );
+
   node_id_type node_id = {.report_step = target_step, .iens = iens  };
-  enkf_node_deserialize(node , fs , node_id , active_list , A , row_offset , column);
-  state_map_update_undefined(enkf_fs_get_state_map(fs) , iens , STATE_INITIALIZED);
+  enkf_node_type * node = enkf_node_alloc( config_node );
+
+  // If partly active, init node from source fs (deserialize will fill it only in part)
+  if(active_list_get_mode(active_list) != ALL_ACTIVE)
+     enkf_node_load( node , src_fs , node_id);
+
+  // deserialize the matrix into the node (and writes it to the target fs)
+  enkf_node_deserialize(node , target_fs , node_id , active_list , A , row_offset , column);
+  state_map_update_undefined(enkf_fs_get_state_map(target_fs) , iens , STATE_INITIALIZED);
   enkf_node_free( node );
 }
 
@@ -706,7 +714,7 @@ static void * deserialize_nodes_mt( void * arg ) {
   for (iens = info->iens1; iens < info->iens2; iens++) {
     int column = int_vector_iget( info->iens_active_index , iens );
     if (column >= 0)
-      deserialize_node( info->target_fs , info->ensemble_config , info->key , iens , info->target_step , info->row_offset , column, info->active_list , info->A );
+      deserialize_node( info->target_fs , info->src_fs, info->ensemble_config , info->key , iens , info->target_step , info->row_offset , column, info->active_list , info->A );
   }
   return NULL;
 }
