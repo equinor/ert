@@ -23,7 +23,7 @@ def call(args):
         exit('subprocess.call error:\n\tcode %d\n\targs %s' % (status, arg_str))
 
 
-def build(source_dir, install_dir, test, c_flags="", test_flags=None):
+def build(source_dir, install_dir, test, c_flags, cxx_flags, test_flags=None):
     build_dir = os.path.join(source_dir, "build")
     if not os.path.isdir(build_dir):
         os.makedirs(build_dir)
@@ -208,7 +208,8 @@ class PrBuilder(object):
 
         test = (self.repository == 'ecl')
         c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, c_flags=c_flags, test_flags=self.test_flags)
+        cxx_flags = "-Werror -Wno-unused-result"
+        build(source_dir, install_dir, test, c_flags, cxx_flags, test_flags=self.test_flags)
 
     def compile_res(self, basedir, install_dir):
         if self.repository == 'res':
@@ -216,15 +217,20 @@ class PrBuilder(object):
         else:
             source_dir = os.path.join(basedir, "libres")
         test = (self.repository in ('ecl', 'res'))
+
         # TODO add c_flags = "-Werror=all"
-        build(source_dir, install_dir, test, test_flags=self.test_flags)
+        c_flags = ""
+        cxx_flags = ""
+        build(source_dir, install_dir, test, c_flags, cxx_flags, test_flags=self.test_flags)
 
     def compile_ert(self, basedir, install_dir):
         if self.repository == 'ert':
             source_dir = basedir
         else:
             source_dir = os.path.join(basedir, "ert")
-        build(source_dir, install_dir, True, test_flags=self.test_flags)
+        c_flags = ""
+        cxx_flags = ""
+        build(source_dir, install_dir, True, c_flags, cxx_flags, test_flags=self.test_flags)
 
 
 def main():
