@@ -83,11 +83,11 @@ built on Windows with Visual Studio (albeit with maaaany warnings) and
 with MinGW.
 
 
-## 3. Building `libecl`
+## 3. Building
 
-CMake is the build system for `libecl`. The top level CMakeLists.txt file
-is located in the top level directory of the repository, and this
-CMakeLists.txt file includes individual CMakeLists.txt files for the
+CMake is the build system for `libecl` and `libres`. The top level CMakeLists.txt file
+is located in the top level directory of the repositories, and the
+CMakeLists.txt files include individual CMakeLists.txt files for the
 different libraries.
 
 Building with CMake is performed like this:
@@ -104,7 +104,7 @@ Linux.
 4. Subsequent builds can be performed using just the native make command, as in
 step 3.
 
-### 3.1 CMake settings you might want to adjust
+### 3.1 CMake settings
 
 The main setting you should adjust is `BUILD_ERT` which is default to
 `OFF`, i.e.  by default only the ECLIPSE related utilities will be
@@ -112,6 +112,30 @@ built. The build system has numerous configurations checks; the
 ECLIPSE utilities should build on Windows, but to build all of `libecl` you
 will need a Linux (Posix) system.
 
+### libecl
+
+```
+git clone https://github.com/Statoil/libecl
+mkdir libecl/build
+pushd libecl/build
+cmake .. -DENABLE_PYTHON=ON
+         -DCMAKE_INSTALL_PREFIX=$INSTALL
+make install
+popd
+```
+
+### libres
+
+```
+git clone https://github.com/Statoil/libres
+mkdir libres/build
+pushd libres/build
+cmake .. -DENABLE_PYTHON=ON
+         -DCMAKE_INSTALL_PREFIX=$INSTALL
+         -DCMAKE_MODULE_PATH=$INSTALL/share/cmake/Modules
+make install
+popd
+```
 
 ## 4. The code
 

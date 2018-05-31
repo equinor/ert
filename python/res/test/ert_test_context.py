@@ -34,7 +34,7 @@ class ErtTest(BaseCClass):
 
     def __init__(self, test_name, model_config = None, config_dict = None, store_area=False):
         if model_config is None and config_dict is None:
-            raise ValueError("Must suuply either model_config or config_dict argument")
+            raise ValueError("Must supply either model_config or config_dict argument")
 
         work_area = TestArea( test_name )
         work_area.convertToCReference( self )
