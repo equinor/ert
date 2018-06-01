@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 
-import json
 import sys
 import os
 import os.path
-import socket
+from datetime import datetime as dt
 import time
 import signal
 import random
-import subprocess
 import shutil
-import datetime
 
 
 try:
@@ -22,6 +19,9 @@ REQUESTED_HEXVERSION  =  0x02070000
 
 LOG_URL       = "http://devnull.statoil.no:4444"
 
+SHORT_SLEEP = 1
+LONG_SLEEP = 5
+EXIT_file = 'ERROR'
 
 def check_version():
     if sys.hexversion < REQUESTED_HEXVERSION:
@@ -43,26 +43,26 @@ def check_version():
 
 
 
-def redirect(file , fd , open_mode):
-    new_fd = os.open(file , open_mode )
+def redirect(fname , fd , open_mode):
+    new_fd = os.open(fname , open_mode )
     os.dup2(new_fd , fd)
     os.close(new_fd)
 
-def redirect_input(file , fd ):
-    redirect( file , fd , os.O_RDONLY)
+def redirect_input(fname , fd ):
+    redirect( fname , fd , os.O_RDONLY)
 
 
-def redirect_output(file , fd ,start_time):
-    if os.path.isfile(file):
-        mtime = os.path.getmtime( file )
+def redirect_output(fname , fd ,start_time):
+    if os.path.isfile(fname):
+        mtime = os.path.getmtime( fname )
         if mtime < start_time:
             # Old stale version; truncate.
-            redirect( file , fd , os.O_WRONLY | os.O_TRUNC | os.O_CREAT )
+            redirect( fname , fd , os.O_WRONLY | os.O_TRUNC | os.O_CREAT )
         else:
             # A new invocation of the same job instance; append putput
-            redirect( file , fd , os.O_APPEND )
+            redirect( fname , fd , os.O_APPEND )
     else:
-        redirect( file , fd , os.O_WRONLY | os.O_TRUNC | os.O_CREAT )
+        redirect( fname , fd , os.O_WRONLY | os.O_TRUNC | os.O_CREAT )
 
 
 
@@ -71,9 +71,9 @@ def cond_symlink(target , src):
         os.symlink( target , src )
 
 
-def cond_unlink(file):
-    if os.path.exists(file):
-        os.unlink(file)
+def cond_unlink(fname):
+    if os.path.exists(fname):
+        os.unlink(fname)
 
 
 
@@ -110,11 +110,11 @@ def kill_job_and_EXIT( job , P ):
     sys.exit( 1 )
 
 
-def unlink_empty(file):
-    if os.path.exists(file):
-        st = os.stat( file )
+def unlink_empty(fname):
+    if os.path.exists(fname):
+        st = os.stat( fname )
         if st.st_size == 0:
-            os.unlink( file )
+            os.unlink( fname )
 
 
 
@@ -172,7 +172,7 @@ def license_check( job ):
                 if currently_running < max_running:
                     break
                 else:
-                    time.sleep(5)
+                    time.sleep(LONG_SLEEP)
 
             os.link(license_file , job["license_link"])
 
@@ -182,13 +182,14 @@ def license_check( job ):
                 if currently_running <= max_running:
                     break # OK - now we can leave the building - and let the job start
                 else:
-                    time.sleep(5)
+                    time.sleep(LONG_SLEEP)
 
 
 # This file will be read by the job_queue_node_fscanf_EXIT() function
 # in job_queue.c. Be very careful with changes in output format.
 def dump_EXIT_file( job , error_msg):
     fileH = open(EXIT_file , "a")
+    now = dt.now()
     fileH.write("<error>\n")
     fileH.write("  <time>%02d:%02d:%02d</time>\n" % (now.tm_hour , now.tm_min , now.tm_sec))
     fileH.write("  <job>%s</job>\n" % job["name"])
@@ -230,7 +231,7 @@ def waitForTargetFile(target_file , stat_start_time):
             if stat.st_mtime > stat_start_time:
                 return (True , "")
 
-        time.sleep(1)
+        time.sleep(SHORT_SLEEP)
         if time.time() - start_time > timeout:
             break
 
@@ -278,7 +279,7 @@ def run_one(job_manager , job):
     if job.get("max_running_minutes"):
         P = job_manager.jobProcess(job)
         while True:
-            time.sleep( short_sleep )
+            time.sleep( SHORT_SLEEP )
             run_time = time.time() - start_time
             returncode = P.poll()
             if returncode is None:
@@ -330,6 +331,8 @@ def run_one(job_manager , job):
 
 
 def main(argv):
+    """FIXME the argument argv is ignored."""
+
     if len(sys.argv) >= 2:
         run_path =  sys.argv[1]
 
@@ -350,7 +353,6 @@ def main(argv):
     random.seed()
     check_version()
 
-    max_runtime = 0
     job_manager = JobManager(error_url=LOG_URL, log_url=LOG_URL)
 
     if len(sys.argv) <= 2:
@@ -397,7 +399,7 @@ def main(argv):
                     sys.exit()
             else:
                 print("Job: %s does not exist. Available jobs:" % job_name)
-                for j in jobs.jobList:
+                for j in job_manager.job_list:
                     print("   %s" % j["name"])
 
 
