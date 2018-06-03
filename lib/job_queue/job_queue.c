@@ -774,18 +774,28 @@ static void job_queue_check_expired(job_queue_type * queue) {
   for (int i = 0; i < job_list_get_size( queue->job_list ); i++) {
     job_queue_node_type * node = job_list_iget_job( queue->job_list , i );
 
-    if (job_queue_node_get_status(node) == JOB_QUEUE_RUNNING) {
-      time_t now = time(NULL);
-      if ( job_queue_get_max_job_duration(queue) > 0) {
-        double elapsed = difftime(now, job_queue_node_get_sim_start( node ));
-        if (elapsed > job_queue_get_max_job_duration(queue))
-          job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
-      }
-      if (job_queue_get_job_stop_time(queue) > 0) {
-        if (now >= job_queue_get_job_stop_time(queue))
-          job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
+    if (job_queue_node_get_status(node) != JOB_QUEUE_RUNNING)
+      continue;
+
+    time_t now = time(NULL);
+    double max_duration = job_queue_get_max_job_duration(queue);
+
+    // max_duration == 0 means unlimited; never kill it due to duration
+    if ( max_duration > 0) {
+      double elapsed = difftime(now, job_queue_node_get_sim_start( node ));
+      if (elapsed > max_duration) {
+        res_log_finfo("Time limit exceeded, %fs > %fs. Scheduled for kill.",
+                      elapsed,
+                      max_duration);
+        job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
       }
     }
+
+    if (job_queue_get_job_stop_time(queue) > 0) {
+      if (now >= job_queue_get_job_stop_time(queue))
+        job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
+    }
+
   }
 }
 
