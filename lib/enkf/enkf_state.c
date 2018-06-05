@@ -421,30 +421,28 @@ static bool enkf_state_internalize_dynamic_eclipse_results(ensemble_config_type 
         const ecl_smspec_type * smspec = ecl_sum_get_smspec(summary);
 
         for(int i = 0; i < ecl_smspec_num_nodes(smspec); i++) {
-	  const smspec_node_type * smspec_node = ecl_smspec_iget_node(smspec, i);
-	  if (smspec_node_is_valid( smspec_node )) {
-	    const char * key = smspec_node_get_gen_key1(smspec_node);
+          const smspec_node_type * smspec_node = ecl_smspec_iget_node(smspec, i);
+          const char * key = smspec_node_get_gen_key1(smspec_node);
 
-              if(summary_key_matcher_match_summary_key(matcher, key)) {
-                summary_key_set_type * key_set = enkf_fs_get_summary_key_set(sim_fs);
-                summary_key_set_add_summary_key(key_set, key);
+          if(summary_key_matcher_match_summary_key(matcher, key)) {
+            summary_key_set_type * key_set = enkf_fs_get_summary_key_set(sim_fs);
+            summary_key_set_add_summary_key(key_set, key);
 
-                enkf_config_node_type * config_node = ensemble_config_get_or_create_summary_node(ens_config, key);
-                enkf_node_type * node = enkf_node_alloc( config_node );
+            enkf_config_node_type * config_node = ensemble_config_get_or_create_summary_node(ens_config, key);
+            enkf_node_type * node = enkf_node_alloc( config_node );
 
-                enkf_node_try_load_vector( node , sim_fs , iens );  // Ensure that what is currently on file is loaded before we update.
+            enkf_node_try_load_vector( node , sim_fs , iens );  // Ensure that what is currently on file is loaded before we update.
 
-                enkf_node_forward_load_vector( node , load_context , time_index);
-                enkf_node_store_vector( node , sim_fs , iens );
-		enkf_node_free( node );
-              }
-            }
+            enkf_node_forward_load_vector( node , load_context , time_index);
+            enkf_node_store_vector( node , sim_fs , iens );
+            enkf_node_free( node );
+          }
         }
 
         int_vector_free( time_index );
 
         /*
-        Check if some of the specified keys are missing from the Eclipse data, and if there are observations for them. That is a problem.
+          Check if some of the specified keys are missing from the Eclipse data, and if there are observations for them. That is a problem.
         */
         enkf_state_check_for_missing_eclipse_summary_data(ens_config, matcher, smspec, load_context, iens);
 
