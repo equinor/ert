@@ -17,6 +17,7 @@ class SimulationContext(object):
         self._mask = mask
 
         job_queue = ert.get_queue_config().create_job_queue()
+        job_queue.set_max_job_duration(max_runtime)
         self._queue_manager = JobQueueManager(job_queue)
         self._queue_manager.startQueue( mask.count( ), verbose=verbose)
         self._run_args = {}
