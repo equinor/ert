@@ -96,7 +96,7 @@ add_library(res res_util/res_log.cpp
                 job_queue/ext_joblist.cpp
                 job_queue/forward_model.cpp
                 job_queue/job_status.c
-                job_queue/job_list.c
+                job_queue/job_list.cpp
                 job_queue/job_node.c
                 job_queue/job_queue.c
                 job_queue/job_queue_manager.c
@@ -110,7 +110,7 @@ add_library(res res_util/res_log.cpp
                 job_queue/workflow_job.c
                 job_queue/workflow_joblist.c
                 job_queue/environment_varlist.cpp
-                job_queue/job_kw_definitions.c
+                job_queue/job_kw_definitions.cpp
                 ${lsb}
 
                 enkf/active_list.c

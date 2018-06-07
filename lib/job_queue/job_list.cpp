@@ -24,11 +24,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
+#include <ert/util/util.hpp>
+#include <ert/util/arg_pack.hpp>
 
-#include <ert/job_queue/job_node.h>
-#include <ert/job_queue/job_list.h>
+#include <ert/job_queue/job_node.hpp>
+#include <ert/job_queue/job_list.hpp>
 
 
 #define JOB_LIST_TYPE_ID 8154222
@@ -86,7 +86,7 @@ void job_list_add_job( job_list_type * job_list , job_queue_node_type * job_node
     job_list->jobs = new_jobs;
 #else
     int new_alloc_size = util_int_max( 16 , job_list->alloc_size * 2);
-    job_list->jobs = util_realloc( job_list->jobs , sizeof * job_list->jobs * new_alloc_size );
+    job_list->jobs = (job_queue_node_type**)util_realloc( job_list->jobs , sizeof * job_list->jobs * new_alloc_size );
 #endif
 
     job_list->alloc_size = new_alloc_size;
