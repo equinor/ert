@@ -24,19 +24,19 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/parser.h>
-#include <ert/res_util/subst_list.h>
-#include <ert/res_util/res_env.h>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/parser.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/res_env.hpp>
 
-#include <ert/config/config_parser.h>
-#include <ert/config/config_content.h>
-#include <ert/config/config_error.h>
+#include <ert/config/config_parser.hpp>
+#include <ert/config/config_content.hpp>
+#include <ert/config/config_error.hpp>
 
-#include <ert/job_queue/job_kw_definitions.h>
-#include <ert/job_queue/ext_job.h>
+#include <ert/job_queue/job_kw_definitions.hpp>
+#include <ert/job_queue/ext_job.hpp>
 
 
 /*
@@ -777,7 +777,7 @@ static void __fprintf_python_argList(FILE * stream,
       const char * src_string = stringlist_iget( argv , index );
       char * filtered_string = __alloc_filtered_string(src_string , ext_job->private_args , global_args );
       if (hash_has_key( ext_job->default_mapping , filtered_string ))
-        filtered_string = util_realloc_string_copy( filtered_string , hash_get( ext_job->default_mapping , filtered_string ));
+        filtered_string = (char *)util_realloc_string_copy( filtered_string , (const char *)hash_get( ext_job->default_mapping , filtered_string ));
 
       fprintf(stream , "\"%s\"" , filtered_string );
       if (index < (stringlist_get_size( argv) - 1))
@@ -941,7 +941,7 @@ void ext_job_fprintf_config(const ext_job_type * ext_job , const char * fmt , FI
 }
 
 config_item_types ext_job_iget_argtype( const ext_job_type * ext_job, int index) {
-  return int_vector_safe_iget( ext_job->arg_types , index );
+  return (config_item_types)int_vector_safe_iget( ext_job->arg_types , index );
 }
 
 
@@ -981,7 +981,8 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , MAX_ARG_KEY           , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
       item = config_add_schema_item(config , ARG_TYPE_KEY          , false ); config_schema_item_set_argc_minmax( item , 2 , 2 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
 
-      config_schema_item_set_indexed_selection_set( item , 1 , 6 , (const char *[6]) {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE, JOB_RUNTIME_FILE_TYPE, JOB_RUNTIME_INT_TYPE});
+      const char * var_types[6] = {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE, JOB_RUNTIME_FILE_TYPE, JOB_RUNTIME_INT_TYPE};
+      config_schema_item_set_indexed_selection_set( item , 1 , 6 , var_types);
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
     {

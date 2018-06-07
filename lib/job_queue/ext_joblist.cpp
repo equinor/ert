@@ -24,13 +24,13 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/res_util/subst_list.h>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/res_util/subst_list.hpp>
 
-#include <ert/job_queue/ext_job.h>
-#include <ert/job_queue/ext_joblist.h>
+#include <ert/job_queue/ext_job.hpp>
+#include <ert/job_queue/ext_joblist.hpp>
 
 
 //#define MODULE_NAME    "jobs.py"
@@ -101,7 +101,7 @@ void ext_joblist_add_job(ext_joblist_type * joblist , const char * name , ext_jo
 
 ext_job_type * ext_joblist_get_job(const ext_joblist_type * joblist , const char * job_name) {
   if (hash_has_key(joblist->jobs , job_name))
-    return hash_get(joblist->jobs , job_name);
+    return (ext_job_type*)hash_get(joblist->jobs , job_name);
   else {
     util_abort("%s: asked for job:%s which does not exist\n",__func__ , job_name);
     return NULL;
@@ -111,7 +111,7 @@ ext_job_type * ext_joblist_get_job(const ext_joblist_type * joblist , const char
 
 ext_job_type * ext_joblist_get_job_copy(const ext_joblist_type * joblist , const char * job_name) {
   if (hash_has_key(joblist->jobs , job_name))
-    return ext_job_alloc_copy(hash_get(joblist->jobs , job_name));
+    return ext_job_alloc_copy((const ext_job_type*)hash_get(joblist->jobs , job_name));
   else {
     util_abort("%s: asked for job:%s which does not exist\n",__func__ , job_name);
     return NULL;

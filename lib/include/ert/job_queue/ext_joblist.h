@@ -44,6 +44,8 @@ bool               ext_joblist_del_job( ext_joblist_type * joblist , const char 
 void               ext_joblist_add_jobs_in_directory(ext_joblist_type * joblist  , const char * path, const char * license_root_path, bool user_mode, bool search_path );
 int                ext_joblist_get_size( const ext_joblist_type * joblist );
 
+hash_type        * ext_joblist_get_jobs( const ext_joblist_type * joblist );
+
 #ifdef __cplusplus
 }
 #endif

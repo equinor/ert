@@ -92,9 +92,9 @@ add_library(res res_util/res_log.cpp
                 analysis/std_enkf.cpp
                 analysis/stepwise.cpp
 
-                job_queue/ext_job.c
-                job_queue/ext_joblist.c
-                job_queue/forward_model.c
+                job_queue/ext_job.cpp
+                job_queue/ext_joblist.cpp
+                job_queue/forward_model.cpp
                 job_queue/job_status.c
                 job_queue/job_list.c
                 job_queue/job_node.c

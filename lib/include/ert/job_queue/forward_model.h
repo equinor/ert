@@ -48,6 +48,8 @@ typedef struct  forward_model_struct forward_model_type ;
   ext_job_type           * forward_model_iget_job( forward_model_type * forward_model , int index);
   int                      forward_model_get_length( const forward_model_type * forward_model );
 
+  ext_job_type           * forward_model_add_job(forward_model_type * forward_model , const char * job_name);
+
 
 #ifdef __cplusplus
 }

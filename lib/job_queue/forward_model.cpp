@@ -22,17 +22,17 @@
 #include <ctype.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/vector.h>
-#include <ert/util/parser.h>
-#include <ert/res_util/subst_list.h>
+#include <ert/util/util.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/util/parser.hpp>
+#include <ert/res_util/subst_list.hpp>
 
-#include <ert/job_queue/ext_job.h>
-#include <ert/job_queue/ext_joblist.h>
-#include <ert/job_queue/forward_model.h>
-#include <ert/job_queue/job_status.h>
+#include <ert/job_queue/ext_job.hpp>
+#include <ert/job_queue/ext_joblist.hpp>
+#include <ert/job_queue/forward_model.hpp>
+#include <ert/job_queue/job_status.hpp>
 
-#include <ert/util/ecl_version.h>
+#include <ert/util/ecl_version.hpp>
 
 
 /**
@@ -229,19 +229,19 @@ void forward_model_formatted_fprintf(const forward_model_type * forward_model ,
 
 forward_model_type * forward_model_alloc_copy(const forward_model_type * forward_model) {
   int ijob;
-  forward_model_type * new;
+  forward_model_type * new_;
 
-  new = forward_model_alloc(forward_model->ext_joblist );
+  new_ = forward_model_alloc(forward_model->ext_joblist );
   for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
     const ext_job_type * job = (const ext_job_type*)vector_iget_const( forward_model->jobs , ijob);
-    vector_append_owned_ref( new->jobs , ext_job_alloc_copy( job ) , ext_job_free__);
+    vector_append_owned_ref( new_->jobs , ext_job_alloc_copy( job ) , ext_job_free__);
   }
 
-  return new;
+  return new_;
 }
 
 ext_job_type * forward_model_iget_job( forward_model_type * forward_model , int index) {
-  return vector_iget( forward_model->jobs , index );
+  return (ext_job_type*)vector_iget( forward_model->jobs , index );
 }
 
 
@@ -250,7 +250,7 @@ void forward_model_fprintf(const forward_model_type * forward_model , FILE * str
   int ijob;
   fprintf(stream , " ");
   for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
-    ext_job_fprintf( vector_iget(forward_model->jobs , ijob) , stream);
+    ext_job_fprintf( (const ext_job_type*)vector_iget(forward_model->jobs , ijob) , stream);
     fprintf(stream , "  ");
   }
   fprintf(stream , "\n");

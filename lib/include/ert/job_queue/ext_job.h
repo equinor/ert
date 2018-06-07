@@ -95,6 +95,9 @@ const char *            ext_job_get_license_path(const ext_job_type*);
 //void                    ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string );
 
 
+const char * ext_job_get_error_file(const ext_job_type * ext_job);
+
+
 #ifdef __cplusplus
 }
 #endif

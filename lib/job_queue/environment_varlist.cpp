@@ -20,7 +20,7 @@
 
 #include <ert/res_util/res_env.hpp>
 
-#include <ert/util/hash.h>
+#include <ert/util/hash.hpp>
 
 #define ENV_VAR_KEY_STRING     "global_environment"
 #define UPDATE_PATH_KEY_STRING "global_update_path"
