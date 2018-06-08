@@ -20,19 +20,19 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 
-#include <ert/util/int_vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/arg_pack.h>
-#include <ert/util/vector.h>
-#include <ert/res_util/subst_list.h>
+#include <ert/util/int_vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/arg_pack.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/res_util/subst_list.hpp>
 
-#include <ert/config/config_parser.h>
+#include <ert/config/config_parser.hpp>
 
-#include <ert/job_queue/workflow.h>
-#include <ert/job_queue/workflow_job.h>
-#include <ert/job_queue/workflow_joblist.h>
+#include <ert/job_queue/workflow.hpp>
+#include <ert/job_queue/workflow_job.hpp>
+#include <ert/job_queue/workflow_joblist.hpp>
 
 #define CMD_TYPE_ID                66153
 #define WORKFLOW_TYPE_ID         6762081
@@ -264,6 +264,14 @@ stringlist_type * workflow_iget_arguments( const workflow_type * workflow, int i
     return cmd->arglist;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const char * worflow_get_src_file(const workflow_type * workflow) {
   return workflow->src_file;
 }
+
+#ifdef __cplusplus
+}
+#endif

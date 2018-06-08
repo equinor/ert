@@ -19,10 +19,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/job_queue/torque_driver.h>
+#include <ert/job_queue/torque_driver.hpp>
 
 
 #define TORQUE_DRIVER_TYPE_ID 34873653
@@ -162,7 +162,8 @@ static bool torque_driver_set_num_cpus_per_node(torque_driver_type * driver, con
   }
 }
 
-bool torque_driver_set_option(void * __driver, const char * option_key, const void * value) {
+bool torque_driver_set_option(void * __driver, const char * option_key, const void * value_) {
+  const char * value = (const char*)value_;
   torque_driver_type * driver = torque_driver_safe_cast(__driver);
   bool option_set = true;
   {
@@ -236,7 +237,7 @@ void torque_driver_init_option_list(stringlist_type * option_list) {
 
 torque_job_type * torque_job_alloc() {
   torque_job_type * job;
-  job = util_malloc(sizeof * job);
+  job = (torque_job_type*)util_malloc(sizeof * job);
   job->torque_jobnr_char = NULL;
   job->torque_jobnr = 0;
   UTIL_TYPE_ID_INIT(job, TORQUE_JOB_TYPE_ID);
@@ -481,7 +482,7 @@ static job_status_type torque_driver_get_qstat_status(torque_driver_type * drive
 }
 
 job_status_type torque_driver_parse_status(const char * qstat_file, const char * jobnr_char) {
-  int status = JOB_QUEUE_STATUS_FAILURE;
+  job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
   if (util_file_exists(qstat_file)) {
     char * line = NULL;
