@@ -108,7 +108,7 @@ add_library(res res_util/res_log.cpp
                 job_queue/torque_driver.cpp
                 job_queue/workflow.cpp
                 job_queue/workflow_job.cpp
-                job_queue/workflow_joblist.c
+                job_queue/workflow_joblist.cpp
                 job_queue/environment_varlist.cpp
                 job_queue/job_kw_definitions.cpp
                 ${lsb}
