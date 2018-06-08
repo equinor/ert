@@ -33,10 +33,10 @@
 
 #include <lsf/lsbatch.h>
 
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/job_queue/lsb.h>
+#include <ert/job_queue/lsb.hpp>
 
 
 

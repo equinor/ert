@@ -95,13 +95,13 @@ add_library(res res_util/res_log.cpp
                 job_queue/ext_job.cpp
                 job_queue/ext_joblist.cpp
                 job_queue/forward_model.cpp
-                job_queue/job_status.c
+                job_queue/job_status.cpp
                 job_queue/job_list.cpp
                 job_queue/job_node.cpp
                 job_queue/job_queue.cpp
                 job_queue/job_queue_manager.cpp
                 job_queue/job_queue_status.cpp
-                job_queue/local_driver.c
+                job_queue/local_driver.cpp
                 job_queue/lsf_driver.c
                 job_queue/queue_driver.c
                 job_queue/rsh_driver.c

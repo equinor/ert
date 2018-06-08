@@ -24,11 +24,11 @@
 #include <pthread.h>
 #include <errno.h>
 
-#include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
+#include <ert/util/util.hpp>
+#include <ert/util/arg_pack.hpp>
 
-#include <ert/job_queue/queue_driver.h>
-#include <ert/job_queue/local_driver.h>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/local_driver.hpp>
 
 
 typedef struct local_job_struct local_job_type;
@@ -60,7 +60,7 @@ static UTIL_SAFE_CAST_FUNCTION( local_job    , LOCAL_JOB_TYPE_ID    )
 
 static local_job_type * local_job_alloc() {
   local_job_type * job;
-  job = util_malloc(sizeof * job );
+  job = (local_job_type*)util_malloc(sizeof * job );
   UTIL_TYPE_ID_INIT( job , LOCAL_JOB_TYPE_ID );
   job->active = false;
   job->status = JOB_QUEUE_WAITING;
@@ -103,7 +103,7 @@ void local_driver_kill_job( void * __driver , void * __job) {
 
 void * submit_job_thread__(void * __arg) {
   arg_pack_type *arg_pack = arg_pack_safe_cast(__arg);
-  const char *executable = arg_pack_iget_const_ptr(arg_pack, 0);
+  const char *executable = (const char*)arg_pack_iget_const_ptr(arg_pack, 0);
   /*
     The arg_pack contains a run_path field as the second argument,
     it has therefore been left here as a comment:
@@ -111,8 +111,8 @@ void * submit_job_thread__(void * __arg) {
     const char * run_path    = arg_pack_iget_const_ptr(arg_pack , 1);
   */
   int argc = arg_pack_iget_int(arg_pack, 2);
-  char **argv = arg_pack_iget_ptr(arg_pack, 3);
-  local_job_type *job = arg_pack_iget_ptr(arg_pack, 4);
+  char **argv = (char**)arg_pack_iget_ptr(arg_pack, 3);
+  local_job_type *job = (local_job_type*)arg_pack_iget_ptr(arg_pack, 4);
   {
     int wait_status;
     job->child_process = util_spawn(executable, argc, (const char**) argv, NULL, NULL);

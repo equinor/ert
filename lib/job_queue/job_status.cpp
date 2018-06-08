@@ -17,7 +17,7 @@
 */
 
 
-#include <ert/job_queue/job_status.h>
+#include <ert/job_queue/job_status.hpp>
 
 
 const char * job_status_get_name(job_status_type status) {
