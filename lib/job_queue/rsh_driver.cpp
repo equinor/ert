@@ -26,11 +26,11 @@
 #include <errno.h>
 
 
-#include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
+#include <ert/util/util.hpp>
+#include <ert/util/arg_pack.hpp>
 
-#include <ert/job_queue/queue_driver.h>
-#include <ert/job_queue/rsh_driver.h>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/rsh_driver.hpp>
 
 
 
@@ -170,13 +170,13 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
 
 static void * rsh_host_submit_job__(void * __arg_pack) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
-  char * rsh_cmd           = arg_pack_iget_ptr(arg_pack , 0);
-  rsh_host_type * rsh_host = arg_pack_iget_ptr(arg_pack , 1);
-  char * submit_cmd        = arg_pack_iget_ptr(arg_pack , 2);
-  int num_cpu              = arg_pack_iget_int(arg_pack , 3);
-  int argc                 = arg_pack_iget_int(arg_pack , 4);
-  const char ** argv       = arg_pack_iget_ptr(arg_pack , 5);
-  rsh_job_type * job       = arg_pack_iget_ptr(arg_pack , 6);
+  char * rsh_cmd           = (char *)         arg_pack_iget_ptr(arg_pack , 0);
+  rsh_host_type * rsh_host = (rsh_host_type *)arg_pack_iget_ptr(arg_pack , 1);
+  char * submit_cmd        = (char *)         arg_pack_iget_ptr(arg_pack , 2);
+  int num_cpu              =                  arg_pack_iget_int(arg_pack , 3);
+  int argc                 =                  arg_pack_iget_int(arg_pack , 4);
+  const char ** argv       = (const char **)  arg_pack_iget_ptr(arg_pack , 5);
+  rsh_job_type * job       = (rsh_job_type*)  arg_pack_iget_ptr(arg_pack , 6);
 
   rsh_host_submit_job(rsh_host , job , rsh_cmd , submit_cmd , num_cpu , argc , argv);
   pthread_exit( NULL );
@@ -197,7 +197,7 @@ static void * rsh_host_submit_job__(void * __arg_pack) {
 
 rsh_job_type * rsh_job_alloc(const char * run_path) {
   rsh_job_type * job;
-  job = util_malloc(sizeof * job );
+  job = (rsh_job_type*)util_malloc(sizeof * job );
   job->active     = false;
   job->status     = JOB_QUEUE_WAITING;
   job->run_path   = util_alloc_string_copy(run_path);
@@ -387,7 +387,7 @@ void rsh_driver_add_host(rsh_driver_type * rsh_driver , const char * hostname , 
   rsh_host_type * new_host = rsh_host_alloc(hostname , host_max_running);  /* Could in principle update an existing node if the host name is old. */
   if (new_host != NULL) {
     rsh_driver->num_hosts++;
-    rsh_driver->host_list = util_realloc(rsh_driver->host_list , rsh_driver->num_hosts * sizeof * rsh_driver->host_list );
+    rsh_driver->host_list = (rsh_host_type**)util_realloc(rsh_driver->host_list , rsh_driver->num_hosts * sizeof * rsh_driver->host_list );
     rsh_driver->host_list[(rsh_driver->num_hosts - 1)] = new_host;
   }
 }
@@ -420,7 +420,8 @@ void rsh_driver_add_host_from_string(rsh_driver_type * rsh_driver , const char *
 
 
 
-bool rsh_driver_set_option( void * __driver , const char * option_key , const void * value ) {
+bool rsh_driver_set_option( void * __driver , const char * option_key , const void * value_ ) {
+  const char * value = (const char*) value_;
   rsh_driver_type * driver = rsh_driver_safe_cast( __driver );
   bool has_option = true;
   {

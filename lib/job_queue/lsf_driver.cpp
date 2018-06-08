@@ -23,20 +23,20 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/res_util/log.h>
-#include <ert/res_util/res_log.h>
-#include <ert/res_util/res_env.h>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/res_util/log.hpp>
+#include <ert/res_util/res_log.hpp>
+#include <ert/res_util/res_env.hpp>
 
-#include <ert/job_queue/queue_driver.h>
-#include <ert/job_queue/lsf_driver.h>
-#include <ert/job_queue/lsf_job_stat.h>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/lsf_driver.hpp>
+#include <ert/job_queue/lsf_job_stat.hpp>
 
 
 #ifdef HAVE_LSF_LIBRARY
-#include <ert/job_queue/lsb.h>
+#include <ert/job_queue/lsb.hpp>
 #endif
 
 
@@ -179,7 +179,7 @@ static UTIL_SAFE_CAST_FUNCTION( lsf_job , LSF_JOB_TYPE_ID)
 
 static lsf_job_type * lsf_job_alloc( const char * job_name ) {
   lsf_job_type * job;
-  job                = util_malloc(sizeof * job);
+  job                = (lsf_job_type *)util_malloc(sizeof * job);
   job->num_exec_host = 0;
   job->exec_host     = NULL;
 
@@ -1182,7 +1182,8 @@ void lsf_driver_set_bjobs_refresh_interval_option( lsf_driver_type * driver , co
    LSF_RESOURCE
 */
 
-bool lsf_driver_set_option( void * __driver , const char * option_key , const void * value) {
+bool lsf_driver_set_option( void * __driver , const char * option_key , const void * value_) {
+  const char * value = (const char *) value_;
   lsf_driver_type * driver  = lsf_driver_safe_cast( __driver );
   bool has_option = true;
   {
