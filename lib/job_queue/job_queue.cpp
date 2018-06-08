@@ -24,17 +24,17 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
-#include <ert/res_util/res_log.h>
-#include <ert/res_util/thread_pool.h>
-#include <ert/res_util/res_portability.h>
+#include <ert/util/util.hpp>
+#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/res_log.hpp>
+#include <ert/res_util/thread_pool.hpp>
+#include <ert/res_util/res_portability.hpp>
 
-#include <ert/job_queue/job_queue.h>
-#include <ert/job_queue/job_node.h>
-#include <ert/job_queue/job_list.h>
-#include <ert/job_queue/job_queue_status.h>
-#include <ert/job_queue/queue_driver.h>
+#include <ert/job_queue/job_queue.hpp>
+#include <ert/job_queue/job_node.hpp>
+#include <ert/job_queue/job_list.hpp>
+#include <ert/job_queue/job_queue_status.hpp>
+#include <ert/job_queue/queue_driver.hpp>
 
 
 /**
@@ -667,7 +667,7 @@ static bool job_queue_check_node_status_files(const job_queue_type * job_queue,
 
 static void * job_queue_run_DONE_callback( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
-  job_queue_type * job_queue = arg_pack_iget_ptr( arg_pack , 0 );
+  job_queue_type * job_queue = (job_queue_type*)arg_pack_iget_ptr( arg_pack , 0 );
   int queue_index = arg_pack_iget_int( arg_pack , 1 );
   job_list_get_rdlock( job_queue->job_list );
   {
@@ -702,7 +702,7 @@ static void job_queue_handle_DONE( job_queue_type * queue , job_queue_node_type 
 
 static void * job_queue_run_EXIT_callback( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
-  job_queue_type * job_queue = arg_pack_iget_ptr( arg_pack , 0 );
+  job_queue_type * job_queue = (job_queue_type*)arg_pack_iget_ptr( arg_pack , 0 );
   int queue_index = arg_pack_iget_int( arg_pack , 1 );
 
   job_list_get_rdlock( job_queue->job_list );
@@ -1064,7 +1064,7 @@ void job_queue_run_jobs(job_queue_type * queue, int num_total_run, bool verbose)
 
 void * job_queue_run_jobs__(void * __arg_pack) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
-  job_queue_type * queue   = arg_pack_iget_ptr(arg_pack , 0);
+  job_queue_type * queue   = (job_queue_type*)arg_pack_iget_ptr(arg_pack , 0);
   int num_total_run        = arg_pack_iget_int(arg_pack , 1);
   bool verbose             = arg_pack_iget_bool(arg_pack , 2);
 

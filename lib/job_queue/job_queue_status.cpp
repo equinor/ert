@@ -17,11 +17,11 @@
 */
 #include <pthread.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/util.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/job_queue/queue_driver.h>
-#include <ert/job_queue/job_queue_status.h>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/job_queue_status.hpp>
 
 #define JOB_QUEUE_STATUS_TYPE_ID 777620306
 

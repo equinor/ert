@@ -25,13 +25,13 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <ert/util/type_macros.h>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/res_util/res_portability.h>
+#include <ert/res_util/res_portability.hpp>
 
-#include <ert/job_queue/job_queue.h>
-#include <ert/job_queue/queue_driver.h>
-#include <ert/job_queue/job_queue_manager.h>
+#include <ert/job_queue/job_queue.hpp>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/job_queue_manager.hpp>
 
 #define JOB_QUEUE_MANAGER_TYPE_ID 81626006
 

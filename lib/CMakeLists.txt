@@ -98,9 +98,9 @@ add_library(res res_util/res_log.cpp
                 job_queue/job_status.c
                 job_queue/job_list.cpp
                 job_queue/job_node.cpp
-                job_queue/job_queue.c
-                job_queue/job_queue_manager.c
-                job_queue/job_queue_status.c
+                job_queue/job_queue.cpp
+                job_queue/job_queue_manager.cpp
+                job_queue/job_queue_status.cpp
                 job_queue/local_driver.c
                 job_queue/lsf_driver.c
                 job_queue/queue_driver.c
