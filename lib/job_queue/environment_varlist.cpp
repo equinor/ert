@@ -47,7 +47,7 @@ void env_varlist_setenv(env_varlist_type * list, const char * key, const char * 
 }
 
 
-static void env_varlist_fprintf_hash(const hash_type * list, char * keystring, FILE * stream) {
+static void env_varlist_fprintf_hash(const hash_type * list, const char * keystring, FILE * stream) {
   int size = hash_get_size(list);
   fprintf(stream, "\"%s\" : {", keystring);
   stringlist_type * stringlist = hash_alloc_stringlist(list);

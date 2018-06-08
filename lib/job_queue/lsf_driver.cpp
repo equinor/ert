@@ -610,7 +610,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
     free( argv[1] );
     free( argv );
   } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-    char ** argv = (char**)util_calloc( 1 , sizeof * argv);
+    const char ** argv = (const char**)util_calloc( 1 , sizeof * argv);
     argv[0] = "-a";
     util_spawn_blocking(driver->bjobs_cmd, 1, (const char **) argv, tmp_file, NULL);
     free( argv );

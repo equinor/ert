@@ -806,7 +806,7 @@ static void __fprintf_python_arg_types(FILE * stream,
   fprintf(stream, "\"%s\" : [", key);
   for (int i = 0; i < ext_job->max_arg; i++) {
 
-    char * arg_type = NULL;
+    const char * arg_type = NULL;
     int type = int_vector_safe_iget(ext_job->arg_types, i);
     switch(type) {
     case CONFIG_INT:          arg_type = JOB_INT_TYPE; break;
