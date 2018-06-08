@@ -51,9 +51,10 @@ bool summary_key_matcher_match_summary_key(const summary_key_matcher_type * matc
 
     for (int i = 0; i < stringlist_get_size(keys); i++) {
         const char * pattern = stringlist_iget(keys, i);
-        if(util_fnmatch(pattern, summary_key) == 0) {
-            has_key = true;
-            break;
+        if (summary_key)
+            if(util_fnmatch(pattern, summary_key) == 0) {
+               has_key = true;
+               break;
         }
     }
 
