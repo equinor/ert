@@ -16,7 +16,9 @@
    for more details.
 */
 
+#ifndef _GNU_SOURCE
 #define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
+#endif
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -25,13 +27,13 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <ert/util/type_macros.h>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/res_util/res_portability.h>
+#include <ert/res_util/res_portability.hpp>
 
-#include <ert/job_queue/job_queue.h>
-#include <ert/job_queue/queue_driver.h>
-#include <ert/job_queue/job_queue_manager.h>
+#include <ert/job_queue/job_queue.hpp>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/job_queue_manager.hpp>
 
 #define JOB_QUEUE_MANAGER_TYPE_ID 81626006
 
@@ -48,7 +50,7 @@ UTIL_IS_INSTANCE_FUNCTION( job_queue_manager , JOB_QUEUE_MANAGER_TYPE_ID )
 
 
 job_queue_manager_type * job_queue_manager_alloc( job_queue_type * job_queue ) {
-  job_queue_manager_type * manager = util_malloc( sizeof * manager );
+  job_queue_manager_type * manager = (job_queue_manager_type*)util_malloc( sizeof * manager );
   UTIL_TYPE_ID_INIT( manager , JOB_QUEUE_MANAGER_TYPE_ID );
   manager->job_queue = job_queue;
   return manager;

@@ -33,10 +33,10 @@
 
 #include <lsf/lsbatch.h>
 
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/util/util.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/job_queue/lsb.h>
+#include <ert/job_queue/lsb.hpp>
 
 
 
@@ -106,7 +106,7 @@ void * lsb_dlopen( lsb_type * lsb , const char * lib_name) {
 */
 
 lsb_type * lsb_alloc() {
-  lsb_type * lsb = util_malloc( sizeof * lsb );
+  lsb_type * lsb = (lsb_type*)util_malloc( sizeof * lsb );
   lsb->ready = true;
   lsb->error_list = stringlist_alloc_new();
 

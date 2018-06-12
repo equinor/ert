@@ -92,25 +92,25 @@ add_library(res res_util/res_log.cpp
                 analysis/std_enkf.cpp
                 analysis/stepwise.cpp
 
-                job_queue/ext_job.c
-                job_queue/ext_joblist.c
-                job_queue/forward_model.c
-                job_queue/job_status.c
-                job_queue/job_list.c
-                job_queue/job_node.c
-                job_queue/job_queue.c
-                job_queue/job_queue_manager.c
-                job_queue/job_queue_status.c
-                job_queue/local_driver.c
-                job_queue/lsf_driver.c
-                job_queue/queue_driver.c
-                job_queue/rsh_driver.c
-                job_queue/torque_driver.c
-                job_queue/workflow.c
-                job_queue/workflow_job.c
-                job_queue/workflow_joblist.c
-                job_queue/environment_varlist.c
-                job_queue/job_kw_definitions.c
+                job_queue/ext_job.cpp
+                job_queue/ext_joblist.cpp
+                job_queue/forward_model.cpp
+                job_queue/job_status.cpp
+                job_queue/job_list.cpp
+                job_queue/job_node.cpp
+                job_queue/job_queue.cpp
+                job_queue/job_queue_manager.cpp
+                job_queue/job_queue_status.cpp
+                job_queue/local_driver.cpp
+                job_queue/lsf_driver.cpp
+                job_queue/queue_driver.cpp
+                job_queue/rsh_driver.cpp
+                job_queue/torque_driver.cpp
+                job_queue/workflow.cpp
+                job_queue/workflow_job.cpp
+                job_queue/workflow_joblist.cpp
+                job_queue/environment_varlist.cpp
+                job_queue/job_kw_definitions.cpp
                 ${lsb}
 
                 enkf/active_list.c

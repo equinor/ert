@@ -21,13 +21,13 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <ert/util/util.h>
+#include <ert/util/util.hpp>
 
-#include <ert/job_queue/queue_driver.h>
-#include <ert/job_queue/lsf_driver.h>
-#include <ert/job_queue/local_driver.h>
-#include <ert/job_queue/rsh_driver.h>
-#include <ert/job_queue/torque_driver.h>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/lsf_driver.hpp>
+#include <ert/job_queue/local_driver.hpp>
+#include <ert/job_queue/rsh_driver.hpp>
+#include <ert/job_queue/torque_driver.hpp>
 
 
 /**
@@ -109,7 +109,8 @@ const char * queue_driver_get_name(const queue_driver_type * driver) {
 }
 
 
-static bool queue_driver_set_generic_option__(queue_driver_type * driver, const char * option_key, const void * value) {
+static bool queue_driver_set_generic_option__(queue_driver_type * driver, const char * option_key, const void * value_) {
+  const char * value = (const char*) value_;
   bool option_set = true;
   {
     if (strcmp(MAX_RUNNING, option_key) == 0) {
@@ -198,7 +199,7 @@ bool queue_driver_unset_option(queue_driver_type * driver, const char * option_k
  */
 
 static queue_driver_type * queue_driver_alloc_empty() {
-  queue_driver_type * driver = util_malloc(sizeof * driver);
+  queue_driver_type * driver = (queue_driver_type*)util_malloc(sizeof * driver);
   UTIL_TYPE_ID_INIT(driver, QUEUE_DRIVER_ID);
   driver->driver_type = NULL_DRIVER;
   driver->submit = NULL;

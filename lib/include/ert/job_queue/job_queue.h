@@ -108,6 +108,8 @@ extern "C" {
   job_queue_node_type * job_queue_iget_node(job_queue_type * queue , int job_index);
   int job_queue_get_max_running( const job_queue_type * queue );
 
+  void                job_queue_set_max_running( job_queue_type * queue , int max_running );
+
   UTIL_SAFE_CAST_HEADER( job_queue );
 
 #ifdef __cplusplus

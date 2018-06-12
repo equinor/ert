@@ -20,19 +20,19 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 
-#include <ert/util/int_vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/arg_pack.h>
-#include <ert/util/vector.h>
-#include <ert/res_util/subst_list.h>
+#include <ert/util/int_vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/arg_pack.hpp>
+#include <ert/util/vector.hpp>
+#include <ert/res_util/subst_list.hpp>
 
-#include <ert/config/config_parser.h>
+#include <ert/config/config_parser.hpp>
 
-#include <ert/job_queue/workflow.h>
-#include <ert/job_queue/workflow_job.h>
-#include <ert/job_queue/workflow_joblist.h>
+#include <ert/job_queue/workflow.hpp>
+#include <ert/job_queue/workflow_job.hpp>
+#include <ert/job_queue/workflow_joblist.hpp>
 
 #define CMD_TYPE_ID                66153
 #define WORKFLOW_TYPE_ID         6762081
@@ -65,7 +65,7 @@ struct workflow_struct {
 
 
 static cmd_type * cmd_alloc( const workflow_job_type * workflow_job , const stringlist_type * arglist) {
-  cmd_type * cmd = util_malloc( sizeof * cmd );
+  cmd_type * cmd = (cmd_type*)util_malloc( sizeof * cmd );
   UTIL_TYPE_ID_INIT(cmd , CMD_TYPE_ID );
   cmd->workflow_job = workflow_job;
   cmd->arglist = stringlist_alloc_deep_copy( arglist );
@@ -184,7 +184,7 @@ bool workflow_run(workflow_type * workflow, void * self , bool verbose , const s
   if (workflow->compiled) {
     int icmd;
     for (icmd = 0; icmd < vector_get_size( workflow->cmd_list ); icmd++) {
-      const cmd_type * cmd = vector_iget_const( workflow->cmd_list , icmd );
+      const cmd_type * cmd = (const cmd_type*)vector_iget_const( workflow->cmd_list , icmd );
       void * return_value = workflow_job_run( cmd->workflow_job, self , verbose , cmd->arglist );
       vector_push_front_ref( workflow->stack , return_value );
     }
@@ -210,7 +210,7 @@ void * workflow_pop_stack( workflow_type * workflow ) {
 
 
 workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * joblist) {
-  workflow_type * script = util_malloc( sizeof * script );
+  workflow_type * script = (workflow_type*)util_malloc( sizeof * script );
   UTIL_TYPE_ID_INIT( script , WORKFLOW_TYPE_ID );
 
   script->src_file        = util_alloc_string_copy( src_file );
@@ -255,15 +255,23 @@ int workflow_size(const workflow_type * workflow) {
 }
 
 const workflow_job_type * workflow_iget_job( const workflow_type * workflow, int index) {
-    const cmd_type * cmd = vector_iget_const( workflow->cmd_list , index );
+    const cmd_type * cmd = (const cmd_type*)vector_iget_const( workflow->cmd_list , index );
     return cmd->workflow_job;
 }
 
 stringlist_type * workflow_iget_arguments( const workflow_type * workflow, int index) {
-    const cmd_type * cmd = vector_iget_const( workflow->cmd_list , index );
+    const cmd_type * cmd = (const cmd_type*)vector_iget_const( workflow->cmd_list , index );
     return cmd->arglist;
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 const char * worflow_get_src_file(const workflow_type * workflow) {
   return workflow->src_file;
 }
+
+#ifdef __cplusplus
+}
+#endif

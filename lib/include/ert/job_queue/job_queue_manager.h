@@ -22,9 +22,9 @@
 extern "C" {
 #endif
 
-#include <ert/util/type_macros.h>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/job_queue/job_queue.h>
+#include <ert/job_queue/job_queue.hpp>
 
 typedef struct job_queue_manager_struct job_queue_manager_type;
 
@@ -49,6 +49,9 @@ typedef struct job_queue_manager_struct job_queue_manager_type;
 
   job_status_type job_queue_manager_iget_job_status(const job_queue_manager_type * manager, int job_index);
   time_t job_queue_manager_get_status_timestamp(const job_queue_manager_type * queue);
+
+  time_t job_queue_manager_get_progress_timestamp(const job_queue_manager_type * manager);
+  time_t job_queue_manager_iget_progress_timestamp(const job_queue_manager_type * manager, int job_index);
 
 
   UTIL_IS_INSTANCE_HEADER( job_queue_manager );

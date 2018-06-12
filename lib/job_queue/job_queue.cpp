@@ -16,7 +16,9 @@
    for more details.
 */
 
+#ifndef _GNU_SOURCE
 #define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
+#endif
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,17 +26,17 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
-#include <ert/res_util/res_log.h>
-#include <ert/res_util/thread_pool.h>
-#include <ert/res_util/res_portability.h>
+#include <ert/util/util.hpp>
+#include <ert/util/arg_pack.hpp>
+#include <ert/res_util/res_log.hpp>
+#include <ert/res_util/thread_pool.hpp>
+#include <ert/res_util/res_portability.hpp>
 
-#include <ert/job_queue/job_queue.h>
-#include <ert/job_queue/job_node.h>
-#include <ert/job_queue/job_list.h>
-#include <ert/job_queue/job_queue_status.h>
-#include <ert/job_queue/queue_driver.h>
+#include <ert/job_queue/job_queue.hpp>
+#include <ert/job_queue/job_node.hpp>
+#include <ert/job_queue/job_list.hpp>
+#include <ert/job_queue/job_queue_status.hpp>
+#include <ert/job_queue/queue_driver.hpp>
 
 
 /**
@@ -667,7 +669,7 @@ static bool job_queue_check_node_status_files(const job_queue_type * job_queue,
 
 static void * job_queue_run_DONE_callback( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
-  job_queue_type * job_queue = arg_pack_iget_ptr( arg_pack , 0 );
+  job_queue_type * job_queue = (job_queue_type*)arg_pack_iget_ptr( arg_pack , 0 );
   int queue_index = arg_pack_iget_int( arg_pack , 1 );
   job_list_get_rdlock( job_queue->job_list );
   {
@@ -702,7 +704,7 @@ static void job_queue_handle_DONE( job_queue_type * queue , job_queue_node_type 
 
 static void * job_queue_run_EXIT_callback( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
-  job_queue_type * job_queue = arg_pack_iget_ptr( arg_pack , 0 );
+  job_queue_type * job_queue = (job_queue_type*)arg_pack_iget_ptr( arg_pack , 0 );
   int queue_index = arg_pack_iget_int( arg_pack , 1 );
 
   job_list_get_rdlock( job_queue->job_list );
@@ -1064,7 +1066,7 @@ void job_queue_run_jobs(job_queue_type * queue, int num_total_run, bool verbose)
 
 void * job_queue_run_jobs__(void * __arg_pack) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
-  job_queue_type * queue   = arg_pack_iget_ptr(arg_pack , 0);
+  job_queue_type * queue   = (job_queue_type*)arg_pack_iget_ptr(arg_pack , 0);
   int num_total_run        = arg_pack_iget_int(arg_pack , 1);
   bool verbose             = arg_pack_iget_bool(arg_pack , 2);
 
@@ -1169,7 +1171,7 @@ int job_queue_add_job(job_queue_type * queue ,
       job_list_unlock( queue->job_list );
       return queue_index;   /* Handle used by the calling scope. */
     } else {
-      char * cwd = util_alloc_cwd();
+      char * cwd = (char*)util_alloc_cwd();
       util_abort("%s: failed to create job: %s in path:%s[%d]  cwd:%s\n",__func__ , job_name , run_path , util_is_directory(run_path), cwd);
       return -1;
     }
@@ -1194,7 +1196,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
 
 
 
-  job_queue_type * queue  = util_malloc(sizeof * queue );
+  job_queue_type * queue  = (job_queue_type*)util_malloc(sizeof * queue );
   UTIL_TYPE_ID_INIT( queue , JOB_QUEUE_TYPE_ID);
   queue->usleep_time      = 250000; /* 1000000 : 1 second */
   queue->max_ok_wait_time = 60;
@@ -1346,7 +1348,7 @@ int job_queue_get_max_running_option(queue_driver_type * driver) {
 
 
 void job_queue_set_max_running_option(queue_driver_type * driver, int max_running) {
-  char * max_running_string = util_alloc_sprintf("%d", max_running);
+  char * max_running_string = (char*)util_alloc_sprintf("%d", max_running);
   queue_driver_set_option(driver, MAX_RUNNING, max_running_string);
   free(max_running_string);
 }

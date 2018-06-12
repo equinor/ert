@@ -21,15 +21,15 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 
-#include <ert/util/hash.h>
-#include <ert/util/int_vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/hash.hpp>
+#include <ert/util/int_vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/config/config_parser.h>
+#include <ert/config/config_parser.hpp>
 
-#include <ert/job_queue/workflow_job.h>
-#include <ert/job_queue/workflow_joblist.h>
+#include <ert/job_queue/workflow_job.hpp>
+#include <ert/job_queue/workflow_joblist.hpp>
 
 
 struct workflow_joblist_struct {
@@ -41,7 +41,7 @@ struct workflow_joblist_struct {
 
 
 workflow_joblist_type * workflow_joblist_alloc( ) {
-  workflow_joblist_type * joblist = util_malloc( sizeof * joblist );
+  workflow_joblist_type * joblist = (workflow_joblist_type*)util_malloc( sizeof * joblist );
 
   joblist->job_config = workflow_job_alloc_config();
   joblist->workflow_compiler = config_alloc();
@@ -60,7 +60,7 @@ void workflow_joblist_free( workflow_joblist_type * joblist) {
 
 
 const workflow_job_type * workflow_joblist_get_job( const workflow_joblist_type * joblist , const char * job_name) {
-  return hash_get( joblist->joblist , job_name );
+  return (const workflow_job_type*)hash_get( joblist->joblist , job_name );
 }
 
 
@@ -71,7 +71,7 @@ void workflow_joblist_add_job( workflow_joblist_type * joblist , const workflow_
 
 
 bool workflow_joblist_has_job( const workflow_joblist_type * joblist , const char * job_name) {
- workflow_job_type * job = hash_safe_get(joblist->joblist, job_name);
+ workflow_job_type * job = (workflow_job_type*)hash_safe_get(joblist->joblist, job_name);
  return (NULL != job);
 }
 

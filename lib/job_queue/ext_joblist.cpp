@@ -24,13 +24,13 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/res_util/subst_list.h>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/res_util/subst_list.hpp>
 
-#include <ert/job_queue/ext_job.h>
-#include <ert/job_queue/ext_joblist.h>
+#include <ert/job_queue/ext_job.hpp>
+#include <ert/job_queue/ext_joblist.hpp>
 
 
 //#define MODULE_NAME    "jobs.py"
@@ -82,7 +82,7 @@ struct ext_joblist_struct {
 
 
 ext_joblist_type * ext_joblist_alloc( ) {
-  ext_joblist_type * joblist = util_malloc( sizeof * joblist );
+  ext_joblist_type * joblist = (ext_joblist_type*)util_malloc( sizeof * joblist );
   joblist->jobs = hash_alloc();
   return joblist;
 }
@@ -101,7 +101,7 @@ void ext_joblist_add_job(ext_joblist_type * joblist , const char * name , ext_jo
 
 ext_job_type * ext_joblist_get_job(const ext_joblist_type * joblist , const char * job_name) {
   if (hash_has_key(joblist->jobs , job_name))
-    return hash_get(joblist->jobs , job_name);
+    return (ext_job_type*)hash_get(joblist->jobs , job_name);
   else {
     util_abort("%s: asked for job:%s which does not exist\n",__func__ , job_name);
     return NULL;
@@ -111,7 +111,7 @@ ext_job_type * ext_joblist_get_job(const ext_joblist_type * joblist , const char
 
 ext_job_type * ext_joblist_get_job_copy(const ext_joblist_type * joblist , const char * job_name) {
   if (hash_has_key(joblist->jobs , job_name))
-    return ext_job_alloc_copy(hash_get(joblist->jobs , job_name));
+    return ext_job_alloc_copy((const ext_job_type*)hash_get(joblist->jobs , job_name));
   else {
     util_abort("%s: asked for job:%s which does not exist\n",__func__ , job_name);
     return NULL;
@@ -159,7 +159,7 @@ void ext_joblist_add_jobs_in_directory(ext_joblist_type * joblist  , const char 
       struct dirent * entry = readdir( dirH );
       if (entry != NULL) {
         if ((strcmp(entry->d_name , ".") != 0) && (strcmp(entry->d_name , "..") != 0)) {
-          char * full_path = util_alloc_filename( path , entry->d_name , NULL );
+          char * full_path = (char*)util_alloc_filename( path , entry->d_name , NULL );
           if (util_is_file( full_path )) {
               ext_job_type * new_job = ext_job_fscanf_alloc(entry->d_name, license_root_path, user_mode, full_path, search_path);
               if (new_job != NULL) {

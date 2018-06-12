@@ -16,7 +16,10 @@
    for more details.
 */
 
+#ifndef _GNU_SOURCE
 #define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
+#endif
+
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,12 +27,12 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
-#include <ert/util/type_macros.h>
-#include <ert/res_util/res_log.h>
+#include <ert/util/util.hpp>
+#include <ert/util/arg_pack.hpp>
+#include <ert/util/type_macros.hpp>
+#include <ert/res_util/res_log.hpp>
 
-#include <ert/job_queue/job_node.h>
+#include <ert/job_queue/job_node.hpp>
 
 #define JOB_QUEUE_NODE_TYPE_ID 3315299
 #define INVALID_QUEUE_INDEX    -999
@@ -112,11 +115,11 @@ void job_queue_node_free_error_info( job_queue_node_type * node ) {
 */
 
 static char * __alloc_tag_content( const char * xml_buffer , const char * tag) {
-  char * open_tag    = util_alloc_sprintf("<%s>"  , tag);
-  char * close_tag   = util_alloc_sprintf("</%s>" , tag);
+  char * open_tag    = (char*)util_alloc_sprintf("<%s>"  , tag);
+  char * close_tag   = (char*)util_alloc_sprintf("</%s>" , tag);
 
-  char * start_ptr   = strstr( xml_buffer , open_tag );
-  char * end_ptr     = strstr( xml_buffer , close_tag );
+  const char * start_ptr   = strstr( xml_buffer , open_tag );
+  const char * end_ptr     = strstr( xml_buffer , close_tag );
   char * tag_content = NULL;
 
   if ((start_ptr != NULL) && (end_ptr != NULL)) {
@@ -275,7 +278,7 @@ job_queue_node_type * job_queue_node_alloc( const char * job_name ,
   if (!util_is_directory( run_path ))
     return NULL;
 
-  job_queue_node_type * node = util_malloc(sizeof * node );
+  job_queue_node_type * node = (job_queue_node_type*)util_malloc(sizeof * node );
   node->confirmed_running  = false;
   node->progress_timestamp = time(NULL);
   UTIL_TYPE_ID_INIT( node , JOB_QUEUE_NODE_TYPE_ID );
@@ -457,6 +460,9 @@ submit_status_type job_queue_node_submit(job_queue_node_type * node,
                                              node->job_name,
                                              node->argc,
                                              (const char **) node->argv);
+  job_status_type old_status;
+  job_status_type new_status;
+
   if (job_data == NULL) {
     /*
       In this case the status of the job itself will be
@@ -470,8 +476,8 @@ submit_status_type job_queue_node_submit(job_queue_node_type * node,
     goto cleanup;
   }
 
-  job_status_type old_status = node->job_status;
-  job_status_type new_status = JOB_QUEUE_SUBMITTED;
+  old_status = node->job_status;
+  new_status = JOB_QUEUE_SUBMITTED;
 
   res_log_finfo("Submitted job %s (attempt %d)",
                 node->job_name,
@@ -534,12 +540,15 @@ bool job_queue_node_update_status(job_queue_node_type * node,
   bool status_change = false;
   pthread_mutex_lock(&node->data_mutex);
 
+  job_status_type current_status;
+  bool confirmed;
+
   if (!node->job_data)
     goto cleanup;
 
-  job_status_type current_status = job_queue_node_get_status(node);
+  current_status = job_queue_node_get_status(node);
 
-  bool confirmed = job_queue_node_status_update_confirmed_running__(node);
+  confirmed = job_queue_node_status_update_confirmed_running__(node);
 
   if ((current_status & JOB_QUEUE_RUNNING) && !confirmed) {
     // it's running, but not confirmed running.

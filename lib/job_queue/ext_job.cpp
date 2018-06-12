@@ -24,19 +24,19 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/parser.h>
-#include <ert/res_util/subst_list.h>
-#include <ert/res_util/res_env.h>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/parser.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/res_env.hpp>
 
-#include <ert/config/config_parser.h>
-#include <ert/config/config_content.h>
-#include <ert/config/config_error.h>
+#include <ert/config/config_parser.hpp>
+#include <ert/config/config_content.hpp>
+#include <ert/config/config_error.hpp>
 
-#include <ert/job_queue/job_kw_definitions.h>
-#include <ert/job_queue/ext_job.h>
+#include <ert/job_queue/job_kw_definitions.hpp>
+#include <ert/job_queue/ext_job.hpp>
 
 
 /*
@@ -161,7 +161,7 @@ static UTIL_SAFE_CAST_FUNCTION( ext_job , EXT_JOB_TYPE_ID)
 
 
 static ext_job_type * ext_job_alloc__(const char * name , const char * license_root_path , bool private_job) {
-  ext_job_type * ext_job = util_malloc(sizeof * ext_job );
+  ext_job_type * ext_job = (ext_job_type*)util_malloc(sizeof * ext_job );
 
   UTIL_TYPE_ID_INIT( ext_job , EXT_JOB_TYPE_ID);
   ext_job->name                = util_alloc_string_copy( name );
@@ -263,7 +263,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
     hash_iter_type * iter     = hash_iter_alloc( src_job->environment );
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      char * value = hash_get( src_job->environment , key);
+      char * value = (char*)hash_get( src_job->environment , key);
       if (value)
         hash_insert_hash_owned_ref( new_job->environment , key , util_alloc_string_copy(value) , free);
       else
@@ -277,7 +277,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
     hash_iter_type * iter     = hash_iter_alloc( src_job->exec_env );
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      char * value = hash_get( src_job->exec_env , key);
+      char * value = (char*)hash_get( src_job->exec_env , key);
       if (value)
         hash_insert_hash_owned_ref( new_job->exec_env , key , util_alloc_string_copy(value) , free);
       else
@@ -293,7 +293,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
     hash_iter_type * iter     = hash_iter_alloc( src_job->default_mapping );
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      char * value = hash_get( src_job->default_mapping , key);
+      char * value = (char*)hash_get( src_job->default_mapping , key);
       hash_insert_hash_owned_ref( new_job->default_mapping , key , util_alloc_string_copy(value) , free);
       key = hash_iter_get_next_key(iter);
     }
@@ -416,7 +416,7 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable_abs,
        to update the mode of the full_path executable to make sure it
        is executable.
     */
-    char * full_path = util_alloc_realpath( executable_abs );
+    char * full_path = (char*)util_alloc_realpath( executable_abs );
     __update_mode( full_path , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH);  /* u:rwx  g:rwx  o:rx */
     ext_job->executable = util_realloc_string_copy(ext_job->executable , full_path);
     free( full_path );
@@ -426,11 +426,11 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable_abs,
        to the current working directory. This is deprecated behaviour,
        support will be removed
     */
-    char * full_path                  = util_alloc_abs_path(executable_input);
+    char * full_path                  = (char*)util_alloc_abs_path(executable_input);
     const char * job_description_file = ext_job_get_config_file(ext_job);
     char * path_to_job_descr_file     = util_split_alloc_dirname(job_description_file);
-    char * new_relative_path_to_exe   = util_alloc_rel_path(path_to_job_descr_file, full_path);
-    char * relative_config_file       = util_alloc_rel_path(NULL , ext_job->config_file);
+    char * new_relative_path_to_exe   = (char*)util_alloc_rel_path(path_to_job_descr_file, full_path);
+    char * relative_config_file       = (char*)util_alloc_rel_path(NULL , ext_job->config_file);
 
     fprintf(stderr,"/----------------------------------------------------------------\n");
     fprintf(stderr,"|                        ** WARNING **                            \n");
@@ -719,7 +719,7 @@ static void __fprintf_python_hash(FILE * stream,
     hash_iter_type * iter = hash_iter_alloc(hash);
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      const char * value = hash_get(hash , key);
+      const char * value = (const char*)hash_get(hash , key);
 
       fprintf(stream,"\"%s\" : " , key);
       if (value)
@@ -777,7 +777,7 @@ static void __fprintf_python_argList(FILE * stream,
       const char * src_string = stringlist_iget( argv , index );
       char * filtered_string = __alloc_filtered_string(src_string , ext_job->private_args , global_args );
       if (hash_has_key( ext_job->default_mapping , filtered_string ))
-        filtered_string = util_realloc_string_copy( filtered_string , hash_get( ext_job->default_mapping , filtered_string ));
+        filtered_string = (char *)util_realloc_string_copy( filtered_string , (const char *)hash_get( ext_job->default_mapping , filtered_string ));
 
       fprintf(stream , "\"%s\"" , filtered_string );
       if (index < (stringlist_get_size( argv) - 1))
@@ -806,7 +806,7 @@ static void __fprintf_python_arg_types(FILE * stream,
   fprintf(stream, "\"%s\" : [", key);
   for (int i = 0; i < ext_job->max_arg; i++) {
 
-    char * arg_type = NULL;
+    const char * arg_type = NULL;
     int type = int_vector_safe_iget(ext_job->arg_types, i);
     switch(type) {
     case CONFIG_INT:          arg_type = JOB_INT_TYPE; break;
@@ -941,7 +941,7 @@ void ext_job_fprintf_config(const ext_job_type * ext_job , const char * fmt , FI
 }
 
 config_item_types ext_job_iget_argtype( const ext_job_type * ext_job, int index) {
-  return int_vector_safe_iget( ext_job->arg_types , index );
+  return (config_item_types)int_vector_safe_iget( ext_job->arg_types , index );
 }
 
 
@@ -981,7 +981,8 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , MAX_ARG_KEY           , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
       item = config_add_schema_item(config , ARG_TYPE_KEY          , false ); config_schema_item_set_argc_minmax( item , 2 , 2 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
 
-      config_schema_item_set_indexed_selection_set( item , 1 , 6 , (const char *[6]) {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE, JOB_RUNTIME_FILE_TYPE, JOB_RUNTIME_INT_TYPE});
+      const char * var_types[6] = {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE, JOB_RUNTIME_FILE_TYPE, JOB_RUNTIME_INT_TYPE};
+      config_schema_item_set_indexed_selection_set( item , 1 , 6 , var_types);
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
     {

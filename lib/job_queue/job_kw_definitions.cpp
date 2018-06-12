@@ -1,10 +1,10 @@
 #include <stdio.h>
 
-#include <ert/config/config_parser.h>
-#include <ert/config/config_content.h>
-#include <ert/config/config_error.h>
+#include <ert/config/config_parser.hpp>
+#include <ert/config/config_content.hpp>
+#include <ert/config/config_error.hpp>
 
-#include <ert/job_queue/job_kw_definitions.h>
+#include <ert/job_queue/job_kw_definitions.hpp>
 
 
 config_item_types job_kw_get_type(const char * arg_type) {

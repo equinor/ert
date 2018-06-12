@@ -19,10 +19,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/job_queue/torque_driver.h>
+#include <ert/job_queue/torque_driver.hpp>
 
 
 #define TORQUE_DRIVER_TYPE_ID 34873653
@@ -58,7 +58,7 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(torque_driver, TORQUE_DRIVER_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION(torque_job, TORQUE_JOB_TYPE_ID)
 
 void * torque_driver_alloc() {
-  torque_driver_type * torque_driver = util_malloc(sizeof * torque_driver);
+  torque_driver_type * torque_driver = (torque_driver_type*)util_malloc(sizeof * torque_driver);
   UTIL_TYPE_ID_INIT(torque_driver, TORQUE_DRIVER_TYPE_ID);
 
   torque_driver->queue_name = NULL;
@@ -162,7 +162,8 @@ static bool torque_driver_set_num_cpus_per_node(torque_driver_type * driver, con
   }
 }
 
-bool torque_driver_set_option(void * __driver, const char * option_key, const void * value) {
+bool torque_driver_set_option(void * __driver, const char * option_key, const void * value_) {
+  const char * value = (const char*)value_;
   torque_driver_type * driver = torque_driver_safe_cast(__driver);
   bool option_set = true;
   {
@@ -236,7 +237,7 @@ void torque_driver_init_option_list(stringlist_type * option_list) {
 
 torque_job_type * torque_job_alloc() {
   torque_job_type * job;
-  job = util_malloc(sizeof * job);
+  job = (torque_job_type*)util_malloc(sizeof * job);
   job->torque_jobnr_char = NULL;
   job->torque_jobnr = 0;
   UTIL_TYPE_ID_INIT(job, TORQUE_JOB_TYPE_ID);
@@ -361,9 +362,9 @@ static int torque_driver_submit_shell_job(torque_driver_type * driver,
   usleep( driver->submit_sleep );
   {
     int job_id;
-    char * tmp_std_file = util_alloc_tmp_file("/tmp", "enkf-submit-std", true);
-    char * tmp_err_file = util_alloc_tmp_file("/tmp", "enkf-submit-err", true);
-    char * script_filename = util_alloc_filename(run_path, "qsub_script", "sh");
+    char * tmp_std_file = (char*)util_alloc_tmp_file("/tmp", "enkf-submit-std", true);
+    char * tmp_err_file = (char*)util_alloc_tmp_file("/tmp", "enkf-submit-err", true);
+    char * script_filename = (char*)util_alloc_filename(run_path, "qsub_script", "sh");
 
     torque_debug(driver, "Setting up submit stdout target '%s' for '%s'", tmp_std_file, script_filename);
     torque_debug(driver, "Setting up submit stderr target '%s' for '%s'", tmp_err_file, script_filename);
@@ -458,11 +459,11 @@ void * torque_driver_submit_job(void * __driver,
 */
 
 static job_status_type torque_driver_get_qstat_status(torque_driver_type * driver, const char * jobnr_char) {
-  char * tmp_file = util_alloc_tmp_file("/tmp", "enkf-qstat", true);
+  char * tmp_file = (char*)util_alloc_tmp_file("/tmp", "enkf-qstat", true);
   job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
   {
-    const char ** argv = util_calloc(1, sizeof * argv);
+    const char ** argv = (const char**)util_calloc(1, sizeof * argv);
     argv[0] = jobnr_char;
 
     util_spawn_blocking(driver->qstat_cmd, 1, (const char **) argv, tmp_file, NULL);
@@ -481,7 +482,7 @@ static job_status_type torque_driver_get_qstat_status(torque_driver_type * drive
 }
 
 job_status_type torque_driver_parse_status(const char * qstat_file, const char * jobnr_char) {
-  int status = JOB_QUEUE_STATUS_FAILURE;
+  job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
   if (util_file_exists(qstat_file)) {
     char * line = NULL;

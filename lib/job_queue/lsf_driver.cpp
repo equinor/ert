@@ -23,20 +23,20 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
-#include <ert/util/stringlist.h>
-#include <ert/res_util/log.h>
-#include <ert/res_util/res_log.h>
-#include <ert/res_util/res_env.h>
+#include <ert/util/util.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/res_util/log.hpp>
+#include <ert/res_util/res_log.hpp>
+#include <ert/res_util/res_env.hpp>
 
-#include <ert/job_queue/queue_driver.h>
-#include <ert/job_queue/lsf_driver.h>
-#include <ert/job_queue/lsf_job_stat.h>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/lsf_driver.hpp>
+#include <ert/job_queue/lsf_job_stat.hpp>
 
 
 #ifdef HAVE_LSF_LIBRARY
-#include <ert/job_queue/lsb.h>
+#include <ert/job_queue/lsb.hpp>
 #endif
 
 
@@ -179,7 +179,7 @@ static UTIL_SAFE_CAST_FUNCTION( lsf_job , LSF_JOB_TYPE_ID)
 
 static lsf_job_type * lsf_job_alloc( const char * job_name ) {
   lsf_job_type * job;
-  job                = util_malloc(sizeof * job);
+  job                = (lsf_job_type *)util_malloc(sizeof * job);
   job->num_exec_host = 0;
   job->exec_host     = NULL;
 
@@ -271,12 +271,12 @@ char* lsf_job_write_bjobs_to_file(const char * bjobs_cmd, lsf_driver_type * driv
 
   const char * noheader = "-noheader";
   const char * fields = "EXEC_HOST";
-  char * cmd = util_alloc_sprintf("%s %s -o '%s' %d", bjobs_cmd, noheader, fields, jobid);
+  char * cmd = (char*)util_alloc_sprintf("%s %s -o '%s' %d", bjobs_cmd, noheader, fields, jobid);
 
-  char * tmp_file = util_alloc_tmp_file("/tmp", "ert_job_exec_host", true);
+  char * tmp_file = (char*)util_alloc_tmp_file("/tmp", "ert_job_exec_host", true);
 
   if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-    char ** argv = util_calloc(2, sizeof *argv);
+    char ** argv = (char**)util_calloc(2, sizeof *argv);
     argv[0] = driver->remote_lsf_server;
     argv[1] = cmd;
     util_spawn_blocking(driver->rsh_cmd, 2, (const char **) argv, tmp_file, NULL);
@@ -362,8 +362,8 @@ char* alloc_composed_resource_request(const lsf_driver_type * driver,
     // and (after) "... bla[..] bla[..]". (we replaced one ']' with ' ')
     // Then we make final string:  before + &&excludes] + after
     int before_size = endpos - resreq;
-    char * before = util_alloc_substring_copy(resreq, 0, before_size);
-    char * after = util_alloc_string_copy(&resreq[before_size]);
+    char * before = (char*)util_alloc_substring_copy(resreq, 0, before_size);
+    char * after = (char*)util_alloc_string_copy(&resreq[before_size]);
 
     req = util_alloc_sprintf("%s && %s]%s", before, excludes_string, after);
   }
@@ -391,7 +391,7 @@ static char * alloc_quoted_resource_string(const lsf_driver_type * driver) {
     stringlist_type * select_list = stringlist_alloc_new();
     if (stringlist_get_size(driver->exclude_hosts) > 0) {
       for (int i = 0; i < stringlist_get_size(driver->exclude_hosts); i++) {
-        char * exclude_host = util_alloc_sprintf("hname!='%s'",
+        char * exclude_host = (char*)util_alloc_sprintf("hname!='%s'",
                                                  stringlist_iget(driver->exclude_hosts, i));
         stringlist_append_owned_ref(select_list, exclude_host);
       }
@@ -429,7 +429,7 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
                                        const char ** job_argv) {
 
   stringlist_type * argv  = stringlist_alloc_new();
-  char *  num_cpu_string  = util_alloc_sprintf("%d" , num_cpu);
+  char *  num_cpu_string  = (char*)util_alloc_sprintf("%d" , num_cpu);
 
   char * quoted_resource_request = alloc_quoted_resource_string(driver);
 
@@ -547,13 +547,13 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
                                        int           job_argc,
                                        const char ** job_argv) {
   int job_id;
-  char * tmp_file = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
+  char * tmp_file = (char*)util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
 
   {
     stringlist_type * remote_argv = lsf_driver_alloc_cmd( driver , lsf_stdout , job_name , submit_cmd , num_cpu , job_argc , job_argv);
 
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-      char ** argv = util_calloc( 2 , sizeof * argv );
+      char ** argv = (char**)util_calloc( 2 , sizeof * argv );
       argv[0] = driver->remote_lsf_server;
       argv[1] = stringlist_alloc_joined_string( remote_argv , " ");
 
@@ -600,17 +600,17 @@ static int lsf_driver_get_status__(lsf_driver_type * driver , const char * statu
 
 
 static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
-  char * tmp_file   = util_alloc_tmp_file("/tmp" , "enkf-bjobs" , true);
+  char * tmp_file   = (char*)util_alloc_tmp_file("/tmp" , "enkf-bjobs" , true);
 
   if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-    char ** argv = util_calloc( 2 , sizeof * argv);
+    char ** argv = (char**)util_calloc( 2 , sizeof * argv);
     argv[0] = driver->remote_lsf_server;
     argv[1] = util_alloc_sprintf("%s -a" , driver->bjobs_cmd);
     util_spawn_blocking(driver->rsh_cmd, 2, (const char **) argv, tmp_file, NULL);
     free( argv[1] );
     free( argv );
   } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-    char ** argv = util_calloc( 1 , sizeof * argv);
+    const char ** argv = (const char**)util_calloc( 1 , sizeof * argv);
     argv[0] = "-a";
     util_spawn_blocking(driver->bjobs_cmd, 1, (const char **) argv, tmp_file, NULL);
     free( argv );
@@ -629,7 +629,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
         int  job_id_int;
 
         if (sscanf(line , "%d %s %s", &job_id_int , user , status) == 3) {
-          char * job_id = util_alloc_sprintf("%d" , job_id_int);
+          char * job_id = (char*)util_alloc_sprintf("%d" , job_id_int);
 
           if (hash_has_key( driver->my_jobs , job_id ))   /* Consider only jobs submitted by this ERT instance - not old jobs lying around from the same user. */
             hash_insert_int(driver->bjobs_cache , job_id , lsf_driver_get_status__( driver , status , job_id));
@@ -691,17 +691,17 @@ static int lsf_driver_get_job_status_libary(void * __driver , void * __job) {
 
 static bool lsf_driver_run_bhist(lsf_driver_type * driver , lsf_job_type * job , int * pend_time , int * run_time) {
   bool bhist_ok = true;
-  char * output_file   = util_alloc_tmp_file("/tmp" , "bhist" , true);
+  char * output_file   = (char*)util_alloc_tmp_file("/tmp" , "bhist" , true);
 
   if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-    char ** argv = util_calloc( 2 , sizeof * argv);
+    char ** argv = (char**)util_calloc( 2 , sizeof * argv);
     argv[0] = driver->remote_lsf_server;
     argv[1] = util_alloc_sprintf("%s %s" , driver->bhist_cmd , job->lsf_jobnr_char);
     util_spawn_blocking(driver->rsh_cmd, 2, (const char **) argv, output_file, NULL);
     free( argv[1] );
     free( argv );
   } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
-    char ** argv = util_calloc( 1 , sizeof * argv);
+    char ** argv = (char**)util_calloc( 1 , sizeof * argv);
     argv[0] = job->lsf_jobnr_char;
     util_spawn_blocking(driver->bjobs_cmd, 2, (const char **) argv, output_file, NULL);
     free( argv );
@@ -947,7 +947,7 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
 #endif
     } else {
       if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
-        char ** argv = util_calloc( 2, sizeof * argv );
+        char ** argv = (char**)util_calloc( 2, sizeof * argv );
         argv[0] = driver->remote_lsf_server;
         argv[1] = util_alloc_sprintf("%s %s" , driver->bkill_cmd , job->lsf_jobnr_char);
 
@@ -980,7 +980,7 @@ void * lsf_driver_submit_job(void * __driver ,
     usleep( driver->submit_sleep );
 
     {
-      char * lsf_stdout                    = util_alloc_filename(run_path , job_name , "LSF-stdout");
+      char * lsf_stdout                    = (char*)util_alloc_filename(run_path , job_name , "LSF-stdout");
       lsf_submit_method_enum submit_method = driver->submit_method;
       pthread_mutex_lock( &driver->submit_lock );
 
@@ -1119,7 +1119,7 @@ static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char 
     driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , remote_server );
     res_env_unsetenv( "BSUB_QUIET" );
     {
-      char * tmp_server = util_alloc_strupr_copy( remote_server );
+      char * tmp_server = (char*)util_alloc_strupr_copy( remote_server );
 
       if (strcmp(tmp_server , LOCAL_LSF_SERVER) == 0)
         driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
@@ -1182,7 +1182,8 @@ void lsf_driver_set_bjobs_refresh_interval_option( lsf_driver_type * driver , co
    LSF_RESOURCE
 */
 
-bool lsf_driver_set_option( void * __driver , const char * option_key , const void * value) {
+bool lsf_driver_set_option( void * __driver , const char * option_key , const void * value_) {
+  const char * value = (const char *) value_;
   lsf_driver_type * driver  = lsf_driver_safe_cast( __driver );
   bool has_option = true;
   {
@@ -1247,7 +1248,7 @@ const void * lsf_driver_get_option( const void * __driver , const char * option_
       return driver->project_code;
     else if (strcmp( LSF_BJOBS_TIMEOUT , option_key ) == 0) {
       /* This will leak. */
-      char * timeout_string = util_alloc_sprintf( "%d"  , driver->bjobs_refresh_interval );
+      char * timeout_string = (char*)util_alloc_sprintf( "%d"  , driver->bjobs_refresh_interval );
       return timeout_string;
     } else {
       util_abort("%s: option_id:%s not recognized for LSF driver \n",__func__ , option_key);
@@ -1369,7 +1370,7 @@ bool lsf_driver_has_project_code( const lsf_driver_type * driver ) {
 
 
 void * lsf_driver_alloc( ) {
-  lsf_driver_type * lsf_driver     = util_malloc(sizeof * lsf_driver );
+  lsf_driver_type * lsf_driver     = (lsf_driver_type*)util_malloc(sizeof * lsf_driver );
   UTIL_TYPE_ID_INIT( lsf_driver , LSF_DRIVER_TYPE_ID);
   lsf_driver->submit_method        = LSF_SUBMIT_INVALID;
   lsf_driver->login_shell          = NULL;

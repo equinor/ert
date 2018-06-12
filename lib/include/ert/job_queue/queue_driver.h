@@ -77,6 +77,9 @@ extern "C" {
   void queue_driver_free(queue_driver_type * driver);
   void queue_driver_free__(void * driver);
 
+  void queue_driver_set_max_running(queue_driver_type * driver, int max_running);
+  int  queue_driver_get_max_running(const queue_driver_type * driver);
+
   typedef enum {SUBMIT_OK           = 0 ,
                 SUBMIT_JOB_FAIL     = 1 , /* Typically no more attempts. */
                 SUBMIT_DRIVER_FAIL  = 2 , /* The driver would not take the job - for whatever reason?? */

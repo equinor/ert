@@ -23,14 +23,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <ert/util/int_vector.h>
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
+#include <ert/util/int_vector.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/type_macros.hpp>
 
-#include <ert/config/config_parser.h>
+#include <ert/config/config_parser.hpp>
 
-#include <ert/job_queue/job_kw_definitions.h>
-#include <ert/job_queue/workflow_job.h>
+#include <ert/job_queue/job_kw_definitions.hpp>
+#include <ert/job_queue/workflow_job.hpp>
 
 
 /* The default values are interepreted as no limit. */
@@ -88,7 +88,8 @@ config_parser_type * workflow_job_alloc_config() {
     item = config_add_schema_item( config , ARG_TYPE_KEY , false );
     config_schema_item_set_argc_minmax( item , 2 , 2 );
     config_schema_item_iset_type( item , 0 , CONFIG_INT );
-    config_schema_item_set_indexed_selection_set( item , 1 , 4 , (const char *[4]) {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE});
+    const char * stringlist[4] = {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE};
+    config_schema_item_set_indexed_selection_set( item , 1 , 4 , stringlist);
 
     /*****************************************************************/
     item = config_add_schema_item( config , EXECUTABLE_KEY , false );
@@ -131,13 +132,13 @@ void workflow_job_update_config_compiler( const workflow_job_type * workflow_job
     int iarg;
     config_schema_item_set_argc_minmax( item , workflow_job->min_arg , workflow_job->max_arg );
     for (iarg = 0; iarg < int_vector_size( workflow_job->arg_types ); iarg++)
-      config_schema_item_iset_type( item , iarg , int_vector_iget( workflow_job->arg_types , iarg ));
+      config_schema_item_iset_type( item , iarg , (config_item_types)int_vector_iget( workflow_job->arg_types , iarg ));
   }
 }
 
 
 workflow_job_type * workflow_job_alloc( const char * name , bool internal ) {
-  workflow_job_type * workflow_job = util_malloc( sizeof * workflow_job );
+  workflow_job_type * workflow_job = (workflow_job_type*)util_malloc( sizeof * workflow_job );
   UTIL_TYPE_ID_INIT( workflow_job , WORKFLOW_JOB_TYPE_ID );
   workflow_job->internal   = internal;      // this can not be changed run-time.
   workflow_job->min_arg    = CONFIG_DEFAULT_ARG_MIN;
@@ -221,7 +222,7 @@ int workflow_job_get_max_arg( const workflow_job_type * workflow_job ) {
 }
 
 config_item_types workflow_job_iget_argtype( const workflow_job_type * workflow_job, int index) {
-  return int_vector_safe_iget( workflow_job->arg_types , index );
+  return (config_item_types)int_vector_safe_iget( workflow_job->arg_types , index );
 }
 
 

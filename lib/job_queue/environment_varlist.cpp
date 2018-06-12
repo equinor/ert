@@ -16,11 +16,11 @@
    for more details.
 */
 
-#include <ert/job_queue/environment_varlist.h>
+#include <ert/job_queue/environment_varlist.hpp>
 
-#include <ert/res_util/res_env.h>
+#include <ert/res_util/res_env.hpp>
 
-#include <ert/util/hash.h>
+#include <ert/util/hash.hpp>
 
 #define ENV_VAR_KEY_STRING     "global_environment"
 #define UPDATE_PATH_KEY_STRING "global_update_path"
@@ -31,7 +31,7 @@ struct env_varlist_struct {
 };
 
 env_varlist_type * env_varlist_alloc() {
-  env_varlist_type * list = util_malloc( sizeof * list );
+  env_varlist_type * list = (env_varlist_type*)util_malloc( sizeof * list );
   list->varlist = hash_alloc();
   list->updatelist = hash_alloc();
   return list;
@@ -47,7 +47,7 @@ void env_varlist_setenv(env_varlist_type * list, const char * key, const char * 
 }
 
 
-static void env_varlist_fprintf_hash(const hash_type * list, char * keystring, FILE * stream) {
+static void env_varlist_fprintf_hash(const hash_type * list, const char * keystring, FILE * stream) {
   int size = hash_get_size(list);
   fprintf(stream, "\"%s\" : {", keystring);
   stringlist_type * stringlist = hash_alloc_stringlist(list);

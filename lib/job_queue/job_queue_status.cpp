@@ -17,11 +17,11 @@
 */
 #include <pthread.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/util.h>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/job_queue/queue_driver.h>
-#include <ert/job_queue/job_queue_status.h>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/job_queue_status.hpp>
 
 #define JOB_QUEUE_STATUS_TYPE_ID 777620306
 
@@ -55,7 +55,7 @@ UTIL_SAFE_CAST_FUNCTION( job_queue_status , JOB_QUEUE_STATUS_TYPE_ID )
 
 
 job_queue_status_type * job_queue_status_alloc() {
-  job_queue_status_type * status = util_malloc( sizeof * status );
+  job_queue_status_type * status = (job_queue_status_type*)util_malloc( sizeof * status );
   UTIL_TYPE_ID_INIT( status ,   JOB_QUEUE_STATUS_TYPE_ID );
   pthread_rwlock_init( &status->rw_lock , NULL);
   job_queue_status_clear( status );

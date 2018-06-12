@@ -15,8 +15,10 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-
+#ifndef _GNU_SOURCE
 #define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
+#endif
+
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,11 +26,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
+#include <ert/util/util.hpp>
+#include <ert/util/arg_pack.hpp>
 
-#include <ert/job_queue/job_node.h>
-#include <ert/job_queue/job_list.h>
+#include <ert/job_queue/job_node.hpp>
+#include <ert/job_queue/job_list.hpp>
 
 
 #define JOB_LIST_TYPE_ID 8154222
@@ -46,7 +48,7 @@ UTIL_IS_INSTANCE_FUNCTION( job_list , JOB_LIST_TYPE_ID )
 UTIL_SAFE_CAST_FUNCTION( job_list , JOB_LIST_TYPE_ID )
 
 job_list_type * job_list_alloc() {
-  job_list_type * job_list = util_malloc( sizeof * job_list );
+  job_list_type * job_list = (job_list_type*)util_malloc( sizeof * job_list );
   UTIL_TYPE_ID_INIT( job_list , JOB_LIST_TYPE_ID );
   job_list->active_size = 0;
   job_list->alloc_size = 0;
@@ -80,13 +82,13 @@ void job_list_add_job( job_list_type * job_list , job_queue_node_type * job_node
 
 #ifdef QUEUE_DEBUG
     int new_alloc_size = job_list->alloc_size + 1;
-    job_queue_node_type ** new_jobs = util_malloc( sizeof * new_jobs * new_alloc_size );
+    job_queue_node_type ** new_jobs = (job_queue_node_type**)util_malloc( sizeof * new_jobs * new_alloc_size );
     memcpy( new_jobs , job_list->jobs , sizeof * new_jobs * job_list->active_size );
     free( job_list->jobs );
     job_list->jobs = new_jobs;
 #else
     int new_alloc_size = util_int_max( 16 , job_list->alloc_size * 2);
-    job_list->jobs = util_realloc( job_list->jobs , sizeof * job_list->jobs * new_alloc_size );
+    job_list->jobs = (job_queue_node_type**)util_realloc( job_list->jobs , sizeof * job_list->jobs * new_alloc_size );
 #endif
 
     job_list->alloc_size = new_alloc_size;
