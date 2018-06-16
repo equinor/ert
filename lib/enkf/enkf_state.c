@@ -120,14 +120,6 @@ struct enkf_state_struct {
 /*****************************************************************/
 
 
-static void enkf_state_internalize_eclipse_state(const ensemble_config_type * ens_config,
-						 forward_load_context_type * load_context,
-                                                 const run_arg_type * run_arg,
-                                                 int report_step,
-                                                 bool store_vectors);
-
-/*****************************************************************/
-
 static UTIL_SAFE_CAST_FUNCTION( enkf_state , ENKF_STATE_TYPE_ID )
 
 
@@ -637,8 +629,6 @@ static int enkf_state_internalize_results(ensemble_config_type * ens_config,
                                           stringlist_type * msg_list) {
 
   forward_load_context_type * load_context = enkf_state_alloc_load_context( ens_config, ecl_config, run_arg, msg_list);
-  int report_step;
-
   /*
     The timing information - i.e. mainly what is the last report step
     in these results are inferred from the loading of summary results,
@@ -658,17 +648,6 @@ static int enkf_state_internalize_results(ensemble_config_type * ens_config,
   if (last_report > 0)
     model_config_set_internalize_state( model_config , last_report);
 
-  if (forward_load_context_ecl_active( load_context )) {
-    for (report_step = run_arg_get_load_start(run_arg); report_step <= last_report; report_step++) {
-      bool store_vectors = (report_step == last_report);
-      if (model_config_internalize_state( model_config , report_step))
-        enkf_state_internalize_eclipse_state(ens_config,
-                                             load_context ,
-                                             run_arg,
-                                             report_step ,
-                                             store_vectors);
-    }
-  }
   enkf_state_internalize_GEN_DATA(ens_config , load_context , model_config , last_report);
   enkf_state_internalize_custom_kw(ens_config, load_context , model_config);
 
