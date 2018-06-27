@@ -935,7 +935,7 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const confi
       gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
       const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
       const char * ecl_file                   = hash_safe_get( options , ECL_FILE_KEY);
-      const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
+      const char * template_file              = hash_safe_get( options , TEMPLATE_KEY);
       const char * data_key                   = hash_safe_get( options , KEY_KEY);
       const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
       const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
@@ -992,8 +992,8 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_DATA_from_config( const confi
         {
           gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
 
-          if (template)
-            gen_data_config_set_template( gen_data_config , template , data_key);
+          if (template_file)
+            gen_data_config_set_template( gen_data_config , template_file , data_key);
 
           for (int i=0; i < int_vector_size( report_steps ); i++) {
             int report_step = int_vector_iget( report_steps , i );
@@ -1024,7 +1024,7 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const conf
       gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
       gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
       const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
-      const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
+      const char * template_file              = hash_safe_get( options , TEMPLATE_KEY);
       const char * data_key                   = hash_safe_get( options , KEY_KEY);
       const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
       const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
@@ -1053,8 +1053,8 @@ enkf_config_node_type * enkf_config_node_alloc_GEN_PARAM_from_config( const conf
 
         config_node = enkf_config_node_alloc_GEN_PARAM( node_key , forward_init , input_format , output_format , init_file_fmt , ecl_file);
 
-        if (template) {
-          bool template_set_ok = gen_data_config_set_template( enkf_config_node_get_ref( config_node ) , template , data_key);
+        if (template_file) {
+          bool template_set_ok = gen_data_config_set_template( enkf_config_node_get_ref( config_node ) , template_file , data_key);
           if (!template_set_ok)
             fprintf(stderr,"** Warning: the template settings were not applied correctly - ignored\n");
         }
