@@ -45,62 +45,62 @@ static void backup_if_existing(const char * filename) {
 
 
 value_export_type * value_export_alloc(const char * directory, const char * base_name) {
-  value_export_type * export = util_malloc( sizeof * export );
-  UTIL_TYPE_ID_INIT( export , VALUE_EXPORT_TYPE_ID );
-  export->directory = util_alloc_string_copy( directory );
-  export->base_name = util_alloc_string_copy( base_name );
+  value_export_type * value = util_malloc( sizeof * value );
+  UTIL_TYPE_ID_INIT( value , VALUE_EXPORT_TYPE_ID );
+  value->directory = util_alloc_string_copy( directory );
+  value->base_name = util_alloc_string_copy( base_name );
 
-  export->keys = stringlist_alloc_new( );
-  export->values = double_vector_alloc(0,0);
-  return export;
+  value->keys = stringlist_alloc_new( );
+  value->values = double_vector_alloc(0,0);
+  return value;
 }
 
 
-void value_export_free(value_export_type * export) {
-  stringlist_free( export->keys );
-  double_vector_free( export->values );
-  free( export->directory );
-  free( export->base_name );
-  free( export );
+void value_export_free(value_export_type * value) {
+  stringlist_free( value->keys );
+  double_vector_free( value->values );
+  free( value->directory );
+  free( value->base_name );
+  free( value );
 }
 
-int value_export_size( const value_export_type * export) {
-  return double_vector_size( export->values );
+int value_export_size( const value_export_type * value) {
+  return double_vector_size( value->values );
 }
 
 
-void value_export_txt__(const value_export_type * export, const char * filename) {
-  const int size = double_vector_size( export->values );
+void value_export_txt__(const value_export_type * value, const char * filename) {
+  const int size = double_vector_size( value->values );
   if (size > 0) {
     FILE * stream = util_fopen( filename , "w");
 
     for (int i=0; i < size; i++) {
-      const char * key          = stringlist_iget( export->keys, i );
-      double value              = double_vector_iget( export->values, i );
-      fprintf(stream, "%s %g\n", key, value);
+      const char * key          = stringlist_iget( value->keys, i );
+      double double_value              = double_vector_iget( value->values, i );
+      fprintf(stream, "%s %g\n", key, double_value);
     }
     fclose( stream );
   }
 }
 
-void value_export_txt(const value_export_type * export) {
-  char * filename = util_alloc_filename( export->directory , export->base_name, "txt");
+void value_export_txt(const value_export_type * value) {
+  char * filename = util_alloc_filename( value->directory , value->base_name, "txt");
   backup_if_existing(filename);
-  value_export_txt__( export, filename );
+  value_export_txt__( value, filename );
   free( filename );
 }
 
-void value_export_json(const value_export_type * export) {
-  char * filename = util_alloc_filename( export->directory , export->base_name, "json");
+void value_export_json(const value_export_type * value) {
+  char * filename = util_alloc_filename( value->directory , value->base_name, "json");
   backup_if_existing(filename);
-  const int size = double_vector_size( export->values );
+  const int size = double_vector_size( value->values );
   if (size > 0) {
     FILE * stream = util_fopen( filename , "w");
     fprintf(stream, "{\n");
     for (int i=0; i < size; i++) {
-      const char * key          = stringlist_iget( export->keys, i );
-      double value              = double_vector_iget( export->values, i );
-      fprintf(stream, "\"%s\" : %g", key, value);
+      const char * key          = stringlist_iget( value->keys, i );
+      double double_value       = double_vector_iget( value->values, i );
+      fprintf(stream, "\"%s\" : %g", key, double_value);
       if (i < (size - 1))
         fprintf(stream, ",");
       fprintf(stream,"\n");
@@ -111,14 +111,14 @@ void value_export_json(const value_export_type * export) {
   free( filename );
 }
 
-void value_export(const value_export_type * export) {
-  value_export_txt( export );
-  value_export_json( export );
+void value_export(const value_export_type * value) {
+  value_export_txt( value );
+  value_export_json( value );
 }
 
-void value_export_append( value_export_type * export, const char * key , double value) {
-  stringlist_append_copy( export->keys, key );
-  double_vector_append( export->values, value );
+void value_export_append( value_export_type * value, const char * key , double double_value) {
+  stringlist_append_copy( value->keys, key );
+  double_vector_append( value->values, double_value );
 }
 
 

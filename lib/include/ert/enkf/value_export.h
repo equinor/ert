@@ -26,14 +26,14 @@ extern "C" {
 
   typedef struct value_export_struct value_export_type;
 
-  void                 value_export_free(value_export_type * export);
+  void                 value_export_free(value_export_type * value);
   value_export_type * value_export_alloc(const char * directory, const char * base_name);
-  int                  value_export_size(const value_export_type * export);
-  void                 value_export_json(const value_export_type * export);
-  void                 value_export_txt(const value_export_type * export);
-  void                 value_export_txt__(const value_export_type * export, const char * filename);
-  void                 value_export(const value_export_type * export);
-  void                 value_export_append( value_export_type * export, const char * key , double value);
+  int                  value_export_size(const value_export_type * value);
+  void                 value_export_json(const value_export_type * value);
+  void                 value_export_txt(const value_export_type * value);
+  void                 value_export_txt__(const value_export_type * value, const char * filename);
+  void                 value_export(const value_export_type * value);
+  void                 value_export_append( value_export_type * value, const char * key , double double_value);
 
 UTIL_IS_INSTANCE_HEADER(value_export);
 
