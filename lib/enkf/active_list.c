@@ -90,11 +90,11 @@ active_list_type * active_list_alloc( ) {
 
 
 active_list_type * active_list_alloc_copy( const active_list_type * src) {
-  active_list_type * new = active_list_alloc(  );
-  new->mode  = src->mode;
-  int_vector_free( new->index_list ) ;
-  new->index_list = int_vector_alloc_copy( src->index_list );
-  return new;
+  active_list_type * new_list = active_list_alloc(  );
+  new_list->mode  = src->mode;
+  int_vector_free( new_list->index_list ) ;
+  new_list->index_list = int_vector_alloc_copy( src->index_list );
+  return new_list;
 }
 
 
