@@ -104,13 +104,13 @@ struct site_config_struct {
   hash_type * path_variables_site; /* We store this so we can roll back when all user settings are cleared. */
   stringlist_type * path_variables_user; /* We can update the same path variable several times - i.e. it can not be a hash table. */
   stringlist_type * path_values_user;
-   
-  queue_config_type * queue_config;    
+
+  queue_config_type * queue_config;
 
 
   char * manual_url;    //not this one
   char * default_browser;   //not this one
-  
+
   bool user_mode;
   bool search_path;
 };
@@ -154,18 +154,18 @@ static void site_config_set_config_file(site_config_type * site_config, const ch
  */
 static site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc(sizeof * site_config);
-   
+
   site_config->queue_config = NULL;
 
   site_config->joblist = ext_joblist_alloc();
- 
+
   site_config->config_file = NULL;
   site_config->license_root_path = NULL;
   site_config->license_root_path_site = NULL;
   site_config->__license_root_path = NULL;
   site_config->manual_url = NULL;
   site_config->default_browser = NULL;
-  site_config->user_mode = false;  
+  site_config->user_mode = false;
 
   site_config->env_varlist = env_varlist_alloc();
 
@@ -178,7 +178,7 @@ static site_config_type * site_config_alloc_empty() {
   site_config_set_umask(site_config, site_config->umask);
   site_config_set_manual_url(site_config, DEFAULT_MANUAL_URL);
   site_config_set_default_browser(site_config, DEFAULT_BROWSER);
-  
+
   site_config->search_path = false;
   return site_config;
 }
@@ -395,7 +395,7 @@ int site_config_get_max_running_lsf(const site_config_type * site_config) {
 }
 
 void site_config_set_max_running_rsh(site_config_type * site_config, int max_running_rsh) {
-  site_config_set_queue_max_running_option(site_config, RSH_DRIVER_NAME, max_running_rsh);  
+  site_config_set_queue_max_running_option(site_config, RSH_DRIVER_NAME, max_running_rsh);
 }
 
 int site_config_get_max_running_rsh(const site_config_type * site_config) {
@@ -563,7 +563,7 @@ static void site_config_init_env(site_config_type * site_config, const config_co
 
 
 static bool site_config_init(site_config_type * site_config, const config_content_type * config) {
-  
+
   site_config_add_jobs(site_config, config);
   site_config_init_env(site_config, config);
 
@@ -586,10 +586,10 @@ static bool site_config_init(site_config_type * site_config, const config_conten
     else
       util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n", __func__, string_mask);
   }
-  
+
   if (config_content_has_item(config, LICENSE_PATH_KEY))
     site_config_set_license_root_path(site_config, config_content_get_value_as_abspath(config, LICENSE_PATH_KEY));
-  
+
   if (config_content_has_item(config, EXT_JOB_SEARCH_PATH_KEY))
       site_config_set_ext_job_search_path(site_config, config_content_get_value_as_bool(config, EXT_JOB_SEARCH_PATH_KEY));
 
