@@ -16,7 +16,6 @@
 */
 
 
-#define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -552,13 +551,13 @@ void time_map_summary_upgrade107( time_map_type * map , const ecl_sum_type * ecl
 static void time_map_update_abort( time_map_type * map , int step , time_t time) {
   time_t current_time = time_map_iget__( map , step );
   int current[3];
-  int new[3];
+  int new_time[3];
 
-  util_set_date_values_utc( current_time , &current[0] , &current[1] , &current[2]);
-  util_set_date_values_utc( time , &new[0] , &new[1] , &new[2]);
+  util_set_date_values_utc( current_time , &current[0]  , &current[1]  , &current[2]);
+  util_set_date_values_utc( time         , &new_time[0] , &new_time[1] , &new_time[2]);
 
-  util_abort("%s: time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",__func__ , step ,
-             new[0]     , new[1]     , new[2] ,
+  util_abort("%s: time mismatch for step:%d   New_Time: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",__func__ , step ,
+             new_time[0], new_time[1], new_time[2] ,
              current[0] , current[1] , current[2]);
 }
 
@@ -582,13 +581,13 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
           time_t ref_time = ecl_sum_get_report_time( map->refcase , step );
           if (ref_time != time) {
             int ref[3];
-            int new[3];
+            int new_time[3];
 
-            util_set_date_values_utc( time , &new[0] , &new[1] , &new[2]);
+            util_set_date_values_utc( time , &new_time[0] , &new_time[1] , &new_time[2]);
             util_set_date_values_utc( ref_time , &ref[0] , &ref[1] , &ref[2]);
 
-            fprintf(stderr," Time mismatch for step:%d  New: %02d/%02d/%04d   refcase: %02d/%02d/%04d \n", step ,
-                    new[0] , new[1] , new[2] ,
+            fprintf(stderr," Time mismatch for step:%d  New_Time: %02d/%02d/%04d   refcase: %02d/%02d/%04d \n", step ,
+                    new_time[0] , new_time[1] , new_time[2] ,
                     ref[0] , ref[1] , ref[2]);
           }
         }
@@ -598,13 +597,13 @@ static void time_map_summary_update_abort( time_map_type * map , const ecl_sum_t
         time_t current_time = time_map_iget__( map , step );
         if (current_time != time) {
           int current[3];
-          int new[3];
+          int new_time[3];
 
           util_set_date_values_utc( current_time , &current[0] , &current[1] , &current[2]);
-          util_set_date_values_utc( time , &new[0] , &new[1] , &new[2]);
+          util_set_date_values_utc( time , &new_time[0] , &new_time[1] , &new_time[2]);
 
-          fprintf(stderr,"Time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",step ,
-                  new[0] , new[1] , new[2] ,
+          fprintf(stderr,"Time mismatch for step:%d   New_Time: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",step ,
+                  new_time[0] , new_time[1] , new_time[2] ,
                   current[0] , current[1] , current[2]);
         }
       }

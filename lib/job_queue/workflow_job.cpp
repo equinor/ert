@@ -88,8 +88,13 @@ config_parser_type * workflow_job_alloc_config() {
     item = config_add_schema_item( config , ARG_TYPE_KEY , false );
     config_schema_item_set_argc_minmax( item , 2 , 2 );
     config_schema_item_iset_type( item , 0 , CONFIG_INT );
-    const char * stringlist[4] = {JOB_STRING_TYPE , JOB_INT_TYPE , JOB_FLOAT_TYPE, JOB_BOOL_TYPE};
-    config_schema_item_set_indexed_selection_set( item , 1 , 4 , stringlist);
+
+    stringlist_type * var_types = stringlist_alloc_new();
+    stringlist_append_ref(var_types, JOB_STRING_TYPE);
+    stringlist_append_ref(var_types, JOB_INT_TYPE);
+    stringlist_append_ref(var_types, JOB_FLOAT_TYPE);
+    stringlist_append_ref(var_types, JOB_BOOL_TYPE);
+    config_schema_item_set_indexed_selection_set( item , 1 , var_types);
 
     /*****************************************************************/
     item = config_add_schema_item( config , EXECUTABLE_KEY , false );

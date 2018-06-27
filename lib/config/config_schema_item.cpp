@@ -160,10 +160,13 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
 
 
 
-static void validate_set_common_selection_set(validate_type * validate , int argc , const char ** argv) {
+static void validate_set_common_selection_set(validate_type * validate , const stringlist_type * argv) {
   if (validate->common_selection_set != NULL)
     set_free(validate->common_selection_set);
-  validate->common_selection_set = set_alloc( argc , argv );
+
+  validate->common_selection_set = set_alloc_empty();
+  for (int i=0; i < stringlist_get_size(argv); i++)
+    set_add_key(validate->common_selection_set, stringlist_iget(argv, i));
 }
 
 
@@ -184,7 +187,7 @@ static void validate_add_indexed_alternative(validate_type * validate , int inde
 
 
 
-static void validate_set_indexed_selection_set(validate_type * validate , int index , int argc , const char ** argv) {
+static void validate_set_indexed_selection_set(validate_type * validate , int index , const stringlist_type * argv) {
 
   if (validate->indexed_selection_set == NULL)
     util_abort("%s: must call xxx_set_argc_minmax() first - aborting \n",__func__);
@@ -192,7 +195,11 @@ static void validate_set_indexed_selection_set(validate_type * validate , int in
   if (index >= validate->argc_min)
     util_abort("%s: When not not setting argc_max selection set can only be applied to indices up to argc_min\n",__func__);
 
-  vector_safe_iset_owned_ref( validate->indexed_selection_set , index , set_alloc(argc,argv) , set_free__ );
+  set_type * set = set_alloc_empty();
+  for (int i=0; i < stringlist_get_size(argv); i++)
+    set_add_key(set, stringlist_iget(argv, i));
+
+  vector_safe_iset_owned_ref( validate->indexed_selection_set , index , set , set_free__ );
 }
 
 
@@ -504,12 +511,12 @@ void config_schema_item_set_envvar_expansion( config_schema_item_type * item , b
 
 
 
-void config_schema_item_set_common_selection_set(config_schema_item_type * item , int argc , const char ** argv) {
-  validate_set_common_selection_set(item->validate , argc , argv);
+void config_schema_item_set_common_selection_set(config_schema_item_type * item , const stringlist_type * argv) {
+  validate_set_common_selection_set(item->validate , argv);
 }
 
-void config_schema_item_set_indexed_selection_set(config_schema_item_type * item , int index , int argc , const char ** argv) {
-  validate_set_indexed_selection_set(item->validate , index , argc , argv);
+void config_schema_item_set_indexed_selection_set(config_schema_item_type * item , int index , const stringlist_type * argv) {
+  validate_set_indexed_selection_set(item->validate , index , argv);
 }
 
 void config_schema_item_add_indexed_alternative(config_schema_item_type * item , int index , const char * value) {

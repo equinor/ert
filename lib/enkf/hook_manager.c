@@ -194,15 +194,15 @@ void hook_manager_add_config_items( config_parser_type * config ) {
   config_schema_item_iset_type( item , 0 , CONFIG_STRING );
   config_schema_item_iset_type( item , 1 , CONFIG_STRING );
   {
-    char ** argv = util_malloc( 4 * sizeof * argv );
+    stringlist_type * argv = stringlist_alloc_new();
 
-    argv[0] = RUN_MODE_PRE_SIMULATION_NAME;
-    argv[1] = RUN_MODE_POST_SIMULATION_NAME;
-    argv[2] = RUN_MODE_PRE_UPDATE_NAME;
-    argv[3] = RUN_MODE_POST_UPDATE_NAME;
-    config_schema_item_set_indexed_selection_set(item, 1, 4, (const char **) argv);
+    stringlist_append_ref(argv, RUN_MODE_PRE_SIMULATION_NAME);
+    stringlist_append_ref(argv, RUN_MODE_POST_SIMULATION_NAME);
+    stringlist_append_ref(argv, RUN_MODE_PRE_UPDATE_NAME);
+    stringlist_append_ref(argv, RUN_MODE_POST_UPDATE_NAME);
+    config_schema_item_set_indexed_selection_set(item, 1, argv);
 
-    free( argv );
+    stringlist_free( argv );
   }
 
   item = config_add_schema_item( config , RUNPATH_FILE_KEY , false  );
