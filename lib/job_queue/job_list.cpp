@@ -15,9 +15,6 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#ifndef _GNU_SOURCE
-#define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
-#endif
 
 #include <stdbool.h>
 #include <string.h>
