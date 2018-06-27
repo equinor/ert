@@ -1,5 +1,3 @@
-#define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
-
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdbool.h>

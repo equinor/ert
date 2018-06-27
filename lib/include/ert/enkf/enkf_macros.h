@@ -111,12 +111,12 @@ bool prefix ## _fload__(void * void_arg , const char * filename) {              
 /*****************************************************************/
 
 #define VOID_ECL_WRITE(prefix) \
-void prefix ## _ecl_write__(const void * void_arg , const char * path , const char * file , value_export_type * export) { \
+void prefix ## _ecl_write__(const void * void_arg , const char * path , const char * file , value_export_type * export_value) { \
    const prefix ## _type * arg = prefix ## _safe_cast_const( void_arg );       \
-   prefix ## _ecl_write(arg , path , file , export);                           \
+   prefix ## _ecl_write(arg , path , file , export_value);                           \
 }
 
-#define VOID_ECL_WRITE_HEADER(prefix) void prefix ## _ecl_write__(const void * , const char * , const char * , value_export_type * export);
+#define VOID_ECL_WRITE_HEADER(prefix) void prefix ## _ecl_write__(const void * , const char * , const char * , value_export_type * export_value);
 
 /*****************************************************************/
 
