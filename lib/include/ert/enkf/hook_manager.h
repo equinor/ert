@@ -35,7 +35,7 @@ extern "C" {
   hook_manager_type   * hook_manager_alloc_load(ert_workflow_list_type *, const char *);
   hook_manager_type   * hook_manager_alloc(ert_workflow_list_type *, const config_content_type *);
 
-  void                  hook_manager_free();
+  void                  hook_manager_free(hook_manager_type * hook_manager);
 
   void                  hook_manager_init(hook_manager_type * hook_manager, const config_content_type * config);
   void                  hook_manager_add_config_items( config_parser_type * config );
