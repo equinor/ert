@@ -808,10 +808,13 @@ static void model_config_init_user_config(config_parser_type * config ) {
 
   item = config_add_schema_item(config, DBASE_TYPE_KEY, false);
   config_schema_item_set_argc_minmax(item , 1, 1);
-  config_schema_item_set_common_selection_set(
-          item, 2, (const char *[2]) {"PLAIN" , "BLOCK_FS"}
-          );
-
+  {
+    stringlist_type * argv = stringlist_alloc_new();
+    stringlist_append_ref(argv, "PLAIN");
+    stringlist_append_ref(argv, "BLOCK_FS");
+    config_schema_item_set_common_selection_set(item, argv);
+    stringlist_free( argv );
+  }
   item = config_add_schema_item(config, FORWARD_MODEL_KEY, false);
   config_schema_item_set_argc_minmax(item , 1, CONFIG_DEFAULT_ARG_MAX);
 
@@ -853,11 +856,15 @@ static void model_config_init_user_config(config_parser_type * config ) {
 
   item = config_add_schema_item(config, HISTORY_SOURCE_KEY, false);
   config_schema_item_set_argc_minmax(item , 1 , 1);
-  config_schema_item_set_common_selection_set(
-          item, 3,
-          (const char *[3]) {"SCHEDULE", "REFCASE_SIMULATED", "REFCASE_HISTORY"}
-          );
+  {
+    stringlist_type * argv = stringlist_alloc_new();
+    stringlist_append_ref(argv, "SCHEDULE");
+    stringlist_append_ref(argv, "REFCASE_SIMULATED");
+    stringlist_append_ref(argv, "REFCASE_HISTORY");
 
+    config_schema_item_set_common_selection_set(item, argv );
+    stringlist_free(argv);
+  }
   config_schema_item_set_required_children_on_value(
           item, "REFCASE_SIMULATED", refcase_dep
           );

@@ -27,7 +27,7 @@
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/res_util/res_log.h>
-#include <ert/enkf/time_map.hpp>
+#include <ert/enkf/time_map.h>
 
 #define DEFAULT_TIME  -1
 
