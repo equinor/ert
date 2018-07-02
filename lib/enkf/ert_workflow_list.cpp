@@ -23,8 +23,10 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+#include <set>
+#include <string>
+
 #include <ert/util/hash.h>
-#include <ert/util/set.h>
 #include <ert/util/ecl_version.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/util.h>
@@ -253,7 +255,7 @@ static char * ert_workflow_list_alloc_version_name( const char * path , const ch
 
 void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path ) {
   DIR * dirH = opendir( path );
-  set_type * names = set_alloc( 0 , NULL );
+  std::set<std::string> names;
   if (dirH) {
     while (true) {
       struct dirent * entry = readdir( dirH );
@@ -261,13 +263,12 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
         if ((strcmp(entry->d_name , ".") != 0) && (strcmp(entry->d_name , "..") != 0)) {
 	  char * root_name, * version;
 	  util_binary_split_string( entry->d_name , "@" , false , &root_name , &version);
-	  if (!set_has_key( names , root_name)) {
+	  if (!names.count(root_name)) {
 	    char * full_path = ert_workflow_list_alloc_version_name( path , root_name );
 
 	    if (full_path) {
-	      set_add_key( names , root_name );
-          res_log_finfo("Adding workflow job:%s", full_path);
-
+        names.insert(root_name);
+        res_log_finfo("Adding workflow job:%s", full_path);
 	      ert_workflow_list_add_job( workflow_list , root_name , full_path );
 	    }
 
@@ -283,7 +284,6 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
   } else
     fprintf(stderr, "** Warning: failed to open workflow/jobs directory: %s\n", path);
 
-  set_free( names );
 }
 
 
