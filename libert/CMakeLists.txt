@@ -1,11 +1,11 @@
-project(ert-ert C)
+project(ert-ert CXX)
 
 if (NOT BUILD_SHARED_LIBS)
     message(WARNING "Building python - forcing shared libs.")
     set(BUILD_SHARED_LIBS ON)
 endif ()
 
-add_library(ert src/ert_version.c)
+add_library(ert src/ert_version.cpp)
 
 target_include_directories(ert
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
