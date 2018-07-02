@@ -20,8 +20,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <string>
+#include <set>
+
 #include <ert/util/util.h>
-#include <ert/util/set.h>
 
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_smspec.h>
@@ -39,7 +41,7 @@ struct summary_config_struct {
   load_fail_type        load_fail;
   ecl_smspec_var_type   var_type;         /* The type of the variable - according to ecl_summary nomenclature. */
   char * var;                             /* This is ONE variable of summary.x format - i.e. WOPR:OP_2, RPR:4, ... */
-  set_type            * obs_set;          /* Set of keys (which fit in enkf_obs) which are observations of this node. */
+  std::set<std::string> obs_set;          /* Set of keys (which fit in enkf_obs) which are observations of this node. */
 };
 
 
@@ -89,27 +91,27 @@ void summary_config_update_load_fail_mode( summary_config_type * config , load_f
 
 
 summary_config_type * summary_config_alloc(const char * var , load_fail_type load_fail) {
-  summary_config_type * config = (summary_config_type *)util_malloc(sizeof *config );
+  summary_config_type * config = new summary_config_type();
+
   config->__type_id            = SUMMARY_CONFIG_TYPE_ID;
   config->var                  = util_alloc_string_copy( var );
   config->var_type             = ecl_smspec_identify_var_type( var );
-  config->obs_set              = set_alloc_empty();
   summary_config_set_load_fail_mode( config , load_fail);
+
   return config;
 }
 
 
 
 void summary_config_add_obs_key(summary_config_type * config, const char * obs_key) {
-  set_add_key(config->obs_set , obs_key);
+  config->obs_set.insert(obs_key);
 }
 
 
 
 void summary_config_free(summary_config_type * config) {
   free(config->var);
-  set_free(config->obs_set);
-  free(config);
+  delete config;
 }
 
 
