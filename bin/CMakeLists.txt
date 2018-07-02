@@ -7,3 +7,4 @@ configure_file(ert.in  ${EXECUTABLE_OUTPUT_PATH}/ert_install )
 
 
 install(PROGRAMS ${EXECUTABLE_OUTPUT_PATH}/ert_install DESTINATION ${CMAKE_INSTALL_PREFIX}/bin RENAME ert)
+install(PROGRAMS ${EXECUTABLE_OUTPUT_PATH}/ert_install DESTINATION ${CMAKE_INSTALL_PREFIX}/bin RENAME gert)
